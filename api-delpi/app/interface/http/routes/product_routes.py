@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from delpi_auth.authorization import require_permission
-from app.core.responses import success_response, error_response, not_found_response
+from app.core.responses import error_response, not_found_response
 from app.utils.logger import log_error
 
 from app.application.dto.product.list_products_requests import ListProductsRequest
@@ -315,8 +315,12 @@ def get_structure_exclusivity(
         use_case = build_get_product_structure_exclusivity_use_case()
         result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
-        return success_response(
-            data=result,
+        return product_success(
+            result,
+            operation_id=PRODUCT_STRUCTURE_EXCLUSIVITY["operation_id"],
+            entity="product_structure_exclusivity",
+            shape="playbook_report",
+            code=code,
             message="Estrutura com exclusividade de MPs carregada com sucesso.",
         )
 
@@ -349,8 +353,12 @@ def get_production_status(
         use_case = build_get_product_production_status_use_case()
         result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
-        return success_response(
-            data=result,
+        return product_success(
+            result,
+            operation_id=PRODUCT_PRODUCTION_STATUS["operation_id"],
+            entity="product_production_status",
+            shape="playbook_report",
+            code=code,
             message="Situação produtiva do produto carregada com sucesso.",
         )
 
@@ -385,8 +393,12 @@ def get_shipping_status(
         use_case = build_get_product_shipping_status_use_case()
         result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
-        return success_response(
-            data=result,
+        return product_success(
+            result,
+            operation_id=PRODUCT_SHIPPING_STATUS["operation_id"],
+            entity="product_shipping_status",
+            shape="playbook_report",
+            code=code,
             message="Status de expedição do produto carregado com sucesso.",
         )
 
@@ -524,7 +536,13 @@ def parents(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id=PRODUCT_PARENTS["operation_id"],
+            entity="product_parents",
+            shape="hierarchy",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -552,7 +570,13 @@ def suppliers(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
+        return product_success(
+            result.to_dict(),
+            operation_id=PRODUCT_SUPPLIERS["operation_id"],
+            entity="product_suppliers",
+            shape="paged_list",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -580,7 +604,13 @@ def customers(
         print(use_case)
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
+        return product_success(
+            result.to_dict(),
+            operation_id=PRODUCT_CUSTOMERS["operation_id"],
+            entity="product_customers",
+            shape="paged_list",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -610,7 +640,13 @@ def inspection(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id=PRODUCT_INSPECTION["operation_id"],
+            entity="product_inspection",
+            shape="paged_list",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -642,7 +678,13 @@ def guide(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id=PRODUCT_GUIDE["operation_id"],
+            entity="product_guide",
+            shape="paged_list",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -682,7 +724,13 @@ def internal_movements(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id=PRODUCT_INTERNAL_MOVEMENTS["operation_id"],
+            entity="product_internal_movements",
+            shape="paged_list",
+            code=code,
+        )
 
     except Exception as e:
 
@@ -771,9 +819,13 @@ def inbound_invoice_items(
 
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message=f"Inbound invoices for {code} fetched successfully."
+        return product_success(
+            result,
+            operation_id=PRODUCT_INBOUND_INVOICE_ITEMS["operation_id"],
+            entity="product_inbound_invoice_items",
+            shape="paged_list",
+            code=code,
+            message=f"Inbound invoices for {code} fetched successfully.",
         )
 
     except Exception as e:
@@ -808,9 +860,13 @@ def outbound_invoice_items(
 
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message=f"Outbound invoices for {code} fetched successfully."
+        return product_success(
+            result,
+            operation_id=PRODUCT_OUTBOUND_INVOICE_ITEMS["operation_id"],
+            entity="product_outbound_invoice_items",
+            shape="paged_list",
+            code=code,
+            message=f"Outbound invoices for {code} fetched successfully.",
         )
 
     except Exception as e:
@@ -837,9 +893,13 @@ def purchases(
             )
         )
 
-        return success_response(
-            data=result,
-            message=f"Purchases for {code} fetched successfully (page {page}/{result['total_pages']})."
+        return product_success(
+            result,
+            operation_id=PRODUCT_PURCHASES["operation_id"],
+            entity="product_purchases",
+            shape="paged_list",
+            code=code,
+            message=f"Purchases for {code} fetched successfully (page {page}/{result['total_pages']}).",
         )
 
     except Exception as e:
@@ -860,9 +920,13 @@ def product_sales_summary(code: str):
             GetProductSalesSummaryRequest(code=code)
         )
 
-        return success_response(
-            data=result,
-            message=f"Sales summary for product {code} fetched successfully."
+        return product_success(
+            result,
+            operation_id=PRODUCT_SALES_SUMMARY["operation_id"],
+            entity="product_sales",
+            shape="scalar",
+            code=code,
+            message=f"Sales summary for product {code} fetched successfully.",
         )
 
     except Exception as e:
@@ -883,9 +947,13 @@ def product_sales_open_orders(code: str):
             GetProductSalesOpenOrdersRequest(code=code)
         )
 
-        return success_response(
-            data=result,
-            message=f"Open sales orders for product {code} fetched successfully."
+        return product_success(
+            result,
+            operation_id=PRODUCT_SALES_OPEN_ORDERS["operation_id"],
+            entity="product_open_orders",
+            shape="paged_list",
+            code=code,
+            message=f"Open sales orders for product {code} fetched successfully.",
         )
 
     except Exception as e:
@@ -906,9 +974,13 @@ def product_sales_billing(code: str):
             GetProductSalesBillingRequest(code=code)
         )
 
-        return success_response(
-            data=result,
-            message=f"Billing summary for product {code} fetched successfully."
+        return product_success(
+            result,
+            operation_id=PRODUCT_SALES_BILLING["operation_id"],
+            entity="product_billing",
+            shape="scalar",
+            code=code,
+            message=f"Billing summary for product {code} fetched successfully.",
         )
 
     except Exception as e:
@@ -937,8 +1009,12 @@ def product_pricing(code: str):
                 recoverable=False,
             )
 
-        return success_response(
-            data=result,
+        return product_success(
+            result,
+            operation_id=PRODUCT_PRICING["operation_id"],
+            entity="product_pricing",
+            shape="scalar",
+            code=code,
             message=f"Preços do produto {code} carregados com sucesso.",
         )
 

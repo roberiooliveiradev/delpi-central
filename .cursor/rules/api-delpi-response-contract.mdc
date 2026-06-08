@@ -1,0 +1,65 @@
+---
+description: Contrato de respostas HTTP da api-delpi (envelope + meta) — rotas novas e alterações
+globs: api-delpi/**
+alwaysApply: false
+---
+
+# api-delpi — contrato de respostas (Playbook 10)
+
+## Princípio
+
+Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`meta` semântico** em sucesso. Consumidores legados (MFE, SI) leem só `data`; chat e ferramentas novas usam `meta.operationId`, `meta.entity`, `meta.shape`.
+
+**Não** reimplementar envelope em use cases — só na camada HTTP.
+
+## Onde implementar
+
+| Camada | Arquivo | Responsabilidade |
+|--------|---------|------------------|
+| Envelope base | `api-delpi/app/core/responses.py` | `success_response`, `error_response`, `not_found_response` |
+| Meta | `api-delpi/app/application/services/response_meta_builder.py` | `ResponseMetaBuilder.build`, `infer_shape`, `pagination_from_data` |
+| Helper de rota | `api-delpi/app/interface/http/route_response_helpers.py` | **`api_delpi_success()`** — usar em toda rota nova |
+| Contratos | `api-delpi/app/interface/http/route_contract_registry.py` | `operationId` → `entity` + `shape` |
+| Chat-critical | `api-delpi/app/interface/http/openapi_agent_metadata.py` | `agent_route()` + `operation_id` estável |
+| Produto | `api-delpi/app/interface/http/routes/product_response_helpers.py` | `product_success()` (alias com `relatedRoutes` por código) |
+
+## Checklist — nova rota ou alteração de resposta
+
+1. **Sucesso:** `return api_delpi_success(data, operation_id="...", message="...")` — **nunca** `success_response` direto em routers.
+2. **Registro:** adicionar entrada em `route_contract_registry.py` (`entity`, `shape` conforme playbook § 4.3).
+3. **OpenAPI:** `operation_id` no decorator **igual** ao passado em `api_delpi_success` (chat-critical: `**CONST` de `openapi_agent_metadata.py`).
+4. **Produto com `{code}`:** usar `product_success(..., code=code)` ou `api_delpi_success(..., code=code)` para `meta.relatedRoutes`.
+5. **Erro:** `error_response(msg, status_code=..., code="DOMAIN_CODE", recoverable=...)` — preencher `error.code` quando possível.
+6. **Shape:** um de `paged_list`, `hierarchy`, `product_snapshot`, `composite_analysis`, `playbook_report`, `scalar` (ver `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md` § 4.3).
+7. **Teste:** smoke em `api-delpi/tests/` (meta presente + `operationId` esperado) quando a rota for chat-critical ou KPI exposto ao SI.
+8. **Doc:** atualizar `api-delpi/docs/api/` se mudar contrato público; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.
+
+## Exceções (fora do envelope + meta)
+
+| Caso | Formato |
+|------|---------|
+| `GET /products/{code}/structure/excel` | StreamingResponse / JSON com `download_url` |
+| Rotas NC (`internal_nc_routes`, `external_nc_routes`) | Pydantic / `HTTPException` — migração futura |
+| 401/403 JWT middleware | Corpo Keycloak — não padronizado aqui |
+
+## O que NÃO fazer
+
+- `return {"success": true, ...}` manual sem `responses.py`.
+- `operationId` diferente entre OpenAPI e `meta.operationId`.
+- Lógica de `meta.shape` só no prompt do chat — pertence ao builder/registry.
+- Breaking change em `data` sem `?legacy=true` / bump `dataVersion` (playbook § 4.4).
+
+## Referência rápida
+
+```python
+from app.interface.http.route_response_helpers import api_delpi_success
+from app.core.responses import error_response
+
+return api_delpi_success(
+    result,
+    operation_id="get_supplies_cpv",
+    message="CPV buscado com sucesso.",
+)
+```
+
+Documentação: `api-delpi/docs/api/00-visao-geral.md`, inventário `api-delpi/docs/roadmaps/fase-0-inventario-contrato-respostas.md`.

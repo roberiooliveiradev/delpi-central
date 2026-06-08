@@ -22,7 +22,8 @@ from app.composition.system_composer import (
     build_search_columns_in_table_use_case,
     build_search_columns_by_description_use_case,
 )
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.core.exceptions import DatabaseConnectionError, BusinessLogicError
 from app.utils.logger import log_info, log_error
 
@@ -53,9 +54,10 @@ def search_tables(
         use_case = build_search_tables_by_description_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message="Busca de tabelas realizada com sucesso!"
+        return api_delpi_success(
+            result,
+            operation_id="search_tables_by_description",
+            message="Busca de tabelas realizada com sucesso!",
         )
 
     except BusinessLogicError as e:
@@ -77,9 +79,10 @@ def table(tableName: str):
         use_case = build_get_table_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message="Tabela localizada com sucesso!"
+        return api_delpi_success(
+            result,
+            operation_id="get_protheus_table",
+            message="Tabela localizada com sucesso!",
         )
 
     except Exception as e:
@@ -109,9 +112,10 @@ def table_columns(
         use_case = build_list_table_columns_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message=f"Colunas da tabela {tableName} retornadas com sucesso!"
+        return api_delpi_success(
+            result,
+            operation_id="list_protheus_table_columns",
+            message=f"Colunas da tabela {tableName} retornadas com sucesso!",
         )
 
     except BusinessLogicError as e:
@@ -130,7 +134,11 @@ def table_indexes(tableName: str):
         use_case = build_get_table_indexes_use_case()
         result = use_case.execute(dto)
 
-        return success_response(result, "Índices retornados com sucesso!")
+        return api_delpi_success(
+            result,
+            operation_id="get_protheus_table_indexes",
+            message="Índices retornados com sucesso!",
+        )
 
     except Exception as e:
         log_error(f"Erro ao consultar índices da tabela {tableName}: {e}")
@@ -145,7 +153,11 @@ def table_relations(tableName: str):
         use_case = build_get_table_relations_use_case()
         result = use_case.execute(dto)
 
-        return success_response(result, "Relacionamentos retornados com sucesso!")
+        return api_delpi_success(
+            result,
+            operation_id="get_protheus_table_relations",
+            message="Relacionamentos retornados com sucesso!",
+        )
 
     except Exception as e:
         log_error(f"Erro ao consultar relacionamentos da tabela {tableName}: {e}")
@@ -160,7 +172,11 @@ def table_schema(tableName: str):
         use_case = build_get_table_schema_use_case()
         result = use_case.execute(dto)
 
-        return success_response(result, "Schema completo retornado!")
+        return api_delpi_success(
+            result,
+            operation_id="get_protheus_table_schema",
+            message="Schema completo retornado!",
+        )
 
     except Exception as e:
         log_error(f"Erro ao consultar schema da tabela {tableName}: {e}")
@@ -179,7 +195,11 @@ def search_columns(tableName: str, q: str = Query(..., min_length=2)):
         use_case = build_search_columns_in_table_use_case()
         result = use_case.execute(dto)
 
-        return success_response(result, f"Colunas contendo '{q}' retornadas!")
+        return api_delpi_success(
+            result,
+            operation_id="search_protheus_columns_in_table",
+            message=f"Colunas contendo '{q}' retornadas!",
+        )
 
     except Exception as e:
         log_error(f"Erro ao buscar colunas por texto na tabela {tableName}: {e}")
@@ -215,9 +235,10 @@ def search_columns_global(
         use_case = build_search_columns_by_description_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message="Busca de colunas realizada com sucesso!"
+        return api_delpi_success(
+            result,
+            operation_id="search_protheus_columns_by_description",
+            message="Busca de colunas realizada com sucesso!",
         )
 
     except BusinessLogicError as e:

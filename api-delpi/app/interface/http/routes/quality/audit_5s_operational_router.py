@@ -19,7 +19,8 @@ from app.application.services.audit_5s.realtime_publisher import (
     publish_audit_updated,
     publish_response_updated,
 )
-from app.core.responses import error_response, success_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
@@ -110,7 +111,7 @@ def list_areas(
     try:
         repo = build_audit_5s_repository()
         data = repo.list_areas(branch, active_only=active)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_areas")
     except Exception as exc:
         log_error(f"Erro ao listar áreas 5S: {exc}")
         return error_response("Erro interno ao listar áreas.", status_code=500)
@@ -126,7 +127,7 @@ def create_area(body: CreateAreaBody = Body(...)):
             name=body.name,
             created_by_user_id=_current_user_id(),
         )
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="create_audit_5s_area")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
@@ -140,7 +141,7 @@ def list_criteria(catalog_version: int | None = Query(None, ge=1)):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_criteria_catalog(catalog_version)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_criteria")
     except Exception as exc:
         log_error(f"Erro ao listar critérios 5S: {exc}")
         return error_response("Erro interno ao listar critérios.", status_code=500)
@@ -155,7 +156,7 @@ def list_audits(
     try:
         repo = build_audit_5s_repository()
         data = repo.list_audits(branch, status=status)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_audits")
     except Exception as exc:
         log_error(f"Erro ao listar auditorias 5S: {exc}")
         return error_response("Erro interno ao listar auditorias.", status_code=500)
@@ -186,7 +187,7 @@ def create_audit(body: CreateAuditBody = Body(...)):
             created_by_user_id=user_id,
             auditors=auditors,
         )
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="create_audit_5s_audit")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
@@ -202,7 +203,7 @@ def get_audit(audit_id: str):
         data = repo.get_audit(audit_id)
         if not data:
             return error_response("Auditoria não encontrada.", status_code=404)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="get_audit_5s_audit")
     except Exception as exc:
         log_error(f"Erro ao buscar auditoria 5S: {exc}")
         return error_response("Erro interno ao buscar auditoria.", status_code=500)
@@ -232,8 +233,9 @@ def delete_audit(audit_id: str):
             storage.delete_nonconformity_dir(nc_id)
 
         repo.delete_audit(audit_id)
-        return success_response(
-            data=None,
+        return api_delpi_success(
+            None,
+            operation_id="delete_audit_5s_audit",
             message="Auditoria excluída com sucesso.",
         )
     except PluginsRepositoryError as exc:
@@ -266,7 +268,7 @@ def join_audit(audit_id: str):
         data = repo.get_audit(audit_id)
         if not data:
             return error_response("Auditoria não encontrada.", status_code=404)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="join_audit_5s_audit")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
@@ -310,7 +312,7 @@ async def upsert_response(
             )
         except Exception as publish_exc:
             log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data={"response": data, "audit": audit})
+        return api_delpi_success({"response": data, "audit": audit}, operation_id="upsert_audit_5s_response")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -334,7 +336,7 @@ async def complete_evaluation(audit_id: str):
             )
         except Exception as publish_exc:
             log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="complete_audit_5s_evaluation")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -348,7 +350,7 @@ def list_nc_candidates(audit_id: str):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_nc_candidates(audit_id)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_nc_candidates")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=404)
     except Exception as exc:
@@ -362,7 +364,7 @@ def list_audit_nonconformities(audit_id: str):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_nonconformities(audit_id)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_nonconformities")
     except Exception as exc:
         log_error(f"Erro ao listar NCs 5S: {exc}")
         return error_response("Erro interno ao listar NCs.", status_code=500)
@@ -396,7 +398,7 @@ async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Bo
                 )
             except Exception as publish_exc:
                 log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="create_audit_5s_nonconformity")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -432,7 +434,7 @@ async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(
                 )
             except Exception as publish_exc:
                 log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="update_audit_5s_nonconformity")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -446,7 +448,7 @@ def list_nc_actions(nc_id: str):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_nc_actions(nc_id)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_nc_actions")
     except Exception as exc:
         log_error(f"Erro ao listar ações NC 5S: {exc}")
         return error_response("Erro interno ao listar ações.", status_code=500)
@@ -463,7 +465,7 @@ def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
             actor_user_id=_current_user_id(),
             actor_display_name=_current_user_name(),
         )
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="create_audit_5s_nc_action")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -477,7 +479,7 @@ def list_audit_nc_attachments(audit_id: str):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_nc_attachments_for_audit(audit_id)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_audit_nc_attachments")
     except Exception as exc:
         log_error(f"Erro ao listar evidências NC 5S: {exc}")
         return error_response("Erro interno ao listar evidências.", status_code=500)
@@ -489,7 +491,7 @@ def list_nc_attachments(nc_id: str):
     try:
         repo = build_audit_5s_repository()
         data = repo.list_nc_attachments(nc_id)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_audit_5s_nc_attachments")
     except Exception as exc:
         log_error(f"Erro ao listar evidências NC 5S: {exc}")
         return error_response("Erro interno ao listar evidências.", status_code=500)
@@ -526,7 +528,7 @@ async def upload_nc_attachment(
             size_bytes=len(content),
             uploaded_by_user_id=_current_user_id(),
         )
-        return success_response(data=data, message="Evidência anexada com sucesso.")
+        return api_delpi_success(data, operation_id="attach_audit_5s_evidence", message="Evidência anexada com sucesso.")
     except (PluginsRepositoryError, Audit5sNcAttachmentStorageError) as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -582,7 +584,7 @@ async def complete_nc_action(nc_id: str):
                 )
             except Exception as publish_exc:
                 log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data=data, message="Ação finalizada com sucesso.")
+        return api_delpi_success(data, operation_id="complete_audit_5s_nc_action", message="Ação finalizada com sucesso.")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -622,7 +624,7 @@ def get_audit_5s_dashboard(
             page=page,
             page_size=page_size,
         )
-        return success_response(data=result.to_dict())
+        return api_delpi_success(result.to_dict(), operation_id="get_audit_5s_analytics_dashboard")
     except ValueError as exc:
         return error_response(str(exc), status_code=400)
     except PluginsRepositoryError as exc:
@@ -648,7 +650,7 @@ async def close_audit(audit_id: str):
             )
         except Exception as publish_exc:
             log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="close_audit_5s_audit")
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:

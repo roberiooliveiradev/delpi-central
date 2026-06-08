@@ -11,7 +11,8 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
 from app.composition.scheduling_composer import build_scheduling_repository
-from app.core.responses import error_response, success_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.infrastructure.persistence.plugins.repositories.scheduling.postgres_scheduling_repository import (
     BookingConflictError,
@@ -157,7 +158,7 @@ def list_resources(
     try:
         repo = build_scheduling_repository()
         data = repo.list_resources(branch, active_only=active)
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_scheduling_resources")
     except Exception as exc:
         log_error(f"Erro ao listar recursos de agendamento: {exc}")
         return error_response("Erro interno ao listar recursos.", status_code=500)
@@ -181,7 +182,11 @@ def create_resource(body: CreateResourceBody):
             metadata=body.metadata,
             created_by_user_id=_current_user_id(),
         )
-        return success_response(data=data, message="Recurso cadastrado com sucesso.")
+        return api_delpi_success(
+            data,
+            operation_id="create_scheduling_resource",
+            message="Recurso cadastrado com sucesso.",
+        )
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
@@ -211,7 +216,11 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
             metadata=body.metadata,
             active=body.active,
         )
-        return success_response(data=data, message="Recurso atualizado com sucesso.")
+        return api_delpi_success(
+            data,
+            operation_id="update_scheduling_resource",
+            message="Recurso atualizado com sucesso.",
+        )
     except PluginsRepositoryError as exc:
         return error_response(str(exc), status_code=400)
     except Exception as exc:
@@ -246,7 +255,7 @@ def list_bookings(
             to_at=end,
             resource_id=resource_id,
         )
-        return success_response(data=data)
+        return api_delpi_success(data, operation_id="list_scheduling_bookings")
     except Exception as exc:
         log_error(f"Erro ao listar reservas: {exc}")
         return error_response("Erro interno ao listar reservas.", status_code=500)
@@ -282,7 +291,11 @@ def create_booking(body: CreateBookingBody):
             booked_by_user_id=_current_user_id(),
             booked_by_name=_current_user_name(),
         )
-        return success_response(data=data, message="Reserva confirmada com sucesso.")
+        return api_delpi_success(
+            data,
+            operation_id="create_scheduling_booking",
+            message="Reserva confirmada com sucesso.",
+        )
     except BookingConflictError as exc:
         return error_response(str(exc), status_code=409)
     except PluginsRepositoryError as exc:
@@ -320,7 +333,11 @@ def cancel_booking(booking_id: str):
             return error_response("Não foi possível cancelar a reserva.", status_code=400)
         data["resource_name"] = booking.get("resource_name")
         data["resource_type"] = booking.get("resource_type")
-        return success_response(data=data, message="Reserva cancelada com sucesso.")
+        return api_delpi_success(
+            data,
+            operation_id="cancel_scheduling_booking",
+            message="Reserva cancelada com sucesso.",
+        )
     except Exception as exc:
         log_error(f"Erro ao cancelar reserva: {exc}")
         return error_response("Erro interno ao cancelar reserva.", status_code=500)

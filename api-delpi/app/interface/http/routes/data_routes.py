@@ -5,7 +5,8 @@ from fastapi.responses import JSONResponse
 from app.application.dto.data.run_sql_request import RunSqlRequest
 from app.composition.data_composer import build_run_sql_use_case
 
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from delpi_auth.authorization import require_any_permission
@@ -77,9 +78,10 @@ async def execute_sql_raw(request: Request):
 
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
-            message="SQL executed successfully."
+        return api_delpi_success(
+            result,
+            operation_id=DATA_SQL["operation_id"],
+            message="SQL executed successfully.",
         )
 
     except Exception as e:

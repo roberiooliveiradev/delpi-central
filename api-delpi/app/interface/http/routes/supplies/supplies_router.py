@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_any_permission
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from app.application.dto.supplies.get_cpv_request import GetCPVRequest
@@ -64,8 +65,9 @@ def get_cpv(
             summary_key="summary",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_cpv",
             message="CPV buscado com sucesso.",
         )
 
@@ -110,8 +112,9 @@ def get_otd(
             summary_key="summary",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_otd",
             message="OTD buscado com sucesso.",
         )
 
@@ -156,8 +159,9 @@ def get_stock_value(
             summary_key="summary",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_stock_value",
             message="Valor total de estoque buscado com sucesso.",
         )
 
@@ -198,8 +202,9 @@ def get_negotiation_savings_summary(
             summary_key="summary",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_negotiation_savings_summary",
             message="Economia em negociações de compras buscada com sucesso.",
         )
 
@@ -256,8 +261,9 @@ def get_inventory_turnover(
                 branch=branch,
             )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_inventory_turnover",
             message="Giro de estoque buscado com sucesso.",
         )
 

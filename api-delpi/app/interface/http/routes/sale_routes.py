@@ -5,7 +5,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from delpi_auth.authorization import require_permission
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from app.application.dto.sale_order.list_sale_order_request import ListSaleOrderRequest
@@ -38,7 +39,10 @@ def list_sale_order_route(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id=SALE_ORDERS_LIST["operation_id"],
+        )
 
     except Exception as e:
         log_error(f"Erro ao buscar ordens de venda: {e}")

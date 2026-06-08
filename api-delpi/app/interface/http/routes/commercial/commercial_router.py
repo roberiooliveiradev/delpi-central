@@ -2,7 +2,8 @@ from fastapi import APIRouter, Query
 from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
@@ -59,8 +60,9 @@ def get_head_office_rol_target_pct(
             recompute_target_pct_from="rol",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_head_office_rol_target_pct",
             message="Head office ROL target percentage fetched successfully.",
         )
 
@@ -100,8 +102,9 @@ def get_branch_rol_target_pct(
             recompute_target_pct_from="rol",
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_branch_rol_target_pct",
             message="Branch ROL target percentage fetched successfully.",
         )
 
@@ -134,8 +137,9 @@ def get_commercial_rol_series(
         use_case = build_get_commercial_rol_series_use_case()
         result = use_case.execute(request)
 
-        return success_response(
-            data=result.to_dict(),
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_commercial_rol_series",
             message="Commercial ROL series fetched successfully.",
         )
 
@@ -178,8 +182,9 @@ def list_commercial_proposals(
 
         result = use_case.execute(request)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="list_commercial_proposals",
             message="Commercial proposals listed successfully.",
         )
 
@@ -219,8 +224,9 @@ def get_sales_conversion_rate(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_conversion_rate",
             message="Sales Conversion Rate fetched successfully.",
         )
 
@@ -254,8 +260,9 @@ def get_new_clients_average(
 
         result = use_case.execute(request)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_new_clients_average",
             message="Number of New Clients (Monthly Average) fetched successfully.",
         )
 
@@ -295,8 +302,9 @@ def get_sales_order_otd(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_order_otd",
             message="Sales order on-time delivery percentage fetched successfully.",
         )
 
@@ -336,8 +344,9 @@ def get_new_business_rol_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_new_business_rol_pct",
             message="New business share of net operating revenue fetched successfully.",
         )
 
@@ -371,8 +380,9 @@ def get_new_clients_rol_pct(
 
         result = use_case.execute(request)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_new_clients_rol_pct",
             message="% of Net Operating Revenue from New Clients fetched successfully.",
         )
 

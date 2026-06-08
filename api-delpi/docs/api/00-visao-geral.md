@@ -78,9 +78,9 @@ Erro (`4xx`/`5xx`):
 
 `error` é opcional em respostas legadas; novas rotas e handlers devem preencher `code` quando possível. HTTP 404 não usa mais `{ "detail": "..." }` solto nas rotas de produto — envelope acima.
 
-Implementação: `app/core/responses.py` — `success_response()`, `error_response()`, `not_found_response()`.
+Implementação: `app/core/responses.py` — `success_response()`, `error_response()`, `not_found_response()`. Rotas HTTP devem usar `api_delpi_success()` (`app/interface/http/route_response_helpers.py`), que monta `meta` via `ResponseMetaBuilder` e `route_contract_registry.py`. Regra Cursor: `.cursor/rules/api-delpi-response-contract.mdc`.
 
-Sucesso com metadados semânticos (Fase 3 — rotas chat-critical):
+Sucesso com metadados semânticos (obrigatório em rotas com envelope — Playbook 10):
 
 ```json
 {

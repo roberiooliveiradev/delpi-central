@@ -21,7 +21,7 @@
 | `success` | Sim | MFEs, SI (`DelpiApiClient`), chat |
 | `message` | Sim | MFEs (erro), chat |
 | `data` | Sim | **Todos** — contrato legado |
-| `meta` | Não (Fase 3) | — |
+| `meta` | Sim (jun/2026 — rotas envelope) | Chat, ferramentas novas |
 | `error` | Não (Fase 2) | — |
 
 Erro hoje: `{ "success": false, "message": "..." }` ou HTTP 404 com `{ "detail": "Not Found" }` (rotas de produto).

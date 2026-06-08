@@ -6,7 +6,8 @@ from app.composition.hr_composer import (
     build_hr_metrics_repository,
     build_hr_metrics_snapshot_service,
 )
-from app.core.responses import error_response, success_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.portal_rh.portal_rh_base_repository import (
     PortalRhRepositoryError,
 )
@@ -80,8 +81,9 @@ def list_hr_branches():
     try:
         repository = build_hr_metrics_repository()
         branches = repository.list_active_branches()
-        return success_response(
-            data={"branches": branches},
+        return api_delpi_success(
+            {"branches": branches},
+            operation_id="list_hr_branches",
             message="Filiais de RH listadas com sucesso.",
         )
     except PortalRhDatabaseConfigError as exc:
@@ -118,13 +120,14 @@ def get_hr_snapshot(
             end_date=normalize_portal_rh_date(end_date),
             branch=branch,
         )
-        return success_response(
-            data=_snapshot_payload(
+        return api_delpi_success(
+            _snapshot_payload(
                 snapshot,
                 start_date=normalize_portal_rh_date(start_date),
                 end_date=normalize_portal_rh_date(end_date),
                 branch=branch,
             ),
+            operation_id="get_hr_snapshot",
             message="Indicadores de RH obtidos com sucesso.",
         )
     except ValueError as exc:
@@ -165,14 +168,15 @@ def get_hr_active_pdi_count(
             end_date=end,
             branch=branch,
         )
-        return success_response(
-            data=enrich_dashboard_metric(
+        return api_delpi_success(
+            enrich_dashboard_metric(
                 data,
                 source_key=goal_keys.HR_PDI,
                 start_date=start,
                 end_date=end,
                 branch=branch,
             ),
+            operation_id="get_hr_active_pdi_count",
             message="Contagem de PDIs ativos obtida com sucesso.",
         )
     except ValueError as exc:
@@ -213,14 +217,15 @@ def get_hr_performance_reviews_completion(
             end_date=end,
             branch=branch,
         )
-        return success_response(
-            data=enrich_dashboard_metric(
+        return api_delpi_success(
+            enrich_dashboard_metric(
                 data,
                 source_key=goal_keys.HR_PERFORMANCE_REVIEWS,
                 start_date=start,
                 end_date=end,
                 branch=branch,
             ),
+            operation_id="get_hr_performance_reviews_completion",
             message="Percentual de avaliações de desempenho concluídas obtido com sucesso.",
         )
     except ValueError as exc:

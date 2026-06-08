@@ -3,7 +3,8 @@ from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
 
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from app.application.dto.auditoria_5s.audit_5s_summary_request import (
@@ -55,7 +56,10 @@ def list_quality_branches(
             date_end=date_end,
         )
 
-        return success_response(data=result.to_dict())
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_quality_branches",
+        )
 
     except ValueError as exc:
         log_error(f"Erro de validação ao listar filiais de qualidade: {exc}")
@@ -96,10 +100,10 @@ def get_nonconformity_series(
         use_case = build_get_nonconformity_series_use_case()
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao buscar série de NC: {exc}")
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_nonconformity_series",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -139,10 +143,10 @@ def list_nonconformity_route(
         use_case = build_list_nonconformity_use_case()
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao buscar não conformidades: {exc}")
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_nonconformities",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -181,7 +185,10 @@ def get_kaizen_summary(
             branch=branch,
         )
 
-        return success_response(data=summary)
+        return api_delpi_success(
+            summary,
+            operation_id="get_kaizen_summary",
+        )
 
     except ValueError as exc:
         log_error(f"Erro de validação ao gerar resumo de kaizens: {exc}")
@@ -219,10 +226,10 @@ def get_audit_5s_summary(
             branch=branch,
         )
 
-        return success_response(data=summary)
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao gerar resumo das auditorias 5S: {exc}")
+        return api_delpi_success(
+            summary,
+            operation_id="get_audit_5s_summary",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -257,10 +264,10 @@ def get_internal_ppm_summary(
             branch=branch,
         )
 
-        return success_response(data=result)
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao buscar resumo de PPM interno: {exc}")
+        return api_delpi_success(
+            result,
+            operation_id="get_ppm_internal_summary",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -295,10 +302,10 @@ def get_external_ppm_summary(
             branch=branch,
         )
 
-        return success_response(data=result)
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao buscar resumo de PPM externo: {exc}")
+        return api_delpi_success(
+            result,
+            operation_id="get_ppm_external_summary",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -365,10 +372,10 @@ def list_internal_ppm(
         use_case = build_list_ppm_use_case()
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao listar PPM interno: {exc}")
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_ppm_internal",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -401,10 +408,10 @@ def list_external_ppm(
         use_case = build_list_ppm_use_case()
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao listar PPM externo: {exc}")
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_ppm_external",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -435,10 +442,10 @@ def _get_ppm_series_route(
         use_case = build_get_ppm_series_use_case()
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
-
-    except ValueError as exc:
-        log_error(f"Erro de validação ao buscar série de PPM {ppm_type}: {exc}")
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id=f"get_ppm_{ppm_type}_series",
+        )
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:

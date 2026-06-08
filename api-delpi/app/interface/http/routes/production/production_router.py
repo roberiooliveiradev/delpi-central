@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_any_permission
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 from app.application.dto.production.production_oee_series_request import (
@@ -60,8 +61,9 @@ def get_direct_labor_cost_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_direct_labor_cost_pct",
             message="Custo de mão de obra direta buscado com sucesso.",
         )
 
@@ -107,8 +109,9 @@ def get_production_cost_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_production_cost_pct",
             message="Custo de produção buscado com sucesso.",
         )
 
@@ -154,8 +157,9 @@ def get_depreciation_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_depreciation_pct",
             message="Depreciação buscada com sucesso.",
         )
 
@@ -190,8 +194,9 @@ def get_production_oee_series(
         use_case = build_get_production_oee_series_use_case()
         result = use_case.execute(request)
 
-        return success_response(
-            data=result.to_dict(),
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_production_oee_series",
             message="Série temporal de OEE carregada com sucesso.",
         )
 
@@ -226,8 +231,9 @@ def get_production_otd_series(
         use_case = build_get_production_otd_series_use_case()
         result = use_case.execute(request)
 
-        return success_response(
-            data=result.to_dict(),
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_production_otd_series",
             message="Série temporal de OTD carregada com sucesso.",
         )
 
@@ -267,8 +273,9 @@ def get_overall_equipment_effectiveness_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_overall_equipment_effectiveness_pct",
             message="Eficiência geral dos equipamentos buscada com sucesso.",
         )
 
@@ -308,8 +315,9 @@ def get_on_time_delivery_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_on_time_delivery_pct",
             message="On-Time Delivery buscado com sucesso.",
         )
 
@@ -360,8 +368,9 @@ def get_eficiencia_fabril_dashboard(
             page_size=page_size,
         )
 
-        return success_response(
-            data=result.to_dict(),
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_eficiencia_fabril_dashboard",
             message="Dashboard de eficiência fabril carregado com sucesso.",
         )
 
@@ -408,8 +417,9 @@ def get_eficiencia_fabril_appointments(
             status_ok_only=status_ok_only,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="list_eficiencia_fabril_appointments",
             message="Apontamentos de eficiência fabril carregados com sucesso.",
         )
 

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 
-from app.core.responses import success_response, error_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 from delpi_auth.authorization import require_any_permission
 
@@ -36,8 +37,9 @@ def get_rol(
         use_case = build_get_rol_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_rol",
             message="ROL consultado com sucesso.",
         )
 
@@ -69,8 +71,9 @@ def get_ebitda_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_ebitda_pct",
             message="EBITDA percentual buscado com sucesso.",
         )
 
@@ -109,8 +112,9 @@ def get_fixed_cost_pct(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_fixed_cost_pct",
             message="Custos fixos percentuais buscados com sucesso.",
         )
 
@@ -149,8 +153,9 @@ def get_pmr(
             branch=branch,
         )
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_pmr",
             message="Prazo médio de recebimento buscado com sucesso.",
         )
 

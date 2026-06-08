@@ -52,6 +52,28 @@ class ResponseMetaBuilder:
         return payload
 
     @staticmethod
+    def infer_shape(data: Any) -> str:
+        if isinstance(data, list):
+            return "paged_list" if not data else "scalar"
+        if not isinstance(data, dict):
+            return "scalar"
+        if "product" in data and isinstance(data.get("product"), dict):
+            if any(key in data for key in ("structure", "guide", "inspection", "sections")):
+                return "composite_analysis"
+            return "product_snapshot"
+        if "root" in data and "items" in data:
+            return "hierarchy"
+        if "items" in data and "summary" in data:
+            return "playbook_report"
+        if ResponseMetaBuilder.pagination_from_data(data) is not None:
+            return "paged_list"
+        if "items" in data and isinstance(data.get("items"), list):
+            return "paged_list"
+        if any(key in data for key in ("structure", "production", "shipping", "branches")):
+            return "composite_analysis"
+        return "scalar"
+
+    @staticmethod
     def product_related_routes(code: str) -> dict[str, str]:
         return {
             "detail": f"/products/{code}",

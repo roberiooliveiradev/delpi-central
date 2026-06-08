@@ -19,7 +19,8 @@ from app.composition.engineering_composer import (
     build_engineering_list_lmps_use_case,
     build_engineering_list_transforma_mais_processes_use_case,
 )
-from app.core.responses import error_response, success_response
+from app.core.responses import error_response
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
     LMP_DASHBOARD,
@@ -69,8 +70,9 @@ def list_lmps_route(
         use_case = build_engineering_list_lmps_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result.to_dict(),
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_lmps",
             message="LMPs listadas com sucesso.",
         )
 
@@ -125,8 +127,9 @@ def list_lmps_dashboard_route(
             }
         result = payload
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="list_lmps_dashboard",
             message="Dashboard de LMPs carregado com sucesso.",
         )
 
@@ -171,8 +174,9 @@ def lmps_dashboard_summary_route(
             branch=branch,
         )
 
-        return success_response(
-            data=summary,
+        return api_delpi_success(
+            summary,
+            operation_id="get_lmps_dashboard_summary",
             message="KPIs do dashboard de LMPs carregados com sucesso.",
         )
 
@@ -214,8 +218,9 @@ def lmps_dashboard_items_route(
         use_case = build_engineering_list_lmps_dashboard_use_case()
         result = use_case.execute_items(dto, status_filter=status)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="list_lmps_dashboard_items",
             message="Itens do dashboard de LMPs carregados com sucesso.",
         )
 
@@ -253,8 +258,9 @@ def lmps_dashboard_charts_route(
         use_case = build_engineering_list_lmps_dashboard_use_case()
         charts = use_case.execute_charts(dto, status_filter=status)
 
-        return success_response(
-            data=charts,
+        return api_delpi_success(
+            charts,
+            operation_id="get_lmps_dashboard_charts",
             message="Gráficos do dashboard de LMPs carregados com sucesso.",
         )
 
@@ -281,8 +287,9 @@ def get_lmp_route(sale_number: str):
         use_case = build_engineering_get_lmp_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
+        return api_delpi_success(
+            result,
+            operation_id="get_lmp_by_sale_number",
             message=f"LMP da ordem de venda {sale_number} carregada com sucesso.",
         )
 
@@ -321,11 +328,12 @@ def list_processes(
 
         processes = use_case.execute(request)
 
-        return success_response(
-            data={
+        return api_delpi_success(
+            {
                 "total": len(processes),
                 "items": [process.to_dict() for process in processes],
             },
+            operation_id="list_transforma_mais_processes",
             message="Processos do Transforma Mais listados com sucesso.",
         )
 
@@ -371,8 +379,9 @@ def get_process_summary(
             branch=filial_id,
         )
 
-        return success_response(
-            data=summary,
+        return api_delpi_success(
+            summary,
+            operation_id="get_transforma_mais_summary",
             message="Resumo dos processos do Transforma Mais carregado com sucesso.",
         )
 

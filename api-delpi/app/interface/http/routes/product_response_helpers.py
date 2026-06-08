@@ -1,7 +1,6 @@
 from typing import Any
 
-from app.application.services.response_meta_builder import ResponseMetaBuilder
-from app.core.responses import success_response
+from app.interface.http.route_response_helpers import api_delpi_success
 
 STOCK_FIELD_LABELS = {
     "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
@@ -19,17 +18,16 @@ def product_success(
     shape: str,
     code: str | None = None,
     fields: dict[str, str] | None = None,
-    sections: list[dict] | None = None,
+    sections: list[dict[str, Any]] | None = None,
     message: str = "Operação realizada com sucesso",
 ):
-    related = ResponseMetaBuilder.product_related_routes(code) if code else None
-    meta = ResponseMetaBuilder.build(
+    return api_delpi_success(
+        data,
         operation_id=operation_id,
         entity=entity,
         shape=shape,
-        pagination=ResponseMetaBuilder.pagination_from_data(data),
+        code=code,
         fields=fields,
-        related_routes=related,
         sections=sections,
+        message=message,
     )
-    return success_response(data=data, message=message, meta=meta)
