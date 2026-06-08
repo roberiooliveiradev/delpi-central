@@ -7,9 +7,13 @@ from app.domain.services.external_actions.presenters.product_analyser_presenter 
 from app.domain.services.external_actions.presenters.product_list_presenter import (
     ExternalActionProductListPresenter,
 )
+from app.domain.services.external_actions.presenters.sql_presenter import (
+    ExternalActionSqlPresenter,
+)
 
 __all__ = [
     "ExternalActionKpiChartPresenter",
     "ExternalActionProductAnalyserPresenter",
     "ExternalActionProductListPresenter",
+    "ExternalActionSqlPresenter",
 ]

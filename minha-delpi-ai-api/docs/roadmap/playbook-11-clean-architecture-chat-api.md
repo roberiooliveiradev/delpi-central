@@ -402,9 +402,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 7):**
+**Sprint imediata (Fase 3 — god classes, lote 8):**
 
-1. Extrair sub-presenters restantes do facade (SQL, billing, system tables).
+1. Extrair sub-presenters restantes do facade (billing, system tables).
 2. Reduzir `chat_tool_context_service.py`.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
@@ -418,5 +418,7 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3B lote 5):** `ExternalActionLmpRouteSelectionService` (~210 linhas); `_select_lmp_action` migrado para `select_lmp()`; `external_action_selection_service.py` **2503 → ~2349** linhas.
 
 **Concluído (Fase 3B lote 6):** `ExternalActionSqlRouteSelectionService` (~170 linhas); `_select_sql_or_data_action` migrado para `select_sql()`; `external_action_selection_service.py` **2349 → ~2236** linhas; correção de falso positivo em `ChatSqlSafetyService` para intenção natural «execute essa consulta».
+
+**Concluído (Fase 3A lote 7):** `ExternalActionSqlPresenter` (~430 linhas); métodos SQL/resultsets migrados para delegate `_sql()`; `external_action_result_presenter.py` **3650 → ~3310** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
