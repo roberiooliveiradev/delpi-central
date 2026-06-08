@@ -28,6 +28,9 @@ from app.domain.services.external_actions.presenters.sql_presenter import (
 from app.domain.services.external_actions.presenters.system_tables_presenter import (
     ExternalActionSystemTablesPresenter,
 )
+from app.domain.services.external_actions.presenters.text_presentation_presenter import (
+    ExternalActionTextPresentationPresenter,
+)
 
 __all__ = [
     "ExternalActionBillingPresenter",
@@ -40,4 +43,5 @@ __all__ = [
     "ExternalActionProductListPresenter",
     "ExternalActionSqlPresenter",
     "ExternalActionSystemTablesPresenter",
+    "ExternalActionTextPresentationPresenter",
 ]

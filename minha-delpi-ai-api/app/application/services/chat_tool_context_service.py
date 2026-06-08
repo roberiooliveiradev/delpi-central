@@ -1,26 +1,28 @@
 import json
 
-from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
-from app.domain.entities.tool_result import ToolResult
-from app.domain.services.chat_external_action_direct_answer_service import (
-    ChatExternalActionDirectAnswerService,
-)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 from app.domain.services.tool_selection_service import ToolSelectionService
-from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
 from app.application.services.chat_tool_context_auxiliary_service import (
     ChatToolContextAuxiliaryService,
+)
+from app.application.services.chat_tool_context_execution_service import (
+    ChatToolContextExecutionService,
 )
 from app.application.services.chat_tool_context_external_action_formatter import (
     ChatToolContextExternalActionFormatter,
 )
 from app.application.services.chat_tool_context_format_service import (
     ChatToolContextFormatService,
+)
+from app.application.services.chat_tool_context_result_assembly_service import (
+    ChatToolContextResultAssemblyService,
+)
+from app.application.services.chat_tool_context_selection_service import (
+    ChatToolContextSelectionService,
 )
 from app.domain.services.chat_tool_context_presentation_service import (
     ChatToolContextPresentationService,
@@ -54,6 +56,9 @@ class ChatToolContextService:
             execute_tool_use_case=execute_tool_use_case,
             external_action_repository=external_action_repository,
         )
+        self._selection_service = ChatToolContextSelectionService()
+        self._execution_service = ChatToolContextExecutionService()
+        self._result_assembly_service = ChatToolContextResultAssemblyService()
 
     def build_context(
         self,
@@ -463,839 +468,61 @@ class ChatToolContextService:
                 reason="Reapresentação do último resultado no formato solicitado.",
             )
 
-        native_meta = {"used": False, "providerSupports": False}
-        native_selections: list[dict] = []
-
-        if self.native_tool_calling_service:
-            native_result = self.native_tool_calling_service.select_tools(
-                message=message,
-                allowed_tool_names=allowed_tool_names,
-                tools_registry=self.execute_tool_use_case.tools,
-                agent_context=agent_context,
-            )
-            native_meta = native_result.get("meta") or native_meta
-            native_selections = list(native_result.get("selections") or [])
-
-        if native_selections:
-            selected_tools = native_selections
-        else:
-            selected_tools = self.tool_selection_service.select_tools(
-                message,
-                attachment_context=attachment_context,
-                previous_messages=previous_messages,
-            )
-
-        if allowed_tool_names:
-            allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}
-            selected_tools = [
-                item for item in selected_tools if str(item.get("name") or "") in allowed
-            ]
-
-        router_suggestion = {"tools": [], "actionId": None}
-
-        if (
-            self.tool_router_service
-            and actions_enabled
-            and not native_selections
-            and not web_search_exclusive
-        ):
-            catalog_actions = []
-
-            if self.external_action_repository and allowed_action_ids:
-                catalog_actions = self.external_action_repository.find_candidate_actions(
-                    message,
-                    limit=Settings.CHAT_TOOL_ROUTER_MAX_ACTIONS,
-                    allowed_action_ids=allowed_action_ids,
-                )
-
-            router_suggestion = self.tool_router_service.suggest(
-                message=message,
-                allowed_tool_names=allowed_tool_names,
-                allowed_actions=catalog_actions,
-            )
-
-            for tool_name in router_suggestion.get("tools") or []:
-                if any(str(item.get("name")) == tool_name for item in selected_tools):
-                    continue
-
-                selected_tools.append(
-                    {
-                        "name": tool_name,
-                        "arguments": {},
-                        "reason": "Ferramenta sugerida pelo roteador inteligente do chat.",
-                    }
-                )
-
-        selected_external_action = None
-        selected_external_action_meta = None
-        drawing_action_required = bool(drawing_analysis_mode and drawing_product_code)
-
-        if (
-            self.external_action_selection_service
-            and actions_enabled
-            and not web_search_exclusive
-        ):
-            from app.application.services.chat_external_action_orchestration_service import (
-                ChatExternalActionOrchestrationService,
-            )
-
-            if on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                on_stream_activity(
-                    ChatStreamActivityService.plan_step(
-                        step=1,
-                        total=1,
-                        target="consultas OpenAPI",
-                        verb="Planejando",
-                        state="active",
-                        detail="Selecionando rotas e parâmetros para a pergunta.",
-                    )
-                )
-
-            plan_workspace = dict(self._build_workspace_context or {})
-
-            if drawing_runtime_skills:
-                merged_skills = plan_workspace.get("skills")
-
-                if isinstance(merged_skills, dict):
-                    plan_workspace["skills"] = {**merged_skills, **drawing_runtime_skills}
-                else:
-                    plan_workspace["skills"] = dict(drawing_runtime_skills)
-
-            planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
-                self.external_action_selection_service,
-                message=message,
-                raw_message=raw_message,
-                allowed_action_ids=allowed_action_ids or [],
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                max_calls=max_external_action_calls,
-                on_stream_activity=on_stream_activity,
-                workspace_context=plan_workspace,
-                forced_product_code=drawing_product_code if drawing_action_required else None,
-                forced_intent=(
-                    ChatProductQueryIntent.ANALYSER
-                    if drawing_action_required
-                    else None
-                ),
-                forced_reason=(
-                    "Produto extra\u00eddo do PDF de desenho t\u00e9cnico; "
-                    "a an\u00e1lise deve usar GET /products/{code}/analyser."
-                    if drawing_action_required
-                    else None
-                ),
-            )
-
-            if planned_external_actions:
-                selected_tools = [
-                    item
-                    for item in selected_tools
-                    if str(item.get("name") or "") != "execute_external_action"
-                ]
-                selected_tools.extend(planned_external_actions)
-                first = planned_external_actions[0]
-                arguments = first.get("arguments") or {}
-                selected_external_action = first
-                selected_external_action_meta = {
-                    "actionId": arguments.get("actionId") or arguments.get("action_id"),
-                    "reason": first.get("reason"),
-                    "plannedCount": len(planned_external_actions),
-                }
-
-                if drawing_action_required:
-                    selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
-                    selected_external_action_meta["productCode"] = drawing_product_code
-                    selected_external_action_meta[
-                        "productCodeSource"
-                    ] = drawing_product_code_source
-
-        if drawing_action_required and not selected_external_action:
-            return self._finalize_tool_context_result(
-                message=raw_message,
-                previous_messages=previous_messages,
-                result={
-                    "context": "",
-                    "toolCalls": [],
-                    "nativeToolCalling": native_meta,
-                    "directAnswer": (
-                        f"Identifiquei o produto **{drawing_product_code}** no PDF, "
-                        "mas n\u00e3o encontrei uma action autorizada para consultar "
-                        "`/products/{code}/analyser` neste agente. Habilite a action de "
-                        "an\u00e1lise t\u00e9cnica do produto e tente novamente."
-                    ),
-                    "skipRag": True,
-                    "drawingAnalysisMode": True,
-                    "drawingPdfExtractSummary": self._auxiliary_service._build_drawing_pdf_extract_summary(
-                        drawing_pdf_extract,
-                        product_code_source=drawing_product_code_source,
-                    ),
-                    "currentMessage": raw_message,
-                },
-            )
-
-        if not selected_tools:
-            from app.domain.services.chat_sql_inventory_query_service import (
-                ChatSqlInventoryQueryService,
-            )
-            from app.domain.services.chat_sql_production_query_service import (
-                ChatSqlProductionQueryService,
-            )
-
-            for resolver in (
-                ChatSqlProductionQueryService,
-                ChatSqlInventoryQueryService,
-            ):
-                sql_resolution = resolver.resolve(message)
-
-                if sql_resolution and sql_resolution.mode == "authoring":
-                    return self._finalize_tool_context_result(
-                        message=raw_message,
-                        previous_messages=previous_messages,
-                        result={
-                            "context": "",
-                            "toolCalls": [],
-                            "nativeToolCalling": native_meta,
-                            "directAnswer": resolver.format_authoring_answer(
-                                sql_resolution
-                            ),
-                            "skipRag": True,
-                            "currentMessage": raw_message,
-                        },
-                    )
-
-        if (
-            actions_enabled
-            and not web_search_exclusive
-            and not selected_external_action
-            and router_suggestion.get("actionId")
-            and allowed_action_ids
-            and str(router_suggestion["actionId"]) in {str(item) for item in allowed_action_ids}
-        ):
-            from app.domain.services.chat_analysis_intent_service import (
-                ChatAnalysisIntentService,
-            )
-            from app.domain.services.chat_sql_operational_intent_service import (
-                ChatSqlOperationalIntentService,
-            )
-            from app.domain.services.external_actions.external_action_sql_capability_service import (
-                ExternalActionSqlCapabilityService,
-            )
-
-            router_action_id = str(router_suggestion["actionId"])
-            skip_router_action = (
-                ChatAnalysisIntentService.is_data_interpretation_request(
-                    raw_message,
-                    previous_messages,
-                )
-                or ExternalActionSqlCapabilityService.is_sql_execution_context(
-                    action_id=router_action_id,
-                )
-            )
-
-            if not skip_router_action and not ChatSqlOperationalIntentService.requires_sql_knowledge(message):
-                selected_tools.append(
-                    {
-                        "name": "execute_external_action",
-                        "arguments": {
-                            "actionId": router_action_id,
-                            "body": {"message": message},
-                        },
-                        "reason": "Action sugerida pelo roteador inteligente do chat.",
-                    }
-                )
-
-        if not selected_tools:
-            return self._finalize_tool_context_result(
-                message=raw_message,
-                previous_messages=previous_messages,
-                result={
-                    "context": "",
-                    "toolCalls": [],
-                    "nativeToolCalling": native_meta,
-                    "currentMessage": raw_message,
-                },
-            )
-
-        context_blocks: list[str] = []
-        safe_tool_calls: list[dict] = []
-        direct_answer: str | None = None
-        skip_rag = False
-        last_external_action_data = None
-        last_web_search_data: dict | None = None
-        web_sources: list[dict] = []
-        web_search_payload: dict | None = None
-        external_action_results: list = []
-        external_planned = [
-            item
-            for item in selected_tools
-            if str(item.get("name") or "") == "execute_external_action"
-        ]
-        external_total = len(external_planned)
-        external_index = 0
-        pagination_continue_prompt: str | None = None
-
-        if on_stream_activity and external_total > 0:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            on_stream_activity(
-                ChatStreamActivityService.entry(
-                    verb="Executando",
-                    target=f"{external_total} consulta(s) DELPI",
-                    phase="tools",
-                    state="active",
-                    message=f"Executando {external_total} consulta(s) à API DELPI...",
-                )
-            )
-
-        session_response_format = ChatToolContextFormatService.session_response_format(
-            getattr(self, "_build_workspace_context", None),
-        )
-
-        for selected_tool in selected_tools:
-            tool_name = str(selected_tool.get("name") or "")
-            arguments = dict(selected_tool.get("arguments") or {})
-            action_id = str(arguments.get("actionId") or arguments.get("action_id") or "")
-            path_hint = str(arguments.get("path") or "")
-
-            if tool_name == "execute_external_action" and session_response_format:
-                parameters = dict(arguments.get("parameters") or {})
-                parameters["sessionResponseFormat"] = session_response_format
-                parameters.setdefault("userMessage", raw_message)
-                arguments["parameters"] = parameters
-
-            if tool_name == "execute_external_action":
-                external_index += 1
-
-                if on_stream_activity:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
-
-                    on_stream_activity(
-                        ChatStreamActivityService.tool_started(
-                            index=external_index,
-                            total=external_total,
-                            path=path_hint or None,
-                            action_id=action_id or None,
-                            reason=selected_tool.get("reason"),
-                        )
-                    )
-
-            if tool_name == "web_search" and on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                search_query = str(arguments.get("query") or raw_message or "").strip()
-
-                on_stream_activity(
-                    ChatStreamActivityService.web_search_started(query=search_query)
-                )
-
-            if (
-                tool_name == "execute_external_action"
-                and action_id
-                and self.external_action_repository
-            ):
-                from app.domain.services.chat_write_confirmation_service import (
-                    ChatWriteConfirmationService,
-                )
-
-                action_bundle = self.external_action_repository.get_action_for_execution(
-                    action_id
-                )
-                action = (action_bundle or {}).get("action") if action_bundle else None
-
-                if ChatWriteConfirmationService.should_block_execution(
-                    message=raw_message,
-                    action=action,
-                ):
-                    prompt = ChatWriteConfirmationService.confirmation_prompt(action)
-                    direct_answer = direct_answer or prompt
-                    skip_rag = True
-
-                    blocked_metadata = {
-                        "ok": False,
-                        "blocked": True,
-                        "blockReason": "confirmation_required",
-                        "actionId": action_id,
-                        "path": path_hint or str((action or {}).get("path") or ""),
-                        "sensitivity": (action or {}).get("sensitivity"),
-                    }
-                    blocked_metadata["responsePreview"] = self._build_response_preview(
-                        blocked_metadata
-                    )
-
-                    safe_tool_calls.append(
-                        {
-                            "name": tool_name,
-                            "arguments": arguments,
-                            "reason": selected_tool.get("reason"),
-                            "metadata": blocked_metadata,
-                        }
-                    )
-
-                    if on_stream_activity:
-                        from app.application.services.chat_stream_activity_service import (
-                            ChatStreamActivityService,
-                        )
-
-                        on_stream_activity(
-                            ChatStreamActivityService.tool_finished(
-                                index=external_index,
-                                total=external_total,
-                                metadata=blocked_metadata,
-                                path=blocked_metadata.get("path"),
-                                action_id=action_id,
-                            )
-                        )
-
-                    continue
-
-            try:
-                result = self.execute_tool_use_case.execute(
-                    ExecuteToolRequest(
-                        user_id=user_id,
-                        access_token=access_token,
-                        tool_name=selected_tool["name"],
-                        arguments=selected_tool.get("arguments") or {},
-                    )
-                )
-            except Exception as exc:
-                tool_name = selected_tool.get("name") or "unknown_tool"
-                error_metadata = {
-                    "ok": False,
-                    "error": str(exc),
-                    "errorType": exc.__class__.__name__,
-                }
-
-                if tool_name == "execute_external_action" and on_stream_activity:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
-
-                    on_stream_activity(
-                        ChatStreamActivityService.tool_finished(
-                            index=external_index,
-                            total=external_total,
-                            metadata=error_metadata,
-                            path=path_hint or None,
-                            action_id=action_id or None,
-                        )
-                    )
-
-                if tool_name == "execute_external_action":
-                    error_metadata["responsePreview"] = self._build_response_preview(
-                        error_metadata
-                    )
-
-                    from app.application.services.chat_composite_direct_answer_service import (
-                        ExternalActionExecutionResult,
-                    )
-
-                    external_action_results.append(
-                        ExternalActionExecutionResult(
-                            metadata=error_metadata,
-                            data=None,
-                            reason=selected_tool.get("reason"),
-                        )
-                    )
-
-                safe_tool_calls.append(
-                    {
-                        "name": tool_name,
-                        "arguments": selected_tool.get("arguments") or {},
-                        "reason": selected_tool.get("reason"),
-                        "metadata": error_metadata,
-                    }
-                )
-
-                context_blocks.append(
-                    self._format_tool_error_context(
-                        name=tool_name,
-                        reason=selected_tool.get("reason"),
-                        error=exc,
-                    )
-                )
-                continue
-
-            result_data = result.data
-            result_metadata = dict(result.metadata or {})
-
-            if (
-                result.name == "execute_external_action"
-                and not self._is_successful_external_action(result_metadata)
-            ):
-                recovery = self._auxiliary_service._try_sql_error_recovery(
-                    user_id=user_id,
-                    access_token=access_token,
-                    allowed_action_ids=allowed_action_ids,
-                    selected_tool=selected_tool,
-                    metadata=result_metadata,
-                    safe_tool_calls=safe_tool_calls,
-                    context_blocks=context_blocks,
-                    on_stream_activity=on_stream_activity,
-                )
-
-                if recovery:
-                    selected_tool = {
-                        **selected_tool,
-                        "reason": recovery.plan.reason,
-                        "arguments": {
-                            **(selected_tool.get("arguments") or {}),
-                            "body": {
-                                "sql": recovery.plan.corrected_sql,
-                                "query": recovery.plan.corrected_sql,
-                                "statement": recovery.plan.corrected_sql,
-                            },
-                        },
-                    }
-                    result_data = recovery.retry_data
-                    result_metadata = dict(recovery.retry_metadata)
-                    result = ToolResult(
-                        name=result.name,
-                        data=result_data,
-                        metadata=result_metadata,
-                    )
-
-            if (
-                result.name == "execute_external_action"
-                and self._is_successful_external_action(result_metadata)
-            ):
-                (
-                    result_data,
-                    result_metadata,
-                    pagination_continue_prompt,
-                ) = paginated_service.maybe_consolidate(
-                    user_id=user_id,
-                    access_token=access_token,
-                    message=raw_message,
-                    previous_messages=previous_messages,
-                    base_arguments=selected_tool.get("arguments") or {},
-                    base_metadata=result_metadata,
-                    base_data=result_data,
-                    on_stream_activity=on_stream_activity,
-                )
-                result = ToolResult(
-                    name=result.name,
-                    data=result_data,
-                    metadata=result_metadata,
-                )
-
-            safe_metadata = self._external_action_formatter._build_safe_tool_metadata(
-                tool_name=result.name,
-                metadata=result.metadata,
-                data=result.data,
-            )
-
-            if result.name == "execute_external_action":
-                from app.domain.services.chat_advanced_sql_specialist_service import (
-                    ChatAdvancedSqlSpecialistService,
-                )
-                from app.domain.services.external_actions.external_action_sql_capability_service import (
-                    ExternalActionSqlCapabilityService,
-                )
-
-                safe_metadata = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
-                    raw_message,
-                    safe_metadata,
-                )
-
-                executed_sql = ExternalActionSqlCapabilityService.extract_sql_from_arguments(
-                    selected_tool.get("arguments")
-                )
-                if executed_sql:
-                    safe_metadata["executedSql"] = executed_sql
-
-            safe_tool_calls.append(
-                {
-                    "name": result.name,
-                    "arguments": selected_tool.get("arguments") or {},
-                    "reason": selected_tool.get("reason"),
-                    "metadata": safe_metadata,
-                }
-            )
-
-            if result.name == "execute_external_action":
-                skip_rag = True
-
-                if on_stream_activity:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
-
-                    on_stream_activity(
-                        ChatStreamActivityService.tool_finished(
-                            index=external_index,
-                            total=external_total,
-                            metadata=safe_metadata,
-                            path=str(safe_metadata.get("path") or path_hint or "") or None,
-                            action_id=str(safe_metadata.get("actionId") or action_id or "")
-                            or None,
-                            data=result.data,
-                        )
-                    )
-
-                from app.application.services.chat_composite_direct_answer_service import (
-                    ExternalActionExecutionResult,
-                )
-
-                external_action_results.append(
-                    ExternalActionExecutionResult(
-                        metadata=safe_metadata,
-                        data=result.data,
-                        reason=selected_tool.get("reason"),
-                    )
-                )
-
-                if self._is_successful_external_action(safe_metadata):
-                    last_external_action_data = result.data
-
-            if result.name == "web_search" and isinstance(result.data, dict):
-                if str(result.data.get("searchStatus") or "") in {"success", "no_results"}:
-                    last_web_search_data = result.data
-
-                if on_stream_activity:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
-
-                    on_stream_activity(
-                        ChatStreamActivityService.web_search_finished(payload=result.data)
-                    )
-
-            context_blocks.append(
-                self._external_action_formatter._format_tool_context(
-                    name=result.name,
-                    reason=selected_tool.get("reason"),
-                    data=result.data,
-                    metadata=safe_metadata,
-                    arguments=selected_tool.get("arguments"),
-                    message=raw_message,
-                )
-            )
-
-        context = "\n\n".join(context_blocks)
-        context = context[: Settings.MAX_CONTEXT_CHARS]
-
-        if external_action_results:
-            from app.application.services.chat_composite_direct_answer_service import (
-                ChatCompositeDirectAnswerService,
-            )
-
-            if not ChatAnalysisIntentService.is_comparison_or_insight_request(raw_message):
-                composite_results = [
-                    item
-                    for item in external_action_results
-                    if not (item.metadata or {}).get("sqlSchemaPrefetch")
-                ]
-
-                if composite_results:
-                    direct_answer = ChatCompositeDirectAnswerService.build(
-                        message,
-                        composite_results,
-                    )
-
-        if isinstance(last_web_search_data, dict):
-            from app.domain.services.chat_web_search_erp_cross_reference_service import (
-                ChatWebSearchErpCrossReferenceService,
-            )
-            from app.domain.services.chat_web_search_direct_answer_service import (
-                ChatWebSearchDirectAnswerService,
-            )
-
-            direct_answer, last_web_search_data = (
-                ChatWebSearchErpCrossReferenceService.append_to_direct_answer(
-                    direct_answer=direct_answer,
-                    internal_data=last_external_action_data,
-                    web_payload=last_web_search_data,
-                    message=raw_message,
-                )
-            )
-            web_search_payload = last_web_search_data
-
-            if (
-                str(last_web_search_data.get("searchStatus") or "") == "success"
-                and not web_sources
-            ):
-                web_sources = ChatWebSearchDirectAnswerService.build_sources(
-                    last_web_search_data
-                )
-                skip_rag = True
-
-        if (
-            not direct_answer
-            and len(safe_tool_calls) == 1
-            and safe_tool_calls[0].get("name") == "execute_external_action"
-            and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
-        ):
-            action_metadata = safe_tool_calls[0].get("metadata") or {}
-            action_arguments = safe_tool_calls[0].get("arguments") or {}
-            direct_answer = self._auxiliary_service._build_direct_answer(
-                self._attach_request_sql(
-                    last_external_action_data,
-                    action_arguments,
-                    action_metadata,
-                ),
-                message=message,
-                path=action_metadata.get("path"),
-                operation_id=action_metadata.get("operationId"),
-            )
-
-        if (
-            not direct_answer
-            and len(safe_tool_calls) == 1
-            and safe_tool_calls[0].get("name") == "web_search"
-            and isinstance(last_web_search_data, dict)
-        ):
-            from app.domain.services.chat_web_search_direct_answer_service import (
-                ChatWebSearchDirectAnswerService,
-            )
-
-            direct_answer = ChatWebSearchDirectAnswerService.format(
-                last_web_search_data,
-                message=raw_message,
-            )
-
-            if direct_answer:
-                skip_rag = True
-                web_sources = ChatWebSearchDirectAnswerService.build_sources(
-                    last_web_search_data
-                )
-                web_search_payload = last_web_search_data
-
-        requested_format = self._format_service.resolve_consolidation_format(
-            raw_message,
-            previous_messages,
-            workspace_context=getattr(self, "_build_workspace_context", None),
-        )
-        if requested_format:
-            self._format_service.apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
-
-        if direct_answer and requested_format != "table":
-            ChatToolContextPresentationService._suppress_redundant_structure_presentations(safe_tool_calls)
-
-        if direct_answer and requested_format != "text":
-            direct_answer = ChatToolContextPresentationService._compact_direct_answer_for_rich_presentation(
-                direct_answer,
-                safe_tool_calls,
-            )
-
-        if pagination_continue_prompt:
-            direct_answer = (
-                f"{direct_answer}\n\n{pagination_continue_prompt}".strip()
-                if direct_answer
-                else pagination_continue_prompt
-            )
-
-        drawing_analysis_payload = None
-
-        if drawing_analysis_mode:
-            drawing_analysis_payload = self._auxiliary_service._build_drawing_analysis_enrichment(
-                safe_tool_calls=safe_tool_calls,
-                product_code=drawing_product_code,
-                has_pdf_attachment=drawing_has_pdf,
-                direct_answer=direct_answer,
-                pdf_extract=drawing_pdf_extract,
-            )
-
-            if drawing_analysis_payload:
-                direct_answer = drawing_analysis_payload.get("directAnswer") or direct_answer
-
-            if drawing_analysis_mode and on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                ChatStreamActivityService.emit_drawing_analysis_progress(
-                    on_stream_activity,
-                    has_pdf=drawing_has_pdf,
-                    phase="complete",
-                )
-
-        result_payload = {
-            "context": context,
-            "toolCalls": safe_tool_calls,
-            "nativeToolCalling": native_meta,
-            "directAnswer": direct_answer,
-            "skipRag": skip_rag,
-            "webSources": web_sources,
-            "webSearchPayload": web_search_payload,
-            "selectedExternalAction": selected_external_action_meta,
-            "currentMessage": raw_message,
-        }
-
-        if drawing_analysis_mode:
-            result_payload["drawingAnalysisMode"] = True
-
-            if drawing_pdf_extract:
-                result_payload[
-                    "drawingPdfExtractSummary"
-                ] = self._auxiliary_service._build_drawing_pdf_extract_summary(
-                    drawing_pdf_extract,
-                    product_code_source=drawing_product_code_source,
-                )
-
-                if drawing_pdf_extract.get("documentVision"):
-                    result_payload["documentVision"] = drawing_pdf_extract["documentVision"]
-
-            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
-                result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
-
-            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysisExport"):
-                result_payload["drawingAnalysisExport"] = drawing_analysis_payload[
-                    "drawingAnalysisExport"
-                ]
-
-        from app.application.services.chat_document_vision_service import (
-            ChatDocumentVisionService,
-        )
-        from app.application.services.chat_stream_activity_service import (
-            ChatStreamActivityService,
-        )
-
-        if (
-            attachment_ids
-            and not result_payload.get("documentVision")
-            and ChatDocumentVisionService.should_run_for_attachment(drawing_runtime_skills)
-        ):
-            if on_stream_activity and not drawing_analysis_mode:
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="start",
-                )
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="ocr",
-                )
-
-            attachment_vision = ChatDocumentVisionService.build_attachment_vision_metadata(
-                user_id=str(user_id) if user_id else None,
-                session_id=session_id,
-                attachment_ids=attachment_ids,
-                skills=drawing_runtime_skills,
-            )
-
-            if attachment_vision:
-                result_payload["documentVision"] = attachment_vision
-
-                if on_stream_activity and not drawing_analysis_mode:
-                    ChatStreamActivityService.emit_document_vision_progress(
-                        on_stream_activity,
-                        phase="complete",
-                        engine=str(attachment_vision.get("engine") or "document_vision"),
-                        char_count=int(attachment_vision.get("charCount") or 0),
-                    )
-
-        return self._finalize_tool_context_result(
-            message=raw_message,
+        selection = self._selection_service.select_tools(
+            self,
+            message=message,
+            raw_message=raw_message,
+            allowed_action_ids=allowed_action_ids,
+            actions_enabled=actions_enabled,
+            allowed_tool_names=allowed_tool_names,
+            conversation_context=conversation_context,
             previous_messages=previous_messages,
-            result=result_payload,
+            max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
+            agent_context=agent_context,
+            attachment_context=attachment_context,
+            drawing_analysis_mode=drawing_analysis_mode,
+            drawing_product_code=drawing_product_code,
+            drawing_product_code_source=drawing_product_code_source,
+            drawing_runtime_skills=drawing_runtime_skills,
+            drawing_pdf_extract=drawing_pdf_extract,
+            web_search_exclusive=web_search_exclusive,
+        )
+
+        if selection.early_result is not None:
+            return selection.early_result
+
+        execution = self._execution_service.execute_selected_tools(
+            self,
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            raw_message=raw_message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            selected_tools=selection.selected_tools,
+            on_stream_activity=on_stream_activity,
+            paginated_service=paginated_service,
+        )
+
+        return self._result_assembly_service.assemble_and_finalize(
+            self,
+            message=message,
+            raw_message=raw_message,
+            previous_messages=previous_messages,
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+            native_meta=selection.native_meta,
+            selected_external_action_meta=selection.selected_external_action_meta,
+            execution=execution,
+            drawing_analysis_mode=drawing_analysis_mode,
+            drawing_product_code=drawing_product_code,
+            drawing_product_code_source=drawing_product_code_source,
+            drawing_has_pdf=drawing_has_pdf,
+            drawing_pdf_extract=drawing_pdf_extract,
+            drawing_runtime_skills=drawing_runtime_skills,
+            on_stream_activity=on_stream_activity,
         )
 
 
