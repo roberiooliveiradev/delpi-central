@@ -5991,12 +5991,18 @@ class ExternalActionResultPresenter:
     def _route_presentation(self, route: str, key: str, **values: str) -> str:
         return self._presenter_text("routePresentations", route, key, **values)
 
-    def _presenter_text(self, section: str, key: str, *extra_path: str, **values: str) -> str:
+    def _presenter_text(
+        self,
+        section: str,
+        text_key: str,
+        *extra_path: str,
+        **values: str,
+    ) -> str:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
         )
 
-        path = (section, key, *extra_path)
+        path = (section, text_key, *extra_path)
 
         if values:
             return ChatAssistantContentService.format(

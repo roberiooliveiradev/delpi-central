@@ -150,6 +150,25 @@ def test_financial_rol_month_question_is_operational_not_capability_inquiry():
     ) is None
 
 
+def test_supplies_cpv_empresa_question_is_operational_not_capability_inquiry():
+    message = "Qual o CPV da empresa?"
+
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.resolve_capability_answer(
+        message=message,
+        workspace_context={"agent": {"name": "Agente Minha DELPI"}, "agentId": "x"},
+        allowed_action_ids=["act.cpv"],
+        action_catalog=[
+            {
+                "actionId": "act.cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "summary": "CPV",
+            }
+        ],
+    ) is None
+
+
 def test_ruptura_stock_question_is_operational_not_capability_inquiry():
     message = "Ruptura de estoque — quais produtos estão abaixo do mínimo?"
 

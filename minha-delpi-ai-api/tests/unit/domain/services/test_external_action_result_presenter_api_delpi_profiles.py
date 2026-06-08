@@ -119,6 +119,27 @@ def test_present_supplies_cpv_routes_by_meta_entity_without_path() -> None:
     assert "CPV" in humanized.get("titulo", "")
 
 
+def test_present_dict_fallback_nested_key_placeholder_does_not_crash() -> None:
+    """Regressão: placeholder {key} no template não pode colidir com parâmetro text_key."""
+    presenter = ExternalActionResultPresenter()
+    envelope = {
+        "success": True,
+        "data": {
+            "summary": {
+                "nested": {"branch": "01", "value": 12.5},
+            }
+        },
+        "meta": {
+            "entity": "unknown_scalar",
+            "shape": "scalar",
+        },
+    }
+
+    humanized = presenter.present(envelope, path="/supplies/cpv")
+
+    assert humanized.get("linhas")
+
+
 def test_present_sale_orders_routes_by_meta_entity_without_path() -> None:
     presenter = ExternalActionResultPresenter()
 

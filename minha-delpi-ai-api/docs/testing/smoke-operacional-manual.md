@@ -16,6 +16,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 
 | Script | Comando (container ou `PYTHONPATH` na API) |
 |--------|---------------------------------------------|
+| **Inteligência operacional (10 perguntas E2E)** | `python scripts/smoke_operational_intelligence_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md) |
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
 | Templates de atalhos (sem código fixo) | `python scripts/smoke_shortcut_placeholders.py` |

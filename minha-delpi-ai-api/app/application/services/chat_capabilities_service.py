@@ -113,6 +113,12 @@ class ChatCapabilitiesService:
         r"\bqual\s+o\s+estoque\b",
         r"\bqual\s+o\s+preco\b",
         r"\bqual\s+o\s+pre[cç]o\b",
+        r"\bqual\s+(o|a)\s+cpv\b",
+        r"\bqual\s+(o|a)\s+otd\b",
+        r"\bqual\s+(o|a)\s+pmr\b",
+        r"\bqual\s+(o|a)\s+rol\b",
+        r"\bqual\s+(o|a)\s+ebitda\b",
+        r"\bqual\s+(o|a)\s+giro\b",
         r"\bquem\s+fornece\b",
         r"\bme\s+fale\s+do\s+produto\b",
         r"\bmostre\s+o\s+estoque\b",
@@ -141,6 +147,25 @@ class ChatCapabilitiesService:
         "preço",
         "lmp",
         "ov ",
+        "cpv",
+        "otd",
+        "giro",
+        "idd",
+    )
+
+    _SUPPLIES_KPI_TERMS = (
+        "cpv",
+        "custo de producao vendido",
+        "custo de produção vendido",
+        " otd",
+        "otd ",
+        "giro de estoque",
+        "giro do estoque",
+        "inventory-turnover",
+        "valor total de estoque",
+        "valor de estoque",
+        "valor do estoque",
+        "valor em estoque",
     )
 
     @classmethod
@@ -415,6 +440,9 @@ class ChatCapabilitiesService:
         if ChatDepartmentKpiIntentService.resolve(message):
             return True
 
+        if cls._looks_like_supplies_kpi_request(message, normalized):
+            return True
+
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return True
 
@@ -434,6 +462,20 @@ class ChatCapabilitiesService:
             return True
 
         return False
+
+    @classmethod
+    def _looks_like_supplies_kpi_request(cls, message: str, normalized: str) -> bool:
+        """KPIs de suprimentos (CPV, OTD, giro…) — não confundir com «consegue consultar cpv?»."""
+        if not any(term in normalized for term in cls._SUPPLIES_KPI_TERMS):
+            return False
+
+        if any(marker in normalized for marker in cls._INQUIRY_MARKERS):
+            return False
+
+        if re.search(r"\bqual\s+(o|a)\s+", normalized):
+            return True
+
+        return "?" not in str(message or "").strip()
 
     @classmethod
     def _is_ability_question(cls, normalized: str, raw: str) -> bool:
