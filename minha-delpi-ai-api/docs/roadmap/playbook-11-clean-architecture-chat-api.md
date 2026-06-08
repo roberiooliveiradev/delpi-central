@@ -402,10 +402,14 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — fechamento, lote 23):**
+**Sprint imediata (Fase 4 — send/stream use cases):**
 
-1. **3B:** reduzir `select_action` (~510 linhas restantes) — candidato: `ExternalActionSelectionDispatchService` para o despacho por intent.
-2. **3C:** `chat_turn_preparation_service.py` (~356 linhas) — orquestrador fino; Fase 3C encerrada.
+1. **4A:** reduzir `send_chat_message_use_case.py` (~877 linhas) — extrair fases pós-preparação.
+2. **4B:** reduzir `stream_chat_message_use_case.py` (~1396 linhas) — alinhar com send; sem duplicar inteligência do turn prep.
+
+**Concluído (Fase 3B lote 23):** `ExternalActionSelectionDispatchService` (~670 linhas); `select_action` migrado para `dispatch()`; facade `external_action_selection_service.py` **723 → ~148** linhas. **Fase 3B encerrada.**
+
+**Concluído (Fase 3):** god classes de presenter, selection, tool context e turn prep abaixo de ~900 linhas (facades); inteligência transversal no chat base.
 
 **Concluído (Fase 3B lote 22):** `ExternalActionSelectionSupportService` (candidatos, ranking, histórico de tools); `looks_like_sql_or_data_query` em `ExternalActionSelectionHeuristicsService` com termos em `actionSelection.sqlOrDataQueryTerms`; `merge_date_range` em `OperationalApiParameterBuilderService`; `external_action_selection_service.py` **886 → ~723** linhas.
 
