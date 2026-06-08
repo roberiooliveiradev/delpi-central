@@ -29,6 +29,9 @@ from app.application.services.external_actions.external_action_route_selection_s
 from app.application.services.external_actions.external_action_domain_route_selection_service import (
     ExternalActionDomainRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+    ExternalActionProductSearchRouteSelectionService,
+)
 
 
 class ExternalActionSelectionService:
@@ -267,20 +270,23 @@ class ExternalActionSelectionService:
                 return selected
 
         if refinement and refinement.kind == "pagination_refinement":
-            selected = self._select_pagination_refinement_action(
+            selected = self._route_selection.select_pagination_refinement(
                 refinement,
                 allowed_action_ids=allowed_action_ids,
                 message=message,
+                select_product=self._select_product_action,
             )
 
             if selected:
                 return selected
 
         if refinement and refinement.kind == "depth_refinement":
-            selected = self._select_depth_refinement_action(
+            selected = self._route_selection.select_depth_refinement(
                 refinement,
                 allowed_action_ids=allowed_action_ids,
                 message=message,
+                select_product=self._select_product_action,
+                clamp_max_depth=self._clamp_max_depth_for_path,
             )
 
             if selected:
@@ -311,13 +317,24 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        group_search_code = self._extract_search_group_code(message, normalized)
+        group_search_code = (
+            ExternalActionProductSearchRouteSelectionService.extract_search_group_code(
+                message,
+                normalized,
+            )
+        )
 
-        if group_search_code and self._looks_like_product_search(normalized):
-            selected = self._select_product_search_action(
+        if (
+            group_search_code
+            and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
+                normalized
+            )
+        ):
+            selected = self._route_selection.select_product_search(
                 message,
                 normalized,
                 allowed_action_ids=allowed_action_ids,
+                candidates_loader=self._list_allowed_candidates,
             )
 
             if selected:
@@ -340,10 +357,11 @@ class ExternalActionSelectionService:
             )
 
             if not resolved_from_history:
-                selected = self._select_product_search_action(
+                selected = self._route_selection.select_product_search(
                     message,
                     normalized,
                     allowed_action_ids=allowed_action_ids,
+                    candidates_loader=self._list_allowed_candidates,
                     description_override=description_lookup,
                 )
 
@@ -522,11 +540,17 @@ class ExternalActionSelectionService:
                 route_segment=product_route_segment,
             )
 
-        if not product_code and self._looks_like_product_search(normalized):
-            selected = self._select_product_search_action(
+        if (
+            not product_code
+            and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
+                normalized
+            )
+        ):
+            selected = self._route_selection.select_product_search(
                 message,
                 normalized,
                 allowed_action_ids=allowed_action_ids,
+                candidates_loader=self._list_allowed_candidates,
             )
 
             if selected:
@@ -550,10 +574,13 @@ class ExternalActionSelectionService:
         ):
             return None
 
-        return self._select_generic_allowed_action(
+        return self._route_selection.select_generic(
             message,
             allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
+            candidates_loader=self._list_allowed_candidates,
+            rank_candidates=self._rank_candidates,
+            build_date_branch_parameters=self._build_date_branch_parameters,
         )
 
     def _looks_like_product_question(self, value: str) -> bool:
@@ -621,268 +648,11 @@ class ExternalActionSelectionService:
 
         return any(term in value for term in terms)
 
-    def _select_pagination_refinement_action(
-        self,
-        refinement,
-        *,
-        allowed_action_ids: list[str],
-        message: str = "",
-    ) -> dict | None:
-        action_id = str(refinement.action_id or "").strip()
-        allowed = set(allowed_action_ids or [])
-
-        if action_id and action_id in allowed:
-            selected = self._build_pagination_refinement_action(
-                refinement,
-                action_id=action_id,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-            if selected:
-                return selected
-
-        product_code = str(refinement.product_code or "").strip()
-        route_segment = str(refinement.route_segment or "").strip()
-
-        if not product_code or not route_segment:
-            return None
-
-        intent_by_segment = {
-            "parents": ChatProductQueryIntent.PARENTS,
-            "structure": ChatProductQueryIntent.STRUCTURE,
-            "stock": ChatProductQueryIntent.STOCK,
-        }
-        intent = intent_by_segment.get(route_segment)
-
-        if not intent:
-            return None
-
-        selected = self._select_product_action(
-            message or "paginação",
-            product_code,
-            allowed_action_ids=allowed_action_ids,
-            intent=intent,
+    @staticmethod
+    def _looks_like_product_search(value: str) -> bool:
+        return ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
+            value
         )
-
-        if not selected:
-            return None
-
-        resolved_action_id = str(
-            (selected.get("arguments") or {}).get("actionId") or ""
-        ).strip()
-
-        if not resolved_action_id:
-            return None
-
-        return self._build_pagination_refinement_action(
-            refinement,
-            action_id=resolved_action_id,
-            allowed_action_ids=allowed_action_ids,
-            base_parameters=dict(
-                refinement.previous_parameters
-                or (selected.get("arguments") or {}).get("parameters")
-                or {}
-            ),
-            fallback_reason=selected.get("reason"),
-        )
-
-    def _select_depth_refinement_action(
-        self,
-        refinement,
-        *,
-        allowed_action_ids: list[str],
-        message: str = "",
-    ) -> dict | None:
-        action_id = str(refinement.action_id or "").strip()
-        allowed = set(allowed_action_ids or [])
-
-        if action_id and action_id in allowed:
-            selected = self._build_depth_refinement_action(
-                refinement,
-                action_id=action_id,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-            if selected:
-                return selected
-
-        product_code = str(refinement.product_code or "").strip()
-        route_segment = str(refinement.route_segment or "").strip()
-
-        if not product_code or route_segment not in {"parents", "structure"}:
-            return None
-
-        intent_by_segment = {
-            "parents": ChatProductQueryIntent.PARENTS,
-            "structure": ChatProductQueryIntent.STRUCTURE,
-        }
-        intent = intent_by_segment.get(route_segment)
-
-        if not intent:
-            return None
-
-        selected = self._select_product_action(
-            message or "profundidade",
-            product_code,
-            allowed_action_ids=allowed_action_ids,
-            intent=intent,
-        )
-
-        if not selected:
-            return None
-
-        resolved_action_id = str(
-            (selected.get("arguments") or {}).get("actionId") or ""
-        ).strip()
-
-        if not resolved_action_id:
-            return None
-
-        return self._build_depth_refinement_action(
-            refinement,
-            action_id=resolved_action_id,
-            allowed_action_ids=allowed_action_ids,
-            base_parameters=dict(
-                refinement.previous_parameters
-                or (selected.get("arguments") or {}).get("parameters")
-                or {}
-            ),
-            fallback_reason=selected.get("reason"),
-        )
-
-    def _build_depth_refinement_action(
-        self,
-        refinement,
-        *,
-        action_id: str,
-        allowed_action_ids: list[str],
-        base_parameters: dict | None = None,
-        fallback_reason: str | None = None,
-    ) -> dict | None:
-        selected = self._build_pagination_refinement_action(
-            refinement,
-            action_id=action_id,
-            allowed_action_ids=allowed_action_ids,
-            base_parameters=base_parameters,
-            fallback_reason=fallback_reason,
-        )
-
-        if not selected or refinement.max_depth is None:
-            return selected
-
-        candidates = self.repository.find_candidate_actions(
-            "",
-            limit=80,
-            allowed_action_ids=allowed_action_ids,
-        )
-
-        action = next(
-            (
-                item
-                for item in candidates
-                if str(item.get("actionId") or "") == action_id
-            ),
-            None,
-        )
-
-        if not action:
-            return selected
-
-        parameters = dict((selected.get("arguments") or {}).get("parameters") or {})
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
-                parameters[name] = self._clamp_max_depth_for_path(
-                    refinement.max_depth,
-                    str(action.get("path") or ""),
-                )
-
-        reason = fallback_reason or refinement.reason or (
-            "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa."
-        )
-
-        return {
-            **selected,
-            "arguments": {
-                **(selected.get("arguments") or {}),
-                "parameters": parameters,
-            },
-            "reason": reason,
-        }
-
-    def _build_pagination_refinement_action(
-        self,
-        refinement,
-        *,
-        action_id: str,
-        allowed_action_ids: list[str],
-        base_parameters: dict | None = None,
-        fallback_reason: str | None = None,
-    ) -> dict | None:
-        candidates = self.repository.find_candidate_actions(
-            "",
-            limit=80,
-            allowed_action_ids=allowed_action_ids,
-        )
-
-        action = next(
-            (
-                item
-                for item in candidates
-                if str(item.get("actionId") or "") == action_id
-            ),
-            None,
-        )
-
-        if not action:
-            return None
-
-        parameters = dict(base_parameters or refinement.previous_parameters or {})
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if refinement.page_size is not None and lowered in {
-                "page_size",
-                "pagesize",
-                "limit",
-            }:
-                parameters[name] = refinement.page_size
-            elif refinement.page is not None and lowered == "page":
-                parameters[name] = refinement.page
-
-        reason = fallback_reason or refinement.reason or (
-            "A mensagem ajusta paginação da consulta operacional já feita nesta conversa."
-        )
-
-        if refinement.page_size is not None:
-            reason = (
-                f"A mensagem aumenta o limite da consulta para "
-                f"{refinement.page_size} registro(s)."
-            )
-        elif refinement.page is not None:
-            reason = f"A mensagem solicita a página {refinement.page} da consulta anterior."
-
-        return {
-            "name": "execute_external_action",
-            "arguments": {
-                "actionId": action_id,
-                "parameters": parameters,
-            },
-            "reason": reason,
-        }
 
     def _build_date_branch_parameters(
         self,
@@ -1032,226 +802,6 @@ class ExternalActionSelectionService:
 
         return False
 
-    def _looks_like_product_search(self, value: str) -> bool:
-        from app.domain.services.chat_technical_description_intent_service import (
-            ChatTechnicalDescriptionIntentService,
-        )
-        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
-        from app.domain.services.chat_web_search_intent_service import (
-            ChatWebSearchIntentService,
-        )
-
-        if ChatSqlIntentService.is_sql_conversation_turn(value):
-            return False
-
-        if ChatWebSearchIntentService.matches(value):
-            return False
-
-        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(value):
-            return False
-
-        if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
-            return False
-
-        audit5s_terms = (
-            "nc 5s",
-            "nao conformidade 5s",
-            "não conformidade 5s",
-            "auditoria 5s",
-            "auditorias 5s",
-            "audit 5s",
-            "candidatas a nc 5s",
-        )
-
-        if any(term in value for term in audit5s_terms):
-            return False
-
-        search_triggers = (
-            "busque", "buscar", "pesquise", "pesquisar",
-            "procure", "procurar", "encontre", "encontrar",
-            "traga", "liste", "listar", "exemplos de",
-            "existe algum", "existem", "tem algum",
-            "quais produtos", "quais itens", "quais materiais",
-            "mais informações sobre", "mais informacoes sobre",
-            "informações sobre", "informacoes sobre",
-            "detalhe de", "detalhes sobre",
-            "search", "find",
-        )
-        product_context = (
-            "produto", "item", "material", "cabo", "parafuso",
-            "chapa", "tubo", "peça", "peca", "insumo", "mp",
-            "componente", "motor", "válvula", "valvula",
-            "rolamento", "filtro", "conector", "anel",
-        )
-
-        has_trigger = any(term in value for term in search_triggers)
-        has_product_context = any(term in value for term in product_context)
-
-        if has_trigger and has_product_context:
-            return True
-
-        if has_trigger and len(value.split()) >= 3:
-            if not any(
-                term in value
-                for term in ("lmp", "ov", "cpv", "otd", "sql", "estoque total", "giro")
-            ):
-                return True
-
-        return False
-
-    def _extract_search_description(self, message: str) -> str:
-        normalized = str(message or "").lower().strip()
-
-        patterns = [
-            r"(?:mais\s+)?informa(?:ç|c)(?:õ|o)es\s+sobre\s+(.+?)$",
-            r"detalhes?\s+(?:sobre\s+)?(.+?)$",
-            r"detalhe\s+de\s+(.+?)$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:exemplos?\s+de\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:produtos?|itens?|materiais?)\s+(?:d[eoa]\s+(?:tipo\s+)?|com\s+(?:descri[çc][ãa]o\s+)?|tipo\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(?:existem?|tem|há)\s+(?:com\s+(?:descri[çc][ãa]o\s+)?|d[eoa]\s+(?:tipo\s+)?|tipo\s+)(.+?)$",
-            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(.+?)$",
-            r"(?:existe|tem)\s+(?:algum|alguma)\s+(.+?)(?:\s+no\s+sistema|\s+cadastrado)?$",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, normalized)
-            if match:
-                result = match.group(1).strip()
-                result = re.sub(
-                    r"^(produtos?|itens?|materiais?|exemplos?|tipo|com|de)\s+",
-                    "",
-                    result,
-                )
-                if result:
-                    return result
-
-        stop_words = {
-            "busque", "buscar", "pesquise", "pesquisar", "procure", "procurar",
-            "encontre", "encontrar", "traga", "liste", "listar", "exemplos",
-            "de", "produtos", "produto", "itens", "item", "materiais", "material",
-            "me", "para", "mim", "os", "as", "o", "a", "um", "uma", "no", "na",
-            "do", "da", "com", "que", "são", "sao", "tipo", "descrição", "descricao",
-        }
-
-        words = normalized.split()
-        description_words = []
-
-        for word in words:
-            cleaned = word.strip(",.!?;:")
-            if cleaned.isdigit() and len(cleaned) <= 2:
-                continue
-            if cleaned not in stop_words:
-                description_words.append(cleaned)
-
-        return " ".join(description_words[-4:]) if description_words else normalized
-
-    def _select_product_search_action(
-        self,
-        message: str,
-        normalized: str,
-        allowed_action_ids: list[str],
-        *,
-        description_override: str | None = None,
-    ) -> dict | None:
-        candidates = self._list_allowed_candidates(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=80,
-        )
-
-        for action in candidates:
-            if action.get("method") != "GET":
-                continue
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if "search" not in path and "search" not in operation_id:
-                continue
-
-            group_code = self._extract_search_group_code(message, normalized)
-            description_query = description_override or self._extract_search_description(message)
-            product_code_query = ChatProductQueryIntentService.extract_product_code(message)
-            page_size = self._extract_search_limit(normalized)
-
-            parameters = {}
-            for parameter in action.get("parametersSchema") or []:
-                name = parameter.get("name")
-                if not name:
-                    continue
-                lowered = name.lower()
-                if lowered in {"group_code", "groupcode", "grupo"} and group_code:
-                    parameters[name] = group_code
-                elif lowered == "code" and product_code_query and not group_code:
-                    parameters[name] = product_code_query
-                elif lowered in {"description", "descricao", "query", "q", "search", "term"}:
-                    if description_query and not group_code:
-                        parameters[name] = description_query
-                elif lowered == "page":
-                    parameters[name] = 1
-                elif lowered in {"page_size", "pagesize", "limit"}:
-                    parameters[name] = page_size
-
-            if group_code and "group_code" not in parameters and "groupCode" not in parameters:
-                parameters["group_code"] = group_code
-
-            if not parameters:
-                if group_code:
-                    parameters = {"group_code": group_code, "page": 1, "page_size": page_size}
-                else:
-                    parameters = {"description": description_query, "page_size": page_size}
-
-            reason = (
-                f"Busca de produtos pelo grupo '{group_code}'."
-                if group_code
-                else f"Busca de produtos por descrição: '{description_query}'."
-            )
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": parameters,
-                },
-                "reason": reason,
-            }
-
-        return None
-
-    def _extract_search_group_code(self, message: str, normalized: str) -> str | None:
-        patterns = (
-            r"\bgrupo\s+de\s+produtos?\s+([A-Za-z0-9]{1,12})\b",
-            r"\bgrupo\s+([A-Za-z0-9]{1,12})\b",
-            r"\bgroup_code\s+([A-Za-z0-9]{1,12})\b",
-            r"\bdo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
-            r"\bpelo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
-        )
-
-        for pattern in patterns:
-            match = re.search(pattern, message, flags=re.IGNORECASE)
-
-            if match:
-                code = str(match.group(1)).strip().upper()
-
-                if code.lower() in {"de", "do", "da", "produto", "produtos"}:
-                    continue
-
-                return code
-
-        return None
-
-    def _extract_search_limit(self, value: str) -> int:
-        match = re.search(r"\b(\d{1,2})\s+(?:exemplos?|produtos?|itens?|resultados?)", value)
-        if match:
-            return min(int(match.group(1)), 20)
-
-        match = re.search(r"(?:exemplos?|produtos?|itens?|resultados?)\s+(\d{1,2})\b", value)
-        if match:
-            return min(int(match.group(1)), 20)
-
-        return 5
-
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         from app.domain.services.chat_sql_operational_intent_service import (
             ChatSqlOperationalIntentService,
@@ -1299,63 +849,6 @@ class ExternalActionSelectionService:
             candidates_loader=self._list_allowed_candidates,
             rank_candidates=self._rank_candidates,
         )
-
-    def _select_generic_allowed_action(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-        *,
-        previous_messages: list | None = None,
-    ) -> dict | None:
-        if not allowed_action_ids:
-            return None
-
-        candidates = self._list_allowed_candidates(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=120,
-        )
-
-        if not candidates:
-            return None
-
-        ranked = self._rank_candidates(
-            message,
-            candidates,
-            allowed_action_ids=allowed_action_ids,
-        )
-
-        if not ranked:
-            return None
-
-        action = ranked[0]
-
-        if action.get("selectionScore") is None:
-            return None
-
-        parameters = self._build_date_branch_parameters(
-            action,
-            message,
-            previous_messages=previous_messages,
-        )
-
-        arguments: dict = {
-            "actionId": action["actionId"],
-            "body": {
-                "message": message,
-            },
-        }
-
-        if parameters:
-            arguments["parameters"] = parameters
-
-        return {
-            "name": "execute_external_action",
-            "arguments": arguments,
-            "reason": action.get("selectionReason")
-            or "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
-        }
-
 
     def _select_product_action(
         self,

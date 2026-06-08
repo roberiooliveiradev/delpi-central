@@ -32,6 +32,15 @@ from app.application.services.external_actions.external_action_kpi_route_selecti
 from app.application.services.external_actions.external_action_domain_route_selection_service import (
     ExternalActionDomainRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+    ExternalActionProductSearchRouteSelectionService,
+)
+from app.application.services.external_actions.external_action_refinement_route_selection_service import (
+    ExternalActionRefinementRouteSelectionService,
+)
+from app.application.services.external_actions.external_action_generic_route_selection_service import (
+    ExternalActionGenericRouteSelectionService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
@@ -50,6 +59,9 @@ class ExternalActionRouteSelectionService:
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
         kpi_route: ExternalActionKpiRouteSelectionService | None = None,
         domain_route: ExternalActionDomainRouteSelectionService | None = None,
+        product_search_route: ExternalActionProductSearchRouteSelectionService | None = None,
+        refinement_route: ExternalActionRefinementRouteSelectionService | None = None,
+        generic_route: ExternalActionGenericRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -62,6 +74,13 @@ class ExternalActionRouteSelectionService:
         self._domain_route = domain_route or ExternalActionDomainRouteSelectionService(
             repository
         )
+        self._product_search_route = (
+            product_search_route or ExternalActionProductSearchRouteSelectionService()
+        )
+        self._refinement_route = refinement_route or ExternalActionRefinementRouteSelectionService(
+            repository
+        )
+        self._generic_route = generic_route or ExternalActionGenericRouteSelectionService()
 
     def select(
         self,
@@ -258,6 +277,77 @@ class ExternalActionRouteSelectionService:
             message,
             allowed_action_ids,
             candidates_loader=candidates_loader,
+        )
+
+    def select_product_search(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        description_override: str | None = None,
+    ) -> dict | None:
+        if not candidates_loader:
+            return None
+
+        return self._product_search_route.select(
+            message,
+            normalized,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            description_override=description_override,
+        )
+
+    def select_pagination_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        message: str = "",
+        select_product: Callable[..., dict | None] | None = None,
+    ) -> dict | None:
+        return self._refinement_route.select_pagination(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            message=message,
+            select_product=select_product,
+        )
+
+    def select_depth_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        message: str = "",
+        select_product: Callable[..., dict | None] | None = None,
+        clamp_max_depth: Callable[[int, str], int] | None = None,
+    ) -> dict | None:
+        return self._refinement_route.select_depth(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            message=message,
+            select_product=select_product,
+            clamp_max_depth=clamp_max_depth,
+        )
+
+    def select_generic(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        rank_candidates: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        return self._generic_route.select(
+            message,
+            allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            rank_candidates=rank_candidates,
+            build_date_branch_parameters=build_date_branch_parameters,
         )
 
     @classmethod

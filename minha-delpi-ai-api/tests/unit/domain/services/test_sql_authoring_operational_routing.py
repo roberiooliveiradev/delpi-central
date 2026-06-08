@@ -36,10 +36,7 @@ def test_sql_authoring_not_product_search():
 
     normalized = _USER_MESSAGE.lower()
 
-    assert not ExternalActionSelectionService._looks_like_product_search(
-        None,
-        normalized,
-    )
+    assert not ExternalActionSelectionService._looks_like_product_search(normalized)
 
 
 def test_schema_prefetch_recommended_with_agent_actions():

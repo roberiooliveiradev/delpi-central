@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 19):**
+**Sprint imediata (Fase 3 — god classes, lote 20):**
 
-1. **3B:** continuar `external_action_selection_service.py` (~1587 linhas) — candidatos: product_search, pagination, generic ranking.
-2. **3C:** extrair fase RAG de `chat_turn_preparation_service.py` (~704 linhas).
+1. **3B:** continuar `external_action_selection_service.py` (~1080 linhas) — candidatos: `_looks_like_product_question`, date/branch params, LMP heuristics.
+2. **3C:** extrair intent route / resultado final de `chat_turn_preparation_service.py` (~532 linhas).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -462,5 +462,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3B lote 18):** `ExternalActionDomainRouteSelectionService` (~400 linhas); sale orders, Transforma e metadados Protheus migrados para `select_sale_orders` / `select_transforma` / `select_system_metadata`; `external_action_selection_service.py` **1937 → ~1587** linhas.
 
 **Concluído (Fase 3C lote 18):** `ChatTurnPreparationPostToolResolutionService` (~350 linhas); cadeia de `direct_answer`/`skip_rag` pós-tools extraída; correção de `request_attachment_ids` no intent route; `chat_turn_preparation_service.py` **948 → ~704** linhas.
+
+**Concluído (Fase 3B lote 19):** `ExternalActionProductSearchRouteSelectionService`, `ExternalActionRefinementRouteSelectionService` e `ExternalActionGenericRouteSelectionService`; product search, paginação/profundidade e fallback semântico migrados; `external_action_selection_service.py` **1587 → ~1080** linhas.
+
+**Concluído (Fase 3C lote 19):** `ChatTurnPreparationRagService` (~240 linhas); construção RAG, glossário, memória semântica e stream activity extraídos; `chat_turn_preparation_service.py` **704 → ~532** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
