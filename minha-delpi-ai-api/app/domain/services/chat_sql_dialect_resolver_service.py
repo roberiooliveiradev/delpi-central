@@ -50,9 +50,9 @@ _DIALECT_HINTS: tuple[tuple[str, SqlDialect], ...] = (
 class ChatSqlDialectResolverService:
     @classmethod
     def default_dialect(cls) -> SqlDialect:
-        from app.infrastructure.config.settings import Settings
+        from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
-        token = str(Settings.CHAT_DEFAULT_SQL_DIALECT or "sqlserver").strip().lower()
+        token = ChatDomainConfigService.chat_default_sql_dialect()
 
         if token in {
             "sqlserver",

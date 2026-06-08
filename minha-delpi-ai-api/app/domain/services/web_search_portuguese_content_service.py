@@ -13,7 +13,7 @@ from app.domain.services.web_search_query_service import (
     USELESS_RESULT_SOURCES,
     WebSearchQueryService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 logger = logging.getLogger("minha-delpi-ai-api.web_search")
 
@@ -80,7 +80,7 @@ class WebSearchPortugueseContentService:
             seen_urls.add(url)
             results.append(summary)
 
-            if len(results) >= Settings.CHAT_WEB_SEARCH_MAX_RESULTS:
+            if len(results) >= ChatDomainConfigService.chat_web_search_max_results():
                 break
 
         if not results:
@@ -287,7 +287,7 @@ class WebSearchPortugueseContentService:
                     "Accept": "application/json",
                     "User-Agent": cls.WIKIPEDIA_USER_AGENT,
                 },
-                timeout=Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS,
+                timeout=ChatDomainConfigService.chat_web_search_timeout_seconds(),
             )
 
             if response.status_code == 404:

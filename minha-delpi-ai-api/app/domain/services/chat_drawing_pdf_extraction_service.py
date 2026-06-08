@@ -9,7 +9,7 @@ from typing import Any
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 _REV_PATTERN = re.compile(
     r"(?:REV(?:IS[AÃ]O)?\.?|REVISION)\s*[:.]?\s*(\d{1,3})",
@@ -34,7 +34,7 @@ _DECAPE_RIGHT_RE = re.compile(
 class ChatDrawingPdfExtractionService:
     @classmethod
     def max_pages(cls) -> int:
-        return max(1, int(Settings.CHAT_DRAWING_PDF_MAX_PAGES))
+        return max(1, int(ChatDomainConfigService.chat_drawing_pdf_max_pages()))
 
     @classmethod
     def extract_from_storage_path(cls, storage_path: str, *, filename: str = "") -> dict[str, Any]:
@@ -121,7 +121,7 @@ class ChatDrawingPdfExtractionService:
         intermediate_codes = sorted(_INTERMEDIATE_CODE_RE.findall(normalized))
         dimensions = cls._extract_dimensions(normalized)
 
-        min_chars = max(1, int(Settings.CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS))
+        min_chars = max(1, int(ChatDomainConfigService.chat_drawing_pdf_min_legible_chars()))
         legible = char_count >= min_chars and bool(
             product_code or revision or component_codes
         )

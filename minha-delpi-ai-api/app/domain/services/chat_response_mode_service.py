@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from app.domain.entities.llm_generation_config import LlmGenerationConfig
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 VALID_MODES = frozenset({"fast", "normal", "thinker"})
 DEFAULT_MODE = "normal"
@@ -94,10 +94,10 @@ class ChatResponseModeService:
 
     @classmethod
     def _provider_default_model(cls) -> str:
-        if Settings.LLM_PROVIDER == "vllm":
-            return Settings.VLLM_MODEL
+        if ChatDomainConfigService.llm_provider() == "vllm":
+            return ChatDomainConfigService.vllm_model()
 
-        return Settings.OLLAMA_MODEL
+        return ChatDomainConfigService.ollama_model()
 
     @classmethod
     def _env_model(cls, key: str, fallback: str | None = None) -> str:
@@ -130,7 +130,7 @@ class ChatResponseModeService:
             max_tokens=int(
                 os.getenv(
                     "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
-                    str(max(Settings.LLM_MAX_TOKENS, 1536)),
+                    str(max(ChatDomainConfigService.llm_max_tokens(), 1536)),
                 )
             ),
             num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "4096")),
@@ -142,8 +142,8 @@ class ChatResponseModeService:
     def _default_config(cls, response_mode: str) -> LlmGenerationConfig:
         return LlmGenerationConfig(
             model=cls._provider_default_model(),
-            max_tokens=Settings.LLM_MAX_TOKENS,
-            num_ctx=Settings.OLLAMA_NUM_CTX,
-            temperature=Settings.LLM_TEMPERATURE,
+            max_tokens=ChatDomainConfigService.llm_max_tokens(),
+            num_ctx=ChatDomainConfigService.ollama_num_ctx(),
+            temperature=ChatDomainConfigService.llm_temperature(),
             response_mode=response_mode,
         )

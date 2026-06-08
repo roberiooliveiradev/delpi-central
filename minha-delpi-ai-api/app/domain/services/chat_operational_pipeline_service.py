@@ -13,7 +13,7 @@ from app.domain.services.chat_sql_production_query_service import (
 from app.domain.services.chat_technical_description_intent_service import (
     ChatTechnicalDescriptionIntentService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ChatOperationalPipelineService:
@@ -60,7 +60,7 @@ class ChatOperationalPipelineService:
 
     @classmethod
     def is_enabled(cls) -> bool:
-        return Settings.CHAT_OPERATIONAL_FAST_PATH_ENABLED
+        return ChatDomainConfigService.chat_operational_fast_path_enabled()
 
     @classmethod
     def should_optimize(

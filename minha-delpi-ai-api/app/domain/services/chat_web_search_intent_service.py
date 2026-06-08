@@ -11,7 +11,7 @@ from app.domain.services.chat_web_search_query_security_service import (
     ChatWebSearchQuerySecurityService,
 )
 from app.domain.services.web_search_query_service import WebSearchQueryService
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ChatWebSearchIntentService:
@@ -50,7 +50,7 @@ class ChatWebSearchIntentService:
 
     @classmethod
     def is_feature_enabled(cls) -> bool:
-        if not Settings.CHAT_WEB_SEARCH_ENABLED:
+        if not ChatDomainConfigService.chat_web_search_enabled():
             return False
 
         from app.application.services.chat_intelligence_settings_service import (

@@ -5,13 +5,13 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from app.domain.services.web_search_query_service import USELESS_RESULT_SOURCES
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ChatWebSearchDirectAnswerService:
     @classmethod
     def is_enabled(cls) -> bool:
-        return Settings.CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED
+        return ChatDomainConfigService.chat_web_search_direct_response_enabled()
 
     @classmethod
     def extract_useful_results(cls, payload: dict | None) -> list[dict]:
@@ -213,7 +213,7 @@ class ChatWebSearchDirectAnswerService:
 
             sources.append(entry)
 
-            if len(sources) >= max(1, int(Settings.CHAT_WEB_SEARCH_MAX_RESULTS)):
+            if len(sources) >= max(1, int(ChatDomainConfigService.chat_web_search_max_results())):
                 break
 
         return sources

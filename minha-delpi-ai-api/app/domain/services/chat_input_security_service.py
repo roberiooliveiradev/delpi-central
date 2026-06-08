@@ -2,7 +2,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 @dataclass(frozen=True)
@@ -123,7 +123,7 @@ class ChatInputSecurityService:
             flags.append("sanitization.control_chars_removed")
             risk_score += 0.15
 
-        if len(original) > Settings.CHAT_MESSAGE_MAX_CHARS:
+        if len(original) > ChatDomainConfigService.chat_message_max_chars():
             flags.append("limits.message_too_long")
             risk_score += 0.25
 
@@ -137,7 +137,7 @@ class ChatInputSecurityService:
         blocked = self._should_block(risk_score=risk_score, sanitized=sanitized)
         flagged = (
             not blocked
-            and risk_score >= Settings.CHAT_INPUT_SECURITY_FLAG_THRESHOLD
+            and risk_score >= ChatDomainConfigService.chat_input_security_flag_threshold()
         )
 
         block_reason = None
@@ -162,18 +162,18 @@ class ChatInputSecurityService:
 
     def build_config(self) -> dict:
         return {
-            "enabled": Settings.CHAT_INPUT_SECURITY_ENABLED,
-            "mode": Settings.CHAT_INPUT_SECURITY_MODE,
-            "messageMaxChars": Settings.CHAT_MESSAGE_MAX_CHARS,
-            "blockThreshold": Settings.CHAT_INPUT_SECURITY_BLOCK_THRESHOLD,
-            "flagThreshold": Settings.CHAT_INPUT_SECURITY_FLAG_THRESHOLD,
-            "rateLimitEnabled": Settings.RATE_LIMIT_ENABLED,
+            "enabled": ChatDomainConfigService.chat_input_security_enabled(),
+            "mode": ChatDomainConfigService.chat_input_security_mode(),
+            "messageMaxChars": ChatDomainConfigService.chat_message_max_chars(),
+            "blockThreshold": ChatDomainConfigService.chat_input_security_block_threshold(),
+            "flagThreshold": ChatDomainConfigService.chat_input_security_flag_threshold(),
+            "rateLimitEnabled": ChatDomainConfigService.rate_limit_enabled(),
             "rateLimits": {
-                "chatMessagesPerWindow": Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW,
-                "toolCallsPerWindow": Settings.RATE_LIMIT_TOOL_CALLS_PER_WINDOW,
-                "knowledgeWritesPerWindow": Settings.RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW,
-                "adminActionsPerWindow": Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW,
-                "windowSeconds": Settings.RATE_LIMIT_WINDOW_SECONDS,
+                "chatMessagesPerWindow": ChatDomainConfigService.rate_limit_chat_messages_per_window(),
+                "toolCallsPerWindow": ChatDomainConfigService.rate_limit_tool_calls_per_window(),
+                "knowledgeWritesPerWindow": ChatDomainConfigService.rate_limit_knowledge_writes_per_window(),
+                "adminActionsPerWindow": ChatDomainConfigService.rate_limit_admin_actions_per_window(),
+                "windowSeconds": ChatDomainConfigService.rate_limit_window_seconds(),
             },
             "injectionRuleCount": len(self.INJECTION_RULES),
         }
@@ -184,31 +184,31 @@ class ChatInputSecurityService:
         collapsed_newlines = self.EXCESSIVE_NEWLINES_PATTERN.sub("\n\n\n", without_controls)
         stripped = collapsed_newlines.strip()
 
-        if len(stripped) > Settings.CHAT_MESSAGE_MAX_CHARS:
-            stripped = stripped[: Settings.CHAT_MESSAGE_MAX_CHARS]
+        if len(stripped) > ChatDomainConfigService.chat_message_max_chars():
+            stripped = stripped[: ChatDomainConfigService.chat_message_max_chars()]
 
         return stripped
 
     def _risk_level(self, risk_score: float) -> str:
-        if risk_score >= Settings.CHAT_INPUT_SECURITY_BLOCK_THRESHOLD:
+        if risk_score >= ChatDomainConfigService.chat_input_security_block_threshold():
             return "critical"
-        if risk_score >= Settings.CHAT_INPUT_SECURITY_FLAG_THRESHOLD:
+        if risk_score >= ChatDomainConfigService.chat_input_security_flag_threshold():
             return "high"
         if risk_score >= 0.2:
             return "medium"
         return "low"
 
     def _should_block(self, *, risk_score: float, sanitized: str) -> bool:
-        if not Settings.CHAT_INPUT_SECURITY_ENABLED:
+        if not ChatDomainConfigService.chat_input_security_enabled():
             return False
 
         if not sanitized.strip():
             return True
 
-        if risk_score < Settings.CHAT_INPUT_SECURITY_BLOCK_THRESHOLD:
+        if risk_score < ChatDomainConfigService.chat_input_security_block_threshold():
             return False
 
-        if Settings.CHAT_INPUT_SECURITY_MODE == "monitor":
+        if ChatDomainConfigService.chat_input_security_mode() == "monitor":
             return False
 
         return True

@@ -9,42 +9,12 @@
     "chat_turn_preparation_service.py": 1282
   },
   "domainInfrastructureImports": {
-    "count": 21,
+    "count": 9,
     "samples": [
-      {
-        "file": "app/domain/services/chat_agentic_action_schema_service.py",
-        "line": 9,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_agentic_catalog_service.py",
-        "line": 14,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_drawing_pdf_extraction_service.py",
-        "line": 12,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
       {
         "file": "app/domain/services/chat_feedback_issue_service.py",
         "line": 38,
         "snippet": "from app.infrastructure.persistence.postgres_chat_quality_issue_repository import ("
-      },
-      {
-        "file": "app/domain/services/chat_input_security_service.py",
-        "line": 5,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_operational_pipeline_service.py",
-        "line": 16,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_pagination_consolidation_service.py",
-        "line": 14,
-        "snippet": "from app.infrastructure.config.settings import Settings"
       },
       {
         "file": "app/domain/services/chat_project_conversation_context_service.py",
@@ -70,36 +40,6 @@
         "file": "app/domain/services/chat_quality_adoption_metrics_service.py",
         "line": 10,
         "snippet": "from app.infrastructure.db.models.chat_session_model import AiChatSessionModel"
-      },
-      {
-        "file": "app/domain/services/chat_response_mode_service.py",
-        "line": 8,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_sql_dialect_resolver_service.py",
-        "line": 53,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_web_search_direct_answer_service.py",
-        "line": 8,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_web_search_intent_service.py",
-        "line": 14,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_web_search_planning_service.py",
-        "line": 13,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/web_search_portuguese_content_service.py",
-        "line": 16,
-        "snippet": "from app.infrastructure.config.settings import Settings"
       },
       {
         "file": "app/domain/skills/chat_skill_registry.py",

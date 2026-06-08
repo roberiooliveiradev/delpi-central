@@ -11,7 +11,7 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 @dataclass(frozen=True)
@@ -111,11 +111,11 @@ class ChatPaginationConsolidationService:
 
     @classmethod
     def enabled(cls) -> bool:
-        return Settings.CHAT_PAGINATION_AUTO_FETCH_ENABLED
+        return ChatDomainConfigService.chat_pagination_auto_fetch_enabled()
 
     @classmethod
     def max_pages_per_turn(cls) -> int:
-        return max(1, min(Settings.CHAT_PAGINATION_MAX_PAGES_PER_TURN, 8))
+        return max(1, min(ChatDomainConfigService.chat_pagination_max_pages_per_turn(), 8))
 
     @classmethod
     def looks_like_full_fetch_request(cls, message: str | None) -> bool:

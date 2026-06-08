@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ChatAgenticActionSchemaService:
@@ -206,7 +206,7 @@ class ChatAgenticActionSchemaService:
 
     @classmethod
     def _max_parameters(cls) -> int:
-        configured = getattr(Settings, "CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS", 10)
+        configured = ChatDomainConfigService.chat_agentic_schema_max_parameters()
 
         try:
             return max(1, min(int(configured), 20))

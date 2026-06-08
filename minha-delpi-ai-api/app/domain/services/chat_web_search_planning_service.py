@@ -10,7 +10,7 @@ from app.domain.services.chat_message_normalization_service import (
 )
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 from app.domain.services.web_search_query_service import WebSearchQueryService
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 @dataclass(frozen=True)
@@ -162,7 +162,7 @@ class ChatWebSearchPlanningService:
 
     @classmethod
     def _resolve_max_results(cls, mode: str) -> int:
-        cap = max(1, min(int(Settings.CHAT_WEB_SEARCH_MAX_RESULTS), 8))
+        cap = max(1, min(int(ChatDomainConfigService.chat_web_search_max_results()), 8))
 
         if mode == "deep":
             return cap

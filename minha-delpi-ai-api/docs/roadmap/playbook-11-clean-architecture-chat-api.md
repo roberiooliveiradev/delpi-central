@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 2 lote 2):**
+**Sprint imediata (Fase 2 lote 3 — repositórios/persistência no domain):**
 
-1. Migrar próximo grupo: `chat_date_range_intent_service`, `chat_error_handling_classifier`, `chat_small_talk_pattern_service`, `prompt_policy_service`, `external_action_response_content_service`.
-2. Expandir `AppConfigPort` (SQL specialist, agentic catalog, web search).
-3. Rodar `audit_clean_architecture.py --write-baseline` e comparar `domainInfrastructureImports.count`.
+1. Migrar imports residuais: `chat_feedback_issue_service`, `chat_project_conversation_context_service`, `chat_quality_adoption_metrics_service`, `chat_skill_registry` (Postgres lazy).
+2. Introduzir ports de repositório em `domain/ports/` onde ainda não existem.
+3. Rodar `audit_clean_architecture.py --write-baseline` (meta: `domainInfrastructureImports` → 0).
+
+**Concluído (Fase 2 lotes 1–2):** ports de conteúdo/config; migração de `ContentService` e grupo inicial de `Settings` (`domainInfrastructureImports` 45 → 21).
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

@@ -11,7 +11,7 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ExternalActionCatalogRepositoryPort(Protocol):
@@ -39,7 +39,7 @@ class ChatAgenticCatalogService:
 
     @classmethod
     def resolve_limit(cls) -> int:
-        return max(1, Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS)
+        return max(1, ChatDomainConfigService.chat_agentic_catalog_max_actions())
 
     @classmethod
     def build_ranked_candidates(
