@@ -28,6 +28,10 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | Descrição, ficha, visão geral do item | `GET /products/{code}/analyser` | `get_product_analyser` |
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
+| Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
+| Situação produtiva (PA/PI/OP) | `GET /products/{code}/production-status` | `get_product_production_status` |
+| Expedição / inspeção final PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
+| Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
 | Fornecedores do item | `GET /products/{code}/suppliers` | (ver catálogo) |
 | Histórico de compras | `GET /products/{code}/purchases` | `purchases` |
 | Vendas / carteira / faturamento | `GET /products/{code}/sales*` | (ver catálogo) |

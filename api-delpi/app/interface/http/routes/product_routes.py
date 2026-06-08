@@ -24,7 +24,7 @@ from app.application.dto.product.get_product_sales_summary_request import GetPro
 from app.application.dto.product.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
 from app.application.dto.product.get_product_sales_billing_request import GetProductSalesBillingRequest
 from app.application.dto.product.get_product_pricing_request import GetProductPricingRequest
-from app.application.dto.product.product_analyser_request import ProductAnalyserRequest
+from app.application.dto.product.product_playbook_request import ProductPlaybookRequest
 
 from app.interface.http.openapi_agent_metadata import (
     PRODUCT_ANALYSER,
@@ -34,6 +34,10 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_SEARCH,
     PRODUCT_STOCK,
     PRODUCT_STRUCTURE,
+    PRODUCT_STRUCTURE_EXCLUSIVITY,
+    PRODUCT_PRODUCTION_STATUS,
+    PRODUCT_SHIPPING_STATUS,
+    PRODUCT_FACTORY_STATUS,
 )
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -53,7 +57,11 @@ from app.composition.product_composer import (
     build_get_product_sales_open_orders,
     build_get_product_sales_billing,
     build_get_product_pricing,
-    build_product_analyser_use_case
+    build_product_analyser_use_case,
+    build_get_product_structure_exclusivity_use_case,
+    build_get_product_production_status_use_case,
+    build_get_product_shipping_status_use_case,
+    build_get_product_factory_status_use_case,
     )
 
 
@@ -198,6 +206,134 @@ def get_structure(
     except Exception as e:
         log_error(f"Erro ao buscar estrutura do produto {code}: {e}")
         return error_response(str(e))
+
+
+@router.get("/{code}/structure/exclusivity", **PRODUCT_STRUCTURE_EXCLUSIVITY)
+@require_permission("api-delpi.access")
+def get_structure_exclusivity(
+    code: str,
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+):
+    try:
+        dto = ProductPlaybookRequest(code=code, max_depth=max_depth)
+        use_case = build_get_product_structure_exclusivity_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Estrutura com exclusividade de MPs carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na estrutura com exclusividade de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar estrutura com exclusividade de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get("/{code}/production-status", **PRODUCT_PRODUCTION_STATUS)
+@require_permission("api-delpi.access")
+def get_production_status(
+    code: str,
+    reference_date: Optional[str] = Query(default=None),
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = ProductPlaybookRequest(
+            code=code,
+            reference_date=reference_date,
+            max_depth=max_depth,
+            branch=branch,
+        )
+        use_case = build_get_product_production_status_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Situação produtiva do produto carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na situação produtiva de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar situação produtiva de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get("/{code}/shipping-status", **PRODUCT_SHIPPING_STATUS)
+@require_permission("api-delpi.access")
+def get_shipping_status(
+    code: str,
+    reference_date: Optional[str] = Query(default=None),
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = ProductPlaybookRequest(
+            code=code,
+            reference_date=reference_date,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+        )
+        use_case = build_get_product_shipping_status_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Status de expedição do produto carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação no status de expedição de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar status de expedição de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get("/{code}/factory-status", **PRODUCT_FACTORY_STATUS)
+@require_permission("api-delpi.access")
+def get_factory_status(
+    code: str,
+    reference_date: Optional[str] = Query(default=None),
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = ProductPlaybookRequest(
+            code=code,
+            reference_date=reference_date,
+            date_start=date_start,
+            date_end=date_end,
+            max_depth=max_depth,
+            branch=branch,
+        )
+        use_case = build_get_product_factory_status_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Status fabril completo do produto carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação no status fabril de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar status fabril de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
 
 @router.get("/{code}/structure/excel")
 @require_permission("api-delpi.access")

@@ -4,7 +4,7 @@
 
 **Provider:** `api-delpi` · **Base no gateway:** `/apps/api-delpi` · **OpenAPI:** `/apps/api-delpi/openapi.json`
 
-**Última revisão:** alinhada às **83 rotas** da `api-delpi` em **29/05/2026** (produção: eficiência fabril + OEE série; comercial: propostas; chat: consolidação paginada).
+**Última revisão:** alinhada à `api-delpi` em **08/06/2026** (playbooks fabril: estrutura/exclusividade, produção, expedição, status fabril).
 
 Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + embeddings + catálogo) e **reindexe** este documento na base de conhecimento.
 
@@ -56,6 +56,10 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Análise completa / ficha detalhada | `GET /products/{code}/analyser` | `get_product_analyser` |
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
+| Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
+| Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
+| Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
+| Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
 | Exportar estrutura em Excel | `GET /products/{code}/structure/excel` | (download; preferir JSON no chat) |
 | **Onde é usado / produto pai / where used** | `GET /products/{code}/parents` | path contém `parents` |
 | Preço / tabela de preço / quanto custa | `GET /products/{code}/pricing` | path contém `pricing` |
@@ -76,6 +80,10 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - `search`: `code`, `description`, `group_code`, `page`, `page_size`, `sort`, `direction`
 - `stock`: `code` (path), `branch`, `location`, `page`, `page_size`
 - `structure` / `parents`: `code` (path), `page`, `page_size`, `max_depth` (até 99)
+- `structure/exclusivity`: `code` (path), `max_depth` (default 50)
+- `production-status`: `code` (path), `reference_date`, `branch`, `max_depth`
+- `shipping-status`: `code` (path), `reference_date` ou `date_start`+`date_end`, `branch`
+- `factory-status`: `code` (path), `reference_date`, `date_start`, `date_end`, `branch`, `max_depth`
 - `analyser`, `summary`, `pricing`: `code` (path)
 
 **Exemplos de frases → rota**
@@ -87,6 +95,10 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - "Liste produtos do grupo MP" / "busque 3 produtos do grupo 1008" → `GET /products/search` (`group_code`, `page_size`)
 - "Onde é usado o 10080001?" → `GET /products/{code}/parents`
 - "Quanto custa o 10080001?" → `GET /products/{code}/pricing`
+- "Quais MPs são exclusivas do 90261255?" → `GET /products/{code}/structure/exclusivity`
+- "O produto já começou a produzir?" → `GET /products/{code}/production-status`
+- "Quanto do PA já está liberado para expedição?" → `GET /products/{code}/shipping-status`
+- "Qual o status do produto na fábrica?" → `GET /products/{code}/factory-status`
 
 ---
 

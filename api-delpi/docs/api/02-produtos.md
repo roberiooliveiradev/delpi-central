@@ -59,6 +59,69 @@ Estrutura (BOM) do produto.
 
 ---
 
+## GET /products/{code}/structure/exclusivity
+
+Estrutura vigente multinível com **exclusividade de matérias-primas** (playbook `playbook-estrutura-produto-exclusividade-mp.md`).
+
+| Query | Descrição |
+|---|---|
+| `max_depth` | Profundidade máxima da árvore (default `50`, máx. `100`). |
+
+Retorna `product`, `items` (componentes com `exclusive_raw_material`, `accumulated_quantity`, `path`) e `summary` (`total_intermediates`, `total_raw_materials`, `total_exclusive_raw_materials`).
+
+**Uso no chat:** MPs exclusivas, estrutura com quantidade acumulada por PA, BOM com flag de exclusividade.
+
+---
+
+## GET /products/{code}/production-status
+
+Situação produtiva do PA e intermediários com OPs (`SC2010`) e apontamentos (`SH6010`) até uma data de referência (playbook `playbook-situacao-de-producao-pa.md`).
+
+| Query | Descrição |
+|---|---|
+| `reference_date` | Data de avaliação (`YYYY-MM-DD` ou `DD/MM/YYYY`; default: hoje). |
+| `max_depth` | Profundidade da BOM (default `50`). |
+| `branch` | Filial (`01`, `02`). |
+
+Retorna `items` por produto da rota (PA + PIs) com OP, apontamentos, `production_started`, `equivalent_in_pa` e `summary`.
+
+**Uso no chat:** “já começou a produzir?”, OPs do produto, quanto foi apontado.
+
+---
+
+## GET /products/{code}/shipping-status
+
+Quantidade do PA finalizada para expedição e perdas no **CT de inspeção final** (playbook `playbook-pa-inspecao-expedicao.md`).
+
+| Query | Descrição |
+|---|---|
+| `reference_date` | Atalho para dia único (equivale a `date_start` quando `date_end` omitido). |
+| `date_start`, `date_end` | Período inclusivo no início e exclusivo no fim (`H6_DTAPONT >= start` e `< end+1`). |
+| `branch` | Filial (`01`, `02`). |
+
+Retorna apontamentos agregados por OP/recurso/CT com `shipped_quantity`, `inspection_loss_quantity` e totais em `summary`.
+
+**Não confundir** com `/inspection` (definição de ensaios QP6/QP7/QP8).
+
+---
+
+## GET /products/{code}/factory-status
+
+Visão fabril consolidada (playbook `playbook-visaostatus-produto.md`): estrutura + exclusividade, estoque de MPs, produção, expedição e classificação `factory_status`.
+
+| Query | Descrição |
+|---|---|
+| `reference_date` | Data para estrutura/produção (default: hoje). |
+| `date_start`, `date_end` | Período de expedição (default: dia de `reference_date`). |
+| `max_depth` | Profundidade da BOM (default `50`). |
+| `branch` | Filial opcional. |
+
+Retorna blocos `structure`, `raw_material_stock`, `production`, `shipping`, `indicators` e `factory_status` (ex.: `PA FINALIZADO / LIBERADO PARA EXPEDIÇÃO`).
+
+**Uso no chat:** status completo do produto na fábrica — preferir esta rota em perguntas amplas.
+
+---
+
 ## GET /products/{code}/structure/excel
 
 Exporta estrutura em Excel.

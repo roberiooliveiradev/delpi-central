@@ -28,6 +28,42 @@ PRODUCT_STRUCTURE = agent_route(
     operation_id="get_product_structure",
 )
 
+PRODUCT_STRUCTURE_EXCLUSIVITY = agent_route(
+    summary="Estrutura do produto com exclusividade de matérias-primas",
+    description=(
+        "Abre a BOM vigente multinível e marca MPs exclusivas (presentes em apenas um PA válido). "
+        "Use para estrutura com exclusividade, MPs exclusivas e quantidade acumulada por componente."
+    ),
+    operation_id="get_product_structure_exclusivity",
+)
+
+PRODUCT_PRODUCTION_STATUS = agent_route(
+    summary="Situação produtiva do produto (PA, PI, OP e apontamentos)",
+    description=(
+        "Avalia PA e intermediários com OPs da SC2010 e apontamentos da SH6010 em uma data de referência. "
+        "Use para saber se produção iniciou, quanto foi apontado e equivalente em PA."
+    ),
+    operation_id="get_product_production_status",
+)
+
+PRODUCT_SHIPPING_STATUS = agent_route(
+    summary="Expedição do PA via inspeção final",
+    description=(
+        "Retorna quantidade finalizada para expedição e perdas no CT de inspeção final (SHB010 + SH6010). "
+        "Use para saber se o PA já passou pela inspeção final e quanto está liberado para expedição."
+    ),
+    operation_id="get_product_shipping_status",
+)
+
+PRODUCT_FACTORY_STATUS = agent_route(
+    summary="Status fabril completo do produto",
+    description=(
+        "Visão consolidada: estrutura vigente, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. "
+        "Preferir quando o usuário pedir status completo do produto na fábrica ou visão fabril integrada."
+    ),
+    operation_id="get_product_factory_status",
+)
+
 PRODUCT_STOCK = agent_route(
     summary="Estoque do produto por filial e local",
     description=(

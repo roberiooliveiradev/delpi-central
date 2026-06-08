@@ -5,7 +5,7 @@ Este documento orienta a **seleção automática de rotas** quando um agente do 
 **Versão expandida para RAG (recomendada na base de conhecimento):**  
 [`minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md)
 
-**Última revisão:** maio/2026 (Onda 10 inteligência + rotas comercial/qualidade/RH/dashboard LMP).
+**Última revisão:** jun/2026 (playbooks fabril: estrutura/exclusividade, produção, expedição, status fabril).
 
 ---
 
@@ -37,13 +37,28 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Ficha analítica completa | `GET /products/{code}/analyser` | `get_product_analyser` |
 | Estoque/saldo **do item** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM | `GET /products/{code}/structure` | `get_product_structure` |
+| Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
+| Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
+| Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
+| Status fabril completo do produto | `GET /products/{code}/factory-status` | `get_product_factory_status` |
 | Onde é usado / produto pai | `GET /products/{code}/parents` | path `parents` |
 | Preço / tabela | `GET /products/{code}/pricing` | path `pricing` |
 | Fornecedores / clientes | `.../suppliers`, `.../customers` | path |
 | Compras / vendas / carteira / faturamento | `.../purchases`, `.../sales`, `.../open-orders`, `.../billing` | ver OpenAPI |
 | Roteiro / inspeção / movimentações / NF | `guide`, `inspection`, `internal-movements`, `inbound|outbound-invoice-items` | path |
 
-**Não confundir:** estoque do item → `/products/{code}/stock`; valor total da empresa → `/supplies/stock-value`.
+**Não confundir:** estoque do item → `/products/{code}/stock`; valor total da empresa → `/supplies/stock-value`. Inspeção de qualidade (QP6/QP7/QP8) → `/products/{code}/inspection`; expedição após inspeção final (CT SHB010 + apontamento SH6010) → `/products/{code}/shipping-status`.
+
+**Playbooks fabril** (SQL validado em `api-delpi/docs/roadmaps/`):
+
+| Intenção | Rota | Parâmetros úteis |
+|---|---|---|
+| BOM com exclusividade de MP | `/structure/exclusivity` | `max_depth` |
+| Produção iniciada / OP / apontamento | `/production-status` | `reference_date`, `branch`, `max_depth` |
+| PA liberado para expedição | `/shipping-status` | `date_start`, `date_end`, `reference_date`, `branch` |
+| Visão integrada na fábrica | `/factory-status` | `reference_date`, `date_start`, `date_end`, `branch`, `max_depth` |
+
+Preferir `/factory-status` quando o usuário pedir status completo do produto na fábrica.
 
 Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** produto”) usa contexto da conversa.
 

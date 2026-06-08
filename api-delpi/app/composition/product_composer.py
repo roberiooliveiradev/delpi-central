@@ -32,6 +32,19 @@ from app.application.use_cases.product.get_product_sales_billing_use_case import
 from app.infrastructure.persistence.totvs.product_repositories.product_pricing_repository import ProductPricingRepository
 from app.application.use_cases.product.get_product_pricing_use_case import GetProductPricingUseCase
 from app.application.use_cases.product.product_analyser_use_case import ProductAnalyserUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_playbook_repository import ProductPlaybookRepository
+from app.application.use_cases.product.get_product_structure_exclusivity_use_case import (
+    GetProductStructureExclusivityUseCase,
+)
+from app.application.use_cases.product.get_product_production_status_use_case import (
+    GetProductProductionStatusUseCase,
+)
+from app.application.use_cases.product.get_product_shipping_status_use_case import (
+    GetProductShippingStatusUseCase,
+)
+from app.application.use_cases.product.get_product_factory_status_use_case import (
+    GetProductFactoryStatusUseCase,
+)
 
 
 
@@ -111,3 +124,19 @@ def build_product_analyser_use_case():
         build_list_product_guide_use_case(),
         build_list_product_inspection_use_case()
     )
+
+
+def build_get_product_structure_exclusivity_use_case() -> GetProductStructureExclusivityUseCase:
+    return GetProductStructureExclusivityUseCase(ProductPlaybookRepository())
+
+
+def build_get_product_production_status_use_case() -> GetProductProductionStatusUseCase:
+    return GetProductProductionStatusUseCase(ProductPlaybookRepository())
+
+
+def build_get_product_shipping_status_use_case() -> GetProductShippingStatusUseCase:
+    return GetProductShippingStatusUseCase(ProductPlaybookRepository())
+
+
+def build_get_product_factory_status_use_case() -> GetProductFactoryStatusUseCase:
+    return GetProductFactoryStatusUseCase(ProductPlaybookRepository())
