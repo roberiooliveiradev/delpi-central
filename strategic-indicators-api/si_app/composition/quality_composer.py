@@ -1,5 +1,3 @@
-from si_app.config import settings
-
 from si_app.application.services.quality.quality_metrics_snapshot_service import (
     QualityMetricsSnapshotService,
 )
@@ -12,16 +10,10 @@ from si_app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
 from si_app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
 )
-from si_app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository import (
-    Audit5SRepository,
-)
-from si_app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository import (
-    KaizenRepository,
-)
-from si_app.infrastructure.persistence.google_sheets.utils import Utils
-from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiPpmGateway
-from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
-    GoogleSheetsClient,
+from si_app.infrastructure.gateways.delpi_quality_gateway import (
+    DelpiAudit5SGateway,
+    DelpiKaizenGateway,
+    DelpiPpmGateway,
 )
 from si_app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
     QualityIndicatorsSnapshotProvider,
@@ -38,42 +30,24 @@ def _get_delpi_client() -> DelpiApiClient:
     return _delpi_client
 
 
-def _build_google_sheets_client() -> GoogleSheetsClient:
-    return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
-
-
-def _build_utils() -> Utils:
-    return Utils()
-
-
-def _build_kaizen_repository() -> KaizenRepository:
-    return KaizenRepository(
-        client=_build_google_sheets_client(),
-        sheet_id=settings.QUALITY_SHEET_ID,
-        gid=settings.QUALITY_KAIZEN_SHEET_GID,
-        utils=_build_utils(),
-    )
-
-
-def _build_audit_5s_repository() -> Audit5SRepository:
-    return Audit5SRepository(
-        client=_build_google_sheets_client(),
-        sheet_id=settings.QUALITY_SHEET_ID,
-        gid=settings.QUALITY_AUDIT_5S_SHEET_GID,
-        utils=_build_utils(),
-    )
-
-
 def _build_ppm_gateway() -> DelpiPpmGateway:
     return DelpiPpmGateway(_get_delpi_client())
 
 
+def _build_kaizen_gateway() -> DelpiKaizenGateway:
+    return DelpiKaizenGateway(_get_delpi_client())
+
+
+def _build_audit_5s_gateway() -> DelpiAudit5SGateway:
+    return DelpiAudit5SGateway(_get_delpi_client())
+
+
 def build_get_kaizen_summary_use_case() -> GetKaizenSummaryUseCase:
-    return GetKaizenSummaryUseCase(repository=_build_kaizen_repository())
+    return GetKaizenSummaryUseCase(repository=_build_kaizen_gateway())
 
 
 def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
-    return GetAudit5SSummaryUseCase(repository=_build_audit_5s_repository())
+    return GetAudit5SSummaryUseCase(repository=_build_audit_5s_gateway())
 
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:

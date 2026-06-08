@@ -46,7 +46,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 | Departamento | Hoje no SI | Migrar para (api-delpi) |
 |--------------|------------|--------------------------|
-| Qualidade | `KaizenRepository`, `Audit5SRepository` local | `GET /quality/kaizens/summary`, `GET /quality/audit-5s/summary` |
+| Qualidade | ~~`KaizenRepository`, `Audit5SRepository` local~~ **feito jun/2026** | `GET /quality/kaizens/summary`, `GET /quality/audit-5s/summary` |
 | Financeiro | `FinancialEbitdaRepository`, fixed cost, receivables local | `GET /financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr` |
 | Produção | `DirectLaborRepository`, production cost, depreciation local | `GET /production/direct_labor_cost_pct`, etc. |
 
@@ -70,7 +70,7 @@ Candidatos (avaliar custo/benefício):
 
 - Unificar DTOs departamentais com contratos mínimos nos gateways (menos arquivos em `application/dto/`).
 - Colapsar use cases que só repassam ao gateway em chamadas diretas nos `*MetricsSnapshotService`.
-- Mover testes de repositório Sheets (`test_kaizen_repository`) para api-delpi ou para testes de gateway.
+- ~~Mover testes de repositório Sheets (`test_kaizen_repository`)~~ → `test_delpi_quality_sheets_gateway.py`.
 
 **Não é obrigatório** para operação do painel; melhora manutenção de longo prazo.
 

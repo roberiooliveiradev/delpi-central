@@ -43,7 +43,7 @@ Criados em `si_app/infrastructure/gateways/`:
 | `delpi_financial_gateway.py` | `GET /financial/rol` |
 | `delpi_production_gateway.py` | `GET /production/*_pct` |
 | `delpi_supplies_gateway.py` | `GET /supplies/*` (incl. `/supplies/negotiation-savings/summary` — planilha IDD) |
-| `delpi_quality_gateway.py` | `GET /quality/ppm/*`, `/quality/nonconformities`, `/quality/branches` |
+| `delpi_quality_gateway.py` | `GET /quality/ppm/*`, `/quality/kaizens/summary`, `/quality/audit-5s/summary`, `/quality/nonconformities`, `/quality/branches` |
 | `delpi_engineering_gateway.py` | `GET /engineering/lmps*` |
 | `transformometro_transforma_mais_gateway.py` | `GET /transformometro/*` (já existia) |
 

@@ -149,10 +149,6 @@ class Settings:
     # ==========================
     GOOGLE_SHEETS_TIMEOUT: str = _get_env("GOOGLE_SHEETS_TIMEOUT", default="10")
 
-    QUALITY_SHEET_ID: str | None = _get_env("QUALITY_SHEET_ID")
-    QUALITY_KAIZEN_SHEET_GID: str | None = _get_env("QUALITY_KAIZEN_SHEET_GID")
-    QUALITY_AUDIT_5S_SHEET_GID: str | None = _get_env("QUALITY_AUDIT_5S_SHEET_GID")
-
     TRANSFORMA_MAIS_SHEET_ID: str | None = _get_env("TRANSFORMA_MAIS_SHEET_ID")
     TRANSFORMA_MAIS_GID_PROCESSOS: str | None = _get_env("TRANSFORMA_MAIS_GID_PROCESSOS")
     TRANSFORMA_MAIS_GID_REVISAO: str | None = _get_env("TRANSFORMA_MAIS_GID_REVISAO")

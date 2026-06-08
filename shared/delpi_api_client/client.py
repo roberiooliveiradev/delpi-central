@@ -121,6 +121,22 @@ class DelpiApiClient:
     def list_nonconformities(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/quality/nonconformities", params=params, authorization=authorization)
 
+    def get_kaizen_summary(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/quality/kaizens/summary", params=params, authorization=authorization)
+
+    def get_audit_5s_summary(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/quality/audit-5s/summary", params=params, authorization=authorization)
+
     # -- Engineering --
     def list_lmps(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/engineering/lmps", params=params, authorization=authorization)
