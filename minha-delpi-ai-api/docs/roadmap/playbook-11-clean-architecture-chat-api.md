@@ -402,12 +402,14 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 2):**
+**Sprint imediata (Fase 3 — god classes, lote 3):**
 
-1. Extrair `product_list_presenter` / `product_analyser_presenter` do facade.
+1. Extrair `product_list_presenter` do facade (`_present_items`, `_present_product_search`, `_present_product_stock`, etc.).
 2. Migrar `_select_product_action` para `ExternalActionRouteSelectionService`.
 3. Reduzir `external_action_selection_service.py` e `chat_tool_context_service.py`.
 
-**Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade `external_action_result_presenter.py` **6247 → ~5570** linhas.
+**Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
+
+**Concluído (Fase 3 lote 2):** `ExternalActionProductAnalyserPresenter` (~1208 linhas) extraído; facade **5572 → ~4524** linhas; 27 métodos analyser delegados via `_analyser()`.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
