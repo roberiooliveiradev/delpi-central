@@ -23,7 +23,34 @@ import { ManifestRegisterModal } from "../modals/ManifestRegisterModal";
 import { resolveIcon } from "../../../utils/iconResolver";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
 
-type AppSortField = "name" | "version" | "active";
+type AppSortField =
+  | "name"
+  | "version"
+  | "active"
+  | "created_at"
+  | "updated_at";
+
+type AppDateFilters = {
+  createdFrom: string;
+  createdTo: string;
+  updatedFrom: string;
+  updatedTo: string;
+};
+
+const EMPTY_DATE_FILTERS: AppDateFilters = {
+  createdFrom: "",
+  createdTo: "",
+  updatedFrom: "",
+  updatedTo: "",
+};
+
+const SORT_OPTIONS: { field: AppSortField; label: string }[] = [
+  { field: "name", label: "Nome" },
+  { field: "version", label: "Versão" },
+  { field: "active", label: "Status" },
+  { field: "created_at", label: "Criado em" },
+  { field: "updated_at", label: "Atualizado em" },
+];
 
 const PAGE_SIZE = 10;
 
@@ -83,6 +110,29 @@ const buildAppAuditMeta = (app: AdminApp): string[] => {
   return lines;
 };
 
+const getSortDirectionLabel = (
+  field: AppSortField,
+  direction: "asc" | "desc"
+) => {
+  if (field === "name" || field === "version") {
+    return direction === "asc" ? "A-Z" : "Z-A";
+  }
+
+  if (field === "active") {
+    return direction === "asc" ? "Inativas" : "Ativas";
+  }
+
+  return direction === "asc" ? "Antigas" : "Recentes";
+};
+
+const hasActiveDateFilters = (filters: AppDateFilters) =>
+  Boolean(
+    filters.createdFrom ||
+      filters.createdTo ||
+      filters.updatedFrom ||
+      filters.updatedTo
+  );
+
 export const AppsTab = () => {
   const { getAccessToken } = useContext(AuthContext);
 
@@ -105,6 +155,9 @@ export const AppsTab = () => {
     direction: "asc",
   });
 
+  const [dateFilters, setDateFilters] =
+    useState<AppDateFilters>(EMPTY_DATE_FILTERS);
+
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
   }, [getAccessToken]);
@@ -117,9 +170,21 @@ export const AppsTab = () => {
         q: search,
         sort: sortState.sort,
         direction: sortState.direction,
+        createdFrom: dateFilters.createdFrom || undefined,
+        createdTo: dateFilters.createdTo || undefined,
+        updatedFrom: dateFilters.updatedFrom || undefined,
+        updatedTo: dateFilters.updatedTo || undefined,
       }),
     PAGE_SIZE,
-    [search, sortState.sort, sortState.direction]
+    [
+      search,
+      sortState.sort,
+      sortState.direction,
+      dateFilters.createdFrom,
+      dateFilters.createdTo,
+      dateFilters.updatedFrom,
+      dateFilters.updatedTo,
+    ]
   );
 
   const apps = appsResource.data ?? [];
@@ -164,6 +229,19 @@ export const AppsTab = () => {
       };
     });
 
+    appsResource.setPage(1);
+  };
+
+  const applyDateFilters = (patch: Partial<AppDateFilters>) => {
+    setDateFilters((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+    appsResource.setPage(1);
+  };
+
+  const clearDateFilters = () => {
+    setDateFilters(EMPTY_DATE_FILTERS);
     appsResource.setPage(1);
   };
 
@@ -268,7 +346,7 @@ export const AppsTab = () => {
     appsResource.setPage(Math.min(totalPages, currentPage + 1));
   };
 
-  const sortLabel = sortState.direction === "asc" ? "A-Z" : "Z-A";
+  const sortLabel = getSortDirectionLabel(sortState.sort, sortState.direction);
 
   return (
     <>
@@ -286,21 +364,13 @@ export const AppsTab = () => {
           onChange: handleSearchChange,
         }}
         toolbarActions={[
-          {
-            label: `Nome ${sortState.sort === "name" ? sortLabel : ""}`,
-            active: sortState.sort === "name",
-            onClick: () => toggleSort("name"),
-          },
-          {
-            label: `Versão ${sortState.sort === "version" ? sortLabel : ""}`,
-            active: sortState.sort === "version",
-            onClick: () => toggleSort("version"),
-          },
-          {
-            label: "Status",
-            active: sortState.sort === "active",
-            onClick: () => toggleSort("active"),
-          },
+          ...SORT_OPTIONS.map(({ field, label }) => ({
+            label: `Ordenar: ${label}${
+              sortState.sort === field ? ` ${sortLabel}` : ""
+            }`,
+            active: sortState.sort === field,
+            onClick: () => toggleSort(field),
+          })),
           {
             label: (
               <>
@@ -312,6 +382,57 @@ export const AppsTab = () => {
             onClick: openRegister,
           },
         ]}
+        filterSlot={
+          <>
+            <div className="admin-entity-filters__group">
+              <span className="admin-entity-filters__label">Criado em:</span>
+              <input
+                type="date"
+                value={dateFilters.createdFrom}
+                onChange={(event) =>
+                  applyDateFilters({ createdFrom: event.target.value })
+                }
+                aria-label="Data inicial de criação"
+              />
+              <span className="admin-entity-filters__range-separator">até</span>
+              <input
+                type="date"
+                value={dateFilters.createdTo}
+                onChange={(event) =>
+                  applyDateFilters({ createdTo: event.target.value })
+                }
+                aria-label="Data final de criação"
+              />
+            </div>
+            <div className="admin-entity-filters__group">
+              <span className="admin-entity-filters__label">Atualizado em:</span>
+              <input
+                type="date"
+                value={dateFilters.updatedFrom}
+                onChange={(event) =>
+                  applyDateFilters({ updatedFrom: event.target.value })
+                }
+                aria-label="Data inicial de atualização"
+              />
+              <span className="admin-entity-filters__range-separator">até</span>
+              <input
+                type="date"
+                value={dateFilters.updatedTo}
+                onChange={(event) =>
+                  applyDateFilters({ updatedTo: event.target.value })
+                }
+                aria-label="Data final de atualização"
+              />
+            </div>
+            {hasActiveDateFilters(dateFilters) ? (
+              <div className="admin-entity-filters__group">
+                <button type="button" onClick={clearDateFilters}>
+                  Limpar filtros de data
+                </button>
+              </div>
+            ) : null}
+          </>
+        }
         listTitle="Catálogo de aplicações"
         listSubtitle={`Página ${currentPage} de ${totalPages}`}
         items={apps}

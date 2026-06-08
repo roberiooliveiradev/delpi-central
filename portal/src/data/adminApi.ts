@@ -29,6 +29,13 @@ export type ListUsersQueryOptions = ListQueryOptions & {
   groupId?: string;
 };
 
+export type ListAppsQueryOptions = ListQueryOptions & {
+  createdFrom?: string;
+  createdTo?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+};
+
 export type AdminUser = {
   id: string;
   name: string;
@@ -357,11 +364,23 @@ export class AdminApi {
      Apps
   ========================= */
 
-  listApps(options?: ListQueryOptions) {
-    const qs = this.buildQuery(options);
+  listApps(options?: ListAppsQueryOptions) {
+    const params = new URLSearchParams();
+
+    if (options?.page) params.append("page", String(options.page));
+    if (options?.pageSize) params.append("page_size", String(options.pageSize));
+    if (options?.q) params.append("q", options.q);
+    if (options?.sort) params.append("sort", options.sort);
+    if (options?.direction) params.append("direction", options.direction);
+    if (options?.createdFrom) params.append("created_from", options.createdFrom);
+    if (options?.createdTo) params.append("created_to", options.createdTo);
+    if (options?.updatedFrom) params.append("updated_from", options.updatedFrom);
+    if (options?.updatedTo) params.append("updated_to", options.updatedTo);
+
+    const qs = params.toString();
 
     return this.client.get<PaginatedResponse<AdminApp>>(
-      `/core-api/admin/apps${qs}`
+      `/core-api/admin/apps${qs ? `?${qs}` : ""}`
     );
   }
 

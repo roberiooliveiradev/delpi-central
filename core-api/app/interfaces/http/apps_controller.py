@@ -1,5 +1,7 @@
 # app/interfaces/http/apps_controller.py
 
+from datetime import datetime, time
+
 from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
@@ -50,6 +52,44 @@ def _request_actor() -> tuple[str | None, str | None]:
     return str(user.id), getattr(user, "name", None)
 
 
+def _parse_optional_date_start(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+
+    normalized = raw.strip()
+    if not normalized:
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if len(normalized) == 10:
+        return datetime.combine(parsed.date(), time.min)
+
+    return parsed
+
+
+def _parse_optional_date_end(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+
+    normalized = raw.strip()
+    if not normalized:
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if len(normalized) == 10:
+        return datetime.combine(parsed.date(), time.max)
+
+    return parsed
+
+
 # ==========================================================
 # LIST APPS (PLUGINS)
 # ==========================================================
@@ -62,6 +102,18 @@ def list_apps():
     q = request.args.get("q")
     sort = request.args.get("sort", "name")
     direction = request.args.get("direction", "asc")
+    created_from = _parse_optional_date_start(
+        request.args.get("created_from") or request.args.get("createdFrom")
+    )
+    created_to = _parse_optional_date_end(
+        request.args.get("created_to") or request.args.get("createdTo")
+    )
+    updated_from = _parse_optional_date_start(
+        request.args.get("updated_from") or request.args.get("updatedFrom")
+    )
+    updated_to = _parse_optional_date_end(
+        request.args.get("updated_to") or request.args.get("updatedTo")
+    )
 
     with SqlAlchemyUnitOfWork() as uow:
         uc = ListAdminAppsUseCase(uow)
@@ -72,6 +124,10 @@ def list_apps():
             q=q,
             sort=sort,
             direction=direction,
+            created_from=created_from,
+            created_to=created_to,
+            updated_from=updated_from,
+            updated_to=updated_to,
         )
 
     total_pages = (total + page_size - 1) // page_size

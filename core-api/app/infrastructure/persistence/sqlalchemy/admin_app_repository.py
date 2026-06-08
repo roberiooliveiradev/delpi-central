@@ -83,6 +83,10 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
         q: str | None,
         sort: str,
         direction: str,
+        created_from=None,
+        created_to=None,
+        updated_from=None,
+        updated_to=None,
     ) -> Tuple[List[AdminAppDTO], int]:
 
         query = self.session.query(App)
@@ -91,12 +95,23 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
         if q:
             query = query.filter(App.name.ilike(f"%{q}%"))
 
+        if created_from is not None:
+            query = query.filter(App.created_at >= created_from)
+        if created_to is not None:
+            query = query.filter(App.created_at <= created_to)
+        if updated_from is not None:
+            query = query.filter(App.updated_at >= updated_from)
+        if updated_to is not None:
+            query = query.filter(App.updated_at <= updated_to)
+
         # 🔄 ordenação segura
         allowed_sort = {
             "name": App.name,
             "version": App.version,
             "active": App.active,
             "type": App.type,
+            "created_at": App.created_at,
+            "updated_at": App.updated_at,
         }
 
         sort_column = allowed_sort.get(sort, App.name)

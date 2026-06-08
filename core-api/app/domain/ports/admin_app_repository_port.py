@@ -32,6 +32,10 @@ class AdminAppRepositoryPort(Protocol):
         q: str | None,
         sort: str,
         direction: str,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+        updated_from: datetime | None = None,
+        updated_to: datetime | None = None,
     ) -> Tuple[List[AdminAppDTO], int]:
         ...
 
