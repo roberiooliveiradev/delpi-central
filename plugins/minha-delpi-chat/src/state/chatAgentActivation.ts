@@ -115,6 +115,10 @@ export type ComposerContextBarInput = {
   contextAgentId?: string | null;
   /** Projeto escolhido no menu + sem sair da página atual */
   contextProjectId?: string | null;
+  /** Agente efetivo do turno (overlay, página ou sessão). */
+  effectiveAgentId?: string | null;
+  /** Projeto efetivo do turno (overlay, página ou sessão). */
+  effectiveProjectId?: string | null;
 };
 
 export type ComposerContextBar = {
@@ -132,14 +136,21 @@ export function resolveComposerContextBar(
   const pageProjectId = normalizeId(input.pageProjectId);
   const contextAgentId = normalizeAgentId(input.contextAgentId);
   const contextProjectId = normalizeId(input.contextProjectId);
+  const effectiveAgentId =
+    normalizeAgentId(input.effectiveAgentId) ?? contextAgentId;
+  const effectiveProjectId =
+    normalizeId(input.effectiveProjectId) ?? contextProjectId;
   const items: ComposerContextBarItem[] = [];
 
-  if (contextAgentId && (!pageAgentId || contextAgentId !== pageAgentId)) {
-    items.push({ kind: "agent", id: contextAgentId });
+  if (effectiveAgentId && (!pageAgentId || effectiveAgentId !== pageAgentId)) {
+    items.push({ kind: "agent", id: effectiveAgentId });
   }
 
-  if (contextProjectId && (!pageProjectId || contextProjectId !== pageProjectId)) {
-    items.push({ kind: "project", id: contextProjectId });
+  if (
+    effectiveProjectId &&
+    (!pageProjectId || effectiveProjectId !== pageProjectId)
+  ) {
+    items.push({ kind: "project", id: effectiveProjectId });
   }
 
   return { items };

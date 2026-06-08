@@ -21,6 +21,7 @@ type StreamMessageParams = {
   context?: string;
   attachmentIds?: string[];
   agentId?: string | null;
+  projectId?: string | null;
   chatMode?: "common" | "agent";
   responseMode?: ChatResponseModeId;
   onStatus?: (message: string) => void;
@@ -143,6 +144,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       context,
       attachmentIds,
       agentId,
+      projectId,
       chatMode,
       responseMode,
       onStatus,
@@ -168,6 +170,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               context,
               attachmentIds,
               agentId: agentId ?? undefined,
+              projectId: projectId ?? null,
               chatMode,
               responseMode,
             },

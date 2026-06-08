@@ -6,8 +6,9 @@ from app.application.services.chat_workspace_agent_activation_service import (
 
 
 class FakeSession:
-    def __init__(self, *, agent_id=None, user_id=None, session_id=None):
+    def __init__(self, *, agent_id=None, project_id=None, user_id=None, session_id=None):
         self.agent_id = agent_id
+        self.project_id = project_id
         self.user_id = user_id or uuid4()
         self.id = session_id or uuid4()
 
@@ -90,6 +91,42 @@ def test_resolve_chat_mode_defaults_to_common_without_agent_id():
         )
         == "common"
     )
+
+
+def test_sync_session_project_binding_persists_request_project():
+    project_id = uuid4()
+    session = FakeSession(project_id=None)
+    persisted: list[object] = []
+
+    def update_session_project_id(*, session_id, user_id, project_id):
+        persisted.append(project_id)
+
+    ChatWorkspaceAgentActivationService.sync_session_project_binding(
+        session=session,
+        request_project_id=str(project_id),
+        update_session_project_id=update_session_project_id,
+    )
+
+    assert session.project_id == project_id
+    assert persisted == [project_id]
+
+
+def test_sync_session_project_binding_clears_project_when_null():
+    project_id = uuid4()
+    session = FakeSession(project_id=project_id)
+    cleared: list[object] = []
+
+    def update_session_project_id(*, session_id, user_id, project_id):
+        cleared.append(project_id)
+
+    ChatWorkspaceAgentActivationService.sync_session_project_binding(
+        session=session,
+        request_project_id=None,
+        update_session_project_id=update_session_project_id,
+    )
+
+    assert session.project_id is None
+    assert cleared == [None]
 
 
 def test_sync_session_agent_binding_clears_legacy_agent_on_common_chat():

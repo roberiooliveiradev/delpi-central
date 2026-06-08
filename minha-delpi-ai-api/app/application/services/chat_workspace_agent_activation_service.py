@@ -71,7 +71,10 @@ class ChatWorkspaceAgentActivationService:
         session,
         request_agent_id: str | None,
         chat_mode: str | None,
+        request_project_id: str | None = None,
+        sync_project_binding: bool = False,
         update_session_agent_id,
+        update_session_project_id=None,
     ) -> None:
         """Aplica modo explícito do turno antes de montar workspace (limpa agente legado no chat comum)."""
         mode = ChatWorkspaceAgentActivationService.resolve_chat_mode_for_request(
@@ -85,6 +88,13 @@ class ChatWorkspaceAgentActivationService:
             chat_mode=mode,
             update_session_agent_id=update_session_agent_id,
         )
+
+        if sync_project_binding and update_session_project_id is not None:
+            ChatWorkspaceAgentActivationService.sync_session_project_binding(
+                session=session,
+                request_project_id=request_project_id,
+                update_session_project_id=update_session_project_id,
+            )
 
     @staticmethod
     def sync_session_agent_binding(
@@ -120,6 +130,28 @@ class ChatWorkspaceAgentActivationService:
                 agent_id=parsed_request_agent_id,
             )
             object.__setattr__(session, "agent_id", parsed_request_agent_id)
+
+    @staticmethod
+    def sync_session_project_binding(
+        *,
+        session,
+        request_project_id: str | None,
+        update_session_project_id,
+    ) -> None:
+        """Persiste project_id enviado pelo composer (permite combinar com agente no turno)."""
+        parsed_request_project_id = ChatWorkspaceAgentActivationService._parse_uuid(
+            request_project_id
+        )
+
+        if session.project_id == parsed_request_project_id:
+            return
+
+        update_session_project_id(
+            session_id=session.id,
+            user_id=session.user_id,
+            project_id=parsed_request_project_id,
+        )
+        object.__setattr__(session, "project_id", parsed_request_project_id)
 
     @staticmethod
     def _parse_uuid(value: str | None) -> UUID | None:

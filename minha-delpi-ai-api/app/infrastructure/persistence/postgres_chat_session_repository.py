@@ -104,6 +104,28 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return True
 
+    def update_session_project_id(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        project_id: UUID | None,
+    ) -> bool:
+        model = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.id == session_id)
+            .filter(AiChatSessionModel.user_id == user_id)
+            .first()
+        )
+
+        if not model:
+            return False
+
+        model.project_id = project_id
+        model.updated_at = datetime.now(timezone.utc)
+        db.session.flush()
+
+        return True
+
     def get_session_by_id(self, session_id: UUID) -> ChatSession | None:
         model = AiChatSessionModel.query.filter(
             AiChatSessionModel.id == session_id

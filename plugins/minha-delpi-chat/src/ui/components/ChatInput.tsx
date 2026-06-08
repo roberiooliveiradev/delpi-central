@@ -27,8 +27,6 @@ import {
   composerAttachmentStatusLabel,
   type ComposerAttachmentStatus,
 } from "../chatAttachmentStatus";
-import { CHAT_TEXT_HOME_STARTERS } from "../chatHomeStarters";
-import { CHAT_TEXT_TEMPLATES } from "../chatTextTemplates";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../state/chatAgentActivation";
 
@@ -65,7 +63,6 @@ type ChatInputProps = {
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (attachmentId: string) => void;
   onClearAttachments?: () => void;
-  onInsertQuery?: (query: string) => void;
   plusMenuOpen?: boolean;
   onPlusMenuOpenChange?: (open: boolean) => void;
   responseModes?: ChatResponseModeOption[];
@@ -112,7 +109,6 @@ export function ChatInput({
   onAttachFiles,
   onRemoveAttachment,
   onClearAttachments,
-  onInsertQuery,
   plusMenuOpen,
   onPlusMenuOpenChange,
   responseModes = [],
@@ -223,44 +219,11 @@ export function ChatInput({
             </button>
           </div>
 
-          {onInsertQuery ? (
-            <div className="mdc-chat-input__menu-section">
-              <strong>Textos</strong>
-
-              {CHAT_TEXT_HOME_STARTERS.map((starter) => (
-                <button
-                  key={starter.label}
-                  type="button"
-                  onClick={() => {
-                    onInsertQuery(starter.query);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <FileText size={16} aria-hidden="true" />
-                  <span>{starter.label}</span>
-                </button>
-              ))}
-
-              <p className="mdc-chat-input__menu-hint">Modelos</p>
-
-              {CHAT_TEXT_TEMPLATES.map((template) => (
-                <button
-                  key={template.label}
-                  type="button"
-                  onClick={() => {
-                    onInsertQuery(template.draft);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <FileText size={16} aria-hidden="true" />
-                  <span>{template.label}</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
           <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
-            <strong>Usar app ou agente neste contexto</strong>
+            <strong>Contexto da conversa</strong>
+            <p className="mdc-chat-input__menu-hint">
+              Combine agente e projeto neste turno — ambos podem ficar ativos.
+            </p>
 
             {selectedAgent ? (
               <button
@@ -271,7 +234,7 @@ export function ChatInput({
                 }}
               >
                 <X size={16} aria-hidden="true" />
-                <span>Remover agente deste contexto</span>
+                <span>Remover agente do contexto</span>
               </button>
             ) : null}
 
@@ -307,10 +270,6 @@ export function ChatInput({
                 </button>
               </div>
             ))}
-          </div>
-
-          <div className="mdc-chat-input__menu-section">
-            <strong>Usar projeto neste contexto</strong>
 
             {selectedProject ? (
               <button
@@ -321,7 +280,7 @@ export function ChatInput({
                 }}
               >
                 <X size={16} aria-hidden="true" />
-                <span>Remover projeto deste contexto</span>
+                <span>Remover projeto do contexto</span>
               </button>
             ) : null}
 

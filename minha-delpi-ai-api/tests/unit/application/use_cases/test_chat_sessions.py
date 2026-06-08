@@ -115,6 +115,9 @@ class FakeChatSessionRepository:
     def update_session_agent_id(self, *args, **kwargs):
         return False
 
+    def update_session_project_id(self, *args, **kwargs):
+        return False
+
     def set_session_pinned(self, *args, **kwargs):
         return None
 

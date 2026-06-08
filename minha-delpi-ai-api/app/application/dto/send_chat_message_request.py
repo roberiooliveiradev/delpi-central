@@ -11,6 +11,9 @@ class SendChatMessageRequest:
     attachment_ids: list[str] | None = None
     resend_from_message_id: str | None = None
     agent_id: str | None = None
+    project_id: str | None = None
+    # True quando o payload trouxe projectId (permite limpar projeto com null explícito).
+    sync_project_binding: bool = False
     # common | agent — modo explícito do MFE (chat comum limpa agent_id legado na sessão).
     chat_mode: str | None = None
     # Modo de resposta: fast | normal | thinker (ver ChatResponseModeService).

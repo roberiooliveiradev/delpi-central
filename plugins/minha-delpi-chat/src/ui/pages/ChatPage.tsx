@@ -64,7 +64,6 @@ import {
   CHAT_SHORTCUT_PROMPT_COPY,
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
-  hasShortcutPlaceholders,
   normalizeShortcutTemplate,
   resolveStarterPromptOptions,
   starterRequiresShortcutModal,
@@ -344,7 +343,7 @@ export function ChatPage({
     getResponseMode,
     onSessionActivated: (sessionId, context) => {
       const agentId = context?.agentId ?? requestedAgentId;
-      const projectId = context?.projectId ?? selectedProjectId;
+      const projectId = context?.projectId ?? requestedProjectId;
 
       if (agentId) {
         navigateChatHref(buildChatAgentSessionHref(agentId, sessionId), { replace: true });
@@ -804,16 +803,22 @@ export function ChatPage({
   const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
   const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
   const contextAgent = agents.find((agent) => agent.id === contextAgentId);
+  const effectiveComposerProject = projects.find(
+    (project) => project.id === requestedProjectId,
+  );
+  const effectiveComposerAgent = agents.find((agent) => agent.id === requestedAgentId);
   const composerContextBar = resolveComposerContextBar({
     pageAgentId: activeAgentPageId,
     pageProjectId: selectedProject?.id ?? null,
     contextAgentId,
     contextProjectId,
+    effectiveAgentId: requestedAgentId,
+    effectiveProjectId: requestedProjectId,
   });
   const chatModePresentation = resolveChatModePresentation({
     explicitAgentActive,
-    agentName: activeAgent?.name ?? null,
-    projectName: selectedProject?.name ?? null,
+    agentName: effectiveComposerAgent?.name ?? activeAgent?.name ?? null,
+    projectName: effectiveComposerProject?.name ?? null,
   });
   const helpAgentId = contextAgentId ?? conversationAgentId ?? activeAgentPageId ?? undefined;
 
@@ -842,12 +847,13 @@ export function ChatPage({
 
       await sendMessage({
         ...params,
+        projectId: requestedProjectId,
         ...(agentId
           ? { agentId, chatMode: "agent" as const }
           : {}),
       });
     },
-    [agents, draft, requestedAgentId, sendMessage],
+    [agents, draft, requestedAgentId, requestedProjectId, sendMessage],
   );
 
   useEffect(() => {
@@ -1760,18 +1766,6 @@ export function ChatPage({
     }
   }
 
-  async function handleInsertQuery(query: string) {
-    const promptOptions = hasShortcutPlaceholders(query)
-      ? resolveStarterPromptOptions(query, {})
-      : CHAT_SHORTCUT_PROMPT_COPY.insert;
-
-    const resolved = await resolveShortcutQuery(query, promptOptions);
-
-    if (resolved) {
-      setDraft(resolved);
-    }
-  }
-
   function handleAgentIcebreaker(query: string) {
     void handleHomeStarter(query);
   }
@@ -1922,40 +1916,35 @@ export function ChatPage({
   }
 
   function getComposerPlaceholder() {
+    const project = effectiveComposerProject;
+    const agent = effectiveComposerAgent ?? contextAgent ?? conversationAgent ?? activeAgentPage;
+
     if (isNarrow) {
-      if (selectedProject && contextAgent) {
-        return `Chat em ${selectedProject.name}`;
+      if (project && agent) {
+        return `Chat em ${project.name}`;
       }
 
-      if (selectedProject) {
-        return `Chat no projeto`;
+      if (project) {
+        return "Chat no projeto";
       }
 
-      if (contextAgent || conversationAgent) {
+      if (agent) {
         return "Pergunte ao agente";
       }
 
       return "Pergunte algo";
     }
 
-    if (selectedProject && contextAgent) {
-      return `Pergunte sobre ${selectedProject.name} com ${contextAgent.name}`;
+    if (project && agent) {
+      return `Pergunte sobre ${project.name} com ${agent.name}`;
     }
 
-    if (selectedProject) {
-      return `Pergunte sobre ${selectedProject.name} ou envie um arquivo`;
+    if (project) {
+      return `Pergunte sobre ${project.name} ou envie um arquivo`;
     }
 
-    if (contextAgent) {
-      return `Código, descrição ou pergunta — ${contextAgent.name} consulta dados autorizados`;
-    }
-
-    if (conversationAgent) {
-      return `Pergunte ao agente ${conversationAgent.name}`;
-    }
-
-    if (activeAgentPage) {
-      return `Converse com ${activeAgentPage.name} — código, descrição ou pergunta`;
+    if (agent) {
+      return `Código, descrição ou pergunta — ${agent.name} consulta dados autorizados`;
     }
 
     return "O que vamos resolver hoje? Pode perguntar do seu jeito.";
@@ -2631,9 +2620,6 @@ export function ChatPage({
                   onChange={setDraft}
                   onSubmit={handleSubmitMessage}
                   onCancel={cancelStreaming}
-                  onInsertQuery={(query) => {
-                    void handleInsertQuery(query);
-                  }}
                 />
               </div>
             </section>

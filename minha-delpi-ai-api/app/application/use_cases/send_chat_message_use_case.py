@@ -130,7 +130,10 @@ class SendChatMessageUseCase:
             session=session,
             request_agent_id=request.agent_id,
             chat_mode=request.chat_mode,
+            request_project_id=request.project_id,
+            sync_project_binding=request.sync_project_binding,
             update_session_agent_id=self.chat_repository.update_session_agent_id,
+            update_session_project_id=self.chat_repository.update_session_project_id,
         )
 
         workspace_context = self.turn_support.build_workspace_context(

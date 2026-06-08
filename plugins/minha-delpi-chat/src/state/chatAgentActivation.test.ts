@@ -119,6 +119,20 @@ describe("chatAgentActivation", () => {
     });
   });
 
+  it("exibe agente e projeto efetivos quando ambos estão ativos no chat comum", () => {
+    expect(
+      resolveComposerContextBar({
+        effectiveAgentId: "agent-a",
+        effectiveProjectId: "project-b",
+      }),
+    ).toEqual({
+      items: [
+        { kind: "agent", id: "agent-a" },
+        { kind: "project", id: "project-b" },
+      ],
+    });
+  });
+
   it("mostra agente de contexto no projeto sem repetir o projeto na barra", () => {
     expect(
       resolveComposerContextBar({

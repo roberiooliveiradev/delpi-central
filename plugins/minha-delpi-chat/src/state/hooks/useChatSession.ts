@@ -1417,6 +1417,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     session?: ChatSession;
     /** Overlay do turno (ex.: ativação automática de agente operacional). */
     agentId?: string | null;
+    projectId?: string | null;
     chatMode?: "common" | "agent";
   } = {}) => {
     const message = (params.content ?? draft).trim();
@@ -1427,6 +1428,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     const effectiveAgentId = params.agentId ?? options.agentId ?? null;
+    const effectiveProjectId = params.projectId ?? options.projectId ?? null;
     const effectiveChatMode =
       params.chatMode ?? options.chatMode ?? (effectiveAgentId ? "agent" : "common");
 
@@ -1614,6 +1616,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
         agentId: effectiveAgentId,
+        projectId: effectiveProjectId,
         chatMode: effectiveChatMode,
         responseMode: getResponseModeRef.current?.() ?? "normal",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
