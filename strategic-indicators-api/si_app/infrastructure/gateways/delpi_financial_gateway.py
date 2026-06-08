@@ -18,6 +18,92 @@ from si_app.infrastructure.http.auth_header import bearer_authorization_from_con
 from delpi_api_client import DelpiApiClient
 
 
+def _std_financial_params(
+    *,
+    branch: str | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> dict[str, str | None]:
+    return {
+        "branch": branch,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+
+
+class DelpiFinancialSheetsGateway:
+    """EBITDA, custos fixos e PMR via planilhas na api-delpi."""
+
+    def __init__(self, client: DelpiApiClient) -> None:
+        self._client = client
+        self._cache: dict[tuple, dict] = {}
+
+    def _fetch_cached(self, key: tuple, fetcher: callable) -> dict:
+        if key not in self._cache:
+            self._cache[key] = fetcher()
+        return self._cache[key]
+
+    def get_ebitda_pct(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        key = ("ebitda", branch or "", start_date or "", end_date or "")
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_ebitda_pct(
+                params=_std_financial_params(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_fixed_cost_pct(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        key = ("fixed-cost", branch or "", start_date or "", end_date or "")
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_fixed_cost_pct(
+                params=_std_financial_params(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_pmr(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        key = ("pmr", branch or "", start_date or "", end_date or "")
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_pmr(
+                params=_std_financial_params(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                ),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+
 class DelpiFinancialGateway(FinancialQueryRepositoryPort):
     def __init__(self, client: DelpiApiClient) -> None:
         self._client = client

@@ -76,6 +76,52 @@ class DelpiOeeGateway(OverallEquipmentEffectivenessRepositoryPort):
         return results
 
 
+class DelpiProductionSheetsGateway:
+    """MO, custo de produção e depreciação via planilhas na api-delpi."""
+
+    def __init__(self, client: DelpiApiClient) -> None:
+        self._client = client
+        self._cache: dict[tuple, dict] = {}
+
+    def _fetch_cached(self, key: tuple, fetcher: callable) -> dict:
+        if key not in self._cache:
+            self._cache[key] = fetcher()
+        return self._cache[key]
+
+    def get_direct_labor_cost_pct(self, request: ProductionRequest) -> float | None:
+        key = ("direct-labor", request.branch or "", request.start_date or "", request.end_date or "")
+        data = self._fetch_cached(
+            key,
+            lambda: self._client.get_direct_labor_cost_pct(
+                params=_std_params(request.branch, request.start_date, request.end_date),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+        return _opt_float(data.get("direct_labor_cost_pct"))
+
+    def get_production_cost_pct(self, request: ProductionRequest) -> float | None:
+        key = ("production-cost", request.branch or "", request.start_date or "", request.end_date or "")
+        data = self._fetch_cached(
+            key,
+            lambda: self._client.get_production_cost_pct(
+                params=_std_params(request.branch, request.start_date, request.end_date),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+        return _opt_float(data.get("production_cost_pct"))
+
+    def get_depreciation_pct(self, request: ProductionRequest) -> float | None:
+        key = ("depreciation", request.branch or "", request.start_date or "", request.end_date or "")
+        data = self._fetch_cached(
+            key,
+            lambda: self._client.get_depreciation_pct(
+                params=_std_params(request.branch, request.start_date, request.end_date),
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+        return _opt_float(data.get("depreciation_pct"))
+
+
 class DelpiOtdProductionGateway(OnTimeDeliveryRepositoryPort):
     def __init__(self, client: DelpiApiClient) -> None:
         self._client = client

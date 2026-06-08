@@ -18,32 +18,45 @@ def test_is_consolidated_sheet_row() -> None:
     assert is_consolidated_sheet_row("01") is False
 
 
-def test_build_snapshot_uses_sheet_pct_without_rol_division() -> None:
-    service = FinancialMetricsSnapshotService(
-        ebitda_repository=MagicMock(),
-        fixed_cost_repository=MagicMock(),
-        receivables_repository=MagicMock(),
-        financial_query_repository=MagicMock(),
+def _build_service(
+    *,
+    ebitda: dict,
+    fixed_cost: dict,
+    pmr: dict,
+    rol_by_branch: dict[str, dict],
+) -> FinancialMetricsSnapshotService:
+    sheets_gateway = MagicMock()
+    sheets_gateway.get_ebitda_pct.return_value = ebitda
+    sheets_gateway.get_fixed_cost_pct.return_value = fixed_cost
+    sheets_gateway.get_pmr.return_value = pmr
+
+    financial_query_repository = MagicMock()
+    financial_query_repository.list_rol_by_branch.return_value = rol_by_branch
+
+    return FinancialMetricsSnapshotService(
+        financial_sheets_gateway=sheets_gateway,
+        financial_query_repository=financial_query_repository,
     )
-    service._financial_query_repository.list_rol_by_branch.return_value = {
-        "01": {"rol": 1_000_000},
-    }
+
+
+def test_build_snapshot_uses_api_pct_without_rol_division() -> None:
+    service = _build_service(
+        ebitda={
+            "ebitda_over_rol_pct": 13.5,
+            "branches": [{"branch": "01", "ebitda_over_rol_pct": 11.0}],
+        },
+        fixed_cost={
+            "fixed_cost_over_rol_pct": 14.0,
+            "branches": [{"branch": "01", "fixed_cost_over_rol_pct": 12.0}],
+        },
+        pmr={"pmr_days": None, "branches": []},
+        rol_by_branch={"01": {"rol": 1_000_000}},
+    )
 
     snapshot = service._build_snapshot(
         start_date="01-05-2026",
         end_date="31-05-2026",
         branch=None,
-        rows_override={
-            "ebitda_rows": [
-                {"filial": "", "data": "15-05-2026", "ebitida": 13.5},
-                {"filial": "01", "data": "15-05-2026", "ebitida": 11.0},
-            ],
-            "fixed_cost_rows": [
-                {"filial": "", "data": "15-05-2026", "custos_fixos": 14.0},
-                {"filial": "01", "data": "15-05-2026", "custos_fixos": 12.0},
-            ],
-            "receivables_rows": [],
-        },
     )
 
     consolidated = next(
@@ -58,27 +71,23 @@ def test_build_snapshot_uses_sheet_pct_without_rol_division() -> None:
 
 
 def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
-    service = FinancialMetricsSnapshotService(
-        ebitda_repository=MagicMock(),
-        fixed_cost_repository=MagicMock(),
-        receivables_repository=MagicMock(),
-        financial_query_repository=MagicMock(),
+    service = _build_service(
+        ebitda={
+            "ebitda_over_rol_pct": 0.0,
+            "branches": [{"branch": "01", "ebitda_over_rol_pct": 0.0}],
+        },
+        fixed_cost={
+            "fixed_cost_over_rol_pct": 0.0,
+            "branches": [],
+        },
+        pmr={"pmr_days": None, "branches": []},
+        rol_by_branch={"01": {"rol": 1_000_000}},
     )
-    service._financial_query_repository.list_rol_by_branch.return_value = {
-        "01": {"rol": 1_000_000},
-    }
 
     snapshot = service._build_snapshot(
         start_date="01-05-2026",
         end_date="31-05-2026",
         branch=None,
-        rows_override={
-            "ebitda_rows": [
-                {"filial": "01", "data": "15-05-2026", "ebitida": 0.0},
-            ],
-            "fixed_cost_rows": [],
-            "receivables_rows": [],
-        },
     )
 
     branch_01 = next(item for item in snapshot.branches if item.branch == "01")
@@ -88,27 +97,20 @@ def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
 
 
 def test_build_snapshot_returns_none_pmr_without_receivables_rows() -> None:
-    service = FinancialMetricsSnapshotService(
-        ebitda_repository=MagicMock(),
-        fixed_cost_repository=MagicMock(),
-        receivables_repository=MagicMock(),
-        financial_query_repository=MagicMock(),
+    service = _build_service(
+        ebitda={
+            "ebitda_over_rol_pct": 10.0,
+            "branches": [{"branch": "02", "ebitda_over_rol_pct": 10.0}],
+        },
+        fixed_cost={"fixed_cost_over_rol_pct": 0.0, "branches": []},
+        pmr={"pmr_days": None, "branches": []},
+        rol_by_branch={"02": {"rol": 500_000}},
     )
-    service._financial_query_repository.list_rol_by_branch.return_value = {
-        "02": {"rol": 500_000},
-    }
 
     snapshot = service._build_snapshot(
         start_date="01-05-2026",
         end_date="31-05-2026",
         branch=None,
-        rows_override={
-            "ebitda_rows": [
-                {"filial": "02", "data": "15-05-2026", "ebitida": 10.0},
-            ],
-            "fixed_cost_rows": [],
-            "receivables_rows": [],
-        },
     )
 
     branch_02 = next(item for item in snapshot.branches if item.branch == "02")
@@ -117,27 +119,20 @@ def test_build_snapshot_returns_none_pmr_without_receivables_rows() -> None:
 
 
 def test_build_snapshot_keeps_zero_pmr_when_sheet_has_zero() -> None:
-    service = FinancialMetricsSnapshotService(
-        ebitda_repository=MagicMock(),
-        fixed_cost_repository=MagicMock(),
-        receivables_repository=MagicMock(),
-        financial_query_repository=MagicMock(),
+    service = _build_service(
+        ebitda={"ebitda_over_rol_pct": 0.0, "branches": []},
+        fixed_cost={"fixed_cost_over_rol_pct": 0.0, "branches": []},
+        pmr={
+            "pmr_days": 0.0,
+            "branches": [{"branch": "02", "pmr_days": 0.0}],
+        },
+        rol_by_branch={"02": {"rol": 500_000}},
     )
-    service._financial_query_repository.list_rol_by_branch.return_value = {
-        "02": {"rol": 500_000},
-    }
 
     snapshot = service._build_snapshot(
         start_date="01-05-2026",
         end_date="31-05-2026",
         branch=None,
-        rows_override={
-            "ebitda_rows": [],
-            "fixed_cost_rows": [],
-            "receivables_rows": [
-                {"filial": "02", "data": "15-05-2026", "prazo_medio_recebimento": 0},
-            ],
-        },
     )
 
     branch_02 = next(item for item in snapshot.branches if item.branch == "02")

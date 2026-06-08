@@ -35,8 +35,9 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 **Não remover na fase 1:**
 
 - Gateways `delpi_*`, use cases e DTOs departamentais usados pelos snapshot providers.
-- Google Sheets em qualidade (Kaizen/5S), financeiro (EBITDA/custo fixo/PMR) e produção (MO/custo/depreciação).
 - Portal RH (`persistence/portal_rh/`).
+
+**Fase 2 concluída:** SI não lê mais Google Sheets localmente; planilhas só na api-delpi.
 
 ---
 
@@ -47,8 +48,8 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | Departamento | Hoje no SI | Migrar para (api-delpi) |
 |--------------|------------|--------------------------|
 | Qualidade | ~~`KaizenRepository`, `Audit5SRepository` local~~ **feito jun/2026** | `GET /quality/kaizens/summary`, `GET /quality/audit-5s/summary` |
-| Financeiro | `FinancialEbitdaRepository`, fixed cost, receivables local | `GET /financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr` |
-| Produção | `DirectLaborRepository`, production cost, depreciation local | `GET /production/direct_labor_cost_pct`, etc. |
+| Financeiro | ~~Sheets locais~~ **feito jun/2026** | `GET /financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr` |
+| Produção | ~~Sheets locais~~ **feito jun/2026** | `GET /production/direct_labor_cost_pct`, `/production_cost_pct`, `/depreciation_pct` |
 
 **Passos por indicador:**
 

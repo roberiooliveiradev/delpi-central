@@ -60,6 +60,30 @@ class DelpiApiClient:
     def get_rol_target_pct(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/financial/rol-target-pct", params=params, authorization=authorization)
 
+    def get_ebitda_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/financial/ebitda_pct", params=params, authorization=authorization)
+
+    def get_fixed_cost_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/financial/fixed_cost_pct", params=params, authorization=authorization)
+
+    def get_pmr(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/financial/pmr", params=params, authorization=authorization)
+
     # -- Commercial --
     def get_new_business_rol_pct(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/commercial/new-business-rol-pct", params=params, authorization=authorization)
@@ -82,6 +106,30 @@ class DelpiApiClient:
 
     def get_on_time_delivery(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/production/on_time_delivery_pct", params=params, authorization=authorization)
+
+    def get_direct_labor_cost_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/production/direct_labor_cost_pct", params=params, authorization=authorization)
+
+    def get_production_cost_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/production/production_cost_pct", params=params, authorization=authorization)
+
+    def get_depreciation_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/production/depreciation_pct", params=params, authorization=authorization)
 
     # -- Supplies --
     def get_cpv(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:

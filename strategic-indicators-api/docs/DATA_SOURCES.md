@@ -25,11 +25,11 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 
 | Departamento | Fontes principais | Acesso | Coletor (si_app) |
 |--------------|-------------------|--------|------------------|
-| Financeiro | ROL (TOTVS), EBITDA/custo fixo (Sheets), recebíveis/PMR (Sheets) | `api-delpi` HTTP + Sheets | `financial_indicators_snapshot_provider` |
+| Financeiro | ROL, EBITDA, custo fixo, PMR | `api-delpi` HTTP | `financial_indicators_snapshot_provider` |
 | Comercial | ROL por segmento, taxa fechamento, OTD pedidos, % novos negócios | `api-delpi` HTTP | `commercial_indicators_snapshot_provider` |
-| Produção | OTD e OEE (TOTVS), MO/custo/depreciação (Sheets) | `api-delpi` HTTP + Sheets | `production_indicators_snapshot_provider` |
+| Produção | OTD, OEE, MO, custo e depreciação | `api-delpi` HTTP | `production_indicators_snapshot_provider` |
 | Qualidade | PPM, NC, Kaizen e 5S | `api-delpi` HTTP | `quality_indicators_snapshot_provider` |
-| Suprimentos | CPV, giro de estoque, OTD, estoque (TOTVS); economia em negociações (Sheets) | `api-delpi` HTTP + Sheets | `supplies_indicators_snapshot_provider` |
+| Suprimentos | CPV, giro de estoque, OTD, estoque, economia em negociações | `api-delpi` HTTP | `supplies_indicators_snapshot_provider` |
 | Engenharia | LMP (TOTVS), Transforma+ (Sheets) | `api-delpi` HTTP + Sheets | `engineering_indicators_snapshot_provider` |
 | RH | Portal RH (Postgres) | direto | `hr_indicators_snapshot_provider` |
 
@@ -41,7 +41,7 @@ A partir de maio/2026, o SI **não acessa mais o TOTVS/SQL Server diretamente**.
 
 Os repositórios TOTVS originais foram **removidos** (fase 1 em [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md)). Medições operacionais passam por gateways HTTP (`si_app/infrastructure/gateways/delpi_*_gateway.py`). Os ports de domínio não mudaram — a troca é transparente para use cases e services.
 
-**Fase 2 (em andamento):** qualidade Kaizen/5S já via HTTP (`DelpiKaizenGateway`, `DelpiAudit5SGateway`). Pendente: financeiro e produção (Sheets locais).
+**Fase 2 (concluída jun/2026):** todas as planilhas do SI passam pela api-delpi (`DelpiFinancialSheetsGateway`, `DelpiProductionSheetsGateway`, gateways de qualidade e suprimentos).
 
 ## api-delpi (HTTP)
 

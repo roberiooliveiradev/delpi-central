@@ -10,20 +10,14 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
-from si_app.domain.ports.production.depreciation_repository_port import (
-    DepreciationRepositoryPort,
-)
-from si_app.domain.ports.production.direct_labor_repository_port import (
-    DirectLaborRepositoryPort,
-)
 from si_app.domain.ports.production.on_time_delivery_repository_port import (
     OnTimeDeliveryRepositoryPort,
 )
 from si_app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
-from si_app.domain.ports.production.production_cost_repository_port import (
-    ProductionCostRepositoryPort,
+from si_app.infrastructure.gateways.delpi_production_gateway import (
+    DelpiProductionSheetsGateway,
 )
 from si_app.shared.branch_filter import effective_query_branch
 
@@ -48,16 +42,12 @@ class ProductionMetricsSnapshotService:
     def __init__(
         self,
         *,
-        direct_labor_repository: DirectLaborRepositoryPort,
-        production_cost_repository: ProductionCostRepositoryPort,
-        depreciation_repository: DepreciationRepositoryPort,
+        production_sheets_gateway: DelpiProductionSheetsGateway,
         overall_equipment_effectiveness_repository: OverallEquipmentEffectivenessRepositoryPort,
         on_time_delivery_repository: OnTimeDeliveryRepositoryPort,
         financial_query_repository: FinancialQueryRepositoryPort,
     ) -> None:
-        self._direct_labor_repository = direct_labor_repository
-        self._production_cost_repository = production_cost_repository
-        self._depreciation_repository = depreciation_repository
+        self._production_sheets_gateway = production_sheets_gateway
         self._overall_equipment_effectiveness_repository = (
             overall_equipment_effectiveness_repository
         )
@@ -126,7 +116,6 @@ class ProductionMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> ProductionUnitMetricsSnapshot:
-        """Snapshot consolidado em passagem única (ROL + planilhas + OEE + OTD)."""
         return self._build_snapshot(
             branch=None,
             start_date=start_date,
@@ -158,26 +147,16 @@ class ProductionMetricsSnapshotService:
         )
 
         rol_payload = self._financial_query_repository.get_rol(rol_request)
-        rol_value = self._to_float(rol_payload.get("rol")) or 0.0
+        rol_value = self._rol_value(rol_payload)
 
-        direct_labor_items = self._direct_labor_repository.get_direct_labor_cost(
+        direct_labor_cost_pct = self._production_sheets_gateway.get_direct_labor_cost_pct(
             production_request
         )
-        production_cost_items = self._production_cost_repository.get_production_cost(
+        production_cost_pct = self._production_sheets_gateway.get_production_cost_pct(
             production_request
         )
-        depreciation_items = self._depreciation_repository.get_depreciation_cost(
+        depreciation_pct = self._production_sheets_gateway.get_depreciation_pct(
             production_request
-        )
-
-        average_direct_labor_cost = self._average_cost(
-            [item.cost for item in direct_labor_items if item.cost is not None]
-        )
-        average_production_cost = self._average_cost(
-            [item.cost for item in production_cost_items if item.cost is not None]
-        )
-        average_depreciation_cost = self._average_cost(
-            [item.cost for item in depreciation_items if item.cost is not None]
         )
 
         oee = self._overall_equipment_effectiveness_repository.get_overall_equipment_effectiveness(
@@ -190,41 +169,28 @@ class ProductionMetricsSnapshotService:
             start_date=start_date,
             end_date=end_date,
             rol=rol_value,
-            average_direct_labor_cost=average_direct_labor_cost,
-            average_production_cost=average_production_cost,
-            average_depreciation_cost=average_depreciation_cost,
-            direct_labor_cost_pct=self._calculate_pct(
-                numerator=average_direct_labor_cost,
-                denominator=rol_value,
-            ),
-            production_cost_pct=self._calculate_pct(
-                numerator=average_production_cost,
-                denominator=rol_value,
-            ),
-            depreciation_pct=self._calculate_pct(
-                numerator=average_depreciation_cost,
-                denominator=rol_value,
-            ),
+            average_direct_labor_cost=self._cost_from_pct(rol_value, direct_labor_cost_pct),
+            average_production_cost=self._cost_from_pct(rol_value, production_cost_pct),
+            average_depreciation_cost=self._cost_from_pct(rol_value, depreciation_pct),
+            direct_labor_cost_pct=direct_labor_cost_pct,
+            production_cost_pct=production_cost_pct,
+            depreciation_pct=depreciation_pct,
             oee_pct=self._to_float(getattr(oee, "oee_pct", None)),
             otd_pct=self._to_float(getattr(otd, "on_time_delivery_pct", None)),
         )
         self._cache[key] = snapshot
         return snapshot
 
-    def _average_cost(self, values: list[float]) -> float:
-        if not values:
+    def _cost_from_pct(self, rol: float, pct: float | None) -> float:
+        if pct is None or not rol:
             return 0.0
-        return sum(values) / len(values)
+        return rol * pct / 100
 
-    def _calculate_pct(
-        self,
-        *,
-        numerator: float,
-        denominator: float,
-    ) -> float | None:
-        if not denominator:
-            return None
-        return (numerator / denominator) * 100
+    def _rol_value(self, payload: dict) -> float:
+        value = self._to_float(payload.get("rol"))
+        if value is not None:
+            return value
+        return self._to_float(payload.get("rol_with_ipi")) or 0.0
 
     def _to_float(self, value) -> float | None:
         if value is None:

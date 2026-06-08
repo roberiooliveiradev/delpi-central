@@ -92,7 +92,7 @@ Pacote monorepo `shared/` (instalado com `pip install -e ./shared[fastapi]`):
 
 Ver [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md).
 
-- Removidos: `persistence/totvs/`, `providers/totvs/`, Sheets Transforma+ legado, `pyodbc`, factories HTTP mortas nos composers.
-- Mantidos: gateways HTTP, use cases usados por snapshots, Sheets locais (qualidade/financeiro/produção) até a fase 2.
+- Removidos: `persistence/totvs/`, `providers/totvs/`, `persistence/google_sheets/`, `providers/google_sheets/`, `pyodbc`.
+- Mantidos: gateways HTTP (`delpi_*_gateway.py`), use cases e snapshot services consumindo api-delpi.
 
 A api-delpi mantém composers departamentais para rotas `/financial`, `/commercial`, etc.
