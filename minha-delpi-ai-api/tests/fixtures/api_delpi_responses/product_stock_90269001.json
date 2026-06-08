@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "items": [
+      {
+        "product_code": "90269001",
+        "branch": "01",
+        "warehouse": "01",
+        "current_quantity": 120.0,
+        "committed_quantity": 10.0,
+        "reserved_quantity": 5.0,
+        "available_quantity": 105.0,
+        "physical_location": "A-01",
+        "default_warehouse": "01",
+        "cost_center": "101",
+        "warehouse_section": "EXP"
+      },
+      {
+        "product_code": "90269001",
+        "branch": "02",
+        "warehouse": "01",
+        "current_quantity": 45.0,
+        "committed_quantity": 0.0,
+        "reserved_quantity": 0.0,
+        "available_quantity": 45.0,
+        "physical_location": null,
+        "default_warehouse": "01",
+        "cost_center": null,
+        "warehouse_section": null
+      }
+    ],
+    "page": 1,
+    "page_size": 50,
+    "total": 2,
+    "total_pages": 1
+  }
+}

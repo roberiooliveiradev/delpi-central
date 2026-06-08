@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "root": {
+      "code": "90269001",
+      "description": "PRODUTO FICTICIO PA",
+      "type": "PA",
+      "unit": "UN",
+      "quantity": 1.0
+    },
+    "items": [
+      {
+        "code": "50219001",
+        "description": "INTERMEDIARIO FICTICIO",
+        "type": "PI",
+        "unit": "UN",
+        "quantity": 2.0,
+        "components": [
+          {
+            "code": "10019001",
+            "description": "MATERIA-PRIMA FICTICIA",
+            "type": "MP",
+            "unit": "KG",
+            "quantity": 0.5,
+            "components": []
+          }
+        ]
+      }
+    ],
+    "page": 1,
+    "page_size": 50,
+    "total": 1,
+    "total_pages": 1
+  }
+}

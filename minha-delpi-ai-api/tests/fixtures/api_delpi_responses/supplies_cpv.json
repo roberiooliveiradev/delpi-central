@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "branch": "01",
+    "start_date": "20260401",
+    "end_date": "20260430",
+    "summary": {
+      "cpv_total": 1850000.0,
+      "rol_with_ipi": 4200000.0,
+      "cpv_percentage": 44.05,
+      "total_movements": 1280,
+      "total_quantity": 54000.0,
+      "average_cost_per_movement": 1445.31,
+      "average_cost_per_unit": 34.26
+    },
+    "by_cfop": [
+      {
+        "cfop": "5101",
+        "cpv_total": 1200000.0,
+        "total_quantity": 35000.0,
+        "total_movements": 800
+      }
+    ],
+    "by_tm": [],
+    "top_products": [
+      {
+        "product_code": "90269001",
+        "product_description": "PRODUTO FICTICIO PA",
+        "cpv_total": 85000.0,
+        "total_quantity": 1200.0
+      }
+    ],
+    "top_documents": []
+  }
+}

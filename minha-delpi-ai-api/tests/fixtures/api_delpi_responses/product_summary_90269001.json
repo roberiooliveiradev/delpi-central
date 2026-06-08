@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "code": "90269001",
+      "description": "PRODUTO FICTICIO PA",
+      "type": "PA",
+      "unit": "UN"
+    },
+    "stock": [
+      {
+        "product_code": "90269001",
+        "branch": "01",
+        "warehouse": "01",
+        "current_quantity": 120.0,
+        "committed_quantity": 10.0,
+        "reserved_quantity": 5.0,
+        "available_quantity": 105.0,
+        "physical_location": null,
+        "default_warehouse": "01",
+        "cost_center": null,
+        "warehouse_section": null
+      }
+    ],
+    "prices": [
+      {
+        "table": "001",
+        "price": 125.5,
+        "currency": "BRL"
+      }
+    ]
+  }
+}

@@ -28,7 +28,15 @@ from app.application.dto.product.product_playbook_request import ProductPlaybook
 
 from app.interface.http.openapi_agent_metadata import (
     PRODUCT_ANALYSER,
+    PRODUCT_CUSTOMERS,
+    PRODUCT_DETAIL,
+    PRODUCT_GUIDE,
+    PRODUCT_INSPECTION,
+    PRODUCT_INTERNAL_MOVEMENTS,
+    PRODUCT_PARENTS,
+    PRODUCT_PRICING,
     PRODUCT_PURCHASES,
+    PRODUCT_SALES_BILLING,
     PRODUCT_SALES_OPEN_ORDERS,
     PRODUCT_SALES_SUMMARY,
     PRODUCT_SEARCH,
@@ -38,6 +46,8 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_PRODUCTION_STATUS,
     PRODUCT_SHIPPING_STATUS,
     PRODUCT_FACTORY_STATUS,
+    PRODUCT_SUMMARY,
+    PRODUCT_SUPPLIERS,
 )
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -101,11 +111,7 @@ def search_products_route(
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
 
-@router.get(
-    "/{code}",
-    summary="Descrição e dados cadastrais do produto",
-    description="Retorna os dados cadastrais completos de um produto: código, descrição, tipo, unidade, grupo, custo, armazém padrão, revisão e NCM.",
-)
+@router.get("/{code}", **PRODUCT_DETAIL)
 @require_permission("api-delpi.access")
 def get_product_detail(code: str):
     try:
@@ -127,11 +133,7 @@ def get_product_detail(code: str):
         return error_response(str(e))
 
 
-@router.get(
-    "/{code}/summary",
-    summary="Resumo consolidado do produto",
-    description="Retorna um resumo completo com dados cadastrais, estoque por filial e preços em uma única consulta. Ideal para perguntas gerais sobre o produto.",
-)
+@router.get("/{code}/summary", **PRODUCT_SUMMARY)
 @require_permission("api-delpi.access")
 def get_product_summary(code: str):
     try:
@@ -381,7 +383,7 @@ async def structure_excel_public(
             status_code=500
         )
     
-@router.get("/{code}/parents")
+@router.get("/{code}/parents", **PRODUCT_PARENTS)
 @require_permission("api-delpi.access")
 def parents(
     code: str,
@@ -411,7 +413,7 @@ def parents(
 
         return error_response(str(e))
 
-@router.get("/{code}/suppliers")
+@router.get("/{code}/suppliers", **PRODUCT_SUPPLIERS)
 @require_permission("api-delpi.access")
 def suppliers(
     code: str,
@@ -439,7 +441,7 @@ def suppliers(
 
         return error_response(str(e))
     
-@router.get("/{code}/customers")
+@router.get("/{code}/customers", **PRODUCT_CUSTOMERS)
 @require_permission("api-delpi.access")
 def customers(
     code: str,
@@ -467,7 +469,7 @@ def customers(
 
         return error_response(str(e))
     
-@router.get("/{code}/inspection")
+@router.get("/{code}/inspection", **PRODUCT_INSPECTION)
 @require_permission("api-delpi.access")
 def inspection(
     code: str,
@@ -497,7 +499,7 @@ def inspection(
 
         return error_response(str(e))
     
-@router.get("/{code}/guide")
+@router.get("/{code}/guide", **PRODUCT_GUIDE)
 @require_permission("api-delpi.access")
 def guide(
     code: str,
@@ -529,7 +531,7 @@ def guide(
 
         return error_response(str(e))
 
-@router.get("/{code}/internal-movements")
+@router.get("/{code}/internal-movements", **PRODUCT_INTERNAL_MOVEMENTS)
 @require_permission("api-delpi.access")
 def internal_movements(
     code: str,
@@ -752,10 +754,7 @@ def product_sales_open_orders(code: str):
 
         return error_response(f"Unexpected error: {e}")
     
-@router.get(
-    "/{code}/sales/billing",
-    summary="Product billing summary"
-)
+@router.get("/{code}/sales/billing", **PRODUCT_SALES_BILLING)
 @require_permission("api-delpi.access")
 def product_sales_billing(code: str):
 
@@ -778,10 +777,7 @@ def product_sales_billing(code: str):
 
         return error_response(f"Unexpected error: {e}")
     
-@router.get(
-    "/{code}/pricing",
-    summary="Product commercial pricing"
-)
+@router.get("/{code}/pricing", **PRODUCT_PRICING)
 @require_permission("api-delpi.access")
 def product_pricing(code: str):
 

@@ -1,0 +1,67 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "product_code": "90269002",
+      "description": "PRODUTO FICTICIO FABRIL"
+    },
+    "reference_date": "20260604",
+    "date_start": "20260604",
+    "date_end_exclusive": "20260605",
+    "factory_status": "OP ABERTA / NÃO INICIADO",
+    "structure": {
+      "items": [
+        {
+          "component_type": "MP",
+          "exclusive_raw_material": "SIM"
+        }
+      ],
+      "summary": {
+        "total_components": 1,
+        "total_intermediates": 0,
+        "total_raw_materials": 1,
+        "total_exclusive_raw_materials": 1
+      }
+    },
+    "raw_material_stock": {
+      "items": [
+        {
+          "raw_material_code": "10019001",
+          "available_quantity": "0",
+          "has_stock_for_one_pa": "NAO"
+        }
+      ],
+      "summary": {
+        "total_raw_materials": 1,
+        "total_without_stock_for_one_pa": 1
+      }
+    },
+    "production": {
+      "items": [
+        {
+          "level": 0,
+          "production_started": "NAO",
+          "production_order": "001",
+          "reported_quantity": "0"
+        }
+      ],
+      "summary": {
+        "pa_production_started": "NAO",
+        "pi_production_started": "NAO",
+        "total_pa_orders": 1,
+        "total_pi_orders": 0
+      }
+    },
+    "shipping": {
+      "items": [],
+      "summary": {
+        "total_shipped_quantity": 0,
+        "total_inspection_loss_quantity": 0
+      }
+    },
+    "indicators": {
+      "total_raw_materials_without_stock_for_one_pa": 1
+    }
+  }
+}

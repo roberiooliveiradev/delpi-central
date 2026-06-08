@@ -18,6 +18,8 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
 
+**Contrato api-delpi → chat (roadmap):** [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md) — padronização de `meta`, OpenAPI e presenter por perfil; a api-delpi declara o dado, o chat base apresenta.
+
 **SQL avançado:** o chat base elabora/revisa/explica (skill + advisors); **execução e metadados Protheus** (`POST /data/sql`, `/system/tables/*`) são responsabilidade do **agente** com actions habilitadas — a base não dispara essas chamadas sem `actionsEnabled`.
 
 ### Modos de resposta (rápida / normal / pensador)

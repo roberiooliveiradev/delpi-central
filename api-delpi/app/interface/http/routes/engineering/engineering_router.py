@@ -23,7 +23,12 @@ from app.core.responses import error_response, success_response
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
     LMP_DASHBOARD,
+    LMP_DASHBOARD_CHARTS,
+    LMP_DASHBOARD_ITEMS,
+    LMP_DASHBOARD_SUMMARY,
     LMP_LIST,
+    TRANSFORMA_MAIS_LIST,
+    TRANSFORMA_MAIS_SUMMARY,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
@@ -137,7 +142,7 @@ def list_lmps_dashboard_route(
         )
 
 
-@router.get("/lmps/dashboard/summary")
+@router.get("/lmps/dashboard/summary", **LMP_DASHBOARD_SUMMARY)
 @require_any_permission(
     ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
 )
@@ -183,7 +188,7 @@ def lmps_dashboard_summary_route(
         )
 
 
-@router.get("/lmps/dashboard/items")
+@router.get("/lmps/dashboard/items", **LMP_DASHBOARD_ITEMS)
 @require_any_permission(
     ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
 )
@@ -226,7 +231,7 @@ def lmps_dashboard_items_route(
         )
 
 
-@router.get("/lmps/dashboard/charts")
+@router.get("/lmps/dashboard/charts", **LMP_DASHBOARD_CHARTS)
 @require_any_permission(
     ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
 )
@@ -290,7 +295,7 @@ def get_lmp_route(sale_number: str):
         return error_response("Erro interno ao buscar LMP.", status_code=500)
 
 
-@router.get("/transforma-mais/processes")
+@router.get("/transforma-mais/processes", **TRANSFORMA_MAIS_LIST)
 @require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
 def list_processes(
     id: str | None = Query(default=None),
@@ -336,7 +341,7 @@ def list_processes(
         )
 
 
-@router.get("/transforma-mais/processes/summary")
+@router.get("/transforma-mais/processes/summary", **TRANSFORMA_MAIS_SUMMARY)
 @require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
 def get_process_summary(
     filial_id: str | None = Query(default=None),

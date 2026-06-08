@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "code": "90269001",
+      "description": "PRODUTO FICTICIO PA",
+      "type": "PA",
+      "unit": "UN",
+      "group_code": "9026",
+      "sale_price": 125.5,
+      "default_warehouse": "01",
+      "revision": "001",
+      "ncm": "00000000"
+    }
+  }
+}

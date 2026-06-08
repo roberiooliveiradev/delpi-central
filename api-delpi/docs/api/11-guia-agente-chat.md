@@ -7,6 +7,8 @@ Este documento orienta a **seleção automática de rotas** quando um agente do 
 
 **Última revisão:** jun/2026 (playbooks fabril: estrutura/exclusividade, produção, expedição, status fabril).
 
+**Roadmap — padronizar JSON para IA:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md) (índice api-delpi: [`docs/roadmaps/playbook-contrato-respostas-ia.md`](../roadmaps/playbook-contrato-respostas-ia.md)).
+
 ---
 
 ## Como o agente escolhe a rota
@@ -41,11 +43,11 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo do produto | `GET /products/{code}/factory-status` | `get_product_factory_status` |
-| Onde é usado / produto pai | `GET /products/{code}/parents` | path `parents` |
-| Preço / tabela | `GET /products/{code}/pricing` | path `pricing` |
-| Fornecedores / clientes | `.../suppliers`, `.../customers` | path |
-| Compras / vendas / carteira / faturamento | `.../purchases`, `.../sales`, `.../open-orders`, `.../billing` | ver OpenAPI |
-| Roteiro / inspeção / movimentações / NF | `guide`, `inspection`, `internal-movements`, `inbound|outbound-invoice-items` | path |
+| Onde é usado / produto pai | `GET /products/{code}/parents` | `get_product_parents` |
+| Preço / tabela | `GET /products/{code}/pricing` | `get_product_pricing` |
+| Fornecedores / clientes | `.../suppliers`, `.../customers` | `get_product_suppliers`, `get_product_customers` |
+| Compras / vendas / carteira / faturamento | `.../purchases`, `.../sales`, `.../open-orders`, `.../billing` | `get_product_purchases`, `get_product_sales_summary`, `get_product_sales_open_orders`, `get_product_sales_billing` |
+| Roteiro / inspeção / movimentações / NF | `guide`, `inspection`, `internal-movements`, `inbound|outbound-invoice-items` | `get_product_guide`, `get_product_inspection`, `get_product_internal_movements` (NF: path) |
 
 **Não confundir:** estoque do item → `/products/{code}/stock`; valor total da empresa → `/supplies/stock-value`. Inspeção de qualidade (QP6/QP7/QP8) → `/products/{code}/inspection`; expedição após inspeção final (CT SHB010 + apontamento SH6010) → `/products/{code}/shipping-status`.
 
@@ -69,12 +71,13 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | O usuário quer… | Rota | Notas |
 |---|---|---|
 | Listar LMPs / amostras | `GET /engineering/lmps` | `list_lmps` |
-| KPIs do painel | `GET /engineering/lmps/dashboard/summary` | Preferir no chat vs dashboard completo |
-| Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | MFE / tabelas grandes |
-| Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | MFE |
+| KPIs do painel | `GET /engineering/lmps/dashboard/summary` | `get_lmps_dashboard_summary` |
+| Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
+| Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Dashboard legado (tudo) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
-| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | OV ≠ código de produto |
-| Transforma Mais | `GET /engineering/transforma-mais/processes` (+ `/summary`) | Melhoria contínua |
+| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
+| Transforma Mais (lista) | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
+| Transforma Mais (resumo) | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |
 
 ---
 

@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "code": "90269001",
+      "description": "PRODUTO FICTICIO PA",
+      "type": "PA",
+      "unit": "UN"
+    },
+    "structure": {
+      "root": {
+        "code": "90269001",
+        "description": "PRODUTO FICTICIO PA",
+        "type": "PA",
+        "unit": "UN",
+        "quantity": 1.0
+      },
+      "items": [
+        {
+          "code": "10019001",
+          "description": "MATERIA-PRIMA FICTICIA",
+          "type": "MP",
+          "unit": "KG",
+          "quantity": 1.0,
+          "components": []
+        }
+      ],
+      "total": 1
+    },
+    "guide": {
+      "items": [
+        {
+          "operation": "10",
+          "work_center": "CT001",
+          "description": "MONTAGEM FICTICIA"
+        }
+      ],
+      "total": 1
+    },
+    "inspection": {
+      "items": [
+        {
+          "work_center": "QP6",
+          "description": "INSPECAO FICTICIA"
+        }
+      ],
+      "total": 1
+    }
+  }
+}

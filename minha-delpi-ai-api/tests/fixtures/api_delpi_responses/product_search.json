@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "items": [
+      {
+        "code": "90269001",
+        "description": "PRODUTO FICTICIO PA",
+        "type": "PA",
+        "unit": "UN",
+        "group_code": "9026"
+      }
+    ],
+    "page": 1,
+    "page_size": 50,
+    "total": 1,
+    "total_pages": 1
+  }
+}

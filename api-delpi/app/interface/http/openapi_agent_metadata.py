@@ -9,6 +9,99 @@ def agent_route(*, summary: str, description: str, operation_id: str) -> dict:
     }
 
 
+PRODUCT_DETAIL = agent_route(
+    summary="Dados cadastrais do produto",
+    description=(
+        "Retorna ficha cadastral completa de um código: descrição, tipo, unidade, grupo, custo, armazém, revisão e NCM. "
+        "Use para cadastro, descrição ou atributos do item sem agregar estoque/preços. "
+        "Para visão resumida com estoque e preços, prefira /summary; para ficha analítica ampla, /analyser."
+    ),
+    operation_id="get_product_detail",
+)
+
+PRODUCT_SUMMARY = agent_route(
+    summary="Resumo do produto (cadastro + estoque + preços)",
+    description=(
+        "Consolida cadastro, amostra de estoque por filial e tabela de preços em uma consulta leve. "
+        "Use para visão geral rápida do item quando não precisa de BOM, roteiro ou analisador completo."
+    ),
+    operation_id="get_product_summary",
+)
+
+PRODUCT_PARENTS = agent_route(
+    summary="Onde o produto é usado (produtos pai / BOM reversa)",
+    description=(
+        "Lista produtos pai que consomem o código informado (explosão reversa / where-used). "
+        "Use quando o usuário perguntar onde o item é usado, em quais PAs entra ou árvore de pais. "
+        "Não confundir com estrutura filha (BOM) — use /structure."
+    ),
+    operation_id="get_product_parents",
+)
+
+PRODUCT_SUPPLIERS = agent_route(
+    summary="Fornecedores do produto",
+    description=(
+        "Lista fornecedores vinculados ao item no cadastro/compras. "
+        "Use para quem fornece, fornecedor principal ou histórico de fornecimento cadastral do código."
+    ),
+    operation_id="get_product_suppliers",
+)
+
+PRODUCT_CUSTOMERS = agent_route(
+    summary="Clientes do produto",
+    description=(
+        "Lista clientes que compram ou estão vinculados ao item. "
+        "Use para carteira de clientes do produto ou relacionamento comercial do código."
+    ),
+    operation_id="get_product_customers",
+)
+
+PRODUCT_INSPECTION = agent_route(
+    summary="Inspeção de qualidade do produto (QP6/QP7/QP8)",
+    description=(
+        "Retorna dados de inspeção de qualidade e centros de trabalho de inspeção do item. "
+        "Use para inspeção de qualidade, QP, CT de inspeção — não para expedição após inspeção final do PA. "
+        "Para PA liberado para expedição (SHB010 + apontamento), use /shipping-status."
+    ),
+    operation_id="get_product_inspection",
+)
+
+PRODUCT_GUIDE = agent_route(
+    summary="Roteiro de produção do produto",
+    description=(
+        "Lista o roteiro / sequência operacional (centros de trabalho, operações) do item. "
+        "Use para roteiro, operações, CTs e sequência fabril do produto."
+    ),
+    operation_id="get_product_guide",
+)
+
+PRODUCT_INTERNAL_MOVEMENTS = agent_route(
+    summary="Movimentações internas do produto",
+    description=(
+        "Movimentações internas de estoque/produção do item com filtros de período, filial, armazém, TM e OP. "
+        "Use para movimentação interna, transferências ou histórico operacional do código."
+    ),
+    operation_id="get_product_internal_movements",
+)
+
+PRODUCT_SALES_BILLING = agent_route(
+    summary="Faturamento do produto",
+    description=(
+        "Resumo de faturamento e notas fiscais de saída vinculadas ao código. "
+        "Use para faturamento, NF de venda ou receita faturada do item — distinto de carteira em aberto (/sales/open-orders)."
+    ),
+    operation_id="get_product_sales_billing",
+)
+
+PRODUCT_PRICING = agent_route(
+    summary="Preços e tabelas comerciais do produto",
+    description=(
+        "Tabelas de preço, condições comerciais e valores de venda do item. "
+        "Use para preço de venda, tabela comercial ou valor unitário — não para custo/CPV agregado de suprimentos."
+    ),
+    operation_id="get_product_pricing",
+)
+
 PRODUCT_SEARCH = agent_route(
     summary="Buscar produtos no Protheus",
     description=(
@@ -100,6 +193,51 @@ LMP_DASHBOARD = agent_route(
         "Use quando o usuário pedir dashboard, painel, resumo ou visão gerencial de LMPs."
     ),
     operation_id="list_lmps_dashboard",
+)
+
+LMP_DASHBOARD_SUMMARY = agent_route(
+    summary="KPIs resumidos do painel de LMPs",
+    description=(
+        "Retorna métricas agregadas do dashboard de LMPs (totais, percentual no prazo, lead time). "
+        "Preferir no chat para KPIs ou resumo de LMPs — não o dashboard completo com itens e gráficos."
+    ),
+    operation_id="get_lmps_dashboard_summary",
+)
+
+LMP_DASHBOARD_ITEMS = agent_route(
+    summary="Itens paginados do painel de LMPs",
+    description=(
+        "Lista paginada de LMPs do dashboard com filtros de período, filial e status. "
+        "Uso principal do MFE; no chat prefira /dashboard/summary para KPIs ou /lmps para listagem."
+    ),
+    operation_id="list_lmps_dashboard_items",
+)
+
+LMP_DASHBOARD_CHARTS = agent_route(
+    summary="Gráficos do painel de LMPs",
+    description=(
+        "Dados para gráficos do dashboard de LMPs (nível, status, evolução). "
+        "Uso principal do MFE — no chat prefira /dashboard/summary."
+    ),
+    operation_id="get_lmps_dashboard_charts",
+)
+
+TRANSFORMA_MAIS_LIST = agent_route(
+    summary="Listar processos Transforma Mais",
+    description=(
+        "Lista processos de melhoria contínua (Transforma Mais) com filtros de filial, setor e status. "
+        "Use para melhoria contínua e processos Transforma Mais — não confundir com LMP de engenharia."
+    ),
+    operation_id="list_transforma_mais_processes",
+)
+
+TRANSFORMA_MAIS_SUMMARY = agent_route(
+    summary="Resumo Transforma Mais",
+    description=(
+        "KPIs agregados dos processos Transforma Mais por filial e período. "
+        "Preferir no chat para resumo de melhoria contínua vs listagem completa de processos."
+    ),
+    operation_id="get_transforma_mais_summary",
 )
 
 LMP_BY_SALE = agent_route(
