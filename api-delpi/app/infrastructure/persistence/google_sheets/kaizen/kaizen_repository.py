@@ -29,6 +29,39 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         normalized = str(value).strip().lower()
         return normalized in {"true", "1", "sim", "yes", "x"}
 
+    def _first_float(self, row: dict, aliases: list[str]) -> Optional[float]:
+        for alias in aliases:
+            value = self.utils.to_float(row.get(alias))
+            if value is not None:
+                return value
+        return None
+
+    def _calculate_daily_savings(self, row: dict) -> Optional[float]:
+        """
+        Ganho diário derivado da planilha:
+        horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
+        ganho_diario = horas_poupadas_dia × custo_hora
+        """
+        seconds_per_occurrence = self._first_float(
+            row,
+            ["segundos_por_ocorrencia", "segudos_por_ocorrecia"],
+        )
+        occurrences_per_day = self._first_float(
+            row,
+            ["ocorrencias_por_dia", "ocorrecias_por_dia"],
+        )
+        hourly_cost = self._first_float(row, ["custo_hora"])
+
+        if (
+            seconds_per_occurrence is None
+            or occurrences_per_day is None
+            or hourly_cost is None
+        ):
+            return None
+
+        hours_saved_per_day = (seconds_per_occurrence * occurrences_per_day) / 3600
+        return round(hours_saved_per_day * hourly_cost, 2)
+
     def _map_row_to_summary_model(self, row: dict) -> Optional[dict]:
         title = self.utils.empty_to_none(row.get("descricao"))
         implemented_date = self.utils.empty_to_none(row.get("data"))
@@ -46,7 +79,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             "accountable": self.utils.empty_to_none(row.get("responsavel")),
             "sector": self.utils.empty_to_none(row.get("area_setor")),
             "investment": self.utils.to_float(row.get("custo_investimento")),
-            "daily_savings": self.utils.to_float(row.get("ganho_diario")),
+            "daily_savings": self._calculate_daily_savings(row),
             "branch": branch,
         }
 
