@@ -14,7 +14,9 @@ Indicadores permanecem `scope_type = consolidated` (medição consolidada no pai
 | Nota 5S | 80% | 80% |
 | Ganhos financeiros Kaizen | Modo **Curva** (12 pontos): R$ 4.500 (jan–jun), R$ 9.000 (jul–dez) | Modo **Padrão**: R$ 4.500/mês |
 
-**Ganhos financeiros (cálculo):** para cada kaizen com status *implantado*, soma `ganho_diario × dias ativos` no mês da competência. A data de implantação define o início da contagem; kaizens implantados em meses anteriores continuam gerando ganho nos dias do mês filtrado (não exige nova implantação no mês). O indicador *Ideias Kaizen* continua contando apenas implantações cuja data cai no período.
+**Ganhos financeiros (cálculo):** a `api-delpi` deriva `daily_savings` de cada kaizen a partir da planilha Google Sheets (`segundos_por_ocorrencia × ocorrencias_por_dia / 3600 × custo_hora`). Para cada kaizen com status *implantado*, o SI soma `daily_savings × dias ativos` no mês da competência. A data de implantação define o início da contagem; kaizens implantados em meses anteriores continuam gerando ganho nos dias do mês filtrado (não exige nova implantação no mês). O indicador *Ideias Kaizen* continua contando apenas implantações cuja data cai no período.
+
+Detalhes da planilha e fórmulas: `api-delpi/docs/api/06-modulos-departamentais.md` (§ `GET /quality/kaizens/summary`).
 
 Metas consolidadas (`goal_scope_branch = ''`) do seed V009 são **inativadas**; a leitura por filial usa `branch=01` ou `02` na API (sem fallback para meta consolidada na query).
 

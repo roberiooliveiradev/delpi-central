@@ -78,3 +78,21 @@ Ao tipar o frontend, inspecionar DTOs em:
 - `app/application/dto/kaizen/`
 - `app/application/dto/auditoria_5s/`
 - `app/application/dto/nonconformity/`
+
+---
+
+## Kaizen — planilha e cálculo
+
+Fonte: Google Sheets via `GET /quality/kaizens/summary` (sem TOTVS).
+
+**Colunas usadas na planilha:** `filial`, `descricao`, `responsavel`, `area_setor`, `custo_investimento`, `segudos_por_ocorrecia` (ou `segundos_por_ocorrencia`), `ocorrecias_por_dia` (ou `ocorrencias_por_dia`), `custo_hora`, `status`, `data`, `deleted`.
+
+**Não usar na planilha:** `horas_poupadas_dia`, `ganho_diario` — a API calcula `daily_savings`:
+
+```
+daily_savings = (segundos_por_ocorrencia × ocorrencias_por_dia / 3600) × custo_hora
+```
+
+**Campo no frontend:** `list_kaizen[].daily_savings` e `total_savings` (soma ponderada por dias ativos no período filtrado).
+
+Documentação completa: `api-delpi/docs/api/06-modulos-departamentais.md` (§ Kaizen).

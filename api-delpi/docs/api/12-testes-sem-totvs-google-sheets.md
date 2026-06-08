@@ -30,7 +30,7 @@ Rotas que dependem **só** de **Google Sheets** continuam funcionando. Rotas que
 
 | Planilha | Env |
 |----------|-----|
-| Kaizen | `QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID` |
+| Kaizen | `QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID` | Colunas de entrada: `segudos_por_ocorrecia`, `ocorrecias_por_dia`, `custo_hora`. `daily_savings` é **calculado na API** (não usar `ganho_diario` / `horas_poupadas_dia` na planilha). Ver [06-modulos-departamentais.md](./06-modulos-departamentais.md) § Kaizen. |
 | Audit 5S | `QUALITY_SHEET_ID` + `QUALITY_AUDIT_5S_SHEET_GID` |
 | EBITDA | `FINANCIAL_EBITDA_SHEET_ID` + `FINANCIAL_EBITDA_SHEET_GID` |
 | Mão de obra direta | `DIRECT_LABOR_SHEET_ID` + `DIRECT_LABOR_SHEET_GID` |

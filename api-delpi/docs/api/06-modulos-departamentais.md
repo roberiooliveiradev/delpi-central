@@ -154,3 +154,143 @@ Consultas analíticas; **não** confundir com o módulo NC PostgreSQL ([07-quali
 | `branch`, `date_start`, `date_end` | Filtros. |
 | `status`, `item_code`, `description` | Filtros adicionais. |
 | `page`, `page_size` | Paginação. |
+
+### GET /quality/kaizens/summary
+
+**Fonte:** Google Sheets (`QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID`). Não usa TOTVS.
+
+| Query | Descrição |
+|---|---|
+| `title` | Filtro parcial no título (`descricao`). |
+| `status` | Filtro exato de status (ex.: `implantado`). |
+| `branch` | Filial (`filial`). |
+| `date_start`, `date_end` | Intervalo de datas (`DD-MM-YYYY`, `YYYY-MM-DD` ou `DD/MM/YYYY`). |
+
+**Contagem (`total_kaizens`):** kaizens com status *implantado* cuja data de implantação (`data`) cai no intervalo.
+
+**Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
+
+#### Planilha — colunas lidas
+
+| Coluna (header) | Campo API | Observação |
+|---|---|---|
+| `filial` | `branch` | |
+| `descricao` | `title` | |
+| `responsavel` | `accountable` | |
+| `area_setor` | `sector` | |
+| `custo_investimento` | `investment` | |
+| `segudos_por_ocorrecia` / `segundos_por_ocorrencia` | — | Entrada do cálculo (aliases aceitos). |
+| `ocorrecias_por_dia` / `ocorrencias_por_dia` | — | Entrada do cálculo (aliases aceitos). |
+| `custo_hora` | — | Entrada do cálculo. |
+| `status` | `status` | |
+| `data` | `date_implemented` | Data de implantação. |
+| `deleted` | — | Linhas marcadas são ignoradas. |
+
+**Não ler da planilha:** `horas_poupadas_dia` e `ganho_diario` — removidas da planilha; a API calcula o ganho diário.
+
+#### Cálculo do ganho diário (`daily_savings`)
+
+Implementado em `KaizenRepository._calculate_daily_savings`:
+
+```
+horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
+daily_savings      = horas_poupadas_dia × custo_hora   # arredondado em 2 casas
+```
+
+Se alguma das três entradas estiver ausente, `daily_savings` é `null` e o kaizen não contribui para `total_savings`.
+
+#### Exemplo de resposta (`data`)
+
+```json
+{
+  "date_start": "01-01-2026",
+  "date_end": "31-01-2026",
+  "total_kaizens": 1,
+  "total_savings": 22.62,
+  "list_kaizen": [
+    {
+      "id": "01-16/01/2026-App resina CT-16",
+      "title": "App resina CT-16",
+      "date_implemented": "16/01/2026",
+      "status": "implantado",
+      "accountable": "Ossamu",
+      "sector": "Produção",
+      "investment": 620.0,
+      "daily_savings": 7.54,
+      "branch": "01"
+    }
+  ]
+}
+```
+
+Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).
+
+### GET /quality/kaizens/summary
+
+**Fonte:** Google Sheets (`QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID`). Não usa TOTVS.
+
+| Query | Descrição |
+|---|---|
+| `title` | Filtro parcial no título (`descricao`). |
+| `status` | Filtro exato de status (ex.: `implantado`). |
+| `branch` | Filial (`filial`). |
+| `date_start`, `date_end` | Intervalo de datas (`DD-MM-YYYY`, `YYYY-MM-DD` ou `DD/MM/YYYY`). |
+
+**Contagem (`total_kaizens`):** kaizens com status *implantado* cuja data de implantação (`data`) cai no intervalo.
+
+**Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
+
+#### Planilha — colunas lidas
+
+| Coluna (header) | Campo API | Observação |
+|---|---|---|
+| `filial` | `branch` | |
+| `descricao` | `title` | |
+| `responsavel` | `accountable` | |
+| `area_setor` | `sector` | |
+| `custo_investimento` | `investment` | |
+| `segudos_por_ocorrecia` / `segundos_por_ocorrencia` | — | Entrada do cálculo (aliases aceitos). |
+| `ocorrecias_por_dia` / `ocorrencias_por_dia` | — | Entrada do cálculo (aliases aceitos). |
+| `custo_hora` | — | Entrada do cálculo. |
+| `status` | `status` | |
+| `data` | `date_implemented` | Data de implantação. |
+| `deleted` | — | Linhas marcadas são ignoradas. |
+
+**Não ler da planilha:** `horas_poupadas_dia` e `ganho_diario` — removidas da planilha; a API calcula o ganho diário.
+
+#### Cálculo do ganho diário (`daily_savings`)
+
+Implementado em `KaizenRepository._calculate_daily_savings`:
+
+```
+horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
+daily_savings      = horas_poupadas_dia × custo_hora   # arredondado em 2 casas
+```
+
+Se alguma das três entradas estiver ausente, `daily_savings` é `null` e o kaizen não contribui para `total_savings`.
+
+#### Exemplo de resposta (`data`)
+
+```json
+{
+  "date_start": "01-01-2026",
+  "date_end": "31-01-2026",
+  "total_kaizens": 1,
+  "total_savings": 22.62,
+  "list_kaizen": [
+    {
+      "id": "01-16/01/2026-App resina CT-16",
+      "title": "App resina CT-16",
+      "date_implemented": "16/01/2026",
+      "status": "implantado",
+      "accountable": "Ossamu",
+      "sector": "Produção",
+      "investment": 620.0,
+      "daily_savings": 7.54,
+      "branch": "01"
+    }
+  ]
+}
+```
+
+Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).
