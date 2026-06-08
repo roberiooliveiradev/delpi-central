@@ -22,6 +22,7 @@ from app.application.services.chat_tool_router_service import ChatToolRouterServ
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
+from app.application.use_cases.cancel_chat_stream_use_case import CancelChatStreamUseCase
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
 from app.application.use_cases.chat_agents_use_cases import (
     CreateChatAgentUseCase,
@@ -338,6 +339,10 @@ def make_delete_chat_session_use_case() -> DeleteChatSessionUseCase:
 
 def make_update_chat_message_use_case() -> UpdateChatMessageUseCase:
     return UpdateChatMessageUseCase(PostgresChatSessionRepository())
+
+
+def make_cancel_chat_stream_use_case() -> CancelChatStreamUseCase:
+    return CancelChatStreamUseCase(PostgresChatSessionRepository())
 
 
 

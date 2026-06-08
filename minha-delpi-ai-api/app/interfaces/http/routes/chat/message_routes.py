@@ -261,6 +261,27 @@ def resend_message_stream(session_id: str, message_id: str):
     return _stream_chat_response(session_id, request_dto)
 
 
+@chat_bp.post("/sessions/<session_id>/messages/cancel")
+@require_permission(CHAT_ASK_PERMISSION)
+def cancel_message_stream(session_id: str):
+    use_case = make_cancel_chat_stream_use_case()
+
+    try:
+        use_case.execute(
+            user_id=g.current_user.sub,
+            session_id=session_id,
+        )
+        db.session.commit()
+    except (ChatSessionNotFoundError, ChatSessionAccessDeniedError):
+        db.session.rollback()
+        return _not_found_response()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"cancelled": True}), 200
+
+
 @chat_bp.post("/sessions/<session_id>/messages/stream")
 @require_permission(CHAT_ASK_PERMISSION)
 @rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)

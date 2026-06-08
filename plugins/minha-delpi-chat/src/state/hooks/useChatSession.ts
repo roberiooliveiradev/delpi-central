@@ -3,6 +3,7 @@ import { flushSync } from "react-dom";
 
 import {
   archiveChatSession,
+  cancelChatStream,
   createChatSession,
   deleteChatSession,
   listChatMessages,
@@ -140,6 +141,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const skipNextSessionLoadRef = useRef(false);
   const activeSessionIdRef = useRef<string | null>(null);
   const userDismissedBackgroundStreamRef = useRef<Set<string>>(new Set());
+  const [dismissedStreamRevision, setDismissedStreamRevision] = useState(0);
+
+  const isSessionStreamDismissed = useCallback(
+    (sessionId: string) => userDismissedBackgroundStreamRef.current.has(sessionId),
+    [dismissedStreamRevision],
+  );
 
   const {
     isSessionStreaming,
@@ -816,11 +823,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const dismissBackgroundStream = useCallback(
     (sessionId: string) => {
       userDismissedBackgroundStreamRef.current.add(sessionId);
+      setDismissedStreamRevision((current) => current + 1);
       unmarkSessionPending(sessionId);
       cancelSessionStreaming(sessionId);
       clearSessionStreamUi(sessionId);
+
+      void cancelChatStream(sessionId, {
+        getAccessToken: options.getAccessToken,
+      }).catch(() => undefined);
     },
-    [cancelSessionStreaming, unmarkSessionPending],
+    [cancelSessionStreaming, options.getAccessToken, unmarkSessionPending],
   );
 
   const cancelStreaming = useCallback(() => {
@@ -1699,7 +1711,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
-    if (userDismissedBackgroundStreamRef.current.has(sessionId)) {
+    if (isSessionStreamDismissed(sessionId)) {
       setStreamingStatus((current) =>
         current === "Finalizando resposta em segundo plano..." ? null : current,
       );
@@ -1723,7 +1735,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     const interval = window.setInterval(() => {
-      if (userDismissedBackgroundStreamRef.current.has(sessionId)) {
+      if (isSessionStreamDismissed(sessionId)) {
         return;
       }
 
@@ -1735,7 +1747,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     };
   }, [
     activeSession?.id,
+    dismissedStreamRevision,
     isSessionPending,
+    isSessionStreamDismissed,
     isSessionStreaming,
     loadMessages,
     messages,
@@ -1773,12 +1787,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, [activeSession, cancellingSessionIds, isSessionPending, isSessionStreaming, messages, pendingUserMessage, playbackPayload]);
 
   const isComposerBusy = isActiveSessionBusy();
+  const isBackgroundAwaitingResponse =
+    Boolean(activeSession) &&
+    !isSessionStreamDismissed(activeSession.id) &&
+    sessionAwaitingAssistantResponse(messages);
   const isStreamingActiveSession =
     Boolean(activeSession) &&
     !cancellingSessionIds.has(activeSession.id) &&
     (isSessionStreaming(activeSession.id) ||
       isSessionPending(activeSession.id) ||
-      isPlaybackActive);
+      isPlaybackActive ||
+      isBackgroundAwaitingResponse ||
+      streamingStatus === "Finalizando resposta em segundo plano...");
 
   const switchMessageBranch = useCallback(
     async (anchorUserMessageId: string, sourceUserMessageId?: string) => {

@@ -39,6 +39,7 @@ from app.application.use_cases.rename_chat_session_use_case import RenameChatSes
 from app.application.use_cases.set_chat_session_state_use_case import SetChatSessionStateRequest
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageRequest
 from app.composition.chat_composer import (
+    make_cancel_chat_stream_use_case,
     make_clear_chat_session_memory_use_case,
     make_create_agent_source_use_case,
     make_create_chat_agent_use_case,

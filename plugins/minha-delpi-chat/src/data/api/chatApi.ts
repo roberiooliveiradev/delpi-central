@@ -270,6 +270,21 @@ export async function listChatMessages(
   return parseJsonResponse<ChatMessage[]>(response);
 }
 
+export async function cancelChatStream(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<{ cancelled: boolean }> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/messages/cancel`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<{ cancelled: boolean }>(response);
+}
+
 export async function switchChatBranch(
   sessionId: string,
   anchorUserMessageId: string,
