@@ -27,7 +27,7 @@ def _session(*, title: str | None = "Nova conversa") -> ChatSession:
 def _build_stream_use_case(*, session: ChatSession):
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
-    chat_repository.list_messages_by_session.return_value = []
+    chat_repository.list_all_messages_by_session.return_value = []
     user_message = MagicMock()
     user_message.id = uuid4()
     assistant_message = MagicMock()
@@ -107,7 +107,7 @@ def patch_chat_settings(monkeypatch):
 @pytest.fixture(autouse=True)
 def patch_llm_cost(monkeypatch):
     monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.StreamChatMessageUseCase._estimate_cost",
+        "app.application.services.chat_turn.chat_turn_completion_service.ChatTurnCompletionService._estimate_cost",
         lambda self, **kwargs: None,
     )
 
@@ -136,7 +136,7 @@ def test_stream_renames_session_on_first_message():
 def test_stream_skips_rename_when_session_already_has_messages():
     session = _session(title="Nova conversa")
     stream_use_case, chat_repository = _build_stream_use_case(session=session)
-    chat_repository.list_messages_by_session.return_value = [MagicMock()]
+    chat_repository.list_all_messages_by_session.return_value = [MagicMock()]
     request = SendChatMessageRequest(
         user_id=str(session.user_id),
         session_id=str(session.id),

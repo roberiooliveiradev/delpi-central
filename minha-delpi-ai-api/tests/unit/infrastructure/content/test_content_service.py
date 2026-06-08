@@ -27,6 +27,8 @@ def test_stream_playbook_status_keys():
     stream = ContentService.stream()
     assert stream.get("statusUnderstandingQuestion")
     assert stream.get("statusAssemblingDirectAnswer")
+    assert stream.get("statusPrepareContextReady")
+    assert stream.get("statusPrepareFailed")
     assert stream.get("cancelledStatusFriendly")
 
 

@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 4 — lote 2):**
+**Sprint imediata (Fase 4 — lote 3):**
 
-1. **4B:** reduzir `stream_chat_message_use_case.py` (~838 linhas) — extrair título de sessão e worker de prepare para serviço stream.
-2. **4C:** `chat_routes.py` (~3153 linhas) — dividir rotas por domínio.
+1. **4C:** `chat_routes.py` (~3153 linhas) — dividir rotas por domínio (`chat_session_routes`, `chat_message_routes`, etc.).
+2. **4D:** ports restantes (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`).
+
+**Concluído (Fase 4 lote 2):** `ChatStreamTurnPrepareService`, `ChatStreamSessionTitleService`, `ChatStreamUserMessageService`; textos prepare em `stream.json`; `stream_chat_message_use_case.py` **838 → ~437** linhas.
 
 **Concluído (Fase 4 lote 1):** `ChatTurnSideEffectsService`, `ChatTurnUseCaseSupportService`, `ChatTurnLlmAssemblyService`; paridade send/stream na montagem pré-LLM; `send_chat_message_use_case.py` **877 → ~286**; `stream_chat_message_use_case.py` **1396 → ~838**.
 

@@ -141,11 +141,7 @@ def patch_chat_settings(monkeypatch):
 @pytest.fixture(autouse=True)
 def patch_llm_cost(monkeypatch):
     monkeypatch.setattr(
-        "app.application.use_cases.send_chat_message_use_case.SendChatMessageUseCase._estimate_cost",
-        lambda self, **kwargs: None,
-    )
-    monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.StreamChatMessageUseCase._estimate_cost",
+        "app.application.services.chat_turn.chat_turn_completion_service.ChatTurnCompletionService._estimate_cost",
         lambda self, **kwargs: None,
     )
 

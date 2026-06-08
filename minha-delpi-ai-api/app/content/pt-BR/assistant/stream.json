@@ -9,6 +9,8 @@
   "statusFinalizing": "Finalizando e salvando no histórico...",
   "statusWebSearch": "Pesquisando na internet...",
   "statusPreparingContext": "Preparando tudo para te responder...",
+  "statusPrepareContextReady": "Tudo pronto. Já começo a responder...",
+  "statusPrepareFailed": "Tive um problema ao preparar a sua resposta.",
   "statusUnderstandingQuestion": "Entendendo seu pedido...",
   "statusCheckingPermissions": "Conferindo permissões...",
   "statusBuildingTable": "Organizando em tabela...",
