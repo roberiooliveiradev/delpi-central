@@ -160,7 +160,11 @@ def make_upsert_chat_message_feedback_use_case():
 
 
 def make_chat_intelligence_settings_service() -> ChatIntelligenceSettingsService:
-    return ChatIntelligenceSettingsService()
+    from app.composition.repository_composer import make_admin_runtime_settings_repository
+
+    return ChatIntelligenceSettingsService(
+        settings_repository=make_admin_runtime_settings_repository(),
+    )
 
 
 def make_rag_context_service() -> RagContextService:

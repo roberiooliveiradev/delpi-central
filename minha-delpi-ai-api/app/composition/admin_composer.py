@@ -124,7 +124,6 @@ from app.composition.knowledge_pipeline_composer import (
 )
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
-from app.infrastructure.persistence.postgres_admin_metrics_repository import PostgresAdminMetricsRepository
 from app.infrastructure.persistence.postgres_admin_system_check_repository import PostgresAdminSystemCheckRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_response_evaluation_repository import (
@@ -202,7 +201,9 @@ def make_list_admin_audit_logs_use_case() -> ListAdminAuditLogsUseCase:
     return ListAdminAuditLogsUseCase(PostgresAuditRepository())
 
 def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
-    return GetAdminMetricsSummaryUseCase(PostgresAdminMetricsRepository())
+    from app.composition.repository_composer import make_admin_metrics_repository
+
+    return GetAdminMetricsSummaryUseCase(make_admin_metrics_repository())
 
 
 def make_get_admin_drawing_analysis_summary_use_case() -> GetAdminDrawingAnalysisSummaryUseCase:
@@ -245,7 +246,11 @@ def make_get_admin_quality_unified_summary_use_case():
         GetAdminQualityUnifiedSummaryUseCase,
     )
 
-    return GetAdminQualityUnifiedSummaryUseCase()
+    return GetAdminQualityUnifiedSummaryUseCase(
+        feedback_use_case=make_get_admin_feedback_summary_use_case(),
+        metrics_use_case=make_get_admin_metrics_summary_use_case(),
+        security_use_case=make_get_admin_security_summary_use_case(),
+    )
 
 
 def make_generate_weekly_quality_report_use_case():
@@ -602,30 +607,52 @@ def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
 
 
 def make_get_admin_tools_health_use_case() -> GetAdminToolsHealthUseCase:
+    from app.composition.repository_composer import make_external_action_repository
+
     return GetAdminToolsHealthUseCase(
         system_check_repository=PostgresAdminSystemCheckRepository(),
-        external_action_repository=make_postgres_external_action_repository(),
+        external_action_repository=make_external_action_repository(),
     )
 
 
 def make_get_admin_chat_intelligence_settings_use_case() -> GetAdminChatIntelligenceSettingsUseCase:
-    return GetAdminChatIntelligenceSettingsUseCase()
+    from app.composition.chat_composer import make_chat_intelligence_settings_service
+
+    return GetAdminChatIntelligenceSettingsUseCase(
+        service=make_chat_intelligence_settings_service(),
+    )
 
 
 def make_save_admin_chat_intelligence_settings_use_case() -> SaveAdminChatIntelligenceSettingsUseCase:
-    return SaveAdminChatIntelligenceSettingsUseCase()
+    from app.composition.chat_composer import make_chat_intelligence_settings_service
+
+    return SaveAdminChatIntelligenceSettingsUseCase(
+        service=make_chat_intelligence_settings_service(),
+    )
 
 
 def make_reindex_external_action_embeddings_use_case() -> ReindexExternalActionEmbeddingsUseCase:
-    return ReindexExternalActionEmbeddingsUseCase()
+    from app.composition.repository_composer import make_external_action_repository
+
+    return ReindexExternalActionEmbeddingsUseCase(
+        repository=make_external_action_repository(),
+    )
 
 
 def make_get_admin_llm_cost_table_use_case() -> GetAdminLlmCostTableUseCase:
-    return GetAdminLlmCostTableUseCase()
+    from app.composition.repository_composer import make_admin_runtime_settings_repository
+
+    return GetAdminLlmCostTableUseCase(
+        settings_repository=make_admin_runtime_settings_repository(),
+    )
 
 
 def make_save_admin_llm_cost_table_use_case() -> SaveAdminLlmCostTableUseCase:
-    return SaveAdminLlmCostTableUseCase()
+    from app.composition.repository_composer import make_admin_runtime_settings_repository
+
+    return SaveAdminLlmCostTableUseCase(
+        settings_repository=make_admin_runtime_settings_repository(),
+    )
 
 def make_create_external_action_provider_use_case() -> CreateExternalActionProviderUseCase:
     return CreateExternalActionProviderUseCase(
@@ -775,17 +802,23 @@ def make_get_admin_security_config_use_case() -> GetAdminSecurityConfigUseCase:
 
 
 def make_get_admin_security_summary_use_case() -> GetAdminSecuritySummaryUseCase:
-    return GetAdminSecuritySummaryUseCase(audit_repository=PostgresAuditRepository())
+    from app.composition.repository_composer import make_audit_repository
+
+    return GetAdminSecuritySummaryUseCase(audit_repository=make_audit_repository())
 
 
 def make_list_admin_security_events_use_case() -> ListAdminSecurityEventsUseCase:
-    return ListAdminSecurityEventsUseCase(audit_repository=PostgresAuditRepository())
+    from app.composition.repository_composer import make_audit_repository
+
+    return ListAdminSecurityEventsUseCase(audit_repository=make_audit_repository())
 
 
 def make_scan_admin_security_input_use_case() -> ScanAdminSecurityInputUseCase:
+    from app.composition.repository_composer import make_audit_repository
+
     return ScanAdminSecurityInputUseCase(
         message_security_service=ChatMessageSecurityService(),
-        audit_repository=PostgresAuditRepository(),
+        audit_repository=make_audit_repository(),
     )
 
 

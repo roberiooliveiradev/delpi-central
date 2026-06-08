@@ -1,9 +1,7 @@
 from app.application.services.chat_intelligence_settings_service import (
     ChatIntelligenceSettingsService,
 )
-from app.infrastructure.persistence.postgres_external_action_repository import (
-    PostgresExternalActionRepository,
-)
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 
 
 class GetAdminChatIntelligenceSettingsUseCase:
@@ -26,14 +24,7 @@ class SaveAdminChatIntelligenceSettingsUseCase:
 
 
 class ReindexExternalActionEmbeddingsUseCase:
-    def __init__(self, repository: PostgresExternalActionRepository | None = None):
-        if repository is None:
-            from app.composition.external_action_composer import (
-                make_postgres_external_action_repository,
-            )
-
-            repository = make_postgres_external_action_repository()
-
+    def __init__(self, repository: ExternalActionRepositoryPort):
         self.repository = repository
 
     def execute(self, *, provider_key: str | None = None) -> dict:

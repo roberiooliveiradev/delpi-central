@@ -5,7 +5,6 @@ from app.application.services.chat_message_security_service import ChatMessageSe
 from app.domain.services.chat_input_security_service import ChatInputSecurityService
 from app.domain.ports.audit_repository_port import AuditLogQuery, AuditRepositoryPort
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 
 
 class GetAdminSecurityConfigUseCase:
@@ -17,8 +16,8 @@ class GetAdminSecurityConfigUseCase:
 
 
 class GetAdminSecuritySummaryUseCase:
-    def __init__(self, audit_repository: AuditRepositoryPort | None = None):
-        self.audit_repository = audit_repository or PostgresAuditRepository()
+    def __init__(self, audit_repository: AuditRepositoryPort):
+        self.audit_repository = audit_repository
 
     def execute(self, *, hours: int = 24) -> dict:
         if not hasattr(self.audit_repository, "get_security_summary"):
@@ -35,8 +34,8 @@ class GetAdminSecuritySummaryUseCase:
 
 
 class ListAdminSecurityEventsUseCase:
-    def __init__(self, audit_repository: AuditRepositoryPort | None = None):
-        self.audit_repository = audit_repository or PostgresAuditRepository()
+    def __init__(self, audit_repository: AuditRepositoryPort):
+        self.audit_repository = audit_repository
 
     def execute(
         self,

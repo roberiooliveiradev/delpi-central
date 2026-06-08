@@ -358,6 +358,19 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         },
                     )
 
+                elif event_type == "error":
+                    yield _sse(
+                        "error",
+                        {
+                            "message": event.get(
+                                "message",
+                                "Erro ao gerar resposta em streaming.",
+                            ),
+                            "detail": event.get("detail", ""),
+                            "errorType": event.get("errorType", "StreamError"),
+                        },
+                    )
+
                 elif event_type == "done":
                     done_payload = {
                         "messageId": event.get("messageId"),

@@ -71,8 +71,13 @@ def get_assistant_catalog():
 
     capabilities = _get_chat_capabilities_from_request()
 
+    from app.composition.chat_composer import make_chat_intelligence_settings_service
+    from app.composition.repository_composer import make_external_action_repository
+
     payload = ChatAssistantCatalogService(
         agent_repository=make_chat_agent_repository(),
+        action_repository=make_external_action_repository(),
+        intelligence_settings=make_chat_intelligence_settings_service(),
     ).build_response(
         user_id=user_id,
         query=query or None,

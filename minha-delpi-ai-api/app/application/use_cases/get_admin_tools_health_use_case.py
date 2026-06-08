@@ -1,19 +1,17 @@
 from app.domain.ports.admin_system_check_repository_port import AdminSystemCheckRepositoryPort
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
-from app.infrastructure.persistence.postgres_external_action_repository import (
-    PostgresExternalActionRepository,
-)
 
 
 class GetAdminToolsHealthUseCase:
     def __init__(
         self,
         system_check_repository: AdminSystemCheckRepositoryPort,
-        external_action_repository: PostgresExternalActionRepository | None = None,
+        external_action_repository: ExternalActionRepositoryPort,
     ):
         self.system_check_repository = system_check_repository
-        self.external_action_repository = external_action_repository or PostgresExternalActionRepository()
+        self.external_action_repository = external_action_repository
 
     def execute(self, *, access_token: str | None = None) -> dict:
         system = self.system_check_repository.check()

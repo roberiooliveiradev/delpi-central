@@ -46,7 +46,7 @@ def stream_chat_events_with_background_completion(
                             },
                         )
                 event_queue.put(_SENTINEL)
-            except Exception:
+            except Exception as exc:
                 logger.exception(
                     "chat_stream_producer_failed",
                     extra={"session_id": session_id},
@@ -55,6 +55,37 @@ def stream_chat_events_with_background_completion(
                     db.session.rollback()
                 except Exception:
                     pass
+                try:
+                    from app.application.services.chat_stream_failure_recovery_service import (
+                        ChatStreamFailureRecoveryService,
+                    )
+                    from app.composition.repository_composer import (
+                        make_chat_session_repository,
+                    )
+
+                    ChatStreamFailureRecoveryService.recover(
+                        chat_repository=make_chat_session_repository(),
+                        session_id=session_id,
+                        detail=str(exc),
+                    )
+                    db.session.commit()
+                except Exception:
+                    logger.exception(
+                        "chat_stream_failure_recovery_failed",
+                        extra={"session_id": session_id},
+                    )
+                    try:
+                        db.session.rollback()
+                    except Exception:
+                        pass
+                event_queue.put(
+                    {
+                        "type": "error",
+                        "message": "Erro ao gerar resposta em streaming.",
+                        "detail": str(exc)[:300],
+                        "errorType": exc.__class__.__name__,
+                    }
+                )
                 event_queue.put(_SENTINEL)
 
     threading.Thread(target=producer, daemon=True).start()

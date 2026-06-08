@@ -58,4 +58,10 @@ def configure_domain_persistence_ports() -> None:
             PostgresAdminRuntimeSettingsRepository()
         )
     )
+    from app.application.services.chat_capabilities_service import (
+        configure_external_action_repository_loader,
+    )
+    from app.composition.repository_composer import make_external_action_repository
+
+    configure_external_action_repository_loader(make_external_action_repository)
     _PERSISTENCE_CONFIGURED = True

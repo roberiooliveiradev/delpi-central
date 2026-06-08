@@ -13,10 +13,8 @@ from app.application.services.chat_intelligence_settings_service import (
 )
 from app.application.services.chat_onboarding_service import ChatOnboardingService
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.persistence.postgres_external_action_repository import (
-    PostgresExternalActionRepository,
-)
 
 _CATEGORY_LABELS: dict[str, str] = {
     "chat_basic": "Chat e agentes",
@@ -41,11 +39,11 @@ class ChatAssistantCatalogService:
     def __init__(
         self,
         agent_repository: ChatAgentRepositoryPort | None = None,
-        action_repository: PostgresExternalActionRepository | None = None,
+        action_repository: ExternalActionRepositoryPort | None = None,
         intelligence_settings: ChatIntelligenceSettingsService | None = None,
     ):
         self.agent_repository = agent_repository
-        self.action_repository = action_repository or PostgresExternalActionRepository()
+        self.action_repository = action_repository
         self.intelligence_settings = (
             intelligence_settings or ChatIntelligenceSettingsService()
         )
@@ -175,15 +173,13 @@ class ChatAssistantCatalogService:
         ]
 
     def _load_action_catalog(self) -> list[dict[str, Any]]:
+        if self.action_repository is None:
+            return []
+
         try:
-            from flask import has_app_context
-
-            if has_app_context():
-                return self.action_repository.list_actions() or []
+            return self.action_repository.list_actions() or []
         except Exception:
-            pass
-
-        return []
+            return []
 
     def _resolve_web_search_enabled(self) -> bool:
         try:

@@ -1,15 +1,18 @@
 from datetime import datetime, timezone
 
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
+)
+from app.extensions.db import db
 from app.infrastructure.db.models.admin_runtime_settings_model import (
     AiAdminRuntimeSettingsModel,
 )
-from app.extensions.db import db
 
 LLM_COST_TABLE_KEY = "llm_cost_table"
 CHAT_INTELLIGENCE_SETTINGS_KEY = "chat_intelligence_settings"
 
 
-class PostgresAdminRuntimeSettingsRepository:
+class PostgresAdminRuntimeSettingsRepository(AdminRuntimeSettingsRepositoryPort):
     def get_json(self, key: str) -> object | None:
         row = AiAdminRuntimeSettingsModel.query.filter_by(key=key).first()
 

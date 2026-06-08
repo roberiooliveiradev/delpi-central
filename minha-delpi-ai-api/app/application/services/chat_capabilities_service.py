@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from functools import lru_cache
 
 from app.application.services.chat_action_label_service import ChatActionLabelService
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -25,6 +27,16 @@ def _skills_texts() -> dict:
 
 def _catalog_texts() -> dict:
     return _capabilities_content().get("catalog") or {}
+
+
+_external_action_repository_loader: Callable[[], ExternalActionRepositoryPort] | None = None
+
+
+def configure_external_action_repository_loader(
+    loader: Callable[[], ExternalActionRepositoryPort],
+) -> None:
+    global _external_action_repository_loader
+    _external_action_repository_loader = loader
 
 
 def _detection() -> dict:
@@ -1073,17 +1085,25 @@ class ChatCapabilitiesService:
 
     @classmethod
     def load_action_catalog_for_agent(
-        cls, allowed_action_ids: list[str] | None,
+        cls,
+        allowed_action_ids: list[str] | None,
+        *,
+        action_repository: ExternalActionRepositoryPort | None = None,
     ) -> list[dict]:
         if not allowed_action_ids:
             return []
 
-        try:
-            from app.infrastructure.persistence.postgres_external_action_repository import (
-                PostgresExternalActionRepository,
-            )
+        repository = action_repository
+        if repository is None and _external_action_repository_loader is not None:
+            try:
+                repository = _external_action_repository_loader()
+            except Exception:
+                repository = None
 
-            repository = PostgresExternalActionRepository()
+        if repository is None:
+            return []
+
+        try:
             catalog = repository.list_actions()
             allowed_set = {str(item).strip() for item in allowed_action_ids}
             return [

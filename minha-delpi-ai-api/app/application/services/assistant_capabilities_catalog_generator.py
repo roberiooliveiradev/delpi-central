@@ -12,6 +12,7 @@ from typing import Any
 from app.application.services.assistant_capabilities_catalog_validator import (
     AssistantCapabilitiesCatalogValidator,
 )
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.infrastructure.content.content_service import ContentService
 
 _PRODUCT_ACTION_TOKENS: tuple[str, ...] = (
@@ -332,16 +333,21 @@ class AssistantCapabilitiesCatalogGenerator:
         return path
 
     @classmethod
-    def load_actions_from_database(cls) -> list[dict[str, Any]]:
+    def load_actions_from_database(
+        cls,
+        *,
+        action_repository: ExternalActionRepositoryPort | None = None,
+    ) -> list[dict[str, Any]]:
+        if action_repository is not None:
+            return action_repository.list_actions() or []
+
+        from app.composition.repository_composer import make_external_action_repository
         from app.composition.root_composer import create_application
-        from app.infrastructure.persistence.postgres_external_action_repository import (
-            PostgresExternalActionRepository,
-        )
 
         app = create_application()
 
         with app.app_context():
-            return PostgresExternalActionRepository().list_actions() or []
+            return make_external_action_repository().list_actions() or []
 
     @classmethod
     def _load_skills(cls) -> list[dict[str, Any]]:

@@ -1,10 +1,10 @@
 import json
 import os
 
-from app.infrastructure.config.settings import Settings
-from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
-    PostgresAdminRuntimeSettingsRepository,
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
 )
+from app.infrastructure.config.settings import Settings
 
 
 class LlmCostEstimatorService:
@@ -14,7 +14,7 @@ class LlmCostEstimatorService:
         self,
         *,
         entries: list[dict] | None = None,
-        settings_repository: PostgresAdminRuntimeSettingsRepository | None = None,
+        settings_repository: AdminRuntimeSettingsRepositoryPort | None = None,
     ):
         self._settings_repository = settings_repository
         self._entries = entries if entries is not None else self._load_entries()
@@ -63,10 +63,9 @@ class LlmCostEstimatorService:
         return round(total, 6)
 
     def _load_entries(self) -> list[dict]:
-        if self._settings_repository is None:
-            self._settings_repository = PostgresAdminRuntimeSettingsRepository()
-
-        stored = self._settings_repository.get_llm_cost_table()
+        stored = None
+        if self._settings_repository is not None:
+            stored = self._settings_repository.get_llm_cost_table()
 
         if stored:
             return [

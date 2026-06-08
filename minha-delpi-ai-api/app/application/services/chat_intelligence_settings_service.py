@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
-from app.infrastructure.config.settings import Settings
-from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
-    CHAT_INTELLIGENCE_SETTINGS_KEY,
-    PostgresAdminRuntimeSettingsRepository,
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
 )
+from app.infrastructure.config.settings import Settings
 
 
 @dataclass(frozen=True)
@@ -26,12 +25,14 @@ class ChatIntelligenceSettings:
 class ChatIntelligenceSettingsService:
     def __init__(
         self,
-        settings_repository: PostgresAdminRuntimeSettingsRepository | None = None,
+        settings_repository: AdminRuntimeSettingsRepositoryPort | None = None,
     ):
-        self.settings_repository = settings_repository or PostgresAdminRuntimeSettingsRepository()
+        self.settings_repository = settings_repository
 
     def resolve(self) -> ChatIntelligenceSettings:
-        stored = self.settings_repository.get_chat_intelligence_settings() or {}
+        stored = {}
+        if self.settings_repository is not None:
+            stored = self.settings_repository.get_chat_intelligence_settings() or {}
 
         return ChatIntelligenceSettings(
             rag_context_min_score=self._float(
@@ -169,7 +170,8 @@ class ChatIntelligenceSettingsService:
             ),
         }
 
-        self.settings_repository.save_chat_intelligence_settings(merged)
+        if self.settings_repository is not None:
+            self.settings_repository.save_chat_intelligence_settings(merged)
 
         return self.to_dict(self.resolve())
 

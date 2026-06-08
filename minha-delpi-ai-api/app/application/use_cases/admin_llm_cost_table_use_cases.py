@@ -1,15 +1,15 @@
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
-from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
-    PostgresAdminRuntimeSettingsRepository,
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
 )
 
 
 class GetAdminLlmCostTableUseCase:
     def __init__(
         self,
-        settings_repository: PostgresAdminRuntimeSettingsRepository | None = None,
+        settings_repository: AdminRuntimeSettingsRepositoryPort,
     ):
-        self.settings_repository = settings_repository or PostgresAdminRuntimeSettingsRepository()
+        self.settings_repository = settings_repository
 
     def execute(self) -> dict:
         stored = self.settings_repository.get_llm_cost_table()
@@ -24,9 +24,9 @@ class GetAdminLlmCostTableUseCase:
 class SaveAdminLlmCostTableUseCase:
     def __init__(
         self,
-        settings_repository: PostgresAdminRuntimeSettingsRepository | None = None,
+        settings_repository: AdminRuntimeSettingsRepositoryPort,
     ):
-        self.settings_repository = settings_repository or PostgresAdminRuntimeSettingsRepository()
+        self.settings_repository = settings_repository
 
     def execute(self, *, entries: list[dict]) -> dict:
         if not isinstance(entries, list) or not entries:

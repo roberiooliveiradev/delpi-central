@@ -7,6 +7,10 @@ from app.application.use_cases.list_external_actions_use_case import (
     ListExternalActionsUseCase,
 )
 from app.composition.external_action_composer import make_postgres_external_action_repository
+from app.domain.ports.admin_metrics_repository_port import AdminMetricsRepositoryPort
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
+)
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_message_feedback_repository_port import (
@@ -15,6 +19,7 @@ from app.domain.ports.chat_message_feedback_repository_port import (
 from app.domain.ports.chat_quality_issue_repository_port import ChatQualityIssueRepositoryPort
 from app.domain.ports.chat_quality_report_repository_port import ChatQualityReportRepositoryPort
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
+from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.chat_skill_repository_port import ChatSkillRepositoryPort
 from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
 from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
@@ -23,6 +28,12 @@ from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 from app.domain.ports.learning_candidate_repository_port import LearningCandidateRepositoryPort
 from app.domain.ports.memory_item_repository_port import MemoryItemRepositoryPort
 from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
+from app.infrastructure.persistence.postgres_admin_metrics_repository import (
+    PostgresAdminMetricsRepository,
+)
+from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
+    PostgresAdminRuntimeSettingsRepository,
+)
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_chat_agent_repository import (
     PostgresChatAgentRepository,
@@ -38,6 +49,9 @@ from app.infrastructure.persistence.postgres_chat_quality_report_repository impo
 )
 from app.infrastructure.persistence.postgres_chat_attachment_repository import (
     PostgresChatAttachmentRepository,
+)
+from app.infrastructure.persistence.postgres_chat_session_repository import (
+    PostgresChatSessionRepository,
 )
 from app.infrastructure.persistence.postgres_chat_skill_repository import PostgresChatSkillRepository
 from app.infrastructure.persistence.postgres_evaluation_case_repository import (
@@ -132,3 +146,15 @@ def make_knowledge_repository() -> KnowledgeRepositoryPort:
 
 def make_chat_attachment_repository() -> ChatAttachmentRepositoryPort:
     return PostgresChatAttachmentRepository()
+
+
+def make_admin_runtime_settings_repository() -> AdminRuntimeSettingsRepositoryPort:
+    return PostgresAdminRuntimeSettingsRepository()
+
+
+def make_admin_metrics_repository() -> AdminMetricsRepositoryPort:
+    return PostgresAdminMetricsRepository()
+
+
+def make_chat_session_repository() -> ChatSessionRepositoryPort:
+    return PostgresChatSessionRepository()
