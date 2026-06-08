@@ -9,6 +9,7 @@ class ChatStreamCheckpointService:
     CHECKPOINT_EVENT_TYPES = frozenset(
         {
             "user_persisted",
+            "session_renamed",
             "assistant_pending",
             "done",
         }

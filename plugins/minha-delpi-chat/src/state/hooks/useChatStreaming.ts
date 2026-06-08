@@ -29,6 +29,7 @@ type StreamMessageParams = {
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
   onUserPersisted?: (messageId: string) => void;
+  onSessionRenamed?: (title: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
   onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
@@ -86,6 +87,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           | "onSources"
           | "onToolCalls"
           | "onToken"
+          | "onUserPersisted"
+          | "onSessionRenamed"
           | "onAssistantPending"
           | "onPlayback"
           | "onCanvasOpen"
@@ -101,6 +104,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
         | "onSources"
         | "onToolCalls"
         | "onToken"
+        | "onUserPersisted"
+        | "onSessionRenamed"
         | "onAssistantPending"
         | "onPlayback"
         | "onCanvasOpen"
@@ -145,6 +150,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onSources,
       onToolCalls,
       onToken,
+      onUserPersisted,
+      onSessionRenamed,
       onAssistantPending,
       onPlayback,
       onCanvasOpen,
@@ -176,6 +183,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           onSources,
           onToolCalls,
           onToken,
+          onUserPersisted,
+          onSessionRenamed,
           onAssistantPending,
           onPlayback,
           onCanvasOpen,

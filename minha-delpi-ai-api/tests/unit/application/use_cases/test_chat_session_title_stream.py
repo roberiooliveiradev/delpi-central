@@ -7,6 +7,9 @@ from uuid import uuid4
 import pytest
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.application.services.chat_turn.chat_stream_session_title_service import (
+    ChatStreamSessionTitleService,
+)
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
 from app.domain.entities.chat_session import ChatSession
 
@@ -86,22 +89,16 @@ def _build_stream_use_case(*, session: ChatSession):
 
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
-    for module in (
-        "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
-    ):
-        monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", False)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_HISTORY_MAX_MESSAGES", 12)
-        monkeypatch.setattr(f"{module}.Settings.LLM_PROVIDER", "ollama")
-        monkeypatch.setattr(f"{module}.Settings.OLLAMA_MODEL", "test-model")
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0
-        )
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000
-        )
-        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", False)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_SESSION_TITLE_LLM_ENABLED", False)
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "CHAT_FAST_PATH_ENABLED", False)
+    monkeypatch.setattr(Settings, "CHAT_HISTORY_MAX_MESSAGES", 12)
+    monkeypatch.setattr(Settings, "LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(Settings, "OLLAMA_MODEL", "test-model")
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0)
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000)
+    monkeypatch.setattr(Settings, "CHAT_PERSIST_BEFORE_PLAYBACK", False)
+    monkeypatch.setattr(Settings, "CHAT_SESSION_TITLE_LLM_ENABLED", False)
 
 
 @pytest.fixture(autouse=True)
@@ -109,6 +106,16 @@ def patch_llm_cost(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_turn.chat_turn_completion_service.ChatTurnCompletionService._estimate_cost",
         lambda self, **kwargs: None,
+    )
+
+
+def test_should_generate_for_default_session_title():
+    session = _session(title="Nova conversa")
+
+    assert ChatStreamSessionTitleService.should_generate(
+        session,
+        [],
+        resend_from_message_id=None,
     )
 
 
@@ -124,6 +131,7 @@ def test_stream_renames_session_on_first_message():
     )
 
     events = list(stream_use_case.stream(request))
+    event_types = [event.get("type") for event in events]
 
     assert any(event.get("type") == "done" for event in events)
     chat_repository.rename_session.assert_called_once_with(
@@ -131,6 +139,8 @@ def test_stream_renames_session_on_first_message():
         user_id=session.user_id,
         title=message,
     )
+    assert "session_renamed" in event_types
+    assert event_types.index("session_renamed") < event_types.index("activity")
 
 
 def test_stream_skips_rename_when_session_already_has_messages():

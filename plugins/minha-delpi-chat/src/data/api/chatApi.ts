@@ -61,6 +61,7 @@ type StreamCallbacks = {
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
   onUserPersisted?: (messageId: string) => void;
+  onSessionRenamed?: (title: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
   onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
@@ -464,6 +465,14 @@ async function consumeChatMessageStream(
 
         if (messageId) {
           callbacks.onUserPersisted?.(messageId);
+        }
+      }
+
+      if (event === "session_renamed") {
+        const title = typeof data.title === "string" ? data.title.trim() : "";
+
+        if (title) {
+          callbacks.onSessionRenamed?.(title);
         }
       }
 

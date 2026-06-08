@@ -1036,6 +1036,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           if (streamOptions?.refreshOnUserPersisted) {
             void loadMessages(sessionId);
           }
+
+          void loadSessions();
+        },
+        onSessionRenamed: (title: string) => {
+          if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          const normalizedTitle = title.trim();
+
+          if (!normalizedTitle) {
+            return;
+          }
+
+          setSessions((current) =>
+            current.map((item) =>
+              item.id === sessionId ? { ...item, title: normalizedTitle } : item,
+            ),
+          );
+          setActiveSession((current) =>
+            current?.id === sessionId ? { ...current, title: normalizedTitle } : current,
+          );
         },
         onStatus: (statusMessage: string) => {
           if (shouldIgnoreStreamEvent() || !statusMessage.trim()) {
@@ -1374,6 +1396,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       patchStreamStatus,
       resetStreamingUi,
       touchStreamActivity,
+      isStreamForActiveSession,
     ],
   );
 

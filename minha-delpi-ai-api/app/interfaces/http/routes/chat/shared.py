@@ -329,6 +329,12 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         {"messageId": event.get("messageId")},
                     )
 
+                elif event_type == "session_renamed":
+                    yield _sse(
+                        "session_renamed",
+                        {"title": event.get("title", "")},
+                    )
+
                 elif event_type == "assistant_pending":
                     yield _sse(
                         "assistant_pending",

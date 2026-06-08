@@ -179,6 +179,24 @@ class StreamChatMessageUseCase:
 
         user_message = user_persist.user_message
 
+        should_generate_session_title = self.session_title_service.should_generate(
+            session,
+            previous_messages,
+            resend_from_message_id=resend_from_message_id,
+        )
+
+        if should_generate_session_title:
+            self.session_title_service.apply_fallback_rename(
+                self.chat_repository,
+                session_id=session_id,
+                user_id=user_id,
+                message=message,
+            )
+            yield {
+                "type": "session_renamed",
+                "title": self.session_title_service.fallback_from_message(message),
+            }
+
         ChatTurnSideEffectsService.capture_all_from_turn(
             message=message,
             session=session,
@@ -224,18 +242,6 @@ class StreamChatMessageUseCase:
         previous_messages = context_box["previous_messages"]
         user_message = context_box.get("user_message")
         existing_user_message = context_box.get("existing_user_message")
-        should_generate_session_title = bool(
-            context_box.get("should_generate_session_title")
-        )
-
-        if should_generate_session_title:
-            self.session_title_service.apply_fallback_rename(
-                self.chat_repository,
-                session_id=session_id,
-                user_id=user_id,
-                message=message,
-            )
-
         if resend_from_message_id:
             user_message = existing_user_message
 

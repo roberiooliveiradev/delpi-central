@@ -34,11 +34,10 @@ class ChatStreamSessionTitleService:
             "",
             *(
                 str(item).strip().lower()
-                for item in ChatAssistantContentService.get(
+                for item in ChatAssistantContentService.list(
                     "stream",
                     "sessionTitleEmptyValues",
                 )
-                or ()
             ),
         }
 
