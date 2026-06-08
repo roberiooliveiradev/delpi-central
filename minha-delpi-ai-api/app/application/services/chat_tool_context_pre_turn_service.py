@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -411,22 +414,22 @@ class ChatToolContextPreTurnService:
         shortcuts = (
             (
                 paginated_service.fetch_continue_plan,
-                "Continuação da consulta paginada consolidada.",
+                ChatToolContextContentService.get("pagination", "continueConsolidation"),
                 True,
             ),
             (
                 paginated_service.fetch_full_from_history,
-                "Consolidação completa da consulta paginada.",
+                ChatToolContextContentService.get("pagination", "fullConsolidation"),
                 True,
             ),
             (
                 paginated_service.fetch_error_recovery_from_history,
-                "Recuperação automática da consulta anterior.",
+                ChatToolContextContentService.get("pagination", "errorRecovery"),
                 False,
             ),
             (
                 paginated_service.fetch_format_refinement_from_history,
-                "Reapresentação do último resultado no formato solicitado.",
+                ChatToolContextContentService.get("pagination", "formatRefinement"),
                 False,
             ),
         )

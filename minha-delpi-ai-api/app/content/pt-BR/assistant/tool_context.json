@@ -1,0 +1,32 @@
+{
+  "router": {
+    "toolSuggested": "Ferramenta sugerida pelo roteador inteligente do chat.",
+    "actionSuggested": "Action sugerida pelo roteador inteligente do chat."
+  },
+  "planning": {
+    "openApiTarget": "consultas OpenAPI",
+    "selectingRoutesDetail": "Selecionando rotas e parâmetros para a pergunta."
+  },
+  "drawing": {
+    "forcedAnalyserReason": "Produto extraído do PDF de desenho técnico; a análise deve usar GET /products/{code}/analyser.",
+    "missingAuthorizedAnalyserAction": "Identifiquei o produto **{product_code}** no PDF, mas não encontrei uma action autorizada para consultar `/products/{{code}}/analyser` neste agente. Habilite a action de análise técnica do produto e tente novamente."
+  },
+  "pagination": {
+    "continueConsolidation": "Continuação da consulta paginada consolidada.",
+    "fullConsolidation": "Consolidação completa da consulta paginada.",
+    "errorRecovery": "Recuperação automática da consulta anterior.",
+    "formatRefinement": "Reapresentação do último resultado no formato solicitado."
+  },
+  "execution": {
+    "externalActionsTarget": "{count} consulta(s) DELPI",
+    "externalActionsMessage": "Executando {count} consulta(s) à API DELPI..."
+  },
+  "sqlRecovery": {
+    "schemaPrefetchReason": "Schema da tabela {table_name} consultado para corrigir colunas inválidas no SQL."
+  },
+  "toolError": {
+    "header": "[Ferramenta autorizada com erro: {tool_name}]",
+    "selectionFailed": "A ferramenta foi selecionada, mas não conseguiu retornar dados.",
+    "policy": "Regra obrigatória: não invente o resultado. Explique o erro em português simples e peça apenas os parâmetros faltantes quando aplicável."
+  }
+}

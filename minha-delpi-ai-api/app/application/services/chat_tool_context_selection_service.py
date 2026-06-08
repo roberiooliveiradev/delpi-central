@@ -5,6 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 from app.infrastructure.config.settings import Settings
 
@@ -104,7 +108,7 @@ class ChatToolContextSelectionService:
                     {
                         "name": tool_name,
                         "arguments": {},
-                        "reason": "Ferramenta sugerida pelo roteador inteligente do chat.",
+                        "reason": ChatToolContextContentService.get("router", "toolSuggested"),
                     }
                 )
 
@@ -130,10 +134,18 @@ class ChatToolContextSelectionService:
                     ChatStreamActivityService.plan_step(
                         step=1,
                         total=1,
-                        target="consultas OpenAPI",
-                        verb="Planejando",
+                        target=ChatToolContextContentService.get("planning", "openApiTarget"),
+                        verb=ChatAssistantContentService.get(
+                            "stream",
+                            "activity",
+                            "verbs",
+                            "planning",
+                        ),
                         state="active",
-                        detail="Selecionando rotas e parâmetros para a pergunta.",
+                        detail=ChatToolContextContentService.get(
+                            "planning",
+                            "selectingRoutesDetail",
+                        ),
                     )
                 )
 
@@ -164,8 +176,7 @@ class ChatToolContextSelectionService:
                     else None
                 ),
                 forced_reason=(
-                    "Produto extra\u00eddo do PDF de desenho t\u00e9cnico; "
-                    "a an\u00e1lise deve usar GET /products/{code}/analyser."
+                    ChatToolContextContentService.get("drawing", "forcedAnalyserReason")
                     if drawing_action_required
                     else None
                 ),
@@ -203,11 +214,10 @@ class ChatToolContextSelectionService:
                         "context": "",
                         "toolCalls": [],
                         "nativeToolCalling": native_meta,
-                        "directAnswer": (
-                            f"Identifiquei o produto **{drawing_product_code}** no PDF, "
-                            "mas n\u00e3o encontrei uma action autorizada para consultar "
-                            "`/products/{code}/analyser` neste agente. Habilite a action de "
-                            "an\u00e1lise t\u00e9cnica do produto e tente novamente."
+                        "directAnswer": ChatToolContextContentService.format(
+                            "drawing",
+                            "missingAuthorizedAnalyserAction",
+                            product_code=drawing_product_code,
                         ),
                         "skipRag": True,
                         "drawingAnalysisMode": True,
@@ -289,7 +299,7 @@ class ChatToolContextSelectionService:
                             "actionId": router_action_id,
                             "body": {"message": message},
                         },
-                        "reason": "Action sugerida pelo roteador inteligente do chat.",
+                        "reason": ChatToolContextContentService.get("router", "actionSuggested"),
                     }
                 )
 

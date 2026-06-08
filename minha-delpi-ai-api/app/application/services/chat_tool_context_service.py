@@ -6,6 +6,9 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 from app.application.services.chat_tool_context_auxiliary_service import (
     ChatToolContextAuxiliaryService,
 )
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 from app.application.services.chat_tool_context_execution_service import (
     ChatToolContextExecutionService,
 )
@@ -437,11 +440,13 @@ class ChatToolContextService:
             "error": str(error),
         }
 
-        return (
-            f"[Ferramenta autorizada com erro: {name}]\n"
-            "A ferramenta foi selecionada, mas não conseguiu retornar dados.\n"
-            "Regra obrigatória: não invente o resultado. Explique o erro em português simples e peça apenas os parâmetros faltantes quando aplicável.\n"
-            f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+        return "\n".join(
+            [
+                ChatToolContextContentService.format("toolError", "header", tool_name=name),
+                ChatToolContextContentService.get("toolError", "selectionFailed"),
+                ChatToolContextContentService.get("toolError", "policy"),
+                json.dumps(payload, ensure_ascii=False, indent=2),
+            ]
         )
 
     def _is_external_action_allowed(

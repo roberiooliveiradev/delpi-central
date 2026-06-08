@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 from app.application.services.chat_tool_context_external_action_formatter import (
     ChatToolContextExternalActionFormatter,
 )
@@ -266,26 +269,25 @@ class ChatToolContextAuxiliaryService:
                 metadata=recovery.schema_metadata,
                 data=recovery.schema_data,
             )
+            schema_reason = ChatToolContextContentService.format(
+                "sqlRecovery",
+                "schemaPrefetchReason",
+                table_name=recovery.plan.table_name,
+            )
             safe_tool_calls.append(
                 {
                     "name": "execute_external_action",
                     "arguments": {
                         "parameters": {"tableName": recovery.plan.table_name},
                     },
-                    "reason": (
-                        f"Schema da tabela {recovery.plan.table_name} consultado para "
-                        "corrigir colunas inválidas no SQL."
-                    ),
+                    "reason": schema_reason,
                     "metadata": schema_metadata,
                 }
             )
             context_blocks.append(
                 self._formatter._format_tool_context(
                     name="execute_external_action",
-                    reason=(
-                        f"Schema da tabela {recovery.plan.table_name} consultado para "
-                        "corrigir colunas inválidas no SQL."
-                    ),
+                    reason=schema_reason,
                     data=recovery.schema_data,
                     metadata=recovery.schema_metadata,
                 )

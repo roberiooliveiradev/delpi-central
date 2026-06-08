@@ -111,6 +111,7 @@
     "collectionPreviewLine": "- {preview}",
     "collectionPreviewPair": "{label}={value}",
     "textPresentationFallback": "Resultado",
+    "stockTextDetailHeader": "Detalhamento por filial e armazém",
     "itemsTableDefaultTitle": "Dados retornados"
   },
   "itemsListPreview": {

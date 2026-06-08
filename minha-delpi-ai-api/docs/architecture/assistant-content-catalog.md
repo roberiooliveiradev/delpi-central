@@ -47,6 +47,7 @@ Wrappers especializados (mantêm API estável):
 | `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
+| `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
 | `operational_parameters.json` | Parâmetros faltantes | `ChatOperationalParameterService` |
 | `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
 | `identity.json` | Quem é você, perfil | `ChatAssistantIdentityService` |

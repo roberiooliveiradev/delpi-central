@@ -20,6 +20,8 @@ Relatório de auditoria após centralização em `app/content/pt-BR/assistant/*.
 | Erro API sem mensagem | `"Erro desconhecido na API."` | `presenter_content.apiErrors.unknown` |
 | KPI fallback | `"Indicador"` espalhado | `_kpi_title(path)` / `kpiTitles.default` |
 | Text presentation | `"Resultado"` | `generic.textPresentationFallback` |
+| Text presentation (estoque) | `"Detalhamento por filial e armazém"` | `generic.stockTextDetailHeader` |
+| Tool context (lote 12–13) | Roteador, paginação, drawing, execução, erros | `tool_context.json` + `ChatToolContextContentService` |
 
 ## Já centralizado (não reimplementar)
 

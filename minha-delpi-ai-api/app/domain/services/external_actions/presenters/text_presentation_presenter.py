@@ -200,7 +200,8 @@ class ExternalActionTextPresentationPresenter:
 
         if "/stock" in lowered and detail_lines:
             markdown_parts.extend(summary_parts)
-            markdown_parts.append("**Detalhamento por filial e armazém**")
+            detail_header = self._host._presenter_text("generic", "stockTextDetailHeader")
+            markdown_parts.append(f"**{detail_header}**")
             markdown_parts.extend(
                 f"- {line}" if not str(line).strip().startswith("-") else str(line).strip()
                 for line in detail_lines

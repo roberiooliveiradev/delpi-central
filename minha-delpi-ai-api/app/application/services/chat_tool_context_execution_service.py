@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 from app.application.services.chat_tool_context_format_service import (
     ChatToolContextFormatService,
 )
@@ -74,10 +77,18 @@ class ChatToolContextExecutionService:
             on_stream_activity(
                 ChatStreamActivityService.entry(
                     verb="Executando",
-                    target=f"{external_total} consulta(s) DELPI",
+                    target=ChatToolContextContentService.format(
+                        "execution",
+                        "externalActionsTarget",
+                        count=str(external_total),
+                    ),
                     phase="tools",
                     state="active",
-                    message=f"Executando {external_total} consulta(s) à API DELPI...",
+                    message=ChatToolContextContentService.format(
+                        "execution",
+                        "externalActionsMessage",
+                        count=str(external_total),
+                    ),
                 )
             )
 
