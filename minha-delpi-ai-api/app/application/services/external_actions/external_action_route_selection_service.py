@@ -29,6 +29,9 @@ from app.application.services.external_actions.external_action_product_route_sel
 from app.application.services.external_actions.external_action_kpi_route_selection_service import (
     ExternalActionKpiRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_domain_route_selection_service import (
+    ExternalActionDomainRouteSelectionService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
@@ -46,6 +49,7 @@ class ExternalActionRouteSelectionService:
         lmp_route: ExternalActionLmpRouteSelectionService | None = None,
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
         kpi_route: ExternalActionKpiRouteSelectionService | None = None,
+        domain_route: ExternalActionDomainRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -55,6 +59,9 @@ class ExternalActionRouteSelectionService:
         self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
         self._kpi_route = kpi_route or ExternalActionKpiRouteSelectionService(self)
+        self._domain_route = domain_route or ExternalActionDomainRouteSelectionService(
+            repository
+        )
 
     def select(
         self,
@@ -196,6 +203,60 @@ class ExternalActionRouteSelectionService:
             refinement,
             allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+        )
+
+    def select_sale_orders(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        if not candidates_loader or not merge_date_parameters:
+            return None
+
+        return self._domain_route.select_sale_orders(
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            merge_date_parameters=merge_date_parameters,
+        )
+
+    def select_transforma(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        if not candidates_loader or not build_date_branch_parameters:
+            return None
+
+        return self._domain_route.select_transforma(
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            previous_messages=previous_messages,
+        )
+
+    def select_system_metadata(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        if not candidates_loader:
+            return None
+
+        return self._domain_route.select_system_metadata(
+            message,
+            allowed_action_ids,
             candidates_loader=candidates_loader,
         )
 

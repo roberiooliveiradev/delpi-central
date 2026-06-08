@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 18):**
+**Sprint imediata (Fase 3 — god classes, lote 19):**
 
-1. **3B:** continuar `external_action_selection_service.py` (~1937 linhas) — candidatos: sale orders, transforma, system metadata.
-2. **3C:** fatiar resolução de `direct_answer`/`skip_rag` pós-tools em `chat_turn_preparation_service.py`.
+1. **3B:** continuar `external_action_selection_service.py` (~1587 linhas) — candidatos: product_search, pagination, generic ranking.
+2. **3C:** extrair fase RAG de `chat_turn_preparation_service.py` (~704 linhas).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -458,5 +458,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3B lote 17):** `ExternalActionKpiRouteSelectionService` (~310 linhas); heurísticas CPV/OTD/IDD/valor estoque e KPI departamental migradas; `external_action_selection_service.py` **2236 → ~1937** linhas.
 
 **Concluído (Fase 3C lote 17):** `ChatTurnPreparationToolRoutingService` (~330 linhas); guards operacionais, skip-tools e execução de ferramentas extraídos; `chat_turn_preparation_service.py` **1078 → ~948** linhas.
+
+**Concluído (Fase 3B lote 18):** `ExternalActionDomainRouteSelectionService` (~400 linhas); sale orders, Transforma e metadados Protheus migrados para `select_sale_orders` / `select_transforma` / `select_system_metadata`; `external_action_selection_service.py` **1937 → ~1587** linhas.
+
+**Concluído (Fase 3C lote 18):** `ChatTurnPreparationPostToolResolutionService` (~350 linhas); cadeia de `direct_answer`/`skip_rag` pós-tools extraída; correção de `request_attachment_ids` no intent route; `chat_turn_preparation_service.py` **948 → ~704** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
