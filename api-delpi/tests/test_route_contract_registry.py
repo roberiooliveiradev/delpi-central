@@ -42,9 +42,15 @@ def test_api_delpi_success_includes_meta() -> None:
 @patch("app.interface.http.routes.financial.financial_routes.build_get_rol_use_case")
 def test_financial_rol_route_returns_meta(mock_build) -> None:
     mock_use_case = MagicMock()
-    mock_use_case.execute.return_value = {"rol": 100}
+    mock_use_case.execute.return_value = {
+        "gross_revenue": 100.0,
+        "rol": 80.0,
+    }
     mock_build.return_value = mock_use_case
 
     response = get_rol()
     body = json.loads(response.body.decode())
     assert body["meta"]["operationId"] == "get_financial_rol"
+    fields = body["meta"].get("fields") or {}
+    assert fields.get("gross_revenue") == "Receita bruta"
+    assert fields.get("rol") == "ROL"

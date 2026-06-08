@@ -31,6 +31,12 @@ from app.composition.production_composer import (
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
 )
+from app.interface.http.kpi_field_labels import (
+    PRODUCTION_COST_FIELD_LABELS,
+    PRODUCTION_OEE_FIELD_LABELS,
+    PRODUCTION_OTD_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/production", tags=["Produção"])
@@ -70,6 +76,7 @@ def get_direct_labor_cost_pct(
             result,
             operation_id="get_direct_labor_cost_pct",
             message="Custo de mão de obra direta buscado com sucesso.",
+            fields=kpi_fields(PRODUCTION_COST_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -118,6 +125,7 @@ def get_production_cost_pct(
             result,
             operation_id="get_production_cost_pct",
             message="Custo de produção buscado com sucesso.",
+            fields=kpi_fields(PRODUCTION_COST_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -166,6 +174,7 @@ def get_depreciation_pct(
             result,
             operation_id="get_depreciation_pct",
             message="Depreciação buscada com sucesso.",
+            fields=kpi_fields(PRODUCTION_COST_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -282,6 +291,7 @@ def get_overall_equipment_effectiveness_pct(
             result,
             operation_id="get_overall_equipment_effectiveness_pct",
             message="Eficiência geral dos equipamentos buscada com sucesso.",
+            fields=kpi_fields(PRODUCTION_OEE_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -324,6 +334,7 @@ def get_on_time_delivery_pct(
             result,
             operation_id="get_on_time_delivery_pct",
             message="On-Time Delivery buscado com sucesso.",
+            fields=kpi_fields(PRODUCTION_OTD_FIELD_LABELS),
         )
 
     except ValueError as exc:

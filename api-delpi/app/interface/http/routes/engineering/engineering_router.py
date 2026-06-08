@@ -22,6 +22,11 @@ from app.composition.engineering_composer import (
     build_engineering_list_transforma_mais_processes_use_case,
 )
 from app.core.responses import error_response
+from app.interface.http.kpi_field_labels import (
+    ENGINEERING_LMP_FIELD_LABELS,
+    ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
@@ -129,6 +134,7 @@ def list_lmps_dashboard_route(
             result,
             operation_id="list_lmps_dashboard",
             message="Dashboard de LMPs carregado com sucesso.",
+            fields=kpi_fields(ENGINEERING_LMP_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -174,6 +180,7 @@ def lmps_dashboard_summary_route(
             summary,
             operation_id="get_lmps_dashboard_summary",
             message="KPIs do dashboard de LMPs carregados com sucesso.",
+            fields=kpi_fields(ENGINEERING_LMP_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -373,6 +380,7 @@ def get_process_summary(
             summary,
             operation_id="get_transforma_mais_summary",
             message="Resumo dos processos do Transforma Mais carregado com sucesso.",
+            fields=kpi_fields(ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS),
         )
 
     except ValueError as exc:

@@ -32,6 +32,36 @@ def test_generic_kpi_cards_use_presenter_palette():
     assert cards[0]["color"] == "#0ea5e9"
 
 
+def test_financial_rol_kpi_cards_use_portuguese_labels():
+    presenter = ExternalActionResultPresenter()
+
+    result = presenter.present(
+        {
+            "success": True,
+            "data": {
+                "gross_revenue": 5138916.92,
+                "returns": 118597.25,
+                "discounts": 12220.52,
+                "icms": 191225.32,
+                "rol": 5000000.0,
+            },
+            "meta": {
+                "entity": "financial_rol",
+                "shape": "scalar",
+                "operationId": "get_financial_rol",
+            },
+        },
+        path="/financial/rol",
+    )
+
+    joined = "\n".join(result.get("linhas") or [])
+
+    assert "Receita bruta" in joined
+    assert "Devoluções" in joined
+    assert "Gross revenue" not in joined
+    assert "Returns" not in joined
+
+
 def test_product_overview_narrative_uses_content():
     presenter = ExternalActionResultPresenter()
 

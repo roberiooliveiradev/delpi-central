@@ -35,6 +35,14 @@ from app.composition.supplies_composer import (
     build_get_stock_value_use_case,
     build_get_inventory_turnover_use_case,
 )
+from app.interface.http.kpi_field_labels import (
+    SUPPLIES_CPV_FIELD_LABELS,
+    SUPPLIES_INVENTORY_TURNOVER_FIELD_LABELS,
+    SUPPLIES_NEGOTIATION_SAVINGS_FIELD_LABELS,
+    SUPPLIES_OTD_FIELD_LABELS,
+    SUPPLIES_STOCK_VALUE_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
@@ -71,6 +79,7 @@ def get_cpv(
             result,
             operation_id="get_supplies_cpv",
             message="CPV buscado com sucesso.",
+            fields=kpi_fields(SUPPLIES_CPV_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -118,6 +127,7 @@ def get_otd(
             result,
             operation_id="get_supplies_otd",
             message="OTD buscado com sucesso.",
+            fields=kpi_fields(SUPPLIES_OTD_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -165,6 +175,7 @@ def get_stock_value(
             result,
             operation_id="get_supplies_stock_value",
             message="Valor total de estoque buscado com sucesso.",
+            fields=kpi_fields(SUPPLIES_STOCK_VALUE_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -208,6 +219,7 @@ def get_negotiation_savings_summary(
             result,
             operation_id="get_supplies_negotiation_savings_summary",
             message="Economia em negociações de compras buscada com sucesso.",
+            fields=kpi_fields(SUPPLIES_NEGOTIATION_SAVINGS_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -267,6 +279,7 @@ def get_inventory_turnover(
             result,
             operation_id="get_supplies_inventory_turnover",
             message="Giro de estoque buscado com sucesso.",
+            fields=kpi_fields(SUPPLIES_INVENTORY_TURNOVER_FIELD_LABELS),
         )
 
     except ValueError as exc:

@@ -37,6 +37,12 @@ from app.composition.quality_composer import (
     build_list_quality_branches_use_case,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
+from app.interface.http.kpi_field_labels import (
+    QUALITY_AUDIT_5S_FIELD_LABELS,
+    QUALITY_KAIZEN_FIELD_LABELS,
+    QUALITY_PPM_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.routes.quality.audit_5s_operational_router import (
     router as audit_5s_operational_router,
 )
@@ -190,6 +196,7 @@ def get_kaizen_summary(
         return api_delpi_success(
             summary,
             operation_id="get_kaizen_summary",
+            fields=kpi_fields(QUALITY_KAIZEN_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -231,6 +238,7 @@ def get_audit_5s_summary(
         return api_delpi_success(
             summary,
             operation_id="get_audit_5s_summary",
+            fields=kpi_fields(QUALITY_AUDIT_5S_FIELD_LABELS),
         )
         return error_response(str(exc), status_code=400)
 
@@ -269,6 +277,7 @@ def get_internal_ppm_summary(
         return api_delpi_success(
             result,
             operation_id="get_ppm_internal_summary",
+            fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
         )
         return error_response(str(exc), status_code=400)
 
@@ -307,6 +316,7 @@ def get_external_ppm_summary(
         return api_delpi_success(
             result,
             operation_id="get_ppm_external_summary",
+            fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
         )
         return error_response(str(exc), status_code=400)
 

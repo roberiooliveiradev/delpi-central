@@ -22,6 +22,7 @@ from app.application.services.strategic_indicators import dashboard_goal_source_
 from app.application.services.strategic_indicators.dashboard_goals_service import (
     get_dashboard_goals_service,
 )
+from app.interface.http.kpi_field_labels import HR_FIELD_LABELS, kpi_fields
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
 
@@ -131,6 +132,7 @@ def get_hr_snapshot(
             ),
             operation_id="get_hr_snapshot",
             message="Indicadores de RH obtidos com sucesso.",
+            fields=kpi_fields(HR_FIELD_LABELS),
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar RH: {exc}")
@@ -180,6 +182,7 @@ def get_hr_active_pdi_count(
             ),
             operation_id="get_hr_active_pdi_count",
             message="Contagem de PDIs ativos obtida com sucesso.",
+            fields=kpi_fields(HR_FIELD_LABELS),
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar PDIs ativos: {exc}")
@@ -229,6 +232,7 @@ def get_hr_performance_reviews_completion(
             ),
             operation_id="get_hr_performance_reviews_completion",
             message="Percentual de avaliações de desempenho concluídas obtido com sucesso.",
+            fields=kpi_fields(HR_FIELD_LABELS),
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar avaliações de desempenho: {exc}")

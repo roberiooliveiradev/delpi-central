@@ -32,6 +32,12 @@ from app.composition.commercial_composer import (
     build_get_sales_order_otd_use_case,
     build_get_new_business_rol_pct_use_case,
 )
+from app.interface.http.kpi_field_labels import (
+    COMMERCIAL_CONVERSION_FIELD_LABELS,
+    COMMERCIAL_ROL_FIELD_LABELS,
+    COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 
@@ -66,6 +72,7 @@ def get_head_office_rol_target_pct(
             result,
             operation_id="get_head_office_rol_target_pct",
             message="Head office ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -108,6 +115,7 @@ def get_branch_rol_target_pct(
             result,
             operation_id="get_branch_rol_target_pct",
             message="Branch ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -230,6 +238,7 @@ def get_sales_conversion_rate(
             result,
             operation_id="get_sales_conversion_rate",
             message="Sales Conversion Rate fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_CONVERSION_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -266,6 +275,7 @@ def get_new_clients_average(
             result,
             operation_id="get_new_clients_average",
             message="Number of New Clients (Monthly Average) fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -308,6 +318,7 @@ def get_sales_order_otd(
             result,
             operation_id="get_sales_order_otd",
             message="Sales order on-time delivery percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -350,6 +361,7 @@ def get_new_business_rol_pct(
             result,
             operation_id="get_new_business_rol_pct",
             message="New business share of net operating revenue fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -386,6 +398,7 @@ def get_new_clients_rol_pct(
             result,
             operation_id="get_new_clients_rol_pct",
             message="% of Net Operating Revenue from New Clients fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
         )
 
     except ValueError as exc:

@@ -24,14 +24,23 @@ class ExternalActionResultPresenter:
         self._active_schema_labels: dict[str, str] | None = None
 
     def present(self, data, *, path: str = "") -> dict:
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
-        routed = self._present_entity_first(data, path=path, profile=profile)
+        previous_labels = self._active_schema_labels
+        self._active_schema_labels = self._column_labels.merge_meta_field_labels(
+            {},
+            data,
+        )
 
-        if routed is not None:
-            return ChatApiDelpiResponseProfileService.enrich_humanized(routed, data)
+        try:
+            profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+            routed = self._present_entity_first(data, path=path, profile=profile)
 
-        result = self._present_legacy(data, path=path)
-        return ChatApiDelpiResponseProfileService.enrich_humanized(result, data)
+            if routed is not None:
+                return ChatApiDelpiResponseProfileService.enrich_humanized(routed, data)
+
+            result = self._present_legacy(data, path=path)
+            return ChatApiDelpiResponseProfileService.enrich_humanized(result, data)
+        finally:
+            self._active_schema_labels = previous_labels
 
     def _present_entity_first(
         self,

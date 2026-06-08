@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Any
 
@@ -44,7 +45,15 @@ class ExternalActionColumnLabelService:
         if isinstance(configured, str) and configured.strip():
             return configured.strip()
 
-        return normalized_key.replace("_", " ").strip().capitalize()
+        snake_key = self._snake_case_key(normalized_key)
+
+        if snake_key != normalized_key:
+            configured = fields.get(snake_key)
+
+            if isinstance(configured, str) and configured.strip():
+                return configured.strip()
+
+        return self._humanize_field_key(normalized_key)
 
     def kv_table_column_defs(self) -> list[dict[str, str]]:
         cfg = (_column_labels_content().get("presenter") or {}).get("kvTableColumns") or {}
@@ -293,6 +302,38 @@ class ExternalActionColumnLabelService:
             return True
 
         return False
+
+    @staticmethod
+    def _snake_case_key(key: str) -> str:
+        normalized = str(key or "").strip()
+
+        if not normalized:
+            return ""
+
+        step_one = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", normalized)
+        step_two = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", step_one)
+
+        return step_two.replace("-", "_").lower()
+
+    @staticmethod
+    def _humanize_field_key(key: str) -> str:
+        normalized = str(key or "").strip()
+
+        if not normalized:
+            return ""
+
+        if "_" in normalized:
+            parts = [part for part in normalized.split("_") if part]
+
+            return " ".join(part.capitalize() for part in parts)
+
+        spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", normalized)
+        parts = [part for part in spaced.split() if part]
+
+        if not parts:
+            return normalized
+
+        return " ".join(part.capitalize() for part in parts)
 
     def _collect_schema_property_labels(
         self,

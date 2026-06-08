@@ -142,6 +142,19 @@ def test_label_for_camel_case_product_summary_keys():
     assert service.label_for("customerReference") == "Referência cliente"
 
 
+def test_label_for_resolves_snake_case_dictionary_from_camel_case_key():
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("registeredLeadTimeDays") == "Lead time (dias)"
+
+
+def test_label_for_humanizes_unknown_snake_and_camel_keys():
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("some_custom_metric") == "Some Custom Metric"
+    assert service.label_for("someCustomMetric") == "Some Custom Metric"
+
+
 def test_presenter_kv_table_and_profile_rows():
     service = ExternalActionColumnLabelService()
 

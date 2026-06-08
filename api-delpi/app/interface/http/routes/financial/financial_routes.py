@@ -16,6 +16,13 @@ from app.composition.financial_composer import (
     build_get_financial_fixed_cost_pct_use_case,
     build_get_financial_pmr_use_case,
 )
+from app.interface.http.kpi_field_labels import (
+    FINANCIAL_EBITDA_FIELD_LABELS,
+    FINANCIAL_FIXED_COST_FIELD_LABELS,
+    FINANCIAL_PMR_FIELD_LABELS,
+    FINANCIAL_ROL_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 
@@ -43,6 +50,7 @@ def get_rol(
             result,
             operation_id="get_financial_rol",
             message="ROL consultado com sucesso.",
+            fields=kpi_fields(FINANCIAL_ROL_FIELD_LABELS),
         )
 
     except Exception as e:
@@ -77,6 +85,7 @@ def get_ebitda_pct(
             result,
             operation_id="get_financial_ebitda_pct",
             message="EBITDA percentual buscado com sucesso.",
+            fields=kpi_fields(FINANCIAL_EBITDA_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -118,6 +127,7 @@ def get_fixed_cost_pct(
             result,
             operation_id="get_financial_fixed_cost_pct",
             message="Custos fixos percentuais buscados com sucesso.",
+            fields=kpi_fields(FINANCIAL_FIXED_COST_FIELD_LABELS),
         )
 
     except ValueError as exc:
@@ -159,6 +169,7 @@ def get_pmr(
             result,
             operation_id="get_financial_pmr",
             message="Prazo médio de recebimento buscado com sucesso.",
+            fields=kpi_fields(FINANCIAL_PMR_FIELD_LABELS),
         )
 
     except ValueError as exc:
