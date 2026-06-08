@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
+from app.domain.ports.chat_quality_issue_repository_port import ChatQualityIssueRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_quality_issue_model import AiChatQualityIssueModel
 
 
-class PostgresChatQualityIssueRepository:
+class PostgresChatQualityIssueRepository(ChatQualityIssueRepositoryPort):
     def find_open_by_code(self, code: str, *, within_days: int = 7) -> dict | None:
         since = datetime.now(timezone.utc) - timedelta(days=max(1, within_days))
         row = (

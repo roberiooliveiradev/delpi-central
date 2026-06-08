@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from uuid import UUID
 
+from app.domain.ports.chat_skill_repository_port import ChatSkillRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_skill_catalog_model import AiChatSkillCatalogModel
 
@@ -12,7 +13,7 @@ def _normalize_key(value: str) -> str:
     return normalized[:80]
 
 
-class PostgresChatSkillRepository:
+class PostgresChatSkillRepository(ChatSkillRepositoryPort):
     def list_all(self, *, include_inactive: bool = False) -> list[dict]:
         query = AiChatSkillCatalogModel.query
 

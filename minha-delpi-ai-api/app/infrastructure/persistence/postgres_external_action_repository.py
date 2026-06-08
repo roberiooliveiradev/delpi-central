@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.external_action_model import ExternalActionModel
 from app.infrastructure.db.models.external_action_provider_model import (
@@ -18,7 +19,7 @@ from app.infrastructure.external_actions.openapi_action_importer import (
 )
 
 
-class PostgresExternalActionRepository:
+class PostgresExternalActionRepository(ExternalActionRepositoryPort):
     def __init__(self, embedding_service=None):
         self.embedding_service = embedding_service
     def create_provider(self, payload: dict) -> dict:

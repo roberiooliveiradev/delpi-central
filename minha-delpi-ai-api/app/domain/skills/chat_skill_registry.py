@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import ClassVar
 
+from app.domain.ports.chat_skill_repository_port import ChatSkillRepositoryPort
+from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
@@ -87,50 +90,59 @@ def _definition_from_row(row: dict) -> ChatSkillDefinition:
     )
 
 
-@lru_cache(maxsize=1)
-def _skills() -> tuple[ChatSkillDefinition, ...]:
-    try:
-        from flask import has_app_context
+def _merge_db_and_json_skills(rows: list[dict]) -> tuple[ChatSkillDefinition, ...]:
+    json_defs = list(_skills_from_json())
+    json_by_key = {d.key: d for d in json_defs}
 
-        if has_app_context():
-            from app.infrastructure.persistence.postgres_chat_skill_repository import (
-                PostgresChatSkillRepository,
-            )
+    db_defs = [_definition_from_row(row) for row in (rows or []) if isinstance(row, dict)]
 
-            rows = PostgresChatSkillRepository().list_active()
+    merged: list[ChatSkillDefinition] = []
+    seen: set[str] = set()
 
-            # Importante: o catálogo no banco pode estar incompleto em ambientes novos.
-            # Para manter defaults (ex.: `company-knowledge`) e evitar regressões,
-            # fazemos merge com o catálogo embarcado (JSON). O DB tem precedência.
-            json_defs = list(_skills_from_json())
-            json_by_key = {d.key: d for d in json_defs}
+    for definition in db_defs:
+        if definition.key and definition.key not in seen:
+            merged.append(definition)
+            seen.add(definition.key)
 
-            db_defs = [_definition_from_row(row) for row in (rows or []) if isinstance(row, dict)]
-            db_by_key = {d.key: d for d in db_defs if d.key}
+    for key, definition in json_by_key.items():
+        if key and key not in seen:
+            merged.append(definition)
+            seen.add(key)
 
-            merged: list[ChatSkillDefinition] = []
-            seen: set[str] = set()
-
-            # Preserva a ordem do DB (sort_order/label) e complementa com JSON.
-            for d in db_defs:
-                if d.key and d.key not in seen:
-                    merged.append(d)
-                    seen.add(d.key)
-
-            for key, d in json_by_key.items():
-                if key and key not in seen:
-                    merged.append(d)
-                    seen.add(key)
-
-            if merged:
-                return tuple(merged)
-    except Exception:
-        pass
+    if merged:
+        return tuple(merged)
 
     return _skills_from_json()
 
 
+@lru_cache(maxsize=1)
+def _skills() -> tuple[ChatSkillDefinition, ...]:
+    repository = ChatSkillRegistry._skill_repository
+
+    if repository is None:
+        return _skills_from_json()
+
+    try:
+        return _merge_db_and_json_skills(repository.list_active())
+    except Exception:
+        return _skills_from_json()
+
+
 class ChatSkillRegistry:
+    _skill_repository: ClassVar[ChatSkillRepositoryPort | None] = None
+    _external_action_repository: ClassVar[ExternalActionRepositoryPort | None] = None
+
+    @classmethod
+    def configure(
+        cls,
+        *,
+        skill_repository: ChatSkillRepositoryPort,
+        external_action_repository: ExternalActionRepositoryPort,
+    ) -> None:
+        cls._skill_repository = skill_repository
+        cls._external_action_repository = external_action_repository
+        invalidate_skill_cache()
+
     @classmethod
     def list_catalog(cls) -> list[dict]:
         return [cls._definition_to_catalog(item) for item in _skills()]
@@ -380,13 +392,12 @@ class ChatSkillRegistry:
         if any(action_id.endswith(operation_suffix) for action_id in allowed_set):
             return True
 
+        repository = cls._external_action_repository
+
+        if repository is None:
+            return False
+
         try:
-            from app.infrastructure.persistence.postgres_external_action_repository import (
-                PostgresExternalActionRepository,
-            )
-
-            repository = PostgresExternalActionRepository()
-
             for action in repository.list_actions():
                 action_id = str(action.get("actionId") or "").strip()
 
@@ -407,12 +418,12 @@ class ChatSkillRegistry:
         if not allowed_action_ids:
             return False
 
-        try:
-            from app.infrastructure.persistence.postgres_external_action_repository import (
-                PostgresExternalActionRepository,
-            )
+        repository = cls._external_action_repository
 
-            repository = PostgresExternalActionRepository()
+        if repository is None:
+            return False
+
+        try:
             allowed_set = set(allowed_action_ids)
 
             for action in repository.list_actions():

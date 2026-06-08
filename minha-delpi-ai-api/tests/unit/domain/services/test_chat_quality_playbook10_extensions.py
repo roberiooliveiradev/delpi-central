@@ -56,15 +56,15 @@ def test_weekly_report_markdown_contains_sections():
     assert "Segurança" in markdown
 
 
-def test_issue_service_skips_duplicate_open_issue(monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.persistence.postgres_chat_quality_issue_repository.PostgresChatQualityIssueRepository.find_open_by_code",
-        lambda self, code, within_days=7: {"id": 1, "code": code},
-    )
-    monkeypatch.setattr(
-        "app.infrastructure.persistence.postgres_chat_quality_issue_repository.PostgresChatQualityIssueRepository.create",
-        lambda self, **kwargs: {"id": 99},
-    )
+def test_issue_service_skips_duplicate_open_issue():
+    class FakeIssueRepository:
+        def find_open_by_code(self, code, *, within_days=7):
+            return {"id": 1, "code": code}
+
+        def create(self, **kwargs):
+            return {"id": 99}
+
+    ChatFeedbackIssueService.configure(FakeIssueRepository())
 
     created = ChatFeedbackIssueService.evaluate_alerts(
         [{"code": "context_loss", "message": "Perda de contexto"}],

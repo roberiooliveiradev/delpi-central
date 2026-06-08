@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
+from app.domain.ports.chat_project_peer_context_repository_port import (
+    ChatProjectPeerContextRepositoryPort,
+    PeerMessageRecord,
+    PeerSessionRecord,
+)
 from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
-from app.extensions.db import db
-from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
-from app.infrastructure.db.models.chat_session_memory_model import AiChatSessionMemoryModel
-from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
 
 _MAX_PEER_SESSIONS = 5
 _MAX_LINES_PER_SESSION = 6
-_ENTITY_KEYS = frozenset({"productCode", "branch", "period"})
 _BEHAVIOR_KEYS = frozenset(
     {
         "responseFormat",
@@ -37,6 +37,22 @@ class ProjectPeerContextBundle:
 
 
 class ChatProjectConversationContextService:
+    _peer_context_repository: ClassVar[ChatProjectPeerContextRepositoryPort | None] = None
+
+    @classmethod
+    def configure(cls, repository: ChatProjectPeerContextRepositoryPort) -> None:
+        cls._peer_context_repository = repository
+
+    @classmethod
+    def _require_repository(cls) -> ChatProjectPeerContextRepositoryPort:
+        if cls._peer_context_repository is None:
+            raise RuntimeError(
+                "ChatProjectPeerContextRepositoryPort não configurado — "
+                "chame configure_domain_infrastructure_ports()"
+            )
+
+        return cls._peer_context_repository
+
     @classmethod
     def build(
         cls,
@@ -139,21 +155,16 @@ class ChatProjectConversationContextService:
         project_id: UUID,
         exclude_session_id: UUID,
         user_id: UUID,
-    ) -> list[AiChatSessionModel]:
-        return (
-            AiChatSessionModel.query.filter(
-                AiChatSessionModel.project_id == project_id,
-                AiChatSessionModel.user_id == user_id,
-                AiChatSessionModel.id != exclude_session_id,
-                AiChatSessionModel.archived_at.is_(None),
-            )
-            .order_by(AiChatSessionModel.updated_at.desc())
-            .limit(_MAX_PEER_SESSIONS)
-            .all()
+    ) -> list[PeerSessionRecord]:
+        return cls._require_repository().list_peer_sessions(
+            project_id=project_id,
+            exclude_session_id=exclude_session_id,
+            user_id=user_id,
+            limit=_MAX_PEER_SESSIONS,
         )
 
     @classmethod
-    def _build_session_snippets(cls, sessions: list[AiChatSessionModel]) -> list[str]:
+    def _build_session_snippets(cls, sessions: list[PeerSessionRecord]) -> list[str]:
         blocks: list[str] = []
 
         for session in sessions:
@@ -172,77 +183,74 @@ class ChatProjectConversationContextService:
 
     @classmethod
     def _recent_message_lines(cls, session_id: UUID) -> list[str]:
-        rows = (
-            AiChatMessageModel.query.filter(
-                AiChatMessageModel.session_id == session_id,
-            )
-            .order_by(AiChatMessageModel.created_at.desc())
-            .limit(8)
-            .all()
-        )
-
+        rows = cls._require_repository().list_recent_messages(session_id, limit=8)
         lines: list[str] = []
 
-        for row in reversed(rows):
-            role = str(row.role or "").strip()
+        for row in rows:
+            lines.extend(cls._format_message_line(row))
 
-            if role == "user":
-                content = str(row.content or "").strip()
+        return lines
 
-                if content:
-                    lines.append(f"- Usuário: {content[:280]}")
+    @classmethod
+    def _format_message_line(cls, row: PeerMessageRecord) -> list[str]:
+        role = row.role
 
-                continue
+        if role == "user":
+            if row.content:
+                return [f"- Usuário: {row.content[:280]}"]
 
-            if role != "assistant":
-                continue
+            return []
 
-            metadata = row.message_metadata if isinstance(row.message_metadata, dict) else {}
-            humanized = metadata.get("humanizedSummary")
+        if role != "assistant":
+            return []
 
-            if isinstance(humanized, dict):
-                titulo = str(humanized.get("titulo") or "").strip()
-                summary_lines = [
-                    str(line).strip()
-                    for line in (humanized.get("linhas") or [])
-                    if str(line or "").strip()
-                ]
+        metadata = row.message_metadata or {}
+        humanized = metadata.get("humanizedSummary")
 
-                if titulo:
-                    lines.append(f"- Assistente ({titulo}):")
+        if isinstance(humanized, dict):
+            titulo = str(humanized.get("titulo") or "").strip()
+            summary_lines = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line or "").strip()
+            ]
+            lines: list[str] = []
 
-                for summary_line in summary_lines[:4]:
-                    lines.append(f"  · {summary_line[:320]}")
+            if titulo:
+                lines.append(f"- Assistente ({titulo}):")
 
-                if titulo or summary_lines:
+            for summary_line in summary_lines[:4]:
+                lines.append(f"  · {summary_line[:320]}")
+
+            if titulo or summary_lines:
+                return lines
+
+        lines = []
+
+        if row.content:
+            lines.append(f"- Assistente: {row.content[:320]}")
+
+        tool_calls = metadata.get("toolCalls")
+
+        if isinstance(tool_calls, list):
+            for call in tool_calls[-2:]:
+                if not isinstance(call, dict):
                     continue
 
-            content = str(row.content or "").strip()
+                call_meta = call.get("metadata")
 
-            if content:
-                lines.append(f"- Assistente: {content[:320]}")
+                if not isinstance(call_meta, dict):
+                    continue
 
-            tool_calls = metadata.get("toolCalls")
+                tool_humanized = call_meta.get("humanizedSummary")
 
-            if isinstance(tool_calls, list):
-                for call in tool_calls[-2:]:
-                    if not isinstance(call, dict):
-                        continue
+                if not isinstance(tool_humanized, dict):
+                    continue
 
-                    call_meta = call.get("metadata")
+                tool_title = str(tool_humanized.get("titulo") or "").strip()
 
-                    if not isinstance(call_meta, dict):
-                        continue
-
-                    tool_humanized = call_meta.get("humanizedSummary")
-
-                    if not isinstance(tool_humanized, dict):
-                        continue
-
-                    tool_title = str(tool_humanized.get("titulo") or "").strip()
-
-                    if tool_title:
-                        lines.append(f"  · Consulta: {tool_title[:200]}")
+                if tool_title:
+                    lines.append(f"  · Consulta: {tool_title[:200]}")
 
         return lines
 
@@ -253,31 +261,17 @@ class ChatProjectConversationContextService:
         project_id: UUID,
         exclude_session_id: UUID,
     ) -> dict[str, Any]:
-        session_ids = [
-            row[0]
-            for row in db.session.query(AiChatSessionModel.id)
-            .filter(
-                AiChatSessionModel.project_id == project_id,
-                AiChatSessionModel.id != exclude_session_id,
-                AiChatSessionModel.archived_at.is_(None),
-            )
-            .order_by(AiChatSessionModel.updated_at.desc())
-            .limit(_MAX_PEER_SESSIONS)
-            .all()
-        ]
+        repository = cls._require_repository()
+        session_ids = repository.list_peer_session_ids(
+            project_id=project_id,
+            exclude_session_id=exclude_session_id,
+            limit=_MAX_PEER_SESSIONS,
+        )
 
         if not session_ids:
             return {"operationalFocus": {}, "behaviorInstructions": {}}
 
-        rows = (
-            AiChatSessionMemoryModel.query.filter(
-                AiChatSessionMemoryModel.session_id.in_(session_ids),
-                AiChatSessionMemoryModel.active.is_(True),
-            )
-            .order_by(AiChatSessionMemoryModel.updated_at.desc())
-            .all()
-        )
-
+        rows = repository.list_active_peer_memories(session_ids)
         entities: dict[str, str] = {}
         behavior: dict[str, str] = {}
 

@@ -26,3 +26,11 @@ def configure_domain_infrastructure_ports() -> None:
     ChatDomainConfigService.configure(config)
     ChatExternalActionDirectResponseService.configure(config)
     _CONFIGURED = True
+
+
+def configure_domain_infrastructure_ports_with_persistence() -> None:
+    """Composition root completo (conteúdo + persistência) — uso em runtime da API."""
+    from app.composition.persistence_composer import configure_domain_persistence_ports
+
+    configure_domain_infrastructure_ports()
+    configure_domain_persistence_ports()

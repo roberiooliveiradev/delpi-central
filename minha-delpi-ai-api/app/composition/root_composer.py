@@ -41,6 +41,12 @@ def create_application() -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from app.composition.content_composer import (
+        configure_domain_infrastructure_ports_with_persistence,
+    )
+
+    configure_domain_infrastructure_ports_with_persistence()
+
     register_request_logging(app)
     register_auth_middleware(app)
 

@@ -402,12 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 2 lote 3 — repositórios/persistência no domain):**
+**Sprint imediata (Fase 3 — god classes e HTTP fino):**
 
-1. Migrar imports residuais: `chat_feedback_issue_service`, `chat_project_conversation_context_service`, `chat_quality_adoption_metrics_service`, `chat_skill_registry` (Postgres lazy).
-2. Introduzir ports de repositório em `domain/ports/` onde ainda não existem.
-3. Rodar `audit_clean_architecture.py --write-baseline` (meta: `domainInfrastructureImports` → 0).
+1. Extrair fatias do `external_action_result_presenter.py` (chart/KPI presenter).
+2. Migrar `_select_product_action` para `ExternalActionRouteSelectionService`.
+3. Reduzir `chat_routes.py` / `admin_routes.py` — Postgres só via composition root.
 
-**Concluído (Fase 2 lotes 1–2):** ports de conteúdo/config; migração de `ContentService` e grupo inicial de `Settings` (`domainInfrastructureImports` 45 → 21).
+**Concluído (Fase 2):** `domainInfrastructureImports` **0** — ports de conteúdo, config e persistência (`configure_domain_infrastructure_ports_with_persistence` no `root_composer`).
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

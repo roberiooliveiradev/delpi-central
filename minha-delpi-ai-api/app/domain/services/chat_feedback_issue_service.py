@@ -6,10 +6,27 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, ClassVar
+
+from app.domain.ports.chat_quality_issue_repository_port import ChatQualityIssueRepositoryPort
 
 
 class ChatFeedbackIssueService:
+    _issue_repository: ClassVar[ChatQualityIssueRepositoryPort | None] = None
+
+    @classmethod
+    def configure(cls, repository: ChatQualityIssueRepositoryPort) -> None:
+        cls._issue_repository = repository
+
+    @classmethod
+    def _require_repository(cls) -> ChatQualityIssueRepositoryPort:
+        if cls._issue_repository is None:
+            raise RuntimeError(
+                "ChatQualityIssueRepositoryPort não configurado — "
+                "chame configure_domain_infrastructure_ports()"
+            )
+
+        return cls._issue_repository
     _ISSUE_TEMPLATES = {
         "context_loss": {
             "title": "Chat perde contexto em follow-ups",
@@ -35,11 +52,7 @@ class ChatFeedbackIssueService:
         feedback_summary: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         created: list[dict[str, Any]] = []
-        from app.infrastructure.persistence.postgres_chat_quality_issue_repository import (
-            PostgresChatQualityIssueRepository,
-        )
-
-        repository = PostgresChatQualityIssueRepository()
+        repository = cls._require_repository()
 
         for alert in alerts or []:
             if not isinstance(alert, dict):
