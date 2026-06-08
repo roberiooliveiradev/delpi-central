@@ -17,6 +17,7 @@ class ResponseMetaBuilder:
         pagination: dict[str, Any] | None = None,
         fields: dict[str, str] | None = None,
         related_routes: dict[str, str] | None = None,
+        sections: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         meta: dict[str, Any] = {
             "dataVersion": DATA_VERSION,
@@ -30,6 +31,8 @@ class ResponseMetaBuilder:
             meta["fields"] = fields
         if related_routes:
             meta["relatedRoutes"] = related_routes
+        if sections:
+            meta["sections"] = sections
         return meta
 
     @staticmethod

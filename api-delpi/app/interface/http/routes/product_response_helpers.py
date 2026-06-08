@@ -19,6 +19,7 @@ def product_success(
     shape: str,
     code: str | None = None,
     fields: dict[str, str] | None = None,
+    sections: list[dict] | None = None,
     message: str = "Operação realizada com sucesso",
 ):
     related = ResponseMetaBuilder.product_related_routes(code) if code else None
@@ -29,5 +30,6 @@ def product_success(
         pagination=ResponseMetaBuilder.pagination_from_data(data),
         fields=fields,
         related_routes=related,
+        sections=sections,
     )
     return success_response(data=data, message=message, meta=meta)

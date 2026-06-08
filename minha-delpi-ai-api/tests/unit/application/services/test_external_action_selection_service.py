@@ -1414,3 +1414,55 @@ def test_select_drawing_analysis_prefers_api_externa_analyser(monkeypatch):
     assert selected["arguments"]["parameters"]["code"] == "90260140"
     assert selected["arguments"]["parameters"]["page_size"] == 50
     assert selected["arguments"]["parameters"]["max_depth"] == 10
+
+
+def test_select_structure_prefers_granular_route_over_analyser():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "structure-action",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+                {
+                    "actionId": "analyser-action",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "view"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "mostre a estrutura do produto 90269001",
+        allowed_action_ids=["structure-action", "analyser-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "structure-action"
+
+
+def test_build_product_parameters_sets_analyser_view_summary_by_default():
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_product_parameters(
+        {
+            "path": "/products/{code}/analyser",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "view"},
+            ],
+        },
+        "90269001",
+        message="resumo do produto 90269001",
+    )
+
+    assert parameters["view"] == "summary"

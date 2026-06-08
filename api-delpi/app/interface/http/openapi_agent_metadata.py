@@ -188,9 +188,10 @@ PRODUCT_STOCK = agent_route(
 PRODUCT_ANALYSER = agent_route(
     summary="Analisador completo do produto",
     description=(
-        "Resumo consolidado do item: descrição, tipo, unidade, grupo, roteiro, fornecedores e demais "
-        "visões em uma única consulta. Preferir para descrição do produto, ficha resumida ou "
-        "visão geral quando não basta só o estoque."
+        "Consolida cadastro, estrutura, roteiro e inspeção. Default view=full. "
+        "Use view=summary para amostra leve. Para intenção pontual prefira rotas granulares: "
+        "/stock (estoque), /structure (BOM), /guide (roteiro), /inspection (qualidade), "
+        "/summary (cadastro+estoque+preços) ou /factory-status (visão fabril integrada)."
     ),
     operation_id="get_product_analyser",
 )

@@ -9,6 +9,10 @@ from app.application.use_cases.product.search_products_use_case import SearchPro
 from app.application.use_cases.product.list_product_structure_use_case import ListProductStructureUseCase
 from app.application.use_cases.product.list_product_guide_use_case import ListProductGuideUseCase
 from app.application.use_cases.product.list_product_inspection_use_case import ListProductInspectionUseCase
+from app.application.services.product.protheus_field_normalizer import narrow_product_fields
+
+SUMMARY_PAGE_SIZE = 3
+SUMMARY_MAX_DEPTH = 2
 
 
 class ProductAnalyserUseCase:
@@ -26,16 +30,14 @@ class ProductAnalyserUseCase:
         self.inspection_use_case = inspection_use_case
 
     def execute(self, dto: ProductAnalyserRequest):
-
-        # ----------------------------
-        # product
-        # ----------------------------
+        view = (dto.view or "full").strip().lower()
+        is_summary = view == "summary"
 
         product_page = self.search_products_use_case.execute(
             ListProductsRequest(
                 code=dto.code,
                 page=1,
-                page_size=1
+                page_size=1,
             )
         )
 
@@ -44,49 +46,59 @@ class ProductAnalyserUseCase:
         if product_page.items:
             p = product_page.items[0]
             product = p.to_dict() if hasattr(p, "to_dict") else vars(p)
+            if is_summary:
+                product = narrow_product_fields(product, view="summary")
 
-        # ----------------------------
-        # structure (FULL)
-        # ----------------------------
-
-        structure = self.structure_use_case.execute(
-            ListProductStructureRequest(
-                code=dto.code,
-                page=None,
-                page_size=None,
-                max_depth=None
+        if is_summary:
+            structure = self.structure_use_case.execute(
+                ListProductStructureRequest(
+                    code=dto.code,
+                    page=1,
+                    page_size=SUMMARY_PAGE_SIZE,
+                    max_depth=SUMMARY_MAX_DEPTH,
+                )
             )
-        )
-
-        # ----------------------------
-        # guide (FULL)
-        # ----------------------------
-
-        guide = self.guide_use_case.execute(
-            ListProductGuideRequest(
-                code=dto.code,
-                page=None,
-                page_size=None,
-                max_depth=None
+            guide = self.guide_use_case.execute(
+                ListProductGuideRequest(
+                    code=dto.code,
+                    page=1,
+                    page_size=SUMMARY_PAGE_SIZE,
+                )
             )
-        )
-
-        # ----------------------------
-        # inspection (FULL)
-        # ----------------------------
-
-        inspection = self.inspection_use_case.execute(
-            ListProductInspectionRequest(
-                code=dto.code,
-                page=None,
-                page_size=None,
-                max_depth=None
+            inspection = self.inspection_use_case.execute(
+                ListProductInspectionRequest(
+                    code=dto.code,
+                    page=1,
+                    page_size=SUMMARY_PAGE_SIZE,
+                )
             )
-        )
+        else:
+            structure = self.structure_use_case.execute(
+                ListProductStructureRequest(
+                    code=dto.code,
+                    page=None,
+                    page_size=None,
+                    max_depth=None,
+                )
+            )
+            guide = self.guide_use_case.execute(
+                ListProductGuideRequest(
+                    code=dto.code,
+                    page=None,
+                    page_size=None,
+                )
+            )
+            inspection = self.inspection_use_case.execute(
+                ListProductInspectionRequest(
+                    code=dto.code,
+                    page=None,
+                    page_size=None,
+                )
+            )
 
         return {
             "product": product,
             "structure": structure,
             "guide": guide,
-            "inspection": inspection
+            "inspection": inspection,
         }

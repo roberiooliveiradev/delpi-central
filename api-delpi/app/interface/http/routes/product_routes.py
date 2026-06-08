@@ -75,6 +75,7 @@ from app.interface.http.schemas.openapi_examples import (
     PRODUCT_SUMMARY_EXAMPLE,
 )
 from app.interface.http.schemas.openapi_route_helpers import openapi_example_response
+from app.application.services.composite_sections_builder import build_composite_sections
 from app.application.services.product.protheus_field_normalizer import (
     narrow_product_fields,
     normalize_playbook_payload,
@@ -433,6 +434,16 @@ def get_factory_status(
             entity="product_factory_status",
             shape="composite_analysis",
             code=code,
+            sections=build_composite_sections(
+                result,
+                view="full",
+                section_keys=(
+                    "structure",
+                    "raw_material_stock",
+                    "production",
+                    "shipping",
+                ),
+            ),
             message="Status fabril completo do produto carregado com sucesso.",
         )
 
@@ -944,11 +955,25 @@ def product_pricing(code: str):
     openapi_extra=openapi_example_response(PRODUCT_ANALYSER_EXAMPLE),
 )
 @require_permission("api-delpi.access")
-def product_analyser(code: str):
+def product_analyser(
+    code: str,
+    view: str = Query(
+        "full",
+        description="full=dimensões completas; summary=amostra leve (opt-in)",
+    ),
+):
 
     try:
+        normalized_view = (view or "full").strip().lower()
+        if normalized_view not in {"full", "summary"}:
+            return error_response(
+                "view inválida. Use full ou summary.",
+                status_code=400,
+                code="INVALID_VIEW",
+                recoverable=True,
+            )
 
-        dto = ProductAnalyserRequest(code=code)
+        dto = ProductAnalyserRequest(code=code, view=normalized_view)
 
         use_case = build_product_analyser_use_case()
 
@@ -960,6 +985,11 @@ def product_analyser(code: str):
             entity="product_analyser",
             shape="composite_analysis",
             code=code,
+            sections=build_composite_sections(
+                result,
+                view=normalized_view,
+                section_keys=("structure", "guide", "inspection"),
+            ),
             message="Analisador do produto carregado com sucesso.",
         )
 

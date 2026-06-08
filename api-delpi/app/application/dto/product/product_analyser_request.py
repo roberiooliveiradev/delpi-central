@@ -6,3 +6,4 @@ from dataclasses import dataclass
 class ProductAnalyserRequest:
 
     code: str
+    view: str = "full"

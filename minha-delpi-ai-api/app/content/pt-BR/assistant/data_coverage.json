@@ -6,6 +6,7 @@
   "depthStructure": "A estrutura foi consultada com profundidade limitada (max_depth={max_depth}). Níveis mais profundos podem estar ocultos.",
   "depthParents": "A consulta de produtos pai foi limitada a {max_depth} nível(is) (max_depth={max_depth}). Hierarquias acima disso podem estar incompletas.",
   "depthGeneric": "A consulta foi limitada a {max_depth} nível(is) de profundidade (max_depth={max_depth}).",
+  "sectionsPartial": "Visão composta parcial ({sections}). Use rotas granulares ou view=full se precisar de todos os itens.",
   "contextLabels": {
     "items": "Resultado",
     "structure": "Estrutura",

@@ -426,14 +426,14 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] `GET /products/{code}/analyser?view=summary|full` — **default permanece `full`** até comunicado; `summary` opt-in (não quebra consumidores que esperam payload completo).
-- [ ] `meta.sections[]` em composite: `{ key, label, itemCount, truncated }`.
-- [ ] Documentar em `11-guia-agente-chat.md`: quando usar granular vs analyser vs factory-status.
+- [x] `GET /products/{code}/analyser?view=summary|full` — **default permanece `full`** até comunicado; `summary` opt-in (não quebra consumidores que esperam payload completo).
+- [x] `meta.sections[]` em composite: `{ key, label, itemCount, truncated }`.
+- [x] Documentar em `11-guia-agente-chat.md`: quando usar granular vs analyser vs factory-status.
 
 **Entregas (chat):**
 
-- [ ] `ExternalActionSelectionService` prefere rotas granulares quando intent é pontual (estoque, estrutura).
-- [ ] `ChatDataCoverageNoticeService` lê `meta.sections` quando existir.
+- [x] `ExternalActionSelectionService` prefere rotas granulares quando intent é pontual (estoque, estrutura).
+- [x] `ChatDataCoverageNoticeService` lê `meta.sections` quando existir.
 
 **Critério de aceite:** `view=summary` &lt; 30% do tamanho de `full` em fixture de produto; seleção não chama `full` sem intent explícito.
 

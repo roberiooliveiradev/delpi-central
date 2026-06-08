@@ -126,6 +126,30 @@ def test_no_notice_for_full_structure_response():
     assert notice is None
 
 
+def test_sections_notice_from_response_meta():
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "product": {"code": "90269001"},
+            "structure": {"items": [{"code": "1"}], "total": 10},
+        },
+        path="/products/90269001/analyser",
+        response_meta={
+            "sections": [
+                {
+                    "key": "structure",
+                    "label": "Estrutura",
+                    "itemCount": 10,
+                    "truncated": True,
+                }
+            ]
+        },
+    )
+
+    assert notice is not None
+    assert "Estrutura" in notice["message"]
+    assert notice["details"]["compositeSections"]["sections"][0]["truncated"] is True
+
+
 def test_append_to_markdown_adds_coverage_block():
     markdown = ChatDataCoverageNoticeService.append_to_markdown(
         "### Título\n\nConteúdo",

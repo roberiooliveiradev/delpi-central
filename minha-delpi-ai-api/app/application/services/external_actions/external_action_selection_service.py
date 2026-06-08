@@ -2515,6 +2515,10 @@ class ExternalActionSelectionService:
             term in normalized
             for term in ("estrutura", "bom", "bill of material", "composição", "composicao")
         )
+        wants_stock = any(
+            term in normalized
+            for term in ("estoque", "saldo", "disponível", "disponivel", "armazém", "armazem")
+        ) and not wants_full_analyser
 
         wants_guide = any(
             term in normalized
@@ -2646,6 +2650,15 @@ class ExternalActionSelectionService:
 
             if wants_structure and "/structure" in path:
                 value += 120
+
+            if wants_stock and (path.endswith("/stock") or "/products/{code}/stock" in haystack):
+                value += 130
+
+            if wants_stock and not wants_full_analyser and "analyser" in haystack:
+                value -= 90
+
+            if wants_structure and not wants_full_analyser and "analyser" in haystack:
+                value -= 70
 
             if wants_guide and "/guide" in path:
                 value += 120
@@ -2970,6 +2983,23 @@ class ExternalActionSelectionService:
                 "local",
             } and warehouse_code:
                 parameters[name] = warehouse_code
+
+            elif lowered == "view" and "/analyser" in path:
+                from app.domain.services.chat_product_query_intent_service import (
+                    ChatProductQueryIntentService,
+                )
+
+                normalized_message = (
+                    ChatMessageNormalizationService.normalize_for_matching(message)
+                    if message
+                    else ""
+                )
+                if ChatProductQueryIntentService._looks_like_full_analyser_question(
+                    normalized_message
+                ):
+                    parameters[name] = "full"
+                else:
+                    parameters[name] = "summary"
 
         return parameters
 

@@ -38,7 +38,7 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Busca sem código exato | `GET /products/search` | `search_products` |
 | Dados cadastrais (leve) | `GET /products/{code}` | `get_product_detail` |
 | Resumo produto + estoque + preços | `GET /products/{code}/summary` | `get_product_summary` |
-| Ficha analítica completa | `GET /products/{code}/analyser` | `get_product_analyser` |
+| Ficha analítica (multi-dimensão) | `GET /products/{code}/analyser` | `get_product_analyser` |
 | Estoque/saldo **do item** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM | `GET /products/{code}/structure` | `get_product_structure` |
 | Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
@@ -52,6 +52,21 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Roteiro / inspeção / movimentações / NF | `guide`, `inspection`, `internal-movements`, `inbound|outbound-invoice-items` | `get_product_guide`, `get_product_inspection`, `get_product_internal_movements` (NF: path) |
 
 **Não confundir:** estoque do item → `/products/{code}/stock`; valor total da empresa → `/supplies/stock-value`. Inspeção de qualidade (QP6/QP7/QP8) → `/products/{code}/inspection`; expedição após inspeção final (CT SHB010 + apontamento SH6010) → `/products/{code}/shipping-status`.
+
+### Quando usar granular vs analyser vs factory-status
+
+| Intenção do usuário | Rota preferida | Evitar |
+|---|---|---|
+| Saldo / estoque do código | `/stock` | `/analyser` full |
+| BOM / estrutura / componentes | `/structure` ou `/structure/exclusivity` | `/analyser` full |
+| Roteiro / operações / CTs | `/guide` | `/analyser` full |
+| Inspeção de qualidade (QP) | `/inspection` | `/shipping-status` |
+| Cadastro + amostra estoque/preços | `/summary` | `/analyser` full |
+| Visão fabril integrada (OP, MPs, expedição) | `/factory-status` | várias rotas separadas |
+| Ficha multi-dimensão explícita | `/analyser?view=full` | — |
+| Visão leve multi-dimensão (chat) | `/analyser?view=summary` | `view=full` sem necessidade |
+
+Respostas `composite_analysis` incluem `meta.sections[]` com `{ key, label, itemCount, truncated }` para o chat sinalizar cobertura parcial.
 
 **Playbooks fabril** (SQL validado em `api-delpi/docs/roadmaps/`):
 

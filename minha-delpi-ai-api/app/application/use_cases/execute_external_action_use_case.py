@@ -361,6 +361,7 @@ class ExecuteExternalActionUseCase:
             parameters=request_parameters,
             presentation=primary_presentation,
             table_presentation=table_presentation,
+            response_meta=self._extract_api_delpi_response_meta(sanitized_data),
         )
 
         metadata = {

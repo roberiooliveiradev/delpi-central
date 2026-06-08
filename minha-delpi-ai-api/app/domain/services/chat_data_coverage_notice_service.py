@@ -23,6 +23,7 @@ class ChatDataCoverageNoticeService:
         parameters: dict | None = None,
         presentation: dict | None = None,
         table_presentation: dict | None = None,
+        response_meta: dict | None = None,
     ) -> dict | None:
         lowered_path = str(path or "").lower()
 
@@ -89,6 +90,12 @@ class ChatDataCoverageNoticeService:
         if depth_notice:
             messages.append(depth_notice["message"])
             details["depth"] = depth_notice
+
+        sections_notice = cls._sections_notice(response_meta)
+
+        if sections_notice:
+            messages.append(sections_notice["message"])
+            details["compositeSections"] = sections_notice
 
         if not messages:
             return None
@@ -164,7 +171,43 @@ class ChatDataCoverageNoticeService:
         if details.get("depth"):
             return "depth"
 
+        if details.get("compositeSections"):
+            return "partial"
+
         return "partial"
+
+    @classmethod
+    def _sections_notice(cls, response_meta: dict | None) -> dict | None:
+        if not isinstance(response_meta, dict):
+            return None
+
+        sections = response_meta.get("sections")
+
+        if not isinstance(sections, list):
+            return None
+
+        truncated = [
+            section
+            for section in sections
+            if isinstance(section, dict) and section.get("truncated")
+        ]
+
+        if not truncated:
+            return None
+
+        labels = [
+            str(section.get("label") or section.get("key") or "Seção").strip()
+            for section in truncated
+        ]
+
+        return {
+            "message": ChatAssistantContentService.format(
+                _BUNDLE,
+                "sectionsPartial",
+                sections=", ".join(labels),
+            ),
+            "sections": truncated,
+        }
 
     @classmethod
     def _pagination_notice(
