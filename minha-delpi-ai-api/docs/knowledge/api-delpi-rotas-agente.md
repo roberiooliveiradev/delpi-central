@@ -61,19 +61,19 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
 | Exportar estrutura em Excel | `GET /products/{code}/structure/excel` | (download; preferir JSON no chat) |
-| **Onde é usado / produto pai / where used** | `GET /products/{code}/parents` | path contém `parents` |
-| Preço / tabela de preço / quanto custa | `GET /products/{code}/pricing` | path contém `pricing` |
-| Fornecedores do item | `GET /products/{code}/suppliers` | path contém `suppliers` |
-| Clientes do item | `GET /products/{code}/customers` | path contém `customers` |
+| **Onde é usado / produto pai / where used** | `GET /products/{code}/parents` | `get_product_parents` |
+| Preço / tabela de preço / quanto custa | `GET /products/{code}/pricing` | `get_product_pricing` |
+| Fornecedores do item | `GET /products/{code}/suppliers` | `get_product_suppliers` |
+| Clientes do item | `GET /products/{code}/customers` | `get_product_customers` |
 | Histórico de compras | `GET /products/{code}/purchases` | `get_product_purchases` |
 | Resumo de vendas do item | `GET /products/{code}/sales` | `get_product_sales_summary` |
 | Carteira / pedidos em aberto do item | `GET /products/{code}/sales/open-orders` | `get_product_sales_open_orders` |
-| Faturamento do item | `GET /products/{code}/sales/billing` | path contém `sales/billing` |
-| Roteiro de fabricação | `GET /products/{code}/guide` | path contém `guide` |
-| Inspeção / qualidade do item | `GET /products/{code}/inspection` | path contém `inspection` |
-| Movimentações internas | `GET /products/{code}/internal-movements` | path contém `internal-movements` |
-| Notas de entrada | `GET /products/{code}/inbound-invoice-items` | path contém `inbound-invoice` |
-| Notas de saída | `GET /products/{code}/outbound-invoice-items` | path contém `outbound-invoice` |
+| Faturamento do item | `GET /products/{code}/sales/billing` | `get_product_sales_billing` |
+| Roteiro de fabricação | `GET /products/{code}/guide` | `get_product_guide` |
+| Inspeção / qualidade do item | `GET /products/{code}/inspection` | `get_product_inspection` |
+| Movimentações internas | `GET /products/{code}/internal-movements` | `get_product_internal_movements` |
+| Notas de entrada | `GET /products/{code}/inbound-invoice-items` | `get_product_inbound_invoice_items` |
+| Notas de saída | `GET /products/{code}/outbound-invoice-items` | `get_product_outbound_invoice_items` |
 
 **Parâmetros comuns**
 
@@ -108,12 +108,12 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 |----------------|------|--------------------------|
 | Listar / filtrar LMPs ou amostras | `GET /engineering/lmps` | `list_lmps` |
 | Dashboard completo (legado / tabela) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
-| **Só KPIs** do dashboard LMP | `GET /engineering/lmps/dashboard/summary` | path `dashboard/summary` |
-| **Itens paginados** do dashboard | `GET /engineering/lmps/dashboard/items` | path `dashboard/items` |
-| **Gráficos** do dashboard LMP | `GET /engineering/lmps/dashboard/charts` | path `dashboard/charts` |
+| **Só KPIs** do dashboard LMP | `GET /engineering/lmps/dashboard/summary` | `get_lmps_dashboard_summary` |
+| **Itens paginados** do dashboard | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
+| **Gráficos** do dashboard LMP | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Detalhe de uma LMP por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
-| Listar processos Transforma Mais | `GET /engineering/transforma-mais/processes` | path `transforma-mais/processes` |
-| Resumo Transforma Mais | `GET /engineering/transforma-mais/processes/summary` | path `processes/summary` |
+| Listar processos Transforma Mais | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
+| Resumo Transforma Mais | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |
 
 **Parâmetros úteis**
 

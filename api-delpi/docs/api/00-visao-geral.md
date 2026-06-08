@@ -80,6 +80,33 @@ Erro (`4xx`/`5xx`):
 
 Implementação: `app/core/responses.py` — `success_response()`, `error_response()`, `not_found_response()`.
 
+Sucesso com metadados semânticos (Fase 3 — rotas chat-critical):
+
+```json
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": { },
+  "error": null,
+  "meta": {
+    "dataVersion": "2026-06",
+    "operationId": "get_product_stock",
+    "entity": "product_stock",
+    "shape": "paged_list"
+  }
+}
+```
+
+**Exceções remanescentes (migração Fase 2):**
+
+| Caso | Formato atual | Prazo |
+|------|---------------|-------|
+| `GET /products/{code}/structure/excel` erro 500 | `{ "error": "..." }` legado | Migrar para envelope |
+| Plugins qualidade NC / rotas sem envelope | JSON direto ou `HTTPException` | Fora do escopo produtos/KPIs |
+| Respostas 401/403 do middleware JWT | Corpo do Keycloak / middleware | Não padronizado nesta fase |
+
+Após deploy com mudanças OpenAPI: [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md).
+
 ### Strategic Indicators e NC (quando montadas)
 
 - Retornam objetos JSON diretamente ou `{"items": [...]}`.

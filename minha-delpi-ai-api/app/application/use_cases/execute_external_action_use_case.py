@@ -126,6 +126,10 @@ class ExecuteExternalActionUseCase:
             **presentation_metadata,
         }
 
+        api_delpi_meta = self._extract_api_delpi_response_meta(sanitized_data)
+        if api_delpi_meta:
+            execution_metadata["apiDelpiResponseMeta"] = api_delpi_meta
+
         if not effective_ok:
             api_error = self._extract_api_error_message(sanitized_data)
 
@@ -152,6 +156,17 @@ class ExecuteExternalActionUseCase:
         text = ChatSqlExecutionErrorInterpretationService.extract_error_text(data)
 
         return text or None
+
+    @staticmethod
+    def _extract_api_delpi_response_meta(data) -> dict | None:
+        if not isinstance(data, dict):
+            return None
+        if "meta" not in data:
+            return None
+        if "success" not in data and "data" not in data:
+            return None
+        meta = data.get("meta")
+        return meta if isinstance(meta, dict) else None
 
     def build_metadata_for_data(
         self,

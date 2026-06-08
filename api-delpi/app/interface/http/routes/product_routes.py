@@ -31,8 +31,10 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_CUSTOMERS,
     PRODUCT_DETAIL,
     PRODUCT_GUIDE,
+    PRODUCT_INBOUND_INVOICE_ITEMS,
     PRODUCT_INSPECTION,
     PRODUCT_INTERNAL_MOVEMENTS,
+    PRODUCT_OUTBOUND_INVOICE_ITEMS,
     PRODUCT_PARENTS,
     PRODUCT_PRICING,
     PRODUCT_PURCHASES,
@@ -48,6 +50,10 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_FACTORY_STATUS,
     PRODUCT_SUMMARY,
     PRODUCT_SUPPLIERS,
+)
+from app.interface.http.routes.product_response_helpers import (
+    STOCK_FIELD_LABELS,
+    product_success,
 )
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -105,7 +111,12 @@ def search_products_route(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result.to_dict())
+        return product_success(
+            result.to_dict(),
+            operation_id="search_products",
+            entity="product_search",
+            shape="paged_list",
+        )
 
     except Exception as e:
         log_error(f"Erro ao buscar produtos: {e}")
@@ -128,7 +139,13 @@ def get_product_detail(code: str):
         product = result.items[0]
         product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)
 
-        return success_response(data={"product": product_dict})
+        return product_success(
+            {"product": product_dict},
+            operation_id="get_product_detail",
+            entity="product",
+            shape="product_snapshot",
+            code=code,
+        )
 
     except Exception as e:
         log_error(f"Erro ao buscar produto {code}: {e}")
@@ -175,11 +192,18 @@ def get_product_summary(code: str):
         except Exception:
             pass
 
-        return success_response(data={
-            "product": product_dict,
-            "stock": stock_items,
-            "prices": prices,
-        })
+        return product_success(
+            {
+                "product": product_dict,
+                "stock": stock_items,
+                "prices": prices,
+            },
+            operation_id="get_product_summary",
+            entity="product",
+            shape="product_snapshot",
+            code=code,
+            message="Resumo do produto carregado com sucesso.",
+        )
 
     except Exception as e:
         log_error(f"Erro ao gerar resumo do produto {code}: {e}")
@@ -208,7 +232,14 @@ def get_structure(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id="get_product_structure",
+            entity="product_structure",
+            shape="hierarchy",
+            code=code,
+            message="Estrutura do produto carregada com sucesso.",
+        )
 
     except Exception as e:
         log_error(f"Erro ao buscar estrutura do produto {code}: {e}")
@@ -328,8 +359,12 @@ def get_factory_status(
         use_case = build_get_product_factory_status_use_case()
         result = use_case.execute(dto)
 
-        return success_response(
-            data=result,
+        return product_success(
+            result,
+            operation_id="get_product_factory_status",
+            entity="product_factory_status",
+            shape="composite_analysis",
+            code=code,
             message="Status fabril completo do produto carregado com sucesso.",
         )
 
@@ -600,7 +635,15 @@ def stock(
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id="get_product_stock",
+            entity="product_stock",
+            shape="paged_list",
+            code=code,
+            fields=STOCK_FIELD_LABELS,
+            message="Estoque do produto carregado com sucesso.",
+        )
 
     except Exception as e:
 
@@ -608,7 +651,7 @@ def stock(
 
         return error_response(str(e))
     
-@router.get("/{code}/inbound-invoice-items")
+@router.get("/{code}/inbound-invoice-items", **PRODUCT_INBOUND_INVOICE_ITEMS)
 @require_permission("api-delpi.access")
 def inbound_invoice_items(
     code: str,
@@ -645,7 +688,7 @@ def inbound_invoice_items(
         log_error(f"Erro ao consultar NF-es de entrada para {code}: {e}")
         return error_response(f"Unexpected error: {e}")
     
-@router.get("/{code}/outbound-invoice-items")
+@router.get("/{code}/outbound-invoice-items", **PRODUCT_OUTBOUND_INVOICE_ITEMS)
 @require_permission("api-delpi.access")
 def outbound_invoice_items(
     code: str,
@@ -794,9 +837,17 @@ def product_pricing(code: str):
             GetProductPricingRequest(code=code)
         )
 
+        if isinstance(result, dict) and result.get("success") is False:
+            return error_response(
+                str(result.get("message") or f"Preços não encontrados para {code}"),
+                status_code=404,
+                code="PRODUCT_PRICING_NOT_FOUND",
+                recoverable=False,
+            )
+
         return success_response(
             data=result,
-            message=f"Product pricing for {code} fetched successfully."
+            message=f"Preços do produto {code} carregados com sucesso.",
         )
 
     except Exception as e:
@@ -817,7 +868,14 @@ def product_analyser(code: str):
 
         result = use_case.execute(dto)
 
-        return success_response(data=result)
+        return product_success(
+            result,
+            operation_id="get_product_analyser",
+            entity="product_analyser",
+            shape="composite_analysis",
+            code=code,
+            message="Analisador do produto carregado com sucesso.",
+        )
 
     except Exception as e:
 

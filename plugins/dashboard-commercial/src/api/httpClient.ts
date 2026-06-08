@@ -10,6 +10,28 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+function formatApiDelpiErrorMessage(errorBody: unknown, fallback: string): string {
+  if (!errorBody || typeof errorBody !== "object") {
+    return fallback;
+  }
+
+  const record = errorBody as Record<string, unknown>;
+  const base =
+    (typeof record.message === "string" && record.message) ||
+    (typeof record.detail === "string" && record.detail) ||
+    fallback;
+  const error = record.error;
+
+  if (error && typeof error === "object") {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string" && code) {
+      return `[${code}] ${base}`;
+    }
+  }
+
+  return base;
+}
+
 export async function httpGet<T>(
   url: string,
   options: RequestOptions = {}
@@ -36,11 +58,7 @@ export async function httpGet<T>(
 
     try {
       const errorBody = await response.json();
-      message =
-        errorBody?.message ||
-        errorBody?.detail ||
-        errorBody?.error ||
-        message;
+      message = formatApiDelpiErrorMessage(errorBody, message);
     } catch {
       // mantém mensagem padrão
     }

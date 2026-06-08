@@ -93,6 +93,24 @@ PRODUCT_SALES_BILLING = agent_route(
     operation_id="get_product_sales_billing",
 )
 
+PRODUCT_INBOUND_INVOICE_ITEMS = agent_route(
+    summary="Itens de nota fiscal de entrada do produto",
+    description=(
+        "Lista itens de notas fiscais de entrada (compras) vinculados ao código. "
+        "Use para NF de entrada, documentos de compra ou recebimento do item."
+    ),
+    operation_id="get_product_inbound_invoice_items",
+)
+
+PRODUCT_OUTBOUND_INVOICE_ITEMS = agent_route(
+    summary="Itens de nota fiscal de saída do produto",
+    description=(
+        "Lista itens de notas fiscais de saída (vendas) vinculados ao código. "
+        "Use para NF de saída ou faturamento documental do item — distinto de /sales/billing agregado."
+    ),
+    operation_id="get_product_outbound_invoice_items",
+)
+
 PRODUCT_PRICING = agent_route(
     summary="Preços e tabelas comerciais do produto",
     description=(

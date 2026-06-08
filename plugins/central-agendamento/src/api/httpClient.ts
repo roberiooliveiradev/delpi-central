@@ -27,11 +27,20 @@ function formatApiError(errorBody: unknown, status: number): string {
 
   const body = errorBody as Record<string, unknown>;
 
-  if (typeof body.message === "string" && body.message.trim()) {
-    return body.message;
+  const base =
+    (typeof body.message === "string" && body.message.trim() && body.message) ||
+    (typeof body.detail === "string" && body.detail.trim() && body.detail) ||
+    `Erro HTTP ${status}`;
+
+  const error = body.error;
+  if (error && typeof error === "object") {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string" && code) {
+      return `[${code}] ${base}`;
+    }
   }
 
-  return `Erro HTTP ${status}`;
+  return base;
 }
 
 async function parseJson<T>(response: Response): Promise<T> {

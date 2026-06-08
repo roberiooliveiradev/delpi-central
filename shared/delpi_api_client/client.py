@@ -8,6 +8,8 @@ from typing import Any, Mapping
 import httpx
 from delpi_auth.service_token import apply_internal_service_headers
 
+from delpi_api_client.envelope import format_error_message, parse_envelope
+
 _DEFAULT_TIMEOUT = 30.0
 
 
@@ -52,19 +54,17 @@ class DelpiApiClient:
             body = None
 
         if resp.status_code >= 400:
-            detail = resp.text[:500]
-            if isinstance(body, dict):
-                message = body.get("message")
-                if isinstance(message, str) and message.strip():
-                    detail = message
-                error_block = body.get("error")
-                if isinstance(error_block, dict) and error_block.get("code"):
-                    detail = f"[{error_block['code']}] {detail}"
-            raise DelpiApiError(resp.status_code, detail)
+            raise DelpiApiError(
+                resp.status_code,
+                format_error_message(body, fallback=resp.text[:500]),
+            )
 
-        if isinstance(body, dict) and "data" in body:
-            return body["data"]
-        return body
+        data, _meta, _error = parse_envelope(body)
+        return data if data is not None else body
+
+    @staticmethod
+    def parse_envelope(body: Any) -> tuple[Any, dict[str, Any] | None, dict[str, Any] | None]:
+        return parse_envelope(body)
 
     # -- Financial --
     def get_rol(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:

@@ -320,9 +320,9 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] `agent_route()` em: `parents`, `guide`, `inspection`, `pricing`, `/{code}`, `/{code}/summary`, `suppliers`, `customers`, `billing`, `internal-movements`.
-- [ ] Atualizar `docs/api/11-guia-agente-chat.md` e `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`.
-- [ ] Procedimento de reimport documentado: `POST .../providers/{key}/import` + reindex RAG.
+- [x] `agent_route()` em: `parents`, `guide`, `inspection`, `pricing`, `/{code}`, `/{code}/summary`, `suppliers`, `customers`, `billing`, `internal-movements`, NF entrada/saída, engenharia LMP/transforma.
+- [x] Atualizar `docs/api/11-guia-agente-chat.md` e `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`.
+- [x] Procedimento de reimport: [`api-delpi/docs/api/12-procedimento-reimport-openapi.md`](../../../api-delpi/docs/api/12-procedimento-reimport-openapi.md).
 
 **Critério de aceite:** Nenhuma rota da tabela «Produtos» do guia 11 sem `operationId` explícito; teste de smoke no OpenAPI exportado.
 
@@ -336,16 +336,16 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] `error_response` estendido com `error: { code, recoverable }`.
-- [ ] Handler FastAPI 404/422 mapeado para envelope (ou documentado como exceção única em `00-visao-geral.md`).
-- [ ] Pricing e rotas com falha lógica: `success: false` no envelope HTTP adequado (4xx) ou campo `data.success` **documentado** + teste.
-- [ ] `success_response` opcionalmente aceita `meta` (inicialmente vazio).
+- [x] `error_response` estendido com `error: { code, recoverable }`.
+- [x] Handler FastAPI 404/422 mapeado para envelope; exceções em `00-visao-geral.md`.
+- [x] Pricing: falha lógica do use case → envelope 404 `PRODUCT_PRICING_NOT_FOUND` + teste.
+- [x] `success_response` aceita `meta` opcional.
 
 **Entregas (consumidores):**
 
-- [ ] `DelpiApiClient`: método `parse_envelope(body)` com fallback; erros leem `message` + `error.code`.
-- [ ] Template `httpClient.ts` dos dashboards: se `success === false`, expor `error?.code` na mensagem (opcional).
-- [ ] Documentar em `00-visao-geral.md` exceções remanescentes (`detail`) e prazo de remoção.
+- [x] `DelpiApiClient.parse_envelope()` + `format_error_message` em `shared/delpi_api_client/envelope.py`.
+- [x] `httpClient.ts` dos dashboards (9 MFEs) + `central-agendamento`: `error.code` na mensagem.
+- [x] Exceções remanescentes documentadas em `00-visao-geral.md`.
 
 **Critério de aceite:** Testes HTTP para 200/404/400 com mesmo shape; guia 00 atualizado; SI snapshot em dev sem regressão; um dashboard smoke (supplies CPV).
 
@@ -359,14 +359,14 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] `ResponseMetaBuilder` (serviço) preenchendo: `dataVersion`, `operationId`, `entity`, `shape`, `pagination`, `fields` (glossário curto), `relatedRoutes`.
-- [ ] Aplicar em: `get_product_stock`, `get_product_structure`, `get_product_analyser`, `get_product_factory_status`, `search_products`, `get_product_summary`.
-- [ ] `dataVersion: "2026-06"` fixo até breaking change.
+- [x] `ResponseMetaBuilder` em `api-delpi/app/application/services/response_meta_builder.py`.
+- [x] Aplicar em: `get_product_stock`, `get_product_structure`, `get_product_analyser`, `get_product_factory_status`, `search_products`, `get_product_summary`, `get_product_detail`.
+- [x] `dataVersion: "2026-06"` fixo até breaking change.
 
 **Entregas (chat — adaptação mínima):**
 
-- [ ] `_unwrap_data` preserva `meta` quando presente no root.
-- [ ] Log estruturado em debug com `meta.entity` (admin).
+- [x] `apiDelpiResponseMeta` em `execution_metadata` quando envelope traz `meta`.
+- [x] Teste unitário de extração de `meta` no `ExecuteExternalActionUseCase`.
 
 **Critério de aceite:** Cada rota acima retorna `meta.shape` coerente; fixture + teste de integração no gateway.
 

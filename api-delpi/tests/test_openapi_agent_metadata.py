@@ -25,6 +25,8 @@ EXPECTED_CHAT_OPERATION_IDS = {
     "list_lmps",
     "list_lmps_dashboard",
     "get_lmp_by_sale_number",
+    "get_product_inbound_invoice_items",
+    "get_product_outbound_invoice_items",
 }
 
 
