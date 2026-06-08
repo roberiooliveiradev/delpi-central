@@ -5,13 +5,13 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_personality_content_service import ChatPersonalityContentService
-from app.infrastructure.content.content_service import ContentService
 
 
 @lru_cache(maxsize=1)
 def _playbook() -> dict[str, Any]:
-    return ContentService.personality_playbook()
+    return ChatAssistantContentService.load_personality_playbook()
 
 
 class ChatFeedbackContentService:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 def invalidate_operational_api_domain_cache() -> None:
@@ -14,7 +14,7 @@ def invalidate_operational_api_domain_cache() -> None:
 
 @lru_cache(maxsize=1)
 def _api_route_domains_content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/api_route_domains")
+    return ChatAssistantContentService.load_bundle("api_route_domains")
 
 
 class ChatOperationalApiDomainService:

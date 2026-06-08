@@ -6,12 +6,12 @@ import zlib
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 @lru_cache(maxsize=1)
 def _playbook() -> dict[str, Any]:
-    return ContentService.load_json("assistant/personality_playbook")
+    return ChatAssistantContentService.load_personality_playbook()
 
 
 class ChatPersonalityContentService:

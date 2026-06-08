@@ -32,6 +32,11 @@
 - Vocabulário: `column_labels.json`, normalização: `ChatPresentationFieldNormalizationService`.
 - Anexos/lousa: `attachments.json` + `ChatAttachmentContentService`.
 
+## Ports (Fase 2)
+
+- Conteúdo: `AssistantContentPort` → `InfrastructureAssistantContentAdapter` via `configure_domain_infrastructure_ports()`.
+- Config: `AppConfigPort` → `InfrastructureAppConfigAdapter` (mesmo wiring).
+
 ## PR checklist
 
 1. Domain sem import de infra?

@@ -6,6 +6,13 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _configure_domain_ports():
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+
+
+@pytest.fixture(autouse=True)
 def _disable_web_search_blocks(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,

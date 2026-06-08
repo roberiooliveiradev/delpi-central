@@ -6,7 +6,7 @@ import re
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 def invalidate_column_label_cache() -> None:
@@ -15,7 +15,7 @@ def invalidate_column_label_cache() -> None:
 
 @lru_cache(maxsize=1)
 def _column_labels_content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/column_labels")
+    return ChatAssistantContentService.load_bundle("column_labels")
 
 
 class ExternalActionColumnLabelService:

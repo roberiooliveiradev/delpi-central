@@ -1,3 +1,4 @@
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageUseCase
 from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
 from app.composition.external_action_composer import make_postgres_external_action_repository
@@ -269,6 +270,8 @@ def make_chat_turn_completion_service():
 
 
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
+    configure_domain_infrastructure_ports()
+
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
         audit_repository=PostgresAuditRepository(),
@@ -290,6 +293,8 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
 
 
 def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
+    configure_domain_infrastructure_ports()
+
     return StreamChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
         audit_repository=PostgresAuditRepository(),

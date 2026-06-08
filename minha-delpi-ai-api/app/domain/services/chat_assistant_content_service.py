@@ -1,29 +1,50 @@
-"""Loader genérico de JSON em app/content/pt-BR/assistant/*."""
+"""Loader de bundles assistant/*.json via AssistantContentPort."""
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, ClassVar
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.ports.assistant_content_port import AssistantContentPort
 
 
 def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
-    if bundle is None:
-        _bundle_content.cache_clear()
-        return
-
     _bundle_content.cache_clear()
+
+    if ChatAssistantContentService._port is not None:
+        ChatAssistantContentService._port.invalidate_cache(bundle)
 
 
 @lru_cache(maxsize=32)
 def _bundle_content(bundle: str) -> dict[str, Any]:
-    normalized = str(bundle or "").strip().removesuffix(".json")
-
-    return ContentService.load_json(f"assistant/{normalized}")
+    return ChatAssistantContentService.load_bundle(bundle)
 
 
 class ChatAssistantContentService:
+    _port: ClassVar[AssistantContentPort | None] = None
+
+    @classmethod
+    def configure(cls, port: AssistantContentPort) -> None:
+        cls._port = port
+        _bundle_content.cache_clear()
+
+    @classmethod
+    def _require_port(cls) -> AssistantContentPort:
+        if cls._port is None:
+            raise RuntimeError(
+                "AssistantContentPort não configurado — chame configure_domain_infrastructure_ports()"
+            )
+
+        return cls._port
+
+    @classmethod
+    def load_bundle(cls, bundle: str) -> dict[str, Any]:
+        return cls._require_port().load_bundle(bundle)
+
+    @classmethod
+    def load_personality_playbook(cls) -> dict[str, Any]:
+        return cls._require_port().load_personality_playbook()
+
     @classmethod
     def get(cls, bundle: str, *path: str, default: str = "") -> str:
         node: Any = _bundle_content(bundle)

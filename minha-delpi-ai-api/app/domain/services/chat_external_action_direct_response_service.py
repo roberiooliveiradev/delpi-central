@@ -1,16 +1,32 @@
 import re
 import time
+from typing import ClassVar
 
-from app.infrastructure.config.settings import Settings
+from app.domain.ports.app_config_port import AppConfigPort
 
 
 class ChatExternalActionDirectResponseService:
-    @staticmethod
-    def is_enabled() -> bool:
-        return Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED
+    _config: ClassVar[AppConfigPort | None] = None
 
-    @staticmethod
-    def should_skip_rag(tool_context: dict | None) -> bool:
+    @classmethod
+    def configure(cls, config: AppConfigPort) -> None:
+        cls._config = config
+
+    @classmethod
+    def _require_config(cls) -> AppConfigPort:
+        if cls._config is None:
+            raise RuntimeError(
+                "AppConfigPort não configurado — chame configure_domain_infrastructure_ports()"
+            )
+
+        return cls._config
+
+    @classmethod
+    def is_enabled(cls) -> bool:
+        return cls._require_config().chat_external_action_direct_response_enabled()
+
+    @classmethod
+    def should_skip_rag(cls, tool_context: dict | None) -> bool:
         if not tool_context:
             return False
 
@@ -19,8 +35,8 @@ class ChatExternalActionDirectResponseService:
 
         return bool(tool_context.get("directAnswer"))
 
-    @staticmethod
-    def resolve_answer(tool_context: dict | None) -> str | None:
+    @classmethod
+    def resolve_answer(cls, tool_context: dict | None) -> str | None:
         if not tool_context or not ChatExternalActionDirectResponseService.is_enabled():
             return None
 
@@ -57,15 +73,16 @@ class ChatExternalActionDirectResponseService:
         if buffer:
             yield buffer
 
-    @staticmethod
-    def iter_stream_chunks(answer: str):
+    @classmethod
+    def iter_stream_chunks(cls, answer: str):
         text = answer.strip()
 
         if not text:
             return
 
-        chunk_size = max(1, Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS)
-        delay_seconds = max(0.0, Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS) / 1000.0
+        config = cls._require_config()
+        chunk_size = max(1, config.chat_direct_response_stream_chunk_chars())
+        delay_seconds = max(0.0, config.chat_direct_response_stream_delay_ms()) / 1000.0
 
         use_words = len(text) >= 120 and chunk_size >= 8
         chunks = (
