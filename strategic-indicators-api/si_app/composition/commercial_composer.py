@@ -4,7 +4,6 @@ from si_app.application.services.commercial.commercial_metrics_snapshot_service 
 from si_app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
 from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
-from si_app.application.use_cases.commercial.get_new_clients_average_use_case import GetNewClientsAverageUseCase
 from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
     GetNewBusinessRolPctUseCase,
 )
@@ -16,7 +15,6 @@ from si_app.infrastructure.providers.strategic_indicators.commercial_indicators_
 )
 from si_app.infrastructure.gateways.delpi_commercial_gateway import (
     DelpiNewBusinessRolPctGateway,
-    DelpiNewClientsAverageGateway,
     DelpiSalesConversionRateGateway,
     DelpiSalesOrderOtdGateway,
 )
@@ -52,12 +50,6 @@ def build_get_branch_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
 def build_get_sales_conversion_rate_use_case() -> GetSalesConversionRateUseCase:
     return GetSalesConversionRateUseCase(
         sales_conversion_rate_repository=DelpiSalesConversionRateGateway(_get_delpi_client())
-    )
-
-
-def build_get_new_clients_average_use_case() -> GetNewClientsAverageUseCase:
-    return GetNewClientsAverageUseCase(
-        new_clients_average_repository=DelpiNewClientsAverageGateway(_get_delpi_client())
     )
 
 

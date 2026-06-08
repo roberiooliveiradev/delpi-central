@@ -10,10 +10,6 @@ class PpmQueryRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_items(self, request):
-        raise NotImplementedError
-
-    @abstractmethod
     def list_branches(
         self,
         *,

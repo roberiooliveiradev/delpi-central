@@ -10,7 +10,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 - **HTTP público:** só `/strategic-indicators/*` e integração de metas (`/integrations/dashboard-goals`).
 - **Medições TOTVS:** 100% via `delpi_*_gateway` + `DelpiApiClient`.
-- **Medições Sheets:** misto — parte ainda lida no SI (qualidade/financeiro/produção), parte via api-delpi (ex.: economia em negociações de suprimentos).
+- **Medições Sheets:** 100% via api-delpi HTTP (gateways `delpi_*`).
 
 ## Fases
 
@@ -63,17 +63,17 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 ---
 
-### Fase 3 — Enxugar camada duplicada (opcional)
+### Fase 3 — Enxugar camada duplicada (concluída jun/2026)
 
 **Objetivo:** reduzir cópia estrutural da api-delpi mantendo só o necessário para snapshots.
 
-Candidatos (avaliar custo/benefício):
+**Removido:**
 
-- Unificar DTOs departamentais com contratos mínimos nos gateways (menos arquivos em `application/dto/`).
-- Colapsar use cases que só repassam ao gateway em chamadas diretas nos `*MetricsSnapshotService`.
-- ~~Mover testes de repositório Sheets (`test_kaizen_repository`)~~ → `test_delpi_quality_sheets_gateway.py`.
+- Use cases departamentais sem rota HTTP no SI (financial `get_*_pct`, production `get_*_pct`, `list_ppm`, `list_nonconformity`, commercial `new_clients_*`, LMP `list/get` fora do snapshot).
+- Ports/entidades/DTOs órfãos (repos de produção Sheets, nonconformity, new clients).
+- Gateways mortos (`DelpiNonconformityGateway`, `DelpiNewClients*Gateway`) e factories não usadas nos composers.
 
-**Não é obrigatório** para operação do painel; melhora manutenção de longo prazo.
+**Mantido (ainda no grafo de snapshots):** use cases finos em qualidade/comercial/suprimentos que encapsulam gateways — refatorar para chamada direta nos services fica como melhoria futura opcional.
 
 ---
 

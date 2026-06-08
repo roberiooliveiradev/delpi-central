@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 from si_app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
-from si_app.application.dto.commercial.new_clients_average_request import NewClientsAverageRequest
-from si_app.application.dto.commercial.new_clients_rol_pct_request import NewClientsRolPctRequest
 from si_app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from si_app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 
 from si_app.domain.entities.commercial.new_business_rol_pct import NewBusinessRolPct
-from si_app.domain.entities.commercial.new_clients_average import NewClientsAverage
-from si_app.domain.entities.commercial.new_clients_rol_pct import NewClientsRolPct
 from si_app.domain.entities.commercial.sales_conversion_rate import SalesConversionRate
 from si_app.domain.entities.commercial.sales_order_otd import SalesOrderOtd
 
 from si_app.domain.ports.commercial.new_business_rol_pct_repository_port import NewBusinessRolPctRepositoryPort
-from si_app.domain.ports.commercial.new_clients_average_repository_port import NewClientsAverageRepositoryPort
-from si_app.domain.ports.commercial.new_clients_rol_pct_repository_port import NewClientsRolPctRepositoryPort
 from si_app.domain.ports.commercial.sales_conversion_rate_repository_port import SalesConversionRateRepositoryPort
 from si_app.domain.ports.commercial.sales_order_otd_repository_port import SalesOrderOtdRepositoryPort
 
@@ -50,25 +44,6 @@ class DelpiNewBusinessRolPctGateway(NewBusinessRolPctRepositoryPort):
         )
 
 
-class DelpiNewClientsRolPctGateway(NewClientsRolPctRepositoryPort):
-    def __init__(self, client: DelpiApiClient) -> None:
-        self._client = client
-
-    def get_new_clients_rol_pct(self, request: NewClientsRolPctRequest) -> NewClientsRolPct:
-        data = self._client.get_new_clients_rol_pct(
-            params=_std_params(request.branch, request.start_date, request.end_date),
-            authorization=bearer_authorization_from_context(),
-        )
-        return NewClientsRolPct(
-            branch=data.get("branch"),
-            start_date=data.get("start_date"),
-            end_date=data.get("end_date"),
-            total_rol=float(data.get("total_rol") or 0),
-            new_clients_rol=float(data.get("new_clients_rol") or 0),
-            new_clients_rol_pct=_opt_float(data.get("new_clients_rol_pct")),
-        )
-
-
 class DelpiSalesConversionRateGateway(SalesConversionRateRepositoryPort):
     def __init__(self, client: DelpiApiClient) -> None:
         self._client = client
@@ -85,27 +60,6 @@ class DelpiSalesConversionRateGateway(SalesConversionRateRepositoryPort):
             qtd_proposals=int(data.get("qtd_proposals") or 0),
             qtd_won=int(data.get("qtd_won") or 0),
             sales_conversion_rate_pct=_opt_float(data.get("sales_conversion_rate_pct")),
-        )
-
-
-class DelpiNewClientsAverageGateway(NewClientsAverageRepositoryPort):
-    def __init__(self, client: DelpiApiClient) -> None:
-        self._client = client
-
-    def get_new_clients_total(self, request: NewClientsAverageRequest) -> NewClientsAverage:
-        data = self._client.get_new_clients_average(
-            params=_std_params(request.branch, request.start_date, request.end_date),
-            authorization=bearer_authorization_from_context(),
-        )
-        return NewClientsAverage(
-            branch=data.get("branch"),
-            start_date=data.get("start_date"),
-            end_date=data.get("end_date"),
-            first_date=data.get("first_date"),
-            last_date=data.get("last_date"),
-            total_new_clients=int(data.get("total_new_clients") or 0),
-            qtd_months=int(data.get("qtd_months") or 0),
-            monthly_average=_opt_float(data.get("monthly_average")),
         )
 
 
