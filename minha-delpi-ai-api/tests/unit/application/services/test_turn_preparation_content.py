@@ -9,6 +9,7 @@ from app.application.services.chat_turn.chat_turn_preparation_direct_answer_serv
 def test_stream_think_keys_exist():
     assert ChatTurnPreparationContentService.stream_think("ingressQuestion")
     assert ChatTurnPreparationContentService.stream_think("questionHistoryDone")
+    assert ChatTurnPreparationContentService.stream_think_target("questionHistory")
 
 
 def test_interpretation_without_data_reads_turn_preparation_json():

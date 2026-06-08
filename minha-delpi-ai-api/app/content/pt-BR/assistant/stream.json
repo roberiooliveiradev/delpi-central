@@ -51,6 +51,13 @@
       "openapiRouteDone": "Já sei como te ajudar.",
       "openapiRouteDoneDetail": "Rota operacional e modo de resposta definidos.",
       "questionHistoryDone": "Entendi o que você precisa."
+    },
+    "thinkTargets": {
+      "questionHistory": "pergunta e histórico",
+      "analysisMode": "comparação ou insights",
+      "operationalOptimize": "resposta operacional direta",
+      "openapiRoute": "intenção e rota OpenAPI",
+      "conversationHistory": "histórico da conversa"
     }
   },
   "activity": {

@@ -10,10 +10,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
-from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
-from app.application.services.chat_intelligence_pipeline_service import (
-    ChatIntelligencePipelineService,
-)
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_turn.chat_turn_preparation_direct_answer_service import (
@@ -34,11 +30,10 @@ from app.application.services.chat_turn.chat_turn_preparation_rag_service import
 from app.application.services.chat_turn.chat_turn_preparation_result_service import (
     ChatTurnPreparationResultService,
 )
-from app.application.services.chat_turn.chat_turn_preparation_content_service import (
-    ChatTurnPreparationContentService,
+from app.application.services.chat_turn.chat_turn_preparation_ingress_service import (
+    ChatTurnPreparationIngressService,
 )
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 
 @dataclass(frozen=True)
 class ChatTurnPreparationResult:
@@ -134,184 +129,29 @@ class ChatTurnPreparationService:
         history_source = history_source or previous_messages or []
         previous_messages = previous_messages or []
 
-        if on_stream_activity:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            on_stream_activity(
-                ChatStreamActivityService.think(
-                    target="pergunta e histórico",
-                    message=ChatTurnPreparationContentService.stream_think(
-                        "ingressQuestion"
-                    ),
-                    entry_id="think-question-history",
-                    state="active",
-                )
-            )
-
-        canvas_action = ChatCanvasContentService.resolve(
-            message,
-            history_source,
-            workspace_context,
+        ingress = ChatTurnPreparationIngressService.prepare(
+            message=message,
+            request=request,
+            workspace_context=workspace_context,
+            history_source=history_source,
+            prepare_history=prepare_history,
+            history_keep=history_keep,
+            on_stream_activity=on_stream_activity,
         )
-        canvas_open_payload = (
-            canvas_action.open_payload if canvas_action and canvas_action.open_payload else None
-        )
-        canvas_operational_update = ChatCanvasIntentService.is_canvas_operational_update_request(
-            message
-        )
-
-        attachment_ids = getattr(request, "attachment_ids", None)
-        allowed_action_ids = workspace_context.get("allowedActionIds") or []
-
-        pre_tool = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
-            message,
-            allowed_action_ids,
-            attachment_ids=attachment_ids,
-            previous_messages=history_source,
-        )
-        operational_optimize = pre_tool.operational_optimize
-        analysis_mode = pre_tool.analysis_mode
-        text_task_category = ChatTextTaskIntentService.classify(message)
-        text_task_pure = ChatTextTaskIntentService.is_pure_text_task(
-            message,
-            previous_messages=history_source,
-        )
-
-        if text_task_pure:
-            operational_optimize = False
-            analysis_mode = False
-
-        if on_stream_activity:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            if analysis_mode:
-                on_stream_activity(
-                    ChatStreamActivityService.think(
-                        target="comparação ou insights",
-                        message=ChatTurnPreparationContentService.stream_think(
-                            "analysisMode"
-                        ),
-                        detail=ChatTurnPreparationContentService.stream_think(
-                            "analysisDetail"
-                        ),
-                    )
-                )
-            elif operational_optimize:
-                on_stream_activity(
-                    ChatStreamActivityService.think(
-                        target="resposta operacional direta",
-                        message=ChatTurnPreparationContentService.stream_think(
-                            "operationalOptimize"
-                        ),
-                        detail=ChatTurnPreparationContentService.stream_think(
-                            "operationalOptimizeDetail"
-                        ),
-                    )
-                )
-            else:
-                on_stream_activity(
-                    ChatStreamActivityService.think(
-                        target="intenção e rota OpenAPI",
-                        message=ChatTurnPreparationContentService.stream_think(
-                            "openapiRoute"
-                        ),
-                        detail=ChatTurnPreparationContentService.stream_think(
-                            "openapiRouteDetail"
-                        ),
-                        entry_id="think-openapi-route",
-                        state="active",
-                    )
-                )
-
-        if canvas_action or canvas_operational_update:
-            operational_optimize = False
-            analysis_mode = False
-
-        if canvas_action:
-            fast_path = True
-
-        if operational_optimize:
-            keep = max(1, int(history_keep))
-            history_summary, history = "", list(history_source[-keep:])
-        else:
-            if on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                on_stream_activity(
-                    ChatStreamActivityService.think(
-                        target="histórico da conversa",
-                        message=ChatTurnPreparationContentService.stream_think(
-                            "historyReview"
-                        ),
-                        entry_id="think-history-summary",
-                        state="active",
-                    )
-                )
-
-            history_summary, history = prepare_history(history_source)
-
-            if on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                on_stream_activity(
-                    ChatStreamActivityService.think(
-                        target="histórico da conversa",
-                        message=ChatTurnPreparationContentService.stream_think(
-                            "historyDone"
-                        ),
-                        entry_id="think-history-summary",
-                        state="done",
-                        level="success",
-                    )
-                )
-
-        if on_stream_activity and not analysis_mode and not operational_optimize and not canvas_action:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            on_stream_activity(
-                ChatStreamActivityService.think(
-                    target="intenção e rota OpenAPI",
-                    message=ChatTurnPreparationContentService.stream_think(
-                        "openapiRouteDone"
-                    ),
-                    detail=ChatTurnPreparationContentService.stream_think(
-                        "openapiRouteDoneDetail"
-                    ),
-                    entry_id="think-openapi-route",
-                    state="done",
-                    level="success",
-                )
-            )
-
-        if on_stream_activity:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            on_stream_activity(
-                ChatStreamActivityService.think(
-                    target="pergunta e histórico",
-                    message=ChatTurnPreparationContentService.stream_think(
-                        "questionHistoryDone"
-                    ),
-                    entry_id="think-question-history",
-                    state="done",
-                    level="success",
-                )
-            )
-
-        pipeline_timings = ChatPipelineTimings()
-        pipeline_stages: list[str] = ["ingress"]
+        canvas_action = ingress.canvas_action
+        canvas_open_payload = ingress.canvas_open_payload
+        canvas_operational_update = ingress.canvas_operational_update
+        attachment_ids = ingress.attachment_ids
+        allowed_action_ids = ingress.allowed_action_ids
+        operational_optimize = ingress.operational_optimize
+        analysis_mode = ingress.analysis_mode
+        text_task_category = ingress.text_task_category
+        text_task_pure = ingress.text_task_pure
+        history = ingress.history
+        history_summary = ingress.history_summary
+        pipeline_timings = ingress.pipeline_timings
+        pipeline_stages = list(ingress.pipeline_stages)
+        fast_path = ingress.fast_path
 
         direct_answer_bundle = ChatTurnPreparationDirectAnswerService.build_early_bundle(
             message=message,

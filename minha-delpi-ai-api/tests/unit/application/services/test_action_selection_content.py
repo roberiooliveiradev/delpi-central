@@ -4,6 +4,24 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
+def test_action_selection_heuristic_terms_exist():
+    from app.domain.services.external_actions.external_action_response_content_service import (
+        ExternalActionResponseContentService,
+    )
+
+    terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productQuestionTerms",
+    )
+    assert "estoque" not in terms
+    assert "produto" in terms
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "lmpQuestion",
+        "terms",
+    )
+
+
 def test_selection_reasons_keys_exist():
     keys = (
         "saleOrdersList",

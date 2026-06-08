@@ -1,5 +1,3 @@
-import re
-
 from app.application.services.chat_conversation_context_service import (
     ChatConversationContextService,
 )
@@ -31,6 +29,9 @@ from app.application.services.external_actions.external_action_domain_route_sele
 )
 from app.application.services.external_actions.external_action_product_search_route_selection_service import (
     ExternalActionProductSearchRouteSelectionService,
+)
+from app.application.services.external_actions.external_action_selection_heuristics_service import (
+    ExternalActionSelectionHeuristicsService,
 )
 
 
@@ -410,7 +411,10 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if self._looks_like_lmp_question(normalized):
+        if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
+            normalized,
+            extract_sale_number=self._extract_sale_number,
+        ):
             selected = self._select_lmp_action(
                 message,
                 allowed_action_ids=allowed_action_ids,
@@ -521,7 +525,9 @@ class ExternalActionSelectionService:
                 return selected
 
         if product_code and (
-            self._looks_like_product_question(normalized)
+            ExternalActionSelectionHeuristicsService.looks_like_product_question(
+                normalized
+            )
             or ChatProductQueryIntentService.extract_product_code(message)
             or product_route_segment
             or ChatProductDescriptionResolutionService.looks_like_description_lookup(message)
@@ -583,71 +589,6 @@ class ExternalActionSelectionService:
             build_date_branch_parameters=self._build_date_branch_parameters,
         )
 
-    def _looks_like_product_question(self, value: str) -> bool:
-        terms = [
-            "produto",
-            "product",
-            "item",
-            "código",
-            "codigo",
-            "referência",
-            "referencia",
-            "ref ",
-            " sku",
-            "material",
-            "insumo",
-            "mp ",
-            "informações do produto",
-            "informacoes do produto",
-            "dados do produto",
-            "busque as informações do produto",
-            "busque informacoes do produto",
-            "consulta produto",
-            "api delpi",
-            "compra",
-            "compras",
-            "venda",
-            "vendas",
-            "faturamento",
-            "carteira",
-            "estrutura",
-            "composição",
-            "composicao",
-            "componentes",
-            "bom",
-            "roteiro",
-            "fornecedor",
-            "fornecedores",
-            "supplier",
-            "preço",
-            "preco",
-            "pricing",
-            "movimenta",
-            "inspeç",
-            "inspec",
-            "nota",
-            "fiscal",
-            "nfe",
-            "clientes",
-            "customer",
-            "onde é usado",
-            "onde e usado",
-            "produto pai",
-            "pai do",
-            "parent",
-            "where used",
-            "quanto custa",
-            "custo do",
-            "notas de entrada",
-            "notas de saída",
-            "notas de saida",
-            "nota de entrada",
-            "nota de saída",
-            "nota de saida",
-        ]
-
-        return any(term in value for term in terms)
-
     @staticmethod
     def _looks_like_product_search(value: str) -> bool:
         return ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
@@ -661,146 +602,11 @@ class ExternalActionSelectionService:
         *,
         previous_messages: list | None = None,
     ) -> dict:
-        from app.domain.services.chat_date_range_intent_service import (
-            ChatDateRangeIntentService,
-        )
-
-        parameters: dict = {}
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        branch_match = re.search(r"\bfilial\s+(\d{2})\b", normalized)
-        branch = branch_match.group(1) if branch_match else None
-        date_range = ChatDateRangeIntentService.resolve(
+        return self._route_selection.parameter_builder.build_date_branch(
+            action,
             message,
             previous_messages=previous_messages,
         )
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if lowered in {"branch", "filial", "branch_code"} and branch:
-                parameters[name] = branch
-            elif date_range and lowered in {
-                "start_date",
-                "startdate",
-                "data_inicio",
-                "data_inicial",
-                "date_start",
-                "datestart",
-            }:
-                parameters[name] = date_range.start_date
-            elif date_range and lowered in {
-                "end_date",
-                "enddate",
-                "data_fim",
-                "data_final",
-                "date_end",
-                "dateend",
-            }:
-                parameters[name] = date_range.end_date
-            elif lowered in {"page"}:
-                parameters[name] = 1
-            elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 50
-            elif lowered == "granularity":
-                inferred = self._infer_granularity(normalized, date_range)
-                if inferred:
-                    parameters[name] = inferred
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name or name in parameters:
-                continue
-
-            if name.lower() != "granularity" or not parameter.get("required"):
-                continue
-
-            parameters[name] = self._infer_granularity(normalized, date_range) or "month"
-
-        return parameters
-
-    @staticmethod
-    def _infer_granularity(normalized: str, date_range) -> str | None:
-        if any(
-            term in normalized
-            for term in ("diario", "diaria", "por dia", " ao dia", " diaria")
-        ):
-            return "day"
-
-        if any(
-            term in normalized
-            for term in ("semanal", "por semana", " semana ", "semanas")
-        ):
-            return "week"
-
-        if any(
-            term in normalized
-            for term in ("anual", "por ano", " ano ", " anos ")
-        ):
-            return "year"
-
-        if any(
-            term in normalized
-            for term in (
-                "serie",
-                "series",
-                "evolucao",
-                "no tempo",
-                "temporal",
-                "mes",
-                "mensal",
-                "trimestre",
-                "marco",
-                "janeiro",
-                "fevereiro",
-                "abril",
-                "maio",
-                "junho",
-                "julho",
-                "agosto",
-                "setembro",
-                "outubro",
-                "novembro",
-                "dezembro",
-            )
-        ):
-            return "month"
-
-        if date_range:
-            return "month"
-
-        return None
-
-    def _looks_like_lmp_question(self, value: str) -> bool:
-        if ExternalActionDomainRouteSelectionService.looks_like_transforma_question(value):
-            return False
-
-        terms = [
-            "lmp",
-            "lmps",
-            "lista de materiais",
-            "lista material",
-            "lista de material",
-            "amostra",
-            " ov ",
-        ]
-
-        if any(term in value for term in terms):
-            return True
-
-        if "ordem de venda" in value or "ordem de vendas" in value:
-            return any(
-                marker in value
-                for marker in ("lmp", "lmps", "amostra", "engenharia")
-            ) or bool(self._extract_sale_number(value))
-
-        return False
 
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         from app.domain.services.chat_sql_operational_intent_service import (

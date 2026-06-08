@@ -25,3 +25,12 @@ class ChatTurnPreparationContentService:
             "think",
             key,
         )
+
+    @classmethod
+    def stream_think_target(cls, key: str) -> str:
+        return ChatAssistantContentService.get(
+            cls._STREAM_BUNDLE,
+            "turnPreparation",
+            "thinkTargets",
+            key,
+        )
