@@ -1318,6 +1318,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_aij_base_x,
             LISTING_KIND_LMP,
             LISTING_KIND_SAMPLE,
+            LISTING_KIND_LMP,
             *params_aij_base,
             *params_lmp_finalized,
             *params_ad1_rev,

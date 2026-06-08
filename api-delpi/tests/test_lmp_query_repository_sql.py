@@ -28,8 +28,9 @@ def test_listing_anchor_marker_prioritizes_lmp_over_sample() -> None:
     assert "WHEN R.LISTING_KIND = ? THEN 1" in sql
     assert sql.index("THEN 2") < sql.index("THEN 1")
     assert "AD1.AD1_REVISA = A.AIJ_REVISA" in sql
-    assert params.count("LMP") >= 2
+    assert params.count("LMP") >= 3
     assert params.count("AMOSTRA") >= 2
+    assert sql.count("?") == len(params)
 
 
 def test_eng_support_reference_uses_current_revision() -> None:
