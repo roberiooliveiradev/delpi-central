@@ -21,14 +21,20 @@ export type TreePresentation = Extract<ChatPresentation, { type: "tree" }>;
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
-const BLOCK_CHILD_COLUMNS = [
+type BlockChildColumn = {
+  key: keyof TreeFlatRow;
+  label: string;
+  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity";
+};
+
+const BLOCK_CHILD_COLUMNS: readonly BlockChildColumn[] = [
   { key: "nivel", label: "Nível" },
   { key: "codigo", label: "Código" },
   { key: "descricao", label: "Descrição" },
   { key: "tipo", label: "Tipo" },
   { key: "unidade", label: "Unid." },
-  { key: "quantidade", label: "Qtde", dataType: "quantity" as const },
-] as const;
+  { key: "quantidade", label: "Qtde", dataType: "quantity" },
+];
 
 function formatQuantity(value: string | number | undefined): string {
   if (value === undefined || value === null || value === "") {
