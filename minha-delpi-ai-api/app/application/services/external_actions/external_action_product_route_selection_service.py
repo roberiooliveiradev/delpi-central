@@ -15,6 +15,9 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionProductRouteSelectionService:
@@ -134,16 +137,21 @@ class ExternalActionProductRouteSelectionService:
             )
 
             if parameters:
-                reason = "A pergunta solicita informações operacionais de produto via OpenAPI."
+                reason = ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "productOperational",
+                )
 
                 if branch_code := (
                     ChatOperationalRefinementService.extract_branch_code(
                         ChatMessageNormalizationService.normalize_for_matching(message)
                     )
                 ):
-                    reason = (
-                        f"A mensagem refina o estoque do produto {product_code} "
-                        f"para a filial {branch_code}."
+                    reason = ExternalActionResponseContentService.format(
+                        "selectionReasons",
+                        "productStockBranchRefinement",
+                        product_code=product_code,
+                        branch_code=branch_code,
                     )
 
                 return {

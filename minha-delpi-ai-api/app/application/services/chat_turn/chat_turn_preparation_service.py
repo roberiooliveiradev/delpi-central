@@ -31,8 +31,13 @@ from app.application.services.chat_turn.chat_turn_preparation_post_tool_resoluti
 from app.application.services.chat_turn.chat_turn_preparation_rag_service import (
     ChatTurnPreparationRagService,
 )
+from app.application.services.chat_turn.chat_turn_preparation_result_service import (
+    ChatTurnPreparationResultService,
+)
+from app.application.services.chat_turn.chat_turn_preparation_content_service import (
+    ChatTurnPreparationContentService,
+)
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_intent_router_service import ChatIntentRouterService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 
 @dataclass(frozen=True)
@@ -137,7 +142,9 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="pergunta e histórico",
-                    message="Entendendo o seu pedido...",
+                    message=ChatTurnPreparationContentService.stream_think(
+                        "ingressQuestion"
+                    ),
                     entry_id="think-question-history",
                     state="active",
                 )
@@ -185,24 +192,36 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="comparação ou insights",
-                        message="Analisando os dados para comparar...",
-                        detail="Modo análise: síntese com base em consultas e histórico.",
+                        message=ChatTurnPreparationContentService.stream_think(
+                            "analysisMode"
+                        ),
+                        detail=ChatTurnPreparationContentService.stream_think(
+                            "analysisDetail"
+                        ),
                     )
                 )
             elif operational_optimize:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="resposta operacional direta",
-                        message="Buscando a resposta mais direta...",
-                        detail="Fast path operacional sem RAG completo.",
+                        message=ChatTurnPreparationContentService.stream_think(
+                            "operationalOptimize"
+                        ),
+                        detail=ChatTurnPreparationContentService.stream_think(
+                            "operationalOptimizeDetail"
+                        ),
                     )
                 )
             else:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="intenção e rota OpenAPI",
-                        message="Vendo a melhor forma de te ajudar...",
-                        detail="Identificando se a pergunta exige dados DELPI ou conhecimento documental.",
+                        message=ChatTurnPreparationContentService.stream_think(
+                            "openapiRoute"
+                        ),
+                        detail=ChatTurnPreparationContentService.stream_think(
+                            "openapiRouteDetail"
+                        ),
                         entry_id="think-openapi-route",
                         state="active",
                     )
@@ -227,7 +246,9 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="histórico da conversa",
-                        message="Revendo o que já conversamos...",
+                        message=ChatTurnPreparationContentService.stream_think(
+                            "historyReview"
+                        ),
                         entry_id="think-history-summary",
                         state="active",
                     )
@@ -243,7 +264,9 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="histórico da conversa",
-                        message="Tudo certo com o nosso histórico.",
+                        message=ChatTurnPreparationContentService.stream_think(
+                            "historyDone"
+                        ),
                         entry_id="think-history-summary",
                         state="done",
                         level="success",
@@ -258,8 +281,12 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="intenção e rota OpenAPI",
-                    message="Já sei como te ajudar.",
-                    detail="Rota operacional e modo de resposta definidos.",
+                    message=ChatTurnPreparationContentService.stream_think(
+                        "openapiRouteDone"
+                    ),
+                    detail=ChatTurnPreparationContentService.stream_think(
+                        "openapiRouteDoneDetail"
+                    ),
                     entry_id="think-openapi-route",
                     state="done",
                     level="success",
@@ -274,7 +301,9 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="pergunta e histórico",
-                    message="Entendi o que você precisa.",
+                    message=ChatTurnPreparationContentService.stream_think(
+                        "questionHistoryDone"
+                    ),
                     entry_id="think-question-history",
                     state="done",
                     level="success",
@@ -487,46 +516,32 @@ class ChatTurnPreparationService:
         workspace_context = rag_phase.workspace_context
         conversation_context = rag_phase.conversation_context
 
-        intent_route = ChatIntentRouterService.resolve_executed(
+        return ChatTurnPreparationResultService.finalize(
             message=message,
             pipeline_stages=pipeline_stages,
-            previous_messages=history_source,
+            history_source=history_source,
             workspace_context=workspace_context,
-            analysis_mode=bool(analysis_mode),
-            text_task_pure=bool(text_task_pure),
-            text_task_category=text_task_category if text_task_pure else None,
-            skip_rag=bool(skip_rag),
+            analysis_mode=analysis_mode,
+            text_task_pure=text_task_pure,
+            text_task_category=text_task_category,
+            skip_rag=skip_rag,
             direct_answer=direct_answer,
             tool_calls=tool_calls,
-            attachment_ids=skip_tool_flags.request_attachment_ids or None,
+            request_attachment_ids=skip_tool_flags.request_attachment_ids,
             allowed_action_ids=allowed_action_ids,
-        ).to_dict()
-
-        if f"intent:{intent_route['intent']}" not in pipeline_stages:
-            pipeline_stages.append(f"intent:{intent_route['intent']}")
-
-        return ChatTurnPreparationResult(
-            operational_optimize=bool(operational_optimize),
-            analysis_mode=bool(analysis_mode),
-            fast_path=bool(fast_path),
-            skip_rag=bool(skip_rag),
+            operational_optimize=operational_optimize,
+            fast_path=fast_path,
             history=history,
             history_summary=history_summary,
             tool_context=tool_context,
-            tool_calls=tool_calls,
-            direct_answer=direct_answer,
             rag=rag,
             sources=sources,
             canvas_open_payload=canvas_open_payload,
             pipeline_timings=pipeline_timings,
-            pipeline_stages=pipeline_stages,
-            text_task_mode=bool(text_task_pure),
-            text_task_category=text_task_category if text_task_pure else None,
-            email_writing_mode=bool(email_writing_mode),
+            email_writing_mode=email_writing_mode,
             email_subtype=email_subtype,
-            text_correction_mode=bool(text_correction_mode),
+            text_correction_mode=text_correction_mode,
             text_correction_subtype=text_correction_subtype,
-            intent_route=intent_route,
             routing_disambiguation_suggestions=routing_disambiguation_suggestions,
         )
 

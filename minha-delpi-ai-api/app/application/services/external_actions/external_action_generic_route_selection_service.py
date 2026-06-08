@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Callable
 
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
+
 
 class ExternalActionGenericRouteSelectionService:
     def select(
@@ -65,5 +69,8 @@ class ExternalActionGenericRouteSelectionService:
             "name": "execute_external_action",
             "arguments": arguments,
             "reason": action.get("selectionReason")
-            or "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
+            or ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "genericSemanticFallback",
+            ),
         }

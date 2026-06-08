@@ -11,6 +11,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionProductSearchRouteSelectionService:
@@ -191,11 +194,18 @@ class ExternalActionProductSearchRouteSelectionService:
                         "page_size": page_size,
                     }
 
-            reason = (
-                f"Busca de produtos pelo grupo '{group_code}'."
-                if group_code
-                else f"Busca de produtos por descrição: '{description_query}'."
-            )
+            if group_code:
+                reason = ExternalActionResponseContentService.format(
+                    "selectionReasons",
+                    "productSearchByGroup",
+                    group_code=group_code,
+                )
+            else:
+                reason = ExternalActionResponseContentService.format(
+                    "selectionReasons",
+                    "productSearchByDescription",
+                    description_query=description_query,
+                )
 
             return {
                 "name": "execute_external_action",

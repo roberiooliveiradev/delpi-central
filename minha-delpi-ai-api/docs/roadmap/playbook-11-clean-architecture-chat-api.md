@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 20):**
+**Sprint imediata (Fase 3 — god classes, lote 21):**
 
 1. **3B:** continuar `external_action_selection_service.py` (~1080 linhas) — candidatos: `_looks_like_product_question`, date/branch params, LMP heuristics.
-2. **3C:** extrair intent route / resultado final de `chat_turn_preparation_service.py` (~532 linhas).
+2. **3C:** extrair fase pré-tool (think/histórico) de `chat_turn_preparation_service.py` (~548 linhas).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -466,5 +466,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3B lote 19):** `ExternalActionProductSearchRouteSelectionService`, `ExternalActionRefinementRouteSelectionService` e `ExternalActionGenericRouteSelectionService`; product search, paginação/profundidade e fallback semântico migrados; `external_action_selection_service.py` **1587 → ~1080** linhas.
 
 **Concluído (Fase 3C lote 19):** `ChatTurnPreparationRagService` (~240 linhas); construção RAG, glossário, memória semântica e stream activity extraídos; `chat_turn_preparation_service.py` **704 → ~532** linhas.
+
+**Concluído (correção pós-lote 19):** textos `reason` e activity RAG migrados para `external_action_responses.json` (`selectionReasons`) e `stream.json` (`activity.rag`, `turnPreparation.think`); diretrizes `.cursor/rules` atualizadas.
+
+**Concluído (Fase 3C lote 20):** `ChatTurnPreparationResultService`; intent route e montagem de `ChatTurnPreparationResult` extraídos; mensagens think do turn prep via `stream.turnPreparation.think`.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

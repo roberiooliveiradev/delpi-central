@@ -8,6 +8,9 @@ from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
 from app.domain.services.chat_department_kpi_intent_service import (
     ChatDepartmentKpiIntentService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionKpiRouteSelectionService:
@@ -29,7 +32,10 @@ class ExternalActionKpiRouteSelectionService:
                 allowed_action_ids=allowed_action_ids,
                 path_token="cpv",
                 operation_token="cpv",
-                reason="A pergunta solicita o indicador CPV de suprimentos.",
+                reason=ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiCpv",
+                ),
                 previous_messages=previous_messages,
                 candidates_loader=candidates_loader,
             )
@@ -58,7 +64,10 @@ class ExternalActionKpiRouteSelectionService:
                 allowed_action_ids=allowed_action_ids,
                 path_token="otd",
                 operation_token="otd",
-                reason="A pergunta solicita o indicador OTD de suprimentos.",
+                reason=ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiOtd",
+                ),
                 previous_messages=previous_messages,
                 candidates_loader=candidates_loader,
             )
@@ -72,7 +81,10 @@ class ExternalActionKpiRouteSelectionService:
                 allowed_action_ids=allowed_action_ids,
                 path_token="inventory-turnover",
                 operation_token="inventory_turnover",
-                reason="A pergunta solicita giro de estoque (IDD) em suprimentos.",
+                reason=ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiIdd",
+                ),
                 previous_messages=previous_messages,
                 candidates_loader=candidates_loader,
             )
@@ -118,7 +130,11 @@ class ExternalActionKpiRouteSelectionService:
                 allowed_action_ids=allowed_action_ids,
                 path_token=str(refinement.metric_path_token),
                 operation_token=str(refinement.metric_path_token),
-                reason=refinement.reason or "Refino de indicador de suprimentos.",
+                reason=refinement.reason
+                or ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiMetricRefinementDefault",
+                ),
                 previous_messages=previous_messages,
                 candidates_loader=candidates_loader,
             )
@@ -131,7 +147,11 @@ class ExternalActionKpiRouteSelectionService:
             match = DepartmentKpiMatch(
                 path_token=str(refinement.metric_path_token),
                 domain_prefix=str(refinement.metric_domain_prefix or ""),
-                reason=refinement.reason or "Refino de KPI departamental.",
+                reason=refinement.reason
+                or ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "departmentKpiRefinement",
+                ),
             )
 
             return self.select_department_kpi(
@@ -222,7 +242,10 @@ class ExternalActionKpiRouteSelectionService:
                     "actionId": action["actionId"],
                     "parameters": self._build_supplies_stock_parameters(action),
                 },
-                "reason": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
+                "reason": ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiStockValue",
+                ),
             }
 
         return None

@@ -38,6 +38,7 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 2. Novas policies em `app/domain/prompt_policies/`; registrar em `PromptPolicyService` quando for modo global (ex.: `analysis_mode`).
 3. Testes em `tests/unit/` do pacote base + casos em `tests/fixtures/chat_intelligence_regression_cases.py`.
 4. Documentar em `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`.
+5. **Textos de `reason`, activity SSE e direct answers** nos delegates de route selection / turn prep → `assistant/*.json` (regra `assistant-content-json.mdc`); nunca hardcoded em lotes de clean architecture.
 
 ## Pipeline (referência)
 

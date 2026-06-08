@@ -37,6 +37,22 @@
   "cancelledStatus": "Resposta cancelada.",
   "errorGenericStatus": "Não foi possível concluir a resposta agora. Tente novamente em instantes ou refine o pedido.",
   "cancelledStatusFriendly": "Resposta cancelada. Quando quiser, é só enviar de novo.",
+  "turnPreparation": {
+    "think": {
+      "ingressQuestion": "Entendendo o seu pedido...",
+      "analysisMode": "Analisando os dados para comparar...",
+      "analysisDetail": "Modo análise: síntese com base em consultas e histórico.",
+      "operationalOptimize": "Buscando a resposta mais direta...",
+      "operationalOptimizeDetail": "Fast path operacional sem RAG completo.",
+      "openapiRoute": "Vendo a melhor forma de te ajudar...",
+      "openapiRouteDetail": "Identificando se a pergunta exige dados DELPI ou conhecimento documental.",
+      "historyReview": "Revendo o que já conversamos...",
+      "historyDone": "Tudo certo com o nosso histórico.",
+      "openapiRouteDone": "Já sei como te ajudar.",
+      "openapiRouteDoneDetail": "Rota operacional e modo de resposta definidos.",
+      "questionHistoryDone": "Entendi o que você precisa."
+    }
+  },
   "activity": {
     "defaultPhaseGroup": "Atividade",
     "phaseGroups": {
@@ -66,6 +82,38 @@
       "thinking": "Pensando",
       "planning": "Planejando",
       "consulting": "Consultando"
+    },
+    "rag": {
+      "searching": {
+        "verb": "Buscando",
+        "target": "base de conhecimento",
+        "message": "Procurando nas informações de apoio...",
+        "detail": "Consultando a base de conhecimento autorizada."
+      },
+      "skipped": {
+        "verb": "Ignorado",
+        "target": "base de conhecimento",
+        "message": "Não precisei de documentos extras desta vez.",
+        "detail": "Base de conhecimento não necessária neste turno."
+      },
+      "foundSources": {
+        "verb": "Encontrado",
+        "targetTemplate": "{count} trecho(s) relevante(s)",
+        "messageTemplate": "Encontrei {count} trecho(s) útil(eis) para te responder.",
+        "detailTemplate": "Base de conhecimento: {count} trecho(s) relevante(s)."
+      },
+      "foundContext": {
+        "verb": "Encontrado",
+        "target": "contexto documental",
+        "message": "Encontrei material de apoio relevante.",
+        "detailTemplate": "Base de conhecimento: contexto aplicado ({chars} caracteres)."
+      },
+      "empty": {
+        "verb": "Sem trechos",
+        "target": "nenhum trecho adicional",
+        "message": "Vou responder com o que já sei sobre isso.",
+        "detail": "Base de conhecimento consultada; nenhum trecho adicional aplicável."
+      }
     }
   }
 }

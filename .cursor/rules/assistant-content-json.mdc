@@ -51,6 +51,18 @@ Presenter: helpers `_presenter_text`, `_presenter_root_format`, `_route_presenta
 4. Atualizar `assistant-content-catalog.md` (e `presenter-content-migration-audit.md` se for presenter).
 5. MFE: se o texto for compartilhado, espelhar em `plugins/minha-delpi-chat/src/content/` e documentar sync no README do plugin.
 
+## Route selection e turn prep (Fase 3+)
+
+Serviços extraídos do god class (`external_action_*_route_selection_service.py`, `chat_turn_preparation_*_service.py`) **seguem a mesma regra**:
+
+| Texto | Bundle / chave |
+|-------|----------------|
+| `reason` de `execute_external_action` | `external_action_responses.json` → `selectionReasons.*` via `ExternalActionResponseContentService` |
+| Activity SSE (RAG, tools) | `stream.json` → `activity.*` via `ChatAssistantContentService` |
+| Direct answer pré/pós-tool | `turn_preparation.json` via `ChatTurnPreparationContentService` |
+
+**Proibido** introduzir `reason="A pergunta solicita..."` ou `message="Procurando..."` em novos delegates — adicionar chave no JSON e teste em `test_action_selection_content.py` ou `test_turn_preparation_content.py`.
+
 ## Revisão antes de merge
 
 Se o diff em `app/domain/` ou `app/application/` adiciona string em português com pontuação/frase completa → mover para JSON ou justificar (log técnico, chave Protheus, marcador de regex).

@@ -7,6 +7,7 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 
 class ChatTurnPreparationContentService:
     _BUNDLE = "turn_preparation"
+    _STREAM_BUNDLE = "stream"
 
     @classmethod
     def get(cls, *path: str) -> str:
@@ -15,3 +16,12 @@ class ChatTurnPreparationContentService:
     @classmethod
     def format(cls, *path: str, **values: str) -> str:
         return ChatAssistantContentService.format(cls._BUNDLE, *path, **values)
+
+    @classmethod
+    def stream_think(cls, key: str) -> str:
+        return ChatAssistantContentService.get(
+            cls._STREAM_BUNDLE,
+            "turnPreparation",
+            "think",
+            key,
+        )

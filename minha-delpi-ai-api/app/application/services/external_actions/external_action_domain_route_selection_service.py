@@ -8,6 +8,9 @@ from typing import Callable
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionDomainRouteSelectionService:
@@ -109,7 +112,10 @@ class ExternalActionDomainRouteSelectionService:
                     merge_date_parameters=merge_date_parameters,
                 ),
             },
-            "reason": "A pergunta solicita listagem de ordens de venda.",
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "saleOrdersList",
+            ),
         }
 
     def select_transforma(
@@ -168,7 +174,10 @@ class ExternalActionDomainRouteSelectionService:
                     previous_messages=previous_messages,
                 ),
             },
-            "reason": "A pergunta solicita dados do programa Transforma Mais.",
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "transformaMais",
+            ),
         }
 
     def select_system_metadata(
@@ -252,7 +261,10 @@ class ExternalActionDomainRouteSelectionService:
                 "actionId": action["actionId"],
                 "parameters": parameters,
             },
-            "reason": "A pergunta solicita metadados de tabelas/colunas do Protheus.",
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "systemMetadata",
+            ),
         }
 
     @staticmethod

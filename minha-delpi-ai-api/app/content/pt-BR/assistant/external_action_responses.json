@@ -38,7 +38,11 @@
       "fornecedor",
       "suprimento"
     ],
-    "suppliesOtdPathPrefix": "/supplies/"
+    "suppliesOtdPathPrefix": "/supplies/",
+    "refinementFallbackMessages": {
+      "pagination": "paginação",
+      "depth": "profundidade"
+    }
   },
   "selectionReasons": {
     "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",
@@ -47,8 +51,27 @@
     "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",
     "stockFastPath": "Consulta de estoque reconhecida — execução direta via API de produto.",
     "productSearch": "Busca de produtos por descrição, código ou grupo.",
+    "productSearchByGroup": "Busca de produtos pelo grupo '{group_code}'.",
+    "productSearchByDescription": "Busca de produtos por descrição: '{description_query}'.",
     "lmpDetail": "Detalhe de LMP/ordem especial por número de OV.",
-    "departmentKpi": "Indicador departamental reconhecido na pergunta."
+    "lmpQuery": "A pergunta solicita consulta de LMP via OpenAPI.",
+    "departmentKpi": "Indicador departamental reconhecido na pergunta.",
+    "saleOrdersList": "A pergunta solicita listagem de ordens de venda.",
+    "transformaMais": "A pergunta solicita dados do programa Transforma Mais.",
+    "systemMetadata": "A pergunta solicita metadados de tabelas/colunas do Protheus.",
+    "paginationRefinementDefault": "A mensagem ajusta paginação da consulta operacional já feita nesta conversa.",
+    "paginationRefinementPageSize": "A mensagem aumenta o limite da consulta para {page_size} registro(s).",
+    "paginationRefinementPage": "A mensagem solicita a página {page} da consulta anterior.",
+    "depthRefinementDefault": "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa.",
+    "genericSemanticFallback": "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
+    "productOperational": "A pergunta solicita informações operacionais de produto via OpenAPI.",
+    "productStockBranchRefinement": "A mensagem refina o estoque do produto {product_code} para a filial {branch_code}.",
+    "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",
+    "kpiOtd": "A pergunta solicita o indicador OTD de suprimentos.",
+    "kpiIdd": "A pergunta solicita giro de estoque (IDD) em suprimentos.",
+    "kpiStockValue": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
+    "kpiMetricRefinementDefault": "Refino de indicador de suprimentos.",
+    "departmentKpiRefinement": "Refino de KPI departamental."
   },
   "composite": {
     "multiExecutionSummary": "Boa! Realizei **{count}** consulta(s) nos dados autorizados para montar a resposta.",

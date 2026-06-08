@@ -5,6 +5,10 @@ from __future__ import annotations
 import re
 from typing import Callable
 
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
+
 
 class ExternalActionLmpRouteSelectionService:
     def __init__(self, repository) -> None:
@@ -63,7 +67,10 @@ class ExternalActionLmpRouteSelectionService:
                 "actionId": action["actionId"],
                 "parameters": parameters,
             },
-            "reason": "A pergunta solicita consulta de LMP via OpenAPI.",
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "lmpQuery",
+            ),
         }
 
     def _extract_sale_number(self, text: str | None) -> str | None:

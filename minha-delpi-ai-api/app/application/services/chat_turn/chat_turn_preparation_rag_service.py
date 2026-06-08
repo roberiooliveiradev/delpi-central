@@ -8,6 +8,7 @@ from typing import Any, Callable
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.config.settings import Settings
 
@@ -21,6 +22,30 @@ class ChatTurnPreparationRagResult:
 
 
 class ChatTurnPreparationRagService:
+    _STREAM_BUNDLE = "stream"
+    _RAG_ACTIVITY_PREFIX = ("activity", "rag")
+
+    @classmethod
+    def _rag_text(cls, key: str, field: str, *, default: str = "") -> str:
+        return ChatAssistantContentService.get(
+            cls._STREAM_BUNDLE,
+            *cls._RAG_ACTIVITY_PREFIX,
+            key,
+            field,
+            default=default,
+        )
+
+    @classmethod
+    def _rag_format(cls, key: str, field: str, *, default: str = "", **values) -> str:
+        return ChatAssistantContentService.format(
+            cls._STREAM_BUNDLE,
+            *cls._RAG_ACTIVITY_PREFIX,
+            key,
+            field,
+            default=default,
+            **values,
+        )
+
     @classmethod
     def build(
         cls,
@@ -58,12 +83,12 @@ class ChatTurnPreparationRagService:
 
             on_stream_activity(
                 ChatStreamActivityService.entry(
-                    verb="Buscando",
-                    target="base de conhecimento",
+                    verb=cls._rag_text("searching", "verb"),
+                    target=cls._rag_text("searching", "target"),
                     phase="rag",
                     state="active",
-                    message="Procurando nas informações de apoio...",
-                    detail="Consultando a base de conhecimento autorizada.",
+                    message=cls._rag_text("searching", "message"),
+                    detail=cls._rag_text("searching", "detail"),
                     entry_id="rag-search",
                 )
             )
@@ -174,43 +199,54 @@ class ChatTurnPreparationRagService:
             if skip_rag:
                 on_stream_activity(
                     ChatStreamActivityService.entry(
-                        verb="Ignorado",
-                        target="base de conhecimento",
+                        verb=cls._rag_text("skipped", "verb"),
+                        target=cls._rag_text("skipped", "target"),
                         phase="rag",
                         state="done",
-                        message="Não precisei de documentos extras desta vez.",
-                        detail="Base de conhecimento não necessária neste turno.",
+                        message=cls._rag_text("skipped", "message"),
+                        detail=cls._rag_text("skipped", "detail"),
                         entry_id="rag-search",
                     )
                 )
             elif sources:
+                count = len(sources)
                 on_stream_activity(
                     ChatStreamActivityService.entry(
-                        verb="Encontrado",
-                        target=f"{len(sources)} trecho(s) relevante(s)",
+                        verb=cls._rag_text("foundSources", "verb"),
+                        target=cls._rag_format(
+                            "foundSources",
+                            "targetTemplate",
+                            count=count,
+                        ),
                         phase="rag",
                         level="success",
                         state="done",
-                        message=(
-                            f"Encontrei {len(sources)} trecho(s) útil(eis) "
-                            "para te responder."
+                        message=cls._rag_format(
+                            "foundSources",
+                            "messageTemplate",
+                            count=count,
                         ),
-                        detail=f"Base de conhecimento: {len(sources)} trecho(s) relevante(s).",
+                        detail=cls._rag_format(
+                            "foundSources",
+                            "detailTemplate",
+                            count=count,
+                        ),
                         entry_id="rag-search",
                     )
                 )
             elif rag_context_chars > 0:
                 on_stream_activity(
                     ChatStreamActivityService.entry(
-                        verb="Encontrado",
-                        target="contexto documental",
+                        verb=cls._rag_text("foundContext", "verb"),
+                        target=cls._rag_text("foundContext", "target"),
                         phase="rag",
                         level="success",
                         state="done",
-                        message="Encontrei material de apoio relevante.",
-                        detail=(
-                            "Base de conhecimento: contexto aplicado "
-                            f"({rag_context_chars} caracteres)."
+                        message=cls._rag_text("foundContext", "message"),
+                        detail=cls._rag_format(
+                            "foundContext",
+                            "detailTemplate",
+                            chars=rag_context_chars,
                         ),
                         entry_id="rag-search",
                     )
@@ -218,16 +254,13 @@ class ChatTurnPreparationRagService:
             else:
                 on_stream_activity(
                     ChatStreamActivityService.entry(
-                        verb="Sem trechos",
-                        target="nenhum trecho adicional",
+                        verb=cls._rag_text("empty", "verb"),
+                        target=cls._rag_text("empty", "target"),
                         phase="rag",
                         level="warning",
                         state="done",
-                        message="Vou responder com o que já sei sobre isso.",
-                        detail=(
-                            "Base de conhecimento consultada; "
-                            "nenhum trecho adicional aplicável."
-                        ),
+                        message=cls._rag_text("empty", "message"),
+                        detail=cls._rag_text("empty", "detail"),
                         entry_id="rag-search",
                     )
                 )

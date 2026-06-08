@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Callable
 
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionRefinementRouteSelectionService:
@@ -49,7 +52,12 @@ class ExternalActionRefinementRouteSelectionService:
             return None
 
         selected = select_product(
-            message or "paginação",
+            message
+            or ExternalActionResponseContentService.get(
+                "actionSelection",
+                "refinementFallbackMessages",
+                "pagination",
+            ),
             product_code,
             allowed_action_ids=allowed_action_ids,
             intent=intent,
@@ -119,7 +127,12 @@ class ExternalActionRefinementRouteSelectionService:
             return None
 
         selected = select_product(
-            message or "profundidade",
+            message
+            or ExternalActionResponseContentService.get(
+                "actionSelection",
+                "refinementFallbackMessages",
+                "depth",
+            ),
             product_code,
             allowed_action_ids=allowed_action_ids,
             intent=intent,
@@ -204,8 +217,9 @@ class ExternalActionRefinementRouteSelectionService:
                     str(action.get("path") or ""),
                 )
 
-        reason = fallback_reason or refinement.reason or (
-            "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa."
+        reason = fallback_reason or refinement.reason or ExternalActionResponseContentService.get(
+            "selectionReasons",
+            "depthRefinementDefault",
         )
 
         return {
@@ -263,17 +277,23 @@ class ExternalActionRefinementRouteSelectionService:
             elif refinement.page is not None and lowered == "page":
                 parameters[name] = refinement.page
 
-        reason = fallback_reason or refinement.reason or (
-            "A mensagem ajusta paginação da consulta operacional já feita nesta conversa."
+        reason = fallback_reason or refinement.reason or ExternalActionResponseContentService.get(
+            "selectionReasons",
+            "paginationRefinementDefault",
         )
 
         if refinement.page_size is not None:
-            reason = (
-                f"A mensagem aumenta o limite da consulta para "
-                f"{refinement.page_size} registro(s)."
+            reason = ExternalActionResponseContentService.format(
+                "selectionReasons",
+                "paginationRefinementPageSize",
+                page_size=refinement.page_size,
             )
         elif refinement.page is not None:
-            reason = f"A mensagem solicita a página {refinement.page} da consulta anterior."
+            reason = ExternalActionResponseContentService.format(
+                "selectionReasons",
+                "paginationRefinementPage",
+                page=refinement.page,
+            )
 
         return {
             "name": "execute_external_action",
