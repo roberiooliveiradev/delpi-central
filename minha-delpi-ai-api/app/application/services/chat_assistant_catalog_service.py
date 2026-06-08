@@ -117,6 +117,11 @@ class ChatAssistantCatalogService:
                 if str(item.get("featureId") or "").strip() not in profile_blocked_ids
             ]
 
+        agent_active = bool(agent)
+
+        if not agent_active:
+            highlights = self._filter_highlights_for_common_chat(highlights)
+
         return {
             "version": AssistantCapabilitiesRegistry.catalog_version(),
             "query": normalized_query or None,
@@ -137,6 +142,7 @@ class ChatAssistantCatalogService:
                 profile_id=onboarding_profile_id,
                 agent_name=agent_name,
                 agent_category=agent_category,
+                agent_active=agent_active,
             ),
             "userContext": {
                 "canUseTools": AssistantCapabilitiesRegistry.user_can_use_tools(
@@ -148,6 +154,26 @@ class ChatAssistantCatalogService:
                 "canOpenAdmin": bool(can_open_admin) if can_open_admin is not None else None,
             },
         }
+
+    @classmethod
+    def _filter_highlights_for_common_chat(
+        cls,
+        highlights: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        filtered: list[dict[str, Any]] = []
+
+        for item in highlights:
+            feature_id = str(item.get("featureId") or "").strip()
+
+            if feature_id:
+                feature = AssistantCapabilitiesRegistry.get_feature(feature_id)
+
+                if isinstance(feature, dict) and feature.get("requiresAgent"):
+                    continue
+
+            filtered.append(item)
+
+        return filtered
 
     @classmethod
     def _group_by_category(cls, features: list[dict[str, Any]]) -> list[dict[str, Any]]:

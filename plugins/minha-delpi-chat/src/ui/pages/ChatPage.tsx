@@ -37,7 +37,9 @@ import {
   resolveComposerContextBar,
   resolveEffectiveChatAgentId,
   resolveEffectiveProjectId,
+  resolvePreferredOperationalAgent,
 } from "../../state/chatAgentActivation";
+import { isOperationalHomeStarter } from "../chatHomeStarters";
 import {
   buildActiveContextSummary,
   collectActiveContextChips,
@@ -277,6 +279,12 @@ export function ChatPage({
     title: "Consulta ao chat",
   });
   const catalogProfileSyncedRef = useRef(false);
+  const sendMessageWithOperationalAgentRef = useRef<
+    (
+      params: Parameters<typeof sendMessage>[0] & { content?: string },
+      starterContext?: StarterInvokeContext,
+    ) => Promise<void>
+  >(async () => undefined);
 
   const {
     enabled: responseModesEnabled,
@@ -482,11 +490,24 @@ export function ChatPage({
           return;
         }
 
-        await sendMessage({ ...params, content: recovered });
+        const sendOperational = sendMessageWithOperationalAgentRef.current;
+
+        if (sendOperational) {
+          await sendOperational({ ...params, content: recovered });
+        } else {
+          await sendMessage({ ...params, content: recovered });
+        }
+
         return;
       }
 
-      await sendMessage({ ...params, content: resolved });
+      const sendOperational = sendMessageWithOperationalAgentRef.current;
+
+      if (sendOperational) {
+        await sendOperational({ ...params, content: resolved });
+      } else {
+        await sendMessage({ ...params, content: resolved });
+      }
     },
     [clearError, draft, resolveShortcutQuery, sendMessage, setDraft, shortcutSendPromptOptions],
   );
@@ -795,6 +816,43 @@ export function ChatPage({
     projectName: selectedProject?.name ?? null,
   });
   const helpAgentId = contextAgentId ?? conversationAgentId ?? activeAgentPageId ?? undefined;
+
+  const sendMessageWithOperationalAgent = useCallback(
+    async (
+      params: Parameters<typeof sendMessage>[0] & { content?: string },
+      starterContext: StarterInvokeContext = {},
+    ) => {
+      let agentId = requestedAgentId;
+
+      if (
+        !agentId &&
+        isOperationalHomeStarter({
+          starterId: starterContext.starterId,
+          query: params.content ?? draft,
+          featureId: starterContext.featureId,
+        })
+      ) {
+        const preferred = resolvePreferredOperationalAgent(agents);
+
+        if (preferred) {
+          agentId = preferred;
+          setContextAgentId(preferred);
+        }
+      }
+
+      await sendMessage({
+        ...params,
+        ...(agentId
+          ? { agentId, chatMode: "agent" as const }
+          : {}),
+      });
+    },
+    [agents, draft, requestedAgentId, sendMessage],
+  );
+
+  useEffect(() => {
+    sendMessageWithOperationalAgentRef.current = sendMessageWithOperationalAgent;
+  }, [sendMessageWithOperationalAgent]);
 
   useEffect(() => {
     if (!helpPanelOpen) {
@@ -1637,7 +1695,7 @@ export function ChatPage({
 
     if (!starterRequiresShortcutModal(normalized, {})) {
       clearError();
-      void sendMessage({ content: normalized });
+      void sendMessageWithOperationalAgent({ content: normalized });
       return;
     }
 
@@ -1659,7 +1717,7 @@ export function ChatPage({
 
     if (!starterRequiresShortcutModal(normalized, context)) {
       clearError();
-      await sendMessage({ content: normalized });
+      await sendMessageWithOperationalAgent({ content: normalized }, context);
       return;
     }
 
@@ -1673,7 +1731,7 @@ export function ChatPage({
       }
 
       clearError();
-      await sendMessage({ content: resolved });
+      await sendMessageWithOperationalAgent({ content: resolved }, context);
     } finally {
       shortcutPromptResolvingRef.current = false;
     }
@@ -1691,7 +1749,7 @@ export function ChatPage({
     setHelpPanelOpen(false);
     setHelpSearchQuery("");
     setDraft("");
-    await sendMessage({ content: resolved });
+    await sendMessageWithOperationalAgent({ content: resolved }, context);
   }
 
   async function handleReuseMessage(content: string) {

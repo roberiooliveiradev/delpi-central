@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { ChatAgent } from "../data/api/chatTypes";
 import {
   isExplicitChatAgentActive,
   resolveChatModePresentation,
@@ -7,7 +8,27 @@ import {
   resolveEffectiveChatAgentId,
   resolveEffectiveProjectId,
   resolveExplicitChatAgentId,
+  resolvePreferredOperationalAgent,
 } from "./chatAgentActivation";
+
+function agentStub(partial: Partial<ChatAgent> & Pick<ChatAgent, "id" | "name">): ChatAgent {
+  return {
+    description: null,
+    enabled: true,
+    metadata: null,
+    owner_user_id: null,
+    visibility: "private",
+    category: null,
+    icon: null,
+    response_style: null,
+    max_tool_calls: 8,
+    requires_confirmation_for_write: false,
+    access_role: "owner",
+    created_at: "",
+    updated_at: "",
+    ...partial,
+  };
+}
 
 describe("chatAgentActivation", () => {
   it("prioriza rota de agente sobre contexto do composer", () => {
@@ -116,6 +137,27 @@ describe("chatAgentActivation", () => {
     ).toEqual({
       items: [{ kind: "project", id: "project-b" }],
     });
+  });
+
+  it("prioriza agente oficial para consultas operacionais no chat comum", () => {
+    expect(
+      resolvePreferredOperationalAgent([
+        agentStub({ id: "a1", name: "Outro" }),
+        agentStub({
+          id: "a2",
+          name: "Agente Minha DELPI",
+          visibility: "system",
+          access_role: "system",
+        }),
+      ]),
+    ).toBe("a2");
+
+    expect(
+      resolvePreferredOperationalAgent([
+        agentStub({ id: "b1", name: "Compras" }),
+        agentStub({ id: "b2", name: "Minha DELPI" }),
+      ]),
+    ).toBe("b2");
   });
 
   it("prioriza overlay do composer quando difere da página", () => {

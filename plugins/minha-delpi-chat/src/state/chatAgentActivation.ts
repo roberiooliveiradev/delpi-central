@@ -1,3 +1,5 @@
+import type { ChatAgent } from "../data/api/chatTypes";
+
 /**
  * Ativação explícita de agente no MFE — não herdar default de projeto nem agente de plataforma.
  *
@@ -62,6 +64,33 @@ export function resolveEffectiveProjectId(input: {
 
 export function isExplicitChatAgentActive(agentId: string | null | undefined): boolean {
   return Boolean(normalizeAgentId(agentId));
+}
+
+function isSystemOfficialAgent(agent: ChatAgent): boolean {
+  return agent.visibility === "system" || agent.access_role === "system";
+}
+
+/** Agente preferido ao disparar consulta operacional a partir do chat comum. */
+export function resolvePreferredOperationalAgent(agents: ChatAgent[]): string | null {
+  const enabled = agents.filter((agent) => agent.enabled !== false);
+
+  if (enabled.length === 0) {
+    return null;
+  }
+
+  const official = enabled.find((agent) => isSystemOfficialAgent(agent));
+
+  if (official?.id) {
+    return official.id;
+  }
+
+  const delpi = enabled.find((agent) => /minha\s*delpi/i.test(String(agent.name ?? "")));
+
+  if (delpi?.id) {
+    return delpi.id;
+  }
+
+  return enabled[0]?.id ?? null;
 }
 
 export type ChatModePresentation = {

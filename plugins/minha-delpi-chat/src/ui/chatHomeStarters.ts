@@ -1,7 +1,45 @@
+import { normalizeShortcutTemplate } from "./chatShortcutPrompt";
+
 export type ChatHomeStarter = {
   label: string;
   query: string;
 };
+
+/** IDs de atalhos da home que exigem agente com actions (espelha API onboarding). */
+export const OPERATIONAL_HOME_STARTER_IDS = new Set([
+  "product",
+  "stock",
+  "supplier",
+  "structure",
+  "sales",
+  "purchases",
+  "data",
+  "kpi",
+]);
+
+const OPERATIONAL_HIGHLIGHT_FEATURE_IDS = new Set(["product_lookup"]);
+
+export function isOperationalHomeStarter(context: {
+  starterId?: string | null;
+  query?: string | null;
+  featureId?: string | null;
+}): boolean {
+  const starterId = String(context.starterId ?? "").trim().toLowerCase();
+
+  if (OPERATIONAL_HOME_STARTER_IDS.has(starterId)) {
+    return true;
+  }
+
+  const featureId = String(context.featureId ?? "").trim();
+
+  if (featureId && OPERATIONAL_HIGHLIGHT_FEATURE_IDS.has(featureId)) {
+    return true;
+  }
+
+  const normalized = normalizeShortcutTemplate(String(context.query ?? "").trim()).toLowerCase();
+
+  return normalized.includes("{{productcode}}");
+}
 
 /** Chips operacionais na home (sem código fixo — preenchimento no clique). */
 export const CHAT_OPERATIONAL_HOME_STARTERS: ChatHomeStarter[] = [

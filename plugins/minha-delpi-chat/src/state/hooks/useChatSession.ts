@@ -1415,6 +1415,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     content?: string;
     /** Sessão alvo (ex.: logo após fork) quando o state ainda não atualizou. */
     session?: ChatSession;
+    /** Overlay do turno (ex.: ativação automática de agente operacional). */
+    agentId?: string | null;
+    chatMode?: "common" | "agent";
   } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
@@ -1422,6 +1425,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     if (!message || isActiveSessionBusy()) {
       return;
     }
+
+    const effectiveAgentId = params.agentId ?? options.agentId ?? null;
+    const effectiveChatMode =
+      params.chatMode ?? options.chatMode ?? (effectiveAgentId ? "agent" : "common");
 
     if (hasUnresolvedShortcutPlaceholders(message)) {
       if (isShortcutPromptOpenRef.current?.()) {
@@ -1495,7 +1502,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             title: "Nova conversa",
             context: "geral",
             projectId: options.projectId ?? null,
-            agentId: options.agentId ?? null,
+            agentId: effectiveAgentId,
           },
           {
             getAccessToken: options.getAccessToken,
@@ -1516,7 +1523,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setActiveSession(sessionForMessage);
         queueMicrotask(() => {
           options.onSessionActivated?.(sessionForMessage!.id, {
-            agentId: sessionForMessage!.agent_id ?? options.agentId ?? null,
+            agentId: sessionForMessage!.agent_id ?? effectiveAgentId,
             projectId: sessionForMessage!.project_id ?? options.projectId ?? null,
           });
         });
@@ -1606,8 +1613,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         message,
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
-        agentId: options.agentId,
-        chatMode: options.chatMode ?? (options.agentId ? "agent" : "common"),
+        agentId: effectiveAgentId,
+        chatMode: effectiveChatMode,
         responseMode: getResponseModeRef.current?.() ?? "normal",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });

@@ -17,6 +17,23 @@ def _content() -> dict[str, Any]:
 
 
 class ChatOnboardingService:
+    _OPERATIONAL_STARTER_IDS = frozenset(
+        {
+            "product",
+            "stock",
+            "supplier",
+            "structure",
+            "sales",
+            "purchases",
+            "data",
+            "kpi",
+        }
+    )
+
+    @classmethod
+    def starter_requires_agent(cls, card_id: str | None) -> bool:
+        return str(card_id or "").strip().lower() in cls._OPERATIONAL_STARTER_IDS
+
     @classmethod
     def payload_for_catalog(
         cls,
@@ -24,6 +41,7 @@ class ChatOnboardingService:
         profile_id: str | None = None,
         agent_name: str | None = None,
         agent_category: str | None = None,
+        agent_active: bool = False,
     ) -> dict[str, Any]:
         data = _content()
         welcome = data.get("welcome") if isinstance(data.get("welcome"), dict) else {}
@@ -48,7 +66,10 @@ class ChatOnboardingService:
             },
             "profiles": cls.list_profiles(),
             "selectedProfileId": resolved_profile,
-            "starterCards": cls.starter_cards(profile_id=resolved_profile),
+            "starterCards": cls.starter_cards(
+                profile_id=resolved_profile,
+                agent_active=agent_active,
+            ),
             "tourSteps": cls.tour_steps(),
             "idleHints": cls.idle_hints(),
             "milestones": cls._list_milestone_catalog(),
@@ -158,7 +179,12 @@ class ChatOnboardingService:
         return None
 
     @classmethod
-    def starter_cards(cls, *, profile_id: str | None = None) -> list[dict[str, str]]:
+    def starter_cards(
+        cls,
+        *,
+        profile_id: str | None = None,
+        agent_active: bool = False,
+    ) -> list[dict[str, str]]:
         preset = cls.profile_preset(profile_id)
 
         if preset:
@@ -166,7 +192,16 @@ class ChatOnboardingService:
         else:
             items = _content().get("starterCards") or []
 
-        return cls._normalize_cards(items)
+        cards = cls._normalize_cards(items)
+
+        if agent_active:
+            return cards
+
+        return [
+            card
+            for card in cards
+            if not cls.starter_requires_agent(card.get("id"))
+        ]
 
     @classmethod
     def _normalize_cards(cls, items: list[Any]) -> list[dict[str, str]]:
