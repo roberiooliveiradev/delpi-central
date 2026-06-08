@@ -2067,6 +2067,7 @@
 
 .a5s-table__actions-cell {
   width: 1%;
+  min-width: 11.5rem;
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -2074,12 +2075,13 @@
 .a5s-table--dashboard th:last-child,
 .a5s-table--dashboard .a5s-table__actions-cell {
   text-align: right;
+  min-width: 11.5rem;
 }
 
-.a5s-icon-btn--table,
-.a5s-table__actions--dashboard .a5s-btn--table-action {
+.a5s-icon-btn--table {
   box-sizing: border-box;
   width: 44px;
+  min-width: 44px;
   height: 44px;
   min-height: 44px;
   flex-shrink: 0;
@@ -2089,9 +2091,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  height: auto;
+  width: auto;
   padding: 0 14px;
   white-space: nowrap;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .a5s-table__actions--dashboard .a5s-row-menu {
