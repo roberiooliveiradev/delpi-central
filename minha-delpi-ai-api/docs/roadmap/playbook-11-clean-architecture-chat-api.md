@@ -402,11 +402,11 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 5):**
+**Sprint imediata (Fase 3 — god classes, lote 6):**
 
-1. Reduzir `external_action_selection_service.py` (LMP/SQL delegates) e `chat_tool_context_service.py`.
+1. Migrar `_select_sql_or_data_action` para route selection.
 2. Extrair sub-presenters restantes do facade (SQL, billing, system tables).
-3. Expandir `ExternalActionRouteSelectionService` para `_select_lmp_action` e KPIs restantes.
+3. Reduzir `chat_tool_context_service.py`.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -415,5 +415,7 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3 lote 3):** `ExternalActionProductListPresenter` (~972 linhas) extraído; facade **4524 → ~3641** linhas.
 
 **Concluído (Fase 3B lote 4):** `ExternalActionProductRouteSelectionService` (~720 linhas); `_select_product_action` migrado para `ExternalActionRouteSelectionService.select_product()`; `external_action_selection_service.py` **3151 → ~2490** linhas.
+
+**Concluído (Fase 3B lote 5):** `ExternalActionLmpRouteSelectionService` (~210 linhas); `_select_lmp_action` migrado para `select_lmp()`; `external_action_selection_service.py` **2503 → ~2349** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

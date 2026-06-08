@@ -17,6 +17,9 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.operational_api_parameter_builder_service import (
     OperationalApiParameterBuilderService,
 )
+from app.application.services.external_actions.external_action_lmp_route_selection_service import (
+    ExternalActionLmpRouteSelectionService,
+)
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
 )
@@ -34,12 +37,14 @@ class ExternalActionRouteSelectionService:
         *,
         parameter_builder: OperationalApiParameterBuilderService | None = None,
         product_route: ExternalActionProductRouteSelectionService | None = None,
+        lmp_route: ExternalActionLmpRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
         self._product_route = product_route or ExternalActionProductRouteSelectionService(
             repository
         )
+        self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
 
     def select(
         self,
@@ -110,6 +115,23 @@ class ExternalActionRouteSelectionService:
             route_segment=route_segment,
             preferred_action_id=preferred_action_id,
             candidates_loader=candidates_loader,
+        )
+
+    def select_lmp(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        conversation_context: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        return self._lmp_route.select(
+            message,
+            allowed_action_ids,
+            conversation_context,
+            candidates_loader=candidates_loader,
+            merge_date_parameters=merge_date_parameters,
         )
 
     @classmethod
