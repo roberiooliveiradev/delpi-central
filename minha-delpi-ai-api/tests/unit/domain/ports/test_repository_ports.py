@@ -54,3 +54,43 @@ def test_postgres_chat_quality_issue_repository_declares_port():
         "PostgresChatQualityIssueRepository",
     )
     assert "ChatQualityIssueRepositoryPort" in bases
+
+
+def test_postgres_memory_item_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_memory_item_repository.py",
+        "PostgresMemoryItemRepository",
+    )
+    assert "MemoryItemRepositoryPort" in bases
+
+
+def test_postgres_vocabulary_term_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_vocabulary_term_repository.py",
+        "PostgresVocabularyTermRepository",
+    )
+    assert "VocabularyTermRepositoryPort" in bases
+
+
+def test_postgres_learning_candidate_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_learning_candidate_repository.py",
+        "PostgresLearningCandidateRepository",
+    )
+    assert "LearningCandidateRepositoryPort" in bases
+
+
+def test_postgres_evaluation_case_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_evaluation_case_repository.py",
+        "PostgresEvaluationCaseRepository",
+    )
+    assert "EvaluationCaseRepositoryPort" in bases
+
+
+def test_postgres_fine_tuning_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_fine_tuning_repository.py",
+        "PostgresFineTuningRepository",
+    )
+    assert "FineTuningRepositoryPort" in bases

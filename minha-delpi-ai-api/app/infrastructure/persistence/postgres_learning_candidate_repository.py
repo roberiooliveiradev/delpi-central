@@ -3,6 +3,9 @@ from uuid import UUID
 
 from sqlalchemy import func
 
+from app.domain.ports.learning_candidate_repository_port import (
+    LearningCandidateRepositoryPort,
+)
 from app.extensions.db import db
 from app.infrastructure.db.models.learning_candidate_model import (
     AiLearningCandidateModel,
@@ -12,7 +15,7 @@ _ACTIVE_STATUSES = ("pending", "auto_approved")
 _HIGH_CONFIDENCE = 0.85
 
 
-class PostgresLearningCandidateRepository:
+class PostgresLearningCandidateRepository(LearningCandidateRepositoryPort):
     def find_active_duplicate(
         self,
         *,

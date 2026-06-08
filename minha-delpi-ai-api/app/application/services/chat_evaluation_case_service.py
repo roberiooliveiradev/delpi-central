@@ -11,21 +11,24 @@ from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGua
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
 from app.domain.services.chat_simple_turn_gate_service import ChatSimpleTurnGateService
 from app.infrastructure.config.settings import Settings
 
 
+def _default_evaluation_repository() -> EvaluationCaseRepositoryPort:
+    from app.composition.repository_composer import make_evaluation_case_repository
+
+    return make_evaluation_case_repository()
+
+
 class ChatEvaluationCaseService:
-    def __init__(self, repository=None):
+    def __init__(self, repository: EvaluationCaseRepositoryPort | None = None):
         self._repository = repository
 
-    def _repo(self):
+    def _repo(self) -> EvaluationCaseRepositoryPort:
         if self._repository is None:
-            from app.infrastructure.persistence.postgres_evaluation_case_repository import (
-                PostgresEvaluationCaseRepository,
-            )
-
-            self._repository = PostgresEvaluationCaseRepository()
+            self._repository = _default_evaluation_repository()
 
         return self._repository
 

@@ -281,20 +281,58 @@ def make_update_admin_quality_issue_status_use_case():
     )
 
 
+def _learning_repositories():
+    from app.composition.repository_composer import (
+        make_evaluation_case_repository,
+        make_fine_tuning_repository,
+        make_knowledge_repository,
+        make_learning_candidate_repository,
+        make_memory_item_repository,
+        make_vocabulary_term_repository,
+    )
+
+    return {
+        "candidate_repository": make_learning_candidate_repository(),
+        "vocabulary_repository": make_vocabulary_term_repository(),
+        "memory_repository": make_memory_item_repository(),
+        "evaluation_repository": make_evaluation_case_repository(),
+        "fine_tuning_repository": make_fine_tuning_repository(),
+        "knowledge_repository": make_knowledge_repository(),
+    }
+
+
 def make_list_learning_candidates_use_case():
+    from app.application.services.chat_knowledge_candidate_service import (
+        ChatKnowledgeCandidateService,
+    )
     from app.application.use_cases.chat_learning_use_cases import (
         ListLearningCandidatesUseCase,
     )
 
-    return ListLearningCandidatesUseCase()
+    repos = _learning_repositories()
+    return ListLearningCandidatesUseCase(
+        candidate_service=ChatKnowledgeCandidateService(
+            candidate_repository=repos["candidate_repository"],
+            vocabulary_repository=repos["vocabulary_repository"],
+        )
+    )
 
 
 def make_review_learning_candidate_use_case():
+    from app.application.services.chat_knowledge_candidate_service import (
+        ChatKnowledgeCandidateService,
+    )
     from app.application.use_cases.chat_learning_use_cases import (
         ReviewLearningCandidateUseCase,
     )
 
-    return ReviewLearningCandidateUseCase()
+    repos = _learning_repositories()
+    return ReviewLearningCandidateUseCase(
+        candidate_service=ChatKnowledgeCandidateService(
+            candidate_repository=repos["candidate_repository"],
+            vocabulary_repository=repos["vocabulary_repository"],
+        )
+    )
 
 
 def make_list_vocabulary_terms_use_case():
@@ -302,7 +340,10 @@ def make_list_vocabulary_terms_use_case():
         ListVocabularyTermsUseCase,
     )
 
-    return ListVocabularyTermsUseCase()
+    repos = _learning_repositories()
+    return ListVocabularyTermsUseCase(
+        vocabulary_repository=repos["vocabulary_repository"],
+    )
 
 
 def make_upsert_vocabulary_term_use_case():
@@ -310,7 +351,10 @@ def make_upsert_vocabulary_term_use_case():
         UpsertVocabularyTermUseCase,
     )
 
-    return UpsertVocabularyTermUseCase()
+    repos = _learning_repositories()
+    return UpsertVocabularyTermUseCase(
+        vocabulary_repository=repos["vocabulary_repository"],
+    )
 
 
 def make_reindex_glossary_knowledge_use_case():
@@ -318,7 +362,10 @@ def make_reindex_glossary_knowledge_use_case():
         ReindexGlossaryKnowledgeUseCase,
     )
 
-    return ReindexGlossaryKnowledgeUseCase()
+    repos = _learning_repositories()
+    return ReindexGlossaryKnowledgeUseCase(
+        vocabulary_repository=repos["vocabulary_repository"],
+    )
 
 
 def make_reindex_user_memory_knowledge_use_case():
@@ -326,7 +373,10 @@ def make_reindex_user_memory_knowledge_use_case():
         ReindexUserMemoryKnowledgeUseCase,
     )
 
-    return ReindexUserMemoryKnowledgeUseCase()
+    repos = _learning_repositories()
+    return ReindexUserMemoryKnowledgeUseCase(
+        memory_repository=repos["memory_repository"],
+    )
 
 
 def make_get_admin_learning_summary_use_case():
@@ -334,31 +384,56 @@ def make_get_admin_learning_summary_use_case():
         GetAdminLearningSummaryUseCase,
     )
 
-    return GetAdminLearningSummaryUseCase()
+    repos = _learning_repositories()
+    return GetAdminLearningSummaryUseCase(**repos)
 
 
 def make_list_evaluation_cases_use_case():
+    from app.application.services.chat_evaluation_case_service import (
+        ChatEvaluationCaseService,
+    )
     from app.application.use_cases.chat_learning_use_cases import (
         ListEvaluationCasesUseCase,
     )
 
-    return ListEvaluationCasesUseCase()
+    repos = _learning_repositories()
+    return ListEvaluationCasesUseCase(
+        evaluation_service=ChatEvaluationCaseService(
+            repository=repos["evaluation_repository"],
+        )
+    )
 
 
 def make_create_evaluation_case_use_case():
+    from app.application.services.chat_evaluation_case_service import (
+        ChatEvaluationCaseService,
+    )
     from app.application.use_cases.chat_learning_use_cases import (
         CreateEvaluationCaseUseCase,
     )
 
-    return CreateEvaluationCaseUseCase()
+    repos = _learning_repositories()
+    return CreateEvaluationCaseUseCase(
+        evaluation_service=ChatEvaluationCaseService(
+            repository=repos["evaluation_repository"],
+        )
+    )
 
 
 def make_run_evaluation_case_use_case():
+    from app.application.services.chat_evaluation_case_service import (
+        ChatEvaluationCaseService,
+    )
     from app.application.use_cases.chat_learning_use_cases import (
         RunEvaluationCaseUseCase,
     )
 
-    return RunEvaluationCaseUseCase()
+    repos = _learning_repositories()
+    return RunEvaluationCaseUseCase(
+        evaluation_service=ChatEvaluationCaseService(
+            repository=repos["evaluation_repository"],
+        )
+    )
 
 
 def make_review_evaluation_case_use_case():
@@ -366,55 +441,106 @@ def make_review_evaluation_case_use_case():
         ReviewEvaluationCaseUseCase,
     )
 
-    return ReviewEvaluationCaseUseCase()
+    repos = _learning_repositories()
+    return ReviewEvaluationCaseUseCase(
+        repository=repos["evaluation_repository"],
+    )
 
 
 def make_list_fine_tuning_samples_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import ListFineTuningSamplesUseCase
 
-    return ListFineTuningSamplesUseCase()
+    repos = _learning_repositories()
+    return ListFineTuningSamplesUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_create_fine_tuning_sample_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import CreateFineTuningSampleUseCase
 
-    return CreateFineTuningSampleUseCase()
+    repos = _learning_repositories()
+    return CreateFineTuningSampleUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_review_fine_tuning_sample_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import ReviewFineTuningSampleUseCase
 
-    return ReviewFineTuningSampleUseCase()
+    repos = _learning_repositories()
+    return ReviewFineTuningSampleUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_list_fine_tuning_datasets_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import ListFineTuningDatasetsUseCase
 
-    return ListFineTuningDatasetsUseCase()
+    repos = _learning_repositories()
+    return ListFineTuningDatasetsUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_create_fine_tuning_dataset_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import CreateFineTuningDatasetUseCase
 
-    return CreateFineTuningDatasetUseCase()
+    repos = _learning_repositories()
+    return CreateFineTuningDatasetUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_approve_fine_tuning_dataset_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import ApproveFineTuningDatasetUseCase
 
-    return ApproveFineTuningDatasetUseCase()
+    repos = _learning_repositories()
+    return ApproveFineTuningDatasetUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_export_fine_tuning_dataset_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import ExportFineTuningDatasetUseCase
 
-    return ExportFineTuningDatasetUseCase()
+    repos = _learning_repositories()
+    return ExportFineTuningDatasetUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_fine_tuning_run_use_case():
+    from app.application.services.chat_fine_tuning_service import ChatFineTuningService
     from app.application.use_cases.chat_learning_use_cases import FineTuningRunUseCase
 
-    return FineTuningRunUseCase()
+    repos = _learning_repositories()
+    return FineTuningRunUseCase(
+        service=ChatFineTuningService(
+            repository=repos["fine_tuning_repository"],
+        )
+    )
 
 
 def make_list_user_memory_items_use_case():
@@ -422,7 +548,10 @@ def make_list_user_memory_items_use_case():
         ListUserMemoryItemsUseCase,
     )
 
-    return ListUserMemoryItemsUseCase()
+    repos = _learning_repositories()
+    return ListUserMemoryItemsUseCase(
+        repository=repos["memory_repository"],
+    )
 
 
 def make_review_user_memory_item_use_case():
@@ -430,7 +559,10 @@ def make_review_user_memory_item_use_case():
         ReviewUserMemoryItemUseCase,
     )
 
-    return ReviewUserMemoryItemUseCase()
+    repos = _learning_repositories()
+    return ReviewUserMemoryItemUseCase(
+        repository=repos["memory_repository"],
+    )
 
 
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:

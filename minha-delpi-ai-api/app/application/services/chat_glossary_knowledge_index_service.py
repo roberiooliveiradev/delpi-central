@@ -1,7 +1,14 @@
 import hashlib
 from uuid import UUID
 
+from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 from app.infrastructure.config.settings import Settings
+
+
+def _default_knowledge_repository() -> KnowledgeRepositoryPort:
+    from app.composition.repository_composer import make_knowledge_repository
+
+    return make_knowledge_repository()
 
 _SOURCE_TYPE = "glossary"
 
@@ -15,17 +22,18 @@ class ChatGlossaryKnowledgeIndexService:
     Gated por flag e best-effort: nunca quebra a promoção/edição admin.
     """
 
-    def __init__(self, *, knowledge_repository=None, embedding_gateway=None):
+    def __init__(
+        self,
+        *,
+        knowledge_repository: KnowledgeRepositoryPort | None = None,
+        embedding_gateway=None,
+    ):
         self._knowledge_repository = knowledge_repository
         self._embedding_gateway = embedding_gateway
 
-    def _repo(self):
+    def _repo(self) -> KnowledgeRepositoryPort:
         if self._knowledge_repository is None:
-            from app.infrastructure.persistence.postgres_knowledge_repository import (
-                PostgresKnowledgeRepository,
-            )
-
-            self._knowledge_repository = PostgresKnowledgeRepository()
+            self._knowledge_repository = _default_knowledge_repository()
 
         return self._knowledge_repository
 

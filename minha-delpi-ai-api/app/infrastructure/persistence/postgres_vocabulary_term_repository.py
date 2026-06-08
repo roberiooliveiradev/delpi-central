@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import func
 
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermModel
 
@@ -10,7 +11,7 @@ from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermM
 _NORMALIZATION_TYPES = ("typo", "abbreviation", "phrase")
 
 
-class PostgresVocabularyTermRepository:
+class PostgresVocabularyTermRepository(VocabularyTermRepositoryPort):
     def upsert_term(
         self,
         *,

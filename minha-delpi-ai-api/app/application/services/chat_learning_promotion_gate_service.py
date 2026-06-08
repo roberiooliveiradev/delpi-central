@@ -5,10 +5,24 @@ from __future__ import annotations
 from app.domain.services.chat_evaluation_case_runner_service import (
     ChatEvaluationCaseRunnerService,
 )
+from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.infrastructure.config.settings import Settings
+
+
+def _default_evaluation_repository() -> EvaluationCaseRepositoryPort:
+    from app.composition.repository_composer import make_evaluation_case_repository
+
+    return make_evaluation_case_repository()
+
+
+def _default_vocabulary_repository() -> VocabularyTermRepositoryPort:
+    from app.composition.repository_composer import make_vocabulary_term_repository
+
+    return make_vocabulary_term_repository()
 
 
 class ChatLearningPromotionGateService:
@@ -21,27 +35,24 @@ class ChatLearningPromotionGateService:
     _NORMALIZATION_CATEGORIES = ("normalization", "routing")
     _ALL_CATEGORIES = ("normalization", "routing", "small_talk", "security", "memory")
 
-    def __init__(self, *, evaluation_repository=None, vocabulary_repository=None):
+    def __init__(
+        self,
+        *,
+        evaluation_repository: EvaluationCaseRepositoryPort | None = None,
+        vocabulary_repository: VocabularyTermRepositoryPort | None = None,
+    ):
         self._evaluation_repository = evaluation_repository
         self._vocabulary_repository = vocabulary_repository
 
-    def _eval_repo(self):
+    def _eval_repo(self) -> EvaluationCaseRepositoryPort:
         if self._evaluation_repository is None:
-            from app.infrastructure.persistence.postgres_evaluation_case_repository import (
-                PostgresEvaluationCaseRepository,
-            )
-
-            self._evaluation_repository = PostgresEvaluationCaseRepository()
+            self._evaluation_repository = _default_evaluation_repository()
 
         return self._evaluation_repository
 
-    def _vocab_repo(self):
+    def _vocab_repo(self) -> VocabularyTermRepositoryPort:
         if self._vocabulary_repository is None:
-            from app.infrastructure.persistence.postgres_vocabulary_term_repository import (
-                PostgresVocabularyTermRepository,
-            )
-
-            self._vocabulary_repository = PostgresVocabularyTermRepository()
+            self._vocabulary_repository = _default_vocabulary_repository()
 
         return self._vocabulary_repository
 

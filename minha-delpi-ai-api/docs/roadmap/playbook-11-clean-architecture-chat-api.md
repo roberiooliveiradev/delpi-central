@@ -401,7 +401,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 **Sprint imediata (pós-playbook 11):**
 
-1. Ports application restantes (`Postgres*` inline em learning, memory, vision — fora do escopo Fase 4 original).
+1. Ports application restantes (admin metrics, external actions inline, runtime settings).
+
+**Concluído (ports learning/memory/vision):** `MemoryItemRepositoryPort`, `VocabularyTermRepositoryPort`, `LearningCandidateRepositoryPort`, `EvaluationCaseRepositoryPort`, `FineTuningRepositoryPort`; aliases em `repository_composer`; application sem `Postgres*` inline nos eixos learning/memory/vision; `ChatDocumentVisionService` via `ChatAttachmentRepositoryPort`; testes `test_learning_memory_vision_repository_ports`.
 
 **Concluído (baseline PT):** heurísticas `external_action_*_route_selection_service` migradas para `external_action_responses.json` (`actionSelection.*`); `semanticRankReason` em `selectionReasons`; gate `test_no_hardcoded_pt_strings` com baseline **32 → 0**.
 

@@ -1,10 +1,17 @@
 from uuid import UUID
 
 from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGuard
+from app.domain.ports.memory_item_repository_port import MemoryItemRepositoryPort
 from app.domain.services.chat_user_memory_durability_service import (
     ChatUserMemoryDurabilityService,
 )
 from app.infrastructure.config.settings import Settings
+
+
+def _default_memory_repository() -> MemoryItemRepositoryPort:
+    from app.composition.repository_composer import make_memory_item_repository
+
+    return make_memory_item_repository()
 
 _TYPE_LABELS = {
     "preference": "Preferência",
@@ -21,15 +28,8 @@ class ChatUserMemoryService:
     turno (playbook §31 — captura sem efeito colateral).
     """
 
-    def __init__(self, repository=None):
-        if repository is None:
-            from app.infrastructure.persistence.postgres_memory_item_repository import (
-                PostgresMemoryItemRepository,
-            )
-
-            repository = PostgresMemoryItemRepository()
-
-        self.repository = repository
+    def __init__(self, repository: MemoryItemRepositoryPort | None = None):
+        self.repository = repository or _default_memory_repository()
 
     def capture_from_turn(
         self,

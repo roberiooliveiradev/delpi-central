@@ -1,6 +1,14 @@
 from uuid import UUID
 
+from app.domain.ports.memory_item_repository_port import MemoryItemRepositoryPort
+
 _VALID_ACTIONS = {"forget": "forgotten", "restore": "active"}
+
+
+def _default_memory_repository() -> MemoryItemRepositoryPort:
+    from app.composition.repository_composer import make_memory_item_repository
+
+    return make_memory_item_repository()
 
 
 def _as_uuid(value) -> UUID | None:
@@ -13,15 +21,8 @@ def _as_uuid(value) -> UUID | None:
 
 
 class ListUserMemoryItemsUseCase:
-    def __init__(self, repository=None):
-        if repository is None:
-            from app.infrastructure.persistence.postgres_memory_item_repository import (
-                PostgresMemoryItemRepository,
-            )
-
-            repository = PostgresMemoryItemRepository()
-
-        self.repository = repository
+    def __init__(self, repository: MemoryItemRepositoryPort | None = None):
+        self.repository = repository or _default_memory_repository()
 
     def execute(
         self,
@@ -47,15 +48,8 @@ class ListUserMemoryItemsUseCase:
 class ReviewUserMemoryItemUseCase:
     """Esquecer/restaurar uma memória (playbook §43 — permitir apagar memória)."""
 
-    def __init__(self, repository=None):
-        if repository is None:
-            from app.infrastructure.persistence.postgres_memory_item_repository import (
-                PostgresMemoryItemRepository,
-            )
-
-            repository = PostgresMemoryItemRepository()
-
-        self.repository = repository
+    def __init__(self, repository: MemoryItemRepositoryPort | None = None):
+        self.repository = repository or _default_memory_repository()
 
     def execute(self, *, item_id: int, action: str, reviewer_id: str | None = None) -> dict:
         normalized = (action or "").strip().lower()

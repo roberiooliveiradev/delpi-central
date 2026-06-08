@@ -151,3 +151,7 @@ class KnowledgeRepositoryPort(ABC):
     @abstractmethod
     def reactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
+
+    @abstractmethod
+    def count_active_documents_by_source_type(self) -> dict[str, int]:
+        raise NotImplementedError

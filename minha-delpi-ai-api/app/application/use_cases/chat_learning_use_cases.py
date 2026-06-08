@@ -4,9 +4,9 @@ from app.application.services.chat_knowledge_candidate_service import (
 from app.application.services.chat_learned_normalization_service import (
     ChatLearnedNormalizationService,
 )
-from app.infrastructure.persistence.postgres_vocabulary_term_repository import (
-    PostgresVocabularyTermRepository,
-)
+from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
+from app.domain.ports.memory_item_repository_port import MemoryItemRepositoryPort
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 
 
 class ListLearningCandidatesUseCase:
@@ -98,9 +98,27 @@ class ReviewLearningCandidateUseCase:
         return result
 
 
+def _default_vocabulary_repository() -> VocabularyTermRepositoryPort:
+    from app.composition.repository_composer import make_vocabulary_term_repository
+
+    return make_vocabulary_term_repository()
+
+
+def _default_memory_repository() -> MemoryItemRepositoryPort:
+    from app.composition.repository_composer import make_memory_item_repository
+
+    return make_memory_item_repository()
+
+
+def _default_evaluation_repository() -> EvaluationCaseRepositoryPort:
+    from app.composition.repository_composer import make_evaluation_case_repository
+
+    return make_evaluation_case_repository()
+
+
 class ListVocabularyTermsUseCase:
-    def __init__(self, vocabulary_repository: PostgresVocabularyTermRepository | None = None):
-        self.vocabulary_repository = vocabulary_repository or PostgresVocabularyTermRepository()
+    def __init__(self, vocabulary_repository: VocabularyTermRepositoryPort | None = None):
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def execute(
         self,
@@ -134,15 +152,8 @@ class ListVocabularyTermsUseCase:
 class ReindexUserMemoryKnowledgeUseCase:
     """Backfill do índice RAG de memórias persistentes ativas."""
 
-    def __init__(self, memory_repository=None):
-        if memory_repository is None:
-            from app.infrastructure.persistence.postgres_memory_item_repository import (
-                PostgresMemoryItemRepository,
-            )
-
-            memory_repository = PostgresMemoryItemRepository()
-
-        self.memory_repository = memory_repository
+    def __init__(self, memory_repository: MemoryItemRepositoryPort | None = None):
+        self.memory_repository = memory_repository or _default_memory_repository()
 
     def execute(self, *, limit: int = 2000) -> dict:
         from app.application.services.chat_memory_knowledge_index_service import (
@@ -164,8 +175,8 @@ class ReindexGlossaryKnowledgeUseCase:
     útil ao habilitar a flag em uma base com termos já promovidos.
     """
 
-    def __init__(self, vocabulary_repository: PostgresVocabularyTermRepository | None = None):
-        self.vocabulary_repository = vocabulary_repository or PostgresVocabularyTermRepository()
+    def __init__(self, vocabulary_repository: VocabularyTermRepositoryPort | None = None):
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def execute(self, *, limit: int = 2000) -> dict:
         from app.application.services.chat_glossary_knowledge_index_service import (
@@ -187,8 +198,8 @@ class ReindexGlossaryKnowledgeUseCase:
 class UpsertVocabularyTermUseCase:
     """Admin cria/edita um termo aprovado diretamente (ex.: regra de typo)."""
 
-    def __init__(self, vocabulary_repository: PostgresVocabularyTermRepository | None = None):
-        self.vocabulary_repository = vocabulary_repository or PostgresVocabularyTermRepository()
+    def __init__(self, vocabulary_repository: VocabularyTermRepositoryPort | None = None):
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def execute(self, *, payload: dict, created_by: str | None = None) -> dict:
         from uuid import UUID
@@ -334,15 +345,8 @@ class ReviewEvaluationCaseUseCase:
 
     _ACTIONS = {"enable", "disable"}
 
-    def __init__(self, repository=None):
-        if repository is None:
-            from app.infrastructure.persistence.postgres_evaluation_case_repository import (
-                PostgresEvaluationCaseRepository,
-            )
-
-            repository = PostgresEvaluationCaseRepository()
-
-        self.repository = repository
+    def __init__(self, repository: EvaluationCaseRepositoryPort | None = None):
+        self.repository = repository or _default_evaluation_repository()
 
     def execute(self, *, case_id: int, action: str) -> dict:
         normalized = str(action or "").strip().lower()

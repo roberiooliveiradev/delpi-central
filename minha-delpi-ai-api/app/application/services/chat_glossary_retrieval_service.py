@@ -2,8 +2,15 @@ import re
 import time
 from uuid import UUID
 
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 from app.domain.services.chat_term_extraction_service import ChatTermExtractionService
 from app.infrastructure.config.settings import Settings
+
+
+def _default_vocabulary_repository() -> VocabularyTermRepositoryPort:
+    from app.composition.repository_composer import make_vocabulary_term_repository
+
+    return make_vocabulary_term_repository()
 
 # Cache em processo: o glossário muda raramente (apenas em promoção/edição admin).
 _CACHE_TTL_SECONDS = 300.0
@@ -21,15 +28,8 @@ class ChatGlossaryRetrievalService:
     _definitions: list[dict] = []
     _last_loaded_at: float = 0.0
 
-    def __init__(self, vocabulary_repository=None):
-        if vocabulary_repository is None:
-            from app.infrastructure.persistence.postgres_vocabulary_term_repository import (
-                PostgresVocabularyTermRepository,
-            )
-
-            vocabulary_repository = PostgresVocabularyTermRepository()
-
-        self.vocabulary_repository = vocabulary_repository
+    def __init__(self, vocabulary_repository: VocabularyTermRepositoryPort | None = None):
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def _ensure_loaded(self, *, force: bool = False) -> None:
         now = time.monotonic()

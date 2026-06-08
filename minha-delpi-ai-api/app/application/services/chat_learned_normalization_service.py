@@ -1,9 +1,16 @@
 import time
 
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.infrastructure.config.settings import Settings
+
+
+def _default_vocabulary_repository() -> VocabularyTermRepositoryPort:
+    from app.composition.repository_composer import make_vocabulary_term_repository
+
+    return make_vocabulary_term_repository()
 
 # Cache em processo: regras aprendidas mudam raramente (apenas em promoção admin).
 _CACHE_TTL_SECONDS = 300.0
@@ -18,15 +25,8 @@ class ChatLearnedNormalizationService:
 
     _last_loaded_at: float = 0.0
 
-    def __init__(self, vocabulary_repository=None):
-        if vocabulary_repository is None:
-            from app.infrastructure.persistence.postgres_vocabulary_term_repository import (
-                PostgresVocabularyTermRepository,
-            )
-
-            vocabulary_repository = PostgresVocabularyTermRepository()
-
-        self.vocabulary_repository = vocabulary_repository
+    def __init__(self, vocabulary_repository: VocabularyTermRepositoryPort | None = None):
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def ensure_loaded(self, *, force: bool = False) -> None:
         """Carrega regras se a flag estiver ligada e o cache expirou. Best-effort."""

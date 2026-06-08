@@ -3,11 +3,12 @@ from uuid import UUID
 
 from sqlalchemy import func
 
+from app.domain.ports.memory_item_repository_port import MemoryItemRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.memory_item_model import AiMemoryItemModel
 
 
-class PostgresMemoryItemRepository:
+class PostgresMemoryItemRepository(MemoryItemRepositoryPort):
     def find_active_duplicate(
         self,
         *,

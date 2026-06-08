@@ -8,35 +8,47 @@ from uuid import UUID
 from app.domain.services.chat_fine_tuning_anonymization_service import (
     ChatFineTuningAnonymizationService,
 )
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
+from app.domain.ports.fine_tuning_repository_port import FineTuningRepositoryPort
 from app.domain.services.chat_fine_tuning_export_service import ChatFineTuningExportService
 from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGuard
 from app.infrastructure.config.settings import Settings
+
+
+def _default_fine_tuning_repository() -> FineTuningRepositoryPort:
+    from app.composition.repository_composer import make_fine_tuning_repository
+
+    return make_fine_tuning_repository()
+
+
+def _default_feedback_repository() -> ChatMessageFeedbackRepositoryPort:
+    from app.composition.repository_composer import make_chat_message_feedback_repository
+
+    return make_chat_message_feedback_repository()
 
 _MIN_SAMPLES_FOR_RUN = 3
 
 
 class ChatFineTuningService:
-    def __init__(self, repository=None, feedback_repository=None):
+    def __init__(
+        self,
+        repository: FineTuningRepositoryPort | None = None,
+        feedback_repository: ChatMessageFeedbackRepositoryPort | None = None,
+    ):
         self._repository = repository
         self._feedback_repository = feedback_repository
 
-    def _repo(self):
+    def _repo(self) -> FineTuningRepositoryPort:
         if self._repository is None:
-            from app.infrastructure.persistence.postgres_fine_tuning_repository import (
-                PostgresFineTuningRepository,
-            )
-
-            self._repository = PostgresFineTuningRepository()
+            self._repository = _default_fine_tuning_repository()
 
         return self._repository
 
-    def _feedback_repo(self):
+    def _feedback_repo(self) -> ChatMessageFeedbackRepositoryPort:
         if self._feedback_repository is None:
-            from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
-                PostgresChatMessageFeedbackRepository,
-            )
-
-            self._feedback_repository = PostgresChatMessageFeedbackRepository()
+            self._feedback_repository = _default_feedback_repository()
 
         return self._feedback_repository
 

@@ -1,10 +1,24 @@
 from uuid import UUID
 
 from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGuard
+from app.domain.ports.learning_candidate_repository_port import LearningCandidateRepositoryPort
+from app.domain.ports.vocabulary_term_repository_port import VocabularyTermRepositoryPort
 from app.domain.services.chat_vocabulary_learning_service import (
     ChatVocabularyLearningService,
 )
 from app.infrastructure.config.settings import Settings
+
+
+def _default_candidate_repository() -> LearningCandidateRepositoryPort:
+    from app.composition.repository_composer import make_learning_candidate_repository
+
+    return make_learning_candidate_repository()
+
+
+def _default_vocabulary_repository() -> VocabularyTermRepositoryPort:
+    from app.composition.repository_composer import make_vocabulary_term_repository
+
+    return make_vocabulary_term_repository()
 
 _CONFIDENCE_CAP = 0.95
 _EVIDENCE_CONFIDENCE_STEP = 0.05
@@ -18,25 +32,11 @@ class ChatKnowledgeCandidateService:
 
     def __init__(
         self,
-        candidate_repository=None,
-        vocabulary_repository=None,
+        candidate_repository: LearningCandidateRepositoryPort | None = None,
+        vocabulary_repository: VocabularyTermRepositoryPort | None = None,
     ):
-        if candidate_repository is None:
-            from app.infrastructure.persistence.postgres_learning_candidate_repository import (
-                PostgresLearningCandidateRepository,
-            )
-
-            candidate_repository = PostgresLearningCandidateRepository()
-
-        if vocabulary_repository is None:
-            from app.infrastructure.persistence.postgres_vocabulary_term_repository import (
-                PostgresVocabularyTermRepository,
-            )
-
-            vocabulary_repository = PostgresVocabularyTermRepository()
-
-        self.candidate_repository = candidate_repository
-        self.vocabulary_repository = vocabulary_repository
+        self.candidate_repository = candidate_repository or _default_candidate_repository()
+        self.vocabulary_repository = vocabulary_repository or _default_vocabulary_repository()
 
     def register_candidate(
         self,

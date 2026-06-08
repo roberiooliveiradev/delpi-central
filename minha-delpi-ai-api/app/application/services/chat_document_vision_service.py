@@ -10,7 +10,14 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.infrastructure.config.settings import Settings
+
+
+def _default_attachment_repository() -> ChatAttachmentRepositoryPort:
+    from app.composition.repository_composer import make_chat_attachment_repository
+
+    return make_chat_attachment_repository()
 
 
 class ChatDocumentVisionService:
@@ -240,11 +247,7 @@ class ChatDocumentVisionService:
         try:
             from datetime import datetime, timezone
 
-            from app.infrastructure.persistence.postgres_chat_attachment_repository import (
-                PostgresChatAttachmentRepository,
-            )
-
-            PostgresChatAttachmentRepository().update_status(
+            _default_attachment_repository().update_status(
                 attachment_id=attachment_id,
                 status=str(attachment.status or "ready"),
                 metadata={
@@ -609,11 +612,7 @@ class ChatDocumentVisionService:
             return []
 
         try:
-            from app.infrastructure.persistence.postgres_chat_attachment_repository import (
-                PostgresChatAttachmentRepository,
-            )
-
-            repository = PostgresChatAttachmentRepository()
+            repository = _default_attachment_repository()
             ids = []
 
             for raw in attachment_ids:

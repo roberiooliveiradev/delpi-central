@@ -3,13 +3,14 @@ from uuid import UUID
 
 from sqlalchemy import func
 
+from app.domain.ports.fine_tuning_repository_port import FineTuningRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.fine_tuning_dataset_model import AiFineTuningDatasetModel
 from app.infrastructure.db.models.fine_tuning_run_model import AiFineTuningRunModel
 from app.infrastructure.db.models.fine_tuning_sample_model import AiFineTuningSampleModel
 
 
-class PostgresFineTuningRepository:
+class PostgresFineTuningRepository(FineTuningRepositoryPort):
     # --- datasets ---
 
     def create_dataset(

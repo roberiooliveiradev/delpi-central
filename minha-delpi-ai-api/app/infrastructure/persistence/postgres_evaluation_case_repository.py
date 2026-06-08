@@ -3,11 +3,12 @@ from uuid import UUID
 
 from sqlalchemy import func
 
+from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.evaluation_case_model import AiEvaluationCaseModel
 
 
-class PostgresEvaluationCaseRepository:
+class PostgresEvaluationCaseRepository(EvaluationCaseRepositoryPort):
     def create(
         self,
         *,
