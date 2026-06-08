@@ -20,6 +20,9 @@ from app.domain.services.operational_api_parameter_builder_service import (
 from app.application.services.external_actions.external_action_lmp_route_selection_service import (
     ExternalActionLmpRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_sql_route_selection_service import (
+    ExternalActionSqlRouteSelectionService,
+)
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
 )
@@ -38,6 +41,7 @@ class ExternalActionRouteSelectionService:
         parameter_builder: OperationalApiParameterBuilderService | None = None,
         product_route: ExternalActionProductRouteSelectionService | None = None,
         lmp_route: ExternalActionLmpRouteSelectionService | None = None,
+        sql_route: ExternalActionSqlRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -45,6 +49,7 @@ class ExternalActionRouteSelectionService:
             repository
         )
         self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
+        self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
 
     def select(
         self,
@@ -132,6 +137,27 @@ class ExternalActionRouteSelectionService:
             conversation_context,
             candidates_loader=candidates_loader,
             merge_date_parameters=merge_date_parameters,
+        )
+
+    def select_sql(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        sql: str | None = None,
+        selection_reason_key: str | None = None,
+        raw_message: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        rank_candidates: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._sql_route.select(
+            message,
+            allowed_action_ids,
+            sql=sql,
+            selection_reason_key=selection_reason_key,
+            raw_message=raw_message,
+            candidates_loader=candidates_loader,
+            rank_candidates=rank_candidates,
         )
 
     @classmethod

@@ -25,3 +25,9 @@ def test_ignores_delete_outside_sql_context():
     assert not ChatSqlSafetyService.contains_destructive_sql(
         "delete a sessão de memória"
     )
+
+
+def test_allows_natural_language_execute_intent():
+    assert not ChatSqlSafetyService.contains_destructive_sql(
+        "execute essa consulta no banco"
+    )

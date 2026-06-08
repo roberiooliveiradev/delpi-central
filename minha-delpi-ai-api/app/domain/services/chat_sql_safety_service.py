@@ -21,6 +21,11 @@ _SQL_CONTEXT = re.compile(
     flags=re.IGNORECASE,
 )
 
+_NATURAL_SQL_EXECUTE_INTENT = re.compile(
+    r"\b(essa consulta|esta consulta|consulta no banco|no banco|traga os dados|trazer os dados)\b",
+    flags=re.IGNORECASE,
+)
+
 
 class ChatSqlSafetyService:
     @classmethod
@@ -54,6 +59,9 @@ class ChatSqlSafetyService:
 
         if re.search(r"\b(exec|execute)\b", normalized, flags=re.IGNORECASE):
             if re.search(r"\bselect\b", normalized, flags=re.IGNORECASE):
+                return False
+
+            if _NATURAL_SQL_EXECUTE_INTENT.search(normalized):
                 return False
 
             return True

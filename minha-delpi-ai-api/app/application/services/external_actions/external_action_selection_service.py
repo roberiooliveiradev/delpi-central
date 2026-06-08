@@ -23,9 +23,6 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
-from app.domain.services.external_actions.external_action_sql_capability_service import (
-    ExternalActionSqlCapabilityService,
-)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -1931,34 +1928,7 @@ class ExternalActionSelectionService:
         )
 
     def _extract_sql_query(self, message: str) -> str | None:
-        raw = str(message or "").strip()
-
-        quoted = re.search(r'["“](.+?)["”]', raw, flags=re.S)
-        if quoted:
-            return quoted.group(1).strip()
-
-        from app.domain.services.external_actions.external_action_sql_capability_service import (
-            ExternalActionSqlCapabilityService,
-        )
-
-        marker = re.search(r"sql\s*:\s*(.+)$", raw, flags=re.I | re.S)
-        if marker:
-            return ExternalActionSqlCapabilityService.normalize_extracted_sql(marker.group(1))
-
-        execute_match = re.search(r"execute\s*:\s*(.+)$", raw, flags=re.I | re.S)
-        if execute_match:
-            candidate = execute_match.group(1).strip()
-
-            if re.search(r"\bselect\b", candidate, flags=re.I):
-                return ExternalActionSqlCapabilityService.normalize_extracted_sql(candidate)
-
-        select_match = re.search(r"(select\s+.+)$", raw, flags=re.I | re.S)
-        if select_match:
-            return ExternalActionSqlCapabilityService.normalize_extracted_sql(
-                select_match.group(1)
-            )
-
-        return None
+        return self._route_selection._sql_route._extract_sql_query(message)
 
     def _select_sql_or_data_action(
         self,
@@ -1969,76 +1939,15 @@ class ExternalActionSelectionService:
         selection_reason_key: str | None = None,
         raw_message: str | None = None,
     ) -> dict | None:
-        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
-
-        if ChatSqlSafetyService.contains_destructive_sql(sql) or ChatSqlSafetyService.contains_destructive_sql(
-            message
-        ):
-            return None
-
-        if not allowed_action_ids:
-            return None
-
-        allowed = {str(item) for item in allowed_action_ids}
-
-        candidates = self._list_allowed_candidates(
+        return self._route_selection.select_sql(
             message,
-            allowed_action_ids=allowed_action_ids,
-            limit=120,
+            allowed_action_ids,
+            sql=sql,
+            selection_reason_key=selection_reason_key,
+            raw_message=raw_message,
+            candidates_loader=self._list_allowed_candidates,
+            rank_candidates=self._rank_candidates,
         )
-
-        if (sql or "").strip():
-            action = self._resolve_data_sql_action(allowed_action_ids)
-        else:
-            preferred = [
-                action
-                for action in candidates
-                if any(
-                    term
-                    in " ".join(
-                        [
-                            str(action.get("path") or ""),
-                            str(action.get("summary") or ""),
-                            str(action.get("description") or ""),
-                            str(action.get("operationId") or ""),
-                        ]
-                    ).lower()
-                    for term in ["sql", "data", "query"]
-                )
-            ]
-
-            ranked = self._rank_candidates(
-                message,
-                preferred or candidates,
-                allowed_action_ids=allowed_action_ids,
-            )
-            action = ranked[0] if ranked else None
-
-        if not action:
-            return None
-
-        sql_query = (sql or "").strip() or self._extract_sql_query(
-            str(raw_message or message).strip()
-        )
-        body = (
-            ExternalActionSqlCapabilityService.build_sql_request_body(sql_query)
-            if sql_query
-            else {"message": message}
-        )
-
-        reason = ExternalActionResponseContentService.get(
-            "selectionReasons",
-            selection_reason_key or ("productionSqlFastPath" if sql else "genericSql"),
-        )
-
-        return {
-            "name": "execute_external_action",
-            "arguments": {
-                "actionId": action["actionId"],
-                "body": body,
-            },
-            "reason": reason,
-        }
 
     def _select_generic_allowed_action(
         self,
@@ -2240,30 +2149,8 @@ class ExternalActionSelectionService:
         return ChatProductQueryIntentService.extract_product_code(message)
 
     def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
-        actions: list[dict] = []
-        seen: set[str] = set()
-
-        list_actions = getattr(self.repository, "list_actions", None)
-        if callable(list_actions):
-            for action in list_actions():
-                action_id = str(action.get("actionId") or "")
-                if action_id and action_id not in seen:
-                    seen.add(action_id)
-                    actions.append(action)
-
-        for action in self.repository.find_candidate_actions(
-            "sql execute readonly query data",
-            limit=120,
-            allowed_action_ids=list(allowed_action_ids),
-        ):
-            action_id = str(action.get("actionId") or "")
-            if action_id and action_id not in seen:
-                seen.add(action_id)
-                actions.append(action)
-
-        return ExternalActionSqlCapabilityService.pick_sql_execution_action(
-            actions,
-            allowed_action_ids=allowed_action_ids,
+        return self._route_selection._sql_route._resolve_data_sql_action(
+            allowed_action_ids
         )
 
     def _list_allowed_candidates(
