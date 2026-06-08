@@ -11,6 +11,8 @@ from app.utils.logger import log_error
 
 from delpi_auth.authorization import require_any_permission
 
+from app.application.security.api_delpi_permissions import DATA_SQL_ACCESS
+
 from app.interface.http.openapi_agent_metadata import DATA_SQL
 
 
@@ -53,7 +55,7 @@ router = APIRouter()
         }
     },
 )
-@require_any_permission(["api-delpi.access.full", "api-delpi.data"])
+@require_any_permission(DATA_SQL_ACCESS)
 async def execute_sql_raw(request: Request):
 
     try:

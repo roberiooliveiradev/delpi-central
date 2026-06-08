@@ -2,6 +2,8 @@ from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_any_permission
 
+from app.application.security.api_delpi_permissions import KPI_HR_ACCESS
+
 from app.composition.hr_composer import (
     build_hr_metrics_repository,
     build_hr_metrics_snapshot_service,
@@ -76,7 +78,7 @@ def _hr_query_dates(
 
 
 @router.get("/branches")
-@require_any_permission(["api-delpi.access", "dashboard-hr.view"])
+@require_any_permission(KPI_HR_ACCESS)
 def list_hr_branches():
     try:
         repository = build_hr_metrics_repository()
@@ -107,7 +109,7 @@ def list_hr_branches():
 
 
 @router.get("/snapshot")
-@require_any_permission(["api-delpi.access", "dashboard-hr.view"])
+@require_any_permission(KPI_HR_ACCESS)
 def get_hr_snapshot(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -154,7 +156,7 @@ def get_hr_snapshot(
 
 
 @router.get("/active-pdi-count")
-@require_any_permission(["api-delpi.access", "dashboard-hr.view"])
+@require_any_permission(KPI_HR_ACCESS)
 def get_hr_active_pdi_count(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -203,7 +205,7 @@ def get_hr_active_pdi_count(
 
 
 @router.get("/performance-reviews-completion")
-@require_any_permission(["api-delpi.access", "dashboard-hr.view"])
+@require_any_permission(KPI_HR_ACCESS)
 def get_hr_performance_reviews_completion(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),

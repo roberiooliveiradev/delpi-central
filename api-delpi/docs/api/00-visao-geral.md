@@ -147,6 +147,8 @@ Após deploy com mudanças OpenAPI: [12-procedimento-reimport-openapi.md](./12-p
 
 ## Permissões (RBAC)
 
+Constantes para decorators (`@require_permission`, `@require_any_permission`): `app/application/security/api_delpi_permissions.py`. Rotas importam dali — não usar strings literais nos routers.
+
 | Permissão | Escopo |
 |---|---|
 | `api-delpi.access` | Produtos, vendas, financeiro, comercial, produção, suprimentos. |

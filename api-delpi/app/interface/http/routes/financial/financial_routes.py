@@ -6,6 +6,8 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 from delpi_auth.authorization import require_any_permission
 
+from app.application.security.api_delpi_permissions import KPI_FINANCIAL_ACCESS
+
 from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.financial_composer import (
@@ -21,7 +23,7 @@ router = APIRouter(tags=["Financeiro"])
 
 
 @router.get("/rol")
-@require_any_permission(["api-delpi.access", "dashboard-financial.view"])
+@require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_rol(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -49,7 +51,7 @@ def get_rol(
 
 
 @router.get("/ebitda_pct")
-@require_any_permission(["api-delpi.access", "dashboard-financial.view"])
+@require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_ebitda_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -90,7 +92,7 @@ def get_ebitda_pct(
 
 
 @router.get("/fixed_cost_pct")
-@require_any_permission(["api-delpi.access", "dashboard-financial.view"])
+@require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_fixed_cost_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -131,7 +133,7 @@ def get_fixed_cost_pct(
 
 
 @router.get("/pmr")
-@require_any_permission(["api-delpi.access", "dashboard-financial.view"])
+@require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_pmr(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),

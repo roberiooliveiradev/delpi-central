@@ -10,6 +10,13 @@ from delpi_auth.authz_core import has_permission
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
+from app.application.security.api_delpi_permissions import (
+    SCHEDULING_BRANCH_MANAGE_PERMS,
+    SCHEDULING_BRANCH_VIEW_PERMS,
+    SCHEDULING_MANAGE_PERMISSIONS,
+    SCHEDULING_READ_PERMISSIONS,
+)
+
 from app.composition.scheduling_composer import build_scheduling_repository
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -21,30 +28,6 @@ from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 
 router = APIRouter(tags=["Agendamento"])
-
-READ_PERMISSIONS = [
-    "api-delpi.access",
-    "central-agendamento.view.filial-es",
-    "central-agendamento.view.filial-sc",
-    "central-agendamento.manage.filial-es",
-    "central-agendamento.manage.filial-sc",
-]
-
-MANAGE_PERMISSIONS = [
-    "api-delpi.access",
-    "central-agendamento.manage.filial-es",
-    "central-agendamento.manage.filial-sc",
-]
-
-BRANCH_VIEW_PERMS = {
-    "ES": "central-agendamento.view.filial-es",
-    "SC": "central-agendamento.view.filial-sc",
-}
-
-BRANCH_MANAGE_PERMS = {
-    "ES": "central-agendamento.manage.filial-es",
-    "SC": "central-agendamento.manage.filial-sc",
-}
 
 
 class CreateResourceBody(BaseModel):
@@ -105,8 +88,8 @@ def _branch_view_allowed(branch: str) -> bool:
     user = get_current_user()
     if user is None:
         return False
-    view_perm = BRANCH_VIEW_PERMS[branch]
-    manage_perm = BRANCH_MANAGE_PERMS[branch]
+    view_perm = SCHEDULING_BRANCH_VIEW_PERMS[branch]
+    manage_perm = SCHEDULING_BRANCH_MANAGE_PERMS[branch]
     return has_permission(user, view_perm) or has_permission(user, manage_perm)
 
 
@@ -116,7 +99,7 @@ def _branch_manage_allowed(branch: str) -> bool:
     user = get_current_user()
     if user is None:
         return False
-    return has_permission(user, BRANCH_MANAGE_PERMS[branch])
+    return has_permission(user, SCHEDULING_BRANCH_MANAGE_PERMS[branch])
 
 
 def _branch_access_error(branch: str, *, require_manage: bool = False):
@@ -140,7 +123,7 @@ def _parse_iso_datetime(value: str) -> datetime | None:
 
 
 @router.get("/resources")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_resources(
     branch: str = Query(..., pattern="^(ES|SC)$"),
     active: bool = Query(True),
@@ -165,7 +148,7 @@ def list_resources(
 
 
 @router.post("/resources")
-@require_any_permission(MANAGE_PERMISSIONS)
+@require_any_permission(SCHEDULING_MANAGE_PERMISSIONS)
 def create_resource(body: CreateResourceBody):
     branch_error = _branch_access_error(body.branch_code, require_manage=True)
     if branch_error:
@@ -195,7 +178,7 @@ def create_resource(body: CreateResourceBody):
 
 
 @router.patch("/resources/{resource_id}")
-@require_any_permission(MANAGE_PERMISSIONS)
+@require_any_permission(SCHEDULING_MANAGE_PERMISSIONS)
 def update_resource(resource_id: str, body: UpdateResourceBody):
     try:
         repo = build_scheduling_repository()
@@ -229,7 +212,7 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
 
 
 @router.get("/bookings")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_bookings(
     branch: str = Query(..., pattern="^(ES|SC)$"),
     from_at: str = Query(..., alias="from"),
@@ -262,7 +245,7 @@ def list_bookings(
 
 
 @router.post("/bookings")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def create_booking(body: CreateBookingBody):
     branch_error = _branch_access_error(body.branch_code)
     if branch_error:
@@ -306,7 +289,7 @@ def create_booking(body: CreateBookingBody):
 
 
 @router.patch("/bookings/{booking_id}/cancel")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def cancel_booking(booking_id: str):
     try:
         repo = build_scheduling_repository()

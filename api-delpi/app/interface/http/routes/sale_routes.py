@@ -5,6 +5,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from delpi_auth.authorization import require_permission
+
+from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -19,7 +21,7 @@ from app.interface.http.openapi_agent_metadata import SALE_ORDERS_LIST
 router = APIRouter()
 
 @router.get("/", **SALE_ORDERS_LIST)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def list_sale_order_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,

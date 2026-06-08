@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
+from app.application.security.api_delpi_permissions import CENTRAL_AGENDAMENTO_VIEW_FILIAL_ES
 from app.interface.http.routes.scheduling.scheduling_router import (
     _branch_manage_allowed,
     _branch_view_allowed,
@@ -28,7 +29,10 @@ def test_parse_iso_datetime(value: str, expected: datetime | None) -> None:
 
 
 def test_branch_view_allowed_with_view_permission() -> None:
-    user = SimpleNamespace(is_superadmin=False, permissions=["central-agendamento.view.filial-es"])
+    user = SimpleNamespace(
+        is_superadmin=False,
+        permissions=[CENTRAL_AGENDAMENTO_VIEW_FILIAL_ES],
+    )
 
     with patch(
         "app.interface.http.routes.scheduling.scheduling_router.get_current_user",

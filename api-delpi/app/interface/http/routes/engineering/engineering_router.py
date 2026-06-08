@@ -3,7 +3,9 @@
 from typing import Optional
 
 from fastapi import APIRouter, Query
-from delpi_auth.authorization import require_permission, require_any_permission
+from delpi_auth.authorization import require_any_permission
+
+from app.application.security.api_delpi_permissions import ENGINEERING_LMP_ACCESS
 
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
@@ -38,9 +40,7 @@ router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
 
 @router.get("/lmps", **LMP_LIST)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_lmps_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -86,9 +86,7 @@ def list_lmps_route(
 
 
 @router.get("/lmps/dashboard", **LMP_DASHBOARD)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_lmps_dashboard_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -146,9 +144,7 @@ def list_lmps_dashboard_route(
 
 
 @router.get("/lmps/dashboard/summary", **LMP_DASHBOARD_SUMMARY)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_summary_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -193,9 +189,7 @@ def lmps_dashboard_summary_route(
 
 
 @router.get("/lmps/dashboard/items", **LMP_DASHBOARD_ITEMS)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_items_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -237,9 +231,7 @@ def lmps_dashboard_items_route(
 
 
 @router.get("/lmps/dashboard/charts", **LMP_DASHBOARD_CHARTS)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_charts_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -277,9 +269,7 @@ def lmps_dashboard_charts_route(
 
 
 @router.get("/lmps/{sale_number}", **LMP_BY_SALE)
-@require_any_permission(
-    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
-)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_route(sale_number: str):
     try:
         dto = GetLMPRequest(sale_number=sale_number)
@@ -303,7 +293,7 @@ def get_lmp_route(sale_number: str):
 
 
 @router.get("/transforma-mais/processes", **TRANSFORMA_MAIS_LIST)
-@require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
@@ -350,7 +340,7 @@ def list_processes(
 
 
 @router.get("/transforma-mais/processes/summary", **TRANSFORMA_MAIS_SUMMARY)
-@require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_process_summary(
     filial_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),

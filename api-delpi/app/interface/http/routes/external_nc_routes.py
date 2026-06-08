@@ -5,6 +5,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from delpi_auth.authorization import require_any_permission, require_permission
 
+from app.application.security.api_delpi_permissions import (
+    QUALITY_NC_MANAGE,
+    QUALITY_NC_VIEW,
+    QUALITY_NC_VIEW_OR_MANAGE,
+    QUALITY_NC_VIEW_PERMISSIONS,
+)
+
 from app.application.dto.external_nc.create_external_nonconformity_request import (
     CreateExternalNonconformityRequest,
 )
@@ -139,7 +146,7 @@ router = APIRouter()
     response_model=ExternalNonconformityResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def create_external_nonconformity(body: CreateExternalNonconformityBody):
     try:
         use_case = build_create_external_nonconformity_use_case()
@@ -190,7 +197,7 @@ def create_external_nonconformity(body: CreateExternalNonconformityBody):
     "/nonconformities",
     response_model=PaginatedExternalNonconformityResponse,
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def list_external_nonconformities(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -225,7 +232,7 @@ def list_external_nonconformities(
     "/nonconformities/{nonconformity_id}",
     response_model=ExternalNonconformityResponse,
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def get_external_nonconformity_details(nonconformity_id: str):
     try:
         use_case = build_get_external_nonconformity_details_use_case()
@@ -241,7 +248,7 @@ def get_external_nonconformity_details(nonconformity_id: str):
     "/nonconformities/{nonconformity_id}",
     response_model=ExternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def update_external_nonconformity(
     nonconformity_id: str,
     body: UpdateExternalNonconformityBody,
@@ -299,7 +306,7 @@ def update_external_nonconformity(
     "/nonconformities/{nonconformity_id}/transition",
     response_model=ExternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def transition_external_nonconformity_status(
     nonconformity_id: str,
     body: TransitionExternalNonconformityStatusBody,
@@ -325,7 +332,7 @@ def transition_external_nonconformity_status(
     "/nonconformities/{nonconformity_id}/comments",
     response_model=list[ExternalNcCommentResponse],
 )
-@require_any_permission(["quality-nc.view","quality-nc.manage"])
+@require_any_permission(QUALITY_NC_VIEW_OR_MANAGE)
 def list_external_nc_comments(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_comments_use_case()
@@ -342,7 +349,7 @@ def list_external_nc_comments(nonconformity_id: str):
     response_model=ExternalNcCommentResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def add_external_nc_comment(
     nonconformity_id: str,
     body: AddExternalNcCommentBody,
@@ -370,7 +377,7 @@ def add_external_nc_comment(
     response_model=ExternalNcAttachmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def upload_external_nc_attachment(
     nonconformity_id: str,
     body: UploadExternalNcAttachmentBody,
@@ -401,7 +408,7 @@ def upload_external_nc_attachment(
     "/nonconformities/{nonconformity_id}/root-causes",
     response_model=list[ExternalNcRootCauseResponse],
 )
-@require_any_permission(["quality-nc.view","quality-nc.manage"])
+@require_any_permission(QUALITY_NC_VIEW_OR_MANAGE)
 def list_external_nc_root_causes(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_root_causes_use_case()
@@ -418,7 +425,7 @@ def list_external_nc_root_causes(nonconformity_id: str):
     response_model=ExternalNcRootCauseResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def add_external_nc_root_cause(
     nonconformity_id: str,
     body: AddExternalNcRootCauseBody,
@@ -448,7 +455,7 @@ def add_external_nc_root_cause(
     "/nonconformities/{nonconformity_id}/actions",
     response_model=list[ExternalNcActionResponse],
 )
-@require_any_permission(["quality-nc.view","quality-nc.manage"])
+@require_any_permission(QUALITY_NC_VIEW_OR_MANAGE)
 def list_external_nc_actions(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_actions_use_case()
@@ -465,7 +472,7 @@ def list_external_nc_actions(nonconformity_id: str):
     response_model=ExternalNcActionResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def create_external_nc_action(nonconformity_id: str, body: CreateExternalNcActionBody):
     try:
         use_case = build_create_external_nc_action_use_case()
@@ -497,7 +504,7 @@ def create_external_nc_action(nonconformity_id: str, body: CreateExternalNcActio
     "/actions/{action_id}",
     response_model=ExternalNcActionResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def update_external_nc_action(action_id: str, body: UpdateExternalNcActionBody):
     try:
         use_case = build_update_external_nc_action_use_case()
@@ -528,7 +535,7 @@ def update_external_nc_action(action_id: str, body: UpdateExternalNcActionBody):
     "/actions/{action_id}/complete",
     response_model=ExternalNcActionResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def complete_external_nc_action(action_id: str, body: CompleteExternalNcActionBody):
     try:
         use_case = build_complete_external_nc_action_use_case()
@@ -550,7 +557,7 @@ def complete_external_nc_action(action_id: str, body: CompleteExternalNcActionBo
     "/nonconformities/{nonconformity_id}/effectiveness-checks",
     response_model=list[ExternalNcEffectivenessCheckResponse],
 )
-@require_any_permission(["quality-nc.view","quality-nc.manage"])
+@require_any_permission(QUALITY_NC_VIEW_OR_MANAGE)
 def list_external_nc_effectiveness_checks(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_effectiveness_checks_use_case()
@@ -567,7 +574,7 @@ def list_external_nc_effectiveness_checks(nonconformity_id: str):
     response_model=ExternalNcEffectivenessCheckResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def register_external_nc_effectiveness_check(
     nonconformity_id: str,
     body: RegisterExternalNcEffectivenessCheckBody,
@@ -598,7 +605,7 @@ def register_external_nc_effectiveness_check(
     response_model=ExternalNcAttachmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def upload_external_nc_action_attachment(
     action_id: str,
     body: UploadExternalNcActionAttachmentBody,
@@ -628,7 +635,7 @@ def upload_external_nc_action_attachment(
     "/nonconformities/{nonconformity_id}/team-members",
     response_model=list[ExternalNcTeamMemberResponse],
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def list_external_nc_team_members(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_team_members_use_case()
@@ -645,7 +652,7 @@ def list_external_nc_team_members(nonconformity_id: str):
     response_model=ExternalNcTeamMemberResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def add_external_nc_team_member(
     nonconformity_id: str,
     body: AddExternalNcTeamMemberBody,
@@ -671,7 +678,7 @@ def add_external_nc_team_member(
     "/nonconformities/{nonconformity_id}/team-members/{member_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def remove_external_nc_team_member(
     nonconformity_id: str,
     member_id: str,
@@ -697,7 +704,7 @@ def remove_external_nc_team_member(
     "/nonconformities/{nonconformity_id}/supplier-status",
     response_model=ExternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def update_external_supplier_status(
     nonconformity_id: str,
     body: UpdateExternalSupplierStatusBody,
@@ -723,7 +730,7 @@ def update_external_supplier_status(
     "/dashboard/summary",
     response_model=ExternalNcDashboardSummaryResponse,
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_external_nc_dashboard_summary():
     use_case = build_get_external_nc_dashboard_summary_use_case()
     return use_case.execute()
@@ -733,7 +740,7 @@ def get_external_nc_dashboard_summary():
     "/dashboard/by-supplier",
     response_model=list[ExternalNcDashboardBySupplierResponse],
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_external_nc_dashboard_by_supplier():
     use_case = build_get_external_nc_dashboard_by_supplier_use_case()
     return use_case.execute()
@@ -743,7 +750,7 @@ def get_external_nc_dashboard_by_supplier():
     "/dashboard/by-cause",
     response_model=list[ExternalNcDashboardByCauseResponse],
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_external_nc_dashboard_by_cause():
     use_case = build_get_external_nc_dashboard_by_cause_use_case()
     return use_case.execute()
@@ -753,7 +760,7 @@ def get_external_nc_dashboard_by_cause():
     "/dashboard/overdue-actions",
     response_model=list[ExternalNcDashboardOverdueActionResponse],
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_external_nc_dashboard_overdue_actions():
     use_case = build_get_external_nc_dashboard_overdue_actions_use_case()
     return use_case.execute()
@@ -762,7 +769,7 @@ def get_external_nc_dashboard_overdue_actions():
     "/nonconformities/{nonconformity_id}/export",
     response_model=ExternalNcExportResponse,
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def export_external_nonconformity_report(nonconformity_id: str):
     try:
         use_case = build_export_nonconformity_report_use_case()
@@ -777,7 +784,7 @@ def export_external_nonconformity_report(nonconformity_id: str):
     "/nonconformities/{nonconformity_id}/full-details",
     response_model=ExternalNcFullDetailsResponse,
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_external_nonconformity_full_details(nonconformity_id: str):
     try:
         use_case = build_get_external_nonconformity_full_details_use_case()

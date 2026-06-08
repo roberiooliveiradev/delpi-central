@@ -3,6 +3,8 @@ from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
 
+from app.application.security.api_delpi_permissions import KPI_QUALITY_ACCESS
+
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -44,7 +46,7 @@ router.include_router(audit_5s_operational_router)
 
 
 @router.get("/branches")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def list_quality_branches(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -74,7 +76,7 @@ def list_quality_branches(
 
 
 @router.get("/nonconformities/series")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_nonconformity_series(
     type: str = Query("all", pattern="^(internal|external|all)$"),
     granularity: str = Query("month", pattern="^(day|week|month|year)$"),
@@ -115,7 +117,7 @@ def get_nonconformity_series(
 
 
 @router.get("/nonconformities")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(
     type: str = Query("all", pattern="^(internal|external|all)$"),
     branch: Optional[str] = None,
@@ -158,7 +160,7 @@ def list_nonconformity_route(
 
 
 @router.get("/kaizens/summary")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -203,7 +205,7 @@ def get_kaizen_summary(
 
 
 @router.get("/audit-5s/summary")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_audit_5s_summary(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
@@ -241,7 +243,7 @@ def get_audit_5s_summary(
 
 
 @router.get("/ppm/internal/summary")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -279,7 +281,7 @@ def get_internal_ppm_summary(
 
 
 @router.get("/ppm/external/summary")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -317,7 +319,7 @@ def get_external_ppm_summary(
 
 
 @router.get("/ppm/internal/series")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_series(
     granularity: str = Query("month", pattern="^(day|week|month|year)$"),
     branch: Optional[str] = None,
@@ -334,7 +336,7 @@ def get_internal_ppm_series(
 
 
 @router.get("/ppm/external/series")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_series(
     granularity: str = Query("month", pattern="^(day|week|month|year)$"),
     branch: Optional[str] = None,
@@ -351,7 +353,7 @@ def get_external_ppm_series(
 
 
 @router.get("/ppm/internal")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def list_internal_ppm(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -387,7 +389,7 @@ def list_internal_ppm(
 
 
 @router.get("/ppm/external")
-@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+@require_any_permission(KPI_QUALITY_ACCESS)
 def list_external_ppm(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,

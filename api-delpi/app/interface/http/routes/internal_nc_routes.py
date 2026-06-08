@@ -5,6 +5,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from delpi_auth.authorization import require_any_permission, require_permission
 
+from app.application.security.api_delpi_permissions import (
+    QUALITY_NC_MANAGE,
+    QUALITY_NC_MANAGE_PERMISSIONS,
+    QUALITY_NC_VIEW,
+    QUALITY_NC_VIEW_PERMISSIONS,
+)
+
 from app.application.dto.internal_nc.create_internal_nonconformity_request import (
     CreateInternalNonconformityRequest,
 )
@@ -123,7 +130,7 @@ router = APIRouter()
     response_model=InternalNonconformityResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def create_internal_nonconformity(body: CreateInternalNonconformityBody):
     try:
         use_case = build_create_internal_nonconformity_use_case()
@@ -163,7 +170,7 @@ def create_internal_nonconformity(body: CreateInternalNonconformityBody):
     "/nonconformities",
     response_model=PaginatedInternalNonconformityResponse,
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def list_internal_nonconformities(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -197,7 +204,7 @@ def list_internal_nonconformities(
     "/nonconformities/{nonconformity_id}",
     response_model=InternalNonconformityResponse,
 )
-@require_permission("quality-nc.view")
+@require_permission(QUALITY_NC_VIEW)
 def get_internal_nonconformity_details(nonconformity_id: str):
     try:
         use_case = build_get_internal_nonconformity_details_use_case()
@@ -213,7 +220,7 @@ def get_internal_nonconformity_details(nonconformity_id: str):
     "/nonconformities/{nonconformity_id}",
     response_model=InternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def update_internal_nonconformity(
     nonconformity_id: str,
     body: UpdateInternalNonconformityBody,
@@ -261,7 +268,7 @@ def update_internal_nonconformity(
     "/nonconformities/{nonconformity_id}/transition",
     response_model=InternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission(QUALITY_NC_MANAGE)
 def transition_internal_nonconformity_status(
     nonconformity_id: str,
     body: TransitionInternalNonconformityStatusBody,
@@ -287,7 +294,7 @@ def transition_internal_nonconformity_status(
     "/nonconformities/{nonconformity_id}/root-causes",
     response_model=list[InternalNcRootCauseResponse],
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def list_internal_nc_root_causes(nonconformity_id: str):
     try:
         use_case = build_list_internal_nc_root_causes_use_case()
@@ -304,7 +311,7 @@ def list_internal_nc_root_causes(nonconformity_id: str):
     response_model=InternalNcRootCauseResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_any_permission(["quality-nc.manage"])
+@require_any_permission(QUALITY_NC_MANAGE_PERMISSIONS)
 def add_internal_nc_root_cause(
     nonconformity_id: str,
     body: AddInternalNcRootCauseBody,
@@ -334,7 +341,7 @@ def add_internal_nc_root_cause(
     "/nonconformities/{nonconformity_id}/actions",
     response_model=list[InternalNcActionResponse],
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def list_internal_nc_actions(nonconformity_id: str):
     try:
         use_case = build_list_internal_nc_actions_use_case()
@@ -351,7 +358,7 @@ def list_internal_nc_actions(nonconformity_id: str):
     response_model=InternalNcActionResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_any_permission(["quality-nc.manage"])
+@require_any_permission(QUALITY_NC_MANAGE_PERMISSIONS)
 def create_internal_nc_action(nonconformity_id: str, body: CreateInternalNcActionBody):
     try:
         use_case = build_create_internal_nc_action_use_case()
@@ -383,7 +390,7 @@ def create_internal_nc_action(nonconformity_id: str, body: CreateInternalNcActio
     "/actions/{action_id}",
     response_model=InternalNcActionResponse,
 )
-@require_any_permission(["quality-nc.manage"])
+@require_any_permission(QUALITY_NC_MANAGE_PERMISSIONS)
 def update_internal_nc_action(action_id: str, body: UpdateInternalNcActionBody):
     try:
         use_case = build_update_internal_nc_action_use_case()
@@ -414,7 +421,7 @@ def update_internal_nc_action(action_id: str, body: UpdateInternalNcActionBody):
     "/actions/{action_id}/complete",
     response_model=InternalNcActionResponse,
 )
-@require_any_permission(["quality-nc.manage"])
+@require_any_permission(QUALITY_NC_MANAGE_PERMISSIONS)
 def complete_internal_nc_action(action_id: str, body: CompleteInternalNcActionBody):
     try:
         use_case = build_complete_internal_nc_action_use_case()
@@ -435,7 +442,7 @@ def complete_internal_nc_action(action_id: str, body: CompleteInternalNcActionBo
     "/nonconformities/{nonconformity_id}/effectiveness-checks",
     response_model=list[InternalNcEffectivenessCheckResponse],
 )
-@require_any_permission(["quality-nc.view"])
+@require_any_permission(QUALITY_NC_VIEW_PERMISSIONS)
 def list_internal_nc_effectiveness_checks(nonconformity_id: str):
     try:
         use_case = build_list_internal_nc_effectiveness_checks_use_case()
@@ -452,7 +459,7 @@ def list_internal_nc_effectiveness_checks(nonconformity_id: str):
     response_model=InternalNcEffectivenessCheckResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@require_any_permission(["quality-nc.manage"])
+@require_any_permission(QUALITY_NC_MANAGE_PERMISSIONS)
 def register_internal_nc_effectiveness_check(
     nonconformity_id: str,
     body: RegisterInternalNcEffectivenessCheckBody,

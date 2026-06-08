@@ -7,6 +7,11 @@ from pydantic import BaseModel, Field
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
+from app.application.security.api_delpi_permissions import (
+    AUDIT_5S_READ_PERMISSIONS,
+    AUDIT_5S_WRITE_PERMISSIONS,
+)
+
 from app.application.services.audit_5s.nc_attachment_storage import (
     Audit5sNcAttachmentStorage,
     Audit5sNcAttachmentStorageError,
@@ -26,17 +31,6 @@ from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/audit-5s", tags=["Auditoria 5S"])
-
-READ_PERMISSIONS = [
-    "api-delpi.access",
-    "api-delpi.quality.access",
-    "auditoria-5s.view.filial-01",
-    "auditoria-5s.view.filial-02",
-    "auditoria-5s.audit.filial-01",
-    "auditoria-5s.audit.filial-02",
-]
-
-WRITE_PERMISSIONS = READ_PERMISSIONS
 
 
 class CreateAreaBody(BaseModel):
@@ -103,7 +97,7 @@ def _current_user_name() -> str:
 
 
 @router.get("/areas")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_areas(
     branch: str = Query(..., pattern="^(01|02)$"),
     active: bool = Query(True),
@@ -118,7 +112,7 @@ def list_areas(
 
 
 @router.post("/areas")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def create_area(body: CreateAreaBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
@@ -136,7 +130,7 @@ def create_area(body: CreateAreaBody = Body(...)):
 
 
 @router.get("/criteria")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_criteria(catalog_version: int | None = Query(None, ge=1)):
     try:
         repo = build_audit_5s_repository()
@@ -148,7 +142,7 @@ def list_criteria(catalog_version: int | None = Query(None, ge=1)):
 
 
 @router.get("/audits")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audits(
     branch: str = Query(..., pattern="^(01|02)$"),
     status: str | None = Query(None),
@@ -163,7 +157,7 @@ def list_audits(
 
 
 @router.post("/audits")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def create_audit(body: CreateAuditBody = Body(...)):
     try:
         user_id = _current_user_id()
@@ -196,7 +190,7 @@ def create_audit(body: CreateAuditBody = Body(...)):
 
 
 @router.get("/audits/{audit_id}")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -210,7 +204,7 @@ def get_audit(audit_id: str):
 
 
 @router.post("/audits/{audit_id}/delete")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def delete_audit(audit_id: str):
     audit_id = audit_id.strip()
     if not audit_id:
@@ -250,7 +244,7 @@ def delete_audit(audit_id: str):
 
 
 @router.post("/audits/{audit_id}/join")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def join_audit(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -277,7 +271,7 @@ def join_audit(audit_id: str):
 
 
 @router.put("/audits/{audit_id}/responses/{criterion_id}")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def upsert_response(
     audit_id: str,
     criterion_id: str,
@@ -321,7 +315,7 @@ async def upsert_response(
 
 
 @router.post("/audits/{audit_id}/complete-evaluation")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def complete_evaluation(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -345,7 +339,7 @@ async def complete_evaluation(audit_id: str):
 
 
 @router.get("/audits/{audit_id}/nc-candidates")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_candidates(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -359,7 +353,7 @@ def list_nc_candidates(audit_id: str):
 
 
 @router.get("/audits/{audit_id}/nonconformities")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_nonconformities(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -371,7 +365,7 @@ def list_audit_nonconformities(audit_id: str):
 
 
 @router.post("/audits/{audit_id}/nonconformities")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
@@ -407,7 +401,7 @@ async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Bo
 
 
 @router.patch("/nonconformities/{nc_id}")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
@@ -443,7 +437,7 @@ async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(
 
 
 @router.get("/nonconformities/{nc_id}/actions")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_actions(nc_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -455,7 +449,7 @@ def list_nc_actions(nc_id: str):
 
 
 @router.post("/nonconformities/{nc_id}/actions")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
     try:
         repo = build_audit_5s_repository()
@@ -474,7 +468,7 @@ def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
 
 
 @router.get("/audits/{audit_id}/nc-attachments")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_nc_attachments(audit_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -486,7 +480,7 @@ def list_audit_nc_attachments(audit_id: str):
 
 
 @router.get("/nonconformities/{nc_id}/attachments")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_attachments(nc_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -498,7 +492,7 @@ def list_nc_attachments(nc_id: str):
 
 
 @router.post("/nonconformities/{nc_id}/attachments")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def upload_nc_attachment(
     nc_id: str,
     attachment_type: str = Form(..., pattern="^(before|after)$"),
@@ -537,7 +531,7 @@ async def upload_nc_attachment(
 
 
 @router.get("/nonconformities/{nc_id}/attachments/{attachment_id}/file")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def download_nc_attachment(nc_id: str, attachment_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -563,7 +557,7 @@ def download_nc_attachment(nc_id: str, attachment_id: str):
 
 
 @router.post("/nonconformities/{nc_id}/complete-action")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def complete_nc_action(nc_id: str):
     try:
         repo = build_audit_5s_repository()
@@ -593,7 +587,7 @@ async def complete_nc_action(nc_id: str):
 
 
 @router.get("/analytics/dashboard")
-@require_any_permission(READ_PERMISSIONS)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit_5s_dashboard(
     branch: str = Query(..., pattern="^(01|02)$"),
     date_start: str = Query(..., alias="date_start"),
@@ -635,7 +629,7 @@ def get_audit_5s_dashboard(
 
 
 @router.post("/audits/{audit_id}/close")
-@require_any_permission(WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def close_audit(audit_id: str):
     try:
         repo = build_audit_5s_repository()

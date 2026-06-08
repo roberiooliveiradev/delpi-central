@@ -4,6 +4,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from delpi_auth.authorization import require_permission
+
+from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.core.responses import error_response, not_found_response
 from app.utils.logger import log_error
 
@@ -116,7 +118,7 @@ router = APIRouter()
     response_model=ProductSearchResponse,
     openapi_extra=openapi_example_response(PRODUCT_SEARCH_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def search_products_route(
     code: Optional[str] = Query(None),
     group_code: Optional[str] = Query(None),
@@ -159,7 +161,7 @@ def search_products_route(
     response_model=ProductDetailResponse,
     openapi_extra=openapi_example_response(PRODUCT_DETAIL_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_product_detail(
     code: str,
     view: str = Query(
@@ -205,7 +207,7 @@ def get_product_detail(
     response_model=ProductSnapshotResponse,
     openapi_extra=openapi_example_response(PRODUCT_SUMMARY_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_product_summary(code: str):
     try:
         product_dto = ListProductsRequest(code=code, page=1, page_size=1)
@@ -268,7 +270,7 @@ def get_product_summary(code: str):
     response_model=HierarchyResponse,
     openapi_extra=openapi_example_response(PRODUCT_STRUCTURE_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_structure(
     code: str,
     max_depth: Optional[int] = None,
@@ -304,7 +306,7 @@ def get_structure(
 
 
 @router.get("/{code}/structure/exclusivity", **PRODUCT_STRUCTURE_EXCLUSIVITY)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_structure_exclusivity(
     code: str,
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
@@ -334,7 +336,7 @@ def get_structure_exclusivity(
 
 
 @router.get("/{code}/production-status", **PRODUCT_PRODUCTION_STATUS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_production_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
@@ -372,7 +374,7 @@ def get_production_status(
 
 
 @router.get("/{code}/shipping-status", **PRODUCT_SHIPPING_STATUS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_shipping_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
@@ -417,7 +419,7 @@ def get_shipping_status(
     response_model=PlaybookReportResponse,
     openapi_extra=openapi_example_response(PRODUCT_FACTORY_STATUS_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def get_factory_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
@@ -469,7 +471,7 @@ def get_factory_status(
 
 
 @router.get("/{code}/structure/excel")
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 async def structure_excel_public(
     request: Request,
     code: str,
@@ -515,7 +517,7 @@ async def structure_excel_public(
         )
     
 @router.get("/{code}/parents", **PRODUCT_PARENTS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def parents(
     code: str,
     max_depth: Optional[int] = None,
@@ -551,7 +553,7 @@ def parents(
         return error_response(str(e))
 
 @router.get("/{code}/suppliers", **PRODUCT_SUPPLIERS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def suppliers(
     code: str,
     page: int = Query(1, ge=1),
@@ -585,7 +587,7 @@ def suppliers(
         return error_response(str(e))
     
 @router.get("/{code}/customers", **PRODUCT_CUSTOMERS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def customers(
     code: str,
     page: Optional[int] = Query(1, ge=1),
@@ -619,7 +621,7 @@ def customers(
         return error_response(str(e))
     
 @router.get("/{code}/inspection", **PRODUCT_INSPECTION)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def inspection(
     code: str,
     page: int | None = Query(None, ge=1),
@@ -655,7 +657,7 @@ def inspection(
         return error_response(str(e))
     
 @router.get("/{code}/guide", **PRODUCT_GUIDE)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def guide(
     code: str,
     branch: Optional[str] = Query(None),
@@ -693,7 +695,7 @@ def guide(
         return error_response(str(e))
 
 @router.get("/{code}/internal-movements", **PRODUCT_INTERNAL_MOVEMENTS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def internal_movements(
     code: str,
     page: int = Query(1, ge=1),
@@ -744,7 +746,7 @@ def internal_movements(
     response_model=PagedListStockResponse,
     openapi_extra=openapi_example_response(PRODUCT_STOCK_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def stock(
     code: str,
     page: int = Query(1, ge=1),
@@ -792,7 +794,7 @@ def stock(
         return error_response(str(e))
     
 @router.get("/{code}/inbound-invoice-items", **PRODUCT_INBOUND_INVOICE_ITEMS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def inbound_invoice_items(
     code: str,
     page: int = Query(1, ge=1),
@@ -833,7 +835,7 @@ def inbound_invoice_items(
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/outbound-invoice-items", **PRODUCT_OUTBOUND_INVOICE_ITEMS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def outbound_invoice_items(
     code: str,
     page: int = Query(1, ge=1),
@@ -874,7 +876,7 @@ def outbound_invoice_items(
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/purchases", **PRODUCT_PURCHASES)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def purchases(
     code: str,
     page: int = Query(1, ge=1),
@@ -909,7 +911,7 @@ def purchases(
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/sales", **PRODUCT_SALES_SUMMARY)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def product_sales_summary(code: str):
 
     try:
@@ -936,7 +938,7 @@ def product_sales_summary(code: str):
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/sales/open-orders", **PRODUCT_SALES_OPEN_ORDERS)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def product_sales_open_orders(code: str):
 
     try:
@@ -963,7 +965,7 @@ def product_sales_open_orders(code: str):
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/sales/billing", **PRODUCT_SALES_BILLING)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def product_sales_billing(code: str):
 
     try:
@@ -990,7 +992,7 @@ def product_sales_billing(code: str):
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/pricing", **PRODUCT_PRICING)
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def product_pricing(code: str):
 
     try:
@@ -1030,7 +1032,7 @@ def product_pricing(code: str):
     response_model=CompositeAnalysisResponse,
     openapi_extra=openapi_example_response(PRODUCT_ANALYSER_EXAMPLE),
 )
-@require_permission("api-delpi.access")
+@require_permission(API_DELPI_ACCESS)
 def product_analyser(
     code: str,
     view: str = Query(

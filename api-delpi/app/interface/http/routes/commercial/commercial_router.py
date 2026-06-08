@@ -2,6 +2,8 @@ from fastapi import APIRouter, Query
 from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
+
+from app.application.security.api_delpi_permissions import KPI_COMMERCIAL_ACCESS
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -37,7 +39,7 @@ router = APIRouter(prefix="/commercial", tags=["Comercial"])
 
 
 @router.get("/head_office_rol_target_pct")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
@@ -79,7 +81,7 @@ def get_head_office_rol_target_pct(
 
 
 @router.get("/branch_rol_target_pct")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
@@ -121,7 +123,7 @@ def get_branch_rol_target_pct(
     
 
 @router.get("/rol/series")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_commercial_rol_series(
     granularity: str = Query(..., min_length=3, max_length=10),
     start_date: Optional[str] = Query(None),
@@ -156,7 +158,7 @@ def get_commercial_rol_series(
 
 
 @router.get("/proposals")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def list_commercial_proposals(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -201,7 +203,7 @@ def list_commercial_proposals(
 
 
 @router.get("/closing-rate")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_conversion_rate(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -243,7 +245,7 @@ def get_sales_conversion_rate(
     
 
 @router.get("/new-clients-average")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_average(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -279,7 +281,7 @@ def get_new_clients_average(
     
 
 @router.get("/sales-order-otd")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -321,7 +323,7 @@ def get_sales_order_otd(
 
 
 @router.get("/new-business-rol-pct")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_business_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -363,7 +365,7 @@ def get_new_business_rol_pct(
 
 
 @router.get("/new-clients-rol-pct")
-@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),

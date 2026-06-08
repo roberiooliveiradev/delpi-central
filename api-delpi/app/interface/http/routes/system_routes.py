@@ -29,11 +29,13 @@ from app.utils.logger import log_info, log_error
 
 from delpi_auth.authorization import require_any_permission
 
+from app.application.security.api_delpi_permissions import SYSTEM_METADATA_ACCESS
+
 router = APIRouter()
 
 
 @router.get("/tables/search", summary="Busca tabelas por descrição (SX2)")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_tables(
     description: str = Query(..., min_length=2, description="Descrição parcial ou completa da tabela"),
     page: int = Query(1, ge=1, description="Número da página"),
@@ -72,7 +74,7 @@ def search_tables(
 
 
 @router.get("/tables/{tableName}", summary="Consulta informações de tabela")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def table(tableName: str):
     try:
         dto = GetTableRequest(table_name=tableName)
@@ -91,7 +93,7 @@ def table(tableName: str):
 
 
 @router.get("/tables/{tableName}/columns", summary="Consulta colunas de tabela com paginação")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_columns(
     tableName: str,
     page: int = Query(1, ge=1, description="Número da página"),
@@ -127,7 +129,7 @@ def table_columns(
 
 
 @router.get("/tables/{tableName}/indexes", summary="Consulta índices (SIX010)")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_indexes(tableName: str):
     try:
         dto = GetTableIndexesRequest(table_name=tableName)
@@ -146,7 +148,7 @@ def table_indexes(tableName: str):
 
 
 @router.get("/tables/{tableName}/relations", summary="Consulta relacionamentos (SX9010)")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_relations(tableName: str):
     try:
         dto = GetTableRelationsRequest(table_name=tableName)
@@ -165,7 +167,7 @@ def table_relations(tableName: str):
 
 
 @router.get("/tables/{tableName}/schema", summary="Schema completo da tabela (SX2, SX3, SIX, SX9)")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_schema(tableName: str):
     try:
         dto = GetTableSchemaRequest(table_name=tableName)
@@ -184,7 +186,7 @@ def table_schema(tableName: str):
 
 
 @router.get("/tables/{tableName}/columns/search", summary="Buscar colunas por texto")
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_columns(tableName: str, q: str = Query(..., min_length=2)):
     try:
         dto = SearchColumnsInTableRequest(
@@ -210,7 +212,7 @@ def search_columns(tableName: str, q: str = Query(..., min_length=2)):
     "/columns/search",
     summary="Busca colunas por descrição (SX3010 + ranking semântico)"
 )
-@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+@require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_columns_global(
     description: str = Query(
         ...,

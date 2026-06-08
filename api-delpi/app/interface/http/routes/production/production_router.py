@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_any_permission
+
+from app.application.security.api_delpi_permissions import (
+    EFICIENCIA_FABRIL_ACCESS,
+    KPI_PRODUCTION_ACCESS,
+)
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -32,7 +37,7 @@ router = APIRouter(prefix="/production", tags=["Produção"])
 
 
 @router.get("/direct_labor_cost_pct")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_direct_labor_cost_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -80,7 +85,7 @@ def get_direct_labor_cost_pct(
 
 
 @router.get("/production_cost_pct")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_cost_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -128,7 +133,7 @@ def get_production_cost_pct(
 
 
 @router.get("/depreciation_pct")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_depreciation_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -176,7 +181,7 @@ def get_depreciation_pct(
     
 
 @router.get("/oee/series")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee_series(
     granularity: str = Query(..., min_length=3, max_length=10),
     start_date: str | None = Query(default=None),
@@ -213,7 +218,7 @@ def get_production_oee_series(
 
 
 @router.get("/otd/series")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_otd_series(
     granularity: str = Query(..., min_length=3, max_length=10),
     start_date: str | None = Query(default=None),
@@ -250,7 +255,7 @@ def get_production_otd_series(
 
 
 @router.get("/overall_equipment_effectiveness_pct")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_overall_equipment_effectiveness_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -292,7 +297,7 @@ def get_overall_equipment_effectiveness_pct(
     
 
 @router.get("/on_time_delivery_pct")
-@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+@require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_on_time_delivery_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -334,15 +339,7 @@ def get_on_time_delivery_pct(
 
 
 @router.get("/eficiencia-fabril/dashboard")
-@require_any_permission(
-    [
-        "api-delpi.access",
-        "eficiencia-fabril.view",
-        "eficiencia-fabril.view.filial-sc",
-        "eficiencia-fabril.view.filial-es",
-        "dashboard-production.view",
-    ]
-)
+@require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_dashboard(
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
@@ -387,15 +384,7 @@ def get_eficiencia_fabril_dashboard(
 
 
 @router.get("/eficiencia-fabril/appointments")
-@require_any_permission(
-    [
-        "api-delpi.access",
-        "eficiencia-fabril.view",
-        "eficiencia-fabril.view.filial-sc",
-        "eficiencia-fabril.view.filial-es",
-        "dashboard-production.view",
-    ]
-)
+@require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_appointments(
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
