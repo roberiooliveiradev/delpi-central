@@ -6,8 +6,8 @@ from app.application.services.agent_specialization_service import (
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
-from app.application.services.chat_platform_default_agent_service import (
-    ChatPlatformDefaultAgentService,
+from app.application.services.chat_workspace_agent_activation_service import (
+    ChatWorkspaceAgentActivationService,
 )
 from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
 
@@ -42,21 +42,24 @@ class ChatWorkspaceContextService:
             if result:
                 project, _role = result
 
-        user_activated_agent_id = session.agent_id or parsed_request_agent_id
-        agent_id = user_activated_agent_id or (project.default_agent_id if project else None)
+        explicit_agent_id = ChatWorkspaceAgentActivationService.resolve_explicit_agent_id(
+            session_agent_id=session.agent_id,
+            request_agent_id=parsed_request_agent_id,
+        )
 
-        if not agent_id:
-            agent_id = ChatPlatformDefaultAgentService.resolve_agent_id(
-                self.agent_repository,
-                user_id,
+        if explicit_agent_id:
+            agent = self.agent_repository.get_enabled_by_id(
+                explicit_agent_id,
+                user_id=user_id,
             )
-
-        if agent_id:
-            agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)
 
         allowed_action_ids = self._allowed_action_ids(agent, user_id)
         actions_enabled = bool(agent and allowed_action_ids)
-        user_activated_agent = bool(user_activated_agent_id and actions_enabled)
+        user_activated_agent = ChatWorkspaceAgentActivationService.is_user_activated(
+            session_agent_id=session.agent_id,
+            request_agent_id=parsed_request_agent_id,
+            actions_enabled=actions_enabled,
+        )
 
         return {
             "project": self._project_metadata(project),

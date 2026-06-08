@@ -75,6 +75,8 @@ type ChatInputProps = {
   presentationFormat?: ChatPresentationFormatId;
   onPresentationFormatChange?: (format: ChatPresentationFormatId) => void;
   showPresentationFormatSelector?: boolean;
+  /** Indica visualmente chat comum vs agente ativo (regra centralizada em chatAgentActivation). */
+  chatMode?: "common" | "agent";
 };
 
 function formatFileSize(size: number): string {
@@ -120,6 +122,7 @@ export function ChatInput({
   presentationFormat = "auto",
   onPresentationFormatChange,
   showPresentationFormatSelector = true,
+  chatMode = "common",
 }: ChatInputProps) {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
@@ -422,6 +425,13 @@ export function ChatInput({
             >
               <X size={16} aria-hidden="true" />
             </button>
+          </div>
+        ) : chatMode === "common" ? (
+          <div className="mdc-chat-input__agent-context mdc-chat-input__agent-context--common">
+            <strong>Chat comum</strong>
+            <span className="mdc-chat-input__mode-hint">
+              Use o menu + para ativar um agente
+            </span>
           </div>
         ) : null}
 

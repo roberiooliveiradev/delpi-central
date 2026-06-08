@@ -1,0 +1,42 @@
+---
+description: Renderização de prosa do assistente — só via assistantProseRendering
+globs: plugins/minha-delpi-chat/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Prosa do assistente (MFE)
+
+## API única
+
+Toda decisão de **título vs corpo**, **markdown vs texto cru** e **streaming vs reveal** passa por `plugins/minha-delpi-chat/src/ui/components/assistantProseRendering.ts`:
+
+| Necessidade | Função |
+|-------------|--------|
+| Corpo no histórico / segmentos | `resolveAssistantRenderableMarkdown` |
+| Título de painel (heading) | `resolveAssistantPresentationTitle` + `shouldRenderPresentationHeading` |
+| Stream em tempo real | `resolveAssistantStreamingProseState` |
+| Playback / reveal | `shouldBypassIncrementalTextReveal` |
+| Detecção de sintaxe | `hasMarkdownSyntax` em `chatMarkdown.ts` (usada só via prose rendering) |
+
+## Regras embutidas (não reimplementar)
+
+1. Prosa simples sem apresentação rica → título vazio; corpo intacto.
+2. Markdown (`**`, `#`, listas) → sempre `ChatMarkdown`, nunca reveal caractere-a-caractere.
+3. `stripLeadingMarkdownTitleSafely` → não apaga mensagem quando título = corpo inteiro.
+4. Legenda de stream com markdown → `ChatMarkdown`, não `<h3>` cru.
+
+## Exemplo
+
+```typescript
+// ❌ BAD — patch no componente
+const title = getPresentationTitle(content, toolCalls);
+if (title) return <h3>{title}</h3>;
+
+// ✅ GOOD — módulo central
+import { resolveAssistantRenderableMarkdown, shouldRenderPresentationHeading, resolveAssistantPresentationTitle } from "./assistantProseRendering";
+const title = resolveAssistantPresentationTitle(content, toolCalls);
+const showTitle = shouldRenderPresentationHeading(title);
+const markdown = resolveAssistantRenderableMarkdown(content, toolCalls);
+```
+
+Novos testes: `assistantProseRendering.test.ts`.

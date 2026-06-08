@@ -40,17 +40,12 @@ class FakeAgentRepository:
         return ["api-externa"]
 
 
-def test_user_not_activated_when_only_platform_implicit_agent(monkeypatch):
+def test_chat_comum_without_implicit_platform_agent():
     agent_id = uuid4()
     agent = FakeAgent(agent_id)
     service = ChatWorkspaceContextService(
         project_repository=None,
         agent_repository=FakeAgentRepository(agent),
-    )
-
-    monkeypatch.setattr(
-        "app.application.services.chat_workspace_context_service.ChatPlatformDefaultAgentService.resolve_agent_id",
-        lambda *_args, **_kwargs: agent_id,
     )
 
     context = service.build_context(
@@ -58,21 +53,18 @@ def test_user_not_activated_when_only_platform_implicit_agent(monkeypatch):
         user_id=uuid4(),
     )
 
-    assert context["actionsEnabled"] is True
+    assert context["agent"] is None
+    assert context["agentPrompt"] is None
+    assert context["actionsEnabled"] is False
     assert context["userActivatedAgent"] is False
 
 
-def test_user_activated_when_session_has_agent_id(monkeypatch):
+def test_user_activated_when_session_has_agent_id():
     agent_id = uuid4()
     agent = FakeAgent(agent_id)
     service = ChatWorkspaceContextService(
         project_repository=None,
         agent_repository=FakeAgentRepository(agent),
-    )
-
-    monkeypatch.setattr(
-        "app.application.services.chat_workspace_context_service.ChatPlatformDefaultAgentService.resolve_agent_id",
-        lambda *_args, **_kwargs: None,
     )
 
     context = service.build_context(
@@ -81,3 +73,4 @@ def test_user_activated_when_session_has_agent_id(monkeypatch):
     )
 
     assert context["userActivatedAgent"] is True
+    assert context["agentPrompt"] == "prompt"

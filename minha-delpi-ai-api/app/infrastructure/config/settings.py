@@ -240,7 +240,7 @@ class Settings:
         os.getenv("CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL", "true").lower() == "true"
     )
     CHAT_PLATFORM_DEFAULT_AGENT_ENABLED = (
-        os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ENABLED", "true").lower() == "true"
+        os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ENABLED", "false").lower() == "true"
     )
     CHAT_PLATFORM_DEFAULT_AGENT_ID = os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ID", "").strip()
     CHAT_PLATFORM_DEFAULT_AGENT_NAME = os.getenv(

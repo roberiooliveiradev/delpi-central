@@ -46,9 +46,6 @@ class CreateChatSessionUseCase:
 
             project, _role = project_result
 
-            if not agent_id:
-                agent_id = project.default_agent_id
-
         if agent_id and self.agent_repository:
             agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)
 

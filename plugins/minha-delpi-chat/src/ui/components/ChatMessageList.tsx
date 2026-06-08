@@ -68,7 +68,10 @@ import {
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
-import { hasMarkdownSyntax } from "./chatMarkdown";
+import {
+  resolveAssistantStreamingProseState,
+  shouldBypassIncrementalTextReveal,
+} from "./assistantProseRendering";
 import { ChatSources } from "./ChatSources";
 import { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
 import {
@@ -616,18 +619,22 @@ export function ChatMessageList({
     !showStreamingCaptionReveal ||
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
   const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
-  const streamingAnswerHasMarkdown = hasMarkdownSyntax(streamingAnswer);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled:
       isGeneratingAnswer &&
       !suppressStreamingMarkdown &&
       !isPlaybackActive &&
-      !streamingAnswerHasMarkdown,
+      !shouldBypassIncrementalTextReveal(streamingAnswer),
     charsPerFrame: 3,
   });
-  const streamingMarkdownContent = streamingAnswerHasMarkdown
-    ? streamingAnswer
-    : revealedStreamingAnswer;
+  const streamingProseState = resolveAssistantStreamingProseState({
+    answer: streamingAnswer,
+    revealedAnswer: revealedStreamingAnswer,
+    suppressRichPresentation: suppressStreamingMarkdown,
+    isGenerating: isGeneratingAnswer,
+    isPlayback: isPlaybackActive,
+  });
+  const streamingMarkdownContent = streamingProseState.markdownContent;
 
   useEffect(() => {
     if (conversationKey !== previousConversationKeyRef.current) {
@@ -1975,9 +1982,13 @@ export function ChatMessageList({
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    <h3 className="mdc-rich-presentation__heading">
-                      {streamingCaptionText}
-                    </h3>
+                    {streamingProseState.captionUsesMarkdown ? (
+                      <ChatMarkdown content={streamingCaptionText} compact />
+                    ) : (
+                      <h3 className="mdc-rich-presentation__heading">
+                        {streamingCaptionText}
+                      </h3>
+                    )}
                   </div>
                 ) : null}
                 {streamingAnswer &&

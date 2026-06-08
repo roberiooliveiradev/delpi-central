@@ -5,10 +5,11 @@ import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTyp
 import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import { AssistantContentChrome } from "./AssistantContentChrome";
 import type { ContentFormatKind } from "./assistantContentLayout";
+import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
-  buildAssistantContentSegments,
-  isPresentationHeadingTitle,
-} from "./assistantContentSegments";
+  resolveAssistantPresentationTitle,
+  shouldRenderPresentationHeading,
+} from "./assistantProseRendering";
 import { renderAssistantContentSegment } from "./assistantContentRegistry";
 import {
   filterSegmentsByVisualKind,
@@ -35,7 +36,6 @@ import {
   getPaginationStateFromToolCalls,
   getPresentationInsightFromToolCalls,
   getPresentationRecommendationsFromToolCalls,
-  getPresentationTitle,
 } from "./chatPresentation";
 
 import "./ChatAssistantContent.css";
@@ -113,7 +113,10 @@ export function ChatAssistantContent({
     return filterSegmentsByVisualKind(segments, activeVisualKind);
   }, [activeVisualKind, perSectionToolbar, segments, visualFormatOptions.length]);
 
-  const title = useMemo(() => getPresentationTitle(content, toolCalls), [content, toolCalls]);
+  const title = useMemo(
+    () => resolveAssistantPresentationTitle(content, toolCalls),
+    [content, toolCalls],
+  );
   const dataCoverageNotice = useMemo(
     () =>
       perSectionToolbar ? null : getDataCoverageNoticeFromToolCalls(toolCalls),
@@ -165,7 +168,7 @@ export function ChatAssistantContent({
 
   const showTitle =
     !perSectionToolbar &&
-    isPresentationHeadingTitle(title) &&
+    shouldRenderPresentationHeading(title) &&
     !visibleSegments.some(
       (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
     );

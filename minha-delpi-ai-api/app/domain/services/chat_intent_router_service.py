@@ -223,6 +223,7 @@ class ChatIntentRouterService:
         "attachment_document": ("attachment_document", "read_content", 5),
         "drawing_analysis": ("drawing_analysis", "delpi_pdf", 5),
         "identity_shortcut": ("identity", "user_profile", 9),
+        "assistant_identity_shortcut": ("identity", "assistant_profile", 9),
         "meta_direct_answer": ("identity", "meta", 9),
         "unclear_request": ("clarification", "unclear", 9),
         "rag": ("rag_question", None, 8),

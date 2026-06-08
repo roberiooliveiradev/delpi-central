@@ -1,0 +1,43 @@
+---
+description: Sempre estender regras centralizadas; proibir patches locais e ifs duplicados
+alwaysApply: true
+---
+
+# Regras centralizadas primeiro
+
+## Princípio
+
+**Nunca** corrigir sintoma com ajuste pontual em componente, use case ou prompt de agente. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão.
+
+## Mapa canônico (referência rápida)
+
+| Domínio | Módulo canônico | Não duplicar em |
+|---------|-----------------|-----------------|
+| Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` (`ChatTurnPreparation*`, `ChatIntentRouterService`, `ChatAssistantIdentityService`) | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
+| Skip de tools por intenção | `ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags` + `should_skip_tools` | `build_tool_context` inline, flags só no frontend |
+| Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `CHAT_PLATFORM_DEFAULT_AGENT_*` implícito, `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
+| Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
+| Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |
+| Apresentação rica (tabela/gráfico/stack) | `chatPresentation.ts` + `assistantContentLayout.ts` | lógica de título/markdown em cada MFE |
+
+## O que NÃO fazer
+
+- `setStreamingStatus("…")` ou `<h3>{texto}</h3>` para contornar markdown quebrado.
+- `getPresentationTitle` + `stripLeadingMarkdownTitle` copiados em novo componente.
+- `hasMarkdownSyntax` + reveal incremental reimplementados fora de `assistantProseRendering`.
+- Novo `if (quem é vc)` em use case em vez de `resolve_skip_tool_flags` / `ChatAssistantIdentityService`.
+- Fix só no agente ou só na UI quando o comportamento é transversal ao chat base.
+
+## O que fazer
+
+1. Identificar a regra de negócio (ex.: «prosa simples não é título», «identidade pula tools»).
+2. Implementar **uma vez** no módulo canônico da tabela acima.
+3. Consumir via API exportada (`resolveAssistantRenderableMarkdown`, `resolve_skip_tool_flags`, etc.).
+4. Adicionar teste em `assistantProseRendering.test.ts`, `test_turn_preparation_tool_routing.py` ou `chat_intelligence_regression_cases.py`.
+5. Se a regra for nova categoria, **criar** função/serviço central — não espalhar.
+
+## Checklist antes de merge
+
+- [ ] Existe um único ponto de verdade para a regra?
+- [ ] Nenhum consumidor novo bypassa o módulo canônico?
+- [ ] Teste de regressão cobre o bug que motivou a mudança?

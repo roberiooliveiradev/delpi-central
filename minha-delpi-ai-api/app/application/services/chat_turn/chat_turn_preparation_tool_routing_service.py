@@ -12,8 +12,12 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_conversation_context_service import (
     ChatConversationContextService,
 )
+from app.application.services.chat_assistant_identity_service import (
+    ChatAssistantIdentityService,
+)
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.infrastructure.config.settings import Settings
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
@@ -22,6 +26,7 @@ from app.domain.services.chat_operational_parameter_service import (
 @dataclass(frozen=True)
 class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_user_identity: bool
+    skip_tools_for_assistant_identity: bool
     skip_tools_for_data_interpretation: bool
     skip_tools_for_attachment_document: bool
     request_attachment_ids: list[str]
@@ -109,6 +114,10 @@ class ChatTurnPreparationToolRoutingService:
             getattr(request, "access_token", None)
             and ChatUserContextService.is_user_identity_question(message)
         )
+        skip_tools_for_assistant_identity = bool(
+            Settings.CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED
+            and ChatAssistantIdentityService.is_assistant_identity_question(message)
+        )
         skip_tools_for_data_interpretation = (
             ChatAnalysisIntentService.is_data_interpretation_request(
                 message,
@@ -134,6 +143,7 @@ class ChatTurnPreparationToolRoutingService:
 
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
+            skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             skip_tools_for_attachment_document=skip_tools_for_attachment_document,
             request_attachment_ids=request_attachment_ids,
@@ -168,6 +178,7 @@ class ChatTurnPreparationToolRoutingService:
                 or routing_disambiguation_answer
                 or interpretation_without_data_answer
                 or skip_flags.skip_tools_for_user_identity
+                or skip_flags.skip_tools_for_assistant_identity
                 or skip_flags.skip_tools_for_data_interpretation
                 or skip_flags.skip_tools_for_attachment_document
                 or small_talk_direct
@@ -204,6 +215,8 @@ class ChatTurnPreparationToolRoutingService:
     ) -> None:
         if skip_flags.skip_tools_for_user_identity:
             pipeline_stages.append("identity_shortcut")
+        elif skip_flags.skip_tools_for_assistant_identity:
+            pipeline_stages.append("assistant_identity_shortcut")
         elif skip_flags.skip_tools_for_data_interpretation:
             pipeline_stages.append("data_interpretation")
         elif canvas_action:

@@ -32,6 +32,11 @@ import {
   type ShortcutPromptOptions,
 } from "../hooks/useChatShortcutPrompt";
 import {
+  isExplicitChatAgentActive,
+  resolveChatModePresentation,
+  resolveExplicitChatAgentId,
+} from "../../state/chatAgentActivation";
+import {
   buildActiveContextSummary,
   collectActiveContextChips,
   contextChipKey,
@@ -189,7 +194,10 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const requestedAgentId = activeAgentPageId ?? contextAgentId ?? null;
+  const requestedAgentId = resolveExplicitChatAgentId({
+    activeAgentPageId,
+    contextAgentId,
+  });
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const [helpPanelOpen, setHelpPanelOpen] = useState(false);
   const [helpSearchQuery, setHelpSearchQuery] = useState("");
@@ -753,9 +761,18 @@ export function ChatPage({
     return null;
   }, [chatRoute]);
   const activeAgentPage = agents.find((agent) => agent.id === activeAgentPageId);
+  const activeAgentId =
+    requestedAgentId ?? activeSession?.agent_id ?? null;
+  const explicitAgentActive = isExplicitChatAgentActive(activeAgentId);
+  const activeAgent = agents.find((agent) => agent.id === activeAgentId);
   const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
   const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
   const contextAgent = agents.find((agent) => agent.id === contextAgentId);
+  const chatModePresentation = resolveChatModePresentation({
+    explicitAgentActive,
+    agentName: activeAgent?.name ?? null,
+    projectName: selectedProject?.name ?? null,
+  });
   const helpAgentId = contextAgentId ?? conversationAgentId ?? activeAgentPageId ?? undefined;
 
   useEffect(() => {
@@ -805,14 +822,6 @@ export function ChatPage({
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
-
-  function getProjectDefaultAgentId(projectId: string | null): string | null {
-    if (!projectId) {
-      return null;
-    }
-
-    return projects.find((project) => project.id === projectId)?.default_agent_id ?? null;
-  }
 
   const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -939,7 +948,7 @@ export function ChatPage({
             setComposerAttachments([]);
             setSelectedProjectId(routeProject.id);
             setActiveAgentPageId(null);
-            setContextAgentId(session.agent_id ?? getProjectDefaultAgentId(routeProject.id));
+            setContextAgentId(session.agent_id ?? null);
             setCurrentView("chat");
             selectSession(session);
             closeMobileSidebar();
@@ -962,7 +971,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(routeProject.id);
           setActiveAgentPageId(null);
-          setContextAgentId(getProjectDefaultAgentId(routeProject.id));
+          setContextAgentId(null);
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1050,7 +1059,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(routeProject.id);
           setActiveAgentPageId(null);
-          setContextAgentId(getProjectDefaultAgentId(routeProject.id));
+          setContextAgentId(null);
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1880,7 +1889,7 @@ export function ChatPage({
   async function handleSelectContextProject(projectId: string | null) {
     setSelectedProjectId(projectId);
     setActiveAgentPageId(null);
-    setContextAgentId(getProjectDefaultAgentId(projectId));
+    setContextAgentId(null);
   }
 
   const composerContextProps = {
@@ -1888,6 +1897,7 @@ export function ChatPage({
     projects,
     selectedAgentId: contextAgentId,
     selectedProjectId,
+    chatMode: explicitAgentActive ? ("agent" as const) : ("common" as const),
     onSelectAgent: handleSelectContextAgent,
     onOpenAgentPage: (agentId: string) => {
       const agent = agents.find((item) => item.id === agentId);
@@ -1908,12 +1918,13 @@ export function ChatPage({
   };
 
   const agentPageComposerContextProps = {
-    agents: [],
+    agents,
     projects: [],
-    selectedAgentId: null,
+    selectedAgentId: activeAgentPageId,
     selectedProjectId: null,
     onSelectAgent: () => undefined,
     onSelectProject: () => undefined,
+    chatMode: "agent" as const,
   };
 
   const composerAttachmentProps = {
@@ -2174,23 +2185,15 @@ export function ChatPage({
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
             onOpenSidebar={isDesktop ? undefined : openMobileSidebar}
-            mode={selectedProject ? "project" : conversationAgent ? "agent" : "general"}
-            title={
-              selectedProject?.name ||
-              conversationAgent?.name ||
-              "Minha DELPI Chat"
+            mode={
+              chatModePresentation.mode === "agent"
+                ? "agent"
+                : selectedProject
+                  ? "project"
+                  : "general"
             }
-            subtitle={
-              selectedProject
-                ? contextAgent
-                  ? `Projeto usando ${contextAgent.name}`
-                  : "Projeto selecionado"
-                : conversationAgent
-                  ? "Conversa do agente"
-                  : contextAgent
-                    ? `Chat usando ${contextAgent.name}`
-                    : "Assistente corporativo"
-            }
+            title={chatModePresentation.label}
+            subtitle={chatModePresentation.subtitle}
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
@@ -2357,10 +2360,6 @@ export function ChatPage({
                     const updated = await editProject(selectedProject.id, {
                       defaultAgentId: agentId,
                     });
-
-                    if (updated) {
-                      setContextAgentId(agentId);
-                    }
 
                     return updated;
                   }}

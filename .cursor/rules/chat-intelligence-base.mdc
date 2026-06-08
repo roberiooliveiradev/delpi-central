@@ -25,9 +25,15 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 - **Resolução de código:** `resolve_product_code` prioriza itens de contexto antes do histórico.
 - **Snapshot:** não usar `lastEntities` nem `activeEntities` — só `operationalFocus`.
 
+## Regras centralizadas (obrigatório)
+
+Ver também `centralized-rules-first.mdc` e `chat-prose-rendering.mdc`. **Proibido** patch local (if no componente, string fixa, reveal/markdown ad hoc). Estender sempre o módulo canônico + teste de regressão.
+
 ## O que NÃO fazer
 
 - Lógica de comparação, insights, seleção operacional ou resposta direta **só** no prompt de um agente.
+- Ajustes pontuais de UI/streaming fora de `assistantProseRendering.ts` ou pipeline base da API.
+- Agente de plataforma ou default de projeto sem escolha explícita do usuário — usar `ChatWorkspaceAgentActivationService` / `chatAgentActivation.ts`.
 - Reintroduzir `lastEntities` / `activeEntities`, seção «Entidades» na UI ou gravar produto/filial só em `upsert_entity` sem `context_item`.
 - Copiar o mesmo `if` em `SendChatMessageUseCase` e `StreamChatMessageUseCase` sem extrair para serviço base.
 - Bypass do pipeline em preview/simulate sem `previous_messages` quando o histórico importa.

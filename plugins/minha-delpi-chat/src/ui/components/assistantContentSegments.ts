@@ -1,5 +1,8 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
-import { hasMarkdownSyntax } from "./chatMarkdown";
+import {
+  resolveAssistantRenderableMarkdown,
+  shouldRenderPresentationHeading,
+} from "./assistantProseRendering";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 
 export type { AssistantContentSegment } from "./assistantContentTypes";
@@ -11,10 +14,7 @@ import {
 } from "./assistantContentLayout";
 import {
   getPresentationPairFromToolCalls,
-  getTextMarkdownFromToolCalls,
   resolveStackCommentaryBody,
-  stripLeadingMarkdownTitle,
-  getPresentationTitle,
 } from "./chatPresentation";
 import { buildInterleavedStackSegments } from "./assistantContentInterleave";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
@@ -459,21 +459,6 @@ function splitMarkdownWithPresentationMarkers(
   );
 }
 
-function resolvePrimaryMarkdown(
-  content: string,
-  toolCalls: ChatToolCall[],
-): string {
-  const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
-  const presentationTitle = getPresentationTitle(content, toolCalls);
-  const raw = String(content || "").trim();
-
-  if (fromMetadata) {
-    return stripLeadingMarkdownTitle(fromMetadata, presentationTitle);
-  }
-
-  return stripLeadingMarkdownTitle(raw, presentationTitle);
-}
-
 function buildStackedSegments(
   content: string,
   toolCalls: ChatToolCall[],
@@ -510,7 +495,7 @@ export function buildAssistantContentSegments(
   const pair = getPresentationPairFromToolCalls(toolCalls);
   const layoutMode = resolveAssistantContentLayout(content, toolCalls, pair);
   const visuals = collectVisualSegments(toolCalls);
-  const rawMarkdown = resolvePrimaryMarkdown(content, toolCalls);
+  const rawMarkdown = resolveAssistantRenderableMarkdown(content, toolCalls);
 
   if (layoutMode === "stack") {
     return buildStackedSegments(content, toolCalls, visuals);
@@ -601,22 +586,9 @@ export function hasAssistantContentSegments(
   return buildAssistantContentSegments(content, toolCalls).length > 0;
 }
 
-/**
- * Um título de apresentação legítimo é um cabeçalho curto de uma linha.
- * Quando não há título real, getPresentationTitle cai no conteúdo inteiro da
- * mensagem; renderizá-lo como heading duplicaria o texto (intro + fence inline
- * crua) acima dos segmentos. Aqui filtramos esse caso.
- */
-export function isPresentationHeadingTitle(title: string | null | undefined): boolean {
-  const value = String(title || "").trim();
-
-  if (!value) {
-    return false;
-  }
-
-  if (value.includes("```") || /\n/.test(value) || hasMarkdownSyntax(value)) {
-    return false;
-  }
-
-  return value.length <= 120;
+/** @deprecated Preferir `shouldRenderPresentationHeading` em assistantProseRendering. */
+export function isPresentationHeadingTitle(
+  title: string | null | undefined,
+): boolean {
+  return shouldRenderPresentationHeading(title);
 }

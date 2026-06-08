@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatSource, ChatToolCall } from "../../data/api/chatTypes";
-import { hasMarkdownSyntax } from "../../ui/components/chatMarkdown";
+import { shouldBypassIncrementalTextReveal } from "../../ui/components/assistantProseRendering";
 import {
   isShortPresentationCaption,
   shouldShowRichPresentation,
@@ -47,7 +47,7 @@ export function useChatMessagePlayback(
     );
 
     const skipIncrementalReveal =
-      payload.skipReveal || hasMarkdownSyntax(payload.answer);
+      payload.skipReveal || shouldBypassIncrementalTextReveal(payload.answer);
 
     if (skipIncrementalReveal) {
       setDisplayedAnswer(payload.answer);
