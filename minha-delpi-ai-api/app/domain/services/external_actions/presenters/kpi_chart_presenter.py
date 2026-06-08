@@ -261,7 +261,15 @@ class ExternalActionKpiChartPresenter:
             if self._is_stock_data(items[0]):
                 return self._build_stock_chart(items)
 
-            return self.try_chart_from_rows(items, force=force, path=path)
+            chart = self.try_chart_from_rows(items, force=force, path=path)
+
+            if chart:
+                return chart
+
+            if force:
+                return self._build_categorical_count_chart(items, path=path)
+
+            return None
 
         if self.looks_like_kpi_response(root, path):
             stock_value_kpi = self._host._build_stock_value_kpi(root, path)
@@ -415,6 +423,12 @@ class ExternalActionKpiChartPresenter:
 
         cards = self.build_generic_kpi_cards(root, path)
 
+        if not cards:
+            summary = root.get("summary")
+
+            if isinstance(summary, dict):
+                cards = self.build_generic_kpi_cards(summary, path)
+
         if cards:
             return {
                 "type": "kpi",
@@ -514,6 +528,70 @@ class ExternalActionKpiChartPresenter:
             "default",
             default="Indicador",
         )
+
+    def _build_categorical_count_chart(
+        self,
+        rows: list,
+        *,
+        path: str = "",
+    ) -> dict | None:
+        if not rows or not isinstance(rows[0], dict):
+            return None
+
+        preferred_keys = (
+            "status",
+            "listing_kind",
+            "filial",
+            "branch",
+            "sale_number",
+            "op",
+            "produto",
+            "product_code",
+        )
+        first = rows[0]
+        label_key = next(
+            (key for key in preferred_keys if key in first and isinstance(first.get(key), str)),
+            None,
+        )
+
+        if not label_key:
+            label_key = next(
+                (key for key, value in first.items() if isinstance(value, str) and str(value).strip()),
+                None,
+            )
+
+        if not label_key:
+            return None
+
+        counts: dict[str, int] = {}
+
+        for row in rows[:24]:
+            if not isinstance(row, dict):
+                continue
+
+            label = str(row.get(label_key) or "").strip() or "—"
+            counts[label] = counts.get(label, 0) + 1
+
+        if not counts:
+            return None
+
+        data = [{"name": name, "value": value} for name, value in counts.items()]
+        chart_title = self._host._infer_items_title(rows, path) or self._host._presenter_text(
+            "charts",
+            "defaultVisualizationTitle",
+        )
+
+        return {
+            "type": "chart",
+            "title": chart_title,
+            "chartType": "donut",
+            "data": data,
+            "config": {
+                "xAxis": "name",
+                "yAxis": ["value"],
+                "legend": len(data) > 1,
+            },
+        }
 
     def try_chart_from_rows(
         self,

@@ -194,7 +194,7 @@ def test_present_stock_items_builds_operational_summary():
 
     assert "10080055" in joined
     assert "80" in joined
-    assert "Filial" in joined
+    assert "filial" in joined.lower()
     assert "disponível" in joined.lower()
 
 

@@ -329,7 +329,7 @@
     "shallowSubtitle": "*Componentes referenciados (sem plano expandido)*"
   },
   "analyserCompact": {
-    "productSummary": "Produto **{code}**: {description}."
+    "productSummary": "**{code}** — {description}."
   },
   "productDetailTitles": {
     "default": "Dados do produto {code}",
