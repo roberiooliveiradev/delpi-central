@@ -14,6 +14,21 @@ class ExternalActionPlaybookReportPresenter:
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
 
+    def _playbook_entity_title(self, entity: str, *, table: bool) -> str:
+        title_key = "tableTitle" if table else "textTitle"
+        title = self._host._presenter_text(
+            "playbookReports",
+            "entities",
+            entity,
+            title_key,
+        )
+
+        if title:
+            return title
+
+        fallback_key = "defaultTableTitle" if table else "defaultTextTitle"
+        return self._host._presenter_text("playbookReports", fallback_key)
+
     def _present_playbook_report(
             self,
             root: dict,
@@ -34,21 +49,26 @@ class ExternalActionPlaybookReportPresenter:
                     )
 
             if items:
-                linhas.append(f"Itens retornados: {len(items)}")
+                linhas.append(
+                    self._host._presenter_text(
+                        "playbookReports",
+                        "itemsReturnedLine",
+                        count=str(len(items)),
+                    )
+                )
 
             if not linhas:
                 return None
 
-            titles = {
-                "product_production_status": "Situação produtiva",
-                "product_shipping_status": "Status de expedição",
-                "product_structure_exclusivity": "Estrutura com exclusividade",
-            }
-
-            title = titles.get(entity, "Relatório do produto")
+            title = self._playbook_entity_title(entity, table=False)
 
             if code:
-                title = f"{title} — {code}"
+                title = self._host._presenter_text(
+                    "playbookReports",
+                    "titleWithCode",
+                    title=title,
+                    code=code,
+                )
 
             return {
                 "titulo": title,
@@ -80,15 +100,9 @@ class ExternalActionPlaybookReportPresenter:
                 for key, value in summary.items()
             ]
 
-            titles = {
-                "product_production_status": "Situação produtiva",
-                "product_shipping_status": "Expedição",
-                "product_structure_exclusivity": "Exclusividade de MPs",
-            }
-
             return {
                 "type": "table",
-                "title": titles.get(entity, "Relatório"),
+                "title": self._playbook_entity_title(entity, table=True),
                 "columns": columns,
                 "rows": rows,
             }

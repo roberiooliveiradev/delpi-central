@@ -120,6 +120,25 @@ def main() -> int:
     if report["interfacesPostgresFiles"]:
         failed = True
 
+    try:
+        from app.infrastructure.content.hardcoded_pt_string_scanner import (
+            diff_against_baseline,
+            load_baseline,
+            scan_protected_paths,
+        )
+
+        baseline_path = ROOT / "tests/fixtures/hardcoded_pt_strings_baseline.json"
+        findings = scan_protected_paths()
+        new_items, _removed = diff_against_baseline(
+            findings,
+            load_baseline(baseline_path),
+        )
+
+        if new_items:
+            failed = True
+    except Exception:
+        failed = True
+
     for name, lines in report["godFileLines"].items():
         if name.endswith("_use_case.py") and lines > targets["sendStreamUseCaseLinesMax"]:
             failed = True

@@ -439,5 +439,25 @@
     "columnLineBoth": "- **{field}:** {label}",
     "columnLineField": "- **{field}**",
     "moreColumns": "… e mais {count} coluna(s)."
+  },
+  "playbookReports": {
+    "entities": {
+      "product_production_status": {
+        "textTitle": "Situação produtiva",
+        "tableTitle": "Situação produtiva"
+      },
+      "product_shipping_status": {
+        "textTitle": "Status de expedição",
+        "tableTitle": "Expedição"
+      },
+      "product_structure_exclusivity": {
+        "textTitle": "Estrutura com exclusividade",
+        "tableTitle": "Exclusividade de MPs"
+      }
+    },
+    "defaultTextTitle": "Relatório do produto",
+    "defaultTableTitle": "Relatório",
+    "itemsReturnedLine": "Itens retornados: {count}",
+    "titleWithCode": "{title} — {code}"
   }
 }

@@ -212,9 +212,15 @@ class ExternalActionPresentationBuilderPresenter:
                     }
                 )
 
+            title = (
+                self._host._route_presentation("factoryStatus", "titleWithCode", code=code)
+                if code
+                else self._host._route_presentation("factoryStatus", "titleGeneric")
+            )
+
             return {
                 "type": "table",
-                "title": f"Status fabril — {code}" if code else "Status fabril do produto",
+                "title": title,
                 "columns": columns,
                 "rows": rows,
             }

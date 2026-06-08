@@ -266,7 +266,13 @@ class ExternalActionProductOverviewPresenter:
 
         for item in detail_list[:5]:
             preview = self._format_detail_preview_line(item)
-            linhas.append(f"- {preview}")
+            linhas.append(
+                self._host._presenter_text(
+                    "generic",
+                    "collectionPreviewLine",
+                    preview=preview,
+                )
+            )
 
         if len(detail_list) > 5:
             linhas.append(

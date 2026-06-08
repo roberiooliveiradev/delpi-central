@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 5 — enforcement conteúdo):**
+**Sprint imediata (Fase 6 — documentação viva):**
 
-1. Fechar itens residuais de `presenter-content-migration-audit.md`.
-2. Gate CI `test_no_hardcoded_pt_strings` em `app/application` e `app/domain`.
+1. ADRs curtos em `docs/architecture/adr/`.
+2. Índice único em `chat-intelligence-base.md` para sub-sistemas.
+
+**Concluído (Fase 5):** gate `test_no_hardcoded_pt_strings` + baseline `hardcoded_pt_strings_baseline.json`; scanner em `hardcoded_pt_string_scanner.py`; resíduos presenter (`collectionPreviewLine`, `playbookReports`, `factoryStatus` table); template PR `.github/pull_request_template.md`.
 
 **Concluído (Fase 4 lote 5):** `admin_chat_skill_use_cases` e `generate_weekly_quality_report_use_case` tipados com ports; composers injetam `make_chat_skill_repository` / `make_chat_quality_report_repository`; `test_interfaces_clean_architecture` + `audit_clean_architecture` verificam `Postgres*Repository` e `make_postgres_` em `app/interfaces/`; smoke `test_generate_weekly_quality_report_use_case`.
 

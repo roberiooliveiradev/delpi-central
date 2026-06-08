@@ -46,17 +46,20 @@ Relatório de auditoria após centralização em `app/content/pt-BR/assistant/*.
 
 ## Residual opcional (baixa prioridade)
 
-1. **`_present_product_with_details`** — bullet `f"- {preview}"` pode usar `generic.collectionPreviewLine` (já existe; chamada ainda inline em um ponto).
-2. **Listagens genéricas** — colunas dinâmicas continuam via `label_for` + `_COLUMN_TYPE_MAP` (documentado no catálogo).
-3. **Outros serviços** — `ChatSqlQueryRefinementService`, rotas HTTP e testes de regressão ainda referenciam «Consulta SQL» / «Visualização dos dados» como strings de fixture ou título de refinamento SQL (fora do presenter).
-4. **`execute_external_action_use_case`** — conjunto `wrong_titles` para UX de chat (não é bundle do presenter).
+1. ~~**`_present_product_with_details`** — bullet `f"- {preview}"`~~ → **feito (Fase 5):** `generic.collectionPreviewLine` em `product_overview_presenter.py`.
+2. **Playbook reports** — títulos migrados para `presenter_content.playbookReports` (Fase 5).
+3. **Listagens genéricas** — colunas dinâmicas continuam via `label_for` + `_COLUMN_TYPE_MAP` (documentado no catálogo).
+4. **Outros serviços** — `ChatSqlQueryRefinementService`, rotas HTTP e testes de regressão ainda referenciam «Consulta SQL» / «Visualização dos dados» como strings de fixture ou título de refinamento SQL (fora do presenter).
+5. **`execute_external_action_use_case`** — conjunto `wrong_titles` para UX de chat (não é bundle do presenter).
+6. **`chat_canvas_content_service`** — mensagens da lousa ainda inline (baseline do gate Fase 5; migrar para bundle canvas).
 
 ## Verificação
 
 ```bash
 docker exec delpi-minha-delpi-ai-api pytest \
   tests/unit/domain/services/test_presenter_content_helpers.py \
-  tests/unit/domain/services/test_external_action_result_presenter*.py -q
+  tests/unit/domain/services/test_external_action_result_presenter*.py \
+  tests/unit/infrastructure/content/test_no_hardcoded_pt_strings.py -q
 ```
 
 ## Referências

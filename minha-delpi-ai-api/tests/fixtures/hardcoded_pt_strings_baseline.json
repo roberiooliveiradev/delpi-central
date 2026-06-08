@@ -1,0 +1,412 @@
+{
+  "allowedFingerprints": [
+    "app/application/services/chat_canvas_content_service.py:106:6b8dd0effcc2a8b4",
+    "app/application/services/chat_canvas_content_service.py:117:1be510e9c9249fe7",
+    "app/application/services/chat_canvas_content_service.py:127:f6ae618efac3c1dc",
+    "app/application/services/chat_canvas_content_service.py:148:ba862d171ac80c20",
+    "app/application/services/chat_canvas_content_service.py:159:7d21257b86bf9ad2",
+    "app/application/services/chat_canvas_content_service.py:170:bc0902c879b6405b",
+    "app/application/services/chat_canvas_content_service.py:192:e7e9ce399c3afe7f",
+    "app/application/services/chat_canvas_content_service.py:207:5dceb5141778aa76",
+    "app/application/services/chat_canvas_content_service.py:222:f2355f4a3d230fdc",
+    "app/application/services/chat_canvas_content_service.py:233:1164a5ebfb13b676",
+    "app/application/services/chat_canvas_content_service.py:257:dd7a3bb65cd2e01a",
+    "app/application/services/chat_canvas_content_service.py:269:e916f364472e1cf8",
+    "app/application/services/chat_canvas_content_service.py:283:f2355f4a3d230fdc",
+    "app/application/services/chat_canvas_content_service.py:293:c1a6794d00ac71ee",
+    "app/application/services/chat_canvas_content_service.py:318:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:327:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:345:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:368:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:436:6a894dfddce6aad7",
+    "app/application/services/chat_canvas_content_service.py:460:8af4a98f58a1edd3",
+    "app/application/services/chat_canvas_content_service.py:460:e7396a659a47c911",
+    "app/application/services/chat_canvas_content_service.py:464:6a894dfddce6aad7",
+    "app/application/services/chat_canvas_content_service.py:536:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:543:fec366b57bbc9190",
+    "app/application/services/chat_canvas_content_service.py:54:63421abceb1af0b7",
+    "app/application/services/chat_canvas_content_service.py:93:63421abceb1af0b7",
+    "app/application/services/external_actions/external_action_domain_route_selection_service.py:336:a17bdaf11d772c0d",
+    "app/application/services/external_actions/external_action_domain_route_selection_service.py:33:93b95fdf897ea88d",
+    "app/application/services/external_actions/external_action_domain_route_selection_service.py:57:5c60fa45e4693e93",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:259:26ea334a700ad2f6",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:283:0b43f222f18e335b",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:284:5798ec89d38b4563",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:285:eeabafca85cff4d3",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:296:830f47dc87312631",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:297:c4a964f0ce3c7037",
+    "app/application/services/external_actions/external_action_kpi_route_selection_service.py:298:9230b3b3988f2a56",
+    "app/application/services/external_actions/external_action_lmp_route_selection_service.py:113:153f40abc7a5f059",
+    "app/application/services/external_actions/external_action_lmp_route_selection_service.py:99:c99f79f1a4cf09e3",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:184:bdeebe25d07f3c4c",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:186:6387f7a6c81c7595",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:188:98c354fcc19f8e55",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:218:c2bafc7fdc75d7f3",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:220:7c6ee49507a975a0",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:222:97bdd4779d199c7d",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:244:e16d55bfe47706ae",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:252:e066e2b08e420d9c",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:262:28cc287c3ae93c65",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:274:e8b30bd1141236ce",
+    "app/application/services/external_actions/external_action_product_route_selection_service.py:275:f1e7ad036f14c6b4",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:114:4ef480598a018883",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:226:13ec3cd976469a79",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:230:a082ddb480ae2440",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:232:9690dffc1e97298a",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:44:c2dcc5e9d0c3a42a",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:45:78dcf7ae37060f32",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:74:b33c7dc6405e1dbb",
+    "app/application/services/external_actions/external_action_product_search_route_selection_service.py:76:49f6c5b8c4d103f5",
+    "app/application/services/external_actions/external_action_semantic_ranker_service.py:111:92af55ad76a43db3"
+  ],
+  "samples": [
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:54:63421abceb1af0b7",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 54,
+      "text": "A lousa não está habilitada neste agente. Ative a capacidade «Permitir lousa (canvas)» no builder do agente."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:93:63421abceb1af0b7",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 93,
+      "text": "A lousa não está habilitada neste agente. Ative a capacidade «Permitir lousa (canvas)» no builder do agente."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:106:6b8dd0effcc2a8b4",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 106,
+      "text": "Ainda não há conteúdo na lousa nem resposta anterior para atualizar. Peça primeiro para colocar algo na lousa ou faça um"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:117:1be510e9c9249fe7",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 117,
+      "text": "Não consegui buscar os dados solicitados para acrescentar na lousa. Tente reformular o pedido ou confira se a API retorn"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:127:f6ae618efac3c1dc",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 127,
+      "text": "informação(ões) adicional(is). Você pode editar, visualizar e salvar o conteúdo quando quiser."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:148:ba862d171ac80c20",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 148,
+      "text": "Não identifiquei o formato desejado para a lousa."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:159:7d21257b86bf9ad2",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 159,
+      "text": "Ainda não há conteúdo na lousa para transformar. Peça primeiro para colocar uma resposta ou texto na lousa."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:170:bc0902c879b6405b",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 170,
+      "text": "**. Você pode editar, visualizar e salvar o conteúdo quando quiser."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:192:e7e9ce399c3afe7f",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 192,
+      "text": "» na lousa ao lado. Você pode editar, visualizar e salvar o relatório de análise quando quiser."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:207:5dceb5141778aa76",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 207,
+      "text": "Ainda não há uma resposta minha nesta conversa para colocar na lousa. Faça uma pergunta primeiro e depois peça para envi"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:222:f2355f4a3d230fdc",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 222,
+      "text": "A última resposta do assistente está vazia. Peça algo novo no chat e tente novamente."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:233:1164a5ebfb13b676",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 233,
+      "text": "» na lousa ao lado. Você pode editar, visualizar e salvar o conteúdo quando quiser."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:257:dd7a3bb65cd2e01a",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 257,
+      "text": "Ainda não há conteúdo para acrescentar na lousa. Faça uma pergunta no chat ou peça para colocar algo na lousa primeiro."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:269:e916f364472e1cf8",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 269,
+      "text": "Não encontrei uma resposta recente para acrescentar à lousa. Faça uma pergunta no chat e peça novamente."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:283:f2355f4a3d230fdc",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 283,
+      "text": "A última resposta do assistente está vazia. Peça algo novo no chat e tente novamente."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:293:c1a6794d00ac71ee",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 293,
+      "text": "» com a resposta mais recente. Você pode editar, visualizar e salvar o conteúdo quando quiser."
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:318:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 318,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:327:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 327,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:345:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 345,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:368:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 368,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:436:6a894dfddce6aad7",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 436,
+      "text": "Relatório de desenho"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:460:8af4a98f58a1edd3",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 460,
+      "text": "Análise de desenho"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:460:e7396a659a47c911",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 460,
+      "text": "Relatório de desenho DELPI"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:464:6a894dfddce6aad7",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 464,
+      "text": "Relatório de desenho"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:536:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 536,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/chat_canvas_content_service.py:543:fec366b57bbc9190",
+      "file": "app/application/services/chat_canvas_content_service.py",
+      "line": 543,
+      "text": "Conteúdo do chat"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_domain_route_selection_service.py:33:93b95fdf897ea88d",
+      "file": "app/application/services/external_actions/external_action_domain_route_selection_service.py",
+      "line": 33,
+      "text": "vendas do período"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_domain_route_selection_service.py:57:5c60fa45e4693e93",
+      "file": "app/application/services/external_actions/external_action_domain_route_selection_service.py",
+      "line": 57,
+      "text": "índices da tabela"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_domain_route_selection_service.py:336:a17bdaf11d772c0d",
+      "file": "app/application/services/external_actions/external_action_domain_route_selection_service.py",
+      "line": 336,
+      "text": "^(?:as?\\s+|os?\\s+)?(?:informacoes?|dados|registros?)\\s+(?:de|do|da|dos|das|sobre)\\s+"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:259:26ea334a700ad2f6",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 259,
+      "text": "custo de produção vendido"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:283:0b43f222f18e335b",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 283,
+      "text": "giro de estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:284:5798ec89d38b4563",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 284,
+      "text": "giro do estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:285:eeabafca85cff4d3",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 285,
+      "text": "giro estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:296:830f47dc87312631",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 296,
+      "text": "valor de estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:297:c4a964f0ce3c7037",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 297,
+      "text": "valor do estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_kpi_route_selection_service.py:298:9230b3b3988f2a56",
+      "file": "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
+      "line": 298,
+      "text": "valor em estoque"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_lmp_route_selection_service.py:99:c99f79f1a4cf09e3",
+      "file": "app/application/services/external_actions/external_action_lmp_route_selection_service.py",
+      "line": 99,
+      "text": "visão gerencial"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_lmp_route_selection_service.py:113:153f40abc7a5f059",
+      "file": "app/application/services/external_actions/external_action_lmp_route_selection_service.py",
+      "line": 113,
+      "text": "lista do painel"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:184:bdeebe25d07f3c4c",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 184,
+      "text": "últimas compras"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:186:6387f7a6c81c7595",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 186,
+      "text": "última compra"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:188:98c354fcc19f8e55",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 188,
+      "text": "histórico de compra"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:218:c2bafc7fdc75d7f3",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 218,
+      "text": "resumo do produto"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:220:7c6ee49507a975a0",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 220,
+      "text": "resumo sintético"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:222:97bdd4779d199c7d",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 222,
+      "text": "visão resumida"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:244:e16d55bfe47706ae",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 244,
+      "text": "rota de fabricação"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:252:e066e2b08e420d9c",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 252,
+      "text": "tabela de preço"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:262:28cc287c3ae93c65",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 262,
+      "text": "onde é usado"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:274:e8b30bd1141236ce",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 274,
+      "text": "nota de saída"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_route_selection_service.py:275:f1e7ad036f14c6b4",
+      "file": "app/application/services/external_actions/external_action_product_route_selection_service.py",
+      "line": 275,
+      "text": "notas de saída"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:44:c2dcc5e9d0c3a42a",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 44,
+      "text": "nao conformidade 5s"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:45:78dcf7ae37060f32",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 45,
+      "text": "não conformidade 5s"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:74:b33c7dc6405e1dbb",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 74,
+      "text": "mais informações sobre"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:76:49f6c5b8c4d103f5",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 76,
+      "text": "informações sobre"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:114:4ef480598a018883",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 114,
+      "text": "estoque total"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:226:13ec3cd976469a79",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 226,
+      "text": "(?:mais\\s+)?informa(?:ç|c)(?:õ|o)es\\s+sobre\\s+(.+?)$"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:230:a082ddb480ae2440",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 230,
+      "text": "(?:busque|pesquise|procure|encontre|traga|liste)\\s+(?:\\d+\\s+)?(?:produtos?|itens?|materiais?)\\s+(?:d[eoa]\\s+(?:tipo\\s+)?"
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_product_search_route_selection_service.py:232:9690dffc1e97298a",
+      "file": "app/application/services/external_actions/external_action_product_search_route_selection_service.py",
+      "line": 232,
+      "text": "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(?:existem?|tem|há)\\s+(?:com\\s+(?:descri[çc][ãa]o\\s+)?|d[eoa]\\s+("
+    },
+    {
+      "fingerprint": "app/application/services/external_actions/external_action_semantic_ranker_service.py:111:92af55ad76a43db3",
+      "file": "app/application/services/external_actions/external_action_semantic_ranker_service.py",
+      "line": 111,
+      "text": "Action selecionada por similaridade semântica (score"
+    }
+  ]
+}
