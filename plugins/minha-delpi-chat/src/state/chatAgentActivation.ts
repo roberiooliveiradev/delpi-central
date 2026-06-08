@@ -167,28 +167,15 @@ export type ChatTopbarPresentation = ChatModePresentation & {
 };
 
 /**
- * Topbar do chat — só muda em superfícies dedicadas (rota de agente/projeto).
- * Overlay do composer e sessão ativa não alteram o título durante a conversa.
+ * Topbar do chat — indica a superfície da rota (comum, agente ou projeto).
+ * Overlay do composer e título da conversa não alteram o cabeçalho.
  */
 export function resolveChatTopbarPresentation(input: {
-  hasActiveConversation: boolean;
-  sessionTitle?: string | null;
   routeAgentPageId?: string | null;
   routeAgentName?: string | null;
   routeProjectId?: string | null;
   routeProjectName?: string | null;
 }): ChatTopbarPresentation {
-  if (input.hasActiveConversation) {
-    const title = String(input.sessionTitle ?? "").trim() || "Minha DELPI Chat";
-
-    return {
-      mode: "common",
-      topbarMode: "general",
-      label: title,
-      subtitle: "Conversa em andamento",
-    };
-  }
-
   const routeAgentName = String(input.routeAgentName ?? "").trim();
   const routeProjectName = String(input.routeProjectName ?? "").trim();
 

@@ -46,28 +46,25 @@ describe("chatAgentActivation", () => {
     expect(isExplicitChatAgentActive(null)).toBe(false);
   });
 
-  it("mantém título da conversa e ignora overlay do composer no topbar", () => {
+  it("mantém chat comum no topbar e ignora overlay do composer", () => {
     expect(
       resolveChatTopbarPresentation({
-        hasActiveConversation: true,
-        sessionTitle: "listar LMPs desse mês",
         routeAgentPageId: null,
         routeAgentName: "Agente Minha DELPI",
-        routeProjectId: "project-a",
+        routeProjectId: null,
         routeProjectName: "novo",
       }),
     ).toEqual({
       mode: "common",
       topbarMode: "general",
-      label: "listar LMPs desse mês",
-      subtitle: "Conversa em andamento",
+      label: "Minha DELPI Chat",
+      subtitle: "Chat comum (sem agente)",
     });
   });
 
-  it("usa rota dedicada de agente só fora da conversa ativa", () => {
+  it("indica rota de agente no topbar com ou sem conversa ativa", () => {
     expect(
       resolveChatTopbarPresentation({
-        hasActiveConversation: false,
         routeAgentPageId: "agent-a",
         routeAgentName: "Agente Minha DELPI",
       }),
@@ -76,6 +73,20 @@ describe("chatAgentActivation", () => {
       topbarMode: "agent",
       label: "Agente Minha DELPI",
       subtitle: "Agente ativo nesta conversa",
+    });
+  });
+
+  it("indica rota de projeto no topbar", () => {
+    expect(
+      resolveChatTopbarPresentation({
+        routeProjectId: "project-a",
+        routeProjectName: "outro",
+      }),
+    ).toEqual({
+      mode: "common",
+      topbarMode: "project",
+      label: "outro",
+      subtitle: "Chat comum do projeto (sem agente)",
     });
   });
 

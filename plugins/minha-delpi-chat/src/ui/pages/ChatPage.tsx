@@ -846,8 +846,6 @@ export function ChatPage({
     (isStreamingActiveSession && Boolean(streamingAnswer));
   const isConversationEmpty = !hasActiveConversation;
   const chatTopbarPresentation = resolveChatTopbarPresentation({
-    hasActiveConversation: !isConversationEmpty,
-    sessionTitle: activeSession?.title,
     routeAgentPageId: activeAgentPageId,
     routeAgentName: activeAgentPage?.name ?? null,
     routeProjectId: selectedProjectId,
