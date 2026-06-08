@@ -26,6 +26,9 @@ from app.application.services.external_actions.external_action_sql_route_selecti
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_kpi_route_selection_service import (
+    ExternalActionKpiRouteSelectionService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
@@ -42,6 +45,7 @@ class ExternalActionRouteSelectionService:
         product_route: ExternalActionProductRouteSelectionService | None = None,
         lmp_route: ExternalActionLmpRouteSelectionService | None = None,
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
+        kpi_route: ExternalActionKpiRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -50,6 +54,7 @@ class ExternalActionRouteSelectionService:
         )
         self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
+        self._kpi_route = kpi_route or ExternalActionKpiRouteSelectionService(self)
 
     def select(
         self,
@@ -158,6 +163,40 @@ class ExternalActionRouteSelectionService:
             raw_message=raw_message,
             candidates_loader=candidates_loader,
             rank_candidates=rank_candidates,
+        )
+
+    def select_kpi_without_product(
+        self,
+        message: str,
+        normalized: str,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._kpi_route.try_select_without_product_code(
+            message,
+            normalized,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+        )
+
+    def select_metric_refinement(
+        self,
+        message: str,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._kpi_route.select_metric_refinement(
+            message,
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
         )
 
     @classmethod

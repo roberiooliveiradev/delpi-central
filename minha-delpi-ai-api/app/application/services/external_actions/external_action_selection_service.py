@@ -12,9 +12,6 @@ from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
-from app.domain.services.chat_department_kpi_intent_service import (
-    ChatDepartmentKpiIntentService,
-)
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
@@ -26,7 +23,6 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
-from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
 )
@@ -253,11 +249,12 @@ class ExternalActionSelectionService:
                 return selected
 
         if refinement and refinement.kind in {"metric_refinement", "metric_reset"}:
-            selected = self._select_metric_refinement_action(
+            selected = self._route_selection.select_metric_refinement(
                 message,
                 refinement,
                 allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
+                candidates_loader=self._list_allowed_candidates,
             )
 
             if selected:
@@ -388,78 +385,13 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if self._looks_like_cpv_question(normalized) and not product_code:
-            selected = self._select_supplies_metric_action(
+        if not product_code:
+            selected = self._route_selection.select_kpi_without_product(
                 message,
+                normalized,
                 allowed_action_ids=allowed_action_ids,
-                path_token="cpv",
-                operation_token="cpv",
-                reason="A pergunta solicita o indicador CPV de suprimentos.",
                 previous_messages=previous_messages,
-            )
-
-            if selected:
-                return selected
-
-        if self._looks_like_otd_question(normalized) and not product_code:
-            department_otd = ChatDepartmentKpiIntentService.resolve(message)
-            path_token = str(getattr(department_otd, "path_token", "") or "").lower()
-
-            if department_otd and (
-                "otd" in path_token or "on_time" in path_token
-            ):
-                selected = self._select_department_kpi_action(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    match=department_otd,
-                    previous_messages=previous_messages,
-                )
-
-                if selected:
-                    return selected
-
-            selected = self._select_supplies_metric_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token="otd",
-                operation_token="otd",
-                reason="A pergunta solicita o indicador OTD de suprimentos.",
-                previous_messages=previous_messages,
-            )
-
-            if selected:
-                return selected
-
-        if self._looks_like_inventory_turnover_question(normalized) and not product_code:
-            selected = self._select_supplies_metric_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token="inventory-turnover",
-                operation_token="inventory_turnover",
-                reason="A pergunta solicita giro de estoque (IDD) em suprimentos.",
-                previous_messages=previous_messages,
-            )
-
-            if selected:
-                return selected
-
-        if self._looks_like_supplies_stock_kpi(normalized) and not product_code:
-            selected = self._select_supplies_stock_value_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-            if selected:
-                return selected
-
-        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
-
-        if department_kpi and not product_code:
-            selected = self._select_department_kpi_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                match=department_kpi,
-                previous_messages=previous_messages,
+                candidates_loader=self._list_allowed_candidates,
             )
 
             if selected:
@@ -671,108 +603,6 @@ class ExternalActionSelectionService:
         ]
 
         return any(term in value for term in terms)
-
-    def _looks_like_cpv_question(self, value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                "cpv",
-                "custo de produção vendido",
-                "custo de producao vendido",
-                "custo producao vendido",
-            )
-        )
-
-    def _looks_like_otd_question(self, value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                " otd",
-                "otd ",
-                "on-time delivery",
-                "entrega no prazo",
-                "entregas no prazo",
-            )
-        ) or value.strip().startswith("otd")
-
-    def _looks_like_inventory_turnover_question(self, value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                "giro de estoque",
-                "giro do estoque",
-                "giro estoque",
-                " rotatividade",
-                "idd",
-                "inventory-turnover",
-            )
-        )
-
-    def _looks_like_supplies_stock_kpi(self, value: str) -> bool:
-        terms = [
-            "valor total",
-            "valor de estoque",
-            "valor do estoque",
-            "valor em estoque",
-        ]
-
-        return any(term in value for term in terms)
-
-    def _select_metric_refinement_action(
-        self,
-        message: str,
-        refinement,
-        *,
-        allowed_action_ids: list[str],
-        previous_messages: list | None = None,
-    ) -> dict | None:
-        if refinement.metric_kind == "supplies" and refinement.metric_path_token:
-            return self._select_supplies_metric_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token=str(refinement.metric_path_token),
-                operation_token=str(refinement.metric_path_token),
-                reason=refinement.reason or "Refino de indicador de suprimentos.",
-                previous_messages=previous_messages,
-            )
-
-        if refinement.metric_kind == "department_kpi" and refinement.metric_path_token:
-            from app.domain.services.chat_department_kpi_intent_service import (
-                DepartmentKpiMatch,
-            )
-
-            match = DepartmentKpiMatch(
-                path_token=str(refinement.metric_path_token),
-                domain_prefix=str(refinement.metric_domain_prefix or ""),
-                reason=refinement.reason or "Refino de KPI departamental.",
-            )
-
-            return self._select_department_kpi_action(
-                message,
-                allowed_action_ids,
-                match=match,
-                previous_messages=previous_messages,
-            )
-
-        return None
-
-    def _select_department_kpi_action(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-        *,
-        match,
-        previous_messages: list | None = None,
-    ) -> dict | None:
-        spec = OperationalApiRouteSpec.from_department_kpi(match)
-
-        return self._route_selection.select(
-            spec,
-            message=message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            fallback_candidates_loader=self._list_allowed_candidates,
-        )
 
     def _select_pagination_refinement_action(
         self,
@@ -1159,135 +989,6 @@ class ExternalActionSelectionService:
             return "month"
 
         return None
-
-    def _select_supplies_metric_action(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-        *,
-        path_token: str,
-        operation_token: str,
-        reason: str,
-        previous_messages: list | None = None,
-    ) -> dict | None:
-        spec = OperationalApiRouteSpec.from_supplies_metric(
-            path_token=path_token,
-            operation_token=operation_token,
-            reason=reason,
-        )
-
-        return self._route_selection.select(
-            spec,
-            message=message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            fallback_candidates_loader=self._list_allowed_candidates,
-        )
-
-    def _prioritize_supplies_otd_candidates(
-        self,
-        message: str,
-        candidates: list[dict],
-    ) -> list[dict]:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        supplies_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "suppliesOtdSuppliesDomainTerms",
-        )
-        supplies_prefix = ExternalActionResponseContentService.get(
-            "actionSelection",
-            "suppliesOtdPathPrefix",
-            default="/supplies/",
-        ).lower()
-
-        if any(term in normalized for term in supplies_terms):
-            supplies = [
-                action
-                for action in candidates
-                if supplies_prefix in str(action.get("path") or "").lower()
-            ]
-            others = [
-                action
-                for action in candidates
-                if supplies_prefix not in str(action.get("path") or "").lower()
-            ]
-
-            if supplies:
-                return supplies + others
-
-        return candidates
-
-    def _select_supplies_stock_value_action(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-    ) -> dict | None:
-        candidates = self._list_allowed_candidates(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=80,
-        )
-
-        for action in sorted(
-            candidates,
-            key=lambda item: self._score_supplies_stock_action(item),
-            reverse=True,
-        ):
-            if action.get("method") != "GET":
-                continue
-
-            path = str(action.get("path") or "").lower()
-
-            if "stock-value" not in path and "stock_value" not in str(
-                action.get("operationId") or ""
-            ).lower():
-                continue
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": self._build_supplies_stock_parameters(action),
-                },
-                "reason": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
-            }
-
-        return None
-
-    def _score_supplies_stock_action(self, action: dict) -> int:
-        haystack = " ".join(
-            str(action.get(key) or "")
-            for key in ["path", "summary", "description", "operationId"]
-        ).lower()
-        value = 0
-
-        if "stock-value" in haystack or "get_supplies_stock_value" in haystack:
-            value += 100
-
-        if "/supplies/" in haystack:
-            value += 20
-
-        if "/products/" in haystack:
-            value -= 80
-
-        return value
-
-    def _build_supplies_stock_parameters(self, action: dict) -> dict:
-        parameters = {}
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if lowered in {"top_limit", "limit"}:
-                parameters[name] = 10
-
-        return parameters
 
     @staticmethod
     def _looks_like_sale_orders_list_question(value: str) -> bool:

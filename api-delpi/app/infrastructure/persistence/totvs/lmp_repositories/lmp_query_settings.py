@@ -6,6 +6,18 @@ from typing import Dict, List
 class LMPQuerySettings:
     branches: List[str] = field(default_factory=lambda: ["01", "02"])
 
+    # Tempo mínimo para considerar chegada real na engenharia (elimina passagens por engano).
+    min_engineering_residence_minutes: int = 30
+
+    # Prioridade quando a OV possui mais de um marcador na mesma revisão.
+    listing_kind_priority: Dict[str, int] = field(
+        default_factory=lambda: {
+            "LMP": 2,
+            "AMOSTRA": 1,
+            "OUTROS": 0,
+        }
+    )
+
     lmp_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {
             # 000002 - OPORTUNIDADE

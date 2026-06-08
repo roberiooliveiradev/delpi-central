@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 17):**
+**Sprint imediata (Fase 3 — god classes, lote 18):**
 
-1. **3B:** retomar fatiamento de `external_action_selection_service.py` (~2236 linhas) — próximo candidato: heurísticas de dashboard/KPI.
-2. **3C:** fatiar `chat_turn_preparation_service.py` — fase de skip-tools/RAG pós-memória (~linhas 430–700).
+1. **3B:** continuar `external_action_selection_service.py` (~1937 linhas) — candidatos: sale orders, transforma, system metadata.
+2. **3C:** fatiar resolução de `direct_answer`/`skip_rag` pós-tools em `chat_turn_preparation_service.py`.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -454,5 +454,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 16):** `ExternalActionPresenterContentPresenter` e `ExternalActionPresentationShapePresenter`; `_path_fragment_title`, textos JSON e detecção tabular/inspeção migrados; facade **944 → ~903** linhas.
 
 **Concluído (Fase 3C lote 16):** `ChatTurnPreparationMemoryContextService` (~130 linhas); memória de trabalho e conversation context extraídos; `chat_turn_preparation_service.py` **1151 → ~1078** linhas.
+
+**Concluído (Fase 3B lote 17):** `ExternalActionKpiRouteSelectionService` (~310 linhas); heurísticas CPV/OTD/IDD/valor estoque e KPI departamental migradas; `external_action_selection_service.py` **2236 → ~1937** linhas.
+
+**Concluído (Fase 3C lote 17):** `ChatTurnPreparationToolRoutingService` (~330 linhas); guards operacionais, skip-tools e execução de ferramentas extraídos; `chat_turn_preparation_service.py` **1078 → ~948** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

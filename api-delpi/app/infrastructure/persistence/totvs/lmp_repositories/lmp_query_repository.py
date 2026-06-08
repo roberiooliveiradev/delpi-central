@@ -68,6 +68,33 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _engineering_status_returned_label(self) -> str:
         return self.settings.engineering_status_labels["returned"]
 
+    def _min_engineering_residence_minutes(self) -> int:
+        return self.settings.min_engineering_residence_minutes
+
+    def _listing_kind_priority(self, listing_kind: str) -> int:
+        return self.settings.listing_kind_priority.get(listing_kind, 0)
+
+    def _sql_ad1_current_revision_match(
+        self,
+        aij_alias: str,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
+        sql = f"""
+            EXISTS (
+                SELECT 1
+                FROM AD1010 AD1
+                WHERE AD1.AD1_FILIAL = {aij_alias}.AIJ_FILIAL
+                  AND AD1.AD1_NROPOR = {aij_alias}.AIJ_NROPOR
+                  AND AD1.AD1_REVISA = {aij_alias}.AIJ_REVISA
+                  AND {where_ad1}
+            )
+        """
+        return sql, params_ad1
+
+    def _engineering_residence_filter_sql(self) -> str:
+        return "WHERE ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?"
+
     def _get_request_branch(self, request) -> str | None:
         return getattr(request, "branch", None)
 
@@ -526,26 +553,34 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             date_start,
             date_end,
         )
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
 
         sql = f"""
             EngSupportOvRef AS (
                 SELECT
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
                     MIN(A.AIJ_DTINIC) AS ANCHOR_START_DATE,
                     MAX(
                         COALESCE(NULLIF(A.AIJ_DTENCE, ''), A.AIJ_DTINIC)
                     ) AS ANCHOR_END_DATE
                 FROM AIJ010 A
-                WHERE {where_aij_base}
+                INNER JOIN AD1010 AD1
+                    ON AD1.AD1_FILIAL = A.AIJ_FILIAL
+                   AND AD1.AD1_NROPOR = A.AIJ_NROPOR
+                   AND AD1.AD1_REVISA = A.AIJ_REVISA
+                WHERE {where_ad1}
+                  AND {where_aij_base}
                   AND {where_eng_support}
                   {where_period}
                 GROUP BY
                     A.AIJ_FILIAL,
-                    A.AIJ_NROPOR
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA
             )
         """
-        return sql, (*params_aij_base, *params_eng_support, *params_period)
+        return sql, (*params_ad1, *params_aij_base, *params_eng_support, *params_period)
 
     def _sql_candidate_lmps_cte(
         self,
@@ -605,6 +640,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN ListingAnchorEventos L
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND L.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND L.AIJ_REVISA = AD1.AD1_REVISA
                 WHERE {where_ad1}
                   AND {where_period_anchor}
                   {listing_kind_clause}
@@ -623,6 +659,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN EngSupportOvRef R
                     ON R.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND R.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND R.AIJ_REVISA = AD1.AD1_REVISA
                 WHERE {where_ad1}
                   AND {where_period_other}
                   AND NOT EXISTS (
@@ -630,6 +667,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                       FROM ListingAnchorEventos L2
                       WHERE L2.AIJ_FILIAL = AD1.AD1_FILIAL
                         AND L2.AIJ_NROPOR = AD1.AD1_NROPOR
+                        AND L2.AIJ_REVISA = AD1.AD1_REVISA
                   )
         """
 
@@ -711,6 +749,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN {scope_cte_name} SCOPE_A
                     ON SCOPE_A.AD1_FILIAL = A.AIJ_FILIAL
                    AND SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR
+                   AND SCOPE_A.AD1_REVISA = A.AIJ_REVISA
             """
 
         win = """PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
@@ -995,13 +1034,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         date_end: str | None = None,
     ) -> Tuple[str, tuple]:
         """
-        Resolve uma única âncora por OV.
+        Resolve uma única âncora por OV na revisão atual do AD1010.
 
         Se a OV já teve lançamento/homologação LMP (estágio 000012), permanece LMP
         com âncora na passagem 000012 mais recente — histórico de amostra não reclassifica.
 
-        Caso contrário: passagem âncora mais recente entre LMP e amostra; em empate,
-        amostra prevalece.
+        Caso contrário: entre LMP e amostra na mesma revisão, LMP prevalece sobre amostra.
         """
         where_aij_base, params_aij_base = self._build_filter_sql(
             lambda qb: (
@@ -1037,6 +1075,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             date_start,
             date_end,
         )
+        where_ad1_rev, params_ad1_rev = self._sql_ad1_current_revision_match(
+            "A",
+            requested_branch,
+        )
 
         sql = f"""
             AllListingAnchorRaw AS (
@@ -1055,6 +1097,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_lmp_anchor}
+                  AND {where_ad1_rev}
                   {where_period}
 
                 UNION ALL
@@ -1074,6 +1117,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_sample_anchor}
+                  AND {where_ad1_rev}
                   {where_period}
             ),
 
@@ -1112,12 +1156,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ROW_NUMBER() OVER (
                         PARTITION BY R.AIJ_FILIAL, R.AIJ_NROPOR
                         ORDER BY
-                            R.AIJ_DTINIC DESC,
-                            R.AIJ_HRINIC DESC,
                             CASE
+                                WHEN R.LISTING_KIND = ? THEN 2
                                 WHEN R.LISTING_KIND = ? THEN 1
                                 ELSE 0
                             END DESC,
+                            R.AIJ_DTINIC DESC,
+                            R.AIJ_HRINIC DESC,
                             R.R_E_C_N_O_ DESC
                     ) AS RN_DESC
                 FROM AllListingAnchorRaw R
@@ -1163,6 +1208,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_lmp_finalized}
+                  AND {where_ad1_rev}
                   {where_period}
             ),
 
@@ -1265,16 +1311,19 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             LISTING_KIND_LMP,
             *params_aij_base,
             *params_lmp_anchor,
+            *params_ad1_rev,
             *params_period,
             LISTING_KIND_SAMPLE,
             *params_aij_base,
             *params_sample_anchor,
+            *params_ad1_rev,
             *params_period,
             *params_aij_base_x,
-            LISTING_KIND_SAMPLE,
             LISTING_KIND_LMP,
+            LISTING_KIND_SAMPLE,
             *params_aij_base,
             *params_lmp_finalized,
+            *params_ad1_rev,
             *params_period,
             *params_aij_base_x,
         )
@@ -1744,6 +1793,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                AND PI.ADJ_REVISA = C.AD1_REVISA
         """ if include_qtd_pi else ""
         qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+        residence_filter = self._engineering_residence_filter_sql()
         order_clause = """
             ORDER BY
                 C.LMP_START_DATE DESC,
@@ -1767,6 +1817,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON H.AIJ_FILIAL = C.AD1_FILIAL
                    AND H.AIJ_NROPOR = C.AD1_NROPOR
                 {qtd_pi_join}
+                {residence_filter}
                 GROUP BY
                     C.AD1_FILIAL,
                     C.AD1_NROPOR,
@@ -1800,6 +1851,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON H.AIJ_FILIAL = C.AD1_FILIAL
                AND H.AIJ_NROPOR = C.AD1_NROPOR
             {qtd_pi_join}
+            {residence_filter}
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
@@ -1825,6 +1877,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                AND PI.ADJ_REVISA = C.AD1_REVISA
         """ if include_qtd_pi else ""
         qtd_pi_group_by = ",\n                    PI.QTD_PI" if include_qtd_pi else ""
+        residence_filter = self._engineering_residence_filter_sql()
 
         return f"""
             SELECT COUNT(*) AS total
@@ -1837,6 +1890,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON H.AIJ_FILIAL = C.AD1_FILIAL
                    AND H.AIJ_NROPOR = C.AD1_NROPOR
                 {qtd_pi_join}
+                {residence_filter}
                 GROUP BY
                     C.AD1_FILIAL,
                     C.AD1_NROPOR,

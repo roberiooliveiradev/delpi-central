@@ -12,9 +12,6 @@ from typing import Any
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
-from app.application.services.chat_conversation_context_service import (
-    ChatConversationContextService,
-)
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
@@ -32,14 +29,13 @@ from app.application.services.chat_turn.chat_turn_preparation_direct_answer_serv
 from app.application.services.chat_turn.chat_turn_preparation_memory_context_service import (
     ChatTurnPreparationMemoryContextService,
 )
-from app.application.services.chat_user_context_service import ChatUserContextService
+from app.application.services.chat_turn.chat_turn_preparation_tool_routing_service import (
+    ChatTurnPreparationToolRoutingService,
+)
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_operational_parameter_service import (
-    ChatOperationalParameterService,
-)
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
@@ -355,8 +351,6 @@ class ChatTurnPreparationService:
             if stage not in pipeline_stages:
                 pipeline_stages.append(stage)
 
-        missing_product_code_answer = None
-        ambiguous_period_answer = None
         interpretation_without_data_answer = (
             ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
                 message=message,
@@ -368,184 +362,63 @@ class ChatTurnPreparationService:
             )
         )
 
-        if not canvas_action and not pre_capability_answer and not analysis_mode and not text_task_pure:
-            from app.domain.services.chat_product_query_intent_service import (
-                ChatProductQueryIntentService,
-            )
-            from app.domain.services.chat_sql_operational_intent_service import (
-                ChatSqlOperationalIntentService,
-            )
+        operational_guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
+            message=message,
+            history_source=history_source,
+            conversation_context=conversation_context,
+            working_memory_snapshot=working_memory_snapshot,
+            canvas_action=canvas_action,
+            pre_capability_answer=pre_capability_answer,
+            analysis_mode=analysis_mode,
+            text_task_pure=text_task_pure,
+        )
+        missing_product_code_answer = operational_guards.missing_product_code_answer
+        ambiguous_period_answer = operational_guards.ambiguous_period_answer
 
-            skip_missing_product_prompt = (
-                ChatSqlOperationalIntentService.requires_sql_knowledge(message)
-                and not ChatProductQueryIntentService.extract_product_code(message)
-            )
-
-            if skip_missing_product_prompt:
-                missing_product_code_answer = None
-            else:
-                missing_product_code_answer = (
-                    ChatOperationalParameterService.resolve_missing_product_code_answer(
-                        message,
-                        conversation_context=conversation_context,
-                        previous_messages=history_source,
-                        memory_snapshot=working_memory_snapshot,
-                    )
-                )
-            ambiguous_period_answer = (
-                ChatOperationalParameterService.resolve_ambiguous_period_answer(
-                    message,
-                    previous_messages=history_source,
-                )
-            )
-
-        skip_tools_for_user_identity = bool(
-            getattr(request, "access_token", None)
-            and ChatUserContextService.is_user_identity_question(message)
+        skip_tool_flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+            message=message,
+            request=request,
+            history_source=history_source,
         )
         skip_tools_for_data_interpretation = (
-            ChatAnalysisIntentService.is_data_interpretation_request(
-                message,
-                history_source,
-            )
-            and ChatConversationContextService.has_recent_tool_data(history_source)
+            skip_tool_flags.skip_tools_for_data_interpretation
         )
 
-        request_attachment_ids = list(getattr(request, "attachment_ids", None) or [])
-        from app.domain.services.chat_attachment_document_intent_service import (
-            ChatAttachmentDocumentIntentService,
+        tool_phase = ChatTurnPreparationToolRoutingService.run_tool_phase(
+            message=message,
+            request=request,
+            history_source=history_source,
+            workspace_context=workspace_context,
+            conversation_context=conversation_context,
+            pipeline_stages=pipeline_stages,
+            pipeline_timings=pipeline_timings,
+            canvas_action=canvas_action,
+            canvas_operational_update=canvas_operational_update,
+            pre_capability_answer=pre_capability_answer,
+            operational_guards=operational_guards,
+            routing_disambiguation_answer=routing_disambiguation_answer,
+            interpretation_without_data_answer=interpretation_without_data_answer,
+            skip_flags=skip_tool_flags,
+            small_talk_direct=small_talk_direct,
+            utility_direct=utility_direct,
+            web_save_sources_direct=web_save_sources_direct,
+            web_post_search_direct=web_post_search_direct,
+            attachment_welcome_direct=attachment_welcome_direct,
+            unclear_direct=unclear_direct,
+            text_task_pure=text_task_pure,
+            fast_path=fast_path,
+            operational_optimize=operational_optimize,
+            analysis_mode=analysis_mode,
+            build_tool_context=build_tool_context,
+            maybe_extend_tool_context=maybe_extend_tool_context,
+            max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
         )
-        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 
-        skip_tools_for_attachment_document = bool(
-            request_attachment_ids
-            and ChatAttachmentDocumentIntentService.is_document_content_question(message)
-            and not ChatDrawingIntentService.is_drawing_analysis_request(
-                message,
-                attachment_ids=request_attachment_ids,
-            )
-        )
-
-        if skip_tools_for_attachment_document:
-            operational_optimize = False
-            analysis_mode = False
-
-        if (
-            canvas_action
-            or pre_capability_answer
-            or missing_product_code_answer
-            or ambiguous_period_answer
-            or routing_disambiguation_answer
-            or interpretation_without_data_answer
-            or skip_tools_for_user_identity
-            or skip_tools_for_data_interpretation
-            or skip_tools_for_attachment_document
-            or small_talk_direct
-            or utility_direct
-            or web_save_sources_direct
-            or web_post_search_direct
-            or attachment_welcome_direct
-            or unclear_direct
-            or text_task_pure
-        ) and not canvas_operational_update:
-            if skip_tools_for_user_identity:
-                pipeline_stages.append("identity_shortcut")
-            elif skip_tools_for_data_interpretation:
-                pipeline_stages.append("data_interpretation")
-            elif canvas_action:
-                pipeline_stages.append("canvas")
-            elif pre_capability_answer:
-                from app.application.services.chat_onboarding_service import (
-                    ChatOnboardingService,
-                )
-
-                if ChatOnboardingService.is_training_request(message):
-                    pipeline_stages.append("onboarding_training")
-                else:
-                    pipeline_stages.append("capabilities")
-            elif missing_product_code_answer:
-                pipeline_stages.append("operational_parameter")
-            elif ambiguous_period_answer:
-                pipeline_stages.append("operational_parameter")
-            elif routing_disambiguation_answer:
-                pipeline_stages.append("intent_disambiguation")
-            elif interpretation_without_data_answer:
-                pipeline_stages.append("data_interpretation_empty")
-            elif small_talk_direct:
-                pipeline_stages.append("small_talk")
-            elif utility_direct:
-                pipeline_stages.append("utility_direct")
-            elif web_save_sources_direct:
-                pipeline_stages.append("web_save_sources")
-            elif web_post_search_direct:
-                pipeline_stages.append("web_post_search_follow_up")
-            elif attachment_welcome_direct:
-                pipeline_stages.append("attachment_welcome")
-            elif skip_tools_for_attachment_document:
-                pipeline_stages.append("attachment_document")
-            elif unclear_direct:
-                pipeline_stages.append("unclear_request")
-            elif text_task_pure:
-                pipeline_stages.append("text_task")
-            tool_context = {
-                "context": "",
-                "toolCalls": [],
-                "nativeToolCalling": {},
-            }
-            if skip_tools_for_attachment_document:
-                from app.application.services.chat_document_vision_service import (
-                    ChatDocumentVisionService,
-                )
-
-                vision_meta = ChatDocumentVisionService.build_attachment_vision_metadata(
-                    user_id=str(getattr(request, "user_id", "") or ""),
-                    session_id=str(getattr(request, "session_id", "") or ""),
-                    attachment_ids=[str(item) for item in request_attachment_ids],
-                    skills=workspace_context.get("skills"),
-                )
-
-                if vision_meta:
-                    tool_context["documentVision"] = vision_meta
-
-            tool_calls = []
-            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-                message,
-                history_source,
-                tool_context,
-            )
-            tool_context = post_tool.tool_context
-            analysis_mode = post_tool.analysis_mode
-            pipeline_timings.mark("tools_done")
-        else:
-            pipeline_stages.append("tools")
-            tool_context = build_tool_context(
-                request,
-                allowed_action_ids=workspace_context.get("allowedActionIds"),
-                capabilities=workspace_context.get("capabilities") or {},
-                specialization=workspace_context.get("specialization"),
-                fast_path=fast_path and not operational_optimize,
-                previous_messages=history_source,
-                max_external_action_calls=max_external_action_calls,
-                on_stream_activity=on_stream_activity,
-                working_memory=workspace_context.get("workingMemory"),
-            )
-            tool_context = maybe_extend_tool_context(
-                request=request,
-                workspace_context=workspace_context,
-                tool_context=tool_context,
-                conversation_context=conversation_context,
-                previous_messages=history_source,
-                on_stream_activity=on_stream_activity,
-            )
-            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-                message,
-                history_source,
-                tool_context,
-            )
-            tool_context = post_tool.tool_context
-            analysis_mode = post_tool.analysis_mode
-            tool_calls = tool_context["toolCalls"]
-            pipeline_timings.mark("tools_done")
+        tool_context = tool_phase.tool_context
+        tool_calls = tool_phase.tool_calls
+        analysis_mode = tool_phase.analysis_mode
+        operational_optimize = tool_phase.operational_optimize
 
         if canvas_operational_update and not canvas_action:
             canvas_action = ChatCanvasContentService.build_update_from_tools(
