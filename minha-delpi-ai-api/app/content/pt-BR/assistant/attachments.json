@@ -123,6 +123,27 @@
       "processing": "- **{name}:** recebido; processamento em andamento."
     }
   },
+  "canvasResponses": {
+    "disabled": "A lousa não está habilitada neste agente. Ative a capacidade «Permitir lousa (canvas)» no builder do agente.",
+    "noContentToUpdate": "Ainda não há conteúdo na lousa nem resposta anterior para atualizar. Peça primeiro para colocar algo na lousa ou faça uma pergunta no chat.",
+    "toolFetchFailed": "Não consegui buscar os dados solicitados para acrescentar na lousa. Tente reformular o pedido ou confira se a API retornou resultados.",
+    "operationalUpdateSuccess": "Atualizei a lousa «{title}» com {count} informação(ões) adicional(is). Você pode editar, visualizar e salvar o conteúdo quando quiser.",
+    "transformFormatUnknown": "Não identifiquei o formato desejado para a lousa.",
+    "noContentToTransform": "Ainda não há conteúdo na lousa para transformar. Peça primeiro para colocar uma resposta ou texto na lousa.",
+    "transformSuccess": "Transformei a lousa em **{label}**. Você pode editar, visualizar e salvar o conteúdo quando quiser.",
+    "drawingCopySuccess": "Coloquei «{title}» na lousa ao lado. Você pode editar, visualizar e salvar o relatório de análise quando quiser.",
+    "noAssistantResponse": "Ainda não há uma resposta minha nesta conversa para colocar na lousa. Faça uma pergunta primeiro e depois peça para enviar o conteúdo à lousa.",
+    "emptyAssistantResponse": "A última resposta do assistente está vazia. Peça algo novo no chat e tente novamente.",
+    "simpleCopySuccess": "Coloquei «{title}» na lousa ao lado. Você pode editar, visualizar e salvar o conteúdo quando quiser.",
+    "noContentToAppend": "Ainda não há conteúdo para acrescentar na lousa. Faça uma pergunta no chat ou peça para colocar algo na lousa primeiro.",
+    "noRecentResponseToAppend": "Não encontrei uma resposta recente para acrescentar à lousa. Faça uma pergunta no chat e peça novamente.",
+    "appendUpdateSuccess": "Atualizei a lousa «{title}» com a resposta mais recente. Você pode editar, visualizar e salvar o conteúdo quando quiser.",
+    "defaultTitle": "Conteúdo do chat",
+    "drawingReportDefault": "Relatório de desenho",
+    "drawingAnalysisTitle": "Análise de desenho {code}",
+    "drawingReportDelpi": "Relatório de desenho DELPI",
+    "transformTitleWithBase": "{label} — {baseTitle}"
+  },
   "canvasAmbiguity": {
     "deicticTerms": [
       "isso",

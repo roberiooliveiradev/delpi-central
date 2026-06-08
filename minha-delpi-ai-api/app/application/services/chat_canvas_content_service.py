@@ -7,6 +7,7 @@ from typing import Any
 from app.application.services.chat_canvas_ambiguity_service import (
     ChatCanvasAmbiguityService,
 )
+from app.domain.services.chat_attachment_content_service import ChatAttachmentContentService
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.domain.services.chat_canvas_transform_service import ChatCanvasTransformService
 from app.domain.services.chat_rich_presentation_canvas_export_service import (
@@ -50,10 +51,7 @@ class ChatCanvasContentService:
 
         if not cls._canvas_enabled(workspace_context):
             return ChatCanvasAction(
-                answer=(
-                    "A lousa não está habilitada neste agente. "
-                    "Ative a capacidade «Permitir lousa (canvas)» no builder do agente."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("disabled"),
                 open_payload=None,
             )
 
@@ -89,10 +87,7 @@ class ChatCanvasContentService:
 
         if not cls._canvas_enabled(workspace_context):
             return ChatCanvasAction(
-                answer=(
-                    "A lousa não está habilitada neste agente. "
-                    "Ative a capacidade «Permitir lousa (canvas)» no builder do agente."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("disabled"),
                 open_payload=None,
             )
 
@@ -102,10 +97,7 @@ class ChatCanvasContentService:
 
         if not base_markdown:
             return ChatCanvasAction(
-                answer=(
-                    "Ainda não há conteúdo na lousa nem resposta anterior para atualizar. "
-                    "Peça primeiro para colocar algo na lousa ou faça uma pergunta no chat."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("noContentToUpdate"),
                 open_payload=None,
             )
 
@@ -113,20 +105,17 @@ class ChatCanvasContentService:
 
         if not sections:
             return ChatCanvasAction(
-                answer=(
-                    "Não consegui buscar os dados solicitados para acrescentar na lousa. "
-                    "Tente reformular o pedido ou confira se a API retornou resultados."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("toolFetchFailed"),
                 open_payload=None,
             )
 
         merged_markdown = cls._merge_markdown(base_markdown, sections)
 
         return ChatCanvasAction(
-            answer=(
-                f"Atualizei a lousa «{base_title}» com {len(sections)} "
-                f"informação(ões) adicional(is). "
-                "Você pode editar, visualizar e salvar o conteúdo quando quiser."
+            answer=ChatAttachmentContentService.canvas_text(
+                "operationalUpdateSuccess",
+                title=base_title,
+                count=str(len(sections)),
             ),
             open_payload=ChatCanvasOpenPayload(
                 title=base_title,
@@ -145,7 +134,7 @@ class ChatCanvasContentService:
 
         if not kind:
             return ChatCanvasAction(
-                answer="Não identifiquei o formato desejado para a lousa.",
+                answer=ChatAttachmentContentService.canvas_text("transformFormatUnknown"),
                 open_payload=None,
             )
 
@@ -155,20 +144,25 @@ class ChatCanvasContentService:
 
         if not base_markdown:
             return ChatCanvasAction(
-                answer=(
-                    "Ainda não há conteúdo na lousa para transformar. "
-                    "Peça primeiro para colocar uma resposta ou texto na lousa."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("noContentToTransform"),
                 open_payload=None,
             )
 
         transformed, label = ChatCanvasTransformService.transform(base_markdown, kind)
-        title = f"{label} — {base_title}" if base_title else label
+        title = (
+            ChatAttachmentContentService.canvas_text(
+                "transformTitleWithBase",
+                label=label,
+                baseTitle=base_title,
+            )
+            if base_title
+            else label
+        )
 
         return ChatCanvasAction(
-            answer=(
-                f"Transformei a lousa em **{label}**. "
-                "Você pode editar, visualizar e salvar o conteúdo quando quiser."
+            answer=ChatAttachmentContentService.canvas_text(
+                "transformSuccess",
+                label=label,
             ),
             open_payload=ChatCanvasOpenPayload(
                 title=title[:120],
@@ -188,9 +182,9 @@ class ChatCanvasContentService:
 
         if export_markdown:
             return ChatCanvasAction(
-                answer=(
-                    f"Coloquei «{export_title}» na lousa ao lado. "
-                    "Você pode editar, visualizar e salvar o relatório de análise quando quiser."
+                answer=ChatAttachmentContentService.canvas_text(
+                    "drawingCopySuccess",
+                    title=export_title,
                 ),
                 open_payload=ChatCanvasOpenPayload(
                     title=export_title,
@@ -203,10 +197,7 @@ class ChatCanvasContentService:
 
         if not source:
             return ChatCanvasAction(
-                answer=(
-                    "Ainda não há uma resposta minha nesta conversa para colocar na lousa. "
-                    "Faça uma pergunta primeiro e depois peça para enviar o conteúdo à lousa."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("noAssistantResponse"),
                 open_payload=None,
             )
 
@@ -218,10 +209,7 @@ class ChatCanvasContentService:
 
         if not markdown:
             return ChatCanvasAction(
-                answer=(
-                    "A última resposta do assistente está vazia. "
-                    "Peça algo novo no chat e tente novamente."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("emptyAssistantResponse"),
                 open_payload=None,
             )
 
@@ -229,9 +217,9 @@ class ChatCanvasContentService:
         source_message_id = cls._message_id(source)
 
         return ChatCanvasAction(
-            answer=(
-                f"Coloquei «{title}» na lousa ao lado. "
-                "Você pode editar, visualizar e salvar o conteúdo quando quiser."
+            answer=ChatAttachmentContentService.canvas_text(
+                "simpleCopySuccess",
+                title=title,
             ),
             open_payload=ChatCanvasOpenPayload(
                 title=title,
@@ -253,10 +241,7 @@ class ChatCanvasContentService:
 
         if not base_markdown and not addition:
             return ChatCanvasAction(
-                answer=(
-                    "Ainda não há conteúdo para acrescentar na lousa. "
-                    "Faça uma pergunta no chat ou peça para colocar algo na lousa primeiro."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("noContentToAppend"),
                 open_payload=None,
             )
 
@@ -265,10 +250,7 @@ class ChatCanvasContentService:
 
         if not addition:
             return ChatCanvasAction(
-                answer=(
-                    "Não encontrei uma resposta recente para acrescentar à lousa. "
-                    "Faça uma pergunta no chat e peça novamente."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("noRecentResponseToAppend"),
                 open_payload=None,
             )
 
@@ -279,19 +261,16 @@ class ChatCanvasContentService:
 
         if not addition_markdown:
             return ChatCanvasAction(
-                answer=(
-                    "A última resposta do assistente está vazia. "
-                    "Peça algo novo no chat e tente novamente."
-                ),
+                answer=ChatAttachmentContentService.canvas_text("emptyAssistantResponse"),
                 open_payload=None,
             )
 
         merged_markdown = cls._merge_markdown(base_markdown, [addition_markdown])
 
         return ChatCanvasAction(
-            answer=(
-                f"Atualizei a lousa «{base_title}» com a resposta mais recente. "
-                "Você pode editar, visualizar e salvar o conteúdo quando quiser."
+            answer=ChatAttachmentContentService.canvas_text(
+                "appendUpdateSuccess",
+                title=base_title,
             ),
             open_payload=ChatCanvasOpenPayload(
                 title=base_title,
@@ -315,7 +294,7 @@ class ChatCanvasContentService:
         source = cls._find_last_substantive_assistant_message(previous_messages)
 
         if not source:
-            return "", "Conteúdo do chat", None
+            return "", ChatAttachmentContentService.canvas_default_title(), None
 
         metadata = cls._message_metadata(source)
         markdown = ChatRichPresentationCanvasExportService.build_markdown_from_assistant(
@@ -324,7 +303,7 @@ class ChatCanvasContentService:
         ).strip()
 
         if not markdown:
-            return "", "Conteúdo do chat", None
+            return "", ChatAttachmentContentService.canvas_default_title(), None
 
         return markdown, cls._derive_title(markdown), cls._message_id(source)
 
@@ -342,7 +321,7 @@ class ChatCanvasContentService:
         previous_messages: list[Any] | None,
     ) -> tuple[str, str, str | None]:
         if not previous_messages:
-            return "", "Conteúdo do chat", None
+            return "", ChatAttachmentContentService.canvas_default_title(), None
 
         for message in reversed(previous_messages):
             metadata = cls._message_metadata(message)
@@ -365,7 +344,7 @@ class ChatCanvasContentService:
                 str(source_message_id) if source_message_id is not None else None
             )
 
-        return "", "Conteúdo do chat", None
+        return "", ChatAttachmentContentService.canvas_default_title(), None
 
     @classmethod
     def _tool_calls_to_markdown_sections(cls, tool_calls: list[dict]) -> list[str]:
@@ -433,7 +412,7 @@ class ChatCanvasContentService:
         previous_messages: list[Any] | None,
     ) -> tuple[str | None, str]:
         if not previous_messages:
-            return None, "Relatório de desenho"
+            return None, ChatAttachmentContentService.canvas_text("drawingReportDefault")
 
         for message in reversed(previous_messages):
             if str(cls._message_role(message) or "").lower() != "assistant":
@@ -457,11 +436,15 @@ class ChatCanvasContentService:
             if isinstance(drawing, dict):
                 code = str(drawing.get("productCode") or "").strip()
 
-            title = f"Análise de desenho {code}".strip() if code else "Relatório de desenho DELPI"
+            title = (
+                ChatAttachmentContentService.canvas_text("drawingAnalysisTitle", code=code)
+                if code
+                else ChatAttachmentContentService.canvas_text("drawingReportDelpi")
+            )
 
             return markdown, title
 
-        return None, "Relatório de desenho"
+        return None, ChatAttachmentContentService.canvas_text("drawingReportDefault")
 
     @classmethod
     def _last_drawing_source_message_id(
@@ -533,14 +516,17 @@ class ChatCanvasContentService:
                 continue
 
             if stripped.startswith("#"):
-                return stripped.lstrip("#").strip()[:80] or "Conteúdo do chat"
+                return (
+                    stripped.lstrip("#").strip()[:80]
+                    or ChatAttachmentContentService.canvas_default_title()
+                )
 
             plain = stripped.replace("**", "").replace("*", "").strip()
 
             if plain:
                 return plain[:80]
 
-        return "Conteúdo do chat"
+        return ChatAttachmentContentService.canvas_default_title()
 
     @classmethod
     def _message_role(cls, message: Any) -> str | None:

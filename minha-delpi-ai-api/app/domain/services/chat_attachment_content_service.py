@@ -112,6 +112,23 @@ class ChatAttachmentContentService:
         return configured.strip() if isinstance(configured, str) and configured.strip() else None
 
     @classmethod
+    def canvas_text(cls, key: str, **values: str) -> str:
+        return ChatAssistantContentService.format(
+            _BUNDLE,
+            "canvasResponses",
+            key,
+            **values,
+        ).strip()
+
+    @classmethod
+    def canvas_default_title(cls) -> str:
+        return ChatAssistantContentService.get(
+            _BUNDLE,
+            "canvasResponses",
+            "defaultTitle",
+        ).strip()
+
+    @classmethod
     def deictic_terms(cls) -> tuple[str, ...]:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "canvasAmbiguity", "deicticTerms"))
 

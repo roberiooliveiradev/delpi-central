@@ -23,3 +23,18 @@ def test_follow_up_queries_mapped():
     queries = ChatAttachmentContentService.follow_up_queries()
 
     assert queries.get("Resumir") == "resuma o conteúdo do arquivo anexado"
+
+
+def test_canvas_responses_load_from_attachments_json():
+    disabled = ChatAttachmentContentService.canvas_text("disabled")
+
+    assert "lousa" in disabled.lower()
+    assert "não está habilitada" in disabled.lower()
+
+    copied = ChatAttachmentContentService.canvas_text(
+        "simpleCopySuccess",
+        title="Perfil",
+    )
+
+    assert "«Perfil»" in copied
+    assert ChatAttachmentContentService.canvas_default_title() == "Conteúdo do chat"

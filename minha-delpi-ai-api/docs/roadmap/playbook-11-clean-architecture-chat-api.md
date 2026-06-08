@@ -405,8 +405,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 **Sprint imediata (pós-playbook 11):**
 
-1. Reduzir baseline `hardcoded_pt_strings_baseline.json` (migrar `chat_canvas_content_service` para bundle).
-2. Fase 2 lote 2: ports restantes na application (`Postgres*` inline fora de composition).
+1. Fase 2 lote 2: ports restantes na application (`Postgres*` inline fora de composition).
+2. Reduzir baseline restante (heurísticas selection → `external_action_responses.json` onde couber).
+
+**Concluído (pós-Fase 6):** mensagens da lousa migradas para `attachments.canvasResponses`; `chat_canvas_content_service` sem strings PT soltas; baseline **58 → 32**.
 
 **Concluído (Fase 6):** ADRs 001–006 em `docs/architecture/adr/`; índice de sub-sistemas em `chat-intelligence-base.md`; playbook §4 atualizado.
 

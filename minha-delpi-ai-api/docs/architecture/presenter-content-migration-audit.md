@@ -51,7 +51,7 @@ Relatório de auditoria após centralização em `app/content/pt-BR/assistant/*.
 3. **Listagens genéricas** — colunas dinâmicas continuam via `label_for` + `_COLUMN_TYPE_MAP` (documentado no catálogo).
 4. **Outros serviços** — `ChatSqlQueryRefinementService`, rotas HTTP e testes de regressão ainda referenciam «Consulta SQL» / «Visualização dos dados» como strings de fixture ou título de refinamento SQL (fora do presenter).
 5. **`execute_external_action_use_case`** — conjunto `wrong_titles` para UX de chat (não é bundle do presenter).
-6. **`chat_canvas_content_service`** — mensagens da lousa ainda inline (baseline do gate Fase 5; migrar para bundle canvas).
+6. ~~**`chat_canvas_content_service`** — mensagens da lousa inline~~ → **feito:** `attachments.json` → `canvasResponses` + `ChatAttachmentContentService.canvas_text()`; baseline **58 → 32** ocorrências.
 
 ## Verificação
 
