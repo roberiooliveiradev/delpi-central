@@ -843,24 +843,45 @@ class ChatCapabilitiesService:
             ChatOnboardingService,
         )
 
+        contexts = _self_help_agent_context()
+        user_activated = bool(workspace_context.get("userActivatedAgent"))
         agent = workspace_context.get("agent") or {}
         agent_name = str(agent.get("name") or "").strip()
         agent_category = str(agent.get("category") or "").strip()
-        contexts = _self_help_agent_context()
+        agent_description = str(agent.get("description") or "").strip()
 
-        if agent_name or agent_category:
-            profile_id = ChatOnboardingService.infer_profile_from_agent(
+        if not user_activated or not agent_name:
+            return str(contexts.get("common") or "").strip() or None
+
+        active_template = str(contexts.get("agentActive") or "").strip()
+
+        if active_template:
+            profile_hint = ""
+
+            if agent_category:
+                profile_id = ChatOnboardingService.infer_profile_from_agent(
+                    agent_name=agent_name,
+                    agent_category=agent_category,
+                )
+                profile_hint = str((contexts.get(profile_id or "") or "")).strip()
+
+            return active_template.format(
                 agent_name=agent_name,
-                agent_category=agent_category,
+                agent_description=agent_description
+                or profile_hint
+                or "agente especializado nesta conversa",
             )
-            intro = str((contexts.get(profile_id or "") or "")).strip()
 
-            if intro:
-                return intro
+        profile_id = ChatOnboardingService.infer_profile_from_agent(
+            agent_name=agent_name,
+            agent_category=agent_category,
+        )
+        intro = str((contexts.get(profile_id or "") or "")).strip()
 
-            return str(contexts.get("engineering") or "").strip() or None
+        if intro:
+            return intro
 
-        return str(contexts.get("common") or "").strip() or None
+        return str(contexts.get("engineering") or "").strip() or None
 
     @classmethod
     def build_direct_answer(

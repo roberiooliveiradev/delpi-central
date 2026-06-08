@@ -25,6 +25,12 @@ _SHOULD_DETECT = (
     "menu de comandos",
     "como voce pode me ajudar",
     "como você pode ajudar",
+    "o que vc faz?",
+    "no que voce ajuda",
+    "quais suas funcoes",
+    "para que serve voce",
+    "o que faz aqui",
+    "me diga o que pode fazer",
     "me mostre o que da pra fazer",
     "pode consultar o que",
     "quais ferramentas",
@@ -62,7 +68,8 @@ def test_capabilities_answer_has_expected_structure_common_chat():
         allowed_action_ids=[],
         action_catalog=[],
     )
-    assert text.startswith("Posso ajudar você nestes formatos:")
+    assert "chat comum" in text.lower()
+    assert "Posso ajudar você nestes formatos:" in text
     assert "Consultas operacionais" in text
     assert "fornecedores do 10080001" in text
     assert "Robério" not in text

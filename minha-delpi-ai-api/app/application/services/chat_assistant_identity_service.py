@@ -73,6 +73,14 @@ class ChatAssistantIdentityService:
 
     @classmethod
     def classify(cls, message: str) -> str | None:
+        from app.application.services.chat_capabilities_service import (
+            ChatCapabilitiesService,
+        )
+
+        # Catálogo de capacidades tem prioridade sobre identidade/papel genérico.
+        if ChatCapabilitiesService.is_capabilities_question(message):
+            return None
+
         content = _identity_content()
         max_length = int(content.get("maxMessageLength") or 220)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)

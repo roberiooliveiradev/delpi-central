@@ -12,7 +12,9 @@ def test_is_capabilities_question():
     assert ChatCapabilitiesService.is_capabilities_question("o que da pra consultar")
     assert ChatCapabilitiesService.is_capabilities_question("ajuda")
     assert ChatCapabilitiesService.is_capabilities_question("o que vc é capaz de fazer?")
-    assert not ChatCapabilitiesService.is_capabilities_question("o que vc faz?")
+    assert ChatCapabilitiesService.is_capabilities_question("o que vc faz?")
+    assert ChatCapabilitiesService.is_capabilities_question("no que voce ajuda")
+    assert ChatCapabilitiesService.is_capabilities_question("quais suas funcoes")
     assert not ChatCapabilitiesService.is_capabilities_question("estoque do 10080001")
 
 
