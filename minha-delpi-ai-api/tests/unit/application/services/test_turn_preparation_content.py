@@ -12,6 +12,16 @@ def test_stream_think_keys_exist():
     assert ChatTurnPreparationContentService.stream_think_target("questionHistory")
 
 
+def test_common_chat_operational_guidance_reads_turn_preparation_json():
+    title = ChatTurnPreparationContentService.get(
+        "directAnswers",
+        "commonChatOperationalGuidance",
+        "title",
+    )
+
+    assert "agente" in title.lower()
+
+
 def test_interpretation_without_data_reads_turn_preparation_json():
     message = ChatTurnPreparationContentService.get(
         "directAnswers",

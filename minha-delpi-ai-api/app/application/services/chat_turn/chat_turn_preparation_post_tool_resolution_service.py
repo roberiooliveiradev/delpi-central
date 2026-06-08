@@ -57,6 +57,7 @@ class ChatTurnPreparationPostToolResolutionService:
         unclear_direct: str | None,
         missing_product_code_answer: str | None,
         ambiguous_period_answer: str | None,
+        common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
         skip_tools_for_data_interpretation: bool,
         resolve_user_identity_answer: Callable[[str], str | None],
@@ -197,6 +198,10 @@ class ChatTurnPreparationPostToolResolutionService:
 
         if not direct_answer and ambiguous_period_answer:
             direct_answer = ambiguous_period_answer
+            skip_rag = True
+
+        if not direct_answer and common_chat_operational_answer:
+            direct_answer = common_chat_operational_answer
             skip_rag = True
 
         if not direct_answer and routing_disambiguation_answer:

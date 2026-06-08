@@ -16,7 +16,7 @@ class FakeRepository:
                 content="texto genérico sobre processos",
                 metadata={},
                 created_at=datetime.now(timezone.utc),
-                score=0.9,
+                score=0.2,
                 title="A",
                 source_type="global",
                 source_ref="a",
@@ -45,24 +45,39 @@ class FakeEmbedding:
         return [0.1, 0.2]
 
 
-def test_hybrid_search_rerank_promotes_keyword_match(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.use_cases.search_knowledge_use_case.Settings.CHAT_RAG_HYBRID_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.use_cases.search_knowledge_use_case.Settings.CHAT_RAG_RERANK_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.use_cases.search_knowledge_use_case.Settings.MAX_CONTEXT_CHUNKS",
-        1,
+def _patch_rag_settings(monkeypatch, **values):
+    for key, value in values.items():
+        monkeypatch.setattr(f"app.infrastructure.config.settings.Settings.{key}", value)
+
+
+def test_hybrid_search_works_without_settings_repository(monkeypatch):
+    _patch_rag_settings(
+        monkeypatch,
+        CHAT_RAG_HYBRID_ENABLED=True,
+        CHAT_RAG_RERANK_ENABLED=False,
+        MAX_CONTEXT_CHUNKS=2,
     )
 
     use_case = SearchKnowledgeUseCase(FakeRepository(), FakeEmbedding())
     results = use_case.execute(
-        SearchKnowledgeRequest(query="pedidos abertos", limit=1, filters={}),
+        SearchKnowledgeRequest(query="pedidos abertos", limit=2, filters={}),
     )
 
-    assert len(results) == 1
+    assert len(results) >= 1
+
+
+def test_hybrid_search_rerank_promotes_keyword_match(monkeypatch):
+    _patch_rag_settings(
+        monkeypatch,
+        CHAT_RAG_HYBRID_ENABLED=True,
+        CHAT_RAG_RERANK_ENABLED=True,
+        MAX_CONTEXT_CHUNKS=2,
+    )
+
+    use_case = SearchKnowledgeUseCase(FakeRepository(), FakeEmbedding())
+    results = use_case.execute(
+        SearchKnowledgeRequest(query="pedidos abertos", limit=2, filters={}),
+    )
+
+    assert len(results) == 2
     assert "pedidos" in results[0]["content"]

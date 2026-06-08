@@ -1,5 +1,18 @@
 {
   "directAnswers": {
-    "interpretationWithoutData": "Ainda não há dados nesta conversa para interpretar. Faça primeiro uma consulta operacional (ex.: estoque, roteiro, estrutura ou inspeção de um produto) e depois peça para explicar, resumir ou traduzir o resultado."
+    "interpretationWithoutData": "Ainda não há dados nesta conversa para interpretar. Faça primeiro uma consulta operacional (ex.: estoque, roteiro, estrutura ou inspeção de um produto) e depois peça para explicar, resumir ou traduzir o resultado.",
+    "commonChatOperationalGuidance": {
+      "title": "**Dados operacionais exigem um agente**",
+      "intro": "No **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).",
+      "commonChatCapabilitiesTitle": "**Neste modo ainda posso:**",
+      "commonChatCapabilitiesItems": [
+        "Responder com **documentação e conhecimento** autorizado (RAG).",
+        "Ajudar com **textos**, revisão, e-mails, atas e traduções.",
+        "Analisar **anexos** que você enviar na conversa.",
+        "**Pesquisar na web** (quando habilitada) com frases explícitas.",
+        "Abrir ou atualizar a **lousa** e montar **gráficos** a partir de dados já mostrados."
+      ],
+      "agentHint": "Para consultar **dados reais**, abra o menu **+** no composer e escolha um **agente especializado** (ex.: **Agente Minha DELPI**)."
+    }
   }
 }

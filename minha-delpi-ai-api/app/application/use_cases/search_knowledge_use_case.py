@@ -49,40 +49,13 @@ class SearchKnowledgeUseCase:
         return [self._chunk_to_dict(chunk) for chunk in chunks]
 
     def _hybrid_enabled(self) -> bool:
-        if not Settings.CHAT_RAG_HYBRID_ENABLED:
-            return False
-
-        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
-        enabled = stored.get("ragHybridEnabled")
-
-        if enabled is None:
-            return True
-
-        return bool(enabled)
+        return self.intelligence_settings_service.resolve().rag_hybrid_enabled
 
     def _rerank_enabled(self) -> bool:
-        if not Settings.CHAT_RAG_RERANK_ENABLED:
-            return False
-
-        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
-        enabled = stored.get("ragRerankEnabled")
-
-        if enabled is None:
-            return True
-
-        return bool(enabled)
+        return self.intelligence_settings_service.resolve().rag_rerank_enabled
 
     def _fts_enabled(self) -> bool:
-        if not Settings.CHAT_RAG_FTS_ENABLED:
-            return False
-
-        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
-        enabled = stored.get("ragFtsEnabled")
-
-        if enabled is None:
-            return True
-
-        return bool(enabled)
+        return self.intelligence_settings_service.resolve().rag_fts_enabled
 
     def _rerank_chunks(self, query: str, chunks: list, *, limit: int) -> list:
         if not self._rerank_enabled() or not chunks:

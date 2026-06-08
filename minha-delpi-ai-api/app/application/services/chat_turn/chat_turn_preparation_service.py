@@ -198,6 +198,7 @@ class ChatTurnPreparationService:
             history_source=history_source,
             conversation_context=conversation_context,
             working_memory_snapshot=working_memory_snapshot,
+            workspace_context=workspace_context,
             canvas_action=canvas_action,
             pre_capability_answer=pre_capability_answer,
             analysis_mode=analysis_mode,
@@ -205,6 +206,7 @@ class ChatTurnPreparationService:
         )
         missing_product_code_answer = operational_guards.missing_product_code_answer
         ambiguous_period_answer = operational_guards.ambiguous_period_answer
+        common_chat_operational_answer = operational_guards.common_chat_operational_answer
 
         skip_tool_flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
             message=message,
@@ -296,6 +298,7 @@ class ChatTurnPreparationService:
             unclear_direct=unclear_direct,
             missing_product_code_answer=missing_product_code_answer,
             ambiguous_period_answer=ambiguous_period_answer,
+            common_chat_operational_answer=common_chat_operational_answer,
             routing_disambiguation_answer=routing_disambiguation_answer,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             resolve_user_identity_answer=resolve_user_identity_answer,

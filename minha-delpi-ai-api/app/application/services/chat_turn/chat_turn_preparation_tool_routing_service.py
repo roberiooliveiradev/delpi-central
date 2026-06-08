@@ -37,6 +37,7 @@ class ChatTurnPreparationSkipToolFlags:
 class ChatTurnPreparationOperationalGuards:
     missing_product_code_answer: str | None
     ambiguous_period_answer: str | None
+    common_chat_operational_answer: str | None
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,7 @@ class ChatTurnPreparationToolRoutingService:
         history_source: list,
         conversation_context: str,
         working_memory_snapshot: dict,
+        workspace_context: dict,
         canvas_action,
         pre_capability_answer: str | None,
         analysis_mode: bool,
@@ -65,6 +67,7 @@ class ChatTurnPreparationToolRoutingService:
             return ChatTurnPreparationOperationalGuards(
                 missing_product_code_answer=None,
                 ambiguous_period_answer=None,
+                common_chat_operational_answer=None,
             )
 
         from app.domain.services.chat_product_query_intent_service import (
@@ -98,9 +101,25 @@ class ChatTurnPreparationToolRoutingService:
             )
         )
 
+        from app.application.services.chat_common_chat_operational_guidance_service import (
+            ChatCommonChatOperationalGuidanceService,
+        )
+
+        common_chat_operational_answer = (
+            ChatCommonChatOperationalGuidanceService.resolve_direct_answer(
+                message,
+                workspace_context=workspace_context,
+                previous_messages=history_source,
+            )
+        )
+
+        if common_chat_operational_answer and missing_product_code_answer:
+            missing_product_code_answer = None
+
         return ChatTurnPreparationOperationalGuards(
             missing_product_code_answer=missing_product_code_answer,
             ambiguous_period_answer=ambiguous_period_answer,
+            common_chat_operational_answer=common_chat_operational_answer,
         )
 
     @classmethod
@@ -178,6 +197,7 @@ class ChatTurnPreparationToolRoutingService:
         pre_capability_answer: str | None,
         missing_product_code_answer: str | None,
         ambiguous_period_answer: str | None,
+        common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
         interpretation_without_data_answer: str | None,
         skip_flags: ChatTurnPreparationSkipToolFlags,
@@ -195,6 +215,7 @@ class ChatTurnPreparationToolRoutingService:
                 or pre_capability_answer
                 or missing_product_code_answer
                 or ambiguous_period_answer
+                or common_chat_operational_answer
                 or routing_disambiguation_answer
                 or interpretation_without_data_answer
                 or skip_flags.skip_tools_for_user_identity
@@ -224,6 +245,7 @@ class ChatTurnPreparationToolRoutingService:
         pre_capability_answer: str | None,
         missing_product_code_answer: str | None,
         ambiguous_period_answer: str | None,
+        common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
         interpretation_without_data_answer: str | None,
         small_talk_direct: str | None,
@@ -255,6 +277,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("operational_parameter")
         elif ambiguous_period_answer:
             pipeline_stages.append("operational_parameter")
+        elif common_chat_operational_answer:
+            pipeline_stages.append("common_chat_operational_guidance")
         elif routing_disambiguation_answer:
             pipeline_stages.append("intent_disambiguation")
         elif interpretation_without_data_answer:
@@ -321,6 +345,7 @@ class ChatTurnPreparationToolRoutingService:
             pre_capability_answer=pre_capability_answer,
             missing_product_code_answer=operational_guards.missing_product_code_answer,
             ambiguous_period_answer=operational_guards.ambiguous_period_answer,
+            common_chat_operational_answer=operational_guards.common_chat_operational_answer,
             routing_disambiguation_answer=routing_disambiguation_answer,
             interpretation_without_data_answer=interpretation_without_data_answer,
             skip_flags=skip_flags,
@@ -340,6 +365,7 @@ class ChatTurnPreparationToolRoutingService:
                 pre_capability_answer=pre_capability_answer,
                 missing_product_code_answer=operational_guards.missing_product_code_answer,
                 ambiguous_period_answer=operational_guards.ambiguous_period_answer,
+                common_chat_operational_answer=operational_guards.common_chat_operational_answer,
                 routing_disambiguation_answer=routing_disambiguation_answer,
                 interpretation_without_data_answer=interpretation_without_data_answer,
                 small_talk_direct=small_talk_direct,

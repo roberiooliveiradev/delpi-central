@@ -402,6 +402,15 @@ class ChatCapabilitiesService:
         return any(topic in normalized for topic in topics)
 
     @classmethod
+    def looks_like_operational_data_request(
+        cls,
+        message: str,
+        normalized: str | None = None,
+    ) -> bool:
+        """Consulta operacional real (ex.: estoque de produto), não pergunta «consegue?»."""
+        return cls._looks_like_operational_data_request(message, normalized=normalized)
+
+    @classmethod
     def _looks_like_operational_data_request(cls, message: str, normalized: str | None = None) -> bool:
         """Consulta operacional real (ex.: estoque de produto), não pergunta «consegue?»."""
         normalized = normalized or ChatMessageNormalizationService.normalize_for_matching(message)
