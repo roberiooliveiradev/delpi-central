@@ -20,3 +20,17 @@ class ChatQualityIssueRepositoryPort(ABC):
         external_url: str | None = None,
     ) -> dict:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_issues(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict], int]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_status(self, issue_id: int, *, status: str) -> dict | None:
+        raise NotImplementedError

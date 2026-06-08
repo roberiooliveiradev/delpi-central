@@ -70,12 +70,14 @@ class ChatFineTuningService:
         user_text = self._feedback_repo().get_user_question_for_assistant(message_id)
         assistant = self._feedback_repo().get_assistant_message(message_id)
 
-        if not user_text or not assistant or not assistant.content:
+        assistant_content = (assistant or {}).get("content") if isinstance(assistant, dict) else None
+
+        if not user_text or not assistant_content:
             return None
 
         raw_messages = [
             {"role": "user", "content": str(user_text)},
-            {"role": "assistant", "content": str(assistant.content)},
+            {"role": "assistant", "content": str(assistant_content)},
         ]
         combined = " ".join(item["content"] for item in raw_messages)
 

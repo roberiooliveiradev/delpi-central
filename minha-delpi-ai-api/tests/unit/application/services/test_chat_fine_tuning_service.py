@@ -79,10 +79,7 @@ class _FakeFeedbackRepo:
         return "como vc s chama"
 
     def get_assistant_message(self, message_id):
-        class _Msg:
-            content = "Sou o assistente Minha DELPI."
-
-        return _Msg()
+        return {"content": "Sou o assistente Minha DELPI.", "metadata": {}}
 
 
 def test_export_dataset_jsonl(monkeypatch):

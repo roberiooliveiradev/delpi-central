@@ -131,7 +131,12 @@ def make_list_chat_sessions_use_case() -> ListChatSessionsUseCase:
 
 
 def make_get_chat_history_use_case() -> GetChatHistoryUseCase:
-    return GetChatHistoryUseCase(PostgresChatSessionRepository())
+    from app.composition.repository_composer import make_chat_message_feedback_repository
+
+    return GetChatHistoryUseCase(
+        PostgresChatSessionRepository(),
+        feedback_repository=make_chat_message_feedback_repository(),
+    )
 
 
 def make_switch_chat_branch_use_case() -> SwitchChatBranchUseCase:
@@ -146,8 +151,12 @@ def make_upsert_chat_message_feedback_use_case():
     from app.application.use_cases.upsert_chat_message_feedback_use_case import (
         UpsertChatMessageFeedbackUseCase,
     )
+    from app.composition.repository_composer import make_chat_message_feedback_repository
 
-    return UpsertChatMessageFeedbackUseCase(PostgresChatSessionRepository())
+    return UpsertChatMessageFeedbackUseCase(
+        PostgresChatSessionRepository(),
+        feedback_repository=make_chat_message_feedback_repository(),
+    )
 
 
 def make_chat_intelligence_settings_service() -> ChatIntelligenceSettingsService:

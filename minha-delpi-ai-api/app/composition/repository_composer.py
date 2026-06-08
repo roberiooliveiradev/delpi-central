@@ -9,12 +9,22 @@ from app.application.use_cases.list_external_actions_use_case import (
 from app.composition.external_action_composer import make_postgres_external_action_repository
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
+from app.domain.ports.chat_quality_issue_repository_port import ChatQualityIssueRepositoryPort
 from app.domain.ports.chat_quality_report_repository_port import ChatQualityReportRepositoryPort
 from app.domain.ports.chat_skill_repository_port import ChatSkillRepositoryPort
 from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_chat_agent_repository import (
     PostgresChatAgentRepository,
+)
+from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
+    PostgresChatMessageFeedbackRepository,
+)
+from app.infrastructure.persistence.postgres_chat_quality_issue_repository import (
+    PostgresChatQualityIssueRepository,
 )
 from app.infrastructure.persistence.postgres_chat_quality_report_repository import (
     PostgresChatQualityReportRepository,
@@ -60,3 +70,11 @@ def make_chat_quality_report_repository() -> ChatQualityReportRepositoryPort:
 
 def make_chat_skill_repository() -> ChatSkillRepositoryPort:
     return PostgresChatSkillRepository()
+
+
+def make_chat_message_feedback_repository() -> ChatMessageFeedbackRepositoryPort:
+    return PostgresChatMessageFeedbackRepository()
+
+
+def make_chat_quality_issue_repository() -> ChatQualityIssueRepositoryPort:
+    return PostgresChatQualityIssueRepository()

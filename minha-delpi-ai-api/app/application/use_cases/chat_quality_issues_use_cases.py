@@ -1,15 +1,19 @@
+from app.domain.ports.chat_quality_issue_repository_port import ChatQualityIssueRepositoryPort
 from app.domain.services.chat_feedback_issue_service import ChatFeedbackIssueService
-from app.infrastructure.persistence.postgres_chat_quality_issue_repository import (
-    PostgresChatQualityIssueRepository,
-)
+
+
+def _default_issue_repository() -> ChatQualityIssueRepositoryPort:
+    from app.composition.repository_composer import make_chat_quality_issue_repository
+
+    return make_chat_quality_issue_repository()
 
 
 class EvaluateFeedbackIssuesUseCase:
     def __init__(
         self,
-        issue_repository: PostgresChatQualityIssueRepository | None = None,
+        issue_repository: ChatQualityIssueRepositoryPort | None = None,
     ):
-        self.issue_repository = issue_repository or PostgresChatQualityIssueRepository()
+        self.issue_repository = issue_repository or _default_issue_repository()
 
     def execute(
         self,
@@ -29,9 +33,9 @@ class EvaluateFeedbackIssuesUseCase:
 class ListAdminQualityIssuesUseCase:
     def __init__(
         self,
-        issue_repository: PostgresChatQualityIssueRepository | None = None,
+        issue_repository: ChatQualityIssueRepositoryPort | None = None,
     ):
-        self.issue_repository = issue_repository or PostgresChatQualityIssueRepository()
+        self.issue_repository = issue_repository or _default_issue_repository()
 
     def execute(
         self,
@@ -61,9 +65,9 @@ class ListAdminQualityIssuesUseCase:
 class UpdateAdminQualityIssueStatusUseCase:
     def __init__(
         self,
-        issue_repository: PostgresChatQualityIssueRepository | None = None,
+        issue_repository: ChatQualityIssueRepositoryPort | None = None,
     ):
-        self.issue_repository = issue_repository or PostgresChatQualityIssueRepository()
+        self.issue_repository = issue_repository or _default_issue_repository()
 
     def execute(self, *, issue_id: int, status: str) -> dict:
         allowed = {"open", "in_progress", "resolved", "dismissed"}

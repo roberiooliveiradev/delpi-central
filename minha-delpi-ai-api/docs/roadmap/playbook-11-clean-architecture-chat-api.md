@@ -1,7 +1,7 @@
 # Playbook 11 — Clean Architecture na API Chat AI
 
 **Projeto:** `minha-delpi-ai-api`  
-**Status:** Fase 0 concluída · Fase 1 concluída · Fase 2 lote 1 em andamento (jun/2026)  
+**Status:** Fase 0 concluída · Fase 1 concluída · Fase 2 lote 2 concluído (jun/2026)  
 **Público:** backend, revisores de PR, agentes Cursor  
 **Relacionado:** [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md), [`chat-pre-llm-layers.md`](../architecture/chat-pre-llm-layers.md), [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md)
 
@@ -405,8 +405,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 **Sprint imediata (pós-playbook 11):**
 
-1. Fase 2 lote 2: ports restantes na application (`Postgres*` inline fora de composition).
+1. Fase 2 lote 3: migrar serviços domain restantes com `ContentService`/`Settings` direto (~15 arquivos).
 2. Reduzir baseline restante (heurísticas selection → `external_action_responses.json` onde couber).
+
+**Concluído (Fase 2 lote 2):** `ChatMessageFeedbackRepositoryPort` + `ChatQualityIssueRepositoryPort` (`list_issues`, `update_status`); use cases feedback/quality issues e resumos admin (`session_memory`, `text_task`) tipados com ports; composers `make_chat_message_feedback_repository` / `make_chat_quality_issue_repository`; `get_assistant_message` retorna dict (`id`, `metadata`, `content`); testes `test_repository_ports`, `test_feedback_repository_ports`.
 
 **Concluído (pós-Fase 6):** mensagens da lousa migradas para `attachments.canvasResponses`; `chat_canvas_content_service` sem strings PT soltas; baseline **58 → 32**.
 

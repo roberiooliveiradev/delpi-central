@@ -1,14 +1,17 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
+from app.extensions.db import db
 from app.infrastructure.db.models.chat_message_feedback_model import (
     AiChatMessageFeedbackModel,
 )
 from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
-from app.extensions.db import db
 
 
-class PostgresChatMessageFeedbackRepository:
+class PostgresChatMessageFeedbackRepository(ChatMessageFeedbackRepositoryPort):
     def upsert_feedback(
         self,
         *,
@@ -101,13 +104,24 @@ class PostgresChatMessageFeedbackRepository:
 
         return {str(row.message_id): self._to_dict(row) for row in rows}
 
-    def get_assistant_message(self, message_id: UUID) -> AiChatMessageModel | None:
-        return (
+    def get_assistant_message(self, message_id: UUID) -> dict | None:
+        row = (
             AiChatMessageModel.query.filter(
                 AiChatMessageModel.id == message_id,
                 AiChatMessageModel.role == "assistant",
             ).first()
         )
+
+        if not row:
+            return None
+
+        metadata = row.metadata if isinstance(row.metadata, dict) else {}
+
+        return {
+            "id": str(row.id),
+            "metadata": metadata,
+            "content": str(row.content or ""),
+        }
 
     def get_user_question_for_assistant(self, message_id: UUID) -> str | None:
         assistant = AiChatMessageModel.query.filter_by(id=message_id).first()

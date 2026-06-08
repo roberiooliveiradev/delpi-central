@@ -1,19 +1,25 @@
 from datetime import datetime, timedelta, timezone
 
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
 from app.domain.services.chat_feedback_admin_metrics_service import (
     ChatFeedbackAdminMetricsService,
 )
-from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
-    PostgresChatMessageFeedbackRepository,
-)
+
+
+def _default_feedback_repository() -> ChatMessageFeedbackRepositoryPort:
+    from app.composition.repository_composer import make_chat_message_feedback_repository
+
+    return make_chat_message_feedback_repository()
 
 
 class GetAdminFeedbackSummaryUseCase:
     def __init__(
         self,
-        feedback_repository: PostgresChatMessageFeedbackRepository | None = None,
+        feedback_repository: ChatMessageFeedbackRepositoryPort | None = None,
     ):
-        self.feedback_repository = feedback_repository or PostgresChatMessageFeedbackRepository()
+        self.feedback_repository = feedback_repository or _default_feedback_repository()
 
     def execute(self, *, hours: int = 168) -> dict:
         from app.infrastructure.config.settings import Settings

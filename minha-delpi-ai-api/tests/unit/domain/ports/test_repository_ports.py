@@ -38,3 +38,19 @@ def test_postgres_chat_quality_report_repository_declares_port():
         "PostgresChatQualityReportRepository",
     )
     assert "ChatQualityReportRepositoryPort" in bases
+
+
+def test_postgres_chat_message_feedback_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_chat_message_feedback_repository.py",
+        "PostgresChatMessageFeedbackRepository",
+    )
+    assert "ChatMessageFeedbackRepositoryPort" in bases
+
+
+def test_postgres_chat_quality_issue_repository_declares_port():
+    bases = _class_bases(
+        "app/infrastructure/persistence/postgres_chat_quality_issue_repository.py",
+        "PostgresChatQualityIssueRepository",
+    )
+    assert "ChatQualityIssueRepositoryPort" in bases

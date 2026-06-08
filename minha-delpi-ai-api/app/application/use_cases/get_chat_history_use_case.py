@@ -6,21 +6,27 @@ from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
 )
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.chat_message_branch_service import ChatMessageBranchService
-from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
-    PostgresChatMessageFeedbackRepository,
-)
+
+
+def _default_feedback_repository() -> ChatMessageFeedbackRepositoryPort:
+    from app.composition.repository_composer import make_chat_message_feedback_repository
+
+    return make_chat_message_feedback_repository()
 
 
 class GetChatHistoryUseCase:
     def __init__(
         self,
         repository: ChatSessionRepositoryPort,
-        feedback_repository: PostgresChatMessageFeedbackRepository | None = None,
+        feedback_repository: ChatMessageFeedbackRepositoryPort | None = None,
     ):
         self.repository = repository
-        self.feedback_repository = feedback_repository or PostgresChatMessageFeedbackRepository()
+        self.feedback_repository = feedback_repository or _default_feedback_repository()
 
     def execute(self, user_id: str, session_id: str) -> list[ChatMessageResponse]:
         session = self.repository.get_session_by_id(UUID(session_id))

@@ -233,8 +233,11 @@ def make_get_admin_feedback_summary_use_case():
     from app.application.use_cases.get_admin_feedback_summary_use_case import (
         GetAdminFeedbackSummaryUseCase,
     )
+    from app.composition.repository_composer import make_chat_message_feedback_repository
 
-    return GetAdminFeedbackSummaryUseCase()
+    return GetAdminFeedbackSummaryUseCase(
+        feedback_repository=make_chat_message_feedback_repository(),
+    )
 
 
 def make_get_admin_quality_unified_summary_use_case():
@@ -260,16 +263,22 @@ def make_list_admin_quality_issues_use_case():
     from app.application.use_cases.chat_quality_issues_use_cases import (
         ListAdminQualityIssuesUseCase,
     )
+    from app.composition.repository_composer import make_chat_quality_issue_repository
 
-    return ListAdminQualityIssuesUseCase()
+    return ListAdminQualityIssuesUseCase(
+        issue_repository=make_chat_quality_issue_repository(),
+    )
 
 
 def make_update_admin_quality_issue_status_use_case():
     from app.application.use_cases.chat_quality_issues_use_cases import (
         UpdateAdminQualityIssueStatusUseCase,
     )
+    from app.composition.repository_composer import make_chat_quality_issue_repository
 
-    return UpdateAdminQualityIssueStatusUseCase()
+    return UpdateAdminQualityIssueStatusUseCase(
+        issue_repository=make_chat_quality_issue_repository(),
+    )
 
 
 def make_list_learning_candidates_use_case():
@@ -425,11 +434,27 @@ def make_review_user_memory_item_use_case():
 
 
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
-    return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
+    from app.composition.repository_composer import (
+        make_audit_repository,
+        make_chat_message_feedback_repository,
+    )
+
+    return GetAdminTextTaskSummaryUseCase(
+        make_audit_repository(),
+        feedback_repository=make_chat_message_feedback_repository(),
+    )
 
 
 def make_get_admin_session_memory_summary_use_case() -> GetAdminSessionMemorySummaryUseCase:
-    return GetAdminSessionMemorySummaryUseCase(PostgresAuditRepository())
+    from app.composition.repository_composer import (
+        make_audit_repository,
+        make_chat_message_feedback_repository,
+    )
+
+    return GetAdminSessionMemorySummaryUseCase(
+        make_audit_repository(),
+        feedback_repository=make_chat_message_feedback_repository(),
+    )
 
 
 def make_get_admin_document_vision_summary_use_case() -> GetAdminDocumentVisionSummaryUseCase:

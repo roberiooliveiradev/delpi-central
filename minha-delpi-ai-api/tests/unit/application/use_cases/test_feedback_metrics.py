@@ -188,10 +188,12 @@ def test_upsert_feedback_persists_context_metadata():
     session.user_id = user_id
     session.agent_id = None
 
-    assistant = MagicMock()
-    assistant.metadata = {
-        "intentRouting": {"intent": "operational_query", "confidence": 0.9},
-        "toolCalls": [],
+    assistant = {
+        "metadata": {
+            "intentRouting": {"intent": "operational_query", "confidence": 0.9},
+            "toolCalls": [],
+        },
+        "content": "resposta",
     }
 
     session_repository = MagicMock()

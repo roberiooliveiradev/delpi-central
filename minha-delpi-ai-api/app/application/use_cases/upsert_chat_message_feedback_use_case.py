@@ -5,25 +5,29 @@ from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
 )
+from app.domain.ports.chat_message_feedback_repository_port import (
+    ChatMessageFeedbackRepositoryPort,
+)
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.chat_feedback_admin_metrics_service import (
     ChatFeedbackAdminMetricsService,
 )
 from app.domain.services.chat_feedback_content_service import ChatFeedbackContentService
 from app.domain.services.chat_feedback_context_service import ChatFeedbackContextService
-from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
-    PostgresChatMessageFeedbackRepository,
-)
+def _default_feedback_repository() -> ChatMessageFeedbackRepositoryPort:
+    from app.composition.repository_composer import make_chat_message_feedback_repository
+
+    return make_chat_message_feedback_repository()
 
 
 class UpsertChatMessageFeedbackUseCase:
     def __init__(
         self,
         session_repository: ChatSessionRepositoryPort,
-        feedback_repository: PostgresChatMessageFeedbackRepository | None = None,
+        feedback_repository: ChatMessageFeedbackRepositoryPort | None = None,
     ):
         self.session_repository = session_repository
-        self.feedback_repository = feedback_repository or PostgresChatMessageFeedbackRepository()
+        self.feedback_repository = feedback_repository or _default_feedback_repository()
 
     def execute(
         self,
@@ -72,7 +76,7 @@ class UpsertChatMessageFeedbackUseCase:
         if rating == 1:
             normalized_reason = None
 
-        assistant_meta = getattr(assistant, "metadata", None) or {}
+        assistant_meta = assistant.get("metadata") or {}
         context_metadata = ChatFeedbackContextService.snapshot_from_assistant_metadata(
             assistant_meta if isinstance(assistant_meta, dict) else None,
             session_id=session_id,
