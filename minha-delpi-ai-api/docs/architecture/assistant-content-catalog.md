@@ -33,7 +33,9 @@ Wrappers especializados (mantêm API estável):
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService` |
+| `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
+| `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
+| `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado | `ChatErrorHandlingClassifier`, SQL interpretation |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |

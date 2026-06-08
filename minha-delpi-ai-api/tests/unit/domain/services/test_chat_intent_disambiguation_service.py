@@ -22,6 +22,15 @@ def test_try_build_not_ambiguous_for_stock():
     assert result is None
 
 
+def test_try_build_not_ambiguous_for_saldo_disponivel():
+    result = ChatIntentDisambiguationService.try_build(
+        "Qual o saldo disponível do produto 10080033 na filial 01?",
+        allowed_action_ids=["action-1"],
+    )
+
+    assert result is None
+
+
 def test_try_build_not_ambiguous_for_quem_fornece():
     result = ChatIntentDisambiguationService.try_build(
         "quem fornece o produto 10080022?",

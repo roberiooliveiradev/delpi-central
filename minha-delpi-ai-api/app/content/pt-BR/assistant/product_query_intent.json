@@ -364,5 +364,119 @@
     "default": "Consulta do produto",
     "stock": "Estoque do produto",
     "parents": "Onde o item é usado"
+  },
+  "operationalAmbiguityScopeTerms": [
+    "estoque",
+    "fornecedor",
+    "venda",
+    "compra",
+    "estrutura",
+    "roteiro",
+    "inspeção",
+    "inspecao",
+    "preço",
+    "preco"
+  ],
+  "router": {
+    "operationalKeywords": [
+      "estoque",
+      "produto",
+      "fornecedor",
+      "fornece",
+      "roteiro",
+      "estrutura",
+      "inspeção",
+      "inspecao",
+      "venda",
+      "faturamento",
+      "pedido",
+      "ov ",
+      "compra",
+      "filial",
+      "armazém",
+      "armazem",
+      "preço",
+      "preco",
+      "saldo",
+      "bom",
+      "where used",
+      "componentes",
+      "protheus"
+    ],
+    "operationalAmbiguityProductLookupExcludes": [
+      "me fale",
+      "fale do",
+      "fale sobre",
+      "informacoes sobre",
+      "informações sobre",
+      "informacoes completas",
+      "informações completas",
+      "analise integrada",
+      "análise integrada",
+      "ficha completa",
+      "analisador",
+      "dados do produto",
+      "cadastro",
+      "ficha",
+      "resumo do produto"
+    ],
+    "supplierMentionTerms": [
+      "fornecedor"
+    ],
+    "invoiceOutbound": {
+      "inboundExcludePhrases": [
+        "notas fiscais de entrada",
+        "nota de entrada",
+        "notas de entrada"
+      ],
+      "outboundPhrases": [
+        "notas fiscais de saída",
+        "notas fiscais de saida",
+        "nota fiscal de saída",
+        "nota fiscal de saida",
+        "notas de saída",
+        "notas de saida",
+        "nota de saída",
+        "nota de saida",
+        "nf de saída",
+        "nf de saida",
+        "nfe de saída",
+        "nfe de saida"
+      ]
+    },
+    "purchaseTerms": [
+      "compra",
+      "purchase"
+    ],
+    "priceTerms": [
+      "preço",
+      "preco",
+      "pricing"
+    ],
+    "guideTerms": [
+      "roteiro",
+      "guide"
+    ],
+    "inspectionTerms": [
+      "inspeção",
+      "inspecao"
+    ],
+    "systemMetadataTableTerms": [
+      "tabela",
+      "tabelas",
+      "coluna",
+      "colunas",
+      "protheus",
+      "sx2",
+      "sx3",
+      "metadado"
+    ],
+    "systemMetadataQuestionPhrases": [
+      "qual a tabela",
+      "qual tabela",
+      "buscar tabela",
+      "pesquisar tabela",
+      "schema da tabela"
+    ]
   }
 }

@@ -230,62 +230,23 @@ class ChatIntentRouterService:
         "web_save_sources": ("web_search", None, 7),
     }
 
-    _SELF_HELP_PHRASES = (
-        "o que você pode",
-        "o que voce pode",
-        "o que você faz",
-        "o que voce faz",
-        "o que consegue",
-        "como uso você",
-        "como uso voce",
-        "como uso o chat",
-        "quais consultas",
-        "quais comandos",
-        "quais ações",
-        "quais acoes",
-        "como anexo arquivo",
-        "como uso a lousa",
-        "como gero gráfico",
-        "como gero grafico",
-        "qual agente escolher",
-        "como faço uma boa pergunta",
-        "como faco uma boa pergunta",
-        "você consegue corrigir texto",
-        "voce consegue corrigir texto",
-        "você consegue pesquisar na web",
-        "voce consegue pesquisar na web",
-    )
+    @staticmethod
+    def _intent_router_terms(*path: str) -> tuple[str, ...]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
 
-    _PRESENTATION_TERMS = (
-        "mostre em tabela",
-        "mostre em gráfico",
-        "mostre em grafico",
-        "em tabela",
-        "em gráfico",
-        "em grafico",
-        "gere gráfico",
-        "gere grafico",
-        "em linha",
-        "em pizza",
-        "em rosca",
-        "em barras",
-        "mostre kpi",
-        "mostre árvore",
-        "mostre arvore",
-        "transforme a tabela em gráfico",
-        "exporte csv",
-        "ver em gráfico",
-        "ver em grafico",
-    )
+        return tuple(ChatAssistantContentService.list("intent_router", *path))
 
-    _WEB_BLOCK_TERMS = (
-        "não pesquise",
-        "nao pesquise",
-        "sem pesquisa na web",
-        "sem pesquisa na internet",
-        "não busque na web",
-        "nao busque na web",
-    )
+    @staticmethod
+    def _product_router_terms(*path: str) -> tuple[str, ...]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return tuple(
+            ChatAssistantContentService.list("product_query_intent", "router", *path)
+        )
 
     @classmethod
     def classify(
@@ -474,8 +435,9 @@ class ChatIntentRouterService:
                 )
 
         sql_sub = cls._sql_sub_intent(normalized)
+        operational_sub = cls._operational_sub_intent(normalized)
 
-        if sql_sub:
+        if sql_sub and operational_sub != "system_metadata":
             execute = sql_sub == "sql_execute"
 
             return cls._with_decision(
@@ -1110,7 +1072,10 @@ class ChatIntentRouterService:
     def _blocks_web_search(message: str) -> bool:
         lowered = message.lower()
 
-        return any(term in lowered for term in ChatIntentRouterService._WEB_BLOCK_TERMS)
+        return any(
+            term in lowered
+            for term in ChatIntentRouterService._intent_router_terms("webBlockTerms")
+        )
 
     @staticmethod
     def _looks_web_search(message: str) -> bool:
@@ -1147,7 +1112,10 @@ class ChatIntentRouterService:
     def _looks_presentation(message: str) -> bool:
         lowered = message.lower()
 
-        return any(term in lowered for term in ChatIntentRouterService._PRESENTATION_TERMS)
+        return any(
+            term in lowered
+            for term in ChatIntentRouterService._intent_router_terms("presentationTerms")
+        )
 
     @staticmethod
     def _presentation_sub_intent(message: str) -> str | None:
@@ -1172,6 +1140,9 @@ class ChatIntentRouterService:
         message: str,
         resolved_params: dict[str, str] | None,
     ) -> tuple[bool, tuple[str, ...]]:
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
@@ -1192,22 +1163,8 @@ class ChatIntentRouterService:
 
         if sub_intent == "product_lookup" and any(
             term in lowered
-            for term in (
-                "me fale",
-                "fale do",
-                "fale sobre",
-                "informacoes sobre",
-                "informações sobre",
-                "informacoes completas",
-                "informações completas",
-                "analise integrada",
-                "análise integrada",
-                "ficha completa",
-                "analisador",
-                "dados do produto",
-                "cadastro",
-                "ficha",
-                "resumo do produto",
+            for term in ChatIntentRouterService._product_router_terms(
+                "operationalAmbiguityProductLookupExcludes"
             )
         ):
             return False, ()
@@ -1215,21 +1172,15 @@ class ChatIntentRouterService:
         if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
             return False, ()
 
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
+            return False, ()
+
         if (
             any(
                 term in lowered
-                for term in (
-                    "estoque",
-                    "fornecedor",
-                    "venda",
-                    "compra",
-                    "estrutura",
-                    "roteiro",
-                    "inspeção",
-                    "inspecao",
-                    "preço",
-                    "preco",
-                )
+                for term in ChatIntentRouterService._operational_scope_terms()
             )
             or ChatIntentRouterService._mentions_supplier(lowered)
             or ChatIntentRouterService._mentions_outbound_invoice(lowered)
@@ -1251,36 +1202,44 @@ class ChatIntentRouterService:
         return True, candidates
 
     @staticmethod
+    def _operational_scope_terms() -> tuple[str, ...]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return tuple(
+            ChatAssistantContentService.list(
+                "product_query_intent",
+                "operationalAmbiguityScopeTerms",
+            )
+        )
+
+    @staticmethod
     def _mentions_supplier(lowered: str) -> bool:
-        return "fornecedor" in lowered or bool(re.search(r"\bfornece", lowered))
+        if any(
+            term in lowered
+            for term in ChatIntentRouterService._product_router_terms("supplierMentionTerms")
+        ):
+            return True
+
+        return bool(re.search(r"\bfornece", lowered))
 
     @staticmethod
     def _mentions_outbound_invoice(lowered: str) -> bool:
         if any(
             term in lowered
-            for term in (
-                "notas fiscais de entrada",
-                "nota de entrada",
-                "notas de entrada",
+            for term in ChatIntentRouterService._product_router_terms(
+                "invoiceOutbound",
+                "inboundExcludePhrases",
             )
         ):
             return False
 
         if any(
             term in lowered
-            for term in (
-                "notas fiscais de saída",
-                "notas fiscais de saida",
-                "nota fiscal de saída",
-                "nota fiscal de saida",
-                "notas de saída",
-                "notas de saida",
-                "nota de saída",
-                "nota de saida",
-                "nf de saída",
-                "nf de saida",
-                "nfe de saída",
-                "nfe de saida",
+            for term in ChatIntentRouterService._product_router_terms(
+                "invoiceOutbound",
+                "outboundPhrases",
             )
         ):
             return True
@@ -1300,104 +1259,76 @@ class ChatIntentRouterService:
 
         return any(
             term in lowered
-            for term in (
-                "estoque",
-                "produto",
-                "fornecedor",
-                "fornece",
-                "roteiro",
-                "estrutura",
-                "inspeção",
-                "inspecao",
-                "venda",
-                "faturamento",
-                "pedido",
-                "ov ",
-                "compra",
-                "filial",
-                "armazém",
-                "armazem",
-                "preço",
-                "preco",
-                "saldo",
-                "bom",
-                "where used",
-                "componentes",
-                "protheus",
-            )
+            for term in ChatIntentRouterService._product_router_terms("operationalKeywords")
         )
 
     @staticmethod
     def _operational_sub_intent(message: str) -> str | None:
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
 
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         lowered = message.lower()
 
-        if "estoque" in lowered:
+        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
             return "stock_lookup"
 
         if ChatIntentRouterService._mentions_outbound_invoice(lowered):
             return "sales_lookup"
 
-        if any(
-            term in lowered
-            for term in (
-                "vendas do produto",
-                "venda do produto",
-                "mostre vendas",
-                "mostra vendas",
-                "resumo de vendas",
-            )
-        ) or ("vendas" in lowered and "produto" in lowered and "estoque" not in lowered):
+        if ChatProductQueryIntentService._looks_like_sales_question(normalized):
             return "sales_lookup"
 
-        if "compra" in lowered:
+        if any(
+            term in lowered
+            for term in ChatIntentRouterService._product_router_terms("purchaseTerms")
+        ):
             return "purchase_lookup"
 
         if ChatIntentRouterService._mentions_supplier(lowered):
             return "supplier_lookup"
 
-        if "preço" in lowered or "preco" in lowered:
+        if any(
+            term in lowered
+            for term in ChatIntentRouterService._product_router_terms("priceTerms")
+        ):
             return "price_lookup"
 
         if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
             return "product_lookup"
 
-        if any(term in lowered for term in ("estrutura", "bom")):
+        if ChatProductQueryIntentService._looks_like_structure_question(normalized):
             return "structure_lookup"
 
-        if any(term in lowered for term in ("roteiro",)):
+        if any(
+            term in lowered
+            for term in ChatIntentRouterService._product_router_terms("guideTerms")
+        ):
             return "guide_lookup"
 
-        if any(term in lowered for term in ("inspeção", "inspecao")):
+        if any(
+            term in lowered
+            for term in ChatIntentRouterService._product_router_terms("inspectionTerms")
+        ):
             return "inspection_lookup"
 
-        if any(term in lowered for term in ("estrutura", "roteiro", "inspeção", "inspecao")):
-            return "structure_lookup"
-
-        if any(term in lowered for term in ("onde", "usado", "pais", "parents", "where used")):
+        if ChatProductQueryIntentService._looks_like_parents_question(normalized):
             return "parents_lookup"
 
         if any(
             term in lowered
-            for term in (
-                "tabela",
-                "tabelas",
-                "coluna",
-                "colunas",
-                "protheus",
-                "sx2",
-                "sx3",
-                "metadado",
+            for term in ChatIntentRouterService._product_router_terms(
+                "systemMetadataTableTerms"
             )
-        ) and (
-            "qual a tabela" in lowered
-            or "qual tabela" in lowered
-            or "buscar tabela" in lowered
-            or "pesquisar tabela" in lowered
-            or "schema da tabela" in lowered
+        ) and any(
+            phrase in lowered
+            for phrase in ChatIntentRouterService._product_router_terms(
+                "systemMetadataQuestionPhrases"
+            )
         ):
             return "system_metadata"
 
@@ -1412,28 +1343,17 @@ class ChatIntentRouterService:
 
         return any(
             term in lowered
-            for term in (
-                "documento",
-                "norma",
-                "procedimento",
-                "política",
-                "politica",
-                "manual",
-                "regulamento",
-                "conformidade",
-                "documentação interna",
-                "documentacao interna",
-                "base de conhecimento",
-                "segundo o documento",
-                "o que diz a norma",
-            )
+            for term in ChatIntentRouterService._intent_router_terms("ragDocumentTerms")
         )
 
     @classmethod
     def _looks_self_help(cls, message: str) -> bool:
         lowered = message.lower()
 
-        return any(phrase in lowered for phrase in cls._SELF_HELP_PHRASES)
+        return any(
+            phrase in lowered
+            for phrase in cls._intent_router_terms("selfHelpPhrases")
+        )
 
     @staticmethod
     def _looks_identity_question(message: str) -> bool:

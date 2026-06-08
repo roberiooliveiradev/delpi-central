@@ -4,16 +4,36 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
+_INTENT_DISAMBIGUATION_BUNDLE = "intent_disambiguation"
+
 
 class ChatIntentDisambiguationService:
-    _SCOPE_OPTIONS: tuple[tuple[str, str, str], ...] = (
-        ("Cadastro", "product_lookup", "me fale do produto {productCode}"),
-        ("Estoque", "stock_lookup", "qual o estoque do produto {productCode}?"),
-        ("Fornecedores", "supplier_lookup", "quais os fornecedores do produto {productCode}?"),
-        ("Estrutura", "structure_lookup", "mostre a estrutura do produto {productCode}"),
-        ("Vendas", "sales_lookup", "mostre as vendas do produto {productCode}"),
-        ("Compras", "purchase_lookup", "mostre as compras do produto {productCode}"),
-    )
+    @classmethod
+    def _scope_options(cls) -> tuple[tuple[str, str, str], ...]:
+        raw = ChatAssistantContentService.get_node(
+            _INTENT_DISAMBIGUATION_BUNDLE,
+            "scopeOptions",
+        )
+
+        if not isinstance(raw, list):
+            return ()
+
+        options: list[tuple[str, str, str]] = []
+
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+
+            label = str(item.get("label") or "").strip()
+            sub_intent = str(item.get("subIntent") or "").strip()
+            query_template = str(item.get("queryTemplate") or "").strip()
+
+            if label and sub_intent and query_template:
+                options.append((label, sub_intent, query_template))
+
+        return tuple(options)
 
     @classmethod
     def try_build(
@@ -42,10 +62,14 @@ class ChatIntentDisambiguationService:
             return None
 
         suggestions = cls.build_suggestions(product_code)
-        direct_answer = (
-            f"O que você quer ver sobre o produto **{product_code}**? "
-            "Escolha uma opção abaixo ou descreva com suas palavras."
+        direct_answer = ChatAssistantContentService.format(
+            _INTENT_DISAMBIGUATION_BUNDLE,
+            "directAnswer",
+            productCode=product_code,
         )
+
+        if not direct_answer:
+            return None
 
         return {
             "directAnswer": direct_answer,
@@ -59,7 +83,7 @@ class ChatIntentDisambiguationService:
         code = str(product_code or "").strip()
         suggestions: list[dict[str, str]] = []
 
-        for label, _sub_intent, template in cls._SCOPE_OPTIONS:
+        for label, _sub_intent, template in cls._scope_options():
             query = template.format(productCode=code)
 
             suggestions.append({"label": label, "query": query, "subIntent": _sub_intent})

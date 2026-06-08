@@ -1,4 +1,14 @@
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+
+
+def test_intent_router_content_bundles_have_router_terms():
+    assert ChatAssistantContentService.list("intent_router", "selfHelpPhrases")
+    assert ChatAssistantContentService.list(
+        "product_query_intent",
+        "router",
+        "operationalKeywords",
+    )
 
 
 def test_classify_text_task_pure():
@@ -20,6 +30,19 @@ def test_classify_operational_stock():
     assert route.intent == "operational_query"
     assert route.sub_intent == "stock_lookup"
     assert route.requires_tool is False or route.requires_tool is True
+
+
+def test_classify_saldo_disponivel_routes_to_stock_not_clarify():
+    route = ChatIntentRouterService.classify(
+        "Qual o saldo disponível do produto 10080033 na filial 01?",
+        allowed_action_ids=["action-1"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "stock_lookup"
+    assert route.ambiguous is False
+    assert route.decision == "operational_action"
+    assert route.resolved_params.get("productCode") == "10080033"
 
 
 def test_classify_supplier_question_quem_fornece_not_ambiguous():

@@ -1,0 +1,35 @@
+{
+  "directAnswer": "O que você quer ver sobre o produto {productCode}? Escolha uma opção abaixo ou descreva com suas palavras.",
+  "scopeOptions": [
+    {
+      "label": "Cadastro",
+      "subIntent": "product_lookup",
+      "queryTemplate": "me fale do produto {productCode}"
+    },
+    {
+      "label": "Estoque",
+      "subIntent": "stock_lookup",
+      "queryTemplate": "qual o estoque do produto {productCode}?"
+    },
+    {
+      "label": "Fornecedores",
+      "subIntent": "supplier_lookup",
+      "queryTemplate": "quais os fornecedores do produto {productCode}?"
+    },
+    {
+      "label": "Estrutura",
+      "subIntent": "structure_lookup",
+      "queryTemplate": "mostre a estrutura do produto {productCode}"
+    },
+    {
+      "label": "Vendas",
+      "subIntent": "sales_lookup",
+      "queryTemplate": "mostre as vendas do produto {productCode}"
+    },
+    {
+      "label": "Compras",
+      "subIntent": "purchase_lookup",
+      "queryTemplate": "mostre as compras do produto {productCode}"
+    }
+  ]
+}
