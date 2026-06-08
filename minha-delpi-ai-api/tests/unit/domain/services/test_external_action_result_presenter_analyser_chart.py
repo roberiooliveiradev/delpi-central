@@ -21,5 +21,8 @@ def test_analyser_builds_composition_chart_when_multiple_types():
 
     assert chart is not None
     assert chart.get("chartType") == "donut"
-    assert "PI" in " ".join(chart.get("labels") or [])
-    assert "MP" in " ".join(chart.get("labels") or [])
+    rows = chart.get("data") or []
+    labels = [str(row.get("label") or "") for row in rows if isinstance(row, dict)]
+    joined = " ".join(labels)
+    assert "PI" in joined
+    assert "MP" in joined

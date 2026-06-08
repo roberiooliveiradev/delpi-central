@@ -1,4 +1,5 @@
 import type { ContentFormatKind } from "./assistantContentLayout";
+import type { AssistantContentSegment } from "./assistantContentTypes";
 
 export type StackSectionId =
   | "scope"
@@ -16,14 +17,14 @@ export type StackSectionChrome = {
   showIn: Array<ContentFormatKind | "complete">;
 };
 
-const SECTION_TITLES: Record<StackSectionId, string> = {
-  scope: "1. Escopo da consulta",
-  profile: "2. Ficha cadastral",
-  highlights: "3. Síntese executiva (Destaques)",
-  guide: "4. Roteiro de produção",
-  inspection: "5. Plano de inspeção",
-  structure: "6. Estrutura (BOM)",
-  attention: "7. Alertas e divergências",
+const SECTION_BASE_TITLES: Record<StackSectionId, string> = {
+  scope: "Escopo da consulta",
+  profile: "Ficha cadastral",
+  highlights: "Síntese executiva (Destaques)",
+  guide: "Roteiro de produção",
+  inspection: "Plano de inspeção",
+  structure: "Estrutura (BOM)",
+  attention: "Alertas e divergências",
 };
 
 const SECTION_SHOW_IN: Record<StackSectionId, StackSectionChrome["showIn"]> = {
@@ -36,12 +37,44 @@ const SECTION_SHOW_IN: Record<StackSectionId, StackSectionChrome["showIn"]> = {
   attention: ["complete", "text"],
 };
 
+export function stripStackSectionNumber(title: string): string {
+  return String(title || "").replace(/^\d+\.\s*/, "").trim();
+}
+
 export function buildStackSectionChrome(id: StackSectionId): StackSectionChrome {
   return {
     id,
-    title: SECTION_TITLES[id],
+    title: SECTION_BASE_TITLES[id],
     showIn: SECTION_SHOW_IN[id],
   };
+}
+
+export function renumberStackSectionTitles(
+  segments: AssistantContentSegment[],
+  activeKind: ContentFormatKind | null,
+): AssistantContentSegment[] {
+  let visibleIndex = 0;
+
+  return segments.map((segment) => {
+    if (segment.kind !== "stackSection") {
+      return segment;
+    }
+
+    if (!isStackSectionVisible(segment.section, activeKind)) {
+      return segment;
+    }
+
+    visibleIndex += 1;
+    const baseTitle = stripStackSectionNumber(segment.section.title);
+
+    return {
+      kind: "stackSection",
+      section: {
+        ...segment.section,
+        title: `${visibleIndex}. ${baseTitle}`,
+      },
+    };
+  });
 }
 
 export function isStackSectionVisible(

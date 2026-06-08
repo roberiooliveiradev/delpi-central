@@ -114,13 +114,22 @@ describe("presentationStackSections", () => {
       .filter((segment) => segment.kind === "stackSection")
       .map((segment) => (segment.kind === "stackSection" ? segment.section.title : ""));
 
-    expect(sectionTitles[0]).toContain("Escopo");
-    expect(sectionTitles[1]).toContain("Ficha cadastral");
-    expect(sectionTitles[2]).toContain("Destaques");
-    expect(sectionTitles[3]).toContain("Roteiro");
-    expect(sectionTitles.some((title) => title.includes("Estrutura"))).toBe(true);
-    expect(sectionTitles.some((title) => title.includes("Inspeção"))).toBe(false);
-    expect(sectionTitles.at(-1)).toContain("Alertas");
+    const numberedTitles = filterSegmentsByVisualKind(segments, null)
+      .filter((segment) => segment.kind === "stackSection")
+      .map((segment) => (segment.kind === "stackSection" ? segment.section.title : ""));
+
+    expect(numberedTitles[0]).toMatch(/^1\.\s/);
+    expect(numberedTitles[0]).toContain("Escopo");
+    expect(numberedTitles[1]).toMatch(/^2\.\s/);
+    expect(numberedTitles[1]).toContain("Ficha cadastral");
+    expect(numberedTitles[2]).toMatch(/^3\.\s/);
+    expect(numberedTitles[2]).toContain("Destaques");
+    expect(numberedTitles[3]).toMatch(/^4\.\s/);
+    expect(numberedTitles[3]).toContain("Roteiro");
+    expect(numberedTitles.some((title) => title.includes("Estrutura"))).toBe(true);
+    expect(numberedTitles.some((title) => title.includes("Inspeção"))).toBe(false);
+    expect(numberedTitles.at(-1)).toMatch(/^\d+\.\s/);
+    expect(numberedTitles.at(-1)).toContain("Alertas");
 
     const profileIndex = segments.findIndex(
       (segment) => segment.kind === "table" && segment.presentation.title?.startsWith("Produto "),
@@ -136,6 +145,28 @@ describe("presentationStackSections", () => {
     expect(scopeIndex).toBeLessThan(profileIndex);
     expect(profileIndex).toBeLessThan(treeIndex);
     expect(treeIndex).toBeLessThan(attentionIndex);
+  });
+
+  it("renumera seções quando escopo e inspeção estão ausentes", () => {
+    const segments = [
+      { kind: "stackSection", section: buildStackSectionChrome("profile") },
+      { kind: "stackSection", section: buildStackSectionChrome("highlights") },
+      { kind: "stackSection", section: buildStackSectionChrome("guide") },
+      { kind: "stackSection", section: buildStackSectionChrome("structure") },
+      { kind: "stackSection", section: buildStackSectionChrome("attention") },
+    ] as never;
+
+    const titles = filterSegmentsByVisualKind(segments, null)
+      .filter((segment) => segment.kind === "stackSection")
+      .map((segment) => (segment.kind === "stackSection" ? segment.section.title : ""));
+
+    expect(titles).toEqual([
+      "1. Ficha cadastral",
+      "2. Síntese executiva (Destaques)",
+      "3. Roteiro de produção",
+      "4. Estrutura (BOM)",
+      "5. Alertas e divergências",
+    ]);
   });
 
   it("filtra seções por aba da toolbar", () => {

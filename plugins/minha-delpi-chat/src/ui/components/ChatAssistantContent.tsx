@@ -17,6 +17,7 @@ import {
   shouldShowCompleteStackView,
   shouldUsePerSectionFormatToolbar,
 } from "./assistantContentVisualFormats";
+import { renumberStackSectionTitles } from "./presentationStackSections";
 import { AssistantContentRouteSection } from "./AssistantContentRouteSection";
 import {
   collectProductRouteBlocks,
@@ -102,11 +103,11 @@ export function ChatAssistantContent({
 
   const visibleSegments = useMemo(() => {
     if (perSectionToolbar) {
-      return segments;
+      return renumberStackSectionTitles(segments, null);
     }
 
     if (visualFormatOptions.length < 2) {
-      return segments;
+      return renumberStackSectionTitles(segments, null);
     }
 
     return filterSegmentsByVisualKind(segments, activeVisualKind);

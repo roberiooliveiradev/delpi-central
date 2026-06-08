@@ -1,6 +1,7 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 
 import { orderVisualSegments, type AssistantVisualKind } from "./assistantContentLayout";
+import { normalizeChartPresentation } from "./chartPresentationNormalize";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import type { StackSectionChrome } from "./presentationStackSections";
@@ -398,16 +399,12 @@ function collectVisualsForToolCall(toolCall: ChatToolCall): AssistantContentSegm
     }
   }
 
-  const chartPresentation = metadata.chartPresentation;
+  const chartPresentation = normalizeChartPresentation(metadata.chartPresentation);
 
-  if (
-    chartPresentation &&
-    typeof chartPresentation === "object" &&
-    (chartPresentation as ChatPresentation).type === "chart"
-  ) {
+  if (chartPresentation) {
     segments.push({
       kind: "chart",
-      presentation: chartPresentation as Extract<ChatPresentation, { type: "chart" }>,
+      presentation: chartPresentation,
     });
   }
 

@@ -9,6 +9,7 @@ import type {
 
 import { resolveAssistantContentLayout } from "./assistantContentLayout";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
+import { normalizeChartPresentation } from "./chartPresentationNormalize";
 
 export type PresentationPair = {
   primary: ChatPresentation | null;
@@ -25,16 +26,6 @@ function isTablePresentation(
     typeof value === "object" &&
     value !== null &&
     (value as { type?: string }).type === "table"
-  );
-}
-
-function isChartPresentation(
-  value: unknown,
-): value is Extract<ChatPresentation, { type: "chart" }> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as { type?: string }).type === "chart"
   );
 }
 
@@ -202,10 +193,11 @@ function collectExternalActionPresentations(toolCalls: ChatToolCall[]): {
     const treePresentation = metadata.treePresentation;
     const chartPresentation = metadata.chartPresentation;
 
-    if (isChartPresentation(presentation)) {
-      charts.push(presentation);
-    } else if (isChartPresentation(chartPresentation)) {
-      charts.push(chartPresentation);
+    const normalizedChart =
+      normalizeChartPresentation(presentation) ?? normalizeChartPresentation(chartPresentation);
+
+    if (normalizedChart) {
+      charts.push(normalizedChart);
     }
 
     if (isTreePresentation(presentation)) {

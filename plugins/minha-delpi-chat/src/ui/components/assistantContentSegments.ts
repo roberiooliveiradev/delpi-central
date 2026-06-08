@@ -23,6 +23,7 @@ import {
   isSameTablePresentation,
 } from "./presentationTableDedup";
 import { shouldSkipTableSegment } from "./presentationStructureDedup";
+import { normalizeChartPresentation } from "./chartPresentationNormalize";
 
 const SQL_FENCE_RE = /```sql\s*([\s\S]*?)```/gi;
 
@@ -367,16 +368,12 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       }
     }
 
-    const chartPresentation = metadata.chartPresentation;
+    const chartPresentation = normalizeChartPresentation(metadata.chartPresentation);
 
-    if (
-      chartPresentation &&
-      typeof chartPresentation === "object" &&
-      (chartPresentation as ChatPresentation).type === "chart"
-    ) {
+    if (chartPresentation) {
       appendVisualSegment(segments, {
         kind: "chart",
-        presentation: chartPresentation as Extract<ChatPresentation, { type: "chart" }>,
+        presentation: chartPresentation,
       });
     }
 

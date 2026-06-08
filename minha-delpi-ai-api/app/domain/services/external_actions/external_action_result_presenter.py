@@ -4927,18 +4927,23 @@ class ExternalActionResultPresenter:
             for key, value in sorted_counts
         ]
         values = [value for _, value in sorted_counts]
+        label_key = "label"
+        value_key = "value"
+        rows = [
+            {label_key: label, value_key: value}
+            for label, value in zip(labels, values)
+        ]
 
         return {
             "type": "chart",
             "chartType": "donut",
             "title": self._presenter_text("charts", "structureTypeCompositionTitle"),
-            "labels": labels,
-            "datasets": [
-                {
-                    "label": self._presenter_text("charts", "defaultDatasetLabel"),
-                    "data": values,
-                }
-            ],
+            "data": rows,
+            "config": {
+                "xAxis": label_key,
+                "yAxis": value_key,
+                "legend": False,
+            },
         }
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:

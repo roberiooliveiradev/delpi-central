@@ -13,7 +13,8 @@ export function ChatRichKpi({
 }: {
   presentation: KpiPresentation;
 }) {
-  const { title, cards } = presentation;
+  const { title, cards: rawCards } = presentation;
+  const cards = Array.isArray(rawCards) ? rawCards : [];
 
   return (
     <div className="mdc-rich-kpi">

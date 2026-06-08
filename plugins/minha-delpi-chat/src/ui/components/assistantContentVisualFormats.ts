@@ -7,7 +7,10 @@ import {
   segmentVisualKind,
 } from "./assistantContentLayout";
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { isStackSectionVisible } from "./presentationStackSections";
+import {
+  isStackSectionVisible,
+  renumberStackSectionTitles,
+} from "./presentationStackSections";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 import {
   getPresentationDecisionFromToolCalls,
@@ -352,27 +355,27 @@ export function filterSegmentsByVisualKind(
   segments: AssistantContentSegment[],
   activeKind: ContentFormatKind | null,
 ): AssistantContentSegment[] {
-  if (!activeKind) {
-    return segments;
-  }
+  const filtered = !activeKind
+    ? segments
+    : segments.filter((segment) => {
+        if (segment.kind === "stackSection") {
+          return isStackSectionVisible(segment.section, activeKind);
+        }
 
-  return segments.filter((segment) => {
-    if (segment.kind === "stackSection") {
-      return isStackSectionVisible(segment.section, activeKind);
-    }
+        if (segment.kind === "markdown" || segment.kind === "code") {
+          return activeKind === "text";
+        }
 
-    if (segment.kind === "markdown" || segment.kind === "code") {
-      return activeKind === "text";
-    }
+        if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
+          return activeKind === "table";
+        }
 
-    if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
-      return activeKind === "table";
-    }
+        const kind = segmentVisualKind(segment);
 
-    const kind = segmentVisualKind(segment);
+        return kind === activeKind;
+      });
 
-    return kind === activeKind;
-  });
+  return renumberStackSectionTitles(filtered, activeKind);
 }
 
 export function shouldShowCompleteStackView(toolCalls: ChatToolCall[]): boolean {

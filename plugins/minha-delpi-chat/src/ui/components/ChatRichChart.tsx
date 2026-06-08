@@ -53,6 +53,7 @@ import {
   applyCategoryFilter,
   buildCategoryFilterOptions,
 } from "./presentationCategoryFilter";
+import { normalizeChartPresentation } from "./chartPresentationNormalize";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
@@ -109,7 +110,8 @@ export function ChatRichChart({
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
-  const { title, chartType, data: rawData, config } = presentation;
+  const normalizedPresentation = normalizeChartPresentation(presentation) ?? presentation;
+  const { title, chartType, data: rawData, config } = normalizedPresentation;
   const data = Array.isArray(rawData) ? rawData : [];
   const [downloadReady, setDownloadReady] = useState(false);
   const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(
