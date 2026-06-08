@@ -35,7 +35,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 **Não remover na fase 1:**
 
 - Gateways `delpi_*`, use cases e DTOs departamentais usados pelos snapshot providers.
-- Portal RH (`persistence/portal_rh/`).
+- ~~Portal RH (`persistence/portal_rh/`)~~ removido na fase 5.
 
 **Fase 2 concluída:** SI não lê mais Google Sheets localmente; planilhas só na api-delpi.
 
@@ -86,7 +86,19 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | `*_metrics_snapshot_service` departamentais | commercial, production, quality, supplies, engineering | Builders existiam nos composers mas **nenhuma rota HTTP** usava; agregação ficou só no SI |
 | Mantidos | `financial_metrics_snapshot_service`, `hr_metrics_snapshot_service` | Rotas `/financial/ebitda_pct`, `/pmr`, `/hr/*` |
 
-**Pendente:** extrair contratos idênticos para `shared/`; RH via HTTP no SI.
+**Pendente:** extrair contratos idênticos para `shared/`.
+
+### Fase 5 — RH via HTTP no SI (concluída jun/2026)
+
+**Objetivo:** lógica Portal RH só na api-delpi; SI consome `GET /hr/snapshot`.
+
+| Removido no SI | Substituído por |
+|----------------|-----------------|
+| `persistence/portal_rh/**` | `DelpiHrGateway` + `DelpiApiClient.get_hr_snapshot` |
+| `providers/database/portal_rh_postgres_connection.py` | — |
+| `PORTAL_RH_DB_*` no compose/config do SI | `DELPI_API_URL` (já usado pelos demais gateways) |
+
+**Mantido na api-delpi:** `HrMetricsRepository`, rotas `/hr/*`.
 
 ---
 

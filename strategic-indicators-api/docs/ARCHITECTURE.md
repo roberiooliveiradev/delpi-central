@@ -12,7 +12,7 @@ Portal (shell)
                     ├── Postgres plugins (catálogo, metas, settings, period_scores)
                     ├── api-delpi via HTTP (medições operacionais TOTVS)
                     ├── Google Sheets (Transforma+, etc.)
-                    └── Portal RH (quando aplicável)
+                    └── api-delpi `/hr/*` (Portal RH só na api-delpi)
 ```
 
 A **api-delpi** não monta mais o router `/strategic-indicators`. Toda leitura e admin do módulo passam pelo serviço dedicado.

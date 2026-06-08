@@ -1,21 +1,25 @@
 from si_app.application.services.hr.hr_metrics_snapshot_service import (
     HrMetricsSnapshotService,
 )
-from si_app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_repository import (
-    HrMetricsRepository,
-)
+from si_app.infrastructure.gateways.delpi_hr_gateway import DelpiHrGateway
+from delpi_api_client import DelpiApiClient
 from si_app.infrastructure.providers.strategic_indicators.hr_indicators_snapshot_provider import (
     HrIndicatorsSnapshotProvider,
 )
 
+_delpi_client: DelpiApiClient | None = None
 
-def build_hr_metrics_repository() -> HrMetricsRepository:
-    return HrMetricsRepository()
+
+def _get_delpi_client() -> DelpiApiClient:
+    global _delpi_client
+    if _delpi_client is None:
+        _delpi_client = DelpiApiClient()
+    return _delpi_client
 
 
 def build_hr_metrics_snapshot_service() -> HrMetricsSnapshotService:
     return HrMetricsSnapshotService(
-        repository=build_hr_metrics_repository(),
+        hr_gateway=DelpiHrGateway(_get_delpi_client()),
     )
 
 

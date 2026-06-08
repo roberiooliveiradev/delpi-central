@@ -44,6 +44,8 @@ Parâmetros opcionais: `branch`, `start_date`, `end_date` (formato Portal RH, ex
 
 ## Strategic Indicators API
 
+O SI consome `GET /hr/snapshot` via `DelpiHrGateway` (sem conexão direta ao Portal RH).
+
 O provider `hr_indicators_snapshot_provider` alimenta medições reais para o cálculo de scores:
 
 - **PDI:** valor consolidado = soma das filiais (contagem).

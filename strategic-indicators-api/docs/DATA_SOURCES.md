@@ -31,7 +31,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 | Qualidade | PPM, NC, Kaizen e 5S | `api-delpi` HTTP | `quality_indicators_snapshot_provider` |
 | Suprimentos | CPV, giro de estoque, OTD, estoque, economia em negociações | `api-delpi` HTTP | `supplies_indicators_snapshot_provider` |
 | Engenharia | LMP (TOTVS), Transforma+ (Sheets) | `api-delpi` HTTP + Sheets | `engineering_indicators_snapshot_provider` |
-| RH | Portal RH (Postgres) | direto | `hr_indicators_snapshot_provider` |
+| RH | Portal RH (Postgres) | via api-delpi HTTP | `DelpiHrGateway` → `hr_indicators_snapshot_provider` |
 
 Composição: `real_indicator_measurements_provider.py` — paraleliza departamentos na visão consolidada.
 
@@ -55,9 +55,9 @@ Variáveis em `si_app/config.py` (prefixos `QUALITY_*`, `TRANSFORMA_MAIS_*`, `FI
 
 Transforma+: cache TTL de `load_raw_data` no coletor de engenharia.
 
-## Portal RH
+## RH (api-delpi)
 
-`PORTAL_RH_DB_*` — métricas de absenteísmo, turnover, treinamento, PDI.
+`GET /hr/snapshot` — absenteísmo, turnover, treinamento, PDI, satisfação e avaliações. Leitura Portal RH permanece na api-delpi (`PORTAL_RH_DB_*` só no serviço `api-delpi`).
 
 ## Dados diretos na api-delpi
 

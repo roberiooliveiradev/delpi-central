@@ -210,3 +210,12 @@ class DelpiApiClient:
 
     def get_lmp_dashboard_summary(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/engineering/lmps/dashboard/summary", params=params, authorization=authorization)
+
+    # -- HR --
+    def get_hr_snapshot(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get("/hr/snapshot", params=params, authorization=authorization)

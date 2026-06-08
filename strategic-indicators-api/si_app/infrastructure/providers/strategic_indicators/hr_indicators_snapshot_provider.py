@@ -121,7 +121,16 @@ class HrIndicatorsSnapshotProvider(
         satisfaction_unit_values = {
             item.branch_code: item.internal_satisfaction_pct
             for item in snapshot.branches
+            if item.internal_satisfaction_pct is not None
         }
+        if (
+            not satisfaction_unit_values
+            and snapshot.internal_satisfaction_pct is not None
+        ):
+            satisfaction_unit_values = {
+                item.branch_code: snapshot.internal_satisfaction_pct
+                for item in snapshot.branches
+            }
 
         items = [
             {

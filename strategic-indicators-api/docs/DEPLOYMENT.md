@@ -75,7 +75,7 @@ Exemplo: [infra/env.strategic-indicators.example](../../infra/env.strategic-indi
 | Grupo | Variáveis |
 |-------|-----------|
 | Postgres plugins | `PLUGINS_DB_HOST`, `PLUGINS_DB_PORT`, `PLUGINS_DB_NAME`, `PLUGINS_DB_USER`, `PLUGINS_DB_PASSWORD` |
-| Portal RH | `PORTAL_RH_DB_*` |
+| api-delpi (RH e demais KPIs) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
 | api-delpi (HTTP) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
 | Google Sheets | `GOOGLE_SHEETS_*`, `*_SHEET_ID`, `*_GID` (ver `config.py`) |
 

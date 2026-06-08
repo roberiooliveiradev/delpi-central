@@ -133,15 +133,4 @@ class Settings:
     CONFIRM_BEFORE_REQUEST: bool = _get_env("CONFIRM_BEFORE_REQUEST", default="false").lower() == "true"
     SHOW_PAYLOAD_BEFORE_EXECUTE: bool = _get_env("SHOW_PAYLOAD_BEFORE_EXECUTE", default="false").lower() == "true"
 
-    # ==========================
-    # Portal RH PostgreSQL
-    # ==========================
-    PORTAL_RH_DB_HOST: str | None = _get_env("PORTAL_RH_DB_HOST")
-    PORTAL_RH_DB_PORT: str = _get_env("PORTAL_RH_DB_PORT", default="5432")
-    PORTAL_RH_DB_NAME: str | None = _get_env("PORTAL_RH_DB_NAME")
-    PORTAL_RH_DB_USER: str | None = _get_env("PORTAL_RH_DB_USER")
-    PORTAL_RH_DB_PASSWORD: str | None = _get_env("PORTAL_RH_DB_PASSWORD")
-    PORTAL_RH_DB_CONNECT_TIMEOUT: str = _get_env("PORTAL_RH_DB_CONNECT_TIMEOUT", default="5")
-    PORTAL_RH_DB_SSLMODE: str = _get_env("PORTAL_RH_DB_SSLMODE", default="prefer")
-
 settings = Settings()
