@@ -109,7 +109,8 @@ export function ChatRichChart({
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
-  const { title, chartType, data, config } = presentation;
+  const { title, chartType, data: rawData, config } = presentation;
+  const data = Array.isArray(rawData) ? rawData : [];
   const [downloadReady, setDownloadReady] = useState(false);
   const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(
     initialViewState?.chartTypeOverride ?? null,

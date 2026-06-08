@@ -456,7 +456,7 @@ export function ChatMessageList({
   conversationKey,
   streamingAnswer,
   streamingSources,
-  streamingToolCalls,
+  streamingToolCalls = [],
   streamingAdminDebug,
   streamingStatus,
   streamingActivityLog = [],

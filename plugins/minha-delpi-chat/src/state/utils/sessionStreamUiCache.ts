@@ -33,7 +33,7 @@ export function patchSessionStreamUi(
     activityLog: patch.activityLog ?? current.activityLog,
     status: patch.status !== undefined ? patch.status : current.status,
     sources: patch.sources ?? current.sources,
-    toolCalls: patch.toolCalls ?? current.toolCalls,
+    toolCalls: Array.isArray(patch.toolCalls) ? patch.toolCalls : current.toolCalls,
   };
 
   cache.set(sessionId, next);

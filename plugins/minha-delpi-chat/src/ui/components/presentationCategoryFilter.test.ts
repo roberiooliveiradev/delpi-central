@@ -25,4 +25,9 @@ describe("presentationCategoryFilter", () => {
     expect(filtered).toHaveLength(2);
     expect(filtered.every((row) => row.filial === "02")).toBe(true);
   });
+
+  it("tolera rows indefinido no filtro e nas opções", () => {
+    expect(buildCategoryFilterOptions(undefined)).toEqual([]);
+    expect(applyCategoryFilter(undefined, "filial", "01")).toEqual([]);
+  });
 });

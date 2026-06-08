@@ -57,7 +57,8 @@ export function ChatRichDashboard({
   /** `admin` — toolbar legível e ações reduzidas no painel administrativo. */
   variant?: "default" | "admin";
 }) {
-  const { title, panels } = presentation;
+  const { title, panels: rawPanels } = presentation;
+  const panels = Array.isArray(rawPanels) ? rawPanels : [];
   const [localExplainOpen, setLocalExplainOpen] = useState(false);
   const explainOpen = showDashboardExplanation || localExplainOpen;
   const setExplainOpen = onShowDashboardExplanationChange ?? setLocalExplainOpen;

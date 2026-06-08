@@ -33,7 +33,9 @@ export function ChatRichTable({
   embeddedInDashboard?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
-  const { title, columns, rows } = presentation;
+  const { title, columns: rawColumns, rows: rawRows } = presentation;
+  const columns = Array.isArray(rawColumns) ? rawColumns : [];
+  const rows = Array.isArray(rawRows) ? rawRows : [];
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
   const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);

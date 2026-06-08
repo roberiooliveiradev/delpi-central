@@ -246,7 +246,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
     );
     setStreamingSources(snapshot.sources);
-    setStreamingToolCalls(snapshot.toolCalls);
+    setStreamingToolCalls(snapshot.toolCalls ?? []);
   }, []);
 
   const restoreStreamUiForSession = useCallback(
@@ -993,8 +993,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          setStreamingToolCalls(snapshot.toolCalls);
-          streamingToolCallsRef.current = snapshot.toolCalls;
+          const streamToolCalls = snapshot.toolCalls ?? [];
+          setStreamingToolCalls(streamToolCalls);
+          streamingToolCallsRef.current = streamToolCalls;
           setStreamingShowPresentation(hasRichPresentation);
           setStreamingStatus(snapshot.status);
         },
@@ -1021,8 +1022,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           awaitingPlaybackRef.current = true;
           setStreamingStatus("Exibindo resposta...");
           setStreamingSources(payload.sources);
-          setStreamingToolCalls(payload.toolCalls);
-          streamingToolCallsRef.current = payload.toolCalls;
+          const playbackToolCalls = payload.toolCalls ?? [];
+          setStreamingToolCalls(playbackToolCalls);
+          streamingToolCallsRef.current = playbackToolCalls;
           setStreamingShowPresentation(
             shouldShowRichPresentation(payload.answer, payload.toolCalls),
           );

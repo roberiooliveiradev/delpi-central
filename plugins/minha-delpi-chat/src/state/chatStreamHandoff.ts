@@ -112,7 +112,9 @@ export function streamContentAlreadyDisplayed(
     return false;
   }
 
-  if (payload.toolCalls.length === 0) {
+  const payloadToolCalls = payload.toolCalls ?? [];
+
+  if (payloadToolCalls.length === 0) {
     return true;
   }
 
@@ -120,7 +122,7 @@ export function streamContentAlreadyDisplayed(
     return false;
   }
 
-  return payload.toolCalls.length === streamingToolCalls.length;
+  return payloadToolCalls.length === streamingToolCalls.length;
 }
 
 export function handoffFromPlaybackPayload(

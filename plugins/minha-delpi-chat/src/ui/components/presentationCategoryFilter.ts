@@ -28,10 +28,10 @@ function scoreFilterKey(key: string): number {
 }
 
 export function buildCategoryFilterOptions(
-  rows: Record<string, unknown>[],
+  rows: Record<string, unknown>[] | undefined | null,
   candidateKeys?: string[],
 ): CategoryFilterOption[] {
-  if (!rows.length) {
+  if (!Array.isArray(rows) || !rows.length) {
     return [];
   }
 
@@ -71,13 +71,15 @@ export function buildCategoryFilterOptions(
 }
 
 export function applyCategoryFilter(
-  rows: Record<string, unknown>[],
+  rows: Record<string, unknown>[] | undefined | null,
   filterKey: string | null,
   filterValue: string | null,
 ): Record<string, unknown>[] {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
   if (!filterKey || !filterValue) {
-    return rows;
+    return safeRows;
   }
 
-  return rows.filter((row) => String(row[filterKey] ?? "").trim() === filterValue);
+  return safeRows.filter((row) => String(row[filterKey] ?? "").trim() === filterValue);
 }
