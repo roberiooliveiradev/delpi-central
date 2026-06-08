@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 15):**
+**Sprint imediata (Fase 3 — god classes, lote 16):**
 
-1. Continuar delegates residuais de `external_action_result_presenter.py` (humanização de produto, empty operational, KPI helpers).
-2. Fatiar `chat_turn_preparation_service.py` — candidato: fase de direct-answers pré-tool (~linhas 301–500) em `ChatTurnPreparationDirectAnswerService`.
+1. Continuar delegates residuais de `external_action_result_presenter.py` (path helpers, `_path_fragment_title`, delegates finos restantes).
+2. Fatiar `chat_turn_preparation_service.py` — candidato: fase de memória/conversation context pós-direct-answer.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -446,5 +446,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 14):** `ExternalActionRouteLinePresenter` (~287 linhas); formatadores de linha, helpers de coleção e títulos de detalhe migrados para `_route_lines()`; `_present_product_structure` e `_present_product_factory_status` em `ExternalActionProductListPresenter`; textos de status fabril em `presenter_content.routePresentations.factoryStatus`; facade **1816 → ~1481** linhas.
 
 **Avaliação lote 14 (turn prep):** `chat_turn_preparation_service.py` permanece orquestrador único de send/stream; extração recomendada no lote 15 (direct-answers pré-tool), sem bypass do pipeline.
+
+**Concluído (Fase 3A lote 15):** `ExternalActionOperationalResponsePresenter` (~350 linhas) e `ExternalActionProductOverviewPresenter` (~300 linhas); empty operational, erros API, normalização e visão geral de produto migrados para `_operational_response()` e `_product_overview()`; facade **1481 → ~944** linhas.
+
+**Concluído (Fase 3C lote 15):** `ChatTurnPreparationDirectAnswerService` (~250 linhas); direct-answers pré-tool extraídos; texto de interpretação sem dados em `turn_preparation.json`; `chat_turn_preparation_service.py` **1282 → ~1151** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

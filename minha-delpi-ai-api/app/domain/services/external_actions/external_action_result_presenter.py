@@ -1,5 +1,3 @@
-import re
-
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
@@ -55,6 +53,12 @@ from app.domain.services.external_actions.presenters.text_presentation_presenter
 from app.domain.services.external_actions.presenters.route_line_presenter import (
     ExternalActionRouteLinePresenter,
 )
+from app.domain.services.external_actions.presenters.operational_response_presenter import (
+    ExternalActionOperationalResponsePresenter,
+)
+from app.domain.services.external_actions.presenters.product_overview_presenter import (
+    ExternalActionProductOverviewPresenter,
+)
 
 
 class ExternalActionResultPresenter:
@@ -77,6 +81,8 @@ class ExternalActionResultPresenter:
         self._presentation_builder_presenter: ExternalActionPresentationBuilderPresenter | None = None
         self._text_presentation_presenter: ExternalActionTextPresentationPresenter | None = None
         self._route_line_presenter: ExternalActionRouteLinePresenter | None = None
+        self._operational_response_presenter: ExternalActionOperationalResponsePresenter | None = None
+        self._product_overview_presenter: ExternalActionProductOverviewPresenter | None = None
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -155,6 +161,18 @@ class ExternalActionResultPresenter:
 
         return self._route_line_presenter
 
+    def _operational_response(self) -> ExternalActionOperationalResponsePresenter:
+        if self._operational_response_presenter is None:
+            self._operational_response_presenter = ExternalActionOperationalResponsePresenter(self)
+
+        return self._operational_response_presenter
+
+    def _product_overview(self) -> ExternalActionProductOverviewPresenter:
+        if self._product_overview_presenter is None:
+            self._product_overview_presenter = ExternalActionProductOverviewPresenter(self)
+
+        return self._product_overview_presenter
+
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
         previous_formats = self._active_schema_formats
@@ -192,189 +210,26 @@ class ExternalActionResultPresenter:
 
 
     def _fallback_title(self, path: str) -> str | None:
-        if not path:
-            return None
-
-        lowered = path.lower()
-        triggers = (
-            "dashboard",
-            "/commercial/",
-            "/financial/",
-            "/finacial/",
-            "/production/",
-            "/hr/",
-            "/quality/",
-        )
-
-        if not any(fragment in lowered for fragment in triggers):
-            return None
-
-        return self._kpi_title(path)
+        return self._operational_response()._fallback_title(path)
 
     def _present_dict_fallback(self, root: dict, path: str) -> dict | None:
-        if not root:
-            return None
-
-        linhas = []
-        title = self._fallback_title(path) or self._presenter_text(
-            "generic", "queryResultTitle"
-        )
-
-        for key, value in root.items():
-            if isinstance(value, dict):
-                sub_items = [
-                    self._presenter_text(
-                        "generic",
-                        "dictNestedValue",
-                        key=str(nested_key),
-                        value=str(nested_value),
-                    )
-                    for nested_key, nested_value in value.items()
-                ]
-                linhas.append(
-                    self._presenter_text(
-                        "generic",
-                        "dictNestedLine",
-                        label=self._humanize_key(key),
-                        items=", ".join(sub_items),
-                    )
-                )
-            elif isinstance(value, list) and value:
-                linhas.append(
-                    self._presenter_text(
-                        "generic",
-                        "dictListItems",
-                        label=self._humanize_key(key),
-                        count=str(len(value)),
-                    )
-                )
-            elif value is not None:
-                linhas.append(
-                    self._presenter_text(
-                        "generic",
-                        "dictScalarLine",
-                        label=self._humanize_key(key),
-                        value=self._format_field_value(key, value),
-                    )
-                )
-
-        if linhas:
-            return {
-                "titulo": title,
-                "linhas": linhas[:12],
-                "dados": root,
-            }
-
-        return None
+        return self._operational_response()._present_dict_fallback(root, path)
 
     def _extract_product_code_from_path(self, path: str) -> str:
-        match = re.search(r"/products/(\d+)/", str(path or ""), flags=re.IGNORECASE)
-
-        if match:
-            return match.group(1)
-
-        return ""
+        return self._operational_response()._extract_product_code_from_path(path)
 
     def _present_empty_operational_result(self, *, path: str, root) -> dict | None:
-        if not self._is_product_operational_path(path):
-            return None
-
-        if not self._is_empty_operational_payload(root):
-            return None
-
-        lowered_path = str(path or "").lower()
-        product_code = self._extract_product_code_from_path(path)
-
-        route_key = None
-
-        if "/suppliers" in lowered_path:
-            route_key = "suppliers"
-        elif "/customers" in lowered_path:
-            route_key = "customers"
-        elif "/stock" in lowered_path:
-            route_key = "stock"
-        elif "/structure" in lowered_path:
-            route_key = "structure"
-        elif "/parents" in lowered_path:
-            route_key = "parents"
-        elif "/guide" in lowered_path:
-            route_key = "guide"
-        elif "/inspection" in lowered_path:
-            route_key = "inspection"
-        elif "/sales" in lowered_path or "/purchases" in lowered_path:
-            route_key = "salesPurchases"
-
-        if route_key and product_code:
-            linha = self._presenter_text(
-                "operationalEmpty", route_key, code=product_code
-            )
-        elif route_key:
-            linha = self._presenter_text("operationalEmpty", f"{route_key}Generic")
-        else:
-            linha = self._presenter_text("operationalEmpty", "default")
-
-        titulo = self._infer_items_title([], path) or self._presenter_text(
-            "generic", "defaultQueryTitle"
-        )
-
-        return {
-            "titulo": titulo,
-            "linhas": [linha],
-            "dados": {
-                "items": [],
-                "total": 0,
-                "product_code": product_code or None,
-            },
-        }
+        return self._operational_response()._present_empty_operational_result(path=path, root=root)
 
     @staticmethod
     def _is_empty_operational_payload(root) -> bool:
-        if isinstance(root, list):
-            return len(root) == 0
-
-        if not isinstance(root, dict):
-            return False
-
-        total = root.get("total")
-
-        if total == 0:
-            return True
-
-        items = root.get("items")
-
-        if isinstance(items, list) and not items:
-            return True
-
-        nested = root.get("data")
-
-        if isinstance(nested, list) and not nested:
-            return True
-
-        if isinstance(nested, dict) and nested.get("total") == 0:
-            inner = nested.get("data") or nested.get("items")
-
-            if inner is None or inner == []:
-                return True
-
-        return False
+        return ExternalActionOperationalResponsePresenter._is_empty_operational_payload(root)
 
     def _format_protheus_date(self, value) -> str | None:
-        raw = str(value or "").strip()
-
-        if len(raw) != 8 or not raw.isdigit():
-            return raw or None
-
-        return f"{raw[6:8]}/{raw[4:6]}/{raw[0:4]}"
+        return self._operational_response()._format_protheus_date(value)
 
     def _format_currency(self, value) -> str:
-        try:
-            number = float(value)
-        except (TypeError, ValueError):
-            return str(value)
-
-        formatted = f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-        return formatted
+        return self._operational_response()._format_currency(value)
 
     def _kpi_cards_to_linhas(self, kpi: dict) -> list[str]:
         return self._kpi_chart().kpi_cards_to_linhas(kpi)
@@ -411,340 +266,29 @@ class ExternalActionResultPresenter:
         )
 
 
-    def _is_product_operational_path(cls, path: str) -> bool:
-        lowered = str(path or "").lower()
-
-        return any(
-            segment in lowered
-            for segment in (
-                "/guide",
-                "/inspection",
-                "/stock",
-                "/structure",
-                "/parents",
-                "/purchases",
-                "/sales",
-                "/suppliers",
-                "/customers",
-            )
-        )
-
+    def _is_product_operational_path(self, path: str) -> bool:
+        return self._operational_response()._is_product_operational_path(path)
 
     def _detect_api_error(self, data, *, path: str = "") -> dict | None:
-        if not isinstance(data, dict):
-            return None
-
-        detail = data.get("detail") or data.get("error") or data.get("message")
-        status = data.get("status_code") or data.get("status")
-
-        is_error_detail = isinstance(detail, str) and detail.lower() in (
-            "not found", "unauthorized", "forbidden", "internal server error",
-            "bad request", "service unavailable",
-        )
-
-        is_error_status = isinstance(status, int) and status >= 400
-
-        if not is_error_detail and not is_error_status:
-            if isinstance(data.get("success"), bool) and not data["success"]:
-                from app.domain.services.chat_sql_execution_error_interpretation_service import (
-                    ChatSqlExecutionErrorInterpretationService,
-                )
-
-                raw_msg = str(
-                    data.get("message")
-                    or self._presenter_text("apiErrors", "unknown")
-                )
-                friendly = ChatSqlExecutionErrorInterpretationService.user_facing_message(
-                    raw_msg,
-                    path=path,
-                )
-                msg = friendly or raw_msg
-
-                if ChatSqlExecutionErrorInterpretationService.is_raw_driver_dump(raw_msg):
-                    msg = friendly or self._analyser_markdown("sqlEnvironmentFailed")
-
-                return {
-                    "titulo": self._presenter_text("generic", "queryErrorTitle"),
-                    "linhas": [msg],
-                    "dados": None,
-                }
-            return None
-
-        if isinstance(detail, str):
-            error_key_map = {
-                "not found": "notFound",
-                "unauthorized": "unauthorized",
-                "forbidden": "forbidden",
-            }
-            mapped = error_key_map.get(detail.lower())
-            msg = (
-                self._presenter_text("apiErrors", mapped)
-                if mapped
-                else self._presenter_text("apiErrors", "withDetail", detail=detail)
-            )
-        else:
-            msg = self._presenter_text("apiErrors", "withStatus", status=str(status))
-
-        return {
-            "titulo": self._presenter_text("generic", "queryErrorTitle"),
-            "linhas": [msg],
-            "dados": None,
-        }
+        return self._operational_response()._detect_api_error(data, path=path)
 
     def _unwrap_data(self, data):
-        root = data
-
-        if isinstance(root, dict) and "data" in root:
-            root = root["data"]
-
-        if isinstance(root, dict) and "data" in root:
-            root = root["data"]
-
-        return root
+        return self._operational_response()._unwrap_data(data)
 
     def _normalize_api_section(self, block, *, _depth: int = 0):
-        """Desembrulha blocos `{ success, data }` retornados pela API DELPI."""
-        if not isinstance(block, dict):
-            return block
-
-        inner = block.get("data")
-
-        if inner is None and "success" not in block and "total" not in block:
-            return block
-
-        if isinstance(inner, list):
-            normalized: dict = {"items": inner}
-            total = block.get("total")
-
-            if total is not None:
-                normalized["total"] = total
-
-            return normalized
-
-        if isinstance(inner, dict):
-            merged = dict(inner)
-
-            for key in ("total", "page", "page_size", "total_pages", "filters", "success"):
-                if key in block and key not in merged:
-                    merged[key] = block[key]
-
-            if "components" in merged and "items" not in merged:
-                components = merged.get("components")
-
-                if isinstance(components, list):
-                    merged["items"] = components
-
-            if merged.get("code") and "root" not in merged:
-                merged.setdefault(
-                    "root",
-                    {
-                        "code": merged.get("code"),
-                        "description": merged.get("description"),
-                        "type": merged.get("type"),
-                        "unit": merged.get("unit"),
-                        "quantity": merged.get("quantity", 1),
-                    },
-                )
-
-            if (
-                _depth < 4
-                and isinstance(merged.get("data"), dict)
-                and not str(merged.get("code") or "").strip()
-            ):
-                return self._normalize_api_section(merged, _depth=_depth + 1)
-
-            return merged
-
-        return block
-
+        return self._operational_response()._normalize_api_section(block, _depth=_depth)
 
     def _overview_missing(self) -> str:
-        return self._presenter_text("productOverview", "missingValue")
+        return self._product_overview()._overview_missing()
 
     def _build_product_overview_narrative_lines(self, product: dict, root: dict) -> list[str]:
-        code = str(product.get("code") or "").strip()
-        description = str(product.get("description") or "").strip()
-        product_type = str(product.get("type") or "").strip()
-        unit = str(product.get("unit") or "").strip()
-        group_code = str(product.get("group_code") or "").strip()
-        active = str(product.get("active") or "").strip()
-        warehouse = str(product.get("default_warehouse") or "").strip()
-        missing = self._overview_missing()
-
-        lines = [
-            self._presenter_text(
-                "productOverview",
-                "identityLine",
-                code=code,
-                description=description
-                or self._presenter_text("productOverview", "noDescription"),
-            ),
-            self._presenter_text(
-                "productOverview",
-                "classificationLine",
-                type=product_type or missing,
-                unit=unit or missing,
-                group_code=group_code or missing,
-            ),
-            self._presenter_text("productOverview", "cadastralActive", active=active or missing)
-            + (
-                self._presenter_text(
-                    "productOverview",
-                    "cadastralWarehouseSuffix",
-                    warehouse=warehouse,
-                )
-                if warehouse
-                else self._presenter_text("productOverview", "cadastralEnd")
-            ),
-        ]
-
-        purchase_price = product.get("last_purchase_price")
-        purchase_date = str(product.get("last_purchase_date") or "").strip()
-        standard_cost = product.get("standard_cost")
-
-        if purchase_price in (0, 0.0, None) and not purchase_date:
-            lines.append(self._analyser_markdown("noRecentPurchase"))
-        else:
-            price_text = self._format_currency(purchase_price)
-            date_text = self._format_revision_date(purchase_date) if purchase_date else ""
-            date_suffix = (
-                self._presenter_text(
-                    "productOverview",
-                    "lastPurchaseDateSuffix",
-                    date=date_text,
-                )
-                if date_text
-                else ""
-            )
-            lines.append(
-                self._presenter_text(
-                    "productOverview",
-                    "lastPurchase",
-                    price=price_text,
-                    date_suffix=date_suffix,
-                )
-            )
-
-        if standard_cost not in (None, ""):
-            lines.append(
-                self._analyser_markdown(
-                    "standardCost",
-                    cost=self._format_currency(standard_cost),
-                )
-            )
-
-        revision = str(product.get("last_revision_date") or "").strip()
-        ncm = str(product.get("ncm_ipi_position") or "").strip()
-
-        if revision:
-            lines.append(
-                self._presenter_text(
-                    "productOverview",
-                    "revisionLine",
-                    revision=self._format_revision_date(revision),
-                )
-            )
-
-        if ncm:
-            lines.append(
-                self._presenter_text("productOverview", "ncmLine", ncm=ncm)
-            )
-
-        blocked = str(product.get("blocked") or "").strip()
-        if blocked and blocked not in {"N", "0", ""}:
-            lines.append(
-                self._presenter_text(
-                    "productOverview",
-                    "blockedLine",
-                    blocked=blocked,
-                )
-            )
-
-        for key in ["guide", "inspection", "structure", "customers", "suppliers"]:
-            value = root.get(key)
-            if isinstance(value, dict):
-                total = value.get("total")
-                if total is not None:
-                    label = self._label_collection(key)
-                    from app.domain.services.chat_product_operational_content_service import (
-                        ChatProductOperationalContentService,
-                    )
-
-                    if int(total or 0) == 0:
-                        lines.append(
-                            ChatProductOperationalContentService.format(
-                                "presenter",
-                                "profile",
-                                "collectionEmpty",
-                                label=label,
-                            )
-                        )
-                    else:
-                        lines.append(
-                            ChatProductOperationalContentService.format(
-                                "presenter",
-                                "profile",
-                                "collectionWithTotal",
-                                label=label,
-                                total=total,
-                            )
-                        )
-
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
-        )
-
-        lines.append(
-            ChatProductOperationalContentService.get("presenter", "profile", "nextStepsHint")
-        )
-
-        return lines
+        return self._product_overview()._build_product_overview_narrative_lines(product, root)
 
     def _format_revision_date(self, token: str) -> str:
-        raw = str(token or "").strip()
-
-        if len(raw) == 8 and raw.isdigit():
-            return f"{raw[6:8]}/{raw[4:6]}/{raw[0:4]}"
-
-        return raw
+        return self._product_overview()._format_revision_date(token)
 
     def _present_product(self, root: dict, product: dict) -> dict:
-        product_summary = {
-            "code": product.get("code"),
-            "description": product.get("description"),
-            "type": product.get("type"),
-            "unit": product.get("unit"),
-            "groupCode": product.get("group_code"),
-            "active": product.get("active"),
-            "defaultWarehouse": product.get("default_warehouse"),
-            "lastPurchasePrice": product.get("last_purchase_price"),
-            "standardCost": product.get("standard_cost"),
-            "lastRevisionDate": product.get("last_revision_date"),
-            "ncm": product.get("ncm_ipi_position"),
-        }
-
-        detail_list = self._extract_product_detail_list(root)
-
-        if detail_list:
-            return self._present_product_with_details(product_summary, detail_list, root)
-
-        linhas = self._build_product_overview_narrative_lines(product, root)
-
-        return {
-            "titulo": self._presenter_text(
-                "productPresentationTitles",
-                "overviewWithCode",
-                code=str(product_summary["code"]),
-            ),
-            "linhas": [line for line in linhas if "None" not in line],
-            "campos": self._alias_dict(product_summary),
-            "dados": {
-                "product": product_summary,
-                "guideTotal": self._total(root.get("guide")),
-                "inspectionTotal": self._total(root.get("inspection")),
-                "structureTotal": self._total(root.get("structure")),
-            },
-        }
+        return self._product_overview()._present_product(root, product)
 
 
 
@@ -772,100 +316,19 @@ class ExternalActionResultPresenter:
 
 
     def _extract_product_detail_list(self, root: dict) -> list | None:
-        detail_keys = (
-            "prices", "stock", "purchases", "sales", "billing",
-            "suppliers", "customers", "movements", "invoices",
-            "open_orders", "items",
-        )
-        for key in detail_keys:
-            value = root.get(key)
-            if isinstance(value, list) and value and isinstance(value[0], dict):
-                return value
-        return None
+        return self._product_overview()._extract_product_detail_list(root)
 
     def _format_detail_preview_line(self, item: dict) -> str:
-        parts: list[str] = []
-
-        for key, value in list(item.items())[:8]:
-            if value is None:
-                continue
-
-            label = self._humanize_key(key)
-
-            if key in {
-                "sale_price",
-                "max_price",
-                "discount_value",
-                "last_price",
-                "last_purchase_price",
-                "standard_cost",
-            }:
-                parts.append(f"{label}: {self._format_currency(value)}")
-            elif key == "discount_percent":
-                parts.append(f"{label}: {self._format_num(value)}%")
-            elif key in {
-                "current_quantity",
-                "available_quantity",
-                "committed_quantity",
-                "reserved_quantity",
-                "lot_quantity",
-            }:
-                parts.append(f"{label}: {self._format_num(value)}")
-            else:
-                parts.append(f"{label}: {value}")
-
-        return ", ".join(parts) if parts else "—"
+        return self._product_overview()._format_detail_preview_line(item)
 
     def _present_product_with_details(
         self, product_summary: dict, detail_list: list, root: dict
     ) -> dict:
-        code = product_summary.get("code") or ""
-        desc = product_summary.get("description") or ""
-
-        linhas = [
-            self._presenter_text(
-                "productWithDetails",
-                "introLine",
-                code=str(code),
-                description=str(desc),
-            )
-        ]
-
-        for item in detail_list[:5]:
-            preview = self._format_detail_preview_line(item)
-            linhas.append(f"- {preview}")
-
-        if len(detail_list) > 5:
-            linhas.append(
-                self._presenter_text(
-                    "pagination",
-                    "moreDetailRecords",
-                    count=str(len(detail_list) - 5),
-                )
-            )
-
-        all_keys = {}
-        for item in detail_list:
-            for k in item:
-                if k not in all_keys:
-                    all_keys[k] = True
-
-        columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
-        rows = detail_list
-
-        title = self._product_detail_title(code, root)
-
-        return {
-            "titulo": title,
-            "linhas": linhas,
-            "dados": {"product": product_summary, "items": rows},
-            "apresentacao": {
-                "type": "table",
-                "title": title,
-                "columns": columns,
-                "rows": rows,
-            },
-        }
+        return self._product_overview()._present_product_with_details(
+            product_summary,
+            detail_list,
+            root,
+        )
 
 
 

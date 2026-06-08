@@ -17,7 +17,6 @@ from app.application.services.chat_conversation_context_service import (
 )
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
-from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.application.services.chat_intelligence_pipeline_service import (
     ChatIntelligencePipelineService,
@@ -27,16 +26,14 @@ from app.application.services.chat_knowledge_scope_service import ChatKnowledgeS
 from app.application.services.chat_meta_direct_answer_service import (
     ChatMetaDirectAnswerService,
 )
-from app.application.services.chat_small_talk_service import ChatSmallTalkService
-from app.application.services.chat_utility_direct_answer_service import (
-    ChatUtilityDirectAnswerService,
+from app.application.services.chat_turn.chat_turn_preparation_direct_answer_service import (
+    ChatTurnPreparationDirectAnswerService,
 )
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
@@ -298,87 +295,47 @@ class ChatTurnPreparationService:
         pipeline_timings = ChatPipelineTimings()
         pipeline_stages: list[str] = ["ingress"]
 
-        meta_intents = ChatMetaDirectAnswerService.detect_intents(message)
-        compound_meta_question = meta_intents.count >= 2
-
-        pre_capability_answer = None
-        if not compound_meta_question:
-            pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
-                message=message,
-                workspace_context=workspace_context,
-                allowed_action_ids=allowed_action_ids,
-                action_catalog=ChatCapabilitiesService.load_action_catalog_for_agent(
-                    allowed_action_ids,
-                ),
-            )
-
-        fast_path = ChatFastPathService.should_use(
-            message,
-            enabled=fast_path_enabled,
-            max_chars=fast_path_max_chars,
-            attachment_ids=attachment_ids,
-        )
-
-        if canvas_action:
-            fast_path = True
-
-        small_talk_direct = ChatSmallTalkService.build_direct_answer(
+        direct_answer_bundle = ChatTurnPreparationDirectAnswerService.build_early_bundle(
             message=message,
             workspace_context=workspace_context,
-            previous_messages=history_source,
-        )
-        utility_direct = ChatUtilityDirectAnswerService.build_direct_answer(
-            message=message,
-        )
-
-        from app.domain.services.chat_unclear_request_service import (
-            ChatUnclearRequestService,
-        )
-
-        # Fallback honesto (Playbook, seções 11/28): só ativa em pedidos vagos curtos,
-        # sem termos operacionais/anexo/lousa/web. Mantém o turno sem ferramentas.
-        unclear_direct = None
-        if not attachment_ids and not small_talk_direct and not utility_direct:
-            unclear_direct = ChatUnclearRequestService.build_direct_answer(
-                message=message,
-                previous_messages=history_source,
-            )
-
-        from app.application.services.chat_web_search_save_sources_service import (
-            ChatWebSearchSaveSourcesService,
-        )
-
-        web_save_sources_direct = ChatWebSearchSaveSourcesService.build_direct_answer(
-            message=message,
-            user_id=str(user_id),
-            session=session,
-            previous_messages=history_source,
-        )
-
-        from app.domain.services.chat_web_search_source_follow_up_service import (
-            ChatWebSearchSourceFollowUpService,
-        )
-
-        web_post_search_direct = (
-            ChatWebSearchSourceFollowUpService.build_post_search_follow_up_answer(
-                message,
-                history_source,
-            )
-        )
-
-        from app.application.services.chat_attachment_welcome_service import (
-            ChatAttachmentWelcomeService,
-        )
-
-        attachment_welcome_direct = None
-
-        if ChatAttachmentWelcomeService.should_welcome(
-            message,
+            history_source=history_source,
+            attachments=attachments,
             attachment_ids=attachment_ids,
-        ):
-            attachment_welcome_direct = ChatAttachmentWelcomeService.build_direct_answer(
-                attachments=attachments,
-            )
+            session=session,
+            user_id=user_id,
+            allowed_action_ids=allowed_action_ids,
+            canvas_action=canvas_action,
+            analysis_mode=analysis_mode,
+            text_task_pure=text_task_pure,
+            text_task_category=text_task_category,
+            fast_path_enabled=fast_path_enabled,
+            fast_path_max_chars=fast_path_max_chars,
+        )
+
+        fast_path = direct_answer_bundle.fast_path
+        pre_capability_answer = direct_answer_bundle.pre_capability_answer
+        small_talk_direct = direct_answer_bundle.small_talk_direct
+        utility_direct = direct_answer_bundle.utility_direct
+        unclear_direct = direct_answer_bundle.unclear_direct
+        web_save_sources_direct = direct_answer_bundle.web_save_sources_direct
+        web_post_search_direct = direct_answer_bundle.web_post_search_direct
+        attachment_welcome_direct = direct_answer_bundle.attachment_welcome_direct
+        routing_disambiguation = direct_answer_bundle.routing_disambiguation
+        routing_disambiguation_answer = direct_answer_bundle.routing_disambiguation_answer
+        routing_disambiguation_suggestions = (
+            direct_answer_bundle.routing_disambiguation_suggestions
+        )
+        session_memory_direct = direct_answer_bundle.session_memory_direct
+        email_writing_mode = direct_answer_bundle.email_writing_mode
+        email_subtype = direct_answer_bundle.email_subtype
+        text_correction_mode = direct_answer_bundle.text_correction_mode
+        text_correction_subtype = direct_answer_bundle.text_correction_subtype
+
+        for stage in direct_answer_bundle.pipeline_stage_additions:
+            if stage not in pipeline_stages:
+                pipeline_stages.append(stage)
+
+        workspace_context.update(direct_answer_bundle.workspace_context_patches)
 
         from app.domain.services.chat_conversation_memory_service import (
             ChatConversationMemoryService,
@@ -416,88 +373,6 @@ class ChatTurnPreparationService:
             workspace_context["projectPeerSessionIds"] = peer_context.peer_session_ids
 
         workspace_context["workingMemory"] = working_memory_snapshot
-
-        from app.domain.services.chat_intent_disambiguation_service import (
-            ChatIntentDisambiguationService,
-        )
-
-        routing_disambiguation = None
-        routing_disambiguation_answer = None
-        routing_disambiguation_suggestions: list[dict[str, str]] | None = None
-
-        if (
-            not canvas_action
-            and not pre_capability_answer
-            and not analysis_mode
-            and not text_task_pure
-        ):
-            routing_disambiguation = ChatIntentDisambiguationService.try_build(
-                message,
-                previous_messages=history_source,
-                workspace_context=workspace_context,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-            if routing_disambiguation:
-                routing_disambiguation_answer = routing_disambiguation.get("directAnswer")
-                raw_suggestions = routing_disambiguation.get("suggestions")
-
-                if isinstance(raw_suggestions, list):
-                    routing_disambiguation_suggestions = [
-                        dict(item) for item in raw_suggestions if isinstance(item, dict)
-                    ]
-
-        from app.application.services.chat_session_memory_direct_answer_service import (
-            ChatSessionMemoryDirectAnswerService,
-        )
-
-        session_memory_direct = ChatSessionMemoryDirectAnswerService.build(
-            message=message,
-            workspace_context=workspace_context,
-        )
-
-        from app.domain.services.chat_email_intent_service import ChatEmailIntentService
-
-        email_writing_mode = bool(
-            text_task_pure and ChatEmailIntentService.is_email_writing(message)
-        )
-        email_subtype = (
-            ChatEmailIntentService.classify_subtype(message) if email_writing_mode else None
-        )
-
-        if text_task_pure:
-            workspace_context["textTaskMode"] = True
-            workspace_context["textTaskCategory"] = text_task_category
-
-        if email_writing_mode:
-            workspace_context["emailWritingMode"] = True
-            workspace_context["emailSubtype"] = email_subtype
-            if "email_writing" not in pipeline_stages:
-                pipeline_stages.append("email_writing")
-
-        if session_memory_direct and "session_memory" not in pipeline_stages:
-            pipeline_stages.append("session_memory")
-
-        from app.domain.services.chat_text_correction_intent_service import (
-            ChatTextCorrectionIntentService,
-        )
-
-        text_correction_mode = bool(
-            text_task_pure
-            and not email_writing_mode
-            and ChatTextCorrectionIntentService.is_text_correction(message)
-        )
-        text_correction_subtype = (
-            ChatTextCorrectionIntentService.classify_subtype(message)
-            if text_correction_mode
-            else None
-        )
-
-        if text_correction_mode:
-            workspace_context["textCorrectionMode"] = True
-            workspace_context["textCorrectionSubtype"] = text_correction_subtype
-            if "text_correction" not in pipeline_stages:
-                pipeline_stages.append("text_correction")
 
         memory_prompt = ChatConversationMemoryService.format_prompt_block(
             working_memory_snapshot
@@ -557,7 +432,16 @@ class ChatTurnPreparationService:
 
         missing_product_code_answer = None
         ambiguous_period_answer = None
-        interpretation_without_data_answer = None
+        interpretation_without_data_answer = (
+            ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
+                message=message,
+                history_source=history_source,
+                canvas_action=canvas_action,
+                pre_capability_answer=pre_capability_answer,
+                analysis_mode=analysis_mode,
+                text_task_pure=text_task_pure,
+            )
+        )
 
         if not canvas_action and not pre_capability_answer and not analysis_mode and not text_task_pure:
             from app.domain.services.chat_product_query_intent_service import (
@@ -589,22 +473,6 @@ class ChatTurnPreparationService:
                     previous_messages=history_source,
                 )
             )
-            from app.domain.services.chat_sql_query_refinement_service import (
-                ChatSqlQueryRefinementService,
-            )
-
-            if ChatAnalysisIntentService.is_data_reference_without_tool_data(
-                message,
-                history_source,
-            ) and not ChatSqlQueryRefinementService.is_sql_follow_up(
-                message,
-                previous_messages=history_source,
-            ):
-                interpretation_without_data_answer = (
-                    "Ainda não há dados nesta conversa para interpretar. "
-                    "Faça primeiro uma consulta operacional (ex.: estoque, roteiro, estrutura ou inspeção de um produto) "
-                    "e depois peça para explicar, resumir ou traduzir o resultado."
-                )
 
         skip_tools_for_user_identity = bool(
             getattr(request, "access_token", None)
