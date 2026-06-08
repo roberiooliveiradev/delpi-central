@@ -25,8 +25,7 @@ def _is_transient_upstream_failure(message: str) -> bool:
     )
 
 
-def has_transformometro_fetch_error(errors: list[dict] | None) -> bool:
-    """Erros upstream de engenharia que devem forçar nova leitura (não usar cache)."""
+def _has_engineering_upstream_auth_error(errors: list[dict] | None) -> bool:
     if not errors:
         return False
 
@@ -52,7 +51,7 @@ def has_transformometro_fetch_error(errors: list[dict] | None) -> bool:
 
 def has_stale_period_snapshot_errors(errors: list[dict] | None) -> bool:
     """Snapshot materializado que não deve ser reutilizado (rede/auth/indisponibilidade)."""
-    if has_transformometro_fetch_error(errors):
+    if _has_engineering_upstream_auth_error(errors):
         return True
     if not errors:
         return False
@@ -62,7 +61,3 @@ def has_stale_period_snapshot_errors(errors: list[dict] | None) -> bool:
         if _is_transient_upstream_failure(message):
             return True
     return False
-
-
-# Alias legado usado pelo snapshot service
-has_transformometro_auth_error = has_stale_period_snapshot_errors

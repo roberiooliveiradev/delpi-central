@@ -14,7 +14,7 @@ from si_app.application.services.strategic_indicators.calculation_snapshots_seri
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
     StrategicIndicatorsCatalogSnapshot,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.domain.ports.strategic_indicators.calculation_snapshots_repository_port import (

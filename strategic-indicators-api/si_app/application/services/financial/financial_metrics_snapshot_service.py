@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
-from si_app.application.services.financial.financial_sheet_scope import (
-    CONSOLIDATED_BRANCH_KEY,
-)
+from si_app.shared.branch_filter import FINANCIAL_CONSOLIDATED_BRANCH_KEY
 from si_app.infrastructure.gateways.delpi_financial_gateway import (
     DelpiFinancialGateway,
     DelpiFinancialSheetsGateway,
@@ -185,7 +183,7 @@ class FinancialMetricsSnapshotService:
         pmr_days = self._opt_float(pmr_data.get("pmr_days"))
 
         return FinancialBranchSnapshot(
-            branch=CONSOLIDATED_BRANCH_KEY,
+            branch=FINANCIAL_CONSOLIDATED_BRANCH_KEY,
             rol=round(rol, 2),
             ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else 0.0,
             fixed_cost_value=round(fixed_pct, 2) if fixed_pct is not None else 0.0,

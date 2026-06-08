@@ -3,7 +3,7 @@ from __future__ import annotations
 from si_app.application.services.production.production_metrics_snapshot_service import (
     ProductionMetricsSnapshotService,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.domain.ports.strategic_indicators.production_indicators_snapshot_port import (

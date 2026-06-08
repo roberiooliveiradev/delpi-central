@@ -651,6 +651,13 @@ services:
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+
     volumes:
       - ../api-delpi:/app
       - ../shared:/shared
@@ -660,8 +667,6 @@ services:
         condition: service_started
       postgres-plugins:
         condition: service_healthy
-      strategic-indicators-api:
-        condition: service_started
       core-api:
         condition: service_started
 
@@ -721,8 +726,12 @@ services:
       - ../shared:/shared
 
     depends_on:
-      - keycloak
-      - postgres-plugins
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      api-delpi:
+        condition: service_healthy
 
     networks:
       - delpi-network

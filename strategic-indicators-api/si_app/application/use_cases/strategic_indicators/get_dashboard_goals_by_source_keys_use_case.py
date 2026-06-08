@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     resolve_period,
 )
 from si_app.domain.services.strategic_indicators_calculator import (

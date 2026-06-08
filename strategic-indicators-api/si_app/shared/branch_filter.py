@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+FINANCIAL_CONSOLIDATED_BRANCH_KEY = "consolidated"
+
 CONSOLIDATED_BRANCH_TOKENS = frozenset(
     {
         "",

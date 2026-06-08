@@ -8,7 +8,7 @@ from si_app.application.services.supplies.supplies_metrics_helpers import (
     build_otd_payload,
     build_stock_value_payload,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway

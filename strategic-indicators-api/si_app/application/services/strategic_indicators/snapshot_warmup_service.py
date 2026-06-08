@@ -9,7 +9,7 @@ from si_app.application.dto.strategic_indicators.get_executive_summary_real_requ
 from si_app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     current_competence,
 )
 from si_app.composition.strategic_indicators_composer import (

@@ -1,4 +1,4 @@
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     normalize_dashboard_period_date,
     resolve_period,
 )

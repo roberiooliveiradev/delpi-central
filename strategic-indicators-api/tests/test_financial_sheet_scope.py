@@ -5,17 +5,7 @@ from unittest.mock import MagicMock
 from si_app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
-from si_app.application.services.financial.financial_sheet_scope import (
-    CONSOLIDATED_BRANCH_KEY,
-    is_consolidated_sheet_row,
-)
-
-
-def test_is_consolidated_sheet_row() -> None:
-    assert is_consolidated_sheet_row(None) is True
-    assert is_consolidated_sheet_row("") is True
-    assert is_consolidated_sheet_row("  ") is True
-    assert is_consolidated_sheet_row("01") is False
+from si_app.shared.branch_filter import FINANCIAL_CONSOLIDATED_BRANCH_KEY
 
 
 def _build_service(
@@ -60,7 +50,7 @@ def test_build_snapshot_uses_api_pct_without_rol_division() -> None:
     )
 
     consolidated = next(
-        item for item in snapshot.branches if item.branch == CONSOLIDATED_BRANCH_KEY
+        item for item in snapshot.branches if item.branch == FINANCIAL_CONSOLIDATED_BRANCH_KEY
     )
     branch_01 = next(item for item in snapshot.branches if item.branch == "01")
 

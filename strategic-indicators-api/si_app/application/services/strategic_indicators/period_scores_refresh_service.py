@@ -7,7 +7,7 @@ import time
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
     invalidate_strategic_indicators_snapshot_cache,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     build_trend_periods,
     current_competence,
     previous_period,

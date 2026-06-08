@@ -142,7 +142,7 @@ PROIBIDO:
 - [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
 - [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
-- [x] 3.4d LMP — cache TTL do resumo + `resolve_dashboard_status` (SI sem lead time)
+- [x] 3.4d LMP — `GET /engineering/lmps/dashboard/summary` via api-delpi (SI sem cálculo local)
 - [x] 3.5 Warm-up — `scripts/warmup_si_snapshots.py` + `SI_WARMUP_ON_STARTUP` (legado se refresh desligado)
 - [x] 3.6 Materialização — `scripts/refresh_period_scores.py` + `SI_PERIOD_SCORES_REFRESH_*`
 

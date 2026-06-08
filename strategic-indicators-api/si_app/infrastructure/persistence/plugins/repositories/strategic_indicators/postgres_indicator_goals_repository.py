@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     competence_reference_date,
 )
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
@@ -1024,7 +1024,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         if competence and len(competence) >= 4:
             return int(competence[:4])
 
-        from si_app.application.use_cases.strategic_indicators.period_resolution import (
+        from si_app.application.services.strategic_indicators.period_resolution import (
             _parse_dashboard_date_parts,
             normalize_dashboard_period_date,
         )

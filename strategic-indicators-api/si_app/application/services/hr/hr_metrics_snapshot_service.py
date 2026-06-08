@@ -4,7 +4,7 @@ from si_app.infrastructure.http.hr_snapshot_models import (
     HrBranchSnapshot,
     HrMetricsSnapshot,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.infrastructure.gateways.delpi_hr_gateway import DelpiHrGateway

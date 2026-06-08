@@ -10,7 +10,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
     StrategicIndicatorsPeriodSnapshot,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.shared.branch_filter import effective_query_branch

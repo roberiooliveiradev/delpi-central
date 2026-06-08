@@ -3,7 +3,7 @@ from __future__ import annotations
 from si_app.application.services.commercial.commercial_metrics_snapshot_service import (
     CommercialMetricsSnapshotService,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (

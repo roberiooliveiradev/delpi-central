@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from si_app.application.services.engineering.engineering_metrics_helpers import (
     resolve_lmp_dashboard_summary,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway

@@ -86,7 +86,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | `*_metrics_snapshot_service` departamentais | commercial, production, quality, supplies, engineering | Builders existiam nos composers mas **nenhuma rota HTTP** usava; agregação ficou só no SI |
 | Mantidos | `financial_metrics_snapshot_service`, `hr_metrics_snapshot_service` | Rotas `/financial/ebitda_pct`, `/pmr`, `/hr/*` |
 
-**Pendente (fase 7+):** mover `period_resolution` para `si_app/application/services/strategic_indicators/` (ainda usado por snapshots e repositórios).
+**Concluído (jun/2026):** `period_resolution` movido para `si_app/application/services/strategic_indicators/`.
 
 ### Fase 5 — RH via HTTP no SI (concluída jun/2026)
 
@@ -112,7 +112,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 ### Fase 7 — Gateways HTTP puros no SI (concluída jun/2026)
 
-**Objetivo:** SI consome api-delpi (e Transformometro) **somente via HTTP**; lógica de negócio departamental fica em `*_metrics_snapshot_service` ou `*_metrics_helpers.py`.
+**Objetivo:** SI consome api-delpi **somente via HTTP**; lógica de negócio departamental fica em `*_metrics_snapshot_service` ou `*_metrics_helpers.py`.
 
 | Removido no SI | Substituído por |
 |----------------|-----------------|
@@ -121,7 +121,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | Use cases finos (`GetCPVUseCase`, `GetPpmSummaryUseCase`, …) | `supplies_metrics_helpers.py`, `engineering_metrics_helpers.py`; snapshot services chamam gateways direto |
 | `shared/delpi_domain/` (já ausente) | Contratos HTTP em `si_app/infrastructure/http/` (ex.: `hr_snapshot_models.py`) |
 
-**Mantido:** `si_app/application/dto/strategic_indicators/`, `si_app/domain/ports/strategic_indicators/`, `si_app/application/use_cases/strategic_indicators/`, `period_resolution`.
+**Mantido:** `si_app/application/dto/strategic_indicators/`, `si_app/domain/ports/strategic_indicators/`, `si_app/application/use_cases/strategic_indicators/`, `services/strategic_indicators/period_resolution.py`.
 
 **api-delpi:** rotas e shapes de resposta **inalterados** (consumidores externos intactos).
 
@@ -140,6 +140,17 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 **Mantido na api-delpi:** `lmp_business_rules`, repos TOTVS, proxy Transformometro nas rotas `/engineering/*`.
 
 **delpi_api_client:** `get_transforma_mais_summary()` adicionado.
+
+### Housekeeping pós-fase 8 (concluído jun/2026)
+
+| Item | Ação |
+|------|------|
+| `period_resolution.py` | Movido para `application/services/strategic_indicators/` |
+| `financial_sheet_scope.py` | Removido; `FINANCIAL_CONSOLIDATED_BRANCH_KEY` em `shared/branch_filter.py` |
+| PPM Qualidade `null` vs `0.0` | `_resolve_ppm` e provider sem `default_value=0.0` |
+| `has_transformometro_*` | Substituído por `has_stale_period_snapshot_errors` |
+| Compose | `api-delpi` com healthcheck; SI aguarda `service_healthy` (sem ciclo com api-delpi) |
+| Docs | `DATA_SOURCES.md`, `LEGACY_CLEANUP.md` atualizados |
 
 ---
 

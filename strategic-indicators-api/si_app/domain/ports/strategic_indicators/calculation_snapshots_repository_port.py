@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
         StrategicIndicatorsCatalogSnapshot,
     )
-    from si_app.application.use_cases.strategic_indicators.period_resolution import (
+    from si_app.application.services.strategic_indicators.period_resolution import (
         ResolvedPeriod,
     )
 

@@ -10,7 +10,7 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
     StrategicIndicatorsSnapshotService,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     resolve_period,
 )
 

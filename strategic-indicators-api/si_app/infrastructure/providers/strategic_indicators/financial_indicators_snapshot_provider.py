@@ -3,16 +3,16 @@ from __future__ import annotations
 from si_app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
-from si_app.application.services.financial.financial_sheet_scope import (
-    CONSOLIDATED_BRANCH_KEY,
-)
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.domain.ports.strategic_indicators.financial_indicators_snapshot_port import (
     StrategicIndicatorsFinancialIndicatorsSnapshotPort,
 )
-from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
+from si_app.shared.branch_filter import (
+    FINANCIAL_CONSOLIDATED_BRANCH_KEY,
+    build_unit_values_for_consolidated_department,
+)
 
 
 class FinancialIndicatorsSnapshotProvider(
@@ -158,7 +158,7 @@ class FinancialIndicatorsSnapshotProvider(
             (
                 item
                 for item in snapshot.branches
-                if item.branch == CONSOLIDATED_BRANCH_KEY
+                if item.branch == FINANCIAL_CONSOLIDATED_BRANCH_KEY
             ),
             None,
         )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from si_app.application.services.quality.quality_metrics_snapshot_service import (
     QualityMetricsSnapshotService,
 )
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.domain.ports.strategic_indicators.quality_indicators_snapshot_port import (
@@ -129,7 +129,6 @@ class QualityIndicatorsSnapshotProvider(
                         ),
                         unit_values=ppm_internal_unit_values,
                         branch=branch,
-                        default_value=0.0,
                     ),
                     "source": "quality_ppm_internal",
                     "unit_values": ppm_internal_unit_values,
@@ -145,7 +144,6 @@ class QualityIndicatorsSnapshotProvider(
                         ),
                         unit_values=ppm_external_unit_values,
                         branch=branch,
-                        default_value=0.0,
                     ),
                     "source": "quality_ppm_external",
                     "unit_values": ppm_external_unit_values,

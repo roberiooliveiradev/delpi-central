@@ -710,11 +710,17 @@ services:
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-false}
 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+
     depends_on:
       - keycloak
       - postgres-plugins
       - transformometro-api
-      - strategic-indicators-api
 
     networks:
       - delpi-network
@@ -770,8 +776,12 @@ services:
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
 
     depends_on:
-      - keycloak
-      - postgres-plugins
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      api-delpi:
+        condition: service_healthy
 
     networks:
       - delpi-network

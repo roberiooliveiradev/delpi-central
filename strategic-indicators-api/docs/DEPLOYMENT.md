@@ -75,18 +75,19 @@ Exemplo: [infra/env.strategic-indicators.example](../../infra/env.strategic-indi
 | Grupo | Variáveis |
 |-------|-----------|
 | Postgres plugins | `PLUGINS_DB_HOST`, `PLUGINS_DB_PORT`, `PLUGINS_DB_NAME`, `PLUGINS_DB_USER`, `PLUGINS_DB_PASSWORD` |
-| api-delpi (RH e demais KPIs) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
-| api-delpi (HTTP) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
-| Google Sheets | `GOOGLE_SHEETS_*`, `*_SHEET_ID`, `*_GID` (ver `config.py`) |
+| api-delpi (todas as medições) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
 
 ## Ordem de subida (dev)
 
 ```text
 postgres-plugins, keycloak
-  → strategic-indicators-api (migrations opcionais + warm-up)
+  → api-delpi (healthcheck /health)
+  → strategic-indicators-api (aguarda api-delpi healthy)
   → strategic-indicators (MFE build)
   → gateway
 ```
+
+O Compose define `depends_on: api-delpi: condition: service_healthy` no SI para evitar `Connection refused` no primeiro snapshot após rebuild.
 
 ## Produção — checklist
 

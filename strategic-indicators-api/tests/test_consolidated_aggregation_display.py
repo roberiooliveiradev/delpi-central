@@ -9,9 +9,7 @@ from si_app.application.services.financial.financial_metrics_snapshot_service im
     FinancialBranchSnapshot,
     FinancialMetricsSnapshot,
 )
-from si_app.application.services.financial.financial_sheet_scope import (
-    CONSOLIDATED_BRANCH_KEY,
-)
+from si_app.shared.branch_filter import FINANCIAL_CONSOLIDATED_BRANCH_KEY
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
@@ -56,7 +54,7 @@ def test_financial_provider_exposes_consolidated_unit_values_on_branch_view() ->
         end_date="30-04-2026",
         branches=[
             FinancialBranchSnapshot(
-                branch=CONSOLIDATED_BRANCH_KEY,
+                branch=FINANCIAL_CONSOLIDATED_BRANCH_KEY,
                 rol=1_000_000.0,
                 ebitda_value=125_000.0,
                 fixed_cost_value=80_000.0,

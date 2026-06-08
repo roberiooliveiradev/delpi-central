@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from si_app.infrastructure.concurrency.context_thread import submit_in_request_context
 from typing import Iterable
 
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
     is_standard_competence_period,
     previous_period,

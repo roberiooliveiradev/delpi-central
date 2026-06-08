@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from si_app.application.use_cases.strategic_indicators.period_resolution import (
+from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
     _parse_dashboard_date_parts,
 )
@@ -185,12 +185,12 @@ class QualityMetricsSnapshotService:
             ppm_internal_consolidated=(
                 round(ppm_internal_consolidated, 2)
                 if ppm_internal_consolidated is not None
-                else 0.0
+                else None
             ),
             ppm_external_consolidated=(
                 round(ppm_external_consolidated, 2)
                 if ppm_external_consolidated is not None
-                else 0.0
+                else None
             ),
         )
 
@@ -213,9 +213,6 @@ class QualityMetricsSnapshotService:
         )
 
         value = self._extract_first_number(result)
-
-        if value is None:
-            return 0.0
 
         return value
 
