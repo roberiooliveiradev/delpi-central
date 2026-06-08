@@ -247,6 +247,14 @@
       "componentType": " ({type})",
       "componentQuantity": " — qtd **{quantity}**"
     },
+    "factoryStatus": {
+      "titleWithCode": "Status fabril — {code}",
+      "titleGeneric": "Status fabril do produto",
+      "statusLine": "Status fabril: {status}",
+      "productWithDescription": "Produto: {code} — {description}",
+      "productCodeOnly": "Produto: {code}",
+      "exclusiveRawMaterials": "MPs exclusivas: {exclusive}"
+    },
     "systemTables": {
       "searchTitle": "Busca de tabelas Protheus (SX2)",
       "noMatch": "Nenhuma tabela correspondeu à descrição informada.",

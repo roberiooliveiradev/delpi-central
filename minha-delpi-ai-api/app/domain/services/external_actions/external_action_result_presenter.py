@@ -52,6 +52,9 @@ from app.domain.services.external_actions.presenters.presentation_builder_presen
 from app.domain.services.external_actions.presenters.text_presentation_presenter import (
     ExternalActionTextPresentationPresenter,
 )
+from app.domain.services.external_actions.presenters.route_line_presenter import (
+    ExternalActionRouteLinePresenter,
+)
 
 
 class ExternalActionResultPresenter:
@@ -73,6 +76,7 @@ class ExternalActionResultPresenter:
         self._entity_route_presenter: ExternalActionEntityRoutePresenter | None = None
         self._presentation_builder_presenter: ExternalActionPresentationBuilderPresenter | None = None
         self._text_presentation_presenter: ExternalActionTextPresentationPresenter | None = None
+        self._route_line_presenter: ExternalActionRouteLinePresenter | None = None
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -144,6 +148,12 @@ class ExternalActionResultPresenter:
             self._text_presentation_presenter = ExternalActionTextPresentationPresenter(self)
 
         return self._text_presentation_presenter
+
+    def _route_lines(self) -> ExternalActionRouteLinePresenter:
+        if self._route_line_presenter is None:
+            self._route_line_presenter = ExternalActionRouteLinePresenter(self)
+
+        return self._route_line_presenter
 
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
@@ -873,142 +883,10 @@ class ExternalActionResultPresenter:
 
 
     def _present_product_structure(self, root: dict, path: str) -> dict | None:
-        root_node = root.get("root")
-
-        if not isinstance(root_node, dict):
-            return None
-
-        items = root.get("items")
-
-        if not isinstance(items, list):
-            return None
-
-        code = str(root_node.get("code") or "").strip()
-        description = str(root_node.get("description") or "").strip()
-        total = root.get("total")
-        level1_count = len(items)
-
-        description = (
-            str(description or "").strip()
-            or self._route_presentation("structureItems", "noDescription")
-        )
-        linhas: list[str] = [
-            self._route_presentation(
-                "structureItems",
-                "productLine",
-                code=code,
-                description=description,
-            ),
-        ]
-
-        if total is not None:
-            linhas.append(
-                self._route_presentation(
-                    "structureItems", "totalFromApi", total=str(total)
-                )
-            )
-        elif level1_count:
-            linhas.append(
-                self._route_presentation(
-                    "structureItems", "countFromItems", count=str(level1_count)
-                )
-            )
-
-        mp_codes: set[str] = set()
-
-        for item in items[:10]:
-            if not isinstance(item, dict):
-                continue
-
-            item_code = str(item.get("code") or "?").strip()
-            item_desc = str(item.get("description") or "").strip()
-            item_type = str(item.get("type") or "").strip()
-            quantity = item.get("quantity")
-
-            if str(item_type).upper() == "MP":
-                mp_codes.add(item_code)
-
-            line = self._format_structure_component_line(
-                item_code,
-                item_desc,
-                item_type,
-                quantity,
-            )
-
-            if line:
-                linhas.append(line)
-
-        if level1_count > 10:
-            linhas.append(
-                self._presenter_text(
-                    "pagination",
-                    "moreStructureComponents",
-                    count=str(level1_count - 10),
-                )
-            )
-
-        if mp_codes:
-            preview = ", ".join(sorted(mp_codes)[:6])
-            suffix = "…" if len(mp_codes) > 6 else ""
-            linhas.append(
-                self._route_presentation(
-                    "structureItems",
-                    "rawMaterials",
-                    count=str(len(mp_codes)),
-                    preview=preview,
-                    suffix=suffix,
-                )
-            )
-
-        return {
-            "titulo": (
-                self._route_presentation("structureItems", "titleWithCode", code=code)
-                if code
-                else self._route_presentation("structureItems", "titleGeneric")
-            ),
-            "linhas": linhas,
-            "dados": root,
-            "sourcePath": path,
-        }
+        return self._product_list()._present_product_structure(root, path)
 
     def _present_product_factory_status(self, root: dict, path: str) -> dict:
-        product = root.get("product") if isinstance(root.get("product"), dict) else {}
-        code = str(
-            product.get("product_code") or product.get("code") or self._extract_product_code_from_path(path)
-        ).strip()
-        description = str(product.get("description") or "").strip()
-        status = str(root.get("factory_status") or "").strip()
-        linhas: list[str] = []
-
-        if status:
-            linhas.append(f"Status fabril: {status}")
-
-        if description:
-            linhas.append(f"Produto: {code} — {description}")
-        elif code:
-            linhas.append(f"Produto: {code}")
-
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
-
-        for key, value in list(indicators.items())[:6]:
-            linhas.append(
-                f"{self._humanize_key(str(key))}: {self._format_field_value(str(key), value)}"
-            )
-
-        structure_summary = (root.get("structure") or {}).get("summary") if isinstance(root.get("structure"), dict) else None
-
-        if isinstance(structure_summary, dict):
-            exclusive = structure_summary.get("total_exclusive_raw_materials")
-
-            if exclusive is not None:
-                linhas.append(f"MPs exclusivas: {exclusive}")
-
-        return {
-            "titulo": f"Status fabril — {code}" if code else "Status fabril do produto",
-            "linhas": linhas or [self._presenter_text("generic", "apiAuthorized")],
-            "dados": root,
-            "sourcePath": path,
-        }
+        return self._product_list()._present_product_factory_status(root, path)
 
 
 
@@ -1037,54 +915,16 @@ class ExternalActionResultPresenter:
 
 
     def _alias_dict(self, payload: dict) -> dict:
-        return {
-            self._humanize_key(key): value
-            for key, value in payload.items()
-            if value is not None
-        }
+        return self._route_lines()._alias_dict(payload)
 
     def _label_collection(self, key: str) -> str:
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
-        )
-
-        labels = ChatProductOperationalContentService.get_mapping(
-            "presenter",
-            "collections",
-            "labels",
-        )
-
-        return labels.get(key, key)
+        return self._route_lines()._label_collection(key)
 
     def _total(self, value):
-        if isinstance(value, dict):
-            return value.get("total")
-
-        return None
+        return self._route_lines()._total(value)
 
     def _collection_is_empty(self, value) -> bool:
-        if not isinstance(value, dict):
-            return True
-
-        total = value.get("total")
-
-        try:
-            if total is not None and int(total) > 0:
-                return False
-        except (TypeError, ValueError):
-            pass
-
-        items = value.get("items")
-
-        if isinstance(items, list) and items:
-            return False
-
-        data = value.get("data")
-
-        if isinstance(data, list) and data:
-            return False
-
-        return True
+        return self._route_lines()._collection_is_empty(value)
 
 
     def _build_parents_text_presentation(self, root: dict, path: str) -> dict | None:
@@ -1181,129 +1021,18 @@ class ExternalActionResultPresenter:
         item_type: str,
         quantity: object,
     ) -> str:
-        separator = self._route_presentation("structureItems", "componentSeparator")
-        parts = [
-            self._route_presentation(
-                "structureItems",
-                "componentCode",
-                code=code,
-            )
-        ]
-
-        if description:
-            parts.append(description)
-
-        line = separator.join(parts[:2])
-
-        if item_type:
-            line += self._route_presentation(
-                "structureItems",
-                "componentType",
-                type=item_type,
-            )
-
-        if quantity is not None:
-            line += self._route_presentation(
-                "structureItems",
-                "componentQuantity",
-                quantity=self._format_num(quantity),
-            )
-
-        return (
-            self._route_presentation("structureItems", "componentBulletPrefix")
-            + line
+        return self._route_lines()._format_structure_component_line(
+            code,
+            description,
+            item_type,
+            quantity,
         )
 
     def _format_measurable_test_specs(self, test: dict) -> str | None:
-        if not isinstance(test, dict):
-            return None
-
-        unit = str(test.get("unit") or "")
-        spec_parts: list[str] = []
-        nominal = test.get("nominal_value")
-        lower = test.get("lower_spec_limit")
-        upper = test.get("upper_spec_limit")
-        missing = self._route_presentation("inspection", "missingLimit")
-
-        if nominal is not None:
-            spec_parts.append(
-                self._route_presentation(
-                    "inspection",
-                    "specNominal",
-                    nominal=str(nominal),
-                    unit=unit,
-                )
-            )
-
-        if lower is not None or upper is not None:
-            spec_parts.append(
-                self._route_presentation(
-                    "inspection",
-                    "specLimits",
-                    lower=str(lower if lower is not None else missing),
-                    upper=str(upper if upper is not None else missing),
-                    unit=unit,
-                )
-            )
-
-        return ", ".join(spec_parts) if spec_parts else None
+        return self._route_lines()._format_measurable_test_specs(test)
 
     def _format_inspection_characteristic_line(self, item: dict) -> str | None:
-        if not isinstance(item, dict):
-            return None
-
-        characteristic = str(
-            item.get("characteristic")
-            or item.get("specification")
-            or item.get("step_description")
-            or item.get("description")
-            or "?"
-        ).strip()
-        inspection_type = str(item.get("inspection_type") or item.get("method") or "").strip()
-        sequence = item.get("sequence")
-        step = item.get("step")
-        separator = self._route_presentation(
-            "inspection",
-            "characteristicPartsSeparator",
-        )
-        parts = [
-            self._route_presentation(
-                "inspection",
-                "characteristicBold",
-                characteristic=characteristic,
-            )
-        ]
-
-        if inspection_type:
-            parts.append(
-                self._route_presentation(
-                    "inspection",
-                    "typeSuffix",
-                    inspection_type=inspection_type,
-                )
-            )
-
-        if sequence not in (None, ""):
-            parts.append(
-                self._route_presentation(
-                    "inspection",
-                    "sequenceSuffix",
-                    sequence=str(sequence),
-                )
-            )
-        elif step not in (None, ""):
-            parts.append(
-                self._route_presentation(
-                    "inspection",
-                    "sequenceSuffix",
-                    sequence=str(step),
-                )
-            )
-
-        return (
-            self._route_presentation("inspection", "characteristicBulletPrefix")
-            + separator.join(parts)
-        )
+        return self._route_lines()._format_inspection_characteristic_line(item)
 
     def _format_product_search_line(
         self,
@@ -1316,85 +1045,21 @@ class ExternalActionResultPresenter:
         level: object,
         is_hierarchy: bool,
     ) -> str:
-        separator = self._route_presentation("productSearch", "separator")
-        parts = [
-            self._route_presentation("productSearch", "codeBold", code=code or "?")
-        ]
-
-        if description:
-            parts.append(description)
-
-        line = separator.join(parts[:2])
-
-        if item_type:
-            line += self._route_presentation(
-                "productSearch",
-                "typePart",
-                type=item_type,
-            )
-
-        if unit:
-            line += self._route_presentation(
-                "productSearch",
-                "unitPart",
-                unit=unit,
-            )
-
-        if is_hierarchy:
-            extras: list[str] = []
-
-            if quantity is not None:
-                extras.append(
-                    self._route_presentation(
-                        "productSearch",
-                        "qtyExtra",
-                        qty=str(quantity),
-                    )
-                )
-
-            if level is not None:
-                extras.append(
-                    self._route_presentation(
-                        "productSearch",
-                        "levelExtra",
-                        level=str(level),
-                    )
-                )
-
-            if extras:
-                line += self._route_presentation(
-                    "productSearch",
-                    "extrasSeparator",
-                ) + ", ".join(extras)
-
-        return line
+        return self._route_lines()._format_product_search_line(
+            code=code,
+            description=description,
+            item_type=item_type,
+            unit=unit,
+            quantity=quantity,
+            level=level,
+            is_hierarchy=is_hierarchy,
+        )
 
     def _product_detail_scope(self, root: dict) -> str:
-        if "prices" in root:
-            return "prices"
-
-        if "stock" in root:
-            return "stock"
-
-        if "purchases" in root:
-            return "purchases"
-
-        if "sales" in root or "billing" in root:
-            return "sales"
-
-        if "open_orders" in root:
-            return "open_orders"
-
-        return "default"
+        return self._route_lines()._product_detail_scope(root)
 
     def _product_detail_title(self, code: object, root: dict) -> str:
-        scope = self._product_detail_scope(root)
-
-        return self._presenter_text(
-            "productDetailTitles",
-            scope,
-            code=str(code or "").strip(),
-        )
+        return self._route_lines()._product_detail_title(code, root)
 
 
 

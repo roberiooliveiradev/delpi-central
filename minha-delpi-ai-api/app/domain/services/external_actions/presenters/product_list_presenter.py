@@ -970,3 +970,170 @@ class ExternalActionProductListPresenter:
             "columns": columns,
             "rows": rows,
         }
+
+    def _present_product_structure(self, root: dict, path: str) -> dict | None:
+        root_node = root.get("root")
+
+        if not isinstance(root_node, dict):
+            return None
+
+        items = root.get("items")
+
+        if not isinstance(items, list):
+            return None
+
+        code = str(root_node.get("code") or "").strip()
+        description = str(root_node.get("description") or "").strip()
+        total = root.get("total")
+        level1_count = len(items)
+
+        description = (
+            str(description or "").strip()
+            or self._host._route_presentation("structureItems", "noDescription")
+        )
+        linhas: list[str] = [
+            self._host._route_presentation(
+                "structureItems",
+                "productLine",
+                code=code,
+                description=description,
+            ),
+        ]
+
+        if total is not None:
+            linhas.append(
+                self._host._route_presentation(
+                    "structureItems", "totalFromApi", total=str(total)
+                )
+            )
+        elif level1_count:
+            linhas.append(
+                self._host._route_presentation(
+                    "structureItems", "countFromItems", count=str(level1_count)
+                )
+            )
+
+        mp_codes: set[str] = set()
+
+        for item in items[:10]:
+            if not isinstance(item, dict):
+                continue
+
+            item_code = str(item.get("code") or "?").strip()
+            item_desc = str(item.get("description") or "").strip()
+            item_type = str(item.get("type") or "").strip()
+            quantity = item.get("quantity")
+
+            if str(item_type).upper() == "MP":
+                mp_codes.add(item_code)
+
+            line = self._host._format_structure_component_line(
+                item_code,
+                item_desc,
+                item_type,
+                quantity,
+            )
+
+            if line:
+                linhas.append(line)
+
+        if level1_count > 10:
+            linhas.append(
+                self._host._presenter_text(
+                    "pagination",
+                    "moreStructureComponents",
+                    count=str(level1_count - 10),
+                )
+            )
+
+        if mp_codes:
+            preview = ", ".join(sorted(mp_codes)[:6])
+            suffix = "…" if len(mp_codes) > 6 else ""
+            linhas.append(
+                self._host._route_presentation(
+                    "structureItems",
+                    "rawMaterials",
+                    count=str(len(mp_codes)),
+                    preview=preview,
+                    suffix=suffix,
+                )
+            )
+
+        return {
+            "titulo": (
+                self._host._route_presentation("structureItems", "titleWithCode", code=code)
+                if code
+                else self._host._route_presentation("structureItems", "titleGeneric")
+            ),
+            "linhas": linhas,
+            "dados": root,
+            "sourcePath": path,
+        }
+
+    def _present_product_factory_status(self, root: dict, path: str) -> dict:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(
+            product.get("product_code") or product.get("code") or self._host._extract_product_code_from_path(path)
+        ).strip()
+        description = str(product.get("description") or "").strip()
+        status = str(root.get("factory_status") or "").strip()
+        linhas: list[str] = []
+
+        if status:
+            linhas.append(
+                self._host._route_presentation(
+                    "factoryStatus",
+                    "statusLine",
+                    status=status,
+                )
+            )
+
+        if description:
+            linhas.append(
+                self._host._route_presentation(
+                    "factoryStatus",
+                    "productWithDescription",
+                    code=code,
+                    description=description,
+                )
+            )
+        elif code:
+            linhas.append(
+                self._host._route_presentation(
+                    "factoryStatus",
+                    "productCodeOnly",
+                    code=code,
+                )
+            )
+
+        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+
+        for key, value in list(indicators.items())[:6]:
+            linhas.append(
+                f"{self._host._humanize_key(str(key))}: {self._host._format_field_value(str(key), value)}"
+            )
+
+        structure_summary = (root.get("structure") or {}).get("summary") if isinstance(root.get("structure"), dict) else None
+
+        if isinstance(structure_summary, dict):
+            exclusive = structure_summary.get("total_exclusive_raw_materials")
+
+            if exclusive is not None:
+                linhas.append(
+                    self._host._route_presentation(
+                        "factoryStatus",
+                        "exclusiveRawMaterials",
+                        exclusive=str(exclusive),
+                    )
+                )
+
+        return {
+            "titulo": (
+                self._host._route_presentation("factoryStatus", "titleWithCode", code=code)
+                if code
+                else self._host._route_presentation("factoryStatus", "titleGeneric")
+            ),
+            "linhas": linhas or [self._host._presenter_text("generic", "apiAuthorized")],
+            "dados": root,
+            "sourcePath": path,
+        }

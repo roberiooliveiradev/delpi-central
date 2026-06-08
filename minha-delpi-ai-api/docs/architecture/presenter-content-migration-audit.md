@@ -25,7 +25,7 @@ Relatório de auditoria após centralização em `app/content/pt-BR/assistant/*.
 
 ## Já centralizado (não reimplementar)
 
-- Rotas: `routePresentations` (guide, inspection, lmp, saleOrders, structureItems, productSearch)
+- Rotas: `routePresentations` (guide, inspection, lmp, saleOrders, structureItems, productSearch, factoryStatus)
 - Narrativas: `productOverview`, `analyserProfile`, `analyserInsights`, `guideItemNarrative`, `systemTablesNarrative`, `routeNarratives`
 - Analyser abertura/atenção: `analyser_insights.json` + `ChatProductAnalyserDivergenceService`
 - Colunas: `column_labels` + `ExternalActionColumnLabelService`

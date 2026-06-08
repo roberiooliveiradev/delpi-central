@@ -123,6 +123,25 @@ def test_format_structure_component_line():
     assert "2,5" in line or "2.5" in line
 
 
+def test_present_product_factory_status_uses_content():
+    presenter = ExternalActionResultPresenter()
+
+    result = presenter._present_product_factory_status(
+        {
+            "product": {"code": "90260123", "description": "CABO"},
+            "factory_status": "Ativo",
+            "structure": {"summary": {"total_exclusive_raw_materials": 3}},
+        },
+        "/products/90260123/factory-status",
+    )
+
+    assert result["titulo"] == "Status fabril — 90260123"
+    joined = "\n".join(result["linhas"])
+    assert "Status fabril: Ativo" in joined
+    assert "Produto: 90260123 — CABO" in joined
+    assert "MPs exclusivas: 3" in joined
+
+
 def test_format_inspection_characteristic_line():
     presenter = ExternalActionResultPresenter()
 
