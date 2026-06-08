@@ -432,6 +432,50 @@ SELECTION_CASES = [
         "expected_action_id": "closing",
     },
     {
+        "message": "Qual a taxa de conversão de vendas da empresa?",
+        "actions": [
+            {
+                "actionId": "product-sales",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "closing",
+                "method": "GET",
+                "path": "/commercial/closing-rate",
+                "operationId": "get_sales_conversion_rate",
+                "summary": "Taxa de conversão",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "closing",
+    },
+    {
+        "message": "Qual o OTD de compras da empresa?",
+        "actions": [
+            {
+                "actionId": "commercial-otd",
+                "method": "GET",
+                "path": "/commercial/sales-order-otd",
+                "operationId": "get_sales_order_otd",
+                "summary": "OTD comercial",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "supplies-otd",
+                "method": "GET",
+                "path": "/supplies/otd",
+                "operationId": "get_supplies_otd",
+                "summary": "OTD suprimentos",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "supplies-otd",
+    },
+    {
         "message": "resumo de kaizens do mês",
         "actions": [
             {

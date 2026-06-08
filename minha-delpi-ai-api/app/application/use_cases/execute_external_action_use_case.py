@@ -120,9 +120,14 @@ class ExecuteExternalActionUseCase:
             request_parameters=request_parameters,
         )
 
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+
         execution_metadata = {
             "durationMs": result["durationMs"],
             "sensitivity": action["sensitivity"],
+            "apiRouteDomain": ChatOperationalApiDomainService.classify_path(resolved_path),
             **presentation_metadata,
         }
 
@@ -392,6 +397,26 @@ class ExecuteExternalActionUseCase:
             "preferredFormat": preferred_format,
             "dataCoverageNotice": data_coverage_notice,
         }
+
+        schema_labels = self.presenter._column_labels.merge_meta_field_labels(
+            self.presenter._column_labels.resolve_schema_labels(action.get("responseSchema")),
+            sanitized_data,
+        )
+        schema_formats = self.presenter._column_labels.merge_meta_field_formats(
+            {},
+            sanitized_data,
+        )
+
+        from app.domain.services.chat_presentation_field_normalization_service import (
+            ChatPresentationFieldNormalizationService,
+        )
+
+        ChatPresentationFieldNormalizationService.normalize_metadata(
+            metadata,
+            path=resolved_path,
+            schema_labels=schema_labels,
+            schema_formats=schema_formats,
+        )
 
         from app.domain.services.chat_presentation_decision_service import (
             ChatPresentationDecisionService,

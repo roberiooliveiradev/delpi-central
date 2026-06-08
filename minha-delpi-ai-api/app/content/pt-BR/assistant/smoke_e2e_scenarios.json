@@ -1,0 +1,176 @@
+{
+  "validation": {
+    "clarifyMarkers": [
+      "escolha uma opção",
+      "o que você quer ver sobre o produto"
+    ],
+    "techErrorMarkers": [
+      "has no attribute",
+      "traceback",
+      "internal server error",
+      "erro interno",
+      "got multiple values for argument",
+      "missing required parameter: code"
+    ],
+    "englishKpiMarkers": [
+      "gross revenue",
+      "returns:",
+      "branch: filial"
+    ],
+    "financialPtIndicators": [
+      "receita bruta",
+      "rol",
+      "r$"
+    ],
+    "productPathMarkers": [
+      "/products/",
+      "/products/{code}"
+    ]
+  },
+  "suites": {
+    "operational_mixed": {
+      "description": "Produto + KPI empresa — roteamento operacional misto",
+      "scenarios": [
+        {
+          "id": "P01",
+          "domain": "produto / faturamento",
+          "message": "Quanto já foi faturado do produto 90260015?",
+          "pathFragment": "/sales/billing"
+        },
+        {
+          "id": "P02",
+          "domain": "produto / status fabril",
+          "message": "Qual o status completo na fábrica do produto 90269002 hoje?",
+          "pathFragment": "/factory-status"
+        },
+        {
+          "id": "P03",
+          "domain": "financeiro / ROL",
+          "message": "Qual foi o ROL da empresa em março de 2026?",
+          "pathFragment": "/financial/rol",
+          "checks": "financial_pt"
+        },
+        {
+          "id": "P04",
+          "domain": "produto / estoque",
+          "message": "Qual o saldo disponível do produto 10080033 na filial 01?",
+          "pathFragment": "/stock"
+        },
+        {
+          "id": "P05",
+          "domain": "produto / estrutura",
+          "message": "mostre a estrutura do produto 90260123",
+          "pathFragment": "/structure"
+        },
+        {
+          "id": "P06",
+          "domain": "suprimentos / CPV",
+          "message": "Qual o CPV da empresa?",
+          "pathFragment": "/supplies/cpv"
+        },
+        {
+          "id": "P07",
+          "domain": "produto / fornecedores",
+          "message": "quem fornece o produto 10080022?",
+          "pathFragment": "/suppliers"
+        },
+        {
+          "id": "P08",
+          "domain": "produto / where-used",
+          "message": "onde é usado o produto 90260149?",
+          "pathFragment": "/parents"
+        },
+        {
+          "id": "P09",
+          "domain": "produto / compras",
+          "message": "mostre as compras do produto 90260015",
+          "pathFragment": "/purchases"
+        },
+        {
+          "id": "P10",
+          "domain": "financeiro / PMR",
+          "message": "Qual o PMR da empresa?",
+          "pathFragment": "/financial/pmr"
+        }
+      ]
+    },
+    "empresa_kpi": {
+      "description": "KPIs corporativos — sem rota /products/",
+      "forbidProductPath": true,
+      "scenarios": [
+        {
+          "id": "K01",
+          "domain": "suprimentos / CPV",
+          "message": "Qual o CPV da empresa?",
+          "pathFragment": "/supplies/cpv"
+        },
+        {
+          "id": "K02",
+          "domain": "suprimentos / valor estoque",
+          "message": "Qual o valor total de estoque da empresa?",
+          "pathFragment": "/supplies/stock-value"
+        },
+        {
+          "id": "K03",
+          "domain": "suprimentos / giro",
+          "message": "Qual o giro de estoque da empresa?",
+          "pathFragment": "/supplies/inventory-turnover"
+        },
+        {
+          "id": "K04",
+          "domain": "suprimentos / OTD compras",
+          "message": "Qual o OTD de compras da empresa?",
+          "pathFragment": "/supplies/otd"
+        },
+        {
+          "id": "K05",
+          "domain": "financeiro / ROL",
+          "message": "Qual foi o ROL da empresa em março de 2026?",
+          "pathFragment": "/financial/rol"
+        },
+        {
+          "id": "K06",
+          "domain": "financeiro / PMR",
+          "message": "Qual o PMR da empresa?",
+          "pathFragment": "/financial/pmr"
+        },
+        {
+          "id": "K07",
+          "domain": "financeiro / EBITDA",
+          "message": "Qual o percentual de EBITDA sobre o ROL?",
+          "pathFragment": "/financial/ebitda"
+        },
+        {
+          "id": "K08",
+          "domain": "comercial / taxa conversão",
+          "message": "Qual a taxa de conversão de vendas da empresa?",
+          "pathFragment": "/commercial/closing-rate"
+        },
+        {
+          "id": "K09",
+          "domain": "comercial / novos clientes",
+          "message": "Qual a média de novos clientes?",
+          "pathFragment": "/commercial/new-clients"
+        },
+        {
+          "id": "K10",
+          "domain": "produção / OEE",
+          "message": "Qual o OEE da produção?",
+          "pathFragment": "/overall_equipment"
+        },
+        {
+          "id": "K11",
+          "domain": "produção / custo",
+          "message": "Qual o custo de produção da empresa?",
+          "pathFragment": "/production/production_cost"
+        },
+        {
+          "id": "K12",
+          "domain": "RH / snapshot",
+          "message": "Qual o snapshot de RH?",
+          "pathFragment": "/hr/snapshot"
+        }
+      ]
+    }
+  }
+}

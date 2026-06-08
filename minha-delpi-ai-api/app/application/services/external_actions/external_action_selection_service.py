@@ -29,6 +29,10 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
+from app.application.services.external_actions.external_action_route_selection_service import (
+    ExternalActionRouteSelectionService,
+)
 
 
 class ExternalActionSelectionService:
@@ -36,6 +40,7 @@ class ExternalActionSelectionService:
     def __init__(self, repository, semantic_ranker=None):
         self.repository = repository
         self.semantic_ranker = semantic_ranker
+        self._route_selection = ExternalActionRouteSelectionService(repository)
 
     def select_action_for_product(
         self,
@@ -400,6 +405,22 @@ class ExternalActionSelectionService:
                 return selected
 
         if self._looks_like_otd_question(normalized) and not product_code:
+            department_otd = ChatDepartmentKpiIntentService.resolve(message)
+            path_token = str(getattr(department_otd, "path_token", "") or "").lower()
+
+            if department_otd and (
+                "otd" in path_token or "on_time" in path_token
+            ):
+                selected = self._select_department_kpi_action(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                    match=department_otd,
+                    previous_messages=previous_messages,
+                )
+
+                if selected:
+                    return selected
+
             selected = self._select_supplies_metric_action(
                 message,
                 allowed_action_ids=allowed_action_ids,
@@ -429,6 +450,19 @@ class ExternalActionSelectionService:
             selected = self._select_supplies_stock_value_action(
                 message,
                 allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
+        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
+
+        if department_kpi and not product_code:
+            selected = self._select_department_kpi_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                match=department_kpi,
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -552,19 +586,6 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
-
-        if department_kpi and department_kpi.domain_prefix.startswith("/quality/audit-5s/") and not product_code:
-            selected = self._select_department_kpi_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                match=department_kpi,
-                previous_messages=previous_messages,
-            )
-
-            if selected:
-                return selected
-
         if self._looks_like_sql_or_data_query(message):
             if ChatSqlIntentService.should_auto_execute_sql(message):
                 return self._select_sql_or_data_action(
@@ -582,19 +603,6 @@ class ExternalActionSelectionService:
             conversation_context=conversation_context,
         ):
             return None
-
-        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
-
-        if department_kpi and not product_code:
-            selected = self._select_department_kpi_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                match=department_kpi,
-                previous_messages=previous_messages,
-            )
-
-            if selected:
-                return selected
 
         return self._select_generic_allowed_action(
             message,
@@ -759,41 +767,15 @@ class ExternalActionSelectionService:
         match,
         previous_messages: list | None = None,
     ) -> dict | None:
-        candidates = self._list_allowed_candidates(
-            message,
+        spec = OperationalApiRouteSpec.from_department_kpi(match)
+
+        return self._route_selection.select(
+            spec,
+            message=message,
             allowed_action_ids=allowed_action_ids,
-            limit=80,
+            previous_messages=previous_messages,
+            fallback_candidates_loader=self._list_allowed_candidates,
         )
-
-        path_token = str(match.path_token or "").lower()
-        domain_prefix = str(match.domain_prefix or "").lower()
-
-        for action in candidates:
-            if action.get("method") != "GET":
-                continue
-
-            path = str(action.get("path") or "").lower()
-
-            if domain_prefix and domain_prefix not in path:
-                continue
-
-            if path_token and path_token not in path:
-                continue
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": self._build_date_branch_parameters(
-                        action,
-                        message,
-                        previous_messages=previous_messages,
-                    ),
-                },
-                "reason": match.reason,
-            }
-
-        return None
 
     def _select_pagination_refinement_action(
         self,
@@ -1191,50 +1173,53 @@ class ExternalActionSelectionService:
         reason: str,
         previous_messages: list | None = None,
     ) -> dict | None:
-        candidates = self._find_allowed_actions_by_path_token(
+        spec = OperationalApiRouteSpec.from_supplies_metric(
             path_token=path_token,
             operation_token=operation_token,
-            allowed_action_ids=allowed_action_ids,
+            reason=reason,
         )
 
-        if not candidates:
-            candidates = self._list_allowed_candidates(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                limit=80,
-            )
+        return self._route_selection.select(
+            spec,
+            message=message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            fallback_candidates_loader=self._list_allowed_candidates,
+        )
 
-        for action in candidates:
-            if action.get("method") != "GET":
-                continue
+    def _prioritize_supplies_otd_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-            token = str(path_token or "").lower()
-            op_token = str(operation_token or "").lower()
+        supplies_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "suppliesOtdSuppliesDomainTerms",
+        )
+        supplies_prefix = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "suppliesOtdPathPrefix",
+            default="/supplies/",
+        ).lower()
 
-            if token and token not in path and op_token not in operation_id:
-                continue
+        if any(term in normalized for term in supplies_terms):
+            supplies = [
+                action
+                for action in candidates
+                if supplies_prefix in str(action.get("path") or "").lower()
+            ]
+            others = [
+                action
+                for action in candidates
+                if supplies_prefix not in str(action.get("path") or "").lower()
+            ]
 
-            parameters = self._build_date_branch_parameters(
-                action,
-                message,
-                previous_messages=previous_messages,
-            )
+            if supplies:
+                return supplies + others
 
-            if not parameters:
-                parameters = self._build_supplies_stock_parameters(action)
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": parameters,
-                },
-                "reason": reason,
-            }
-
-        return None
+        return candidates
 
     def _select_supplies_stock_value_action(
         self,
@@ -2748,17 +2733,17 @@ class ExternalActionSelectionService:
                     value -= 80
 
             elif intent == ChatProductQueryIntent.SUMMARY:
-                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
-                    value += 240
-
                 if "/products/{code}/summary" in path or path.endswith("/summary"):
                     value += 260
 
                 if "summary" in haystack and "product" in haystack:
                     value += 40
 
+                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
+                    value -= 120
+
                 if "analyser" in haystack or "analyzer" in haystack:
-                    value += 80
+                    value -= 80
 
                 if path == "/products/{code}":
                     value += 30

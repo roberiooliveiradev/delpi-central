@@ -45,6 +45,11 @@ import {
   inferDefaultChartAxes,
   isNumericAxisChartType,
 } from "./chartAxisSelection";
+import {
+  formatChartAxisValue,
+  type FieldFormats,
+  type FieldLabels,
+} from "./presentationFieldLabels";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ExpandButton } from "./ChatExpandModal";
 import type { ChartViewState } from "./chartViewState";
@@ -245,6 +250,9 @@ export function ChatRichChart({
   const displayYAxes = chartView.axes;
   const displayXAxis = chartView.axisKey;
 
+  const fieldLabels = config?.fieldLabels;
+  const fieldFormats = config?.fieldFormats;
+
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
   const colors = config?.colors || chartTheme.seriesColors;
   const showLegend = config?.legend !== false && displayYAxes.length > 1;
@@ -291,12 +299,14 @@ export function ChatRichChart({
     }
 
     if (axisXOverride || axisYOverride) {
-      parts.push(`Eixos: ${formatChartColumnLabel(resolvedX)} × ${formatChartColumnLabel(resolvedY)}`);
+      parts.push(
+        `Eixos: ${formatChartColumnLabel(resolvedX, fieldLabels)} × ${formatChartColumnLabel(resolvedY, fieldLabels)}`,
+      );
     }
 
     if (categoryFilterKey && categoryFilterValue) {
       parts.push(
-        `Filtro: ${formatChartColumnLabel(categoryFilterKey)} = ${categoryFilterValue}`,
+        `Filtro: ${formatChartColumnLabel(categoryFilterKey, fieldLabels)} = ${categoryFilterValue}`,
       );
     }
 
@@ -307,6 +317,7 @@ export function ChatRichChart({
     categoryFilterKey,
     categoryFilterValue,
     chartTypeOverride,
+    fieldLabels,
     periodCompareEnabled,
     resolvedX,
     resolvedY,
@@ -413,7 +424,7 @@ export function ChatRichChart({
                     >
                       {axisDefaults.numericColumns.map((column) => (
                         <option key={column} value={column}>
-                          {formatChartColumnLabel(column)}
+                          {formatChartColumnLabel(column, fieldLabels)}
                         </option>
                       ))}
                     </select>
@@ -447,7 +458,7 @@ export function ChatRichChart({
                         : axisDefaults.categoryColumns
                       ).map((column) => (
                         <option key={column} value={column}>
-                          {formatChartColumnLabel(column)}
+                          {formatChartColumnLabel(column, fieldLabels)}
                         </option>
                       ))}
                     </select>
@@ -665,11 +676,23 @@ export function ChatRichChart({
           />
         ) : (
           <ResponsiveContainer width="100%" height={expanded ? 420 : 280}>
-            {renderChart(activeChartType, displayData, displayXAxis, displayYAxes, colors, showLegend, config, {
-              gridColor,
-              tickStyle,
-              tooltipStyle,
-            }, onDrillDown ? openPointMenu : undefined)}
+            {renderChart(
+              activeChartType,
+              displayData,
+              displayXAxis,
+              displayYAxes,
+              colors,
+              showLegend,
+              config,
+              {
+                gridColor,
+                tickStyle,
+                tooltipStyle,
+              },
+              onDrillDown ? openPointMenu : undefined,
+              fieldLabels,
+              fieldFormats,
+            )}
           </ResponsiveContainer>
         )}
       </div>
@@ -730,6 +753,17 @@ function chartPointFromEvent(
   onPointClick(point, event?.clientX ?? 0, event?.clientY ?? 0);
 }
 
+function buildAxisTickFormatter(
+  axisKey: string,
+  fieldFormats?: FieldFormats | null,
+) {
+  return (value: unknown) => formatChartAxisValue(value, axisKey, fieldFormats);
+}
+
+function seriesLabel(key: string, fieldLabels?: FieldLabels | null) {
+  return formatChartColumnLabel(key, fieldLabels);
+}
+
 function renderChart(
   type: string,
   data: Record<string, unknown>[],
@@ -740,9 +774,12 @@ function renderChart(
   chartConfig: ChartPresentation["config"],
   theme: ThemeConfig,
   onPointClick?: ChartPointClickHandler,
+  fieldLabels?: FieldLabels | null,
+  fieldFormats?: FieldFormats | null,
 ) {
   const commonProps = { data, margin: { top: 10, right: 20, left: 10, bottom: 5 } };
   const interactiveCursor = onPointClick ? "pointer" : undefined;
+  const xAxisTickFormatter = buildAxisTickFormatter(xAxis, fieldFormats);
 
   switch (type) {
     case "line":
@@ -750,13 +787,14 @@ function renderChart(
       return (
         <LineChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} tickFormatter={xAxisTickFormatter} />
           <YAxis tick={theme.tickStyle} />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Line
               key={key}
+              name={seriesLabel(key, fieldLabels)}
               type="monotone"
               dataKey={key}
               stroke={colors[i % colors.length]}
@@ -778,13 +816,14 @@ function renderChart(
       return (
         <AreaChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} tickFormatter={xAxisTickFormatter} />
           <YAxis tick={theme.tickStyle} />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Area
               key={key}
+              name={seriesLabel(key, fieldLabels)}
               type="monotone"
               dataKey={key}
               stroke={colors[i % colors.length]}
@@ -837,12 +876,19 @@ function renderChart(
         <BarChart {...commonProps} layout="vertical" margin={{ top: 10, right: 20, left: 8, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
           <XAxis type="number" tick={theme.tickStyle} />
-          <YAxis type="category" dataKey={xAxis} width={120} tick={theme.tickStyle} />
+          <YAxis
+            type="category"
+            dataKey={xAxis}
+            width={120}
+            tick={theme.tickStyle}
+            tickFormatter={xAxisTickFormatter}
+          />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Bar
               key={key}
+              name={seriesLabel(key, fieldLabels)}
               dataKey={key}
               fill={colors[i % colors.length]}
               radius={[0, 4, 4, 0]}
@@ -862,12 +908,13 @@ function renderChart(
       return (
         <ComposedChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} tickFormatter={xAxisTickFormatter} />
           <YAxis tick={theme.tickStyle} />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {barKey ? (
             <Bar
+              name={seriesLabel(barKey, fieldLabels)}
               dataKey={barKey}
               fill={colors[0]}
               radius={[4, 4, 0, 0]}
@@ -876,6 +923,7 @@ function renderChart(
           ) : null}
           {lineKey ? (
             <Line
+              name={seriesLabel(lineKey, fieldLabels)}
               type="monotone"
               dataKey={lineKey}
               stroke={colors[1 % colors.length]}
@@ -894,8 +942,18 @@ function renderChart(
       return (
         <ScatterChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis type="number" dataKey={scatterX} tick={theme.tickStyle} name={scatterX} />
-          <YAxis type="number" dataKey={scatterY} tick={theme.tickStyle} name={scatterY} />
+          <XAxis
+            type="number"
+            dataKey={scatterX}
+            tick={theme.tickStyle}
+            name={seriesLabel(scatterX, fieldLabels)}
+          />
+          <YAxis
+            type="number"
+            dataKey={scatterY}
+            tick={theme.tickStyle}
+            name={seriesLabel(scatterY, fieldLabels)}
+          />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           <Scatter
@@ -916,13 +974,14 @@ function renderChart(
       return (
         <BarChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} tickFormatter={xAxisTickFormatter} />
           <YAxis tick={theme.tickStyle} />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Bar
               key={key}
+              name={seriesLabel(key, fieldLabels)}
               dataKey={key}
               stackId="stack"
               fill={colors[i % colors.length]}
@@ -969,13 +1028,14 @@ function renderChart(
       return (
         <BarChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
-          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} tickFormatter={xAxisTickFormatter} />
           <YAxis tick={theme.tickStyle} />
           <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Bar
               key={key}
+              name={seriesLabel(key, fieldLabels)}
               dataKey={key}
               fill={colors[i % colors.length]}
               radius={[4, 4, 0, 0]}

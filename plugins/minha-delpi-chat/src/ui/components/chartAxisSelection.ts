@@ -1,3 +1,8 @@
+import {
+  resolveFieldLabel,
+  type FieldLabels,
+} from "./presentationFieldLabels";
+
 export type ChartAxisHints = {
   preferY?: string[];
   preferX?: string[];
@@ -60,11 +65,11 @@ export function listCategoryColumns(
   });
 }
 
-export function formatChartColumnLabel(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase())
-    .trim();
+export function formatChartColumnLabel(
+  key: string,
+  fieldLabels?: FieldLabels | null,
+): string {
+  return resolveFieldLabel(key, fieldLabels);
 }
 
 function scoreKey(

@@ -653,57 +653,6 @@
       "query": "quem é você?"
     }
   ],
-  "attachmentWelcome": {
-    "title": "Arquivo recebido.",
-    "intro": "Posso ajudar com o conteúdo anexado nesta mensagem.",
-    "bullets": [
-      "resumo",
-      "correção de texto",
-      "tradução",
-      "extração de pendências",
-      "transformação em checklist",
-      "análise dos dados",
-      "criação de relatório"
-    ],
-    "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa."
-  },
-  "attachmentFollowUpChips": [
-    "Resumir",
-    "Corrigir",
-    "Colocar na lousa",
-    "Traduzir",
-    "Extrair pendências",
-    "Criar checklist",
-    "Criar ata",
-    "Criar relatório",
-    "Criar comunicado",
-    "Criar e-mail do anexo",
-    "Revisar redação",
-    "Explicar conteúdo",
-    "Versão simplificada",
-    "Comparar"
-  ],
-  "attachmentTextTaskChips": {
-    "correct": ["Revisar redação", "Criar e-mail do anexo"],
-    "summarize": ["Resumo executivo", "Criar comunicado"],
-    "minutes": ["Criar ata", "Extrair pendências"],
-    "structure": ["Criar checklist", "Criar plano de ação"],
-    "documentation": ["Criar documentação", "Versão simplificada"]
-  },
-  "attachmentLargeFile": {
-    "body": "O arquivo é **extenso**. Posso começar por um resumo geral ou trabalhar por seções — não prometo leitura integral de todas as páginas de uma vez.",
-    "chips": [
-      "Resumo geral",
-      "Trabalhar por seção",
-      "Extrair pendências",
-      "Procurar termo",
-      "Criar checklist",
-      "Colocar na lousa"
-    ]
-  },
-  "attachmentUnreadable": {
-    "body": "Não consegui ler o arquivo com segurança nesta sessão. Você pode reenviar em PDF/DOCX, melhorar a qualidade da imagem, converter para texto ou descrever o que precisa que eu analise."
-  },
   "emailFollowUpChips": [
     "Deixar mais formal",
     "Deixar mais curto",
@@ -783,25 +732,6 @@
     "Acrescentar à lousa": "acrescente a última resposta na lousa",
     "Traduzir lousa": "traduza o conteúdo da lousa para inglês",
     "Colocar resumo na lousa": "resuma a última resposta e coloque na lousa"
-  },
-  "attachmentFollowUpQueries": {
-    "Resumir": "resuma o conteúdo do arquivo anexado",
-    "Corrigir": "corrija o texto do arquivo anexado",
-    "Traduzir": "traduza o conteúdo do arquivo anexado para português",
-    "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
-    "Criar checklist": "transforme o arquivo anexado em um checklist",
-    "Criar ata": "transforme o arquivo anexado em ata de reunião",
-    "Criar relatório": "transforme o arquivo anexado em relatório estruturado",
-    "Criar comunicado": "crie um comunicado interno com base no arquivo anexado",
-    "Criar e-mail do anexo": "crie um e-mail corporativo com base no arquivo anexado, com assunto",
-    "Revisar redação": "revise clareza e tom do texto do arquivo anexado",
-    "Explicar conteúdo": "explique de forma simples o conteúdo do arquivo anexado",
-    "Versão simplificada": "gere uma versão simplificada do arquivo anexado",
-    "Colocar na lousa": "resuma o arquivo anexado e coloque o resultado na lousa",
-    "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais",
-    "Resumo geral": "faça um resumo geral do arquivo anexado em tópicos",
-    "Trabalhar por seção": "analise o arquivo anexado seção por seção, começando pelo início",
-    "Procurar termo": "procure no arquivo anexado o termo "
   },
   "textHomeStarters": [
     {

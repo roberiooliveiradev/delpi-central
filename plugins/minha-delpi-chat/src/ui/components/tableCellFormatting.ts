@@ -186,6 +186,10 @@ export function formatCellValue(
 
   const str = String(value);
 
+  if (colType === "date" && /^\d{8}$/.test(str)) {
+    return `${str.slice(6, 8)}/${str.slice(4, 6)}/${str.slice(0, 4)}`;
+  }
+
   if (colType === "date" || /^\d{4}-\d{2}-\d{2}/.test(str)) {
     const d = new Date(str);
 

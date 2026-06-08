@@ -55,7 +55,7 @@ export type ChatPresentation =
       columns: {
         key: string;
         label: string;
-        dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity";
+        dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
       }[];
       rows: Record<string, unknown>[];
     }
@@ -91,6 +91,8 @@ export type ChatPresentation =
         comboLineKey?: string;
         gaugeValueKey?: string;
         gaugeTargetKey?: string | null;
+        fieldLabels?: Record<string, string>;
+        fieldFormats?: Record<string, string>;
       };
       chartExplanation?: string;
     }

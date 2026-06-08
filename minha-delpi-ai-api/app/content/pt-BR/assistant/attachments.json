@@ -1,0 +1,152 @@
+{
+  "welcome": {
+    "title": "Arquivo recebido.",
+    "intro": "Posso ajudar com o conteúdo anexado nesta mensagem.",
+    "bullets": [
+      "resumo",
+      "correção de texto",
+      "tradução",
+      "extração de pendências",
+      "transformação em checklist",
+      "análise dos dados",
+      "criação de relatório"
+    ],
+    "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa.",
+    "handoffPattern": "^(?:segue|anexo|arquivo|em anexo|veja (?:o )?anexo|conforme anexo)\\b",
+    "shortAckMessages": [
+      "ok",
+      "pronto",
+      "enviado",
+      "segue",
+      "anexo",
+      "arquivo",
+      "veja o anexo",
+      "em anexo"
+    ],
+    "maxHandoffMessageLength": 48,
+    "filesSingleLabel": "Arquivo",
+    "filesMultipleLabel": "Arquivos",
+    "bulletSuffix": ";"
+  },
+  "unreadable": {
+    "body": "Não consegui ler o arquivo com segurança nesta sessão. Você pode reenviar em PDF/DOCX, melhorar a qualidade da imagem, converter para texto ou descrever o que precisa que eu analise."
+  },
+  "largeFile": {
+    "body": "O arquivo é **extenso**. Posso começar por um resumo geral ou trabalhar por seções — não prometo leitura integral de todas as páginas de uma vez.",
+    "chips": [
+      "Resumo geral",
+      "Trabalhar por seção",
+      "Extrair pendências",
+      "Procurar termo",
+      "Criar checklist",
+      "Colocar na lousa"
+    ],
+    "charThreshold": 120000,
+    "pageThreshold": 40
+  },
+  "followUp": {
+    "chips": [
+      "Resumir",
+      "Corrigir",
+      "Colocar na lousa",
+      "Traduzir",
+      "Extrair pendências",
+      "Criar checklist",
+      "Criar ata",
+      "Criar relatório",
+      "Criar comunicado",
+      "Criar e-mail do anexo",
+      "Revisar redação",
+      "Explicar conteúdo",
+      "Versão simplificada",
+      "Comparar"
+    ],
+    "textTaskChips": {
+      "correct": ["Revisar redação", "Criar e-mail do anexo"],
+      "summarize": ["Resumo executivo", "Criar comunicado"],
+      "minutes": ["Criar ata", "Extrair pendências"],
+      "structure": ["Criar checklist", "Criar plano de ação"],
+      "documentation": ["Criar documentação", "Versão simplificada"]
+    },
+    "queries": {
+      "Resumir": "resuma o conteúdo do arquivo anexado",
+      "Corrigir": "corrija o texto do arquivo anexado",
+      "Traduzir": "traduza o conteúdo do arquivo anexado para português",
+      "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
+      "Criar checklist": "transforme o arquivo anexado em um checklist",
+      "Criar ata": "transforme o arquivo anexado em ata de reunião",
+      "Criar relatório": "transforme o arquivo anexado em relatório estruturado",
+      "Criar comunicado": "crie um comunicado interno com base no arquivo anexado",
+      "Criar e-mail do anexo": "crie um e-mail corporativo com base no arquivo anexado, com assunto",
+      "Revisar redação": "revise clareza e tom do texto do arquivo anexado",
+      "Explicar conteúdo": "explique de forma simples o conteúdo do arquivo anexado",
+      "Versão simplificada": "gere uma versão simplificada do arquivo anexado",
+      "Colocar na lousa": "resuma o arquivo anexado e coloque o resultado na lousa",
+      "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais",
+      "Resumo geral": "faça um resumo geral do arquivo anexado em tópicos",
+      "Trabalhar por seção": "analise o arquivo anexado seção por seção, começando pelo início",
+      "Procurar termo": "procure no arquivo anexado o termo "
+    }
+  },
+  "preview": {
+    "readingSectionTitle": "Leitura do arquivo:",
+    "defaultFilename": "arquivo",
+    "columnsEllipsis": ", …",
+    "spreadsheetSheetPrefix": "# Planilha:",
+    "ocrContentPrefix": "Texto extraído da imagem (OCR):",
+    "readingStatus": {
+      "indexed": "Indexado",
+      "uploaded": "Processando leitura",
+      "uploading": "Processando leitura",
+      "unsupported": "Leitura limitada",
+      "index_failed": "Falha na leitura",
+      "default": "Aguardando envio"
+    },
+    "indexReason": {
+      "legacy_doc_format": "DOC legado — salve como DOCX",
+      "legacy_xls_format": "XLS legado — salve como XLSX"
+    },
+    "lines": {
+      "spreadsheetWithSheet": "- **{name}:** planilha indexada (*{sheet}*). Colunas: {columns}.",
+      "spreadsheet": "- **{name}:** planilha indexada. Colunas: {columns}.",
+      "document": "- **{name}:** documento indexado{charSuffix}",
+      "documentCharSuffix": " (~{charCount} caracteres extraídos).",
+      "documentNoCharSuffix": ".",
+      "imageOcr": "- **{name}:** imagem com OCR{size} — «{excerpt}»",
+      "imageGeneric": "- **{name}:** imagem indexada{size} — descreva o que analisar no visual.",
+      "imageSize": " ({width}×{height} {format})",
+      "imageDefaultFormat": "imagem",
+      "textIndexed": "- **{name}:** conteúdo indexado para consulta no chat.",
+      "indexedRag": "- **{name}:** indexado para RAG nesta sessão.",
+      "limitedReading": "- **{name}:** leitura automática limitada ({status}). {hint}",
+      "limitedReadingHint": "Ainda posso ajudar se você descrever o que precisa.",
+      "processing": "- **{name}:** recebido; processamento em andamento."
+    }
+  },
+  "canvasAmbiguity": {
+    "deicticTerms": [
+      "isso",
+      "isto",
+      "essa",
+      "esse",
+      "esta",
+      "este",
+      "aquilo",
+      "a resposta",
+      "o resumo",
+      "a tabela",
+      "o grafico",
+      "o gráfico"
+    ],
+    "referentLabels": {
+      "lastResponse": "a última resposta",
+      "table": "a tabela",
+      "attachmentSummary": "o resumo do arquivo"
+    },
+    "clarificationQuestion": "Você quer colocar na lousa {options}?\n\n{hint}",
+    "clarificationHint": "Responda com uma frase curta (ex.: «a última resposta», «a tabela» ou «o resumo do arquivo»).",
+    "optionsJoiner": ", ",
+    "optionsLastJoiner": " ou ",
+    "minAssistantContentLength": 80
+  }
+}

@@ -1,0 +1,35 @@
+# Roteamento centralizado de APIs operacionais
+
+## Princípio
+
+Chamadas à api-delpi (e demais providers OpenAPI) **não** devem acoplar lógica por tipo (produto, KPI, LMP, SQL) no chamador. O fluxo é:
+
+```
+Intent/heurística → OperationalApiRouteSpec → ExternalActionRouteSelectionService → execute_external_action
+```
+
+## Onde implementar
+
+| Camada | Responsabilidade |
+|--------|------------------|
+| **Vocabulário** | `app/content/pt-BR/assistant/api_route_domains.json` — domínios, `pathMarkers`, `parameterStrategy` |
+| **Domínio** | `OperationalApiRouteSpec`, `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
+| **Aplicação** | `ExternalActionRouteSelectionService` — matching de actions + tool call |
+| **Orquestração** | `ExternalActionSelectionService` — detecta intenção e monta a spec; **não** duplica matching HTTP |
+
+## O que fazer
+
+1. Novo domínio ou estratégia de parâmetro → editar `api_route_domains.json` primeiro.
+2. Factory em `OperationalApiRouteSpec` (`from_department_kpi`, `from_supplies_metric`, `from_product`, …).
+3. Seleção via `ExternalActionRouteSelectionService.select(spec, ...)`.
+4. Execução HTTP permanece em `ExecuteExternalActionUseCase` + `HttpExternalActionGateway`.
+
+## O que NÃO fazer
+
+- `if "/products/"` / `if kpi` espalhado em use cases ou no MFE para escolher action.
+- Duplicar `_build_date_branch_parameters` fora de `OperationalApiParameterBuilderService`.
+- Bypass de `execute_external_action` em preview/simulate sem o mesmo contrato de metadata.
+
+## Metadata
+
+`toolCalls[].metadata.apiRouteDomain` classifica o path executado (`product`, `department_kpi`, `supplies_kpi`, …).

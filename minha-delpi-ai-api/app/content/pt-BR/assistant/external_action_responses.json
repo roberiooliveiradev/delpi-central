@@ -31,6 +31,15 @@
     "stockCheckSuggestion": "Posso verificar o estoque dos componentes dos produtos programados.",
     "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados."
   },
+  "actionSelection": {
+    "suppliesOtdSuppliesDomainTerms": [
+      "compra",
+      "suprimentos",
+      "fornecedor",
+      "suprimento"
+    ],
+    "suppliesOtdPathPrefix": "/supplies/"
+  },
   "selectionReasons": {
     "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",

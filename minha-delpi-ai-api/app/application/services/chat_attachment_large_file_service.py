@@ -2,18 +2,11 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
-
-_LARGE_CHAR_THRESHOLD = 120_000
-_LARGE_PAGE_THRESHOLD = 40
-
-
-@lru_cache(maxsize=1)
-def _playbook() -> dict[str, Any]:
-    return ContentService.personality_playbook()
+from app.domain.services.chat_attachment_content_service import (
+    ChatAttachmentContentService,
+)
 
 
 class ChatAttachmentLargeFileService:
@@ -33,13 +26,15 @@ class ChatAttachmentLargeFileService:
             return False
 
         char_count = preview.get("charCount")
+        char_threshold = ChatAttachmentContentService.large_file_char_threshold()
 
-        if isinstance(char_count, int) and char_count >= _LARGE_CHAR_THRESHOLD:
+        if isinstance(char_count, int) and char_count >= char_threshold:
             return True
 
         page_limit = preview.get("pageLimit")
+        page_threshold = ChatAttachmentContentService.large_file_page_threshold()
 
-        if isinstance(page_limit, int) and page_limit >= _LARGE_PAGE_THRESHOLD:
+        if isinstance(page_limit, int) and page_limit >= page_threshold:
             return True
 
         return False
@@ -50,28 +45,17 @@ class ChatAttachmentLargeFileService:
 
     @classmethod
     def format_notice(cls) -> str | None:
-        block = _playbook().get("attachmentLargeFile") or {}
-
-        if not isinstance(block, dict):
-            return None
-
+        block = ChatAttachmentContentService.large_file_block()
         body = str(block.get("body") or "").strip()
 
         return body or None
 
     @classmethod
     def follow_up_labels(cls) -> list[str]:
-        block = _playbook().get("attachmentLargeFile") or {}
+        block = ChatAttachmentContentService.large_file_block()
         chips = block.get("chips")
 
         if isinstance(chips, list) and chips:
             return [str(item).strip() for item in chips if str(item).strip()]
 
-        return [
-            "Resumo geral",
-            "Trabalhar por seção",
-            "Extrair pendências",
-            "Procurar termo",
-            "Criar checklist",
-            "Colocar na lousa",
-        ]
+        return ChatAttachmentContentService.follow_up_chips()[:6]

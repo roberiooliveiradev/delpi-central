@@ -460,6 +460,19 @@
     "registered_date": "date",
     "measurement_date": "date",
     "data_limite": "date",
+    "issue_date": "date",
+    "delivery_date": "date",
+    "movement_date": "date",
+    "last_sale_date": "date",
+    "last_purchase_date": "date",
+    "last_price_date": "date",
+    "opening_date": "date",
+    "scheduled_date": "date",
+    "data_producao": "date",
+    "ordered_quantity": "quantity",
+    "delivered_quantity": "quantity",
+    "sold_quantity": "quantity",
+    "unit_price": "currency",
     "total_kaizens": "quantity",
     "total_lines": "quantity",
     "on_time_lines": "quantity",
@@ -612,6 +625,7 @@
     "production",
     "lmp",
     "invoice",
+    "purchase",
     "guide",
     "inspection",
     "movement",
@@ -652,6 +666,26 @@
         ["quantity", "Quantidade"],
         ["unit_price", "Preço unitário"],
         ["total_value", "Valor total"]
+      ]
+    },
+    "purchase": {
+      "detect": {
+        "anyKeys": ["order_number", "ordered_quantity"],
+        "excludeIfAnyKeys": ["invoice_number", "sale_number"]
+      },
+      "preferredColumns": [
+        ["order_number", "Nº pedido"],
+        ["branch", "Filial"],
+        ["issue_date", "Data emissão"],
+        ["delivery_date", "Data entrega"],
+        ["supplier_code", "Cód. fornecedor"],
+        ["supplier_name", "Fornecedor"],
+        ["supplier_store", "Loja"],
+        ["product_code", "Produto"],
+        ["ordered_quantity", "Qtd. pedida"],
+        ["delivered_quantity", "Qtd. entregue"],
+        ["unit_price", "Preço unitário"],
+        ["line_total", "Total linha"]
       ]
     },
     "guide": {

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Smoke E2E — roteamento operacional (cenários em smoke_e2e_scenarios.json).
+"""Smoke E2E — KPIs empresa sem produto (cenários em smoke_e2e_scenarios.json).
 
 Uso:
-  PYTHONPATH=minha-delpi-ai-api python3 minha-delpi-ai-api/scripts/smoke_operational_intelligence_e2e.py
-  docker exec delpi-minha-delpi-ai-api python scripts/smoke_operational_intelligence_e2e.py
+  PYTHONPATH=minha-delpi-ai-api python3 minha-delpi-ai-api/scripts/smoke_empresa_kpi_e2e.py
+  docker exec delpi-minha-delpi-ai-api python scripts/smoke_empresa_kpi_e2e.py
 """
 
 from __future__ import annotations
@@ -16,11 +16,15 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Callable
 
-from scripts.smoke_e2e_loader import SmokeScenario, load_suite, validation_markers
+from scripts.smoke_e2e_loader import (
+    SmokeScenario,
+    load_suite,
+    suite_forbids_product_path,
+    validation_markers,
+)
 
-_SUITE = "operational_mixed"
+_SUITE = "empresa_kpi"
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
@@ -34,12 +38,13 @@ _PAUSE_SEC = float(os.environ.get("SMOKE_PAUSE_SEC", "2"))
 
 _CLARIFY_MARKERS = validation_markers("clarifyMarkers")
 _TECH_ERROR_MARKERS = validation_markers("techErrorMarkers")
-_ENGLISH_KPI_MARKERS = validation_markers("englishKpiMarkers")
-_FINANCIAL_PT_INDICATORS = validation_markers("financialPtIndicators")
+_PRODUCT_PATH_MARKERS = validation_markers("productPathMarkers")
+_FORBID_PRODUCT_PATH = suite_forbids_product_path(_SUITE)
 
 
 def _default_checks(content: str, meta: dict) -> tuple[bool, str]:
     lowered = content.lower()
+    path = str(meta.get("path") or "").lower()
 
     if any(marker in lowered for marker in _CLARIFY_MARKERS):
         return False, "desambiguação indevida"
@@ -53,36 +58,10 @@ def _default_checks(content: str, meta: dict) -> tuple[bool, str]:
     if not content.strip():
         return False, "resposta vazia (sem content nem humanizedSummary)"
 
-    return True, ""
-
-
-def _financial_pt_checks(content: str, meta: dict) -> tuple[bool, str]:
-    ok, reason = _default_checks(content, meta)
-
-    if not ok:
-        return ok, reason
-
-    lowered = content.lower()
-
-    if any(marker in lowered for marker in _ENGLISH_KPI_MARKERS):
-        return False, "rótulo em inglês ou glossário técnico"
-
-    if not any(marker in lowered for marker in _FINANCIAL_PT_INDICATORS):
-        return False, "sem indicador financeiro em PT"
+    if _FORBID_PRODUCT_PATH and any(marker in path for marker in _PRODUCT_PATH_MARKERS):
+        return False, f"rota de produto indevida: {path!r}"
 
     return True, ""
-
-
-_CHECKERS: dict[str, Callable[[str, dict], tuple[bool, str]]] = {
-    "financial_pt": _financial_pt_checks,
-}
-
-
-def _checker_for(scenario: SmokeScenario) -> Callable[[str, dict], tuple[bool, str]] | None:
-    if not scenario.checks:
-        return None
-
-    return _CHECKERS.get(scenario.checks)
 
 
 def _request(
@@ -159,7 +138,7 @@ def _send_message(token: str, agent_id: str, message: str) -> dict:
         "POST",
         f"{_BASE_URL}{_CHAT_PREFIX}/sessions",
         token=token,
-        body={"title": f"Smoke E2E — {message[:48]}", "agentId": agent_id},
+        body={"title": f"Smoke empresa — {message[:48]}", "agentId": agent_id},
     )
     session_id = str(session["id"])
 
@@ -230,8 +209,7 @@ def _evaluate(scenario: SmokeScenario, response: dict) -> tuple[bool, str]:
     if scenario.path_fragment.lower() not in path.lower():
         return False, f"path={path!r} (esperado *{scenario.path_fragment}*)"
 
-    checker = _checker_for(scenario) or _default_checks
-    ok, reason = checker(content, meta)
+    ok, reason = _default_checks(content, meta)
 
     if not ok:
         snippet = re.sub(r"\s+", " ", content[:160])
@@ -243,7 +221,7 @@ def _evaluate(scenario: SmokeScenario, response: dict) -> tuple[bool, str]:
 def main() -> int:
     scenarios = load_suite(_SUITE)
 
-    print(f"Smoke operacional E2E — base={_BASE_URL} user={_USERNAME}")
+    print(f"Smoke empresa/KPI E2E — base={_BASE_URL} user={_USERNAME}")
     print(f"Suite={_SUITE} cenários={len(scenarios)} (pausa {_PAUSE_SEC}s)\n")
 
     token = _token()

@@ -1,0 +1,69 @@
+{
+  "version": "2026.06.04",
+  "domains": {
+    "product": {
+      "label": "Produto",
+      "pathMarkers": ["/products/{code}", "/products/"],
+      "excludePathMarkers": ["/products/search"],
+      "parameterStrategy": "product_code",
+      "method": "GET"
+    },
+    "product_search": {
+      "label": "Busca de produtos",
+      "pathMarkers": ["/products/search"],
+      "parameterStrategy": "product_search",
+      "method": "GET"
+    },
+    "department_kpi": {
+      "label": "KPI departamental",
+      "pathMarkers": [
+        "/commercial/",
+        "/financial/",
+        "/production/",
+        "/hr/",
+        "/quality/"
+      ],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "supplies_kpi": {
+      "label": "KPI suprimentos",
+      "pathMarkers": ["/supplies/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "lmp": {
+      "label": "LMP / transformação",
+      "pathMarkers": ["/lmp", "/transforma"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "sql": {
+      "label": "SQL / dados",
+      "pathMarkers": ["/data/sql", "/data/"],
+      "parameterStrategy": "sql",
+      "method": "POST"
+    },
+    "system": {
+      "label": "Metadados Protheus",
+      "pathMarkers": ["/system/"],
+      "parameterStrategy": "none",
+      "method": "GET"
+    },
+    "generic": {
+      "label": "Operacional genérico",
+      "pathMarkers": [],
+      "parameterStrategy": "semantic",
+      "method": "GET"
+    }
+  },
+  "parameterStrategies": {
+    "product_code": "Código de produto com paginação, filial e armazém",
+    "date_branch": "Filial e intervalo de datas",
+    "product_search": "Termo ou código de busca",
+    "supplies_stock": "Limite top para valor de estoque",
+    "sql": "Consulta SQL somente leitura",
+    "none": "Sem parâmetros automáticos",
+    "semantic": "Ranking semântico sobre candidatos"
+  }
+}

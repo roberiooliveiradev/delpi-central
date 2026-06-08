@@ -112,6 +112,7 @@ export function buildChartExplanationFallback(
   }
 
   const config = presentation.config ?? {};
+  const fieldLabels = config.fieldLabels;
   const chartType = presentation.chartType ?? "bar";
   const chartLabel = CHART_TYPE_LABELS[chartType] ?? "gráfico";
   const xAxis = config.xAxis ?? guessCategoryKey(rows[0]);
@@ -133,9 +134,9 @@ export function buildChartExplanationFallback(
     reason
       ? `Este ${chartLabel} mostra ${rows.length} registro(s): ${reason}.`
       : `Este ${chartLabel} mostra ${rows.length} registro(s).`,
-    `No eixo horizontal está «${formatChartColumnLabel(String(xAxis))}»; no vertical, «${formatChartColumnLabel(String(yAxis))}».`,
+    `No eixo horizontal está «${formatChartColumnLabel(String(xAxis), fieldLabels)}»; no vertical, «${formatChartColumnLabel(String(yAxis), fieldLabels)}».`,
     numericValues.length
-      ? `O maior valor aparece em ${leaderLabel}; a média de «${formatChartColumnLabel(String(yAxis))}» é ${formatNumber(statisticsMean(numericValues))}.`
+      ? `O maior valor aparece em ${leaderLabel}; a média de «${formatChartColumnLabel(String(yAxis), fieldLabels)}» é ${formatNumber(statisticsMean(numericValues))}.`
       : "",
     "Use os seletores do gráfico para trocar eixos ou filtrar sem enviar nova pergunta.",
   ];

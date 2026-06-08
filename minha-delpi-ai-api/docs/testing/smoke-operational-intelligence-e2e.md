@@ -40,18 +40,13 @@ docker exec delpi-minha-delpi-ai-api python scripts/smoke_operational_intelligen
 
 ## Cenários (P01–P10)
 
-| ID | Domínio | Pergunta | Rota esperada |
-|----|---------|----------|---------------|
-| P01 | Faturamento produto | Quanto já foi faturado do produto 90260015? | `/products/…/sales/billing` |
-| P02 | Status fabril | Qual o status completo na fábrica do produto 90269002 hoje? | `/products/…/factory-status` |
-| P03 | ROL | Qual foi o ROL da empresa em março de 2026? | `/financial/rol` |
-| P04 | Estoque | Qual o saldo disponível do produto 10080033 na filial 01? | `/products/…/stock` |
-| P05 | Estrutura | mostre a estrutura do produto 90260123 | `/products/…/structure` |
-| P06 | CPV | Qual o CPV da empresa? | `/supplies/cpv` |
-| P07 | Fornecedores | quem fornece o produto 10080022? | `/products/…/suppliers` |
-| P08 | Where-used | onde é usado o produto 90260149? | `/products/…/parents` |
-| P09 | Compras | mostre as compras do produto 90260015 | `/products/…/purchases` |
-| P10 | PMR | Qual o PMR da empresa? | `/financial/pmr` |
+Fonte única: [`app/content/pt-BR/assistant/smoke_e2e_scenarios.json`](../../app/content/pt-BR/assistant/smoke_e2e_scenarios.json) → suite `operational_mixed`.
+
+Para listar no terminal:
+
+```bash
+python3 -c "import json; d=json.load(open('minha-delpi-ai-api/app/content/pt-BR/assistant/smoke_e2e_scenarios.json')); print(*(s['id']+': '+s['message'] for s in d['suites']['operational_mixed']['scenarios']), sep='\n')"
+```
 
 ## Critérios de OK / FAIL
 
@@ -101,6 +96,18 @@ docker exec delpi-minha-delpi-ai-api pytest \
 | 2026-06 | CPV/pricing: `TypeError` em `_presenter_text` com placeholder `{key}` | Parâmetro renomeado para `text_key` |
 | 2026-06 | ROL: `content` vazio mas `humanizedSummary.linhas` preenchido | Script lê `_effective_content()` |
 | 2026-06 | HTTP 429 em rajada | `SMOKE_PAUSE_SEC` entre turnos |
+
+## Smoke empresa / KPI (sem produto)
+
+Cenários **K01–K12** cobrem apenas indicadores corporativos (financeiro, comercial, suprimentos, produção, RH) — nenhuma rota `/products/{code}`.
+
+```bash
+python3 minha-delpi-ai-api/scripts/smoke_empresa_kpi_e2e.py
+```
+
+Fonte única: `smoke_e2e_scenarios.json` → suite `empresa_kpi` (`forbidProductPath: true`).
+
+Critério extra: `metadata.path` **não** pode conter `/products/`.
 
 ## Referências
 

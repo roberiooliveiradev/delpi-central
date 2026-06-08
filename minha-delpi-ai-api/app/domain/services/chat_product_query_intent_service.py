@@ -760,6 +760,13 @@ class ChatProductQueryIntentService:
         ):
             return False
 
+        from app.domain.services.chat_department_kpi_intent_service import (
+            ChatDepartmentKpiIntentService,
+        )
+
+        if ChatDepartmentKpiIntentService.resolve(normalized):
+            return False
+
         from app.domain.services.chat_product_plural_phrasing_service import (
             ChatProductPluralPhrasingService,
         )

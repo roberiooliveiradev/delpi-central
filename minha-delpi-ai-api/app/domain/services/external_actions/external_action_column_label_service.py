@@ -108,6 +108,38 @@ class ExternalActionColumnLabelService:
         ),
     }
 
+    def enrich_column_def(
+        self,
+        key: str,
+        *,
+        label: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        schema_formats: dict[str, str] | None = None,
+    ) -> dict[str, str]:
+        normalized_key = str(key or "").strip()
+
+        if not normalized_key:
+            return {"key": "", "label": ""}
+
+        resolved_label = (
+            str(label).strip()
+            if isinstance(label, str) and label.strip()
+            else self.label_for(normalized_key, schema_labels=schema_labels)
+        )
+        column: dict[str, str] = {
+            "key": normalized_key,
+            "label": resolved_label,
+        }
+        field_format = self.resolve_field_format(
+            normalized_key,
+            schema_formats=schema_formats,
+        )
+
+        if field_format:
+            column["dataType"] = field_format
+
+        return column
+
     def label_for(
         self,
         key: str,

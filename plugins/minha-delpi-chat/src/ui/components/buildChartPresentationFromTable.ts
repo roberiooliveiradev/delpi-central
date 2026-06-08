@@ -1,6 +1,7 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { aggregateChartRowsByCategory } from "./chartCategoryAggregation";
 import { inferDefaultChartAxes, listCategoryColumns, listNumericColumns } from "./chartAxisSelection";
+import { buildFieldLabelsFromTableColumns } from "./presentationFieldLabels";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
@@ -40,6 +41,8 @@ export function buildChartPresentationFromTable(
     chartType === "bar"
       ? aggregateChartRowsByCategory(rows.slice(0, 100), axes.xKey, yAxis).slice(0, 24)
       : rows.slice(0, 24);
+  const tableColumns = Array.isArray(table.columns) ? table.columns : [];
+  const { fieldLabels, fieldFormats } = buildFieldLabelsFromTableColumns(tableColumns);
 
   return {
     type: "chart",
@@ -50,6 +53,8 @@ export function buildChartPresentationFromTable(
       xAxis: axes.xKey,
       yAxis: yAxis,
       legend: yAxis.length > 1,
+      fieldLabels,
+      fieldFormats,
     },
   };
 }

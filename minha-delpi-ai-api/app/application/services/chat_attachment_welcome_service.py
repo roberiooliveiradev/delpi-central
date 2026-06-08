@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_message_normalization_service import (
@@ -15,20 +13,12 @@ from app.application.services.chat_attachment_large_file_service import (
 from app.application.services.chat_attachment_preview_service import (
     ChatAttachmentPreviewService,
 )
-from app.infrastructure.content.content_service import ContentService
-
-
-@lru_cache(maxsize=1)
-def _playbook() -> dict[str, Any]:
-    return ContentService.personality_playbook()
+from app.domain.services.chat_attachment_content_service import (
+    ChatAttachmentContentService,
+)
 
 
 class ChatAttachmentWelcomeService:
-    _HANDOFF_RE = re.compile(
-        r"^(?:segue|anexo|arquivo|em anexo|veja (?:o )?anexo|conforme anexo)\b",
-        re.IGNORECASE,
-    )
-
     @classmethod
     def should_welcome(cls, message: str, *, attachment_ids: list | None) -> bool:
         if not attachment_ids:
@@ -41,47 +31,32 @@ class ChatAttachmentWelcomeService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
 
-        if len(normalized) <= 48 and cls._HANDOFF_RE.search(normalized):
+        if (
+            len(normalized) <= ChatAttachmentContentService.max_handoff_message_length()
+            and ChatAttachmentContentService.handoff_pattern().search(normalized)
+        ):
             return True
 
-        if normalized in {
-            "ok",
-            "pronto",
-            "enviado",
-            "segue",
-            "anexo",
-            "arquivo",
-            "veja o anexo",
-            "em anexo",
-        }:
+        if normalized in ChatAttachmentContentService.short_ack_messages():
             return True
 
         return False
 
     @classmethod
     def build_direct_answer(cls, *, attachments: list[dict] | None) -> str | None:
-        block = _playbook().get("attachmentWelcome") or {}
+        block = ChatAttachmentContentService.welcome_block()
 
-        if not isinstance(block, dict):
+        if not block:
             return None
 
-        title = str(block.get("title") or "Arquivo recebido.").strip()
-        intro = str(
-            block.get("intro")
-            or "Posso ajudar com o conteúdo anexado nesta mensagem."
-        ).strip()
-        bullets = block.get("bullets") or [
-            "resumo",
-            "correção de texto",
-            "tradução",
-            "extração de pendências",
-            "checklist",
-            "análise dos dados",
-        ]
-        hint = str(
-            block.get("hint")
-            or "Escolha uma ação nos chips abaixo ou descreva o que precisa."
-        ).strip()
+        title = str(block.get("title") or "").strip()
+        intro = str(block.get("intro") or "").strip()
+        bullets = block.get("bullets") or []
+        hint = str(block.get("hint") or "").strip()
+        bullet_suffix = str(block.get("bulletSuffix") or ";").strip() or ";"
+
+        if not title or not intro:
+            return None
 
         names: list[str] = []
 
@@ -102,15 +77,19 @@ class ChatAttachmentWelcomeService:
 
         if names:
             if len(names) == 1:
-                files_line = f"\n\n**Arquivo:** {names[0]}"
+                single_label = str(block.get("filesSingleLabel") or "Arquivo").strip()
+                files_line = f"\n\n**{single_label}:** {names[0]}"
             else:
+                multiple_label = str(block.get("filesMultipleLabel") or "Arquivos").strip()
                 listed = "\n".join(f"- {name}" for name in names[:5])
-                files_line = f"\n\n**Arquivos:**\n{listed}"
+                files_line = f"\n\n**{multiple_label}:**\n{listed}"
 
         reading_line = ChatAttachmentPreviewService.format_reading_lines(attachments)
 
         bullet_lines = "\n".join(
-            f"- {str(item).strip().rstrip('.')};" for item in bullets[:8]
+            f"- {str(item).strip().rstrip('.')}{bullet_suffix}"
+            for item in bullets[:8]
+            if str(item).strip()
         )
 
         parts = [title, "", intro + files_line]
@@ -132,8 +111,7 @@ class ChatAttachmentWelcomeService:
         ]
 
         if unreadable and len(unreadable) == len(list(attachments or [])):
-            block = _playbook().get("attachmentUnreadable") or {}
-            unreadable_body = str(block.get("body") or "").strip()
+            unreadable_body = ChatAttachmentContentService.unreadable_body()
 
             if unreadable_body:
                 parts.extend(["", unreadable_body])

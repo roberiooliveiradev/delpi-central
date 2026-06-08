@@ -74,6 +74,29 @@ def _self_help_agent_context() -> dict:
     return _capabilities_content().get("selfHelpAgentContext") or {}
 
 
+@lru_cache(maxsize=1)
+def _operational_query_patterns() -> tuple[str, ...]:
+    patterns = _detection().get("operationalQueryPatterns") or []
+    return tuple(str(item) for item in patterns if str(item).strip())
+
+
+@lru_cache(maxsize=1)
+def _operational_data_topics() -> tuple[str, ...]:
+    topics = _detection().get("operationalDataTopics") or []
+    return tuple(str(item) for item in topics if str(item).strip())
+
+
+@lru_cache(maxsize=1)
+def _supplies_kpi_terms() -> tuple[str, ...]:
+    terms = _detection().get("suppliesKpiTerms") or []
+    return tuple(str(item) for item in terms if str(item).strip())
+
+
+@lru_cache(maxsize=1)
+def _supplies_kpi_qual_pattern() -> str:
+    return str(_detection().get("suppliesKpiQualPattern") or r"\bqual\s+(o|a)\s+")
+
+
 class ChatCapabilitiesService:
     """Responde perguntas sobre o que o chat/agente consegue fazer."""
 
@@ -107,65 +130,6 @@ class ChatCapabilitiesService:
         "é possivel buscar",
         "sabe buscar",
         "tem como buscar",
-    )
-
-    _OPERATIONAL_QUERY_PATTERNS = (
-        r"\bqual\s+o\s+estoque\b",
-        r"\bqual\s+o\s+preco\b",
-        r"\bqual\s+o\s+pre[cç]o\b",
-        r"\bqual\s+(o|a)\s+cpv\b",
-        r"\bqual\s+(o|a)\s+otd\b",
-        r"\bqual\s+(o|a)\s+pmr\b",
-        r"\bqual\s+(o|a)\s+rol\b",
-        r"\bqual\s+(o|a)\s+ebitda\b",
-        r"\bqual\s+(o|a)\s+giro\b",
-        r"\bquem\s+fornece\b",
-        r"\bme\s+fale\s+do\s+produto\b",
-        r"\bmostre\s+o\s+estoque\b",
-        r"\bmostre\s+a\s+estrutura\b",
-        r"\bestoque\s+do\s+produto\b",
-        r"\bestoque\s+do\b",
-        r"\bvis[aã]o\s+360\b",
-        r"\bconsulte\b",
-        r"\bconsultar\b",
-        r"\bliste\s+os\s+fornecedores\b",
-        r"\bonde\s+o\s+produto\b",
-        r"\bonde\s+[eé]\s+usado\b",
-    )
-
-    _OPERATIONAL_DATA_TOPICS = (
-        "estoque",
-        "fornecedor",
-        "estrutura",
-        "roteiro",
-        "inspecao",
-        "inspeção",
-        "faturamento",
-        "venda",
-        "compra",
-        "preco",
-        "preço",
-        "lmp",
-        "ov ",
-        "cpv",
-        "otd",
-        "giro",
-        "idd",
-    )
-
-    _SUPPLIES_KPI_TERMS = (
-        "cpv",
-        "custo de producao vendido",
-        "custo de produção vendido",
-        " otd",
-        "otd ",
-        "giro de estoque",
-        "giro do estoque",
-        "inventory-turnover",
-        "valor total de estoque",
-        "valor de estoque",
-        "valor do estoque",
-        "valor em estoque",
     )
 
     @classmethod
@@ -446,7 +410,9 @@ class ChatCapabilitiesService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return True
 
-        if any(re.search(pattern, normalized) for pattern in cls._OPERATIONAL_QUERY_PATTERNS):
+        if any(
+            re.search(pattern, normalized) for pattern in _operational_query_patterns()
+        ):
             return True
 
         from app.domain.services.chat_product_query_intent_service import (
@@ -455,7 +421,9 @@ class ChatCapabilitiesService:
 
         product_code = ChatProductQueryIntentService.extract_product_code(message)
 
-        if product_code and any(topic in normalized for topic in cls._OPERATIONAL_DATA_TOPICS):
+        if product_code and any(
+            topic in normalized for topic in _operational_data_topics()
+        ):
             return True
 
         if product_code and not any(marker in normalized for marker in cls._INQUIRY_MARKERS):
@@ -466,13 +434,13 @@ class ChatCapabilitiesService:
     @classmethod
     def _looks_like_supplies_kpi_request(cls, message: str, normalized: str) -> bool:
         """KPIs de suprimentos (CPV, OTD, giro…) — não confundir com «consegue consultar cpv?»."""
-        if not any(term in normalized for term in cls._SUPPLIES_KPI_TERMS):
+        if not any(term in normalized for term in _supplies_kpi_terms()):
             return False
 
         if any(marker in normalized for marker in cls._INQUIRY_MARKERS):
             return False
 
-        if re.search(r"\bqual\s+(o|a)\s+", normalized):
+        if re.search(_supplies_kpi_qual_pattern(), normalized):
             return True
 
         return "?" not in str(message or "").strip()

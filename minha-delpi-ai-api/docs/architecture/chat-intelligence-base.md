@@ -72,6 +72,7 @@ Mensagem do usuário
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
 | `ChatAttachmentWelcomeService` | Welcome ao anexar + preview de leitura (Playbook 05) |
+| `ChatAttachmentContentService` | Vocabulário de anexos/lousa em `attachments.json` (welcome, preview, chips, ambiguidade) |
 | `ChatAttachmentFollowUpService` | Chips «Com o anexo» e `attachmentSummaries` |
 | `ChatAttachmentLargeFileService` | Aviso e chips para arquivos extensos |
 | `ChatCanvasAmbiguityService` | Desambigua «coloque isso na lousa» |
@@ -113,6 +114,9 @@ Mensagem do usuário
 | `ChatWeeklyQualityReportService` | Relatório semanal markdown + persistência (`POST /admin/reports/quality/weekly/generate`) |
 | `ChatFeedbackIssueService` | Issues automáticas a partir de alertas recorrentes (`ai_chat_quality_issues`) |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
+| `ExternalActionRouteSelectionService` | Seleção unificada de action + parâmetros a partir de `OperationalApiRouteSpec` (produto, KPI, suprimentos, …) |
+| `ChatOperationalApiDomainService` | Classifica path em domínio (`api_route_domains.json`) — metadata `apiRouteDomain` na execução |
+| `OperationalApiParameterBuilderService` | Monta query/body por `parameterStrategy` (`date_branch`, `product_code`, …) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Any
 
 from app.application.services.chat_attachment_large_file_service import (
@@ -11,12 +10,9 @@ from app.application.services.chat_attachment_large_file_service import (
 from app.application.services.chat_attachment_preview_service import (
     ChatAttachmentPreviewService,
 )
-from app.infrastructure.content.content_service import ContentService
-
-
-@lru_cache(maxsize=1)
-def _playbook() -> dict[str, Any]:
-    return ContentService.personality_playbook()
+from app.domain.services.chat_attachment_content_service import (
+    ChatAttachmentContentService,
+)
 
 
 class ChatAttachmentFollowUpService:
@@ -38,18 +34,8 @@ class ChatAttachmentFollowUpService:
             if summaries:
                 metadata["attachmentSummaries"] = summaries
 
-        labels = list(
-            _playbook().get("attachmentFollowUpChips")
-            or [
-                "Resumir",
-                "Corrigir",
-                "Traduzir",
-                "Extrair pendências",
-                "Criar checklist",
-                "Colocar na lousa",
-            ]
-        )
-        queries = dict(_playbook().get("attachmentFollowUpQueries") or {})
+        labels = list(ChatAttachmentContentService.follow_up_chips())
+        queries = ChatAttachmentContentService.follow_up_queries()
 
         if message:
             from app.domain.services.chat_text_task_intent_service import (
@@ -58,7 +44,7 @@ class ChatAttachmentFollowUpService:
 
             category = ChatTextTaskIntentService.classify(message)
 
-            extra_labels = (_playbook().get("attachmentTextTaskChips") or {}).get(category)
+            extra_labels = ChatAttachmentContentService.text_task_chips(category)
 
             if isinstance(extra_labels, list):
                 for label in extra_labels:
