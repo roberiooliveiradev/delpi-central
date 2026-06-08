@@ -54,3 +54,6 @@ def test_financial_rol_route_returns_meta(mock_build) -> None:
     fields = body["meta"].get("fields") or {}
     assert fields.get("gross_revenue") == "Receita bruta"
     assert fields.get("rol") == "ROL"
+    field_formats = body["meta"].get("fieldFormats") or {}
+    assert field_formats.get("gross_revenue") == "currency"
+    assert field_formats.get("rol") == "currency"

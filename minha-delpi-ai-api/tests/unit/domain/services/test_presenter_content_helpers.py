@@ -58,8 +58,11 @@ def test_financial_rol_kpi_cards_use_portuguese_labels():
 
     assert "Receita bruta" in joined
     assert "Devoluções" in joined
+    assert "R$" in joined
+    assert "5.138.916,92" in joined
     assert "Gross revenue" not in joined
     assert "Returns" not in joined
+    assert "branch: Filial" not in joined
 
 
 def test_product_overview_narrative_uses_content():

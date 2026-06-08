@@ -32,6 +32,8 @@ export type ChatKpiCard = {
   label: string;
   value: string | number;
   unit?: string;
+  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
+  key?: string;
   trend?: "up" | "down" | "stable";
   delta?: string;
   color?: string;

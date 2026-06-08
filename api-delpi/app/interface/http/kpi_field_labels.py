@@ -248,3 +248,119 @@ def kpi_fields(*bundles: dict[str, str] | None) -> dict[str, str]:
         SI_GOAL_FIELD_LABELS,
         *bundles,
     )
+
+
+_FIELD_FORMAT_TOKENS: dict[str, tuple[str, ...]] = {
+    "currency": (
+        "revenue",
+        "receita",
+        "rol",
+        "cost",
+        "custo",
+        "price",
+        "preco",
+        "saving",
+        "economia",
+        "investment",
+        "balance",
+        "saldo",
+        "icms",
+        "pis",
+        "cofins",
+        "iss",
+        "ipi",
+        "discount",
+        "desconto",
+        "return",
+        "devolv",
+        "tax",
+        "imposto",
+        "valor",
+        "amount",
+        "ebitda_value",
+        "fixed_cost",
+        "cpv_total",
+        "stock_value",
+        "savings",
+        "depreciation",
+    ),
+    "percent": (
+        "_pct",
+        "_percent",
+        "percentage",
+        "taxa",
+        "rate",
+        "margem",
+        "margin",
+        "otd",
+        "giro",
+        "eficiencia",
+        "yield",
+        "turnover",
+        "absenteeism",
+        "satisfaction",
+        "completion",
+    ),
+    "date": (
+        "_date",
+        "date_start",
+        "date_end",
+        "start_date",
+        "end_date",
+        "registered_date",
+        "measurement_date",
+        "data_limite",
+    ),
+    "quantity": (
+        "qtd",
+        "qty",
+        "quantity",
+        "_count",
+        "_lines",
+        "_months",
+        "registros",
+        "points",
+        "kaizens",
+        "reviews",
+        "pdis",
+        "lmps",
+        "proposals",
+        "movements",
+        "hours_saved",
+        "solutions",
+    ),
+    "days": (
+        "_days",
+        "pmr_days",
+        "lead_time",
+        "dias_uteis",
+    ),
+}
+
+
+def infer_field_format(key: str) -> str | None:
+    lowered = str(key or "").strip().lower()
+
+    if not lowered:
+        return None
+
+    for field_format, tokens in _FIELD_FORMAT_TOKENS.items():
+        if any(token in lowered for token in tokens):
+            return field_format
+
+    return None
+
+
+def infer_scalar_field_formats(fields: dict[str, str] | None) -> dict[str, str]:
+    if not fields:
+        return {}
+
+    inferred: dict[str, str] = {}
+
+    for key in fields:
+        field_format = infer_field_format(key)
+
+        if field_format:
+            inferred[key] = field_format
+
+    return inferred

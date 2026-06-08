@@ -21,6 +21,93 @@ def _column_labels_content() -> dict[str, Any]:
 class ExternalActionColumnLabelService:
     """Resolve labels de campos para tabelas do presenter operacional."""
 
+    _FIELD_FORMAT_TOKENS: dict[str, tuple[str, ...]] = {
+        "currency": (
+            "revenue",
+            "receita",
+            "rol",
+            "cost",
+            "custo",
+            "price",
+            "preco",
+            "saving",
+            "economia",
+            "investment",
+            "balance",
+            "saldo",
+            "icms",
+            "pis",
+            "cofins",
+            "iss",
+            "ipi",
+            "discount",
+            "desconto",
+            "return",
+            "devolv",
+            "tax",
+            "imposto",
+            "valor",
+            "amount",
+            "ebitda_value",
+            "fixed_cost",
+            "cpv_total",
+            "stock_value",
+            "savings",
+            "depreciation",
+        ),
+        "percent": (
+            "_pct",
+            "_percent",
+            "percentage",
+            "taxa",
+            "rate",
+            "margem",
+            "margin",
+            "otd",
+            "giro",
+            "eficiencia",
+            "yield",
+            "turnover",
+            "absenteeism",
+            "satisfaction",
+            "completion",
+        ),
+        "date": (
+            "_date",
+            "date_start",
+            "date_end",
+            "start_date",
+            "end_date",
+            "registered_date",
+            "measurement_date",
+            "data_limite",
+        ),
+        "quantity": (
+            "qtd",
+            "qty",
+            "quantity",
+            "_count",
+            "_lines",
+            "_months",
+            "registros",
+            "points",
+            "kaizens",
+            "reviews",
+            "pdis",
+            "lmps",
+            "proposals",
+            "movements",
+            "hours_saved",
+            "solutions",
+        ),
+        "days": (
+            "_days",
+            "pmr_days",
+            "lead_time",
+            "dias_uteis",
+        ),
+    }
+
     def label_for(
         self,
         key: str,
@@ -54,6 +141,130 @@ class ExternalActionColumnLabelService:
                 return configured.strip()
 
         return self._humanize_field_key(normalized_key)
+
+    def resolve_field_format(
+        self,
+        key: str,
+        *,
+        schema_formats: dict[str, str] | None = None,
+    ) -> str | None:
+        normalized_key = str(key or "").strip()
+
+        if not normalized_key:
+            return None
+
+        if schema_formats:
+            configured = schema_formats.get(normalized_key)
+
+            if isinstance(configured, str) and configured.strip():
+                return configured.strip()
+
+            snake_key = self._snake_case_key(normalized_key)
+
+            if snake_key != normalized_key:
+                configured = schema_formats.get(snake_key)
+
+                if isinstance(configured, str) and configured.strip():
+                    return configured.strip()
+
+        content = _column_labels_content()
+        formats = content.get("fieldFormats") or {}
+        configured = formats.get(normalized_key)
+
+        if isinstance(configured, str) and configured.strip():
+            return configured.strip()
+
+        snake_key = self._snake_case_key(normalized_key)
+
+        if snake_key != normalized_key:
+            configured = formats.get(snake_key)
+
+            if isinstance(configured, str) and configured.strip():
+                return configured.strip()
+
+        return self._infer_field_format(normalized_key)
+
+    def format_field_value(
+        self,
+        key: str,
+        value: object,
+        *,
+        schema_formats: dict[str, str] | None = None,
+    ) -> str:
+        if value is None:
+            return "—"
+
+        if isinstance(value, bool):
+            return "Sim" if value else "Não"
+
+        if isinstance(value, (list, dict)):
+            return str(value)
+
+        field_format = self.resolve_field_format(
+            key,
+            schema_formats=schema_formats,
+        )
+
+        if isinstance(value, (int, float)):
+            number = float(value)
+
+            if field_format == "currency":
+                return f"R$ {self._format_br_number(number)}"
+
+            if field_format == "percent":
+                return f"{self._format_br_number(number)}%"
+
+            if field_format == "quantity":
+                if number == int(number):
+                    return f"{int(number):,}".replace(",", ".")
+                return self._format_br_number(number)
+
+            if field_format == "days":
+                if number == int(number):
+                    return f"{int(number)} dias"
+                return f"{self._format_br_number(number)} dias"
+
+            if number == int(number):
+                return f"{int(number):,}".replace(",", ".")
+
+            return self._format_br_number(number)
+
+        text = str(value).strip()
+
+        if field_format == "date" and text:
+            if len(text) == 8 and text.isdigit():
+                return f"{text[6:8]}/{text[4:6]}/{text[0:4]}"
+
+            if re.match(r"^\d{4}-\d{2}-\d{2}", text):
+                parts = text[:10].split("-")
+
+                if len(parts) == 3:
+                    return f"{parts[2]}/{parts[1]}/{parts[0]}"
+
+        return text
+
+    def merge_meta_field_formats(
+        self,
+        schema_formats: dict[str, str] | None,
+        data,
+    ) -> dict[str, str]:
+        formats = dict(schema_formats or {})
+        payload = data if isinstance(data, dict) else {}
+        meta = payload.get("meta")
+
+        if not isinstance(meta, dict):
+            return formats
+
+        configured = meta.get("fieldFormats")
+
+        if not isinstance(configured, dict):
+            return formats
+
+        for key, value in configured.items():
+            if isinstance(key, str) and isinstance(value, str) and value.strip():
+                formats[key] = value.strip()
+
+        return formats
 
     def kv_table_column_defs(self) -> list[dict[str, str]]:
         cfg = (_column_labels_content().get("presenter") or {}).get("kvTableColumns") or {}
@@ -302,6 +513,25 @@ class ExternalActionColumnLabelService:
             return True
 
         return False
+
+    @classmethod
+    def _infer_field_format(cls, key: str) -> str | None:
+        lowered = str(key or "").strip().lower()
+
+        if not lowered:
+            return None
+
+        for field_format, tokens in cls._FIELD_FORMAT_TOKENS.items():
+            if any(token in lowered for token in tokens):
+                return field_format
+
+        return None
+
+    @staticmethod
+    def _format_br_number(value: float) -> str:
+        formatted = f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        return formatted
 
     @staticmethod
     def _snake_case_key(key: str) -> str:

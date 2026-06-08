@@ -3,6 +3,7 @@ from app.interface.http.kpi_field_labels import (
     FINANCIAL_ROL_FIELD_LABELS,
     HR_FIELD_LABELS,
     SI_GOAL_FIELD_LABELS,
+    infer_scalar_field_formats,
     kpi_fields,
     merge_kpi_field_labels,
 )
@@ -33,3 +34,11 @@ def test_hr_bundle_contains_portal_rh_indicators():
     assert fields["active_pdi_count"] == "PDIs ativos"
     assert "branch" in COMMON_SCALAR_FIELD_LABELS
     assert "has_goal" in SI_GOAL_FIELD_LABELS
+
+
+def test_infer_scalar_field_formats_from_kpi_labels():
+    fields = kpi_fields(FINANCIAL_ROL_FIELD_LABELS)
+    formats = infer_scalar_field_formats(fields)
+
+    assert formats["gross_revenue"] == "currency"
+    assert formats["returns"] == "currency"

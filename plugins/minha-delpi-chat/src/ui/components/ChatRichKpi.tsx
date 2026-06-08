@@ -1,4 +1,8 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatKpiCard, ChatPresentation } from "../../data/api/chatTypes";
+import {
+  formatCellValue,
+  inferColumnType,
+} from "./tableCellFormatting";
 
 type KpiPresentation = Extract<ChatPresentation, { type: "kpi" }>;
 
@@ -31,8 +35,8 @@ export function ChatRichKpi({
           >
             <div className="mdc-rich-kpi__label">{card.label}</div>
             <div className="mdc-rich-kpi__value">
-              {formatKpiValue(card.value)}
-              {card.unit && (
+              {formatKpiValue(card)}
+              {card.unit && !shouldHideUnit(card) && (
                 <span className="mdc-rich-kpi__unit">{card.unit}</span>
               )}
             </div>
@@ -56,13 +60,28 @@ export function ChatRichKpi({
   );
 }
 
-function formatKpiValue(value: string | number): string {
+function shouldHideUnit(card: ChatKpiCard): boolean {
+  const dataType = card.dataType || inferColumnType(card.key || card.label);
+
+  return dataType === "currency" || dataType === "percent";
+}
+
+function formatKpiValue(card: ChatKpiCard): string {
+  const { value, key, label, dataType } = card;
+  const columnKey = key || label;
+  const resolvedType = dataType || inferColumnType(columnKey);
+
   if (typeof value === "number") {
-    if (Number.isInteger(value)) return value.toLocaleString("pt-BR");
-    return value.toLocaleString("pt-BR", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 2,
-    });
+    return formatCellValue(value, columnKey, resolvedType);
   }
+
+  if (typeof value === "string" && value.trim()) {
+    const numeric = Number(value.replace(/\./g, "").replace(",", "."));
+
+    if (!Number.isNaN(numeric) && value.trim() !== "") {
+      return formatCellValue(numeric, columnKey, resolvedType);
+    }
+  }
+
   return String(value);
 }

@@ -356,40 +356,7 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def enrich_humanized(cls, humanized: dict | None, data: Any) -> dict | None:
-        if not isinstance(humanized, dict):
-            return humanized
-
-        meta = cls.extract_meta(data)
-
-        if not meta:
-            return humanized
-
-        fields = meta.get("fields")
-
-        if not isinstance(fields, dict) or not fields:
-            return humanized
-
-        glossary_lines = [
-            f"{key}: {label.strip()}"
-            for key, label in fields.items()
-            if isinstance(key, str) and isinstance(label, str) and label.strip()
-        ][:4]
-
-        if not glossary_lines:
-            return humanized
-
-        enriched = dict(humanized)
-        detail_lines = list(enriched.get("linhas_detalhe") or [])
-        existing = set(detail_lines) | set(enriched.get("linhas") or [])
-
-        for line in glossary_lines:
-            if line not in existing:
-                detail_lines.append(line)
-
-        if detail_lines:
-            enriched["linhas_detalhe"] = detail_lines
-
-        return enriched
+        return humanized
 
     @classmethod
     def _entity_from_path(cls, path: str) -> str | None:

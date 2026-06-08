@@ -16,6 +16,7 @@ class ResponseMetaBuilder:
         shape: str,
         pagination: dict[str, Any] | None = None,
         fields: dict[str, str] | None = None,
+        field_formats: dict[str, str] | None = None,
         related_routes: dict[str, str] | None = None,
         sections: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
@@ -29,6 +30,8 @@ class ResponseMetaBuilder:
             meta["pagination"] = pagination
         if fields:
             meta["fields"] = fields
+        if field_formats:
+            meta["fieldFormats"] = field_formats
         if related_routes:
             meta["relatedRoutes"] = related_routes
         if sections:

@@ -22,10 +22,16 @@ class ExternalActionResultPresenter:
     ):
         self._column_labels = column_label_service or ExternalActionColumnLabelService()
         self._active_schema_labels: dict[str, str] | None = None
+        self._active_schema_formats: dict[str, str] | None = None
 
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
+        previous_formats = self._active_schema_formats
         self._active_schema_labels = self._column_labels.merge_meta_field_labels(
+            {},
+            data,
+        )
+        self._active_schema_formats = self._column_labels.merge_meta_field_formats(
             {},
             data,
         )
@@ -35,12 +41,12 @@ class ExternalActionResultPresenter:
             routed = self._present_entity_first(data, path=path, profile=profile)
 
             if routed is not None:
-                return ChatApiDelpiResponseProfileService.enrich_humanized(routed, data)
+                return routed
 
-            result = self._present_legacy(data, path=path)
-            return ChatApiDelpiResponseProfileService.enrich_humanized(result, data)
+            return self._present_legacy(data, path=path)
         finally:
             self._active_schema_labels = previous_labels
+            self._active_schema_formats = previous_formats
 
     def _present_entity_first(
         self,
@@ -551,7 +557,7 @@ class ExternalActionResultPresenter:
                         "generic",
                         "dictScalarLine",
                         label=self._humanize_key(key),
-                        value=str(value),
+                        value=self._format_field_value(key, value),
                     )
                 )
 
@@ -688,12 +694,22 @@ class ExternalActionResultPresenter:
             label = str(card.get("label") or self._kpi_title("")).strip()
             unit = str(card.get("unit") or "").strip()
             value = card.get("value")
+            field_key = str(card.get("key") or "").strip()
 
             if value is None:
                 continue
 
-            suffix = f" {unit}".rstrip()
-            linhas.append(f"**{label}:** {self._format_num(value)}{suffix}")
+            formatted_value = (
+                self._format_field_value(field_key, value)
+                if field_key
+                else self._format_field_value(label, value)
+            )
+            suffix = (
+                ""
+                if formatted_value.endswith("%") or formatted_value.startswith("R$")
+                else f" {unit}".rstrip()
+            )
+            linhas.append(f"**{label}:** {formatted_value}{suffix}")
 
         return linhas
 
@@ -3326,7 +3342,9 @@ class ExternalActionResultPresenter:
         indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
 
         for key, value in list(indicators.items())[:6]:
-            linhas.append(f"{self._humanize_key(str(key))}: {value}")
+            linhas.append(
+                f"{self._humanize_key(str(key))}: {self._format_field_value(str(key), value)}"
+            )
 
         structure_summary = (root.get("structure") or {}).get("summary") if isinstance(root.get("structure"), dict) else None
 
@@ -3358,7 +3376,9 @@ class ExternalActionResultPresenter:
 
         if summary:
             for key, value in list(summary.items())[:8]:
-                linhas.append(f"{self._humanize_key(str(key))}: {value}")
+                linhas.append(
+                    f"{self._humanize_key(str(key))}: {self._format_field_value(str(key), value)}"
+                )
 
         if items:
             linhas.append(f"Itens retornados: {len(items)}")
@@ -4431,6 +4451,10 @@ class ExternalActionResultPresenter:
             schema_labels,
             data,
         )
+        self._active_schema_formats = self._column_labels.merge_meta_field_formats(
+            {},
+            data,
+        )
 
         try:
             profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
@@ -4446,6 +4470,7 @@ class ExternalActionResultPresenter:
             return self._build_presentation(data, path=path)
         finally:
             self._active_schema_labels = None
+            self._active_schema_formats = None
 
     def _build_presentation_by_entity(
         self,
@@ -5117,6 +5142,13 @@ class ExternalActionResultPresenter:
         return self._column_labels.label_for(
             key,
             schema_labels=self._active_schema_labels,
+        )
+
+    def _format_field_value(self, key: str, value: object) -> str:
+        return self._column_labels.format_field_value(
+            key,
+            value,
+            schema_formats=self._active_schema_formats,
         )
 
     def _fixed_columns(self, table_id: str) -> list[dict]:
@@ -5916,13 +5948,20 @@ class ExternalActionResultPresenter:
             if not isinstance(val, (int, float)):
                 continue
 
+            field_format = self._column_labels.resolve_field_format(
+                str(key),
+                schema_formats=self._active_schema_formats,
+            )
             lowered_key = str(key).lower()
             cards.append({
+                "key": str(key),
                 "label": self._humanize_key(key),
                 "value": val,
+                "dataType": field_format,
                 "unit": (
                     "%"
-                    if any(token in lowered_key for token in percent_keys)
+                    if field_format == "percent"
+                    or any(token in lowered_key for token in percent_keys)
                     else ""
                 ),
                 "color": str(palette[idx % len(palette)]),

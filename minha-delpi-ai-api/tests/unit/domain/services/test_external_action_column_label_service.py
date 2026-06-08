@@ -155,6 +155,36 @@ def test_label_for_humanizes_unknown_snake_and_camel_keys():
     assert service.label_for("someCustomMetric") == "Some Custom Metric"
 
 
+def test_format_field_value_applies_currency_percent_and_days():
+    service = ExternalActionColumnLabelService()
+
+    assert service.format_field_value("gross_revenue", 5138916.92) == "R$ 5.138.916,92"
+    assert service.format_field_value("ebitda_over_rol_pct", 12.5) == "12,50%"
+    assert service.format_field_value("pmr_days", 42) == "42 dias"
+
+
+def test_merge_meta_field_formats_reads_api_meta():
+    service = ExternalActionColumnLabelService()
+
+    formats = service.merge_meta_field_formats(
+        {},
+        {
+            "meta": {
+                "fieldFormats": {
+                    "custom_metric": "percent",
+                }
+            }
+        },
+    )
+
+    assert formats["custom_metric"] == "percent"
+    assert service.format_field_value(
+        "custom_metric",
+        10,
+        schema_formats=formats,
+    ) == "10,00%"
+
+
 def test_presenter_kv_table_and_profile_rows():
     service = ExternalActionColumnLabelService()
 

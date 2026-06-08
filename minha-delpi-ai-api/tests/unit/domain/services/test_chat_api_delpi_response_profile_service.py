@@ -67,7 +67,7 @@ def test_is_entity_routed_for_present_includes_kpi_and_sql() -> None:
     )
 
 
-def test_enrich_humanized_appends_meta_fields_glossary() -> None:
+def test_enrich_humanized_does_not_append_meta_fields_glossary() -> None:
     enriched = ChatApiDelpiResponseProfileService.enrich_humanized(
         {"titulo": "Estoque", "linhas": ["2 filiais"]},
         {
@@ -80,4 +80,4 @@ def test_enrich_humanized_appends_meta_fields_glossary() -> None:
     )
 
     assert enriched is not None
-    assert "available_quantity" in "\n".join(enriched.get("linhas_detalhe") or [])
+    assert enriched.get("linhas_detalhe") in (None, [])
