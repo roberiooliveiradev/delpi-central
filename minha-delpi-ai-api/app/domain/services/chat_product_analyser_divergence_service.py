@@ -174,13 +174,13 @@ class ChatProductAnalyserDivergenceService:
         inspection = root.get("inspection")
 
         if not isinstance(inspection, dict):
-            return []
+            return [cls._txt("attention", "inspectionNotRegistered")]
 
         items = [item for item in (inspection.get("items") or []) if isinstance(item, dict)]
         total = cls._collection_total(inspection)
 
         if total == 0 or not items:
-            return []
+            return [cls._txt("attention", "inspectionNotRegistered")]
 
         empty_qp: list[str] = []
         missing_blocks: list[str] = []

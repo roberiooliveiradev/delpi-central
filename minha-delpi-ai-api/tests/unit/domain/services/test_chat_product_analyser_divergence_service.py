@@ -49,6 +49,50 @@ def test_attention_points_cover_empty_guide_and_inspection_gap():
     assert any("QP6" in point or "qp" in point.lower() for point in points)
 
 
+def test_attention_points_when_inspection_not_registered():
+    root = {
+        "product": {
+            "code": "90260015",
+            "description": "CHICOTE DE LIGACAO",
+            "type": "PA",
+            "group_code": "9026",
+        },
+        "guide": {"items": [{"product_code": "90260015", "operation_description": "EMBALAR"}], "total": 1},
+        "inspection": {"items": [], "total": 0},
+        "structure": {
+            "items": [
+                {
+                    "code": "50210372",
+                    "components": [
+                        {"code": "10420040", "description": "CABO", "type": "MP"},
+                    ],
+                }
+            ],
+            "total": 1,
+        },
+    }
+    product = root["product"]
+
+    points = ChatProductAnalyserDivergenceService.build_attention_points(root, product)
+
+    assert any("inspeção" in point.lower() and "não cadastrad" in point.lower() for point in points)
+
+
+def test_attention_points_when_inspection_collection_missing():
+    root = {
+        "product": {"code": "90260015", "description": "ITEM", "type": "PA"},
+        "guide": {"items": [{"product_code": "90260015", "operation_description": "OP"}], "total": 1},
+        "structure": {"items": [], "total": 0},
+    }
+
+    points = ChatProductAnalyserDivergenceService.build_attention_points(
+        root,
+        root["product"],
+    )
+
+    assert any("inspeção" in point.lower() and "não cadastrad" in point.lower() for point in points)
+
+
 def test_opening_narrative_mentions_composition_and_sources():
     root = _root_with_cross_collection_gap()
     product = root["product"]

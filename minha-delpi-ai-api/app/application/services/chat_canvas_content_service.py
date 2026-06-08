@@ -9,6 +9,9 @@ from app.application.services.chat_canvas_ambiguity_service import (
 )
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.domain.services.chat_canvas_transform_service import ChatCanvasTransformService
+from app.domain.services.chat_rich_presentation_canvas_export_service import (
+    ChatRichPresentationCanvasExportService,
+)
 
 
 @dataclass(frozen=True)
@@ -207,7 +210,11 @@ class ChatCanvasContentService:
                 open_payload=None,
             )
 
-        markdown = str(source.get("content") or "").strip()
+        metadata = cls._message_metadata(source)
+        markdown = ChatRichPresentationCanvasExportService.build_markdown_from_assistant(
+            str(source.get("content") or ""),
+            metadata,
+        ).strip()
 
         if not markdown:
             return ChatCanvasAction(
@@ -307,7 +314,11 @@ class ChatCanvasContentService:
         if not source:
             return "", "Conteúdo do chat", None
 
-        markdown = str(source.get("content") or "").strip()
+        metadata = cls._message_metadata(source)
+        markdown = ChatRichPresentationCanvasExportService.build_markdown_from_assistant(
+            str(source.get("content") or ""),
+            metadata,
+        ).strip()
 
         if not markdown:
             return "", "Conteúdo do chat", None
@@ -375,58 +386,21 @@ class ChatCanvasContentService:
 
     @classmethod
     def _metadata_to_markdown_section(cls, metadata: dict) -> str | None:
+        sections = ChatRichPresentationCanvasExportService.sections_from_tool_metadata(
+            metadata
+        )
         text_presentation = metadata.get("textPresentation")
 
         if isinstance(text_presentation, dict):
             markdown = str(text_presentation.get("markdown") or "").strip()
 
             if markdown:
-                return markdown
+                sections = [markdown, *sections]
 
-        presentation = metadata.get("presentation")
+        if not sections:
+            return None
 
-        if isinstance(presentation, dict):
-            presentation_type = str(presentation.get("type") or "").strip()
-
-            if presentation_type == "table":
-                title = str(presentation.get("title") or "Consulta").strip()
-                columns = presentation.get("columns") or []
-                rows = presentation.get("rows") or []
-
-                if columns and rows:
-                    header = " | ".join(
-                        str(column.get("label") or column.get("key") or "")
-                        for column in columns
-                    )
-                    body_lines = []
-
-                    for row in rows[:50]:
-                        if not isinstance(row, dict):
-                            continue
-
-                        body_lines.append(
-                            " | ".join(
-                                str(row.get(column.get("key"), ""))
-                                for column in columns
-                                if isinstance(column, dict)
-                            )
-                        )
-
-                    if body_lines:
-                        return "\n".join(
-                            [
-                                f"### {title}",
-                                "",
-                                header,
-                                " | ".join(["---"] * len(columns)),
-                                *body_lines,
-                            ]
-                        )
-
-                if title:
-                    return f"### {title}"
-
-        return None
+        return "\n\n".join(section for section in sections if section).strip() or None
 
     @classmethod
     def _merge_markdown(cls, base_markdown: str, sections: list[str]) -> str:
@@ -528,7 +502,11 @@ class ChatCanvasContentService:
             if cls._is_canvas_confirmation_message(text):
                 continue
 
-            return {"id": cls._message_id(message), "content": text}
+            return {
+                "id": cls._message_id(message),
+                "content": text,
+                "metadata": cls._message_metadata(message),
+            }
 
         return None
 

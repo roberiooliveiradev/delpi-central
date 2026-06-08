@@ -110,6 +110,54 @@ def test_build_update_from_tools_merges_existing_canvas_and_tool_markdown():
     assert "Atualizei a lousa" in action.answer
 
 
+def test_resolve_simple_copy_includes_rich_presentations_from_tool_calls():
+    assistant = _assistant_message(
+        "### Informações completas do produto 90260015\n\n**Destaques**\n\n- Estrutura com 4 itens.",
+        metadata={
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "tablePresentations": [
+                            {
+                                "type": "table",
+                                "title": "Produto 90260015",
+                                "columns": [
+                                    {"key": "campo", "label": "Campo"},
+                                    {"key": "valor", "label": "Valor"},
+                                ],
+                                "rows": [{"campo": "Código", "valor": "90260015"}],
+                            }
+                        ],
+                        "presentation": {
+                            "type": "tree",
+                            "title": "Estrutura do produto 90260015",
+                            "root": {
+                                "id": "90260015",
+                                "label": "90260015",
+                                "badge": "PA",
+                                "children": [],
+                            },
+                        },
+                    },
+                }
+            ]
+        },
+    )
+
+    action = ChatCanvasContentService.resolve(
+        "coloque o resultado acima na lousa",
+        [assistant],
+        {"capabilities": {"canvas": True}},
+    )
+
+    assert action is not None
+    assert action.open_payload is not None
+    assert "Produto 90260015" in action.open_payload.markdown
+    assert "Estrutura do produto 90260015" in action.open_payload.markdown
+
+
 def test_content_append_skips_canvas_confirmation_and_merges_existing_canvas():
     profile = _assistant_message(
         "## Seu perfil\n\nRobério Oliveira",

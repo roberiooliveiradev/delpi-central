@@ -2,6 +2,7 @@
   "attention": {
     "guideMissing": "Roteiro não retornado: não há operações registradas na rota analisada.",
     "guideNoOperations": "Roteiro retornou itens, mas nenhum traz operações preenchidas — confirme no ERP se o roteiro está incompleto ou se a API filtrou o detalhe.",
+    "inspectionNotRegistered": "Plano de inspeção não cadastrado — valide com qualidade/processos antes de liberar produção ou expedição.",
     "inspectionEmptyQp": "Inspeções com blocos QP6/QP7/QP8 vazios nos itens: {sample}{suffix}.",
     "inspectionMissingQp": "Registros de inspeção sem blocos QP6/QP7/QP8 estruturados: {sample}.",
     "crossOnlyInspection": "Componente **{code}** aparece na inspeção, mas não consta na estrutura retornada — vale conferir desenho, cadastro técnico ou divergência entre bases.",
