@@ -45,10 +45,23 @@ class DelpiApiClient:
         with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
             resp = client.get(path, params=clean_params, headers=headers)
 
-        if resp.status_code >= 400:
-            raise DelpiApiError(resp.status_code, resp.text[:500])
+        body: dict[str, Any] | Any
+        try:
+            body = resp.json()
+        except Exception:
+            body = None
 
-        body = resp.json()
+        if resp.status_code >= 400:
+            detail = resp.text[:500]
+            if isinstance(body, dict):
+                message = body.get("message")
+                if isinstance(message, str) and message.strip():
+                    detail = message
+                error_block = body.get("error")
+                if isinstance(error_block, dict) and error_block.get("code"):
+                    detail = f"[{error_block['code']}] {detail}"
+            raise DelpiApiError(resp.status_code, detail)
+
         if isinstance(body, dict) and "data" in body:
             return body["data"]
         return body

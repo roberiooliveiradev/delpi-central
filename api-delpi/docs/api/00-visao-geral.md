@@ -62,16 +62,23 @@ Sucesso (`200`):
 }
 ```
 
-Erro (`400` por padrão, configurável):
+Erro (`4xx`/`5xx`):
 
 ```json
 {
   "success": false,
-  "message": "Descrição do erro"
+  "message": "Descrição do erro",
+  "data": null,
+  "error": {
+    "code": "PRODUCT_NOT_FOUND",
+    "recoverable": false
+  }
 }
 ```
 
-Implementação: `app/core/responses.py` — `success_response()` e `error_response()`.
+`error` é opcional em respostas legadas; novas rotas e handlers devem preencher `code` quando possível. HTTP 404 não usa mais `{ "detail": "..." }` solto nas rotas de produto — envelope acima.
+
+Implementação: `app/core/responses.py` — `success_response()`, `error_response()`, `not_found_response()`.
 
 ### Strategic Indicators e NC (quando montadas)
 

@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from delpi_auth.authorization import require_permission
-from app.core.responses import success_response, error_response
+from app.core.responses import success_response, error_response, not_found_response
 from app.utils.logger import log_error
 
 from app.application.dto.product.list_products_requests import ListProductsRequest
@@ -120,8 +120,10 @@ def get_product_detail(code: str):
         result = use_case.execute(dto)
 
         if not result.items:
-            from fastapi.responses import JSONResponse
-            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+            return not_found_response(
+                f"Produto {code} não encontrado",
+                code="PRODUCT_NOT_FOUND",
+            )
 
         product = result.items[0]
         product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)
@@ -142,7 +144,10 @@ def get_product_summary(code: str):
         product_result = product_uc.execute(product_dto)
 
         if not product_result.items:
-            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+            return not_found_response(
+                f"Produto {code} não encontrado",
+                code="PRODUCT_NOT_FOUND",
+            )
 
         product = product_result.items[0]
         product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)

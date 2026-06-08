@@ -1,8 +1,10 @@
 # app/main.py
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
@@ -28,6 +30,7 @@ from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.scheduling import scheduling_router
+from app.core.responses import error_response, not_found_response
 from app.middleware.auth_middleware import jwt_middleware
 from app.middleware.app_usage_tracking_middleware import app_usage_tracking_middleware
 
@@ -115,6 +118,30 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi
+
+
+# ==========================================================
+# EXCEPTION HANDLERS (envelope unificado)
+# ==========================================================
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(_request: Request, exc: StarletteHTTPException):
+    detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+    if exc.status_code == 404:
+        return not_found_response(detail or "Recurso não encontrado")
+    code = "VALIDATION_ERROR" if exc.status_code == 422 else "HTTP_ERROR"
+    return error_response(detail, status_code=exc.status_code, code=code)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+    return error_response(
+        "Parâmetros inválidos",
+        status_code=422,
+        code="VALIDATION_ERROR",
+        recoverable=True,
+    )
 
 
 # ==========================================================
