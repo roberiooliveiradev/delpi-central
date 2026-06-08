@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { handleChatNavClick } from "../../navigation/chatNavigation";
+import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
 
 import "./ChatSidebarWorkspaceItem.css";
 
@@ -48,7 +48,12 @@ export function ChatSidebarWorkspaceItem({
         href={href}
         className={className}
         onClick={(event) => {
-          handleChatNavClick(event, href, { onNavigate: onClick });
+          if (shouldOpenChatLinkInNewTab(event)) {
+            return;
+          }
+
+          event.preventDefault();
+          onClick?.();
         }}
         title={subtitle || title}
       >

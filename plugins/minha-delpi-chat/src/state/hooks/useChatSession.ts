@@ -44,6 +44,7 @@ import {
 import {
   applyStreamHandoffToMessages,
   handoffFromPlaybackPayload,
+  shouldSkipPlaybackReveal,
   streamContentAlreadyDisplayed,
   type AssistantTurnHandoff,
 } from "../chatStreamHandoff";
@@ -1194,21 +1195,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           markStreamProgress();
           awaitingPlaybackRef.current = true;
-          setStreamingStatus("Exibindo resposta...");
-          setStreamingSources(payload.sources);
           const playbackToolCalls = payload.toolCalls ?? [];
-          setStreamingToolCalls(playbackToolCalls);
           streamingToolCallsRef.current = playbackToolCalls;
-          setStreamingShowPresentation(
-            shouldShowRichPresentation(payload.answer, payload.toolCalls),
-          );
-          const skipReveal = streamContentAlreadyDisplayed(
+          const skipReveal = shouldSkipPlaybackReveal(
             streamingAnswerRef.current,
             streamingToolCallsRef.current,
             payload,
           );
           const enriched: ChatPlaybackPayload = { ...payload, skipReveal };
+
           playbackPayloadRef.current = enriched;
+
+          if (skipReveal) {
+            streamingAnswerRef.current = payload.answer;
+            return;
+          }
+
+          setStreamingStatus("Exibindo resposta...");
+          setStreamingSources(payload.sources);
+          setStreamingToolCalls(playbackToolCalls);
+          setStreamingShowPresentation(
+            shouldShowRichPresentation(payload.answer, payload.toolCalls),
+          );
           setPlaybackPayload(enriched);
         },
         onCanvasOpen: (payload) => {
@@ -1280,7 +1288,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
             if (existingPayload) {
               if (
-                streamContentAlreadyDisplayed(
+                shouldSkipPlaybackReveal(
                   streamingAnswerRef.current,
                   streamingToolCallsRef.current,
                   existingPayload,
@@ -1301,7 +1309,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
               sources: turnHandoff.sources,
               toolCalls: finalToolCalls,
               adminDebug: response.adminDebug ?? null,
-              skipReveal: streamContentAlreadyDisplayed(
+              skipReveal: shouldSkipPlaybackReveal(
                 streamingAnswerRef.current,
                 streamingToolCallsRef.current,
                 {

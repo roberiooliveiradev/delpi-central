@@ -1,5 +1,7 @@
 import type { MouseEvent } from "react";
 
+import { parseChatRoute, type ChatRoute } from "./chatRoutes";
+
 export function shouldOpenChatLinkInNewTab(event: Pick<
   MouseEvent,
   "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey" | "defaultPrevented"
@@ -17,29 +19,23 @@ export function shouldOpenChatLinkInNewTab(event: Pick<
   );
 }
 
-export function handleChatNavClick(
-  event: MouseEvent<HTMLAnchorElement>,
-  href: string,
-  options: { replace?: boolean; onNavigate?: () => void } = {},
-) {
-  if (shouldOpenChatLinkInNewTab(event)) {
-    return;
+export function resolveChatLocation(href?: string) {
+  if (typeof window === "undefined") {
+    return href ?? "";
   }
 
-  event.preventDefault();
-  navigateChatHref(href, options);
-  options.onNavigate?.();
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
 export function navigateChatHref(href: string, options: { replace?: boolean } = {}) {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
-  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const current = resolveChatLocation();
 
   if (current === href) {
-    return;
+    return false;
   }
 
   if (options.replace) {
@@ -49,4 +45,44 @@ export function navigateChatHref(href: string, options: { replace?: boolean } = 
   }
 
   window.dispatchEvent(new PopStateEvent("popstate"));
+  return true;
+}
+
+/**
+ * Navega para uma superfície do chat e reaplica a rota quando a URL já é a mesma
+ * (ex.: «Nova conversa» no chat comum já aberto).
+ */
+export function navigateChatSurface(
+  href: string,
+  options: {
+    replace?: boolean;
+    onApplyRoute?: (route: ChatRoute) => void;
+  } = {},
+) {
+  const navigated = navigateChatHref(href, { replace: options.replace });
+
+  if (!navigated && options.onApplyRoute) {
+    options.onApplyRoute(parseChatRoute(href));
+  }
+}
+
+export function handleChatNavClick(
+  event: MouseEvent<HTMLAnchorElement>,
+  href: string,
+  options: {
+    replace?: boolean;
+    onNavigate?: () => void;
+    onApplyRoute?: (route: ChatRoute) => void;
+  } = {},
+) {
+  if (shouldOpenChatLinkInNewTab(event)) {
+    return;
+  }
+
+  event.preventDefault();
+  navigateChatSurface(href, {
+    replace: options.replace,
+    onApplyRoute: options.onApplyRoute,
+  });
+  options.onNavigate?.();
 }

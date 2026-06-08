@@ -131,7 +131,10 @@ import {
   parseChatRoute,
   type ChatRoute,
 } from "../../navigation/chatRoutes";
-import { navigateChatHref } from "../../navigation/chatNavigation";
+import {
+  navigateChatHref,
+  navigateChatSurface,
+} from "../../navigation/chatNavigation";
 import {
   getChatSidebarViewForRoute,
   getInitialActiveAgentPageId,
@@ -247,10 +250,6 @@ export function ChatPage({
   const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
     () => initialHomeCatalogCache?.onboarding ?? null,
   );
-  const [homeCatalogLoading, setHomeCatalogLoading] = useState(
-    () => !initialHomeCatalogCache?.onboarding,
-  );
-  const [homeCatalogError, setHomeCatalogError] = useState(false);
   const [tourPlusMenuOpen, setTourPlusMenuOpen] = useState<boolean | null>(null);
   const [onboardingTourOpen, setOnboardingTourOpen] = useState(false);
   const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(
@@ -1354,6 +1353,16 @@ export function ChatPage({
     ],
   );
 
+  const navigateToChatSurface = useCallback(
+    (href: string, options?: { replace?: boolean }) => {
+      navigateChatSurface(href, {
+        replace: options?.replace,
+        onApplyRoute: applyChatRoute,
+      });
+    },
+    [applyChatRoute],
+  );
+
   useChatRouteSync({
     pathname,
     sessions,
@@ -1582,8 +1591,8 @@ export function ChatPage({
     await startSession();
   }
 
-  async function handleStartGeneralSession() {
-    navigateChatHref(buildChatHref({ kind: "home" }));
+  function handleStartGeneralSession() {
+    navigateToChatSurface(buildChatHref({ kind: "home" }));
   }
 
   function handleSelectSession(session: typeof sessions[number]) {
@@ -1880,16 +1889,11 @@ export function ChatPage({
     const needsTourHomeNavigation = !isHomeChatSurface || !isConversationEmpty;
 
     if (needsTourHomeNavigation) {
-      navigateChatHref(buildChatHref({ kind: "home" }));
-      applyChatRoute({ kind: "home" });
+      navigateToChatSurface(buildChatHref({ kind: "home" }));
     }
 
     setOnboardingTourOpen(true);
-  }, [
-    applyChatRoute,
-    isConversationEmpty,
-    isHomeChatSurface,
-  ]);
+  }, [isConversationEmpty, isHomeChatSurface, navigateToChatSurface]);
 
   useEffect(() => {
     if (!isConversationEmpty) {
@@ -1898,19 +1902,7 @@ export function ChatPage({
       return;
     }
 
-    setHomeCatalogLoading(true);
-  }, [isConversationEmpty]);
-
-  useEffect(() => {
-    if (!isConversationEmpty) {
-      setHomeCatalogLoading(false);
-      return;
-    }
-
     let cancelled = false;
-
-    setHomeCatalogLoading(true);
-    setHomeCatalogError(false);
 
     void getAssistantCatalog({
       getAccessToken,
@@ -1954,35 +1946,12 @@ export function ChatPage({
 
         setHomeHighlights([]);
         setHomeOnboarding(null);
-        setHomeCatalogError(true);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setHomeCatalogLoading(false);
-        }
       });
 
     return () => {
       cancelled = true;
     };
   }, [getAccessToken, helpAgentId, isConversationEmpty, onboardingProfileId]);
-
-  function handleSelectOnboardingProfile(profileId: string) {
-    setOnboardingProfileId(profileId);
-
-    const cached = readHomeCatalogCache(profileId);
-
-    if (cached?.onboarding) {
-      setHomeOnboarding(cached.onboarding);
-      setHomeHighlights(cached.highlights ?? []);
-    }
-
-    try {
-      localStorage.setItem("minha-delpi-chat:onboarding-profile", profileId);
-    } catch {
-      /* ignore */
-    }
-  }
 
   function getComposerPlaceholder() {
     const combinedPlaceholder = formatComposerPlaceholderParts({
@@ -2046,17 +2015,9 @@ export function ChatPage({
     onOpenAgentPage: (agentId: string) => {
       const agent = agents.find((item) => item.id === agentId);
 
-      setCanvasDocument(null);
-      setSelectedProjectId(null);
-      clearComposerOverlayContext();
-      setActiveAgentPageId(agentId);
-      setCurrentView("chat");
-
       if (agent) {
-        navigateChatHref(buildChatAgentHref(agent.id));
+        navigateToChatSurface(buildChatAgentHref(agent.id));
       }
-
-      void startSession();
     },
     onToggleProject: handleToggleContextProject,
     onRemoveContextProject: handleRemoveContextProject,
@@ -2183,15 +2144,15 @@ export function ChatPage({
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
             if (!projectId) {
-              navigateChatHref(buildChatHref({ kind: "home" }));
+              navigateToChatSurface(buildChatHref({ kind: "home" }));
               return;
             }
 
-            navigateChatHref(buildChatProjectHref(projectId));
+            navigateToChatSurface(buildChatProjectHref(projectId));
           }}
           onSelectAgent={(agentId) => {
             if (!agentId) {
-              navigateChatHref(buildChatHref({ kind: "home" }));
+              navigateToChatSurface(buildChatHref({ kind: "home" }));
               return;
             }
 
@@ -2201,7 +2162,7 @@ export function ChatPage({
               return;
             }
 
-            navigateChatHref(buildChatAgentHref(agentId));
+            navigateToChatSurface(buildChatAgentHref(agentId));
           }}
           isCollapsed={isDesktop && isSidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}
@@ -2234,18 +2195,11 @@ export function ChatPage({
               isLoading={isLoadingProjects}
               onBack={() => {
                 clearWorkspaceError();
-                setCurrentView("chat");
-                navigateChatHref(buildChatHref({ kind: "home" }));
+                navigateToChatSurface(buildChatHref({ kind: "home" }));
               }}
               onSelectProject={(projectId) => {
                 clearWorkspaceError();
-                clearError();
-                setCanvasDocument(null);
-                setActiveAgentPageId(null);
-                clearComposerOverlayContext();
-                setSelectedProjectId(projectId);
-                setCurrentView("chat");
-                navigateChatHref(buildChatProjectHref(projectId));
+                navigateToChatSurface(buildChatProjectHref(projectId));
               }}
               onCreateProject={addProject}
               onRenameProject={(projectId, name) => editProject(projectId, { name })}
@@ -2273,30 +2227,21 @@ export function ChatPage({
               onBack={() => {
                 clearWorkspaceError();
                 setAgentEditRequest(null);
-                setCurrentView("chat");
-                navigateChatHref(buildChatHref({ kind: "home" }));
+                navigateToChatSurface(buildChatHref({ kind: "home" }));
               }}
               onSelectAgent={(agentId) => {
                 clearWorkspaceError();
-                clearError();
-                setCanvasDocument(null);
-                setSelectedProjectId(null);
                 setAgentEditRequest(null);
-                setActiveAgentPageId(agentId);
-                clearComposerOverlayContext();
-                setCurrentView("chat");
 
                 if (agentId) {
                   const agent = agents.find((item) => item.id === agentId);
 
                   if (agent) {
-                    navigateChatHref(buildChatAgentHref(agent.id));
+                    navigateToChatSurface(buildChatAgentHref(agent.id));
                   }
                 } else {
-                  navigateChatHref(buildChatHref({ kind: "home" }));
+                  navigateToChatSurface(buildChatHref({ kind: "home" }));
                 }
-
-                void startSession();
               }}
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
@@ -2564,11 +2509,6 @@ export function ChatPage({
                         <ChatEmptyState
                           displayName={userDisplayName}
                           contextualHighlights={homeHighlights}
-                          onboarding={homeOnboarding}
-                          catalogLoading={homeCatalogLoading}
-                          catalogError={homeCatalogError}
-                          selectedProfileId={onboardingProfileId}
-                          onSelectProfile={handleSelectOnboardingProfile}
                           onUseStarter={handleHomeStarter}
                           onStartTour={
                             canOfferOnboardingTour ? startOnboardingTour : undefined

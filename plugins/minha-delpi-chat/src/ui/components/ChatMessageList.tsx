@@ -620,7 +620,9 @@ export function ChatMessageList({
   const streamingCaptionComplete =
     !showStreamingCaptionReveal ||
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
-  const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
+  const showStreamingActivityPanel = Boolean(
+    (isStreaming || isPlaybackActive) && !streamingAnswer?.trim(),
+  );
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled:
       isGeneratingAnswer &&

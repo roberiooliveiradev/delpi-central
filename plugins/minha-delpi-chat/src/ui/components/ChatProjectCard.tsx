@@ -9,7 +9,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { ChatProject } from "../../data/api/chatTypes";
-import { handleChatNavClick } from "../../navigation/chatNavigation";
+import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
 
 import "./ChatProjectCard.css";
 
@@ -160,7 +160,12 @@ export function ChatProjectCard({
           href={href}
           className="mdc-chat-project-card__main"
           onClick={(event) => {
-            handleChatNavClick(event, href);
+            if (shouldOpenChatLinkInNewTab(event)) {
+              return;
+            }
+
+            event.preventDefault();
+            onSelect();
           }}
           title={project.description || project.name}
         >

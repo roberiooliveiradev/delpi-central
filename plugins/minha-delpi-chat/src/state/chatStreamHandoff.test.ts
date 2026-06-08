@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "../data/api/chatTypes";
 import {
   applyStreamHandoffToMessages,
+  shouldSkipPlaybackReveal,
   streamContentAlreadyDisplayed,
 } from "./chatStreamHandoff";
 
@@ -67,5 +68,21 @@ describe("streamContentAlreadyDisplayed", () => {
         toolCalls: [],
       }),
     ).toBe(false);
+  });
+
+  it("ignora playback incremental quando a API não enviou tokens", () => {
+    expect(
+      shouldSkipPlaybackReveal("", [], {
+        answer: "Olá! O que vamos resolver hoje?",
+        toolCalls: [],
+      }),
+    ).toBe(true);
+
+    expect(
+      streamContentAlreadyDisplayed("", [], {
+        answer: "Olá! O que vamos resolver hoje?",
+        toolCalls: [],
+      }),
+    ).toBe(true);
   });
 });

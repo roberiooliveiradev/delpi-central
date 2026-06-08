@@ -101,12 +101,49 @@ export function streamContentAlreadyDisplayed(
   streamingToolCalls: ChatToolCall[],
   payload: Pick<ChatPlaybackPayload, "answer" | "toolCalls" | "skipReveal">,
 ): boolean {
+  if (shouldSkipPlaybackReveal(streamingAnswer, streamingToolCalls, payload)) {
+    return true;
+  }
+
+  const streamed = String(streamingAnswer ?? "").trim();
+  const finalAnswer = String(payload.answer ?? "").trim();
+
+  if (!streamed || streamed !== finalAnswer) {
+    return false;
+  }
+
+  const payloadToolCalls = payload.toolCalls ?? [];
+
+  if (payloadToolCalls.length === 0) {
+    return true;
+  }
+
+  if (streamingToolCalls.length === 0) {
+    return false;
+  }
+
+  return payloadToolCalls.length === streamingToolCalls.length;
+}
+
+/**
+ * Evita reanimar playback quando a API montou a resposta sem tokens SSE
+ * (ex.: small talk / direct answer com persist_before_playback).
+ */
+export function shouldSkipPlaybackReveal(
+  streamingAnswer: string,
+  streamingToolCalls: ChatToolCall[],
+  payload: Pick<ChatPlaybackPayload, "answer" | "toolCalls" | "skipReveal">,
+): boolean {
   if (payload.skipReveal) {
     return true;
   }
 
   const streamed = String(streamingAnswer ?? "").trim();
   const finalAnswer = String(payload.answer ?? "").trim();
+
+  if (!streamed && finalAnswer) {
+    return true;
+  }
 
   if (!streamed || streamed !== finalAnswer) {
     return false;

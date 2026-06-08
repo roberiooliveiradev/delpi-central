@@ -2,7 +2,10 @@ import { MessageSquarePlus, Search, Settings2, X } from "lucide-react";
 import type { RefObject } from "react";
 
 import { buildChatHref } from "../../navigation/chatRoutes";
-import { handleChatNavClick } from "../../navigation/chatNavigation";
+import {
+  handleChatNavClick,
+  shouldOpenChatLinkInNewTab,
+} from "../../navigation/chatNavigation";
 
 type ChatSidebarNavProps = {
   isSearchOpen: boolean;
@@ -19,7 +22,7 @@ export function ChatSidebarNav({
   isSearchOpen,
   searchTerm,
   searchInputRef,
-  onNewSession: _onNewSession,
+  onNewSession,
   onOpenAdmin,
   onToggleSearch,
   onClearSearch,
@@ -31,7 +34,12 @@ export function ChatSidebarNav({
         <a
           href={buildChatHref({ kind: "home" })}
           onClick={(event) => {
-            handleChatNavClick(event, buildChatHref({ kind: "home" }));
+            if (shouldOpenChatLinkInNewTab(event)) {
+              return;
+            }
+
+            event.preventDefault();
+            onNewSession();
           }}
         >
           <MessageSquarePlus size={17} aria-hidden="true" />

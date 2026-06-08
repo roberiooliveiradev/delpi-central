@@ -172,11 +172,7 @@ export function ChatSidebarProjectsSection({
                         project={project}
                         active={isProjectActive}
                         href={buildChatProjectHref(project.id)}
-                        onSelect={() =>
-                          onSelectProject?.(
-                            project.id === selectedProjectId ? null : project.id,
-                          )
-                        }
+                        onSelect={() => onSelectProject?.(project.id)}
                         onRename={() => {
                           void (async () => {
                             const nextName = await prompt({
