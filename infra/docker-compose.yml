@@ -644,6 +644,12 @@ services:
       POSTGRES_USER: ${PLUGINS_DB_USER}
       POSTGRES_PASSWORD: ${PLUGINS_DB_PASSWORD}
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     volumes:
       - postgres_plugins_data:/var/lib/postgresql/data
       - ./docker/postgres/plugins-init.sql:/docker-entrypoint-initdb.d/plugins-init.sql
