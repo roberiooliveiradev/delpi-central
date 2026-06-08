@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   CheckCircle2,
@@ -36,6 +36,7 @@ import {
 } from "../utils/auditList";
 import { formatPersonNamesList } from "../utils/formatPersonName";
 import { getDisplayNameFromToken } from "../utils/jwt";
+import { AuditRowMenuPortal } from "./AuditRowMenuPortal";
 
 const PAGE_SIZE = 10;
 
@@ -78,6 +79,13 @@ function primaryActionLabel(status: string): string {
   return "Ver avaliação";
 }
 
+function countRowMenuItems(item: AuditListItem): number {
+  let count = 1;
+  if (canAccessNc(item.status)) count += 1;
+  if (item.status === "draft") count += 1;
+  return count;
+}
+
 export function AuditListView({
   branch,
   audits,
@@ -94,6 +102,7 @@ export function AuditListView({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AuditListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const userName = getDisplayNameFromToken(getAccessToken()) ?? "Auditor";
   const areaNameById = useMemo(() => buildAreaNameMap(areas), [areas]);
@@ -332,56 +341,61 @@ export function AuditListView({
                           </button>
                           <div className="a5s-row-menu">
                             <button
+                              ref={openMenuId === item.id ? menuTriggerRef : undefined}
                               type="button"
                               className="a5s-icon-btn a5s-icon-btn--table"
                               aria-label="Mais ações"
                               aria-expanded={openMenuId === item.id}
+                              aria-haspopup="menu"
                               onClick={() =>
                                 setOpenMenuId((current) => (current === item.id ? null : item.id))
                               }
                             >
                               <MoreHorizontal size={18} strokeWidth={2.2} aria-hidden />
                             </button>
-                            {openMenuId === item.id ? (
-                              <div className="a5s-row-menu__panel" role="menu">
+                            <AuditRowMenuPortal
+                              open={openMenuId === item.id}
+                              onClose={() => setOpenMenuId(null)}
+                              triggerRef={menuTriggerRef}
+                              itemCount={countRowMenuItems(item)}
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  onOpenAudit(item.id);
+                                }}
+                              >
+                                Ver avaliação
+                              </button>
+                              {canAccessNc(item.status) ? (
                                 <button
                                   type="button"
                                   role="menuitem"
                                   onClick={() => {
                                     setOpenMenuId(null);
-                                    onOpenAudit(item.id);
+                                    onOpenNc(item.id);
                                   }}
                                 >
-                                  Ver avaliação
+                                  {ncActionLabel(item.status)}
                                 </button>
-                                {canAccessNc(item.status) ? (
-                                  <button
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      onOpenNc(item.id);
-                                    }}
-                                  >
-                                    {ncActionLabel(item.status)}
-                                  </button>
-                                ) : null}
-                                {item.status === "draft" ? (
-                                  <button
-                                    type="button"
-                                    role="menuitem"
-                                    className="a5s-row-menu__danger"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      setPendingDelete(item);
-                                    }}
-                                  >
-                                    <Trash2 size={14} aria-hidden />
-                                    Excluir auditoria
-                                  </button>
-                                ) : null}
-                              </div>
-                            ) : null}
+                              ) : null}
+                              {item.status === "draft" ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="a5s-row-menu__danger"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setPendingDelete(item);
+                                  }}
+                                >
+                                  <Trash2 size={14} aria-hidden />
+                                  Excluir auditoria
+                                </button>
+                              ) : null}
+                            </AuditRowMenuPortal>
                           </div>
                         </div>
                       </td>

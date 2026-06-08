@@ -2187,6 +2187,12 @@
   box-shadow: 0 8px 24px color-mix(in srgb, var(--a5s-title) 12%, transparent);
 }
 
+.a5s-row-menu__panel--portal {
+  position: fixed;
+  right: auto;
+  z-index: 1200;
+}
+
 .a5s-row-menu__panel button {
   display: block;
   width: 100%;
