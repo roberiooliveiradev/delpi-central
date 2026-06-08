@@ -644,8 +644,21 @@
 
 .a5s-form {
   display: grid;
-  gap: 12px;
-  max-width: 560px;
+  gap: 16px;
+  width: 100%;
+  max-width: none;
+}
+
+.a5s-form--new-audit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.a5s-form__title,
+.a5s-form__full,
+.a5s-form--new-audit .a5s-auditor-picker,
+.a5s-form--new-audit > .a5s-btn {
+  grid-column: 1 / -1;
 }
 
 .a5s-auditor-picker {
@@ -723,17 +736,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: var(--a5s-control-height);
   padding: 0 12px;
   border: 1px solid var(--a5s-border);
-  border-radius: 10px;
+  border-radius: var(--a5s-control-radius);
   background: var(--a5s-surface);
+  color: var(--a5s-muted);
+}
+
+.a5s-auditor-picker__search svg {
+  flex-shrink: 0;
 }
 
 .a5s-auditor-picker__search input {
   flex: 1;
-  padding: 10px 0;
+  min-width: 0;
+  width: 100%;
+  min-height: var(--a5s-control-height);
+  padding: 0;
   border: none;
   background: transparent;
+  color: var(--a5s-text);
 }
 
 .a5s-auditor-picker__search input:focus {
@@ -789,31 +812,46 @@
   color: var(--a5s-success);
 }
 
-.a5s-form h2 {
+.a5s-form h2,
+.a5s-form__title {
   margin: 0 0 4px;
   color: var(--a5s-title);
 }
 
-.a5s-form label {
+.a5s-form > label {
   display: grid;
   gap: 6px;
   font-weight: 600;
+  min-width: 0;
 }
 
+.a5s-form > label > input,
+.a5s-form > label > select,
 .a5s-form input,
 .a5s-form select {
+  width: 100%;
+  min-height: var(--a5s-control-height);
   padding: 10px 12px;
   border: 1px solid var(--a5s-border);
-  border-radius: 10px;
+  border-radius: var(--a5s-control-radius);
+  background: var(--a5s-surface);
+  color: var(--a5s-text);
 }
 
 .a5s-inline {
   display: flex;
   gap: 8px;
+  align-items: stretch;
 }
 
 .a5s-inline input {
   flex: 1;
+  min-width: 0;
+}
+
+.a5s-form--new-audit > .a5s-btn {
+  justify-self: start;
+  min-width: min(100%, 280px);
 }
 
 .a5s-alert {
@@ -2336,11 +2374,28 @@
   }
 }
 
+@media (max-width: 900px) {
+  .a5s-form--new-audit {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-auditoria-5s.dashboard-page,
   .a5s-app--dashboard,
   .a5s-app--nc {
     padding: 16px;
+  }
+
+  .a5s-form .a5s-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .a5s-form--new-audit > .a5s-btn {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
   }
 
   .a5s-hero__inner {

@@ -430,8 +430,8 @@ export function Audit5sPage({ pathname }: Props) {
       )}
 
       {view === "new" && (
-        <section className="a5s-panel a5s-form">
-          <h2>Nova auditoria</h2>
+        <section className="a5s-panel a5s-form a5s-form--new-audit">
+          <h2 className="a5s-form__title">Nova auditoria</h2>
           <label>
             Data
             <input
@@ -454,7 +454,7 @@ export function Audit5sPage({ pathname }: Props) {
               ))}
             </select>
           </label>
-          <div className="a5s-inline">
+          <div className="a5s-inline a5s-form__full">
             <input
               type="text"
               placeholder="Cadastrar nova área"

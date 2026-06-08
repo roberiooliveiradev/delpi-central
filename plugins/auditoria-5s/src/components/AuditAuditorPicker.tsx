@@ -99,16 +99,17 @@ export function AuditAuditorPicker({ value, onChange, disabled = false }: Props)
         <p className="a5s-auditor-picker__empty">Nenhum auditor selecionado.</p>
       )}
 
-      <label className="a5s-auditor-picker__search">
+      <div className="a5s-auditor-picker__search">
         <Search size={16} aria-hidden />
         <input
           type="search"
           value={query}
           disabled={disabled}
           placeholder="Buscar por nome ou e-mail…"
+          aria-label="Buscar auditor por nome ou e-mail"
           onChange={(event) => setQuery(event.target.value)}
         />
-      </label>
+      </div>
 
       {searching ? <p className="a5s-auditor-picker__status">Buscando…</p> : null}
 
