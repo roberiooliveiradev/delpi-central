@@ -11,7 +11,15 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  applyComposerMentionSelection,
+  detectActiveComposerMention,
+  filterComposerMentionCandidates,
+  listComposerMentionCandidates,
+} from "../../state/chatComposerMention";
+import { ChatComposerMentionMenu } from "./ChatComposerMentionMenu";
 
 import type {
   ChatAgent,
@@ -51,15 +59,17 @@ type ChatInputProps = {
   placeholder?: string;
   agents?: ChatAgent[];
   projects?: ChatProject[];
-  selectedAgentId?: string | null;
-  selectedProjectId?: string | null;
+  selectedAgentIds?: string[];
+  selectedProjectIds?: string[];
   attachments?: ChatInputAttachment[];
   onChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
-  onSelectAgent?: (agentId: string | null) => void;
+  onToggleAgent?: (agentId: string) => void;
+  onRemoveContextAgent?: (agentId: string) => void;
   onOpenAgentPage?: (agentId: string) => void;
-  onSelectProject?: (projectId: string | null) => void;
+  onToggleProject?: (projectId: string) => void;
+  onRemoveContextProject?: (projectId: string) => void;
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (attachmentId: string) => void;
   onClearAttachments?: () => void;
@@ -97,15 +107,17 @@ export function ChatInput({
   placeholder = "Pergunte alguma coisa",
   agents = [],
   projects = [],
-  selectedAgentId,
-  selectedProjectId,
+  selectedAgentIds = [],
+  selectedProjectIds = [],
   attachments = [],
   onChange,
   onSubmit,
   onCancel,
-  onSelectAgent,
+  onToggleAgent,
+  onRemoveContextAgent,
   onOpenAgentPage,
-  onSelectProject,
+  onToggleProject,
+  onRemoveContextProject,
   onAttachFiles,
   onRemoveAttachment,
   onClearAttachments,
@@ -135,6 +147,32 @@ export function ChatInput({
   }
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
+  const [mentionCursor, setMentionCursor] = useState(0);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const mentionCandidates = useMemo(
+    () =>
+      listComposerMentionCandidates({
+        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
+        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+      }),
+    [agents, projects],
+  );
+  const activeMention = detectActiveComposerMention(value, mentionCursor);
+  const mentionItems = useMemo(
+    () =>
+      activeMention
+        ? filterComposerMentionCandidates(mentionCandidates, activeMention.query, {
+            selectedAgentIds,
+            selectedProjectIds,
+          })
+        : [],
+    [activeMention, mentionCandidates, selectedAgentIds, selectedProjectIds],
+  );
+  const isMentionMenuOpen = Boolean(activeMention);
+
+  useEffect(() => {
+    setMentionIndex(0);
+  }, [activeMention?.query, mentionItems.length]);
   const showResponseMode =
     showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
   const showPresentationFormat =
@@ -184,10 +222,49 @@ export function ChatInput({
     };
   }, [isMenuOpen]);
 
-  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
-  const selectedProject = projects.find((project) => project.id === selectedProjectId);
+  const selectedAgentIdSet = new Set(selectedAgentIds);
+  const selectedProjectIdSet = new Set(selectedProjectIds);
   const hasContextBar = contextBarItems.length > 0;
   const hasAttachments = attachments.length > 0;
+
+  function syncMentionCursor() {
+    const cursor = textareaRef.current?.selectionStart ?? value.length;
+    setMentionCursor(cursor);
+  }
+
+  function handleMentionSelect(candidate: (typeof mentionItems)[number]) {
+    if (!activeMention) {
+      return;
+    }
+
+    const next = applyComposerMentionSelection({
+      value,
+      cursor: mentionCursor,
+      mentionStart: activeMention.start,
+      candidate,
+    });
+
+    onChange(next.value);
+
+    if (candidate.kind === "agent") {
+      onToggleAgent?.(candidate.id);
+    } else {
+      onToggleProject?.(candidate.id);
+    }
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      textarea.setSelectionRange(next.cursor, next.cursor);
+      setMentionCursor(next.cursor);
+      syncHeight();
+    });
+  }
 
   const plusControl = (
     <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
@@ -222,34 +299,20 @@ export function ChatInput({
           <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
             <strong>Contexto da conversa</strong>
             <p className="mdc-chat-input__menu-hint">
-              Combine agente e projeto neste turno — ambos podem ficar ativos.
+              Selecione até 2 agentes e 3 projetos — o menu permanece aberto para combinar.
             </p>
-
-            {selectedAgent ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectAgent?.(null);
-                  setMenuOpen(false);
-                }}
-              >
-                <X size={16} aria-hidden="true" />
-                <span>Remover agente do contexto</span>
-              </button>
-            ) : null}
 
             {agents.map((agent) => (
               <div key={agent.id} className="mdc-chat-input__agent-menu-row">
                 <button
                   type="button"
                   className={
-                    agent.id === selectedAgentId
+                    selectedAgentIdSet.has(agent.id)
                       ? "mdc-chat-input__menu-item--active"
                       : undefined
                   }
                   onClick={() => {
-                    onSelectAgent?.(agent.id);
-                    setMenuOpen(false);
+                    onToggleAgent?.(agent.id);
                   }}
                 >
                   <Bot size={16} aria-hidden="true" />
@@ -271,31 +334,17 @@ export function ChatInput({
               </div>
             ))}
 
-            {selectedProject ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectProject?.(null);
-                  setMenuOpen(false);
-                }}
-              >
-                <X size={16} aria-hidden="true" />
-                <span>Remover projeto do contexto</span>
-              </button>
-            ) : null}
-
             {projects.slice(0, 8).map((project) => (
               <button
                 key={project.id}
                 type="button"
                 className={
-                  project.id === selectedProjectId
+                  selectedProjectIdSet.has(project.id)
                     ? "mdc-chat-input__menu-item--active"
                     : undefined
                 }
                 onClick={() => {
-                  onSelectProject?.(project.id);
-                  setMenuOpen(false);
+                  onToggleProject?.(project.id);
                 }}
               >
                 <Folder size={16} aria-hidden="true" />
@@ -390,7 +439,7 @@ export function ChatInput({
 
                     <button
                       type="button"
-                      onClick={() => onSelectAgent?.(null)}
+                      onClick={() => onRemoveContextAgent?.(item.id)}
                       aria-label={`Remover ${agent.name} do contexto`}
                       title={`Remover ${agent.name} do contexto`}
                     >
@@ -416,7 +465,7 @@ export function ChatInput({
 
                   <button
                     type="button"
-                    onClick={() => onSelectProject?.(null)}
+                    onClick={() => onRemoveContextProject?.(item.id)}
                     aria-label={`Remover ${project.name} do contexto`}
                     title={`Remover ${project.name} do contexto`}
                   >
@@ -478,6 +527,15 @@ export function ChatInput({
 
         <div className="mdc-chat-input__composer-stack">
           <div className="mdc-chat-input__composer-field">
+            {isMentionMenuOpen ? (
+              <ChatComposerMentionMenu
+                items={mentionItems}
+                activeIndex={Math.min(mentionIndex, Math.max(mentionItems.length - 1, 0))}
+                onHover={setMentionIndex}
+                onSelect={handleMentionSelect}
+              />
+            ) : null}
+
             <textarea
               ref={textareaRef}
               className="mdc-auto-grow-textarea"
@@ -488,12 +546,49 @@ export function ChatInput({
               rows={1}
               onChange={(event) => {
                 onChange(event.target.value);
+                setMentionCursor(event.target.selectionStart ?? event.target.value.length);
                 requestAnimationFrame(() => syncHeight());
               }}
               onInput={() => {
                 requestAnimationFrame(() => syncHeight());
               }}
+              onClick={syncMentionCursor}
+              onKeyUp={syncMentionCursor}
+              onSelect={syncMentionCursor}
               onKeyDown={(event) => {
+                if (isMentionMenuOpen && mentionItems.length > 0) {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setMentionIndex((current) => (current + 1) % mentionItems.length);
+                    return;
+                  }
+
+                  if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    setMentionIndex(
+                      (current) => (current - 1 + mentionItems.length) % mentionItems.length,
+                    );
+                    return;
+                  }
+
+                  if (event.key === "Enter" || event.key === "Tab") {
+                    event.preventDefault();
+                    const selected =
+                      mentionItems[Math.min(mentionIndex, mentionItems.length - 1)];
+
+                    if (selected) {
+                      handleMentionSelect(selected);
+                    }
+
+                    return;
+                  }
+
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    return;
+                  }
+                }
+
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
                   onSubmit();
@@ -533,7 +628,7 @@ export function ChatInput({
       <small>
         {hasAttachments
           ? "Arquivos anexados serão usados como fonte de conhecimento desta conversa."
-          : "A resposta será exibida em tempo real e salva no histórico ao concluir."}
+          : "Digite @ para citar agente ou projeto na pergunta. A resposta será exibida em tempo real."}
       </small>
     </form>
   );

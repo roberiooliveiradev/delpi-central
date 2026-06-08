@@ -32,13 +32,26 @@ import {
   type ShortcutPromptOptions,
 } from "../hooks/useChatShortcutPrompt";
 import {
-  isExplicitChatAgentActive,
-  resolveChatModePresentation,
-  resolveComposerContextBar,
-  resolveEffectiveChatAgentId,
-  resolveEffectiveProjectId,
+  resolveChatTopbarPresentation,
   resolvePreferredOperationalAgent,
 } from "../../state/chatAgentActivation";
+import {
+  buildComposerTurnPayload,
+  formatComposerPlaceholderParts,
+  MAX_COMPOSER_AGENTS,
+  MAX_COMPOSER_PROJECTS,
+  removeContextId,
+  resolveComposerContextBarFromLists,
+  resolveEffectiveAgentIds,
+  resolveEffectiveProjectIds,
+  resolvePrimaryContextId,
+  toggleContextId,
+} from "../../state/chatComposerContext";
+import {
+  listComposerMentionCandidates,
+  mergeMentionedContextIds,
+  resolveMentionedContextIds,
+} from "../../state/chatComposerMention";
 import { isOperationalHomeStarter } from "../chatHomeStarters";
 import {
   buildActiveContextSummary,
@@ -187,12 +200,16 @@ export function ChatPage({
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
   const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
-  const [contextAgentId, setContextAgentId] = useState<string | null>(null);
-  const [contextProjectId, setContextProjectId] = useState<string | null>(null);
+  const [contextAgentIds, setContextAgentIds] = useState<string[]>([]);
+  const [contextProjectIds, setContextProjectIds] = useState<string[]>([]);
+  const [removedComposerAgentIds, setRemovedComposerAgentIds] = useState<string[]>([]);
+  const [removedComposerProjectIds, setRemovedComposerProjectIds] = useState<string[]>([]);
 
   function clearComposerOverlayContext() {
-    setContextAgentId(null);
-    setContextProjectId(null);
+    setContextAgentIds([]);
+    setContextProjectIds([]);
+    setRemovedComposerAgentIds([]);
+    setRemovedComposerProjectIds([]);
   }
 
   const [currentView, setCurrentView] = useState<ChatSidebarView>(() =>
@@ -204,14 +221,18 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const requestedAgentId = resolveEffectiveChatAgentId({
+  const overlayAgentIds = resolveEffectiveAgentIds({
     pageAgentId: activeAgentPageId,
-    contextAgentId,
+    contextAgentIds,
+    excludedAgentIds: removedComposerAgentIds,
   });
-  const requestedProjectId = resolveEffectiveProjectId({
+  const overlayProjectIds = resolveEffectiveProjectIds({
     pageProjectId: selectedProjectId,
-    contextProjectId,
+    contextProjectIds,
+    excludedProjectIds: removedComposerProjectIds,
   });
+  const requestedAgentId = resolvePrimaryContextId(overlayAgentIds);
+  const requestedProjectId = resolvePrimaryContextId(overlayProjectIds);
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const [helpPanelOpen, setHelpPanelOpen] = useState(false);
   const [helpSearchQuery, setHelpSearchQuery] = useState("");
@@ -340,21 +361,10 @@ export function ChatPage({
     getAccessToken,
     projectId: requestedProjectId,
     agentId: requestedAgentId,
+    projectIds: overlayProjectIds,
+    agentIds: overlayAgentIds,
     getResponseMode,
-    onSessionActivated: (sessionId, context) => {
-      const agentId = context?.agentId ?? requestedAgentId;
-      const projectId = context?.projectId ?? requestedProjectId;
-
-      if (agentId) {
-        navigateChatHref(buildChatAgentSessionHref(agentId, sessionId), { replace: true });
-        return;
-      }
-
-      if (projectId) {
-        navigateChatHref(buildChatProjectSessionHref(projectId, sessionId), { replace: true });
-        return;
-      }
-
+    onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
@@ -371,6 +381,18 @@ export function ChatPage({
     },
   });
 
+  const effectiveAgentIds = resolveEffectiveAgentIds({
+    pageAgentId: activeAgentPageId,
+    sessionAgentId: activeSession?.agent_id,
+    contextAgentIds,
+    excludedAgentIds: removedComposerAgentIds,
+  });
+  const effectiveProjectIds = resolveEffectiveProjectIds({
+    pageProjectId: selectedProjectId,
+    sessionProjectId: activeSession?.project_id,
+    contextProjectIds,
+    excludedProjectIds: removedComposerProjectIds,
+  });
   const {
     options: presentationFormatOptions,
     presentationFormat,
@@ -526,6 +548,11 @@ export function ChatPage({
     },
     [syncFromSessionChips],
   );
+
+  useEffect(() => {
+    setRemovedComposerAgentIds([]);
+    setRemovedComposerProjectIds([]);
+  }, [activeSession?.id]);
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -796,31 +823,46 @@ export function ChatPage({
     return null;
   }, [chatRoute]);
   const activeAgentPage = agents.find((agent) => agent.id === activeAgentPageId);
-  const activeAgentId =
-    requestedAgentId ?? activeSession?.agent_id ?? null;
-  const explicitAgentActive = isExplicitChatAgentActive(activeAgentId);
-  const activeAgent = agents.find((agent) => agent.id === activeAgentId);
   const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
-  const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
-  const contextAgent = agents.find((agent) => agent.id === contextAgentId);
-  const effectiveComposerProject = projects.find(
-    (project) => project.id === requestedProjectId,
-  );
-  const effectiveComposerAgent = agents.find((agent) => agent.id === requestedAgentId);
-  const composerContextBar = resolveComposerContextBar({
+  const effectiveComposerProjects = effectiveProjectIds
+    .map((id) => projects.find((project) => project.id === id))
+    .filter((project): project is NonNullable<typeof project> => Boolean(project));
+  const effectiveComposerAgents = effectiveAgentIds
+    .map((id) => agents.find((agent) => agent.id === id))
+    .filter((agent): agent is NonNullable<typeof agent> => Boolean(agent));
+  const composerContextBarItems = resolveComposerContextBarFromLists({
     pageAgentId: activeAgentPageId,
     pageProjectId: selectedProject?.id ?? null,
-    contextAgentId,
-    contextProjectId,
-    effectiveAgentId: requestedAgentId,
-    effectiveProjectId: requestedProjectId,
+    sessionAgentId: activeSession?.agent_id,
+    sessionProjectId: activeSession?.project_id,
+    contextAgentIds,
+    contextProjectIds,
+    excludedAgentIds: removedComposerAgentIds,
+    excludedProjectIds: removedComposerProjectIds,
   });
-  const chatModePresentation = resolveChatModePresentation({
-    explicitAgentActive,
-    agentName: effectiveComposerAgent?.name ?? activeAgent?.name ?? null,
-    projectName: effectiveComposerProject?.name ?? null,
+  const hasActiveConversation =
+    messages.length > 0 ||
+    isStreamingActiveSession ||
+    (isStreamingActiveSession && Boolean(streamingAnswer));
+  const isConversationEmpty = !hasActiveConversation;
+  const chatTopbarPresentation = resolveChatTopbarPresentation({
+    hasActiveConversation: !isConversationEmpty,
+    sessionTitle: activeSession?.title,
+    routeAgentPageId: activeAgentPageId,
+    routeAgentName: activeAgentPage?.name ?? null,
+    routeProjectId: selectedProjectId,
+    routeProjectName: selectedProject?.name ?? null,
   });
-  const helpAgentId = contextAgentId ?? conversationAgentId ?? activeAgentPageId ?? undefined;
+  const helpAgentId =
+    contextAgentIds[0] ?? conversationAgentId ?? activeAgentPageId ?? undefined;
+  const mentionCandidates = useMemo(
+    () =>
+      listComposerMentionCandidates({
+        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
+        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+      }),
+    [agents, projects],
+  );
 
   const sendMessageWithOperationalAgent = useCallback(
     async (
@@ -841,19 +883,55 @@ export function ChatPage({
 
         if (preferred) {
           agentId = preferred;
-          setContextAgentId(preferred);
+          setContextAgentIds((current) =>
+            toggleContextId(current, preferred, MAX_COMPOSER_AGENTS),
+          );
         }
       }
 
+      const messageContent = params.content ?? draft;
+      const mentioned = resolveMentionedContextIds(messageContent, mentionCandidates);
+      const resolvedAgentIds = agentId
+        ? [agentId, ...effectiveAgentIds.filter((id) => id !== agentId)].slice(
+            0,
+            MAX_COMPOSER_AGENTS,
+          )
+        : effectiveAgentIds;
+      const mergedContext = mergeMentionedContextIds({
+        overlayAgentIds: resolvedAgentIds,
+        mentionAgentIds: mentioned.agentIds,
+        overlayProjectIds: effectiveProjectIds,
+        mentionProjectIds: mentioned.projectIds,
+      });
+      const turnPayload = buildComposerTurnPayload({
+        effectiveAgentIds: mergedContext.agentIds,
+        effectiveProjectIds: mergedContext.projectIds,
+      });
+
       await sendMessage({
         ...params,
-        projectId: requestedProjectId,
-        ...(agentId
-          ? { agentId, chatMode: "agent" as const }
-          : {}),
+        ...turnPayload,
+        turnContext: {
+          agents: mergedContext.agentIds
+            .map((id) => agents.find((entry) => entry.id === id))
+            .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+            .map((entry) => ({ id: entry.id, name: entry.name })),
+          projects: mergedContext.projectIds
+            .map((id) => projects.find((entry) => entry.id === id))
+            .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+            .map((entry) => ({ id: entry.id, name: entry.name })),
+        },
       });
     },
-    [agents, draft, requestedAgentId, requestedProjectId, sendMessage],
+    [
+      agents,
+      draft,
+      effectiveAgentIds,
+      effectiveProjectIds,
+      mentionCandidates,
+      projects,
+      sendMessage,
+    ],
   );
 
   useEffect(() => {
@@ -1033,7 +1111,7 @@ export function ChatPage({
             setComposerAttachments([]);
             setSelectedProjectId(routeProject.id);
             setActiveAgentPageId(null);
-            setContextAgentId(session.agent_id ?? null);
+            clearComposerOverlayContext();
             setCurrentView("chat");
             selectSession(session);
             closeMobileSidebar();
@@ -1780,13 +1858,6 @@ export function ChatPage({
     return editAndResendMessage(messageId, resolved);
   }
 
-  const hasActiveConversation =
-    messages.length > 0 ||
-    isStreamingActiveSession ||
-    (isStreamingActiveSession && Boolean(streamingAnswer));
-
-  const isConversationEmpty = !hasActiveConversation;
-
   const homeTourSteps = useMemo(
     () => homeOnboarding?.tourSteps ?? [],
     [homeOnboarding?.tourSteps],
@@ -1916,55 +1987,64 @@ export function ChatPage({
   }
 
   function getComposerPlaceholder() {
-    const project = effectiveComposerProject;
-    const agent = effectiveComposerAgent ?? contextAgent ?? conversationAgent ?? activeAgentPage;
+    const combinedPlaceholder = formatComposerPlaceholderParts({
+      projectNames: effectiveComposerProjects.map((item) => item.name),
+      agentNames: effectiveComposerAgents.map((item) => item.name),
+    });
 
-    if (isNarrow) {
-      if (project && agent) {
-        return `Chat em ${project.name}`;
-      }
+    if (combinedPlaceholder) {
+      if (isNarrow) {
+        if (effectiveComposerProjects.length > 0 && effectiveComposerAgents.length > 0) {
+          return "Chat com contexto combinado";
+        }
 
-      if (project) {
-        return "Chat no projeto";
-      }
+        if (effectiveComposerProjects.length > 0) {
+          return "Chat no projeto";
+        }
 
-      if (agent) {
         return "Pergunte ao agente";
       }
 
-      return "Pergunte algo";
-    }
-
-    if (project && agent) {
-      return `Pergunte sobre ${project.name} com ${agent.name}`;
-    }
-
-    if (project) {
-      return `Pergunte sobre ${project.name} ou envie um arquivo`;
-    }
-
-    if (agent) {
-      return `Código, descrição ou pergunta — ${agent.name} consulta dados autorizados`;
+      return combinedPlaceholder;
     }
 
     return "O que vamos resolver hoje? Pode perguntar do seu jeito.";
   }
 
-  async function handleSelectContextAgent(agentId: string | null) {
-    setContextAgentId(agentId);
+  function handleToggleContextAgent(agentId: string) {
+    setRemovedComposerAgentIds((current) => removeContextId(current, agentId));
+    setContextAgentIds((current) => toggleContextId(current, agentId, MAX_COMPOSER_AGENTS));
   }
 
-  async function handleSelectContextProject(projectId: string | null) {
-    setContextProjectId(projectId);
+  function handleToggleContextProject(projectId: string) {
+    setRemovedComposerProjectIds((current) => removeContextId(current, projectId));
+    setContextProjectIds((current) =>
+      toggleContextId(current, projectId, MAX_COMPOSER_PROJECTS),
+    );
+  }
+
+  function handleRemoveContextAgent(agentId: string) {
+    setRemovedComposerAgentIds((current) =>
+      toggleContextId(current, agentId, MAX_COMPOSER_AGENTS),
+    );
+    setContextAgentIds((current) => removeContextId(current, agentId));
+  }
+
+  function handleRemoveContextProject(projectId: string) {
+    setRemovedComposerProjectIds((current) =>
+      toggleContextId(current, projectId, MAX_COMPOSER_PROJECTS),
+    );
+    setContextProjectIds((current) => removeContextId(current, projectId));
   }
 
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentId: contextAgentId,
-    selectedProjectId: contextProjectId,
-    contextBarItems: composerContextBar.items,
-    onSelectAgent: handleSelectContextAgent,
+    selectedAgentIds: contextAgentIds,
+    selectedProjectIds: contextProjectIds,
+    contextBarItems: composerContextBarItems,
+    onToggleAgent: handleToggleContextAgent,
+    onRemoveContextAgent: handleRemoveContextAgent,
     onOpenAgentPage: (agentId: string) => {
       const agent = agents.find((item) => item.id === agentId);
 
@@ -1980,7 +2060,8 @@ export function ChatPage({
 
       void startSession();
     },
-    onSelectProject: handleSelectContextProject,
+    onToggleProject: handleToggleContextProject,
+    onRemoveContextProject: handleRemoveContextProject,
   };
 
   const composerAttachmentProps = {
@@ -2241,17 +2322,11 @@ export function ChatPage({
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
             onOpenSidebar={isDesktop ? undefined : openMobileSidebar}
-            mode={
-              chatModePresentation.mode === "agent"
-                ? "agent"
-                : selectedProject
-                  ? "project"
-                  : "general"
-            }
-            title={chatModePresentation.label}
-            subtitle={chatModePresentation.subtitle}
+            mode={chatTopbarPresentation.topbarMode}
+            title={chatTopbarPresentation.label}
+            subtitle={chatTopbarPresentation.subtitle}
             badge={
-              selectedProject
+              chatTopbarPresentation.topbarMode === "project" && selectedProject
                 ? `${selectedProjectSessions.length} chats`
                 : undefined
             }
@@ -2359,7 +2434,7 @@ export function ChatPage({
                   project={selectedProject}
                   sessions={selectedProjectSessions}
                   agents={agents}
-                  contextAgentId={contextAgentId}
+                  contextAgentId={contextAgentIds[0] ?? null}
                   compact
                   settingsOpen={projectSettingsOpen}
                   onSettingsOpenChange={(open) => {
@@ -2402,7 +2477,7 @@ export function ChatPage({
                   }}
                   onUpdateProject={editProject}
                   getAccessToken={getAccessToken}
-                  onUseAgent={handleSelectContextAgent}
+                  onUseAgent={handleToggleContextAgent}
                   onOpenAgentPage={(agentId) => {
                     const agent = agents.find((item) => item.id === agentId);
 

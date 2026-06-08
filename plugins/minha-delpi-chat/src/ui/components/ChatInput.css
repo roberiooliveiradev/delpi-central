@@ -35,6 +35,7 @@
 }
 
 .mdc-chat-input__composer-field {
+  position: relative;
   width: 100%;
   min-width: 0;
 }

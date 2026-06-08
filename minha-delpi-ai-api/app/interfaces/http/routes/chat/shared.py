@@ -188,6 +188,57 @@ def _can_use_admin_debug() -> bool:
     )
 
 
+def _normalize_context_id_list(raw) -> list[str] | None:
+    if raw is None:
+        return None
+
+    if not isinstance(raw, list):
+        return None
+
+    seen: set[str] = set()
+    normalized: list[str] = []
+
+    for item in raw:
+        value = str(item or "").strip()
+
+        if not value or value in seen:
+            continue
+
+        seen.add(value)
+        normalized.append(value)
+
+    return normalized
+
+
+def _resolve_context_ids_from_payload(
+    payload: dict,
+    *,
+    plural_keys: tuple[str, ...],
+    singular_keys: tuple[str, ...],
+) -> tuple[str | None, list[str] | None]:
+    id_list = None
+
+    for key in plural_keys:
+        if key in payload:
+            id_list = _normalize_context_id_list(payload.get(key))
+            break
+
+    singular = None
+
+    for key in singular_keys:
+        if key in payload:
+            raw = payload.get(key)
+            singular = str(raw).strip() if raw is not None else None
+            break
+
+    if id_list is None and singular:
+        id_list = [singular]
+
+    primary = (id_list[0] if id_list else None) or singular or None
+
+    return primary, id_list
+
+
 def _build_send_chat_message_request(
     *,
     session_id: str,
@@ -199,6 +250,17 @@ def _build_send_chat_message_request(
     if resend_from_message_id is not None:
         message = payload.get("content", message)
 
+    agent_id, agent_ids = _resolve_context_ids_from_payload(
+        payload,
+        plural_keys=("agentIds", "agent_ids"),
+        singular_keys=("agentId", "agent_id"),
+    )
+    project_id, project_ids = _resolve_context_ids_from_payload(
+        payload,
+        plural_keys=("projectIds", "project_ids"),
+        singular_keys=("projectId", "project_id"),
+    )
+
     return SendChatMessageRequest(
         user_id=g.current_user.sub,
         session_id=session_id,
@@ -206,9 +268,14 @@ def _build_send_chat_message_request(
         context=payload.get("context"),
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
-        agent_id=payload.get("agentId") or payload.get("agent_id") or None,
-        project_id=payload.get("projectId") or payload.get("project_id") or None,
-        sync_project_binding="projectId" in payload or "project_id" in payload,
+        agent_id=agent_id,
+        agent_ids=agent_ids,
+        project_id=project_id,
+        project_ids=project_ids,
+        sync_project_binding=any(
+            key in payload
+            for key in ("projectId", "project_id", "projectIds", "project_ids")
+        ),
         chat_mode=payload.get("chatMode") or payload.get("chat_mode") or None,
         resend_from_message_id=resend_from_message_id,
         response_mode=_parse_response_mode(payload),

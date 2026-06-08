@@ -80,7 +80,9 @@ import {
 } from "./ChatActionConfirmationPanel";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
+import { resolveUserMessageTurnContextChips } from "../../state/chatComposerContext";
 import { ChatMessageEditField } from "./ChatMessageEditField";
+import { ChatUserTurnContextChips } from "./ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "./chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
@@ -1123,6 +1125,11 @@ export function ChatMessageList({
                 />
               ) : (
                 <>
+                  <ChatUserTurnContextChips
+                    chips={resolveUserMessageTurnContextChips(
+                      message.metadata as Record<string, unknown> | null | undefined,
+                    )}
+                  />
                   <ChatMessageAttachments
                     attachments={getMessageAttachments(message)}
                     onDownloadAttachment={onDownloadAttachment}

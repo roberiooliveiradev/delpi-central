@@ -4,6 +4,7 @@ import type { ChatAgent } from "../data/api/chatTypes";
 import {
   isExplicitChatAgentActive,
   resolveChatModePresentation,
+  resolveChatTopbarPresentation,
   resolveComposerContextBar,
   resolveEffectiveChatAgentId,
   resolveEffectiveProjectId,
@@ -43,6 +44,39 @@ describe("chatAgentActivation", () => {
   it("retorna null quando nenhum agente foi escolhido", () => {
     expect(resolveExplicitChatAgentId({})).toBeNull();
     expect(isExplicitChatAgentActive(null)).toBe(false);
+  });
+
+  it("mantém título da conversa e ignora overlay do composer no topbar", () => {
+    expect(
+      resolveChatTopbarPresentation({
+        hasActiveConversation: true,
+        sessionTitle: "listar LMPs desse mês",
+        routeAgentPageId: null,
+        routeAgentName: "Agente Minha DELPI",
+        routeProjectId: "project-a",
+        routeProjectName: "novo",
+      }),
+    ).toEqual({
+      mode: "common",
+      topbarMode: "general",
+      label: "listar LMPs desse mês",
+      subtitle: "Conversa em andamento",
+    });
+  });
+
+  it("usa rota dedicada de agente só fora da conversa ativa", () => {
+    expect(
+      resolveChatTopbarPresentation({
+        hasActiveConversation: false,
+        routeAgentPageId: "agent-a",
+        routeAgentName: "Agente Minha DELPI",
+      }),
+    ).toEqual({
+      mode: "agent",
+      topbarMode: "agent",
+      label: "Agente Minha DELPI",
+      subtitle: "Agente ativo nesta conversa",
+    });
   });
 
   it("diferencia chat comum de agente ativo nos rótulos", () => {

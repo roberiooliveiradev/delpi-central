@@ -162,6 +162,62 @@ type ChatModePresentationInput = {
   explicitAgentActive: boolean;
 };
 
+export type ChatTopbarPresentation = ChatModePresentation & {
+  topbarMode: "general" | "project" | "agent";
+};
+
+/**
+ * Topbar do chat — só muda em superfícies dedicadas (rota de agente/projeto).
+ * Overlay do composer e sessão ativa não alteram o título durante a conversa.
+ */
+export function resolveChatTopbarPresentation(input: {
+  hasActiveConversation: boolean;
+  sessionTitle?: string | null;
+  routeAgentPageId?: string | null;
+  routeAgentName?: string | null;
+  routeProjectId?: string | null;
+  routeProjectName?: string | null;
+}): ChatTopbarPresentation {
+  if (input.hasActiveConversation) {
+    const title = String(input.sessionTitle ?? "").trim() || "Minha DELPI Chat";
+
+    return {
+      mode: "common",
+      topbarMode: "general",
+      label: title,
+      subtitle: "Conversa em andamento",
+    };
+  }
+
+  const routeAgentName = String(input.routeAgentName ?? "").trim();
+  const routeProjectName = String(input.routeProjectName ?? "").trim();
+
+  if (input.routeAgentPageId && routeAgentName) {
+    return {
+      mode: "agent",
+      topbarMode: "agent",
+      label: routeAgentName,
+      subtitle: "Agente ativo nesta conversa",
+    };
+  }
+
+  if (input.routeProjectId && routeProjectName) {
+    return {
+      mode: "common",
+      topbarMode: "project",
+      label: routeProjectName,
+      subtitle: "Chat comum do projeto (sem agente)",
+    };
+  }
+
+  return {
+    mode: "common",
+    topbarMode: "general",
+    label: "Minha DELPI Chat",
+    subtitle: "Chat comum (sem agente)",
+  };
+}
+
 /** Rótulos de topbar/composer — fonte única para «Chat comum» vs agente. */
 export function resolveChatModePresentation(
   input: ChatModePresentationInput,

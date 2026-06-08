@@ -93,6 +93,19 @@ def test_resolve_chat_mode_defaults_to_common_without_agent_id():
     )
 
 
+def test_resolve_chat_mode_keeps_agent_when_session_has_binding():
+    session_agent_id = uuid4()
+
+    assert (
+        ChatWorkspaceAgentActivationService.resolve_chat_mode_for_request(
+            chat_mode=None,
+            request_agent_id=None,
+            session_agent_id=session_agent_id,
+        )
+        == "agent"
+    )
+
+
 def test_sync_session_project_binding_persists_request_project():
     project_id = uuid4()
     session = FakeSession(project_id=None)
@@ -127,6 +140,25 @@ def test_sync_session_project_binding_clears_project_when_null():
 
     assert session.project_id is None
     assert cleared == [None]
+
+
+def test_prepare_session_keeps_session_agent_on_follow_up_without_request_agent():
+    agent_id = uuid4()
+    session = FakeSession(agent_id=agent_id)
+    cleared: list[object] = []
+
+    def update_session_agent_id(*, session_id, user_id, agent_id):
+        cleared.append(agent_id)
+
+    ChatWorkspaceAgentActivationService.prepare_session_for_turn(
+        session=session,
+        request_agent_id=None,
+        chat_mode=None,
+        update_session_agent_id=update_session_agent_id,
+    )
+
+    assert session.agent_id == agent_id
+    assert cleared == []
 
 
 def test_sync_session_agent_binding_clears_legacy_agent_on_common_chat():

@@ -694,7 +694,9 @@ export type SendChatMessagePayload = {
   context?: string;
   attachmentIds?: string[];
   agentId?: string | null;
+  agentIds?: string[];
   projectId?: string | null;
+  projectIds?: string[];
   /** Modo explícito: common limpa agente legado na sessão; agent persiste agentId. */
   chatMode?: "common" | "agent";
   responseMode?: ChatResponseModeId;

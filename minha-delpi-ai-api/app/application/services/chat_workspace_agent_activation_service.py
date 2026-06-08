@@ -57,13 +57,20 @@ class ChatWorkspaceAgentActivationService:
         *,
         chat_mode: str | None,
         request_agent_id: str | None,
+        session_agent_id: UUID | None = None,
     ) -> str:
         normalized = ChatWorkspaceAgentActivationService.normalize_chat_mode(chat_mode)
 
         if normalized:
             return normalized
 
-        return "agent" if str(request_agent_id or "").strip() else "common"
+        if str(request_agent_id or "").strip():
+            return "agent"
+
+        if session_agent_id:
+            return "agent"
+
+        return "common"
 
     @staticmethod
     def prepare_session_for_turn(
@@ -80,6 +87,7 @@ class ChatWorkspaceAgentActivationService:
         mode = ChatWorkspaceAgentActivationService.resolve_chat_mode_for_request(
             chat_mode=chat_mode,
             request_agent_id=request_agent_id,
+            session_agent_id=session.agent_id,
         )
 
         ChatWorkspaceAgentActivationService.sync_session_agent_binding(

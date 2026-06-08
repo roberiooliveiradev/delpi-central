@@ -28,6 +28,8 @@ class ChatWorkspaceContextService:
         session,
         user_id: UUID,
         request_agent_id: UUID | str | None = None,
+        supplemental_agent_ids: list[str] | None = None,
+        supplemental_project_ids: list[str] | None = None,
     ) -> dict:
         project = None
         agent = None
@@ -53,6 +55,17 @@ class ChatWorkspaceContextService:
                 user_id=user_id,
             )
 
+        supplemental_agents = self._load_supplemental_agents(
+            supplemental_agent_ids,
+            user_id=user_id,
+            exclude_agent_id=explicit_agent_id,
+        )
+        supplemental_projects = self._load_supplemental_projects(
+            supplemental_project_ids,
+            user_id=user_id,
+            exclude_project_id=session.project_id,
+        )
+
         allowed_action_ids = self._allowed_action_ids(agent, user_id)
         actions_enabled = bool(agent and allowed_action_ids)
         user_activated_agent = ChatWorkspaceAgentActivationService.is_user_activated(
@@ -64,9 +77,15 @@ class ChatWorkspaceContextService:
         return {
             "project": self._project_metadata(project),
             "agent": self._agent_metadata(agent),
-            "projectPrompt": self._project_prompt(project),
-            "agentPrompt": agent.system_prompt if agent else None,
+            "projectPrompt": self._merged_project_prompt(project, supplemental_projects),
+            "agentPrompt": self._merged_agent_prompt(agent, supplemental_agents),
             "agentId": str(agent.id) if agent else None,
+            "supplementalAgents": [
+                self._agent_metadata(item) for item in supplemental_agents if item
+            ],
+            "supplementalProjects": [
+                self._project_metadata(item) for item in supplemental_projects if item
+            ],
             "actionProviderKeys": self._action_provider_keys(agent, user_id),
             "allowedActionIds": allowed_action_ids,
             "actionsEnabled": actions_enabled,
@@ -130,6 +149,133 @@ class ChatWorkspaceContextService:
             return None
 
         return "\n".join(parts)
+
+    def _merged_project_prompt(self, project, supplemental_projects: list) -> str | None:
+        parts: list[str] = []
+
+        primary = self._project_prompt(project)
+
+        if primary:
+            parts.append(primary)
+
+        for item in supplemental_projects:
+            block = self._supplemental_project_prompt(item)
+
+            if block:
+                parts.append(block)
+
+        if not parts:
+            return None
+
+        return "\n\n".join(parts)
+
+    def _supplemental_project_prompt(self, project) -> str | None:
+        if not project:
+            return None
+
+        parts: list[str] = []
+
+        if project.name:
+            parts.append(f"Projeto suplementar: {project.name}")
+
+        if project.description:
+            parts.append(f"Descrição: {project.description}")
+
+        if project.instructions:
+            parts.append(f"Instruções: {project.instructions}")
+
+        if not parts:
+            return None
+
+        return "\n".join(parts)
+
+    def _merged_agent_prompt(self, agent, supplemental_agents: list) -> str | None:
+        parts: list[str] = []
+
+        if agent and agent.system_prompt:
+            parts.append(agent.system_prompt)
+
+        for item in supplemental_agents:
+            block = self._supplemental_agent_prompt(item)
+
+            if block:
+                parts.append(block)
+
+        if not parts:
+            return None
+
+        return "\n\n".join(parts)
+
+    def _supplemental_agent_prompt(self, agent) -> str | None:
+        if not agent:
+            return None
+
+        parts: list[str] = []
+
+        if agent.name:
+            parts.append(f"Agente suplementar: {agent.name}")
+
+        if agent.system_prompt:
+            parts.append(agent.system_prompt)
+
+        if not parts:
+            return None
+
+        return "\n".join(parts)
+
+    def _load_supplemental_agents(
+        self,
+        agent_ids: list[str] | None,
+        *,
+        user_id: UUID,
+        exclude_agent_id: UUID | None,
+    ) -> list:
+        if not agent_ids:
+            return []
+
+        loaded: list = []
+
+        for raw_id in agent_ids:
+            parsed_id = self._parse_agent_id(raw_id)
+
+            if not parsed_id or parsed_id == exclude_agent_id:
+                continue
+
+            agent = self.agent_repository.get_enabled_by_id(parsed_id, user_id=user_id)
+
+            if agent:
+                loaded.append(agent)
+
+        return loaded
+
+    def _load_supplemental_projects(
+        self,
+        project_ids: list[str] | None,
+        *,
+        user_id: UUID,
+        exclude_project_id: UUID | None,
+    ) -> list:
+        if not project_ids:
+            return []
+
+        loaded: list = []
+
+        for raw_id in project_ids:
+            parsed_id = self._parse_agent_id(raw_id)
+
+            if not parsed_id or parsed_id == exclude_project_id:
+                continue
+
+            result = self.project_repository.get_accessible_by_id(
+                project_id=parsed_id,
+                user_id=user_id,
+            )
+
+            if result:
+                project, _role = result
+                loaded.append(project)
+
+        return loaded
 
     def _specialization(self, agent) -> dict | None:
         if not agent:

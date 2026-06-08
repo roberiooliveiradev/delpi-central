@@ -136,10 +136,23 @@ class SendChatMessageUseCase:
             update_session_project_id=self.chat_repository.update_session_project_id,
         )
 
+        supplemental_agent_ids = (
+            request.agent_ids[1:]
+            if request.agent_ids and len(request.agent_ids) > 1
+            else None
+        )
+        supplemental_project_ids = (
+            request.project_ids[1:]
+            if request.project_ids and len(request.project_ids) > 1
+            else None
+        )
+
         workspace_context = self.turn_support.build_workspace_context(
             session,
             user_id,
             request_agent_id=request.agent_id,
+            supplemental_agent_ids=supplemental_agent_ids,
+            supplemental_project_ids=supplemental_project_ids,
         )
         attachments = self.turn_support.get_message_attachments(request, user_id, session_id)
         previous_messages = self.chat_repository.list_all_messages_by_session(session_id)

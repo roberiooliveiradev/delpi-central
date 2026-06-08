@@ -1,0 +1,60 @@
+.mdc-chat-composer-mention-menu {
+  position: absolute;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: calc(100% + 0.35rem);
+  z-index: 45;
+  display: grid;
+  gap: 0.15rem;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.45rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 88%, var(--mdc-primary));
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
+  box-shadow: 0 18px 40px color-mix(in srgb, #000 28%, transparent);
+}
+
+.mdc-chat-composer-mention-menu__hint,
+.mdc-chat-composer-mention-menu__empty {
+  margin: 0;
+  padding: 0.2rem 0.45rem 0.35rem;
+  font-size: 0.72rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-composer-mention-menu__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.55rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--mdc-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mdc-chat-composer-mention-menu__item span {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.mdc-chat-composer-mention-menu__item small {
+  font-size: 0.68rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-composer-mention-menu__item:hover,
+.mdc-chat-composer-mention-menu__item--active {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-composer-mention-menu__item--active small,
+.mdc-chat-composer-mention-menu__item:hover small {
+  color: color-mix(in srgb, var(--mdc-primary) 72%, var(--mdc-text-muted));
+}

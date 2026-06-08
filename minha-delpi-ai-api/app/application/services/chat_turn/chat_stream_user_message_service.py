@@ -119,6 +119,8 @@ class ChatStreamUserMessageService:
                 "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
+                "supplementalAgents": workspace_context.get("supplementalAgents"),
+                "supplementalProjects": workspace_context.get("supplementalProjects"),
                 "attachments": attachments,
                 "stream": True,
                 "branch": {
@@ -168,6 +170,8 @@ class ChatStreamUserMessageService:
                 "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
+                "supplementalAgents": workspace_context.get("supplementalAgents"),
+                "supplementalProjects": workspace_context.get("supplementalProjects"),
                 "attachments": attachments,
                 "stream": True,
                 **ChatLlmMetadataService.user_message_response_mode(request),

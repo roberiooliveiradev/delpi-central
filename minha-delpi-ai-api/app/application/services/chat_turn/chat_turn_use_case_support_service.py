@@ -151,12 +151,16 @@ class ChatTurnUseCaseSupportService:
         user_id: UUID,
         *,
         request_agent_id: str | None = None,
+        supplemental_agent_ids: list[str] | None = None,
+        supplemental_project_ids: list[str] | None = None,
     ) -> dict:
         if self.workspace_context_service:
             return self.workspace_context_service.build_context(
                 session=session,
                 user_id=user_id,
                 request_agent_id=request_agent_id,
+                supplemental_agent_ids=supplemental_agent_ids,
+                supplemental_project_ids=supplemental_project_ids,
             )
 
         agent = self._get_session_agent(session, user_id)

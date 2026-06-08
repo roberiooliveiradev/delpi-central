@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
+import { buildTurnContextMetadata } from "../chatComposerContext";
+
 import {
   archiveChatSession,
   cancelChatStream,
@@ -65,7 +67,9 @@ import {
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   projectId?: string | null;
+  projectIds?: string[];
   agentId?: string | null;
+  agentIds?: string[];
   chatMode?: "common" | "agent";
   onSessionActivated?: (
     sessionId: string,
@@ -88,6 +92,10 @@ function createOptimisticUserMessage(
   sessionId: string,
   content: string,
   attachments: { id: string; original_filename: string; size_bytes: number; content_type: string | null; status: string }[] = [],
+  turnContext?: {
+    agents?: Array<{ id: string; name: string }>;
+    projects?: Array<{ id: string; name: string }>;
+  },
 ): ChatMessage {
   return {
     id: `optimistic-${Date.now()}`,
@@ -97,6 +105,10 @@ function createOptimisticUserMessage(
     metadata: {
       optimistic: true,
       attachments,
+      ...buildTurnContextMetadata({
+        agents: turnContext?.agents,
+        projects: turnContext?.projects,
+      }),
     },
     created_at: new Date().toISOString(),
   };
@@ -1417,8 +1429,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     session?: ChatSession;
     /** Overlay do turno (ex.: ativação automática de agente operacional). */
     agentId?: string | null;
+    agentIds?: string[];
     projectId?: string | null;
+    projectIds?: string[];
     chatMode?: "common" | "agent";
+    turnContext?: {
+      agents?: Array<{ id: string; name: string }>;
+      projects?: Array<{ id: string; name: string }>;
+    };
   } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
@@ -1427,10 +1445,32 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
-    const effectiveAgentId = params.agentId ?? options.agentId ?? null;
-    const effectiveProjectId = params.projectId ?? options.projectId ?? null;
+    const resolvedAgentIds =
+      (params.agentIds && params.agentIds.length > 0
+        ? params.agentIds
+        : params.agentId
+          ? [params.agentId]
+          : options.agentIds && options.agentIds.length > 0
+            ? options.agentIds
+            : options.agentId
+              ? [options.agentId]
+              : []) ?? [];
+    const resolvedProjectIds =
+      (params.projectIds && params.projectIds.length > 0
+        ? params.projectIds
+        : params.projectId
+          ? [params.projectId]
+          : options.projectIds && options.projectIds.length > 0
+            ? options.projectIds
+            : options.projectId
+              ? [options.projectId]
+              : []) ?? [];
+    const effectiveAgentId = resolvedAgentIds[0] ?? null;
+    const effectiveProjectId = resolvedProjectIds[0] ?? null;
     const effectiveChatMode =
-      params.chatMode ?? options.chatMode ?? (effectiveAgentId ? "agent" : "common");
+      params.chatMode ??
+      options.chatMode ??
+      (resolvedAgentIds.length > 0 ? "agent" : "common");
 
     if (hasUnresolvedShortcutPlaceholders(message)) {
       if (isShortcutPromptOpenRef.current?.()) {
@@ -1490,6 +1530,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       ...createOptimisticUserMessage(
         sessionForMessage?.id ?? "pending",
         message,
+        [],
+        params.turnContext,
       ),
       id: optimisticId,
     };
@@ -1616,7 +1658,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
         agentId: effectiveAgentId,
+        agentIds: resolvedAgentIds,
         projectId: effectiveProjectId,
+        projectIds: resolvedProjectIds,
         chatMode: effectiveChatMode,
         responseMode: getResponseModeRef.current?.() ?? "normal",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
@@ -1689,9 +1733,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     markSessionCancelling,
     markSessionPending,
     options.agentId,
+    options.agentIds,
     options.chatMode,
     options.getAccessToken,
     options.projectId,
+    options.projectIds,
     resetStreamingUi,
     streamMessage,
     buildStreamCallbacks,
