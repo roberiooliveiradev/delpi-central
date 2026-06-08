@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.domain.ports.chat_skill_repository_port import ChatSkillRepositoryPort
 from app.domain.skills.chat_skill_registry import invalidate_skill_cache
 from app.infrastructure.content.content_service import ContentService
-from app.infrastructure.persistence.postgres_chat_skill_repository import PostgresChatSkillRepository
+
+
+def _default_skill_repository() -> ChatSkillRepositoryPort:
+    from app.composition.repository_composer import make_chat_skill_repository
+
+    return make_chat_skill_repository()
 
 
 class ListAdminChatSkillsUseCase:
-    def __init__(self, repository: PostgresChatSkillRepository | None = None):
-        self.repository = repository or PostgresChatSkillRepository()
+    def __init__(self, repository: ChatSkillRepositoryPort | None = None):
+        self.repository = repository or _default_skill_repository()
 
     def execute(self, *, include_inactive: bool = True) -> list[dict]:
         # Bootstrapa skills "built-in" do catálogo embarcado (ex.: `company-knowledge`)
@@ -56,8 +62,8 @@ class ListAdminChatSkillsUseCase:
 
 
 class CreateAdminChatSkillUseCase:
-    def __init__(self, repository: PostgresChatSkillRepository | None = None):
-        self.repository = repository or PostgresChatSkillRepository()
+    def __init__(self, repository: ChatSkillRepositoryPort | None = None):
+        self.repository = repository or _default_skill_repository()
 
     def execute(self, payload: dict) -> dict:
         result = self.repository.create(payload)
@@ -66,8 +72,8 @@ class CreateAdminChatSkillUseCase:
 
 
 class UpdateAdminChatSkillUseCase:
-    def __init__(self, repository: PostgresChatSkillRepository | None = None):
-        self.repository = repository or PostgresChatSkillRepository()
+    def __init__(self, repository: ChatSkillRepositoryPort | None = None):
+        self.repository = repository or _default_skill_repository()
 
     def execute(self, skill_id: str, payload: dict) -> dict | None:
         result = self.repository.update(UUID(skill_id), payload)
@@ -76,8 +82,8 @@ class UpdateAdminChatSkillUseCase:
 
 
 class DeactivateAdminChatSkillUseCase:
-    def __init__(self, repository: PostgresChatSkillRepository | None = None):
-        self.repository = repository or PostgresChatSkillRepository()
+    def __init__(self, repository: ChatSkillRepositoryPort | None = None):
+        self.repository = repository or _default_skill_repository()
 
     def execute(self, skill_id: str) -> bool:
         result = self.repository.deactivate(UUID(skill_id))

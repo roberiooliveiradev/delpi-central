@@ -249,8 +249,11 @@ def make_generate_weekly_quality_report_use_case():
     from app.application.use_cases.generate_weekly_quality_report_use_case import (
         GenerateWeeklyQualityReportUseCase,
     )
+    from app.composition.repository_composer import make_chat_quality_report_repository
 
-    return GenerateWeeklyQualityReportUseCase()
+    return GenerateWeeklyQualityReportUseCase(
+        report_repository=make_chat_quality_report_repository(),
+    )
 
 
 def make_list_admin_quality_issues_use_case():
@@ -631,23 +634,27 @@ def make_scan_admin_security_input_use_case() -> ScanAdminSecurityInputUseCase:
 
 def make_list_admin_chat_skills_use_case():
     from app.application.use_cases.admin_chat_skill_use_cases import ListAdminChatSkillsUseCase
+    from app.composition.repository_composer import make_chat_skill_repository
 
-    return ListAdminChatSkillsUseCase()
+    return ListAdminChatSkillsUseCase(repository=make_chat_skill_repository())
 
 
 def make_create_admin_chat_skill_use_case():
     from app.application.use_cases.admin_chat_skill_use_cases import CreateAdminChatSkillUseCase
+    from app.composition.repository_composer import make_chat_skill_repository
 
-    return CreateAdminChatSkillUseCase()
+    return CreateAdminChatSkillUseCase(repository=make_chat_skill_repository())
 
 
 def make_update_admin_chat_skill_use_case():
     from app.application.use_cases.admin_chat_skill_use_cases import UpdateAdminChatSkillUseCase
+    from app.composition.repository_composer import make_chat_skill_repository
 
-    return UpdateAdminChatSkillUseCase()
+    return UpdateAdminChatSkillUseCase(repository=make_chat_skill_repository())
 
 
 def make_deactivate_admin_chat_skill_use_case():
     from app.application.use_cases.admin_chat_skill_use_cases import DeactivateAdminChatSkillUseCase
+    from app.composition.repository_composer import make_chat_skill_repository
 
-    return DeactivateAdminChatSkillUseCase()
+    return DeactivateAdminChatSkillUseCase(repository=make_chat_skill_repository())

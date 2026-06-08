@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 4 — lote 5):**
+**Sprint imediata (Fase 5 — enforcement conteúdo):**
 
-1. **4F:** `admin_chat_skill_use_cases` e `generate_weekly_quality_report_use_case` tipados com ports (remover `Postgres*` inline na application).
-2. **4G:** enforcement `rg 'Postgres.*Repository' app/interfaces/'` em CI + smoke admin quality report.
+1. Fechar itens residuais de `presenter-content-migration-audit.md`.
+2. Gate CI `test_no_hardcoded_pt_strings` em `app/application` e `app/domain`.
+
+**Concluído (Fase 4 lote 5):** `admin_chat_skill_use_cases` e `generate_weekly_quality_report_use_case` tipados com ports; composers injetam `make_chat_skill_repository` / `make_chat_quality_report_repository`; `test_interfaces_clean_architecture` + `audit_clean_architecture` verificam `Postgres*Repository` e `make_postgres_` em `app/interfaces/`; smoke `test_generate_weekly_quality_report_use_case`.
 
 **Concluído (Fase 4 lote 4):** ports formais (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`, `ChatQualityReportRepositoryPort`); aliases `make_chat_quality_report_repository` / `make_chat_skill_repository`; `admin_routes.py` sem `make_postgres_*`; `agent_routes.py` **1076 → 548** + `agent_provider_routes.py` (461) + `agent_skill_routes.py` (68); `rg 'Postgres.*Repository|make_postgres_' app/interfaces/` → **0**.
 

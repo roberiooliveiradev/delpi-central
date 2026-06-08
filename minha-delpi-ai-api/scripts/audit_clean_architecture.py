@@ -58,9 +58,14 @@ def interfaces_postgres_usage() -> list[str]:
 
     for path in sorted(routes_dir.rglob("*.py")):
         text = path.read_text(encoding="utf-8")
+        rel = str(path.relative_to(ROOT))
 
         if "Postgres" in text and "Repository" in text:
-            matches.append(str(path.relative_to(ROOT)))
+            matches.append(rel)
+            continue
+
+        if "make_postgres_" in text:
+            matches.append(rel)
 
     return matches
 
