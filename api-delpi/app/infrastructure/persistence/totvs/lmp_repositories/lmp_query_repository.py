@@ -793,16 +793,48 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
         return sql, (*params_ad1, *params_aij_base, *params_eng_support, *params_period)
 
+    def _apply_effective_listing_type_filter_to_select(
+        self,
+        request: ListLMPRequest,
+        select_sql: str,
+        select_params: tuple,
+    ) -> Tuple[str, tuple]:
+        """Filtra pelo tipo exibido após reclassificação Amostra/Outro."""
+        listing_filter = self._resolve_listing_type_filter(request, lmp_only=False)
+        if not listing_filter:
+            return select_sql, select_params
+
+        inner_sql = select_sql
+        order_clause = ""
+        order_marker = "\n            ORDER BY"
+        order_index = select_sql.rfind(order_marker)
+        if order_index != -1:
+            inner_sql = select_sql[:order_index]
+            order_clause = (
+                select_sql[order_index:]
+                .replace("C.LMP_START_DATE", "start_date")
+                .replace("C.AD1_NROPOR", "sale_number")
+            )
+
+        return (
+            f"""
+            SELECT *
+            FROM (
+                {inner_sql}
+            ) EFFECTIVE_LISTING_ROWS
+            WHERE EFFECTIVE_LISTING_ROWS.listing_kind = ?
+            {order_clause}
+            """,
+            (*select_params, listing_filter),
+        )
+
     def _sql_candidate_lmps_cte(
         self,
         request: ListLMPRequest,
         *,
         lmp_only: bool = False,
     ) -> Tuple[str, tuple]:
-        listing_filter = self._resolve_listing_type_filter(
-            request,
-            lmp_only=lmp_only,
-        )
+        del lmp_only
 
         cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
             request.branch,
@@ -832,12 +864,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         where_period_other, params_period_other = qb_period_other.build()
 
-        listing_kind_clause = ""
-        listing_kind_params: tuple = ()
-        if listing_filter:
-            listing_kind_clause = "AND L.LISTING_KIND = ?"
-            listing_kind_params = (listing_filter,)
-
         anchor_candidates_sql = f"""
                 SELECT DISTINCT
                     AD1.AD1_FILIAL,
@@ -862,7 +888,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                    AND SA.AIJ_REVISA = AD1.AD1_REVISA
                 WHERE {where_ad1}
                   AND {where_period_anchor}
-                  {listing_kind_clause}
         """
 
         other_candidates_sql = f"""
@@ -891,12 +916,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   )
         """
 
-        if listing_filter == LISTING_KIND_OTHER:
-            candidate_body = other_candidates_sql
-        elif listing_filter in (LISTING_KIND_LMP, LISTING_KIND_SAMPLE):
-            candidate_body = anchor_candidates_sql
-        else:
-            candidate_body = f"""
+        candidate_body = f"""
                 {anchor_candidates_sql}
 
                 UNION
@@ -914,25 +934,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
 
         params: list = [*params_marker, *params_eng_ref]
-        if listing_filter == LISTING_KIND_OTHER:
-            params.extend(
-                [LISTING_KIND_OTHER, *params_ad1, *params_period_other]
-            )
-        elif listing_filter in (LISTING_KIND_LMP, LISTING_KIND_SAMPLE):
-            params.extend(
-                [*params_ad1, *params_period_anchor, *listing_kind_params]
-            )
-        else:
-            params.extend(
-                [
-                    *params_ad1,
-                    *params_period_anchor,
-                    *listing_kind_params,
-                    LISTING_KIND_OTHER,
-                    *params_ad1,
-                    *params_period_other,
-                ]
-            )
+        params.extend(
+            [
+                *params_ad1,
+                *params_period_anchor,
+                LISTING_KIND_OTHER,
+                *params_ad1,
+                *params_period_other,
+            ]
+        )
 
         return sql, tuple(params)
 
@@ -2047,9 +2057,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         2. Cria temp tables por fase (SET NOCOUNT ON)
         3. Executa o SELECT final (SET NOCOUNT OFF)
         """
-        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
-            request, lmp_only=lmp_only,
-        )
+        del lmp_only
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
 
         cte_hist, params_hist = self._sql_historico_ov_cte(
             scope_cte_name=self._TEMP_CANDIDATES,
@@ -2191,13 +2200,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """ if include_qtd_pi else ""
         qtd_pi_group_by = ",\n                    PI.QTD_PI" if include_qtd_pi else ""
         residence_filter = self._engineering_residence_filter_sql()
+        listing_kind_expr = self._effective_listing_kind_expr()
 
         return f"""
             SELECT COUNT(*) AS total
             FROM (
                 SELECT
                     C.AD1_FILIAL,
-                    C.AD1_NROPOR
+                    C.AD1_NROPOR,
+                    {listing_kind_expr} AS listing_kind
                 FROM {self._TEMP_CANDIDATES} C
                 LEFT JOIN {self._TEMP_ENG_RESUMO} H
                     ON H.AIJ_FILIAL = C.AD1_FILIAL
@@ -2220,7 +2231,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     H.TEMPO_TOTAL_MINUTOS_ENG,
                     H.TEMPO_MINUTOS_AMOSTRA_ENG
                     {qtd_pi_group_by}
-            ) BASE_ROWS
+            ) EFFECTIVE_LISTING_ROWS
         """
 
     # =========================
@@ -2231,14 +2242,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         final_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi, order_by=True,
         )
+        residence_params = self._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        )
+        final_select, final_params = self._apply_effective_listing_type_filter_to_select(
+            request,
+            final_select,
+            residence_params,
+        )
         batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
             final_select=final_select,
-            final_params=self._staged_residence_final_params(
-                residence_filter_count=1,
-                listing_kind_reclass_count=1,
-            ),
+            final_params=final_params,
         )
         with self as repo:
             rows = repo.execute_batch_query(batch_sql, batch_params)
@@ -2264,6 +2281,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         rows_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi, order_by=True,
         )
+        query_params = self._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        )
+        count_select, count_params = self._apply_effective_listing_type_filter_to_select(
+            request,
+            count_select,
+            query_params,
+        )
+        rows_select, rows_params = self._apply_effective_listing_type_filter_to_select(
+            request,
+            rows_select,
+            query_params,
+        )
         combined_final = f"""
             {count_select};
             {rows_select}
@@ -2275,10 +2306,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             include_qtd_pi=include_qtd_pi,
             final_select=combined_final,
             final_params=(
-                *self._staged_residence_final_params(
-                    residence_filter_count=2,
-                    listing_kind_reclass_count=1,
-                ),
+                *count_params,
+                *rows_params,
                 offset,
                 page_size,
             ),
@@ -2364,8 +2393,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
 
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
-        listing_filter = self._resolve_listing_type_filter(request, lmp_only=False)
-        lmp_only = listing_filter == LISTING_KIND_LMP
         include_qtd_pi = self._resolve_include_qtd_pi(request)
 
         final_select = self._staged_final_select(
@@ -2373,15 +2400,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             order_by=True,
             summary_only=True,
         )
+        residence_params = self._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        )
+        final_select, final_params = self._apply_effective_listing_type_filter_to_select(
+            request,
+            final_select,
+            residence_params,
+        )
         batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
-            lmp_only=lmp_only,
             final_select=final_select,
-            final_params=self._staged_residence_final_params(
-                residence_filter_count=1,
-                listing_kind_reclass_count=1,
-            ),
+            final_params=final_params,
         )
 
         with self as repo:

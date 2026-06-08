@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import (
+    LISTING_KIND_LMP,
     LISTING_KIND_OTHER,
     LISTING_KIND_SAMPLE,
     ListLMPRequest,
@@ -134,6 +135,20 @@ def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:
 
     count_select = repo._staged_count_select(include_qtd_pi=False)
     rows_select = repo._staged_final_select(include_qtd_pi=False, order_by=True)
+    query_params = repo._staged_residence_final_params(
+        residence_filter_count=1,
+        listing_kind_reclass_count=1,
+    )
+    count_select, count_params = repo._apply_effective_listing_type_filter_to_select(
+        request,
+        count_select,
+        query_params,
+    )
+    rows_select, rows_params = repo._apply_effective_listing_type_filter_to_select(
+        request,
+        rows_select,
+        query_params,
+    )
     combined_final = f"""
         {count_select};
         {rows_select}
@@ -145,13 +160,41 @@ def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:
         include_qtd_pi=False,
         final_select=combined_final,
         final_params=(
-            *repo._staged_residence_final_params(
-                residence_filter_count=2,
-                listing_kind_reclass_count=1,
-            ),
+            *count_params,
+            *rows_params,
             10,
             10,
         ),
     )
 
-    assert batch_params[-5:] == (30, 30, 30, 10, 10)
+    assert batch_params[-6:] == (30, 30, 30, 30, 10, 10)
+
+
+def test_listing_type_filter_uses_effective_kind_not_anchor() -> None:
+    repo = _repository()
+    request = ListLMPRequest(
+        date_start="20260601",
+        date_end="20260608",
+        listing_type="LMP",
+    )
+
+    final_select = repo._staged_final_select(include_qtd_pi=False, order_by=True)
+    residence_params = repo._staged_residence_final_params(
+        residence_filter_count=1,
+        listing_kind_reclass_count=1,
+    )
+    filtered_select, filtered_params = (
+        repo._apply_effective_listing_type_filter_to_select(
+            request,
+            final_select,
+            residence_params,
+        )
+    )
+
+    assert "EFFECTIVE_LISTING_ROWS" in filtered_select
+    assert "EFFECTIVE_LISTING_ROWS.listing_kind = ?" in filtered_select
+    assert filtered_params[-1] == LISTING_KIND_LMP
+
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(request)
+    assert "UNION" in candidate_sql
+    assert "AND L.LISTING_KIND = ?" not in candidate_sql

@@ -655,12 +655,20 @@ Status: bateu
 
 ### Maio/2026
 
-Com filtro de 30 minutos:
+Com filtro de 30 minutos (homologação legada — só `AD1_REVISA`):
 
 ```text
 Total retornado: 17
 Quantidade da planilha: 17
 Status: bateu
+```
+
+Com regras atuais (medição por revisão no período + filtro Tipo=LMP efetivo):
+
+```text
+Planilha RQ-060: 17 LMP — todas presentes
+API Tipo=LMP: 20 registros (17 planilha + 4 extras filial 02 em 04/05)
+Filtro Tipo: sem vazamento Amostra/Outro
 ```
 
 ---
@@ -825,3 +833,58 @@ Outros pode ser pontual.
 LMP precisa comprovar permanência mínima de 30 minutos.
 LMP pontual com marcador de Amostra vira Amostra na listagem.
 ```
+
+---
+
+## 22. Filtro de Tipo (`listing_type`) — tipo efetivo
+
+### Problema corrigido (jun/2026)
+
+O parâmetro `listing_type` (MFE: **Tipo**) filtrava só a **âncora** em `CandidateLMPs`
+(`L.LISTING_KIND` antes da reclassificação). OVs com âncora LMP reclassificadas para
+**AMOSTRA** ou **OUTRO** continuavam aparecendo com filtro `LMP`.
+
+Exemplo validado — período `20260601`–`20260608`:
+
+| Filtro Tipo | Esperado | OVs |
+|-------------|----------|-----|
+| Todos | 3 | 003578, 003520, 000124 |
+| LMP | 1 | 000124 |
+| Amostra | 1 | 003578 |
+| Outro | 1 | 003520 |
+
+### Regra implementada
+
+1. **Candidatos** — `CandidateLMPs` sempre usa união âncora LMP/Amostra + suporte engenharia
+   (`OUTRO` nativo), **sem** `AND L.LISTING_KIND = ?` na fase de candidatos.
+2. **Classificação** — `_effective_listing_kind_expr()` define o tipo exibido (LMP / AMOSTRA / OUTRO).
+3. **Filtro HTTP** — `_apply_effective_listing_type_filter_to_select()` aplica
+   `WHERE listing_kind = ?` **depois** da reclassificação, em:
+   - `list_lmps` / `list_lmps_page`
+   - `get_lmp_dashboard_summary` (itens, KPIs e gráficos do dashboard)
+4. **Contagem** — `_staged_count_select` conta pelo tipo efetivo, não pela âncora.
+5. **SQL Server** — ao envolver o `SELECT` em subquery, o `ORDER BY` sai da subquery e
+   referencia aliases (`start_date`, `sale_number`).
+
+### O que não confundir
+
+| Camada | Campo | Uso |
+|--------|-------|-----|
+| Candidato | `C.LISTING_KIND` | Âncora TOTVS (prioridade LMP > Amostra) |
+| Exibição / filtro Tipo | `listing_kind` efetivo | Resultado após `HAS_SAMPLE_ANCHOR` + minutos |
+| Filtro Status (dashboard) | `status` | SLA Pontual / Atrasado / Andamento / Retornada — aplicado no use case, após a query |
+
+### Homologação maio/2026 — planilha RQ-060 (17 LMP)
+
+Com `listing_type=LMP` e `20260501`–`20260530`:
+
+- As **17 OVs da planilha** aparecem todas como **LMP** (tipos efetivos corretos).
+- A API retorna **20 LMP** no total: entram ainda **000087**, **000088**, **000089** e **000095**
+  (filial 02, âncora `000012` em 04/05) — evento `AIJ010` no período, mas fora do RQ-060 de maio.
+  Divergência de **critério de inclusão no período**, não do filtro de tipo.
+
+### Testes automatizados
+
+- `tests/test_lmp_query_repository_sql.py`
+  - `test_listing_type_filter_uses_effective_kind_not_anchor`
+  - demais testes de batch, residência e medição por revisão
