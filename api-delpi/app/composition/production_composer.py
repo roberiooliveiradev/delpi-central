@@ -1,8 +1,5 @@
 from app.config import settings
 
-from app.application.services.production.production_metrics_snapshot_service import (
-    ProductionMetricsSnapshotService,
-)
 from app.application.use_cases.production.get_depreciation_pct_use_case import (
     GetDepreciationPctUseCase,
 )
@@ -87,19 +84,6 @@ def _build_depreciation_repository(
         client=client,
         sheet_id=settings.DEPRECIATION_SHEET_ID,
         gid=settings.DEPRECIATION_SHEET_GID,
-    )
-
-
-def build_production_metrics_snapshot_service() -> ProductionMetricsSnapshotService:
-    client = _build_google_sheets_client()
-
-    return ProductionMetricsSnapshotService(
-        direct_labor_repository=_build_direct_labor_repository(client),
-        production_cost_repository=_build_production_cost_repository(client),
-        depreciation_repository=_build_depreciation_repository(client),
-        overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository(),
-        on_time_delivery_repository=OnTimeDeliveryRepository(),
-        financial_query_repository=FinancialRepository(),
     )
 
 

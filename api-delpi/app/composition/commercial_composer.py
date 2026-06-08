@@ -1,6 +1,3 @@
-from app.application.services.commercial.commercial_metrics_snapshot_service import (
-    CommercialMetricsSnapshotService,
-)
 from app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import FinancialRepository
 from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
@@ -87,14 +84,4 @@ def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
 def build_get_new_business_rol_pct_use_case() -> GetNewBusinessRolPctUseCase:
     return GetNewBusinessRolPctUseCase(
         new_business_rol_pct_repository=NewBusinessRolPctRepository()
-    )
-
-
-def build_commercial_metrics_snapshot_service() -> CommercialMetricsSnapshotService:
-    return CommercialMetricsSnapshotService(
-        head_office_rol_target_use_case=build_get_head_office_rol_target_pct_use_case(),
-        branch_rol_target_use_case=build_get_branch_rol_target_pct_use_case(),
-        sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
-        new_clients_average_use_case=build_get_new_clients_average_use_case(),
-        new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
     )

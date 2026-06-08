@@ -1,8 +1,5 @@
 from app.config import settings
 
-from app.application.services.supplies.supplies_metrics_snapshot_service import (
-    SuppliesMetricsSnapshotService,
-)
 from app.application.use_cases.supplies.get_negotiation_savings_summary_use_case import (
     GetNegotiationSavingsSummaryUseCase,
 )
@@ -95,13 +92,4 @@ def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
 def build_get_negotiation_savings_summary_use_case() -> GetNegotiationSavingsSummaryUseCase:
     return GetNegotiationSavingsSummaryUseCase(
         repository=_build_negotiation_savings_repository(),
-    )
-
-
-def build_supplies_metrics_snapshot_service() -> SuppliesMetricsSnapshotService:
-    return SuppliesMetricsSnapshotService(
-        get_cpv_use_case=build_get_cpv_use_case(),
-        get_inventory_turnover_use_case=build_get_inventory_turnover_use_case(),
-        get_otd_use_case=build_get_otd_use_case(),
-        get_stock_value_use_case=build_get_stock_value_use_case(),
     )

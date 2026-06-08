@@ -1,8 +1,5 @@
 from app.config import settings
 
-from app.application.services.quality.quality_metrics_snapshot_service import (
-    QualityMetricsSnapshotService,
-)
 from app.application.use_cases.audit_5s.get_audit_5s_summary_use_case import (
     GetAudit5SSummaryUseCase,
 )
@@ -107,13 +104,4 @@ def build_list_nonconformity_use_case() -> ListNonconformityUseCase:
 
 def build_get_nonconformity_series_use_case() -> GetNonconformitySeriesUseCase:
     return GetNonconformitySeriesUseCase(_build_nonconformity_repository())
-
-
-def build_quality_metrics_snapshot_service() -> QualityMetricsSnapshotService:
-    return QualityMetricsSnapshotService(
-        internal_ppm_use_case=build_get_ppm_summary_use_case(),
-        external_ppm_use_case=build_get_ppm_summary_use_case(),
-        kaizen_summary_use_case=build_get_kaizen_summary_use_case(),
-        audit_5s_summary_use_case=build_get_audit_5s_summary_use_case(),
-    )
 

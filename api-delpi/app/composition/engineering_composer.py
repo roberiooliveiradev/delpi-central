@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from app.application.services.engineering.engineering_metrics_snapshot_service import (
-    EngineeringMetricsSnapshotService,
-)
 from app.application.use_cases.lmp.get_lmp_use_case import GetLMPUseCase
 from app.application.use_cases.lmp.list_lmp_dashboard_use_case import (
     ListLMPDashboardUseCase,
@@ -51,13 +48,6 @@ def build_engineering_list_transforma_mais_processes_use_case() -> ListProcessUs
 
 def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummaryUseCase:
     return GetProcessSummaryUseCase(_build_transforma_mais_gateway())
-
-
-def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotService:
-    return EngineeringMetricsSnapshotService(
-        lmp_dashboard_summary_use_case=build_engineering_get_lmp_dashboard_summary_use_case(),
-        transforma_mais_summary_use_case=build_engineering_get_transforma_mais_summary_use_case(),
-    )
 
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:

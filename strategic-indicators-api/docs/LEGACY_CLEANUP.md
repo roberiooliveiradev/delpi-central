@@ -77,6 +77,19 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 ---
 
+### Fase 4 — Limpeza na api-delpi (concluída jun/2026 — snapshot services mortos)
+
+**Objetivo:** remover cópias legadas no serviço de dados que o SI já não consome diretamente.
+
+| Item | api-delpi | Motivo |
+|------|-----------|--------|
+| `*_metrics_snapshot_service` departamentais | commercial, production, quality, supplies, engineering | Builders existiam nos composers mas **nenhuma rota HTTP** usava; agregação ficou só no SI |
+| Mantidos | `financial_metrics_snapshot_service`, `hr_metrics_snapshot_service` | Rotas `/financial/ebitda_pct`, `/pmr`, `/hr/*` |
+
+**Pendente:** extrair contratos idênticos para `shared/`; RH via HTTP no SI.
+
+---
+
 ## Checklist pós-fase 1
 
 ```bash
