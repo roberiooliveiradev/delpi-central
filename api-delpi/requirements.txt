@@ -12,3 +12,5 @@ httpx
 psycopg[binary]
 python-socketio>=5.11.0
 python-multipart
+pytest
+pytest-asyncio
