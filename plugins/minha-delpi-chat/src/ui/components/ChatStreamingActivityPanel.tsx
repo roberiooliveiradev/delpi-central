@@ -190,8 +190,6 @@ export function ChatStreamingActivityPanel({
             <RisingLogFeed lines={fullLines.slice(-RISING_LOG_VISIBLE_LINES)} risingIds={risingIds} />
           )}
         </>
-      ) : isActive ? (
-        <p className="mdc-chat-stream-activity__placeholder">{headline}</p>
       ) : null}
     </div>
   );

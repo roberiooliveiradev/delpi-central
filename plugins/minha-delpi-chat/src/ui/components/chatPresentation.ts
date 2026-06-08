@@ -743,7 +743,18 @@ export function getPresentationTitle(
     return pathTitle;
   }
 
-  return String(messageContent || "").trim() || "Resultado";
+  const trimmed = String(messageContent || "").trim();
+
+  if (!trimmed) {
+    return "Resultado";
+  }
+
+  // Prosa simples (sem apresentação rica): não usar o corpo inteiro como título.
+  if (!hasRichPresentation(pair) && !getTextMarkdownFromToolCalls(toolCalls)) {
+    return "";
+  }
+
+  return trimmed;
 }
 
 export function tablePresentationToMarkdown(

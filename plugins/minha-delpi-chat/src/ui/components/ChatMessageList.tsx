@@ -617,8 +617,6 @@ export function ChatMessageList({
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
   const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
   const streamingAnswerHasMarkdown = hasMarkdownSyntax(streamingAnswer);
-  const deferStreamingMarkdown =
-    streamingAnswerHasMarkdown && isGeneratingAnswer;
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled:
       isGeneratingAnswer &&
@@ -627,8 +625,8 @@ export function ChatMessageList({
       !streamingAnswerHasMarkdown,
     charsPerFrame: 3,
   });
-  const streamingMarkdownContent = deferStreamingMarkdown
-    ? ""
+  const streamingMarkdownContent = streamingAnswerHasMarkdown
+    ? streamingAnswer
     : revealedStreamingAnswer;
 
   useEffect(() => {

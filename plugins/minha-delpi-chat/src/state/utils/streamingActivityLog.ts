@@ -99,6 +99,44 @@ export function resolveStreamingHeadline(
   return "Processando sua solicitação...";
 }
 
+export function statusMessageToActivityEntry(
+  message: string,
+  options?: { entryId?: string; phase?: string },
+): ChatStreamActivityEntry {
+  const trimmed = message.trim();
+
+  return {
+    id: options?.entryId ?? `status-${trimmed.toLowerCase().replace(/\s+/g, "-").slice(0, 48)}`,
+    message: trimmed,
+    phase: options?.phase ?? "status",
+    state: "active",
+    at: Date.now(),
+  };
+}
+
+/** Converte eventos `status` do SSE em linhas do painel de atividade. */
+export function appendStatusToActivityLog(
+  current: ChatStreamActivityEntry[],
+  message: string,
+): ChatStreamActivityEntry[] {
+  const trimmed = message.trim();
+
+  if (!trimmed) {
+    return current;
+  }
+
+  const withDone = current.map((entry) =>
+    activityPhaseKey(entry) === "status" && entry.state === "active"
+      ? { ...entry, state: "done" as const }
+      : entry,
+  );
+
+  return upsertStreamingActivityEntry(
+    withDone,
+    statusMessageToActivityEntry(trimmed),
+  );
+}
+
 export function resolveActivityStatusMessage(
   entry: ChatStreamActivityEntry,
   fallback: string | null = null,

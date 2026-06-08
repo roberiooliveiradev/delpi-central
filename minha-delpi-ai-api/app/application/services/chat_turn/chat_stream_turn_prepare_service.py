@@ -101,13 +101,6 @@ class ChatStreamTurnPrepareService:
                 ChatSimpleTurnGateService,
             )
 
-            suppress_activity["value"] = ChatSimpleTurnGateService.is_simple_turn(
-                message=message,
-                workspace_context=workspace_context,
-                previous_messages=previous_messages,
-                attachment_ids=getattr(request, "attachment_ids", None),
-            )
-
             _on_stream_activity(
                 ChatStreamActivityService.entry(
                     verb="Carregando",
@@ -120,6 +113,13 @@ class ChatStreamTurnPrepareService:
                     ),
                     entry_id="prepare-session-context",
                 )
+            )
+
+            suppress_activity["value"] = ChatSimpleTurnGateService.is_simple_turn(
+                message=message,
+                workspace_context=workspace_context,
+                previous_messages=previous_messages,
+                attachment_ids=getattr(request, "attachment_ids", None),
             )
 
             if resend_from_message_id:

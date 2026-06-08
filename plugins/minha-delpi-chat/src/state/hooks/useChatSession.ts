@@ -51,6 +51,7 @@ import {
   type SessionStreamUiSnapshot,
 } from "../utils/sessionStreamUiCache";
 import {
+  appendStatusToActivityLog,
   resolveActivityStatusMessage,
   resolveStreamingHeadline,
   upsertStreamingActivityEntry,
@@ -275,6 +276,40 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [applyStreamUiSnapshot],
   );
 
+  const patchStreamStatus = useCallback((sessionId: string, status: string) => {
+    const trimmed = status.trim();
+
+    if (!trimmed) {
+      return getSessionStreamUi(sessionId);
+    }
+
+    const cached = getSessionStreamUi(sessionId);
+
+    return patchSessionStreamUi(sessionId, {
+      status: trimmed,
+      activityLog: appendStatusToActivityLog(cached.activityLog, trimmed),
+    });
+  }, []);
+
+  const ensureAwaitingStreamUi = useCallback(
+    (sessionId: string) => {
+      if (restoreStreamUiForSession(sessionId)) {
+        return;
+      }
+
+      const fallbackStatus = "Processando sua solicitação...";
+      const snapshot = patchSessionStreamUi(sessionId, {
+        activityLog: appendStatusToActivityLog([], fallbackStatus),
+        status: fallbackStatus,
+      });
+
+      if (isStreamForActiveSession(sessionId)) {
+        applyStreamUiSnapshot(snapshot);
+      }
+    },
+    [applyStreamUiSnapshot, isStreamForActiveSession, restoreStreamUiForSession],
+  );
+
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
     setError(null);
@@ -368,14 +403,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           if (serverStillAwaiting) {
             markSessionPending(sessionId);
-            restoreStreamUiForSession(sessionId);
+            ensureAwaitingStreamUi(sessionId);
           } else {
             unmarkSessionPending(sessionId);
 
             if (activeSessionIdRef.current === sessionId) {
-              setStreamingStatus((current) =>
-                current === "Finalizando resposta em segundo plano..." ? null : current,
-              );
+              resetStreamingUi();
             }
           }
         }
@@ -398,9 +431,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           unmarkSessionCancelling(sessionId);
 
           if (activeSessionIdRef.current === sessionId) {
-            setStreamingStatus((current) =>
-              current === "Finalizando resposta em segundo plano..." ? null : current,
-            );
+            resetStreamingUi();
           }
         }
       } catch (err) {
@@ -415,11 +446,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionCancelling, unmarkSessionPending],
+    [
+      ensureAwaitingStreamUi,
+      markSessionPending,
+      options.getAccessToken,
+      resetStreamingUi,
+      unmarkSessionCancelling,
+      unmarkSessionPending,
+    ],
   );
 
   const finalizeAssistantTurn = useCallback(
     (sessionId: string, handoff: AssistantTurnHandoff) => {
+      clearSessionStreamUi(sessionId);
       setMessages((current) => applyStreamHandoffToMessages(current, handoff));
       setPlaybackPayload(null);
       playbackPayloadRef.current = null;
@@ -453,16 +492,20 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       if (
         sessionStillProcessing &&
         !userDismissedBackgroundStreamRef.current.has(session.id) &&
-        !restoreStreamUiForSession(session.id)
+        !isSessionStreaming(session.id)
       ) {
-        if (!isSessionStreaming(session.id)) {
-          setStreamingStatus("Finalizando resposta em segundo plano...");
-        }
+        ensureAwaitingStreamUi(session.id);
       }
 
       void loadMessages(session.id);
     },
-    [isSessionProcessing, isSessionStreaming, loadMessages, resetStreamingUi, restoreStreamUiForSession],
+    [
+      ensureAwaitingStreamUi,
+      isSessionProcessing,
+      isSessionStreaming,
+      loadMessages,
+      resetStreamingUi,
+    ],
   );
 
   const finishPlayback = useCallback(() => {
@@ -815,7 +858,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const finishSending = useCallback(
     (sessionId: string) => {
       unmarkSessionPending(sessionId);
-      clearSessionStreamUi(sessionId);
     },
     [unmarkSessionPending],
   );
@@ -935,15 +977,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          const snapshot = patchSessionStreamUi(sessionId, {
-            status: statusMessage.trim(),
-          });
+          const snapshot = patchStreamStatus(sessionId, statusMessage);
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
-          setStreamingStatus(snapshot.status);
+          flushSync(() => {
+            setStreamingActivityLog(snapshot.activityLog);
+            setStreamingStatus(
+              resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
+            );
+          });
         },
         onActivity: (entry: ChatStreamActivityEntry) => {
           if (shouldIgnoreStreamEvent()) {
@@ -979,14 +1024,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             sources.length > 0
               ? "Consultando a base de conhecimento..."
               : "Verificando contexto autorizado...";
-          const snapshot = patchSessionStreamUi(sessionId, { sources, status });
+          patchStreamStatus(sessionId, status);
+          const snapshot = patchSessionStreamUi(sessionId, { sources });
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
           setStreamingSources(snapshot.sources);
-          setStreamingStatus(snapshot.status);
+          setStreamingActivityLog(snapshot.activityLog);
+          setStreamingStatus(
+            resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
+          );
         },
         onToolCalls: (toolCalls: ChatToolCall[]) => {
           if (shouldIgnoreStreamEvent()) {
@@ -999,7 +1048,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             : toolCalls.length > 0
               ? "Consultando sistemas autorizados..."
               : "Gerando resposta...";
-          const snapshot = patchSessionStreamUi(sessionId, { toolCalls, status });
+          patchStreamStatus(sessionId, status);
+          const snapshot = patchSessionStreamUi(sessionId, { toolCalls });
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
@@ -1009,22 +1059,29 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingToolCalls(streamToolCalls);
           streamingToolCallsRef.current = streamToolCalls;
           setStreamingShowPresentation(hasRichPresentation);
-          setStreamingStatus(snapshot.status);
+          setStreamingActivityLog(snapshot.activityLog);
+          setStreamingStatus(
+            resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
+          );
         },
         onAssistantPending: () => {
           if (shouldIgnoreStreamEvent()) {
             return;
           }
 
-          const snapshot = patchSessionStreamUi(sessionId, {
-            status: "Gerando resposta em linguagem natural...",
-          });
+          const snapshot = patchStreamStatus(
+            sessionId,
+            "Gerando resposta em linguagem natural...",
+          );
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
-          setStreamingStatus(snapshot.status);
+          setStreamingActivityLog(snapshot.activityLog);
+          setStreamingStatus(
+            resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
+          );
         },
         onPlayback: (payload) => {
           if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
@@ -1226,6 +1283,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       loadMessages,
       loadSessions,
       options.onOpenCanvas,
+      patchStreamStatus,
       resetStreamingUi,
     ],
   );
@@ -1284,18 +1342,21 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
-    setStreamingActivityLog([]);
     setStreamingShowPresentation(false);
     const initialStatus = sessionForMessage
       ? "Preparando sua pergunta..."
       : "Criando conversa e preparando sua pergunta...";
-    setStreamingStatus(initialStatus);
+    const initialActivityLog = appendStatusToActivityLog([], initialStatus);
+    setStreamingActivityLog(initialActivityLog);
+    setStreamingStatus(
+      resolveStreamingHeadline(initialStatus, initialActivityLog),
+    );
 
     if (sessionForMessage) {
       userDismissedBackgroundStreamRef.current.delete(sessionForMessage.id);
       clearSessionStreamUi(sessionForMessage.id);
       patchSessionStreamUi(sessionForMessage.id, {
-        activityLog: [],
+        activityLog: initialActivityLog,
         status: initialStatus,
         sources: [],
         toolCalls: [],
@@ -1333,7 +1394,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         markSessionPending(sessionForMessage!.id);
         clearSessionStreamUi(sessionForMessage!.id);
         patchSessionStreamUi(sessionForMessage!.id, {
-          activityLog: [],
+          activityLog: initialActivityLog,
           status: initialStatus,
           sources: [],
           toolCalls: [],
@@ -1477,18 +1538,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       if (sessionForMessage && isIncompleteChatStreamError(err)) {
-        dismissBackgroundStream(sessionForMessage.id);
-        resetStreamingUi();
-        setMessages((current) =>
-          sanitizeMessagesAfterStreamDismiss(
-            current.filter((message) => !message.metadata?.optimistic),
-          ),
-        );
-        void loadMessages(sessionForMessage.id, { userDismissedBackground: true });
+        markSessionPending(sessionForMessage.id);
+        ensureAwaitingStreamUi(sessionForMessage.id);
         setPendingUserMessage(null);
-        setError(
-          "A conexão com o servidor foi interrompida. Você pode cancelar ou enviar a pergunta novamente.",
-        );
+        void loadMessages(sessionForMessage.id);
         return;
       }
 
@@ -1503,6 +1556,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     activeSession,
     draft,
     dismissBackgroundStream,
+    ensureAwaitingStreamUi,
     finishSending,
     isActiveSessionBusy,
     lastSentUserText,
@@ -1712,9 +1766,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     if (isSessionStreamDismissed(sessionId)) {
-      setStreamingStatus((current) =>
-        current === "Finalizando resposta em segundo plano..." ? null : current,
-      );
       unmarkSessionPending(sessionId);
       return;
     }
@@ -1724,15 +1775,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       sessionAwaitingAssistantResponse(messages);
 
     if (!awaitingBackground) {
-      setStreamingStatus((current) =>
-        current === "Finalizando resposta em segundo plano..." ? null : current,
-      );
       return;
     }
 
-    if (!restoreStreamUiForSession(sessionId)) {
-      setStreamingStatus("Finalizando resposta em segundo plano...");
-    }
+    ensureAwaitingStreamUi(sessionId);
 
     const interval = window.setInterval(() => {
       if (isSessionStreamDismissed(sessionId)) {
@@ -1755,7 +1801,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     messages,
     pendingUserMessage,
     playbackPayload,
-    restoreStreamUiForSession,
+    ensureAwaitingStreamUi,
     unmarkSessionPending,
   ]);
 
@@ -1797,8 +1843,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     (isSessionStreaming(activeSession.id) ||
       isSessionPending(activeSession.id) ||
       isPlaybackActive ||
-      isBackgroundAwaitingResponse ||
-      streamingStatus === "Finalizando resposta em segundo plano...");
+      isBackgroundAwaitingResponse);
 
   const switchMessageBranch = useCallback(
     async (anchorUserMessageId: string, sourceUserMessageId?: string) => {

@@ -130,4 +130,16 @@ describe("assistantContentSegments", () => {
     expect(isPresentationHeadingTitle("Linha 1\nLinha 2")).toBe(false);
     expect(isPresentationHeadingTitle("Tem ```sql aqui")).toBe(false);
   });
+
+  it("renderiza saudação com negrito via markdown, não como heading cru", () => {
+    const greeting = "Olá! Sou o **Agente Minha DELPI**. O que vamos consultar?";
+    const segments = buildAssistantContentSegments(greeting, []);
+
+    expect(isPresentationHeadingTitle(greeting)).toBe(false);
+    expect(segments).toHaveLength(1);
+    expect(segments[0]?.kind).toBe("markdown");
+    if (segments[0]?.kind === "markdown") {
+      expect(segments[0].markdown).toBe(greeting);
+    }
+  });
 });

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 
 import {
+  appendStatusToActivityLog,
   compactActivityLogForDisplay,
   fullActivityLogForDisplay,
   resolveActivityStatusMessage,
@@ -70,6 +71,20 @@ describe("streamingActivityLog", () => {
         { id: "1", message: "Consultando base...", state: "active" },
       ]),
     ).toBe("Consultando base...");
+  });
+
+  it("converte status SSE em linhas do painel de atividade", () => {
+    const log = appendStatusToActivityLog([], "Entendendo sua pergunta...");
+
+    expect(log).toHaveLength(1);
+    expect(log[0]?.message).toBe("Entendendo sua pergunta...");
+    expect(log[0]?.state).toBe("active");
+
+    const updated = appendStatusToActivityLog(log, "Gerando resposta...");
+
+    expect(updated).toHaveLength(2);
+    expect(updated[0]?.state).toBe("done");
+    expect(updated[1]?.message).toBe("Gerando resposta...");
   });
 
   it("resolve status a partir da fase web_search", () => {

@@ -1,4 +1,5 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
+import { hasMarkdownSyntax } from "./chatMarkdown";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 
 export type { AssistantContentSegment } from "./assistantContentTypes";
@@ -613,7 +614,7 @@ export function isPresentationHeadingTitle(title: string | null | undefined): bo
     return false;
   }
 
-  if (value.includes("```") || /\n/.test(value)) {
+  if (value.includes("```") || /\n/.test(value) || hasMarkdownSyntax(value)) {
     return false;
   }
 

@@ -9,6 +9,7 @@ import {
 describe("chatMarkdown", () => {
   it("detecta negrito e cabeçalhos", () => {
     expect(hasMarkdownSyntax("Olá! Sou o **Agente Minha DELPI**.")).toBe(true);
+    expect(hasMarkdownSyntax("Olá! Sou o **Agente")).toBe(true);
     expect(hasMarkdownSyntax("### Título")).toBe(true);
     expect(hasMarkdownSyntax("Texto simples sem formatação.")).toBe(false);
   });

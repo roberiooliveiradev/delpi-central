@@ -10,7 +10,7 @@ export function hasMarkdownSyntax(content: string | null | undefined): boolean {
   }
 
   return (
-    /\*\*[^*]+\*\*/.test(text) ||
+    /\*\*/.test(text) ||
     /(?:^|\n)#{1,6}\s/.test(text) ||
     /```/.test(text) ||
     /(?:^|\n)\s*[-*]\s+\S/.test(text) ||
