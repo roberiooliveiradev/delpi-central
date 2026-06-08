@@ -23,6 +23,8 @@ describe("chatHomeStarters", () => {
       isOperationalHomeStarter({ query: "me fale do produto {{productCode}}" }),
     ).toBe(true);
     expect(isOperationalHomeStarter({ query: "corrija o texto abaixo" })).toBe(false);
+    expect(isOperationalHomeStarter({ query: "listar LMPs desse mês" })).toBe(true);
+    expect(isOperationalHomeStarter({ query: "crie uma carta formal" })).toBe(false);
   });
 
   it("operacionais usam placeholders em vez de código fixo", () => {

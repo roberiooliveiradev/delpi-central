@@ -19,6 +19,59 @@ export const OPERATIONAL_HOME_STARTER_IDS = new Set([
 
 const OPERATIONAL_HIGHLIGHT_FEATURE_IDS = new Set(["product_lookup"]);
 
+/** Verbos de consulta operacional (espelha API capabilities.detection). */
+const OPERATIONAL_QUERY_VERBS = [
+  "busque",
+  "buscar",
+  "pesquise",
+  "pesquisar",
+  "liste",
+  "listar",
+  "procure",
+  "procurar",
+  "traga",
+  "mostre",
+  "mostrar",
+  "exiba",
+  "exibir",
+  "consulte",
+  "consultar",
+];
+
+/** Tópicos de dados operacionais (subset de operationalDataTopics da API). */
+const OPERATIONAL_QUERY_TOPICS = [
+  "estoque",
+  "fornecedor",
+  "estrutura",
+  "roteiro",
+  "inspecao",
+  "inspeção",
+  "faturamento",
+  "venda",
+  "compra",
+  "preco",
+  "preço",
+  "lmp",
+  "ov ",
+  "cpv",
+  "otd",
+  "giro",
+  "idd",
+];
+
+function looksLikeOperationalDataQuery(query: string): boolean {
+  const normalized = query.toLowerCase();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const hasVerb = OPERATIONAL_QUERY_VERBS.some((verb) => normalized.includes(verb));
+  const hasTopic = OPERATIONAL_QUERY_TOPICS.some((topic) => normalized.includes(topic));
+
+  return hasVerb && hasTopic;
+}
+
 export function isOperationalHomeStarter(context: {
   starterId?: string | null;
   query?: string | null;
@@ -38,7 +91,11 @@ export function isOperationalHomeStarter(context: {
 
   const normalized = normalizeShortcutTemplate(String(context.query ?? "").trim()).toLowerCase();
 
-  return normalized.includes("{{productcode}}");
+  if (normalized.includes("{{productcode}}")) {
+    return true;
+  }
+
+  return looksLikeOperationalDataQuery(normalized);
 }
 
 /** Chips operacionais na home (sem código fixo — preenchimento no clique). */

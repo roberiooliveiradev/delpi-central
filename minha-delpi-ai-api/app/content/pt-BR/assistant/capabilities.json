@@ -310,6 +310,9 @@
       "\\bconsulte\\b",
       "\\bconsultar\\b",
       "\\bliste\\s+os\\s+fornecedores\\b",
+      "\\blistar\\s+lmp",
+      "\\bliste\\s+lmp",
+      "\\blistar\\s+as\\s+lmp",
       "\\bonde\\s+o\\s+produto\\b",
       "\\bonde\\s+[eé]\\s+usado\\b"
     ],

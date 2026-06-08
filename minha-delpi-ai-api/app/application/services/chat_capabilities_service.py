@@ -450,6 +450,11 @@ class ChatCapabilitiesService:
         if product_code and not any(marker in normalized for marker in cls._INQUIRY_MARKERS):
             return True
 
+        if cls._looks_like_operational_command(normalized) and any(
+            topic in normalized for topic in _operational_data_topics()
+        ):
+            return True
+
         return False
 
     @classmethod
