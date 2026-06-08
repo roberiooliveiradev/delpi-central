@@ -71,9 +71,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _min_engineering_residence_minutes(self) -> int:
         return self.settings.min_engineering_residence_minutes
 
-    def _listing_kind_priority(self, listing_kind: str) -> int:
-        return self.settings.listing_kind_priority.get(listing_kind, 0)
-
     def _sql_ad1_current_revision_match(
         self,
         aij_alias: str,
@@ -1630,9 +1627,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             LEFT JOIN ListingAnchorEventos L
                 ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                AND L.AIJ_NROPOR = AD1.AD1_NROPOR
+               AND L.AIJ_REVISA = AD1.AD1_REVISA
             LEFT JOIN EngSupportOvRef R
                 ON R.AIJ_FILIAL = AD1.AD1_FILIAL
                AND R.AIJ_NROPOR = AD1.AD1_NROPOR
+               AND R.AIJ_REVISA = AD1.AD1_REVISA
             LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_FILIAL = AD1.AD1_FILIAL
                AND H.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -1920,6 +1919,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             request,
             include_qtd_pi=include_qtd_pi,
             final_select=final_select,
+            final_params=(self._min_engineering_residence_minutes(),),
         )
         with self as repo:
             rows = repo.execute_batch_query(batch_sql, batch_params)
@@ -1951,11 +1951,17 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             OFFSET ? ROWS
             FETCH NEXT ? ROWS ONLY
         """
+        min_residence = self._min_engineering_residence_minutes()
         batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
             final_select=combined_final,
-            final_params=(offset, page_size),
+            final_params=(
+                min_residence,
+                min_residence,
+                offset,
+                page_size,
+            ),
         )
 
         with self as repo:
@@ -2052,6 +2058,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             include_qtd_pi=include_qtd_pi,
             lmp_only=lmp_only,
             final_select=final_select,
+            final_params=(self._min_engineering_residence_minutes(),),
         )
 
         with self as repo:
