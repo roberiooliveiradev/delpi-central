@@ -42,6 +42,10 @@ from app.domain.services.external_actions.presenters.playbook_report_presenter i
     ExternalActionPlaybookReportPresenter,
 )
 
+from app.domain.services.external_actions.presenters.entity_route_presenter import (
+    ExternalActionEntityRoutePresenter,
+)
+
 
 class ExternalActionResultPresenter:
     def __init__(
@@ -59,6 +63,7 @@ class ExternalActionResultPresenter:
         self._system_tables_presenter: ExternalActionSystemTablesPresenter | None = None
         self._playbook_report_presenter: ExternalActionPlaybookReportPresenter | None = None
         self._legacy_route_presenter: ExternalActionLegacyRoutePresenter | None = None
+        self._entity_route_presenter: ExternalActionEntityRoutePresenter | None = None
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -111,6 +116,13 @@ class ExternalActionResultPresenter:
 
         return self._legacy_route_presenter
 
+
+    def _entity_route(self) -> ExternalActionEntityRoutePresenter:
+        if self._entity_route_presenter is None:
+            self._entity_route_presenter = ExternalActionEntityRoutePresenter(self)
+
+        return self._entity_route_presenter
+
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
         previous_formats = self._active_schema_formats
@@ -125,7 +137,7 @@ class ExternalActionResultPresenter:
 
         try:
             profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
-            routed = self._present_entity_first(data, path=path, profile=profile)
+            routed = self._entity_route()._present_entity_first(data, path=path, profile=profile)
 
             if routed is not None:
                 return routed
@@ -135,260 +147,7 @@ class ExternalActionResultPresenter:
             self._active_schema_labels = previous_labels
             self._active_schema_formats = previous_formats
 
-    def _present_entity_first(
-        self,
-        data,
-        *,
-        path: str,
-        profile: ApiDelpiResponseProfile,
-    ) -> dict | None:
-        entity = profile.entity
 
-        if not ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity):
-            return None
-
-        error = self._detect_api_error(data, path=path)
-
-        if error:
-            return error
-
-        root = self._unwrap_data(data)
-
-        empty_operational = self._present_empty_operational_result(
-            path=path,
-            root=root,
-        )
-
-        if empty_operational:
-            return empty_operational
-
-        if entity == "product_analyser" and isinstance(root, dict):
-            root = self._normalize_analyser_root(root)
-            product = root.get("product")
-
-            if isinstance(product, dict):
-                return self._present_product_analyser(
-                    root,
-                    self._normalize_api_section(product),
-                    path,
-                )
-
-        if entity == "product_factory_status" and isinstance(root, dict):
-            return self._present_product_factory_status(root, path)
-
-        if entity == "product_structure" and isinstance(root, dict):
-            structure_result = self._present_product_structure(root, path)
-
-            if structure_result:
-                return structure_result
-
-        if entity == "product_parents" and isinstance(root, dict):
-            structure_result = self._present_product_structure(root, path)
-
-            if structure_result:
-                return structure_result
-
-        product = root.get("product") if isinstance(root, dict) else None
-
-        if entity == "product" and isinstance(product, dict):
-            return self._present_product(root, self._normalize_api_section(product))
-
-        if isinstance(root, dict):
-            items = root.get("items")
-
-            if isinstance(items, list) and items:
-                title = self._infer_items_title(items, path)
-                first_item = items[0] if isinstance(items[0], dict) else {}
-
-                if entity == "product_stock" or self._is_stock_data(first_item):
-                    return self._present_product_stock(items, path=path, title=title)
-
-                if entity == "product_guide" or (
-                    isinstance(first_item, dict)
-                    and (
-                        "operation_description" in first_item
-                        or "operation_code" in first_item
-                    )
-                ):
-                    return self._present_product_guide(items, path=path, title=title)
-
-                if entity == "product_inspection" or self._looks_like_inspection_item(
-                    first_item
-                ):
-                    return self._present_product_inspection(items, path=path, title=title)
-
-                if entity == "product_search" and isinstance(first_item, dict) and (
-                    "code" in first_item and "description" in first_item
-                ):
-                    return self._present_product_search(root, items, title=title)
-
-                path_routed = self._present_path_routed_items(root, path)
-
-                if path_routed:
-                    return path_routed
-
-        if entity in {
-            "product_production_status",
-            "product_shipping_status",
-            "product_structure_exclusivity",
-        } and isinstance(root, dict):
-            fallback = self._present_playbook_report(root, path, entity=entity)
-
-            if fallback:
-                return fallback
-
-        return self._present_entity_extensions(
-            root,
-            path=path,
-            profile=profile,
-        )
-
-    def _present_entity_extensions(
-        self,
-        root,
-        *,
-        path: str,
-        profile: ApiDelpiResponseProfile,
-    ) -> dict | None:
-        entity = profile.entity
-        effective_path = ChatApiDelpiResponseProfileService.presentation_path(
-            path=path,
-            entity=entity,
-        )
-
-        if entity == "product_billing":
-            billing = self._present_product_billing_summary(
-                root,
-                effective_path,
-                entity=entity,
-            )
-
-            if billing:
-                return billing
-
-        if entity == "product_pricing" and isinstance(root, dict):
-            prices = root.get("prices")
-
-            if isinstance(prices, list) and prices:
-                title = self._infer_items_title(prices, effective_path)
-
-                return self._present_items(
-                    prices,
-                    title=title or self._presenter_text("productDetailTitles", "prices", code=""),
-                )
-
-            pricing_fallback = self._present_dict_fallback(root, effective_path)
-
-            if pricing_fallback:
-                return pricing_fallback
-
-        if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
-            items = root.get("items") if isinstance(root, dict) else None
-
-            if isinstance(items, list):
-                if not items:
-                    title = self._infer_items_title([], effective_path) or self._presenter_text(
-                        "generic",
-                        "defaultQueryTitle",
-                    )
-                    return {
-                        "titulo": title,
-                        "linhas": [
-                            self._presenter_text("generic", "emptyItemsQuery")
-                        ],
-                        "dados": root,
-                    }
-
-                if entity == "product_open_orders":
-                    return self._present_items(
-                        items,
-                        title=self._infer_items_title(items, effective_path),
-                    )
-
-                title = self._infer_items_title(items, effective_path)
-                return self._present_items(items, title=title)
-
-        if entity == "product_sales" and isinstance(root, dict):
-            kpi = self._present_kpi_response(root, effective_path, entity=entity)
-
-            if kpi:
-                return kpi
-
-        if ChatApiDelpiResponseProfileService.is_kpi_entity(entity) and isinstance(root, dict):
-            specialized = (
-                self._present_stock_value_summary(root, effective_path, entity=entity)
-                or self._present_financial_pmr(root, effective_path, entity=entity)
-            )
-
-            if specialized:
-                return specialized
-
-            kpi = self._present_kpi_response(root, effective_path, entity=entity)
-
-            if kpi:
-                return kpi
-
-        if entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES and isinstance(
-            root, dict
-        ):
-            lmp_page = self._present_lmp_page(root)
-
-            if lmp_page:
-                return lmp_page
-
-            lmp_detail = self._present_lmp_detail(root)
-
-            if lmp_detail:
-                return lmp_detail
-
-        if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
-            items = root.get("items") if isinstance(root, dict) else None
-
-            if isinstance(items, list) and items:
-                return self._present_sale_orders(root, items)
-
-        if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
-            sql_resultsets = self._present_sql_resultsets(root, effective_path)
-
-            if sql_resultsets:
-                return sql_resultsets
-
-            sql_rows = self._present_sql_rows(root)
-
-            if sql_rows:
-                return sql_rows
-
-        if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES and isinstance(
-            root, dict
-        ):
-            system = (
-                self._present_system_tables_search(root, effective_path, entity=entity)
-                or self._present_system_table_columns(root, effective_path, entity=entity)
-            )
-
-            if system:
-                return system
-
-            system_fallback = self._present_dict_fallback(root, effective_path)
-
-            if system_fallback:
-                return system_fallback
-
-        if entity == "commercial_proposal" and isinstance(root, dict):
-            items = root.get("items")
-
-            if isinstance(items, list):
-                title = self._infer_items_title(items, effective_path)
-                return self._present_items(items, title=title)
-
-        if entity == "eficiencia_fabril_appointment" and isinstance(root, dict):
-            items = root.get("items")
-
-            if isinstance(items, list) and items:
-                title = self._infer_items_title(items, effective_path)
-                return self._present_items(items, title=title)
-
-        return None
 
     def _present_kpi_response(
         self,
