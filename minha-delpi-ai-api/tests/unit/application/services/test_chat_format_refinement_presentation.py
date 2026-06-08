@@ -129,6 +129,36 @@ def test_refinement_to_table_from_chart():
     assert "/system/tables" not in str(meta.get("path") or "")
 
 
+def test_apply_format_override_text_hides_kpi_primary():
+    service = _build_service()
+    kpi = {
+        "type": "kpi",
+        "title": "Indicadores de RH",
+        "cards": [{"label": "PDIs ativos", "value": 29}],
+    }
+    meta = {
+        "ok": True,
+        "path": "/hr/snapshot",
+        "presentationDecision": {
+            "selected": "kpi",
+            "availableViews": ["kpi", "text", "table", "chart"],
+        },
+        "presentation": kpi,
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Indicadores de RH",
+        },
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": meta}]
+
+    service._apply_format_override(tool_calls, "text", {"active_pdis": 29})
+
+    assert meta["preferredFormat"] == "text"
+    assert meta["presentationDecision"]["selected"] == "text"
+    assert meta["presentation"] is None
+    assert meta["kpiPresentation"] == kpi
+
+
 def test_refinement_to_chart_from_table():
     service = _build_service()
     result = service.build_context(

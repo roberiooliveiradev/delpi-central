@@ -417,6 +417,28 @@ export function resolveInitialToolbarKind(
   }
 
   if (shouldShowCompleteStackView(toolCalls)) {
+    const decision = getPresentationDecisionFromToolCalls(toolCalls);
+    const fromDecision = mapPresentationDecisionToViewFormat(decision?.selected);
+    const available = options.map((item) => item.kind);
+
+    if (fromDecision) {
+      const mapped = mapViewFormatToContentKind(fromDecision);
+
+      if (mapped && available.includes(mapped)) {
+        return mapped;
+      }
+    }
+
+    const preferred = getPreferredFormatFromToolCalls(toolCalls);
+
+    if (preferred) {
+      const mapped = mapViewFormatToContentKind(preferred);
+
+      if (mapped && available.includes(mapped)) {
+        return mapped;
+      }
+    }
+
     return null;
   }
 

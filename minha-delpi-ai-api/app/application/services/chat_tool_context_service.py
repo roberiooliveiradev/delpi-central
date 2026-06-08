@@ -1839,6 +1839,48 @@ class ChatToolContextService:
 
             if requested_format == "text":
                 meta["preferredFormat"] = "text"
+                decision = meta.get("presentationDecision")
+
+                if isinstance(decision, dict):
+                    decision["selected"] = "text"
+
+                had_kpi_primary = (
+                    isinstance(meta.get("presentation"), dict)
+                    and meta["presentation"].get("type") == "kpi"
+                )
+
+                from app.application.use_cases.execute_external_action_use_case import (
+                    ExecuteExternalActionUseCase,
+                )
+
+                ExecuteExternalActionUseCase._align_presentation_with_decision(
+                    meta,
+                    kpi_presentation=(
+                        meta.get("kpiPresentation")
+                        if isinstance(meta.get("kpiPresentation"), dict)
+                        else meta.get("presentation")
+                        if had_kpi_primary
+                        else None
+                    ),
+                )
+
+                text_presentation = meta.get("textPresentation")
+                markdown = (
+                    str(text_presentation.get("markdown") or "").strip()
+                    if isinstance(text_presentation, dict)
+                    else ""
+                )
+                caption_only = markdown.startswith("###") and "**" not in markdown
+
+                if last_data and (had_kpi_primary or caption_only):
+                    path = str(meta.get("path") or "")
+                    rebuilt = self.external_action_result_presenter.build_text_presentation(
+                        last_data,
+                        path=path,
+                    )
+
+                    if rebuilt:
+                        meta["textPresentation"] = rebuilt
 
             elif requested_format == "tree":
                 meta["preferredFormat"] = "tree"

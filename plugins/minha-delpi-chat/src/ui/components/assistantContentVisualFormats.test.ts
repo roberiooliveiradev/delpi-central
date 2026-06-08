@@ -5,6 +5,7 @@ import {
   filterSegmentsByVisualKind,
   resolveAvailableVisualFormatOptions,
   resolveDefaultVisualKind,
+  resolveInitialToolbarKind,
 } from "./assistantContentVisualFormats";
 import { fixtureToolCalls } from "./testFixtures";
 
@@ -238,5 +239,40 @@ describe("assistantContentVisualFormats", () => {
     const options = resolveAvailableVisualFormatOptions(segments, analyserCalls);
 
     expect(resolveDefaultVisualKind(analyserCalls, options)).toBe("text");
+  });
+
+  it("no stack com KPI, inicia em texto quando o formato solicitado é texto", () => {
+    const kpiCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            availableViews: ["text", "kpi", "table", "chart"],
+            visualOrder: ["text", "kpi", "table", "chart"],
+            layoutMode: "stack",
+          },
+          preferredFormat: "text",
+          presentation: {
+            type: "kpi",
+            title: "Indicadores de RH",
+            cards: [{ label: "PDIs ativos", value: 29 }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Indicadores de RH\n\n**PDIs ativos:** 29",
+          },
+        },
+      },
+    ]);
+    const segments = buildAssistantContentSegments("", kpiCalls);
+    const options = resolveAvailableVisualFormatOptions(segments, kpiCalls);
+
+    expect(resolveInitialToolbarKind(kpiCalls, options)).toBe("text");
+
+    const visible = filterSegmentsByVisualKind(segments, "text");
+
+    expect(visible.some((segment) => segment.kind === "kpi")).toBe(false);
+    expect(visible.some((segment) => segment.kind === "markdown")).toBe(true);
   });
 });
