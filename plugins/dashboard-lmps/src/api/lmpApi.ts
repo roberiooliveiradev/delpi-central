@@ -1,11 +1,12 @@
 import type { DashboardGoalFields } from "../utils/goalDisplay";
 import { httpGet } from "./httpClient";
-import type {
-  ApiSuccessResponse,
-  ListLmpsParams,
-  LmpItem,
-  LmpDashboardItem,
-  Page,
+import {
+  unwrapApiDelpiEnvelope,
+  type ApiSuccessResponse,
+  type ListLmpsParams,
+  type LmpItem,
+  type LmpDashboardItem,
+  type Page,
 } from "../types/lmp";
 
 export type LmpsDashboardSummary = DashboardGoalFields & {
@@ -83,56 +84,66 @@ function buildQuery(params: ListLmpsParams & { status?: string }): string {
   return query ? `?${query}` : "";
 }
 
+async function fetchLmpData<T>(
+  path: string,
+  params: LmpsDashboardParams | ListLmpsParams = {},
+  signal?: AbortSignal,
+  fallbackMessage = "Erro na API de LMPs",
+): Promise<T> {
+  const query = buildQuery(params);
+  const response = await httpGet<ApiSuccessResponse<T>>(
+    `/apps/api-delpi/engineering${path}${query}`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, fallbackMessage);
+}
+
 export async function listLmps(
   params: ListLmpsParams,
   signal?: AbortSignal
 ): Promise<Page<LmpItem>> {
   const query = buildQuery(params);
-
   const response = await httpGet<ApiSuccessResponse<Page<LmpItem>>>(
     `/apps/api-delpi/engineering/lmps/${query}`,
-    { signal }
+    { signal },
   );
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao listar LMPs");
 }
 
 export async function getLmpsDashboard(
   params: LmpsDashboardParams,
   signal?: AbortSignal
 ): Promise<LmpsDashboardResponse> {
-  const query = buildQuery(params);
-
-  const response = await httpGet<ApiSuccessResponse<LmpsDashboardResponse>>(
-    `/apps/api-delpi/engineering/lmps/dashboard${query}`,
-    { signal }
+  return fetchLmpData<LmpsDashboardResponse>(
+    "/lmps/dashboard",
+    params,
+    signal,
+    "Erro ao carregar dashboard de LMPs",
   );
-
-  return response.data;
 }
 
 export async function getLmpsDashboardSummary(
   params: LmpsDashboardParams,
   signal?: AbortSignal,
 ): Promise<LmpsDashboardSummary> {
-  const query = buildQuery(params);
-  const response = await httpGet<ApiSuccessResponse<LmpsDashboardSummary>>(
-    `/apps/api-delpi/engineering/lmps/dashboard/summary${query}`,
-    { signal },
+  return fetchLmpData<LmpsDashboardSummary>(
+    "/lmps/dashboard/summary",
+    params,
+    signal,
+    "Erro ao carregar KPIs de LMPs",
   );
-  return response.data;
 }
 
 export async function getLmpsDashboardCharts(
   params: LmpsDashboardParams,
   signal?: AbortSignal,
 ): Promise<LmpsDashboardCharts> {
-  const query = buildQuery(params);
-  const response = await httpGet<ApiSuccessResponse<LmpsDashboardCharts>>(
-    `/apps/api-delpi/engineering/lmps/dashboard/charts${query}`,
-    { signal },
+  return fetchLmpData<LmpsDashboardCharts>(
+    "/lmps/dashboard/charts",
+    params,
+    signal,
+    "Erro ao carregar gráficos de LMPs",
   );
-  return response.data;
 }
 
 export type LmpsDashboardItemsResponse = {
@@ -146,10 +157,10 @@ export async function getLmpsDashboardItems(
   params: LmpsDashboardParams,
   signal?: AbortSignal,
 ): Promise<LmpsDashboardItemsResponse> {
-  const query = buildQuery(params);
-  const response = await httpGet<ApiSuccessResponse<LmpsDashboardItemsResponse>>(
-    `/apps/api-delpi/engineering/lmps/dashboard/items${query}`,
-    { signal },
+  return fetchLmpData<LmpsDashboardItemsResponse>(
+    "/lmps/dashboard/items",
+    params,
+    signal,
+    "Erro ao carregar itens de LMPs",
   );
-  return response.data;
 }

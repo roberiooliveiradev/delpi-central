@@ -24,10 +24,38 @@ export interface PaginatedResult<T> {
   total_pages: number;
 }
 
+export interface ApiDelpiResponseMeta {
+  dataVersion?: string;
+  operationId?: string;
+  entity?: string;
+  shape?: string;
+  pagination?: Record<string, unknown>;
+  fields?: Record<string, string>;
+  relatedRoutes?: Record<string, string>;
+  sections?: Array<Record<string, unknown>>;
+}
+
+export interface ApiDelpiErrorPayload {
+  code?: string;
+  recoverable?: boolean;
+}
+
 export interface ApiSuccessResponse<T> {
   success: boolean;
   message: string;
   data: T;
+  meta?: ApiDelpiResponseMeta;
+  error?: ApiDelpiErrorPayload | null;
+}
+
+function assertApiDelpiSuccess<T>(
+  response: ApiSuccessResponse<T>,
+  fallbackMessage: string,
+): ApiSuccessResponse<T> {
+  if (response.success === false) {
+    throw new Error(response.message?.trim() || fallbackMessage);
+  }
+  return response;
 }
 
 export class DelpiApi {
@@ -62,7 +90,19 @@ export class DelpiApi {
         throw new Error("Erro ao consultar API DELPI");
       }
 
-      return await response.json();
+      const body = (await response.json()) as T;
+      if (
+        body &&
+        typeof body === "object" &&
+        "success" in body &&
+        "data" in body
+      ) {
+        return assertApiDelpiSuccess(
+          body as ApiSuccessResponse<unknown>,
+          "Erro na API DELPI",
+        ) as T;
+      }
+      return body;
     } catch (error: any) {
       if (error?.name === "AbortError") {
         throw new Error("Timeout na API DELPI");

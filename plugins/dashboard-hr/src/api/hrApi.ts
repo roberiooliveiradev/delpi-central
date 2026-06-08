@@ -1,5 +1,5 @@
 import { httpGet } from "./httpClient";
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type { HrBranchesResponse, HrFilterParams, HrSnapshot } from "../types/hr";
 
 export const HR_API_BASE = "/apps/api-delpi/hr";
@@ -25,11 +25,7 @@ async function fetchHrData<T>(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro na API de RH");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro na API de RH");
 }
 
 export function getHrSnapshot(params: HrFilterParams = {}, signal?: AbortSignal) {

@@ -1,6 +1,12 @@
 import type { BranchCode, ResourceType } from "../constants/scheduling";
 import { API_BASE } from "../constants/scheduling";
-import { type ApiEnvelope, httpGet, httpPatch, httpPost } from "./httpClient";
+import {
+  type ApiEnvelope,
+  httpGet,
+  httpPatch,
+  httpPost,
+  unwrapApiDelpiEnvelope,
+} from "./httpClient";
 
 export type SchedulingResource = {
   id: string;
@@ -49,7 +55,7 @@ export async function fetchResources(
   const envelope = await httpGet<ApiEnvelope<SchedulingResource[]>>(
     `${API_BASE}/resources?${params.toString()}`,
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function createResource(payload: {
@@ -64,7 +70,7 @@ export async function createResource(payload: {
     `${API_BASE}/resources`,
     payload,
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function updateResource(
@@ -82,7 +88,7 @@ export async function updateResource(
     `${API_BASE}/resources/${resourceId}`,
     payload,
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function fetchBookings(
@@ -102,7 +108,7 @@ export async function fetchBookings(
   const envelope = await httpGet<ApiEnvelope<SchedulingBooking[]>>(
     `${API_BASE}/bookings?${params.toString()}`,
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function createBooking(payload: {
@@ -117,7 +123,7 @@ export async function createBooking(payload: {
     `${API_BASE}/bookings`,
     payload,
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function cancelBooking(bookingId: string): Promise<SchedulingBooking> {
@@ -125,7 +131,7 @@ export async function cancelBooking(bookingId: string): Promise<SchedulingBookin
     `${API_BASE}/bookings/${bookingId}/cancel`,
     {},
   );
-  return envelope.data;
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
 export async function fetchMeProfile(): Promise<MeProfile> {

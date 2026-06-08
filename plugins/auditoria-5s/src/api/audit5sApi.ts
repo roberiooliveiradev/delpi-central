@@ -1,6 +1,14 @@
 import { API_BASE } from "../constants/audit5s";
 import type { AuditDashboardData, AuditDashboardFilterParams } from "../types/auditDashboard";
-import { type ApiEnvelope, httpGet, httpPatch, httpPost, httpPut, httpUploadForm } from "./httpClient";
+import {
+  type ApiEnvelope,
+  httpGet,
+  httpPatch,
+  httpPost,
+  httpPut,
+  httpUploadForm,
+  unwrapApiDelpiEnvelope,
+} from "./httpClient";
 
 export type AuditArea = {
   id: string;
@@ -62,7 +70,7 @@ export type AuditDetail = {
 
 export async function fetchAreas(branch: string) {
   const res = await httpGet<ApiEnvelope<AuditArea[]>>(`${API_BASE}/areas?branch=${branch}`);
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function createArea(branch: string, name: string) {
@@ -70,22 +78,22 @@ export async function createArea(branch: string, name: string) {
     branch_code: branch,
     name,
   });
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function fetchAudits(branch: string) {
   const res = await httpGet<ApiEnvelope<AuditListItem[]>>(`${API_BASE}/audits?branch=${branch}`);
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function fetchAudit(auditId: string) {
   const res = await httpGet<ApiEnvelope<AuditDetail>>(`${API_BASE}/audits/${auditId}`);
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function joinAudit(auditId: string) {
   const res = await httpPost<ApiEnvelope<AuditDetail>>(`${API_BASE}/audits/${auditId}/join`, {});
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function deleteAudit(auditId: string) {
@@ -101,7 +109,7 @@ export async function createAudit(payload: {
   auditors?: Array<{ user_id: string; display_name: string }>;
 }) {
   const res = await httpPost<ApiEnvelope<AuditDetail>>(`${API_BASE}/audits`, payload);
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function saveResponse(
@@ -118,7 +126,7 @@ export async function saveResponse(
     `${API_BASE}/audits/${auditId}/responses/${criterionId}`,
     payload,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function completeEvaluation(auditId: string) {
@@ -126,7 +134,7 @@ export async function completeEvaluation(auditId: string) {
     `${API_BASE}/audits/${auditId}/complete-evaluation`,
     {},
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export type NcCandidate = Criterion & {
@@ -182,14 +190,14 @@ export async function fetchNcCandidates(auditId: string) {
   const res = await httpGet<ApiEnvelope<NcCandidate[]>>(
     `${API_BASE}/audits/${auditId}/nc-candidates`,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function fetchNonconformities(auditId: string) {
   const res = await httpGet<ApiEnvelope<Nonconformity[]>>(
     `${API_BASE}/audits/${auditId}/nonconformities`,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function createNonconformity(
@@ -208,7 +216,7 @@ export async function createNonconformity(
     `${API_BASE}/audits/${auditId}/nonconformities`,
     payload,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function updateNonconformity(
@@ -226,14 +234,14 @@ export async function updateNonconformity(
     `${API_BASE}/nonconformities/${ncId}`,
     payload,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function fetchAuditNcAttachments(auditId: string) {
   const res = await httpGet<ApiEnvelope<NcAttachment[]>>(
     `${API_BASE}/audits/${auditId}/nc-attachments`,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function uploadNcAttachment(ncId: string, attachmentType: NcAttachmentType, file: File) {
@@ -244,7 +252,7 @@ export async function uploadNcAttachment(ncId: string, attachmentType: NcAttachm
     `${API_BASE}/nonconformities/${ncId}/attachments`,
     formData,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function completeNcAction(ncId: string) {
@@ -252,14 +260,14 @@ export async function completeNcAction(ncId: string) {
     `${API_BASE}/nonconformities/${ncId}/complete-action`,
     {},
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function fetchNcActions(ncId: string) {
   const res = await httpGet<ApiEnvelope<NcAction[]>>(
     `${API_BASE}/nonconformities/${ncId}/actions`,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function addNcAction(ncId: string, description: string) {
@@ -267,7 +275,7 @@ export async function addNcAction(ncId: string, description: string) {
     `${API_BASE}/nonconformities/${ncId}/actions`,
     { description },
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 export async function closeAudit(auditId: string) {
@@ -275,7 +283,7 @@ export async function closeAudit(auditId: string) {
     `${API_BASE}/audits/${auditId}/close`,
     {},
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
 function buildDashboardQuery(params: AuditDashboardFilterParams): string {
@@ -298,5 +306,5 @@ export async function fetchAudit5sDashboard(params: AuditDashboardFilterParams) 
   const res = await httpGet<ApiEnvelope<AuditDashboardData>>(
     `${API_BASE}/analytics/dashboard?${query}`,
   );
-  return res.data;
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }

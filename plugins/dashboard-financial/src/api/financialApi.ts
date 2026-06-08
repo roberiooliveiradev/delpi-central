@@ -1,5 +1,5 @@
 import { httpGet } from "./httpClient";
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   EbitdaPctData,
   FinancialFilterParams,
@@ -31,11 +31,7 @@ async function fetchFinancialData<T>(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro na API financeira");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro na API financeira");
 }
 
 export function getRol(params: FinancialFilterParams, signal?: AbortSignal) {

@@ -1,5 +1,5 @@
 import { httpGet } from "./httpClient";
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   EngineeringFilterParams,
   TransformaProcessesList,
@@ -61,11 +61,7 @@ async function fetchEngineeringData<T>(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro na API de engenharia");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro na API de engenharia");
 }
 
 export function getTransformaSummary(
@@ -99,11 +95,7 @@ export async function getLmpsDashboard(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar LMPs");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar LMPs");
 }
 
 export async function getLmpsDashboardSummary(
@@ -114,10 +106,7 @@ export async function getLmpsDashboardSummary(
     `${ENGINEERING_API_BASE}/lmps/dashboard/summary${buildLmpQuery(params)}`,
     { signal },
   );
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar KPIs de LMPs");
-  }
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar KPIs de LMPs");
 }
 
 export async function getLmpsDashboardCharts(
@@ -128,10 +117,7 @@ export async function getLmpsDashboardCharts(
     `${ENGINEERING_API_BASE}/lmps/dashboard/charts${buildLmpQuery(params)}`,
     { signal },
   );
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar gráficos de LMPs");
-  }
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar gráficos de LMPs");
 }
 
 export type LmpsDashboardItemsResponse = {
@@ -149,8 +135,5 @@ export async function getLmpsDashboardItems(
     `${ENGINEERING_API_BASE}/lmps/dashboard/items${buildLmpQuery(params)}`,
     { signal },
   );
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar itens de LMPs");
-  }
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar itens de LMPs");
 }

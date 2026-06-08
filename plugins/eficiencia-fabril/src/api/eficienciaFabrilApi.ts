@@ -1,4 +1,4 @@
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   EficienciaFabrilDashboardData,
   EficienciaFabrilFilterParams,
@@ -36,11 +36,7 @@ export async function getEficienciaFabrilDashboard(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar dashboard");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar dashboard");
 }
 
 export async function getEficienciaFabrilAppointments(
@@ -52,9 +48,5 @@ export async function getEficienciaFabrilAppointments(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro ao carregar apontamentos");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar apontamentos");
 }

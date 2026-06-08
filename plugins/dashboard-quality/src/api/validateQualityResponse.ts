@@ -45,11 +45,21 @@ export function parseQualityApiEnvelope<T>(
     );
   }
 
-  return {
+  const envelope: ApiSuccessResponse<T> = {
     success: true,
     message: typeof body.message === "string" ? body.message : "",
     data: body.data,
   };
+
+  if (isRecord(body.meta)) {
+    envelope.meta = body.meta as ApiSuccessResponse<T>["meta"];
+  }
+
+  if ("error" in body) {
+    envelope.error = body.error as ApiSuccessResponse<T>["error"];
+  }
+
+  return envelope;
 }
 
 export function isQualityBranchesData(data: unknown): data is {

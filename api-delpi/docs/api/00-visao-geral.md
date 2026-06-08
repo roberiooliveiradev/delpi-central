@@ -149,6 +149,8 @@ Após deploy com mudanças OpenAPI: [12-procedimento-reimport-openapi.md](./12-p
 
 Constantes para decorators (`@require_permission`, `@require_any_permission`): `app/application/security/api_delpi_permissions.py`. Rotas importam dali — não usar strings literais nos routers.
 
+Consumidores TypeScript (plugins MFE): tipos em `shared/api-delpi-envelope/types.ts`; usar `unwrapApiDelpiEnvelope()` ao ler `data` e validar `success === false`.
+
 | Permissão | Escopo |
 |---|---|
 | `api-delpi.access` | Produtos, vendas, financeiro, comercial, produção, suprimentos. |

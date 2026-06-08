@@ -2,11 +2,39 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+type ApiDelpiResponseMeta = {
+  dataVersion?: string;
+  operationId?: string;
+  entity?: string;
+  shape?: string;
+  pagination?: Record<string, unknown>;
+  fields?: Record<string, string>;
+  relatedRoutes?: Record<string, string>;
+  sections?: Array<Record<string, unknown>>;
+};
+
+type ApiDelpiErrorPayload = {
+  code?: string;
+  recoverable?: boolean;
+};
+
 type ApiEnvelope<T> = {
   success: boolean;
   message?: string;
   data: T;
+  meta?: ApiDelpiResponseMeta;
+  error?: ApiDelpiErrorPayload | null;
 };
+
+export function unwrapApiDelpiEnvelope<T>(
+  response: ApiEnvelope<T>,
+  fallbackMessage: string,
+): T {
+  if (response.success === false) {
+    throw new Error(response.message?.trim() || fallbackMessage);
+  }
+  return response.data;
+}
 
 const DELPI_CALLER_APP = "central-agendamento";
 

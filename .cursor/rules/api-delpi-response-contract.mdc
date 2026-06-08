@@ -23,6 +23,7 @@ Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`m
 | Chat-critical | `api-delpi/app/interface/http/openapi_agent_metadata.py` | `agent_route()` + `operation_id` estável |
 | Produto | `api-delpi/app/interface/http/routes/product_response_helpers.py` | `product_success()` (alias com `relatedRoutes` por código) |
 | RBAC | `api-delpi/app/application/security/api_delpi_permissions.py` | Constantes para `@require_permission` / `@require_any_permission` — **nunca** strings literais nos routers |
+| Tipos consumidor (TS) | `shared/api-delpi-envelope/types.ts` | `ApiDelpiEnvelope`, `unwrapApiDelpiEnvelope` — espelhar em plugins MFE |
 
 ## Checklist — nova rota ou alteração de resposta
 

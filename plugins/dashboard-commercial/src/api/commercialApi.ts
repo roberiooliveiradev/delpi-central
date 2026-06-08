@@ -1,5 +1,5 @@
 import { httpGet } from "./httpClient";
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type { ChartGranularity } from "../types/chart";
 import type {
   ClosingRateData,
@@ -44,11 +44,7 @@ async function fetchCommercialData<T>(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro na API comercial");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro na API comercial");
 }
 
 export function getHeadOfficeRolTarget(

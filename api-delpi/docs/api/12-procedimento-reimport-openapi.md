@@ -31,10 +31,42 @@ Reindexar na base de conhecimento do agente o documento:
 
 `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`
 
-## 4. Smoke
+## 4. Smoke (pós-padronização envelope + meta)
+
+### API
 
 - `GET /apps/api-delpi/openapi.json` contém `operationId` esperados.
-- Turno de chat com action de produto (estoque / estrutura) responde igual ou melhor.
-- Plugins MFE: leitura de `response.data` inalterada.
+- `GET /apps/api-delpi/financial/rol` retorna `meta.operationId`, `meta.shape` e `data` inalterado.
+- `pytest api-delpi/tests/test_envelope_consumer_compat.py` passa no container.
+
+### Chat (minha-delpi-ai-api)
+
+```bash
+docker exec delpi-minha-delpi-ai-api pytest \
+  tests/unit/domain/services/test_external_action_result_presenter_api_delpi_profiles.py \
+  tests/unit/application/use_cases/test_execute_external_action_api_delpi_meta.py -q
+```
+
+- Turno real: «Qual o estoque do 90269001?» — tabela de estoque; metadata com `apiDelpiResponseMeta`.
+
+### Plugins MFE (leem `response.data`; `meta` é opcional)
+
+| Plugin | Smoke manual |
+|--------|----------------|
+| `dashboard-financial` | KPI ROL carrega |
+| `dashboard-supplies` | CPV / OTD |
+| `dashboard-lmps` | Dashboard summary |
+| `dashboard-delpi` | Busca de produtos |
+| `central-agendamento` | Lista recursos |
+| `auditoria-5s` | Lista áreas |
+
+Build rápido (opcional):
+
+```bash
+cd plugins/dashboard-lmps && npm run build
+cd plugins/dashboard-supplies && npm run build
+```
+
+Tipos TS: `shared/api-delpi-envelope/types.ts` (espelhado em `plugins/*/src/types/api.ts`).
 
 Relacionado: [Playbook 10 — contrato de respostas](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md).

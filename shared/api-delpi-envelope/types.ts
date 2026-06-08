@@ -1,4 +1,7 @@
-/** Alinhado a shared/api-delpi-envelope/types.ts */
+/**
+ * Contrato HTTP da api-delpi (Playbook 10).
+ * Espelhar em plugins que consomem a API — ver api-delpi/docs/api/00-visao-geral.md.
+ */
 
 export type ApiDelpiResponseMeta = {
   dataVersion?: string;
@@ -16,7 +19,7 @@ export type ApiDelpiErrorPayload = {
   recoverable?: boolean;
 };
 
-export type ApiSuccessResponse<T> = {
+export type ApiDelpiEnvelope<T> = {
   success: boolean;
   message?: string;
   data: T;
@@ -24,8 +27,11 @@ export type ApiSuccessResponse<T> = {
   error?: ApiDelpiErrorPayload | null;
 };
 
+/** Alias legado nos dashboards MFE. */
+export type ApiSuccessResponse<T> = ApiDelpiEnvelope<T>;
+
 export function unwrapApiDelpiEnvelope<T>(
-  response: ApiSuccessResponse<T>,
+  response: ApiDelpiEnvelope<T>,
   fallbackMessage: string,
 ): T {
   if (response.success === false) {

@@ -1,5 +1,5 @@
 import { httpGet } from "./httpClient";
-import type { ApiSuccessResponse } from "../types/api";
+import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   CpvData,
   InventoryTurnoverData,
@@ -46,11 +46,7 @@ async function fetchSuppliesData<T>(
     { signal }
   );
 
-  if (response.success === false) {
-    throw new Error(response.message || "Erro na API de suprimentos");
-  }
-
-  return response.data;
+  return unwrapApiDelpiEnvelope(response, "Erro na API de suprimentos");
 }
 
 export function getCpv(params: SuppliesFilterParams, signal?: AbortSignal) {
