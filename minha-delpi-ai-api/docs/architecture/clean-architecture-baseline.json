@@ -2,7 +2,7 @@
   "godFileLines": {
     "external_action_result_presenter.py": 6247,
     "external_action_selection_service.py": 3151,
-    "chat_routes.py": 3161,
+    "chat_routes.py": 3153,
     "chat_tool_context_service.py": 2438,
     "send_chat_message_use_case.py": 877,
     "stream_chat_message_use_case.py": 1396,
@@ -12,10 +12,7 @@
     "count": 0,
     "samples": []
   },
-  "interfacesPostgresFiles": [
-    "app/interfaces/http/routes/admin_routes.py",
-    "app/interfaces/http/routes/chat_routes.py"
-  ],
+  "interfacesPostgresFiles": [],
   "targets": {
     "godFileLinesMax": 1200,
     "domainInfrastructureImportsMax": 0,

@@ -17,8 +17,13 @@ from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.content.content_service import ContentService
-from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
-from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.composition.repository_composer import (
+    make_list_external_action_providers_use_case,
+    make_list_external_actions_use_case,
+    make_postgres_audit_repository,
+    make_postgres_chat_agent_repository,
+    make_postgres_external_action_repository,
+)
 from app.infrastructure.external_actions.external_action_test_executor import ExternalActionTestExecutor
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
@@ -173,7 +178,7 @@ def _can_manage_agent_configuration(agent_id: str) -> tuple[bool, dict]:
     except ValueError:
         return False, capabilities
 
-    record = PostgresChatAgentRepository().get_accessible_by_id(
+    record = make_postgres_chat_agent_repository().get_accessible_by_id(
         agent_uuid,
         user_uuid,
     )
@@ -306,16 +311,14 @@ def _build_send_chat_message_request(
 @chat_bp.get("/action-providers")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_action_providers():
-    repository = PostgresExternalActionRepository()
-    return jsonify(repository.list_providers()), 200
+    return jsonify(make_list_external_action_providers_use_case().execute()), 200
 
 
 @chat_bp.get("/actions")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_actions():
     provider_key = request.args.get("providerKey") or request.args.get("provider_key")
-    repository = PostgresExternalActionRepository()
-    actions = repository.list_actions(provider_key=provider_key)
+    actions = make_list_external_actions_use_case().execute(provider_key=provider_key)
 
     return jsonify(actions), 200
 
@@ -359,7 +362,7 @@ def get_assistant_catalog():
     capabilities = _get_chat_capabilities_from_request()
 
     payload = ChatAssistantCatalogService(
-        agent_repository=PostgresChatAgentRepository(),
+        agent_repository=make_postgres_chat_agent_repository(),
     ).build_response(
         user_id=user_id,
         query=query or None,
@@ -414,10 +417,6 @@ def record_assistant_help_event():
         from app.domain.services.chat_interactivity_admin_metrics_service import (
             ChatInteractivityAdminMetricsService,
         )
-        from app.infrastructure.persistence.postgres_audit_repository import (
-            PostgresAuditRepository,
-        )
-
         label = str(safe_meta.get("label") or "").strip()
         session_id = safe_meta.get("sessionId") or safe_meta.get("session_id")
 
@@ -434,14 +433,14 @@ def record_assistant_help_event():
             click_snapshot = ChatInteractivityAdminMetricsService.snapshot_from_click(safe_meta)
 
             if click_snapshot:
-                PostgresAuditRepository().log(
+                make_postgres_audit_repository().log(
                     user_id=UUID(str(g.current_user.sub)),
                     action="chat.interactivity.clicked",
                     metadata=click_snapshot,
                 )
 
                 if str(click_snapshot.get("group") or "") == "recuperar":
-                    PostgresAuditRepository().log(
+                    make_postgres_audit_repository().log(
                         user_id=UUID(str(g.current_user.sub)),
                         action="chat.error_recovery.clicked",
                         metadata=click_snapshot,
@@ -457,7 +456,7 @@ def record_assistant_help_event():
                     str(click_snapshot.get("group") or "") == "web_search"
                     or str(click_snapshot.get("label") or "") in allowed_web_labels
                 ):
-                    PostgresAuditRepository().log(
+                    make_postgres_audit_repository().log(
                         user_id=UUID(str(g.current_user.sub)),
                         action="chat.web_search.follow_up_clicked",
                         metadata=click_snapshot,
@@ -467,9 +466,6 @@ def record_assistant_help_event():
         from app.domain.services.chat_presentation_admin_metrics_service import (
             ChatPresentationAdminMetricsService,
         )
-        from app.infrastructure.persistence.postgres_audit_repository import (
-            PostgresAuditRepository,
-        )
 
         event_snapshot = ChatPresentationAdminMetricsService.snapshot_from_event(
             event=event,
@@ -477,7 +473,7 @@ def record_assistant_help_event():
         )
 
         if event_snapshot:
-            PostgresAuditRepository().log(
+            make_postgres_audit_repository().log(
                 user_id=UUID(str(g.current_user.sub)),
                 action="chat.presentation.event",
                 metadata=event_snapshot,
@@ -1082,7 +1078,7 @@ def create_agent_action_provider(agent_id: str):
     if not can_manage_agent:
         return forbidden("You do not have permission to configure actions for this agent")
 
-    repository = PostgresExternalActionRepository()
+    repository = make_postgres_external_action_repository()
     upsert_use_case = make_upsert_chat_agent_action_provider_use_case()
 
     try:
@@ -1162,7 +1158,7 @@ def get_agent_action_provider(agent_id: str, provider_key: str):
     if not linked:
         return _not_found_response()
 
-    repository = PostgresExternalActionRepository()
+    repository = make_postgres_external_action_repository()
     provider = repository.get_provider_details(provider_key)
 
     if not provider:
@@ -1189,7 +1185,7 @@ def update_agent_action_provider(agent_id: str, provider_key: str):
     if not linked:
         return _not_found_response()
 
-    repository = PostgresExternalActionRepository()
+    repository = make_postgres_external_action_repository()
 
     try:
         update_payload = {
@@ -1248,7 +1244,7 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
     if not provider:
         return _not_found_response()
 
-    repository = PostgresExternalActionRepository()
+    repository = make_postgres_external_action_repository()
 
     try:
         result = repository.import_schema_from_url(provider_key=provider_key)
@@ -2873,14 +2869,10 @@ def upsert_message_feedback(session_id: str, message_id: str):
         )
 
         if rating in (-1, 1):
-            from app.infrastructure.persistence.postgres_audit_repository import (
-                PostgresAuditRepository,
-            )
-
             audit_metadata = (result or {}).get("auditMetadata") or {}
 
             if audit_metadata:
-                PostgresAuditRepository().log(
+                make_postgres_audit_repository().log(
                     user_id=UUID(str(g.current_user.sub)),
                     action="chat.feedback.submitted",
                     metadata=audit_metadata,
@@ -2892,7 +2884,7 @@ def upsert_message_feedback(session_id: str, message_id: str):
                 )
 
                 if ChatWebSearchAdminMetricsService.is_web_feedback_reason(reason_value):
-                    PostgresAuditRepository().log(
+                    make_postgres_audit_repository().log(
                         user_id=UUID(str(g.current_user.sub)),
                         action="chat.feedback.web",
                         metadata=ChatWebSearchAdminMetricsService.feedback_audit_metadata(
