@@ -161,11 +161,11 @@ flowchart TB
 ```text
 Fase 0 ─ Governança e baseline          [concluída]
 Fase 1 ─ Unificar turno send/stream     [concluída]
-Fase 2 ─ Desacoplar domain da infra     [lote 1: ports conteúdo/config · 3–4 semanas]
-Fase 3 ─ Quebrar god classes            [4–6 semanas]
-Fase 4 ─ HTTP fino + ports restantes    [2 semanas]
-Fase 5 ─ Enforcement conteúdo + CI      [1–2 semanas]
-Fase 6 ─ Documentação viva + ADRs       [contínuo]
+Fase 2 ─ Desacoplar domain da infra     [lote 1 concluído · ports conteúdo/config]
+Fase 3 ─ Quebrar god classes            [concluída]
+Fase 4 ─ HTTP fino + ports restantes    [concluída]
+Fase 5 ─ Enforcement conteúdo + CI      [concluída]
+Fase 6 ─ Documentação viva + ADRs       [concluída]
 ```
 
 ---
@@ -394,6 +394,7 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 | [`chat-pre-llm-layers.md`](../architecture/chat-pre-llm-layers.md) | Camadas pré-LLM e alvo `ChatTurnContext` |
 | [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md) | Bundles JSON |
 | [`presenter-content-migration-audit.md`](../architecture/presenter-content-migration-audit.md) | Strings residuais |
+| [`adr/README.md`](../architecture/adr/README.md) | Decisões arquiteturais (ADRs) |
 | [`.cursor/rules/chat-intelligence-base.mdc`](../../.cursor/rules/chat-intelligence-base.mdc) | Onde implementar inteligência |
 | [`.cursor/rules/operational-api-routing.mdc`](../../.cursor/rules/operational-api-routing.mdc) | Roteamento API |
 | [`.cursor/rules/assistant-content-json.mdc`](../../.cursor/rules/assistant-content-json.mdc) | Vocabulário |
@@ -402,10 +403,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 6 — documentação viva):**
+**Sprint imediata (pós-playbook 11):**
 
-1. ADRs curtos em `docs/architecture/adr/`.
-2. Índice único em `chat-intelligence-base.md` para sub-sistemas.
+1. Reduzir baseline `hardcoded_pt_strings_baseline.json` (migrar `chat_canvas_content_service` para bundle).
+2. Fase 2 lote 2: ports restantes na application (`Postgres*` inline fora de composition).
+
+**Concluído (Fase 6):** ADRs 001–006 em `docs/architecture/adr/`; índice de sub-sistemas em `chat-intelligence-base.md`; playbook §4 atualizado.
 
 **Concluído (Fase 5):** gate `test_no_hardcoded_pt_strings` + baseline `hardcoded_pt_strings_baseline.json`; scanner em `hardcoded_pt_string_scanner.py`; resíduos presenter (`collectionPreviewLine`, `playbookReports`, `factoryStatus` table); template PR `.github/pull_request_template.md`.
 

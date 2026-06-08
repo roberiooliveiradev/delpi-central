@@ -22,6 +22,35 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 
 **Clean architecture (roadmap):** [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md) — revisão de camadas, débitos, fases 0–6 e baseline [`clean-architecture-baseline.json`](./clean-architecture-baseline.json).
 
+**ADRs:** [`adr/README.md`](./adr/README.md) — decisões aceitas (chat base, paridade send/stream, JSON, ports, HTTP modular, gate de conteúdo).
+
+---
+
+## Índice de sub-sistemas
+
+Mapa de navegação — não substitui a tabela completa em [§ Serviços centrais](#serviços-centrais). Código principal em `app/domain/services/`, `app/application/services/`, use cases em `app/application/use_cases/`.
+
+| Sub-sistema | Responsabilidade | Entrada no código | Docs / ADR |
+|-------------|------------------|-------------------|------------|
+| **Turno send/stream** | Preparação, LLM, conclusão unificados | `app/application/services/chat_turn/` · `SendChatMessageUseCase` · `StreamChatMessageUseCase` | [ADR 002](./adr/002-send-stream-turn-parity.md) · [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md) |
+| **Pipeline pré-tool** | Intenção, direct answer, memória, canvas | `ChatIntelligencePipelineService` · `ChatTurnPreparationService` + delegates `chat_turn_preparation_*` | [ADR 001](./adr/001-chat-base-intelligence.md) |
+| **Tools & actions** | Seleção, execução, contexto para LLM | `ChatToolContextService` + `chat_tool_context_*` · `ExternalActionSelectionService` + `external_action_*_route_selection_*` | [`operational-api-routing`](../../.cursor/rules/operational-api-routing.mdc) |
+| **Presenter & UI de dados** | `humanizedSummary`, tabelas, gráficos | `external_action_result_presenter.py` · `presenters/*_presenter.py` | [ADR 003](./adr/003-assistant-content-json.md) · [`presenter-content-migration-audit.md`](./presenter-content-migration-audit.md) |
+| **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
+| **SQL avançado** | Authoring, schema, execução (com agente) | `ChatAdvancedSqlSpecialistService` · `ChatSql*Service` | Skill `sql-assistant` · policies `sql-*.md` |
+| **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) |
+| **Memória & contexto** | Snapshot, assertividade, projeto | `ChatConversationMemoryService` · `ChatWorkingMemoryService` · `ChatUserContextItemService` | [`session-memory.md`](./session-memory.md) |
+| **Intent & respostas diretas** | Identidade, small talk, gate simples | `ChatIntentRouterService` · `ChatSimpleTurnGateService` · `ChatAssistantIdentityService` | [`intent-routing.md`](./intent-routing.md) |
+| **HTTP & composição** | Rotas finas, DI | `interfaces/http/routes/chat/` · `composition/*_composer.py` | [ADR 004](./adr/004-repository-ports-composition-root.md) · [ADR 005](./adr/005-http-routes-modular-facade.md) |
+| **Admin & qualidade** | Métricas, feedback, relatório semanal | `ChatQualityUnifiedMetricsService` · `GenerateWeeklyQualityReportUseCase` | `GET/POST /admin/metrics/*` · `GET/POST /admin/reports/quality/*` |
+| **Auditoria CI** | God files, domain→infra, conteúdo | `scripts/audit_clean_architecture.py` · `test_no_hardcoded_pt_strings.py` | [`clean-architecture-baseline.json`](./clean-architecture-baseline.json) |
+
+**Delegates do turno (pós-refactor):** `ChatTurnPreparationIngressService`, `ChatTurnPreparationDirectAnswerService`, `ChatTurnPreparationMemoryContextService`, `ChatTurnPreparationToolRoutingService`, `ChatTurnPreparationRagService`, `ChatTurnPreparationPostToolResolutionService`, `ChatTurnPreparationResultService`, `ChatTurnPreparationPreToolContextService` — todos consumidos por `ChatTurnPreparationService.prepare()`.
+
+**Delegates do presenter (pós-refactor):** `ExternalActionProductListPresenter`, `ExternalActionProductAnalyserPresenter`, `ExternalActionKpiChartPresenter`, `ExternalActionPresentationBuilderPresenter`, `ExternalActionOperationalResponsePresenter`, … — acessados via facade `ExternalActionResultPresenter`.
+
+---
+
 **SQL avançado:** o chat base elabora/revisa/explica (skill + advisors); **execução e metadados Protheus** (`POST /data/sql`, `/system/tables/*`) são responsabilidade do **agente** com actions habilitadas — a base não dispara essas chamadas sem `actionsEnabled`.
 
 ### Modos de resposta (rápida / normal / pensador)
@@ -186,7 +215,9 @@ Documentação dedicada: [`email-writing.md`](./email-writing.md) (escrita de e-
 4. **Admin** — `adminDebug.memory` inclui `semanticMemory` e `episodicMemory`.
 5. **Regressão** — `MEMORY_CONTEXT_REGRESSION_CASES` (M1–M17): `scripts/run_memory_context_validation.sh`; assertividade: `CONTEXT_ASSERTIVENESS_CASES` e smokes em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
-A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream.
+A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream — ver [índice de sub-sistemas](#índice-de-sub-sistemas) e [ADR 002](./adr/002-send-stream-turn-parity.md).
+
+Montagem pré-LLM (web search, metadata, prompt): **`ChatTurnLlmAssemblyService`**. Efeitos colaterais no início do turno: **`ChatTurnSideEffectsService`**. Stream: **`ChatStreamTurnPrepareService`**, **`ChatStreamSessionTitleService`**, **`ChatStreamUserMessageService`**.
 
 A conclusão pós-LLM (metadata, persistência, auditoria, memória de sessão) está em **`ChatTurnCompletionService`** (`app/application/services/chat_turn/chat_turn_completion_service.py`), também compartilhada por send e stream.
 
