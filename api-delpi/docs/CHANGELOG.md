@@ -1,0 +1,17 @@
+# CHANGELOG — api-delpi
+
+## 2026-06 — Contrato de respostas (Fase 5)
+
+Normalização de campos Protheus na origem. Use `?legacy=true` para manter o formato antigo durante a transição.
+
+| Campo antigo | Campo novo | Remoção prevista |
+|---|---|---|
+| `exclusive_raw_material: "SIM"/"NAO"` | `exclusive_raw_material: bool` + `exclusive_raw_material_label` | 2026-12 (com `legacy=true` até lá) |
+| `has_stock_for_one_pa: "SIM"/"NAO"` | `has_stock_for_one_pa: bool` + `has_stock_for_one_pa_label` | 2026-12 |
+| `production_started: "SIM"/"NAO"/"SIM_SC2"` | `production_started: bool` + `production_started_label` | 2026-12 |
+| `pa_production_started` / `pi_production_started` (string) | bool + `*_label` em `summary` | 2026-12 |
+| `reference_date` (YYYYMMDD) | mantido + `reference_date_iso` (ISO 8601) | `_iso` permanece; YYYYMMDD removível em 2027-06 |
+| Query `location` (estoque) | Query `warehouse` (preferido; `location` aceito) | `location` removível em 2027-06 |
+| `GET /products/{code}` (dump completo) | `?view=summary` (~15 campos) | opt-in; default `full` inalterado |
+
+**Rotas afetadas:** `/structure/exclusivity`, `/production-status`, `/shipping-status`, `/factory-status`, `/stock`, `/products/{code}`.

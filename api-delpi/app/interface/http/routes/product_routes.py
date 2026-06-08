@@ -75,6 +75,11 @@ from app.interface.http.schemas.openapi_examples import (
     PRODUCT_SUMMARY_EXAMPLE,
 )
 from app.interface.http.schemas.openapi_route_helpers import openapi_example_response
+from app.application.services.product.protheus_field_normalizer import (
+    narrow_product_fields,
+    normalize_playbook_payload,
+    normalize_stock_payload,
+)
 from app.composition.product_composer import (
     build_search_products_use_case,
     build_list_structure_use_case,
@@ -154,7 +159,17 @@ def search_products_route(
     openapi_extra=openapi_example_response(PRODUCT_DETAIL_EXAMPLE),
 )
 @require_permission("api-delpi.access")
-def get_product_detail(code: str):
+def get_product_detail(
+    code: str,
+    view: str = Query(
+        "full",
+        description="full=cadastro completo; summary=subconjunto (~15 campos)",
+    ),
+    legacy: bool = Query(
+        False,
+        description="Reservado para campos normalizados futuros no cadastro",
+    ),
+):
     try:
         dto = ListProductsRequest(code=code, page=1, page_size=1)
         use_case = build_search_products_use_case()
@@ -168,6 +183,7 @@ def get_product_detail(code: str):
 
         product = result.items[0]
         product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)
+        product_dict = narrow_product_fields(product_dict, view=view)
 
         return product_success(
             {"product": product_dict},
@@ -291,11 +307,12 @@ def get_structure(
 def get_structure_exclusivity(
     code: str,
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
     try:
-        dto = ProductPlaybookRequest(code=code, max_depth=max_depth)
+        dto = ProductPlaybookRequest(code=code, max_depth=max_depth, legacy=legacy)
         use_case = build_get_product_structure_exclusivity_use_case()
-        result = use_case.execute(dto)
+        result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
         return success_response(
             data=result,
@@ -318,6 +335,7 @@ def get_production_status(
     reference_date: Optional[str] = Query(default=None),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
     try:
         dto = ProductPlaybookRequest(
@@ -325,9 +343,10 @@ def get_production_status(
             reference_date=reference_date,
             max_depth=max_depth,
             branch=branch,
+            legacy=legacy,
         )
         use_case = build_get_product_production_status_use_case()
-        result = use_case.execute(dto)
+        result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
         return success_response(
             data=result,
@@ -351,6 +370,7 @@ def get_shipping_status(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    legacy: bool = Query(False, description="Omite datas ISO normalizadas"),
 ):
     try:
         dto = ProductPlaybookRequest(
@@ -359,9 +379,10 @@ def get_shipping_status(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
+            legacy=legacy,
         )
         use_case = build_get_product_shipping_status_use_case()
-        result = use_case.execute(dto)
+        result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
         return success_response(
             data=result,
@@ -391,6 +412,7 @@ def get_factory_status(
     date_end: Optional[str] = Query(default=None),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
     try:
         dto = ProductPlaybookRequest(
@@ -400,9 +422,10 @@ def get_factory_status(
             date_end=date_end,
             max_depth=max_depth,
             branch=branch,
+            legacy=legacy,
         )
         use_case = build_get_product_factory_status_use_case()
-        result = use_case.execute(dto)
+        result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
 
         return product_success(
             result,
@@ -668,7 +691,15 @@ def stock(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     branch: Optional[str] = Query(None),
-    location: Optional[str] = Query(None)
+    warehouse: Optional[str] = Query(
+        None,
+        description="Filtra por armazém (preferido; equivalente a location)",
+    ),
+    location: Optional[str] = Query(
+        None,
+        description="Alias legado de warehouse — preferir warehouse",
+    ),
+    legacy: bool = Query(False, description="Omite alias location nos itens de estoque"),
 ):
 
     try:
@@ -678,12 +709,12 @@ def stock(
             page=page,
             page_size=page_size,
             branch=branch,
-            location=location
+            location=warehouse or location,
         )
 
         use_case = build_list_product_stock_use_case()
 
-        result = use_case.execute(dto)
+        result = normalize_stock_payload(use_case.execute(dto), legacy=legacy)
 
         return product_success(
             result,

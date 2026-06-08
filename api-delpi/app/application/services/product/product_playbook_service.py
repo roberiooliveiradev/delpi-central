@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from app.application.services.product.protheus_field_normalizer import is_protheus_yes
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
@@ -38,7 +39,7 @@ def summarize_structure(items: list[dict]) -> dict:
     pis = [item for item in items if item.get("component_type") == "PI"]
     mps = [item for item in items if item.get("component_type") == "MP"]
     exclusive_mps = [
-        item for item in mps if item.get("exclusive_raw_material") == "SIM"
+        item for item in mps if is_protheus_yes(item.get("exclusive_raw_material"))
     ]
 
     return {
@@ -68,13 +69,13 @@ def summarize_raw_material_stock(items: list[dict]) -> dict:
             },
         )
         entry["available_quantity"] += _to_float(item.get("available_quantity"))
-        if item.get("has_stock_for_one_pa") == "SIM":
+        if is_protheus_yes(item.get("has_stock_for_one_pa")):
             entry["has_stock_for_one_pa"] = "SIM"
 
     without_stock = [
         code
         for code, entry in by_code.items()
-        if entry["has_stock_for_one_pa"] != "SIM"
+        if not is_protheus_yes(entry["has_stock_for_one_pa"])
     ]
 
     return {
@@ -92,7 +93,7 @@ def summarize_production(items: list[dict]) -> dict:
         return [
             row
             for row in rows
-            if row.get("production_started") in ("SIM", "SIM_SC2")
+            if is_protheus_yes(row.get("production_started"))
         ]
 
     pa_started = _started_rows(pa_items)
@@ -140,8 +141,8 @@ def classify_factory_status(
         return "ESTRUTURA OK, SEM OP LOCALIZADA"
 
     production_started = (
-        production_summary.get("pa_production_started") == "SIM"
-        or production_summary.get("pi_production_started") == "SIM"
+        is_protheus_yes(production_summary.get("pa_production_started"))
+        or is_protheus_yes(production_summary.get("pi_production_started"))
     )
     if not production_started:
         return "OP ABERTA / NÃO INICIADO"
@@ -156,8 +157,8 @@ def classify_factory_status(
     if has_inspection_reports and shipped == 0 and loss > 0:
         return "PA INSPECIONADO COM PERDA"
 
-    pa_started = production_summary.get("pa_production_started") == "SIM"
-    pi_started = production_summary.get("pi_production_started") == "SIM"
+    pa_started = is_protheus_yes(production_summary.get("pa_production_started"))
+    pi_started = is_protheus_yes(production_summary.get("pi_production_started"))
 
     if pi_started and not has_inspection_reports:
         return "INTERMEDIÁRIOS EM PRODUÇÃO / PA NÃO FINALIZADO"

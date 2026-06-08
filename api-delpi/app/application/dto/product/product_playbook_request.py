@@ -10,3 +10,4 @@ class ProductPlaybookRequest:
     date_start: Optional[str] = None
     date_end: Optional[str] = None
     branch: Optional[str] = None
+    legacy: bool = False

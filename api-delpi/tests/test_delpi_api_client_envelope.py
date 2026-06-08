@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
 
 from delpi_api_client.envelope import format_error_message, parse_envelope  # noqa: E402
+from delpi_api_client.protheus_fields import coerce_yes_no, read_yes_no_label  # noqa: E402
 
 
 def test_parse_envelope_extracts_data_meta_error() -> None:
@@ -37,3 +38,16 @@ def test_format_error_message_with_code() -> None:
         }
     )
     assert message == "[PRODUCT_NOT_FOUND] Produto não encontrado"
+
+
+def test_coerce_yes_no_accepts_normalized_and_legacy() -> None:
+    assert coerce_yes_no(True) is True
+    assert coerce_yes_no("SIM") is True
+    assert coerce_yes_no("NAO") is False
+
+
+def test_read_yes_no_label_from_normalized_payload() -> None:
+    assert read_yes_no_label(
+        {"exclusive_raw_material": True, "exclusive_raw_material_label": "Sim"},
+        "exclusive_raw_material",
+    ) == "Sim"

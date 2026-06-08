@@ -10,6 +10,9 @@ from app.application.use_cases.product.get_product_factory_status_use_case impor
 from app.application.use_cases.product.get_product_production_status_use_case import (
     GetProductProductionStatusUseCase,
 )
+from app.application.services.product.protheus_field_normalizer import (
+    normalize_playbook_payload,
+)
 from app.application.use_cases.product.get_product_structure_exclusivity_use_case import (
     GetProductStructureExclusivityUseCase,
 )
@@ -132,3 +135,18 @@ def test_factory_status_use_case_aggregates_sections() -> None:
 def test_resolve_protheus_date_rejects_invalid_value() -> None:
     with pytest.raises(ValueError):
         service.resolve_protheus_date("data-invalida")
+
+
+def test_structure_exclusivity_normalized_types_default() -> None:
+    repository = MagicMock()
+    repository.fetch_product_header.return_value = {"product_code": "90269001"}
+    repository.fetch_structure_with_exclusivity.return_value = [
+        {"component_type": "MP", "exclusive_raw_material": "SIM"},
+    ]
+
+    use_case = GetProductStructureExclusivityUseCase(repository)
+    raw = use_case.execute(ProductPlaybookRequest(code="90269001"))
+    result = normalize_playbook_payload(raw, legacy=False)
+
+    assert result["items"][0]["exclusive_raw_material"] is True
+    assert result["items"][0]["exclusive_raw_material_label"] == "Sim"

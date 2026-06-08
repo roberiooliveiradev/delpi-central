@@ -34,7 +34,12 @@ GET /apps/api-delpi/products/search?description=parafuso&page=1&page_size=20
 
 Dados cadastrais do produto (leve, sem o payload completo do analyser).
 
-Campos típicos: `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `last_purchase_price`, `standard_cost`, `last_revision_date`, `ncm_ipi_position`.
+| Query | Default | Descrição |
+|---|---|---|
+| `view` | `full` | `summary` retorna ~15 campos (`code`, `description`, `type`, `unit`, `group_code`, `active`, `blocked`, `default_warehouse`, preços, NCM, revisão, `make_or_buy`). |
+| `legacy` | `false` | Reservado para evoluções de cadastro; playbook usa em rotas fabris. |
+
+Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `last_purchase_price`, `standard_cost`, `last_revision_date`, `ncm_ipi_position`.
 
 **Uso no chat:** perguntas de descrição, “o que é o produto X”, dados cadastrais — preferir esta rota antes do `/analyser` quando não precisar de todas as dimensões.
 
@@ -69,6 +74,10 @@ Estrutura vigente multinível com **exclusividade de matérias-primas** (playboo
 
 Retorna `product`, `items` (componentes com `exclusive_raw_material`, `accumulated_quantity`, `path`) e `summary` (`total_intermediates`, `total_raw_materials`, `total_exclusive_raw_materials`).
 
+| Query | Default | Descrição |
+|---|---|---|
+| `legacy` | `false` | `false`: `exclusive_raw_material` é `bool` + `exclusive_raw_material_label`; `true`: string `SIM`/`NAO` legada. |
+
 **Uso no chat:** MPs exclusivas, estrutura com quantidade acumulada por PA, BOM com flag de exclusividade.
 
 ---
@@ -82,6 +91,7 @@ Situação produtiva do PA e intermediários com OPs (`SC2010`) e apontamentos (
 | `reference_date` | Data de avaliação (`YYYY-MM-DD` ou `DD/MM/YYYY`; default: hoje). |
 | `max_depth` | Profundidade da BOM (default `50`). |
 | `branch` | Filial (`01`, `02`). |
+| `legacy` | `false` | `false`: `production_started` bool + label; resposta inclui `reference_date_iso`. |
 
 Retorna `items` por produto da rota (PA + PIs) com OP, apontamentos, `production_started`, `equivalent_in_pa` e `summary`.
 
@@ -98,6 +108,7 @@ Quantidade do PA finalizada para expedição e perdas no **CT de inspeção fina
 | `reference_date` | Atalho para dia único (equivale a `date_start` quando `date_end` omitido). |
 | `date_start`, `date_end` | Período inclusivo no início e exclusivo no fim (`H6_DTAPONT >= start` e `< end+1`). |
 | `branch` | Filial (`01`, `02`). |
+| `legacy` | `false` | `false`: inclui `date_start_iso` / `date_end_exclusive_iso`. |
 
 Retorna apontamentos agregados por OP/recurso/CT com `shipped_quantity`, `inspection_loss_quantity` e totais em `summary`.
 
@@ -115,6 +126,7 @@ Visão fabril consolidada (playbook `playbook-visaostatus-produto.md`): estrutur
 | `date_start`, `date_end` | Período de expedição (default: dia de `reference_date`). |
 | `max_depth` | Profundidade da BOM (default `50`). |
 | `branch` | Filial opcional. |
+| `legacy` | `false` | `false`: booleanos normalizados + datas ISO; `true`: formato Protheus legado. |
 
 Retorna blocos `structure`, `raw_material_stock`, `production`, `shipping`, `indicators` e `factory_status` (ex.: `PA FINALIZADO / LIBERADO PARA EXPEDIÇÃO`).
 
@@ -204,9 +216,12 @@ Movimentações internas de estoque.
 
 Posição de estoque.
 
-| Query | Descrição |
-|---|---|
-| `branch`, `location` | Filtros de filial e local. |
+| Query | Default | Descrição |
+|---|---|---|
+| `branch` | — | Filial. |
+| `warehouse` | — | Armazém/local (preferido). |
+| `location` | — | Alias legado de `warehouse` (aceito). |
+| `legacy` | `false` | `false`: cada item inclui `location` espelhando `warehouse`. |
 
 ---
 

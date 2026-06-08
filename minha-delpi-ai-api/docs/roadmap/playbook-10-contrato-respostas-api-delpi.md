@@ -402,17 +402,17 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] Booleanos: `exclusive_raw_material: true` + `exclusive_raw_material_label: "Sim"` (manter legado opcional por query `?legacy=true` durante transição).
-- [ ] Datas ISO 8601 em campos novos (`reference_date_iso`); manter `YYYYMMDD` em `*_raw` se necessário.
-- [ ] Alinhar nomes: `warehouse` ↔ query `location` (deprecar um com alias documentado).
-- [ ] `GET /products/{code}?view=summary` — subset de campos (~15) vs cadastro completo.
+- [x] Booleanos: `exclusive_raw_material: true` + `exclusive_raw_material_label: "Sim"` (manter legado opcional por query `?legacy=true` durante transição).
+- [x] Datas ISO 8601 em campos novos (`reference_date_iso`); manter `YYYYMMDD` em `*_raw` se necessário.
+- [x] Alinhar nomes: `warehouse` ↔ query `location` (deprecar um com alias documentado).
+- [x] `GET /products/{code}?view=summary` — subset de campos (~15) vs cadastro completo.
 
 **Entregas (consumidores — obrigatório nesta fase):**
 
-- [ ] Query `?legacy=true` (default `false`) devolve campos antigos (`SIM`/`NAO`, `YYYYMMDD`) onde houver normalização.
-- [ ] Atualizar tipos TS dos dashboards **somente** se adotarem campos novos; senão continuam ignorando.
-- [ ] Gateways SI: ler campos novos com fallback para legado (`exclusive_raw_material` bool OU string).
-- [ ] CHANGELOG api-delpi com tabela «campo antigo → campo novo → data de remoção».
+- [x] Query `?legacy=true` (default `false`) devolve campos antigos (`SIM`/`NAO`, `YYYYMMDD`) onde houver normalização.
+- [x] Atualizar tipos TS dos dashboards **somente** se adotarem campos novos; senão continuam ignorando.
+- [x] Gateways SI: ler campos novos com fallback para legado (`exclusive_raw_material` bool OU string).
+- [x] CHANGELOG api-delpi com tabela «campo antigo → campo novo → data de remoção».
 
 **Critério de aceite:** Testes de use case com asserts em tipos normalizados; guia 02-produtos atualizado; **smoke SI + 3 dashboards** com e sem `legacy=true`.
 
