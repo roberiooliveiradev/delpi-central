@@ -1286,6 +1286,21 @@ class StrategicIndicatorsCalculator:
                 competence=competence,
             )
 
+        if (
+            (indicator.scope_type or "").strip() == "per_unit"
+            and indicator.goal_value is not None
+            and getattr(indicator, "has_resolved_goal", True)
+        ):
+            return self.calculate_comparable_goal(
+                goal_value=indicator.goal_value,
+                goal_periodicity=indicator.goal_periodicity,
+                goal_mode=getattr(indicator, "goal_mode", "standard"),
+                monthly_targets=getattr(indicator, "monthly_targets", None),
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
         return None
 
     def _build_indicator_without_goal_for_view(

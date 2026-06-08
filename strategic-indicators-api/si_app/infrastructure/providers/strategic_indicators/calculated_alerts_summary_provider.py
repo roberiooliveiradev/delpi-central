@@ -26,6 +26,9 @@ class CalculatedStrategicIndicatorsAlertsSummaryProvider(
         alerts: list[dict] = []
 
         if not departments and measurement_errors:
+            fetch_alert = self._build_measurement_error_alert(measurement_errors)
+            if fetch_alert is not None:
+                return [fetch_alert]
             return [
                 {
                     "title": "Falha na coleta dos indicadores do período",

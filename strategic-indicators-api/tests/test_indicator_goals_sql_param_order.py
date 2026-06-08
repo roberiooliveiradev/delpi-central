@@ -5,6 +5,7 @@ from datetime import date
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
     PostgresStrategicIndicatorsIndicatorGoalsRepository,
 )
+from si_app.shared.goal_scope import uses_strict_branch_goal_resolution
 
 
 def test_resolved_goals_params_place_branch_after_validity_dates() -> None:
@@ -27,4 +28,7 @@ def test_resolved_goals_params_place_branch_after_validity_dates() -> None:
     )
     params.extend(scope_order_params)
 
-    assert params == [2026, "01", reference, reference, "01"]
+    if uses_strict_branch_goal_resolution("01"):
+        assert params == [2026, "01", reference, reference]
+    else:
+        assert params == [2026, "01", reference, reference, "01"]

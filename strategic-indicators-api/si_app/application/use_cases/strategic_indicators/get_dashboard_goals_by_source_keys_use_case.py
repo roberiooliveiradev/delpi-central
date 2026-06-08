@@ -191,7 +191,10 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 item_view_branch
             )
             if branch_goal:
-                return branch_goal
+                return {
+                    **branch_goal,
+                    "goal_scope_branch": item_view_branch,
+                }
 
         resolved = goals_by_indicator.get(indicator_id)
         if resolved is None:
