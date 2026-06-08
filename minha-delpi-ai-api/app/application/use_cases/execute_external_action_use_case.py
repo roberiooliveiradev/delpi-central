@@ -350,6 +350,8 @@ class ExecuteExternalActionUseCase:
             preferred_format = "dashboard"
         elif price_like and text_presentation and not session_format:
             preferred_format = "text"
+        elif kpi_presentation and not session_format:
+            preferred_format = "kpi"
         else:
             preferred_format = ChatPresentationRoutePolicyService.resolve_default_preferred_format(
                 path=resolved_path,
@@ -358,6 +360,7 @@ class ExecuteExternalActionUseCase:
                 has_table=bool(table_presentation or table_presentations_list),
                 has_chart=bool(chart_presentation),
                 has_text=bool(text_presentation),
+                has_kpi=bool(kpi_presentation),
             )
 
         data_coverage_notice = ChatDataCoverageNoticeService.build(
@@ -455,8 +458,41 @@ class ExecuteExternalActionUseCase:
         ChatRichPresentationTextService.compact_metadata_text(metadata)
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
+        self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
 
         return metadata
+
+    @staticmethod
+    def _align_presentation_with_decision(
+        metadata: dict,
+        *,
+        kpi_presentation: dict | None,
+    ) -> None:
+        decision = metadata.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        selected = str(decision.get("selected") or "").strip().lower()
+        presentation = metadata.get("presentation")
+        text_presentation = metadata.get("textPresentation")
+
+        if selected == "kpi" and isinstance(kpi_presentation, dict):
+            metadata["presentation"] = kpi_presentation
+
+            if isinstance(text_presentation, dict):
+                title = str(
+                    text_presentation.get("title")
+                    or kpi_presentation.get("title")
+                    or ""
+                ).strip()
+                text_presentation["markdown"] = f"### {title}".strip() if title else ""
+
+            return
+
+        if selected == "text" and isinstance(presentation, dict) and presentation.get("type") == "kpi":
+            metadata["kpiPresentation"] = presentation
+            metadata["presentation"] = None
 
     @staticmethod
     def _normalize_eficiencia_fabril_titles(metadata: dict, path: str) -> None:

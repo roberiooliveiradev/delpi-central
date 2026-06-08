@@ -61,6 +61,7 @@ class ChatPresentationRoutePolicyService:
         has_table: bool = False,
         has_chart: bool = False,
         has_text: bool = False,
+        has_kpi: bool = False,
     ) -> str | None:
         token = str(session_format or "").strip().lower()
 
@@ -85,6 +86,9 @@ class ChatPresentationRoutePolicyService:
 
         if has_table and cls.is_table_route(lowered):
             return "table"
+
+        if has_kpi:
+            return "kpi"
 
         if has_chart:
             return "chart"

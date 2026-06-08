@@ -1906,6 +1906,17 @@ class ChatToolContextService:
                     for line in (humanized.get("linhas") or [])
                     if str(line or "").strip()
                 ]
+                decision = safe_metadata.get("presentationDecision")
+
+                if (
+                    isinstance(decision, dict)
+                    and str(decision.get("selected") or "").strip().lower() == "kpi"
+                    and linhas
+                ):
+                    titulo = str(humanized.get("titulo") or "").strip()
+                    linhas = [
+                        titulo or "Indicadores disponíveis no painel de KPIs.",
+                    ]
 
                 if humanized.get("titulo") or linhas:
                     titulo = str(humanized.get("titulo") or "").strip()
