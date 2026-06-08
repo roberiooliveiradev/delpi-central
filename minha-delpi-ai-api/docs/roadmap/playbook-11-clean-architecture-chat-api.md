@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 16):**
+**Sprint imediata (Fase 3 — god classes, lote 17):**
 
-1. Continuar delegates residuais de `external_action_result_presenter.py` (path helpers, `_path_fragment_title`, delegates finos restantes).
-2. Fatiar `chat_turn_preparation_service.py` — candidato: fase de memória/conversation context pós-direct-answer.
+1. **3B:** retomar fatiamento de `external_action_selection_service.py` (~2236 linhas) — próximo candidato: heurísticas de dashboard/KPI.
+2. **3C:** fatiar `chat_turn_preparation_service.py` — fase de skip-tools/RAG pós-memória (~linhas 430–700).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -450,5 +450,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 15):** `ExternalActionOperationalResponsePresenter` (~350 linhas) e `ExternalActionProductOverviewPresenter` (~300 linhas); empty operational, erros API, normalização e visão geral de produto migrados para `_operational_response()` e `_product_overview()`; facade **1481 → ~944** linhas.
 
 **Concluído (Fase 3C lote 15):** `ChatTurnPreparationDirectAnswerService` (~250 linhas); direct-answers pré-tool extraídos; texto de interpretação sem dados em `turn_preparation.json`; `chat_turn_preparation_service.py` **1282 → ~1151** linhas.
+
+**Concluído (Fase 3A lote 16):** `ExternalActionPresenterContentPresenter` e `ExternalActionPresentationShapePresenter`; `_path_fragment_title`, textos JSON e detecção tabular/inspeção migrados; facade **944 → ~903** linhas.
+
+**Concluído (Fase 3C lote 16):** `ChatTurnPreparationMemoryContextService` (~130 linhas); memória de trabalho e conversation context extraídos; `chat_turn_preparation_service.py` **1151 → ~1078** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

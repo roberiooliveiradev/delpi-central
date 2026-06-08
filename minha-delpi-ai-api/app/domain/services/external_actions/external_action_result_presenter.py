@@ -59,6 +59,12 @@ from app.domain.services.external_actions.presenters.operational_response_presen
 from app.domain.services.external_actions.presenters.product_overview_presenter import (
     ExternalActionProductOverviewPresenter,
 )
+from app.domain.services.external_actions.presenters.presenter_content_presenter import (
+    ExternalActionPresenterContentPresenter,
+)
+from app.domain.services.external_actions.presenters.presentation_shape_presenter import (
+    ExternalActionPresentationShapePresenter,
+)
 
 
 class ExternalActionResultPresenter:
@@ -83,6 +89,8 @@ class ExternalActionResultPresenter:
         self._route_line_presenter: ExternalActionRouteLinePresenter | None = None
         self._operational_response_presenter: ExternalActionOperationalResponsePresenter | None = None
         self._product_overview_presenter: ExternalActionProductOverviewPresenter | None = None
+        self._presenter_content_presenter: ExternalActionPresenterContentPresenter | None = None
+        self._presentation_shape_presenter: ExternalActionPresentationShapePresenter | None = None
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -173,6 +181,18 @@ class ExternalActionResultPresenter:
 
         return self._product_overview_presenter
 
+    def _presenter_content(self) -> ExternalActionPresenterContentPresenter:
+        if self._presenter_content_presenter is None:
+            self._presenter_content_presenter = ExternalActionPresenterContentPresenter(self)
+
+        return self._presenter_content_presenter
+
+    def _presentation_shape(self) -> ExternalActionPresentationShapePresenter:
+        if self._presentation_shape_presenter is None:
+            self._presentation_shape_presenter = ExternalActionPresentationShapePresenter(self)
+
+        return self._presentation_shape_presenter
+
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
         previous_formats = self._active_schema_formats
@@ -244,26 +264,7 @@ class ExternalActionResultPresenter:
 
 
     def _path_fragment_title(self, fragment: str) -> str | None:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
-
-        key = str(fragment or "").strip()
-        if not key:
-            return None
-
-        if not key.startswith("/"):
-            key = f"/{key}"
-
-        return ChatAssistantContentService.get(
-            "presenter_content",
-            "titlesByPathFragment",
-            key,
-        ) or ChatAssistantContentService.get(
-            "presenter_content",
-            "titlesByPathFragment",
-            key.lstrip("/"),
-        )
+        return self._presenter_content()._path_fragment_title(fragment)
 
 
     def _is_product_operational_path(self, path: str) -> bool:
@@ -356,23 +357,7 @@ class ExternalActionResultPresenter:
 
 
     def _looks_like_inspection_item(self, item: dict) -> bool:
-        return any(
-            key in item
-            for key in (
-                "inspection_type",
-                "characteristic",
-                "specification",
-                "has_inspection",
-                "measurable_tests",
-                "textual_tests",
-                "QP6",
-                "QP7",
-                "QP8",
-                "qp6",
-                "qp7",
-                "qp8",
-            )
-        )
+        return self._presentation_shape()._looks_like_inspection_item(item)
 
 
 
@@ -837,17 +822,7 @@ class ExternalActionResultPresenter:
         return self._kpi_chart().build_chart_presentation(data, path=path, force=force)
 
     def _is_tabular_data(self, row: dict) -> bool:
-        """Dados que naturalmente beneficiam de apresentação em tabela mesmo com 1 registro."""
-        tabular_markers = [
-            "warehouse", "current_quantity", "available_quantity",
-            "supplier_code", "supplier_name", "customer_code", "customer_name",
-            "table_code", "sale_price", "invoice_number",
-            "order_number", "sale_number",
-            "step", "sequence", "inspection_type", "characteristic",
-            "origin_warehouse", "destination_warehouse", "movement_date",
-            "operation_code", "operation_description", "route_code", "work_center",
-        ]
-        return any(k in row for k in tabular_markers)
+        return self._presentation_shape()._is_tabular_data(row)
 
     def _is_stock_data(self, row: dict) -> bool:
         return self._kpi_chart()._is_stock_data(row)
@@ -902,13 +877,13 @@ class ExternalActionResultPresenter:
         return self._column_labels.format_num(value)
 
     def _analyser_markdown(self, key: str, **values: str) -> str:
-        return self._presenter_text("analyserMarkdown", key, **values)
+        return self._presenter_content()._analyser_markdown(key, **values)
 
     def _route_narrative(self, route: str, key: str, **values: str) -> str:
-        return self._presenter_text("routeNarratives", route, key, **values)
+        return self._presenter_content()._route_narrative(route, key, **values)
 
     def _route_presentation(self, route: str, key: str, **values: str) -> str:
-        return self._presenter_text("routePresentations", route, key, **values)
+        return self._presenter_content()._route_presentation(route, key, **values)
 
     def _presenter_text(
         self,
@@ -917,28 +892,12 @@ class ExternalActionResultPresenter:
         *extra_path: str,
         **values: str,
     ) -> str:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
-
-        path = (section, text_key, *extra_path)
-
-        if values:
-            return ChatAssistantContentService.format(
-                "presenter_content",
-                *path,
-                **values,
-            )
-
-        return ChatAssistantContentService.get("presenter_content", *path)
-
-    def _presenter_root_format(self, key: str, **values: str) -> str:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
-
-        return ChatAssistantContentService.format(
-            "presenter_content",
-            key,
+        return self._presenter_content()._presenter_text(
+            section,
+            text_key,
+            *extra_path,
             **values,
         )
+
+    def _presenter_root_format(self, key: str, **values: str) -> str:
+        return self._presenter_content()._presenter_root_format(key, **values)
