@@ -90,11 +90,41 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return sql, params_ad1
 
     def _engineering_residence_filter_sql(self) -> str:
+        """Tempo mínimo em engenharia aplica somente a LMP; Amostra e Outro listam sempre."""
         return f"""
             WHERE
-                C.LISTING_KIND <> '{LISTING_KIND_LMP}'
-                OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+                C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                OR (
+                    C.LISTING_KIND = '{LISTING_KIND_LMP}'
+                    AND (
+                        ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+                        OR C.HAS_SAMPLE_ANCHOR = 1
+                    )
+                )
         """
+
+    def _effective_listing_kind_expr(self) -> str:
+        return f"""
+            CASE
+                WHEN C.LISTING_KIND = '{LISTING_KIND_LMP}'
+                 AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
+                 AND C.HAS_SAMPLE_ANCHOR = 1
+                THEN '{LISTING_KIND_SAMPLE}'
+                ELSE C.LISTING_KIND
+            END
+        """
+
+    def _staged_residence_final_params(
+        self,
+        *,
+        listing_kind_reclass_count: int = 1,
+        residence_filter_count: int = 1,
+    ) -> tuple:
+        minutes = self._min_engineering_residence_minutes()
+        params: list[int] = []
+        params.extend([minutes] * residence_filter_count)
+        params.extend([minutes] * listing_kind_reclass_count)
+        return tuple(params)
 
     def _get_request_branch(self, request) -> str | None:
         return getattr(request, "branch", None)
@@ -635,6 +665,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     AD1.AD1_REVISA,
                     AD1.AD1_DESCRI,
                     L.LISTING_KIND,
+                    CASE
+                        WHEN SA.AIJ_NROPOR IS NOT NULL THEN 1
+                        ELSE 0
+                    END AS HAS_SAMPLE_ANCHOR,
                     L.ANCHOR_START_DATE AS LMP_START_DATE,
                     L.ANCHOR_END_DATE AS LMP_END_DATE
                 FROM AD1010 AD1
@@ -642,6 +676,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND L.AIJ_NROPOR = AD1.AD1_NROPOR
                    AND L.AIJ_REVISA = AD1.AD1_REVISA
+                LEFT JOIN SampleAnchorOvKeys SA
+                    ON SA.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND SA.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND SA.AIJ_REVISA = AD1.AD1_REVISA
                 WHERE {where_ad1}
                   AND {where_period_anchor}
                   {listing_kind_clause}
@@ -654,6 +692,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     AD1.AD1_REVISA,
                     AD1.AD1_DESCRI,
                     ? AS LISTING_KIND,
+                    0 AS HAS_SAMPLE_ANCHOR,
                     R.ANCHOR_START_DATE AS LMP_START_DATE,
                     R.ANCHOR_END_DATE AS LMP_END_DATE
                 FROM AD1010 AD1
@@ -1279,6 +1318,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 WHERE A.RN_DESC = 1
             ),
 
+            SampleAnchorOvKeys AS (
+                SELECT DISTINCT
+                    R.AIJ_FILIAL,
+                    R.AIJ_NROPOR,
+                    R.AIJ_REVISA
+                FROM AllListingAnchorRaw R
+                WHERE R.LISTING_KIND = '{LISTING_KIND_SAMPLE}'
+            ),
+
             ListingAnchorEventos AS (
                 SELECT
                     F.AIJ_FILIAL,
@@ -1798,6 +1846,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """ if include_qtd_pi else ""
         qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
         residence_filter = self._engineering_residence_filter_sql()
+        listing_kind_expr = self._effective_listing_kind_expr()
         order_clause = """
             ORDER BY
                 C.LMP_START_DATE DESC,
@@ -1810,7 +1859,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.AD1_FILIAL AS branch,
                     C.AD1_NROPOR AS sale_number,
                     C.AD1_DESCRI AS sale_description,
-                    C.LISTING_KIND AS listing_kind,
+                    {listing_kind_expr} AS listing_kind,
                     C.LMP_START_DATE AS start_date,
                     C.LMP_END_DATE AS end_date,
                     H.ENGINEERING_STATUS AS engineering_status,
@@ -1827,6 +1876,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.AD1_NROPOR,
                     C.AD1_DESCRI,
                     C.LISTING_KIND,
+                    C.HAS_SAMPLE_ANCHOR,
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
                     H.ENGINEERING_STATUS,
@@ -1840,7 +1890,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 C.AD1_FILIAL AS branch,
                 C.AD1_NROPOR AS sale_number,
                 C.AD1_DESCRI AS sale_description,
-                C.LISTING_KIND AS listing_kind,
+                {listing_kind_expr} AS listing_kind,
                 C.LMP_START_DATE AS start_date,
                 C.LMP_END_DATE AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
@@ -1861,6 +1911,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 C.AD1_NROPOR,
                 C.AD1_DESCRI,
                 C.LISTING_KIND,
+                C.HAS_SAMPLE_ANCHOR,
                 C.LMP_START_DATE,
                 C.LMP_END_DATE,
                 H.ENGINEERING_STATUS,
@@ -1900,6 +1951,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.AD1_NROPOR,
                     C.AD1_DESCRI,
                     C.LISTING_KIND,
+                    C.HAS_SAMPLE_ANCHOR,
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
                     H.ENGINEERING_STATUS,
@@ -1924,7 +1976,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             request,
             include_qtd_pi=include_qtd_pi,
             final_select=final_select,
-            final_params=(self._min_engineering_residence_minutes(),),
+            final_params=self._staged_residence_final_params(
+                residence_filter_count=1,
+                listing_kind_reclass_count=1,
+            ),
         )
         with self as repo:
             rows = repo.execute_batch_query(batch_sql, batch_params)
@@ -1956,14 +2011,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             OFFSET ? ROWS
             FETCH NEXT ? ROWS ONLY
         """
-        min_residence = self._min_engineering_residence_minutes()
         batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
             final_select=combined_final,
             final_params=(
-                min_residence,
-                min_residence,
+                *self._staged_residence_final_params(
+                    residence_filter_count=2,
+                    listing_kind_reclass_count=1,
+                ),
                 offset,
                 page_size,
             ),
@@ -2063,7 +2119,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             include_qtd_pi=include_qtd_pi,
             lmp_only=lmp_only,
             final_select=final_select,
-            final_params=(self._min_engineering_residence_minutes(),),
+            final_params=self._staged_residence_final_params(
+                residence_filter_count=1,
+                listing_kind_reclass_count=1,
+            ),
         )
 
         with self as repo:

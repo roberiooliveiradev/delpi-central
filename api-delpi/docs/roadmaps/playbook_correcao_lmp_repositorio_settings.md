@@ -770,8 +770,14 @@ Contagem da página = quantidade real da lista
 def _engineering_residence_filter_sql(self) -> str:
     return """
         WHERE
-            C.LISTING_KIND <> 'LMP'
-            OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+            C.LISTING_KIND IN ('AMOSTRA', 'OUTRO')
+            OR (
+                C.LISTING_KIND = 'LMP'
+                AND (
+                    ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+                    OR C.HAS_SAMPLE_ANCHOR = 1
+                )
+            )
     """
 ```
 
@@ -785,6 +791,27 @@ def _engineering_residence_filter_sql(self) -> str:
 | LMP com passagem rápida | LMP | 0 | Não listar |
 | OUTRO com passagem rápida | OUTRO | 0 | Listar |
 
+### Reclassificação LMP pontual com marcador de Amostra
+
+Quando a âncora inicial é `LMP` mas `TEMPO_TOTAL_MINUTOS_ENG < 30` e existe marcador de
+`AMOSTRA` na revisão (`HAS_SAMPLE_ANCHOR = 1`), reclassificar para `AMOSTRA` e listar.
+
+Caso típico: OV `003578` (jun/2026) — passagem pontual na engenharia com 0 minuto.
+
+```sql
+-- inclusão no filtro
+OR C.HAS_SAMPLE_ANCHOR = 1
+
+-- tipo exibido
+CASE
+    WHEN C.LISTING_KIND = 'LMP'
+     AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
+     AND C.HAS_SAMPLE_ANCHOR = 1
+    THEN 'AMOSTRA'
+    ELSE C.LISTING_KIND
+END
+```
+
 ### Resumo
 
 ```text
@@ -794,4 +821,5 @@ Filtro de tempo é filtro de LMP.
 Amostra pode ser pontual.
 Outros pode ser pontual.
 LMP precisa comprovar permanência mínima de 30 minutos.
+LMP pontual com marcador de Amostra vira Amostra na listagem.
 ```
