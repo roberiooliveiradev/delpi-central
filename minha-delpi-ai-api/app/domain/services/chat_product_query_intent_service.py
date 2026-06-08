@@ -784,6 +784,42 @@ class ChatProductQueryIntentService:
         )
 
     @classmethod
+    def _has_product_scope_reference(cls, normalized: str) -> bool:
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
+        return bool(
+            cls.extract_product_code(normalized)
+            or ChatProductPluralPhrasingService.has_product_entity_reference(
+                normalized
+            )
+        )
+
+    @classmethod
+    def _looks_like_billing_question(cls, normalized: str) -> bool:
+        if not any(term in normalized for term in cls._terms("billing", "terms")):
+            return False
+
+        return cls._has_product_scope_reference(normalized)
+
+    @classmethod
+    def _looks_like_factory_status_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("factoryStatus", "terms")):
+            return True
+
+        lowered = normalized.lower()
+
+        return (
+            cls._has_product_scope_reference(normalized)
+            and "status" in lowered
+            and any(
+                marker in lowered
+                for marker in ("fabril", "fabrica", "fábrica", "producao", "produção")
+            )
+        )
+
+    @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:
         if any(
             term in normalized

@@ -1,3 +1,6 @@
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -32,6 +35,22 @@ def test_detect_sales_intent_over_stock_provider_preference():
         ChatProductQueryIntentService.detect("mostre vendas do produto 10080001")
         == ChatProductQueryIntent.SALES
     )
+
+
+def test_looks_like_billing_question_with_product_code():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quanto já foi faturado do produto 90260015?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_billing_question(normalized)
+
+
+def test_looks_like_factory_status_question_with_product_code():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Qual o status completo na fábrica do produto 90269002 hoje?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
 
 
 def test_detect_summary_intent():

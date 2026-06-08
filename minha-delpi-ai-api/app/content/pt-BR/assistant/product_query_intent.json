@@ -191,6 +191,42 @@
     ],
     "productSaleTerms": ["vendas", " venda ", " venda do", "venda do"]
   },
+  "billing": {
+    "terms": [
+      "faturado",
+      "faturamento",
+      "billing",
+      "quanto foi faturado",
+      "quanto ja foi faturado",
+      "quanto já foi faturado",
+      "valor faturado",
+      "total faturado",
+      "quanto faturou",
+      "ja faturou",
+      "já faturou"
+    ]
+  },
+  "factoryStatus": {
+    "terms": [
+      "status na fabrica",
+      "status na fábrica",
+      "status fabril",
+      "situacao na fabrica",
+      "situação na fábrica",
+      "situacao fabril",
+      "situação fabril",
+      "status completo na fabrica",
+      "status completo na fábrica",
+      "factory status",
+      "factory-status",
+      "status de producao",
+      "status de produção",
+      "situacao de producao",
+      "situação de produção",
+      "situacao produtiva",
+      "situação produtiva"
+    ]
+  },
   "analyser": {
     "fullQuestion": [
       "ficha completa",
@@ -375,7 +411,12 @@
     "inspeção",
     "inspecao",
     "preço",
-    "preco"
+    "preco",
+    "faturado",
+    "faturamento",
+    "fabril",
+    "fabrica",
+    "fábrica"
   ],
   "router": {
     "operationalKeywords": [
@@ -389,6 +430,10 @@
       "inspecao",
       "venda",
       "faturamento",
+      "faturado",
+      "fabril",
+      "fabrica",
+      "fábrica",
       "pedido",
       "ov ",
       "compra",

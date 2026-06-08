@@ -2475,8 +2475,13 @@ class ExternalActionSelectionService:
                 "historico de compra",
             )
         )
-        wants_billing = any(
-            term in normalized for term in ("faturamento", "billing", "faturado")
+        wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
+            normalized
+        )
+        wants_factory_status = (
+            ChatProductQueryIntentService._looks_like_factory_status_question(
+                normalized
+            )
         )
         wants_open_orders = any(
             term in normalized
@@ -2595,6 +2600,7 @@ class ExternalActionSelectionService:
             or wants_guide or wants_suppliers or wants_pricing or wants_customers
             or wants_parents or wants_movements or wants_invoices or wants_inspection
             or wants_billing
+            or wants_factory_status
             or wants_product_summary
             or wants_product_overview
             or wants_full_analyser
@@ -2614,6 +2620,9 @@ class ExternalActionSelectionService:
 
             if wants_billing and "/sales/billing" in path:
                 value += 125
+
+            if wants_factory_status and "factory-status" in path:
+                value += 140
 
             if wants_open_orders and "open-orders" in path:
                 value += 115

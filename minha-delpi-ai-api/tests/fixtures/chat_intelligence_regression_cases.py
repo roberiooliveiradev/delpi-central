@@ -504,6 +504,50 @@ SELECTION_CASES = [
         "expected_action_id": "analyser",
     },
     {
+        "message": "Quanto já foi faturado do produto 90260015?",
+        "actions": [
+            {
+                "actionId": "billing",
+                "method": "GET",
+                "path": "/products/{code}/sales/billing",
+                "operationId": "get_product_sales_billing",
+                "summary": "Faturamento",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "billing",
+    },
+    {
+        "message": "Qual o status completo na fábrica do produto 90269002 hoje?",
+        "actions": [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador completo",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "factory-status",
+    },
+    {
         "message": "faturamento do produto 10080047",
         "actions": [
             {

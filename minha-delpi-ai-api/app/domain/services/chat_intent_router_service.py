@@ -1193,6 +1193,12 @@ class ChatIntentRouterService:
         if ChatProductQueryIntentService._looks_like_stock_question(normalized):
             return False, ()
 
+        if ChatProductQueryIntentService._looks_like_billing_question(normalized):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
+            return False, ()
+
         if (
             any(
                 term in lowered
@@ -1300,6 +1306,12 @@ class ChatIntentRouterService:
 
         if ChatProductQueryIntentService._looks_like_stock_question(normalized):
             return "stock_lookup"
+
+        if ChatProductQueryIntentService._looks_like_billing_question(normalized):
+            return "billing_lookup"
+
+        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
+            return "factory_status_lookup"
 
         if ChatIntentRouterService._mentions_outbound_invoice(lowered):
             return "sales_lookup"

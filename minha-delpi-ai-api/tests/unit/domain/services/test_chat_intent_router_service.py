@@ -54,6 +54,32 @@ def test_classify_supplier_question_quem_fornece_not_ambiguous():
     assert route.resolved_params == {"productCode": "10080022"}
 
 
+def test_classify_billing_question_not_ambiguous():
+    route = ChatIntentRouterService.classify(
+        "Quanto já foi faturado do produto 90260015?",
+        allowed_action_ids=["get_product_sales_billing"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "billing_lookup"
+    assert route.ambiguous is False
+    assert route.decision == "operational_action"
+    assert route.resolved_params.get("productCode") == "90260015"
+
+
+def test_classify_factory_status_question_not_ambiguous():
+    route = ChatIntentRouterService.classify(
+        "Qual o status completo na fábrica do produto 90269002 hoje?",
+        allowed_action_ids=["get_product_factory_status"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "factory_status_lookup"
+    assert route.ambiguous is False
+    assert route.decision == "operational_action"
+    assert route.resolved_params.get("productCode") == "90269002"
+
+
 def test_classify_financial_rol_routes_to_department_kpi_not_self_help():
     route = ChatIntentRouterService.classify(
         "Qual foi o ROL da empresa em março de 2026?",
