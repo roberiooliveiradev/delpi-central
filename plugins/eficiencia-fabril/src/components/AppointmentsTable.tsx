@@ -126,18 +126,22 @@ export function AppointmentsTable({
                       : "ef-row"
                   }
                 >
-                  <td>{formatDisplayDate(item.data_producao)}</td>
-                  <td>{item.hora_inicio ?? "—"}</td>
-                  <td>{item.hora_final ?? "—"}</td>
-                  <td>{formatNumber(item.qtd_apontada, 3)}</td>
-                  <td>{item.filial ?? "—"}</td>
-                  <td>{item.op ?? "—"}</td>
-                  <td>{item.descricao_produto?.trim() || item.produto || "—"}</td>
-                  <td>{item.centro_trabalho ?? "—"}</td>
-                  <td>{item.nome_operador ?? item.login_operador ?? "—"}</td>
-                  <td>{formatPercent(item.eficiencia_percentual)}</td>
-                  <td>{formatCurrency(item.resultado_mod)}</td>
-                  <td>
+                  <td data-label="Data">{formatDisplayDate(item.data_producao)}</td>
+                  <td data-label="Início">{item.hora_inicio ?? "—"}</td>
+                  <td data-label="Fim">{item.hora_final ?? "—"}</td>
+                  <td data-label="Qtd. apontada">{formatNumber(item.qtd_apontada, 3)}</td>
+                  <td data-label="Filial">{item.filial ?? "—"}</td>
+                  <td data-label="OP">{item.op ?? "—"}</td>
+                  <td data-label="Descrição produto">
+                    {item.descricao_produto?.trim() || item.produto || "—"}
+                  </td>
+                  <td data-label="CT">{item.centro_trabalho ?? "—"}</td>
+                  <td data-label="Operador">
+                    {item.nome_operador ?? item.login_operador ?? "—"}
+                  </td>
+                  <td data-label="Eficiência">{formatPercent(item.eficiencia_percentual)}</td>
+                  <td data-label="Resultado MOD">{formatCurrency(item.resultado_mod)}</td>
+                  <td data-label="Status">
                     {(item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT ? (
                       <span className="ef-badge ef-badge--danger">Verificar</span>
                     ) : (

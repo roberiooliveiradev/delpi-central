@@ -1,9 +1,10 @@
+/** Paleta alinhada ao portal (`--primary`, `--secundary`, `--success`, `--danger`). */
 export const CHART_COLORS = {
   primary: "#089bdb",
   secondary: "#003866",
-  success: "#2e7d32",
-  warning: "#f9a825",
-  danger: "#c62828",
+  success: "#067647",
+  warning: "#f59e0b",
+  danger: "#b42318",
   muted: "#94a3b8",
   planned: "#64748b",
 } as const;

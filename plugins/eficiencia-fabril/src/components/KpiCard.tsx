@@ -17,12 +17,18 @@ export function KpiCard({
 }: KpiCardProps) {
   return (
     <article className={`ef-kpi-card ef-kpi-card--${tone}`}>
-      <div className="ef-kpi-card__header">
-        {icon ? <span className="ef-kpi-card__icon">{icon}</span> : null}
-        <span className="ef-kpi-card__label">{label}</span>
+      <div className="ef-kpi-header">
+        <div>
+          <p className="ef-kpi-card__label">{label}</p>
+          <strong className="ef-kpi-card__value">{value}</strong>
+          {hint ? <p className="ef-kpi-card__hint">{hint}</p> : null}
+        </div>
+        {icon ? (
+          <div className="ef-kpi-icon" aria-hidden="true">
+            {icon}
+          </div>
+        ) : null}
       </div>
-      <strong className="ef-kpi-card__value">{value}</strong>
-      {hint ? <p className="ef-kpi-card__hint">{hint}</p> : null}
     </article>
   );
 }

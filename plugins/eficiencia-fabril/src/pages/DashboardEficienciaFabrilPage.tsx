@@ -35,12 +35,14 @@ export function DashboardEficienciaFabrilPage({ pathname }: DashboardEficienciaF
   if (!branchRoute || !totvsBranch) {
     return (
       <div className="dashboard-eficiencia-fabril dashboard-page">
+        <div className="ef-app-shell">
         <div className="ef-alert ef-alert--error" role="alert">
           <AlertTriangle size={18} aria-hidden />
           <span>
             Filial inválida. Use uma rota como /apps/eficiencia-fabril/sc ou
             /apps/eficiencia-fabril/es.
           </span>
+        </div>
         </div>
       </div>
     );
@@ -99,9 +101,12 @@ function DashboardEficienciaFabrilContent({
 
   return (
     <div className="dashboard-eficiencia-fabril dashboard-page">
+      <div className="ef-app-shell">
       <header className="ef-page-header">
         <div className="ef-page-header__title">
-          <Factory size={28} aria-hidden />
+          <div className="ef-header__icon" aria-hidden="true">
+            <Factory size={28} strokeWidth={1.75} />
+          </div>
           <div>
             <h1>Eficiência Fabril — {branchRoute}</h1>
             <p>
@@ -184,25 +189,25 @@ function DashboardEficienciaFabrilContent({
                   ? "negative"
                   : "default"
               }
-              icon={<Gauge size={20} />}
+              icon={<Gauge size={22} />}
             />
             <KpiCard
               label="Apontamentos"
               value={summary.table_appointment_count.toLocaleString("pt-BR")}
               hint={`${summary.verify_appointment_count.toLocaleString("pt-BR")} a avaliar (Verificar)`}
-              icon={<Factory size={20} />}
+              icon={<Factory size={22} />}
             />
             <KpiCard
               label="Resultado MOD"
               value={formatCurrency(summary.total_mod_result)}
               tone={(summary.total_mod_result ?? 0) >= 0 ? "positive" : "negative"}
-              icon={<TrendingUp size={20} />}
+              icon={<TrendingUp size={22} />}
             />
             <KpiCard
               label="Horas ganhas/perdidas"
               value={formatHoursKpi(summary.total_hours_gained_lost, 2)}
               hint="Positivo = economia de tempo"
-              icon={<Clock3 size={20} />}
+              icon={<Clock3 size={22} />}
             />
           </section>
         ) : null}
@@ -233,6 +238,7 @@ function DashboardEficienciaFabrilContent({
             disabled={loading}
           />
         ) : null}
+      </div>
       </div>
     </div>
   );
