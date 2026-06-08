@@ -13,6 +13,12 @@ from app.domain.services.chat_product_query_intent_service import ChatProductQue
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
+from app.application.services.chat_tool_context_format_service import (
+    ChatToolContextFormatService,
+)
+from app.domain.services.chat_tool_context_presentation_service import (
+    ChatToolContextPresentationService,
+)
 
 
 class ChatToolContextService:
@@ -32,6 +38,7 @@ class ChatToolContextService:
         self.external_action_repository = external_action_repository
         self.native_tool_calling_service = native_tool_calling_service
         self.external_action_result_presenter = ExternalActionResultPresenter()
+        self._format_service = ChatToolContextFormatService(self.external_action_result_presenter)
 
     def build_context(
         self,
@@ -730,7 +737,7 @@ class ChatToolContextService:
                 )
             )
 
-        session_response_format = self._session_response_format(
+        session_response_format = ChatToolContextFormatService.session_response_format(
             getattr(self, "_build_workspace_context", None),
         )
 
@@ -1147,15 +1154,19 @@ class ChatToolContextService:
                 )
                 web_search_payload = last_web_search_data
 
-        requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
+        requested_format = self._format_service.resolve_consolidation_format(
+            raw_message,
+            previous_messages,
+            workspace_context=getattr(self, "_build_workspace_context", None),
+        )
         if requested_format:
-            self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
+            self._format_service.apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
 
         if direct_answer and requested_format != "table":
-            self._suppress_redundant_structure_presentations(safe_tool_calls)
+            ChatToolContextPresentationService._suppress_redundant_structure_presentations(safe_tool_calls)
 
         if direct_answer and requested_format != "text":
-            direct_answer = self._compact_direct_answer_for_rich_presentation(
+            direct_answer = ChatToolContextPresentationService._compact_direct_answer_for_rich_presentation(
                 direct_answer,
                 safe_tool_calls,
             )
@@ -1273,6 +1284,166 @@ class ChatToolContextService:
         )
 
 
+
+    # --- Apresentação rica (delegação Fase 3C lote 9) ---
+
+    @classmethod
+    def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:
+        return ChatToolContextPresentationService._rich_presentation_from_metadata(metadata)
+
+    @classmethod
+    def _external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
+        return ChatToolContextPresentationService._external_action_tool_calls(safe_tool_calls)
+
+    @classmethod
+    def _successful_external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
+        return ChatToolContextPresentationService._successful_external_action_tool_calls(safe_tool_calls)
+
+    @classmethod
+    def should_answer_with_presentation_only(cls, safe_tool_calls: list[dict]) -> bool:
+        return ChatToolContextPresentationService.should_answer_with_presentation_only(safe_tool_calls)
+
+    @classmethod
+    def prefer_presentation_direct_answer(cls, direct_answer, safe_tool_calls, *, message=None):
+        return ChatToolContextPresentationService.prefer_presentation_direct_answer(
+            direct_answer, safe_tool_calls, message=message
+        )
+
+    @classmethod
+    def _extract_pagination_continuation_suffix(cls, direct_answer):
+        return ChatToolContextPresentationService._extract_pagination_continuation_suffix(direct_answer)
+
+    @classmethod
+    def resolve_presentation_only_answer(cls, safe_tool_calls):
+        return ChatToolContextPresentationService.resolve_presentation_only_answer(safe_tool_calls)
+
+    @classmethod
+    def _authorized_body_from_metadata(cls, metadata: dict):
+        return ChatToolContextPresentationService._authorized_body_from_metadata(metadata)
+
+    @classmethod
+    def build_authorized_answer_from_tool_calls(cls, safe_tool_calls):
+        return ChatToolContextPresentationService.build_authorized_answer_from_tool_calls(safe_tool_calls)
+
+    @classmethod
+    def should_persist_authorized_tool_answer(cls, safe_tool_calls, *, message=None):
+        return ChatToolContextPresentationService.should_persist_authorized_tool_answer(
+            safe_tool_calls, message=message
+        )
+
+    @classmethod
+    def resolve_authorized_persisted_answer(cls, answer, safe_tool_calls, *, message=None, skip_replacement=False):
+        return ChatToolContextPresentationService.resolve_authorized_persisted_answer(
+            answer, safe_tool_calls, message=message, skip_replacement=skip_replacement
+        )
+
+    @classmethod
+    def _has_rich_presentation(cls, safe_tool_calls):
+        return ChatToolContextPresentationService._has_rich_presentation(safe_tool_calls)
+
+    @classmethod
+    def _presentation_titles(cls, safe_tool_calls):
+        return ChatToolContextPresentationService._presentation_titles(safe_tool_calls)
+
+    @classmethod
+    def _compact_direct_answer_for_rich_presentation(cls, direct_answer, safe_tool_calls):
+        return ChatToolContextPresentationService._compact_direct_answer_for_rich_presentation(
+            direct_answer, safe_tool_calls
+        )
+
+    @classmethod
+    def _suppress_redundant_structure_presentations(cls, safe_tool_calls):
+        return ChatToolContextPresentationService._suppress_redundant_structure_presentations(safe_tool_calls)
+
+    def _resolve_consolidation_format(self, message: str, previous_messages: list | None) -> str | None:
+        return self._format_service.resolve_consolidation_format(
+            message,
+            previous_messages,
+            workspace_context=getattr(self, "_build_workspace_context", None),
+        )
+
+    @classmethod
+    def _detect_requested_format(cls, message: str) -> str | None:
+        return ChatToolContextFormatService.detect_requested_format(message)
+
+    def _apply_format_override(self, safe_tool_calls, requested_format, last_data) -> None:
+        return self._format_service.apply_format_override(safe_tool_calls, requested_format, last_data)
+
+    def _finalize_paginated_consolidation_result(
+        self,
+        *,
+        raw_message: str,
+        previous_messages: list | None,
+        merged_data,
+        merged_metadata: dict,
+        arguments: dict,
+        continue_prompt: str | None,
+        reason: str,
+    ) -> dict:
+        safe_metadata = self._build_safe_tool_metadata(
+            "execute_external_action",
+            merged_metadata,
+            merged_data,
+        )
+        safe_tool_calls = [
+            {
+                "name": "execute_external_action",
+                "arguments": arguments,
+                "reason": reason,
+                "metadata": safe_metadata,
+            }
+        ]
+        direct_answer = self._build_direct_answer(
+            self._attach_request_sql(merged_data, arguments, safe_metadata),
+            message=raw_message,
+            path=safe_metadata.get("path"),
+            operation_id=safe_metadata.get("operationId"),
+        )
+
+        requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
+
+        if requested_format:
+            self._apply_format_override(
+                safe_tool_calls,
+                requested_format,
+                merged_data,
+            )
+
+        if direct_answer and requested_format != "text":
+            ChatToolContextPresentationService._suppress_redundant_structure_presentations(safe_tool_calls)
+
+        if direct_answer and requested_format != "text":
+            direct_answer = ChatToolContextPresentationService._compact_direct_answer_for_rich_presentation(
+                direct_answer,
+                safe_tool_calls,
+            )
+
+        if continue_prompt:
+            direct_answer = (
+                f"{direct_answer}\n\n{continue_prompt}".strip()
+                if direct_answer
+                else continue_prompt
+            )
+
+        return self._finalize_tool_context_result(
+            message=raw_message,
+            previous_messages=previous_messages,
+            result={
+                "context": self._format_tool_context(
+                    "execute_external_action",
+                    reason,
+                    merged_data,
+                    merged_metadata,
+                ),
+                "toolCalls": safe_tool_calls,
+                "nativeToolCalling": {"used": False, "providerSupports": False},
+                "directAnswer": direct_answer,
+                "skipRag": True,
+                "currentMessage": raw_message,
+            },
+        )
+
+
     def _finalize_tool_context_result(
         self,
         *,
@@ -1324,607 +1495,26 @@ class ChatToolContextService:
 
         return None
 
-    @classmethod
-    def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:
-        tree_presentation = metadata.get("treePresentation")
 
-        if isinstance(tree_presentation, dict) and str(tree_presentation.get("type") or "") == "tree":
-            return tree_presentation
 
-        presentation = metadata.get("presentation")
 
-        if isinstance(presentation, dict):
-            presentation_type = str(presentation.get("type") or "").strip().lower()
 
-            if presentation_type in {"tree", "table", "chart", "kpi"}:
-                return presentation
 
-        for key in ("tablePresentation", "chartPresentation"):
-            nested = metadata.get(key)
 
-            if isinstance(nested, dict):
-                nested_type = str(nested.get("type") or "").strip().lower()
 
-                if nested_type in {"table", "chart", "kpi"}:
-                    return nested
 
-        return None
 
-    @classmethod
-    def _external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
-        return [
-            tool_call
-            for tool_call in safe_tool_calls
-            if str(tool_call.get("name") or "") == "execute_external_action"
-        ]
 
-    @classmethod
-    def _successful_external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
-        successful: list[dict] = []
 
-        for tool_call in cls._external_action_tool_calls(safe_tool_calls):
-            metadata = tool_call.get("metadata")
 
-            if not isinstance(metadata, dict):
-                continue
 
-            if not metadata.get("ok"):
-                continue
 
-            successful.append(tool_call)
 
-        return successful
 
-    @classmethod
-    def should_answer_with_presentation_only(cls, safe_tool_calls: list[dict]) -> bool:
-        external_calls = cls._external_action_tool_calls(safe_tool_calls)
 
-        if not external_calls:
-            return False
 
-        if len(cls._successful_external_action_tool_calls(safe_tool_calls)) != len(
-            external_calls
-        ):
-            return False
 
-        return cls._has_rich_presentation(safe_tool_calls)
 
-    @classmethod
-    def prefer_presentation_direct_answer(
-        cls,
-        direct_answer: str | None,
-        safe_tool_calls: list[dict],
-        *,
-        message: str | None = None,
-    ) -> str | None:
-        """Resposta curta quando a UI rica já exibe tabela/gráfico/KPI (11.4.1)."""
-
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
-        )
-
-        if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
-            return direct_answer
-
-        if not cls.should_answer_with_presentation_only(safe_tool_calls):
-            return direct_answer
-
-        presentation = cls.resolve_presentation_only_answer(safe_tool_calls)
-
-        if not presentation:
-            return direct_answer
-
-        continuation = cls._extract_pagination_continuation_suffix(direct_answer)
-
-        if continuation:
-            return f"{presentation}\n\n{continuation}".strip()
-
-        normalized = str(direct_answer or "").strip()
-
-        if normalized and normalized != presentation:
-            looks_tabular = "|" in normalized or normalized.count("\n") > 6
-
-            if not looks_tabular and (
-                "\n" in normalized or len(normalized) > len(presentation) + 30
-            ):
-                return normalized
-
-        return presentation
-
-    @classmethod
-    def _extract_pagination_continuation_suffix(cls, direct_answer: str | None) -> str | None:
-        if not direct_answer:
-            return None
-
-        marker = "**Deseja que eu continue buscando?**"
-
-        if marker not in direct_answer:
-            return None
-
-        start = direct_answer.rfind("Consolidei", 0, direct_answer.index(marker))
-
-        if start >= 0:
-            return direct_answer[start:].strip()
-
-        return direct_answer[direct_answer.index(marker) :].strip()
-
-    @classmethod
-    def resolve_presentation_only_answer(cls, safe_tool_calls: list[dict]) -> str | None:
-        if not cls.should_answer_with_presentation_only(safe_tool_calls):
-            return None
-
-        titles = cls._presentation_titles(safe_tool_calls)
-
-        if not titles:
-            return "Consulta concluída."
-
-        if len(titles) == 1:
-            return titles[0]
-
-        return "\n".join(f"- {title}" for title in titles)
-
-    @classmethod
-    def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
-        text_presentation = metadata.get("textPresentation")
-
-        if isinstance(text_presentation, dict):
-            markdown = str(text_presentation.get("markdown") or "").strip()
-
-            if markdown:
-                return markdown
-
-        humanized = metadata.get("humanizedSummary")
-
-        if isinstance(humanized, dict):
-            linhas = [
-                str(line).strip()
-                for line in (humanized.get("linhas") or [])
-                if str(line or "").strip()
-            ]
-
-            if not linhas:
-                return None
-
-            titulo = str(humanized.get("titulo") or "").strip()
-            body = "\n".join(linhas)
-
-            if titulo:
-                return f"### {titulo}\n\n{body}"
-
-            return body
-
-        return None
-
-    @classmethod
-    def build_authorized_answer_from_tool_calls(
-        cls,
-        safe_tool_calls: list[dict],
-    ) -> str | None:
-        """Markdown autorizado (textPresentation / humanizedSummary) para persistir no chat."""
-
-        bodies: list[str] = []
-
-        for tool_call in cls._successful_external_action_tool_calls(safe_tool_calls):
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            body = cls._authorized_body_from_metadata(metadata)
-
-            if body and body not in bodies:
-                bodies.append(body)
-
-        if not bodies:
-            return None
-
-        return "\n\n".join(bodies).strip()
-
-    @classmethod
-    def should_persist_authorized_tool_answer(
-        cls,
-        safe_tool_calls: list[dict],
-        *,
-        message: str | None = None,
-    ) -> bool:
-        del message
-
-        if not cls.build_authorized_answer_from_tool_calls(safe_tool_calls):
-            return False
-
-        from app.domain.services.chat_rich_presentation_text_service import (
-            ChatRichPresentationTextService,
-        )
-
-        for tool_call in cls._successful_external_action_tool_calls(safe_tool_calls):
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            if ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
-                [tool_call],
-            ):
-                return True
-
-        return cls._has_rich_presentation(safe_tool_calls)
-
-    @classmethod
-    def resolve_authorized_persisted_answer(
-        cls,
-        answer: str | None,
-        safe_tool_calls: list[dict],
-        *,
-        message: str | None = None,
-        skip_replacement: bool = False,
-    ) -> str:
-        """Substitui texto livre do LLM pelo markdown autorizado da ferramenta quando aplicável."""
-
-        if skip_replacement:
-            return str(answer or "").strip()
-
-        if not cls.should_persist_authorized_tool_answer(safe_tool_calls, message=message):
-            return str(answer or "").strip()
-
-        authorized = cls.build_authorized_answer_from_tool_calls(safe_tool_calls)
-
-        if not authorized:
-            return str(answer or "").strip()
-
-        continuation = cls._extract_pagination_continuation_suffix(answer)
-
-        if continuation and continuation not in authorized:
-            return f"{authorized}\n\n{continuation}".strip()
-
-        return authorized
-
-    @classmethod
-    def _has_rich_presentation(cls, safe_tool_calls: list[dict]) -> bool:
-        for tool_call in safe_tool_calls:
-            if str(tool_call.get("name") or "") != "execute_external_action":
-                continue
-
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            if cls._rich_presentation_from_metadata(metadata):
-                return True
-
-        return False
-
-    @classmethod
-    def _presentation_titles(cls, safe_tool_calls: list[dict]) -> list[str]:
-        titles: list[str] = []
-
-        for tool_call in safe_tool_calls:
-            if str(tool_call.get("name") or "") != "execute_external_action":
-                continue
-
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            presentation = cls._rich_presentation_from_metadata(metadata)
-
-            if not presentation:
-                continue
-
-            title = str(presentation.get("title") or "").strip()
-
-            if title and title not in titles:
-                titles.append(title)
-
-        return titles
-
-    @classmethod
-    def _compact_direct_answer_for_rich_presentation(
-        cls,
-        direct_answer: str | None,
-        safe_tool_calls: list[dict],
-    ) -> str | None:
-        """Evita repetir em markdown o mesmo conteúdo já exibido em tabela/gráfico/KPI."""
-
-        if not direct_answer or not cls._has_rich_presentation(safe_tool_calls):
-            return direct_answer
-
-        normalized = str(direct_answer).strip()
-
-        if not normalized:
-            return None
-
-        if (
-            len(normalized) <= 180
-            and "|" not in normalized
-            and normalized.count("\n") <= 3
-        ):
-            return normalized
-
-        titles = cls._presentation_titles(safe_tool_calls)
-
-        if titles:
-            if len(titles) == 1:
-                return titles[0]
-
-            return "\n".join(f"- {title}" for title in titles)
-
-        return None
-
-    @classmethod
-    def _suppress_redundant_structure_presentations(cls, safe_tool_calls: list[dict]) -> None:
-        """Árvore e tabela plana da mesma hierarquia não coexistem no mesmo turno."""
-
-        from app.domain.services.chat_presentation_structure_dedup_service import (
-            ChatPresentationStructureDedupService,
-        )
-
-        for tool_call in safe_tool_calls:
-            if str(tool_call.get("name") or "") != "execute_external_action":
-                continue
-
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            ChatPresentationStructureDedupService.dedupe_metadata(metadata)
-
-    _FORMAT_TABLE_HINTS = (
-        "em tabela", "em uma tabela", "numa tabela", "na tabela",
-        "formato tabela", "em formato de tabela",
-        "mostra em tabela", "mostre em tabela", "como tabela",
-        "exibir tabela", "exiba em tabela",
-        "coloque em tabela", "coloque em uma tabela",
-        "põe em tabela", "poe em tabela", "ponha em tabela",
-        "tabela completa", "lista em tabela", "listagem em tabela",
-        "completa em tabela", "completo em tabela",
-    )
-    _FORMAT_CHART_HINTS = (
-        "em gráfico", "em grafico", "formato gráfico", "formato grafico",
-        "como gráfico", "como grafico", "mostra em gráfico", "mostre em gráfico",
-        "em formato de gráfico", "exibir gráfico", "exiba em gráfico",
-    )
-    _FORMAT_TEXT_HINTS = (
-        "em texto", "formato texto", "sem tabela", "sem gráfico",
-        "só texto", "so texto", "apenas texto", "formato simples",
-        "resumo", "resumido",
-    )
-    _FORMAT_TREE_HINTS = (
-        "em árvore", "em arvore", "formato árvore", "formato arvore",
-        "como árvore", "como arvore", "visualização em árvore",
-        "visualizacao em arvore", "mostra em árvore", "mostre em árvore",
-        "diagrama hierárquico", "diagrama hierarquico",
-        "arvore completa", "árvore completa", "completa em arvore",
-        "completa em árvore",
-    )
-
-    @classmethod
-    def _session_response_format(cls, workspace_context: dict | None) -> str | None:
-        working = (workspace_context or {}).get("workingMemory") or {}
-        behavior = working.get("behaviorInstructions") or {}
-        token = str(behavior.get("responseFormat") or "").strip().lower()
-
-        if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
-            return token
-
-        return None
-
-    def _resolve_consolidation_format(
-        self,
-        message: str,
-        previous_messages: list | None,
-    ) -> str | None:
-        requested_format = self._detect_requested_format(message)
-
-        if requested_format:
-            return requested_format
-
-        session_format = self._session_response_format(
-            getattr(self, "_build_workspace_context", None),
-        )
-
-        if session_format and session_format != "topics":
-            return session_format
-
-        from app.domain.services.chat_pagination_consolidation_service import (
-            ChatPaginationConsolidationService,
-        )
-
-        return ChatPaginationConsolidationService.collect_last_preferred_format(
-            previous_messages,
-        )
-
-    def _finalize_paginated_consolidation_result(
-        self,
-        *,
-        raw_message: str,
-        previous_messages: list | None,
-        merged_data,
-        merged_metadata: dict,
-        arguments: dict,
-        continue_prompt: str | None,
-        reason: str,
-    ) -> dict:
-        safe_metadata = self._build_safe_tool_metadata(
-            "execute_external_action",
-            merged_metadata,
-            merged_data,
-        )
-        safe_tool_calls = [
-            {
-                "name": "execute_external_action",
-                "arguments": arguments,
-                "reason": reason,
-                "metadata": safe_metadata,
-            }
-        ]
-        direct_answer = self._build_direct_answer(
-            self._attach_request_sql(merged_data, arguments, safe_metadata),
-            message=raw_message,
-            path=safe_metadata.get("path"),
-            operation_id=safe_metadata.get("operationId"),
-        )
-
-        requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
-
-        if requested_format:
-            self._apply_format_override(
-                safe_tool_calls,
-                requested_format,
-                merged_data,
-            )
-
-        if direct_answer and requested_format != "table":
-            self._suppress_redundant_structure_presentations(safe_tool_calls)
-
-        if direct_answer and requested_format != "text":
-            direct_answer = self._compact_direct_answer_for_rich_presentation(
-                direct_answer,
-                safe_tool_calls,
-            )
-
-        if continue_prompt:
-            direct_answer = (
-                f"{direct_answer}\n\n{continue_prompt}".strip()
-                if direct_answer
-                else continue_prompt
-            )
-
-        return self._finalize_tool_context_result(
-            message=raw_message,
-            previous_messages=previous_messages,
-            result={
-                "context": self._format_tool_context(
-                    "execute_external_action",
-                    reason,
-                    merged_data,
-                    merged_metadata,
-                ),
-                "toolCalls": safe_tool_calls,
-                "nativeToolCalling": {"used": False, "providerSupports": False},
-                "directAnswer": direct_answer,
-                "skipRag": True,
-                "currentMessage": raw_message,
-            },
-        )
-
-    def _detect_requested_format(self, message: str) -> str | None:
-        """Detecta se o usuário pediu um formato específico de apresentação."""
-        lowered = (message or "").lower()
-        if any(h in lowered for h in self._FORMAT_TEXT_HINTS):
-            return "text"
-        if any(h in lowered for h in self._FORMAT_TREE_HINTS):
-            return "tree"
-        if any(h in lowered for h in self._FORMAT_TABLE_HINTS):
-            return "table"
-        if any(h in lowered for h in self._FORMAT_CHART_HINTS):
-            return "chart"
-        return None
-
-    def _apply_format_override(
-        self,
-        safe_tool_calls: list[dict],
-        requested_format: str,
-        last_data,
-    ) -> None:
-        """Sobrescreve a presentation com base no formato solicitado pelo usuário."""
-        for tc in safe_tool_calls:
-            if tc.get("name") != "execute_external_action":
-                continue
-            meta = tc.get("metadata")
-            if not meta or not meta.get("ok"):
-                continue
-
-            if requested_format == "text":
-                meta["preferredFormat"] = "text"
-                decision = meta.get("presentationDecision")
-
-                if isinstance(decision, dict):
-                    decision["selected"] = "text"
-
-                had_kpi_primary = (
-                    isinstance(meta.get("presentation"), dict)
-                    and meta["presentation"].get("type") == "kpi"
-                )
-
-                from app.application.use_cases.execute_external_action_use_case import (
-                    ExecuteExternalActionUseCase,
-                )
-
-                ExecuteExternalActionUseCase._align_presentation_with_decision(
-                    meta,
-                    kpi_presentation=(
-                        meta.get("kpiPresentation")
-                        if isinstance(meta.get("kpiPresentation"), dict)
-                        else meta.get("presentation")
-                        if had_kpi_primary
-                        else None
-                    ),
-                )
-
-                text_presentation = meta.get("textPresentation")
-                markdown = (
-                    str(text_presentation.get("markdown") or "").strip()
-                    if isinstance(text_presentation, dict)
-                    else ""
-                )
-                caption_only = markdown.startswith("###") and "**" not in markdown
-
-                if last_data and (had_kpi_primary or caption_only):
-                    path = str(meta.get("path") or "")
-                    rebuilt = self.external_action_result_presenter.build_text_presentation(
-                        last_data,
-                        path=path,
-                    )
-
-                    if rebuilt:
-                        meta["textPresentation"] = rebuilt
-
-            elif requested_format == "tree":
-                meta["preferredFormat"] = "tree"
-                tree_pres = meta.get("treePresentation") or meta.get("presentation")
-                if tree_pres and tree_pres.get("type") == "tree":
-                    meta["presentation"] = tree_pres
-                    meta["treePresentation"] = None
-                elif last_data:
-                    path = meta.get("path") or ""
-                    forced_tree = self.external_action_result_presenter.build_tree_presentation(
-                        last_data, path=path
-                    )
-                    if forced_tree:
-                        meta["presentation"] = forced_tree
-                        meta["treePresentation"] = None
-
-            elif requested_format == "table":
-                meta["preferredFormat"] = "table"
-                table_pres = meta.get("tablePresentation") or meta.get("presentation")
-                if table_pres and table_pres.get("type") == "table":
-                    meta["presentation"] = table_pres
-                    meta["tablePresentation"] = None
-                elif last_data:
-                    path = meta.get("path") or ""
-                    forced_table = self.external_action_result_presenter.build_presentation(
-                        last_data, path=path
-                    )
-                    if forced_table:
-                        meta["presentation"] = forced_table
-                        meta["tablePresentation"] = None
-
-            elif requested_format == "chart":
-                meta["preferredFormat"] = "chart"
-                chart_pres = meta.get("presentation")
-                if chart_pres and chart_pres.get("type") == "chart":
-                    pass
-                elif last_data:
-                    path = meta.get("path") or ""
-                    forced_chart = self.external_action_result_presenter.build_chart_presentation(
-                        last_data, path=path, force=True
-                    )
-                    if forced_chart:
-                        meta["presentation"] = forced_chart
-                        meta["tablePresentation"] = None
 
     def _build_safe_tool_metadata(
         self,
@@ -2219,7 +1809,7 @@ class ChatToolContextService:
 
         code = str(product_code or "").strip()
 
-        for tool_call in self._successful_external_action_tool_calls(safe_tool_calls):
+        for tool_call in ChatToolContextPresentationService._successful_external_action_tool_calls(safe_tool_calls):
             metadata = tool_call.get("metadata") or {}
             path = str(metadata.get("path") or "")
 

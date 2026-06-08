@@ -10,6 +10,12 @@ from app.domain.services.external_actions.presenters.product_list_presenter impo
 from app.domain.services.external_actions.presenters.billing_presenter import (
     ExternalActionBillingPresenter,
 )
+from app.domain.services.external_actions.presenters.legacy_route_presenter import (
+    ExternalActionLegacyRoutePresenter,
+)
+from app.domain.services.external_actions.presenters.playbook_report_presenter import (
+    ExternalActionPlaybookReportPresenter,
+)
 from app.domain.services.external_actions.presenters.sql_presenter import (
     ExternalActionSqlPresenter,
 )
@@ -20,6 +26,8 @@ from app.domain.services.external_actions.presenters.system_tables_presenter imp
 __all__ = [
     "ExternalActionBillingPresenter",
     "ExternalActionKpiChartPresenter",
+    "ExternalActionLegacyRoutePresenter",
+    "ExternalActionPlaybookReportPresenter",
     "ExternalActionProductAnalyserPresenter",
     "ExternalActionProductListPresenter",
     "ExternalActionSqlPresenter",

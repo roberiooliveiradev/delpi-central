@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 9):**
+**Sprint imediata (Fase 3 — god classes, lote 10):**
 
-1. Reduzir `chat_tool_context_service.py`.
-2. Extrair blocos restantes do facade (legacy routing, playbook report).
+1. Extrair `_present_entity_first` / `_present_entity_extensions` do facade.
+2. Extrair formatação de metadata/contexto de tools (`_build_safe_tool_metadata`, `_format_external_action_context`).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -422,5 +422,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 7):** `ExternalActionSqlPresenter` (~430 linhas); métodos SQL/resultsets migrados para delegate `_sql()`; `external_action_result_presenter.py` **3650 → ~3310** linhas.
 
 **Concluído (Fase 3A lote 8):** `ExternalActionBillingPresenter` (~260 linhas) e `ExternalActionSystemTablesPresenter` (~200 linhas); billing/estoque/PMR e SX2/SX3 migrados para `_billing()` e `_system_tables()`; facade **3325 → ~2893** linhas.
+
+**Concluído (Fase 3C lote 9):** `ChatToolContextPresentationService` e `ChatToolContextFormatService` extraídos; `chat_tool_context_service.py` **2438 → ~2028** linhas.
+
+**Concluído (Fase 3A lote 9):** `ExternalActionLegacyRoutePresenter` e `ExternalActionPlaybookReportPresenter`; facade **2893 → ~2700** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
