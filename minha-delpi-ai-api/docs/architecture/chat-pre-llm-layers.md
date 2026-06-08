@@ -15,7 +15,12 @@ Chats de IA maduros **não** mandam a pergunta crua direto ao modelo. Antes do L
 - **Protegem o sistema** — sanitização, permissões, limites de contexto.
 - **Enriquecem o prompt** — só o que o turno precisa (histórico resumido, tool results, chunks RAG).
 
-No Minha DELPI, **send** e **stream** compartilham `ChatTurnPreparationService` para tools, RAG e flags de pipeline; decisões pré-tools (canvas, capacidades) e pós-tools ainda passam por `ChatIntelligencePipelineService` nos use cases. A proposta abaixo descreve o modelo alvo (`ChatTurnContext` registrável) para evoluir sem duplicar lógica.
+No Minha DELPI, **send** e **stream** compartilham:
+
+- **Pré-LLM:** `ChatTurnPreparationService` (tools, RAG, flags de pipeline).
+- **Pós-LLM:** `ChatTurnCompletionService` (metadata, persistência, auditoria, memória de sessão).
+
+Decisões pré-tools (canvas, capacidades) e pós-tools ainda passam por `ChatIntelligencePipelineService` nos use cases. A proposta abaixo descreve o modelo alvo (`ChatTurnContext` registrável) para evoluir sem duplicar lógica.
 
 ---
 

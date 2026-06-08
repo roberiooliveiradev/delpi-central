@@ -20,6 +20,8 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 
 **Contrato api-delpi → chat (roadmap):** [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md) — padronização de `meta`, OpenAPI e presenter por perfil; a api-delpi declara o dado, o chat base apresenta.
 
+**Clean architecture (roadmap):** [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md) — revisão de camadas, débitos, fases 0–6 e baseline [`clean-architecture-baseline.json`](./clean-architecture-baseline.json).
+
 **SQL avançado:** o chat base elabora/revisa/explica (skill + advisors); **execução e metadados Protheus** (`POST /data/sql`, `/system/tables/*`) são responsabilidade do **agente** com actions habilitadas — a base não dispara essas chamadas sem `actionsEnabled`.
 
 ### Modos de resposta (rápida / normal / pensador)
@@ -185,6 +187,8 @@ Documentação dedicada: [`email-writing.md`](./email-writing.md) (escrita de e-
 5. **Regressão** — `MEMORY_CONTEXT_REGRESSION_CASES` (M1–M17): `scripts/run_memory_context_validation.sh`; assertividade: `CONTEXT_ASSERTIVENESS_CASES` e smokes em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
 A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream.
+
+A conclusão pós-LLM (metadata, persistência, auditoria, memória de sessão) está em **`ChatTurnCompletionService`** (`app/application/services/chat_turn/chat_turn_completion_service.py`), também compartilhada por send e stream.
 
 ### Identidade do assistente (maio/2026)
 

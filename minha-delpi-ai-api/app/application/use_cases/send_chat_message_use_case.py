@@ -27,6 +27,11 @@ from app.domain.services.chat_message_normalization_service import (
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
+from app.application.services.chat_turn.chat_turn_completion_service import (
+    ChatTurnCompletionInput,
+    ChatTurnCompletionService,
+    ChatTurnPersistenceOptions,
+)
 from app.application.services.chat_turn.chat_turn_preparation_service import (
     ChatTurnPreparationService,
 )
@@ -72,6 +77,7 @@ class SendChatMessageUseCase:
         message_security_service: ChatMessageSecurityService | None = None,
         web_search_synthesis_service: ChatWebSearchSynthesisService | None = None,
         session_memory_service=None,
+        turn_completion_service: ChatTurnCompletionService | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -87,6 +93,11 @@ class SendChatMessageUseCase:
         self.session_memory_service = session_memory_service
         self.turn_preparation_service = ChatTurnPreparationService(
             rag_context_service=rag_context_service,
+            session_memory_service=session_memory_service,
+        )
+        self.turn_completion_service = turn_completion_service or ChatTurnCompletionService(
+            chat_repository=chat_repository,
+            audit_repository=audit_repository,
             session_memory_service=session_memory_service,
         )
         self.agent_repository = agent_repository
@@ -473,675 +484,53 @@ class SendChatMessageUseCase:
         else:
             answer = self.llm_gateway.generate(llm_messages)
 
-        from app.application.services.chat_email_turn_service import ChatEmailTurnService
-        from app.application.services.chat_text_correction_turn_service import (
-            ChatTextCorrectionTurnService,
-        )
-
-        answer, email_guard_meta = ChatEmailTurnService.finalize_answer(
-            answer,
-            message=request.message,
-            workspace_context=workspace_context,
-        )
-        answer, correction_guard_meta = ChatTextCorrectionTurnService.finalize_answer(
-            answer,
-            message=request.message,
-            workspace_context=workspace_context,
-        )
-
-        from app.domain.services.chat_advanced_sql_specialist_service import (
-            ChatAdvancedSqlSpecialistService,
-        )
-
-        sql_snapshot = (
-            tool_context.get("sqlAdvanced")
-            if isinstance(tool_context, dict) and isinstance(tool_context.get("sqlAdvanced"), dict)
-            else None
-        )
-        answer = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
-            answer,
-            snapshot=sql_snapshot,
-        )
-        answer = ChatAdvancedSqlSpecialistService.normalize_protheus_sql_answer(
-            answer,
-            message=request.message,
-            tool_calls=ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(
-                tool_calls
-            ),
-        )
-        answer = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(answer)
-        tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
-
-        from app.application.services.chat_tool_context_service import (
-            ChatToolContextService,
-        )
-
-        answer = ChatToolContextService.resolve_authorized_persisted_answer(
-            answer,
-            tool_calls,
-            message=request.message,
-            skip_replacement=bool(
-                prepared.email_writing_mode
-                or prepared.text_correction_mode
-                or (
-                    isinstance(tool_context, dict)
-                    and tool_context.get("sqlRequiresLlm")
-                )
-            ),
-        )
-
-        correction_canvas_payload = (
-            ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
-                message=request.message,
-                answer=answer,
-                previous_messages=previous_messages,
+        completion = self.turn_completion_service.complete_turn(
+            ChatTurnCompletionInput(
+                request=request,
+                message=message,
+                user_id=user_id,
+                session_id=session_id,
                 workspace_context=workspace_context,
-            )
-        )
-        correction_canvas_updated = bool(correction_canvas_payload)
-
-        if correction_canvas_payload:
-            canvas_open_payload = correction_canvas_payload
-            answer = ChatTextCorrectionTurnService.apply_canvas_update_to_answer(
-                answer,
-                canvas_payload=correction_canvas_payload,
-            )
-
-        text_canvas_updated = False
-
-        if prepared.text_task_mode and not canvas_open_payload:
-            from app.application.services.chat_text_task_canvas_service import (
-                ChatTextTaskCanvasService,
-            )
-
-            text_canvas_payload = ChatTextTaskCanvasService.resolve_canvas_open_after_text_task(
-                message=request.message,
-                answer=answer,
+                attachments=attachments,
                 previous_messages=previous_messages,
-                workspace_context=workspace_context,
-            )
-
-            if text_canvas_payload:
-                canvas_open_payload = text_canvas_payload
-                text_canvas_updated = True
-                answer = ChatTextTaskCanvasService.append_canvas_update_note(
-                    answer,
-                    title=text_canvas_payload.title,
-                )
-
-        pipeline_timings.mark("llm_done")
-        intelligence_metadata = ChatIntelligenceMetadataService.build(
-            sources=sources,
-            tool_context=tool_context,
-            embedding_cache_stats=self._embedding_cache_stats(),
-            pipeline_timings=pipeline_timings.to_dict(),
-            pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
+                history_source=previous_messages,
+                prepared=prepared,
+                answer=answer,
+                sources=sources,
+                tool_context=tool_context,
+                tool_calls=tool_calls,
+                direct_answer=direct_answer,
+                pipeline_timings=pipeline_timings,
+                pipeline_stages=pipeline_stages,
                 fast_path=fast_path,
                 operational_optimize=operational_optimize,
-                tool_context=tool_context,
                 skip_rag=skip_rag,
                 analysis_mode=analysis_mode,
-                stages=pipeline_stages,
+                llm_messages=llm_messages,
+                admin_debug_payload=admin_debug_payload,
+                active_guidelines=active_guidelines,
+                started_at=started_at,
+                user_message=user_message,
+                canvas_open_payload=canvas_open_payload,
             ),
+            persistence=ChatTurnPersistenceOptions(mode="send"),
         )
-        latency_ms = int((time.perf_counter() - started_at) * 1000)
-        prompt_tokens_estimated = self._estimate_tokens_from_messages(llm_messages)
-        completion_tokens_estimated = self._estimate_tokens(answer)
-        total_tokens_estimated = prompt_tokens_estimated + completion_tokens_estimated
-        estimated_cost = self._estimate_cost(
-            prompt_tokens=prompt_tokens_estimated,
-            completion_tokens=completion_tokens_estimated,
-        )
-
-        assistant_metadata = {
-            **ChatLlmMetadataService.build_assistant_llm_fields(),
-            "agentId": workspace_context.get("agentId"),
-            "agent": workspace_context.get("agent"),
-            "project": workspace_context.get("project"),
-            "attachments": attachments,
-            "sources": sources,
-            "toolCalls": tool_calls,
-            "rag": {
-                "enabled": True,
-                "sourceCount": len(sources),
-            },
-            "intelligence": intelligence_metadata,
-            "adminGuidelines": self._guideline_metadata(active_guidelines),
-            "metrics": {
-                "latencyMs": latency_ms,
-                "promptTokensEstimated": prompt_tokens_estimated,
-                "completionTokensEstimated": completion_tokens_estimated,
-                "totalTokensEstimated": total_tokens_estimated,
-                "estimatedCost": estimated_cost,
-            },
-            "directResponse": bool(direct_answer),
-        }
-
-        ChatAdminDebugService.attach_to_assistant_metadata(
-            assistant_metadata,
-            admin_debug_payload,
-            intelligence_metadata=intelligence_metadata,
-        )
-
-        from app.domain.services.chat_intent_router_metrics_service import (
-            ChatIntentRouterMetricsService,
-        )
-
-        ChatIntentRouterMetricsService.attach_to_assistant_metadata(
-            assistant_metadata,
-            prepared.intent_route,
-            normalized_message=request.message,
-        )
-
-        from app.application.services.chat_intent_disambiguation_follow_up_service import (
-            ChatIntentDisambiguationFollowUpService,
-        )
-
-        ChatIntentDisambiguationFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            suggestions=prepared.routing_disambiguation_suggestions,
-        )
-
-        from app.application.services.chat_active_pending_service import (
-            ChatActivePendingService,
-        )
-
-        ChatActivePendingService.attach_for_operational_direct_answer(
-            assistant_metadata,
-            message=request.message,
-            previous_messages=previous_messages,
-            pipeline_stages=pipeline_stages,
-        )
-
-        from app.application.services.chat_web_search_research_activity_service import (
-            ChatWebSearchResearchActivityService,
-        )
-
-        ChatWebSearchResearchActivityService.attach_to_assistant_metadata(
-            assistant_metadata,
-            tool_context=tool_context,
-            pipeline_stages=pipeline_stages,
-            latency_ms=latency_ms,
-        )
-
-        from app.application.services.chat_web_search_follow_up_service import (
-            ChatWebSearchFollowUpService,
-        )
-
-        ChatWebSearchFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            tool_context=tool_context,
-            message=request.message,
-            had_attachments=bool(getattr(request, "attachment_ids", None)),
-        )
-
-        from app.application.services.chat_help_follow_up_service import (
-            ChatHelpFollowUpService,
-        )
-
-        ChatHelpFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-        )
-
-        from app.application.services.chat_help_self_help_telemetry_service import (
-            ChatHelpSelfHelpTelemetryService,
-        )
-
-        ChatHelpSelfHelpTelemetryService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-            workspace_context=workspace_context,
-            had_direct_answer=bool(direct_answer),
-        )
-
-        from app.application.services.chat_onboarding_follow_up_service import (
-            ChatOnboardingFollowUpService,
-        )
-
-        ChatOnboardingFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-            pipeline_stages=pipeline_stages,
-        )
-
-        from app.application.services.chat_onboarding_milestone_service import (
-            ChatOnboardingMilestoneService,
-        )
-
-        ChatOnboardingMilestoneService.attach_to_assistant_metadata(
-            assistant_metadata,
-            previous_messages=previous_messages,
-            pipeline_stages=pipeline_stages,
-            tool_calls=tool_calls,
-            had_attachments=bool(getattr(request, "attachment_ids", None)),
-            canvas_open=bool(canvas_open_payload),
-        )
-
-        from app.application.services.chat_guided_flow_service import (
-            ChatGuidedFlowService,
-        )
-
-        ChatGuidedFlowService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-        )
-
-        if canvas_open_payload:
-            assistant_metadata["canvasOpen"] = {
-                "title": canvas_open_payload.title,
-                "markdown": canvas_open_payload.markdown,
-                "sourceMessageId": canvas_open_payload.source_message_id,
-            }
-
-            from app.application.services.chat_canvas_session_metadata_service import (
-                ChatCanvasSessionMetadataService,
-            )
-            from app.domain.services.chat_canvas_intent_service import (
-                ChatCanvasIntentService,
-            )
-
-            operation = "open"
-
-            if ChatCanvasIntentService.is_canvas_transform_request(request.message):
-                operation = "transform"
-            elif ChatCanvasIntentService.is_canvas_update_request(request.message):
-                operation = "append"
-
-            normalized_canvas = ChatMessageNormalizationService.normalize_for_matching(
-                request.message
-            )
-
-            if any(token in normalized_canvas for token in ("substitu", "substitua", "trocar")):
-                operation = "replace"
-
-            ChatCanvasSessionMetadataService.attach_open(
-                assistant_metadata,
-                open_payload=canvas_open_payload,
-                operation=operation,
-                previous_messages=previous_messages,
-            )
-
-            from app.application.services.chat_attachment_artifact_telemetry_service import (
-                ChatAttachmentArtifactTelemetryService,
-            )
-
-            ChatAttachmentArtifactTelemetryService.attach_canvas_open(
-                assistant_metadata,
-                operation=operation,
-            )
-
-        from app.application.services.chat_personality_metadata_service import (
-            ChatPersonalityMetadataService,
-        )
-
-        ChatPersonalityMetadataService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-            answer=answer,
-            tool_calls=tool_calls,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-            issues=intelligence_metadata.get("issues")
-            if isinstance(intelligence_metadata, dict)
-            else None,
-            attachments=attachments,
-            latency_ms=latency_ms,
-        )
-
-        from app.application.services.chat_error_handling_telemetry_service import (
-            ChatErrorHandlingTelemetryService,
-        )
-
-        ChatErrorHandlingTelemetryService.log_classification(assistant_metadata)
-
-        from app.application.services.chat_error_handling_service import (
-            ChatErrorHandlingService,
-        )
-
-        answer = ChatErrorHandlingService.resolve_display_answer(answer, assistant_metadata)
-
-        from app.application.services.chat_context_metadata_service import (
-            ChatContextMetadataService,
-        )
-
-        ChatContextMetadataService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-            answer=answer,
-            tool_calls=tool_calls,
-            previous_messages=previous_messages,
-            workspace_context=workspace_context,
-            session_memory_service=self.session_memory_service,
-        )
-
-        from app.application.services.chat_attachment_follow_up_service import (
-            ChatAttachmentFollowUpService,
-        )
-
-        ChatAttachmentFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            had_attachments=bool(getattr(request, "attachment_ids", None)),
-            attachments=attachments,
-            message=message,
-        )
-
-        from app.application.services.chat_attachment_artifact_telemetry_service import (
-            ChatAttachmentArtifactTelemetryService,
-        )
-        from app.application.services.chat_attachment_source_citation_service import (
-            ChatAttachmentSourceCitationService,
-        )
-        from app.application.services.chat_canvas_follow_up_service import (
-            ChatCanvasFollowUpService,
-        )
-
-        if bool(getattr(request, "attachment_ids", None)):
-            ChatAttachmentArtifactTelemetryService.attach_attachment_welcome(
-                assistant_metadata,
-                attachments=attachments,
-            )
-
-        ChatAttachmentSourceCitationService.attach_to_assistant_metadata(
-            assistant_metadata,
-            attachments=attachments,
-            answer=answer,
-        )
-
-        ChatCanvasFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-            opened_canvas_this_turn=bool(canvas_open_payload),
-        )
-
-        from app.application.services.chat_drawing_follow_up_service import (
-            ChatDrawingFollowUpService,
-        )
-
-        ChatDrawingFollowUpService.attach_to_assistant_metadata(
-            assistant_metadata,
-            intelligence=intelligence_metadata,
-            tool_context=tool_context,
-            latency_ms=latency_ms,
-        )
-
-        ChatEmailTurnService.attach_follow_up_metadata(
-            assistant_metadata,
-            message=request.message,
-            answer=answer,
-            workspace_context=workspace_context,
-            tool_context=tool_context,
-            guard_meta=email_guard_meta,
-        )
-
-        ChatTextCorrectionTurnService.attach_follow_up_metadata(
-            assistant_metadata,
-            message=request.message,
-            answer=answer,
-            workspace_context=workspace_context,
-            guard_meta=correction_guard_meta,
-            canvas_updated=correction_canvas_updated,
-        )
-
-        if prepared.text_task_mode:
-            from app.application.services.chat_text_task_turn_service import (
-                ChatTextTaskTurnService,
-            )
-
-            ChatTextTaskTurnService.attach_follow_up_metadata(
-                assistant_metadata,
-                message=request.message,
-                answer=answer,
-                workspace_context=workspace_context,
-                text_task_mode=True,
-                correction_guard_meta=correction_guard_meta,
-                canvas_updated=correction_canvas_updated or text_canvas_updated,
-                pipeline_stages=pipeline_stages,
-                tool_context=tool_context,
-                canvas_title=canvas_open_payload.title if canvas_open_payload else None,
-                canvas_markdown=canvas_open_payload.markdown if canvas_open_payload else None,
-                previous_messages=previous_messages,
-            )
-
-        from app.application.services.chat_document_vision_metrics_service import (
-            ChatDocumentVisionMetricsService,
-        )
-
-        ChatDocumentVisionMetricsService.attach_to_assistant_metadata(
-            assistant_metadata,
-            intelligence=intelligence_metadata,
-            tool_context=tool_context,
-        )
-
-        from app.domain.services.chat_advanced_sql_specialist_service import (
-            ChatAdvancedSqlSpecialistService,
-        )
-        from app.domain.services.chat_advanced_sql_metrics_service import (
-            ChatAdvancedSqlMetricsService,
-        )
-
-        ChatAdvancedSqlSpecialistService.attach_to_assistant_metadata(
-            assistant_metadata,
-            message=request.message,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-            tool_calls=tool_calls,
-        )
-        ChatAdvancedSqlMetricsService.attach_to_assistant_metadata(
-            assistant_metadata,
-            tool_context=tool_context,
-        )
-
-        from app.application.services.chat_interactivity_suggestion_service import (
-            ChatInteractivitySuggestionService,
-        )
-        from app.application.services.chat_interactivity_telemetry_service import (
-            ChatInteractivityTelemetryService,
-        )
-
-        intent_route = assistant_metadata.get("intentRouting")
-
-        ChatInteractivitySuggestionService.attach_to_assistant_metadata(
-            assistant_metadata,
-            workspace_context=workspace_context,
-            tool_calls=tool_calls,
-            intent_route=intent_route if isinstance(intent_route, dict) else None,
-            message=request.message,
-        )
-        ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
-
-        from app.domain.services.chat_response_metadata_service import (
-            ChatResponseMetadataService,
-        )
-
-        ChatResponseMetadataService.attach_to_assistant_metadata(
-            assistant_metadata,
-            workspace_context=workspace_context,
-            session_id=str(session_id),
-            duration_ms=latency_ms,
-        )
-
-        assistant_message = self.chat_repository.create_message(
-            session_id=session_id,
-            role="assistant",
-            content=answer,
-            parent_message_id=user_message.id,
-            metadata=assistant_metadata,
-        )
-
-        if self.session_memory_service:
-            post_snapshot = assistant_metadata.get("contextSnapshot")
-
-            if isinstance(post_snapshot, dict):
-                self.session_memory_service.persist_post_turn(
-                    session_id=session_id,
-                    snapshot=post_snapshot,
-                    source_message_id=assistant_message.id,
-                )
-
-        self.chat_repository.set_active_leaf_message_id(
-            session_id=session_id,
-            user_id=user_id,
-            message_id=assistant_message.id,
-        )
-
-        from app.application.services.chat_drawing_metrics_service import (
-            ChatDrawingMetricsService,
-        )
-
-        audit_metadata = {
-            "session_id": str(session_id),
-            **ChatLlmMetadataService.build_assistant_llm_fields(),
-            "agentId": workspace_context.get("agentId"),
-            "agent": workspace_context.get("agent"),
-            "project": workspace_context.get("project"),
-            "attachments": attachments,
-            "sources": sources,
-            "rag_enabled": True,
-            "tool_count": len(tool_calls),
-            "admin_guideline_count": len(active_guidelines),
-            "admin_guidelines": self._guideline_metadata(active_guidelines),
-            "latency_ms": latency_ms,
-            "prompt_tokens_estimated": prompt_tokens_estimated,
-            "completion_tokens_estimated": completion_tokens_estimated,
-            "total_tokens_estimated": total_tokens_estimated,
-            "estimated_cost": estimated_cost,
-        }
-        ChatDrawingMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            intelligence=intelligence_metadata,
-            tool_context=tool_context,
-            latency_ms=latency_ms,
-        )
-
-        from app.application.services.chat_document_vision_metrics_service import (
-            ChatDocumentVisionMetricsService,
-        )
-
-        ChatDocumentVisionMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            intelligence=intelligence_metadata,
-            tool_context=tool_context,
-        )
-
-        from app.domain.services.chat_advanced_sql_metrics_service import (
-            ChatAdvancedSqlMetricsService,
-        )
-
-        ChatAdvancedSqlMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-            tool_context=tool_context,
-        )
-
-        ChatIntentRouterMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            route=prepared.intent_route,
-        )
-
-        from app.domain.services.chat_text_task_admin_metrics_service import (
-            ChatTextTaskAdminMetricsService,
-        )
-
-        ChatTextTaskAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        from app.domain.services.chat_session_memory_admin_metrics_service import (
-            ChatSessionMemoryAdminMetricsService,
-        )
-
-        ChatSessionMemoryAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        from app.domain.services.chat_interactivity_admin_metrics_service import (
-            ChatInteractivityAdminMetricsService,
-        )
-
-        ChatInteractivityAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        from app.domain.services.chat_presentation_admin_metrics_service import (
-            ChatPresentationAdminMetricsService,
-        )
-
-        ChatPresentationAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        from app.domain.services.chat_error_handling_admin_metrics_service import (
-            ChatErrorHandlingAdminMetricsService,
-        )
-
-        ChatErrorHandlingAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        from app.domain.services.chat_web_search_admin_metrics_service import (
-            ChatWebSearchAdminMetricsService,
-        )
-
-        ChatWebSearchAdminMetricsService.enrich_audit_metadata(
-            audit_metadata,
-            assistant_metadata=assistant_metadata,
-        )
-
-        ChatWebSearchAdminMetricsService.log_security_events_if_needed(
-            self.audit_repository,
-            user_id=user_id,
-            message=message,
-        )
-
-        self.audit_repository.log(
-            user_id=user_id,
-            action="chat.message.sent",
-            prompt_hash=self._hash_prompt(message),
-            context=request.context,
-            tool_calls=tool_calls,
-            metadata=audit_metadata,
-        )
-
-        for tool_call in tool_calls or []:
-            if not isinstance(tool_call, dict):
-                continue
-
-            attempt = (tool_call.get("metadata") or {}).get("errorRecoveryAttempt")
-
-            if isinstance(attempt, dict):
-                self.audit_repository.log(
-                    user_id=user_id,
-                    action="chat.error_recovery.attempted",
-                    metadata=attempt,
-                )
-                break
 
         return SendChatMessageResponse(
-            messageId=str(assistant_message.id),
-            answer=answer,
-            sources=sources,
-            toolCalls=tool_calls,
+            messageId=str(completion.assistant_message.id),
+            answer=completion.answer,
+            sources=completion.sources,
+            toolCalls=completion.tool_calls,
             canvasOpen=(
                 {
-                    "title": canvas_open_payload.title,
-                    "markdown": canvas_open_payload.markdown,
-                    "sourceMessageId": canvas_open_payload.source_message_id,
+                    "title": completion.canvas_open_payload.title,
+                    "markdown": completion.canvas_open_payload.markdown,
+                    "sourceMessageId": completion.canvas_open_payload.source_message_id,
                 }
-                if canvas_open_payload
+                if completion.canvas_open_payload
                 else None
             ),
-            adminDebug=ChatAdminDebugService.resolve_client_admin_debug(
-                request,
-                build_payload=admin_debug_payload,
-                assistant_metadata=assistant_metadata,
-            ),
+            adminDebug=completion.client_admin_debug,
         )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:

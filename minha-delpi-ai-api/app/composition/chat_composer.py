@@ -256,6 +256,18 @@ def make_chat_session_memory_pins_use_case() -> ChatSessionMemoryPinsUseCase:
     )
 
 
+def make_chat_turn_completion_service():
+    from app.application.services.chat_turn.chat_turn_completion_service import (
+        ChatTurnCompletionService,
+    )
+
+    return ChatTurnCompletionService(
+        chat_repository=PostgresChatSessionRepository(),
+        audit_repository=PostgresAuditRepository(),
+        session_memory_service=make_chat_session_memory_service(),
+    )
+
+
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
@@ -273,6 +285,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
         web_search_synthesis_service=make_chat_web_search_synthesis_service(),
         session_memory_service=make_chat_session_memory_service(),
+        turn_completion_service=make_chat_turn_completion_service(),
     )
 
 
@@ -293,6 +306,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
         web_search_synthesis_service=make_chat_web_search_synthesis_service(),
         session_memory_service=make_chat_session_memory_service(),
+        turn_completion_service=make_chat_turn_completion_service(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:

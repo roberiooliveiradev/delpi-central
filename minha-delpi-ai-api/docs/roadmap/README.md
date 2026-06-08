@@ -24,6 +24,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
 | [playbook-04-autoajuda-chat.md](./playbook-04-autoajuda-chat.md) | **Playbook 04:** autoajuda — manual vivo do chat (catálogo, ajuda contextual, regressão A1–A12). |
 | [playbook-05-anexos-lousa.md](./playbook-05-anexos-lousa.md) | **Playbook 05:** anexos e lousa — welcome, chips, ambiguidade, metadata de versão (L1–L12). |
+| [playbook-11-clean-architecture-chat-api.md](./playbook-11-clean-architecture-chat-api.md) | **Playbook 11:** clean architecture — revisão, roadmap por fases, checklist de PR, baseline de auditoria. |
 | [playbook-06-erros-resultados-vazios.md](./playbook-06-erros-resultados-vazios.md) | **Playbook 06:** erros e vazios — classificação, templates, chips de recuperação (E1–E15). |
 | [playbook-07-interatividade-botoes.md](./playbook-07-interatividade-botoes.md) | **Playbook 07:** interatividade — consolidação de chips, Mais opções, apresentação (I1–I15). |
 | [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: status, smokes e índice. |

@@ -1,0 +1,41 @@
+# Clean Architecture — minha-delpi-ai-api (chat)
+
+## Dependências
+
+- `domain` **não** importa `app.infrastructure.*` nem `app.interfaces.*`.
+- `interfaces` **não** instancia `Postgres*Repository` — só `composition.make_*`.
+- Textos PT-BR para usuário vivem em `app/content/pt-BR/assistant/*.json`.
+
+## Onde colocar código novo
+
+| Mudança | Camada |
+|---------|--------|
+| Intenção, roteamento, presenter, normalização campo | `domain/services` |
+| Orquestração de turno, RAG, tools, SSE | `application/services` + use case fino |
+| Postgres, LLM, HTTP api-delpi, loader JSON | `infrastructure` |
+| Endpoint REST | `interfaces/http` (handler < 40 linhas) |
+
+## Send / Stream
+
+- Pré-LLM: `ChatTurnPreparationService` (único).
+- Pós-LLM: `ChatTurnCompletionService` (alvo — não duplicar nos use cases).
+- Inteligência: `ChatIntelligencePipelineService` (único).
+
+## API operacional
+
+- Spec: `OperationalApiRouteSpec` + `api_route_domains.json`.
+- Seleção: `ExternalActionRouteSelectionService`.
+- Execução: `ExecuteExternalActionUseCase` + gateway HTTP.
+
+## Apresentação
+
+- Vocabulário: `column_labels.json`, normalização: `ChatPresentationFieldNormalizationService`.
+- Anexos/lousa: `attachments.json` + `ChatAttachmentContentService`.
+
+## PR checklist
+
+1. Domain sem import de infra?
+2. Texto novo só em JSON?
+3. Send/stream usam o mesmo serviço para a mesma regra?
+4. Teste ou caso em `chat_intelligence_regression_cases.py`?
+5. Playbook: `docs/roadmap/playbook-11-clean-architecture-chat-api.md`

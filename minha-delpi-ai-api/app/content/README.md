@@ -32,6 +32,8 @@ Arquivos em `assistant/` usados pela API de chat:
 
 Catálogo completo: [`docs/architecture/assistant-content-catalog.md`](../docs/architecture/assistant-content-catalog.md).
 
+Arquitetura e roadmap de refatoração: [`docs/roadmap/playbook-11-clean-architecture-chat-api.md`](../docs/roadmap/playbook-11-clean-architecture-chat-api.md).
+
 Loader genérico: `ChatAssistantContentService` (`app/domain/services/chat_assistant_content_service.py`).
 | `identity.json` | Identidade e small talk |
 | `operational_parameters.json` | Parâmetros faltantes e ambiguidade de período |
