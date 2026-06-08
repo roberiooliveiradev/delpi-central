@@ -374,10 +374,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-delpi:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -392,10 +388,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/strategic-indicators:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -409,10 +401,6 @@ services:
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/transformometro:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -430,12 +418,9 @@ services:
     environment:
       TZ: ${TZ}
 
-    # Sem volume em /app ou dist: o container é nginx com build da imagem (igual prod e demais MFEs).
-    # Após alterar o plugin: docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-chat
-    # e recrie o serviço (up -d --force-recreate minha-delpi-chat). Iteração rápida: npm run dev no plugin.
-
     networks:
       - delpi-network
+
   dashboard-lmps:
     build:
       context: ../plugins/dashboard-lmps
@@ -446,10 +431,6 @@ services:
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-lmps:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -465,10 +446,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-quality:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -483,10 +460,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-commercial:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -500,10 +473,6 @@ services:
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-production:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -564,10 +533,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-supplies:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -581,10 +546,6 @@ services:
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-financial:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
@@ -600,10 +561,6 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/dashboard-engineering:/app
-      - /app/node_modules
-
     networks:
       - delpi-network
 
@@ -617,10 +574,6 @@ services:
 
     environment:
       TZ: ${TZ}
-
-    volumes:
-      - ../plugins/dashboard-hr:/app
-      - /app/node_modules
 
     networks:
       - delpi-network
