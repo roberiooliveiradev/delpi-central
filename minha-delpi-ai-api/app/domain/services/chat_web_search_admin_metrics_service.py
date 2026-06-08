@@ -6,7 +6,7 @@ from collections import Counter
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _OFFICIAL_SOURCE_TYPES = frozenset(
     {
@@ -37,7 +37,7 @@ _WEB_FEEDBACK_REASON_IDS = frozenset(
 
 @lru_cache(maxsize=1)
 def _web_follow_up_labels() -> frozenset[str]:
-    playbook = ContentService.personality_playbook()
+    playbook = ChatAssistantContentService.load_personality_playbook()
     labels: set[str] = set()
 
     for key in ("webSearchFollowUpChips", "webSearchFollowUpChipsNoResults"):

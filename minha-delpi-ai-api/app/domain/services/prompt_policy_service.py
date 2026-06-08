@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 class PromptPolicyService:
@@ -319,7 +319,7 @@ Comportamento esperado:
                 )
             )
 
-        stream_texts = ContentService.stream()
+        stream_texts = ChatAssistantContentService.load_stream()
         rag_header = str(stream_texts.get("ragContextHeader") or "Contexto documental autorizado:")
         rag_empty = str(
             stream_texts.get("ragEmptyContext")

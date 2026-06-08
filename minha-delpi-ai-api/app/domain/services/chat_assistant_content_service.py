@@ -46,6 +46,14 @@ class ChatAssistantContentService:
         return cls._require_port().load_personality_playbook()
 
     @classmethod
+    def load_stream(cls) -> dict[str, Any]:
+        return cls._require_port().load_stream()
+
+    @classmethod
+    def load_skills_catalog(cls) -> dict[str, Any]:
+        return cls._require_port().load_skills_catalog()
+
+    @classmethod
     def get(cls, bundle: str, *path: str, default: str = "") -> str:
         node: Any = _bundle_content(bundle)
 

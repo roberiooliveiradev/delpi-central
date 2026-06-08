@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
@@ -19,6 +20,9 @@ def configure_domain_infrastructure_ports() -> None:
     if _CONFIGURED:
         return
 
+    config = InfrastructureAppConfigAdapter()
+
     ChatAssistantContentService.configure(InfrastructureAssistantContentAdapter())
-    ChatExternalActionDirectResponseService.configure(InfrastructureAppConfigAdapter())
+    ChatDomainConfigService.configure(config)
+    ChatExternalActionDirectResponseService.configure(config)
     _CONFIGURED = True

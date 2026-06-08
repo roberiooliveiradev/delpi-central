@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 from app.application.services.chat_follow_up_suggestion_service import (
     ChatFollowUpSuggestionService,
@@ -24,7 +24,7 @@ from app.domain.services.chat_product_query_intent_service import (
 
 @lru_cache(maxsize=1)
 def _error_handling_content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/error_handling")
+    return ChatAssistantContentService.load_bundle("error_handling")
 
 
 @dataclass(frozen=True)

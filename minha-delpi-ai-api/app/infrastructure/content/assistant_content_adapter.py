@@ -14,6 +14,12 @@ class InfrastructureAssistantContentAdapter(AssistantContentPort):
     def load_personality_playbook(self) -> dict[str, Any]:
         return ContentService.personality_playbook()
 
+    def load_stream(self) -> dict[str, Any]:
+        return ContentService.stream()
+
+    def load_skills_catalog(self) -> dict[str, Any]:
+        return ContentService.skills_catalog()
+
     def invalidate_cache(self, bundle: str | None = None) -> None:
         if bundle is None:
             ContentService.clear_cache()

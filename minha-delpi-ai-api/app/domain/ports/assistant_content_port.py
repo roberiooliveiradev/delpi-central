@@ -16,5 +16,13 @@ class AssistantContentPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def load_stream(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def load_skills_catalog(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
     def invalidate_cache(self, bundle: str | None = None) -> None:
         raise NotImplementedError

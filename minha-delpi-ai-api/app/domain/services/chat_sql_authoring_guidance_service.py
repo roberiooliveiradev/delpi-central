@@ -10,12 +10,13 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 @lru_cache(maxsize=1)
 def _content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/interactivity")
+    return ChatAssistantContentService.load_bundle("interactivity")
 
 
 class ChatSqlAuthoringGuidanceService:
@@ -89,9 +90,7 @@ class ChatSqlAuthoringGuidanceService:
         sql_authoring = skills.get("sqlAuthoring")
 
         if sql_authoring is None:
-            from app.infrastructure.config.settings import Settings
-
-            sql_authoring = Settings.CHAT_DEFAULT_SQL_AUTHORING_SKILL
+            sql_authoring = ChatDomainConfigService.chat_default_sql_authoring_skill_enabled()
 
         if not sql_authoring:
             return False

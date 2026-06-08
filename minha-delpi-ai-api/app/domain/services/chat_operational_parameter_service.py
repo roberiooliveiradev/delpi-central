@@ -18,7 +18,7 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _PRODUCT_CONTEXT_TERMS = (
     "produto",
@@ -34,7 +34,7 @@ _PRODUCT_CONTEXT_TERMS = (
 
 @lru_cache(maxsize=1)
 def _parameter_content() -> dict:
-    return ContentService.load_json("assistant/operational_parameters")
+    return ChatAssistantContentService.load_bundle("operational_parameters")
 
 
 class ChatOperationalParameterService:

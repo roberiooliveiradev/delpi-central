@@ -4,12 +4,12 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 @lru_cache(maxsize=1)
 def _identity_content() -> dict:
-    return ContentService.load_json("assistant/identity")
+    return ChatAssistantContentService.load_bundle("identity")
 
 
 @dataclass(frozen=True)

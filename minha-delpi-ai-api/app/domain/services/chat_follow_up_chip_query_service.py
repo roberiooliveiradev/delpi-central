@@ -8,14 +8,14 @@ from functools import lru_cache
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _PRODUCT_CODE_RE = re.compile(r"\b\d{5,9}\b")
 
 
 @lru_cache(maxsize=1)
 def _query_templates() -> tuple[str, ...]:
-    playbook = ContentService.personality_playbook()
+    playbook = ChatAssistantContentService.load_personality_playbook()
     raw = playbook.get("followUpQueries") or {}
 
     templates: list[str] = []

@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
@@ -36,7 +37,7 @@ def invalidate_skill_cache() -> None:
 
 
 def _skills_from_json() -> tuple[ChatSkillDefinition, ...]:
-    catalog = ContentService.skills_catalog()
+    catalog = ChatAssistantContentService.load_skills_catalog()
     items = catalog.get("skills") or []
     parsed: list[ChatSkillDefinition] = []
 
@@ -237,15 +238,13 @@ class ChatSkillRegistry:
                 enabled = cls._drawing_analysis_available(allowed)
             elif definition.key == DOCUMENT_VISION_SKILL_KEY:
                 if not cls._has_explicit_config(agent_metadata, definition):
-                    from app.infrastructure.config.settings import Settings
-
                     if has_agent:
                         enabled = cls._drawing_analysis_available(allowed) or (
-                            Settings.CHAT_DOCUMENT_VISION_ENABLED
-                            and Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING
+                            ChatDomainConfigService.chat_document_vision_enabled()
+                            and ChatDomainConfigService.chat_document_vision_auto_with_drawing()
                         )
                     else:
-                        enabled = Settings.CHAT_DOCUMENT_VISION_ENABLED
+                        enabled = ChatDomainConfigService.chat_document_vision_enabled()
 
             derived: dict[str, bool] = {}
 

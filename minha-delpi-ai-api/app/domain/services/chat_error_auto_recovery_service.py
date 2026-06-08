@@ -9,12 +9,12 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 @lru_cache(maxsize=1)
 def _content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/error_handling")
+    return ChatAssistantContentService.load_bundle("error_handling")
 
 
 class ChatErrorAutoRecoveryService:

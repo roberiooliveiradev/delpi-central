@@ -9,28 +9,8 @@
     "chat_turn_preparation_service.py": 1282
   },
   "domainInfrastructureImports": {
-    "count": 39,
+    "count": 21,
     "samples": [
-      {
-        "file": "app/domain/services/chat_advanced_sql_specialist_service.py",
-        "line": 28,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
-        "file": "app/domain/services/chat_advanced_sql_specialist_service.py",
-        "line": 1305,
-        "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_agent_personality_service.py",
-        "line": 10,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
-        "file": "app/domain/services/chat_agent_profile_service.py",
-        "line": 7,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
       {
         "file": "app/domain/services/chat_agentic_action_schema_service.py",
         "line": 9,
@@ -42,24 +22,9 @@
         "snippet": "from app.infrastructure.config.settings import Settings"
       },
       {
-        "file": "app/domain/services/chat_date_range_intent_service.py",
-        "line": 17,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
         "file": "app/domain/services/chat_drawing_pdf_extraction_service.py",
         "line": 12,
         "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_error_auto_recovery_service.py",
-        "line": 12,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
-        "file": "app/domain/services/chat_error_handling_classifier.py",
-        "line": 9,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
       },
       {
         "file": "app/domain/services/chat_feedback_issue_service.py",
@@ -67,19 +32,9 @@
         "snippet": "from app.infrastructure.persistence.postgres_chat_quality_issue_repository import ("
       },
       {
-        "file": "app/domain/services/chat_follow_up_chip_query_service.py",
-        "line": 11,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
         "file": "app/domain/services/chat_input_security_service.py",
         "line": 5,
         "snippet": "from app.infrastructure.config.settings import Settings"
-      },
-      {
-        "file": "app/domain/services/chat_operational_parameter_service.py",
-        "line": 21,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
       },
       {
         "file": "app/domain/services/chat_operational_pipeline_service.py",
@@ -122,19 +77,44 @@
         "snippet": "from app.infrastructure.config.settings import Settings"
       },
       {
-        "file": "app/domain/services/chat_small_talk_pattern_service.py",
-        "line": 11,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
-        "file": "app/domain/services/chat_sql_authoring_guidance_service.py",
-        "line": 13,
-        "snippet": "from app.infrastructure.content.content_service import ContentService"
-      },
-      {
-        "file": "app/domain/services/chat_sql_authoring_guidance_service.py",
-        "line": 92,
+        "file": "app/domain/services/chat_sql_dialect_resolver_service.py",
+        "line": 53,
         "snippet": "from app.infrastructure.config.settings import Settings"
+      },
+      {
+        "file": "app/domain/services/chat_web_search_direct_answer_service.py",
+        "line": 8,
+        "snippet": "from app.infrastructure.config.settings import Settings"
+      },
+      {
+        "file": "app/domain/services/chat_web_search_intent_service.py",
+        "line": 14,
+        "snippet": "from app.infrastructure.config.settings import Settings"
+      },
+      {
+        "file": "app/domain/services/chat_web_search_planning_service.py",
+        "line": 13,
+        "snippet": "from app.infrastructure.config.settings import Settings"
+      },
+      {
+        "file": "app/domain/services/web_search_portuguese_content_service.py",
+        "line": 16,
+        "snippet": "from app.infrastructure.config.settings import Settings"
+      },
+      {
+        "file": "app/domain/skills/chat_skill_registry.py",
+        "line": 96,
+        "snippet": "from app.infrastructure.persistence.postgres_chat_skill_repository import ("
+      },
+      {
+        "file": "app/domain/skills/chat_skill_registry.py",
+        "line": 384,
+        "snippet": "from app.infrastructure.persistence.postgres_external_action_repository import ("
+      },
+      {
+        "file": "app/domain/skills/chat_skill_registry.py",
+        "line": 411,
+        "snippet": "from app.infrastructure.persistence.postgres_external_action_repository import ("
       }
     ]
   },

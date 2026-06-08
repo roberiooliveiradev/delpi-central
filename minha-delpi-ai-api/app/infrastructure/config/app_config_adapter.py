@@ -13,3 +13,12 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
 
     def chat_direct_response_stream_delay_ms(self) -> int:
         return int(Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS)
+
+    def chat_default_sql_authoring_skill_enabled(self) -> bool:
+        return bool(Settings.CHAT_DEFAULT_SQL_AUTHORING_SKILL)
+
+    def chat_document_vision_enabled(self) -> bool:
+        return bool(Settings.CHAT_DOCUMENT_VISION_ENABLED)
+
+    def chat_document_vision_auto_with_drawing(self) -> bool:
+        return bool(Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING)

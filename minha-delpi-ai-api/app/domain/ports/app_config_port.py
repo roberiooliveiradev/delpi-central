@@ -17,3 +17,15 @@ class AppConfigPort(ABC):
     @abstractmethod
     def chat_direct_response_stream_delay_ms(self) -> int:
         raise NotImplementedError
+
+    @abstractmethod
+    def chat_default_sql_authoring_skill_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_document_vision_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_document_vision_auto_with_drawing(self) -> bool:
+        raise NotImplementedError

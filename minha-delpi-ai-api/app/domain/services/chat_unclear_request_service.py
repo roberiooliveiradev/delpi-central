@@ -16,12 +16,12 @@ from functools import lru_cache
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 @lru_cache(maxsize=1)
 def _content() -> dict:
-    return ContentService.load_json("assistant/unclear_requests")
+    return ChatAssistantContentService.load_bundle("unclear_requests")
 
 
 class ChatUnclearRequestService:

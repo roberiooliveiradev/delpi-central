@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 def invalidate_external_action_response_cache() -> None:
@@ -14,7 +14,7 @@ def invalidate_external_action_response_cache() -> None:
 
 @lru_cache(maxsize=1)
 def _responses_content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/external_action_responses")
+    return ChatAssistantContentService.load_bundle("external_action_responses")
 
 
 class ExternalActionResponseContentService:

@@ -14,7 +14,7 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _MONTHS_PT = {
     "janeiro": 1,
@@ -450,8 +450,8 @@ class ChatDateRangeIntentService:
         if not ambiguous:
             return None
 
-        template = ContentService.get(
-            "assistant/operational_parameters",
+        template = ChatAssistantContentService.get(
+            "operational_parameters",
             "ambiguousPeriodYear",
             default=(
                 "Para **{month_label}**, preciso confirmar o ano: "

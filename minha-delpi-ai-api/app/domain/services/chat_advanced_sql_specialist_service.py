@@ -25,7 +25,8 @@ from app.domain.services.chat_sql_query_refinement_service import (
 )
 from app.domain.services.chat_sql_review_service import ChatSqlReviewService
 from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 SqlSpecialistMode = Literal[
     "create",
@@ -175,7 +176,7 @@ _PLANNER_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
 
 @lru_cache(maxsize=1)
 def _interactivity_content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/interactivity")
+    return ChatAssistantContentService.load_bundle("interactivity")
 
 
 class ChatAdvancedSqlSpecialistService:
@@ -1302,8 +1303,6 @@ class ChatAdvancedSqlSpecialistService:
         sql_authoring = skills.get("sqlAuthoring")
 
         if sql_authoring is None:
-            from app.infrastructure.config.settings import Settings
-
-            sql_authoring = Settings.CHAT_DEFAULT_SQL_AUTHORING_SKILL
+            sql_authoring = ChatDomainConfigService.chat_default_sql_authoring_skill_enabled()
 
         return bool(sql_authoring)
