@@ -129,17 +129,28 @@ class HrMetricsRepository(PortalRhBaseRepository):
                         p.end_date IS NULL
                         OR make_date(mt.year, mt.month, 1) <= date_trunc('month', p.end_date)::date
                 )
+            ),
+            latest AS (
+                SELECT
+                    total_pdis,
+                    active_pdis,
+                    measurement_date,
+                    ROW_NUMBER() OVER (
+                        ORDER BY measurement_date DESC
+                    ) AS row_number
+                FROM pdi_rows
             )
             SELECT
-                SUM(total_pdis) AS total_pdis,
-                SUM(active_pdis) AS active_pdis,
+                total_pdis,
+                active_pdis,
                 CASE
-                    WHEN SUM(total_pdis) IS NULL OR SUM(total_pdis) = 0 THEN NULL
-                    WHEN SUM(active_pdis) IS NULL THEN NULL
-                    ELSE (SUM(active_pdis) / SUM(total_pdis)) * 100
+                    WHEN total_pdis IS NULL OR total_pdis = 0 THEN NULL
+                    WHEN active_pdis IS NULL THEN NULL
+                    ELSE (active_pdis / total_pdis) * 100
                 END AS pdi_pct,
-                MAX(measurement_date) AS measurement_date
-            FROM pdi_rows
+                measurement_date
+            FROM latest
+            WHERE row_number = 1
         """
 
         row = self.fetch_one(
@@ -151,6 +162,13 @@ class HrMetricsRepository(PortalRhBaseRepository):
                 "pdi_indicator_code": PDI_ACTIVE_INDICATOR_CODE,
             },
         )
+
+        if not row:
+            row = self._fetch_latest_pdi_before_reference(
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
         active_pdis = self._safe_round((row or {}).get("active_pdis"))
         total_pdis = self._safe_round((row or {}).get("total_pdis"))
@@ -165,6 +183,66 @@ class HrMetricsRepository(PortalRhBaseRepository):
             "value": active_pdis,
             "measurement_date": (row or {}).get("measurement_date"),
         }
+
+    def _fetch_latest_pdi_before_reference(
+        self,
+        *,
+        branch_code: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict | None:
+        fallback_sql = """
+            WITH params AS (
+                SELECT
+                    CAST(%(branch_code)s AS varchar) AS branch_code,
+                    COALESCE(
+                        TO_DATE(NULLIF(CAST(%(end_date)s AS text), ''), 'DD-MM-YYYY'),
+                        TO_DATE(NULLIF(CAST(%(start_date)s AS text), ''), 'DD-MM-YYYY'),
+                        CURRENT_DATE
+                    ) AS reference_date
+            ),
+            pdi_rows AS (
+                SELECT
+                    mt.target_value AS total_pdis,
+                    ma.actual_value AS active_pdis,
+                    make_date(mt.year, mt.month, 1) AS measurement_date
+                FROM indicators_monthlytarget mt
+                INNER JOIN indicators_indicator i
+                    ON i.id = mt.indicator_id
+                LEFT JOIN indicators_monthlyactual ma
+                    ON ma.indicator_id = mt.indicator_id
+                AND ma.branch_code = mt.branch_code
+                AND ma.year = mt.year
+                AND ma.month = mt.month
+                CROSS JOIN params p
+                WHERE mt.branch_code = p.branch_code
+                AND i.active = TRUE
+                AND i.code = %(pdi_indicator_code)s
+                AND make_date(mt.year, mt.month, 1) <= date_trunc('month', p.reference_date)::date
+            )
+            SELECT
+                total_pdis,
+                active_pdis,
+                CASE
+                    WHEN total_pdis IS NULL OR total_pdis = 0 THEN NULL
+                    WHEN active_pdis IS NULL THEN NULL
+                    ELSE (active_pdis / total_pdis) * 100
+                END AS pdi_pct,
+                measurement_date
+            FROM pdi_rows
+            ORDER BY measurement_date DESC
+            LIMIT 1
+        """
+
+        return self.fetch_one(
+            fallback_sql,
+            {
+                "branch_code": branch_code,
+                "start_date": start_date,
+                "end_date": end_date,
+                "pdi_indicator_code": PDI_ACTIVE_INDICATOR_CODE,
+            },
+        )
 
     def get_performance_reviews_completion_snapshot(
         self,

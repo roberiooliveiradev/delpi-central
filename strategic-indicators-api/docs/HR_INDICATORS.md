@@ -25,7 +25,7 @@ Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 
 | Indicador SI | Código Portal | Realizado |
 |--------------|---------------|-----------|
-| `hr-pdi` | `PDI_ATV` | Soma de `actual_value` (PDIs ativos) no período |
+| `hr-pdi` | `PDI_ATV` | `actual_value` do **último mês** no recorte (snapshot); consolidado = soma das filiais |
 | `hr-performance-reviews` | `DES_AVL` (alias `AVA_DES`) | Média de `indicators_monthlyactual.actual_value` no período (% já calculado no Portal RH) |
 | Demais | `ABS_*`, `TUR_*`, `TRN_*`, `SAT_INT` | Média/agregação existente no snapshot |
 

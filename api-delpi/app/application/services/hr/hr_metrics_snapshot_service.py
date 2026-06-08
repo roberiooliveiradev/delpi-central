@@ -364,3 +364,4 @@ class HrMetricsSnapshotService:
             return float(value)
         except (TypeError, ValueError):
             return None
+
