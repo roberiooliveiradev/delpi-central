@@ -447,10 +447,10 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (minha-delpi-ai-api):**
 
-- [ ] `ChatApiDelpiResponseProfileService` — mapa `meta.entity` → handler de `present()` / `build_presentation()`.
-- [ ] Migrar rotas `/structure`, `/stock`, `/analyser`, `/factory-status` para perfil primeiro; manter fallback por `path`.
-- [ ] `humanizedSummary` enriquecido com `meta.fields` quando útil.
-- [ ] Testes: `tests/fixtures/api_delpi_responses/` × presenter × regressão em `tests/fixtures/chat_intelligence_regression_cases.py`.
+- [x] `ChatApiDelpiResponseProfileService` — mapa `meta.entity` → handler de `present()` / `build_presentation()`.
+- [x] Migrar rotas `/structure`, `/stock`, `/analyser`, `/factory-status` para perfil primeiro; manter fallback por `path`.
+- [x] `humanizedSummary` enriquecido com `meta.fields` quando útil.
+- [x] Testes: `tests/fixtures/api_delpi_responses/` × presenter × regressão em `tests/fixtures/chat_intelligence_regression_cases.py`.
 
 **Critério de aceite:** ≥ 80% das rotas chat-critical roteadas por perfil; suite verde; nenhuma regressão em apresentação multi-rota produto.
 

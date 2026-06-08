@@ -23,3 +23,62 @@ def load_api_delpi_fixture(name: str) -> dict[str, Any]:
 def load_api_delpi_data(name: str) -> Any:
     envelope = load_api_delpi_fixture(name)
     return envelope.get("data")
+
+
+def with_api_delpi_meta(envelope: dict[str, Any], meta: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(envelope)
+    payload["meta"] = meta
+    return payload
+
+
+PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
+    "product_stock_90269001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_stock",
+        "entity": "product_stock",
+        "shape": "paged_list",
+        "fields": {
+            "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
+        },
+    },
+    "product_structure_90269001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_structure",
+        "entity": "product_structure",
+        "shape": "hierarchy",
+    },
+    "product_analyser_90269001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_analyser",
+        "entity": "product_analyser",
+        "shape": "composite_analysis",
+    },
+    "product_factory_status_90269002.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_factory_status",
+        "entity": "product_factory_status",
+        "shape": "composite_analysis",
+    },
+    "product_detail_90269001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_detail",
+        "entity": "product",
+        "shape": "product_snapshot",
+    },
+    "product_search.json": {
+        "dataVersion": "2026-06",
+        "operationId": "search_products",
+        "entity": "product_search",
+        "shape": "paged_list",
+    },
+}
+
+
+def load_api_delpi_fixture_with_meta(name: str) -> dict[str, Any]:
+    envelope = load_api_delpi_fixture(name)
+    meta = PRODUCT_ENTITY_META.get(name)
+
+    if not meta:
+        return envelope
+
+    return with_api_delpi_meta(envelope, meta)

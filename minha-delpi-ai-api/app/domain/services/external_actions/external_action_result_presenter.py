@@ -9,6 +9,10 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.chat_api_delpi_response_profile_service import (
+    ApiDelpiResponseProfile,
+    ChatApiDelpiResponseProfileService,
+)
 
 
 class ExternalActionResultPresenter:
@@ -20,6 +24,120 @@ class ExternalActionResultPresenter:
         self._active_schema_labels: dict[str, str] | None = None
 
     def present(self, data, *, path: str = "") -> dict:
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        routed = self._present_entity_first(data, path=path, profile=profile)
+
+        if routed is not None:
+            return ChatApiDelpiResponseProfileService.enrich_humanized(routed, data)
+
+        result = self._present_legacy(data, path=path)
+        return ChatApiDelpiResponseProfileService.enrich_humanized(result, data)
+
+    def _present_entity_first(
+        self,
+        data,
+        *,
+        path: str,
+        profile: ApiDelpiResponseProfile,
+    ) -> dict | None:
+        entity = profile.entity
+
+        if not ChatApiDelpiResponseProfileService.is_profile_present_entity(entity):
+            return None
+
+        error = self._detect_api_error(data, path=path)
+
+        if error:
+            return error
+
+        root = self._unwrap_data(data)
+
+        empty_operational = self._present_empty_operational_result(
+            path=path,
+            root=root,
+        )
+
+        if empty_operational:
+            return empty_operational
+
+        if entity == "product_analyser" and isinstance(root, dict):
+            root = self._normalize_analyser_root(root)
+            product = root.get("product")
+
+            if isinstance(product, dict):
+                return self._present_product_analyser(
+                    root,
+                    self._normalize_api_section(product),
+                    path,
+                )
+
+        if entity == "product_factory_status" and isinstance(root, dict):
+            return self._present_product_factory_status(root, path)
+
+        if entity == "product_structure" and isinstance(root, dict):
+            structure_result = self._present_product_structure(root, path)
+
+            if structure_result:
+                return structure_result
+
+        if entity == "product_parents" and isinstance(root, dict):
+            structure_result = self._present_product_structure(root, path)
+
+            if structure_result:
+                return structure_result
+
+        product = root.get("product") if isinstance(root, dict) else None
+
+        if entity == "product" and isinstance(product, dict):
+            return self._present_product(root, self._normalize_api_section(product))
+
+        if isinstance(root, dict):
+            items = root.get("items")
+
+            if isinstance(items, list) and items:
+                title = self._infer_items_title(items, path)
+                first_item = items[0] if isinstance(items[0], dict) else {}
+
+                if entity == "product_stock" or self._is_stock_data(first_item):
+                    return self._present_product_stock(items, path=path, title=title)
+
+                if entity == "product_guide" or (
+                    isinstance(first_item, dict)
+                    and (
+                        "operation_description" in first_item
+                        or "operation_code" in first_item
+                    )
+                ):
+                    return self._present_product_guide(items, path=path, title=title)
+
+                if entity == "product_inspection" or self._looks_like_inspection_item(
+                    first_item
+                ):
+                    return self._present_product_inspection(items, path=path, title=title)
+
+                if entity == "product_search" and isinstance(first_item, dict) and (
+                    "code" in first_item and "description" in first_item
+                ):
+                    return self._present_product_search(root, items, title=title)
+
+                path_routed = self._present_path_routed_items(root, path)
+
+                if path_routed:
+                    return path_routed
+
+        if entity in {
+            "product_production_status",
+            "product_shipping_status",
+            "product_structure_exclusivity",
+        } and isinstance(root, dict):
+            fallback = self._present_playbook_report(root, path, entity=entity)
+
+            if fallback:
+                return fallback
+
+        return None
+
+    def _present_legacy(self, data, *, path: str = "") -> dict:
         error = self._detect_api_error(data, path=path)
         if error:
             return error
@@ -2943,6 +3061,84 @@ class ExternalActionResultPresenter:
             "sourcePath": path,
         }
 
+    def _present_product_factory_status(self, root: dict, path: str) -> dict:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(
+            product.get("product_code") or product.get("code") or self._extract_product_code_from_path(path)
+        ).strip()
+        description = str(product.get("description") or "").strip()
+        status = str(root.get("factory_status") or "").strip()
+        linhas: list[str] = []
+
+        if status:
+            linhas.append(f"Status fabril: {status}")
+
+        if description:
+            linhas.append(f"Produto: {code} — {description}")
+        elif code:
+            linhas.append(f"Produto: {code}")
+
+        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+
+        for key, value in list(indicators.items())[:6]:
+            linhas.append(f"{self._humanize_key(str(key))}: {value}")
+
+        structure_summary = (root.get("structure") or {}).get("summary") if isinstance(root.get("structure"), dict) else None
+
+        if isinstance(structure_summary, dict):
+            exclusive = structure_summary.get("total_exclusive_raw_materials")
+
+            if exclusive is not None:
+                linhas.append(f"MPs exclusivas: {exclusive}")
+
+        return {
+            "titulo": f"Status fabril — {code}" if code else "Status fabril do produto",
+            "linhas": linhas or [self._presenter_text("generic", "apiAuthorized")],
+            "dados": root,
+            "sourcePath": path,
+        }
+
+    def _present_playbook_report(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str,
+    ) -> dict | None:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(product.get("product_code") or product.get("code") or "").strip()
+        summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}
+        items = root.get("items") if isinstance(root.get("items"), list) else []
+        linhas: list[str] = []
+
+        if summary:
+            for key, value in list(summary.items())[:8]:
+                linhas.append(f"{self._humanize_key(str(key))}: {value}")
+
+        if items:
+            linhas.append(f"Itens retornados: {len(items)}")
+
+        if not linhas:
+            return None
+
+        titles = {
+            "product_production_status": "Situação produtiva",
+            "product_shipping_status": "Status de expedição",
+            "product_structure_exclusivity": "Estrutura com exclusividade",
+        }
+
+        title = titles.get(entity, "Relatório do produto")
+
+        if code:
+            title = f"{title} — {code}"
+
+        return {
+            "titulo": title,
+            "linhas": linhas,
+            "dados": root,
+            "sourcePath": path,
+        }
+
     def _present_product_search(self, root: dict, items: list, *, title: str | None = None) -> dict:
         titulo = title or self._route_presentation("productSearch", "defaultTitle")
         total = root.get("total")
@@ -3992,9 +4188,167 @@ class ExternalActionResultPresenter:
         )
 
         try:
+            profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+            entity_first = self._build_presentation_by_entity(
+                data,
+                path=path,
+                profile=profile,
+            )
+
+            if entity_first is not None:
+                return entity_first
+
             return self._build_presentation(data, path=path)
         finally:
             self._active_schema_labels = None
+
+    def _build_presentation_by_entity(
+        self,
+        data,
+        *,
+        path: str,
+        profile: ApiDelpiResponseProfile,
+    ) -> dict | None:
+        entity = profile.entity
+
+        if not ChatApiDelpiResponseProfileService.is_profile_present_entity(entity):
+            return None
+
+        root = self._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        if entity == "product_factory_status":
+            return self._build_factory_status_table(root, path)
+
+        product = root.get("product")
+
+        if entity == "product_analyser" and isinstance(product, dict):
+            guide_table = self._build_product_analyser_guide_table(root)
+
+            if guide_table:
+                return guide_table
+
+            return self._build_product_analyser_profile_table(product, root)
+
+        if entity == "product" and isinstance(product, dict):
+            detail_list = self._extract_product_detail_list(root)
+
+            if detail_list:
+                return self._build_product_detail_table(product, detail_list, root)
+
+            return self._build_product_table(product, root)
+
+        if entity in {"product_structure", "product_parents"}:
+            if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
+                if entity == "product_parents":
+                    return None
+
+                structure_table = self._build_analyser_structure_components_table(root)
+
+                if structure_table:
+                    return structure_table
+
+        items = root.get("items")
+
+        if isinstance(items, list) and items and isinstance(items[0], dict):
+            title = self._infer_items_title(items, path)
+            first_item = items[0]
+
+            if entity == "product_stock" or self._is_stock_data(first_item):
+                return self._build_items_table(items, title=title, path=path)
+
+            if entity == "product_inspection" or self._looks_like_inspection_item(first_item):
+                return self._build_inspection_items_table(items, path=path)
+
+            if entity == "product_search" and "code" in first_item and "description" in first_item:
+                return self._build_product_search_table(items, root, title=title)
+
+            if entity == "product_guide" or (
+                "operation_description" in first_item or "operation_code" in first_item
+            ):
+                return self._build_items_table(items, title=title, path=path)
+
+            if len(items) >= 2 or self._is_tabular_data(first_item):
+                return self._build_items_table(items, title=title, path=path)
+
+        if entity in {
+            "product_production_status",
+            "product_shipping_status",
+            "product_structure_exclusivity",
+        }:
+            return self._build_playbook_report_table(root, path, entity=entity)
+
+        return None
+
+    def _build_factory_status_table(self, root: dict, path: str) -> dict:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(product.get("product_code") or product.get("code") or "").strip()
+        columns = self._column_labels.kv_table_column_defs()
+        rows = [
+            {
+                "campo": "Status fabril",
+                "valor": str(root.get("factory_status") or "—"),
+            },
+            {
+                "campo": "Produto",
+                "valor": f"{code} — {product.get('description', '')}".strip(" —"),
+            },
+        ]
+
+        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+
+        for key, value in list(indicators.items())[:8]:
+            rows.append(
+                {
+                    "campo": self._humanize_key(str(key)),
+                    "valor": str(value),
+                }
+            )
+
+        return {
+            "type": "table",
+            "title": f"Status fabril — {code}" if code else "Status fabril do produto",
+            "columns": columns,
+            "rows": rows,
+        }
+
+    def _build_playbook_report_table(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str,
+    ) -> dict | None:
+        summary = root.get("summary") if isinstance(root.get("summary"), dict) else None
+        items = root.get("items") if isinstance(root.get("items"), list) else None
+
+        if items and isinstance(items[0], dict):
+            title = self._infer_items_title(items, path)
+            return self._build_items_table(items, title=title, path=path)
+
+        if not summary:
+            return None
+
+        columns = self._column_labels.kv_table_column_defs()
+        rows = [
+            {"campo": self._humanize_key(str(key)), "valor": str(value)}
+            for key, value in summary.items()
+        ]
+
+        titles = {
+            "product_production_status": "Situação produtiva",
+            "product_shipping_status": "Expedição",
+            "product_structure_exclusivity": "Exclusividade de MPs",
+        }
+
+        return {
+            "type": "table",
+            "title": titles.get(entity, "Relatório"),
+            "columns": columns,
+            "rows": rows,
+        }
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
         from app.domain.services.chat_product_operational_content_service import (
