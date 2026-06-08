@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 4 — send/stream use cases):**
+**Sprint imediata (Fase 4 — lote 2):**
 
-1. **4A:** reduzir `send_chat_message_use_case.py` (~877 linhas) — extrair fases pós-preparação.
-2. **4B:** reduzir `stream_chat_message_use_case.py` (~1396 linhas) — alinhar com send; sem duplicar inteligência do turn prep.
+1. **4B:** reduzir `stream_chat_message_use_case.py` (~838 linhas) — extrair título de sessão e worker de prepare para serviço stream.
+2. **4C:** `chat_routes.py` (~3153 linhas) — dividir rotas por domínio.
+
+**Concluído (Fase 4 lote 1):** `ChatTurnSideEffectsService`, `ChatTurnUseCaseSupportService`, `ChatTurnLlmAssemblyService`; paridade send/stream na montagem pré-LLM; `send_chat_message_use_case.py` **877 → ~286**; `stream_chat_message_use_case.py` **1396 → ~838**.
 
 **Concluído (Fase 3B lote 23):** `ExternalActionSelectionDispatchService` (~670 linhas); `select_action` migrado para `dispatch()`; facade `external_action_selection_service.py` **723 → ~148** linhas. **Fase 3B encerrada.**
 
