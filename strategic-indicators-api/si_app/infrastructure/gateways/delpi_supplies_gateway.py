@@ -88,6 +88,7 @@ class DelpiSuppliesGateway:
                     start_date=start_date,
                     end_date=end_date,
                     location=location,
+                    summary_only="true",
                 ),
                 authorization=bearer_authorization_from_context(),
             ),

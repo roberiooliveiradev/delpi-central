@@ -13,6 +13,7 @@ from app.domain.ports.supplies.stock_value_query_repository_port import (
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HISTORICAL_STOCK_BUNDLE_BATCH_SQL,
+    HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL,
 )
 
 
@@ -63,7 +64,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         d3_filter, d3_params = self._branch_filter_clause("D3.D3_FILIAL", branch)
         d3_loc_filter, d3_loc_params = self._location_filter_clause("D3.D3_LOCAL", location)
 
-        sql = HISTORICAL_STOCK_BUNDLE_BATCH_SQL.format(
+        template = (
+            HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL
+            if request.summary_only
+            else HISTORICAL_STOCK_BUNDLE_BATCH_SQL
+        )
+        sql = template.format(
             sb9_branch_filter=sb9_filter,
             sb9_branch_filter_b9=sb9_b9_filter,
             sb9_location_filter=sb9_loc_filter,
@@ -202,7 +208,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         branch_label, location_label = self._labels(request)
         limit = max(1, int(getattr(request, "top_limit", 10) or 10))
 
-        sql = f"""
+        summary_sql = f"""
             SELECT
                 ? AS branch,
                 ? AS location,
@@ -212,47 +218,54 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 COUNT(DISTINCT SB2.B2_COD) AS total_products,
                 COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
             FROM SB2010 SB2
-            WHERE {where_clause};
-
-            SELECT
-                SB2.B2_FILIAL AS branch,
-                ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
-                ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
-                COUNT(*) AS total_records,
-                COUNT(DISTINCT SB2.B2_COD) AS total_products,
-                COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
-            FROM SB2010 SB2
             WHERE {where_clause}
-            GROUP BY SB2.B2_FILIAL
-            ORDER BY SB2.B2_FILIAL;
-
-            SELECT
-                SB2.B2_FILIAL AS branch,
-                SB2.B2_LOCAL AS location,
-                ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
-                ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
-                COUNT(*) AS total_records,
-                COUNT(DISTINCT SB2.B2_COD) AS total_products
-            FROM SB2010 SB2
-            WHERE {where_clause}
-            GROUP BY SB2.B2_FILIAL, SB2.B2_LOCAL
-            ORDER BY SB2.B2_FILIAL, SB2.B2_LOCAL;
-
-            SELECT TOP {limit}
-                SB2.B2_COD AS product_code,
-                MAX(SB1.B1_DESC) AS product_description,
-                ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
-                ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
-                ROUND(AVG(CAST(SB2.B2_CM1 AS DECIMAL(18, 6))), 6) AS average_unit_cost,
-                COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
-            FROM SB2010 SB2
-            LEFT JOIN SB1010 SB1
-                ON SB1.D_E_L_E_T_ = ''
-               AND SB1.B1_COD = SB2.B2_COD
-            WHERE {where_clause}
-            GROUP BY SB2.B2_COD
-            ORDER BY total_stock_value DESC, product_code;
         """
+
+        if request.summary_only:
+            sql = summary_sql
+        else:
+            sql = f"""
+                {summary_sql};
+
+                SELECT
+                    SB2.B2_FILIAL AS branch,
+                    ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
+                    ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
+                    COUNT(*) AS total_records,
+                    COUNT(DISTINCT SB2.B2_COD) AS total_products,
+                    COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
+                FROM SB2010 SB2
+                WHERE {where_clause}
+                GROUP BY SB2.B2_FILIAL
+                ORDER BY SB2.B2_FILIAL;
+
+                SELECT
+                    SB2.B2_FILIAL AS branch,
+                    SB2.B2_LOCAL AS location,
+                    ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
+                    ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
+                    COUNT(*) AS total_records,
+                    COUNT(DISTINCT SB2.B2_COD) AS total_products
+                FROM SB2010 SB2
+                WHERE {where_clause}
+                GROUP BY SB2.B2_FILIAL, SB2.B2_LOCAL
+                ORDER BY SB2.B2_FILIAL, SB2.B2_LOCAL;
+
+                SELECT TOP {limit}
+                    SB2.B2_COD AS product_code,
+                    MAX(SB1.B1_DESC) AS product_description,
+                    ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
+                    ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
+                    ROUND(AVG(CAST(SB2.B2_CM1 AS DECIMAL(18, 6))), 6) AS average_unit_cost,
+                    COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
+                FROM SB2010 SB2
+                LEFT JOIN SB1010 SB1
+                    ON SB1.D_E_L_E_T_ = ''
+                   AND SB1.B1_COD = SB2.B2_COD
+                WHERE {where_clause}
+                GROUP BY SB2.B2_COD
+                ORDER BY total_stock_value DESC, product_code;
+            """
 
         final_params = (branch_label, location_label) + params
 

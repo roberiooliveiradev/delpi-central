@@ -15,6 +15,7 @@ def stock_value_cache_key(request: GetStockValueRequest) -> str:
             request.start_date or "",
             request.end_date or "",
             str(request.top_limit or 10),
+            "summary" if request.summary_only else "full",
         ]
     )
 

@@ -52,6 +52,7 @@ def test_execute_uses_stock_value_repository_for_stock_context():
     stock_repository = use_case._stock_repository
     stock_repository.get_stock_value_summary.assert_called_once()
     stock_request = stock_repository.get_stock_value_summary.call_args[0][0]
+    assert stock_request.summary_only is True
     assert stock_request.branch == "02"
     assert stock_request.start_date == "2026-04-01"
     assert stock_request.end_date == "2026-04-30"

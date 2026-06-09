@@ -29,6 +29,7 @@ class GetInventoryTurnoverUseCase:
             location=request.location,
             start_date=request.start_date,
             end_date=request.end_date,
+            summary_only=True,
         )
 
     def _parse_date(self, value: str | None) -> date | None:

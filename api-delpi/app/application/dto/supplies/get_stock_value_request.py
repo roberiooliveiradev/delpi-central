@@ -9,6 +9,7 @@ class GetStockValueRequest:
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     top_limit: int = 10
+    summary_only: bool = False
 
     @property
     def uses_historical_estimation(self) -> bool:

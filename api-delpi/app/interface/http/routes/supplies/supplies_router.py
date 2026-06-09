@@ -150,6 +150,10 @@ def get_stock_value(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     top_limit: int = Query(default=10, ge=1, le=50),
+    summary_only: bool = Query(
+        default=False,
+        description="Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto).",
+    ),
 ):
     try:
         use_case = build_get_stock_value_use_case()
@@ -160,6 +164,7 @@ def get_stock_value(
             start_date=start_date,
             end_date=end_date,
             top_limit=top_limit,
+            summary_only=summary_only,
         )
 
         result = enrich_dashboard_metric(
