@@ -82,6 +82,26 @@ def test_structured_answer_includes_reasons():
     assert "Não encontrei registros" in text
 
 
+def test_index_failed_attachment_skipped_when_drawing_analyser_succeeded():
+    classification = ChatErrorHandlingClassifier.classify(
+        message="Analise o desenho 90260140 e gere o relatório de conformidade DELPI",
+        answer="Resumo operacional",
+        attachments=[{"original_filename": "90261040.pdf", "status": "index_failed"}],
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/products/90260140/analyser",
+                },
+            }
+        ],
+    )
+
+    assert classification is None
+
+
 def test_help_error_skipped_when_recovery_present():
     from app.application.services.chat_help_error_follow_up_service import (
         ChatHelpErrorFollowUpService,

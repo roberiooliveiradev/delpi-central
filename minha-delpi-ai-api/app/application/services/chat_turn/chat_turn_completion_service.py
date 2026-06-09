@@ -231,6 +231,17 @@ class ChatTurnCompletionService:
             ),
         )
 
+        from app.application.services.chat_drawing_turn_enrichment_service import (
+            ChatDrawingTurnEnrichmentService,
+        )
+
+        drawing_report_answer = ChatDrawingTurnEnrichmentService.resolve_report_direct_answer(
+            turn.tool_context if isinstance(turn.tool_context, dict) else None,
+        )
+
+        if drawing_report_answer:
+            answer = drawing_report_answer
+
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
                 message=turn.message,

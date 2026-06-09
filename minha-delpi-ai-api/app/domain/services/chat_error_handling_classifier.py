@@ -56,6 +56,12 @@ class ChatErrorHandlingClassifier:
     ) -> ChatErrorHandlingClassification | None:
         attachment_type = cls._classify_attachments(attachments)
 
+        if attachment_type == "file_unreadable" and cls._drawing_analysis_recovered_attachment(
+            message=message,
+            tool_calls=tool_calls,
+        ):
+            attachment_type = None
+
         if attachment_type:
             return cls._stub_classification(attachment_type)
 
@@ -546,6 +552,39 @@ class ChatErrorHandlingClassifier:
             return "unsupported_file"
 
         return None
+
+    @classmethod
+    def _drawing_analysis_recovered_attachment(
+        cls,
+        *,
+        message: str,
+        tool_calls: list | None,
+    ) -> bool:
+        """Indexação RAG pode falhar enquanto visão/OCR + /analyser concluem o relatório DELPI."""
+
+        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+        if not ChatDrawingIntentService.is_drawing_analysis_request(message):
+            return False
+
+        for tool_call in tool_calls or []:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if "/analyser" in path:
+                return True
+
+        return False
 
     @classmethod
     def _looks_like_rag_turn(cls, workspace_context: dict | None, answer: str) -> bool:

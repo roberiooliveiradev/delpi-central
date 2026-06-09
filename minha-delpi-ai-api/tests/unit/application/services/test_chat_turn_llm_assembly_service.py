@@ -104,3 +104,57 @@ def test_assemble_stream_keeps_admin_guidelines_on_fast_path():
 
     assert result.active_guidelines == [{"id": "g1"}]
     prompt_builder.build_messages.assert_called_once()
+
+
+def test_assemble_prefers_drawing_report_over_existing_direct_answer():
+    report = "# Relatório de Análise de Desenho DELPI\n\nAprovado"
+    prepared = _prepared(
+        direct_answer="### Informações completas do produto 90260140",
+        tool_context={
+            "context": "",
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "statusCode": 200,
+                        "path": "/products/90260140/analyser",
+                    },
+                }
+            ],
+            "drawingAnalysisMode": True,
+            "drawingAnalysis": {"productCode": "90260140"},
+            "drawingAnalysisExport": {"markdown": report},
+        },
+    )
+    web_search = MagicMock()
+    web_search.enhance_prepared_turn.side_effect = lambda **kwargs: (
+        kwargs["direct_answer"],
+        kwargs["pipeline_stages"],
+    )
+
+    result = ChatTurnLlmAssemblyService.assemble(
+        request=SimpleNamespace(
+            access_token=None,
+            session_id=str(uuid4()),
+            attachment_ids=["att-1"],
+        ),
+        message="Analise o desenho 90260140 e gere o relatório de conformidade DELPI",
+        user_id=uuid4(),
+        workspace_context={"skills": {"drawingAnalysis": True}},
+        attachments=[],
+        previous_messages=[],
+        prepared=prepared,
+        user_message=SimpleNamespace(id=uuid4()),
+        chat_repository=MagicMock(),
+        prompt_builder_service=MagicMock(),
+        web_search_synthesis_service=web_search,
+        build_attachment_context=lambda **kwargs: "",
+        resolve_llm_user_context=lambda *args, **kwargs: None,
+        build_admin_guidelines_prompt=lambda ctx: ("", []),
+        embedding_cache_stats=lambda: None,
+        channel="stream",
+    )
+
+    assert result.direct_answer == report
+    assert result.llm_messages == []

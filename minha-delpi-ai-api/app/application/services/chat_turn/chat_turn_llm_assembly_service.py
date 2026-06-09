@@ -86,7 +86,7 @@ class ChatTurnLlmAssemblyService:
             tool_context
         )
 
-        if report_direct and not str(direct_answer or "").strip():
+        if report_direct:
             direct_answer = report_direct
 
         if direct_answer and isinstance(tool_context, dict):
