@@ -1,0 +1,271 @@
+"""Rotas HTTP de PPM e quantidade produzida (CT inspeção final)."""
+
+from typing import Literal, Optional
+
+from fastapi import APIRouter, Query
+from delpi_auth.authorization import require_any_permission
+
+from app.application.dto.ppm.list_ppm_request import ListPpmRequest
+from app.application.dto.ppm.produced_quantity_request import ProducedQuantityRequest
+from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
+from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
+from app.application.security.api_delpi_permissions import KPI_QUALITY_ACCESS
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.composition.quality_composer import (
+    build_get_ppm_series_use_case,
+    build_get_ppm_summary_use_case,
+    build_get_produced_quantity_use_case,
+    build_list_ppm_use_case,
+)
+from app.core.responses import error_response
+from app.interface.http.kpi_field_labels import (
+    QUALITY_PPM_FIELD_LABELS,
+    QUALITY_PRODUCED_QUANTITY_FIELD_LABELS,
+    kpi_fields,
+)
+from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
+from app.utils.logger import log_error
+
+router = APIRouter(tags=["Qualidade — PPM"])
+
+PpmType = Literal["internal", "external"]
+
+_PPM_GOAL_KEYS = {
+    "internal": goal_keys.QUALITY_PPM_INTERNAL,
+    "external": goal_keys.QUALITY_PPM_EXTERNAL,
+}
+
+
+def _ppm_summary_response(
+    *,
+    ppm_type: PpmType,
+    branch: Optional[str],
+    date_start: Optional[str],
+    date_end: Optional[str],
+):
+    try:
+        dto = PpmSummaryRequest(
+            type=ppm_type,
+            branch=branch,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        use_case = build_get_ppm_summary_use_case()
+        result = enrich_dashboard_metric(
+            use_case.execute(dto).to_dict(),
+            source_key=_PPM_GOAL_KEYS[ppm_type],
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+        )
+        return api_delpi_success(
+            result,
+            operation_id=f"get_ppm_{ppm_type}_summary",
+            fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar resumo de PPM {ppm_type}: {exc}")
+        return error_response(
+            f"Erro interno ao buscar resumo de PPM {ppm_type}.",
+            status_code=500,
+        )
+
+
+def _ppm_list_response(
+    *,
+    ppm_type: PpmType,
+    branch: Optional[str],
+    date_start: Optional[str],
+    date_end: Optional[str],
+    page: Optional[int],
+    page_size: Optional[int],
+):
+    try:
+        dto = ListPpmRequest(
+            type=ppm_type,
+            branch=branch,
+            date_start=date_start,
+            date_end=date_end,
+            page=page,
+            page_size=page_size,
+        )
+        use_case = build_list_ppm_use_case()
+        result = use_case.execute(dto)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id=f"list_ppm_{ppm_type}",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar PPM {ppm_type}: {exc}")
+        return error_response(
+            f"Erro interno ao listar PPM {ppm_type}.",
+            status_code=500,
+        )
+
+
+def _ppm_series_response(
+    *,
+    ppm_type: PpmType,
+    granularity: str,
+    branch: Optional[str],
+    date_start: Optional[str],
+    date_end: Optional[str],
+):
+    try:
+        dto = PpmSeriesRequest(
+            type=ppm_type,
+            granularity=granularity,
+            branch=branch,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        use_case = build_get_ppm_series_use_case()
+        result = use_case.execute(dto)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id=f"get_ppm_{ppm_type}_series",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar série de PPM {ppm_type}: {exc}")
+        return error_response(
+            f"Erro interno ao buscar série de PPM {ppm_type}.",
+            status_code=500,
+        )
+
+
+@router.get("/ppm/internal/summary")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_internal_ppm_summary(
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+):
+    return _ppm_summary_response(
+        ppm_type="internal",
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+
+@router.get("/ppm/external/summary")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_external_ppm_summary(
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+):
+    return _ppm_summary_response(
+        ppm_type="external",
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+
+@router.get("/ppm/internal/series")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_internal_ppm_series(
+    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+):
+    return _ppm_series_response(
+        ppm_type="internal",
+        granularity=granularity,
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+
+@router.get("/ppm/external/series")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_external_ppm_series(
+    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+):
+    return _ppm_series_response(
+        ppm_type="external",
+        granularity=granularity,
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+
+@router.get("/ppm/internal")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def list_internal_ppm(
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    page: int = Query(None, ge=1),
+    page_size: int = Query(None, ge=1),
+):
+    return _ppm_list_response(
+        ppm_type="internal",
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/ppm/external")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def list_external_ppm(
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    page: int = Query(None, ge=1),
+    page_size: int = Query(None, ge=1),
+):
+    return _ppm_list_response(
+        ppm_type="external",
+        branch=branch,
+        date_start=date_start,
+        date_end=date_end,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/produced-quantity")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_produced_quantity(
+    product: list[str] = Query(
+        ...,
+        description="Código(s) do produto; repetível ou separado por vírgula",
+    ),
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+):
+    try:
+        dto = ProducedQuantityRequest(
+            products=product,
+            branch=branch,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        use_case = build_get_produced_quantity_use_case()
+        result = use_case.execute(dto)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_produced_quantity",
+            fields=kpi_fields(QUALITY_PRODUCED_QUANTITY_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao buscar quantidade produzida: {exc}")
+        return error_response(
+            "Erro interno ao buscar quantidade produzida.",
+            status_code=500,
+        )

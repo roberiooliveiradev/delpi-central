@@ -29,3 +29,9 @@ def test_ppm_includes_pa_and_pi() -> None:
 def test_ct_filter_matches_playbook() -> None:
     assert "INSPE" in CT_INSPECAO_NOME_SQL_LIKE
     assert "FINAL" in CT_INSPECAO_NOME_SQL_LIKE
+
+
+def test_sql_b1_tipo_in_clause() -> None:
+    from app.domain.services.ppm_inspection_denominator import sql_b1_tipo_in_clause
+
+    assert sql_b1_tipo_in_clause() == "('PA', 'PI')"

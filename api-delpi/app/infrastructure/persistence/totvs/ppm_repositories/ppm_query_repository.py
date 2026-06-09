@@ -1,48 +1,30 @@
 from datetime import datetime, timedelta
 
-from app.infrastructure.persistence.totvs.base_repository import BaseRepository
-from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
-
 from app.application.models.page import Page
-from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.ppm_item import PpmItem
+from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.produced_quantity import (
     ProducedQuantityByProduct,
     ProducedQuantityItem,
     ProducedQuantityReport,
 )
 from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
-from app.infrastructure.persistence.totvs.ppm_repositories.ppm_production_sql import (
-    APONT_INSPECAO_CTE,
-    CT_INSPECAO_FINAL_CTE,
-    CT_INSPECAO_JOIN,
-    QTD_PRODUZIDA_OP_EXPR,
-    SH1_RECURSO_JOIN,
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.ppm_repositories.ppm_inspection_sql_builder import (
+    append_apont_date_params,
+    build_inspection_apont_ctes,
 )
+from app.infrastructure.persistence.totvs.ppm_repositories.ppm_nc_query import (
+    build_nc_where_clause,
+)
+from app.infrastructure.persistence.totvs.ppm_repositories.ppm_protheus_dates import (
+    exclusive_end_date,
+    to_protheus_date,
+)
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
-
-    def _type_filter(self, ppm_type: str) -> str:
-        if ppm_type == "internal":
-            return "QI2_TIPO = '1'"
-
-        if ppm_type == "external":
-            return "QI2_TIPO = '2'"
-
-        raise ValueError("ppm_type deve ser internal ou external")
-
-    def _to_protheus_date(self, value: str | None) -> str | None:
-        return QueryBuilder().convert_date_to_protheus(value)
-
-    def _exclusive_end_date(self, value: str | None) -> str | None:
-        protheus_date = self._to_protheus_date(value)
-
-        if not protheus_date:
-            return None
-
-        parsed = datetime.strptime(protheus_date, "%Y%m%d")
-        return (parsed + timedelta(days=1)).strftime("%Y%m%d")
 
     def _map_ppm_item(self, row: dict) -> PpmItem:
         """Mapeia linha SQL para entidade (ignora colunas extras do SELECT)."""
@@ -57,67 +39,32 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             returned_quantity_un=float(row.get("returned_quantity_un") or 0),
         )
 
-    def _build_inspection_apont_ctes(
+    def _resolve_date_range(
         self,
-        *,
-        branch: str | None,
-        product_codes: list[str] | None = None,
-    ) -> tuple[str, str, list[str]]:
-        prod_branch_filter_ct = ""
-        prod_branch_filter_sh6 = ""
-        prod_params: list[str] = []
-
-        if branch:
-            prod_branch_filter_ct = "AND HB.HB_FILIAL = ?"
-            prod_branch_filter_sh6 = "AND SH6.H6_FILIAL = ?"
-            prod_params.append(branch)
-            prod_params.append(branch)
-
-        product_filter = ""
-        if product_codes:
-            placeholders = ", ".join("?" for _ in product_codes)
-            product_filter = f"AND SH6.H6_PRODUTO IN ({placeholders})"
-            prod_params.extend(product_codes)
-
-        ct_inspecao_cte = CT_INSPECAO_FINAL_CTE.format(
-            ct_branch_filter=prod_branch_filter_ct,
-        )
-        apont_inspecao_cte = APONT_INSPECAO_CTE.format(
-            qtd_expr=QTD_PRODUZIDA_OP_EXPR.strip(),
-            sh1_join=SH1_RECURSO_JOIN.strip(),
-            ct_join=CT_INSPECAO_JOIN.strip(),
-            sh6_branch_filter=prod_branch_filter_sh6,
-            product_filter=product_filter,
-        )
-        return ct_inspecao_cte, apont_inspecao_cte, prod_params
+        date_start: str | None,
+        date_end: str | None,
+    ) -> tuple[str | None, str | None]:
+        return to_protheus_date(date_start), exclusive_end_date(date_end)
 
     def get_summary(self, request) -> PpmSummary:
-        date_start = self._to_protheus_date(request.date_start)
-        date_end_exclusive = self._exclusive_end_date(request.date_end)
-
-        qb_nc = QueryBuilder()
-        qb_nc.raw("D_E_L_E_T_ = ' '")
-
-        if request.branch:
-            qb_nc.eq("QI2_FILIAL", request.branch)
-
-        if date_start:
-            qb_nc.gte("QI2_OCORRE", date_start)
-
-        if date_end_exclusive:
-            qb_nc.lt("QI2_OCORRE", date_end_exclusive)
-
-        qb_nc.raw(self._type_filter(request.type))
-
-        where_nc, params_nc = qb_nc.build()
-
-        ct_inspecao_cte, apont_inspecao_cte, prod_params = self._build_inspection_apont_ctes(
-            branch=request.branch,
+        date_start, date_end_exclusive = self._resolve_date_range(
+            request.date_start,
+            request.date_end,
         )
-        prod_params.extend([
-            date_start,
-            date_end_exclusive,
-        ])
+
+        where_nc, params_nc = build_nc_where_clause(
+            ppm_type=request.type,
+            branch=request.branch,
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+        )
+
+        ctes = build_inspection_apont_ctes(branch=request.branch)
+        prod_params = append_apont_date_params(
+            ctes.params,
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+        )
 
         sql = f"""
             WITH nc AS (
@@ -132,8 +79,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 FROM QI2010
                 WHERE {where_nc}
             ),
-            {ct_inspecao_cte.strip()},
-            {apont_inspecao_cte.strip()},
+            {ctes.ct_inspecao_cte.strip()},
+            {ctes.apont_inspecao_cte.strip()},
             prod AS (
                 SELECT
                     SUM(qtd_produzida_op) AS total_produzido_milheiro
@@ -168,22 +115,30 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         )
 
     def list_produced_quantity(self, request) -> ProducedQuantityReport:
-        date_start = self._to_protheus_date(request.date_start)
-        date_end_exclusive = self._exclusive_end_date(request.date_end)
+        date_start, date_end_exclusive = self._resolve_date_range(
+            request.date_start,
+            request.date_end,
+        )
 
         if not date_start or not date_end_exclusive:
             raise ValueError("date_start e date_end são obrigatórios.")
 
-        ct_inspecao_cte, apont_inspecao_cte, prod_params = self._build_inspection_apont_ctes(
+        ctes = build_inspection_apont_ctes(
             branch=request.branch,
             product_codes=request.products,
         )
-        params = tuple(prod_params + [date_start, date_end_exclusive])
+        params = tuple(
+            append_apont_date_params(
+                ctes.params,
+                date_start=date_start,
+                date_end_exclusive=date_end_exclusive,
+            )
+        )
 
         sql = f"""
             WITH
-            {ct_inspecao_cte.strip()},
-            {apont_inspecao_cte.strip()}
+            {ctes.ct_inspecao_cte.strip()},
+            {ctes.apont_inspecao_cte.strip()}
             SELECT
                 LTRIM(RTRIM(ai.H6_FILIAL)) AS branch,
                 LTRIM(RTRIM(ai.H6_PRODUTO)) AS product_code,
@@ -223,6 +178,24 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             for row in rows
         ]
 
+        by_product = self._aggregate_produced_by_product(items)
+        total_milheiro = sum(item.produced_milheiro for item in items)
+
+        return ProducedQuantityReport(
+            branch=request.branch,
+            date_start=request.date_start,
+            date_end=request.date_end,
+            products=request.products,
+            items=items,
+            total_produced_milheiro=total_milheiro,
+            total_produced_un=total_milheiro * 1000,
+            by_product=by_product,
+        )
+
+    @staticmethod
+    def _aggregate_produced_by_product(
+        items: list[ProducedQuantityItem],
+    ) -> list[ProducedQuantityByProduct]:
         by_product_map: dict[str, ProducedQuantityByProduct] = {}
         for item in items:
             existing = by_product_map.get(item.product_code)
@@ -245,22 +218,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             if item.branch and item.branch not in existing.branches:
                 existing.branches.append(item.branch)
 
-        by_product = sorted(
-            by_product_map.values(),
-            key=lambda row: row.product_code,
-        )
-        total_milheiro = sum(item.produced_milheiro for item in items)
-
-        return ProducedQuantityReport(
-            branch=request.branch,
-            date_start=request.date_start,
-            date_end=request.date_end,
-            products=request.products,
-            items=items,
-            total_produced_milheiro=total_milheiro,
-            total_produced_un=total_milheiro * 1000,
-            by_product=by_product,
-        )
+        return sorted(by_product_map.values(), key=lambda row: row.product_code)
 
     def list_branches(
         self,
@@ -269,26 +227,18 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         date_start: str | None,
         date_end: str | None,
     ) -> list[str]:
-        if ppm_type not in {"internal", "external"}:
-            raise ValueError("ppm_type deve ser internal ou external")
+        date_start_protheus, date_end_exclusive = self._resolve_date_range(
+            date_start,
+            date_end,
+        )
 
-        date_start_protheus = self._to_protheus_date(date_start)
-        date_end_exclusive = self._exclusive_end_date(date_end)
-
-        nc_filters = [
-            "D_E_L_E_T_ = ' '",
-            self._type_filter(ppm_type),
-            "NULLIF(LTRIM(RTRIM(QI2_FILIAL)), '') IS NOT NULL",
-        ]
-        nc_params: list[str] = []
-
-        if date_start_protheus:
-            nc_filters.append("QI2_OCORRE >= ?")
-            nc_params.append(date_start_protheus)
-
-        if date_end_exclusive:
-            nc_filters.append("QI2_OCORRE < ?")
-            nc_params.append(date_end_exclusive)
+        where_nc, params_nc = build_nc_where_clause(
+            ppm_type=ppm_type,
+            branch=None,
+            date_start=date_start_protheus,
+            date_end_exclusive=date_end_exclusive,
+        )
+        where_nc = f"{where_nc} AND NULLIF(LTRIM(RTRIM(QI2_FILIAL)), '') IS NOT NULL"
 
         prod_filters = [
             "D_E_L_E_T_ = ' '",
@@ -313,7 +263,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 SELECT
                     LTRIM(RTRIM(QI2_FILIAL)) AS branch
                 FROM QI2010
-                WHERE {' AND '.join(nc_filters)}
+                WHERE {where_nc}
 
                 UNION
 
@@ -326,7 +276,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             ORDER BY branch
         """
 
-        params = tuple(nc_params + prod_params)
+        params = tuple(params_nc + prod_params)
 
         with self as repo:
             rows = repo.execute_query(sql, params)
@@ -338,24 +288,17 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         ]
 
     def list_items(self, request) -> Page[PpmItem]:
-        date_start = self._to_protheus_date(request.date_start)
-        date_end_exclusive = self._exclusive_end_date(request.date_end)
+        date_start, date_end_exclusive = self._resolve_date_range(
+            request.date_start,
+            request.date_end,
+        )
 
-        qb = QueryBuilder()
-        qb.raw("D_E_L_E_T_ = ' '")
-
-        if request.branch:
-            qb.eq("QI2_FILIAL", request.branch)
-
-        if date_start:
-            qb.gte("QI2_OCORRE", date_start)
-
-        if date_end_exclusive:
-            qb.lt("QI2_OCORRE", date_end_exclusive)
-
-        qb.raw(self._type_filter(request.type))
-
-        where_clause, params = qb.build()
+        where_clause, params = build_nc_where_clause(
+            ppm_type=request.type,
+            branch=request.branch,
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+        )
 
         base_sql = f"""
             FROM QI2010

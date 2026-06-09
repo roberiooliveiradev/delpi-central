@@ -113,9 +113,9 @@ def test_quality_kaizen_summary_returns_meta(mock_build, _mock_enrich) -> None:
     )
 
 
-@patch("app.interface.http.routes.quality.quality_router.build_get_produced_quantity_use_case")
+@patch("app.interface.http.routes.quality.ppm_routes.build_get_produced_quantity_use_case")
 def test_quality_produced_quantity_returns_meta(mock_build) -> None:
-    from app.interface.http.routes.quality.quality_router import get_produced_quantity
+    from app.interface.http.routes.quality.ppm_routes import get_produced_quantity
 
     mock_report = MagicMock()
     mock_report.to_dict.return_value = {

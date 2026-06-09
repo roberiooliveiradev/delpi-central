@@ -21,37 +21,29 @@ from app.application.dto.nonconformity.list_nonconformity_request import (
 from app.application.dto.nonconformity.nonconformity_series_request import (
     NonconformitySeriesRequest,
 )
-from app.application.dto.ppm.list_ppm_request import ListPpmRequest
-from app.application.dto.ppm.produced_quantity_request import ProducedQuantityRequest
-from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
-from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
 
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.quality_composer import (
     build_get_audit_5s_summary_use_case,
     build_get_kaizen_summary_use_case,
-    build_get_ppm_series_use_case,
-    build_get_ppm_summary_use_case,
-    build_get_produced_quantity_use_case,
     build_get_nonconformity_series_use_case,
     build_list_nonconformity_use_case,
-    build_list_ppm_use_case,
     build_list_quality_branches_use_case,
 )
-from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.interface.http.kpi_field_labels import (
     QUALITY_AUDIT_5S_FIELD_LABELS,
     QUALITY_KAIZEN_FIELD_LABELS,
-    QUALITY_PPM_FIELD_LABELS,
-    QUALITY_PRODUCED_QUANTITY_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.routes.quality.audit_5s_operational_router import (
     router as audit_5s_operational_router,
 )
+from app.interface.http.routes.quality.ppm_routes import router as ppm_router
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
 router.include_router(audit_5s_operational_router)
+router.include_router(ppm_router)
 
 
 @router.get("/branches")
@@ -252,259 +244,3 @@ def get_audit_5s_summary(
             status_code=500,
         )
 
-
-@router.get("/ppm/internal/summary")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_internal_ppm_summary(
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-):
-    try:
-        dto = PpmSummaryRequest(
-            type="internal",
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-        )
-
-        use_case = build_get_ppm_summary_use_case()
-        result = enrich_dashboard_metric(
-            use_case.execute(dto).to_dict(),
-            source_key=goal_keys.QUALITY_PPM_INTERNAL,
-            start_date=date_start,
-            end_date=date_end,
-            branch=branch,
-        )
-
-        return api_delpi_success(
-            result,
-            operation_id="get_ppm_internal_summary",
-            fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
-        )
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao buscar resumo de PPM interno: {exc}")
-        return error_response(
-            "Erro interno ao buscar resumo de PPM interno.",
-            status_code=500,
-        )
-
-
-@router.get("/ppm/external/summary")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_external_ppm_summary(
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-):
-    try:
-        dto = PpmSummaryRequest(
-            type="external",
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-        )
-
-        use_case = build_get_ppm_summary_use_case()
-        result = enrich_dashboard_metric(
-            use_case.execute(dto).to_dict(),
-            source_key=goal_keys.QUALITY_PPM_EXTERNAL,
-            start_date=date_start,
-            end_date=date_end,
-            branch=branch,
-        )
-
-        return api_delpi_success(
-            result,
-            operation_id="get_ppm_external_summary",
-            fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
-        )
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao buscar resumo de PPM externo: {exc}")
-        return error_response(
-            "Erro interno ao buscar resumo de PPM externo.",
-            status_code=500,
-        )
-
-
-@router.get("/ppm/internal/series")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_internal_ppm_series(
-    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-):
-    return _get_ppm_series_route(
-        ppm_type="internal",
-        granularity=granularity,
-        branch=branch,
-        date_start=date_start,
-        date_end=date_end,
-    )
-
-
-@router.get("/ppm/external/series")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_external_ppm_series(
-    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-):
-    return _get_ppm_series_route(
-        ppm_type="external",
-        granularity=granularity,
-        branch=branch,
-        date_start=date_start,
-        date_end=date_end,
-    )
-
-
-@router.get("/ppm/internal")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def list_internal_ppm(
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-    page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
-):
-    try:
-        dto = ListPpmRequest(
-            type="internal",
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-            page=page,
-            page_size=page_size,
-        )
-
-        use_case = build_list_ppm_use_case()
-        result = use_case.execute(dto)
-
-        return api_delpi_success(
-            result.to_dict(),
-            operation_id="list_ppm_internal",
-        )
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao listar PPM interno: {exc}")
-        return error_response(
-            "Erro interno ao listar PPM interno.",
-            status_code=500,
-        )
-
-
-@router.get("/ppm/external")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def list_external_ppm(
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-    page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
-):
-    try:
-        dto = ListPpmRequest(
-            type="external",
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-            page=page,
-            page_size=page_size,
-        )
-
-        use_case = build_list_ppm_use_case()
-        result = use_case.execute(dto)
-
-        return api_delpi_success(
-            result.to_dict(),
-            operation_id="list_ppm_external",
-        )
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao listar PPM externo: {exc}")
-        return error_response(
-            "Erro interno ao listar PPM externo.",
-            status_code=500,
-        )
-
-
-@router.get("/produced-quantity")
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_produced_quantity(
-    product: list[str] = Query(
-        ...,
-        description="Código(s) do produto; repetível ou separado por vírgula",
-    ),
-    branch: Optional[str] = None,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-):
-    try:
-        dto = ProducedQuantityRequest(
-            products=product,
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-        )
-
-        use_case = build_get_produced_quantity_use_case()
-        result = use_case.execute(dto)
-
-        return api_delpi_success(
-            result.to_dict(),
-            operation_id="get_produced_quantity",
-            fields=kpi_fields(QUALITY_PRODUCED_QUANTITY_FIELD_LABELS),
-        )
-
-    except ValueError as exc:
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao buscar quantidade produzida: {exc}")
-        return error_response(
-            "Erro interno ao buscar quantidade produzida.",
-            status_code=500,
-        )
-
-
-def _get_ppm_series_route(
-    *,
-    ppm_type: str,
-    granularity: str,
-    branch: Optional[str],
-    date_start: Optional[str],
-    date_end: Optional[str],
-):
-    try:
-        dto = PpmSeriesRequest(
-            type=ppm_type,
-            granularity=granularity,
-            branch=branch,
-            date_start=date_start,
-            date_end=date_end,
-        )
-
-        use_case = build_get_ppm_series_use_case()
-        result = use_case.execute(dto)
-
-        return api_delpi_success(
-            result.to_dict(),
-            operation_id=f"get_ppm_{ppm_type}_series",
-        )
-        return error_response(str(exc), status_code=400)
-
-    except Exception as exc:
-        log_error(f"Erro ao buscar série de PPM {ppm_type}: {exc}")
-        return error_response(
-            f"Erro interno ao buscar série de PPM {ppm_type}.",
-            status_code=500,
-        )

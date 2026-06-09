@@ -34,6 +34,7 @@ Estrutura atual recomendada:
 app/interface/http/routes/quality/
   __init__.py
   quality_router.py
+  ppm_routes.py
   nonconformity_routes.py
   kaizen_routes.py
   audit_5s_routes.py

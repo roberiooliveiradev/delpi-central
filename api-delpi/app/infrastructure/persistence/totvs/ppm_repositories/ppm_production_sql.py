@@ -1,12 +1,13 @@
 """Fragmentos SQL do denominador PPM — apontamento no CT de inspeção final."""
 
-# Tipos de produto incluídos no total produzido (PA + PI).
-PPM_PRODUCED_B1_TIPOS = ("PA", "PI")
+from app.domain.services.ppm_inspection_denominator import (
+    CT_INSPECAO_NOME_SQL_LIKE,
+    sql_b1_tipo_in_clause,
+)
 
-# Filtro dinâmico de CT de inspeção final (SHB010) — playbook expedição / produção.
-CT_INSPECAO_NOME_LIKE = "%INSPE%FINAL%"
+_B1_TIPOS_SQL = sql_b1_tipo_in_clause()
 
-CT_INSPECAO_FINAL_CTE = """
+CT_INSPECAO_FINAL_CTE = f"""
     ct_inspecao_final AS (
         SELECT
             HB.HB_FILIAL,
@@ -15,8 +16,8 @@ CT_INSPECAO_FINAL_CTE = """
         FROM SHB010 HB
         WHERE
             HB.D_E_L_E_T_ = ' '
-            AND UPPER(HB.HB_NOME) LIKE '%INSPE%FINAL%'
-            {ct_branch_filter}
+            AND UPPER(HB.HB_NOME) LIKE '{CT_INSPECAO_NOME_SQL_LIKE}'
+            {{ct_branch_filter}}
     )
 """
 
@@ -37,7 +38,7 @@ CT_INSPECAO_JOIN = """
 # Soma H6_QTDPROD por OP/produto/operação no CT de inspeção (playbook).
 QTD_PRODUZIDA_OP_EXPR = "SUM(CAST(SH6.H6_QTDPROD AS FLOAT))"
 
-APONT_INSPECAO_CTE = """
+APONT_INSPECAO_CTE = f"""
     apont_inspecao AS (
         SELECT
             SH6.H6_FILIAL,
@@ -45,22 +46,22 @@ APONT_INSPECAO_CTE = """
             SH6.H6_PRODUTO,
             SH6.H6_OPERAC,
             SB1.B1_TIPO,
-            {qtd_expr} AS qtd_produzida_op
+            {{qtd_expr}} AS qtd_produzida_op
         FROM SH6010 SH6
         INNER JOIN SB1010 SB1
             ON SB1.B1_COD = SH6.H6_PRODUTO
            AND SB1.D_E_L_E_T_ = ' '
-           AND SB1.B1_TIPO IN ('PA', 'PI')
-        {sh1_join}
-        {ct_join}
+           AND SB1.B1_TIPO IN {_B1_TIPOS_SQL}
+        {{sh1_join}}
+        {{ct_join}}
         WHERE
             SH6.D_E_L_E_T_ = ' '
-            {sh6_branch_filter}
+            {{sh6_branch_filter}}
             AND SH6.H6_TIPO = 'P'
             AND SH6.H6_OP <> ''
             AND SH6.H6_PRODUTO <> ''
             AND SH6.H6_RECURSO <> ''
-            {product_filter}
+            {{product_filter}}
             AND SH6.H6_DTAPONT >= ?
             AND SH6.H6_DTAPONT < ?
         GROUP BY
