@@ -94,9 +94,12 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+const DELPI_CALLER_APP = "auditoria-5s";
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
   };
   const token = accessTokenGetter?.();
   if (token) {
@@ -158,7 +161,9 @@ export async function httpPatch<T>(
 
 export async function httpUploadForm<T>(url: string, body: FormData): Promise<T> {
   const token = accessTokenGetter?.();
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
+  };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }

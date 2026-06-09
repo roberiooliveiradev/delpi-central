@@ -26,11 +26,17 @@ class DelpiApiClient:
         self,
         base_url: str | None = None,
         timeout: float | None = None,
+        caller_app: str | None = None,
     ) -> None:
         self._base_url = (
             base_url or os.getenv("DELPI_API_URL", "http://delpi-api-delpi:8000")
         ).rstrip("/")
         self._timeout = timeout or float(os.getenv("DELPI_API_TIMEOUT", str(_DEFAULT_TIMEOUT)))
+        self._caller_app = (
+            caller_app
+            or os.getenv("DELPI_API_CALLER_APP", "strategic-indicators-api")
+            or ""
+        ).strip()
 
     def _get(
         self,
@@ -42,6 +48,8 @@ class DelpiApiClient:
         clean_params = {k: v for k, v in (params or {}).items() if v is not None}
         headers: dict[str, str] = {}
         apply_internal_service_headers(headers)
+        if self._caller_app:
+            headers["X-Delpi-Caller-App"] = self._caller_app
         if authorization:
             headers["Authorization"] = authorization
 
