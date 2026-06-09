@@ -492,6 +492,18 @@ class ExecuteExternalActionUseCase:
 
         ChatPresentationStructureDedupService.dedupe_metadata(metadata)
 
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
+        )
+
+        ChatPresentationPrimaryViewService.apply_session_preference(
+            metadata,
+            session_format,
+            data=sanitized_data,
+            path=resolved_path,
+            presenter=self.presenter,
+        )
+
         from app.domain.services.chat_presentation_stack_order_service import (
             ChatPresentationStackOrderService,
         )
@@ -523,31 +535,14 @@ class ExecuteExternalActionUseCase:
         *,
         kpi_presentation: dict | None,
     ) -> None:
-        decision = metadata.get("presentationDecision")
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
+        )
 
-        if not isinstance(decision, dict):
-            return
-
-        selected = str(decision.get("selected") or "").strip().lower()
-        presentation = metadata.get("presentation")
-        text_presentation = metadata.get("textPresentation")
-
-        if selected == "kpi" and isinstance(kpi_presentation, dict):
-            metadata["presentation"] = kpi_presentation
-
-            if isinstance(text_presentation, dict):
-                title = str(
-                    text_presentation.get("title")
-                    or kpi_presentation.get("title")
-                    or ""
-                ).strip()
-                text_presentation["markdown"] = f"### {title}".strip() if title else ""
-
-            return
-
-        if selected == "text" and isinstance(presentation, dict) and presentation.get("type") == "kpi":
-            metadata["kpiPresentation"] = presentation
-            metadata["presentation"] = None
+        ChatPresentationPrimaryViewService.finalize_decision_alignment(
+            metadata,
+            kpi_presentation=kpi_presentation,
+        )
 
     @staticmethod
     def _normalize_eficiencia_fabril_titles(metadata: dict, path: str) -> None:

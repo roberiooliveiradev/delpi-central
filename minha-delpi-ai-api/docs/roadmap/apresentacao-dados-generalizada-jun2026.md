@@ -316,7 +316,7 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fase 0 concluída — matriz 130 rotas (`presentation-coverage-baseline.json`, `audit_presentation_coverage.py`). Fase 1 em andamento.
+**Status jun/2026:** ✅ Fase 0 concluída — matriz 130 rotas. ✅ Fase 1 concluída — preferência de sessão respeitada ponta a ponta.
 
 ### Fase 0 — entregue
 
@@ -327,3 +327,12 @@ Atualizar este doc ao concluir cada fase (checkbox no topo).
 | Baseline | `docs/architecture/presentation-coverage-baseline.json` |
 | Fixtures | `tests/fixtures/chat_presentation_regression_cases.py` |
 | Testes | `tests/unit/domain/services/test_chat_presentation_coverage_service.py` |
+
+### Fase 1 — entregue
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/chat_presentation_primary_view_service.py` |
+| Wiring | `ExecuteExternalActionUseCase._build_presentation_metadata` |
+| Testes | `tests/unit/application/use_cases/test_presentation_session_format_respected.py` |
+| Testes unit. | `tests/unit/domain/services/test_chat_presentation_primary_view_service.py` |
