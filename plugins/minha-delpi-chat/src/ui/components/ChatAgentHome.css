@@ -132,12 +132,16 @@
   display: grid;
   gap: var(--mdc-space-3);
   width: 100%;
+  padding: var(--mdc-space-4);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 88%, transparent);
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
   text-align: left;
 }
 
 .mdc-chat-agent-home__suggestions-header {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .mdc-chat-agent-home__suggestions-header h3 {
@@ -158,64 +162,162 @@
 .mdc-chat-agent-home__icebreakers {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mdc-space-2);
+  gap: 0.75rem;
   width: 100%;
 }
 
 .mdc-chat-agent-home__icebreaker {
+  --icebreaker-accent: var(--mdc-primary);
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: 0.55rem;
-  min-height: 4.5rem;
-  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
-  border-radius: 0.95rem;
-  background: color-mix(in srgb, var(--mdc-primary) 4%, transparent);
+  gap: 0.65rem;
+  min-height: 5.35rem;
+  border: 1px solid color-mix(in srgb, var(--icebreaker-accent) 22%, var(--mdc-card-border));
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--icebreaker-accent) 10%, transparent),
+      transparent 58%
+    ),
+    color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
-  padding: 0.8rem 0.85rem;
+  padding: 0.85rem 0.9rem;
   text-align: left;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--icebreaker-accent) 5%, transparent);
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.15s ease;
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.mdc-chat-agent-home__icebreaker--product {
+  --icebreaker-accent: #3b82f6;
+}
+
+.mdc-chat-agent-home__icebreaker--stock {
+  --icebreaker-accent: #f59e0b;
+}
+
+.mdc-chat-agent-home__icebreaker--web {
+  --icebreaker-accent: #06b6d4;
+}
+
+.mdc-chat-agent-home__icebreaker--capabilities {
+  --icebreaker-accent: var(--mdc-primary);
+}
+
+.mdc-chat-agent-home__icebreaker--text {
+  --icebreaker-accent: #a855f7;
+}
+
+.mdc-chat-agent-home__icebreaker--generic {
+  --icebreaker-accent: var(--mdc-text-muted);
 }
 
 .mdc-chat-agent-home__icebreaker:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 42%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--icebreaker-accent) 42%, var(--mdc-card-border));
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--icebreaker-accent) 14%, transparent),
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--icebreaker-accent) 10%, transparent);
 }
 
 .mdc-chat-agent-home__icebreaker:focus-visible {
-  outline: 2px solid var(--mdc-primary);
+  outline: 2px solid var(--icebreaker-accent);
   outline-offset: 2px;
 }
 
-.mdc-chat-agent-home__icebreaker-icon {
-  margin-top: 0.1rem;
-  color: var(--mdc-primary);
-  flex-shrink: 0;
+.mdc-chat-agent-home__icebreaker-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mdc-chat-agent-home__icebreaker-icon-wrap {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--icebreaker-accent) 24%, transparent);
+  background: color-mix(in srgb, var(--icebreaker-accent) 12%, transparent);
+  color: var(--icebreaker-accent);
+}
+
+.mdc-chat-agent-home__icebreaker-arrow {
+  color: var(--mdc-muted);
+  opacity: 0;
+  transform: translate(-2px, 2px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    color 0.18s ease;
+}
+
+.mdc-chat-agent-home__icebreaker:hover .mdc-chat-agent-home__icebreaker-arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+  color: var(--icebreaker-accent);
 }
 
 .mdc-chat-agent-home__icebreaker-copy {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .mdc-chat-agent-home__icebreaker-copy strong {
-  font-size: 0.9rem;
-  font-weight: 760;
-  line-height: 1.3;
+  font-size: 0.92rem;
+  font-weight: 780;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
-.mdc-chat-agent-home__icebreaker-copy > span {
+.mdc-chat-agent-home__icebreaker-example {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.mdc-chat-agent-home__icebreaker-example-label {
+  flex-shrink: 0;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--icebreaker-accent) 12%, transparent);
+  color: var(--icebreaker-accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.35rem;
+  text-transform: uppercase;
+}
+
+.mdc-chat-agent-home__icebreaker-example-value {
+  min-width: 0;
+  color: var(--mdc-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-agent-home__icebreaker-hint {
   color: var(--mdc-muted);
   font-size: 0.78rem;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 .mdc-chat-agent-home__icebreakers--few {
@@ -232,12 +334,12 @@
 }
 
 .mdc-chat-agent-home__icebreakers--many .mdc-chat-agent-home__icebreaker {
-  min-height: 3.8rem;
-  padding: 0.65rem 0.75rem;
+  min-height: 4.75rem;
+  padding: 0.7rem 0.8rem;
 }
 
 .mdc-chat-agent-home__icebreakers--many .mdc-chat-agent-home__icebreaker-copy strong {
-  font-size: 0.84rem;
+  font-size: 0.86rem;
 }
 
 @media (max-width: 760px) {
@@ -269,5 +371,9 @@
   .mdc-chat-agent-home__manage {
     width: 100%;
     justify-content: center;
+  }
+
+  .mdc-chat-agent-home__suggestions {
+    padding: var(--mdc-space-3);
   }
 }

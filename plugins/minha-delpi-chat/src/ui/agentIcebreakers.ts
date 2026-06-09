@@ -12,6 +12,7 @@ export const AGENT_ICEBREAKER_MAX_CHARS = 72;
 export type AgentIcebreakerTemplate = {
   label: string;
   template: string;
+  hint?: string;
 };
 
 /** Modelos com campos editáveis `{{campo}}` — mesmo padrão da home do chat. */
@@ -19,9 +20,21 @@ export const AGENT_ICEBREAKER_TEMPLATES: AgentIcebreakerTemplate[] = [
   { label: "Consultar produto", template: "me fale do produto {{productCode}}" },
   { label: "Ver estoque", template: "qual o estoque do produto {{productCode}}?" },
   { label: "Pesquisar na web", template: "pesquise na web sobre {{searchQuery}}" },
-  { label: "Capacidades", template: "o que você pode fazer?" },
+  {
+    label: "Capacidades",
+    template: "o que você pode fazer?",
+    hint: "Ferramentas, dados e limites do agente",
+  },
   { label: "Corrigir texto", template: "corrija o texto abaixo:\n\n{{textContent}}" },
 ];
+
+export type IcebreakerVisualKind =
+  | "product"
+  | "stock"
+  | "web"
+  | "capabilities"
+  | "text"
+  | "generic";
 
 /** Campos inseríveis no editor (token → rótulo curto). */
 export const AGENT_ICEBREAKER_PLACEHOLDER_FIELDS: Array<{
@@ -109,6 +122,7 @@ export function formatIcebreakerForDisplay(
 export type IcebreakerCardPresentation = {
   title: string;
   subtitle?: string;
+  example?: string;
 };
 
 /** Rótulo curto + exemplo para cards da home do agente. */
@@ -121,11 +135,13 @@ export function resolveIcebreakerCardPresentation(
   );
   const display = formatShortcutTemplateForDisplay(normalized);
   const exampleMatch = display.match(/\s+Ex\.:\s+(.+)$/i);
+  const example = exampleMatch?.[1]?.trim();
 
   if (known) {
     return {
       title: known.label,
-      subtitle: exampleMatch?.[1]?.trim(),
+      subtitle: example ?? known.hint,
+      example,
     };
   }
 
@@ -133,10 +149,57 @@ export function resolveIcebreakerCardPresentation(
     return {
       title: display.replace(/\s+Ex\.:\s+.+$/i, "").trim(),
       subtitle: exampleMatch[1].trim(),
+      example: exampleMatch[1].trim(),
     };
   }
 
   return { title: display };
+}
+
+/** Variante visual do card (ícone e cor de destaque). */
+export function resolveIcebreakerVisualKind(template: string): IcebreakerVisualKind {
+  const normalized = template.trim();
+  const known = AGENT_ICEBREAKER_TEMPLATES.find((item) => item.template === normalized);
+
+  if (known) {
+    if (known.template.includes("{{productCode}}") && /estoque/i.test(known.template)) {
+      return "stock";
+    }
+
+    if (known.template.includes("{{productCode}}")) {
+      return "product";
+    }
+
+    if (known.template.includes("{{searchQuery}}")) {
+      return "web";
+    }
+
+    if (known.template.includes("{{textContent}}")) {
+      return "text";
+    }
+
+    if (/o que você pode fazer/i.test(known.template)) {
+      return "capabilities";
+    }
+  }
+
+  if (normalized.includes("{{productCode}}") && /estoque/i.test(normalized)) {
+    return "stock";
+  }
+
+  if (normalized.includes("{{productCode}}")) {
+    return "product";
+  }
+
+  if (normalized.includes("{{searchQuery}}")) {
+    return "web";
+  }
+
+  if (normalized.includes("{{textContent}}")) {
+    return "text";
+  }
+
+  return "generic";
 }
 
 /** Classe de densidade do grid conforme a quantidade de sugestões. */

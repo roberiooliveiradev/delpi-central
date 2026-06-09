@@ -1,4 +1,16 @@
-import { BadgeCheck, Bot, Settings, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  Bot,
+  Boxes,
+  Globe,
+  MessageSquare,
+  Package,
+  PenLine,
+  Settings,
+  Sparkles,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import {
@@ -7,6 +19,8 @@ import {
   getIcebreakerGridDensityClass,
   resolveAgentIcebreakersForDisplay,
   resolveIcebreakerCardPresentation,
+  resolveIcebreakerVisualKind,
+  type IcebreakerVisualKind,
 } from "../agentIcebreakers";
 
 import "./ChatAgentHome.css";
@@ -16,6 +30,15 @@ type ChatAgentHomeProps = {
   onUseSuggestion: (value: string) => void;
   canManageAgent?: boolean;
   onManageAgent?: () => void;
+};
+
+const ICEBREAKER_ICONS: Record<IcebreakerVisualKind, LucideIcon> = {
+  product: Package,
+  stock: Boxes,
+  web: Globe,
+  capabilities: Sparkles,
+  text: PenLine,
+  generic: MessageSquare,
 };
 
 function formatAgentMetaLabel(value: string): string {
@@ -126,19 +149,44 @@ export function ChatAgentHome({
           >
             {icebreakers.map((icebreaker) => {
               const card = resolveIcebreakerCardPresentation(icebreaker);
+              const visualKind = resolveIcebreakerVisualKind(icebreaker);
+              const Icon = ICEBREAKER_ICONS[visualKind];
 
               return (
                 <button
                   key={icebreaker}
                   type="button"
-                  className="mdc-chat-agent-home__icebreaker"
+                  className={[
+                    "mdc-chat-agent-home__icebreaker",
+                    `mdc-chat-agent-home__icebreaker--${visualKind}`,
+                  ].join(" ")}
                   onClick={() => onUseSuggestion(icebreaker)}
                   title={card.subtitle ? `${card.title} — ${card.subtitle}` : card.title}
                 >
-                  <Sparkles size={15} aria-hidden="true" className="mdc-chat-agent-home__icebreaker-icon" />
+                  <span className="mdc-chat-agent-home__icebreaker-top">
+                    <span className="mdc-chat-agent-home__icebreaker-icon-wrap">
+                      <Icon size={16} aria-hidden="true" />
+                    </span>
+                    <ArrowUpRight
+                      size={15}
+                      aria-hidden="true"
+                      className="mdc-chat-agent-home__icebreaker-arrow"
+                    />
+                  </span>
                   <span className="mdc-chat-agent-home__icebreaker-copy">
                     <strong>{card.title}</strong>
-                    {card.subtitle ? <span>{card.subtitle}</span> : null}
+                    {card.subtitle ? (
+                      card.example ? (
+                        <span className="mdc-chat-agent-home__icebreaker-example">
+                          <span className="mdc-chat-agent-home__icebreaker-example-label">Ex.</span>
+                          <span className="mdc-chat-agent-home__icebreaker-example-value">
+                            {card.subtitle}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="mdc-chat-agent-home__icebreaker-hint">{card.subtitle}</span>
+                      )
+                    ) : null}
                   </span>
                 </button>
               );
