@@ -128,4 +128,11 @@ INTENT_ROUTER_REGRESSION_CASES: list[dict[str, Any]] = [
         "message": "O que diz a norma?",
         "expected_intent": "rag_question",
     },
+    {
+        "id": "R16",
+        "message": "analise produto 90260148",
+        "expected_intent": "operational_query",
+        "expected_sub_intent": "product_lookup",
+        "expected_ambiguous": False,
+    },
 ]

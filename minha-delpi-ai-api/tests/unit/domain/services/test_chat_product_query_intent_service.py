@@ -110,6 +110,19 @@ def test_detect_analyser_intent():
     )
 
 
+def test_detect_analyser_for_analyse_product_phrase():
+    assert (
+        ChatProductQueryIntentService.detect("analise produto 90260148")
+        == ChatProductQueryIntent.ANALYSER
+    )
+
+
+def test_generic_product_analysis_excludes_drawing_scope():
+    assert ChatProductQueryIntentService._looks_like_full_analyser_question(
+        "analise o desenho 90260140"
+    ) is False
+
+
 def test_extract_product_code_ignores_example_in_prompt():
     code = ChatProductQueryIntentService.extract_product_code(
         "informe o codigo do produto (ex.: 10080099)"

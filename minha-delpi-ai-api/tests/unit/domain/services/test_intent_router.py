@@ -42,6 +42,9 @@ def test_intent_router_regression(case: dict):
     if case.get("expected_product_code"):
         assert (route.resolved_params or {}).get("productCode") == case["expected_product_code"]
 
+    if case.get("expected_ambiguous") is False:
+        assert route.ambiguous is False
+
     payload = route.to_dict()
     assert "intentRouting" in payload
     assert payload["intentRouting"]["intent"] == case["expected_intent"]

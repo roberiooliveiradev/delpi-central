@@ -847,19 +847,49 @@ class ChatProductQueryIntentService:
         return any(term in normalized for term in cls._terms("stock", "terms"))
 
     @classmethod
-    def _looks_like_full_analyser_question(cls, normalized: str) -> bool:
+    def _looks_like_generic_product_analysis_question(cls, normalized: str) -> bool:
+        """«Analise produto …» sem escopo operacional explícito → analyser integrado."""
+        if "produt" not in normalized:
+            return False
+
+        if not re.search(r"\banalis", normalized):
+            return False
+
+        if any(
+            term in normalized
+            for term in cls._terms("analyser", "genericAnalysisExclude")
+        ):
+            return False
+
+        if any(
+            term in normalized for term in cls._terms("operationalAmbiguityScopeTerms")
+        ):
+            return False
+
+        return True
+
+    @classmethod
+    def _looks_like_full_analyser_question(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
         if any(
             term in normalized for term in cls._terms("analyser", "fullQuestion")
         ):
+            return True
+
+        if cls._looks_like_generic_product_analysis_question(normalized):
             return True
 
         from app.domain.services.chat_product_multi_scope_planning_service import (
             ChatProductMultiScopePlanningService,
         )
 
-        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(normalized)
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
 
-        return ChatProductMultiScopePlanningService.should_use_single_analyser(scopes, normalized)
+        return ChatProductMultiScopePlanningService.should_use_single_analyser(
+            scopes,
+            message,
+        )
 
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:

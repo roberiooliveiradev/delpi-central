@@ -55,6 +55,20 @@ def test_try_build_not_ambiguous_for_full_analyser_phrases():
         ) is None, query
 
 
+def test_try_build_not_ambiguous_for_analyse_product_phrases():
+    queries = [
+        "analise produto 90260148",
+        "análise do produto 90260148",
+        "analisar produto 90260148",
+    ]
+
+    for query in queries:
+        assert ChatIntentDisambiguationService.try_build(
+            query,
+            allowed_action_ids=["action-1"],
+        ) is None, query
+
+
 def test_try_build_not_ambiguous_for_home_starter_queries():
     queries = [
         "me fale do produto 10080022",
