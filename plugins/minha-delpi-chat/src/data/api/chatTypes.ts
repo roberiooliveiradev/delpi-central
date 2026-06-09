@@ -663,7 +663,7 @@ export type ChatAttachment = {
   original_filename: string;
   content_type: string | null;
   size_bytes: number;
-  status: "uploaded" | "indexed" | "unsupported" | "index_failed" | string;
+  status: "uploaded" | "indexing" | "indexed" | "unsupported" | "index_failed" | string;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

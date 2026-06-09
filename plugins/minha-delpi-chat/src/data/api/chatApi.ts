@@ -1316,6 +1316,18 @@ export async function shareChatProject(
 }
 
 
+export async function fetchChatSessionAttachments(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAttachment[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/attachments`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAttachment[]>(response);
+}
+
 export async function uploadChatAttachment(
   sessionId: string,
   file: File,

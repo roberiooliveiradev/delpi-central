@@ -15,6 +15,10 @@ export function attachmentReadingStatusLabel(
     return "Indexado";
   }
 
+  if (normalized === "indexing") {
+    return "Indexando para consulta";
+  }
+
   if (normalized === "uploading" || normalized === "uploaded") {
     return "Processando leitura";
   }
@@ -62,7 +66,7 @@ export function mapApiAttachmentToComposerStatus(
     return "failed";
   }
 
-  if (normalized === "uploaded") {
+  if (normalized === "indexing" || normalized === "uploaded") {
     return "uploading";
   }
 

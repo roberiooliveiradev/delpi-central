@@ -96,6 +96,7 @@
     "ocrContentPrefix": "Texto extraído da imagem (OCR):",
     "readingStatus": {
       "indexed": "Indexado",
+      "indexing": "Indexando para consulta",
       "uploaded": "Processando leitura",
       "uploading": "Processando leitura",
       "unsupported": "Leitura limitada",

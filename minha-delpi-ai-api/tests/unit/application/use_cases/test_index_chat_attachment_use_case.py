@@ -52,7 +52,7 @@ class FakeIngestUseCase:
 
 
 class FakeTextExtractor:
-    def extract(self, *, storage_path, filename, content_type):
+    def extract(self, *, storage_path, filename, content_type, pdf_page_limit=None):
         return {
             "supported": True,
             "content": "# Documento\n\nConteúdo de teste.",
@@ -111,9 +111,48 @@ def test_index_chat_attachment_uses_session_source_scope():
     assert request.metadata["originalFilename"] == "documento.md"
 
 
+def test_index_pdf_skips_vision_when_deferred_on_index(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX = True
+
+    attachment_id = uuid4()
+    repository = FakeAttachmentRepository()
+    ingest = FakeIngestUseCase()
+
+    use_case = IndexChatAttachmentUseCase(
+        attachment_repository=repository,
+        ingest_knowledge_document_use_case=ingest,
+        text_extractor=FakeTextExtractor(),
+    )
+
+    with patch(
+        "app.application.services.chat_document_vision_service.ChatDocumentVisionService.refresh_attachment_vision_snapshot"
+    ) as refresh_mock:
+        use_case.execute(
+            user_id=str(uuid4()),
+            attachment=FakeAttachment(
+                id=attachment_id,
+                user_id=uuid4(),
+                session_id=uuid4(),
+                message_id=None,
+                project_id=None,
+                agent_id=None,
+                storage_path="/tmp/desenho.pdf",
+                original_filename="desenho.pdf",
+                content_type="application/pdf",
+            ),
+        )
+
+    refresh_mock.assert_not_called()
+
+
 def test_index_pdf_triggers_vision_snapshot_when_enabled(monkeypatch):
     monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX", "false")
     Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX = False
 
     attachment_id = uuid4()
     repository = FakeAttachmentRepository()

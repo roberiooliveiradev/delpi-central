@@ -17,6 +17,7 @@ from app.domain.exceptions.chat_exceptions import (
 )
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+from app.infrastructure.config.settings import Settings
 
 
 ALLOWED_EXTENSIONS = {
@@ -111,19 +112,33 @@ class CreateChatAttachmentUseCase:
         )
 
         if self.index_attachment_use_case:
-            self.index_attachment_use_case.execute(
-                user_id=request.user_id,
-                attachment=attachment,
-            )
+            if Settings.CHAT_ATTACHMENT_ASYNC_INDEX:
+                indexed_attachment = self.attachment_repository.update_status(
+                    attachment_id=attachment.id,
+                    status="indexing",
+                    metadata={
+                        **metadata,
+                        "indexed": False,
+                        "asyncIndex": True,
+                    },
+                )
 
-            refreshed = self.attachment_repository.list_attachments_by_ids(
-                user_id=user_id,
-                session_id=session_id,
-                attachment_ids=[attachment.id],
-            )
+                if indexed_attachment:
+                    attachment = indexed_attachment
+            else:
+                self.index_attachment_use_case.execute(
+                    user_id=request.user_id,
+                    attachment=attachment,
+                )
 
-            if refreshed:
-                attachment = refreshed[0]
+                refreshed = self.attachment_repository.list_attachments_by_ids(
+                    user_id=user_id,
+                    session_id=session_id,
+                    attachment_ids=[attachment.id],
+                )
+
+                if refreshed:
+                    attachment = refreshed[0]
 
         return _attachment_to_response(attachment)
 

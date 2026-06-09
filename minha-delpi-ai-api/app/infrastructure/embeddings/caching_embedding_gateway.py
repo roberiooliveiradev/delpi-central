@@ -37,3 +37,34 @@ class CachingEmbeddingGateway(EmbeddingGatewayPort):
         self.cache.set(text, embedding)
 
         return embedding
+
+    def embed_many(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        if not Settings.EMBEDDING_CACHE_ENABLED or self.cache is None:
+            return self.inner.embed_many(texts)
+
+        results: list[list[float] | None] = [None] * len(texts)
+        misses: list[tuple[int, str]] = []
+
+        for index, text in enumerate(texts):
+            cached = self.cache.get(text)
+
+            if cached is not None:
+                self.hits += 1
+                results[index] = cached
+            else:
+                misses.append((index, text))
+
+        if not misses:
+            return [embedding for embedding in results if embedding is not None]
+
+        self.misses += len(misses)
+        embedded = self.inner.embed_many([text for _, text in misses])
+
+        for (index, text), embedding in zip(misses, embedded, strict=True):
+            self.cache.set(text, embedding)
+            results[index] = embedding
+
+        return [embedding for embedding in results if embedding is not None]

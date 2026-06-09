@@ -89,9 +89,10 @@ class IngestKnowledgeDocumentUseCase:
             metadata=document_metadata,
         )
 
-        for index, chunk in enumerate(prepared.chunks):
-            embedding = self.embedding_gateway.embed(chunk.content)
+        chunk_contents = [chunk.content for chunk in prepared.chunks]
+        embeddings = self.embedding_gateway.embed_many(chunk_contents)
 
+        for index, (chunk, embedding) in enumerate(zip(prepared.chunks, embeddings, strict=True)):
             self.knowledge_repository.create_chunk(
                 document_id=document.id,
                 chunk_index=index,

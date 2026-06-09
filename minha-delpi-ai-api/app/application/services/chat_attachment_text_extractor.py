@@ -7,6 +7,7 @@ from pathlib import Path
 from app.application.services.chat_attachment_image_ocr_service import (
     ChatAttachmentImageOcrService,
 )
+from app.infrastructure.config.settings import Settings
 
 
 class ChatAttachmentTextExtractor:
@@ -22,7 +23,14 @@ class ChatAttachmentTextExtractor:
             | set(cls.SUPPORTED_IMAGE_EXTENSIONS)
         )
 
-    def extract(self, *, storage_path: str, filename: str, content_type: str | None) -> dict:
+    def extract(
+        self,
+        *,
+        storage_path: str,
+        filename: str,
+        content_type: str | None,
+        pdf_page_limit: int | None = None,
+    ) -> dict:
         path = Path(storage_path)
         extension = path.suffix.lower() or Path(filename).suffix.lower()
 
@@ -62,7 +70,7 @@ class ChatAttachmentTextExtractor:
             return self._extract_xlsx(path)
 
         if extension == ".pdf":
-            return self._extract_pdf(path)
+            return self._extract_pdf(path, page_limit=pdf_page_limit)
 
         if extension in self.SUPPORTED_IMAGE_EXTENSIONS:
             return self._extract_image(path, extension)
@@ -195,7 +203,7 @@ class ChatAttachmentTextExtractor:
         except Exception as exc:
             return self._unsupported_optional(".xlsx", exc)
 
-    def _extract_pdf(self, path: Path) -> dict:
+    def _extract_pdf(self, path: Path, *, page_limit: int | None = None) -> dict:
         try:
             from pypdf import PdfReader
         except Exception as exc:
@@ -204,8 +212,9 @@ class ChatAttachmentTextExtractor:
         try:
             reader = PdfReader(str(path))
             pages = []
+            limit = max(1, int(page_limit or Settings.CHAT_ATTACHMENT_INDEX_PDF_PAGE_LIMIT))
 
-            for page in reader.pages[:80]:
+            for page in reader.pages[:limit]:
                 pages.append(page.extract_text() or "")
 
             return {
@@ -214,7 +223,7 @@ class ChatAttachmentTextExtractor:
                 "metadata": {
                     "extractor": "pypdf",
                     "extension": ".pdf",
-                    "pageLimit": 80,
+                    "pageLimit": limit,
                 },
             }
         except Exception as exc:

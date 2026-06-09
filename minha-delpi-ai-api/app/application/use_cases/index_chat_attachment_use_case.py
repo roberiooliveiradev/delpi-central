@@ -28,6 +28,7 @@ class IndexChatAttachmentUseCase:
             storage_path=attachment.storage_path,
             filename=attachment.original_filename,
             content_type=attachment.content_type,
+            pdf_page_limit=Settings.CHAT_ATTACHMENT_INDEX_PDF_PAGE_LIMIT,
         )
 
         if not extracted["supported"]:
@@ -108,7 +109,13 @@ class IndexChatAttachmentUseCase:
             },
         )
 
-        if Settings.CHAT_DOCUMENT_VISION_ENABLED and updated:
+        should_refresh_vision = (
+            Settings.CHAT_DOCUMENT_VISION_ENABLED
+            and not Settings.CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX
+            and updated
+        )
+
+        if should_refresh_vision:
             from app.application.services.chat_document_vision_service import (
                 ChatDocumentVisionService,
             )

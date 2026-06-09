@@ -1621,6 +1621,34 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           uploadedAttachments.push(uploaded);
         }
+
+        const pendingAttachmentIds = uploadedAttachments
+          .filter((attachment) => attachment.status === "indexing")
+          .map((attachment) => attachment.id);
+
+        if (pendingAttachmentIds.length > 0) {
+          setStreamingStatus("Indexando anexos para consulta...");
+
+          const { waitForSessionAttachmentsIndexed } = await import(
+            "../../data/chatAttachmentIndexPolling"
+          );
+
+          const settled = await waitForSessionAttachmentsIndexed(
+            sessionForMessage.id,
+            pendingAttachmentIds,
+            {
+              getAccessToken: options.getAccessToken,
+            },
+          );
+
+          for (const attachment of settled) {
+            const index = uploadedAttachments.findIndex((item) => item.id === attachment.id);
+
+            if (index >= 0) {
+              uploadedAttachments[index] = attachment;
+            }
+          }
+        }
       }
 
       const attachmentIds =

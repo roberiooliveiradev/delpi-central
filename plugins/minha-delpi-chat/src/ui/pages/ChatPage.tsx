@@ -110,6 +110,10 @@ import {
   uploadChatAttachment,
   uploadProjectSource,
 } from "../../data/api/chatApi";
+import {
+  isAttachmentIndexPending,
+  waitForSessionAttachmentIndexed,
+} from "../../data/chatAttachmentIndexPolling";
 import { mapApiAttachmentToComposerStatus } from "../chatAttachmentStatus";
 import {
   buildChatAdminAgentHref,
@@ -1624,7 +1628,19 @@ export function ChatPage({
 
       try {
         const uploaded = await uploadChatAttachment(sessionId, file, { getAccessToken });
-        const metadata = uploaded.metadata as Record<string, unknown> | null;
+        let resolvedAttachment = uploaded;
+
+        if (isAttachmentIndexPending(uploaded.status)) {
+          const settled = await waitForSessionAttachmentIndexed(sessionId, uploaded.id, {
+            getAccessToken,
+          });
+
+          if (settled) {
+            resolvedAttachment = settled;
+          }
+        }
+
+        const metadata = resolvedAttachment.metadata as Record<string, unknown> | null;
         const readingStatus =
           typeof metadata?.readingStatus === "string" ? metadata.readingStatus : undefined;
 
@@ -1633,8 +1649,8 @@ export function ChatPage({
             item.id === localId
               ? {
                   ...item,
-                  status: mapApiAttachmentToComposerStatus(uploaded.status),
-                  serverAttachmentId: uploaded.id,
+                  status: mapApiAttachmentToComposerStatus(resolvedAttachment.status),
+                  serverAttachmentId: resolvedAttachment.id,
                   readingStatus,
                 }
               : item,

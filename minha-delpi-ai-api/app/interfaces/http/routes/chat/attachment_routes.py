@@ -1,6 +1,23 @@
 """Rotas HTTP do chat — registradas em `chat.shared.chat_bp`."""
 
+from flask import current_app
+
+from app.application.services.chat_attachment_index_scheduler_service import (
+    ChatAttachmentIndexSchedulerService,
+)
 from app.interfaces.http.routes.chat.deps import *  # noqa: F403
+
+
+def _schedule_attachment_index_if_needed(attachment, *, user_id: str, session_id: str) -> None:
+    if str(getattr(attachment, "status", "") or "") != "indexing":
+        return
+
+    ChatAttachmentIndexSchedulerService.enqueue(
+        current_app._get_current_object(),
+        user_id=user_id,
+        session_id=session_id,
+        attachment_id=str(attachment.id),
+    )
 
 @chat_bp.post("/attachments")
 @require_permission(CHAT_ASK_PERMISSION)
@@ -51,6 +68,11 @@ def upload_attachment_with_session():
         )
 
         db.session.commit()
+        _schedule_attachment_index_if_needed(
+            attachment,
+            user_id=g.current_user.sub,
+            session_id=session.id,
+        )
     except Exception:
         db.session.rollback()
         raise
@@ -106,6 +128,11 @@ def upload_attachment(session_id: str):
         )
 
         db.session.commit()
+        _schedule_attachment_index_if_needed(
+            result,
+            user_id=g.current_user.sub,
+            session_id=session_id,
+        )
     except Exception:
         db.session.rollback()
         raise
