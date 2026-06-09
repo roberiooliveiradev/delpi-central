@@ -119,6 +119,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_ppm_external_series": RouteContract("ppm_external_series", "scalar"),
     "list_ppm_internal": RouteContract("ppm_internal", "paged_list"),
     "list_ppm_external": RouteContract("ppm_external", "paged_list"),
+    "get_produced_quantity": RouteContract("produced_quantity", "playbook_report"),
     # Auditoria 5S operacional
     "list_audit_5s_areas": RouteContract("audit_5s_area", "paged_list"),
     "create_audit_5s_area": RouteContract("audit_5s_area", "scalar"),

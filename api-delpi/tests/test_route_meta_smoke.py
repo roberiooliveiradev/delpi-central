@@ -113,6 +113,38 @@ def test_quality_kaizen_summary_returns_meta(mock_build, _mock_enrich) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.quality_router.build_get_produced_quantity_use_case")
+def test_quality_produced_quantity_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.quality_router import get_produced_quantity
+
+    mock_report = MagicMock()
+    mock_report.to_dict.return_value = {
+        "branch": "01",
+        "date_start": "2026-01-01",
+        "date_end": "2026-01-31",
+        "products": ["50232465"],
+        "items": [],
+        "total_produced_milheiro": 0.0,
+        "total_produced_un": 0.0,
+        "by_product": [],
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_report
+    mock_build.return_value = mock_use_case
+
+    response = get_produced_quantity(
+        product=["50232465"],
+        branch="01",
+        date_start="2026-01-01",
+        date_end="2026-01-31",
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="get_produced_quantity",
+        shape="playbook_report",
+    )
+
+
 @patch("app.interface.http.routes.hr.hr_router.build_hr_metrics_repository")
 def test_hr_branches_returns_meta(mock_build) -> None:
     from app.interface.http.routes.hr.hr_router import list_hr_branches

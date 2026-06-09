@@ -12,7 +12,7 @@ venv/
 ENV/
 env/
 env.bak/
-
+planilhas/
 # ---- 🧰 IDEs e Editores ----
 .vscode/
 .idea/

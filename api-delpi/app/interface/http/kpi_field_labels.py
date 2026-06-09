@@ -175,6 +175,25 @@ QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
     "returned_quantity_original": "Qtd. devolvida (original)",
 }
 
+QUALITY_PRODUCED_QUANTITY_FIELD_LABELS: dict[str, str] = {
+    "branch": "Filial",
+    "product_code": "Código do produto",
+    "product_type": "Tipo do produto",
+    "description": "Descrição",
+    "unit": "Unidade",
+    "produced_milheiro": "Produzido (milheiro)",
+    "produced_un": "Produzido (un.)",
+    "orders_count": "Ordens de produção",
+    "total_produced_milheiro": "Total produzido (milheiro)",
+    "total_produced_un": "Total produzido (un.)",
+    "products": "Produtos filtrados",
+    "date_start": "Data inicial",
+    "date_end": "Data final",
+    "branches": "Filiais",
+    "by_product": "Totais por produto",
+    "items": "Detalhe por filial e produto",
+}
+
 QUALITY_KAIZEN_FIELD_LABELS: dict[str, str] = {
     "total_kaizens": "Total kaizens",
     "average_score": "Nota média",

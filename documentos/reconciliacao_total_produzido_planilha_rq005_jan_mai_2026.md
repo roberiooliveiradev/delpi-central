@@ -115,6 +115,21 @@ Roteiro final, só PA (substituída): **739.023** acum. vs **631.848** (CT atual
 | Planilha | 108.991 |
 | **PPM CT** | **111.833** |
 
+### 5.6 Tabela detalhada — planilha sem CT-70 × apontamentos Totvs
+
+Cruzamento **lote a lote** (75 colunas) dos **14 códigos** presentes na planilha com **zero apontamento no CT-70** no período, vinculando cada OP à planilha (data linha 8) e aos apontamentos reais no Protheus (outros CTs).
+
+| Artefato | Descrição |
+|----------|-----------|
+| [`tabela_planilha_sem_ct70_apontamentos_totvs.md`](./tabela_planilha_sem_ct70_apontamentos_totvs.md) | Resumo + amostra (80 linhas) + agregado por produto/CT |
+| [`tabela_planilha_sem_ct70_apontamentos_totvs.csv`](./tabela_planilha_sem_ct70_apontamentos_totvs.csv) | **813 linhas** completas (1 linha por apontamento Totvs × lote planilha) |
+
+Colunas: mês, coluna planilha, código produto, OP, qtd planilha, **data planilha**, **CT Totvs**, **data apontamento Totvs**, qtd apontada.
+
+Script: `api-delpi/scripts/export_planilha_sem_ct70_table.py`.
+
+**Leitura rápida:** os PIs **50232465**, **50233615** e **50233616** aparecem apontados em **CT-23** (corte), **CT-08** (montagem), **CT-61/62/63** etc., mas **nunca no CT-70**; a data da planilha (inspeção) costuma ser **1–3 dias depois** do último apontamento de montagem/corte no Totvs.
+
 ---
 
 ## 6. Por que a planilha diverge — cinco argumentos

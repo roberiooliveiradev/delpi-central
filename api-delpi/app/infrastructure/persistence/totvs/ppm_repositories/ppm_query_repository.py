@@ -6,6 +6,11 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.application.models.page import Page
 from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.ppm_item import PpmItem
+from app.domain.entities.ppm.produced_quantity import (
+    ProducedQuantityByProduct,
+    ProducedQuantityItem,
+    ProducedQuantityReport,
+)
 from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
 from app.infrastructure.persistence.totvs.ppm_repositories.ppm_production_sql import (
     APONT_INSPECAO_CTE,
@@ -52,6 +57,40 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             returned_quantity_un=float(row.get("returned_quantity_un") or 0),
         )
 
+    def _build_inspection_apont_ctes(
+        self,
+        *,
+        branch: str | None,
+        product_codes: list[str] | None = None,
+    ) -> tuple[str, str, list[str]]:
+        prod_branch_filter_ct = ""
+        prod_branch_filter_sh6 = ""
+        prod_params: list[str] = []
+
+        if branch:
+            prod_branch_filter_ct = "AND HB.HB_FILIAL = ?"
+            prod_branch_filter_sh6 = "AND SH6.H6_FILIAL = ?"
+            prod_params.append(branch)
+            prod_params.append(branch)
+
+        product_filter = ""
+        if product_codes:
+            placeholders = ", ".join("?" for _ in product_codes)
+            product_filter = f"AND SH6.H6_PRODUTO IN ({placeholders})"
+            prod_params.extend(product_codes)
+
+        ct_inspecao_cte = CT_INSPECAO_FINAL_CTE.format(
+            ct_branch_filter=prod_branch_filter_ct,
+        )
+        apont_inspecao_cte = APONT_INSPECAO_CTE.format(
+            qtd_expr=QTD_PRODUZIDA_OP_EXPR.strip(),
+            sh1_join=SH1_RECURSO_JOIN.strip(),
+            ct_join=CT_INSPECAO_JOIN.strip(),
+            sh6_branch_filter=prod_branch_filter_sh6,
+            product_filter=product_filter,
+        )
+        return ct_inspecao_cte, apont_inspecao_cte, prod_params
+
     def get_summary(self, request) -> PpmSummary:
         date_start = self._to_protheus_date(request.date_start)
         date_end_exclusive = self._exclusive_end_date(request.date_end)
@@ -72,32 +111,13 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
         where_nc, params_nc = qb_nc.build()
 
-        prod_branch_filter_ct = ""
-        prod_branch_filter_sh6 = ""
-        prod_params: list[str] = []
-
-        if request.branch:
-            prod_branch_filter_ct = "AND HB.HB_FILIAL = ?"
-            prod_branch_filter_sh6 = "AND SH6.H6_FILIAL = ?"
-            prod_params.append(request.branch)
-
-        if request.branch:
-            prod_params.append(request.branch)
-
+        ct_inspecao_cte, apont_inspecao_cte, prod_params = self._build_inspection_apont_ctes(
+            branch=request.branch,
+        )
         prod_params.extend([
             date_start,
             date_end_exclusive,
         ])
-
-        ct_inspecao_cte = CT_INSPECAO_FINAL_CTE.format(
-            ct_branch_filter=prod_branch_filter_ct,
-        )
-        apont_inspecao_cte = APONT_INSPECAO_CTE.format(
-            qtd_expr=QTD_PRODUZIDA_OP_EXPR.strip(),
-            sh1_join=SH1_RECURSO_JOIN.strip(),
-            ct_join=CT_INSPECAO_JOIN.strip(),
-            sh6_branch_filter=prod_branch_filter_sh6,
-        )
 
         sql = f"""
             WITH nc AS (
@@ -145,6 +165,101 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             total_produzido_milheiro=float(row.get("total_produzido_milheiro") or 0),
             total_produzido_un=float(row.get("total_produzido_un") or 0),
             ppm=float(row.get("ppm") or 0),
+        )
+
+    def list_produced_quantity(self, request) -> ProducedQuantityReport:
+        date_start = self._to_protheus_date(request.date_start)
+        date_end_exclusive = self._exclusive_end_date(request.date_end)
+
+        if not date_start or not date_end_exclusive:
+            raise ValueError("date_start e date_end são obrigatórios.")
+
+        ct_inspecao_cte, apont_inspecao_cte, prod_params = self._build_inspection_apont_ctes(
+            branch=request.branch,
+            product_codes=request.products,
+        )
+        params = tuple(prod_params + [date_start, date_end_exclusive])
+
+        sql = f"""
+            WITH
+            {ct_inspecao_cte.strip()},
+            {apont_inspecao_cte.strip()}
+            SELECT
+                LTRIM(RTRIM(ai.H6_FILIAL)) AS branch,
+                LTRIM(RTRIM(ai.H6_PRODUTO)) AS product_code,
+                LTRIM(RTRIM(ai.B1_TIPO)) AS product_type,
+                MAX(LTRIM(RTRIM(SB1.B1_DESC))) AS description,
+                MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit,
+                SUM(ai.qtd_produzida_op) AS produced_milheiro,
+                SUM(ai.qtd_produzida_op) * 1000 AS produced_un,
+                COUNT(DISTINCT ai.H6_OP) AS orders_count
+            FROM apont_inspecao ai
+            INNER JOIN SB1010 SB1
+                ON SB1.B1_COD = ai.H6_PRODUTO
+               AND SB1.D_E_L_E_T_ = ' '
+            GROUP BY
+                ai.H6_FILIAL,
+                ai.H6_PRODUTO,
+                ai.B1_TIPO
+            ORDER BY
+                ai.H6_FILIAL,
+                ai.H6_PRODUTO
+        """
+
+        with self as repo:
+            rows = repo.execute_query(sql, params) or []
+
+        items = [
+            ProducedQuantityItem(
+                branch=str(row.get("branch") or "").strip(),
+                product_code=str(row.get("product_code") or "").strip(),
+                product_type=str(row.get("product_type") or "").strip(),
+                description=str(row.get("description") or "").strip(),
+                unit=str(row.get("unit") or "").strip(),
+                produced_milheiro=float(row.get("produced_milheiro") or 0),
+                produced_un=float(row.get("produced_un") or 0),
+                orders_count=int(row.get("orders_count") or 0),
+            )
+            for row in rows
+        ]
+
+        by_product_map: dict[str, ProducedQuantityByProduct] = {}
+        for item in items:
+            existing = by_product_map.get(item.product_code)
+            if existing is None:
+                by_product_map[item.product_code] = ProducedQuantityByProduct(
+                    product_code=item.product_code,
+                    product_type=item.product_type,
+                    description=item.description,
+                    unit=item.unit,
+                    produced_milheiro=item.produced_milheiro,
+                    produced_un=item.produced_un,
+                    orders_count=item.orders_count,
+                    branches=[item.branch] if item.branch else [],
+                )
+                continue
+
+            existing.produced_milheiro += item.produced_milheiro
+            existing.produced_un += item.produced_un
+            existing.orders_count += item.orders_count
+            if item.branch and item.branch not in existing.branches:
+                existing.branches.append(item.branch)
+
+        by_product = sorted(
+            by_product_map.values(),
+            key=lambda row: row.product_code,
+        )
+        total_milheiro = sum(item.produced_milheiro for item in items)
+
+        return ProducedQuantityReport(
+            branch=request.branch,
+            date_start=request.date_start,
+            date_end=request.date_end,
+            products=request.products,
+            items=items,
+            total_produced_milheiro=total_milheiro,
+            total_produced_un=total_milheiro * 1000,
+            by_product=by_product,
         )
 
     def list_branches(

@@ -10,6 +10,10 @@ class PpmQueryRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_produced_quantity(self, request):
+        raise NotImplementedError
+
+    @abstractmethod
     def list_items(self, request):
         raise NotImplementedError
 

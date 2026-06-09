@@ -60,6 +60,7 @@ APONT_INSPECAO_CTE = """
             AND SH6.H6_OP <> ''
             AND SH6.H6_PRODUTO <> ''
             AND SH6.H6_RECURSO <> ''
+            {product_filter}
             AND SH6.H6_DTAPONT >= ?
             AND SH6.H6_DTAPONT < ?
         GROUP BY

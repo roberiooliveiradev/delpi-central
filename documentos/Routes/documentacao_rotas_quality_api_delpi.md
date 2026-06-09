@@ -9,7 +9,8 @@ Atualmente, o módulo contempla:
 - não conformidades;
 - kaizens;
 - auditorias 5S;
-- indicadores de PPM interno e externo.
+- indicadores de PPM interno e externo;
+- quantidade produzida por produto (regra CT inspeção final, compartilhada com PPM).
 
 A publicação das rotas é feita por um agregador do módulo `quality`, responsável por expor os submódulos em um único contexto HTTP.
 
@@ -438,6 +439,67 @@ GET /apps/api-delpi/quality/ppm/external/summary
 ```http
 GET /apps/api-delpi/quality/ppm/internal
 GET /apps/api-delpi/quality/ppm/external
+```
+
+### Quantidade produzida (por produto)
+
+```http
+GET /apps/api-delpi/quality/produced-quantity
+```
+
+Retorna a quantidade produzida de um ou mais produtos (PA e PI), por filial ou em todas as unidades, no intervalo de datas. Usa a **mesma regra canônica do denominador PPM**: apontamento no CT de inspeção final (`SHB010` + `SH1010` + `SH6010`), `SUM(H6_QTDPROD)` por OP/produto/operação, conversão ×1000 para unidades.
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|---|---|---:|---|
+| `product` | string (repetível) | sim | Código do produto; aceita múltiplos `product=` ou lista separada por vírgula |
+| `date_start` | string | sim | Data inicial (inclusiva) |
+| `date_end` | string | sim | Data final (inclusiva) |
+| `branch` | string | não | Filial; omitido = todas as filiais |
+
+Exemplo:
+
+```http
+GET /apps/api-delpi/quality/produced-quantity?product=50232465&product=50233615&branch=01&date_start=2026-01-01&date_end=2026-01-31
+```
+
+Resposta (`operationId`: `get_produced_quantity`, `shape`: `playbook_report`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "branch": "01",
+    "date_start": "2026-01-01",
+    "date_end": "2026-01-31",
+    "products": ["50232465", "50233615"],
+    "total_produced_milheiro": 12.5,
+    "total_produced_un": 12500.0,
+    "items": [
+      {
+        "branch": "01",
+        "product_code": "50232465",
+        "product_type": "PI",
+        "description": "Produto exemplo",
+        "unit": "UN",
+        "produced_milheiro": 7.2,
+        "produced_un": 7200.0,
+        "orders_count": 15
+      }
+    ],
+    "by_product": [
+      {
+        "product_code": "50232465",
+        "product_type": "PI",
+        "description": "Produto exemplo",
+        "unit": "UN",
+        "produced_milheiro": 7.2,
+        "produced_un": 7200.0,
+        "orders_count": 15,
+        "branches": ["01"]
+      }
+    ]
+  }
+}
 ```
 
 ---

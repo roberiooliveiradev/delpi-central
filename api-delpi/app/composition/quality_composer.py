@@ -12,6 +12,9 @@ from app.application.use_cases.nonconformity.get_nonconformity_series_use_case i
 from app.application.use_cases.nonconformity.list_nonconformity_use_case import (
     ListNonconformityUseCase,
 )
+from app.application.use_cases.ppm.get_produced_quantity_use_case import (
+    GetProducedQuantityUseCase,
+)
 from app.application.use_cases.ppm.get_ppm_series_use_case import (
     GetPpmSeriesUseCase,
 )
@@ -84,6 +87,10 @@ def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
     return GetPpmSummaryUseCase(_build_ppm_repository())
+
+
+def build_get_produced_quantity_use_case() -> GetProducedQuantityUseCase:
+    return GetProducedQuantityUseCase(_build_ppm_repository())
 
 
 def build_list_ppm_use_case() -> ListPpmUseCase:
