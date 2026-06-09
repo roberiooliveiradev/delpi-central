@@ -1,0 +1,1313 @@
+{
+  "version": "1",
+  "api_title": "API DELPI",
+  "api_version": "1.0.0",
+  "openapi_version": "3.0.3",
+  "operation_count": 126,
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/commercial/branch_rol_target_pct",
+      "operationId": "get_branch_rol_target_pct_commercial_branch_rol_target_pct_get",
+      "summary": "Get Branch Rol Target Pct",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/closing-rate",
+      "operationId": "get_sales_conversion_rate_commercial_closing_rate_get",
+      "summary": "Get Sales Conversion Rate",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/head_office_rol_target_pct",
+      "operationId": "get_head_office_rol_target_pct_commercial_head_office_rol_target_pct_get",
+      "summary": "Get Head Office Rol Target Pct",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-business-rol-pct",
+      "operationId": "get_new_business_rol_pct_commercial_new_business_rol_pct_get",
+      "summary": "Get New Business Rol Pct",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-clients-average",
+      "operationId": "get_new_clients_average_commercial_new_clients_average_get",
+      "summary": "Get New Clients Average",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-clients-rol-pct",
+      "operationId": "get_new_clients_rol_pct_commercial_new_clients_rol_pct_get",
+      "summary": "Get New Clients Rol Pct",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/proposals",
+      "operationId": "list_commercial_proposals_commercial_proposals_get",
+      "summary": "List Commercial Proposals",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/rol/series",
+      "operationId": "get_commercial_rol_series_commercial_rol_series_get",
+      "summary": "Get Commercial Rol Series",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/sales-order-otd",
+      "operationId": "get_sales_order_otd_commercial_sales_order_otd_get",
+      "summary": "Get Sales Order Otd",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/data/sql",
+      "operationId": "execute_readonly_sql",
+      "summary": "Executar consulta SQL somente leitura",
+      "tags": [
+        "data"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps",
+      "operationId": "list_lmps",
+      "summary": "Listar LMPs (ordens especiais / amostras)",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard",
+      "operationId": "list_lmps_dashboard",
+      "summary": "Dashboard de LMPs",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/charts",
+      "operationId": "get_lmps_dashboard_charts",
+      "summary": "Gráficos do painel de LMPs",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/items",
+      "operationId": "list_lmps_dashboard_items",
+      "summary": "Itens paginados do painel de LMPs",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/summary",
+      "operationId": "get_lmps_dashboard_summary",
+      "summary": "KPIs resumidos do painel de LMPs",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}",
+      "operationId": "get_lmp_by_sale_number",
+      "summary": "Detalhe da LMP por ordem de venda",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes",
+      "operationId": "list_transforma_mais_processes",
+      "summary": "Listar processos Transforma Mais",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes/summary",
+      "operationId": "get_transforma_mais_summary",
+      "summary": "Resumo Transforma Mais",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/ebitda_pct",
+      "operationId": "get_ebitda_pct_finacial_ebitda_pct_get",
+      "summary": "Get Ebitda Pct",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/fixed_cost_pct",
+      "operationId": "get_fixed_cost_pct_finacial_fixed_cost_pct_get",
+      "summary": "Get Fixed Cost Pct",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/pmr",
+      "operationId": "get_pmr_finacial_pmr_get",
+      "summary": "Get Pmr",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/rol",
+      "operationId": "get_rol_finacial_rol_get",
+      "summary": "Get Rol",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/financial/ebitda_pct",
+      "operationId": "get_ebitda_pct_financial_ebitda_pct_get",
+      "summary": "Get Ebitda Pct",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/financial/fixed_cost_pct",
+      "operationId": "get_fixed_cost_pct_financial_fixed_cost_pct_get",
+      "summary": "Get Fixed Cost Pct",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/financial/pmr",
+      "operationId": "get_pmr_financial_pmr_get",
+      "summary": "Get Pmr",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/financial/rol",
+      "operationId": "get_rol_financial_rol_get",
+      "summary": "Get Rol",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "operationId": "root_health_get",
+      "summary": "Root",
+      "tags": [
+        "Health"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/hr/active-pdi-count",
+      "operationId": "get_hr_active_pdi_count_hr_active_pdi_count_get",
+      "summary": "Get Hr Active Pdi Count",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/hr/branches",
+      "operationId": "list_hr_branches_hr_branches_get",
+      "summary": "List Hr Branches",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/hr/performance-reviews-completion",
+      "operationId": "get_hr_performance_reviews_completion_hr_performance_reviews_completion_get",
+      "summary": "Get Hr Performance Reviews Completion",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/hr/snapshot",
+      "operationId": "get_hr_snapshot_hr_snapshot_get",
+      "summary": "Get Hr Snapshot",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/depreciation_pct",
+      "operationId": "get_depreciation_pct_production_depreciation_pct_get",
+      "summary": "Get Depreciation Pct",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/direct_labor_cost_pct",
+      "operationId": "get_direct_labor_cost_pct_production_direct_labor_cost_pct_get",
+      "summary": "Get Direct Labor Cost Pct",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/appointments",
+      "operationId": "get_eficiencia_fabril_appointments_production_eficiencia_fabril_appointments_get",
+      "summary": "Get Eficiencia Fabril Appointments",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/dashboard",
+      "operationId": "get_eficiencia_fabril_dashboard_production_eficiencia_fabril_dashboard_get",
+      "summary": "Get Eficiencia Fabril Dashboard",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/oee/series",
+      "operationId": "get_production_oee_series_production_oee_series_get",
+      "summary": "Get Production Oee Series",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/on_time_delivery_pct",
+      "operationId": "get_on_time_delivery_pct_production_on_time_delivery_pct_get",
+      "summary": "Get On Time Delivery Pct",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/otd/series",
+      "operationId": "get_production_otd_series_production_otd_series_get",
+      "summary": "Get Production Otd Series",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "operationId": "get_overall_equipment_effectiveness_pct_production_overall_equipment_effectiveness_pct_get",
+      "summary": "Get Overall Equipment Effectiveness Pct",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/production_cost_pct",
+      "operationId": "get_production_cost_pct_production_production_cost_pct_get",
+      "summary": "Get Production Cost Pct",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/search",
+      "operationId": "search_products",
+      "summary": "Buscar produtos no Protheus",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}",
+      "operationId": "get_product_detail",
+      "summary": "Dados cadastrais do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/analyser",
+      "operationId": "get_product_analyser",
+      "summary": "Analisador completo do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/customers",
+      "operationId": "get_product_customers",
+      "summary": "Clientes do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/factory-status",
+      "operationId": "get_product_factory_status",
+      "summary": "Status fabril completo do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "operationId": "get_product_guide",
+      "summary": "Roteiro de produção do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/inbound-invoice-items",
+      "operationId": "get_product_inbound_invoice_items",
+      "summary": "Itens de nota fiscal de entrada do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/inspection",
+      "operationId": "get_product_inspection",
+      "summary": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/internal-movements",
+      "operationId": "get_product_internal_movements",
+      "summary": "Movimentações internas do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/outbound-invoice-items",
+      "operationId": "get_product_outbound_invoice_items",
+      "summary": "Itens de nota fiscal de saída do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/parents",
+      "operationId": "get_product_parents",
+      "summary": "Onde o produto é usado (produtos pai / BOM reversa)",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/pricing",
+      "operationId": "get_product_pricing",
+      "summary": "Preços e tabelas comerciais do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/production-status",
+      "operationId": "get_product_production_status",
+      "summary": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/purchases",
+      "operationId": "get_product_purchases",
+      "summary": "Histórico de compras do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales",
+      "operationId": "get_product_sales_summary",
+      "summary": "Resumo de vendas do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales/billing",
+      "operationId": "get_product_sales_billing",
+      "summary": "Faturamento do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales/open-orders",
+      "operationId": "get_product_sales_open_orders",
+      "summary": "Carteira de pedidos de venda em aberto do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/shipping-status",
+      "operationId": "get_product_shipping_status",
+      "summary": "Expedição do PA via inspeção final",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/stock",
+      "operationId": "get_product_stock",
+      "summary": "Estoque do produto por filial e local",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure",
+      "operationId": "get_product_structure",
+      "summary": "Estrutura (BOM) do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure/excel",
+      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "summary": "Structure Excel Public",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure/exclusivity",
+      "operationId": "get_product_structure_exclusivity",
+      "summary": "Estrutura do produto com exclusividade de matérias-primas",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/summary",
+      "operationId": "get_product_summary",
+      "summary": "Resumo do produto (cadastro + estoque + preços)",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/suppliers",
+      "operationId": "get_product_suppliers",
+      "summary": "Fornecedores do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "summary": "Get Audit 5S Dashboard",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/areas",
+      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "summary": "List Areas",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/areas",
+      "operationId": "create_area_quality_audit_5s_areas_post",
+      "summary": "Create Area",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits",
+      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "summary": "List Audits",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits",
+      "operationId": "create_audit_quality_audit_5s_audits_post",
+      "summary": "Create Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "summary": "Get Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/close",
+      "operationId": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "summary": "Close Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
+      "operationId": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "summary": "Complete Evaluation",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/delete",
+      "operationId": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "summary": "Delete Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/join",
+      "operationId": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "summary": "Join Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
+      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "summary": "List Audit Nc Attachments",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "summary": "List Nc Candidates",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "summary": "List Audit Nonconformities",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operationId": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "summary": "Create Nonconformity",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
+      "operationId": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "summary": "Upsert Response",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/criteria",
+      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "summary": "List Criteria",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}",
+      "operationId": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "summary": "Update Nonconformity",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "summary": "List Nc Actions",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operationId": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "summary": "Add Nc Action",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "summary": "List Nc Attachments",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operationId": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "summary": "Upload Nc Attachment",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
+      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "summary": "Download Nc Attachment",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "operationId": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "summary": "Complete Nc Action",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/summary",
+      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "summary": "Get Audit 5S Summary",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/branches",
+      "operationId": "list_quality_branches_quality_branches_get",
+      "summary": "List Quality Branches",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/summary",
+      "operationId": "get_kaizen_summary_quality_kaizens_summary_get",
+      "summary": "Get Kaizen Summary",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/nonconformities",
+      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "summary": "List Nonconformity Route",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/nonconformities/series",
+      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "summary": "Get Nonconformity Series",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external",
+      "operationId": "list_ppm_external",
+      "summary": "List External Ppm",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external/series",
+      "operationId": "get_ppm_external_series",
+      "summary": "Get External Ppm Series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external/summary",
+      "operationId": "get_ppm_external_summary",
+      "summary": "Get External Ppm Summary",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal",
+      "operationId": "list_ppm_internal",
+      "summary": "List Internal Ppm",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal/series",
+      "operationId": "get_ppm_internal_series",
+      "summary": "Get Internal Ppm Series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal/summary",
+      "operationId": "get_ppm_internal_summary",
+      "summary": "Get Internal Ppm Summary",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/produced-quantity",
+      "operationId": "get_produced_quantity",
+      "summary": "Get Produced Quantity",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/sales/",
+      "operationId": "list_sale_orders",
+      "summary": "Listar ordens de venda",
+      "tags": [
+        "sales"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/scheduling/bookings",
+      "operationId": "list_bookings_scheduling_bookings_get",
+      "summary": "List Bookings",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/scheduling/bookings",
+      "operationId": "create_booking_scheduling_bookings_post",
+      "summary": "Create Booking",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/scheduling/bookings/{booking_id}/cancel",
+      "operationId": "cancel_booking_scheduling_bookings__booking_id__cancel_patch",
+      "summary": "Cancel Booking",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/scheduling/resources",
+      "operationId": "list_resources_scheduling_resources_get",
+      "summary": "List Resources",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/scheduling/resources",
+      "operationId": "create_resource_scheduling_resources_post",
+      "summary": "Create Resource",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/scheduling/resources/{resource_id}",
+      "operationId": "update_resource_scheduling_resources__resource_id__patch",
+      "summary": "Update Resource",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/cpv",
+      "operationId": "get_supplies_cpv",
+      "summary": "CPV — custo de produto vendido (Kardex / suprimentos)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/inventory-turnover",
+      "operationId": "get_supplies_inventory_turnover",
+      "summary": "Giro de estoque / IDD (suprimentos)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/negotiation-savings/summary",
+      "operationId": "get_supplies_negotiation_savings_summary",
+      "summary": "Economia em negociações de compras (planilha IDD Suprimentos)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/otd",
+      "operationId": "get_supplies_otd",
+      "summary": "OTD — entrega no prazo (suprimentos)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/stock-value",
+      "operationId": "get_supplies_stock_value",
+      "summary": "Valor total de estoque (suprimentos)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/caller-stats",
+      "operationId": "get_caller_stats_system_caller_stats_get",
+      "summary": "Breakdown de requests por X-Delpi-Caller-App",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/columns/search",
+      "operationId": "search_columns_global_system_columns_search_get",
+      "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/envelope-contracts",
+      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "summary": "Golden files de contrato de envelope (smoke)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/observability-snapshot",
+      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "summary": "Snapshot unificado para comparador de deploy",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/openapi-diff",
+      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "summary": "Diff do OpenAPI atual vs baseline versionado",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/query-cache/stats",
+      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/smoke-definitions",
+      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "summary": "Definições das smoke suites do console",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/sql-health",
+      "operationId": "get_sql_health_system_sql_health_get",
+      "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/search",
+      "operationId": "search_tables_system_tables_search_get",
+      "summary": "Busca tabelas por descrição (SX2)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}",
+      "operationId": "table_system_tables__tableName__get",
+      "summary": "Consulta informações de tabela",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns",
+      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "summary": "Consulta colunas de tabela com paginação",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns/search",
+      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "summary": "Buscar colunas por texto",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/indexes",
+      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "summary": "Consulta índices (SIX010)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/relations",
+      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "summary": "Consulta relacionamentos (SX9010)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/schema",
+      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
+      "tags": [
+        "system"
+      ],
+      "deprecated": false
+    }
+  ]
+}

@@ -38,7 +38,9 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.query_cache_composer import get_query_cache_backend_name, get_query_cache_storage
 from app.config import settings
 from app.domain.services.caller_request_stats_service import get_caller_stats_summary
+from app.domain.services.envelope_contract_service import load_envelope_contract_golden
 from app.domain.services.observability_snapshot_service import build_observability_snapshot
+from app.domain.services.openapi_diff_service import diff_openapi_against_baseline
 from app.domain.services.query_cache_stats_service import build_query_cache_stats_payload
 from app.domain.services.smoke_definitions_service import load_smoke_definitions
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
@@ -279,6 +281,38 @@ def get_smoke_definitions():
     except Exception as e:
         log_error(f"Erro ao carregar smoke definitions: {e}")
         return error_response("Erro ao carregar definições de smoke.", status_code=500)
+
+
+@router.get("/openapi-diff", summary="Diff do OpenAPI atual vs baseline versionado")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_openapi_diff():
+    try:
+        from app.main import app
+
+        payload = diff_openapi_against_baseline(app.openapi())
+        return api_delpi_success(
+            payload,
+            operation_id="get_openapi_diff",
+            message="Diff OpenAPI calculado com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao calcular diff OpenAPI: {e}")
+        return error_response("Erro ao calcular diff OpenAPI.", status_code=500)
+
+
+@router.get("/envelope-contracts", summary="Golden files de contrato de envelope (smoke)")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_envelope_contracts():
+    try:
+        payload = load_envelope_contract_golden()
+        return api_delpi_success(
+            payload,
+            operation_id="get_envelope_contracts",
+            message="Contratos de envelope carregados com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar contratos de envelope: {e}")
+        return error_response("Erro ao carregar contratos de envelope.", status_code=500)
 
 
 @router.get("/query-cache/stats", summary="Hits e misses do cache compartilhado (LMP, estoque)")

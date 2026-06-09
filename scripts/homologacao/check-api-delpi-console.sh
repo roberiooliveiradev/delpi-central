@@ -47,7 +47,13 @@ curl -fsS "${AUTH[@]}" "$API_PREFIX/system/smoke-definitions" | python3 -m json.
 echo "[10/11] Query cache stats"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/query-cache/stats" | python3 -m json.tool
 
-echo "[11/11] Observability snapshot"
+echo "[11/13] Observability snapshot"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/observability-snapshot?limit=10" | python3 -m json.tool
+
+echo "[12/13] OpenAPI diff"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/openapi-diff" | python3 -m json.tool
+
+echo "[13/13] Envelope contracts"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/envelope-contracts" | python3 -m json.tool
 
 echo "[OK] Homologação api-delpi-console concluída."

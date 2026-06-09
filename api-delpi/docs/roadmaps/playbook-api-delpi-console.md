@@ -104,7 +104,7 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 
 **DoD:** suite «Rotas essenciais» roda em homologação; falha exibe `operationId` e motivo (status ou timeout).
 
-**Fase 1–3 concluídas** — próximo marco: Fase 4 (contrato e regressão OpenAPI).
+**Fases 1–4 (MVP) concluídas** — evolução contínua: ampliar golden files e homologação HTTP com `TOKEN` no CI.
 
 ### Integração com o portal (federated)
 
@@ -136,13 +136,15 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |
 
-### Fase 4 — Contrato e regressão (contínuo)
+### Fase 4 — Contrato e regressão (MVP concluído)
 
-| Item | Detalhe |
-|------|---------|
-| **Diff OpenAPI** | Comparar spec atual vs tag Git anterior |
-| **Snapshot envelope** | Golden files por rota (`meta`, shape de `data`) |
-| **Integração CI** | `scripts/homologacao/check-api-delpi-console.sh` no pipeline |
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Diff OpenAPI** | `GET /system/openapi-diff` vs `app/content/openapi_baseline.json` | [x] |
+| **Snapshot envelope** | `envelope_contract_golden.json` + `GET /system/envelope-contracts` | [x] |
+| **UI Console** | Painel de diff na aba OpenAPI | [x] |
+| **Baseline sync** | `python scripts/sync_openapi_baseline.py` | [x] |
+| **Integração CI** | `.github/workflows/api-delpi-console.yml` (pytest + build MFE) | [x] |
 
 Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-respostas.md`.
 

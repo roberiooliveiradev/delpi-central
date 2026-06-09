@@ -871,3 +871,28 @@
 .api-delpi-console .adc-check input {
   accent-color: var(--adc-accent);
 }
+
+.api-delpi-console .adc-diff-list {
+  margin: 0.75rem 0 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.api-delpi-console .adc-diff-list__item {
+  font-size: 0.85rem;
+}
+
+.api-delpi-console .adc-diff-list__item--add {
+  color: var(--adc-ok);
+}
+
+.api-delpi-console .adc-diff-list__item--rm {
+  color: var(--adc-err);
+}
+
+.api-delpi-console .adc-diff-list__item--chg {
+  color: var(--adc-warn);
+}

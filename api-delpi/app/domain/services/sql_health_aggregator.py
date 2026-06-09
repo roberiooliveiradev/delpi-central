@@ -55,7 +55,7 @@ def _aggregate_by_operation_id(entries: list[SqlQueryRecord]) -> list[dict[str, 
             key,
             {
                 "operation_id": item.operation_id,
-                "label": item.operation_id or "—",
+                "label": item.operation_id or "sem operation id",
                 "count": 0,
                 "total_ms": 0.0,
                 "max_ms": 0.0,

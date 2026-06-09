@@ -164,7 +164,7 @@ def get_external_ppm_summary(
     )
 
 
-@router.get("/ppm/internal/series")
+@router.get("/ppm/internal/series", operation_id="get_ppm_internal_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_series(
     granularity: str = Query("month", pattern="^(day|week|month|year)$"),
@@ -181,7 +181,7 @@ def get_internal_ppm_series(
     )
 
 
-@router.get("/ppm/external/series")
+@router.get("/ppm/external/series", operation_id="get_ppm_external_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_series(
     granularity: str = Query("month", pattern="^(day|week|month|year)$"),
@@ -198,7 +198,7 @@ def get_external_ppm_series(
     )
 
 
-@router.get("/ppm/internal")
+@router.get("/ppm/internal", operation_id="list_ppm_internal")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_internal_ppm(
     branch: Optional[str] = None,
@@ -217,7 +217,7 @@ def list_internal_ppm(
     )
 
 
-@router.get("/ppm/external")
+@router.get("/ppm/external", operation_id="list_ppm_external")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_external_ppm(
     branch: Optional[str] = None,

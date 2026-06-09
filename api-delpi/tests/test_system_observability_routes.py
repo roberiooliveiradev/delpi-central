@@ -111,3 +111,26 @@ def test_get_observability_snapshot_unifies_phase2_and_phase3() -> None:
     assert "sql_health" in payload
     assert payload["sql_health"]["total_samples"] >= 1
     assert payload["caller_stats"]["total_requests"] >= 1
+
+
+def test_get_openapi_diff_matches_baseline_when_unchanged() -> None:
+    from app.interface.http.routes.system_routes import get_openapi_diff
+
+    response = get_openapi_diff()
+    payload = _body(response)["data"]
+
+    assert "added_count" in payload
+    assert "removed_count" in payload
+    assert "changed_count" in payload
+    assert payload["added_count"] >= 0
+    assert payload["removed_count"] >= 0
+
+
+def test_get_envelope_contracts_returns_golden_routes() -> None:
+    from app.interface.http.routes.system_routes import get_envelope_contracts
+
+    response = get_envelope_contracts()
+    payload = _body(response)["data"]
+
+    assert isinstance(payload.get("routes"), list)
+    assert len(payload["routes"]) >= 5

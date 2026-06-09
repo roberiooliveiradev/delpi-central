@@ -1,0 +1,62 @@
+{
+  "version": "1",
+  "description": "Contrato de envelope (meta.operationId, entity, shape) para rotas das smoke suites do console.",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/summary",
+      "operationId": "get_lmps_dashboard_summary",
+      "entity": "lmp_dashboard_summary",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/stock-value",
+      "operationId": "get_supplies_stock_value",
+      "entity": "supplies_stock_value",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/branches",
+      "operationId": "list_quality_branches",
+      "entity": "quality_branch",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal/summary",
+      "operationId": "get_ppm_internal_summary",
+      "entity": "ppm_internal_summary",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external/summary",
+      "operationId": "get_ppm_external_summary",
+      "entity": "ppm_external_summary",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/produced-quantity",
+      "operationId": "get_produced_quantity",
+      "entity": "produced_quantity",
+      "shape": "playbook_report"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes/summary",
+      "operationId": "get_transforma_mais_summary",
+      "entity": "transforma_mais_summary",
+      "shape": "scalar"
+    },
+    {
+      "method": "GET",
+      "path": "/scheduling/resources",
+      "operationId": "list_scheduling_resources",
+      "entity": "scheduling_resource",
+      "shape": "paged_list"
+    }
+  ]
+}
