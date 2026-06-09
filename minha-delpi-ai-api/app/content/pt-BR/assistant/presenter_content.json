@@ -255,7 +255,7 @@
       "productCodeOnly": "Produto **{code}**",
       "exclusiveRawMaterials": "MPs exclusivas na estrutura: **{exclusive}**",
       "referenceDateLine": "Referência da consulta: **{date}**",
-      "introWithDescription": "Montei a visão fabril integrada do produto **{code}** ({description}): estrutura, estoque de MP, produção (playbook) e expedição no mesmo panorama.",
+      "introWithDescription": "Visão integrada do produto **{code}** ({description}): estrutura, estoque de MP, produção e expedição no mesmo panorama.",
       "introCodeOnly": "Montei a visão fabril integrada do produto **{code}**: estrutura, estoque de MP, produção e expedição.",
       "structureSummary": "Estrutura: **{components}** componente(s), **{intermediates}** intermediário(s), **{rawMaterials}** MP(s), **{exclusive}** exclusiva(s).",
       "stockSummary": "Estoque de MP: **{withoutStock}** material(is) sem saldo para montar 1 PA.",
@@ -265,13 +265,15 @@
       "sectionStockTitle": "Estoque de matérias-primas",
       "sectionProductionTitle": "Produção (PA / PI / OP / apontamentos)",
       "sectionShippingTitle": "Expedição e inspeção final",
-      "overviewTableTitle": "Panorama fabril"
+      "overviewTableTitle": "Panorama fabril",
+      "tableVisualizationHint": "Detalhes por bloco nas **tabelas** abaixo."
     },
     "productionStatus": {
       "titleWithCode": "Análise produtiva — {code}",
       "titleGeneric": "Análise produtiva do produto",
-      "introWithDescription": "Playbook produtivo do produto **{code}** ({description}): ordens PA/PI, OPs abertas e apontamentos SH6010 na data de referência.",
-      "introCodeOnly": "Playbook produtivo do produto **{code}**: ordens PA/PI, OPs e apontamentos na data de referência.",
+      "introWithDescription": "Situação produtiva do produto **{code}** ({description}): ordens PA/PI, OPs abertas e apontamentos na data de referência.",
+      "introCodeOnly": "Situação produtiva do produto **{code}**: ordens PA/PI, OPs e apontamentos na data de referência.",
+      "tableVisualizationHint": "Ordens e apontamentos na **tabela** abaixo.",
       "referenceDateLine": "Data de referência: **{date}**",
       "paStartedLine": "Produção do PA iniciada: **{value}**",
       "piStartedLine": "Produção de intermediários (PI) iniciada: **{value}**",
@@ -286,8 +288,9 @@
     "shippingStatus": {
       "titleWithCode": "Expedição e inspeção final — {code}",
       "titleGeneric": "Expedição e inspeção final do PA",
-      "introWithDescription": "Playbook de expedição do produto **{code}** ({description}): apontamentos no CT de inspeção final (SH6010) no período consultado.",
-      "introCodeOnly": "Playbook de expedição do produto **{code}**: quantidade expedida e perdas de inspeção final.",
+      "introWithDescription": "Expedição e inspeção final do produto **{code}** ({description}): apontamentos no CT de inspeção final no período consultado.",
+      "introCodeOnly": "Expedição e inspeção final do produto **{code}**: quantidade expedida e perdas de inspeção final.",
+      "tableVisualizationHint": "Movimentos de expedição na **tabela** abaixo.",
       "referenceDateLine": "Referência da consulta: **{date}**",
       "periodLine": "Período consultado: **{start}** até **{end}** (fim exclusivo).",
       "shippedLine": "Quantidade expedida no período: **{value}**",
@@ -311,7 +314,8 @@
       "noExclusiveLine": "Estrutura retornada **sem MPs marcadas como exclusivas**.",
       "itemsEmptyLine": "Nenhum componente retornado para a profundidade consultada.",
       "overviewTableTitle": "Resumo da estrutura",
-      "componentsTableTitle": "Componentes com exclusividade"
+      "componentsTableTitle": "Componentes com exclusividade",
+      "tableVisualizationHint": "Componentes e exclusividade na **tabela** abaixo."
     },
     "systemTables": {
       "searchTitle": "Busca de tabelas Protheus (SX2)",
@@ -507,7 +511,7 @@
     "productionStatus": {
       "highlightsHeader": "**Destaques**",
       "attentionHeader": "**Pontos de atenção**",
-      "playbookHeadline": "Playbook produtivo na referência **{date}**",
+      "scopeHeadline": "Consulta produtiva na referência **{date}**",
       "paNotStarted": "PA ainda **sem apontamento** — OP pode estar aberta aguardando início.",
       "piWithoutPa": "Intermediários com movimento, mas PA **ainda não finalizado**.",
       "hasAppointments": "**{count}** registro(s) com apontamento SH6010 consolidado.",
@@ -517,7 +521,7 @@
     "shippingStatus": {
       "highlightsHeader": "**Destaques**",
       "attentionHeader": "**Pontos de atenção**",
-      "playbookHeadline": "Playbook de expedição no período **{period}**",
+      "scopeHeadline": "Expedição e inspeção no período **{period}**",
       "hasShipped": "**{quantity}** unidade(s) expedida(s) após inspeção final.",
       "lossWithoutShip": "Há **perda de inspeção** sem quantidade expedida no período.",
       "noMovement": "Sem movimento de inspeção final/expedição no intervalo consultado.",
@@ -527,7 +531,7 @@
     "structureExclusivity": {
       "highlightsHeader": "**Destaques**",
       "attentionHeader": "**Pontos de atenção**",
-      "playbookHeadline": "BOM com **{exclusive}** MP(s) exclusiva(s) de **{rawMaterials}** matéria(s)-prima(s).",
+      "scopeHeadline": "BOM com **{exclusive}** MP(s) exclusiva(s) de **{rawMaterials}** matéria(s)-prima(s).",
       "hasExclusive": "**{count}** matéria(s)-prima(s) exclusiva(s) na estrutura vigente.",
       "noExclusiveMps": "Nenhuma MP marcada como exclusiva — risco de substituição compartilhado.",
       "noStructure": "Produto **sem componentes** retornados na profundidade consultada.",
@@ -556,7 +560,7 @@
     "entities": {
       "product_production_status": {
         "textTitle": "Análise produtiva",
-        "tableTitle": "Análise produtiva (playbook)"
+        "tableTitle": "Análise produtiva"
       },
       "product_shipping_status": {
         "textTitle": "Status de expedição",

@@ -4,10 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.external_actions.operational_route_narrative_service import (
+    ExternalActionOperationalRouteNarrativeService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
     )
+
+_Narrative = ExternalActionOperationalRouteNarrativeService
 
 
 class ExternalActionProductCompositeAnalysisPresenter:
@@ -67,10 +73,20 @@ class ExternalActionProductCompositeAnalysisPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
 
-        if description:
+        if compact_for_rich_ui:
+            compact_line = _Narrative.compact_product_line(
+                self._host,
+                code=code,
+                description=description,
+            )
+
+            if compact_line:
+                linhas.append(compact_line)
+        elif description:
             linhas.append(
                 self._route(
                     "factoryStatus",
@@ -128,8 +144,12 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 self._route(
                     "factoryStatus",
                     "productionSummary",
-                    paStarted=str(production_summary.get("pa_production_started") or "—"),
-                    piStarted=str(production_summary.get("pi_production_started") or "—"),
+                    paStarted=_Narrative.format_production_flag(
+                        production_summary.get("pa_production_started")
+                    ),
+                    piStarted=_Narrative.format_production_flag(
+                        production_summary.get("pi_production_started")
+                    ),
                     paOrders=str(production_summary.get("total_pa_orders") or 0),
                     piOrders=str(production_summary.get("total_pi_orders") or 0),
                 )
@@ -142,10 +162,21 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 self._route(
                     "factoryStatus",
                     "shippingSummary",
-                    shipped=str(shipping_summary.get("total_shipped_quantity") or 0),
-                    loss=str(shipping_summary.get("total_inspection_loss_quantity") or 0),
+                    shipped=_Narrative.format_quantity(
+                        self._host,
+                        shipping_summary.get("total_shipped_quantity"),
+                        field_key="total_shipped_quantity",
+                    ),
+                    loss=_Narrative.format_quantity(
+                        self._host,
+                        shipping_summary.get("total_inspection_loss_quantity"),
+                        field_key="total_inspection_loss_quantity",
+                    ),
                 )
             )
+
+        if compact_for_rich_ui:
+            linhas.append(self._route("factoryStatus", "tableVisualizationHint"))
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
 
@@ -238,9 +269,17 @@ class ExternalActionProductCompositeAnalysisPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> str:
         parts: list[str] = []
-        parts.extend(self._build_factory_narrative_lines(root, code=code, description=description))
+        parts.extend(
+            self._build_factory_narrative_lines(
+                root,
+                code=code,
+                description=description,
+                compact_for_rich_ui=compact_for_rich_ui,
+            )
+        )
 
         highlights = self._build_factory_highlights(root)
 
@@ -257,6 +296,13 @@ class ExternalActionProductCompositeAnalysisPresenter:
         return "\n".join(part for part in parts if part is not None).strip()
 
     def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
         code, description = self._product_context(root, path)
         title = (
             self._host._presenter_text(
@@ -270,15 +316,36 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 "factoryStatusGeneric",
             )
         )
-        body = self._build_factory_markdown_body(root, code=code, description=description)
+        auxiliary_tables = self.build_factory_status_table_presentations(root, path)
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+        )
+        body = self._build_factory_markdown_body(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         if not body:
             return None
 
+        markdown_parts = [f"### {title}", ""]
+
+        if not compact_for_rich_ui:
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "factoryStatus",
+                "scopeIntro",
+            )
+            markdown_parts.extend([scope_line, ""])
+
+        markdown_parts.append(body)
+
         return {
             "type": "markdown",
             "title": title,
-            "markdown": f"### {title}\n\n{body}",
+            "markdown": "\n".join(markdown_parts).strip(),
         }
 
     def build_factory_status_table_presentations(self, root: dict, path: str) -> list[dict]:

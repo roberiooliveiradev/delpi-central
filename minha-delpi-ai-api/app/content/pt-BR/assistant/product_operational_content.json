@@ -162,6 +162,18 @@
       "titleGeneric": "Informações completas do produto",
       "scopeIntro": "Análise integrada do cadastro, roteiro de produção, plano de inspeção e estrutura (BOM) do item abaixo."
     },
+    "productionStatus": {
+      "scopeIntro": "Situação produtiva do PA e intermediários — ordens, OPs e apontamentos na data de referência."
+    },
+    "shippingStatus": {
+      "scopeIntro": "Expedição e inspeção final do PA — quantidades expedidas e perdas no período consultado."
+    },
+    "structureExclusivity": {
+      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente."
+    },
+    "factoryStatus": {
+      "scopeIntro": "Visão integrada na fábrica — estrutura, estoque de MP, produção e expedição no mesmo panorama."
+    },
     "parents": {
       "titleWithCode": "Onde é usado o produto {code}",
       "titleGeneric": "Produtos pai (onde é usado)"
@@ -202,16 +214,16 @@
       "factoryHighlights": "Leitura rápida da situação consolidada antes dos blocos detalhados.",
       "factoryStructure": "Composição e exclusividade de MPs — base para avaliar risco de falta.",
       "factoryStock": "Saldo de matérias-primas frente à necessidade de 1 PA.",
-      "factoryProduction": "Playbook produtivo (OPs e apontamentos) dentro da visão fabril.",
+      "factoryProduction": "Produção (OPs e apontamentos) dentro da visão fabril.",
       "factoryShipping": "Expedição e perdas de inspeção no intervalo consultado.",
       "factoryAttention": "Riscos operacionais que pedem ação entre compras, PCP e chão de fábrica.",
       "productionScopeWithCode": "Análise produtiva do produto {code} — PA, PI, OPs e apontamentos SH6010.",
-      "productionScopeGeneric": "Playbook produtivo consolidado nesta resposta.",
+      "productionScopeGeneric": "Situação produtiva consolidada nesta resposta.",
       "productionHighlights": "Resumo do que a produção já iniciou e quanto foi apontado.",
       "productionOrders": "Detalhe linha a linha das ordens e apontamentos retornados.",
       "productionAttention": "Situações de OP parada, divergência de quantidade ou falta de apontamento.",
       "shippingScopeWithCode": "Expedição e inspeção final do PA {code} — apontamentos no CT de inspeção final.",
-      "shippingScopeGeneric": "Playbook de expedição consolidado nesta resposta.",
+      "shippingScopeGeneric": "Expedição e inspeção final consolidadas nesta resposta.",
       "shippingHighlights": "Leitura rápida do que já saiu para expedição e das perdas de inspeção.",
       "shippingSummary": "Totais de quantidade expedida, perda e apontamentos no período.",
       "shippingMovements": "Detalhe por OP/recurso/CT retornado pela API.",

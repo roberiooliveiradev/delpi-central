@@ -1,13 +1,19 @@
-"""Expedição / inspeção final do PA (playbook SHB010 + SH6010) — perfil generalizável."""
+"""Expedição / inspeção final do PA — perfil generalizável."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.domain.services.external_actions.operational_route_narrative_service import (
+    ExternalActionOperationalRouteNarrativeService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
     )
+
+_Narrative = ExternalActionOperationalRouteNarrativeService
 
 
 class ExternalActionProductShippingStatusPresenter:
@@ -83,10 +89,20 @@ class ExternalActionProductShippingStatusPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
 
-        if description:
+        if compact_for_rich_ui:
+            compact_line = _Narrative.compact_product_line(
+                self._host,
+                code=code,
+                description=description,
+            )
+
+            if compact_line:
+                linhas.append(compact_line)
+        elif description:
             linhas.append(
                 self._route(
                     "introWithDescription",
@@ -108,13 +124,21 @@ class ExternalActionProductShippingStatusPresenter:
             linhas.append(
                 self._route(
                     "shippedLine",
-                    value=str(summary.get("total_shipped_quantity") or 0),
+                    value=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_shipped_quantity"),
+                        field_key="total_shipped_quantity",
+                    ),
                 )
             )
             linhas.append(
                 self._route(
                     "lossLine",
-                    value=str(summary.get("total_inspection_loss_quantity") or 0),
+                    value=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_inspection_loss_quantity"),
+                        field_key="total_inspection_loss_quantity",
+                    ),
                 )
             )
             linhas.append(
@@ -126,30 +150,39 @@ class ExternalActionProductShippingStatusPresenter:
 
         items = self._items(root)
 
-        if items:
-            linhas.append(self._route("itemsPreviewLine", count=str(len(items))))
-
-            for item in items[:6]:
-                if not isinstance(item, dict):
-                    continue
-
-                linhas.append(
-                    self._route(
-                        "movementLine",
-                        order=str(item.get("production_order") or "—"),
-                        shipped=str(item.get("shipped_quantity") or "0"),
-                        loss=str(item.get("inspection_loss_quantity") or "0"),
-                    )
-                )
-        else:
-            linhas.append(self._route("itemsEmptyLine"))
+        _Narrative.append_item_preview(
+            self._host,
+            linhas,
+            items,
+            compact_for_rich_ui=compact_for_rich_ui,
+            preview_line=self._route("itemsPreviewLine", count=str(len(items))),
+            empty_line=self._route("itemsEmptyLine"),
+            table_hint=self._route("tableVisualizationHint"),
+            format_item_line=self._format_movement_preview_line,
+        )
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
+
+    def _format_movement_preview_line(self, item: dict) -> str:
+        return self._route(
+            "movementLine",
+            order=str(item.get("production_order") or "—"),
+            shipped=_Narrative.format_quantity(
+                self._host,
+                item.get("shipped_quantity"),
+                field_key="shipped_quantity",
+            ),
+            loss=_Narrative.format_quantity(
+                self._host,
+                item.get("inspection_loss_quantity"),
+                field_key="inspection_loss_quantity",
+            ),
+        )
 
     def _build_highlights(self, root: dict) -> list[str]:
         highlights: list[str] = []
         period = self._period_label(root) or "—"
-        highlights.append(self._insight("playbookHeadline", period=period))
+        highlights.append(self._insight("scopeHeadline", period=period))
 
         summary = self._summary(root)
 
@@ -164,7 +197,16 @@ class ExternalActionProductShippingStatusPresenter:
             loss = 0.0
 
         if shipped > 0:
-            highlights.append(self._insight("hasShipped", quantity=str(summary.get("total_shipped_quantity") or 0)))
+            highlights.append(
+                self._insight(
+                    "hasShipped",
+                    quantity=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_shipped_quantity"),
+                        field_key="total_shipped_quantity",
+                    ),
+                )
+            )
 
         if loss > 0 and shipped == 0:
             highlights.append(self._insight("lossWithoutShip"))
@@ -207,9 +249,17 @@ class ExternalActionProductShippingStatusPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> str:
         parts: list[str] = []
-        parts.extend(self._build_narrative_lines(root, code=code, description=description))
+        parts.extend(
+            self._build_narrative_lines(
+                root,
+                code=code,
+                description=description,
+                compact_for_rich_ui=compact_for_rich_ui,
+            )
+        )
 
         highlights = self._build_highlights(root)
 
@@ -226,6 +276,13 @@ class ExternalActionProductShippingStatusPresenter:
         return "\n".join(part for part in parts if part is not None).strip()
 
     def _build_shipping_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
         code, description = self._product_context(root, path)
         title = (
             self._host._presenter_text(
@@ -239,15 +296,36 @@ class ExternalActionProductShippingStatusPresenter:
                 "shippingStatusGeneric",
             )
         )
-        body = self._build_markdown_body(root, code=code, description=description)
+        auxiliary_tables = self.build_shipping_status_table_presentations(root, path)
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+        )
+        body = self._build_markdown_body(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         if not body:
             return None
 
+        markdown_parts = [f"### {title}", ""]
+
+        if not compact_for_rich_ui:
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "shippingStatus",
+                "scopeIntro",
+            )
+            markdown_parts.extend([scope_line, ""])
+
+        markdown_parts.append(body)
+
         return {
             "type": "markdown",
             "title": title,
-            "markdown": f"### {title}\n\n{body}",
+            "markdown": "\n".join(markdown_parts).strip(),
         }
 
     def build_shipping_status_table_presentations(self, root: dict, path: str) -> list[dict]:

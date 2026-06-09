@@ -1,13 +1,19 @@
-"""Análise produtiva (playbook PA/PI/OP/apontamentos) — perfil generalizável."""
+"""Análise produtiva (PA/PI/OP/apontamentos) — perfil generalizável."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.domain.services.external_actions.operational_route_narrative_service import (
+    ExternalActionOperationalRouteNarrativeService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
     )
+
+_Narrative = ExternalActionOperationalRouteNarrativeService
 
 
 class ExternalActionProductProductionStatusPresenter:
@@ -71,10 +77,20 @@ class ExternalActionProductProductionStatusPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
 
-        if description:
+        if compact_for_rich_ui:
+            compact_line = _Narrative.compact_product_line(
+                self._host,
+                code=code,
+                description=description,
+            )
+
+            if compact_line:
+                linhas.append(compact_line)
+        elif description:
             linhas.append(
                 self._route(
                     "introWithDescription",
@@ -96,13 +112,13 @@ class ExternalActionProductProductionStatusPresenter:
             linhas.append(
                 self._route(
                     "paStartedLine",
-                    value=str(summary.get("pa_production_started") or "—"),
+                    value=_Narrative.format_production_flag(summary.get("pa_production_started")),
                 )
             )
             linhas.append(
                 self._route(
                     "piStartedLine",
-                    value=str(summary.get("pi_production_started") or "—"),
+                    value=_Narrative.format_production_flag(summary.get("pi_production_started")),
                 )
             )
             linhas.append(
@@ -115,39 +131,51 @@ class ExternalActionProductProductionStatusPresenter:
             linhas.append(
                 self._route(
                     "reportedLine",
-                    paQty=str(summary.get("total_pa_reported_quantity") or 0),
-                    piQty=str(summary.get("total_pi_reported_quantity") or 0),
+                    paQty=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_pa_reported_quantity"),
+                        field_key="total_pa_reported_quantity",
+                    ),
+                    piQty=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_pi_reported_quantity"),
+                        field_key="total_pi_reported_quantity",
+                    ),
                 )
             )
 
         items = self._items(root)
 
-        if items:
-            linhas.append(self._route("itemsPreviewLine", count=str(len(items))))
-
-            for item in items[:6]:
-                if not isinstance(item, dict):
-                    continue
-
-                linhas.append(
-                    self._route(
-                        "opLine",
-                        level=str(item.get("level") or "—"),
-                        order=str(item.get("production_order") or "—"),
-                        product=str(item.get("product_code") or item.get("order_product_code") or "—"),
-                        started=str(item.get("production_started") or "—"),
-                        reported=str(item.get("reported_quantity") or "0"),
-                    )
-                )
-        else:
-            linhas.append(self._route("itemsEmptyLine"))
+        _Narrative.append_item_preview(
+            self._host,
+            linhas,
+            items,
+            compact_for_rich_ui=compact_for_rich_ui,
+            preview_line=self._route("itemsPreviewLine", count=str(len(items))),
+            empty_line=self._route("itemsEmptyLine"),
+            table_hint=self._route("tableVisualizationHint"),
+            format_item_line=self._format_op_preview_line,
+        )
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
+
+    def _format_op_preview_line(self, item: dict) -> str:
+        return self._route(
+            "opLine",
+            level=str(item.get("level") or "—"),
+            order=str(item.get("production_order") or "—"),
+            product=str(item.get("product_code") or item.get("order_product_code") or "—"),
+            started=_Narrative.format_production_flag(item.get("production_started")),
+            reported=_Narrative.format_quantity(
+                self._host,
+                item.get("reported_quantity"),
+            ),
+        )
 
     def _build_highlights(self, root: dict) -> list[str]:
         highlights: list[str] = []
         reference_date = str(root.get("reference_date") or "—")
-        highlights.append(self._insight("playbookHeadline", date=reference_date))
+        highlights.append(self._insight("scopeHeadline", date=reference_date))
 
         summary = self._summary(root)
         pa_started = str(summary.get("pa_production_started") or "").upper()
@@ -166,10 +194,15 @@ class ExternalActionProductProductionStatusPresenter:
                     self._insight("hasAppointments", count=str(len(with_reports)))
                 )
 
-        if pa_started not in {"SIM", "SIM_SC2"}:
+        if pa_started not in {"SIM", "SIM_SC2", "TRUE", "1"}:
             highlights.append(self._insight("paNotStarted"))
 
-        if pi_started in {"SIM", "SIM_SC2"} and pa_started not in {"SIM", "SIM_SC2"}:
+        if pi_started in {"SIM", "SIM_SC2", "TRUE", "1"} and pa_started not in {
+            "SIM",
+            "SIM_SC2",
+            "TRUE",
+            "1",
+        }:
             highlights.append(self._insight("piWithoutPa"))
 
         return highlights
@@ -193,7 +226,7 @@ class ExternalActionProductProductionStatusPresenter:
             except ValueError:
                 order_qty = 0.0
 
-            if order and started == "NAO":
+            if order and started in {"NAO", "NÃO", "FALSE", "0"}:
                 attention.append(self._insight("attentionStaleOp"))
                 break
 
@@ -209,9 +242,17 @@ class ExternalActionProductProductionStatusPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> str:
         parts: list[str] = []
-        parts.extend(self._build_narrative_lines(root, code=code, description=description))
+        parts.extend(
+            self._build_narrative_lines(
+                root,
+                code=code,
+                description=description,
+                compact_for_rich_ui=compact_for_rich_ui,
+            )
+        )
 
         highlights = self._build_highlights(root)
 
@@ -228,6 +269,13 @@ class ExternalActionProductProductionStatusPresenter:
         return "\n".join(part for part in parts if part is not None).strip()
 
     def _build_production_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
         code, description = self._product_context(root, path)
         title = (
             self._host._presenter_text(
@@ -241,15 +289,36 @@ class ExternalActionProductProductionStatusPresenter:
                 "productionStatusGeneric",
             )
         )
-        body = self._build_markdown_body(root, code=code, description=description)
+        auxiliary_tables = self.build_production_status_table_presentations(root, path)
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+        )
+        body = self._build_markdown_body(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         if not body:
             return None
 
+        markdown_parts = [f"### {title}", ""]
+
+        if not compact_for_rich_ui:
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "productionStatus",
+                "scopeIntro",
+            )
+            markdown_parts.extend([scope_line, ""])
+
+        markdown_parts.append(body)
+
         return {
             "type": "markdown",
             "title": title,
-            "markdown": f"### {title}\n\n{body}",
+            "markdown": "\n".join(markdown_parts).strip(),
         }
 
     def build_production_status_table_presentations(self, root: dict, path: str) -> list[dict]:

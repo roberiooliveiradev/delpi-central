@@ -1,13 +1,19 @@
-"""Estrutura vigente com exclusividade de MPs (playbook BOM + flag exclusiva)."""
+"""Estrutura vigente com exclusividade de MPs — perfil generalizável."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.domain.services.external_actions.operational_route_narrative_service import (
+    ExternalActionOperationalRouteNarrativeService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
     )
+
+_Narrative = ExternalActionOperationalRouteNarrativeService
 
 
 class ExternalActionProductStructureExclusivityPresenter:
@@ -87,10 +93,20 @@ class ExternalActionProductStructureExclusivityPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
 
-        if description:
+        if compact_for_rich_ui:
+            compact_line = _Narrative.compact_product_line(
+                self._host,
+                code=code,
+                description=description,
+            )
+
+            if compact_line:
+                linhas.append(compact_line)
+        elif description:
             linhas.append(
                 self._route(
                     "introWithDescription",
@@ -126,21 +142,43 @@ class ExternalActionProductStructureExclusivityPresenter:
                 self._route("exclusivePreviewLine", count=str(len(exclusive_items)))
             )
 
-            for item in exclusive_items[:6]:
-                linhas.append(
-                    self._route(
-                        "exclusiveItemLine",
-                        code=str(item.get("product_code") or item.get("component_code") or "—"),
-                        quantity=str(item.get("accumulated_quantity") or item.get("quantity") or "—"),
-                        level=str(item.get("level") or "—"),
+            if compact_for_rich_ui:
+                linhas.append(self._route("tableVisualizationHint"))
+            else:
+                for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
+                    linhas.append(self._format_exclusive_preview_line(item))
+
+                remaining = len(exclusive_items) - min(len(exclusive_items), _Narrative._PREVIEW_MAX)
+
+                if remaining > 0:
+                    linhas.append(
+                        self._host._presenter_text(
+                            "pagination",
+                            "moreDetailRecords",
+                            count=str(remaining),
+                        )
                     )
-                )
+
+                if len(exclusive_items) > _Narrative._PREVIEW_MAX:
+                    linhas.append(self._route("tableVisualizationHint"))
         elif self._items(root):
             linhas.append(self._route("noExclusiveLine"))
         else:
             linhas.append(self._route("itemsEmptyLine"))
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
+
+    def _format_exclusive_preview_line(self, item: dict) -> str:
+        return self._route(
+            "exclusiveItemLine",
+            code=str(item.get("product_code") or item.get("component_code") or "—"),
+            quantity=_Narrative.format_quantity(
+                self._host,
+                item.get("accumulated_quantity") or item.get("quantity"),
+                field_key="accumulated_quantity",
+            ),
+            level=str(item.get("level") or "—"),
+        )
 
     def _build_highlights(self, root: dict) -> list[str]:
         highlights: list[str] = []
@@ -150,7 +188,7 @@ class ExternalActionProductStructureExclusivityPresenter:
 
         highlights.append(
             self._insight(
-                "playbookHeadline",
+                "scopeHeadline",
                 exclusive=str(exclusive_count),
                 rawMaterials=str(raw_materials),
             )
@@ -182,9 +220,17 @@ class ExternalActionProductStructureExclusivityPresenter:
         *,
         code: str,
         description: str,
+        compact_for_rich_ui: bool = False,
     ) -> str:
         parts: list[str] = []
-        parts.extend(self._build_narrative_lines(root, code=code, description=description))
+        parts.extend(
+            self._build_narrative_lines(
+                root,
+                code=code,
+                description=description,
+                compact_for_rich_ui=compact_for_rich_ui,
+            )
+        )
 
         highlights = self._build_highlights(root)
 
@@ -201,6 +247,13 @@ class ExternalActionProductStructureExclusivityPresenter:
         return "\n".join(part for part in parts if part is not None).strip()
 
     def _build_structure_exclusivity_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
         code, description = self._product_context(root, path)
         title = (
             self._host._presenter_text(
@@ -214,15 +267,36 @@ class ExternalActionProductStructureExclusivityPresenter:
                 "structureExclusivityGeneric",
             )
         )
-        body = self._build_markdown_body(root, code=code, description=description)
+        auxiliary_tables = self.build_structure_exclusivity_table_presentations(root, path)
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+        )
+        body = self._build_markdown_body(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         if not body:
             return None
 
+        markdown_parts = [f"### {title}", ""]
+
+        if not compact_for_rich_ui:
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "structureExclusivity",
+                "scopeIntro",
+            )
+            markdown_parts.extend([scope_line, ""])
+
+        markdown_parts.append(body)
+
         return {
             "type": "markdown",
             "title": title,
-            "markdown": f"### {title}\n\n{body}",
+            "markdown": "\n".join(markdown_parts).strip(),
         }
 
     def build_structure_exclusivity_table_presentations(self, root: dict, path: str) -> list[dict]:

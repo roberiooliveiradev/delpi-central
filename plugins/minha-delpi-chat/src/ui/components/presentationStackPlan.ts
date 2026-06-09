@@ -31,8 +31,14 @@ export type StackPresentationPlan = {
   tableRoleOrder: StackTableRole[];
   tailVisualOrder: string[];
   narrativeOrder: StackNarrativeSlot[];
-  /** Inteligência da API: mockup humanizado só no analyser. */
-  presentationProfile?: "product_analyser" | "generic_stack";
+  /** Inteligência da API: mockup humanizado no analyser e rotas compostas de produto. */
+  presentationProfile?:
+    | "product_analyser"
+    | "product_factory_status"
+    | "product_production_status"
+    | "product_shipping_status"
+    | "product_structure_exclusivity"
+    | "generic_stack";
   humanizedSections?: boolean;
   sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
   /** Texto explicativo por seção (API) — renderizado como markdown normal, sem repetir tabela/bullets. */
@@ -167,7 +173,12 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
       : DEFAULT_PLAN.tailVisualOrder,
     narrativeOrder: normalizeNarrativeOrder(raw.narrativeOrder),
     presentationProfile:
-      profile === "product_analyser" || profile === "generic_stack"
+      profile === "product_analyser" ||
+      profile === "product_factory_status" ||
+      profile === "product_production_status" ||
+      profile === "product_shipping_status" ||
+      profile === "product_structure_exclusivity" ||
+      profile === "generic_stack"
         ? profile
         : undefined,
     humanizedSections: raw.humanizedSections === true,
@@ -179,7 +190,14 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
 }
 
 export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {
-  return plan.humanizedSections === true && plan.presentationProfile === "product_analyser";
+  return (
+    plan.humanizedSections === true &&
+    (plan.presentationProfile === "product_analyser" ||
+      plan.presentationProfile === "product_factory_status" ||
+      plan.presentationProfile === "product_production_status" ||
+      plan.presentationProfile === "product_shipping_status" ||
+      plan.presentationProfile === "product_structure_exclusivity")
+  );
 }
 
 export function getStackPresentationPlanFromToolCalls(
@@ -225,6 +243,11 @@ export function inferTableRoleFromTitle(title: string): StackTableRole {
   const normalized = title.trim().toLowerCase();
 
   if (
+    normalized.includes("panorama fabril") ||
+    normalized.includes("resumo produtivo") ||
+    normalized.includes("resumo de expedição") ||
+    normalized.includes("resumo de expedicao") ||
+    normalized.includes("resumo da estrutura") ||
     normalized.startsWith("produto ") ||
     normalized.includes("cadastro") ||
     normalized.includes("ficha")
@@ -244,9 +267,33 @@ export function inferTableRoleFromTitle(title: string): StackTableRole {
     normalized.includes("estoque") ||
     normalized.includes("saldo") ||
     normalized.includes("armazém") ||
-    normalized.includes("armazem")
+    normalized.includes("armazem") ||
+    normalized.includes("matéria") ||
+    normalized.includes("materia")
   ) {
     return "stock";
+  }
+
+  if (
+    normalized.includes("produção") ||
+    normalized.includes("producao") ||
+    normalized.includes("apontamento") ||
+    normalized.includes("ordens") ||
+    normalized.includes("movimentos de expedição") ||
+    normalized.includes("movimentos de expedicao")
+  ) {
+    return "list";
+  }
+
+  if (normalized.includes("expedição") || normalized.includes("expedicao")) {
+    return "list";
+  }
+
+  if (
+    normalized.includes("exclusividade") ||
+    normalized.includes("componentes com exclusividade")
+  ) {
+    return "structure";
   }
 
   if (

@@ -162,6 +162,18 @@
       "titleGeneric": "Informações completas do produto",
       "scopeIntro": "Análise integrada do cadastro, roteiro de produção, plano de inspeção e estrutura (BOM) do item abaixo."
     },
+    "productionStatus": {
+      "scopeIntro": "Situação produtiva do PA e intermediários — ordens, OPs e apontamentos na data de referência."
+    },
+    "shippingStatus": {
+      "scopeIntro": "Expedição e inspeção final do PA — quantidades expedidas e perdas no período consultado."
+    },
+    "structureExclusivity": {
+      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente."
+    },
+    "factoryStatus": {
+      "scopeIntro": "Visão integrada na fábrica — estrutura, estoque de MP, produção e expedição no mesmo panorama."
+    },
     "parents": {
       "titleWithCode": "Onde é usado o produto {code}",
       "titleGeneric": "Produtos pai (onde é usado)"
@@ -196,7 +208,32 @@
       "guide": "Sequência de operações de fabricação por produto da hierarquia (consulte códigos, centros e operações na tabela).",
       "inspection": "Referências de inspeção retornadas para os itens da estrutura — detalhes de ensaio na tabela quando a API enviar.",
       "structure": "Composição do produto em árvore (PA → PI → MP). Expanda os nós para ver componentes e quantidades.",
-      "attention": "Pontos que merecem validação comercial, de compras ou engenharia antes de usar este cadastro em decisão."
+      "attention": "Pontos que merecem validação comercial, de compras ou engenharia antes de usar este cadastro em decisão.",
+      "factoryScopeWithCode": "Status integrado na fábrica do produto {code} — estrutura, estoque de MP, produção e expedição.",
+      "factoryScopeGeneric": "Panorama fabril integrado retornado nesta consulta.",
+      "factoryHighlights": "Leitura rápida da situação consolidada antes dos blocos detalhados.",
+      "factoryStructure": "Composição e exclusividade de MPs — base para avaliar risco de falta.",
+      "factoryStock": "Saldo de matérias-primas frente à necessidade de 1 PA.",
+      "factoryProduction": "Produção (OPs e apontamentos) dentro da visão fabril.",
+      "factoryShipping": "Expedição e perdas de inspeção no intervalo consultado.",
+      "factoryAttention": "Riscos operacionais que pedem ação entre compras, PCP e chão de fábrica.",
+      "productionScopeWithCode": "Análise produtiva do produto {code} — PA, PI, OPs e apontamentos SH6010.",
+      "productionScopeGeneric": "Situação produtiva consolidada nesta resposta.",
+      "productionHighlights": "Resumo do que a produção já iniciou e quanto foi apontado.",
+      "productionOrders": "Detalhe linha a linha das ordens e apontamentos retornados.",
+      "productionAttention": "Situações de OP parada, divergência de quantidade ou falta de apontamento.",
+      "shippingScopeWithCode": "Expedição e inspeção final do PA {code} — apontamentos no CT de inspeção final.",
+      "shippingScopeGeneric": "Expedição e inspeção final consolidadas nesta resposta.",
+      "shippingHighlights": "Leitura rápida do que já saiu para expedição e das perdas de inspeção.",
+      "shippingSummary": "Totais de quantidade expedida, perda e apontamentos no período.",
+      "shippingMovements": "Detalhe por OP/recurso/CT retornado pela API.",
+      "shippingAttention": "Perdas ou ausência de movimento que pedem validação com qualidade/expedição.",
+      "structureExclusivityScopeWithCode": "Estrutura vigente do produto {code} com flag de MP exclusiva.",
+      "structureExclusivityScopeGeneric": "BOM com exclusividade de matérias-primas nesta resposta.",
+      "structureExclusivityHighlights": "Resumo de quantas MPs são exclusivas na composição.",
+      "structureExclusivitySummary": "Contagens de componentes, intermediários e MPs exclusivas.",
+      "structureExclusivityComponents": "Lista plana de componentes com quantidade acumulada e flag exclusiva.",
+      "structureExclusivityAttention": "MPs exclusivas impactam compras e risco de falta — valide saldo."
     }
   }
 }
