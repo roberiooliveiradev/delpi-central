@@ -36,7 +36,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 | **Pipeline pré-tool** | Intenção, direct answer, memória, canvas | `ChatIntelligencePipelineService` · `ChatTurnPreparationService` + delegates `chat_turn_preparation_*` | [ADR 001](./adr/001-chat-base-intelligence.md) |
 | **Tools & actions** | Seleção, execução, contexto para LLM | `ChatToolContextService` + `chat_tool_context_*` · `ExternalActionSelectionService` + `external_action_*_route_selection_*` | [`operational-api-routing`](../../.cursor/rules/operational-api-routing.mdc) |
 | **Presenter & UI de dados** | `humanizedSummary`, tabelas, gráficos | `external_action_result_presenter.py` · `presenters/*_presenter.py` | [ADR 003](./adr/003-assistant-content-json.md) · [`presenter-content-migration-audit.md`](./presenter-content-migration-audit.md) |
-| **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
+| **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [vocabulário jun/2026](./vocabulary-centralization-jun2026.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
 | **SQL avançado** | Authoring, schema, execução (com agente) | `ChatAdvancedSqlSpecialistService` · `ChatSql*Service` | Skill `sql-assistant` · policies `sql-*.md` |
 | **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) |
 | **Memória & contexto** | Snapshot, assertividade, projeto | `ChatConversationMemoryService` · `ChatWorkingMemoryService` · `ChatUserContextItemService` | [`session-memory.md`](./session-memory.md) |
@@ -454,17 +454,22 @@ Testes: `test_chat_technical_description_intent_service.py`, `test_select_action
 
 Checklist manual: **N1–N4** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
-### SQL operacional — produção do dia (maio/2026)
+### SQL operacional — produção do dia (maio/2026, vocabulário jun/2026)
 
 Perguntas como «quais produtos serão produzidos hoje?» exigem **SQL analítico** (SC2010), não catálogo REST:
 
 | Serviço | Função |
 |---------|--------|
-| `ChatSqlOperationalIntentService` | Marca intenção SQL de produção |
-| `ChatSqlProductionQueryService` | Template SQL; fast path com `POST /data/sql` ou resposta direta com query (G3) |
+| `ChatSqlOperationalIntentService` | Marca intenção SQL de produção (vocabulário `sql_intent_vocabulary.json`) |
+| `ChatSqlProductionQueryService` | Template SQL; fast path; breakdown **por filial** |
+| `ChatSqlQueryRefinementService` | Refinamento multi-turn; motivos em `external_action_responses.sqlQueryRefinement` |
+| `ChatSqlDynamicColumnRefinementService` | Agrupar/filtrar por coluna do SELECT ativo |
+| `ChatSqlProductionSchedulePresentationService` | Narrativa/insights SC2010 (`productionSchedule.narrative`) |
 | `ChatToolContextService` | Executa SQL sem RAG quando aplicável |
 
 Bloqueios: não usar `/products/search`; action fixa em `/data/sql` (não KPI departamental «production»).
+
+Doc consolidada: [`vocabulary-centralization-jun2026.md`](./vocabulary-centralization-jun2026.md).
 
 Checklist: **G1–G3** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); smoke `scripts/smoke_gpt_instructions_improvements.py`.
 

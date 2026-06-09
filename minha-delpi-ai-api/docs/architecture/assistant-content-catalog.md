@@ -115,11 +115,12 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Linhas de lista por rota (roteiro preview, LMP, OV, estrutura, busca) → `presenter_content.routePresentations.*`; cronograma SQL → `external_action_responses.productionSchedule`
 - Dict fallback, preview de coleção e inspeção plana (características + limites de teste) → `presenter_content.generic`, `routePresentations.inspection`
 - Varredura final do presenter (estoque/fornecedor em `_present_items`, títulos stock/parents/structure, SQL/chart/KPI/erro API) → `presenter_content` + `product_operational_content`; ver [presenter-content-migration-audit.md](./presenter-content-migration-audit.md)
+- **Vocabulário SQL/temporal/sessão/web (jun/2026)** → bundles `*_vocabulary.json`, loaders `ChatAssistantVocabularyService`; ver [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md)
 
 ## Pendente (baixa prioridade)
 
 1. Colunas dinâmicas em listagens genéricas continuam via `label_for` + `_COLUMN_TYPE_MAP`
-2. Títulos/strings em serviços adjacentes (refinamento SQL, rotas HTTP) — fora do `ExternalActionResultPresenter`
+2. Regex temporais pontuais (`_TODAY_PATTERNS` em `ChatTemporalIntentService`) e tokens de apresentação adjacentes — ver pendências em [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md)
 
 ## Como adicionar conteúdo
 
