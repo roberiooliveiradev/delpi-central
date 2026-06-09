@@ -2,6 +2,8 @@
 
 Checklist amostral para validar a generalização de apresentação **antes de release**. Complementa a suíte automatizada (Fase 6).
 
+**Roteiro copiável (playbook + apresentação):** [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md).
+
 ## Pré-requisitos
 
 - Gateway + api-delpi + minha-delpi-ai-api em homologação
@@ -77,17 +79,14 @@ Marque **OK** / **Falha** / **N/A** após exercitar no chat (modo Automático + 
 
 ## Comandos
 
+Comando útil (smoke local):
+
 ```bash
-# Auditoria + gate de perfil (CI local)
-cd minha-delpi-ai-api
-PYTHONPATH=. .venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
+# Auditoria + gate perfis
+cd minha-delpi-ai-api && PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-profiles
 
-# Suíte parametrizada por entidade
-.venv/bin/pytest tests/unit/domain/services/test_chat_presentation_entity_contract.py -q
-
-# Smoke playbook produto + MP/PA
-SMOKE_MP_CODE=10080001 SMOKE_PA_CODE=90261255 \\
-  PYTHONPATH=. .venv/bin/python scripts/smoke_playbook_product_routes.py
+# Perguntas manuais (roteiro jun/2026)
+# Ver docs/testing/perguntas-teste-chat-jun2026.md
 ```
 
 ## Registro de execução

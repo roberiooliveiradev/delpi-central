@@ -18,6 +18,8 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 |--------|---------------------------------------------|
 | **Inteligência operacional (10 perguntas E2E)** | `python scripts/smoke_operational_intelligence_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md) |
 | **Playbooks produto (data + sessão ativa)** | `python scripts/smoke_playbook_product_routes.py` — ver [`../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`](../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md) |
+| **Perguntas manuais (playbook MP/PA + apresentação jun/2026)** | [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md) — roteiro copiar/colar + registro OK/Falha |
+| **Apresentação generalizada (homologação)** | [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) + `scripts/audit_presentation_coverage.py --check-profiles` |
 | **KPIs empresa (12 perguntas, sem produto)** | `python scripts/smoke_empresa_kpi_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md#smoke-empresa--kpi-sem-produto) |
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
@@ -652,12 +654,56 @@ docker run --rm -v "$(pwd)/plugins/minha-delpi-chat:/app" -w /app node:22-alpine
 
 ---
 
+## Playbook fabril + preço MP / simulador PA (jun/2026)
+
+Roteiro completo com produtos homologados, desambiguação e apresentação: **[`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md)**.
+
+### Amostra mínima (mesma conversa onde indicado)
+
+| # | Pergunta | Rota / efeito esperado |
+|---|----------|------------------------|
+| PB1 | `status fabril do produto 90269002 hoje` | `/factory-status` |
+| PB2 | `situação de produção do 90269002 hoje` | `/production-status` |
+| PB3 | `análise de preço da matéria-prima 10080001` | `/raw-material-price-intelligence` |
+| PB4 | `quais materiais mais impactam o custo do PA 90261255?` | `/cost-impact-simulation` |
+| PB5 | `qual o preço de venda do produto 10080001?` | `/pricing` — **não** intelligence MP |
+| PB6 | *(após PB3)* `mostre o último resultado em tabela` | Refinamento formato; sem `/system/tables` |
+| PB7 | *(sessão)* `análise de preço MP` → `10080001` | Continuação código isolado |
+
+**Smoke E2E:**
+
+```bash
+cd minha-delpi-ai-api
+SMOKE_MP_CODE=10080001 SMOKE_PA_CODE=90261255 SMOKE_PRODUCT_CODE=90269002 \
+  SMOKE_BASE_URL=http://localhost PYTHONPATH=. python scripts/smoke_playbook_product_routes.py
+```
+
+---
+
+## Apresentação — preferência, chips e refinamento (jun/2026)
+
+Detalhes AP1–AP15 em [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md).
+
+| # | Sequência | O que observar |
+|---|-----------|----------------|
+| AP1 | estoque 10080022 + toolbar **Tabela** | `presentationDecision.selected` = table |
+| AP2 | *(após estoque)* `mostre os dados acima em gráfico` | Refinamento; mesma consulta |
+| AP3 | *(após MP3)* chips **Exportar CSV** / **Ver em linha** | `interactivity.json` + perfil |
+| AP4 | analyser → toolbar **Documento** (canvas) | Modo canvas; não mapear silencioso para texto |
+
+---
+
 ## Anotações do teste
 
 Use esta seção para marcar o que passou/falhou durante a validação manual.
 
 | # | OK | Observação |
 |---|:--:|------------|
+| PB7 | ☐ | |
+| AP1 | ☐ | |
+| AP2 | ☐ | |
+| AP3 | ☐ | |
+| AP4 | ☐ | |
 | G1 | ☐ | |
 | G2 | ☐ | |
 | G3 | ☐ | |
