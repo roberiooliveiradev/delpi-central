@@ -29,7 +29,11 @@ from app.utils.logger import log_info, log_error
 
 from delpi_auth.authorization import require_any_permission
 
-from app.application.security.api_delpi_permissions import SYSTEM_METADATA_ACCESS
+from app.application.security.api_delpi_permissions import (
+    CONSOLE_SMOKE_ACCESS,
+    SYSTEM_METADATA_ACCESS,
+)
+from app.domain.services.smoke_definitions_service import load_smoke_definitions
 
 router = APIRouter()
 
@@ -252,3 +256,18 @@ def search_columns_global(
     except Exception as e:
         log_error(f"Erro inesperado ao buscar colunas: {e}")
         return error_response(f"Erro inesperado: {e}")
+
+
+@router.get("/smoke-definitions", summary="Definições das smoke suites do console")
+@require_any_permission(CONSOLE_SMOKE_ACCESS)
+def get_smoke_definitions():
+    try:
+        payload = load_smoke_definitions()
+        return api_delpi_success(
+            payload,
+            operation_id="get_smoke_definitions",
+            message="Definições de smoke carregadas com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar smoke definitions: {e}")
+        return error_response("Erro ao carregar definições de smoke.", status_code=500)

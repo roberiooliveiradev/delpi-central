@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Play, RefreshCw } from "lucide-react";
 import {
   downloadSmokeResult,
   listSmokeSuites,
   loadLastSmokeResult,
+  resolveSmokeSuites,
   runSmokeSuite,
+  type SmokeSuite,
   type SmokeSuiteResult,
 } from "../lib/smokeRunner";
 
@@ -13,13 +15,27 @@ type Props = {
 };
 
 export function VerificacoesPage({ onNavigate }: Props) {
-  const suites = useMemo(() => listSmokeSuites(), []);
+  const [suites, setSuites] = useState<SmokeSuite[]>(() => listSmokeSuites());
   const [selectedSuiteId, setSelectedSuiteId] = useState(suites[0]?.id ?? "");
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<SmokeSuiteResult | null>(() => loadLastSmokeResult());
   const [error, setError] = useState<string | null>(null);
 
   const selectedSuite = suites.find((s) => s.id === selectedSuiteId) ?? suites[0];
+
+  useEffect(() => {
+    let cancelled = false;
+    void resolveSmokeSuites().then((loaded) => {
+      if (cancelled || loaded.length === 0) return;
+      setSuites(loaded);
+      setSelectedSuiteId((current) =>
+        loaded.some((suite) => suite.id === current) ? current : loaded[0].id,
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const runSuite = async () => {
     if (!selectedSuite) return;

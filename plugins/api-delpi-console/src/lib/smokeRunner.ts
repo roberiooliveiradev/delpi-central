@@ -43,8 +43,48 @@ export type SmokeSuiteResult = {
 
 const STORAGE_KEY = "api-delpi-console:smoke-last-result";
 
+type ApiEnvelope<T> = {
+  data?: T;
+  meta?: unknown;
+};
+
+type SmokeDefinitionsPayload = {
+  version?: string;
+  suites: SmokeSuite[];
+};
+
+let resolvedSuitesCache: SmokeSuite[] | null = null;
+
+function unwrapSmokeDefinitions(data: unknown): SmokeSuite[] | null {
+  if (!data || typeof data !== "object") return null;
+  const envelope = data as ApiEnvelope<SmokeDefinitionsPayload>;
+  const payload = envelope.data ?? (data as SmokeDefinitionsPayload);
+  if (!Array.isArray(payload.suites) || payload.suites.length === 0) return null;
+  return payload.suites;
+}
+
 export function listSmokeSuites(): SmokeSuite[] {
-  return smokeSuites.suites;
+  return resolvedSuitesCache ?? smokeSuites.suites;
+}
+
+export async function resolveSmokeSuites(): Promise<SmokeSuite[]> {
+  if (resolvedSuitesCache) return resolvedSuitesCache;
+
+  try {
+    const response = await apiFetch<ApiEnvelope<SmokeDefinitionsPayload>>(
+      "/system/smoke-definitions",
+    );
+    const suites = response.ok ? unwrapSmokeDefinitions(response.data) : null;
+    if (suites) {
+      resolvedSuitesCache = suites;
+      return suites;
+    }
+  } catch {
+    /* fallback local */
+  }
+
+  resolvedSuitesCache = smokeSuites.suites;
+  return resolvedSuitesCache;
 }
 
 export async function runSmokeSuite(suite: SmokeSuite): Promise<SmokeSuiteResult> {

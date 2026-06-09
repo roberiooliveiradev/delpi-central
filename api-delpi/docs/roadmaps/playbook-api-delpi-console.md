@@ -100,9 +100,11 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 | **Mais suites** | PPM, scheduling, transforma-mais | [x] |
 | **Exportação** | CSV/JSON do último resultado na UI | [x] |
 | **Homologação** | `scripts/homologacao/check-api-delpi-console.sh` | [x] |
-| **API backend** | Opcional: `GET /system/smoke-definitions` (JSON versionado no repo) | [ ] |
+| **API backend** | `GET /system/smoke-definitions` (`app/content/smoke_definitions.json`) | [x] |
 
 **DoD:** suite «Rotas essenciais» roda em homologação; falha exibe `operationId` e motivo (status ou timeout).
+
+**Fase 1 concluída** — próximo marco: Fase 2 (telemetria SQL).
 
 ### Fase 2 — Saúde SQL (3–4 sprints)
 

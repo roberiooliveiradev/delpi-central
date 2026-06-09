@@ -17,6 +17,8 @@ Microfrontend para explorar rotas da **api-delpi**, executar requests de teste e
 
 - `api-delpi-console.view`
 
+As smoke suites são carregadas de `GET /system/smoke-definitions` (fonte: `api-delpi/app/content/smoke_definitions.json`), com fallback local em `src/content/smokeSuites.ts`.
+
 ## Desenvolvimento
 
 ```bash
