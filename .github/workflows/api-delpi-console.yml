@@ -36,7 +36,7 @@ jobs:
 
       - name: Testes Fases 2–5 (observabilidade, contrato e alertas)
         run: |
-          pytest \
+          PYTHONPATH=. pytest \
             tests/test_sql_health_aggregator.py \
             tests/test_sql_query_telemetry_service.py \
             tests/test_sql_telemetry_composer.py \

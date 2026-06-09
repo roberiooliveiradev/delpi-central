@@ -532,6 +532,20 @@ services:
     networks:
       - delpi-network
 
+  pedidos-venda-abertos:
+    build:
+      context: ../plugins/pedidos-venda-abertos
+      dockerfile: Dockerfile
+
+    container_name: delpi-pedidos-venda-abertos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   auditoria-5s:
     build:
       context: ../plugins/auditoria-5s
@@ -894,6 +908,7 @@ services:
       - dashboard-commercial
       - dashboard-production
       - eficiencia-fabril
+      - pedidos-venda-abertos
       - auditoria-5s
       - central-agendamento
       - dashboard-supplies

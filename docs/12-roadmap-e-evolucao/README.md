@@ -49,3 +49,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [central-agendamento/README.md](./central-agendamento/README.md) | Índice do módulo |
 | [central-agendamento/ROADMAP.md](./central-agendamento/ROADMAP.md) | Fases de entrega e checklist de produção |
+
+### Pedidos de Venda em Aberto
+
+| Arquivo | Conteúdo |
+|---|---|
+| [pedidos-venda-abertos/README.md](./pedidos-venda-abertos/README.md) | Índice do módulo |
+| [pedidos-venda-abertos/ROADMAP.md](./pedidos-venda-abertos/ROADMAP.md) | **Plano de implementação por fases** |
+| [pedidos-venda-abertos/ESPECIFICACAO-VIEW.md](./pedidos-venda-abertos/ESPECIFICACAO-VIEW.md) | Contrato da view TOTVS e campos da API |
+| [pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md](./pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md) | Template de validação TOTVS (Fase 0) |
