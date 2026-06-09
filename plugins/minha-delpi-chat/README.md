@@ -54,7 +54,7 @@ src/
 ## Experiência do usuário (chat)
 
 - Sessões com pin, arquivo e renomear
-- Mensagens com streaming, fontes, tool calls e anexos
+- Mensagens com streaming, fontes, tool calls e anexos (cards na timeline com `readingStatus`; edição de anexos ao **reenviar** pergunta com preview em card/modal)
 - Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
 - Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`** — ver [Apresentação no chat](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md)
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente

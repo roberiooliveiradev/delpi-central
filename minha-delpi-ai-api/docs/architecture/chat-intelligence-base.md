@@ -87,6 +87,7 @@ Mensagem do usuário
 | `ChatActivePendingService` | Pendências ativas (`metadata.activePending`); resolução como `clarification`; filial/sim; snapshot de roteamento no feedback `routing_*` |
 | `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
 | `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
+| `ChatAttachmentPreviewService` | Preview de leitura, `readingStatus` com `documentVision`, snapshots em `metadata.attachments` (Playbook 07) |
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
 | `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
 | `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
@@ -97,7 +98,7 @@ Mensagem do usuário
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |
 | Backends visão | `native`, `tesseract`, `docling`, `paddleocr` (profile vision), `ollama_vlm` (Ollama `/api/chat` + imagens) |
-| Persistência anexo | `attachment.metadata.documentVision` após indexação (`IndexChatAttachmentUseCase`) e turno `attachment_document` |
+| Persistência anexo | `attachment.metadata.documentVision` após indexação (`IndexChatAttachmentUseCase`), turno `attachment_document` e OCR de desenho (`enrich_drawing_extract`); `readingStatus` alinhado em upload, mensagem do usuário e patch pós-turno |
 | `ChatAgentMiniDashboardService` | Mini dashboard + recomendações em `GET /chat/agents/{id}/stats` (gráficos Fase 4) |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
@@ -464,6 +465,17 @@ Perguntas como «quais produtos serão produzidos hoje?» exigem **SQL analític
 Bloqueios: não usar `/products/search`; action fixa em `/data/sql` (não KPI departamental «production»).
 
 Checklist: **G1–G3** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); smoke `scripts/smoke_gpt_instructions_improvements.py`.
+
+### Anexos — reenvio, relatório DELPI e status com visão (jun/2026)
+
+Changelog: [`../changelog/2026-06-chat-anexos-desenho-ux.md`](../changelog/2026-06-chat-anexos-desenho-ux.md).
+
+| Entrega | Detalhe |
+|---------|---------|
+| Reenvio | MFE permite editar anexos ao reenviar pergunta (card + modal de preview) |
+| Desenho | Relatório `drawingAnalysisExport` substitui resposta direta e persiste como `answer` quando `/analyser` OK |
+| Status | `index_failed` + `documentVision.legible` → «Legível por visão» via `ChatAttachmentPreviewService` + `attachments.json` |
+| Timeline | Patch de `metadata.attachments` ao concluir turno; MFE recarrega mensagens após stream |
 
 ### Download de fontes e anexos (maio/2026)
 

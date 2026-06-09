@@ -1,6 +1,6 @@
 # Playbook 07 — Anexos e arquivos
 
-> **Status (30/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md) — indexação PDF/XLSX/CSV/imagens (metadados), welcome automático, preview de colunas/imagens, `attachmentSummaries`, comparação multi-arquivo (`attachment_compare`), `readingStatus` no composer e nas mensagens.
+> **Status (08/06/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md) — indexação PDF/XLSX/CSV/imagens (metadados), welcome automático, preview de colunas/imagens, `attachmentSummaries`, comparação multi-arquivo (`attachment_compare`), `readingStatus` no composer e nas mensagens, **edição de anexos no reenvio** (MFE), **`readingStatus` com `documentVision`** quando indexação falha mas OCR confirma legibilidade. Changelog: [`../../../changelog/2026-06-chat-anexos-desenho-ux.md`](../../../changelog/2026-06-chat-anexos-desenho-ux.md).
 
 
 ## Objetivo

@@ -194,6 +194,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | 2026-05-31 | Painel **Análise de Desenhos DELPI** na aba Métricas do admin (MFE `minha-delpi-chat`). |
 | 2026-05-31 | Roteamento explícito api-externa para `/analyser` (testes + smoke + policy/catálogo). |
 | 2026-05-31 | Playbook OCR/visão chat base → [Onda 13](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md). |
+| 2026-06-08 | Relatório DELPI (`drawingAnalysisExport`) sempre na resposta quando `/analyser` OK; card de anexo alinhado com `documentVision.legible` — ver [changelog](../../changelog/2026-06-chat-anexos-desenho-ux.md). |
 
 ---
 
