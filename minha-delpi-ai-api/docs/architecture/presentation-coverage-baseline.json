@@ -1,0 +1,1674 @@
+{
+  "summary": {
+    "operationCount": 130,
+    "tierCounts": {
+      "A": 24,
+      "B": 47,
+      "C": 57,
+      "D": 2
+    },
+    "entityRoutedCount": 73,
+    "entityRoutedRatio": 0.5615,
+    "unmappedEntityCount": 57,
+    "distinctEntities": 69,
+    "topTags": [
+      [
+        "Qualidade",
+        35
+      ],
+      [
+        "products",
+        24
+      ],
+      [
+        "Auditoria 5S",
+        23
+      ],
+      [
+        "system",
+        19
+      ],
+      [
+        "Financeiro",
+        16
+      ],
+      [
+        "Agendamento",
+        12
+      ],
+      [
+        "Comercial",
+        9
+      ],
+      [
+        "Produção",
+        9
+      ],
+      [
+        "Engenharia",
+        8
+      ],
+      [
+        "Qualidade — PPM",
+        7
+      ],
+      [
+        "Suprimentos",
+        5
+      ],
+      [
+        "Recursos Humanos",
+        4
+      ]
+    ],
+    "profileCoverageRatio": 1.0,
+    "entityPathHintCount": 62,
+    "pathEntityFallbackCount": 22
+  },
+  "rows": [
+    {
+      "method": "GET",
+      "path": "/commercial/branch_rol_target_pct",
+      "operation_id": "get_branch_rol_target_pct_commercial_branch_rol_target_pct_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/closing-rate",
+      "operation_id": "get_sales_conversion_rate_commercial_closing_rate_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "sales_conversion_rate",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/head_office_rol_target_pct",
+      "operation_id": "get_head_office_rol_target_pct_commercial_head_office_rol_target_pct_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "commercial_rol_target",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-business-rol-pct",
+      "operation_id": "get_new_business_rol_pct_commercial_new_business_rol_pct_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "new_business_rol_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-clients-average",
+      "operation_id": "get_new_clients_average_commercial_new_clients_average_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "new_clients_average",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-clients-rol-pct",
+      "operation_id": "get_new_clients_rol_pct_commercial_new_clients_rol_pct_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "new_clients_rol_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/proposals",
+      "operation_id": "list_commercial_proposals_commercial_proposals_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "commercial_proposal",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/rol/series",
+      "operation_id": "get_commercial_rol_series_commercial_rol_series_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "commercial_rol_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/sales-order-otd",
+      "operation_id": "get_sales_order_otd_commercial_sales_order_otd_get",
+      "tags": [
+        "Comercial"
+      ],
+      "entity": "sales_order_otd",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "POST",
+      "path": "/data/sql",
+      "operation_id": "execute_readonly_sql",
+      "tags": [
+        "data"
+      ],
+      "entity": "sql_result",
+      "entity_routed": true,
+      "tier": "D",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps",
+      "operation_id": "list_lmps",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard",
+      "operation_id": "list_lmps_dashboard",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp_dashboard",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/charts",
+      "operation_id": "get_lmps_dashboard_charts",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp_dashboard_charts",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/items",
+      "operation_id": "list_lmps_dashboard_items",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp_dashboard_items",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/summary",
+      "operation_id": "get_lmps_dashboard_summary",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp_dashboard_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}",
+      "operation_id": "get_lmp_by_sale_number",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes",
+      "operation_id": "list_transforma_mais_processes",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "transforma_mais_process",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes/summary",
+      "operation_id": "get_transforma_mais_summary",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "transforma_mais_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/ebitda_pct",
+      "operation_id": "get_ebitda_pct_finacial_ebitda_pct_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/fixed_cost_pct",
+      "operation_id": "get_fixed_cost_pct_finacial_fixed_cost_pct_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/pmr",
+      "operation_id": "get_pmr_finacial_pmr_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/finacial/rol",
+      "operation_id": "get_rol_finacial_rol_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/financial/ebitda_pct",
+      "operation_id": "get_ebitda_pct_financial_ebitda_pct_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": "financial_ebitda_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/financial/fixed_cost_pct",
+      "operation_id": "get_fixed_cost_pct_financial_fixed_cost_pct_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": "financial_fixed_cost_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/financial/pmr",
+      "operation_id": "get_pmr_financial_pmr_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": "financial_pmr",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/financial/rol",
+      "operation_id": "get_rol_financial_rol_get",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "entity": "financial_rol",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "operation_id": "root_health_get",
+      "tags": [
+        "Health"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/hr/active-pdi-count",
+      "operation_id": "get_hr_active_pdi_count_hr_active_pdi_count_get",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "entity": "hr_active_pdi_count",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/hr/branches",
+      "operation_id": "list_hr_branches_hr_branches_get",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "entity": "hr_branch",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/hr/performance-reviews-completion",
+      "operation_id": "get_hr_performance_reviews_completion_hr_performance_reviews_completion_get",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "entity": "hr_performance_reviews_completion",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/hr/snapshot",
+      "operation_id": "get_hr_snapshot_hr_snapshot_get",
+      "tags": [
+        "Recursos Humanos"
+      ],
+      "entity": "hr_snapshot",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/depreciation_pct",
+      "operation_id": "get_depreciation_pct_production_depreciation_pct_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "depreciation_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/direct_labor_cost_pct",
+      "operation_id": "get_direct_labor_cost_pct_production_direct_labor_cost_pct_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "direct_labor_cost_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/appointments",
+      "operation_id": "get_eficiencia_fabril_appointments_production_eficiencia_fabril_appointments_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "eficiencia_fabril_appointment",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/dashboard",
+      "operation_id": "get_eficiencia_fabril_dashboard_production_eficiencia_fabril_dashboard_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "eficiencia_fabril_dashboard",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/oee/series",
+      "operation_id": "get_production_oee_series_production_oee_series_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_oee_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/on_time_delivery_pct",
+      "operation_id": "get_on_time_delivery_pct_production_on_time_delivery_pct_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_otd",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/otd/series",
+      "operation_id": "get_production_otd_series_production_otd_series_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_otd_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "operation_id": "get_overall_equipment_effectiveness_pct_production_overall_equipment_effectiveness_pct_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "overall_equipment_effectiveness",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/production/production_cost_pct",
+      "operation_id": "get_production_cost_pct_production_production_cost_pct_get",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_cost_pct",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/search",
+      "operation_id": "search_products",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_search",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}",
+      "operation_id": "get_product_detail",
+      "tags": [
+        "products"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/analyser",
+      "operation_id": "get_product_analyser",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_analyser",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/customers",
+      "operation_id": "get_product_customers",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_customers",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/factory-status",
+      "operation_id": "get_product_factory_status",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_factory_status",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "operation_id": "get_product_guide",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_guide",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/inbound-invoice-items",
+      "operation_id": "get_product_inbound_invoice_items",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_inbound_invoice_items",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/inspection",
+      "operation_id": "get_product_inspection",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_inspection",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/internal-movements",
+      "operation_id": "get_product_internal_movements",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_internal_movements",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/outbound-invoice-items",
+      "operation_id": "get_product_outbound_invoice_items",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_outbound_invoice_items",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/parents",
+      "operation_id": "get_product_parents",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_parents",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/pricing",
+      "operation_id": "get_product_pricing",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_pricing",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/production-status",
+      "operation_id": "get_product_production_status",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_production_status",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/purchases",
+      "operation_id": "get_product_purchases",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_purchases",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales",
+      "operation_id": "get_product_sales_summary",
+      "tags": [
+        "products"
+      ],
+      "entity": "sale_order",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales/billing",
+      "operation_id": "get_product_sales_billing",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_billing",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/sales/open-orders",
+      "operation_id": "get_product_sales_open_orders",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_open_orders",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/shipping-status",
+      "operation_id": "get_product_shipping_status",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_shipping_status",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/stock",
+      "operation_id": "get_product_stock",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_stock",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure",
+      "operation_id": "get_product_structure",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_structure",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure/excel",
+      "operation_id": "structure_excel_public_products__code__structure_excel_get",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_structure",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/structure/exclusivity",
+      "operation_id": "get_product_structure_exclusivity",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_structure_exclusivity",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/summary",
+      "operation_id": "get_product_summary",
+      "tags": [
+        "products"
+      ],
+      "entity": "product",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/suppliers",
+      "operation_id": "get_product_suppliers",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_suppliers",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "operation_id": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/areas",
+      "operation_id": "list_areas_quality_audit_5s_areas_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/areas",
+      "operation_id": "create_area_quality_audit_5s_areas_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits",
+      "operation_id": "list_audits_quality_audit_5s_audits_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits",
+      "operation_id": "create_audit_quality_audit_5s_audits_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "operation_id": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/close",
+      "operation_id": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
+      "operation_id": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/delete",
+      "operation_id": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/join",
+      "operation_id": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
+      "operation_id": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "operation_id": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operation_id": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operation_id": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
+      "operation_id": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/criteria",
+      "operation_id": "list_criteria_quality_audit_5s_criteria_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}",
+      "operation_id": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operation_id": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operation_id": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operation_id": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operation_id": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
+      "operation_id": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "operation_id": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/summary",
+      "operation_id": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": "audit_5s_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/branches",
+      "operation_id": "list_quality_branches_quality_branches_get",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": "quality_branch",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/summary",
+      "operation_id": "get_kaizen_summary_quality_kaizens_summary_get",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": "kaizen_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/nonconformities",
+      "operation_id": "list_nonconformity_route_quality_nonconformities_get",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/nonconformities/series",
+      "operation_id": "get_nonconformity_series_quality_nonconformities_series_get",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": "nonconformity_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external",
+      "operation_id": "list_ppm_external",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external/series",
+      "operation_id": "get_ppm_external_series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": "ppm_external_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/external/summary",
+      "operation_id": "get_ppm_external_summary",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": "ppm_external_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal",
+      "operation_id": "list_ppm_internal",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal/series",
+      "operation_id": "get_ppm_internal_series",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": "ppm_internal_series",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/ppm/internal/summary",
+      "operation_id": "get_ppm_internal_summary",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": "ppm_internal_summary",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/quality/produced-quantity",
+      "operation_id": "get_produced_quantity",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/",
+      "operation_id": "list_sale_orders",
+      "tags": [
+        "sales"
+      ],
+      "entity": "sale_order",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/scheduling/bookings",
+      "operation_id": "list_bookings_scheduling_bookings_get",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/scheduling/bookings",
+      "operation_id": "create_booking_scheduling_bookings_post",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "PATCH",
+      "path": "/scheduling/bookings/{booking_id}/cancel",
+      "operation_id": "cancel_booking_scheduling_bookings__booking_id__cancel_patch",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/scheduling/resources",
+      "operation_id": "list_resources_scheduling_resources_get",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/scheduling/resources",
+      "operation_id": "create_resource_scheduling_resources_post",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "PATCH",
+      "path": "/scheduling/resources/{resource_id}",
+      "operation_id": "update_resource_scheduling_resources__resource_id__patch",
+      "tags": [
+        "Agendamento",
+        "Agendamento"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/cpv",
+      "operation_id": "get_supplies_cpv",
+      "tags": [
+        "Suprimentos"
+      ],
+      "entity": "supplies_cpv",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/inventory-turnover",
+      "operation_id": "get_supplies_inventory_turnover",
+      "tags": [
+        "Suprimentos"
+      ],
+      "entity": "supplies_inventory_turnover",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/negotiation-savings/summary",
+      "operation_id": "get_supplies_negotiation_savings_summary",
+      "tags": [
+        "Suprimentos"
+      ],
+      "entity": "supplies_negotiation_savings",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/otd",
+      "operation_id": "get_supplies_otd",
+      "tags": [
+        "Suprimentos"
+      ],
+      "entity": "supplies_otd",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/stock-value",
+      "operation_id": "get_supplies_stock_value",
+      "tags": [
+        "Suprimentos"
+      ],
+      "entity": "supplies_stock_value",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/system/caller-stats",
+      "operation_id": "get_caller_stats_system_caller_stats_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/columns/search",
+      "operation_id": "search_columns_global_system_columns_search_get",
+      "tags": [
+        "system"
+      ],
+      "entity": "product_search",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/system/console-alerts",
+      "operation_id": "get_console_alerts_system_console_alerts_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/system/console-alerts/evaluate",
+      "operation_id": "post_console_alerts_evaluate_system_console_alerts_evaluate_post",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "POST",
+      "path": "/system/console-alerts/smoke",
+      "operation_id": "post_console_alerts_smoke_system_console_alerts_smoke_post",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/console-health",
+      "operation_id": "get_console_health_system_console_health_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/envelope-contracts",
+      "operation_id": "get_envelope_contracts_system_envelope_contracts_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/observability-snapshot",
+      "operation_id": "get_observability_snapshot_system_observability_snapshot_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/openapi-diff",
+      "operation_id": "get_openapi_diff_system_openapi_diff_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/query-cache/stats",
+      "operation_id": "get_query_cache_stats_system_query_cache_stats_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/smoke-definitions",
+      "operation_id": "get_smoke_definitions_system_smoke_definitions_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/sql-health",
+      "operation_id": "get_sql_health_system_sql_health_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/search",
+      "operation_id": "search_tables_system_tables_search_get",
+      "tags": [
+        "system"
+      ],
+      "entity": "protheus_table",
+      "entity_routed": true,
+      "tier": "D",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}",
+      "operation_id": "table_system_tables__tableName__get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns",
+      "operation_id": "table_columns_system_tables__tableName__columns_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns/search",
+      "operation_id": "search_columns_system_tables__tableName__columns_search_get",
+      "tags": [
+        "system"
+      ],
+      "entity": "product_search",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/indexes",
+      "operation_id": "table_indexes_system_tables__tableName__indexes_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/relations",
+      "operation_id": "table_relations_system_tables__tableName__relations_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/system/tables/{tableName}/schema",
+      "operation_id": "table_schema_system_tables__tableName__schema_get",
+      "tags": [
+        "system"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none"
+    }
+  ]
+}

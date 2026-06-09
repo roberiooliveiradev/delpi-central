@@ -360,12 +360,25 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def _entity_from_path(cls, path: str) -> str | None:
-        lowered = str(path or "").lower()
+        lowered = str(path or "").lower().rstrip("/")
 
         if not lowered:
             return None
 
-        for fragment, entity in PATH_ENTITY_FALLBACKS:
+        for entity, hint in ENTITY_PATH_HINTS.items():
+            hint_lower = str(hint or "").lower().rstrip("/")
+
+            if not hint_lower:
+                continue
+
+            if lowered == hint_lower or lowered.endswith(hint_lower):
+                return entity
+
+        for fragment, entity in sorted(
+            PATH_ENTITY_FALLBACKS,
+            key=lambda item: len(item[0]),
+            reverse=True,
+        ):
             if fragment in lowered:
                 return entity
 

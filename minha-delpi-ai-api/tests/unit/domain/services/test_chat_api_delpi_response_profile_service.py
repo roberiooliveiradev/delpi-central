@@ -33,6 +33,16 @@ def test_resolve_falls_back_to_path_when_meta_missing() -> None:
     assert profile.routed_by == "path"
 
 
+def test_resolve_entity_path_hint_for_kpi_route() -> None:
+    profile = ChatApiDelpiResponseProfileService.resolve(
+        {"success": True, "data": {}},
+        path="/supplies/cpv",
+    )
+
+    assert profile.entity == "supplies_cpv"
+    assert profile.routed_by == "path"
+
+
 def test_profile_coverage_covers_all_chat_critical_entities() -> None:
     ratio = ChatApiDelpiResponseProfileService.profile_coverage_ratio()
 

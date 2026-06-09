@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
 
 ---
 
