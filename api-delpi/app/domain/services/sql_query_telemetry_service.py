@@ -1,50 +1,23 @@
-"""Telemetria de queries SQL — ring buffer em memória (Fase 2 do console)."""
+"""Telemetria de queries SQL — ring buffer em memória ou Redis (Fase 2 do console)."""
 
 from __future__ import annotations
 
 import hashlib
-import threading
 import time
-from collections import deque
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any
 
+from app.composition.sql_telemetry_composer import build_sql_telemetry_store
+from app.domain.services.sql_query_telemetry_models import SqlQueryRecord, preview_query
 from app.infrastructure.observability.request_context import get_caller_app, get_operation_id
-
-_MAX_ENTRIES = 800
-_PREVIEW_LEN = 160
-
-
-@dataclass(frozen=True)
-class SqlQueryRecord:
-    query_hash: str
-    duration_ms: float
-    operation_id: str | None
-    caller_app: str | None
-    repository: str
-    recorded_at: str
-    preview: str
-
-
-_lock = threading.Lock()
-_buffer: deque[SqlQueryRecord] = deque(maxlen=_MAX_ENTRIES)
-
-
-def _normalize_query(query: str) -> str:
-    return " ".join(query.split())
 
 
 def query_hash(query: str) -> str:
-    normalized = _normalize_query(query).lower()
+    from app.domain.services.sql_query_telemetry_models import normalize_query
+
+    normalized = normalize_query(query).lower()
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
-
-
-def _preview(query: str) -> str:
-    compact = _normalize_query(query)
-    if len(compact) <= _PREVIEW_LEN:
-        return compact
-    return compact[: _PREVIEW_LEN - 1] + "…"
 
 
 def record_sql_query(
@@ -60,19 +33,18 @@ def record_sql_query(
         caller_app=get_caller_app(),
         repository=repository,
         recorded_at=datetime.now(timezone.utc).isoformat(),
-        preview=_preview(query),
+        preview=preview_query(query),
     )
-
-    with _lock:
-        _buffer.append(record)
+    build_sql_telemetry_store().append(record)
 
 
 def get_sql_health_summary(*, limit: int = 25) -> dict[str, Any]:
-    with _lock:
-        entries = list(_buffer)
+    store = build_sql_telemetry_store()
+    entries = store.list_entries()
 
     if not entries:
         return {
+            "storage_backend": store.backend_name(),
             "total_samples": 0,
             "window_samples": 0,
             "top_by_duration": [],
@@ -121,6 +93,7 @@ def get_sql_health_summary(*, limit: int = 25) -> dict[str, Any]:
     recent = [asdict(item) for item in reversed(entries[-limit:])]
 
     return {
+        "storage_backend": store.backend_name(),
         "total_samples": len(entries),
         "window_samples": len(entries),
         "top_by_duration": top_by_duration,

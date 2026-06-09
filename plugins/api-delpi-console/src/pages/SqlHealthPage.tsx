@@ -15,6 +15,7 @@ type SqlAggregate = {
 };
 
 type SqlHealthPayload = {
+  storage_backend?: string;
   total_samples: number;
   top_by_duration: SqlAggregate[];
   top_by_count: SqlAggregate[];
@@ -113,7 +114,8 @@ export function SqlHealthPage({ onNavigate }: Props) {
           </button>
           <h1>Saúde SQL</h1>
           <p className="adc-subtitle">
-            Top queries por duração e repetição — amostras recentes do ring buffer em memória.
+            Top queries por duração e repetição — ring buffer{" "}
+            {summary?.storage_backend === "redis" ? "Redis" : "em memória"}.
           </p>
         </div>
         <div className="adc-header__actions">
@@ -136,6 +138,10 @@ export function SqlHealthPage({ onNavigate }: Props) {
           <div className="adc-stat">
             <span className="adc-stat__label">Amostras no buffer</span>
             <strong>{summary.total_samples}</strong>
+          </div>
+          <div className="adc-stat">
+            <span className="adc-stat__label">Armazenamento</span>
+            <strong>{summary.storage_backend === "redis" ? "Redis" : "Memória"}</strong>
           </div>
         </div>
       ) : null}

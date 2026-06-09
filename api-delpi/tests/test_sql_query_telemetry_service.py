@@ -1,8 +1,13 @@
+from app.composition.sql_telemetry_composer import reset_sql_telemetry_store_for_tests
 from app.domain.services.sql_query_telemetry_service import (
     get_sql_health_summary,
     query_hash,
     record_sql_query,
 )
+
+
+def setup_function() -> None:
+    reset_sql_telemetry_store_for_tests()
 
 
 def test_record_and_summarize_sql_telemetry() -> None:
@@ -13,6 +18,7 @@ def test_record_and_summarize_sql_telemetry() -> None:
 
     summary = get_sql_health_summary(limit=10)
 
+    assert summary["storage_backend"] == "memory"
     assert summary["total_samples"] >= 2
     assert summary["top_by_count"][0]["count"] >= 2
     assert summary["top_by_count"][0]["query_hash"] == query_hash(query)

@@ -156,5 +156,11 @@ class Settings:
     QUERY_CACHE_TTL_SECONDS: str = _get_env("QUERY_CACHE_TTL_SECONDS", default="300")
     REDIS_URL: str | None = _get_env("REDIS_URL")
 
+    # ==========================
+    # Telemetria SQL (console)
+    # ==========================
+    SQL_TELEMETRY_BACKEND: str = _get_env("SQL_TELEMETRY_BACKEND", default="memory")
+    SQL_TELEMETRY_MAX_ENTRIES: str = _get_env("SQL_TELEMETRY_MAX_ENTRIES", default="800")
+
 
 settings = Settings()

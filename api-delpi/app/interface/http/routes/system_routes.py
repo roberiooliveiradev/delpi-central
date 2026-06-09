@@ -275,7 +275,7 @@ def get_smoke_definitions():
         return error_response("Erro ao carregar definições de smoke.", status_code=500)
 
 
-@router.get("/sql-health", summary="Telemetria SQL recente (ring buffer em memória)")
+@router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)")
 @require_any_permission(SQL_HEALTH_ACCESS)
 def get_sql_health(limit: int = Query(25, ge=1, le=100)):
     try:

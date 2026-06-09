@@ -122,7 +122,7 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 | **Armazenamento** | Ring buffer em memória (800 amostras) | [x] MVP |
 | **Endpoint** | `GET /system/sql-health` — top N por tempo e repetição | [x] MVP |
 | **UI Console** | Aba «SQL» com tabelas agregadas | [x] MVP |
-| **Persistência** | Ring buffer Redis ou tabela PostgreSQL plugins | [ ] |
+| **Persistência** | Ring buffer Redis (`SQL_TELEMETRY_BACKEND=redis`) com fallback memória | [x] |
 | **Gráficos** | Drill-down visual por `operationId` | [ ] |
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
@@ -186,6 +186,8 @@ docker compose -f docker-compose.dev.yml up -d --build api-delpi-console api-del
 ```
 
 Documentação do plugin: `plugins/api-delpi-console/README.md`.
+
+**Telemetria SQL persistente:** defina `REDIS_URL` e `SQL_TELEMETRY_BACKEND=redis` no `.env` da stack. Sem Redis, o ring buffer permanece em memória (por processo).
 
 ---
 
