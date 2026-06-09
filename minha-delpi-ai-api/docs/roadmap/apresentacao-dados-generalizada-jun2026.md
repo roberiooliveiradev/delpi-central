@@ -316,7 +316,7 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fases 0–2 concluídas. Próxima: Fase 3 (presenter schema-driven).
+**Status jun/2026:** ✅ Fases 0–3 concluídas. Próxima: Fase 4 (markdown stack e lousa).
 
 ### Fase 0 — entregue
 
@@ -345,3 +345,13 @@ Atualizar este doc ao concluir cada fase (checkbox no topo).
 | Serviço | `app/domain/services/chat_presentation_profile_service.py` |
 | Delegação | `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
 | Testes | `tests/unit/domain/services/test_chat_presentation_profile_service.py` |
+
+### Fase 3 — entregue
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/chat_schema_driven_presentation_service.py` |
+| Templates | `presenter_content.json` → `schemaDriven.*` |
+| Wiring | `ExternalActionResultPresenter.build_presentation`, `text_presentation_presenter`, `kpi_chart_presenter` |
+| Fixtures | `tests/fixtures/chat_presentation_regression_cases.py` → `SCHEMA_DRIVEN_SAMPLE_PAYLOADS` |
+| Testes | `tests/unit/domain/services/test_chat_schema_driven_presentation_service.py` |

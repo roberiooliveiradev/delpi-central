@@ -71,6 +71,7 @@ Wrappers especializados (mantêm API estável):
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
 | `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
+| `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
 
 ## Vocabulário compartilhado (dicionários PT)
 

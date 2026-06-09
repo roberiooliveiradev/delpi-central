@@ -74,3 +74,25 @@ PRESENTATION_COVERAGE_EXPECTATIONS: dict[str, int] = {
     "min_tier_b": 25,
     "min_entity_routed": 55,
 }
+
+SCHEMA_DRIVEN_SAMPLE_PAYLOADS: tuple[dict[str, object], ...] = (
+    {
+        "id": "commercial_kpi_scalar",
+        "path": "/commercial/closing-rate",
+        "entity": "sales_conversion_rate",
+        "data": {"value": 82.5, "target": 90.0, "previous": 80.0, "unit": "%"},
+        "expected_primary_type": "kpi",
+    },
+    {
+        "id": "quality_time_series",
+        "path": "/quality/nonconformities/series",
+        "entity": "nonconformity_series",
+        "data": {
+            "series": [
+                {"period": "jan/2026", "value": 4},
+                {"period": "fev/2026", "value": 6},
+            ]
+        },
+        "expected_table_rows": 2,
+    },
+)

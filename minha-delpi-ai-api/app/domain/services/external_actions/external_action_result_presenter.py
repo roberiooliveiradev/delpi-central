@@ -473,7 +473,21 @@ class ExternalActionResultPresenter:
             if entity_first is not None:
                 return entity_first
 
-            return self._presentation_builder()._build_presentation(data, path=path)
+            legacy = self._presentation_builder()._build_presentation(data, path=path)
+
+            if legacy is not None:
+                return legacy
+
+            from app.domain.services.chat_schema_driven_presentation_service import (
+                ChatSchemaDrivenPresentationService,
+            )
+
+            return ChatSchemaDrivenPresentationService.build_primary(
+                self,
+                data,
+                path=path,
+                entity=profile.entity,
+            )
         finally:
             self._active_schema_labels = None
             self._active_schema_formats = None

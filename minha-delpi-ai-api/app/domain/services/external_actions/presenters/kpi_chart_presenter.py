@@ -277,9 +277,30 @@ class ExternalActionKpiChartPresenter:
             if stock_value_kpi:
                 return stock_value_kpi
 
-            return self.build_kpi_chart(root, path)
+            kpi_chart = self.build_kpi_chart(root, path)
 
-        return None
+            if isinstance(kpi_chart, dict) and kpi_chart.get("type") == "chart":
+                return kpi_chart
+
+            return kpi_chart
+
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(root)
+
+        return ChatSchemaDrivenPresentationService.build_chart(
+            self._host,
+            root if isinstance(root, dict) else {},
+            rows=rows,
+            path=path,
+            entity=profile.entity,
+        )
 
     def looks_like_kpi_response(
         self,

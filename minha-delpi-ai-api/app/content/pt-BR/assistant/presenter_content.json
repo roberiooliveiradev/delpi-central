@@ -114,6 +114,14 @@
     "stockTextDetailHeader": "Detalhamento por filial e armazém",
     "itemsTableDefaultTitle": "Dados retornados"
   },
+  "schemaDriven": {
+    "tableTitleFallback": "Resultado da consulta",
+    "listSummary": "{title}: {count} registro(s) retornado(s) pela API.",
+    "timeSeriesLead": "{title}: série temporal com {count} ponto(s) — use tabela ou gráfico para detalhar.",
+    "kpiLead": "{title}: indicador com {metricCount} métrica(s) disponível(is).",
+    "emptyQuery": "A consulta não retornou dados tabulares para exibir.",
+    "singleRecordLead": "{title}: registro único com {columns} campo(s)."
+  },
   "itemsListPreview": {
     "supplierLeadTime": "Lead time: {days}d",
     "supplierLastPrice": "Últ. preço: R$ {price}",

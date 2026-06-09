@@ -195,7 +195,7 @@ class ExternalActionTextPresentationPresenter:
         humanized = self._host.present(data, path=path)
 
         if not isinstance(humanized, dict):
-            return None
+            return self._schema_text_fallback(data, root, path)
 
         lines = humanized.get("linhas") or []
         detail_lines = humanized.get("linhas_detalhe") or []
@@ -203,7 +203,7 @@ class ExternalActionTextPresentationPresenter:
         summary_parts = [str(line).strip() for line in lines if str(line).strip()]
 
         if not summary_parts and not title and not detail_lines:
-            return None
+            return self._schema_text_fallback(data, root, path)
 
         markdown_parts: list[str] = []
 
@@ -229,7 +229,7 @@ class ExternalActionTextPresentationPresenter:
         markdown = "\n\n".join(markdown_parts).strip()
 
         if not markdown:
-            return None
+            return self._schema_text_fallback(data, root, path)
 
         return {
             "type": "markdown",
@@ -238,6 +238,23 @@ class ExternalActionTextPresentationPresenter:
             or self._host._presenter_text("generic", "textPresentationFallback"),
             "markdown": markdown,
         }
+
+    def _schema_text_fallback(self, data, root, path: str) -> dict | None:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+
+        return ChatSchemaDrivenPresentationService.build_text(
+            self._host,
+            root if isinstance(root, dict) else {},
+            path=path,
+            entity=profile.entity,
+        )
 
     def build_tree_presentation(self, data, *, path: str = "") -> dict | None:
         from app.domain.services.chat_product_structure_presentation_service import (
