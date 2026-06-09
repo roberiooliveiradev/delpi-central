@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 107,
+  "operation_count": 130,
   "operations": [
     {
       "method": "GET",
@@ -650,6 +650,259 @@
       "summary": "Fornecedores do produto",
       "tags": [
         "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "summary": "Get Audit 5S Dashboard",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/areas",
+      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "summary": "List Areas",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/areas",
+      "operationId": "create_area_quality_audit_5s_areas_post",
+      "summary": "Create Area",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits",
+      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "summary": "List Audits",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits",
+      "operationId": "create_audit_quality_audit_5s_audits_post",
+      "summary": "Create Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "summary": "Get Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/close",
+      "operationId": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "summary": "Close Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
+      "operationId": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "summary": "Complete Evaluation",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/delete",
+      "operationId": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "summary": "Delete Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/join",
+      "operationId": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "summary": "Join Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
+      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "summary": "List Audit Nc Attachments",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "summary": "List Nc Candidates",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "summary": "List Audit Nonconformities",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "operationId": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "summary": "Create Nonconformity",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
+      "operationId": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "summary": "Upsert Response",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/criteria",
+      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "summary": "List Criteria",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}",
+      "operationId": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "summary": "Update Nonconformity",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "summary": "List Nc Actions",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "operationId": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "summary": "Add Nc Action",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "summary": "List Nc Attachments",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "operationId": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "summary": "Upload Nc Attachment",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
+      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "summary": "Download Nc Attachment",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "operationId": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "summary": "Complete Nc Action",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
       ],
       "deprecated": false
     },

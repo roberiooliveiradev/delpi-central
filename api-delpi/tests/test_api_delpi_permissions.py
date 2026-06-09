@@ -4,6 +4,7 @@ from app.application.security import api_delpi_permissions as perms
 def test_core_permissions_are_stable_strings() -> None:
     assert perms.API_DELPI_ACCESS == "api-delpi.access"
     assert perms.API_DELPI_QUALITY_ACCESS == "api-delpi.quality.access"
+    assert perms.AUDITORIA_5S_AUDIT_FILIAL_01 == "auditoria-5s.audit.filial-01"
 
 
 def test_kpi_access_lists_include_api_delpi_access() -> None:

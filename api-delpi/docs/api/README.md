@@ -75,7 +75,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 |---|---|
 | **FastAPI** | Framework HTTP, OpenAPI, validação Pydantic. |
 | **SQL Server (Protheus)** | Consultas operacionais (produtos, vendas, métricas). |
-| **PostgreSQL** | Plugins (`scheduling`); schema `strategic_indicators` via **strategic-indicators-api**. |
+| **PostgreSQL** | Plugins (`quality` auditoria 5S, `scheduling`); schema `strategic_indicators` via **strategic-indicators-api**. |
 | **Google Sheets** | Kaizen, Audit 5S, EBITDA, custos produção (export CSV público). |
 | **delpi_auth** | JWT + decorators de permissão. |
 | **Core API** | Rastreamento de uso via `POST /integrations/app-usage/record` (consentimento `usage_tracking`). |

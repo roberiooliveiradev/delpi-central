@@ -6,7 +6,7 @@ Infraestrutura de persistência PostgreSQL para os módulos plugáveis da DELPI 
 
 Este pacote existe para isolar o acesso ao banco `postgres-plugins` dentro da `api-delpi`.
 
-Ele é a base técnica para módulos plugáveis em PostgreSQL (ex.: **scheduling**), mantendo separação explícita entre:
+Ele é a base técnica para módulos plugáveis em PostgreSQL (ex.: **quality** auditoria 5S, **scheduling**), mantendo separação explícita entre:
 
 - contexto legado TOTVS / SQL Server
 - contexto novo de plugins / PostgreSQL

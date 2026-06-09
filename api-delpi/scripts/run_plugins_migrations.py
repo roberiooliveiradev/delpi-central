@@ -313,7 +313,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--plugin",
-        help="Slug do plugin. Ex.: scheduling, strategic-indicators.",
+        help="Slug do plugin. Ex.: quality, scheduling, strategic-indicators.",
         default=None,
     )
 
