@@ -192,6 +192,26 @@
     "Colocar na lousa": "coloque o resultado acima na lousa",
     "Explicar gráfico": "explique o gráfico acima em linguagem simples"
   },
+  "viewChipLabels": {
+    "table": "Ver como tabela",
+    "chart": "Gerar gráfico",
+    "tree": "Ver em árvore",
+    "text": "Ver em texto",
+    "canvas": "Colocar na lousa",
+    "line_chart": "Ver em linha",
+    "horizontal_bar": "Ver ranking",
+    "donut": "Ver participação",
+    "bar_chart": "Ver em barras",
+    "dashboard": "Explique esse painel",
+    "kpi": "Ver em tabela"
+  },
+  "profileExtraChips": {
+    "stock": ["Só com saldo", "Ver em gráfico"],
+    "playbook_report": ["Exportar CSV"],
+    "table_list": ["Exportar CSV"],
+    "raw_material_price_intelligence": ["Exportar CSV"],
+    "cost_impact_simulation": ["Exportar CSV"]
+  },
   "presentationQueries": {
     "Exportar CSV": "exporte a última tabela em CSV",
     "Gerar gráfico": "gere um gráfico com os dados acima",

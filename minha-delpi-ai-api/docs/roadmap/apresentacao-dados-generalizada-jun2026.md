@@ -316,7 +316,7 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fases 0–4 concluídas. Próxima: Fase 5 (chips e recomendações).
+**Status jun/2026:** ✅ Fases 0–5 concluídas. Próxima: Fase 6 (CI/cobertura 130 rotas).
 
 ### Fase 0 — entregue
 
@@ -365,3 +365,15 @@ Atualizar este doc ao concluir cada fase (checkbox no topo).
 | Wiring | `ChatPresentationStackOrderService`, `ExecuteExternalActionUseCase` (canvas), `ChatPresentationProfileService`, `ChatPresentationDecisionService`, `ChatPresentationPrimaryViewService` |
 | MFE | `useChatPresentationFormat` (Documento), `assistantContentInterleave`, `assistantContentRegistry` (checklist) |
 | Testes | `tests/unit/domain/services/test_chat_presentation_stack_markdown_service.py`, `test_chat_presentation_section_availability_service.py`, `test_presentation_session_format_respected.py` |
+
+### Fase 5 — entregue
+
+| Artefato | Caminho |
+|----------|---------|
+| Vocabulário | `operational_pipeline_vocabulary.json` → `presentationFormatRefinement` |
+| Serviço vocabulário | `app/domain/services/chat_presentation_format_vocabulary_service.py` |
+| Recomendações | `presenter_content.json` → `presentationRecommendation.entityFamilies` + `ChatPresentationRecommendationService` |
+| Chips | `interactivity.json` → `viewChipLabels`, `profileExtraChips` + `ChatPresentationInteractivityService` |
+| Refinamento | `ChatPresentationFormatRefinementService`, `ChatToolContextFormatService` (vocabulário compartilhado) |
+| Paginação cross-turn | `ChatPaginationConsolidationService.collect_last_preferred_format` (canvas + decision) |
+| Testes | `test_chat_presentation_recommendation_service.py`, `test_chat_presentation_format_vocabulary_service.py`, `test_chat_pagination_consolidation_service.py` |

@@ -478,9 +478,34 @@ class ChatPaginationConsolidationService:
                     continue
 
                 tool_meta = tool_call.get("metadata") or {}
+                decision = tool_meta.get("presentationDecision")
+
+                if isinstance(decision, dict):
+                    selected = str(decision.get("selected") or "").strip().lower()
+
+                    if selected in {"table", "tree", "chart", "text", "canvas"}:
+                        if selected == "table" and isinstance(tool_meta.get("treePresentation"), dict):
+                            return "tree"
+
+                        return selected
+
+                    if selected in {
+                        "line_chart",
+                        "area_chart",
+                        "bar_chart",
+                        "horizontal_bar",
+                        "donut",
+                        "scatter",
+                        "kpi",
+                    }:
+                        if selected == "kpi":
+                            return "chart"
+
+                        return "chart"
+
                 preferred = str(tool_meta.get("preferredFormat") or "").strip().lower()
 
-                if preferred in {"table", "tree", "chart", "text"}:
+                if preferred in {"table", "tree", "chart", "text", "canvas"}:
                     if preferred == "table" and isinstance(tool_meta.get("treePresentation"), dict):
                         return "tree"
                     return preferred
@@ -498,8 +523,11 @@ class ChatPaginationConsolidationService:
                     if presentation_type == "tree":
                         return "tree"
 
-                    if presentation_type in {"table", "chart", "kpi"}:
-                        return "chart" if presentation_type == "kpi" else presentation_type
+                    if presentation_type in {"table", "chart", "kpi", "canvas"}:
+                        if presentation_type == "kpi":
+                            return "chart"
+
+                        return presentation_type
 
                 table_presentation = tool_meta.get("tablePresentation")
 

@@ -55,6 +55,56 @@ def test_collect_last_preferred_format():
     )
 
 
+def test_collect_last_preferred_format_from_presentation_decision_canvas():
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "preferredFormat": "text",
+                            "presentationDecision": {
+                                "selected": "canvas",
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    assert (
+        ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
+        == "canvas"
+    )
+
+
+def test_collect_last_preferred_format_cross_turn_chart_subtype():
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "presentationDecision": {
+                                "selected": "line_chart",
+                                "availableViews": ["table", "line_chart"],
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    assert (
+        ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
+        == "chart"
+    )
+
+
 def test_looks_like_continue_fetch_request():
     assert ChatPaginationConsolidationService.looks_like_continue_fetch_request(
         "sim, continue"

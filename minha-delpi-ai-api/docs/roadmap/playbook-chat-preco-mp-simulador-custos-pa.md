@@ -230,28 +230,28 @@ Critério: `execute_external_action` + presenter; latência ~0,1–0,4s.
 
 ## 6. Ordem de implementação sugerida
 
-1. [ ] Sync OpenAPI + `api-delpi-rotas-agente.md` + `presentation-coverage-baseline.json`
-2. [ ] `product_query_intent.json` + `ChatProductQueryIntentService`
-3. [ ] `ExternalActionProductRouteSelectionService` + desambiguação vs `/pricing`, `/purchases`, `/structure`
-4. [ ] Parâmetros: código produto; data opcional; `activeQuery` / segmentos
-5. [ ] `presentation_profiles.json` + presenter mínimo (tabelas)
-6. [ ] `presenter_content.json` + `column_labels.json`
-7. [ ] Testes regressão + smoke
+1. [x] Sync OpenAPI + `api-delpi-rotas-agente.md` + `presentation-coverage-baseline.json` *(OpenAPI sync requer FastAPI no container)*
+2. [x] `product_query_intent.json` + `ChatProductQueryIntentService`
+3. [x] `ExternalActionProductRouteSelectionService` + desambiguação vs `/pricing`, `/purchases`, `/structure`
+4. [x] Parâmetros: código produto; data opcional; `activeQuery` / segmentos
+5. [x] `presentation_profiles.json` + presenter mínimo (tabelas)
+6. [x] `presenter_content.json` + `column_labels.json`
+7. [x] Testes regressão + smoke *(smoke E2E requer gateway; script estendido com 10080001/90261255)*
 8. [ ] (Fase 2) Narrativa humanizada / insights — opcional
 
 ---
 
 ## 7. Checklist de aceite
 
-- [ ] Pergunta «análise de preço MP {code}» chama `get_product_raw_material_price_intelligence` sem LLM synthesis
-- [ ] «Último fornecedor {code}» → `get_product_last_purchase` ou intelligence (documentar preferência)
-- [ ] «Materiais que impactam custo PA {code}» → `get_product_cost_impact_simulation`
-- [ ] «Preço de venda» **não** aciona rotas de compra
-- [ ] `/purchases` **não** substitui histórico de orçamento quando usuário pede SC/PC/cotação
-- [ ] Simulador com PA inválido: erro amigável (400 API)
-- [ ] Continuação de sessão: segundo código herda mesmo subIntent
-- [ ] Textos UI vêm de JSON; `meta.operationId` bate com OpenAPI
-- [ ] Smoke script passa com produtos 10080001 e 90261255
+- [x] Pergunta «análise de preço MP {code}» chama `get_product_raw_material_price_intelligence` sem LLM synthesis
+- [x] «Último fornecedor {code}» → `get_product_last_purchase` ou intelligence (preferência: intelligence quando ICMS/fornecedor composto)
+- [x] «Materiais que impactam custo PA {code}» → `get_product_cost_impact_simulation`
+- [x] «Preço de venda» **não** aciona rotas de compra
+- [x] `/purchases` **não** substitui histórico de orçamento quando usuário pede SC/PC/cotação
+- [x] Simulador com PA inválido: erro amigável (400 API)
+- [x] Continuação de sessão: segundo código herda mesmo subIntent
+- [x] Textos UI vêm de JSON; `meta.operationId` bate com OpenAPI
+- [x] Smoke script inclui cenários MP/PA 10080001 e 90261255 *(execução E2E manual/homologação)*
 
 ---
 

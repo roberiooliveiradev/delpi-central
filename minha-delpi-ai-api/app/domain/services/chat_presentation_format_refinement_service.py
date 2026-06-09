@@ -7,105 +7,12 @@ from typing import Any
 from app.domain.services.chat_pagination_consolidation_service import (
     ChatPaginationConsolidationService,
 )
+from app.domain.services.chat_presentation_format_vocabulary_service import (
+    ChatPresentationFormatVocabularyService,
+)
 
 
 class ChatPresentationFormatRefinementService:
-    _FORMAT_TABLE_HINTS = (
-        "em tabela",
-        "em uma tabela",
-        "numa tabela",
-        "na tabela",
-        "formato tabela",
-        "em formato de tabela",
-        "mostra em tabela",
-        "mostre em tabela",
-        "como tabela",
-        "ver como tabela",
-        "ver em tabela",
-        "exibir tabela",
-        "exiba em tabela",
-        "coloque em tabela",
-        "coloque em uma tabela",
-        "põe em tabela",
-        "poe em tabela",
-        "ponha em tabela",
-    )
-    _IMPERATIVE_FORMAT_VERBS = (
-        "coloque",
-        "coloca",
-        "mostre",
-        "mostra",
-        "exiba",
-        "exibe",
-        "põe",
-        "poe",
-        "ponha",
-        "transforme",
-        "converta",
-        "passe",
-        "mude",
-        "troque",
-        "gere",
-        "gera",
-        "apresente",
-        "apresenta",
-    )
-    _FORMAT_CHART_HINTS = (
-        "em gráfico",
-        "em grafico",
-        "como gráfico",
-        "como grafico",
-        "mostre em gráfico",
-        "mostre em grafico",
-        "gerar gráfico",
-        "gerar grafico",
-        "ver como gráfico",
-    )
-    _FORMAT_TEXT_HINTS = (
-        "em texto",
-        "formato texto",
-        "só texto",
-        "so texto",
-        "apenas texto",
-        "sem tabela",
-        "sem gráfico",
-    )
-    _FORMAT_TREE_HINTS = (
-        "em árvore",
-        "em arvore",
-        "como árvore",
-        "como arvore",
-        "mostre em árvore",
-    )
-    _REFERENCE_HINTS = (
-        "dados acima",
-        "resultado acima",
-        "consulta acima",
-        "resposta acima",
-        "tabela acima",
-        "gráfico acima",
-        "grafico acima",
-        "dados anteriores",
-        "resultado anterior",
-        "consulta anterior",
-        "último resultado",
-        "ultimo resultado",
-        "última consulta",
-        "ultima consulta",
-        "o que mostrou",
-        "que você mostrou",
-        "que voce mostrou",
-        "mostrados acima",
-        "apresentados acima",
-        "acima em",
-        "dados acima",
-        "mesmos dados",
-        "mesmo dado",
-        "mesmo resultado",
-        "mesmos resultados",
-        "mesma resposta",
-    )
-
     @classmethod
     def looks_like_format_refinement(cls, message: str | None) -> bool:
         lowered = str(message or "").strip().lower()
@@ -114,21 +21,16 @@ class ChatPresentationFormatRefinementService:
             return False
 
         has_format = bool(cls.detect_requested_format(lowered))
-        has_reference = any(token in lowered for token in cls._REFERENCE_HINTS)
+        has_reference = any(
+            token in lowered for token in ChatPresentationFormatVocabularyService.reference_hints()
+        )
 
         if has_format and has_reference:
             return True
 
         if has_format and any(
             token in lowered
-            for token in (
-                "último",
-                "ultimo",
-                "anterior",
-                "mesmo dado",
-                "mesmos dados",
-                "mesma consulta",
-            )
+            for token in ChatPresentationFormatVocabularyService.last_result_terms()
         ):
             return True
 
@@ -139,29 +41,35 @@ class ChatPresentationFormatRefinementService:
 
     @classmethod
     def _has_imperative_format_intent(cls, lowered: str) -> bool:
-        if not any(verb in lowered for verb in cls._IMPERATIVE_FORMAT_VERBS):
+        if not any(
+            verb in lowered for verb in ChatPresentationFormatVocabularyService.imperative_verbs()
+        ):
             return False
 
-        return any(hint in lowered for hint in cls._FORMAT_TABLE_HINTS) or any(
-            hint in lowered for hint in cls._FORMAT_CHART_HINTS
-        ) or any(hint in lowered for hint in cls._FORMAT_TEXT_HINTS) or any(
-            hint in lowered for hint in cls._FORMAT_TREE_HINTS
+        return any(
+            hint in lowered for hint in ChatPresentationFormatVocabularyService.table_hints()
+        ) or any(
+            hint in lowered for hint in ChatPresentationFormatVocabularyService.chart_hints()
+        ) or any(
+            hint in lowered for hint in ChatPresentationFormatVocabularyService.text_hints()
+        ) or any(
+            hint in lowered for hint in ChatPresentationFormatVocabularyService.tree_hints()
         )
 
     @classmethod
     def detect_requested_format(cls, message: str) -> str | None:
         lowered = str(message or "").lower()
 
-        if any(h in lowered for h in cls._FORMAT_TEXT_HINTS):
+        if any(h in lowered for h in ChatPresentationFormatVocabularyService.text_hints()):
             return "text"
 
-        if any(h in lowered for h in cls._FORMAT_TREE_HINTS):
+        if any(h in lowered for h in ChatPresentationFormatVocabularyService.tree_hints()):
             return "tree"
 
-        if any(h in lowered for h in cls._FORMAT_TABLE_HINTS):
+        if any(h in lowered for h in ChatPresentationFormatVocabularyService.table_hints()):
             return "table"
 
-        if any(h in lowered for h in cls._FORMAT_CHART_HINTS):
+        if any(h in lowered for h in ChatPresentationFormatVocabularyService.chart_hints()):
             return "chart"
 
         return None

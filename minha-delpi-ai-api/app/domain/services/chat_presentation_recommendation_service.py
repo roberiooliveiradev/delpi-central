@@ -28,6 +28,7 @@ _CHART_SELECTED = frozenset(
     }
 )
 
+
 class ChatPresentationRecommendationService:
     @classmethod
     def _view_labels(cls) -> dict[str, str]:
@@ -43,6 +44,14 @@ class ChatPresentationRecommendationService:
             "presenter_content",
             "presentationRecommendation",
             "viewQueries",
+        )
+
+    @classmethod
+    def _reasons(cls) -> dict[str, str]:
+        return ChatAssistantContentService.get_mapping(
+            "presenter_content",
+            "presentationRecommendation",
+            "reasons",
         )
 
     @classmethod
@@ -89,6 +98,7 @@ class ChatPresentationRecommendationService:
 
         output: list[dict[str, str]] = []
         seen: set[str] = set()
+        reasons = cls._reasons()
 
         def add(view: str, reason: str) -> None:
             token = str(view or "").strip().lower()
@@ -118,26 +128,26 @@ class ChatPresentationRecommendationService:
             if selected in {"scatter", "chart", "bar_chart"}:
                 add(
                     "horizontal_bar",
-                    "pergunta sobre eficiência — ranking por operador ou centro costuma ser mais legível",
+                    reasons.get("efficiencyHorizontalBar", ""),
                 )
 
             if selected == "table" and ideal in {"", "table", "horizontal_bar"}:
                 add(
                     "horizontal_bar",
-                    "eficiência fabril fica mais clara em barras por operador ou centro",
+                    reasons.get("efficiencyFactoryBars", ""),
                 )
 
         if selected == "table" and "line_chart" in available:
             shape_dict = shape if isinstance(shape, dict) else {}
 
             if shape_dict.get("hasDate") and shape_dict.get("hasNumeric"):
-                add("line_chart", "há datas e valores — a evolução em linha facilita a leitura")
+                add("line_chart", reasons.get("timeSeriesLineChart", ""))
 
         if selected in _CHART_SELECTED and "table" in available:
             row_count = int((shape or {}).get("rows") or len(rows) or 0)
 
             if row_count >= 8:
-                add("table", "muitos pontos no gráfico — a tabela ajuda a conferir valores exatos")
+                add("table", reasons.get("chartManyPointsTable", ""))
 
         if (
             isinstance(metadata, dict)
@@ -145,9 +155,93 @@ class ChatPresentationRecommendationService:
             and metadata["presentation"].get("type") == "dashboard"
             and selected != "dashboard"
         ):
-            add("dashboard", "há um painel consolidado com resumo e gráficos auxiliares")
+            add("dashboard", reasons.get("dashboardConsolidated", ""))
+
+        cls._apply_entity_family_rules(
+            decision=decision,
+            metadata=metadata,
+            shape=shape if isinstance(shape, dict) else {},
+            add=add,
+        )
 
         return output[:3]
+
+    @classmethod
+    def _apply_entity_family_rules(
+        cls,
+        *,
+        decision: dict[str, Any],
+        metadata: dict[str, Any] | None,
+        shape: dict[str, Any],
+        add,
+    ) -> None:
+        profile_key = str(decision.get("presentationProfileKey") or "").strip()
+
+        if not profile_key:
+            from app.domain.services.chat_presentation_profile_service import (
+                ChatPresentationProfileService,
+            )
+
+            path = str((metadata or {}).get("path") or "")
+            entity = str((metadata or {}).get("entity") or "")
+            profile = ChatPresentationProfileService.resolve_profile(path, entity)
+            profile_key = str(profile.get("profileKey") or "").strip()
+
+        if not profile_key:
+            return
+
+        families = ChatAssistantContentService.get_node(
+            "presenter_content",
+            "presentationRecommendation",
+            "entityFamilies",
+        )
+        reasons = cls._reasons()
+
+        if not isinstance(families, dict):
+            return
+
+        selected = str(decision.get("selected") or "").strip().lower()
+        available = {
+            str(view or "").strip().lower()
+            for view in (decision.get("availableViews") or [])
+            if str(view or "").strip()
+        }
+
+        for family_config in families.values():
+            if not isinstance(family_config, dict):
+                continue
+
+            profile_keys = [
+                str(key or "").strip()
+                for key in (family_config.get("profileKeys") or [])
+                if str(key or "").strip()
+            ]
+
+            if profile_key not in profile_keys:
+                continue
+
+            for rule in family_config.get("suggestions") or []:
+                if not isinstance(rule, dict):
+                    continue
+
+                when_selected = str(rule.get("whenSelected") or "").strip().lower()
+
+                if when_selected and when_selected != selected:
+                    continue
+
+                requires_shape = str(rule.get("requiresShape") or "").strip()
+
+                if requires_shape and not shape.get(requires_shape):
+                    continue
+
+                view = str(rule.get("view") or "").strip().lower()
+                reason_key = str(rule.get("reasonKey") or "").strip()
+                reason = reasons.get(reason_key, "")
+
+                if view and view in available:
+                    add(view, reason)
+
+            break
 
     @classmethod
     def _rows_from_metadata(cls, metadata: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -186,20 +280,21 @@ class ChatPresentationRecommendationService:
     def _reason_for_view(cls, view: str, decision: dict[str, Any]) -> str:
         shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
         fallback = str(decision.get("reason") or "").strip()
+        reasons = cls._reasons()
 
         if view == "line_chart" and shape.get("hasDate"):
-            return "série temporal detectada nos dados"
+            return reasons.get("dataShapeLineChart", fallback)
 
         if view == "horizontal_bar" and int(shape.get("categoryCardinality") or 0) > 6:
-            return "muitas categorias — ranking em barra horizontal"
+            return reasons.get("dataShapeHorizontalBar", fallback)
 
         if view == "donut":
-            return "poucas categorias com participação relativa"
+            return reasons.get("dataShapeDonut", fallback)
 
         if view == "table" and fallback:
-            return "alternativa em tabela para conferência detalhada"
+            return reasons.get("dataShapeTableFallback", fallback)
 
         if view == "dashboard":
-            return "visão consolidada disponível para este resultado"
+            return reasons.get("dashboardConsolidated", fallback)
 
-        return fallback or "formato alternativo sugerido pelos dados"
+        return fallback or reasons.get("genericAlternateView", "")

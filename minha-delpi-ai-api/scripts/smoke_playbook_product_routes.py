@@ -24,6 +24,8 @@ _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _PRODUCT = os.environ.get("SMOKE_PRODUCT_CODE", "90269002").strip()
+_MP_PRODUCT = os.environ.get("SMOKE_MP_CODE", "10080001").strip()
+_PA_PRODUCT = os.environ.get("SMOKE_PA_CODE", "90261255").strip()
 _MAX_LATENCY_S = float(os.environ.get("SMOKE_MAX_LATENCY_SECONDS", "45"))
 
 
@@ -230,6 +232,30 @@ def main() -> int:
             "/structure/exclusivity",
             True,
         ),
+        (
+            "análise preço MP usa /raw-material-price-intelligence",
+            f"análise de preço da matéria-prima {_MP_PRODUCT}",
+            "/raw-material-price-intelligence",
+            True,
+        ),
+        (
+            "última compra MP usa intelligence",
+            f"última compra e ICMS do produto {_MP_PRODUCT}",
+            "/raw-material-price-intelligence",
+            True,
+        ),
+        (
+            "simulador impacto PA usa /cost-impact-simulation",
+            f"quais materiais mais impactam o custo do PA {_PA_PRODUCT}?",
+            "/cost-impact-simulation",
+            True,
+        ),
+        (
+            "preço de venda usa /pricing",
+            f"qual o preço de venda do produto {_MP_PRODUCT}?",
+            "/pricing",
+            True,
+        ),
     ]
 
     for title, message, expected_fragment, expect_tool in scenarios:
@@ -257,6 +283,12 @@ def main() -> int:
                 _check(
                     title,
                     expected_fragment in path,
+                    f"path={path or '?'} elapsed={elapsed:.1f}s stages={stages[-3:]}",
+                )
+            elif expected_fragment:
+                _check(
+                    title,
+                    expected_fragment not in path,
                     f"path={path or '?'} elapsed={elapsed:.1f}s stages={stages[-3:]}",
                 )
             else:

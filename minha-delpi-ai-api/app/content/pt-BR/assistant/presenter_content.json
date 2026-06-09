@@ -552,7 +552,88 @@
       "fabril",
       "produtividade",
       "oee"
-    ]
+    ],
+    "reasons": {
+      "operationalTableDetail": "detalhes tabulares ajudam a conferir filiais e quantidades",
+      "operationalTextSummary": "resumo em texto destaca os pontos principais",
+      "operationalChartTrend": "evolução em gráfico facilita comparar períodos",
+      "tabularListDetail": "tabela completa ajuda a revisar cada linha do resultado",
+      "tabularChartWhenNumeric": "valores numéricos ficam mais legíveis em gráfico",
+      "treeFlattenTable": "tabela auxiliar ajuda a conferir itens da estrutura",
+      "treeVisualHierarchy": "árvore mostra a hierarquia de forma mais clara",
+      "efficiencyHorizontalBar": "pergunta sobre eficiência — ranking por operador ou centro costuma ser mais legível",
+      "efficiencyFactoryBars": "eficiência fabril fica mais clara em barras por operador ou centro",
+      "timeSeriesLineChart": "há datas e valores — a evolução em linha facilita a leitura",
+      "chartManyPointsTable": "muitos pontos no gráfico — a tabela ajuda a conferir valores exatos",
+      "dashboardConsolidated": "há um painel consolidado com resumo e gráficos auxiliares",
+      "dataShapeLineChart": "série temporal detectada nos dados",
+      "dataShapeHorizontalBar": "muitas categorias — ranking em barra horizontal",
+      "dataShapeDonut": "poucas categorias com participação relativa",
+      "dataShapeTableFallback": "alternativa em tabela para conferência detalhada",
+      "genericAlternateView": "formato alternativo sugerido pelos dados"
+    },
+    "entityFamilies": {
+      "product_operational": {
+        "profileKeys": [
+          "stock",
+          "factory_status",
+          "production_status",
+          "shipping_status",
+          "structure_exclusivity",
+          "raw_material_price_intelligence",
+          "cost_impact_simulation"
+        ],
+        "suggestions": [
+          {
+            "whenSelected": "text",
+            "view": "table",
+            "reasonKey": "operationalTableDetail"
+          },
+          {
+            "whenSelected": "table",
+            "view": "text",
+            "reasonKey": "operationalTextSummary"
+          },
+          {
+            "whenSelected": "table",
+            "view": "chart",
+            "reasonKey": "operationalChartTrend",
+            "requiresShape": "hasDate"
+          }
+        ]
+      },
+      "table_list": {
+        "profileKeys": ["table_list", "playbook_report"],
+        "suggestions": [
+          {
+            "whenSelected": "text",
+            "view": "table",
+            "reasonKey": "tabularListDetail"
+          },
+          {
+            "whenSelected": "table",
+            "view": "chart",
+            "reasonKey": "tabularChartWhenNumeric",
+            "requiresShape": "hasNumeric"
+          }
+        ]
+      },
+      "tree_hierarchy": {
+        "profileKeys": ["tree_hierarchy", "analyser"],
+        "suggestions": [
+          {
+            "whenSelected": "tree",
+            "view": "table",
+            "reasonKey": "treeFlattenTable"
+          },
+          {
+            "whenSelected": "text",
+            "view": "tree",
+            "reasonKey": "treeVisualHierarchy"
+          }
+        ]
+      }
+    }
   },
   "productOverview": {
     "identityLine": "**{code}** — {description}.",
