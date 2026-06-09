@@ -132,16 +132,11 @@ export function ChatAgentHome({
       </div>
 
       {icebreakers.length > 0 ? (
-        <div className="mdc-chat-agent-home__suggestions">
-          <header className="mdc-chat-agent-home__suggestions-header">
-            <h3>Comece por aqui</h3>
-            <p>
-              {usingDefaultIcebreakers
-                ? "Sugestões padrão — clique para enviar ao agente."
-                : "Quebra-gelos configurados para este agente."}
-            </p>
-          </header>
-
+        <div
+          className="mdc-chat-agent-home__suggestions"
+          role="region"
+          aria-label="Sugestões para começar"
+        >
           <div className="mdc-chat-agent-home__icebreakers-scroll">
             <div
               className={["mdc-chat-agent-home__icebreakers", icebreakerDensityClass]

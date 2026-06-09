@@ -9,6 +9,7 @@ import {
   Settings,
   Trash2,
   X,
+  Box,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -129,6 +130,19 @@ export function ChatContextTopbar({
                   </button>
                 ) : null}
 
+                {onManageAgents ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onManageAgents();
+                    }}
+                  >
+                    <Box size={17} aria-hidden="true" />
+                    <span>Apps e agentes</span>
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -189,7 +203,7 @@ export function ChatContextTopbar({
                     }}
                   >
                     <Settings size={17} aria-hidden="true" />
-                    <span>Gerenciar agentes</span>
+                    <span>Apps e agentes</span>
                   </button>
                 ) : null}
 

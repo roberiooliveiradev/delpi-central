@@ -199,7 +199,7 @@
   }
 
   .mdc-chat-agent-home__icebreakers-scroll {
-    max-height: min(15rem, 32vh);
+    max-height: min(16.5rem, 38vh);
   }
 
   .mdc-chat-agent-home__actions {

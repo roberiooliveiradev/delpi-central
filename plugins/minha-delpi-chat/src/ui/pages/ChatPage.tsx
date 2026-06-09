@@ -2342,7 +2342,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
+            onManageAgents={openAgentsDirectory}
             onClearAgent={() => {
               setActiveAgentPageId(null);
               clearComposerOverlayContext();
