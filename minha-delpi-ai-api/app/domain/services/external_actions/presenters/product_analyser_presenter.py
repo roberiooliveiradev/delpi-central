@@ -506,6 +506,11 @@ class ExternalActionProductAnalyserPresenter:
         if inspection_table:
             tables.append(inspection_table)
 
+        structure_table = self._build_analyser_structure_components_table(root.get("structure"))
+
+        if structure_table:
+            tables.append(structure_table)
+
         return tables
 
     def _build_product_analyser_inspection_markdown(self, inspection_items: list) -> list[str]:

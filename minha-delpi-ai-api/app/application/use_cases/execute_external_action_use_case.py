@@ -207,25 +207,29 @@ class ExecuteExternalActionUseCase:
         request_parameters: dict,
     ) -> dict:
         action_path = action.get("path") or ""
-        text_presentation = self.presenter.build_text_presentation(
+        presentation_data = self.presenter.prepare_presentation_data(
             sanitized_data,
+            path=resolved_path,
+        )
+        text_presentation = self.presenter.build_text_presentation(
+            presentation_data,
             path=resolved_path,
         )
         tree_presentation = self.presenter.build_tree_presentation(
-            sanitized_data,
+            presentation_data,
             path=resolved_path,
         )
         dashboard_presentation = self.presenter.build_dashboard_presentation(
-            sanitized_data,
+            presentation_data,
             path=resolved_path,
         )
         presentation = self.presenter.build_presentation(
-            sanitized_data,
+            presentation_data,
             path=resolved_path,
             response_schema=action.get("responseSchema"),
         )
         chart_presentation = self.presenter.build_chart_presentation(
-            sanitized_data,
+            presentation_data,
             path=resolved_path,
         )
 
@@ -272,7 +276,7 @@ class ExecuteExternalActionUseCase:
             )
         ):
             forced_chart = self.presenter.build_chart_presentation(
-                sanitized_data,
+                presentation_data,
                 path=resolved_path or action_path,
                 force=True,
             )
@@ -308,7 +312,7 @@ class ExecuteExternalActionUseCase:
         table_presentations_list: list[dict] = []
         profile_table_presentation = None
         inspection_table_presentation = None
-        root_payload = self.presenter._unwrap_data(sanitized_data)
+        root_payload = self.presenter._unwrap_data(presentation_data)
 
         if isinstance(root_payload, dict):
             if "/analyser" in path_lower and isinstance(root_payload.get("product"), dict):

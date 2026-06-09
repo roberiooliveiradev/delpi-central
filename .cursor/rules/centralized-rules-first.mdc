@@ -18,7 +18,7 @@ alwaysApply: true
 | Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `CHAT_PLATFORM_DEFAULT_AGENT_*` implícito, `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
 | Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
 | Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |
-| Apresentação rica (tabela/gráfico/stack) | `chatPresentation.ts` + `assistantContentLayout.ts` | lógica de título/markdown em cada MFE |
+| Apresentação rica (tabela/gráfico/stack) | API: `ChatApiDelpiResponseProfileService` + `ExternalActionEntityRoutePresenter.prepare_presentation_root` / `ExternalActionResultPresenter` · MFE: `chatPresentation.ts` + `assistantContentLayout.ts` | `if '/analyser'` no use case, serviço paralelo de normalização, lógica de título/markdown em cada MFE |
 
 ## O que NÃO fazer
 

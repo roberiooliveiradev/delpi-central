@@ -19,6 +19,29 @@ class ExternalActionEntityRoutePresenter:
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
 
+    def prepare_presentation_root(self, data, *, path: str):
+        """Alinha builders (`build_*_presentation`) ao mesmo root que `present()` usa por entidade."""
+        root = self._host._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return data
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        normalized = self._normalize_root_for_entity(root, profile)
+
+        if normalized is root:
+            return data
+
+        return normalized
+
+    def _normalize_root_for_entity(self, root: dict, profile: ApiDelpiResponseProfile) -> dict:
+        entity = profile.entity
+
+        if entity == "product_analyser":
+            return self._host._normalize_analyser_root(root)
+
+        return root
+
     def _present_entity_first(
             self,
             data,
@@ -47,7 +70,7 @@ class ExternalActionEntityRoutePresenter:
                 return empty_operational
 
             if entity == "product_analyser" and isinstance(root, dict):
-                root = self._host._normalize_analyser_root(root)
+                root = self._normalize_root_for_entity(root, profile)
                 product = root.get("product")
 
                 if isinstance(product, dict):

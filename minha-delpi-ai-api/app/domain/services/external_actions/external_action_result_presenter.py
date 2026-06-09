@@ -381,6 +381,9 @@ class ExternalActionResultPresenter:
     def _build_structure_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._text()._build_structure_text_presentation(root, path)
 
+    def prepare_presentation_data(self, data, *, path: str = ""):
+        return self._entity_route().prepare_presentation_root(data, path=path)
+
     def build_text_presentation(self, data, *, path: str = "") -> dict | None:
         return self._text().build_text_presentation(data, path=path)
 
