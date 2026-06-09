@@ -143,6 +143,7 @@ PROIBIDO:
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
 - [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
 - [x] 3.4d LMP — `GET /engineering/lmps/dashboard/summary` via api-delpi (SI sem cálculo local)
+- [x] 3.4e LMP summary leve (jun/2026) — gateway envia `listing_type=lmp`; api-delpi omite `EngSupportOvRef` + cache `|summary-response`
 - [x] 3.5 Warm-up — `scripts/warmup_si_snapshots.py` + `SI_WARMUP_ON_STARTUP` (legado se refresh desligado)
 - [x] 3.6 Materialização — `scripts/refresh_period_scores.py` + `SI_PERIOD_SCORES_REFRESH_*`
 
@@ -228,3 +229,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Documentação completa SI: OVERVIEW, DATABASE, MFE, DEPLOYMENT, DEVELOPMENT, OPERATIONS, CODE_STRUCTURE, DATA_SOURCES |
 | 2026-05-25 | api-delpi: refatoração LMP com batch queries (temp tables em batch único pyodbc) + connection pooling |
 | 2026-05-26 | api-delpi: fix pool max=4→10 (burst ~30 req do snapshot causava TimeoutError → 500) |
+| 2026-06-09 | LMP summary: `listing_type=lmp` no `DelpiEngineeringGateway`; escopo SQL reduzido; cache resposta 300s; console `slow_sql` &lt; 2,5s no warm path |

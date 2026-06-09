@@ -195,8 +195,11 @@ def test_listing_type_filter_uses_effective_kind_not_anchor() -> None:
     assert "EFFECTIVE_LISTING_ROWS.listing_kind = ?" in filtered_select
     assert filtered_params[-1] == LISTING_KIND_LMP
 
-    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(request)
-    assert "UNION" in candidate_sql
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
+        request,
+        lmp_only=False,
+    )
+    assert "EngSupportOvRef" in candidate_sql
     assert "AND L.LISTING_KIND = ?" not in candidate_sql
 
 
@@ -226,6 +229,51 @@ def test_dashboard_summary_batch_uses_lite_eng_resumo_without_order_by() -> None
     assert "TEMPO_TOTAL_MINUTOS_ENG" in batch_sql
     assert "TEMPO_MINUTOS_AMOSTRA_ENG" in batch_sql
     assert "ENGINEERING_STATUS" in batch_sql
+
+
+def test_lmp_only_candidate_cte_skips_eng_support_and_other_union() -> None:
+    repo = _repository()
+    request = ListLMPRequest(
+        date_start="20260401",
+        date_end="20260501",
+        listing_type="lmp",
+    )
+
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
+        request,
+        lmp_only=True,
+    )
+
+    assert "EngSupportOvRef" not in candidate_sql
+    assert f"? AS LISTING_KIND,\n                    0 AS HAS_SAMPLE_ANCHOR" not in candidate_sql
+    assert "CandidateLMPs AS" in candidate_sql
+
+
+def test_staged_batch_uses_lmp_only_candidates_when_listing_type_is_lmp() -> None:
+    repo = _repository()
+    request = ListLMPRequest(
+        date_start="20260401",
+        date_end="20260501",
+        listing_type="lmp",
+    )
+
+    final_select = repo._staged_final_select(
+        include_qtd_pi=False,
+        order_by=False,
+        summary_only=True,
+    )
+    batch_sql, _batch_params = repo._build_staged_batch(
+        request,
+        include_qtd_pi=False,
+        eng_resumo_lite=True,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert "EngSupportOvRef" not in batch_sql
 
 
 def test_full_staged_batch_keeps_eng_passagem_counts() -> None:

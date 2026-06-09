@@ -828,20 +828,17 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             (*select_params, listing_filter),
         )
 
+    def _candidate_scope_lmp_only(self, request: ListLMPRequest) -> bool:
+        """Quando o filtro efetivo é só LMP, pula OVs «Outro» sem âncora de listagem."""
+        return self._resolve_listing_type_filter(request, lmp_only=False) == LISTING_KIND_LMP
+
     def _sql_candidate_lmps_cte(
         self,
         request: ListLMPRequest,
         *,
         lmp_only: bool = False,
     ) -> Tuple[str, tuple]:
-        del lmp_only
-
         cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
-            request.branch,
-            request.date_start,
-            request.date_end,
-        )
-        cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
             request.branch,
             request.date_start,
             request.date_end,
@@ -916,6 +913,28 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   )
         """
 
+        if lmp_only:
+            candidate_body = anchor_candidates_sql
+            sql = f"""
+                {cte_marker},
+
+                CandidateLMPs AS (
+                    {candidate_body}
+                )
+            """
+            params: list = [
+                *params_marker,
+                *params_ad1,
+                *params_period_anchor,
+            ]
+            return sql, tuple(params)
+
+        cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
+            request.branch,
+            request.date_start,
+            request.date_end,
+        )
+
         candidate_body = f"""
                 {anchor_candidates_sql}
 
@@ -933,7 +952,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         """
 
-        params: list = [*params_marker, *params_eng_ref]
+        params = [*params_marker, *params_eng_ref]
         params.extend(
             [
                 *params_ad1,
@@ -2083,8 +2102,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         2. Cria temp tables por fase (SET NOCOUNT ON)
         3. Executa o SELECT final (SET NOCOUNT OFF)
         """
-        del lmp_only
-        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
+        lmp_only_candidates = self._candidate_scope_lmp_only(request)
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
+            request,
+            lmp_only=lmp_only_candidates,
+        )
 
         cte_hist, params_hist = self._sql_historico_ov_cte(
             scope_cte_name=self._TEMP_CANDIDATES,

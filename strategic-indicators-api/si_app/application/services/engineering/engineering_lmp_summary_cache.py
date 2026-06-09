@@ -13,6 +13,7 @@ def lmp_summary_cache_key(
     date_start: str | None,
     date_end: str | None,
     branch: str | None,
+    listing_type: str = "lmp",
 ) -> str:
     return "|".join(
         [
@@ -20,6 +21,7 @@ def lmp_summary_cache_key(
             date_start or "",
             date_end or "",
             branch or "",
+            listing_type or "",
         ]
     )
 

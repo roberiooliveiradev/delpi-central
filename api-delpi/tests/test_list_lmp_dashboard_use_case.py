@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.application.use_cases.lmp.list_lmp_dashboard_use_case import (
@@ -45,3 +45,52 @@ def test_dashboard_paginates_items_and_builds_summary() -> None:
     assert result["total"] == 3
     assert result["summary"]["total_items"] == 3
     assert result["charts"]["levelData"]
+
+
+def test_execute_summary_caches_response_without_second_repository_call() -> None:
+    repository = MagicMock()
+    repository.get_lmp_dashboard_summary.return_value = [
+        {
+            "branch": "01",
+            "sale_number": "OV001",
+            "sale_description": "Projeto",
+            "listing_kind": "LMP",
+            "start_date": "20260501",
+            "end_date": "20260510",
+            "engineering_status": "Finalizado",
+            "engineering_total_minutes": 60,
+            "qtd_pi": 0,
+        }
+    ]
+
+    use_case = ListLMPDashboardUseCase(repository)
+    request = ListLMPRequest(date_start="20260501", date_end="20260522")
+
+    cached_response = {
+        "total_lmps": 1,
+        "total_items": 1,
+        "percent_dentro_prazo": 100.0,
+        "avg_lead_time": 5.0,
+    }
+    summary_response_reads = {"count": 0}
+
+    def _get_cache_side_effect(key: str):
+        if key.endswith("|summary-response"):
+            summary_response_reads["count"] += 1
+            if summary_response_reads["count"] > 1:
+                return cached_response
+        return None
+
+    with patch(
+        "app.application.use_cases.lmp.list_lmp_dashboard_use_case.get_cached_lmp_dashboard",
+        side_effect=_get_cache_side_effect,
+    ), patch(
+        "app.application.use_cases.lmp.list_lmp_dashboard_use_case.set_cached_lmp_dashboard",
+    ) as set_cache_mock:
+        first = use_case.execute_summary(request)
+        second = use_case.execute_summary(request)
+
+    assert first["total_lmps"] == 1
+    assert second == cached_response
+    repository.get_lmp_dashboard_summary.assert_called_once()
+    set_cache_mock.assert_called()

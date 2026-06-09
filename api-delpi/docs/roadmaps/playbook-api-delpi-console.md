@@ -127,6 +127,30 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
 
+#### Validação — `get_lmps_dashboard_summary` (jun/2026)
+
+| Sintoma | Causa provável | Ação |
+|---------|----------------|------|
+| P95 &gt; 2500 ms, caller `strategic-indicators-api` | Cold path sem `listing_type=lmp` ou cache miss | Confirmar deploy SI + api-delpi; segunda chamada no mesmo período deve cair para &lt; 500 ms |
+| Mesma query hash, duração variável (300 ms–5 s) | Contenção TOTVS ou cold cache | Aba Cache: hit rate `lmp-dashboard`; aguardar TTL 300s entre comparações |
+| Caller anônimo | Cliente sem `X-Delpi-Caller-App` | SI e dashboards devem enviar header; ver aba Callers |
+
+Teste manual pós-deploy:
+
+```bash
+# 1ª chamada (cold) — esperado &lt; 2 s com listing_type=lmp
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$API/engineering/lmps/dashboard/summary?date_start=20260401&date_end=20260430&listing_type=lmp" \
+  -D - -o /dev/null | grep -i x-response-time
+
+# 2ª chamada — esperado cache hit (&lt; 100 ms)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$API/engineering/lmps/dashboard/summary?date_start=20260401&date_end=20260430&listing_type=lmp" \
+  -D - -o /dev/null | grep -i x-response-time
+```
+
+Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_list_lmp_dashboard_use_case.py`.
+
 ### Fase 3 — Cache e callers (concluída)
 
 | Item | Detalhe | Status |
@@ -171,6 +195,7 @@ Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-re
 | Domínio | Rotas | Risco SQL / carga |
 |---------|-------|-------------------|
 | Engenharia | `GET /engineering/lmps`, `/engineering/lmps/dashboard/*` | Alto — paginação + cache |
+| Engenharia (summary) | `GET /engineering/lmps/dashboard/summary` | Alto — batch AIJ + engenharia; otimizado com `listing_type=lmp` e cache `|summary-response` |
 | Suprimentos | `GET /supplies/stock-value` | Alto — bundle histórico |
 | Qualidade | `GET /quality/ppm/*` | Médio |
 | Produção | `GET /production/eficiencia-fabril/*` | Médio |

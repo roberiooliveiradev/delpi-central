@@ -102,7 +102,7 @@ Parâmetros adicionais:
 |---|---|---|
 | GET | `/engineering/lmps` | Lista LMPs com filtros de data/filial. |
 | GET | `/engineering/lmps/dashboard` | Dashboard agregado (`status` default `Todos`). Dados completos com items paginados. |
-| GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (total_lmps, percent_dentro_prazo, avg_lead_time). Fase 1 do carregamento progressivo. |
+| GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (`total_lmps`, `total_items`, `percent_dentro_prazo`, `avg_lead_time`). Query leve (`eng_resumo_lite`, sem `ORDER BY`). Fase 1 do carregamento progressivo. |
 | GET | `/engineering/lmps/dashboard/items` | Itens paginados do dashboard (tabela). |
 | GET | `/engineering/lmps/dashboard/charts` | Dados de gráficos (levelData, statusData, leadByLevel, evolutionData). Fase 2 do carregamento progressivo. |
 | GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem. |
@@ -113,7 +113,16 @@ Parâmetros adicionais:
 |---|---|
 | `date_start`, `date_end` | Período. |
 | `branch` | Filial. |
-| `page`, `page_size` | Paginação (apenas `/dashboard`). |
+| `listing_type` | `Todos` (default), `LMP`, `Amostra` ou `Outro`. Com `LMP`, a SQL omite OVs «Outro» sem âncora de listagem (`EngSupportOvRef`). |
+| `status` | Filtro de status do dashboard (`Todos`, `Pontual`, `Atrasado`, …). |
+| `page`, `page_size` | Paginação (apenas `/dashboard` e `/items`). |
+
+**Performance (`/dashboard/summary`):**
+
+- Repositório: batch com temp tables, `eng_resumo_lite=True`, sem ordenação final.
+- Integradores que só precisam de KPI de LMP (ex.: Strategic Indicators) devem enviar `listing_type=lmp`.
+- Cache: resposta final em `query_cache` (namespace `lmp-dashboard`, chave `|summary-response`) + linhas em `|summary-rows` (TTL alinhado ao `QUERY_CACHE_TTL_SECONDS`, default 300s).
+- Console: `operation_id=get_lmps_dashboard_summary`; alerta `slow_sql` acima de 2500 ms — validar após deploy com caller `strategic-indicators-api` e aba Cache.
 
 ### Transforma Mais
 

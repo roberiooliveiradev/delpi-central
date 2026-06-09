@@ -6,7 +6,7 @@ from app.application.dto.lmp.lmp_dashboard_summary_response import (
 from app.domain.services.query_cache_stats_service import record_cache_get, record_cache_set
 from app.infrastructure.cache.ttl_cache import TtlCache
 
-_LMP_DASHBOARD_SUMMARY_TTL_SECONDS = 120.0
+_LMP_DASHBOARD_SUMMARY_TTL_SECONDS = 300.0
 
 _lmp_dashboard_summary_cache: TtlCache[LMPDashboardSummaryResponse] = TtlCache(
     ttl_seconds=_LMP_DASHBOARD_SUMMARY_TTL_SECONDS,

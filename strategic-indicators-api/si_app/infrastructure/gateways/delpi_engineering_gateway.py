@@ -20,6 +20,7 @@ class DelpiEngineeringGateway:
                 "date_start": date_start,
                 "date_end": date_end,
                 "branch": branch,
+                "listing_type": "lmp",
             },
             authorization=bearer_authorization_from_context(),
         )

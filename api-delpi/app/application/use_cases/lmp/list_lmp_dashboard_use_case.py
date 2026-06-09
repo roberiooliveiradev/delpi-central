@@ -223,13 +223,20 @@ class ListLMPDashboardUseCase:
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
         """Fase 1: apenas KPIs (summary) — usa query leve sem carregar items completos."""
+        cache_key = self._build_base_cache_key(request, status_filter) + "|summary-response"
+        cached = get_cached_lmp_dashboard(cache_key)
+        if cached is not None:
+            return cached
+
         items = self._load_summary_rows(request)
         lmp_only = [i for i in items if i.listing_kind == LISTING_KIND_LMP]
 
         resolved_status = resolve_dashboard_status_filter(status_filter)
         filtered = self._filter_items_by_status(items, resolved_status)
 
-        return self._compute_summary(lmp_only, len(filtered))
+        result = self._compute_summary(lmp_only, len(filtered))
+        set_cached_lmp_dashboard(cache_key, result)
+        return result
 
     def execute_charts(
         self,
