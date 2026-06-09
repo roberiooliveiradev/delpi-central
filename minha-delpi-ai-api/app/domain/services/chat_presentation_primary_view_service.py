@@ -8,7 +8,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
     ExternalActionResultPresenter,
 )
 
-_EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart"})
+_EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart", "canvas"})
 _VIEW_SLOT_BY_TYPE = {
     "table": "tablePresentation",
     "tree": "treePresentation",
@@ -46,6 +46,8 @@ class ChatPresentationPrimaryViewService:
             cls._apply_tree_primary(metadata, data=data, path=path, presenter=presenter)
         elif token == "chart":
             cls._apply_chart_primary(metadata, data=data, path=path, presenter=presenter)
+        elif token == "canvas":
+            pass
 
         return True
 
@@ -78,7 +80,7 @@ class ChatPresentationPrimaryViewService:
 
             return
 
-        if selected == "text":
+        if selected == "text" or explicit == "text":
             presentation = metadata.get("presentation")
 
             if isinstance(presentation, dict) and presentation.get("type") == "kpi":
@@ -89,6 +91,12 @@ class ChatPresentationPrimaryViewService:
                 decision["layoutMode"] = "single"
                 decision["visualOrder"] = ["text"]
 
+            return
+
+        if explicit == "canvas":
+            decision["selected"] = "canvas"
+            decision["layoutMode"] = "single"
+            decision["visualOrder"] = ["canvas", "text"]
             return
 
         if explicit in _EXPLICIT_SESSION_FORMATS and selected:

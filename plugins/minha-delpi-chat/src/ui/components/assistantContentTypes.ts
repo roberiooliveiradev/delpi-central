@@ -10,4 +10,5 @@ export type AssistantContentSegment =
   | { kind: "chart"; presentation: Extract<ChatPresentation, { type: "chart" }> }
   | { kind: "tree"; presentation: Extract<ChatPresentation, { type: "tree" }> }
   | { kind: "kpi"; presentation: Extract<ChatPresentation, { type: "kpi" }> }
-  | { kind: "dashboard"; presentation: Extract<ChatPresentation, { type: "dashboard" }> };
+  | { kind: "dashboard"; presentation: Extract<ChatPresentation, { type: "dashboard" }> }
+  | { kind: "checklist"; markdown: string; title?: string };

@@ -171,6 +171,28 @@ def test_parents_session_tree_keeps_tree_primary():
     assert decision["layoutMode"] == "single"
 
 
+def test_commercial_kpi_session_canvas_keeps_canvas_preference():
+    use_case = _use_case()
+    meta = use_case._build_presentation_metadata(
+        action={"path": "/commercial/closing-rate"},
+        sanitized_data={
+            "value": 82.5,
+            "target": 90.0,
+            "previous": 80.0,
+            "unit": "%",
+        },
+        resolved_path="/commercial/closing-rate",
+        request_parameters={"sessionResponseFormat": "canvas"},
+    )
+
+    decision = meta["presentationDecision"]
+
+    assert meta["preferredFormat"] == "canvas"
+    assert "canvas" in meta["availableFormats"]
+    assert decision["selected"] == "canvas"
+    assert decision["layoutMode"] == "single"
+
+
 def test_session_format_regression_cases_table_and_tree():
     use_case = _use_case()
     structure_payload = {

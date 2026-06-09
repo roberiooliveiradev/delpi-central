@@ -70,7 +70,12 @@ class ChatPresentationStackOrderService:
             ),
         }
 
-        return ChatPresentationSectionAvailabilityService.enrich_stack_plan(metadata, plan)
+        from app.domain.services.chat_presentation_stack_markdown_service import (
+            ChatPresentationStackMarkdownService,
+        )
+
+        plan = ChatPresentationSectionAvailabilityService.enrich_stack_plan(metadata, plan)
+        return ChatPresentationStackMarkdownService.enrich_stack_plan(metadata, plan)
 
     @classmethod
     def enrich_metadata(cls, metadata: dict[str, Any]) -> None:

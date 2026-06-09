@@ -117,6 +117,18 @@ const BASE_RENDERERS: Record<AssistantContentSegment["kind"], AssistantSegmentRe
       />
     );
   },
+  checklist: (segment, index) => {
+    if (segment.kind !== "checklist") {
+      return null;
+    }
+
+    return (
+      <ChatMarkdown
+        key={`checklist-${index}`}
+        content={segment.markdown}
+      />
+    );
+  },
 };
 
 const customRenderers: Partial<

@@ -1113,7 +1113,7 @@ class ChatPresentationDecisionService:
             return "chart"
 
         if selected == "canvas":
-            return "text"
+            return "canvas"
 
         return selected
 

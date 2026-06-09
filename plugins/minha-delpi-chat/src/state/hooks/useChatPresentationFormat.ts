@@ -39,12 +39,17 @@ export const PRESENTATION_FORMAT_OPTIONS: ChatPresentationFormatOption[] = [
     label: "Gráfico",
     description: "Prioriza gráficos quando os dados forem visuais.",
   },
+  {
+    id: "canvas",
+    label: "Documento",
+    description: "Prioriza narrativa longa na lousa (markdown expandível).",
+  },
 ];
 
 function normalizeFormat(value: string | null | undefined): ChatPresentationFormatId {
   const raw = String(value ?? "").trim().toLowerCase();
 
-  if (raw === "text" || raw === "table" || raw === "tree" || raw === "chart") {
+  if (raw === "text" || raw === "table" || raw === "tree" || raw === "chart" || raw === "canvas") {
     return raw;
   }
 

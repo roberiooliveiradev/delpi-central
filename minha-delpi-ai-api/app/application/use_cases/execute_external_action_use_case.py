@@ -257,6 +257,7 @@ class ExecuteExternalActionUseCase:
 
         if text_presentation:
             available_formats.append("text")
+            available_formats.append("canvas")
 
         if tree_presentation:
             available_formats.append("tree")
@@ -400,7 +401,7 @@ class ExecuteExternalActionUseCase:
         preferred_format = None
 
         if session_format in {"table", "text", "tree", "chart", "topics", "canvas"}:
-            preferred_format = "text" if session_format == "canvas" else session_format
+            preferred_format = session_format if session_format != "topics" else "text"
         elif dashboard_presentation:
             preferred_format = "dashboard"
         elif price_like and text_presentation and not session_format:

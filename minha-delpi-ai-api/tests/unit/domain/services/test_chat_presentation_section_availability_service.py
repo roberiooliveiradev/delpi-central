@@ -53,17 +53,24 @@ def test_analyser_humanized_sections_only_when_data_exists():
     assert "estrutura com" not in " ".join(framing.values()).lower()
 
 
-def test_stock_route_has_no_humanized_sections():
+def test_stock_route_has_humanized_sections_when_highlights_exist():
     metadata = {
         "path": "/products/90260149/stock",
-        "textPresentation": {"markdown": "**Destaques**\n\n- Saldo."},
+        "textPresentation": {
+            "markdown": "### Estoque\n\n**Destaques**\n\n- Saldo positivo.",
+        },
+        "tablePresentation": {
+            "type": "table",
+            "title": "Estoque por filial",
+            "rows": [{"branch": "01", "available_quantity": 1}],
+        },
     }
 
     plan = ChatPresentationStackOrderService.resolve_plan(metadata)
 
-    assert plan["humanizedSections"] is False
+    assert plan["humanizedSections"] is True
     assert plan["presentationProfile"] == "generic_stack"
-    assert plan.get("sectionVisibility") == {}
+    assert plan["sectionVisibility"]["highlights"] is True
 
 
 def test_filter_analyser_highlights_drops_absence_bullets():

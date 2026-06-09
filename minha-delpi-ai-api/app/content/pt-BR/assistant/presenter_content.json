@@ -122,6 +122,32 @@
     "emptyQuery": "A consulta não retornou dados tabulares para exibir.",
     "singleRecordLead": "{title}: registro único com {columns} campo(s)."
   },
+  "stackSectionFraming": {
+    "default": {
+      "scope": "Contexto interpretativo desta resposta antes dos detalhes.",
+      "profile": "Identificação e cadastro resumido do foco consultado.",
+      "highlights": "Síntese dos pontos mais relevantes antes das tabelas operacionais.",
+      "guide": "Detalhamento tabular para conferência linha a linha.",
+      "structure": "Composição ou hierarquia quando disponível nos dados.",
+      "attention": "Pontos que merecem revisão antes de tomar uma ação."
+    },
+    "byProfile": {
+      "stock": {
+        "scope": "Panorama do estoque consultado antes do detalhamento por filial ou armazém.",
+        "highlights": "Resumo dos saldos e situações mais relevantes.",
+        "guide": "Posições detalhadas para auditoria operacional."
+      },
+      "table_list": {
+        "guide": "Listagem retornada pela API para comparação e filtro."
+      },
+      "tree_hierarchy": {
+        "structure": "Hierarquia de composição ou vínculos entre itens."
+      },
+      "generic": {
+        "scope": "Resumo interpretativo desta consulta."
+      }
+    }
+  },
   "itemsListPreview": {
     "supplierLeadTime": "Lead time: {days}d",
     "supplierLastPrice": "Últ. preço: R$ {price}",

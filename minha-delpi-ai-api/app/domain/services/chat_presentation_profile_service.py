@@ -117,10 +117,10 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         token = str(session_format or "").strip().lower()
 
         if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
-            if token == "canvas":
+            if token == "topics":
                 return "text"
 
-            return cls._SESSION_FORMAT_ALIASES.get(token, token)
+            return token
 
         profile = cls.resolve_profile(path, entity)
         policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
