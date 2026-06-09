@@ -1,16 +1,26 @@
 import { getAuthToken, getMessageTargetOrigin } from "./auth";
+import { buildThemeMessage } from "./portalTheme";
+
+function postToDocsIframe(iframe: HTMLIFrameElement | null, payload: unknown): void {
+  if (!iframe?.contentWindow) return;
+  iframe.contentWindow.postMessage(payload, getMessageTargetOrigin());
+}
 
 /** Envia JWT à documentação interativa da api-delpi (main.py → DELPI_AUTH). */
 export function postAuthToDocsIframe(iframe: HTMLIFrameElement | null): void {
-  if (!iframe?.contentWindow) return;
-
   const token = getAuthToken();
   if (!token) return;
+  postToDocsIframe(iframe, { type: "DELPI_AUTH", token });
+}
 
-  iframe.contentWindow.postMessage(
-    { type: "DELPI_AUTH", token },
-    getMessageTargetOrigin(),
-  );
+/** Sincroniza tema claro/escuro do portal com o Swagger embutido. */
+export function postThemeToDocsIframe(iframe: HTMLIFrameElement | null): void {
+  postToDocsIframe(iframe, buildThemeMessage());
+}
+
+export function syncDocsIframeBridge(iframe: HTMLIFrameElement | null): void {
+  postThemeToDocsIframe(iframe);
+  postAuthToDocsIframe(iframe);
 }
 
 export function setupDocsMessageListener(
@@ -21,16 +31,38 @@ export function setupDocsMessageListener(
     if (event.origin !== getMessageTargetOrigin()) return;
 
     if (event.data?.type === "DELPI_AUTH_READY") {
-      postAuthToDocsIframe(iframe);
+      syncDocsIframeBridge(iframe);
       return;
     }
 
     if (event.data?.type === "DELPI_REFRESH_REQUEST") {
       onUnauthorized?.();
-      window.setTimeout(() => postAuthToDocsIframe(iframe), 300);
+      window.setTimeout(() => syncDocsIframeBridge(iframe), 300);
     }
   };
 
   window.addEventListener("message", handler);
   return () => window.removeEventListener("message", handler);
+}
+
+export function setupDocsThemeObserver(
+  iframe: HTMLIFrameElement | null,
+): () => void {
+  const sync = () => postThemeToDocsIframe(iframe);
+
+  const observer = new MutationObserver(sync);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === "theme") sync();
+  };
+  window.addEventListener("storage", onStorage);
+
+  return () => {
+    observer.disconnect();
+    window.removeEventListener("storage", onStorage);
+  };
 }

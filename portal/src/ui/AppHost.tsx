@@ -496,6 +496,32 @@ export const AppHost = () => {
     return () => window.removeEventListener("focus", onFocus);
   }, [getAccessToken]);
 
+  useEffect(() => {
+    function handleNestedIframeRefresh(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "DELPI_REFRESH_REQUEST") return;
+
+      void refreshToken().then(() => {
+        const token = getAccessToken();
+        if (!token) return;
+
+        if (typeof mountedModuleRef.current?.updateToken === "function") {
+          mountedModuleRef.current.updateToken(token);
+          return;
+        }
+
+        window.dispatchEvent(
+          new CustomEvent("DELPI_TOKEN_UPDATE", {
+            detail: { token },
+          })
+        );
+      });
+    }
+
+    window.addEventListener("message", handleNestedIframeRefresh);
+    return () => window.removeEventListener("message", handleNestedIframeRefresh);
+  }, [getAccessToken, refreshToken]);
+
   if (!app) return <div>App não encontrado.</div>;
 
   if (app.renderMode === "external") {

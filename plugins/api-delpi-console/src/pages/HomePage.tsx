@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, BookOpen, CheckCircle2, FileJson, Terminal, XCircle } from "lucide-react";
+import { Activity, BookOpen, CheckCircle2, FileJson, ShieldCheck, Terminal, XCircle } from "lucide-react";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
 
 type Props = {
@@ -74,6 +74,14 @@ export function HomePage({ onNavigate }: Props) {
           <p>Referência interativa de rotas com teste de endpoints e JWT do portal.</p>
         </article>
 
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("verificacoes")}>
+          <div className="adc-card__icon">
+            <ShieldCheck size={22} />
+          </div>
+          <h2>Verificações</h2>
+          <p>Smoke suite das rotas críticas — LMP, estoque, qualidade e saúde.</p>
+        </article>
+
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>
           <div className="adc-card__icon">
             <Terminal size={22} />
@@ -92,11 +100,11 @@ export function HomePage({ onNavigate }: Props) {
       </section>
 
       <section className="adc-panel adc-panel--info">
-        <h3>Autenticação na documentação</h3>
+        <h3>Integração com o portal</h3>
         <p>
-          A documentação embutida usa <code>/apps/api-delpi/docs</code> com bridge{" "}
-          <code>DELPI_AUTH</code> (mesmo contrato do portal para iframes). Em 401, o iframe
-          solicita reenvio do token via <code>DELPI_REFRESH_REQUEST</code>.
+          Visual alinhado às variáveis do portal (<code>--primary</code>, <code>--secundary</code>,
+          light/dark). A documentação usa <code>DELPI_AUTH</code> para JWT automático; verificações
+          registram <code>operationId</code> e latência por rota.
         </p>
         <p className="adc-muted">
           Roadmap: <code>api-delpi/docs/roadmaps/playbook-api-delpi-console.md</code>

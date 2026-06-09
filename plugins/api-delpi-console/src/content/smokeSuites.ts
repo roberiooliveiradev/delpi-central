@@ -1,0 +1,111 @@
+import type { SmokeSuite } from "../lib/smokeRunner";
+
+export const smokeSuites: { suites: SmokeSuite[] } = {
+  suites: [
+    {
+      id: "essencial",
+      name: "Rotas essenciais",
+      description: "Saúde da API e endpoints críticos usados pelos dashboards.",
+      cases: [
+        {
+          id: "health",
+          label: "Saúde da API",
+          method: "GET",
+          path: "/health",
+          expectStatus: [200],
+          maxDurationMs: 5000,
+        },
+        {
+          id: "lmp-summary",
+          label: "LMP — resumo do dashboard",
+          method: "GET",
+          path: "/engineering/lmps/dashboard/summary",
+          query: { status: "Todos" },
+          expectStatus: [200],
+          maxDurationMs: 45000,
+        },
+        {
+          id: "stock-value",
+          label: "Suprimentos — valor de estoque",
+          method: "GET",
+          path: "/supplies/stock-value",
+          query: { top_limit: "5" },
+          expectStatus: [200],
+          maxDurationMs: 60000,
+        },
+        {
+          id: "quality-branches",
+          label: "Qualidade — filiais",
+          method: "GET",
+          path: "/quality/branches",
+          expectStatus: [200],
+          maxDurationMs: 15000,
+        },
+      ],
+    },
+    {
+      id: "qualidade-ppm",
+      name: "Qualidade — PPM",
+      description: "Resumos de PPM interno/externo e quantidade produzida.",
+      cases: [
+        {
+          id: "ppm-internal-summary",
+          label: "PPM interno — resumo",
+          method: "GET",
+          path: "/quality/ppm/internal/summary",
+          expectStatus: [200],
+          maxDurationMs: 45000,
+        },
+        {
+          id: "ppm-external-summary",
+          label: "PPM externo — resumo",
+          method: "GET",
+          path: "/quality/ppm/external/summary",
+          expectStatus: [200],
+          maxDurationMs: 45000,
+        },
+        {
+          id: "produced-quantity",
+          label: "Quantidade produzida",
+          method: "GET",
+          path: "/quality/produced-quantity",
+          expectStatus: [200],
+          maxDurationMs: 45000,
+        },
+      ],
+    },
+    {
+      id: "engenharia-agendamento",
+      name: "Engenharia e agendamento",
+      description: "Transforma Mais e recursos de agendamento por filial.",
+      cases: [
+        {
+          id: "transforma-mais-summary",
+          label: "Transforma Mais — resumo",
+          method: "GET",
+          path: "/engineering/transforma-mais/processes/summary",
+          expectStatus: [200],
+          maxDurationMs: 45000,
+        },
+        {
+          id: "scheduling-resources-es",
+          label: "Agendamento — recursos (ES)",
+          method: "GET",
+          path: "/scheduling/resources",
+          query: { branch: "ES" },
+          expectStatus: [200],
+          maxDurationMs: 15000,
+        },
+        {
+          id: "scheduling-resources-sc",
+          label: "Agendamento — recursos (SC)",
+          method: "GET",
+          path: "/scheduling/resources",
+          query: { branch: "SC" },
+          expectStatus: [200],
+          maxDurationMs: 15000,
+        },
+      ],
+    },
+  ],
+};

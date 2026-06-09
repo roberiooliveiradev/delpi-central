@@ -3,7 +3,7 @@
 > **Plugin:** `plugins/api-delpi-console`  
 > **Manifesto:** `api-delpi-console.manifest.json`  
 > **Público:** engenharia, ops, suporte avançado  
-> **Status:** Fase 0 (MVP) entregue — explorador OpenAPI + histórico local
+> **Status:** Fase 0 concluída · Fase 1 iniciada (verificações + tema portal)
 
 ---
 
@@ -51,6 +51,7 @@ Portal (AppHost federado)
 | **Documentação da API** | Iframe `/apps/api-delpi/docs` com bridge `DELPI_AUTH` / `DELPI_REFRESH_REQUEST` |
 | **Explorador** | Lista operações do OpenAPI por tag; exemplos de schema; respostas documentadas; executor HTTP |
 | **OpenAPI / Spec** | Resumo da spec (tags, versão), inventário e download `openapi.json` |
+| **Verificações** | Smoke suite «Rotas essenciais» (health, LMP summary, stock-value, quality branches) |
 | **Histórico** | Últimas 50 chamadas (status, ms cliente/servidor, `operationId`) |
 
 ### Critérios de aceite
@@ -62,6 +63,8 @@ Portal (AppHost federado)
 - [x] Documentação interativa embutida com autorização JWT automática
 - [x] Página de especificação OpenAPI (inventário + download)
 - [x] Serviço Docker `api-delpi-console`
+- [x] Tema alinhado ao portal (`--primary`, `--secundary`, `data-theme` light/dark)
+- [x] Smoke suite inicial em `plugins/api-delpi-console/src/content/smokeSuites.ts`
 
 ### Registro na plataforma
 
@@ -87,16 +90,19 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 
 ## 4. Roadmap
 
-### Fase 1 — Smoke suites (2–3 sprints)
+### Fase 1 — Smoke suites (em andamento)
 
-| Item | Detalhe |
-|------|---------|
-| **Coleções fixas** | Rotas críticas: LMP dashboard, stock-value, quality PPM, scheduling |
-| **Execução em lote** | Rodar N requests sequenciais; tabela pass/fail + tempo p95 |
-| **Persistência** | Salvar último resultado da suite no localStorage ou Core API (config por tenant) |
-| **API backend** | Opcional: `GET /system/smoke-definitions` (JSON versionado no repo) |
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Coleções fixas** | Rotas críticas: health, LMP summary, stock-value, quality branches | [x] MVP |
+| **Execução em lote** | Rodar N requests sequenciais; tabela pass/fail + latência | [x] MVP |
+| **Persistência** | Último resultado no localStorage | [x] MVP |
+| **Mais suites** | PPM, scheduling, transforma-mais | [x] |
+| **Exportação** | CSV/JSON do último resultado na UI | [x] |
+| **Homologação** | `scripts/homologacao/check-api-delpi-console.sh` | [x] |
+| **API backend** | Opcional: `GET /system/smoke-definitions` (JSON versionado no repo) | [ ] |
 
-**DoD:** suite «Estoque + LMP» roda em &lt; 60s em homologação; falha exibe `operationId` e corpo de erro.
+**DoD:** suite «Rotas essenciais» roda em homologação; falha exibe `operationId` e motivo (status ou timeout).
 
 ### Fase 2 — Saúde SQL (3–4 sprints)
 

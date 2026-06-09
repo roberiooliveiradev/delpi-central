@@ -8,6 +8,7 @@ Microfrontend para explorar rotas da **api-delpi**, executar requests de teste e
 |------|-----------|
 | `/apps/api-delpi-console` | Início — saúde da API |
 | `/apps/api-delpi-console/documentacao` | Documentação interativa (`/apps/api-delpi/docs`) com JWT automático |
+| `/apps/api-delpi-console/verificacoes` | Smoke suites (essencial, PPM, engenharia/agendamento) com exportação CSV/JSON |
 | `/apps/api-delpi-console/explorer` | Explorador OpenAPI com executor de requests |
 | `/apps/api-delpi-console/spec` | Inventário OpenAPI + download JSON |
 | `/apps/api-delpi-console/history` | Histórico local de chamadas |
@@ -38,6 +39,10 @@ docker compose up -d --build api-delpi-console
 ```
 
 ## Registro na Core API
+
+O manifesto expõe **apenas a rota principal** no launcher do portal; Documentação, Verificações, Explorador etc. são navegação interna do MFE.
+
+Após alterar o manifesto, **re-registre** o app para remover sub-rotas antigas do menu:
 
 ```bash
 curl -X POST "http://localhost/core-api/admin/apps/register" \

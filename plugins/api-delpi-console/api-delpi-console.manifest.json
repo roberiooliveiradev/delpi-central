@@ -24,38 +24,6 @@
       "icon": "terminal",
       "order": 90,
       "showInMenu": true
-    },
-    {
-      "path": "/apps/api-delpi-console/documentacao",
-      "label": "Documentação da API",
-      "permission": "api-delpi-console.view",
-      "icon": "terminal",
-      "order": 91,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/api-delpi-console/explorer",
-      "label": "Explorador de rotas",
-      "permission": "api-delpi-console.view",
-      "icon": "terminal",
-      "order": 92,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/api-delpi-console/spec",
-      "label": "Especificação OpenAPI",
-      "permission": "api-delpi-console.view",
-      "icon": "terminal",
-      "order": 93,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/api-delpi-console/history",
-      "label": "Histórico de chamadas",
-      "permission": "api-delpi-console.view",
-      "icon": "terminal",
-      "order": 94,
-      "showInMenu": false
     }
   ],
   "ui": {

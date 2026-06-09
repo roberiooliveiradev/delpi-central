@@ -1,11 +1,18 @@
 let accessTokenGetter: (() => string | undefined) | null = null;
+let cachedAccessToken: string | null = null;
 
 export function configureAuth(getAccessToken?: () => string | undefined) {
   accessTokenGetter = getAccessToken ?? null;
+  const token = getAccessToken?.();
+  if (token) cachedAccessToken = token;
+}
+
+export function setCachedAccessToken(token: string | null): void {
+  cachedAccessToken = token;
 }
 
 export function getAuthToken(): string | null {
-  const fromPortal = accessTokenGetter?.();
+  const fromPortal = accessTokenGetter?.() ?? cachedAccessToken;
   if (fromPortal) return fromPortal;
 
   if (typeof window === "undefined") return null;

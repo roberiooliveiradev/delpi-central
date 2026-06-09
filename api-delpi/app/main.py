@@ -34,6 +34,7 @@ from app.core.responses import error_response, not_found_response
 from app.middleware.auth_middleware import jwt_middleware
 from app.middleware.app_usage_tracking_middleware import app_usage_tracking_middleware
 from app.middleware.request_observability_middleware import request_observability_middleware
+from app.interface.http.swagger_portal_bridge import build_swagger_portal_bridge_script
 
 
 # ==========================================================
@@ -204,71 +205,10 @@ async def custom_swagger():
         title="API DELPI Docs",
     )
 
-    allowed_origins_js = "[" + ", ".join(f'"{origin}"' for origin in ALLOWED_ORIGINS) + "]"
-
-    injected_script = f"""
-    <script>
-    window.DELPI_TOKEN = null;
-
-    const ALLOWED_ORIGINS = {allowed_origins_js};
-
-    function applyToken(token) {{
-        if (!window.ui || !token) return;
-
-        try {{
-            window.ui.preauthorizeApiKey("BearerAuth", token);
-            console.log("Swagger autorizado automaticamente 🔐");
-        }} catch (error) {{
-            console.warn("Falha ao aplicar token no Swagger:", error);
-        }}
-    }}
-
-    window.addEventListener("message", function (event) {{
-        if (!ALLOWED_ORIGINS.includes(event.origin)) return;
-
-        if (event.data?.type === "DELPI_AUTH" && event.data?.token) {{
-            window.DELPI_TOKEN = event.data.token;
-            applyToken(window.DELPI_TOKEN);
-        }}
-    }});
-
-    const originalFetch = window.fetch.bind(window);
-
-    window.fetch = async function () {{
-        const response = await originalFetch.apply(this, arguments);
-
-        if (response.status === 401) {{
-            try {{
-                if (window.parent && window.parent !== window) {{
-                    const targetOrigin = ALLOWED_ORIGINS.includes(window.location.origin)
-                        ? window.location.origin
-                        : ALLOWED_ORIGINS[0];
-
-                    if (targetOrigin) {{
-                        window.parent.postMessage(
-                            {{ type: "DELPI_REFRESH_REQUEST" }},
-                            targetOrigin
-                        );
-                    }}
-                }}
-            }} catch (error) {{
-                console.warn("Falha ao solicitar refresh do token:", error);
-            }}
-        }}
-
-        return response;
-    }};
-
-    window.addEventListener("load", function () {{
-        if (window.DELPI_TOKEN) {{
-            applyToken(window.DELPI_TOKEN);
-        }}
-    }});
-    </script>
-    """
+    injected_bridge = build_swagger_portal_bridge_script(ALLOWED_ORIGINS)
 
     html_content = swagger_html.body.decode("utf-8")
-    html_content = html_content.replace("</body>", injected_script + "</body>")
+    html_content = html_content.replace("</body>", injected_bridge + "</body>")
 
     return HTMLResponse(content=html_content)
 

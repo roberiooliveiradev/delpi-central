@@ -1,5 +1,6 @@
 import ReactDOM from "react-dom/client";
 import App, { type AppProps } from "./App";
+import { setCachedAccessToken } from "./lib/auth";
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 
@@ -18,6 +19,15 @@ export function mount(el: HTMLElement, props: AppProps = {}) {
 
 export function updateRoute(el: HTMLElement, props: AppProps = {}) {
   renderApp(el, props);
+}
+
+export function updateToken(token: string) {
+  setCachedAccessToken(token);
+  window.dispatchEvent(
+    new CustomEvent("DELPI_TOKEN_UPDATE", {
+      detail: { token },
+    }),
+  );
 }
 
 export function unmount(el?: HTMLElement) {

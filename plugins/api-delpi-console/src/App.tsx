@@ -6,6 +6,7 @@ import { ExplorerPage } from "./pages/ExplorerPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { HomePage } from "./pages/HomePage";
 import { SpecPage } from "./pages/SpecPage";
+import { VerificacoesPage } from "./pages/VerificacoesPage";
 import { DocumentacaoPage } from "./pages/DocumentacaoPage";
 import "./index.css";
 
@@ -25,6 +26,8 @@ function renderPage(segment: string, onNavigate: (s: string) => void) {
   switch (segment) {
     case "documentacao":
       return <DocumentacaoPage onNavigate={onNavigate} />;
+    case "verificacoes":
+      return <VerificacoesPage onNavigate={onNavigate} />;
     case "explorer":
       return <ExplorerPage onNavigate={onNavigate} />;
     case "spec":
