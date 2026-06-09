@@ -56,6 +56,15 @@ class ChatExternalActionOrchestrationService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return []
 
+        from app.domain.services.chat_active_query_session_service import (
+            ChatActiveQuerySessionService,
+        )
+
+        selection_message = ChatActiveQuerySessionService.compose_selection_message(
+            message,
+            previous_messages=previous_messages,
+        )
+
         from app.application.services.chat_conversation_context_service import (
             ChatConversationContextService,
         )
@@ -130,7 +139,7 @@ class ChatExternalActionOrchestrationService:
 
         if not Settings.CHAT_MULTI_ACTION_ENABLED:
             selected = selection_service.select_action(
-                message,
+                selection_message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
@@ -186,7 +195,7 @@ class ChatExternalActionOrchestrationService:
             normalized
         ):
             selected = selection_service.select_action(
-                message,
+                selection_message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
@@ -216,7 +225,7 @@ class ChatExternalActionOrchestrationService:
             for refinement in operational_follow_ups[:limit]:
                 if refinement.kind in {"stock_refinement", "stock_reset"}:
                     selected = selection_service.select_action_for_product(
-                        message,
+                        selection_message,
                         product_code=str(refinement.product_code or ""),
                         allowed_action_ids=allowed_action_ids,
                         intent=ChatProductQueryIntent.STOCK,
@@ -224,7 +233,7 @@ class ChatExternalActionOrchestrationService:
                     )
                 elif refinement.kind in {"metric_refinement", "metric_reset"}:
                     selected = selection_service.select_action(
-                        message,
+                        selection_message,
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
@@ -233,7 +242,7 @@ class ChatExternalActionOrchestrationService:
                     )
                 elif refinement.kind == "pagination_refinement":
                     selected = selection_service.select_action(
-                        message,
+                        selection_message,
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
@@ -242,7 +251,7 @@ class ChatExternalActionOrchestrationService:
                     )
                 elif refinement.kind == "depth_refinement":
                     selected = selection_service.select_action(
-                        message,
+                        selection_message,
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
@@ -259,27 +268,28 @@ class ChatExternalActionOrchestrationService:
                 return _return_planned(planned)
 
         limit = cls._resolve_max_calls(max_calls)
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        planning_message = selection_message
+        normalized = ChatMessageNormalizationService.normalize_for_matching(planning_message)
         codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
-            message,
+            planning_message,
             conversation_context,
             previous_messages=previous_messages,
             memory_snapshot=memory_snapshot,
         )
         intent = ChatProductQueryIntentService.resolve_product_intent(
-            message,
+            planning_message,
             previous_messages=previous_messages,
         )
         route_segment = ChatRouteContextService.resolve_product_route_segment(
-            message,
+            planning_message,
             previous_messages=previous_messages,
         )
 
-        explicit_route_segment = ChatRouteContextService.segment_from_message(message)
+        explicit_route_segment = ChatRouteContextService.segment_from_message(planning_message)
 
         if intent == ChatProductQueryIntent.FULL:
             intent = ChatProductQueryIntentService.refine_operational_intent_from_full(
-                message,
+                planning_message,
                 normalized=normalized,
             )
 
@@ -292,7 +302,7 @@ class ChatExternalActionOrchestrationService:
             not codes
             and recent_batch
             and (
-                ChatProductQueryIntentService.references_previous_product(message)
+                ChatProductQueryIntentService.references_previous_product(planning_message)
                 or ChatRouteContextService.is_product_route_segment(route_segment)
                 or ChatRouteContextService.is_product_route_segment(explicit_route_segment)
             )
@@ -318,11 +328,12 @@ class ChatExternalActionOrchestrationService:
 
             for code in codes[:limit]:
                 selected = selection_service.select_action_for_product(
-                    message,
+                    selection_message,
                     product_code=code,
                     allowed_action_ids=allowed_action_ids,
                     intent=intent,
                     route_segment=route_segment,
+                    previous_messages=previous_messages,
                 )
 
                 if selected:
@@ -336,7 +347,7 @@ class ChatExternalActionOrchestrationService:
         )
 
         product_code = ChatProductQueryIntentService.resolve_product_code(
-            message,
+            planning_message,
             conversation_context,
             previous_messages=previous_messages,
             memory_snapshot=memory_snapshot,
@@ -345,7 +356,7 @@ class ChatExternalActionOrchestrationService:
         if product_code:
             scope_planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
                 selection_service,
-                message=message,
+                message=planning_message,
                 product_code=product_code,
                 allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
@@ -359,7 +370,7 @@ class ChatExternalActionOrchestrationService:
                 return _return_planned(scope_planned)
 
         selected = selection_service.select_action(
-            message,
+            selection_message,
             allowed_action_ids=allowed_action_ids,
             conversation_context=conversation_context,
             previous_messages=previous_messages,

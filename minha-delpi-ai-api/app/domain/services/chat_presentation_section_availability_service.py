@@ -32,24 +32,60 @@ class ChatPresentationSectionAvailabilityService:
         path = str(metadata.get("path") or "")
         lowered = ChatPresentationRoutePolicyService.path_lowered(path)
 
-        if not ChatPresentationRoutePolicyService.is_analyser_route(lowered):
-            plan["presentationProfile"] = "generic_stack"
-            plan["humanizedSections"] = False
-            plan["sectionVisibility"] = {}
-            plan["sectionFraming"] = {}
+        if ChatPresentationRoutePolicyService.is_analyser_route(lowered):
+            visibility = cls._resolve_analyser_visibility(metadata)
+            plan["presentationProfile"] = "product_analyser"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_section_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_visibility(
+                visibility,
+                attention_last=bool(visibility.get(cls._ATTENTION)),
+                highlights_after_profile=bool(visibility.get(cls._HIGHLIGHTS)),
+                profile_first=bool(visibility.get(cls._PROFILE)),
+            )
             return plan
 
-        visibility = cls._resolve_analyser_visibility(metadata)
-        plan["presentationProfile"] = "product_analyser"
-        plan["humanizedSections"] = True
-        plan["sectionVisibility"] = visibility
-        plan["sectionFraming"] = cls._build_section_framing(metadata, visibility)
-        plan["narrativeOrder"] = cls._narrative_order_for_visibility(
-            visibility,
-            attention_last=bool(visibility.get(cls._ATTENTION)),
-            highlights_after_profile=bool(visibility.get(cls._HIGHLIGHTS)),
-            profile_first=bool(visibility.get(cls._PROFILE)),
-        )
+        if ChatPresentationRoutePolicyService.is_factory_status_route(lowered):
+            visibility = cls._resolve_factory_visibility(metadata)
+            plan["presentationProfile"] = "product_factory_status"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_factory_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_factory(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_production_status_route(lowered):
+            visibility = cls._resolve_production_visibility(metadata)
+            plan["presentationProfile"] = "product_production_status"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_production_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_production(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_shipping_status_route(lowered):
+            visibility = cls._resolve_shipping_visibility(metadata)
+            plan["presentationProfile"] = "product_shipping_status"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_shipping_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_shipping(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_structure_exclusivity_route(lowered):
+            visibility = cls._resolve_structure_exclusivity_visibility(metadata)
+            plan["presentationProfile"] = "product_structure_exclusivity"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_structure_exclusivity_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_structure_exclusivity(visibility)
+            return plan
+
+        plan["presentationProfile"] = "generic_stack"
+        plan["humanizedSections"] = False
+        plan["sectionVisibility"] = {}
+        plan["sectionFraming"] = {}
         return plan
 
     @classmethod
@@ -154,6 +190,299 @@ class ChatPresentationSectionAvailabilityService:
             framing[cls._ATTENTION] = section_texts.get("attention", "")
 
         return framing
+
+    @classmethod
+    def _narrative_order_for_factory(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if (
+            visibility.get(cls._PROFILE)
+            or visibility.get(cls._STRUCTURE)
+            or visibility.get(cls._GUIDE)
+        ):
+            order.append("operationalTables")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _narrative_order_for_production(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
+            order.append("operationalTables")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _resolve_factory_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(metadata, ("panorama fabril",)),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._STRUCTURE: cls._has_table_with_tokens(
+                metadata,
+                ("estrutura", "bom", "exclusividade"),
+            ),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ("estoque", "matéria", "materia", "produção", "producao", "expedição", "expedicao"),
+            ),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_production_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo produtivo",)),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ("ordens", "apontamento", "produção", "producao"),
+            ),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_shipping_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo de expedição", "resumo de expedicao")),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ("expedição", "expedicao", "movimentos", "inspeção final", "inspecao final"),
+            ),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_structure_exclusivity_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo da estrutura",)),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._STRUCTURE: cls._has_table_with_tokens(
+                metadata,
+                ("exclusividade", "componentes", "estrutura"),
+            ),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _narrative_order_for_shipping(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
+            order.append("operationalTables")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _narrative_order_for_structure_exclusivity(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE):
+            order.append("profileTables")
+
+        if visibility.get(cls._STRUCTURE):
+            order.append("tailVisuals")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _build_factory_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/factory-status")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "factoryScopeWithCode" if code else "factoryScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("factoryScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("factoryHighlights", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("factoryStructure", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("factoryProduction", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("factoryStock", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("factoryAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_production_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/production-status")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "productionScopeWithCode" if code else "productionScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("productionScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("productionHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("productionHighlights", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("productionOrders", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("productionAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_shipping_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/shipping-status")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "shippingScopeWithCode" if code else "shippingScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("shippingScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("shippingHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("shippingSummary", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("shippingMovements", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("shippingAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_structure_exclusivity_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/structure/exclusivity")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "structureExclusivityScopeWithCode" if code else "structureExclusivityScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("structureExclusivityScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("structureExclusivityHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("structureExclusivitySummary", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("structureExclusivityComponents", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("structureExclusivityAttention", "")
+
+        return result
+
+    @classmethod
+    def _load_section_framing(cls) -> dict[str, str]:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        return ChatProductOperationalContentService.get_mapping(
+            "presentation",
+            "sectionFraming",
+        )
+
+    @classmethod
+    def _product_code_from_path_generic(cls, metadata: dict[str, Any], token: str) -> str:
+        match = re.search(
+            rf"/products/([^/]+){re.escape(token)}",
+            str(metadata.get("path") or ""),
+            re.I,
+        )
+
+        return match.group(1).strip() if match else ""
+
+    @classmethod
+    def _has_table_with_tokens(cls, metadata: dict[str, Any], title_tokens: tuple[str, ...]) -> bool:
+        for presentation in cls._table_presentations(metadata):
+            title = str(presentation.get("title") or "").strip().lower()
+
+            if any(token in title for token in title_tokens):
+                return cls._table_has_rows(presentation)
+
+        return False
+
+    @classmethod
+    def _has_highlights_generic(cls, markdown: str) -> bool:
+        marker = cls._highlights_header()
+
+        return marker in markdown and cls._has_highlights(markdown)
+
+    @classmethod
+    def _has_attention_generic(cls, markdown: str) -> bool:
+        marker = cls._attention_header_prefix()
+
+        return marker in markdown and cls._has_attention(markdown)
 
     @classmethod
     def _strip_md(cls, value: str) -> str:

@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "product_code": "90269002",
+      "description": "PRODUTO FICTICIO FABRIL"
+    },
+    "date_start": "20260604",
+    "date_end_exclusive": "20260605",
+    "items": [
+      {
+        "production_order": "001",
+        "product_code": "90269002",
+        "description": "PRODUTO FICTICIO FABRIL",
+        "shipped_quantity": "10",
+        "inspection_loss_quantity": "1",
+        "total_reports": 2,
+        "resource_code": "REC01",
+        "work_center": "CT01"
+      }
+    ],
+    "summary": {
+      "total_shipped_quantity": 10,
+      "total_inspection_loss_quantity": 1,
+      "total_reports": 2
+    }
+  }
+}

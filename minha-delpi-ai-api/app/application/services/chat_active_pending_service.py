@@ -69,10 +69,20 @@ class ChatActivePendingService:
             message,
             previous_messages=previous_messages,
         ):
+            from app.domain.services.chat_active_query_session_service import (
+                ChatActiveQuerySessionService,
+            )
+
             intent = ChatOperationalParameterService._missing_product_code_intent(
                 message,
                 None,
                 previous_messages=previous_messages,
+            )
+
+            context = ChatActiveQuerySessionService.build_pending_context(
+                message,
+                sub_intent=intent or "default",
+                expected_param="productCode",
             )
 
             return {
@@ -80,6 +90,7 @@ class ChatActivePendingService:
                 "expectedParam": "productCode",
                 "subIntent": intent or "default",
                 "prompt": "Informe o código do produto para continuar a consulta.",
+                "context": context,
             }
 
         if ChatOperationalParameterService.resolve_ambiguous_period_answer(
@@ -111,6 +122,29 @@ class ChatActivePendingService:
                 "expectedParam": "periodYear",
                 "subIntent": "period",
                 "prompt": "Confirme o ano do período solicitado.",
+                "context": context,
+            }
+
+        missing_date = ChatOperationalParameterService.resolve_missing_date_answer(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if missing_date:
+            from app.domain.services.chat_operational_date_parameter_service import (
+                ChatOperationalDateParameterService,
+            )
+
+            context = ChatOperationalDateParameterService.build_pending_context(
+                message,
+                previous_messages=previous_messages,
+            )
+
+            return {
+                "kind": "missing_date",
+                "expectedParam": "period",
+                "subIntent": context.get("subIntent") or "default",
+                "prompt": "Informe a data ou o período da consulta.",
                 "context": context,
             }
 
@@ -153,18 +187,44 @@ class ChatActivePendingService:
             ):
                 return None
 
-            code = ChatProductQueryIntentService.extract_product_code(normalized)
+            from app.domain.services.chat_analysis_intent_service import (
+                ChatAnalysisIntentService,
+            )
 
-            if not code and re.fullmatch(r"\d{5,}", normalized.replace(".", "")):
-                code = normalized.replace(".", "").strip()
+            codes = ChatAnalysisIntentService.extract_all_product_codes(normalized)
 
-            if code and ChatProductQueryIntentService._CALENDAR_YEAR_RE.fullmatch(code):
-                return None
+            if not codes:
+                code = ChatProductQueryIntentService.extract_product_code(normalized)
 
-            if code:
+                if not code and re.fullmatch(r"\d{5,}", normalized.replace(".", "")):
+                    code = normalized.replace(".", "").strip()
+
+                if code and ChatProductQueryIntentService._CALENDAR_YEAR_RE.fullmatch(code):
+                    return None
+
+                if code:
+                    codes = [code]
+
+            if codes:
+                context = (
+                    pending.get("context")
+                    if isinstance(pending.get("context"), dict)
+                    else {}
+                )
+                original_message = str(context.get("originalMessage") or "").strip()
+                resume_message = f"{original_message} {normalized}".strip()
+                resolved_params: dict[str, str] = {}
+
+                if len(codes) == 1:
+                    resolved_params["productCode"] = codes[0]
+                else:
+                    resolved_params["productCode"] = codes[0]
+                    resolved_params["productCodes"] = ",".join(codes)
+
                 return {
                     "kind": kind,
-                    "resolvedParams": {"productCode": code},
+                    "resolvedParams": resolved_params,
+                    "resumeMessage": resume_message,
                     "requiresTool": True,
                 }
 
@@ -185,6 +245,34 @@ class ChatActivePendingService:
                         "resolvedParams": {"periodYear": year_match.group(1)},
                         "requiresTool": True,
                     }
+
+        if kind == "missing_date":
+            from app.domain.services.chat_operational_date_parameter_service import (
+                ChatOperationalDateParameterService,
+            )
+
+            date_range = ChatOperationalDateParameterService.resolve_date_range(normalized)
+
+            if date_range:
+                context = pending.get("context") if isinstance(pending.get("context"), dict) else {}
+                original_message = str(context.get("originalMessage") or "").strip()
+                resume_message = f"{original_message} {normalized}".strip()
+                resolved_params = {
+                    "referenceDate": date_range.start_date,
+                    "dateStart": date_range.start_date,
+                    "dateEnd": date_range.end_date,
+                }
+                product_code = str(context.get("productCode") or "").strip()
+
+                if product_code:
+                    resolved_params["productCode"] = product_code
+
+                return {
+                    "kind": kind,
+                    "resolvedParams": resolved_params,
+                    "resumeMessage": resume_message,
+                    "requiresTool": True,
+                }
 
         if kind in {"branch", "missing_branch", "filial"}:
             branch_match = re.search(r"\b(\d{1,3})\b", normalized)

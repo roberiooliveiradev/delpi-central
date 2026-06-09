@@ -142,6 +142,7 @@ class ExternalActionRouteSelectionService:
         route_segment: str | None = None,
         preferred_action_id: str | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         return self._product_route.select(
             message,
@@ -151,6 +152,7 @@ class ExternalActionRouteSelectionService:
             route_segment=route_segment,
             preferred_action_id=preferred_action_id,
             candidates_loader=candidates_loader,
+            previous_messages=previous_messages,
         )
 
     def select_lmp(

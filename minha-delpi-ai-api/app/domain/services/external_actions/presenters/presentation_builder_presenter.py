@@ -40,7 +40,36 @@ class ExternalActionPresentationBuilderPresenter:
                 return None
 
             if entity == "product_factory_status":
+                tables = self._host.build_factory_status_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
                 return self._build_factory_status_table(root, path)
+
+            if entity == "product_production_status":
+                tables = self._host.build_production_status_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
+                return self._host._build_playbook_report_table(root, path, entity=entity)
+
+            if entity == "product_shipping_status":
+                tables = self._host.build_shipping_status_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
+                return self._host._build_playbook_report_table(root, path, entity=entity)
+
+            if entity == "product_structure_exclusivity":
+                tables = self._host.build_structure_exclusivity_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
+                return self._host._build_playbook_report_table(root, path, entity=entity)
 
             product = root.get("product")
 
@@ -94,7 +123,6 @@ class ExternalActionPresentationBuilderPresenter:
                     return self._host._build_items_table(items, title=title, path=path)
 
             if entity in {
-                "product_production_status",
                 "product_shipping_status",
                 "product_structure_exclusivity",
             }:

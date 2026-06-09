@@ -10,6 +10,13 @@
   },
   "missingSaleNumber": "Claro! Para a **LMP** ou **ordem de venda**, informe o **número da OV** (ex.: 123456). Exemplo: *consulte a OV 123456*.",
   "missingPeriod": "Para essa consulta, preciso do **período** (ex.: *março de 2026*, *últimos 30 dias*). Sem isso, não filtro vendas ou indicadores com segurança.",
+  "missingDateByContext": {
+    "default": "Para essa consulta, preciso da **data ou do período** (ex.: *hoje*, *ontem*, *semana passada*, *01/06/2026 a 15/06/2026*).",
+    "factory_status": "Para montar o **status na fábrica**, informe a **data ou o intervalo** (ex.: *hoje*, *esta semana*, *01/06/2026*).",
+    "production_status": "Para a **análise produtiva**, informe a **data de referência** (ex.: *hoje*, *ontem*, *31/05/2026*).",
+    "shipping_status": "Para consultar **expedição/inspeção final**, informe a **data ou o período** (ex.: *hoje*, *semana passada*, *01/06 a 07/06*).",
+    "period_metric": "Para esse indicador, preciso do **período** (ex.: *março de 2026*, *últimos 30 dias*, *este mês*)."
+  },
   "missingBranch": "Qual **filial** devo usar? Ex.: *01* ou *matriz*.",
   "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?",
   "ambiguousPeriodRange": "Encontrei mais de uma interpretação de período. Confirme se quer **{option_a}** ou **{option_b}**."

@@ -18,6 +18,7 @@ class FakeSelectionService:
         allowed_action_ids=None,
         intent=None,
         route_segment=None,
+        previous_messages=None,
     ):
         self.product_calls.append((product_code, intent))
         return {

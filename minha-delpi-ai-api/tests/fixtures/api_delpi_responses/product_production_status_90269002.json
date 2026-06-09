@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "product_code": "90269002",
+      "description": "PRODUTO FICTICIO FABRIL"
+    },
+    "reference_date": "20260604",
+    "items": [
+      {
+        "level": 0,
+        "product_code": "90269002",
+        "description": "PRODUTO FICTICIO FABRIL",
+        "product_type": "PA",
+        "production_order": "001",
+        "order_quantity": "10",
+        "reported_quantity": "0",
+        "production_started": "NAO",
+        "total_reports": 0
+      }
+    ],
+    "summary": {
+      "total_pa_orders": 1,
+      "total_pi_orders": 0,
+      "pa_production_started": "NAO",
+      "pi_production_started": "NAO",
+      "total_pa_reported_quantity": 0,
+      "total_pi_reported_quantity": 0
+    }
+  }
+}

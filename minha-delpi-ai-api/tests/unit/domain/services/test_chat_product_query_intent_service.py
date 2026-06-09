@@ -53,6 +53,40 @@ def test_looks_like_factory_status_question_with_product_code():
     assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
 
 
+def test_looks_like_production_status_question_with_apontamentos():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "O produto 90269002 já tem apontamento na OP?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_production_status_question(normalized)
+    assert not ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
+
+
+def test_production_status_not_factory_for_playbook_phrase():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "análise produtiva do produto 90269002"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_production_status_question(normalized)
+
+
+def test_looks_like_shipping_status_question_with_expedicao():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quanto do produto 90269002 já foi liberado para expedição?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_shipping_status_question(normalized)
+    assert not ChatProductQueryIntentService._looks_like_production_status_question(normalized)
+
+
+def test_looks_like_structure_exclusivity_question():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quais MPs exclusivas existem na estrutura do produto 90269002?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_structure_exclusivity_question(normalized)
+
+
 def test_detect_summary_intent():
     assert (
         ChatProductQueryIntentService.detect("resumo do produto 10080047")

@@ -812,7 +812,36 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_factory_status_question(cls, normalized: str) -> bool:
+        if cls._looks_like_production_status_question(normalized):
+            factory_only = any(
+                term in normalized
+                for term in cls._terms("factoryStatus", "terms")
+            ) or any(
+                marker in normalized
+                for marker in (
+                    "fabril",
+                    "fabrica",
+                    "fábrica",
+                    "completo na fabrica",
+                    "completo na fábrica",
+                    "factory-status",
+                    "factory status",
+                )
+            )
+
+            if not factory_only:
+                return False
+
         if any(term in normalized for term in cls._terms("factoryStatus", "terms")):
+            if any(
+                term in normalized
+                for term in cls._terms("factoryStatus", "excludeWhenProductionPlaybook")
+            ) and not any(
+                marker in normalized
+                for marker in ("fabril", "fabrica", "fábrica", "completo na")
+            ):
+                return False
+
             return True
 
         lowered = normalized.lower()
@@ -822,9 +851,95 @@ class ChatProductQueryIntentService:
             and "status" in lowered
             and any(
                 marker in lowered
-                for marker in ("fabril", "fabrica", "fábrica", "producao", "produção")
+                for marker in ("fabril", "fabrica", "fábrica")
             )
         )
+
+    @classmethod
+    def _looks_like_production_status_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("productionStatus", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        lowered = normalized.lower()
+
+        if not cls._has_product_scope_reference(normalized):
+            return False
+
+        production_markers = (
+            "apontamento",
+            " sh6010",
+            "ordem de produc",
+            "ordem de produ",
+            " op ",
+            " ops ",
+            "playbook produtivo",
+        )
+
+        return any(marker in lowered for marker in production_markers)
+
+    @classmethod
+    def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("shippingStatus", "terms")):
+            if any(
+                term in normalized
+                for term in cls._terms("shippingStatus", "excludeWhenQualityInspection")
+            ) and not any(
+                marker in normalized
+                for marker in (
+                    "expedicao",
+                    "expedição",
+                    "inspecao final",
+                    "inspeção final",
+                    "liberado para exped",
+                    "shipping-status",
+                )
+            ):
+                return False
+
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        lowered = normalized.lower()
+
+        if not cls._has_product_scope_reference(normalized):
+            return False
+
+        shipping_markers = (
+            "inspecao final",
+            "inspeção final",
+            "liberado para exped",
+            "quantidade exped",
+            "quanto exped",
+            "pa finalizado",
+            "pa liberado",
+        )
+
+        return any(marker in lowered for marker in shipping_markers)
+
+    @classmethod
+    def _looks_like_structure_exclusivity_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("structureExclusivity", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        lowered = normalized.lower()
+
+        if not cls._has_product_scope_reference(normalized):
+            return False
+
+        exclusivity_markers = (
+            "exclusiv",
+            "mp exclus",
+            "materia prima exclus",
+            "matéria-prima exclus",
+            "matéria prima exclus",
+        )
+
+        return any(marker in lowered for marker in exclusivity_markers)
 
     @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:

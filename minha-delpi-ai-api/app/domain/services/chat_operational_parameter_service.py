@@ -46,6 +46,8 @@ class ChatOperationalParameterService:
             ChatProductQueryIntent.STRUCTURE,
             ChatProductQueryIntent.PARENTS,
             ChatProductQueryIntent.DESCRIPTION,
+            ChatProductQueryIntent.ANALYSER,
+            ChatProductQueryIntent.SUMMARY,
         }
     )
 
@@ -347,6 +349,42 @@ class ChatOperationalParameterService:
         ) is not None
 
     @classmethod
+    def resolve_missing_date_answer(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
+    ) -> str | None:
+        from app.domain.services.chat_operational_date_parameter_service import (
+            ChatOperationalDateParameterService,
+        )
+
+        return ChatOperationalDateParameterService.resolve_missing_date_answer(
+            message,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+            conversation_context=conversation_context,
+        )
+
+    @classmethod
+    def should_skip_tools_for_missing_date(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
+    ) -> bool:
+        return cls.resolve_missing_date_answer(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        ) is not None
+
+    @classmethod
     def _requires_explicit_product_context(cls, normalized: str, intent: str) -> bool:
         if intent == ChatProductQueryIntent.STOCK:
             return ChatProductQueryIntentService._looks_like_stock_question(normalized)
@@ -361,6 +399,18 @@ class ChatOperationalParameterService:
             return (
                 ChatProductQueryIntentService._looks_like_description_question(normalized)
                 or any(term in normalized for term in _PRODUCT_CONTEXT_TERMS)
+            )
+
+        if intent == ChatProductQueryIntent.ANALYSER:
+            return ChatProductQueryIntentService._looks_like_full_analyser_question(
+                normalized
+            ) or ChatProductQueryIntentService._looks_like_product_summary_question(
+                normalized
+            )
+
+        if intent == ChatProductQueryIntent.SUMMARY:
+            return ChatProductQueryIntentService._looks_like_product_summary_question(
+                normalized
             )
 
         return False

@@ -101,6 +101,11 @@ class OperationalApiParameterBuilderService:
                 "dateend",
             }:
                 parameters[name] = date_range.end_date
+            elif date_range and lowered in {
+                "reference_date",
+                "referencedate",
+            }:
+                parameters[name] = date_range.start_date
             elif lowered in {"page"}:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
@@ -172,6 +177,11 @@ class OperationalApiParameterBuilderService:
                 "dateend",
             }:
                 merged[name] = date_range.end_date
+            elif lowered in {
+                "reference_date",
+                "referencedate",
+            }:
+                merged[name] = date_range.start_date
 
         return merged
 

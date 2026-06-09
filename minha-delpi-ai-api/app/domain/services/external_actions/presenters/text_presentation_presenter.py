@@ -157,6 +157,18 @@ class ExternalActionTextPresentationPresenter:
                     path,
                 )
 
+            if "/factory-status" in lowered:
+                return self._host._build_factory_status_text_presentation(root, path)
+
+            if "/production-status" in lowered:
+                return self._host._build_production_status_text_presentation(root, path)
+
+            if "/shipping-status" in lowered:
+                return self._host._build_shipping_status_text_presentation(root, path)
+
+            if "/structure/exclusivity" in lowered:
+                return self._host._build_structure_exclusivity_text_presentation(root, path)
+
         if isinstance(root, dict) and "/parents" in lowered:
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,

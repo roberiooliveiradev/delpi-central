@@ -18,6 +18,18 @@ from app.domain.services.external_actions.presenters.kpi_chart_presenter import 
 from app.domain.services.external_actions.presenters.product_analyser_presenter import (
     ExternalActionProductAnalyserPresenter,
 )
+from app.domain.services.external_actions.presenters.product_composite_analysis_presenter import (
+    ExternalActionProductCompositeAnalysisPresenter,
+)
+from app.domain.services.external_actions.presenters.product_production_status_presenter import (
+    ExternalActionProductProductionStatusPresenter,
+)
+from app.domain.services.external_actions.presenters.product_shipping_status_presenter import (
+    ExternalActionProductShippingStatusPresenter,
+)
+from app.domain.services.external_actions.presenters.product_structure_exclusivity_presenter import (
+    ExternalActionProductStructureExclusivityPresenter,
+)
 from app.domain.services.external_actions.presenters.product_list_presenter import (
     ExternalActionProductListPresenter,
 )
@@ -77,6 +89,10 @@ class ExternalActionResultPresenter:
         self._active_schema_formats: dict[str, str] | None = None
         self._kpi_chart_presenter: ExternalActionKpiChartPresenter | None = None
         self._product_analyser_presenter: ExternalActionProductAnalyserPresenter | None = None
+        self._product_composite_presenter: ExternalActionProductCompositeAnalysisPresenter | None = None
+        self._product_production_status_presenter: ExternalActionProductProductionStatusPresenter | None = None
+        self._product_shipping_status_presenter: ExternalActionProductShippingStatusPresenter | None = None
+        self._product_structure_exclusivity_presenter: ExternalActionProductStructureExclusivityPresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
         self._sql_presenter: ExternalActionSqlPresenter | None = None
         self._billing_presenter: ExternalActionBillingPresenter | None = None
@@ -103,6 +119,36 @@ class ExternalActionResultPresenter:
             self._product_analyser_presenter = ExternalActionProductAnalyserPresenter(self)
 
         return self._product_analyser_presenter
+
+    def _composite_analysis(self) -> ExternalActionProductCompositeAnalysisPresenter:
+        if self._product_composite_presenter is None:
+            self._product_composite_presenter = ExternalActionProductCompositeAnalysisPresenter(self)
+
+        return self._product_composite_presenter
+
+    def _production_status(self) -> ExternalActionProductProductionStatusPresenter:
+        if self._product_production_status_presenter is None:
+            self._product_production_status_presenter = ExternalActionProductProductionStatusPresenter(
+                self
+            )
+
+        return self._product_production_status_presenter
+
+    def _shipping_status(self) -> ExternalActionProductShippingStatusPresenter:
+        if self._product_shipping_status_presenter is None:
+            self._product_shipping_status_presenter = ExternalActionProductShippingStatusPresenter(
+                self
+            )
+
+        return self._product_shipping_status_presenter
+
+    def _structure_exclusivity(self) -> ExternalActionProductStructureExclusivityPresenter:
+        if self._product_structure_exclusivity_presenter is None:
+            self._product_structure_exclusivity_presenter = (
+                ExternalActionProductStructureExclusivityPresenter(self)
+            )
+
+        return self._product_structure_exclusivity_presenter
 
     def _product_list(self) -> ExternalActionProductListPresenter:
         if self._product_list_presenter is None:
@@ -350,7 +396,16 @@ class ExternalActionResultPresenter:
         return self._product_list()._present_product_structure(root, path)
 
     def _present_product_factory_status(self, root: dict, path: str) -> dict:
-        return self._product_list()._present_product_factory_status(root, path)
+        return self._composite_analysis()._present_factory_status(root, path)
+
+    def _present_product_production_status(self, root: dict, path: str) -> dict:
+        return self._production_status()._present_production_status(root, path)
+
+    def _present_product_shipping_status(self, root: dict, path: str) -> dict:
+        return self._shipping_status()._present_shipping_status(root, path)
+
+    def _present_product_structure_exclusivity(self, root: dict, path: str) -> dict:
+        return self._structure_exclusivity()._present_structure_exclusivity(root, path)
 
 
 
@@ -527,7 +582,42 @@ class ExternalActionResultPresenter:
         return self._presentation_builder()._build_presentation_entity_extensions(root, path=path, profile=profile)
 
     def _build_factory_status_table(self, root: dict, path: str) -> dict:
+        tables = self.build_factory_status_table_presentations(root, path)
+
+        if tables:
+            return tables[0]
+
         return self._presentation_builder()._build_factory_status_table(root, path)
+
+    def build_factory_status_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._composite_analysis().build_factory_status_table_presentations(root, path)
+
+    def build_production_status_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._production_status().build_production_status_table_presentations(root, path)
+
+    def build_shipping_status_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._shipping_status().build_shipping_status_table_presentations(root, path)
+
+    def build_structure_exclusivity_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._structure_exclusivity().build_structure_exclusivity_table_presentations(
+            root,
+            path,
+        )
+
+    def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._composite_analysis()._build_factory_status_text_presentation(root, path)
+
+    def _build_production_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._production_status()._build_production_status_text_presentation(root, path)
+
+    def _build_shipping_status_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._shipping_status()._build_shipping_status_text_presentation(root, path)
+
+    def _build_structure_exclusivity_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._structure_exclusivity()._build_structure_exclusivity_text_presentation(
+            root,
+            path,
+        )
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
         return self._presentation_builder()._build_presentation(data, path=path)

@@ -478,6 +478,18 @@ class ChatAnalysisIntentService:
 
     @classmethod
     def _looks_like_single_product_fetch(cls, normalized: str) -> bool:
+        if ChatProductQueryIntentService._looks_like_production_status_question(normalized):
+            return True
+
+        if ChatProductQueryIntentService._looks_like_shipping_status_question(normalized):
+            return True
+
+        if ChatProductQueryIntentService._looks_like_structure_exclusivity_question(normalized):
+            return True
+
+        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
+            return True
+
         if any(
             term in normalized
             for term in (
@@ -488,6 +500,10 @@ class ChatAnalysisIntentService:
                 "informações completas",
                 "analisador do produto",
                 "analisador completo",
+                "analise produtiva",
+                "análise produtiva",
+                "status completo na fabrica",
+                "status completo na fábrica",
             )
         ):
             return "compar" not in normalized and "versus" not in normalized

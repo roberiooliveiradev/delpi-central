@@ -434,6 +434,18 @@ class ChatTurnCompletionService:
             pipeline_stages=turn.pipeline_stages,
         )
 
+        from app.domain.services.chat_active_query_session_service import (
+            ChatActiveQuerySessionService,
+        )
+
+        ChatActiveQuerySessionService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=turn.request.message,
+            tool_context=turn.tool_context,
+            pipeline_stages=turn.pipeline_stages,
+            previous_messages=turn.previous_messages,
+        )
+
         from app.application.services.chat_web_search_research_activity_service import (
             ChatWebSearchResearchActivityService,
         )

@@ -18,6 +18,10 @@ _TABLE_PATH_TOKENS = (
 )
 _STOCK_PATH_TOKEN = "/stock"
 _ANALYSER_PATH_TOKEN = "/analyser"
+_FACTORY_STATUS_PATH_TOKEN = "/factory-status"
+_PRODUCTION_STATUS_PATH_TOKEN = "/production-status"
+_SHIPPING_STATUS_PATH_TOKEN = "/shipping-status"
+_STRUCTURE_EXCLUSIVITY_PATH_TOKEN = "/structure/exclusivity"
 
 
 class ChatPresentationRoutePolicyService:
@@ -50,6 +54,22 @@ class ChatPresentationRoutePolicyService:
     @classmethod
     def is_analyser_route(cls, path: str | None) -> bool:
         return _ANALYSER_PATH_TOKEN in cls.path_lowered(path)
+
+    @classmethod
+    def is_factory_status_route(cls, path: str | None) -> bool:
+        return _FACTORY_STATUS_PATH_TOKEN in cls.path_lowered(path)
+
+    @classmethod
+    def is_production_status_route(cls, path: str | None) -> bool:
+        return _PRODUCTION_STATUS_PATH_TOKEN in cls.path_lowered(path)
+
+    @classmethod
+    def is_shipping_status_route(cls, path: str | None) -> bool:
+        return _SHIPPING_STATUS_PATH_TOKEN in cls.path_lowered(path)
+
+    @classmethod
+    def is_structure_exclusivity_route(cls, path: str | None) -> bool:
+        return _STRUCTURE_EXCLUSIVITY_PATH_TOKEN in cls.path_lowered(path)
 
     @classmethod
     def resolve_default_preferred_format(
@@ -121,6 +141,17 @@ class ChatPresentationRoutePolicyService:
                     ordered.append(view)
         elif cls.is_analyser_route(lowered):
             for view in ("table", "tree", "chart", "kpi", "dashboard"):
+                if view in normalized and view not in ordered:
+                    ordered.append(view)
+        elif cls.is_factory_status_route(lowered) or cls.is_production_status_route(lowered):
+            for view in ("table", "text", "chart", "tree", "kpi", "dashboard"):
+                if view in normalized and view not in ordered:
+                    ordered.append(view)
+        elif (
+            cls.is_shipping_status_route(lowered)
+            or cls.is_structure_exclusivity_route(lowered)
+        ):
+            for view in ("table", "text", "chart", "tree", "kpi", "dashboard"):
                 if view in normalized and view not in ordered:
                     ordered.append(view)
         elif cls.is_tree_route(lowered):

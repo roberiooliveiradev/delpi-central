@@ -248,12 +248,70 @@
       "componentQuantity": " — qtd **{quantity}**"
     },
     "factoryStatus": {
-      "titleWithCode": "Status fabril — {code}",
-      "titleGeneric": "Status fabril do produto",
-      "statusLine": "Status fabril: {status}",
-      "productWithDescription": "Produto: {code} — {description}",
-      "productCodeOnly": "Produto: {code}",
-      "exclusiveRawMaterials": "MPs exclusivas: {exclusive}"
+      "titleWithCode": "Status completo na fábrica — {code}",
+      "titleGeneric": "Status completo na fábrica",
+      "statusLine": "Situação consolidada: **{status}**",
+      "productWithDescription": "Produto **{code}** — {description}",
+      "productCodeOnly": "Produto **{code}**",
+      "exclusiveRawMaterials": "MPs exclusivas na estrutura: **{exclusive}**",
+      "referenceDateLine": "Referência da consulta: **{date}**",
+      "introWithDescription": "Montei a visão fabril integrada do produto **{code}** ({description}): estrutura, estoque de MP, produção (playbook) e expedição no mesmo panorama.",
+      "introCodeOnly": "Montei a visão fabril integrada do produto **{code}**: estrutura, estoque de MP, produção e expedição.",
+      "structureSummary": "Estrutura: **{components}** componente(s), **{intermediates}** intermediário(s), **{rawMaterials}** MP(s), **{exclusive}** exclusiva(s).",
+      "stockSummary": "Estoque de MP: **{withoutStock}** material(is) sem saldo para montar 1 PA.",
+      "productionSummary": "Produção: PA **{paStarted}** · PI **{piStarted}** — **{paOrders}** OP(s) PA e **{piOrders}** OP(s) PI.",
+      "shippingSummary": "Expedição no período: **{shipped}** expedido(s) · **{loss}** perda(s) de inspeção.",
+      "sectionStructureTitle": "Estrutura (BOM + exclusividade)",
+      "sectionStockTitle": "Estoque de matérias-primas",
+      "sectionProductionTitle": "Produção (PA / PI / OP / apontamentos)",
+      "sectionShippingTitle": "Expedição e inspeção final",
+      "overviewTableTitle": "Panorama fabril"
+    },
+    "productionStatus": {
+      "titleWithCode": "Análise produtiva — {code}",
+      "titleGeneric": "Análise produtiva do produto",
+      "introWithDescription": "Playbook produtivo do produto **{code}** ({description}): ordens PA/PI, OPs abertas e apontamentos SH6010 na data de referência.",
+      "introCodeOnly": "Playbook produtivo do produto **{code}**: ordens PA/PI, OPs e apontamentos na data de referência.",
+      "referenceDateLine": "Data de referência: **{date}**",
+      "paStartedLine": "Produção do PA iniciada: **{value}**",
+      "piStartedLine": "Produção de intermediários (PI) iniciada: **{value}**",
+      "ordersLine": "Ordens localizadas: **{paOrders}** PA · **{piOrders}** PI",
+      "reportedLine": "Quantidade apontada: **{paQty}** no PA · **{piQty}** nos PI(s)",
+      "itemsPreviewLine": "Há **{count}** linha(s) de OP/apontamento — detalhes na tabela abaixo.",
+      "itemsEmptyLine": "Nenhuma OP ou apontamento retornado para os filtros informados.",
+      "overviewTableTitle": "Resumo produtivo",
+      "ordersTableTitle": "Ordens e apontamentos",
+      "opLine": "- Nível **{level}** · OP **{order}** · prod. **{product}** — iniciada **{started}**, apontado **{reported}**"
+    },
+    "shippingStatus": {
+      "titleWithCode": "Expedição e inspeção final — {code}",
+      "titleGeneric": "Expedição e inspeção final do PA",
+      "introWithDescription": "Playbook de expedição do produto **{code}** ({description}): apontamentos no CT de inspeção final (SH6010) no período consultado.",
+      "introCodeOnly": "Playbook de expedição do produto **{code}**: quantidade expedida e perdas de inspeção final.",
+      "referenceDateLine": "Referência da consulta: **{date}**",
+      "periodLine": "Período consultado: **{start}** até **{end}** (fim exclusivo).",
+      "shippedLine": "Quantidade expedida no período: **{value}**",
+      "lossLine": "Perdas de inspeção final: **{value}**",
+      "reportsLine": "Apontamentos consolidados: **{value}**",
+      "itemsPreviewLine": "Há **{count}** movimento(s) de expedição/inspeção — detalhes na tabela abaixo.",
+      "itemsEmptyLine": "Nenhum apontamento de inspeção final retornado para os filtros informados.",
+      "overviewTableTitle": "Resumo de expedição",
+      "movementsTableTitle": "Movimentos de expedição",
+      "movementLine": "- OP **{order}** — expedido **{shipped}**, perda **{loss}**"
+    },
+    "structureExclusivity": {
+      "titleWithCode": "Estrutura com exclusividade — {code}",
+      "titleGeneric": "Estrutura com exclusividade de MPs",
+      "introWithDescription": "BOM vigente do produto **{code}** ({description}) com flag de **matéria-prima exclusiva** por componente.",
+      "introCodeOnly": "BOM vigente do produto **{code}** com exclusividade de matérias-primas.",
+      "componentsLine": "Composição: **{total}** componente(s) · **{intermediates}** PI · **{rawMaterials}** MP",
+      "exclusiveLine": "Matérias-primas exclusivas: **{count}**",
+      "exclusivePreviewLine": "Principais MPs exclusivas (**{count}** no total):",
+      "exclusiveItemLine": "- **{code}** — qtd acumulada **{quantity}** (nível **{level}**)",
+      "noExclusiveLine": "Estrutura retornada **sem MPs marcadas como exclusivas**.",
+      "itemsEmptyLine": "Nenhum componente retornado para a profundidade consultada.",
+      "overviewTableTitle": "Resumo da estrutura",
+      "componentsTableTitle": "Componentes com exclusividade"
     },
     "systemTables": {
       "searchTitle": "Busca de tabelas Protheus (SX2)",
@@ -419,8 +477,62 @@
   },
   "productPresentationTitles": {
     "overviewWithCode": "Visão do produto {code}",
-    "analyserWithCode": "Informações completas do produto {code}",
-    "analyserGeneric": "Informações completas do produto"
+    "analyserWithCode": "Análise completa do produto {code}",
+    "analyserGeneric": "Análise completa do produto",
+    "factoryStatusWithCode": "Status completo na fábrica — {code}",
+    "factoryStatusGeneric": "Status completo na fábrica",
+    "productionStatusWithCode": "Análise produtiva — {code}",
+    "productionStatusGeneric": "Análise produtiva do produto",
+    "shippingStatusWithCode": "Expedição e inspeção final — {code}",
+    "shippingStatusGeneric": "Expedição e inspeção final do PA",
+    "structureExclusivityWithCode": "Estrutura com exclusividade — {code}",
+    "structureExclusivityGeneric": "Estrutura com exclusividade de MPs"
+  },
+  "compositeAnalysisInsights": {
+    "factoryStatus": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "headlineStatus": "Situação fabril: **{status}**",
+      "exclusiveWithoutStock": "**{count}** MP(s) exclusiva(s) sem estoque para montar 1 PA.",
+      "productionNotStarted": "Há OP(s) aberta(s), mas a produção ainda **não foi iniciada** (sem apontamento SH6010).",
+      "productionStarted": "Produção **em andamento** — PA **{pa}** · PI **{pi}**.",
+      "noProductionOrders": "Estrutura cadastrada, mas **nenhuma OP** localizada na referência.",
+      "noStructure": "Produto **sem estrutura vigente** na data consultada.",
+      "shippingWithMovement": "Expedição/inspeção: **{shipped}** expedido(s) no período.",
+      "shippingNoMovement": "Sem movimento de expedição/inspeção no intervalo consultado.",
+      "attentionExclusiveStock": "Validar compra ou substituição — MP exclusiva sem saldo para 1 PA.",
+      "attentionOpNotStarted": "OP aberta sem apontamento: conferir liberação no chão de fábrica.",
+      "attentionNoStructure": "Cadastro sem BOM vigente — engenharia precisa revisar estrutura."
+    },
+    "productionStatus": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "playbookHeadline": "Playbook produtivo na referência **{date}**",
+      "paNotStarted": "PA ainda **sem apontamento** — OP pode estar aberta aguardando início.",
+      "piWithoutPa": "Intermediários com movimento, mas PA **ainda não finalizado**.",
+      "hasAppointments": "**{count}** registro(s) com apontamento SH6010 consolidado.",
+      "attentionStaleOp": "OP aberta sem apontamento na referência — vale confirmar status no Protheus.",
+      "attentionLowReport": "Apontamento abaixo da quantidade da OP — revisar perdas ou paradas."
+    },
+    "shippingStatus": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "playbookHeadline": "Playbook de expedição no período **{period}**",
+      "hasShipped": "**{quantity}** unidade(s) expedida(s) após inspeção final.",
+      "lossWithoutShip": "Há **perda de inspeção** sem quantidade expedida no período.",
+      "noMovement": "Sem movimento de inspeção final/expedição no intervalo consultado.",
+      "attentionLossOnly": "Perda registrada sem expedição — validar reprovação ou retrabalho.",
+      "attentionHighLoss": "Perda de inspeção elevada frente ao expedido — revisar CT/recurso."
+    },
+    "structureExclusivity": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "playbookHeadline": "BOM com **{exclusive}** MP(s) exclusiva(s) de **{rawMaterials}** matéria(s)-prima(s).",
+      "hasExclusive": "**{count}** matéria(s)-prima(s) exclusiva(s) na estrutura vigente.",
+      "noExclusiveMps": "Nenhuma MP marcada como exclusiva — risco de substituição compartilhado.",
+      "noStructure": "Produto **sem componentes** retornados na profundidade consultada.",
+      "attentionExclusiveSupply": "MPs exclusivas exigem validação de estoque/compras antes de montar o PA."
+    }
   },
   "productWithDetails": {
     "introLine": "Produto {code}: {description}."
@@ -443,8 +555,8 @@
   "playbookReports": {
     "entities": {
       "product_production_status": {
-        "textTitle": "Situação produtiva",
-        "tableTitle": "Situação produtiva"
+        "textTitle": "Análise produtiva",
+        "tableTitle": "Análise produtiva (playbook)"
       },
       "product_shipping_status": {
         "textTitle": "Status de expedição",

@@ -26,6 +26,14 @@ class ChatPresentationStackOrderService:
         "other",
     )
 
+    _FACTORY_TABLE_ROLES = ("profile", "structure", "stock", "list", "other")
+
+    _PRODUCTION_TABLE_ROLES = ("profile", "list", "other")
+
+    _SHIPPING_TABLE_ROLES = ("profile", "list", "other")
+
+    _STRUCTURE_EXCLUSIVITY_TABLE_ROLES = ("profile", "structure", "other")
+
     _ANALYSER_TABLE_ROLES = ("profile", "guide", "inspection", "other")
 
     _STOCK_TABLE_ROLES = ("profile", "stock", "other")
@@ -45,6 +53,22 @@ class ChatPresentationStackOrderService:
             table_roles = list(cls._ANALYSER_TABLE_ROLES)
             profile_first = True
             highlights_after_profile = True
+        elif ChatPresentationRoutePolicyService.is_factory_status_route(lowered):
+            table_roles = list(cls._FACTORY_TABLE_ROLES)
+            profile_first = True
+            highlights_after_profile = has_highlights
+        elif ChatPresentationRoutePolicyService.is_production_status_route(lowered):
+            table_roles = list(cls._PRODUCTION_TABLE_ROLES)
+            profile_first = True
+            highlights_after_profile = has_highlights
+        elif ChatPresentationRoutePolicyService.is_shipping_status_route(lowered):
+            table_roles = list(cls._SHIPPING_TABLE_ROLES)
+            profile_first = True
+            highlights_after_profile = has_highlights
+        elif ChatPresentationRoutePolicyService.is_structure_exclusivity_route(lowered):
+            table_roles = list(cls._STRUCTURE_EXCLUSIVITY_TABLE_ROLES)
+            profile_first = True
+            highlights_after_profile = has_highlights
         elif ChatPresentationRoutePolicyService.is_stock_route(lowered):
             table_roles = list(cls._STOCK_TABLE_ROLES)
             profile_first = True

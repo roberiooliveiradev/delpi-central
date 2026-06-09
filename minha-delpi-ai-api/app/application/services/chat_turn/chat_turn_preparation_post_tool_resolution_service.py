@@ -57,6 +57,7 @@ class ChatTurnPreparationPostToolResolutionService:
         unclear_direct: str | None,
         missing_product_code_answer: str | None,
         ambiguous_period_answer: str | None,
+        missing_date_answer: str | None,
         common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
         skip_tools_for_data_interpretation: bool,
@@ -209,6 +210,10 @@ class ChatTurnPreparationPostToolResolutionService:
 
         if not direct_answer and ambiguous_period_answer:
             direct_answer = ambiguous_period_answer
+            skip_rag = True
+
+        if not direct_answer and missing_date_answer:
+            direct_answer = missing_date_answer
             skip_rag = True
 
         if not direct_answer and common_chat_operational_answer:

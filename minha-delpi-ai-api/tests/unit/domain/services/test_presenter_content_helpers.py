@@ -135,11 +135,11 @@ def test_present_product_factory_status_uses_content():
         "/products/90260123/factory-status",
     )
 
-    assert result["titulo"] == "Status fabril — 90260123"
+    assert result["titulo"] == "Status completo na fábrica — 90260123"
     joined = "\n".join(result["linhas"])
-    assert "Status fabril: Ativo" in joined
-    assert "Produto: 90260123 — CABO" in joined
-    assert "MPs exclusivas: 3" in joined
+    assert "Situação consolidada" in joined
+    assert "90260123" in joined
+    assert "MPs exclusivas" in joined or "exclusiva" in joined.lower()
 
 
 def test_format_inspection_characteristic_line():

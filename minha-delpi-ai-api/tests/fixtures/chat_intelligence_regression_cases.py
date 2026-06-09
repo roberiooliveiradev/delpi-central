@@ -602,6 +602,80 @@ SELECTION_CASES = [
         "expected_action_id": "factory-status",
     },
     {
+        "message": "O produto 90269002 já começou a produzir? Tem apontamento na OP?",
+        "actions": [
+            {
+                "actionId": "production-status",
+                "method": "GET",
+                "path": "/products/{code}/production-status",
+                "operationId": "get_product_production_status",
+                "summary": "Análise produtiva",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "production-status",
+    },
+    {
+        "message": "Quanto do produto 90269002 já foi liberado para expedição hoje?",
+        "actions": [
+            {
+                "actionId": "shipping-status",
+                "method": "GET",
+                "path": "/products/{code}/shipping-status",
+                "operationId": "get_product_shipping_status",
+                "summary": "Expedição do PA",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "inspection",
+                "method": "GET",
+                "path": "/products/{code}/inspection",
+                "operationId": "get_product_inspection",
+                "summary": "Inspeção de qualidade",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "shipping-status",
+    },
+    {
+        "message": "Quais matérias-primas exclusivas existem na estrutura do produto 90269002?",
+        "actions": [
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "operationId": "get_product_structure_exclusivity",
+                "summary": "Estrutura com exclusividade",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "structure-exclusivity",
+    },
+    {
         "message": "faturamento do produto 10080047",
         "actions": [
             {
@@ -1265,6 +1339,31 @@ PAGINATION_REFINEMENT_SELECTION_CASES = [
 ]
 
 DATE_RANGE_SELECTION_CASES = [
+    {
+        "message": "status fabril do produto 90263059 em 01/06/2026",
+        "actions": [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "reference_date"},
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                ],
+            },
+        ],
+        "expected_action_id": "factory-status",
+        "expected_parameters": {
+            "code": "90263059",
+            "reference_date": "01-06-2026",
+            "date_start": "01-06-2026",
+            "date_end": "01-06-2026",
+        },
+    },
     {
         "message": "cpv de 01/04/2026 a 30/04/2026",
         "actions": [

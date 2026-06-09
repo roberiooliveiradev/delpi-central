@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "product": {
+      "product_code": "90269002",
+      "description": "PRODUTO FICTICIO FABRIL"
+    },
+    "items": [
+      {
+        "level": 1,
+        "component_type": "PI",
+        "product_code": "50219001",
+        "description": "INTERMEDIARIO FICTICIO",
+        "exclusive_raw_material": "NAO",
+        "accumulated_quantity": "1"
+      },
+      {
+        "level": 2,
+        "component_type": "MP",
+        "product_code": "10019001",
+        "description": "MATERIA PRIMA FICTICIA",
+        "exclusive_raw_material": "SIM",
+        "accumulated_quantity": "2"
+      }
+    ],
+    "summary": {
+      "total_components": 2,
+      "total_intermediates": 1,
+      "total_raw_materials": 1,
+      "total_exclusive_raw_materials": 1
+    }
+  }
+}

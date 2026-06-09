@@ -83,6 +83,15 @@ class ExternalActionEntityRoutePresenter:
             if entity == "product_factory_status" and isinstance(root, dict):
                 return self._host._present_product_factory_status(root, path)
 
+            if entity == "product_production_status" and isinstance(root, dict):
+                return self._host._present_product_production_status(root, path)
+
+            if entity == "product_shipping_status" and isinstance(root, dict):
+                return self._host._present_product_shipping_status(root, path)
+
+            if entity == "product_structure_exclusivity" and isinstance(root, dict):
+                return self._host._present_product_structure_exclusivity(root, path)
+
             if entity == "product_structure" and isinstance(root, dict):
                 structure_result = self._host._present_product_structure(root, path)
 
@@ -133,16 +142,6 @@ class ExternalActionEntityRoutePresenter:
 
                     if path_routed:
                         return path_routed
-
-            if entity in {
-                "product_production_status",
-                "product_shipping_status",
-                "product_structure_exclusivity",
-            } and isinstance(root, dict):
-                fallback = self._host._present_playbook_report(root, path, entity=entity)
-
-                if fallback:
-                    return fallback
 
             return self._present_entity_extensions(
                 root,

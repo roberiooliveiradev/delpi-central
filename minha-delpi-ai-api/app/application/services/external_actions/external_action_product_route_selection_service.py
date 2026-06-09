@@ -59,6 +59,7 @@ class ExternalActionProductRouteSelectionService:
         route_segment: str | None = None,
         preferred_action_id: str | None = None,
         candidates_loader: Callable | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         candidates = self._load_candidates(
             message,
@@ -134,7 +135,24 @@ class ExternalActionProductRouteSelectionService:
                 action,
                 product_code,
                 message=message,
+                previous_messages=previous_messages,
             )
+
+            if not parameters:
+                continue
+
+            from app.domain.services.chat_operational_date_parameter_service import (
+                ChatOperationalDateParameterService,
+            )
+
+            if (
+                ChatOperationalDateParameterService.action_has_date_query_params(action)
+                and not ChatOperationalDateParameterService.parameters_have_date(
+                    action,
+                    parameters,
+                )
+            ):
+                continue
 
             if parameters:
                 reason = ExternalActionResponseContentService.get(
@@ -188,6 +206,21 @@ class ExternalActionProductRouteSelectionService:
         )
         wants_factory_status = (
             ChatProductQueryIntentService._looks_like_factory_status_question(
+                normalized
+            )
+        )
+        wants_production_status = (
+            ChatProductQueryIntentService._looks_like_production_status_question(
+                normalized
+            )
+        )
+        wants_shipping_status = (
+            ChatProductQueryIntentService._looks_like_shipping_status_question(
+                normalized
+            )
+        )
+        wants_structure_exclusivity = (
+            ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
                 normalized
             )
         )
@@ -315,6 +348,9 @@ class ExternalActionProductRouteSelectionService:
             or wants_parents or wants_movements or wants_invoices or wants_inspection
             or wants_billing
             or wants_factory_status
+            or wants_production_status
+            or wants_shipping_status
+            or wants_structure_exclusivity
             or wants_product_summary
             or wants_product_overview
             or wants_full_analyser
@@ -337,6 +373,53 @@ class ExternalActionProductRouteSelectionService:
 
             if wants_factory_status and "factory-status" in path:
                 value += 140
+
+            if wants_production_status and "production-status" in path:
+                value += 145
+
+            if wants_shipping_status and "shipping-status" in path:
+                value += 145
+
+            if wants_structure_exclusivity and "/structure/exclusivity" in path:
+                value += 145
+
+            if wants_production_status and wants_factory_status:
+                if any(
+                    marker in normalized
+                    for marker in (
+                        "fabril",
+                        "fabrica",
+                        "fábrica",
+                        "completo na fabrica",
+                        "completo na fábrica",
+                    )
+                ):
+                    if "production-status" in path:
+                        value -= 80
+                elif any(
+                    marker in normalized
+                    for marker in (
+                        "apontamento",
+                        " sh6010",
+                        "playbook produtivo",
+                        "analise produtiva",
+                        "análise produtiva",
+                    )
+                ):
+                    if "factory-status" in path:
+                        value -= 80
+
+            if wants_shipping_status and "/inspection" in path and "shipping-status" not in path:
+                value -= 90
+
+            if wants_shipping_status and "factory-status" in path and not wants_factory_status:
+                value -= 70
+
+            if wants_structure_exclusivity and path.rstrip("/").endswith("/structure"):
+                value -= 80
+
+            if wants_structure_exclusivity and "analyser" in haystack and not wants_full_analyser:
+                value -= 60
 
             if wants_open_orders and "open-orders" in path:
                 value += 115
@@ -374,6 +457,9 @@ class ExternalActionProductRouteSelectionService:
             if wants_structure and "/structure" in path:
                 value += 120
 
+            if wants_structure_exclusivity and "/structure/exclusivity" not in path and "/structure" in path:
+                value -= 40
+
             if wants_stock and (path.endswith("/stock") or "/products/{code}/stock" in haystack):
                 value += 130
 
@@ -409,8 +495,11 @@ class ExternalActionProductRouteSelectionService:
                 elif "/inbound-invoice" in path or "/outbound-invoice" in path:
                     value += 120
 
-            if wants_inspection and "/inspection" in path:
+            if wants_inspection and "/inspection" in path and not wants_shipping_status:
                 value += 120
+
+            if wants_inspection and wants_shipping_status and "/inspection" in path:
+                value -= 90
 
             if intent == ChatProductQueryIntent.STRUCTURE:
                 if "/structure" in path:
@@ -610,7 +699,14 @@ class ExternalActionProductRouteSelectionService:
 
         return ChatDrawingIntentService.is_drawing_analysis_request(message or "")
 
-    def _build_product_parameters(self, action: dict, code: str, *, message: str | None = None) -> dict:
+    def _build_product_parameters(
+        self,
+        action: dict,
+        code: str,
+        *,
+        message: str | None = None,
+        previous_messages: list | None = None,
+    ) -> dict:
         parameters = {}
         path = (action.get("path") or "").lower()
         is_full_listing = "/structure" in path or "/parents" in path
@@ -724,4 +820,13 @@ class ExternalActionProductRouteSelectionService:
                 else:
                     parameters[name] = "summary"
 
-        return parameters
+        from app.domain.services.chat_operational_date_parameter_service import (
+            ChatOperationalDateParameterService,
+        )
+
+        return ChatOperationalDateParameterService.merge_into_parameters(
+            action,
+            message,
+            parameters,
+            previous_messages=previous_messages,
+        )

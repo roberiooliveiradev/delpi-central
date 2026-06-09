@@ -19,6 +19,9 @@ BASELINE_FIXTURES = [
     "product_structure_90269001.json",
     "product_analyser_90269001.json",
     "product_factory_status_90269002.json",
+    "product_production_status_90269002.json",
+    "product_shipping_status_90269002.json",
+    "product_structure_exclusivity_90269002.json",
     "supplies_cpv.json",
 ]
 

@@ -217,6 +217,42 @@
       ]
     },
     "productRouteRanking": {
+      "productionStatusTerms": [
+        "analise produtiva",
+        "análise produtiva",
+        "playbook produtivo",
+        "apontamento",
+        "apontamentos",
+        " sh6010",
+        "ordem de producao",
+        "ordem de produção",
+        "production-status"
+      ],
+      "factoryStatusTerms": [
+        "status completo na fabrica",
+        "status completo na fábrica",
+        "status fabril",
+        "visao fabril",
+        "visão fabril",
+        "factory-status"
+      ],
+      "shippingStatusTerms": [
+        "expedicao",
+        "expedição",
+        "inspecao final",
+        "inspeção final",
+        "liberado para expedicao",
+        "liberado para expedição",
+        "shipping-status"
+      ],
+      "structureExclusivityTerms": [
+        "exclusividade",
+        "mp exclusiva",
+        "mps exclusivas",
+        "materia prima exclusiva",
+        "matéria-prima exclusiva",
+        "structure/exclusivity"
+      ],
       "purchasesTerms": [
         "compra",
         "compras",
@@ -379,6 +415,11 @@
     "genericSemanticFallback": "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
     "semanticRankReason": "Action selecionada por similaridade semântica (score {score}).",
     "productOperational": "A pergunta solicita informações operacionais de produto via OpenAPI.",
+    "productProductionStatus": "A pergunta solicita análise produtiva do playbook (PA/PI/OP/apontamentos SH6010).",
+    "productFactoryStatus": "A pergunta solicita visão fabril integrada (estrutura, estoque MP, produção e expedição).",
+    "productShippingStatus": "A pergunta solicita expedição/inspeção final do PA (playbook SHB010 + apontamentos SH6010).",
+    "productStructureExclusivity": "A pergunta solicita estrutura vigente com exclusividade de matérias-primas.",
+    "productAnalyser": "A pergunta solicita análise completa do produto (cadastro, estrutura, roteiro e inspeção).",
     "productStockBranchRefinement": "A mensagem refina o estoque do produto {product_code} para a filial {branch_code}.",
     "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",
     "kpiOtd": "A pergunta solicita o indicador OTD de suprimentos.",

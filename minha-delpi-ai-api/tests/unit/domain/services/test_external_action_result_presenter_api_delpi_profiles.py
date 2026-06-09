@@ -32,6 +32,81 @@ def test_present_structure_fixture_routes_by_meta_entity() -> None:
     assert "50219001" in body or "INTERMEDIARIO" in body
 
 
+def test_present_production_status_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_production_status_90269002.json")
+
+    humanized = presenter.present(envelope, path="")
+
+    body = "\n".join(humanized.get("linhas") or [])
+
+    assert "Análise produtiva" in humanized.get("titulo", "")
+    assert "NAO" in body or "não" in body.lower() or "Produção" in body
+
+
+def test_build_presentation_production_status_tables_from_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_production_status_90269002.json")
+
+    tables = presenter.build_production_status_table_presentations(
+        envelope["data"],
+        "/products/90269002/production-status",
+    )
+
+    assert len(tables) >= 1
+    assert tables[0]["type"] == "table"
+
+
+def test_present_shipping_status_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_shipping_status_90269002.json")
+
+    humanized = presenter.present(envelope, path="")
+
+    body = "\n".join(humanized.get("linhas") or [])
+
+    assert "Expedição" in humanized.get("titulo", "")
+    assert "10" in body or "exped" in body.lower()
+
+
+def test_build_presentation_shipping_status_tables_from_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_shipping_status_90269002.json")
+
+    tables = presenter.build_shipping_status_table_presentations(
+        envelope["data"],
+        "/products/90269002/shipping-status",
+    )
+
+    assert len(tables) >= 1
+    assert tables[0]["type"] == "table"
+
+
+def test_present_structure_exclusivity_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90269002.json")
+
+    humanized = presenter.present(envelope, path="")
+
+    body = "\n".join(humanized.get("linhas") or [])
+
+    assert "exclusividade" in humanized.get("titulo", "").lower()
+    assert "10019001" in body or "exclusiv" in body.lower()
+
+
+def test_build_presentation_structure_exclusivity_tables_from_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90269002.json")
+
+    tables = presenter.build_structure_exclusivity_table_presentations(
+        envelope["data"],
+        "/products/90269002/structure/exclusivity",
+    )
+
+    assert len(tables) >= 1
+    assert tables[0]["type"] == "table"
+
+
 def test_present_factory_status_fixture_by_meta_entity() -> None:
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")
@@ -40,7 +115,7 @@ def test_present_factory_status_fixture_by_meta_entity() -> None:
 
     body = "\n".join(humanized.get("linhas") or [])
 
-    assert "OP ABERTA" in body or "Status fabril" in body
+    assert "OP ABERTA" in body or "Situação consolidada" in body or "fábrica" in body.lower()
 
 
 def test_build_presentation_stock_table_from_meta_entity() -> None:
@@ -62,7 +137,7 @@ def test_build_presentation_factory_status_table_from_meta_entity() -> None:
 
     assert table is not None
     assert table["type"] == "table"
-    assert any(row.get("campo") == "Status fabril" for row in table.get("rows") or [])
+    assert any(row.get("campo") == "Situação consolidada" for row in table.get("rows") or [])
 
 
 def test_present_analyser_fixture_still_works_with_meta() -> None:
