@@ -57,6 +57,11 @@ class ChatRouteContextService:
             "inbound-invoice",
             "outbound-invoice",
             "customers",
+            "raw-material-price-intelligence",
+            "cost-impact-simulation",
+            "last-purchase",
+            "purchase-price-history",
+            "purchase-budget-history",
         }
     )
 
@@ -99,6 +104,56 @@ class ChatRouteContextService:
             ),
         ),
         ("customers", ("cliente do produto", "clientes do produto", "customer")),
+        (
+            "raw-material-price-intelligence",
+            (
+                "analise de preco da materia-prima",
+                "análise de preço da matéria-prima",
+                "inteligencia de preco",
+                "inteligência de preço",
+                "raw-material-price-intelligence",
+            ),
+        ),
+        (
+            "cost-impact-simulation",
+            (
+                "impacto de custo",
+                "materiais que mais impactam",
+                "pareto matéria-prima",
+                "simular aumento",
+                "cost-impact-simulation",
+            ),
+        ),
+        (
+            "last-purchase",
+            (
+                "ultimo fornecedor",
+                "último fornecedor",
+                "icms da ultima compra",
+                "icms da última compra",
+                "last-purchase",
+            ),
+        ),
+        (
+            "purchase-price-history",
+            (
+                "historico de preco de compra",
+                "histórico de preço de compra",
+                "variacao de preco",
+                "variação de preço",
+                "purchase-price-history",
+            ),
+        ),
+        (
+            "purchase-budget-history",
+            (
+                "historico de orcamento",
+                "histórico de orçamento",
+                "orcamento de compra",
+                "orçamento de compra",
+                "purchase-budget-history",
+            ),
+        ),
     )
 
     _DEPARTMENT_DOMAIN_MARKERS: tuple[str, ...] = (

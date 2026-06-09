@@ -50,6 +50,13 @@ _PLAYBOOK_PATH_MARKERS = (
     "/shipping-status",
 )
 
+_OPTIONAL_DATE_PATH_MARKERS = (
+    "/raw-material-price-intelligence",
+    "/last-purchase",
+    "/purchase-price-history",
+    "/purchase-budget-history",
+)
+
 
 @lru_cache(maxsize=1)
 def _parameter_content() -> dict:
@@ -104,6 +111,18 @@ class ChatOperationalDateParameterService:
                 return True
 
         return False
+
+    @classmethod
+    def action_requires_explicit_date(cls, action: dict) -> bool:
+        if not cls.action_has_date_query_params(action):
+            return False
+
+        path = str(action.get("path") or "").lower()
+
+        if any(marker in path for marker in _OPTIONAL_DATE_PATH_MARKERS):
+            return False
+
+        return cls.is_playbook_date_route(path)
 
     @classmethod
     def parameters_have_date(cls, action: dict, parameters: dict) -> bool:

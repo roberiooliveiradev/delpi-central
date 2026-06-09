@@ -63,6 +63,11 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
+| Análise de preço de MP (compra, ICMS, orçamento, variação) | `GET /products/{code}/raw-material-price-intelligence` | `get_product_raw_material_price_intelligence` |
+| Última NF / fornecedor / ICMS de compra (MP) | `GET /products/{code}/last-purchase` | `get_product_last_purchase` |
+| Histórico de preço de compra (NF + variação %) | `GET /products/{code}/purchase-price-history` | `get_product_purchase_price_history` |
+| Histórico de orçamento (SC + PC) | `GET /products/{code}/purchase-budget-history` | `get_product_purchase_budget_history` |
+| Impacto de custo / Pareto MPs / simulação de reajuste (PA) | `GET /products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` |
 | Exportar estrutura em Excel | `GET /products/{code}/structure/excel` | (download; preferir JSON no chat) |
 | **Onde é usado / produto pai / where used** | `GET /products/{code}/parents` | `get_product_parents` |
 | Preço / tabela de preço / quanto custa | `GET /products/{code}/pricing` | `get_product_pricing` |
@@ -87,6 +92,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - `production-status`: `code` (path), `reference_date`, `branch`, `max_depth`
 - `shipping-status`: `code` (path), `reference_date` ou `date_start`+`date_end`, `branch`
 - `factory-status`: `code` (path), `reference_date`, `date_start`, `date_end`, `branch`, `max_depth`
+- `raw-material-price-intelligence`, `last-purchase`, `purchase-price-history`, `purchase-budget-history`: `code` (path); `date_start`/`date_end` **opcionais** no chat (API default 12 meses); `branch`, `history_limit` quando aplicável
+- `cost-impact-simulation`: `code` (path, **PA only**); `adjustment_percent` (ex.: 10 = +10%), `price_source` (`standard_cost` | `last_purchase`), `top_n`, `max_depth`
 - `analyser`, `summary`, `pricing`: `code` (path)
 
 **Exemplos de frases → rota**
@@ -102,6 +109,12 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - "O produto já começou a produzir?" → `GET /products/{code}/production-status`
 - "Quanto do PA já está liberado para expedição?" → `GET /products/{code}/shipping-status`
 - "Qual o status do produto na fábrica?" → `GET /products/{code}/factory-status`
+- "Análise de preço da matéria-prima 10080001" → `GET /products/{code}/raw-material-price-intelligence`
+- "Última compra e ICMS do 10080001" → `GET /products/{code}/last-purchase`
+- "Histórico de orçamento de compra do 10080001" → `GET /products/{code}/purchase-budget-history`
+- "Quais materiais mais impactam o custo do PA 90261255?" → `GET /products/{code}/cost-impact-simulation`
+- "Simule aumento de 10% nos materiais do 90261255" → `GET /products/{code}/cost-impact-simulation?adjustment_percent=10`
+- "Qual o preço de venda do 10080001?" → `GET /products/{code}/pricing` (**não** usar rotas de compra MP)
 
 ---
 

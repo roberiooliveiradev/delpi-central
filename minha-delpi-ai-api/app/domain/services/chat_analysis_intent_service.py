@@ -365,6 +365,17 @@ class ChatAnalysisIntentService:
         if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
             return True
 
+        if ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+            normalized
+        ):
+            return True
+
+        if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(normalized):
+            return True
+
+        if ChatProductQueryIntentService._looks_like_last_purchase_question(normalized):
+            return True
+
         if any(
             term in normalized
             for term in (

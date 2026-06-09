@@ -329,6 +329,146 @@
       "componentes exclusiv"
     ]
   },
+  "salePricing": {
+    "terms": [
+      "preço de venda",
+      "preco de venda",
+      "preços de venda",
+      "precos de venda",
+      "tabela comercial",
+      "tabela de venda",
+      "preço comercial",
+      "preco comercial",
+      "quanto vende",
+      "precificacao de venda",
+      "precificação de venda"
+    ]
+  },
+  "rawMaterialPriceIntelligence": {
+    "terms": [
+      "analise de preco da materia-prima",
+      "análise de preço da matéria-prima",
+      "analise de preco de mp",
+      "análise de preço de mp",
+      "preco de compra",
+      "preço de compra",
+      "preco da compra",
+      "preço da compra",
+      "custo de compra",
+      "ultimo fornecedor",
+      "último fornecedor",
+      "inteligencia de preco",
+      "inteligência de preço",
+      "raw-material-price-intelligence",
+      "analise inteligente de preco",
+      "análise inteligente de preço",
+      "analise completa de preco",
+      "análise completa de preço"
+    ],
+    "excludeWhenSalePricing": [
+      "preço de venda",
+      "preco de venda",
+      "tabela comercial",
+      "tabela de venda"
+    ],
+    "excludeWhenCostImpact": [
+      "impacto de custo",
+      "impacto no custo",
+      "materiais que mais impactam",
+      "pareto",
+      "cost-impact-simulation",
+      "simular aumento",
+      "simule aumento",
+      "reajuste percentual"
+    ]
+  },
+  "costImpactSimulation": {
+    "terms": [
+      "impacto de custo",
+      "impacto no custo",
+      "impacto nos custos",
+      "materiais que mais impactam",
+      "materiais que impactam",
+      "mp que mais impacta",
+      "mps que mais impactam",
+      "pareto matéria-prima",
+      "pareto materia prima",
+      "pareto de mp",
+      "simular aumento",
+      "simule aumento",
+      "simulacao de aumento",
+      "simulação de aumento",
+      "reajuste percentual",
+      "ranking custo mp",
+      "ranking de custo",
+      "cost-impact-simulation",
+      "simulador de custo",
+      "simulador de impacto",
+      "custo do pa",
+      "custos do pa"
+    ],
+    "excludeWhenFactoryStatus": [
+      "status fabril",
+      "status na fabrica",
+      "status na fábrica",
+      "visao fabril",
+      "visão fabril",
+      "factory-status"
+    ]
+  },
+  "lastPurchase": {
+    "terms": [
+      "ultimo fornecedor",
+      "último fornecedor",
+      "ultima compra",
+      "última compra",
+      "fornecedor da ultima compra",
+      "fornecedor da última compra",
+      "ultima nf de entrada",
+      "última nf de entrada",
+      "ultima nota fiscal de entrada",
+      "última nota fiscal de entrada",
+      "icms da ultima compra",
+      "icms da última compra",
+      "icms compra",
+      "preco da ultima compra",
+      "preço da última compra",
+      "last-purchase"
+    ]
+  },
+  "purchasePriceHistory": {
+    "terms": [
+      "historico de preco de compra",
+      "histórico de preço de compra",
+      "historico de precos de compra",
+      "histórico de preços de compra",
+      "serie de precos",
+      "série de preços",
+      "evolucao do preco de compra",
+      "evolução do preço de compra",
+      "variacao entre compras",
+      "variação entre compras",
+      "purchase-price-history"
+    ]
+  },
+  "purchaseBudgetHistory": {
+    "terms": [
+      "historico de orcamento de compra",
+      "histórico de orçamento de compra",
+      "orcamento de compra",
+      "orçamento de compra",
+      "cotacao de compra",
+      "cotação de compra",
+      "solicitacao de compra",
+      "solicitação de compra",
+      "pedido de compra",
+      " sc1010",
+      " sc7010",
+      " sc ",
+      " pc ",
+      "purchase-budget-history"
+    ]
+  },
   "analyser": {
     "fullQuestion": [
       "ficha completa",

@@ -18,6 +18,28 @@ from tests.unit.application.services.test_external_action_selection_service impo
 )
 
 
+def test_optional_date_not_required_for_raw_material_price_intelligence():
+    action = {
+        "path": "/products/{code}/raw-material-price-intelligence",
+        "parametersSchema": [
+            {"name": "code"},
+            {"name": "date_start"},
+            {"name": "date_end"},
+        ],
+    }
+
+    assert ChatOperationalDateParameterService.action_has_date_query_params(action) is True
+    assert ChatOperationalDateParameterService.action_requires_explicit_date(action) is False
+
+
+def test_missing_date_not_requested_for_raw_material_price_intelligence():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "Análise de preço da matéria-prima 10080001"
+    )
+
+    assert answer is None
+
+
 def test_resolve_missing_date_answer_for_factory_status_without_period():
     answer = ChatOperationalParameterService.resolve_missing_date_answer(
         "Qual o status completo na fábrica do produto 90263059?"

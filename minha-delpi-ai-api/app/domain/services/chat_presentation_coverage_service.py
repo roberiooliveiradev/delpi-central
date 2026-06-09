@@ -19,6 +19,11 @@ _RICH_PRODUCT_PATH_TOKENS: tuple[str, ...] = (
     "/production-status",
     "/shipping-status",
     "/structure/exclusivity",
+    "/raw-material-price-intelligence",
+    "/cost-impact-simulation",
+    "/last-purchase",
+    "/purchase-price-history",
+    "/purchase-budget-history",
 )
 
 _TIER_ORDER = ("A", "B", "C", "D")

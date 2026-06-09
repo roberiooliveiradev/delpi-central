@@ -146,7 +146,7 @@ class ExternalActionProductRouteSelectionService:
             )
 
             if (
-                ChatOperationalDateParameterService.action_has_date_query_params(action)
+                ChatOperationalDateParameterService.action_requires_explicit_date(action)
                 and not ChatOperationalDateParameterService.parameters_have_date(
                     action,
                     parameters,
@@ -223,6 +223,32 @@ class ExternalActionProductRouteSelectionService:
             ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
                 normalized
             )
+        )
+        wants_raw_material_price_intelligence = (
+            ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+                normalized
+            )
+        )
+        wants_cost_impact_simulation = (
+            ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
+                normalized
+            )
+        )
+        wants_last_purchase = (
+            ChatProductQueryIntentService._looks_like_last_purchase_question(normalized)
+        )
+        wants_purchase_price_history = (
+            ChatProductQueryIntentService._looks_like_purchase_price_history_question(
+                normalized
+            )
+        )
+        wants_purchase_budget_history = (
+            ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
+                normalized
+            )
+        )
+        wants_sale_pricing = ChatProductQueryIntentService._looks_like_sale_pricing_question(
+            normalized
         )
         wants_open_orders = any(
             term in normalized
@@ -341,6 +367,16 @@ class ExternalActionProductRouteSelectionService:
         elif inherited_segment == "outbound-invoice":
             wants_invoices = True
             wants_outbound = True
+        elif inherited_segment == "raw-material-price-intelligence":
+            wants_raw_material_price_intelligence = True
+        elif inherited_segment == "cost-impact-simulation":
+            wants_cost_impact_simulation = True
+        elif inherited_segment == "last-purchase":
+            wants_last_purchase = True
+        elif inherited_segment == "purchase-price-history":
+            wants_purchase_price_history = True
+        elif inherited_segment == "purchase-budget-history":
+            wants_purchase_budget_history = True
 
         has_specific_sub_intent = (
             wants_purchases or wants_sales or wants_open_orders or wants_structure
@@ -351,6 +387,11 @@ class ExternalActionProductRouteSelectionService:
             or wants_production_status
             or wants_shipping_status
             or wants_structure_exclusivity
+            or wants_raw_material_price_intelligence
+            or wants_cost_impact_simulation
+            or wants_last_purchase
+            or wants_purchase_price_history
+            or wants_purchase_budget_history
             or wants_product_summary
             or wants_product_overview
             or wants_full_analyser
@@ -382,6 +423,58 @@ class ExternalActionProductRouteSelectionService:
 
             if wants_structure_exclusivity and "/structure/exclusivity" in path:
                 value += 145
+
+            if wants_raw_material_price_intelligence and "raw-material-price-intelligence" in path:
+                value += 150
+
+            if wants_cost_impact_simulation and "cost-impact-simulation" in path:
+                value += 150
+
+            if wants_last_purchase and "last-purchase" in path:
+                value += 140
+
+            if wants_purchase_price_history and "purchase-price-history" in path:
+                value += 135
+
+            if wants_purchase_budget_history and "purchase-budget-history" in path:
+                value += 135
+
+            if wants_sale_pricing and "/pricing" in path:
+                value += 130
+
+            if wants_sale_pricing and (
+                "raw-material-price-intelligence" in path
+                or "last-purchase" in path
+                or "purchase-price-history" in path
+                or "purchase-budget-history" in path
+            ):
+                value -= 100
+
+            if (
+                wants_raw_material_price_intelligence
+                or wants_last_purchase
+                or wants_purchase_price_history
+                or wants_purchase_budget_history
+            ) and "/pricing" in path and not wants_sale_pricing:
+                value -= 90
+
+            if wants_last_purchase and "/purchases" in path and "last-purchase" not in path:
+                value -= 80
+
+            if wants_purchase_budget_history and "/purchases" in path:
+                value -= 85
+
+            if wants_purchase_price_history and "/purchases" in path:
+                value -= 70
+
+            if wants_cost_impact_simulation and path.rstrip("/").endswith("/structure"):
+                value -= 85
+
+            if wants_cost_impact_simulation and "cost-impact-simulation" not in path and "/structure" in path:
+                value -= 60
+
+            if wants_structure and not wants_cost_impact_simulation and "cost-impact-simulation" in path:
+                value -= 90
 
             if wants_production_status and wants_factory_status:
                 if any(
@@ -820,6 +913,40 @@ class ExternalActionProductRouteSelectionService:
                 else:
                     parameters[name] = "summary"
 
+            elif lowered == "adjustment_percent":
+                percent = self._extract_adjustment_percent(normalized)
+
+                if percent is not None:
+                    parameters[name] = percent
+
+            elif lowered == "top_n":
+                top_n = self._extract_top_n(normalized)
+
+                if top_n is not None:
+                    parameters[name] = top_n
+
+            elif lowered == "price_source":
+                if any(
+                    term in normalized
+                    for term in (
+                        "ultima compra",
+                        "última compra",
+                        "last_purchase",
+                        "last purchase",
+                    )
+                ):
+                    parameters[name] = "last_purchase"
+                elif any(
+                    term in normalized
+                    for term in (
+                        "custo padrao",
+                        "custo padrão",
+                        "standard_cost",
+                        "standard cost",
+                    )
+                ):
+                    parameters[name] = "standard_cost"
+
         from app.domain.services.chat_operational_date_parameter_service import (
             ChatOperationalDateParameterService,
         )
@@ -830,3 +957,45 @@ class ExternalActionProductRouteSelectionService:
             parameters,
             previous_messages=previous_messages,
         )
+
+    @staticmethod
+    def _extract_adjustment_percent(normalized: str) -> float | None:
+        if not normalized:
+            return None
+
+        patterns = (
+            r"(?:aumento|reajuste|subir|simul\w*)\s*(?:de\s*)?([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)",
+            r"([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)\s*(?:de\s*)?(?:aumento|reajuste|simul)",
+        )
+
+        for pattern in patterns:
+            match = re.search(pattern, normalized)
+
+            if match:
+                try:
+                    return float(match.group(1).replace(",", "."))
+                except ValueError:
+                    return None
+
+        return None
+
+    @staticmethod
+    def _extract_top_n(normalized: str) -> int | None:
+        if not normalized:
+            return None
+
+        patterns = (
+            r"\btop\s*(\d+)\b",
+            r"\b(\d+)\s*(?:principais|maiores|primeir)",
+        )
+
+        for pattern in patterns:
+            match = re.search(pattern, normalized)
+
+            if match:
+                try:
+                    return int(match.group(1))
+                except ValueError:
+                    return None
+
+        return None

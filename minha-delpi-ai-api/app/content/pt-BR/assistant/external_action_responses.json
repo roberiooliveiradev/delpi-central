@@ -288,6 +288,53 @@
         "matéria-prima exclusiva",
         "structure/exclusivity"
       ],
+      "rawMaterialPriceIntelligenceTerms": [
+        "analise de preco da materia-prima",
+        "análise de preço da matéria-prima",
+        "preco de compra",
+        "preço de compra",
+        "inteligencia de preco",
+        "inteligência de preço",
+        "raw-material-price-intelligence"
+      ],
+      "costImpactSimulationTerms": [
+        "impacto de custo",
+        "materiais que mais impactam",
+        "pareto matéria-prima",
+        "simular aumento",
+        "simule aumento",
+        "cost-impact-simulation",
+        "ranking custo mp"
+      ],
+      "lastPurchaseTerms": [
+        "ultimo fornecedor",
+        "último fornecedor",
+        "icms da ultima compra",
+        "icms da última compra",
+        "last-purchase"
+      ],
+      "purchasePriceHistoryTerms": [
+        "historico de preco de compra",
+        "histórico de preço de compra",
+        "variacao de preco",
+        "variação de preço",
+        "purchase-price-history"
+      ],
+      "purchaseBudgetHistoryTerms": [
+        "historico de orcamento",
+        "histórico de orçamento",
+        "orcamento de compra",
+        "orçamento de compra",
+        "cotacao fornecedor",
+        "cotação fornecedor",
+        "purchase-budget-history"
+      ],
+      "salePricingTerms": [
+        "preço de venda",
+        "preco de venda",
+        "tabela comercial",
+        "tabela de venda"
+      ],
       "purchasesTerms": [
         "compra",
         "compras",

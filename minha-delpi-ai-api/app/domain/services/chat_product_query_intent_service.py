@@ -942,6 +942,119 @@ class ChatProductQueryIntentService:
         return any(marker in lowered for marker in exclusivity_markers)
 
     @classmethod
+    def _looks_like_sale_pricing_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._terms("salePricing", "terms"))
+
+    @classmethod
+    def _looks_like_raw_material_price_intelligence_question(cls, normalized: str) -> bool:
+        if cls._looks_like_sale_pricing_question(normalized):
+            return False
+
+        if cls._looks_like_cost_impact_simulation_question(normalized):
+            return False
+
+        if any(
+            term in normalized
+            for term in cls._terms("rawMaterialPriceIntelligence", "excludeWhenSalePricing")
+        ):
+            return False
+
+        if any(term in normalized for term in cls._terms("rawMaterialPriceIntelligence", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        return False
+
+    @classmethod
+    def _looks_like_cost_impact_simulation_question(cls, normalized: str) -> bool:
+        if any(
+            term in normalized
+            for term in cls._terms("costImpactSimulation", "excludeWhenFactoryStatus")
+        ) and not any(
+            marker in normalized
+            for marker in (
+                "impacto",
+                "pareto",
+                "simul",
+                "reajuste",
+                "cost-impact",
+            )
+        ):
+            return False
+
+        if any(term in normalized for term in cls._terms("costImpactSimulation", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        lowered = normalized.lower()
+
+        if not cls._has_product_scope_reference(normalized):
+            return False
+
+        cost_markers = (
+            "impacto de custo",
+            "impacto no custo",
+            "materiais que mais impactam",
+            "materiais que impactam",
+            "pareto",
+            "simular aumento",
+            "simule aumento",
+            "reajuste percentual",
+            "ranking custo",
+        )
+
+        return any(marker in lowered for marker in cost_markers)
+
+    @classmethod
+    def _looks_like_last_purchase_question(cls, normalized: str) -> bool:
+        if cls._looks_like_raw_material_price_intelligence_question(normalized):
+            return False
+
+        if cls._looks_like_sale_pricing_question(normalized):
+            return False
+
+        if any(term in normalized for term in cls._terms("lastPurchase", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        if (
+            ("ultima compra" in normalized or "última compra" in normalized)
+            and any(marker in normalized for marker in ("icms", "fornecedor", " nf"))
+        ):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        return False
+
+    @classmethod
+    def _looks_like_purchase_price_history_question(cls, normalized: str) -> bool:
+        if cls._looks_like_raw_material_price_intelligence_question(normalized):
+            return False
+
+        if any(term in normalized for term in cls._terms("purchasePriceHistory", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        return False
+
+    @classmethod
+    def _looks_like_purchase_budget_history_question(cls, normalized: str) -> bool:
+        if cls._looks_like_raw_material_price_intelligence_question(normalized):
+            return False
+
+        if any(term in normalized for term in cls._terms("purchaseBudgetHistory", "terms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
+        return False
+
+    @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:
         if any(
             term in normalized

@@ -33,6 +33,11 @@ class ChatActiveQuerySessionService:
         "factory_status": ChatProductQueryIntent.FULL,
         "production_status": ChatProductQueryIntent.FULL,
         "shipping_status": ChatProductQueryIntent.FULL,
+        "raw_material_price_intelligence": ChatProductQueryIntent.FULL,
+        "cost_impact_simulation": ChatProductQueryIntent.FULL,
+        "last_purchase": ChatProductQueryIntent.FULL,
+        "purchase_price_history": ChatProductQueryIntent.FULL,
+        "purchase_budget_history": ChatProductQueryIntent.FULL,
     }
 
     @classmethod

@@ -32,6 +32,12 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | Situação produtiva (PA/PI/OP) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
+| Análise de preço MP (compra, ICMS, orçamento) | `GET /products/{code}/raw-material-price-intelligence` | `get_product_raw_material_price_intelligence` |
+| Última NF / fornecedor / ICMS (MP) | `GET /products/{code}/last-purchase` | `get_product_last_purchase` |
+| Histórico preço compra + variação | `GET /products/{code}/purchase-price-history` | `get_product_purchase_price_history` |
+| Histórico orçamento SC/PC | `GET /products/{code}/purchase-budget-history` | `get_product_purchase_budget_history` |
+| Pareto MPs / simulação reajuste (PA) | `GET /products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` |
+| Preço de **venda** (tabela comercial) | `GET /products/{code}/pricing` | `get_product_pricing` |
 | Fornecedores do item | `GET /products/{code}/suppliers` | (ver catálogo) |
 | Histórico de compras | `GET /products/{code}/purchases` | `purchases` |
 | Vendas / carteira / faturamento | `GET /products/{code}/sales*` | (ver catálogo) |

@@ -676,6 +676,162 @@ SELECTION_CASES = [
         "expected_action_id": "structure-exclusivity",
     },
     {
+        "message": "Análise de preço da matéria-prima 10080001",
+        "actions": [
+            {
+                "actionId": "raw-material-price-intelligence",
+                "method": "GET",
+                "path": "/products/{code}/raw-material-price-intelligence",
+                "operationId": "get_product_raw_material_price_intelligence",
+                "summary": "Análise inteligente de preço de matéria-prima",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                ],
+            },
+            {
+                "actionId": "pricing",
+                "method": "GET",
+                "path": "/products/{code}/pricing",
+                "operationId": "get_product_pricing",
+                "summary": "Preços do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "purchases",
+                "method": "GET",
+                "path": "/products/{code}/purchases",
+                "operationId": "get_product_purchases",
+                "summary": "Compras do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "raw-material-price-intelligence",
+    },
+    {
+        "message": "Última compra e ICMS do produto 10080001",
+        "actions": [
+            {
+                "actionId": "last-purchase",
+                "method": "GET",
+                "path": "/products/{code}/last-purchase",
+                "operationId": "get_product_last_purchase",
+                "summary": "Última compra válida da matéria-prima",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "raw-material-price-intelligence",
+                "method": "GET",
+                "path": "/products/{code}/raw-material-price-intelligence",
+                "operationId": "get_product_raw_material_price_intelligence",
+                "summary": "Análise inteligente de preço de matéria-prima",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "purchases",
+                "method": "GET",
+                "path": "/products/{code}/purchases",
+                "operationId": "get_product_purchases",
+                "summary": "Compras do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "last-purchase",
+    },
+    {
+        "message": "Histórico de orçamento de compra do produto 10080001",
+        "actions": [
+            {
+                "actionId": "purchase-budget-history",
+                "method": "GET",
+                "path": "/products/{code}/purchase-budget-history",
+                "operationId": "get_product_purchase_budget_history",
+                "summary": "Histórico de orçamento de compra",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "purchases",
+                "method": "GET",
+                "path": "/products/{code}/purchases",
+                "operationId": "get_product_purchases",
+                "summary": "Compras do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "purchase-budget-history",
+    },
+    {
+        "message": "Quais materiais mais impactam o custo do PA 90261255?",
+        "actions": [
+            {
+                "actionId": "cost-impact-simulation",
+                "method": "GET",
+                "path": "/products/{code}/cost-impact-simulation",
+                "operationId": "get_product_cost_impact_simulation",
+                "summary": "Simulador de impacto de custos do PA",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "cost-impact-simulation",
+    },
+    {
+        "message": "Simule aumento de 10% nos materiais do produto 90261255",
+        "actions": [
+            {
+                "actionId": "cost-impact-simulation",
+                "method": "GET",
+                "path": "/products/{code}/cost-impact-simulation",
+                "operationId": "get_product_cost_impact_simulation",
+                "summary": "Simulador de impacto de custos do PA",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "adjustment_percent"},
+                ],
+            },
+            {
+                "actionId": "pricing",
+                "method": "GET",
+                "path": "/products/{code}/pricing",
+                "operationId": "get_product_pricing",
+                "summary": "Preços do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "cost-impact-simulation",
+        "expected_parameters": {"adjustment_percent": 10.0},
+    },
+    {
+        "message": "Qual o preço de venda do produto 10080001?",
+        "actions": [
+            {
+                "actionId": "pricing",
+                "method": "GET",
+                "path": "/products/{code}/pricing",
+                "operationId": "get_product_pricing",
+                "summary": "Preços do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "raw-material-price-intelligence",
+                "method": "GET",
+                "path": "/products/{code}/raw-material-price-intelligence",
+                "operationId": "get_product_raw_material_price_intelligence",
+                "summary": "Análise inteligente de preço de matéria-prima",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "pricing",
+    },
+    {
         "message": "faturamento do produto 10080047",
         "actions": [
             {
