@@ -798,3 +798,76 @@
     transform: rotate(360deg);
   }
 }
+
+.api-delpi-console .adc-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.api-delpi-console .adc-bar-chart__row {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) 1fr minmax(72px, 88px);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.api-delpi-console .adc-bar-chart__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-delpi-console .adc-bar-chart__track {
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--adc-surface-2);
+  border: 1px solid var(--adc-border);
+  overflow: hidden;
+}
+
+.api-delpi-console .adc-bar-chart__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--adc-accent) 82%, white),
+    var(--adc-accent)
+  );
+}
+
+.api-delpi-console .adc-bar-chart__value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--adc-muted);
+  text-align: right;
+}
+
+.api-delpi-console .adc-op-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--adc-title);
+  cursor: pointer;
+  text-align: left;
+}
+
+.api-delpi-console .adc-op-link:hover,
+.api-delpi-console .adc-op-link--active {
+  color: var(--adc-accent);
+  text-decoration: underline;
+}
+
+.api-delpi-console .adc-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--adc-muted);
+  margin-right: 0.5rem;
+}
+
+.api-delpi-console .adc-check input {
+  accent-color: var(--adc-accent);
+}

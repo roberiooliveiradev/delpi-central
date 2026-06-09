@@ -104,14 +104,14 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 
 **DoD:** suite «Rotas essenciais» roda em homologação; falha exibe `operationId` e motivo (status ou timeout).
 
-**Fase 1 concluída** — próximo marco: Fase 2 (telemetria SQL).
+**Fase 1 concluída** · **Fase 2 concluída** — próximo marco: Fase 3 (cache e callers).
 
 ### Integração com o portal (federated)
 
 - O `bootstrap.tsx` **não** deve chamar `mount(#root)` ao carregar o remote — isso substitui o shell do portal (sidebar some). Desenvolvimento standalone usa só `src/main.tsx`.
 - Navegação interna via `navigateConsole` (`pushState` + `popstate`), rota derivada de `pathname` repassado pelo `AppHost`.
 
-### Fase 2 — Saúde SQL (em andamento)
+### Fase 2 — Saúde SQL (concluída)
 
 Complementa o middleware HTTP já existente (`request_observability_middleware`).
 
@@ -123,7 +123,7 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 | **Endpoint** | `GET /system/sql-health` — top N por tempo e repetição | [x] MVP |
 | **UI Console** | Aba «SQL» com tabelas agregadas | [x] MVP |
 | **Persistência** | Ring buffer Redis (`SQL_TELEMETRY_BACKEND=redis`) com fallback memória | [x] |
-| **Gráficos** | Drill-down visual por `operationId` | [ ] |
+| **Gráficos** | Barras por `operationId`, linha do tempo e drill-down (`?operation_id=`) | [x] |
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
 

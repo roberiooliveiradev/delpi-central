@@ -277,9 +277,15 @@ def get_smoke_definitions():
 
 @router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)")
 @require_any_permission(SQL_HEALTH_ACCESS)
-def get_sql_health(limit: int = Query(25, ge=1, le=100)):
+def get_sql_health(
+    limit: int = Query(25, ge=1, le=100),
+    operation_id: str | None = Query(
+        None,
+        description="Filtra drill-down por operation id; use __none__ para amostras sem id.",
+    ),
+):
     try:
-        payload = get_sql_health_summary(limit=limit)
+        payload = get_sql_health_summary(limit=limit, operation_id=operation_id)
         return api_delpi_success(
             payload,
             operation_id="get_sql_health",

@@ -22,4 +22,17 @@ def test_record_and_summarize_sql_telemetry() -> None:
     assert summary["total_samples"] >= 2
     assert summary["top_by_count"][0]["count"] >= 2
     assert summary["top_by_count"][0]["query_hash"] == query_hash(query)
+    assert summary["by_operation_id"]
     assert summary["recent"]
+
+
+def test_get_sql_health_summary_drill_down_by_operation_id() -> None:
+    query = "SELECT 2 AS value"
+    record_sql_query(query=query, duration_ms=5.0, repository="RepoA")
+    record_sql_query(query="SELECT 3 AS value", duration_ms=7.0, repository="RepoB")
+
+    summary = get_sql_health_summary(limit=10, operation_id="__none__")
+
+    assert summary["filter_operation_id"] == "__none__"
+    assert "timeline" in summary
+    assert "queries_in_operation" in summary

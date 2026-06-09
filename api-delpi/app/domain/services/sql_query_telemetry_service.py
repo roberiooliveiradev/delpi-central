@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any
 
 from app.composition.sql_telemetry_composer import build_sql_telemetry_store
+from app.domain.services.sql_health_aggregator import (
+    build_sql_health_payload,
+    filter_entries_by_operation_id,
+)
 from app.domain.services.sql_query_telemetry_models import SqlQueryRecord, preview_query
 from app.infrastructure.observability.request_context import get_caller_app, get_operation_id
 
@@ -38,68 +41,21 @@ def record_sql_query(
     build_sql_telemetry_store().append(record)
 
 
-def get_sql_health_summary(*, limit: int = 25) -> dict[str, Any]:
+def get_sql_health_summary(
+    *,
+    limit: int = 25,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
     store = build_sql_telemetry_store()
-    entries = store.list_entries()
+    all_entries = store.list_entries()
+    entries = filter_entries_by_operation_id(all_entries, operation_id)
 
-    if not entries:
-        return {
-            "storage_backend": store.backend_name(),
-            "total_samples": 0,
-            "window_samples": 0,
-            "top_by_duration": [],
-            "top_by_count": [],
-            "recent": [],
-        }
-
-    by_hash: dict[str, dict[str, Any]] = {}
-
-    for item in entries:
-        bucket = by_hash.setdefault(
-            item.query_hash,
-            {
-                "query_hash": item.query_hash,
-                "preview": item.preview,
-                "count": 0,
-                "total_ms": 0.0,
-                "max_ms": 0.0,
-                "last_operation_id": item.operation_id,
-                "last_caller_app": item.caller_app,
-                "last_repository": item.repository,
-                "last_recorded_at": item.recorded_at,
-            },
-        )
-        bucket["count"] += 1
-        bucket["total_ms"] += item.duration_ms
-        bucket["max_ms"] = max(bucket["max_ms"], item.duration_ms)
-        bucket["last_operation_id"] = item.operation_id
-        bucket["last_caller_app"] = item.caller_app
-        bucket["last_repository"] = item.repository
-        bucket["last_recorded_at"] = item.recorded_at
-
-    aggregated = []
-    for bucket in by_hash.values():
-        count = bucket["count"]
-        aggregated.append(
-            {
-                **bucket,
-                "avg_ms": round(bucket["total_ms"] / count, 2),
-                "total_ms": round(bucket["total_ms"], 2),
-            }
-        )
-
-    top_by_duration = sorted(aggregated, key=lambda row: row["max_ms"], reverse=True)[:limit]
-    top_by_count = sorted(aggregated, key=lambda row: row["count"], reverse=True)[:limit]
-    recent = [asdict(item) for item in reversed(entries[-limit:])]
-
-    return {
-        "storage_backend": store.backend_name(),
-        "total_samples": len(entries),
-        "window_samples": len(entries),
-        "top_by_duration": top_by_duration,
-        "top_by_count": top_by_count,
-        "recent": recent,
-    }
+    return build_sql_health_payload(
+        entries,
+        limit=limit,
+        storage_backend=store.backend_name(),
+        filter_operation_id=operation_id,
+    )
 
 
 class _TimedQuery:
