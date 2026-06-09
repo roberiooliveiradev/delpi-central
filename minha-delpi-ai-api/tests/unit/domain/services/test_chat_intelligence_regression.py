@@ -216,6 +216,12 @@ def test_date_range_selection_regression(case):
     )
 
     assert selected is not None
+
+    if case.get("expected_action_id"):
+        assert (
+            selected["arguments"].get("actionId") == case["expected_action_id"]
+        )
+
     params = selected["arguments"].get("parameters") or {}
 
     for key, value in case["expected_parameters"].items():

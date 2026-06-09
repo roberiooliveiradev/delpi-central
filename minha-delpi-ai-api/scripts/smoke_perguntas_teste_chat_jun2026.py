@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -22,6 +23,7 @@ _FABRIL = os.environ.get("SMOKE_PRODUCT_CODE", "90269002").strip()
 _MP = os.environ.get("SMOKE_MP_CODE", "10080001").strip()
 _PA = os.environ.get("SMOKE_PA_CODE", "90261255").strip()
 _MAX_LATENCY_S = float(os.environ.get("SMOKE_MAX_LATENCY_SECONDS", "45"))
+_PAUSE_S = float(os.environ.get("SMOKE_PAUSE_SECONDS", "2"))
 
 
 def _request(method: str, url: str, *, token: str, body: dict | None = None) -> dict:
@@ -184,7 +186,33 @@ def _path_matches(path: str, expected: str | tuple[str, ...]) -> bool:
     return expected in path
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--case",
+        action="append",
+        default=[],
+        help="Executa só cenário(s) informado(s): R1, F5, MP10, etc. Pode repetir a flag.",
+    )
+    return parser.parse_args()
+
+
+def _case_selected(case_id: str, selected: list[str]) -> bool:
+    if not selected:
+        return True
+
+    normalized = case_id.strip().upper()
+
+    for item in selected:
+        token = item.strip().upper()
+        if normalized == token or normalized.startswith(f"{token} "):
+            return True
+
+    return False
+
+
 def main() -> int:
+    args = _parse_args()
     failed = 0
     token = _token()
     agent_id = _agent_id(token)
@@ -209,7 +237,11 @@ def main() -> int:
     ]
 
     for title, message, expected_fragment, expect_match in single_turn:
+        if not _case_selected(title, args.case):
+            continue
+
         try:
+            time.sleep(_PAUSE_S)
             session_id = _session(token, agent_id, title)
             response, elapsed = _send(token, session_id, agent_id, message)
             path = _action_path(response)
@@ -233,94 +265,102 @@ def main() -> int:
             print(f"FAIL {title} — {exc}", file=sys.stderr)
             failed += 1
 
-    try:
-        session_id = _session(token, agent_id, "F5 pending date")
-        _send(token, session_id, agent_id, f"status fabril do produto {_FABRIL}")
-        pending = _pending_kind(token, session_id)
-        _check(
-            "F5 pede data",
-            pending in {"missing_date", "missing_period"} or "data" in pending or "periodo" in pending,
-            f"pending={pending or '?'}",
-        )
-        follow, elapsed = _send(token, session_id, agent_id, "hoje")
-        path = _action_path(follow)
-        _check(
-            "F6 continuação hoje",
-            "/factory-status" in path and not _llm_improvised(follow),
-            f"path={path or '?'} elapsed={elapsed:.1f}s",
-        )
-    except AssertionError:
-        failed += 1
-    except Exception as exc:
-        print(f"FAIL F5/F6 — {exc}", file=sys.stderr)
-        failed += 1
+    if _case_selected("F5", args.case) or _case_selected("F6", args.case):
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "F5 pending date")
+            _send(token, session_id, agent_id, f"status fabril do produto {_FABRIL}")
+            pending = _pending_kind(token, session_id)
+            _check(
+                "F5 pede data",
+                pending in {"missing_date", "missing_period"} or "data" in pending or "periodo" in pending,
+                f"pending={pending or '?'}",
+            )
+            follow, elapsed = _send(token, session_id, agent_id, "hoje")
+            path = _action_path(follow)
+            _check(
+                "F6 continuação hoje",
+                "/factory-status" in path and not _llm_improvised(follow),
+                f"path={path or '?'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL F5/F6 — {exc}", file=sys.stderr)
+            failed += 1
 
-    try:
-        session_id = _session(token, agent_id, "MP10 sessão ativa")
-        _send(token, session_id, agent_id, "análise de preço MP")
-        follow, elapsed = _send(token, session_id, agent_id, _MP)
-        path = _action_path(follow)
-        _check(
-            "MP10 código isolado",
-            "/raw-material-price-intelligence" in path,
-            f"path={path or '?'} elapsed={elapsed:.1f}s",
-        )
-    except AssertionError:
-        failed += 1
-    except Exception as exc:
-        print(f"FAIL MP10 — {exc}", file=sys.stderr)
-        failed += 1
+    if _case_selected("MP10", args.case):
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "MP10 sessão ativa")
+            _send(token, session_id, agent_id, "análise de preço MP")
+            follow, elapsed = _send(token, session_id, agent_id, _MP)
+            path = _action_path(follow)
+            _check(
+                "MP10 código isolado",
+                "/raw-material-price-intelligence" in path,
+                f"path={path or '?'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL MP10 — {exc}", file=sys.stderr)
+            failed += 1
 
-    try:
-        session_id = _session(token, agent_id, "R6 refinamento formato")
-        _send(token, session_id, agent_id, f"análise de preço da matéria-prima {_MP}")
-        follow, elapsed = _send(token, session_id, agent_id, "mostre o último resultado em tabela")
-        path = _action_path(follow)
-        answer = str(follow.get("answer") or follow.get("content") or "")
-        _check(
-            "R6 refinamento tabela",
-            "/system/tables" not in path
-            and (not path or "/raw-material" in path or "tabela" in answer.lower() or follow.get("toolCalls")),
-            f"path={path or '(sem tool)'} elapsed={elapsed:.1f}s",
-        )
-    except AssertionError:
-        failed += 1
-    except Exception as exc:
-        print(f"FAIL R6 — {exc}", file=sys.stderr)
-        failed += 1
+    if _case_selected("R6", args.case):
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "R6 refinamento formato")
+            _send(token, session_id, agent_id, f"análise de preço da matéria-prima {_MP}")
+            follow, elapsed = _send(token, session_id, agent_id, "mostre o último resultado em tabela")
+            path = _action_path(follow)
+            answer = str(follow.get("answer") or follow.get("content") or "")
+            _check(
+                "R6 refinamento tabela",
+                "/system/tables" not in path
+                and (not path or "/raw-material" in path or "tabela" in answer.lower() or follow.get("toolCalls")),
+                f"path={path or '(sem tool)'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL R6 — {exc}", file=sys.stderr)
+            failed += 1
 
-    try:
-        session_id = _session(token, agent_id, "MP7 MP no simulador")
-        response, elapsed = _send(
-            token,
-            session_id,
-            agent_id,
-            f"Simule impacto de custo do produto {_MP}",
-        )
-        path = _action_path(response)
-        answer = str(response.get("answer") or response.get("content") or "").lower()
-        tool_meta = {}
+    if _case_selected("MP7", args.case):
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "MP7 MP no simulador")
+            response, elapsed = _send(
+                token,
+                session_id,
+                agent_id,
+                f"Simule impacto de custo do produto {_MP}",
+            )
+            path = _action_path(response)
+            answer = str(response.get("answer") or response.get("content") or "").lower()
+            tool_meta = {}
 
-        for call in response.get("toolCalls") or []:
-            if str(call.get("name") or "") == "execute_external_action":
-                tool_meta = call.get("metadata") or {}
-                break
+            for call in response.get("toolCalls") or []:
+                if str(call.get("name") or "") == "execute_external_action":
+                    tool_meta = call.get("metadata") or {}
+                    break
 
-        ok = (
-            not tool_meta.get("ok")
-            or "/cost-impact-simulation" not in path
-            or "400" in str(tool_meta.get("error") or "")
-            or "pa" in answer
-            or "produto acabado" in answer
-            or "não" in answer
-            or "nao" in answer
-        )
-        _check("MP7 erro MP no simulador", ok, f"path={path or '?'} elapsed={elapsed:.1f}s")
-    except AssertionError:
-        failed += 1
-    except Exception as exc:
-        print(f"FAIL MP7 — {exc}", file=sys.stderr)
-        failed += 1
+            ok = (
+                not tool_meta.get("ok")
+                or "/cost-impact-simulation" not in path
+                or "400" in str(tool_meta.get("error") or "")
+                or "pa" in answer
+                or "produto acabado" in answer
+                or "não" in answer
+                or "nao" in answer
+            )
+            _check("MP7 erro MP no simulador", ok, f"path={path or '?'} elapsed={elapsed:.1f}s")
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL MP7 — {exc}", file=sys.stderr)
+            failed += 1
 
     if failed:
         print(f"\n{failed} cenário(s) falharam", file=sys.stderr)

@@ -53,6 +53,44 @@ def test_looks_like_factory_status_question_with_product_code():
     assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
 
 
+def test_resolve_product_intent_status_fabril_nao_herda_estoque():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/90269002/stock"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            "status fabril do produto 90269002 hoje",
+            previous_messages=history,
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
+def test_refine_operational_intent_status_fabril_mantem_full():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "status fabril do produto 90269002 hoje"
+    )
+
+    assert (
+        ChatProductQueryIntentService.refine_operational_intent_from_full(
+            "status fabril do produto 90269002 hoje",
+            normalized=normalized,
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
 def test_looks_like_production_status_question_with_apontamentos():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "O produto 90269002 já tem apontamento na OP?"

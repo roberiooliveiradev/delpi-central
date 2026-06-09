@@ -406,6 +406,18 @@ class ExternalActionProductRouteSelectionService:
             or wants_product_overview
             or wants_full_analyser
         )
+        suppress_api_externa_provider_bias = (
+            wants_factory_status
+            or wants_production_status
+            or wants_shipping_status
+            or wants_structure_exclusivity
+            or wants_raw_material_price_intelligence
+            or wants_cost_impact_simulation
+            or wants_last_purchase
+            or wants_purchase_price_history
+            or wants_purchase_budget_history
+            or wants_sale_pricing
+        )
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -746,7 +758,10 @@ class ExternalActionProductRouteSelectionService:
             if "structure" in haystack or "estrutura" in haystack:
                 value += 5
 
-            value += self._provider_preference_bonus(action)
+            value += self._provider_preference_bonus(
+                action,
+                suppress_playbook_bias=suppress_api_externa_provider_bias,
+            )
 
             return value
 
@@ -762,10 +777,15 @@ class ExternalActionProductRouteSelectionService:
         return lowered.endswith("/sales") and "/products/" in lowered
 
     @classmethod
-    def _provider_preference_bonus(cls, action: dict) -> int:
+    def _provider_preference_bonus(
+        cls,
+        action: dict,
+        *,
+        suppress_playbook_bias: bool = False,
+    ) -> int:
         from app.infrastructure.config.settings import Settings
 
-        if not Settings.CHAT_PREFER_API_EXTERNA_PROVIDER:
+        if suppress_playbook_bias or not Settings.CHAT_PREFER_API_EXTERNA_PROVIDER:
             return 0
 
         action_id = str(action.get("actionId") or "").lower()

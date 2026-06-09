@@ -455,6 +455,22 @@ class ChatProductQueryIntentService:
         return str(getattr(message, "role", "") or "").strip().lower()
 
     @classmethod
+    def _looks_like_explicit_playbook_product_scope(cls, normalized: str) -> bool:
+        """Playbook fabril/MP/PA — não herdar intent de consulta anterior (ex.: estoque)."""
+        return (
+            cls._looks_like_factory_status_question(normalized)
+            or cls._looks_like_production_status_question(normalized)
+            or cls._looks_like_shipping_status_question(normalized)
+            or cls._looks_like_structure_exclusivity_question(normalized)
+            or cls._looks_like_cost_impact_simulation_question(normalized)
+            or cls._looks_like_raw_material_price_intelligence_question(normalized)
+            or cls._looks_like_last_purchase_question(normalized)
+            or cls._looks_like_purchase_price_history_question(normalized)
+            or cls._looks_like_purchase_budget_history_question(normalized)
+            or cls._looks_like_sale_pricing_question(normalized)
+        )
+
+    @classmethod
     def infer_intent_from_recent_tool(cls, previous_messages: list | None) -> str | None:
         from app.domain.services.chat_route_context_service import (
             ChatRouteContextService,
@@ -497,6 +513,9 @@ class ChatProductQueryIntentService:
             return intent
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if cls._looks_like_explicit_playbook_product_scope(normalized):
+            return ChatProductQueryIntent.FULL
 
         if cls._looks_like_product_sub_intent(normalized):
             return intent
@@ -1202,6 +1221,9 @@ class ChatProductQueryIntentService:
         normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
             message
         )
+
+        if cls._looks_like_explicit_playbook_product_scope(normalized_text):
+            return ChatProductQueryIntent.FULL
 
         if cls._looks_like_structure_question(normalized_text):
             return ChatProductQueryIntent.STRUCTURE

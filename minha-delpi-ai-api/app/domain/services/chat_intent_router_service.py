@@ -1331,14 +1331,20 @@ class ChatIntentRouterService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         lowered = message.lower()
 
+        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
+            return "factory_status_lookup"
+
+        if ChatProductQueryIntentService._looks_like_production_status_question(normalized):
+            return "production_status_lookup"
+
+        if ChatProductQueryIntentService._looks_like_shipping_status_question(normalized):
+            return "shipping_status_lookup"
+
         if ChatProductQueryIntentService._looks_like_stock_question(normalized):
             return "stock_lookup"
 
         if ChatProductQueryIntentService._looks_like_billing_question(normalized):
             return "billing_lookup"
-
-        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
-            return "factory_status_lookup"
 
         if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
             normalized
