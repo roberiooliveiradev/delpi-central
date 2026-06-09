@@ -1,0 +1,49 @@
+name: minha-delpi-ai-api presentation
+
+on:
+  push:
+    paths:
+      - "minha-delpi-ai-api/**"
+      - "api-delpi/app/content/openapi_baseline.json"
+      - ".github/workflows/minha-delpi-ai-api-presentation.yml"
+  pull_request:
+    paths:
+      - "minha-delpi-ai-api/**"
+      - "api-delpi/app/content/openapi_baseline.json"
+      - ".github/workflows/minha-delpi-ai-api-presentation.yml"
+
+jobs:
+  presentation-coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: minha-delpi-ai-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: minha-delpi-ai-api/requirements.txt
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Gate perfis OpenAPI × presentation_profiles
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-profiles
+
+      - name: Testes cobertura e contrato por entidade
+        run: |
+          PYTHONPATH=. pytest \
+            tests/unit/domain/services/test_chat_presentation_coverage_service.py \
+            tests/unit/domain/services/test_chat_presentation_entity_contract.py \
+            tests/unit/domain/services/test_chat_presentation_profile_service.py \
+            tests/unit/domain/services/test_chat_presentation_recommendation_service.py \
+            tests/unit/domain/services/test_chat_presentation_format_vocabulary_service.py \
+            tests/unit/domain/services/test_chat_pagination_consolidation_service.py \
+            tests/unit/application/use_cases/test_presentation_session_format_respected.py \
+            -q
+
+      - name: Alerta operações novas vs baseline congelado
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-new-operations

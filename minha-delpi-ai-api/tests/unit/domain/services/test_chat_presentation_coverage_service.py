@@ -75,7 +75,16 @@ def test_rows_to_csv_header() -> None:
     rows = ChatPresentationCoverageService.build_matrix()[:1]
     csv_text = ChatPresentationCoverageService.rows_to_csv(rows)
 
-    assert csv_text.startswith("method,path,operation_id,tags,entity,entity_routed,tier,routed_by")
+    assert csv_text.startswith(
+        "method,path,operation_id,tags,entity,entity_routed,tier,routed_by,profile_key"
+    )
+
+
+def test_validate_for_ci_passes_on_current_matrix() -> None:
+    validation = ChatPresentationCoverageService.validate_for_ci()
+
+    assert validation["ok"] is True
+    assert not validation["profileGaps"]
 
 
 def test_regression_fixture_domains_are_unique_enough() -> None:

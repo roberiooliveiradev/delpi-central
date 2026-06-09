@@ -17,6 +17,7 @@
     "flags": []
   },
   "entityProfiles": {
+    "product": "table_list",
     "product_analyser": "analyser",
     "product_stock": "stock",
     "product_structure": "tree_hierarchy",
@@ -40,6 +41,9 @@
     "product_sales": "table_list",
     "product_open_orders": "table_list",
     "product_billing": "table_list",
+    "product_internal_movements": "table_list",
+    "product_inbound_invoice_items": "table_list",
+    "product_outbound_invoice_items": "table_list",
     "sql_result": "sql",
     "protheus_table": "system",
     "protheus_column": "system",
@@ -72,6 +76,7 @@
     { "contains": "/movements", "profile": "table_list" },
     { "contains": "/invoices", "profile": "table_list" },
     { "contains": "/products/search", "profile": "table_list" },
+    { "contains": "/summary", "profile": "table_list" },
     { "contains": "/data/sql", "profile": "sql" },
     { "contains": "/system/", "profile": "system" }
   ],

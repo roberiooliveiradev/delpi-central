@@ -63,7 +63,14 @@
     ],
     "profileCoverageRatio": 1.0,
     "entityPathHintCount": 62,
-    "pathEntityFallbackCount": 22
+    "pathEntityFallbackCount": 27,
+    "metrics": {
+      "tierBPlusCount": 71,
+      "tierBPlusRatio": 0.5462,
+      "tierABProfileMappedRatio": 1.0,
+      "stackLayoutRatio": 0.0,
+      "sessionFormatRespectedRatio": null
+    }
   },
   "rows": [
     {
@@ -76,7 +83,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -88,7 +96,8 @@
       "entity": "sales_conversion_rate",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -100,7 +109,8 @@
       "entity": "commercial_rol_target",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -112,7 +122,8 @@
       "entity": "new_business_rol_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -124,7 +135,8 @@
       "entity": "new_clients_average",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -136,7 +148,8 @@
       "entity": "new_clients_rol_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -148,7 +161,8 @@
       "entity": "commercial_proposal",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -160,7 +174,8 @@
       "entity": "commercial_rol_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -172,7 +187,8 @@
       "entity": "sales_order_otd",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "POST",
@@ -184,7 +200,8 @@
       "entity": "sql_result",
       "entity_routed": true,
       "tier": "D",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "sql"
     },
     {
       "method": "GET",
@@ -196,7 +213,8 @@
       "entity": "lmp",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -208,7 +226,8 @@
       "entity": "lmp_dashboard",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -220,7 +239,8 @@
       "entity": "lmp_dashboard_charts",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -232,7 +252,8 @@
       "entity": "lmp_dashboard_items",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -244,7 +265,8 @@
       "entity": "lmp_dashboard_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -256,7 +278,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -268,7 +291,8 @@
       "entity": "transforma_mais_process",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -280,7 +304,8 @@
       "entity": "transforma_mais_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -293,7 +318,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -306,7 +332,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -319,7 +346,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -332,7 +360,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -345,7 +374,8 @@
       "entity": "financial_ebitda_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -358,7 +388,8 @@
       "entity": "financial_fixed_cost_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -371,7 +402,8 @@
       "entity": "financial_pmr",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -384,7 +416,8 @@
       "entity": "financial_rol",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -396,7 +429,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -408,7 +442,8 @@
       "entity": "hr_active_pdi_count",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -420,7 +455,8 @@
       "entity": "hr_branch",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -432,7 +468,8 @@
       "entity": "hr_performance_reviews_completion",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -444,7 +481,8 @@
       "entity": "hr_snapshot",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -456,7 +494,8 @@
       "entity": "depreciation_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -468,7 +507,8 @@
       "entity": "direct_labor_cost_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -480,7 +520,8 @@
       "entity": "eficiencia_fabril_appointment",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -492,7 +533,8 @@
       "entity": "eficiencia_fabril_dashboard",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -504,7 +546,8 @@
       "entity": "production_oee_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -516,7 +559,8 @@
       "entity": "production_otd",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -528,7 +572,8 @@
       "entity": "production_otd_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -540,7 +585,8 @@
       "entity": "overall_equipment_effectiveness",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -552,7 +598,8 @@
       "entity": "production_cost_pct",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -564,7 +611,8 @@
       "entity": "product_search",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -576,7 +624,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -588,7 +637,8 @@
       "entity": "product_analyser",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "analyser"
     },
     {
       "method": "GET",
@@ -600,7 +650,8 @@
       "entity": "product_customers",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -612,7 +663,8 @@
       "entity": "product_factory_status",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "factory_status"
     },
     {
       "method": "GET",
@@ -624,7 +676,8 @@
       "entity": "product_guide",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -636,7 +689,8 @@
       "entity": "product_inbound_invoice_items",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -648,7 +702,8 @@
       "entity": "product_inspection",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -660,7 +715,8 @@
       "entity": "product_internal_movements",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -672,7 +728,8 @@
       "entity": "product_outbound_invoice_items",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -684,7 +741,8 @@
       "entity": "product_parents",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "tree_hierarchy"
     },
     {
       "method": "GET",
@@ -696,7 +754,8 @@
       "entity": "product_pricing",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -708,7 +767,8 @@
       "entity": "product_production_status",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "production_status"
     },
     {
       "method": "GET",
@@ -720,7 +780,8 @@
       "entity": "product_purchases",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -732,7 +793,8 @@
       "entity": "sale_order",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -744,7 +806,8 @@
       "entity": "product_billing",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -756,7 +819,8 @@
       "entity": "product_open_orders",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -768,7 +832,8 @@
       "entity": "product_shipping_status",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "shipping_status"
     },
     {
       "method": "GET",
@@ -780,7 +845,8 @@
       "entity": "product_stock",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "stock"
     },
     {
       "method": "GET",
@@ -792,7 +858,8 @@
       "entity": "product_structure",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "tree_hierarchy"
     },
     {
       "method": "GET",
@@ -804,7 +871,8 @@
       "entity": "product_structure",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "tree_hierarchy"
     },
     {
       "method": "GET",
@@ -816,7 +884,8 @@
       "entity": "product_structure_exclusivity",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "structure_exclusivity"
     },
     {
       "method": "GET",
@@ -828,7 +897,8 @@
       "entity": "product",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -840,7 +910,8 @@
       "entity": "product_suppliers",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -853,7 +924,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -866,7 +938,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -879,7 +952,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -892,7 +966,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -905,7 +980,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -918,7 +994,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -931,7 +1008,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -944,7 +1022,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -957,7 +1036,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -970,7 +1050,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -983,7 +1064,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -996,7 +1078,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1009,7 +1092,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1022,7 +1106,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "PUT",
@@ -1035,7 +1120,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1048,7 +1134,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "PATCH",
@@ -1061,7 +1148,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1074,7 +1162,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1087,7 +1176,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1100,7 +1190,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1113,7 +1204,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1126,7 +1218,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1139,7 +1232,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1151,7 +1245,8 @@
       "entity": "audit_5s_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1163,7 +1258,8 @@
       "entity": "quality_branch",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1175,7 +1271,8 @@
       "entity": "kaizen_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1187,7 +1284,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1199,7 +1297,8 @@
       "entity": "nonconformity_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1212,7 +1311,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1225,7 +1325,8 @@
       "entity": "ppm_external_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1238,7 +1339,8 @@
       "entity": "ppm_external_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1251,7 +1353,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1264,7 +1367,8 @@
       "entity": "ppm_internal_series",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1277,7 +1381,8 @@
       "entity": "ppm_internal_summary",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1290,7 +1395,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1302,7 +1408,8 @@
       "entity": "sale_order",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1315,7 +1422,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1328,7 +1436,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "PATCH",
@@ -1341,7 +1450,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1354,7 +1464,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "POST",
@@ -1367,7 +1478,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "PATCH",
@@ -1380,7 +1492,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1392,7 +1505,8 @@
       "entity": "supplies_cpv",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1404,7 +1518,8 @@
       "entity": "supplies_inventory_turnover",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1416,7 +1531,8 @@
       "entity": "supplies_negotiation_savings",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1428,7 +1544,8 @@
       "entity": "supplies_otd",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "generic"
     },
     {
       "method": "GET",
@@ -1440,7 +1557,8 @@
       "entity": "supplies_stock_value",
       "entity_routed": true,
       "tier": "B",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "stock"
     },
     {
       "method": "GET",
@@ -1452,7 +1570,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1464,7 +1583,8 @@
       "entity": "product_search",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1476,7 +1596,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "POST",
@@ -1488,7 +1609,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "POST",
@@ -1500,7 +1622,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1512,7 +1635,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1524,7 +1648,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1536,7 +1661,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1548,7 +1674,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1560,7 +1687,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1572,7 +1700,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1584,7 +1713,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1596,7 +1726,8 @@
       "entity": "protheus_table",
       "entity_routed": true,
       "tier": "D",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1608,7 +1739,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1620,7 +1752,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1632,7 +1765,8 @@
       "entity": "product_search",
       "entity_routed": true,
       "tier": "A",
-      "routed_by": "path"
+      "routed_by": "path",
+      "profile_key": "table_list"
     },
     {
       "method": "GET",
@@ -1644,7 +1778,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1656,7 +1791,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     },
     {
       "method": "GET",
@@ -1668,7 +1804,8 @@
       "entity": null,
       "entity_routed": false,
       "tier": "C",
-      "routed_by": "none"
+      "routed_by": "none",
+      "profile_key": "system"
     }
   ]
 }

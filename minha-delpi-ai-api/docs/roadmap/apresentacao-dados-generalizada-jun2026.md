@@ -316,7 +316,7 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fases 0–5 concluídas. Próxima: Fase 6 (CI/cobertura 130 rotas).
+**Status jun/2026:** ✅ Fases 0–6 concluídas. Roadmap de apresentação generalizada encerrado.
 
 ### Fase 0 — entregue
 
@@ -377,3 +377,14 @@ Atualizar este doc ao concluir cada fase (checkbox no topo).
 | Refinamento | `ChatPresentationFormatRefinementService`, `ChatToolContextFormatService` (vocabulário compartilhado) |
 | Paginação cross-turn | `ChatPaginationConsolidationService.collect_last_preferred_format` (canvas + decision) |
 | Testes | `test_chat_presentation_recommendation_service.py`, `test_chat_presentation_format_vocabulary_service.py`, `test_chat_pagination_consolidation_service.py` |
+
+### Fase 6 — entregue
+
+| Artefato | Caminho |
+|----------|---------|
+| Contrato por entidade | `ChatPresentationCoverageService.build_entity_contract_cases` + `test_chat_presentation_entity_contract.py` |
+| Gate CI perfis | `scripts/audit_presentation_coverage.py` → `--check-profiles`, `--check-new-operations` |
+| Workflow | `.github/workflows/minha-delpi-ai-api-presentation.yml` |
+| Baseline | `docs/architecture/presentation-coverage-baseline.json` (com `profile_key` e `metrics`) |
+| Homologação | `docs/testing/presentation-homologation-jun2026.md` |
+| Perfis | `presentation_profiles.json` → `product`, movimentações NF |
