@@ -67,3 +67,9 @@ def test_does_not_flag_single_product_stock_without_code():
     assert not ChatSqlOperationalIntentService.requires_sql_knowledge(
         "estoque do produto"
     )
+
+
+def test_detects_programados_para_produzir_phrase():
+    assert ChatSqlOperationalIntentService.requires_production_sql_knowledge(
+        "quais os 9026 estão programados para produzir hoje?"
+    )

@@ -5,18 +5,23 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.domain.services.chat_text_context_vocabulary_service import (
+    ChatTextContextVocabularyService,
+)
+
 
 class ChatTextContextResolverService:
-    _PREVIOUS_REF = (
-        "resposta anterior",
-        "texto anterior",
-        "mensagem anterior",
-        "conversa acima",
-        "dados acima",
-        "essa conversa",
-        "esta conversa",
-        "histórico",
-    )
+    @classmethod
+    def _previous_reference_terms(cls) -> tuple[str, ...]:
+        return ChatTextContextVocabularyService.terms("previousReferenceTerms")
+
+    @classmethod
+    def _canvas_markers(cls) -> tuple[str, ...]:
+        return ChatTextContextVocabularyService.terms("canvasMarkers")
+
+    @classmethod
+    def _attachment_markers(cls) -> tuple[str, ...]:
+        return ChatTextContextVocabularyService.terms("attachmentMarkers")
 
     @classmethod
     def resolve(
@@ -29,10 +34,10 @@ class ChatTextContextResolverService:
         normalized = raw.lower()
 
         extracted = cls._extract_inline_text(raw)
-        references_previous = any(ref in normalized for ref in cls._PREVIOUS_REF)
-        references_canvas = "lousa" in normalized or "canvas" in normalized
+        references_previous = any(ref in normalized for ref in cls._previous_reference_terms())
+        references_canvas = any(token in normalized for token in cls._canvas_markers())
         references_attachment = any(
-            token in normalized for token in ("anexo", "arquivo", "pdf", "documento anex")
+            token in normalized for token in cls._attachment_markers()
         )
 
         prior_snippet = None
@@ -62,7 +67,13 @@ class ChatTextContextResolverService:
             if len(snippet) > 4000:
                 snippet = snippet[:4000] + "…"
 
-            lines.append(f"- Texto fonte na mensagem: «{snippet}»")
+            lines.append(
+                ChatTextContextVocabularyService.text(
+                    "promptBlock",
+                    "inlineTextSource",
+                    snippet=snippet,
+                )
+            )
 
         if context.get("priorSnippet") and context.get("referencesPrevious"):
             prior = str(context["priorSnippet"]).strip()
@@ -70,13 +81,23 @@ class ChatTextContextResolverService:
             if len(prior) > 2000:
                 prior = prior[:2000] + "…"
 
-            lines.append(f"- Use como base a resposta anterior: «{prior}»")
+            lines.append(
+                ChatTextContextVocabularyService.text(
+                    "promptBlock",
+                    "priorAssistant",
+                    prior=prior,
+                )
+            )
 
         if context.get("referencesCanvas"):
-            lines.append("- Fonte: conteúdo da lousa ativa (se disponível no histórico).")
+            lines.append(
+                ChatTextContextVocabularyService.text("promptBlock", "canvasSource")
+            )
 
         if context.get("referencesAttachment"):
-            lines.append("- Fonte: arquivo(s) anexados neste turno.")
+            lines.append(
+                ChatTextContextVocabularyService.text("promptBlock", "attachmentSource")
+            )
 
         if not lines:
             return None

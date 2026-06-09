@@ -122,8 +122,18 @@ class ExternalActionSqlPresenter:
 
             if self._looks_like_production_sql_context(root, path):
                 schedule = self._resolve_production_schedule_from_root(root)
+
+                if schedule and self._looks_like_production_branch_breakdown(root):
+                    return ExternalActionResponseContentService.format(
+                        "productionSchedule",
+                        "titleByBranchBreakdown",
+                        default=f"{schedule.title} — por filial",
+                        label=schedule.label,
+                    )
+
                 if schedule:
                     return schedule.title
+
                 return ExternalActionResponseContentService.get(
                     "productionSchedule",
                     "titleTodayFallback",
@@ -326,6 +336,45 @@ class ExternalActionSqlPresenter:
             return "COD_PRODUTO" in keys and (
                 "DESCRICAO_PRODUTO" in keys or "QTD_PLANEJADA" in keys
             )
+
+    def _looks_like_production_branch_breakdown(self, root: dict) -> bool:
+            rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+
+            if rows and "FILIAL" in {str(key).upper() for key in rows[0].keys()}:
+                return True
+
+            if not isinstance(root, dict):
+                return False
+
+            for key in ("sql", "query", "statement", "executedSql"):
+                value = root.get(key)
+
+                if isinstance(value, str) and self._looks_like_production_branch_breakdown_sql(
+                    value
+                ):
+                    return True
+
+            dados = root.get("dados")
+
+            if isinstance(dados, dict):
+                for key in ("sql", "query", "statement", "executedSql"):
+                    value = dados.get(key)
+
+                    if isinstance(value, str) and self._looks_like_production_branch_breakdown_sql(
+                        value
+                    ):
+                        return True
+
+            return False
+
+    @staticmethod
+    def _looks_like_production_branch_breakdown_sql(sql: str) -> bool:
+            normalized = str(sql or "").upper()
+
+            if "C2_FILIAL AS FILIAL" in normalized:
+                return True
+
+            return "C2_FILIAL IN (" in normalized
 
     def _format_production_schedule_row(self, row: dict) -> str:
             code = str(

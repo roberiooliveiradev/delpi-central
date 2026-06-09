@@ -1,0 +1,603 @@
+{
+  "operationalIntent": {
+    "productionPhrases": [
+      "produzidos hoje",
+      "produzido hoje",
+      "serao produzidos",
+      "sera produzido",
+      "vao ser produzidos",
+      "vao ser produzido",
+      "producao de hoje",
+      "producao hoje",
+      "programacao de producao",
+      "programacao produtiva",
+      "programados para producao",
+      "programados para produzir",
+      "produtos programados",
+      "ordens de producao",
+      "ordem de producao",
+      "planejamento de producao",
+      "lista de producao",
+      "apontamento de producao",
+      "sc2010"
+    ],
+    "productionProductScopePhrases": [
+      "quais produtos",
+      "que produtos",
+      "o que",
+      "qual produto",
+      "produtos programados"
+    ],
+    "catalogSearchMarkers": [
+      "busque produto",
+      "pesquise produto",
+      "procure produto",
+      "encontre produto",
+      "cadastro de produto",
+      "descricao do produto",
+      "codigo do produto",
+      "informacoes sobre o produto"
+    ],
+    "inventoryAggregateMarkers": [
+      "estoque abaixo",
+      "abaixo do minimo",
+      "abaixo do mínimo",
+      "saldo abaixo",
+      "ruptura de estoque",
+      "produtos com estoque",
+      "liste os produtos com estoque",
+      "lista de produtos com estoque",
+      "itens com estoque abaixo"
+    ],
+    "salesAggregateMarkers": [
+      "vendas por mes",
+      "vendas por mês",
+      "evolucao de vendas",
+      "evolução de vendas",
+      "faturamento por mes",
+      "faturamento por mês",
+      "faturamento do mes",
+      "faturamento do mês",
+      "ranking dos",
+      "ranking de clientes",
+      "ranking de cliente",
+      "top 10 clientes",
+      "top 5 clientes",
+      "clientes que mais compraram",
+      "participacao do faturamento",
+      "participação do faturamento",
+      "por cliente em rosca"
+    ],
+    "temporalTerms": [
+      "hoje",
+      "ontem",
+      "amanha",
+      "anteontem",
+      "semana",
+      "mes ",
+      "proxim",
+      "passad",
+      "segunda",
+      "terca",
+      "quarta",
+      "quinta",
+      "sexta",
+      "sabado",
+      "domingo"
+    ]
+  },
+  "productionQuery": {
+    "branchBreakdownTerms": [
+      "por filial",
+      "por filiais",
+      "agrupado por filial",
+      "agrupada por filial",
+      "em cada filial",
+      "todas as filiais",
+      "todas filiais",
+      "cada filial",
+      "detalhe por filial",
+      "detalhar por filial"
+    ],
+    "defaultBranches": ["01", "02"]
+  },
+  "sqlIntent": {
+    "executeTerms": [
+      "execute ",
+      "executa ",
+      "executar ",
+      "rode ",
+      "rodar ",
+      "roda ",
+      "run ",
+      "consulte ",
+      "consultar ",
+      "consulta no banco",
+      "no banco de dados",
+      "busque no banco",
+      "traga os dados",
+      "trazer os dados",
+      "mostre os resultados",
+      "exiba os resultados",
+      "retorne os dados",
+      "retornar os dados",
+      "aplique a query",
+      "aplica a query"
+    ],
+    "authoringTerms": [
+      "monte ",
+      "monta ",
+      "crie ",
+      "cria ",
+      "gere ",
+      "gera ",
+      "escreva ",
+      "escreve ",
+      "elabore ",
+      "elabora ",
+      "construa ",
+      "constrói ",
+      "formula ",
+      "formule ",
+      "ajuste ",
+      "ajusta ",
+      "altere ",
+      "altera ",
+      "corrija ",
+      "corrige ",
+      "refine ",
+      "refina ",
+      "mude ",
+      "muda ",
+      "atualize ",
+      "atualiza ",
+      "melhore ",
+      "melhora ",
+      "otimize ",
+      "otimiza ",
+      "reescreva ",
+      "reescreve ",
+      "mostre a query",
+      "mostra a query",
+      "exiba a query",
+      "exibe a query",
+      "qual e a query",
+      "qual é a query",
+      "me mostre o sql",
+      "me mostra o sql",
+      "somente a query",
+      "so a query",
+      "só a query",
+      "apenas a query",
+      "nao execute",
+      "não execute",
+      "sem executar",
+      "sem rodar",
+      "revisa ",
+      "revisar ",
+      "revise ",
+      "explique ",
+      "explicar ",
+      "explique essa",
+      "revisa essa"
+    ],
+    "sqlBuildContext": [
+      "query que",
+      "consulta que",
+      "sql que",
+      "select que"
+    ],
+    "sqlContextTerms": [
+      "sql",
+      "consulta",
+      "query",
+      "select",
+      "tabela",
+      "coluna",
+      "join",
+      "schema",
+      " from ",
+      "cte",
+      " window ",
+      "/data/sql"
+    ],
+    "sqlConversationTurnTerms": [
+      "monte",
+      "monta",
+      "crie",
+      "gere",
+      "elabore",
+      "revise",
+      "revisa",
+      "explique",
+      "otimize",
+      "execute",
+      "executar",
+      "relacion",
+      "relacionar",
+      "schema"
+    ],
+    "sqlReviewTerms": [
+      "revise",
+      "revisar",
+      "revisa",
+      "review",
+      "valida",
+      "valide"
+    ],
+    "sqlExplainTerms": [
+      "explique",
+      "explicar",
+      "explain"
+    ]
+  },
+  "queryRefinement": {
+    "addTerms": [
+      "acrescente",
+      "acrescenta",
+      "adicione",
+      "adiciona",
+      "inclua",
+      "incluir",
+      "add ",
+      "insira",
+      "insere",
+      "coloque a coluna",
+      "coloca a coluna"
+    ],
+    "removeTerms": [
+      "remova",
+      "remove",
+      "retire",
+      "retira",
+      "tire",
+      "exclua",
+      "excluir",
+      "elimine",
+      "elimina"
+    ],
+    "alterTerms": [
+      "altere",
+      "altera",
+      "ajuste",
+      "ajusta",
+      "atualize",
+      "atualiza",
+      "modifique",
+      "modifica",
+      "mude",
+      "muda",
+      "refine",
+      "refina",
+      "troque",
+      "troca"
+    ],
+    "showQueryTerms": [
+      "mostre a query",
+      "mostra a query",
+      "exiba a query",
+      "exibe a query",
+      "qual query",
+      "qual e a query",
+      "qual é a query",
+      "query usada",
+      "query utilizada",
+      "sql usado",
+      "sql utilizado",
+      "mostre o sql",
+      "mostra o sql",
+      "exiba o sql",
+      "exibe o sql",
+      "qual sql",
+      "query executada",
+      "consulta executada",
+      "consulta usada",
+      "me mostre o sql",
+      "me mostra o sql",
+      "ver sql",
+      "ver a query",
+      "ver o sql",
+      "ver consulta",
+      "codigo sql",
+      "código sql",
+      "codigo da query",
+      "código da query",
+      "mostre o codigo",
+      "mostra o codigo",
+      "mostre o código",
+      "mostra o código",
+      "somente a query",
+      "so a query",
+      "só a query",
+      "apenas a query",
+      "sem executar",
+      "sem rodar"
+    ],
+    "filterTerms": [
+      "filtre",
+      "filtro",
+      "filtrar",
+      "filtra ",
+      "somente",
+      "apenas",
+      "restrinja",
+      "restringe",
+      "limitar",
+      "limita "
+    ],
+    "removeBranchTerms": [
+      "todas as filiais",
+      "todas filiais",
+      "remover filtro de filial",
+      "remova filtro de filial",
+      "retire filtro de filial",
+      "sem filtro de filial",
+      "sem filial"
+    ],
+    "incrementalAuthoringTerms": [
+      "consulta anterior",
+      "query anterior",
+      "sql anterior",
+      "primeiros",
+      "primeiras",
+      "agrupar por",
+      "agrupa por",
+      "group by"
+    ]
+  },
+  "dynamicColumnRefinement": {
+    "groupByTerms": [
+      "agrupar por",
+      "agrupa por",
+      "agrupado por",
+      "agrupada por",
+      "group by"
+    ],
+    "groupByMarkers": [
+      "agrup",
+      "group by"
+    ],
+    "filterTerms": [
+      "filtre por",
+      "filtrar por",
+      "filtra por",
+      "filtro por",
+      "somente",
+      "apenas",
+      "restrinja por",
+      "restringe por"
+    ],
+    "filterPrefixTerms": [
+      "filtrar por",
+      "filtre por",
+      "filtra por",
+      "filtro por",
+      "restrinja por",
+      "restringe por",
+      "somente",
+      "apenas"
+    ],
+    "columnSynonyms": {
+      "filial": ["FILIAL", "BRANCH", "B2_FILIAL", "C2_FILIAL", "D1_FILIAL"],
+      "produto": ["COD_PRODUTO", "PRODUCT_CODE", "B1_COD", "C2_PRODUTO", "PRODUTO"],
+      "descricao": [
+        "DESCRICAO",
+        "DESCRICAO_PRODUTO",
+        "PRODUCT_DESCRIPTION",
+        "B1_DESC"
+      ],
+      "cliente": ["A1_COD", "A1_NOME", "CUSTOMER", "CLIENTE"],
+      "cidade": ["A1_MUN", "CIDADE", "MUNICIPIO"],
+      "municipio": ["A1_MUN", "CIDADE", "MUNICIPIO"],
+      "quantidade": ["QTD_PLANEJADA", "QUANTITY", "QTD", "QUANT"],
+      "unidade": ["UNIDADE", "UM", "UNIT"],
+      "armazem": ["WAREHOUSE", "B2_LOCAL", "LOCAL"],
+      "data": ["DATA", "DT", "DATE"]
+    }
+  },
+  "resultAnalyzer": {
+    "insights": {
+      "empty": "Resultado vazio — nenhum registro retornou para os filtros atuais.",
+      "singleRow": "Retorno unitário — útil para KPI ou detalhe pontual.",
+      "smallSet": "Conjunto pequeno ({row_count} registros) — tabela ou ranking funciona bem.",
+      "largeSet": "{row_count} registros retornados — considere paginação ou agregação.",
+      "nullableColumns": "Colunas com possíveis nulos: {columns}."
+    },
+    "emptyRecovery": [
+      "Ampliar o período ou relaxar filtros",
+      "Verificar se a tabela/filial está correta",
+      "Confirmar colunas e joins com /system/tables/*",
+      "Executar contagem simples (COUNT) para validar base"
+    ],
+    "executeNextSteps": [
+      "Adicionar coluna",
+      "Ajustar filtros",
+      "Gerar gráfico",
+      "Exportar CSV",
+      "Explicar SQL",
+      "Colocar na lousa"
+    ],
+    "emptyRecoveryFollowUps": [
+      {
+        "label": "Ampliar período",
+        "query": "amplie o período da última consulta SQL"
+      },
+      {
+        "label": "Ajustar filtros",
+        "query": "ajuste os filtros da consulta anterior"
+      },
+      {
+        "label": "Ver schema",
+        "query": "mostre o schema da tabela usada na consulta"
+      },
+      {
+        "label": "Explicar SQL",
+        "query": "explique a query executada"
+      }
+    ]
+  },
+  "advancedSqlSpecialist": {
+    "activationTerms": [
+      "sql",
+      "consulta",
+      "query",
+      "select",
+      "tabela",
+      "coluna",
+      "schema",
+      "join",
+      "agrup",
+      "filtr",
+      "orden",
+      "ranking",
+      "cte",
+      "window",
+      "executar consulta",
+      "trazer dados",
+      "otimiz",
+      "explic",
+      "revis"
+    ],
+    "incrementalEditTerms": [
+      "consulta anterior",
+      "query anterior",
+      "sql anterior",
+      "adicione a coluna",
+      "adiciona a coluna",
+      "remova a coluna",
+      "remove a coluna",
+      "agrup",
+      "ordene",
+      "filtre",
+      "filtra ",
+      "ajuste a query",
+      "ajusta a query"
+    ],
+    "modePatterns": {
+      "review": [
+        "revisa",
+        "revise",
+        "valida essa query",
+        "valida esse sql",
+        "esta correta",
+        "está correta",
+        "esta certa",
+        "está certa",
+        "tem erro",
+        "aponta risco"
+      ],
+      "explain": [
+        "explique a query",
+        "explique essa query",
+        "explique o sql",
+        "explique essa consulta",
+        "o que faz essa query",
+        "o que faz esse sql",
+        "entenda essa query"
+      ],
+      "optimize": [
+        "otimiz",
+        "melhorar performance",
+        "query lenta",
+        "consulta lenta",
+        "demorad",
+        "indice",
+        "índice",
+        "explain plan"
+      ],
+      "schema_explore": [
+        "quais tabelas",
+        "qual tabela",
+        "quais colunas",
+        "mostre as colunas",
+        "mostra as colunas",
+        "schema da tabela",
+        "schema completo",
+        "relacion",
+        "como relacionar",
+        "procure coluna",
+        "busque coluna"
+      ],
+      "analyze_result": [
+        "interprete o resultado",
+        "interprete resultado",
+        "analise o resultado",
+        "analise resultado",
+        "o que significa",
+        "inferir resultado"
+      ],
+      "visualize": [
+        "gerar grafico",
+        "gerar gráfico",
+        "gere um grafico",
+        "gere um gráfico",
+        "gere grafico",
+        "gere gráfico",
+        "mostre em grafico",
+        "mostre em gráfico",
+        "visualiz",
+        "chart"
+      ]
+    },
+    "plannerHints": [
+      {
+        "triggers": ["compar", "periodo", "período", "mes anterior", "mês anterior", "ano anterior"],
+        "hint": "use_cte_period_compare"
+      },
+      {
+        "triggers": ["ranking", "top ", "maior", "menor", "por categoria"],
+        "hint": "use_window_rank"
+      },
+      {
+        "triggers": ["ultimo registro", "último registro", "mais recente por"],
+        "hint": "use_row_number_dedup"
+      },
+      {
+        "triggers": ["variacao", "variação", "percentual", "%"],
+        "hint": "guard_division_by_zero"
+      },
+      {
+        "triggers": ["deduplic", "duplicad", "unico", "único"],
+        "hint": "use_row_number_dedup"
+      },
+      {
+        "triggers": ["pivot", "cruzad", "matriz"],
+        "hint": "use_pivot_or_conditional_agg"
+      }
+    ]
+  },
+  "queryPatternAdvisor": {
+    "patterns": [
+      {
+        "triggers": ["compar", "periodo", "período", "mes anterior", "mês anterior", "ano anterior"],
+        "code": "period_compare_cte",
+        "guidance": "Use CTEs para isolar período atual e anterior antes do JOIN final."
+      },
+      {
+        "triggers": ["ranking", "top ", "maior", "menor", "por categoria"],
+        "code": "window_rank",
+        "guidance": "Use ROW_NUMBER() ou RANK() OVER (PARTITION BY ... ORDER BY ...) para ranking."
+      },
+      {
+        "triggers": ["ultimo registro", "último registro", "mais recente por", "deduplic"],
+        "code": "window_dedup",
+        "guidance": "Use ROW_NUMBER() OVER (PARTITION BY chave ORDER BY data DESC) = 1 para deduplicar."
+      },
+      {
+        "triggers": ["variacao", "variação", "percentual", "%"],
+        "code": "percent_change",
+        "guidance": "Calcule variação com NULLIF no denominador para evitar divisão por zero."
+      },
+      {
+        "triggers": ["pivot", "cruzad", "matriz"],
+        "code": "conditional_agg",
+        "guidance": "Para pivot simples, use SUM(CASE WHEN ...) GROUP BY dimensão."
+      },
+      {
+        "triggers": ["coorte", "cohort"],
+        "code": "cohort_cte",
+        "guidance": "Monte coorte em CTE base e agregue retenção/conversão em etapa seguinte."
+      }
+    ]
+  }
+}

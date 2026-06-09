@@ -32,6 +32,10 @@
     "stockCheckSuggestion": "Posso verificar o estoque dos componentes dos produtos programados.",
     "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados."
   },
+  "sqlColumnRefinement": {
+    "groupByColumn": "Refinamento SQL: agrupamento por {column} aplicado na consulta anterior.",
+    "filterByColumn": "Refinamento SQL: filtro por {column} = {value} aplicado na consulta anterior."
+  },
   "actionSelection": {
     "suppliesOtdSuppliesDomainTerms": [
       "compra",

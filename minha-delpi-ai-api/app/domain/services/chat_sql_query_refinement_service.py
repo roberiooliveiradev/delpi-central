@@ -9,6 +9,9 @@ from typing import Any, Literal
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
@@ -32,110 +35,35 @@ class RecentSqlExecution:
 
 
 class ChatSqlQueryRefinementService:
-    _ADD_TERMS = (
-        "acrescente",
-        "acrescenta",
-        "adicione",
-        "adiciona",
-        "inclua",
-        "incluir",
-        "add ",
-        "insira",
-        "insere",
-        "coloque a coluna",
-        "coloca a coluna",
-    )
-    _REMOVE_TERMS = (
-        "remova",
-        "remove",
-        "retire",
-        "retira",
-        "tire",
-        "exclua",
-        "excluir",
-        "elimine",
-        "elimina",
-    )
-    _ALTER_TERMS = (
-        "altere",
-        "altera",
-        "ajuste",
-        "ajusta",
-        "atualize",
-        "atualiza",
-        "modifique",
-        "modifica",
-        "mude",
-        "muda",
-        "refine",
-        "refina",
-        "troque",
-        "troca",
-    )
-    _SHOW_QUERY_TERMS = (
-        "mostre a query",
-        "mostra a query",
-        "exiba a query",
-        "exibe a query",
-        "qual query",
-        "qual e a query",
-        "qual é a query",
-        "query usada",
-        "query utilizada",
-        "sql usado",
-        "sql utilizado",
-        "mostre o sql",
-        "mostra o sql",
-        "exiba o sql",
-        "exibe o sql",
-        "qual sql",
-        "query executada",
-        "consulta executada",
-        "consulta usada",
-        "me mostre o sql",
-        "me mostra o sql",
-        "ver sql",
-        "ver a query",
-        "ver o sql",
-        "ver consulta",
-        "codigo sql",
-        "código sql",
-        "codigo da query",
-        "código da query",
-        "mostre o codigo",
-        "mostra o codigo",
-        "mostre o código",
-        "mostra o código",
-        "somente a query",
-        "so a query",
-        "só a query",
-        "apenas a query",
-        "sem executar",
-        "sem rodar",
-    )
-    _FILTER_TERMS = (
-        "filtre",
-        "filtro",
-        "filtrar",
-        "filtra ",
-        "somente",
-        "apenas",
-        "restrinja",
-        "restringe",
-        "limitar",
-        "limita ",
-    )
-    _REMOVE_BRANCH_TERMS = (
-        "todas as filiais",
-        "todas filiais",
-        "remover filtro de filial",
-        "remova filtro de filial",
-        "retire filtro de filial",
-        "sem filtro de filial",
-        "sem filial",
-    )
+    @classmethod
+    def _add_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("queryRefinement", "addTerms")
+
+    @classmethod
+    def _remove_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("queryRefinement", "removeTerms")
+
+    @classmethod
+    def _alter_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("queryRefinement", "alterTerms")
+
+    @classmethod
+    def _show_query_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("queryRefinement", "showQueryTerms")
+
+    @classmethod
+    def _filter_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("queryRefinement", "filterTerms")
+
+    @classmethod
+    def _remove_branch_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "queryRefinement",
+            "removeBranchTerms",
+        )
+
     _BRANCH_RE = re.compile(
-        r"\b(?:filial|fil\.?)\s*[_-]?\s*(\d{1,2})\b",
+        r"\b(?:filial|fil\.)\s*[_-]?\s*(\d{1,2})\b",
         re.IGNORECASE,
     )
     _TOP_RE = re.compile(r"\btop\s*(\d{1,3})\b", re.IGNORECASE)
@@ -398,6 +326,23 @@ class ChatSqlQueryRefinementService:
                 sql=active_sql,
                 title=title,
                 reason="A mensagem solicita exibir a consulta SQL da conversa.",
+            )
+
+        from app.domain.services.chat_sql_dynamic_column_refinement_service import (
+            ChatSqlDynamicColumnRefinementService,
+        )
+
+        dynamic_refinement = ChatSqlDynamicColumnRefinementService.resolve(
+            message,
+            active_sql,
+        )
+
+        if dynamic_refinement and dynamic_refinement.sql != active_sql:
+            return SqlQueryRefinement(
+                mode=mode,
+                sql=dynamic_refinement.sql,
+                title=title,
+                reason=dynamic_refinement.reason,
             )
 
         if cls._looks_like_branch_breakdown_request(normalized):
@@ -675,6 +620,26 @@ class ChatSqlQueryRefinementService:
         return [(expr, value) for _key, expr, value in matched]
 
     @classmethod
+    def selected_columns(cls, sql: str) -> dict[str, str]:
+        return cls._sql_selected_columns(sql)
+
+    @classmethod
+    def split_select_items(cls, body: str) -> list[str]:
+        return cls._split_select_items(body)
+
+    @classmethod
+    def match_column_label(
+        cls,
+        label: str,
+        columns: dict[str, str],
+    ) -> tuple[str, str] | None:
+        return cls._match_column_from_label(label, columns)
+
+    @classmethod
+    def escape_sql_literal(cls, value: str) -> str:
+        return cls._escape_sql_literal(value)
+
+    @classmethod
     def _sql_selected_columns(cls, sql: str) -> dict[str, str]:
         """Colunas simples do SELECT mapeadas para a expressão usável no WHERE."""
         match = re.search(r"\bSELECT\b(.*?)\bFROM\b", str(sql or ""), flags=re.I | re.S)
@@ -867,20 +832,23 @@ class ChatSqlQueryRefinementService:
             return False
 
         incremental_terms = (
-            *cls._ADD_TERMS,
-            *cls._ALTER_TERMS,
-            *cls._FILTER_TERMS,
-            "consulta anterior",
-            "query anterior",
-            "sql anterior",
-            "primeiros",
-            "primeiras",
+            *cls._add_terms(),
+            *cls._alter_terms(),
+            *cls._filter_terms(),
+            *cls._incremental_authoring_terms(),
         )
 
         if cls._extract_top_limit(normalized) is not None:
             return True
 
         return any(term in normalized for term in incremental_terms)
+
+    @classmethod
+    def _incremental_authoring_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "queryRefinement",
+            "incrementalAuthoringTerms",
+        )
 
     @classmethod
     def _branch_predicate(cls, column: str, branches: list[str]) -> str:
@@ -913,19 +881,19 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def _looks_like_add_column(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._ADD_TERMS) or (
+        return any(term in normalized for term in cls._add_terms()) or (
             "coluna" in normalized
-            and not any(term in normalized for term in cls._REMOVE_TERMS)
+            and not any(term in normalized for term in cls._remove_terms())
             and not cls._looks_like_show_query(normalized)
         )
 
     @classmethod
     def _looks_like_remove_column(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._REMOVE_TERMS)
+        return any(term in normalized for term in cls._remove_terms())
 
     @classmethod
     def _looks_like_show_query(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._SHOW_QUERY_TERMS):
+        if any(term in normalized for term in cls._show_query_terms()):
             return True
 
         if "sql" in normalized and any(
@@ -942,23 +910,26 @@ class ChatSqlQueryRefinementService:
         *,
         branches: list[str] | None = None,
     ) -> bool:
-        if any(term in normalized for term in cls._FILTER_TERMS):
+        if any(term in normalized for term in cls._filter_terms()):
             return True
 
-        if any(term in normalized for term in cls._ALTER_TERMS) and branches:
+        if any(term in normalized for term in cls._alter_terms()) and branches:
             return True
 
         return bool(branches)
 
     @classmethod
     def _looks_like_remove_branch_filter(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._REMOVE_BRANCH_TERMS)
+        return any(term in normalized for term in cls._remove_branch_terms())
 
     @classmethod
     def _looks_like_branch_breakdown_request(cls, normalized: str) -> bool:
         from app.domain.services.chat_sql_production_query_service import (
             ChatSqlProductionQueryService,
         )
+
+        if re.search(r"\bagrup", normalized):
+            return False
 
         if not ChatSqlProductionQueryService.wants_branch_breakdown(normalized):
             return False
@@ -969,7 +940,7 @@ class ChatSqlQueryRefinementService:
     def _looks_like_limit_adjustment(cls, normalized: str) -> bool:
         return cls._extract_top_limit(normalized) is not None and (
             "top" in normalized
-            or any(term in normalized for term in cls._ALTER_TERMS + cls._FILTER_TERMS)
+            or any(term in normalized for term in cls._alter_terms() + cls._filter_terms())
             or re.search(r"\b\d{1,3}\s+produtos?\b", normalized)
             or re.search(r"\b\d{1,3}\s+registros?\b", normalized)
             or re.search(r"\b\d{1,3}\s+primeir[oa]s?\b", normalized)
@@ -977,7 +948,7 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def _extract_branch_codes(cls, normalized: str) -> list[str]:
-        match = re.search(r"\b(?:filial(?:is)?|fil\.?)\s*(.+)$", normalized)
+        match = re.search(r"\b(?:filiais|filial|fil\.)\s+(.+)$", normalized)
 
         if match:
             tail = match.group(1)

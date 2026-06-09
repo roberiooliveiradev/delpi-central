@@ -23,6 +23,9 @@ from app.domain.services.chat_sql_performance_advisor_service import (
 from app.domain.services.chat_sql_query_refinement_service import (
     ChatSqlQueryRefinementService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.chat_sql_review_service import ChatSqlReviewService
 from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -41,138 +44,14 @@ SqlSpecialistMode = Literal[
     "none",
 ]
 
-_SQL_ACTIVATION_TERMS = (
-    "sql",
-    "consulta",
-    "query",
-    "select",
-    "tabela",
-    "coluna",
-    "schema",
-    "join",
-    "agrup",
-    "filtr",
-    "orden",
-    "ranking",
-    "cte",
-    "window",
-    "executar consulta",
-    "trazer dados",
-    "otimiz",
-    "explic",
-    "revis",
+_MODE_ORDER: tuple[SqlSpecialistMode, ...] = (
+    "review",
+    "explain",
+    "optimize",
+    "schema_explore",
+    "analyze_result",
+    "visualize",
 )
-
-_MODE_PATTERNS: tuple[tuple[SqlSpecialistMode, tuple[str, ...]], ...] = (
-    (
-        "review",
-        (
-            "revisa",
-            "revise",
-            "valida essa query",
-            "valida esse sql",
-            "esta correta",
-            "está correta",
-            "esta certa",
-            "está certa",
-            "tem erro",
-            "aponta risco",
-        ),
-    ),
-    (
-        "explain",
-        (
-            "explique a query",
-            "explique essa query",
-            "explique o sql",
-            "explique essa consulta",
-            "o que faz essa query",
-            "o que faz esse sql",
-            "entenda essa query",
-        ),
-    ),
-    (
-        "optimize",
-        (
-            "otimiz",
-            "melhorar performance",
-            "query lenta",
-            "consulta lenta",
-            "demorad",
-            "indice",
-            "índice",
-            "explain plan",
-        ),
-    ),
-    (
-        "schema_explore",
-        (
-            "quais tabelas",
-            "qual tabela",
-            "quais colunas",
-            "mostre as colunas",
-            "mostra as colunas",
-            "schema da tabela",
-            "schema completo",
-            "relacion",
-            "como relacionar",
-            "procure coluna",
-            "busque coluna",
-        ),
-    ),
-    (
-        "analyze_result",
-        (
-            "interprete o resultado",
-            "interprete resultado",
-            "analise o resultado",
-            "analise resultado",
-            "o que significa",
-            "inferir resultado",
-        ),
-    ),
-    (
-        "visualize",
-        (
-            "gerar grafico",
-            "gerar gráfico",
-            "gere um grafico",
-            "gere um gráfico",
-            "gere grafico",
-            "gere gráfico",
-            "mostre em grafico",
-            "mostre em gráfico",
-            "visualiz",
-            "chart",
-        ),
-    ),
-)
-
-_INCREMENTAL_EDIT_TERMS = (
-    "consulta anterior",
-    "query anterior",
-    "sql anterior",
-    "adicione a coluna",
-    "adiciona a coluna",
-    "remova a coluna",
-    "remove a coluna",
-    "agrup",
-    "ordene",
-    "filtre",
-    "filtra ",
-    "ajuste a query",
-    "ajusta a query",
-)
-
-_PLANNER_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("compar", "periodo", "período", "mes anterior", "mês anterior", "ano anterior"), "use_cte_period_compare"),
-    (("ranking", "top ", "maior", "menor", "por categoria"), "use_window_rank"),
-    (("ultimo registro", "último registro", "mais recente por"), "use_row_number_dedup"),
-    (("variacao", "variação", "percentual", "%"), "guard_division_by_zero"),
-    (("deduplic", "duplicad", "unico", "único"), "use_row_number_dedup"),
-    (("pivot", "cruzad", "matriz"), "use_pivot_or_conditional_agg"),
-)
-
 
 @lru_cache(maxsize=1)
 def _interactivity_content() -> dict[str, Any]:
@@ -180,6 +59,33 @@ def _interactivity_content() -> dict[str, Any]:
 
 
 class ChatAdvancedSqlSpecialistService:
+    @classmethod
+    def _activation_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "advancedSqlSpecialist",
+            "activationTerms",
+        )
+
+    @classmethod
+    def _incremental_edit_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "advancedSqlSpecialist",
+            "incrementalEditTerms",
+        )
+
+    @classmethod
+    def _mode_patterns(cls) -> tuple[tuple[SqlSpecialistMode, tuple[str, ...]], ...]:
+        mapping = ChatSqlIntentVocabularyService.mode_pattern_map()
+        resolved: list[tuple[SqlSpecialistMode, tuple[str, ...]]] = []
+
+        for mode in _MODE_ORDER:
+            patterns = mapping.get(mode)
+
+            if patterns:
+                resolved.append((mode, patterns))
+
+        return tuple(resolved)
+
     @classmethod
     def should_activate(
         cls,
@@ -213,7 +119,7 @@ class ChatAdvancedSqlSpecialistService:
         if ChatSqlPerformanceAdvisorService.extract_sql_block(message):
             return True
 
-        return any(term in normalized for term in _SQL_ACTIVATION_TERMS)
+        return any(term in normalized for term in cls._activation_terms())
 
     @classmethod
     def classify_mode(
@@ -227,7 +133,7 @@ class ChatAdvancedSqlSpecialistService:
         if not normalized:
             return "none"
 
-        for mode, patterns in _MODE_PATTERNS:
+        for mode, patterns in cls._mode_patterns():
             if mode in {"analyze_result", "visualize", "explain", "review", "optimize", "schema_explore"}:
                 if any(pattern in normalized for pattern in patterns):
                     return mode
@@ -238,7 +144,7 @@ class ChatAdvancedSqlSpecialistService:
         ):
             return "incremental_edit"
 
-        if any(term in normalized for term in _INCREMENTAL_EDIT_TERMS):
+        if any(term in normalized for term in cls._incremental_edit_terms()):
             workspace = ChatSqlMemoryWorkspaceService.build_workspace(
                 message=message,
                 previous_messages=previous_messages,
@@ -261,7 +167,7 @@ class ChatAdvancedSqlSpecialistService:
         if ChatSqlIntentService.is_authoring_request(message):
             return "create"
 
-        if any(term in normalized for term in _SQL_ACTIVATION_TERMS):
+        if any(term in normalized for term in cls._activation_terms()):
             return "create"
 
         return "none"
@@ -381,7 +287,7 @@ class ChatAdvancedSqlSpecialistService:
 
         hints: list[str] = []
 
-        for patterns, hint in _PLANNER_HINTS:
+        for patterns, hint in ChatSqlIntentVocabularyService.planner_hints():
             if any(pattern in normalized for pattern in patterns):
                 hints.append(hint)
 

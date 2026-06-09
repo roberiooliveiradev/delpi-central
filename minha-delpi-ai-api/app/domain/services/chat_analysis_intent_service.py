@@ -1,5 +1,8 @@
 import re
 
+from app.domain.services.chat_analysis_intent_vocabulary_service import (
+    ChatAnalysisIntentVocabularyService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -11,35 +14,33 @@ from app.domain.services.chat_product_query_intent_service import (
 class ChatAnalysisIntentService:
     """Detecta pedidos de comparação, apontamentos e insights (sem nova consulta operacional)."""
 
-    _COMPARISON_TERMS = (
-        "compar",
-        "compare",
-        "versus",
-        " vs ",
-        "diferen",
-        "diferenc",
-        "insight",
-        "apontament",
-        "contrast",
-        "semelhan",
-        "similaridad",
-        "distin",
-        "lado a lado",
-        "entre as duas",
-        "entre os dois",
-        "entre elas",
-        "entre eles",
-        "as duas estrutura",
-        "os dois produto",
-        "os dois item",
-        "o que mudou",
-        "o que difere",
-        "quais difer",
-        "traga insight",
-        "trazer insight",
-        "pontos em comum",
-        "em comum e",
-    )
+    @classmethod
+    def _comparison_terms(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("comparisonTerms")
+
+    @classmethod
+    def _data_interpretation_terms(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("dataInterpretationTerms")
+
+    @classmethod
+    def _interpretation_short_commands(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("interpretationShortCommands")
+
+    @classmethod
+    def _sql_result_interpretation_terms(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("sqlResultInterpretationTerms")
+
+    @classmethod
+    def _data_reference_terms(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("dataReferenceTerms")
+
+    @classmethod
+    def _data_reference_pronouns(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("dataReferencePronouns")
+
+    @classmethod
+    def _email_from_data_terms(cls) -> tuple[str, ...]:
+        return ChatAnalysisIntentVocabularyService.terms("emailFromDataTerms")
 
     _STRUCTURE_PATH_RE = re.compile(
         r"/products/(?P<code>[^/]+)/structure",
@@ -50,132 +51,6 @@ class ChatAnalysisIntentService:
         re.IGNORECASE,
     )
     _PATH_PLACEHOLDER_RE = re.compile(r"^\{[^}]+\}$")
-
-    _DATA_INTERPRETATION_TERMS = (
-        "explique",
-        "explica ",
-        "interprete",
-        "interpreta",
-        "o que significa",
-        "o que quer dizer",
-        "o que isso quer dizer",
-        "me explica",
-        "me explique",
-        "detalhe o resultado",
-        "detalhe os dados",
-        "detalhe essa",
-        "detalhe esta",
-        "detalhe este registro",
-        "detalhe esse registro",
-        "detalhe o registro",
-        "detalhe deste registro",
-        "detalhe desse registro",
-        "detalhar registro",
-        "detalhe este item do resultado",
-        "resume",
-        "resuma",
-        "resumir",
-        "resumo do",
-        "resumo da",
-        "traduz",
-        "traduca",
-        "traduza",
-        "traduzir",
-        "descreva o que",
-        "descrever o que",
-        "em linguagem natural",
-        "com palavras simples",
-        "me ajude a entender",
-        "ajude a entender",
-        "nao entendi",
-        "não entendi",
-        "nao entendi o que",
-        "não entendi o que",
-    )
-
-    _INTERPRETATION_SHORT_COMMANDS = (
-        "resume",
-        "resuma",
-        "resumir",
-        "traduz",
-        "traduca",
-        "traduza",
-        "traduzir",
-    )
-
-    _SQL_RESULT_INTERPRETATION_TERMS = (
-        "interprete o resultado",
-        "interprete resultado",
-        "interpreta o resultado",
-        "interpreta resultado",
-        "analise o resultado",
-        "analise resultado",
-        "explique o resultado",
-        "explique resultado",
-        "ultima consulta sql",
-        "última consulta sql",
-        "ultima consulta",
-        "última consulta",
-        "resultado da ultima consulta",
-        "resultado da última consulta",
-        "resultado da consulta sql",
-        "resultado da consulta",
-    )
-
-    _DATA_REFERENCE_TERMS = (
-        "dados acima",
-        "resultado acima",
-        "tabela acima",
-        "consulta acima",
-        "dados anteriores",
-        "resultado anterior",
-        "ultimo resultado",
-        "último resultado",
-        "deste resultado",
-        "neste resultado",
-        "do resultado",
-        "registro do resultado",
-        "essa tabela",
-        "esta tabela",
-        "esse resultado",
-        "este resultado",
-        "esses dados",
-        "estes dados",
-        "dados mostrados",
-        "dados apresentados",
-        "resultado mostrado",
-        "que mostrou",
-        "que voce mostrou",
-        "que você mostrou",
-        "na tela",
-        "acima",
-        "anterior",
-    )
-
-    _DATA_REFERENCE_PRONOUNS = (
-        "isso",
-        "isto",
-        "isso ai",
-        "isso aí",
-    )
-
-    _EMAIL_FROM_DATA_TERMS = (
-        "escreva um email",
-        "escreva um e-mail",
-        "escreva email",
-        "escreva e-mail",
-        "monte um email",
-        "monte um e-mail",
-        "gerar email",
-        "gerar e-mail",
-        "email com os dados",
-        "e-mail com os dados",
-        "email com a tabela",
-        "e-mail com a tabela",
-        "email com dados",
-        "redija um email",
-        "redija um e-mail",
-    )
 
     @classmethod
     def is_email_from_operational_data_request(
@@ -188,7 +63,7 @@ class ChatAnalysisIntentService:
         if not normalized:
             return False
 
-        if not any(term in normalized for term in cls._EMAIL_FROM_DATA_TERMS):
+        if not any(term in normalized for term in cls._email_from_data_terms()):
             return False
 
         return bool(
@@ -244,17 +119,17 @@ class ChatAnalysisIntentService:
             ):
                 return True
 
-        if not any(term in normalized for term in cls._DATA_INTERPRETATION_TERMS):
+        if not any(term in normalized for term in cls._data_interpretation_terms()):
             return False
 
-        if any(term in normalized for term in cls._DATA_REFERENCE_TERMS):
+        if any(term in normalized for term in cls._data_reference_terms()):
             return bool(
                 previous_messages
                 and cls._has_recent_successful_tool_data(previous_messages)
             )
 
         if previous_messages and cls._has_recent_successful_tool_data(previous_messages):
-            if any(term in normalized for term in cls._DATA_REFERENCE_PRONOUNS):
+            if any(term in normalized for term in cls._data_reference_pronouns()):
                 return True
 
             if any(
@@ -272,7 +147,7 @@ class ChatAnalysisIntentService:
 
     @classmethod
     def _is_sql_result_interpretation_request(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._SQL_RESULT_INTERPRETATION_TERMS):
+        if any(term in normalized for term in cls._sql_result_interpretation_terms()):
             return True
 
         if any(
@@ -305,7 +180,7 @@ class ChatAnalysisIntentService:
         if not previous_messages or not cls._has_recent_successful_tool_data(previous_messages):
             return False
 
-        for command in cls._INTERPRETATION_SHORT_COMMANDS:
+        for command in cls._interpretation_short_commands():
             if normalized == command:
                 return True
 
@@ -438,15 +313,15 @@ class ChatAnalysisIntentService:
         if cls._has_recent_successful_tool_data(previous_messages or []):
             return False
 
-        if any(term in normalized for term in cls._DATA_REFERENCE_TERMS):
+        if any(term in normalized for term in cls._data_reference_terms()):
             return True
 
         if "acima" in normalized and any(
-            term in normalized for term in cls._DATA_INTERPRETATION_TERMS
+            term in normalized for term in cls._data_interpretation_terms()
         ):
             return True
 
-        return normalized in cls._INTERPRETATION_SHORT_COMMANDS
+        return normalized in cls._interpretation_short_commands()
 
     @classmethod
     def is_comparison_or_insight_request(cls, message: str) -> bool:
@@ -458,7 +333,7 @@ class ChatAnalysisIntentService:
         if cls._looks_like_single_product_fetch(normalized):
             return False
 
-        if any(term in normalized for term in cls._COMPARISON_TERMS):
+        if any(term in normalized for term in cls._comparison_terms()):
             return True
 
         if ("as duas" in normalized or "os dois" in normalized or "ambos" in normalized) and any(

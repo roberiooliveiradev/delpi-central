@@ -4,23 +4,25 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
+
 
 class ChatSqlResultAnalyzerService:
-    _EMPTY_RECOVERY = (
-        "Ampliar o período ou relaxar filtros",
-        "Verificar se a tabela/filial está correta",
-        "Confirmar colunas e joins com /system/tables/*",
-        "Executar contagem simples (COUNT) para validar base",
-    )
+    @classmethod
+    def _empty_recovery(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "resultAnalyzer",
+            "emptyRecovery",
+        )
 
-    _EXECUTE_NEXT_STEPS = (
-        "Adicionar coluna",
-        "Ajustar filtros",
-        "Gerar gráfico",
-        "Exportar CSV",
-        "Explicar SQL",
-        "Colocar na lousa",
-    )
+    @classmethod
+    def _execute_next_steps(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "resultAnalyzer",
+            "executeNextSteps",
+        )
 
     @classmethod
     def analyze_tool_calls(cls, tool_calls: list | None) -> dict[str, Any] | None:
@@ -74,18 +76,37 @@ class ChatSqlResultAnalyzerService:
         insights: list[str] = []
 
         if is_empty:
-            insights.append("Resultado vazio — nenhum registro retornou para os filtros atuais.")
+            insights.append(
+                ChatSqlIntentVocabularyService.insight_text("empty")
+            )
         elif row_count == 1:
-            insights.append("Retorno unitário — útil para KPI ou detalhe pontual.")
+            insights.append(
+                ChatSqlIntentVocabularyService.insight_text("singleRow")
+            )
         elif row_count <= 10:
-            insights.append(f"Conjunto pequeno ({row_count} registros) — tabela ou ranking funciona bem.")
+            insights.append(
+                ChatSqlIntentVocabularyService.insight_text(
+                    "smallSet",
+                    row_count=str(row_count),
+                )
+            )
         else:
-            insights.append(f"{row_count} registros retornados — considere paginação ou agregação.")
+            insights.append(
+                ChatSqlIntentVocabularyService.insight_text(
+                    "largeSet",
+                    row_count=str(row_count),
+                )
+            )
 
         null_hints = cls._detect_nullable_columns(resultsets)
 
         if null_hints:
-            insights.append(f"Colunas com possíveis nulos: {', '.join(null_hints[:4])}.")
+            insights.append(
+                ChatSqlIntentVocabularyService.insight_text(
+                    "nullableColumns",
+                    columns=", ".join(null_hints[:4]),
+                )
+            )
 
         return {
             "rowCount": row_count,
@@ -95,19 +116,34 @@ class ChatSqlResultAnalyzerService:
             "resultsetCount": len(resultsets),
             "presentationType": presentation_type,
             "insights": insights,
-            "recoverySuggestions": list(cls._EMPTY_RECOVERY) if is_empty else [],
-            "nextSteps": list(cls._EXECUTE_NEXT_STEPS),
+            "recoverySuggestions": list(cls._empty_recovery()) if is_empty else [],
+            "nextSteps": list(cls._execute_next_steps()),
             "executedSql": cls._extract_executed_sql(payload, metadata),
         }
 
     @classmethod
     def build_empty_recovery_follow_ups(cls) -> list[dict[str, str]]:
-        return [
-            {"label": "Ampliar período", "query": "amplie o período da última consulta SQL"},
-            {"label": "Ajustar filtros", "query": "ajuste os filtros da consulta anterior"},
-            {"label": "Ver schema", "query": "mostre o schema da tabela usada na consulta"},
-            {"label": "Explicar SQL", "query": "explique a query executada"},
-        ]
+        raw = ChatSqlIntentVocabularyService.node(
+            "resultAnalyzer",
+            "emptyRecoveryFollowUps",
+        )
+
+        if not isinstance(raw, list):
+            return []
+
+        follow_ups: list[dict[str, str]] = []
+
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+
+            label = str(item.get("label") or "").strip()
+            query = str(item.get("query") or "").strip()
+
+            if label and query:
+                follow_ups.append({"label": label, "query": query})
+
+        return follow_ups
 
     @classmethod
     def _resolve_payload(cls, tool_call: dict, metadata: dict) -> dict | None:

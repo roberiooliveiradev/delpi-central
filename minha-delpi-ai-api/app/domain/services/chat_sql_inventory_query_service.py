@@ -13,6 +13,9 @@ from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
@@ -21,18 +24,6 @@ from app.domain.services.external_actions.external_action_response_content_servi
 )
 
 SqlInventoryMode = Literal["execute", "authoring"]
-
-_BELOW_MINIMUM_MARKERS = (
-    "estoque abaixo",
-    "abaixo do minimo",
-    "abaixo do mínimo",
-    "saldo abaixo",
-    "ruptura de estoque",
-    "produtos com estoque",
-    "liste os produtos com estoque",
-    "lista de produtos com estoque",
-    "itens com estoque abaixo",
-)
 
 
 @dataclass(frozen=True)
@@ -44,6 +35,13 @@ class SqlInventoryResolution:
 
 class ChatSqlInventoryQueryService:
     """Template SB2010+SB1010 para listas de estoque (ex.: abaixo do mínimo)."""
+
+    @classmethod
+    def _below_minimum_markers(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "inventoryAggregateMarkers",
+        )
 
     @classmethod
     def can_fast_path(cls, message: str | None, allowed_action_ids: list[str] | None) -> bool:
@@ -101,7 +99,7 @@ class ChatSqlInventoryQueryService:
 
     @classmethod
     def _looks_like_below_minimum_stock(cls, normalized: str) -> bool:
-        return any(marker in normalized for marker in _BELOW_MINIMUM_MARKERS)
+        return any(marker in normalized for marker in cls._below_minimum_markers())
 
     @classmethod
     def _extract_filial(cls, normalized: str) -> str | None:

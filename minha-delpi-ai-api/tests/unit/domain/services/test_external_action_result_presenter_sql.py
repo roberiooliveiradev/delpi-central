@@ -109,6 +109,61 @@ def test_present_sql_resultsets_empty_production():
     ]
 
 
+def test_present_sql_resultsets_with_production_rows_by_branch():
+    presenter = ExternalActionResultPresenter()
+    branch_sql = (
+        "DECLARE @DATA DATE = '2026-06-10';\n"
+        "SELECT OP.C2_FILIAL AS FILIAL, OP.C2_PRODUTO AS COD_PRODUTO "
+        "FROM SC2010 OP WHERE OP.C2_FILIAL IN ('01', '02')"
+    )
+    rows = [
+        {
+            "FILIAL": "01",
+            "COD_PRODUTO": "90264130",
+            "DESCRICAO_PRODUTO": "PARAFUSO M8",
+            "QTD_PLANEJADA": 1200,
+            "UNIDADE": "UN",
+            "DATA_INICIO_OPERACAO": "20260610",
+        }
+    ]
+
+    humanized = presenter.present(
+        {
+            "success": True,
+            "data": {
+                "sql": branch_sql,
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "columns": list(rows[0].keys()),
+                        "total": 1,
+                        "data": rows,
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert "por filial" in humanized["titulo"].lower()
+
+    table = presenter.build_presentation(
+        {
+            "success": True,
+            "data": {
+                "sql": branch_sql,
+                "total_resultsets": 1,
+                "resultsets": [{"total": 1, "data": rows}],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert table is not None
+    assert any(col.get("key") == "FILIAL" for col in table["columns"])
+
+
 def test_present_sql_resultsets_with_production_rows():
     presenter = ExternalActionResultPresenter()
 

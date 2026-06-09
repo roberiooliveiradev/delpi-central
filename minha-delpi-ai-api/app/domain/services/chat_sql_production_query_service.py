@@ -19,27 +19,15 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.chat_sql_production_schedule_date_service import (
     ChatSqlProductionScheduleDateService,
     ResolvedProductionScheduleDate,
 )
 
 SqlProductionMode = Literal["execute", "authoring"]
-
-_BRANCH_BREAKDOWN_TERMS = (
-    "por filial",
-    "por filiais",
-    "agrupado por filial",
-    "agrupada por filial",
-    "em cada filial",
-    "todas as filiais",
-    "todas filiais",
-    "cada filial",
-    "detalhe por filial",
-    "detalhar por filial",
-)
-
-_DEFAULT_BRANCHES = ("01", "02")
 
 
 @dataclass(frozen=True)
@@ -101,8 +89,22 @@ class ChatSqlProductionQueryService:
         return SqlProductionResolution(mode="execute", sql=sql, title=title)
 
     @classmethod
+    def _branch_breakdown_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "productionQuery",
+            "branchBreakdownTerms",
+        )
+
+    @classmethod
+    def _default_branches(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "productionQuery",
+            "defaultBranches",
+        )
+
+    @classmethod
     def wants_branch_breakdown(cls, normalized: str) -> bool:
-        return any(term in normalized for term in _BRANCH_BREAKDOWN_TERMS)
+        return any(term in normalized for term in cls._branch_breakdown_terms())
 
     @classmethod
     def format_authoring_answer(cls, resolution: SqlProductionResolution) -> str:
@@ -154,7 +156,7 @@ class ChatSqlProductionQueryService:
         if match:
             return match.group(1)
 
-        match = re.search(r"\bf(?:ilial)?\s*(\d{2})\b", normalized)
+        match = re.search(r"\bf(?:ilial)\s*(\d{2})\b", normalized)
 
         if match:
             return match.group(1)
@@ -170,7 +172,7 @@ class ChatSqlProductionQueryService:
         include_all_branches: bool = False,
     ) -> str:
         if include_all_branches:
-            branches = ", ".join(f"'{code}'" for code in _DEFAULT_BRANCHES)
+            branches = ", ".join(f"'{code}'" for code in cls._default_branches())
 
             return f"""{schedule_date.sql_date_declaration}
 SELECT

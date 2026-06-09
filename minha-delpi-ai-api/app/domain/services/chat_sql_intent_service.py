@@ -5,93 +5,8 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-
-_EXECUTE_TERMS = (
-    "execute ",
-    "executa ",
-    "executar ",
-    "rode ",
-    "rodar ",
-    "roda ",
-    "run ",
-    "consulte ",
-    "consultar ",
-    "consulta no banco",
-    "no banco de dados",
-    "busque no banco",
-    "traga os dados",
-    "trazer os dados",
-    "mostre os resultados",
-    "exiba os resultados",
-    "retorne os dados",
-    "retornar os dados",
-    "aplique a query",
-    "aplica a query",
-)
-
-_AUTHORING_TERMS = (
-    "monte ",
-    "monta ",
-    "crie ",
-    "cria ",
-    "gere ",
-    "gera ",
-    "escreva ",
-    "escreve ",
-    "elabore ",
-    "elabora ",
-    "construa ",
-    "constrói ",
-    "formula ",
-    "formule ",
-    "ajuste ",
-    "ajusta ",
-    "altere ",
-    "altera ",
-    "corrija ",
-    "corrige ",
-    "refine ",
-    "refina ",
-    "mude ",
-    "muda ",
-    "atualize ",
-    "atualiza ",
-    "melhore ",
-    "melhora ",
-    "otimize ",
-    "otimiza ",
-    "reescreva ",
-    "reescreve ",
-    "mostre a query",
-    "mostra a query",
-    "exiba a query",
-    "exibe a query",
-    "qual e a query",
-    "qual é a query",
-    "me mostre o sql",
-    "me mostra o sql",
-    "somente a query",
-    "so a query",
-    "só a query",
-    "apenas a query",
-    "nao execute",
-    "não execute",
-    "sem executar",
-    "sem rodar",
-    "revisa ",
-    "revisar ",
-    "revise ",
-    "explique ",
-    "explicar ",
-    "explique essa",
-    "revisa essa",
-)
-
-_SQL_BUILD_CONTEXT = (
-    "query que",
-    "consulta que",
-    "sql que",
-    "select que",
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
 )
 
 
@@ -99,23 +14,41 @@ class ChatSqlIntentService:
     """Diferencia elaborar/mostrar SQL de executar via action."""
 
     @classmethod
+    def _execute_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "executeTerms")
+
+    @classmethod
+    def _authoring_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "authoringTerms")
+
+    @classmethod
+    def _sql_build_context(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "sqlBuildContext")
+
+    @classmethod
+    def _sql_context_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "sqlContextTerms")
+
+    @classmethod
+    def _sql_conversation_turn_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "sqlIntent",
+            "sqlConversationTurnTerms",
+        )
+
+    @classmethod
+    def _sql_review_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "sqlReviewTerms")
+
+    @classmethod
+    def _sql_explain_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms("sqlIntent", "sqlExplainTerms")
+
+    @classmethod
     def _has_sql_context(cls, normalized: str) -> bool:
         return any(
             term in normalized
-            for term in (
-                "sql",
-                "consulta",
-                "query",
-                "select",
-                "tabela",
-                "coluna",
-                "join",
-                "schema",
-                " from ",
-                "cte",
-                " window ",
-                "/data/sql",
-            )
+            for term in cls._sql_context_terms()
         ) or bool(
             re.search(
                 r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{0,4}\b",
@@ -139,25 +72,7 @@ class ChatSqlIntentService:
         if cls.is_authoring_request(message) or cls.should_auto_execute_sql(message):
             return True
 
-        return any(
-            term in normalized
-            for term in (
-                "monte",
-                "monta",
-                "crie",
-                "gere",
-                "elabore",
-                "revise",
-                "revisa",
-                "explique",
-                "otimize",
-                "execute",
-                "executar",
-                "relacion",
-                "relacionar",
-                "schema",
-            )
-        )
+        return any(term in normalized for term in cls._sql_conversation_turn_terms())
 
     @classmethod
     def router_sub_intent(cls, message: str | None) -> str | None:
@@ -177,13 +92,10 @@ class ChatSqlIntentService:
             return None
 
         if cls.is_authoring_request(message):
-            if any(
-                term in normalized
-                for term in ("revise", "revisar", "revisa", "review", "valida", "valide")
-            ):
+            if any(term in normalized for term in cls._sql_review_terms()):
                 return "sql_review"
 
-            if any(term in normalized for term in ("explique", "explicar", "explain")):
+            if any(term in normalized for term in cls._sql_explain_terms()):
                 return "sql_explain"
 
             return "sql_generate"
@@ -191,10 +103,10 @@ class ChatSqlIntentService:
         if cls.should_auto_execute_sql(message):
             return "sql_execute"
 
-        if any(term in normalized for term in ("revise", "revisar", "review")):
+        if any(term in normalized for term in cls._sql_review_terms()):
             return "sql_review"
 
-        if any(term in normalized for term in ("explique", "explicar", "explain")):
+        if any(term in normalized for term in cls._sql_explain_terms()):
             return "sql_explain"
 
         return "sql_generate"
@@ -206,11 +118,11 @@ class ChatSqlIntentService:
         if not normalized:
             return False
 
-        if any(term in normalized for term in _AUTHORING_TERMS):
+        if any(term in normalized for term in cls._authoring_terms()):
             return True
 
         if "query" in normalized or "consulta sql" in normalized or "sql" in normalized:
-            if any(ctx in normalized for ctx in _SQL_BUILD_CONTEXT):
+            if any(ctx in normalized for ctx in cls._sql_build_context()):
                 return True
 
         return False
@@ -230,19 +142,16 @@ class ChatSqlIntentService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return not cls.is_authoring_request(message)
 
-        if any(term in normalized for term in _AUTHORING_TERMS):
+        if any(term in normalized for term in cls._authoring_terms()):
             return False
 
-        if any(
-            term in normalized
-            for term in ("revise", "revisar", "revisa", "review", "valida", "valide")
-        ) and (
+        if any(term in normalized for term in cls._sql_review_terms()) and (
             ChatSqlSafetyService.looks_like_sql_payload(message)
             or cls._has_embedded_select(normalized)
         ):
             return False
 
-        if any(term in normalized for term in ("explique", "explicar", "explain")) and (
+        if any(term in normalized for term in cls._sql_explain_terms()) and (
             ChatSqlSafetyService.looks_like_sql_payload(message)
             or "query" in normalized
             or cls._has_embedded_select(normalized)
@@ -252,11 +161,11 @@ class ChatSqlIntentService:
         if cls._has_embedded_select(normalized):
             return True
 
-        if any(term in normalized for term in _EXECUTE_TERMS):
+        if any(term in normalized for term in cls._execute_terms()):
             return True
 
         if "query" in normalized or "consulta sql" in normalized or "sql" in normalized:
-            if any(ctx in normalized for ctx in _SQL_BUILD_CONTEXT):
+            if any(ctx in normalized for ctx in cls._sql_build_context()):
                 return False
 
         return False

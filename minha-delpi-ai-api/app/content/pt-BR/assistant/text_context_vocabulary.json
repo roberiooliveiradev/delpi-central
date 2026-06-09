@@ -1,0 +1,20 @@
+{
+  "previousReferenceTerms": [
+    "resposta anterior",
+    "texto anterior",
+    "mensagem anterior",
+    "conversa acima",
+    "dados acima",
+    "essa conversa",
+    "esta conversa",
+    "histórico"
+  ],
+  "canvasMarkers": ["lousa", "canvas"],
+  "attachmentMarkers": ["anexo", "arquivo", "pdf", "documento anex"],
+  "promptBlock": {
+    "inlineTextSource": "- Texto fonte na mensagem: «{snippet}»",
+    "priorAssistant": "- Use como base a resposta anterior: «{prior}»",
+    "canvasSource": "- Fonte: conteúdo da lousa ativa (se disponível no histórico).",
+    "attachmentSource": "- Fonte: arquivo(s) anexados neste turno."
+  }
+}

@@ -7,93 +7,55 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 from app.domain.services.chat_temporal_intent_service import ChatTemporalIntentService
-
-_PRODUCTION_SQL_PHRASES = (
-    "produzidos hoje",
-    "produzido hoje",
-    "serao produzidos",
-    "sera produzido",
-    "vao ser produzidos",
-    "vao ser produzido",
-    "producao de hoje",
-    "producao hoje",
-    "programacao de producao",
-    "programacao produtiva",
-    "programados para producao",
-    "produtos programados",
-    "ordens de producao",
-    "ordem de producao",
-    "planejamento de producao",
-    "lista de producao",
-    "apontamento de producao",
-    "sc2010",
-)
-
-_CATALOG_SEARCH_MARKERS = (
-    "busque produto",
-    "pesquise produto",
-    "procure produto",
-    "encontre produto",
-    "cadastro de produto",
-    "descricao do produto",
-    "codigo do produto",
-    "informacoes sobre o produto",
-)
-
-# Consultas agregadas sem GET /products/{code}/… — rota via POST /data/sql + playbooks SQL.
-_INVENTORY_AGGREGATE_MARKERS = (
-    "estoque abaixo",
-    "abaixo do minimo",
-    "abaixo do mínimo",
-    "saldo abaixo",
-    "ruptura de estoque",
-    "produtos com estoque",
-    "liste os produtos com estoque",
-    "lista de produtos com estoque",
-    "itens com estoque abaixo",
-)
-
-_SALES_AGGREGATE_MARKERS = (
-    "vendas por mes",
-    "vendas por mês",
-    "evolucao de vendas",
-    "evolução de vendas",
-    "faturamento por mes",
-    "faturamento por mês",
-    "faturamento do mes",
-    "faturamento do mês",
-    "ranking dos",
-    "ranking de clientes",
-    "ranking de cliente",
-    "top 10 clientes",
-    "top 5 clientes",
-    "clientes que mais compraram",
-    "participacao do faturamento",
-    "participação do faturamento",
-    "por cliente em rosca",
-)
-
-_TEMPORAL_TERMS = (
-    "hoje",
-    "ontem",
-    "amanha",
-    "anteontem",
-    "semana",
-    "mes ",
-    "proxim",
-    "passad",
-    "segunda",
-    "terca",
-    "quarta",
-    "quinta",
-    "sexta",
-    "sabado",
-    "domingo",
-)
 
 
 class ChatSqlOperationalIntentService:
+    @classmethod
+    def _production_phrases(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "productionPhrases",
+        )
+
+    @classmethod
+    def _catalog_search_markers(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "catalogSearchMarkers",
+        )
+
+    @classmethod
+    def _inventory_aggregate_markers(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "inventoryAggregateMarkers",
+        )
+
+    @classmethod
+    def _sales_aggregate_markers(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "salesAggregateMarkers",
+        )
+
+    @classmethod
+    def _temporal_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "temporalTerms",
+        )
+
+    @classmethod
+    def _production_product_scope_phrases(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "operationalIntent",
+            "productionProductScopePhrases",
+        )
+
     @classmethod
     def requires_sql_knowledge(cls, message: str | None) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -101,7 +63,7 @@ class ChatSqlOperationalIntentService:
         if not normalized:
             return False
 
-        if any(marker in normalized for marker in _CATALOG_SEARCH_MARKERS):
+        if any(marker in normalized for marker in cls._catalog_search_markers()):
             return False
 
         if cls._looks_like_aggregate_sql_question(message, normalized):
@@ -116,28 +78,22 @@ class ChatSqlOperationalIntentService:
         if not normalized:
             return False
 
-        if any(marker in normalized for marker in _CATALOG_SEARCH_MARKERS):
+        if any(marker in normalized for marker in cls._catalog_search_markers()):
             return False
 
         if cls._looks_like_aggregate_sql_question(message, normalized):
             return False
 
-        if any(phrase in normalized for phrase in _PRODUCTION_SQL_PHRASES):
+        if any(phrase in normalized for phrase in cls._production_phrases()):
             return True
 
         if re.search(r"\bproduz\w*\b", normalized) and (
             ChatTemporalIntentService.has_temporal_reference(message)
-            or any(term in normalized for term in _TEMPORAL_TERMS)
+            or any(term in normalized for term in cls._temporal_terms())
         ):
             if any(
                 phrase in normalized
-                for phrase in (
-                    "quais produtos",
-                    "que produtos",
-                    "o que",
-                    "qual produto",
-                    "produtos programados",
-                )
+                for phrase in cls._production_product_scope_phrases()
             ):
                 return True
 
@@ -168,10 +124,10 @@ class ChatSqlOperationalIntentService:
         if re.search(r"\bproduto\s+\d", normalized):
             return False
 
-        if any(marker in normalized for marker in _INVENTORY_AGGREGATE_MARKERS):
+        if any(marker in normalized for marker in cls._inventory_aggregate_markers()):
             return True
 
-        if any(marker in normalized for marker in _SALES_AGGREGATE_MARKERS):
+        if any(marker in normalized for marker in cls._sales_aggregate_markers()):
             return True
 
         return False
