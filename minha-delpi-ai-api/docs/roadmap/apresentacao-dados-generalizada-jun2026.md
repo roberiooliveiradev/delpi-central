@@ -316,7 +316,7 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fase 0 concluída — matriz 130 rotas. ✅ Fase 1 concluída — preferência de sessão respeitada ponta a ponta.
+**Status jun/2026:** ✅ Fases 0–2 concluídas. Próxima: Fase 3 (presenter schema-driven).
 
 ### Fase 0 — entregue
 
@@ -336,3 +336,12 @@ Atualizar este doc ao concluir cada fase (checkbox no topo).
 | Wiring | `ExecuteExternalActionUseCase._build_presentation_metadata` |
 | Testes | `tests/unit/application/use_cases/test_presentation_session_format_respected.py` |
 | Testes unit. | `tests/unit/domain/services/test_chat_presentation_primary_view_service.py` |
+
+### Fase 2 — entregue
+
+| Artefato | Caminho |
+|----------|---------|
+| JSON | `app/content/pt-BR/assistant/presentation_profiles.json` |
+| Serviço | `app/domain/services/chat_presentation_profile_service.py` |
+| Delegação | `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
+| Testes | `tests/unit/domain/services/test_chat_presentation_profile_service.py` |

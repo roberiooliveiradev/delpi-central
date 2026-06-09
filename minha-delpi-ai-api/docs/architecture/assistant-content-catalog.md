@@ -70,6 +70,7 @@ Wrappers especializados (mantêm API estável):
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
+| `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
 
 ## Vocabulário compartilhado (dicionários PT)
 

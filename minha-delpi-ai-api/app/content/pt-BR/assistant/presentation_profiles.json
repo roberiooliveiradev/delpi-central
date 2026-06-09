@@ -1,0 +1,203 @@
+{
+  "defaults": {
+    "defaultViewPolicy": "generic",
+    "viewOrder": [
+      "text",
+      "table",
+      "tree",
+      "chart",
+      "line_chart",
+      "bar_chart",
+      "horizontal_bar",
+      "donut",
+      "kpi",
+      "dashboard"
+    ],
+    "stackPlan": "default",
+    "flags": []
+  },
+  "entityProfiles": {
+    "product_analyser": "analyser",
+    "product_stock": "stock",
+    "product_structure": "tree_hierarchy",
+    "product_parents": "tree_hierarchy",
+    "product_factory_status": "factory_status",
+    "product_production_status": "production_status",
+    "product_shipping_status": "shipping_status",
+    "product_structure_exclusivity": "structure_exclusivity",
+    "product_guide": "table_list",
+    "product_inspection": "table_list",
+    "product_search": "table_list",
+    "product_pricing": "table_list",
+    "product_purchases": "table_list",
+    "product_suppliers": "table_list",
+    "product_customers": "table_list",
+    "product_sales": "table_list",
+    "product_open_orders": "table_list",
+    "product_billing": "table_list",
+    "sql_result": "sql",
+    "protheus_table": "system",
+    "protheus_column": "system",
+    "protheus_index": "system",
+    "protheus_relation": "system",
+    "protheus_table_schema": "system"
+  },
+  "pathRules": [
+    { "contains": "/structure/exclusivity", "profile": "structure_exclusivity" },
+    { "contains": "/analyser", "profile": "analyser" },
+    { "contains": "/factory-status", "profile": "factory_status" },
+    { "contains": "/production-status", "profile": "production_status" },
+    { "contains": "/shipping-status", "profile": "shipping_status" },
+    { "contains": "/stock", "profile": "stock" },
+    { "contains": "/structure", "profile": "tree_hierarchy" },
+    { "contains": "/parents", "profile": "tree_hierarchy" },
+    { "contains": "/guide", "profile": "table_list" },
+    { "contains": "/inspection", "profile": "table_list" },
+    { "contains": "/suppliers", "profile": "table_list" },
+    { "contains": "/customers", "profile": "table_list" },
+    { "contains": "/purchases", "profile": "table_list" },
+    { "contains": "/sales", "profile": "table_list" },
+    { "contains": "/pricing", "profile": "table_list" },
+    { "contains": "/prices", "profile": "table_list" },
+    { "contains": "/movements", "profile": "table_list" },
+    { "contains": "/invoices", "profile": "table_list" },
+    { "contains": "/products/search", "profile": "table_list" },
+    { "contains": "/data/sql", "profile": "sql" },
+    { "contains": "/system/", "profile": "system" }
+  ],
+  "profiles": {
+    "analyser": {
+      "defaultViewPolicy": "tree_when_available",
+      "viewOrder": ["text", "table", "tree", "chart", "kpi", "dashboard"],
+      "stackPlan": "analyser",
+      "flags": ["analyser", "table"]
+    },
+    "stock": {
+      "defaultViewPolicy": "stock",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "stock",
+      "flags": ["stock"]
+    },
+    "tree_hierarchy": {
+      "defaultViewPolicy": "tree_when_available",
+      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
+      "stackPlan": "tree_hierarchy",
+      "flags": ["tree"]
+    },
+    "table_list": {
+      "defaultViewPolicy": "table_when_available",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "table_list",
+      "flags": ["table"]
+    },
+    "factory_status": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "factory_status",
+      "flags": ["factory_status"]
+    },
+    "production_status": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "production_status",
+      "flags": ["production_status"]
+    },
+    "shipping_status": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "shipping_status",
+      "flags": ["shipping_status"]
+    },
+    "structure_exclusivity": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "structure_exclusivity",
+      "flags": ["structure_exclusivity"]
+    },
+    "sql": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table"],
+      "stackPlan": "default",
+      "flags": ["sql"]
+    },
+    "system": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table"],
+      "stackPlan": "default",
+      "flags": ["system"]
+    },
+    "generic": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": [
+        "text",
+        "table",
+        "tree",
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+        "kpi",
+        "dashboard"
+      ],
+      "stackPlan": "default",
+      "flags": []
+    }
+  },
+  "stackPlans": {
+    "analyser": {
+      "tableRoleOrder": ["profile", "guide", "inspection", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "stock": {
+      "tableRoleOrder": ["profile", "stock", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "tree_hierarchy": {
+      "tableRoleOrder": ["profile", "structure", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "table_list": {
+      "tableRoleOrder": ["profile", "guide", "inspection", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "factory_status": {
+      "tableRoleOrder": ["profile", "structure", "stock", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "production_status": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "shipping_status": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "structure_exclusivity": {
+      "tableRoleOrder": ["profile", "structure", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "default": {
+      "tableRoleOrder": [
+        "profile",
+        "guide",
+        "inspection",
+        "stock",
+        "pricing",
+        "structure",
+        "list",
+        "other"
+      ],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    }
+  }
+}

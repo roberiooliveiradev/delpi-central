@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_presentation_route_policy_service import (
-    ChatPresentationRoutePolicyService,
-)
 from app.domain.services.chat_presentation_section_availability_service import (
     ChatPresentationSectionAvailabilityService,
 )
@@ -26,65 +23,33 @@ class ChatPresentationStackOrderService:
         "other",
     )
 
-    _FACTORY_TABLE_ROLES = ("profile", "structure", "stock", "list", "other")
-
-    _PRODUCTION_TABLE_ROLES = ("profile", "list", "other")
-
-    _SHIPPING_TABLE_ROLES = ("profile", "list", "other")
-
-    _STRUCTURE_EXCLUSIVITY_TABLE_ROLES = ("profile", "structure", "other")
-
-    _ANALYSER_TABLE_ROLES = ("profile", "guide", "inspection", "other")
-
-    _STOCK_TABLE_ROLES = ("profile", "stock", "other")
-
-    _TREE_ROUTE_TABLE_ROLES = ("profile", "structure", "list", "other")
-
-    _TABLE_ROUTE_ROLES = ("profile", "guide", "inspection", "list", "other")
-
     @classmethod
     def resolve_plan(cls, metadata: dict[str, Any]) -> dict[str, Any]:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
         path = str(metadata.get("path") or "")
-        lowered = ChatPresentationRoutePolicyService.path_lowered(path)
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        stack_config = ChatPresentationProfileService.stack_plan_config(path, entity)
         has_attention = cls._markdown_has_attention(metadata)
         has_highlights = cls._markdown_has_highlights(metadata)
+        table_roles = list(stack_config.get("tableRoleOrder") or cls._DEFAULT_TABLE_ROLES)
+        profile_first = bool(stack_config.get("profileFirst", True))
+        highlights_after_profile = bool(
+            stack_config.get("highlightsAfterProfile", has_highlights)
+        )
 
-        if ChatPresentationRoutePolicyService.is_analyser_route(lowered):
-            table_roles = list(cls._ANALYSER_TABLE_ROLES)
-            profile_first = True
+        if ChatPresentationProfileService.has_flag(path, "analyser", entity=entity):
             highlights_after_profile = True
-        elif ChatPresentationRoutePolicyService.is_factory_status_route(lowered):
-            table_roles = list(cls._FACTORY_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_production_status_route(lowered):
-            table_roles = list(cls._PRODUCTION_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_shipping_status_route(lowered):
-            table_roles = list(cls._SHIPPING_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_structure_exclusivity_route(lowered):
-            table_roles = list(cls._STRUCTURE_EXCLUSIVITY_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_stock_route(lowered):
-            table_roles = list(cls._STOCK_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_tree_route(lowered):
-            table_roles = list(cls._TREE_ROUTE_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        elif ChatPresentationRoutePolicyService.is_table_route(lowered):
-            table_roles = list(cls._TABLE_ROUTE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
-        else:
-            table_roles = list(cls._DEFAULT_TABLE_ROLES)
-            profile_first = True
-            highlights_after_profile = has_highlights
 
         tail_visuals = cls._resolve_tail_visual_order(metadata)
 
@@ -98,6 +63,10 @@ class ChatPresentationStackOrderService:
                 profile_first=profile_first,
                 highlights_after_profile=highlights_after_profile,
                 attention_last=has_attention,
+            ),
+            "presentationProfileKey": ChatPresentationProfileService.resolve_profile_key(
+                path,
+                entity,
             ),
         }
 
