@@ -198,3 +198,52 @@ def test_listing_type_filter_uses_effective_kind_not_anchor() -> None:
     candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(request)
     assert "UNION" in candidate_sql
     assert "AND L.LISTING_KIND = ?" not in candidate_sql
+
+
+def test_dashboard_summary_batch_uses_lite_eng_resumo_without_order_by() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260401", date_end="20260501")
+
+    final_select = repo._staged_final_select(
+        include_qtd_pi=False,
+        order_by=False,
+        summary_only=True,
+    )
+    batch_sql, _batch_params = repo._build_staged_batch(
+        request,
+        include_qtd_pi=False,
+        eng_resumo_lite=True,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert "C.LMP_START_DATE DESC" not in batch_sql
+    assert "QTD_PASSAGENS_ENG" not in batch_sql
+    assert "QTD_RETORNOU_ENG" not in batch_sql
+    assert "TEMPO_TOTAL_MINUTOS_ENG" in batch_sql
+    assert "TEMPO_MINUTOS_AMOSTRA_ENG" in batch_sql
+    assert "ENGINEERING_STATUS" in batch_sql
+
+
+def test_full_staged_batch_keeps_eng_passagem_counts() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260401", date_end="20260501")
+
+    final_select = repo._staged_final_select(include_qtd_pi=False, order_by=True)
+    batch_sql, _batch_params = repo._build_staged_batch(
+        request,
+        include_qtd_pi=False,
+        eng_resumo_lite=False,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert "QTD_PASSAGENS_ENG" in batch_sql
+    assert "QTD_RETORNOU_ENG" in batch_sql
+    assert "ORDER BY" in batch_sql

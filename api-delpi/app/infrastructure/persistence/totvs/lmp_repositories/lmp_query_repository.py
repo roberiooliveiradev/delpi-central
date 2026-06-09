@@ -946,12 +946,90 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         return sql, tuple(params)
 
+    def _sql_engenharia_resumo_ultima_revisao_select(
+        self,
+        *,
+        eng_minutes_expr: str,
+        where_sample_eng_e: str,
+        lite: bool,
+    ) -> str:
+        """Colunas de EngenhariaResumoUltimaRevisao; lite omite passagens/datas extras."""
+        tempo_cols = f"""
+                    SUM({eng_minutes_expr}) AS TEMPO_TOTAL_MINUTOS_ENG,
+                    SUM(
+                        CASE
+                            WHEN {where_sample_eng_e}
+                            THEN {eng_minutes_expr}
+                            ELSE 0
+                        END
+                    ) AS TEMPO_MINUTOS_AMOSTRA_ENG,
+                    S.ENGINEERING_STATUS AS ENGINEERING_STATUS"""
+        if lite:
+            return f"""
+                    E.AIJ_FILIAL,
+                    E.AIJ_NROPOR,
+                    {tempo_cols}"""
+
+        return f"""
+                    E.AIJ_FILIAL,
+                    E.AIJ_NROPOR,
+                    MIN(E.AIJ_DTINIC) AS START_DATE,
+                    MAX(
+                        CASE
+                            WHEN ISNULL(E.AIJ_DTENCE, '') <> '' THEN E.AIJ_DTENCE
+                            WHEN ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> '' THEN E.PROXIMO_DTINIC_GLOBAL
+                            ELSE NULL
+                        END
+                    ) AS END_DATE,
+                    COUNT(*) AS QTD_PASSAGENS_ENG,
+                    SUM(
+                        CASE
+                            WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                              OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS QTD_PASSAGENS_ENCERRADAS,
+                    {tempo_cols},
+                    SUM(
+                        CASE
+                            WHEN (
+                                ISNULL(E.AIJ_DTENCE, '') <> ''
+                                OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
+                            )
+                            AND E.PROXIMO_STAGE_GLOBAL IS NOT NULL
+                            AND ISNULL(E.PROXIMO_EH_ENG_GLOBAL, 0) = 0
+                            AND E.PROXIMA_REVISA_GLOBAL = E.AIJ_REVISA
+                            AND E.PROXIMO_STAGE_GLOBAL > E.AIJ_STAGE
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS QTD_AVANCOU_ENG,
+                    SUM(
+                        CASE
+                            WHEN (
+                                ISNULL(E.AIJ_DTENCE, '') <> ''
+                                OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
+                            )
+                            AND E.PROXIMO_STAGE_GLOBAL IS NOT NULL
+                            AND ISNULL(E.PROXIMO_EH_ENG_GLOBAL, 0) = 0
+                            AND (
+                                E.PROXIMA_REVISA_GLOBAL > E.AIJ_REVISA
+                                OR E.PROXIMO_STAGE_GLOBAL < E.AIJ_STAGE
+                            )
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS QTD_RETORNOU_ENG"""
+
     def _sql_historico_ov_cte(
         self,
         scope_cte_name: str | None = None,
         requested_branch: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
+        *,
+        eng_resumo_lite: bool = False,
     ) -> Tuple[str, tuple]:
         where_aij_base_a, params_aij_base_a = self._build_filter_sql(
             lambda qb: (
@@ -1142,64 +1220,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             EngenhariaResumoUltimaRevisao AS (
                 SELECT
-                    E.AIJ_FILIAL,
-                    E.AIJ_NROPOR,
-                    MIN(E.AIJ_DTINIC) AS START_DATE,
-                    MAX(
-                        CASE
-                            WHEN ISNULL(E.AIJ_DTENCE, '') <> '' THEN E.AIJ_DTENCE
-                            WHEN ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> '' THEN E.PROXIMO_DTINIC_GLOBAL
-                            ELSE NULL
-                        END
-                    ) AS END_DATE,
-                    COUNT(*) AS QTD_PASSAGENS_ENG,
-                    SUM(
-                        CASE
-                            WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
-                              OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS QTD_PASSAGENS_ENCERRADAS,
-                    SUM({eng_minutes_expr}) AS TEMPO_TOTAL_MINUTOS_ENG,
-                    SUM(
-                        CASE
-                            WHEN {where_sample_eng_e}
-                            THEN {eng_minutes_expr}
-                            ELSE 0
-                        END
-                    ) AS TEMPO_MINUTOS_AMOSTRA_ENG,
-                    SUM(
-                        CASE
-                            WHEN (
-                                ISNULL(E.AIJ_DTENCE, '') <> ''
-                                OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
-                            )
-                            AND E.PROXIMO_STAGE_GLOBAL IS NOT NULL
-                            AND ISNULL(E.PROXIMO_EH_ENG_GLOBAL, 0) = 0
-                            AND E.PROXIMA_REVISA_GLOBAL = E.AIJ_REVISA
-                            AND E.PROXIMO_STAGE_GLOBAL > E.AIJ_STAGE
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS QTD_AVANCOU_ENG,
-                    SUM(
-                        CASE
-                            WHEN (
-                                ISNULL(E.AIJ_DTENCE, '') <> ''
-                                OR ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
-                            )
-                            AND E.PROXIMO_STAGE_GLOBAL IS NOT NULL
-                            AND ISNULL(E.PROXIMO_EH_ENG_GLOBAL, 0) = 0
-                            AND (
-                                E.PROXIMA_REVISA_GLOBAL > E.AIJ_REVISA
-                                OR E.PROXIMO_STAGE_GLOBAL < E.AIJ_STAGE
-                            )
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS QTD_RETORNOU_ENG,
-                    S.ENGINEERING_STATUS AS ENGINEERING_STATUS
+                    {self._sql_engenharia_resumo_ultima_revisao_select(
+                        eng_minutes_expr=eng_minutes_expr,
+                        where_sample_eng_e=where_sample_eng_e,
+                        lite=eng_resumo_lite,
+                    )}
                 FROM EngenhariaEventos E
                 INNER JOIN UltimaRevisaoMedicaoEngenharia M
                     ON M.AIJ_FILIAL = E.AIJ_FILIAL
@@ -2048,6 +2073,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         include_qtd_pi: bool,
         lmp_only: bool = False,
+        eng_resumo_lite: bool = False,
         final_select: str,
         final_params: tuple = (),
     ) -> Tuple[str, tuple]:
@@ -2065,6 +2091,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             requested_branch=request.branch,
             date_start=request.date_start,
             date_end=request.date_end,
+            eng_resumo_lite=eng_resumo_lite,
         )
 
         parts = [
@@ -2397,7 +2424,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         final_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi,
-            order_by=True,
+            order_by=False,
             summary_only=True,
         )
         residence_params = self._staged_residence_final_params(
@@ -2412,6 +2439,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
+            eng_resumo_lite=True,
             final_select=final_select,
             final_params=final_params,
         )
