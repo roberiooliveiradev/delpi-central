@@ -84,7 +84,9 @@ Mensagem do usuário
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatIntentRouterService` | Roteamento de intenção (Playbook 02): `classify`, `resolve_executed`; intents `self_help`, `web_search`, `sql_task`, `mixed_task`, `presentation_task`; `metadata.intentRouting` + `adminDebug.intentRoute`; ver [`intent-routing.md`](./intent-routing.md) |
 | `ChatIntentRouterMetricsService` | `intentRouterMetrics` e espelho `intentRouting` na mensagem do assistente |
-| `ChatActivePendingService` | Pendências ativas (`metadata.activePending`); resolução como `clarification`; filial/sim; snapshot de roteamento no feedback `routing_*` |
+| `ChatActivePendingService` | Pendências ativas (`metadata.activePending`); resolução como `clarification`; filial/sim; snapshot de roteamento no feedback `routing_*`; `context.originalMessage` + `resumeMessage` |
+| `ChatActiveQuerySessionService` | Sessão de consulta ativa (`metadata.activeQuery`); `compose_selection_message`; continuação com resposta curta até mudança de assunto (jun/2026) |
+| `ChatOperationalDateParameterService` | Parâmetros temporais obrigatórios em rotas de playbook; pending `missing_date`; merge `reference_date` / intervalo (jun/2026) |
 | `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
 | `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
 | `ChatAttachmentPreviewService` | Preview de leitura, `readingStatus` com `documentVision`, snapshots em `metadata.attachments` (Playbook 07) |
@@ -153,7 +155,7 @@ Mensagem do usuário
 | `ChatOperationalApiDomainService` | Classifica path em domínio (`api_route_domains.json`) — metadata `apiRouteDomain` na execução |
 | `OperationalApiParameterBuilderService` | Monta query/body por `parameterStrategy` (`date_branch`, `product_code`, …) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
-| `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
+| `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, OV, etc.); guards de tools/agentic |
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
 | `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
 | `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», «rol do mês de março», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV); ambiguidade de ano pede confirmação |
@@ -519,12 +521,37 @@ Perguntas como «estoque do produto» (sem código) **não** disparam API nem lo
 
 | Etapa | Comportamento |
 |-------|----------------|
-| `ChatOperationalParameterService` | Detecta intent STOCK/STRUCTURE/PARENTS/DESCRIPTION sem código |
+| `ChatOperationalParameterService` | Detecta intent STOCK/STRUCTURE/PARENTS/DESCRIPTION/ANALYSER/SUMMARY sem código |
 | `ChatTurnPreparationService` | `direct_answer` canônico (`operational_parameters.json`), `skip_rag`, **sem** `build_tool_context` |
 | `ExternalActionSelectionService` | Retorna `None` (evita fallback semântico → ROL comercial) |
 | `ChatAgenticToolLoopService` | Não executa se `should_skip_agentic_loop` |
+| `ChatActivePendingService` | Grava `activePending.kind=missing_product_code` com `context.originalMessage` |
 
 Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
+
+**Importante (jun/2026):** consultas de **produto** com «estoque» **não** devem cair em `missing_date` / `period_metric` — `ChatOperationalDateParameterService` exclui intents de produto antes de métricas agregadas.
+
+### Data obrigatória e sessão ativa — jun/2026
+
+Rotas cujo OpenAPI declara `reference_date`, `date_start`, `date_end` (ou equivalentes) **sem default** no chat:
+
+| Etapa | Comportamento |
+|-------|----------------|
+| `ChatOperationalDateParameterService.resolve_missing_date_answer` | Pergunta data/período (`missingDateByContext` em `operational_parameters.json`) |
+| `ExternalActionProductRouteSelectionService` | Não seleciona action se schema exige data e parâmetros temporais vazios |
+| Resposta curta | «hoje», «semana passada», `01/06/2026` → `ChatActivePendingService.try_resolve` monta `resumeMessage` |
+| `ChatActiveQuerySessionService.compose_selection_message` | Recompõe pergunta original + resposta (pending ou sessão ativa) |
+| `ChatExternalActionOrchestrationService` | Planeja actions com `selection_message` (não só a última linha do usuário) |
+
+**Sessão ativa (`metadata.activeQuery`):** após consulta operacional bem-sucedida, o assistente guarda `subIntent`, `originalMessage` e `expectedParam`. Enquanto o usuário enviar **só parâmetros** (códigos, datas, filial), o chat repete o mesmo tipo de consulta. Mudança explícita de assunto («estrutura», «pesquisa web», KPI agregado) encerra a continuação.
+
+Playbooks cobertos: `/factory-status`, `/production-status`, `/shipping-status`; apresentação dedicada também para `/structure/exclusivity`.
+
+Changelog detalhado: [`../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`](../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md).
+
+Smoke: `scripts/smoke_playbook_product_routes.py`.
+
+Testes: `test_chat_operational_date_parameter_service.py`, `test_chat_active_query_session_service.py`, `DATE_RANGE_SELECTION_CASES` em `chat_intelligence_regression_cases.py`.
 
 ### Loop agentic e router LLM — defaults conservadores
 

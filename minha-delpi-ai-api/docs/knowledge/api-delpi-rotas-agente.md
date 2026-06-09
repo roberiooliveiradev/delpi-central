@@ -4,7 +4,7 @@
 
 **Provider:** `api-delpi` · **Base no gateway:** `/apps/api-delpi` · **OpenAPI:** `/apps/api-delpi/openapi.json`
 
-**Última revisão:** alinhada à `api-delpi` em **08/06/2026** (playbooks fabril: estrutura/exclusividade, produção, expedição, status fabril).
+**Última revisão:** alinhada à `api-delpi` em **09/06/2026** (playbooks fabril + parâmetros obrigatórios e sessão ativa no chat base).
 
 Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + embeddings + catálogo) e **reindexe** este documento na base de conhecimento.
 
@@ -24,6 +24,9 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 8. Perguntas do tipo «consegue buscar por grupo?» são **capacidade** — responda com a rota e parâmetros; só execute a API quando o usuário pedir a busca de fato.
 9. Rotas **paginadas** (`page`, `page_size`, `total`): quando o usuário pedir **total/completo/tabela completa/traga tudo**, o chat base consolida várias páginas automaticamente (`CHAT_PAGINATION_*`). Não peça ao usuário para clicar «próxima página» se ele pediu a listagem completa.
 10. **ROL genérico** («rol do mês», KPI financeiro) → `GET /financial/rol` com `start_date`/`end_date`. **Série/gráfico comercial de ROL** → `GET /commercial/rol/series` com `granularity` (`day`, `week`, `month`, `year`).
+11. **Data obrigatória (chat base, jun/2026):** rotas `factory-status`, `production-status`, `shipping-status` exigem data ou período informado pelo usuário — o chat **pergunta** antes de chamar a API (não usa default silencioso). Aceita *hoje*, *ontem*, *semana passada*, *este mês*, `DD/MM/YYYY` e intervalos.
+12. **Resposta curta:** após o chat pedir código ou data, o usuário pode responder só com o valor (`90263059`, `hoje`, `01/06 a 15/06`). O pipeline recomponha a pergunta original automaticamente.
+13. **Mesma consulta em sequência:** depois de um estoque (ou outra rota) bem-sucedido, novos códigos na mesma conversa continuam no **mesmo tipo** até o usuário pedir outra coisa (ex.: «estrutura», «analyser», pesquisa web).
 
 ---
 

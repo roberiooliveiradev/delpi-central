@@ -20,7 +20,17 @@ Histórico + mensagem
   → ChatConversationMemoryService.build_post_turn
   → ChatEpisodicMemoryService.apply_post_turn (grava episódio quando couber)
   → contextSnapshot + contextChips + adminDebug.memory
+  → metadata.activePending | metadata.activeQuery (parâmetro / sessão de consulta)
 ```
+
+### Metadata transversal (jun/2026)
+
+| Chave | Serviço | Uso |
+|-------|---------|-----|
+| `activePending` | `ChatActivePendingService` | Turno anterior pediu parâmetro; próxima mensagem curta resolve via `ChatIntentRouterService` |
+| `activeQuery` | `ChatActiveQuerySessionService` | Última consulta bem-sucedida; continuar enviando só códigos/datas até mudar assunto |
+
+Ver [`chat-intelligence-base.md`](./chat-intelligence-base.md) § Data obrigatória e sessão ativa.
 
 ## Serviços
 
@@ -52,6 +62,8 @@ Histórico + mensagem
 | `ChatUserContextItemService` | Contexto do usuário + `sync_operational_focus` |
 | `ChatWorkingMemoryService` | Pré/pós-turno, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
+| `ChatActiveQuerySessionService` | `metadata.activeQuery` pós-turno — herança de tipo de consulta até mudança de assunto (jun/2026) |
+| `ChatActivePendingService` | `metadata.activePending` — parâmetro faltante (código, data, filial) |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
 | `ChatSessionMemoryService` | Persistência ai_chat_session_memory, limpeza |
 | `ChatSessionMemoryDirectAnswerService` | Ack preferência + ambiguidade |

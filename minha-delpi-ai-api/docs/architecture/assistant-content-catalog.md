@@ -52,7 +52,7 @@ Wrappers especializados (mantêm API estável):
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
 | `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
 | `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService` |
-| `operational_parameters.json` | Parâmetros faltantes | `ChatOperationalParameterService` |
+| `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
 | `identity.json` | Quem é você, perfil | `ChatAssistantIdentityService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
