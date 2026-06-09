@@ -1,11 +1,21 @@
 /* Organograma: IGD → Departamentos → Indicadores */
 
 .si-org-chart--single-scope {
-  --si-dept-slot-width: clamp(320px, 42vw, 480px);
-  --si-dept-gap: clamp(16px, 3vw, 32px);
+  --si-dept-gap: clamp(12px, 2cqw, 28px);
+  --si-dept-slot-width: clamp(
+    220px,
+    calc(
+      (
+          100cqw - var(--si-dept-gap, 16px) * max(0, var(--si-dept-count, 4) - 1) -
+            48px
+        ) / max(1, var(--si-dept-count, 4))
+    ),
+    420px
+  );
   --si-igd-card-max-width: min(640px, 100%);
   --si-tree-card-radius: 26px;
-  padding: clamp(12px, 2vw, 20px) clamp(14px, 2.5vw, 24px) clamp(24px, 4vw, 36px);
+  padding: clamp(12px, 2cqw, 20px) clamp(14px, 2.5cqw, 24px)
+    clamp(24px, 4cqw, 36px);
 }
 
 .si-org-chart--single-scope .si-org-chart__department-column {
@@ -884,7 +894,6 @@
 
 @media (max-width: 1200px) {
   .si-org-chart--single-scope {
-    --si-dept-slot-width: clamp(300px, 44vw, 440px);
     --si-tree-card-radius: 24px;
   }
 }

@@ -276,6 +276,52 @@ export function usePanZoom({
     return () => window.cancelAnimationFrame(frame);
   }, [autoFitOnTokenChange, fitToken, fitToView]);
 
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    let previousWidth = viewport.clientWidth;
+    let hasBaseline = false;
+    let frame = 0;
+    let debounceTimer = 0;
+
+    const scheduleFit = () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        frame = window.requestAnimationFrame(() => {
+          fitToView();
+        });
+      }, 160);
+    };
+
+    const observer = new ResizeObserver(() => {
+      const nextWidth = viewport.clientWidth;
+
+      if (!hasBaseline) {
+        hasBaseline = true;
+        previousWidth = nextWidth;
+        return;
+      }
+
+      if (Math.abs(nextWidth - previousWidth) < 8) {
+        return;
+      }
+
+      previousWidth = nextWidth;
+      scheduleFit();
+    });
+
+    observer.observe(viewport);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(debounceTimer);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [fitToView]);
+
   const clearTouchGestures = useCallback(() => {
     touchPanRef.current = null;
     pinchRef.current = null;

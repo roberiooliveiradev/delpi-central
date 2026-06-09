@@ -1,7 +1,7 @@
 .si-tree-map-floating {
   display: flex;
   width: 100%;
-  max-width: calc(100vw - 48px);
+  max-width: 100%;
   pointer-events: none;
 }
 
@@ -335,9 +335,6 @@
 }
 
 @media (min-width: 1101px) and (max-width: 1280px) {
-  .si-tree-map-floating {
-    max-width: calc(100vw - 32px);
-  }
 
   .si-tree-map-floating__filters .si-reference-filters__field {
     min-width: 112px;
@@ -380,10 +377,6 @@
 
 /* ≤1100px: empilhamento completo, filtros em grid e controles centralizados */
 @media (max-width: 1100px) {
-  .si-tree-map-floating {
-    max-width: calc(100vw - 20px);
-  }
-
   .si-tree-map-floating__panel {
     padding: 8px 10px;
     border-radius: 14px;
@@ -457,10 +450,6 @@
 
 /* Telas estreitas: filtros em 2 colunas */
 @media (max-width: 768px) {
-  .si-tree-map-floating {
-    max-width: calc(100vw - 16px);
-  }
-
   .si-tree-map-floating__filters.si-reference-filters,
   .si-tree-map-floating__filters.si-reference-filters--with-comparison {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -473,10 +462,6 @@
 }
 
 @media (max-width: 480px) {
-  .si-tree-map-floating {
-    max-width: calc(100vw - 12px);
-  }
-
   .si-tree-map-floating__toggle span {
     display: none;
   }

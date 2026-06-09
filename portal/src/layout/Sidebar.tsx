@@ -32,6 +32,7 @@ import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
 import { DELPI_OPEN_APP_LAUNCHER_EVENT } from "../utils/appLauncher";
+import { DELPI_SIDEBAR_EXPAND_EVENT } from "../utils/sidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
 
 type GroupedRoutes = Record<
@@ -82,6 +83,15 @@ export const Sidebar = () => {
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
+    document.documentElement.dataset.sidebarCollapsed = collapsed ? "true" : "false";
+    document.documentElement.style.setProperty(
+      "--portal-sidebar-width",
+      collapsed
+        ? "0px"
+        : window.matchMedia("(max-width: 1024px)").matches
+          ? "280px"
+          : "300px",
+    );
   }, [collapsed]);
 
   useEffect(() => {
@@ -94,6 +104,12 @@ export const Sidebar = () => {
     setCollapsed(false);
     setShowEdgeExpand(false);
   }, []);
+
+  useEffect(() => {
+    const expandFromPlugin = () => openSidebarFromEdge();
+    window.addEventListener(DELPI_SIDEBAR_EXPAND_EVENT, expandFromPlugin);
+    return () => window.removeEventListener(DELPI_SIDEBAR_EXPAND_EVENT, expandFromPlugin);
+  }, [openSidebarFromEdge]);
 
   const hideEdgeExpand = useCallback(() => {
     setShowEdgeExpand(false);
@@ -111,7 +127,7 @@ export const Sidebar = () => {
         return;
       }
 
-      const edgeWidth = event.pointerType === "touch" ? 34 : 24;
+      const edgeWidth = event.pointerType === "touch" ? 42 : 40;
 
       if (event.clientX <= edgeWidth) {
         setShowEdgeExpand(true);

@@ -121,6 +121,8 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   height: min(78vh, 860px);
   min-height: 480px;
   overflow: hidden;
+  container-type: inline-size;
+  container-name: si-pan-zoom-viewport;
   border-radius: 20px;
   border: 1px solid var(--si-card-border);
   background-color: color-mix(in srgb, var(--si-card-bg) 92%, var(--si-text-muted));
@@ -142,13 +144,14 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
 .si-pan-zoom__floating-bar {
   position: absolute;
   top: 12px;
-  left: 12px;
-  right: 12px;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
   z-index: 4;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .si-pan-zoom__floating-controls {
