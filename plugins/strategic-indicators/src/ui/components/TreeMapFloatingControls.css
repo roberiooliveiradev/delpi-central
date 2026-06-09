@@ -35,7 +35,7 @@
 }
 
 /*
- * Toolbar em linhas separadas para evitar sobreposição de filtros e controles de zoom.
+ * Toolbar responsiva: empilha em telas estreitas; em desktop alinha filtros e zoom na mesma linha.
  * Breakpoints SI: 1100 tablet | 768 phone | 480 phone estreito.
  */
 .si-tree-map-floating__toolbar {
@@ -57,32 +57,56 @@
 }
 
 .si-tree-map-floating__row--head {
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.si-tree-map-floating__head-trail {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
 }
 
 .si-tree-map-floating__row--filters {
-  display: block;
+  display: flex;
+  align-items: flex-end;
   width: 100%;
+  min-width: 0;
 }
 
 .si-tree-map-floating__row--viewport {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   width: 100%;
+  min-width: 0;
 }
 
 .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
-  margin-left: auto;
   width: fit-content;
   max-width: 100%;
 }
 
 .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
-  flex-wrap: nowrap;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
+.si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--head {
+  width: auto;
+}
+
 .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--viewport {
-  display: block;
+  display: flex;
+  width: auto;
+  margin-left: auto;
 }
 
 .si-tree-map-floating__panel--collapsed
@@ -258,6 +282,58 @@
   letter-spacing: 0.02em;
 }
 
+/* Desktop: cabeçalho em linha; filtros e zoom compartilham a segunda linha */
+@media (min-width: 1101px) {
+  .si-tree-map-floating__toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head head"
+      "filters viewport";
+    gap: 8px 12px;
+    align-items: end;
+  }
+
+  .si-tree-map-floating__row--head {
+    grid-area: head;
+  }
+
+  .si-tree-map-floating__row--filters {
+    grid-area: filters;
+    width: auto;
+    min-width: 0;
+  }
+
+  .si-tree-map-floating__row--viewport {
+    grid-area: viewport;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .si-tree-map-floating__filters.si-reference-filters {
+    flex-wrap: wrap;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--head,
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--viewport {
+    width: auto;
+  }
+
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--viewport {
+    margin-left: auto;
+  }
+}
+
 @media (min-width: 1101px) and (max-width: 1280px) {
   .si-tree-map-floating {
     max-width: calc(100vw - 32px);
@@ -274,7 +350,35 @@
   }
 }
 
-/* ≤1100px: filtros em grid e controles centralizados */
+/* Telas largas: uma única linha com wrap automático quando faltar espaço */
+@media (min-width: 1500px) {
+  .si-tree-map-floating__toolbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "head filters viewport";
+    align-items: center;
+    gap: 10px 14px;
+  }
+
+  .si-tree-map-floating__row--head {
+    width: auto;
+    flex-wrap: nowrap;
+  }
+
+  .si-tree-map-floating__head-trail {
+    margin-left: 0;
+  }
+
+  .si-tree-map-floating__row--filters {
+    justify-content: center;
+  }
+
+  .si-tree-map-floating__filters.si-reference-filters {
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+}
+
+/* ≤1100px: empilhamento completo, filtros em grid e controles centralizados */
 @media (max-width: 1100px) {
   .si-tree-map-floating {
     max-width: calc(100vw - 20px);
@@ -283,6 +387,14 @@
   .si-tree-map-floating__panel {
     padding: 8px 10px;
     border-radius: 14px;
+  }
+
+  .si-tree-map-floating__row--head {
+    justify-content: flex-start;
+  }
+
+  .si-tree-map-floating__head-trail {
+    margin-left: auto;
   }
 
   .si-tree-map-floating__filters.si-reference-filters,
@@ -300,8 +412,11 @@
     width: 100%;
   }
 
+  .si-tree-map-floating__row--viewport {
+    justify-content: center;
+  }
+
   .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
-    margin-left: 0;
     width: 100%;
     justify-content: center;
     flex-wrap: nowrap;
