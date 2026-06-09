@@ -1,0 +1,186 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Transformômetro API — Snapshot (Chat)",
+    "description": "Rotas de leitura sobre o cache materializado `dashboard_calculos` e a view `processo_competencia_snapshot`. Destinadas a agentes de chat e integrações analíticas — não recalculam o dashboard.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/apps/transformometro-api",
+      "description": "Gateway Minha Delpi"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Transformômetro Snapshot",
+      "description": "Consultas rápidas sobre indicadores materializados (economia, investimento, horas)."
+    }
+  ],
+  "paths": {
+    "/transformometro/dashboard/snapshot/meta": {
+      "get": {
+        "operationId": "get_dashboard_snapshot_meta",
+        "tags": ["Transformômetro Snapshot"],
+        "summary": "Metadados do cache materializado do dashboard",
+        "description": "Retorna contagem de linhas e `latest_calculated_at` de `dashboard_calculos`. Use antes de consultas analíticas para verificar se o cache está populado.",
+        "responses": {
+          "200": {
+            "description": "Metadados do cache",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformometro/dashboard/snapshot/resumo": {
+      "get": {
+        "operationId": "get_dashboard_snapshot_resumo",
+        "tags": ["Transformômetro Snapshot"],
+        "summary": "KPIs agregados a partir do cache materializado",
+        "description": "Economia bruta/líquida, investimentos e horas economizadas somados em `dashboard_calculos`.",
+        "parameters": [
+          { "$ref": "#/components/parameters/filial_id" },
+          { "$ref": "#/components/parameters/setor_id" },
+          { "$ref": "#/components/parameters/competencia_inicio" },
+          { "$ref": "#/components/parameters/competencia_fim" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo agregado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformometro/dashboard/snapshot/processos": {
+      "get": {
+        "operationId": "get_dashboard_snapshot_processos",
+        "tags": ["Transformômetro Snapshot"],
+        "summary": "Processos agregados por competência",
+        "description": "Lista economia e investimento por processo e mês (view `processo_competencia_snapshot`). Preferir para ranking e comparativos mensais.",
+        "parameters": [
+          { "$ref": "#/components/parameters/filial_id" },
+          { "$ref": "#/components/parameters/setor_id" },
+          { "$ref": "#/components/parameters/familia_processo" },
+          { "$ref": "#/components/parameters/processo_id" },
+          { "$ref": "#/components/parameters/competencia_inicio" },
+          { "$ref": "#/components/parameters/competencia_fim" },
+          { "$ref": "#/components/parameters/limit_processos" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista agregada por processo e competência",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformometro/dashboard/snapshot/linhas": {
+      "get": {
+        "operationId": "get_dashboard_snapshot_linhas",
+        "tags": ["Transformômetro Snapshot"],
+        "summary": "Linhas detalhadas revisão × competência no cache",
+        "description": "Detalhe fino de `dashboard_calculos` (revisão, cenário, KPIs mensais).",
+        "parameters": [
+          { "$ref": "#/components/parameters/processo_id" },
+          { "$ref": "#/components/parameters/revisao_id" },
+          { "$ref": "#/components/parameters/filial_id" },
+          { "$ref": "#/components/parameters/setor_id" },
+          { "$ref": "#/components/parameters/competencia_inicio" },
+          { "$ref": "#/components/parameters/competencia_fim" },
+          { "$ref": "#/components/parameters/limit_linhas" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Linhas detalhadas do cache",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "filial_id": {
+        "name": "filial_id",
+        "in": "query",
+        "schema": { "type": "string", "example": "01" },
+        "description": "Filtra por filial (01, 02)."
+      },
+      "setor_id": {
+        "name": "setor_id",
+        "in": "query",
+        "schema": { "type": "string" },
+        "description": "Filtra por setor do processo."
+      },
+      "familia_processo": {
+        "name": "familia_processo",
+        "in": "query",
+        "schema": { "type": "string" },
+        "description": "Filtra por família de processo."
+      },
+      "processo_id": {
+        "name": "processo_id",
+        "in": "query",
+        "schema": { "type": "string", "format": "uuid" },
+        "description": "UUID do processo."
+      },
+      "revisao_id": {
+        "name": "revisao_id",
+        "in": "query",
+        "schema": { "type": "string", "format": "uuid" },
+        "description": "UUID da revisão."
+      },
+      "competencia_inicio": {
+        "name": "competencia_inicio",
+        "in": "query",
+        "schema": { "type": "string", "example": "2025-01" },
+        "description": "Competência inicial (YYYY-MM)."
+      },
+      "competencia_fim": {
+        "name": "competencia_fim",
+        "in": "query",
+        "schema": { "type": "string", "example": "2025-12" },
+        "description": "Competência final (YYYY-MM)."
+      },
+      "limit_processos": {
+        "name": "limit",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 200 },
+        "description": "Máximo de linhas retornadas."
+      },
+      "limit_linhas": {
+        "name": "limit",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 2000, "default": 500 },
+        "description": "Máximo de linhas retornadas."
+      }
+    },
+    "schemas": {
+      "ApiEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": { "type": "object" }
+        }
+      }
+    }
+  }
+}

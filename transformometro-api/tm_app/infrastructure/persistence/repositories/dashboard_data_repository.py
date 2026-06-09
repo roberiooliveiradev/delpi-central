@@ -179,6 +179,130 @@ class DashboardCalculoRepository(PluginBaseRepository):
         row = self.fetch_one("SELECT COUNT(*)::int AS total FROM transformometro.dashboard_calculos")
         return int((row or {}).get("total") or 0)
 
+    def latest_calculated_at(self) -> str | None:
+        row = self.fetch_one(
+            "SELECT MAX(calculated_at) AS latest FROM transformometro.dashboard_calculos"
+        )
+        latest = (row or {}).get("latest")
+        return str(latest) if latest is not None else None
+
+    def query_linhas(
+        self,
+        *,
+        processo_id: str | None = None,
+        revisao_id: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        if processo_id:
+            clauses.append("d.processo_id = %s")
+            params.append(processo_id)
+        if revisao_id:
+            clauses.append("d.revisao_id = %s")
+            params.append(revisao_id)
+        if filial_id:
+            clauses.append("d.filial_id = %s")
+            params.append(filial_id)
+        if setor_id:
+            clauses.append("d.setor_id = %s")
+            params.append(setor_id)
+        if competencia_inicio:
+            clauses.append("d.competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("d.competencia <= %s")
+            params.append(competencia_fim)
+
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(limit)
+
+        return self.fetch_all(
+            f"""
+            SELECT
+                d.dashboard_calculo_id,
+                d.revisao_id,
+                d.processo_id,
+                p.codigo_processo,
+                p.nome_processo,
+                d.competencia,
+                d.filial_id,
+                d.setor_id,
+                d.cenario_tipo,
+                d.revisao_ativa,
+                d.economia_bruta,
+                d.economia_liquida_mes,
+                d.investimento_unico_mes,
+                d.custo_recorrente_mes,
+                d.custo_recursos_compartilhados_mes,
+                (
+                    COALESCE(d.investimento_unico_mes, 0)
+                  + COALESCE(d.custo_recorrente_mes, 0)
+                  + COALESCE(d.custo_recursos_compartilhados_mes, 0)
+                ) AS investimento_total_mes,
+                d.horas_economizadas_mes,
+                d.calculated_at
+            FROM transformometro.dashboard_calculos d
+            JOIN transformometro.processos p ON p.processo_id = d.processo_id
+            {where_sql}
+            ORDER BY d.competencia DESC, p.codigo_processo ASC
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
+    def query_processo_competencia_snapshot(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+        processo_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+        limit: int = 200,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        if filial_id:
+            clauses.append("filial_id = %s")
+            params.append(filial_id)
+        if setor_id:
+            clauses.append("setor_id = %s")
+            params.append(setor_id)
+        if familia_processo:
+            clauses.append("familia_processo = %s")
+            params.append(familia_processo)
+        if processo_id:
+            clauses.append("processo_id = %s")
+            params.append(processo_id)
+        if competencia_inicio:
+            clauses.append("competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("competencia <= %s")
+            params.append(competencia_fim)
+
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(limit)
+
+        return self.fetch_all(
+            f"""
+            SELECT *
+            FROM transformometro.processo_competencia_snapshot
+            {where_sql}
+            ORDER BY competencia DESC, economia_liquida_mes DESC
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
     def query_resumo(
         self,
         *,

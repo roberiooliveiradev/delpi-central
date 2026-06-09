@@ -37,6 +37,7 @@ from tm_app.infrastructure.persistence.repositories.recurso_repository import (
     VinculoRepository,
 )
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
+from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
@@ -65,6 +66,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
 logger = logging.getLogger(__name__)
+_recalc_hook = DashboardRecalcHookService()
 
 
 _PERSONAL_DATA_FIELDS = frozenset({
@@ -104,6 +106,18 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
             action,
             format_api_error(exc),
         )
+
+
+def _recalc_after_processo(processo_id: str) -> None:
+    _recalc_hook.after_processo(processo_id)
+
+
+def _recalc_after_revisao(revisao_id: str, *, processo_id: str | None = None) -> None:
+    _recalc_hook.after_revisao(revisao_id, processo_id=processo_id)
+
+
+def _recalc_after_global_resource_change() -> None:
+    _recalc_hook.after_global_resource_change()
 
 
 def _validate_processo_body(body: ProcessoCreateBody):
@@ -181,6 +195,7 @@ def create_processo(body: ProcessoCreateBody, request: Request):
 
     pid = str(row["processo_id"])
     _audit(request, "processo", pid, "create", body.model_dump())
+    _recalc_after_processo(pid)
     return ok(row_to_json(row), "Processo criado.", 201)
 
 
@@ -196,6 +211,7 @@ def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request
         return fail("Processo não encontrado.", 404)
 
     _audit(request, "processo", processo_id, "update", body.model_dump())
+    _recalc_after_processo(processo_id)
     return ok(row_to_json(row), "Processo atualizado.")
 
 
@@ -204,6 +220,7 @@ def delete_processo(processo_id: str, request: Request):
     if not ProcessoRepository().soft_delete(processo_id):
         return fail("Processo não encontrado.", 404)
     _audit(request, "processo", processo_id, "delete", {})
+    _recalc_after_processo(processo_id)
     return ok(message="Processo excluído.")
 
 
@@ -234,6 +251,7 @@ def duplicate_processo(
             "copiados": result["copiados"],
         },
     )
+    _recalc_after_processo(new_id)
     return ok(
         {
             "processo": row_to_json(result["processo"]),
@@ -274,6 +292,7 @@ def create_revisao(body: RevisaoBody, request: Request):
 
     rid = str(row["revisao_id"])
     _audit(request, "revisao", rid, "create", body.model_dump())
+    _recalc_after_revisao(rid, processo_id=str(body.processo_id))
     return ok(row_to_json(row), "Revisão criada.", 201)
 
 
@@ -289,6 +308,7 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
         return fail("Revisão não encontrada.", 404)
 
     _audit(request, "revisao", revisao_id, "update", body.model_dump())
+    _recalc_after_revisao(revisao_id, processo_id=str(row["processo_id"]))
     return ok(row_to_json(row), "Revisão atualizada.")
 
 
@@ -299,6 +319,7 @@ def activate_revisao(revisao_id: str, request: Request):
     if not row:
         return fail("Revisão não encontrada.", 404)
     _audit(request, "revisao", revisao_id, "activate", {})
+    _recalc_after_revisao(revisao_id, processo_id=str(row["processo_id"]))
     return ok(row_to_json(row), "Revisão ativada.")
 
 
@@ -307,6 +328,7 @@ def delete_revisao(revisao_id: str, request: Request):
     if not RevisaoRepository().soft_delete(revisao_id):
         return fail("Revisão não encontrada.", 404)
     _audit(request, "revisao", revisao_id, "delete", {})
+    _recalc_after_revisao(revisao_id)
     return ok(message="Revisão excluída.")
 
 
@@ -332,6 +354,7 @@ def upsert_medicao(body: MedicaoBody, request: Request):
     row = MedicaoRepository().upsert(body.model_dump())
     mid = str(row["medicao_id"])
     _audit(request, "medicao", mid, "upsert", body.model_dump())
+    _recalc_after_revisao(str(body.revisao_id))
     return ok(row_to_json(row), "Medição salva.")
 
 
@@ -357,6 +380,7 @@ def create_investimento(body: InvestimentoBody, request: Request):
 
     iid = str(row["investimento_id"])
     _audit(request, "investimento", iid, "create", body.model_dump())
+    _recalc_after_revisao(str(body.revisao_id))
     return ok(row_to_json(row), "Investimento criado.", 201)
 
 
@@ -375,14 +399,19 @@ def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, requ
         return fail("Investimento não encontrado.", 404)
 
     _audit(request, "investimento", investimento_id, "update", body.model_dump())
+    _recalc_after_revisao(str(row["revisao_id"]))
     return ok(row_to_json(row), "Investimento atualizado.")
 
 
 @router.delete("/investimentos/{investimento_id}")
 def delete_investimento(investimento_id: str, request: Request):
+    existing = InvestimentoRepository().get(investimento_id)
+    if not existing:
+        return fail("Investimento não encontrado.", 404)
     if not InvestimentoRepository().soft_delete(investimento_id):
         return fail("Investimento não encontrado.", 404)
     _audit(request, "investimento", investimento_id, "delete", {})
+    _recalc_after_revisao(str(existing["revisao_id"]))
     return ok(message="Investimento excluído.")
 
 
@@ -413,6 +442,7 @@ def create_recurso(body: RecursoBody, request: Request):
 
     rid = str(row["recurso_compartilhado_id"])
     _audit(request, "recurso", rid, "create", body.model_dump())
+    _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Recurso criado.", 201)
 
 
@@ -428,6 +458,7 @@ def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
         return fail("Recurso não encontrado.", 404)
 
     _audit(request, "recurso", recurso_id, "update", body.model_dump())
+    _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Recurso atualizado.")
 
 
@@ -436,6 +467,7 @@ def delete_recurso(recurso_id: str, request: Request):
     if not RecursoRepository().soft_delete(recurso_id):
         return fail("Recurso não encontrado.", 404)
     _audit(request, "recurso", recurso_id, "delete", {})
+    _recalc_after_global_resource_change()
     return ok(message="Recurso excluído.")
 
 
@@ -471,6 +503,7 @@ def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Reque
 
     cid = str(row["recurso_custo_id"])
     _audit(request, "recurso_custo", cid, "create", body.model_dump())
+    _recalc_after_global_resource_change()
     recurso = RecursoRepository().get(recurso_id)
     return ok(
         {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
@@ -495,6 +528,7 @@ def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, requ
 
     cid = str(row["recurso_custo_id"])
     _audit(request, "recurso_custo", cid, "reajuste", body.model_dump())
+    _recalc_after_global_resource_change()
     recurso = RecursoRepository().get(recurso_id)
     return ok(
         {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
@@ -517,6 +551,7 @@ def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request:
         return fail("Vigência de custo não encontrada.", 404)
 
     _audit(request, "recurso_custo", recurso_custo_id, "update", body.model_dump())
+    _recalc_after_global_resource_change()
     recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
     return ok(
         {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
@@ -532,6 +567,7 @@ def delete_recurso_custo(recurso_custo_id: str, request: Request):
     if not RecursoCustoRepository().soft_delete(recurso_custo_id):
         return fail("Vigência de custo não encontrada.", 404)
     _audit(request, "recurso_custo", recurso_custo_id, "delete", {})
+    _recalc_after_global_resource_change()
     recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
     return ok(
         {"recurso": row_to_json(recurso) if recurso else None},
@@ -553,6 +589,7 @@ def create_vinculo(body: VinculoBody, request: Request):
     row = VinculoRepository().create(body.model_dump())
     vid = str(row["vinculo_id"])
     _audit(request, "vinculo", vid, "create", body.model_dump())
+    _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo criado.", 201)
 
 
@@ -562,12 +599,16 @@ def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
     if not row:
         return fail("Vínculo não encontrado.", 404)
     _audit(request, "vinculo", vinculo_id, "update", body.model_dump())
+    _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo atualizado.")
 
 
 @router.delete("/revisao-recursos-compartilhados/{vinculo_id}")
 def delete_vinculo(vinculo_id: str, request: Request):
+    if not VinculoRepository().get(vinculo_id):
+        return fail("Vínculo não encontrado.", 404)
     if not VinculoRepository().soft_delete(vinculo_id):
         return fail("Vínculo não encontrado.", 404)
     _audit(request, "vinculo", vinculo_id, "delete", {})
+    _recalc_after_global_resource_change()
     return ok(message="Vínculo excluído.")

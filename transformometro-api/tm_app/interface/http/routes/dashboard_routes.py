@@ -7,12 +7,16 @@ from tm_app.application.services.dashboard_alerts_service import DashboardAlerts
 from tm_app.application.services.dashboard_export_service import DashboardExportService
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
+from tm_app.application.services.dashboard_snapshot_read_service import (
+    DashboardSnapshotReadService,
+)
 from tm_app.core.responses import ok
 from tm_app.core.serialize import rows_to_json
 
 router = APIRouter(prefix="/transformometro/dashboard", tags=["Transformômetro Dashboard"])
 
 _live = DashboardLiveService()
+_snapshot = DashboardSnapshotReadService()
 
 
 @router.post("/recalcular")
@@ -35,6 +39,116 @@ def recalcular_dashboard(
     if result.get("mode") == "incremental":
         return ok(result, "Cache do dashboard atualizado (incremental).")
     return ok(result, "Cache do dashboard atualizado (completo).")
+
+
+@router.get(
+    "/snapshot/meta",
+    operation_id="get_dashboard_snapshot_meta",
+    summary="Metadados do cache materializado do dashboard",
+    description=(
+        "Retorna contagem de linhas e `latest_calculated_at` de `dashboard_calculos`. "
+        "Use antes de consultas analíticas para verificar se o cache está populado."
+    ),
+    tags=["Transformômetro Snapshot"],
+)
+def dashboard_snapshot_meta():
+    return ok(
+        _snapshot.meta(),
+        "Metadados do cache materializado (dashboard_calculos).",
+    )
+
+
+@router.get(
+    "/snapshot/resumo",
+    operation_id="get_dashboard_snapshot_resumo",
+    summary="KPIs agregados a partir do cache materializado",
+    description=(
+        "Economia bruta/líquida, investimentos e horas economizadas somados em "
+        "`dashboard_calculos`, com filtros opcionais de filial, setor e competência."
+    ),
+    tags=["Transformômetro Snapshot"],
+)
+def dashboard_snapshot_resumo(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    data = _snapshot.resumo(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    return ok(data, "Resumo agregado a partir do cache materializado.")
+
+
+@router.get(
+    "/snapshot/processos",
+    operation_id="get_dashboard_snapshot_processos",
+    summary="Processos agregados por competência (view processo_competencia_snapshot)",
+    description=(
+        "Lista economia e investimento por processo e mês. Preferir esta rota para "
+        "ranking, comparativos mensais e perguntas do tipo «quanto economizou o processo X»."
+    ),
+    tags=["Transformômetro Snapshot"],
+)
+def dashboard_snapshot_processos(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+    processo_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+    limit: int = Query(default=200, ge=1, le=1000),
+):
+    data = _snapshot.processos(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+        processo_id=processo_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+        limit=limit,
+    )
+    return ok(
+        {"meta": data["meta"], "total": data["total"], "items": rows_to_json(data["items"])},
+        "Processos agregados por competência (view processo_competencia_snapshot).",
+    )
+
+
+@router.get(
+    "/snapshot/linhas",
+    operation_id="get_dashboard_snapshot_linhas",
+    summary="Linhas detalhadas revisão × competência no cache",
+    description=(
+        "Detalhe fino de `dashboard_calculos` (revisão, cenário, KPIs mensais). "
+        "Use quando precisar de breakdown por revisão ou auditoria linha a linha."
+    ),
+    tags=["Transformômetro Snapshot"],
+)
+def dashboard_snapshot_linhas(
+    processo_id: str | None = None,
+    revisao_id: str | None = None,
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+    limit: int = Query(default=500, ge=1, le=2000),
+):
+    data = _snapshot.linhas(
+        processo_id=processo_id,
+        revisao_id=revisao_id,
+        filial_id=filial_id,
+        setor_id=setor_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+        limit=limit,
+    )
+    return ok(
+        {"meta": data["meta"], "total": data["total"], "items": rows_to_json(data["items"])},
+        "Linhas detalhadas do cache (revisão × competência).",
+    )
 
 
 @router.get("/resumo")

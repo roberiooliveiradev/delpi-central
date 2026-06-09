@@ -117,6 +117,31 @@ Alertas de economia líquida negativa usam `economia_liquida_mes` já calculada 
 
 Leituras SQL legadas no `DashboardCalculoRepository` expõem `investimento_total` e `custo_recursos_compartilhados_total` com as mesmas fórmulas. Após mudança de regra, executar recálculo completo do cache.
 
+### Recálculo automático (CRUD)
+
+Com `TM_DASHBOARD_AUTO_RECALC=true` (padrão), mutações CRUD disparam `DashboardRecalcHookService`:
+
+| Escopo | Gatilho |
+|--------|---------|
+| `processo_id` | processo, revisão (com processo), medição, investimento |
+| `revisao_id` | exclusão de revisão sem escopo de processo |
+| recálculo **full** | recurso compartilhado, custo de recurso, vínculo revisão↔recurso (rateio global) |
+
+Desabilitar: `TM_DASHBOARD_AUTO_RECALC=false`.
+
+### Leitura para chat / integrações
+
+Endpoints sobre o cache materializado (não recalculam):
+
+| Rota | Conteúdo |
+|------|----------|
+| `GET /dashboard/snapshot/meta` | contagem e `latest_calculated_at` |
+| `GET /dashboard/snapshot/resumo` | agregados do cache |
+| `GET /dashboard/snapshot/processos` | view `processo_competencia_snapshot` |
+| `GET /dashboard/snapshot/linhas` | linhas `dashboard_calculos` (revisão × competência) |
+
+O dashboard interativo (`GET /dashboard/resumo`, etc.) continua em tempo real via `DashboardLiveService`.
+
 ## Histórico de revisões
 
 A série mensal considera revisões comparáveis **pela vigência no mês**, não apenas `revisao_ativa = true` no cadastro atual.

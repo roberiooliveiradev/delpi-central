@@ -38,6 +38,7 @@ def build_openapi_catalog_markdown(
     schema: dict,
     *,
     provider_key: str = "api-delpi",
+    catalog_title: str | None = None,
 ) -> str:
     operations = collect_openapi_operations(schema)
     by_tag: dict[str, list[dict]] = defaultdict(list)
@@ -46,12 +47,17 @@ def build_openapi_catalog_markdown(
         by_tag[item["tag"]].append(item)
 
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    title = catalog_title or f"Catálogo OpenAPI — {provider_key} (gerado automaticamente)"
+    sync_hint = "sync_api_delpi_openapi.py"
+    if provider_key == "transformometro-api":
+        sync_hint = "sync_transformometro_openapi.py"
+
     lines = [
-        "# Catálogo OpenAPI — api-delpi (gerado automaticamente)",
+        f"# {title}",
         "",
         f"**Provider:** `{provider_key}` · **Rotas:** {len(operations)} · **Gerado em:** {generated_at}",
         "",
-        "> Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.",
+        f"> Não edite manualmente. Regenerado por `scripts/{sync_hint}`.",
         "",
     ]
 

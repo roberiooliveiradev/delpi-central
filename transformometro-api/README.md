@@ -44,7 +44,7 @@ make test
 |-------|----------|
 | Processos / revisões | `/processos`, `POST /processos/{id}/duplicar`, `/revisoes`, `POST /revisoes/{id}/ativar` |
 | Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
-| Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências) |
+| Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências), **`GET /dashboard/snapshot/*`** (leitura do cache) |
 | Integração | `/integrations/engineering/transforma-mais/processes` |
 
 ## Cadastro de dados
