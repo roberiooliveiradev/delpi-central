@@ -7,6 +7,8 @@ def test_swagger_bridge_includes_auth_theme_and_retry() -> None:
     assert "DELPI_AUTH" in script
     assert "DELPI_THEME" in script
     assert "DELPI_AUTH_READY" in script
-    assert "preauthorizeApiKey" in script
+    assert "authActions.authorize" in script
+    assert "normalizeBearerToken" in script
+    assert 'headers.set("Authorization"' in script
     assert "data-delpi-theme" in script
     assert "--delpi-primary" in script

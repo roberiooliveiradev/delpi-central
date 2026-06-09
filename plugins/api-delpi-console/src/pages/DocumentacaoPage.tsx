@@ -28,7 +28,10 @@ export function DocumentacaoPage({ onNavigate }: Props) {
   useEffect(() => {
     refreshAuthState();
 
-    const cleanupMessages = setupDocsMessageListener(iframeRef.current, refreshAuthState);
+    const cleanupMessages = setupDocsMessageListener(
+      () => iframeRef.current,
+      refreshAuthState,
+    );
     const cleanupTheme = setupDocsThemeObserver(iframeRef.current);
 
     const onTokenUpdate = (event: Event) => {

@@ -114,18 +114,61 @@ def build_swagger_portal_bridge_script(allowed_origins: list[str]) -> str:
         }}
     }}
 
+    function normalizeBearerToken(token) {{
+        if (!token) return null;
+        const trimmed = String(token).trim();
+        if (!trimmed) return null;
+        return trimmed.toLowerCase().startsWith("bearer ")
+            ? trimmed
+            : "Bearer " + trimmed;
+    }}
+
+    function bareJwt(token) {{
+        const bearer = normalizeBearerToken(token);
+        if (!bearer) return null;
+        return bearer.replace(/^Bearer\\s+/i, "");
+    }}
+
+    function authorizeSwagger(token) {{
+        const jwt = bareJwt(token);
+        if (!jwt || !window.ui) return false;
+
+        if (window.ui.authActions && window.ui.authActions.authorize) {{
+            try {{
+                window.ui.authActions.authorize({{
+                    BearerAuth: {{
+                        name: "BearerAuth",
+                        schema: {{
+                            type: "http",
+                            scheme: "bearer",
+                            bearerFormat: "JWT",
+                        }},
+                        value: jwt,
+                    }},
+                }});
+                return true;
+            }} catch (error) {{
+                console.warn("authActions.authorize falhou:", error);
+            }}
+        }}
+
+        if (window.ui.preauthorizeApiKey) {{
+            try {{
+                window.ui.preauthorizeApiKey("BearerAuth", jwt);
+                return true;
+            }} catch (error) {{
+                console.warn("preauthorizeApiKey falhou:", error);
+            }}
+        }}
+
+        return false;
+    }}
+
     function applyToken(token) {{
         if (!token) return;
 
         function tryApply(attempt) {{
-            if (window.ui) {{
-                try {{
-                    window.ui.preauthorizeApiKey("BearerAuth", token);
-                    return;
-                }} catch (error) {{
-                    console.warn("Falha ao aplicar token no Swagger:", error);
-                }}
-            }}
+            if (authorizeSwagger(token)) return;
             if (attempt < 48) {{
                 window.setTimeout(function () {{ tryApply(attempt + 1); }}, 250);
             }}
@@ -155,8 +198,17 @@ def build_swagger_portal_bridge_script(allowed_origins: list[str]) -> str:
 
     const originalFetch = window.fetch.bind(window);
 
-    window.fetch = async function () {{
-        const response = await originalFetch.apply(this, arguments);
+    window.fetch = async function (input, init) {{
+        const nextInit = Object.assign({{}}, init || {{}});
+        const headers = new Headers(nextInit.headers || {{}});
+
+        if (window.DELPI_TOKEN && !headers.has("Authorization")) {{
+            const bearer = normalizeBearerToken(window.DELPI_TOKEN);
+            if (bearer) headers.set("Authorization", bearer);
+        }}
+
+        nextInit.headers = headers;
+        const response = await originalFetch.call(this, input, nextInit);
 
         if (response.status === 401) {{
             try {{

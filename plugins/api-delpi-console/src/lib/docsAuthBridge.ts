@@ -23,21 +23,29 @@ export function syncDocsIframeBridge(iframe: HTMLIFrameElement | null): void {
   postAuthToDocsIframe(iframe);
 }
 
+type DocsIframeTarget = HTMLIFrameElement | null | (() => HTMLIFrameElement | null);
+
+function resolveDocsIframe(target: DocsIframeTarget): HTMLIFrameElement | null {
+  return typeof target === "function" ? target() : target;
+}
+
 export function setupDocsMessageListener(
-  iframe: HTMLIFrameElement | null,
+  iframe: DocsIframeTarget,
   onUnauthorized?: () => void,
 ): () => void {
   const handler = (event: MessageEvent) => {
     if (event.origin !== getMessageTargetOrigin()) return;
 
+    const frame = resolveDocsIframe(iframe);
+
     if (event.data?.type === "DELPI_AUTH_READY") {
-      syncDocsIframeBridge(iframe);
+      syncDocsIframeBridge(frame);
       return;
     }
 
     if (event.data?.type === "DELPI_REFRESH_REQUEST") {
       onUnauthorized?.();
-      window.setTimeout(() => syncDocsIframeBridge(iframe), 300);
+      window.setTimeout(() => syncDocsIframeBridge(frame), 300);
     }
   };
 
