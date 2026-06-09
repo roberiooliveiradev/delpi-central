@@ -1818,8 +1818,8 @@ SIMPLE_TURN_GATE_CASES = [
     ("que horas sao", "utility"),
     ("que dia e hoje", "utility"),
     ("o que voce pode fazer", "capabilities"),
-    # "oq vc faz" normaliza para "o que voce faz" → identity.role (resposta direta, turno simples).
-    ("oq vc faz", "assistant_identity"),
+    # "oq vc faz" → "o que voce faz" está no catálogo de capacidades (prioridade sobre identity.role).
+    ("oq vc faz", "capabilities"),
     ("faz isso", "unclear_request"),
     ("arruma", "unclear_request"),
     # Não simples: consulta operacional / ferramenta / texto com dados.
