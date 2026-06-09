@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.application.dto.lmp.lmp_dashboard_summary_response import (
     LMPDashboardSummaryResponse,
 )
+from app.domain.services.query_cache_stats_service import record_cache_get, record_cache_set
 from app.infrastructure.cache.ttl_cache import TtlCache
 
 _LMP_DASHBOARD_SUMMARY_TTL_SECONDS = 120.0
@@ -35,7 +36,9 @@ def lmp_dashboard_summary_cache_key(
 def get_cached_lmp_dashboard_summary(
     key: str,
 ) -> LMPDashboardSummaryResponse | None:
-    return _lmp_dashboard_summary_cache.get(key)
+    cached = _lmp_dashboard_summary_cache.get(key)
+    record_cache_get(key, hit=cached is not None)
+    return cached
 
 
 def set_cached_lmp_dashboard_summary(
@@ -43,3 +46,4 @@ def set_cached_lmp_dashboard_summary(
     value: LMPDashboardSummaryResponse,
 ) -> None:
     _lmp_dashboard_summary_cache.set(key, value)
+    record_cache_set(key)

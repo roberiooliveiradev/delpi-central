@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from collections import defaultdict
+
 from app.domain.ports.query_cache_port import QueryCachePort
+from app.domain.services.query_cache_stats_service import cache_namespace_from_key
 
 
 class RedisQueryCache(QueryCachePort):
@@ -49,3 +52,16 @@ class RedisQueryCache(QueryCachePort):
 
     def _storage_key(self, key: str) -> str:
         return f"{self._key_prefix}{key}"
+
+    def count_keys_by_namespace(self) -> dict[str, int]:
+        counts: dict[str, int] = defaultdict(int)
+        cursor = 0
+        pattern = f"{self._key_prefix}*"
+        while True:
+            cursor, keys = self._client.scan(cursor=cursor, match=pattern, count=200)
+            for storage_key in keys:
+                logical_key = storage_key.removeprefix(self._key_prefix)
+                counts[cache_namespace_from_key(logical_key)] += 1
+            if cursor == 0:
+                break
+        return dict(counts)

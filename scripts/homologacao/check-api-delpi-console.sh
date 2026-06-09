@@ -41,7 +41,13 @@ curl -fsS "${AUTH[@]}" "$API_PREFIX/engineering/transforma-mais/processes/summar
 echo "[8/9] Agendamento — recursos ES"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/scheduling/resources?branch=ES" | python3 -m json.tool
 
-echo "[9/9] Smoke definitions (console)"
+echo "[9/11] Smoke definitions (console)"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/smoke-definitions" | python3 -m json.tool
+
+echo "[10/11] Query cache stats"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/query-cache/stats" | python3 -m json.tool
+
+echo "[11/11] Observability snapshot"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/observability-snapshot?limit=10" | python3 -m json.tool
 
 echo "[OK] Homologação api-delpi-console concluída."

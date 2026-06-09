@@ -104,7 +104,7 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 
 **DoD:** suite «Rotas essenciais» roda em homologação; falha exibe `operationId` e motivo (status ou timeout).
 
-**Fase 1 concluída** · **Fase 2 concluída** — próximo marco: Fase 3 (cache e callers).
+**Fase 1–3 concluídas** — próximo marco: Fase 4 (contrato e regressão OpenAPI).
 
 ### Integração com o portal (federated)
 
@@ -127,13 +127,14 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
 
-### Fase 3 — Cache e callers (1–2 sprints)
+### Fase 3 — Cache e callers (concluída)
 
-| Item | Detalhe |
-|------|---------|
-| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por chave (LMP, stock-value) |
-| **Caller breakdown** | Agregar `X-Delpi-Caller-App` + Core usage tracking |
-| **Comparador** | Antes/depois de deploy (export CSV) |
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (LMP, estoque, lmp-summary) | [x] |
+| **Caller breakdown** | `GET /system/caller-stats` — agrega `X-Delpi-Caller-App` por request | [x] |
+| **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
+| **UI Console** | Aba «Cache» com tabelas e comparador | [x] |
 
 ### Fase 4 — Contrato e regressão (contínuo)
 

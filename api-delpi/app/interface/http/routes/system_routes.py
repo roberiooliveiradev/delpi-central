@@ -31,9 +31,15 @@ from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
     CONSOLE_SMOKE_ACCESS,
+    OBSERVABILITY_ACCESS,
     SQL_HEALTH_ACCESS,
     SYSTEM_METADATA_ACCESS,
 )
+from app.composition.query_cache_composer import get_query_cache_backend_name, get_query_cache_storage
+from app.config import settings
+from app.domain.services.caller_request_stats_service import get_caller_stats_summary
+from app.domain.services.observability_snapshot_service import build_observability_snapshot
+from app.domain.services.query_cache_stats_service import build_query_cache_stats_payload
 from app.domain.services.smoke_definitions_service import load_smoke_definitions
 from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
@@ -273,6 +279,57 @@ def get_smoke_definitions():
     except Exception as e:
         log_error(f"Erro ao carregar smoke definitions: {e}")
         return error_response("Erro ao carregar definições de smoke.", status_code=500)
+
+
+@router.get("/query-cache/stats", summary="Hits e misses do cache compartilhado (LMP, estoque)")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_query_cache_stats():
+    try:
+        storage = get_query_cache_storage()
+        keys_by_namespace = storage.count_keys_by_namespace() if storage else {}
+        payload = build_query_cache_stats_payload(
+            backend=get_query_cache_backend_name(),
+            ttl_seconds=float(settings.QUERY_CACHE_TTL_SECONDS or 300),
+            keys_by_namespace=keys_by_namespace,
+        )
+        return api_delpi_success(
+            payload,
+            operation_id="get_query_cache_stats",
+            message="Estatísticas de cache carregadas com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar estatísticas de cache: {e}")
+        return error_response("Erro ao carregar estatísticas de cache.", status_code=500)
+
+
+@router.get("/caller-stats", summary="Breakdown de requests por X-Delpi-Caller-App")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_caller_stats(limit: int = Query(25, ge=1, le=100)):
+    try:
+        payload = get_caller_stats_summary(limit=limit)
+        return api_delpi_success(
+            payload,
+            operation_id="get_caller_stats",
+            message="Estatísticas de callers carregadas com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar estatísticas de callers: {e}")
+        return error_response("Erro ao carregar estatísticas de callers.", status_code=500)
+
+
+@router.get("/observability-snapshot", summary="Snapshot unificado para comparador de deploy")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_observability_snapshot(limit: int = Query(25, ge=1, le=100)):
+    try:
+        payload = build_observability_snapshot(limit=limit)
+        return api_delpi_success(
+            payload,
+            operation_id="get_observability_snapshot",
+            message="Snapshot de observabilidade capturado com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao capturar snapshot de observabilidade: {e}")
+        return error_response("Erro ao capturar snapshot de observabilidade.", status_code=500)
 
 
 @router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)")

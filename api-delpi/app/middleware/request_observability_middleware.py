@@ -5,6 +5,7 @@ import time
 
 from fastapi import Request
 
+from app.domain.services.caller_request_stats_service import record_caller_request
 from app.infrastructure.observability.request_context import (
     bind_request_context,
     reset_request_context,
@@ -47,5 +48,15 @@ async def request_observability_middleware(request: Request, call_next):
     if operation_id:
         response.headers["X-Operation-Id"] = operation_id
     response.headers["X-Response-Time-Ms"] = str(duration_ms)
+
+    caller_header = request.headers.get("X-Delpi-Caller-App")
+    caller_app = caller_header.strip() if isinstance(caller_header, str) and caller_header.strip() else None
+    record_caller_request(
+        caller_app=caller_app,
+        route_path=request.url.path,
+        operation_id=operation_id,
+        status_code=response.status_code,
+        duration_ms=duration_ms,
+    )
 
     return response

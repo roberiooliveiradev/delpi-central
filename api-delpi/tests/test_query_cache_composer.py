@@ -4,7 +4,9 @@ from app.composition.query_cache_composer import (
     build_query_cache,
     reset_query_cache_for_tests,
 )
+from app.composition.query_cache_composer import get_query_cache_storage
 from app.infrastructure.cache.memory_query_cache import MemoryQueryCache
+from app.infrastructure.cache.stats_tracking_query_cache import StatsTrackingQueryCache
 
 
 def setup_function() -> None:
@@ -13,7 +15,8 @@ def setup_function() -> None:
 
 def test_build_query_cache_defaults_to_memory() -> None:
     cache = build_query_cache()
-    assert isinstance(cache, MemoryQueryCache)
+    assert isinstance(cache, StatsTrackingQueryCache)
+    assert isinstance(get_query_cache_storage(), MemoryQueryCache)
 
 
 def test_build_query_cache_falls_back_to_memory_when_redis_unavailable() -> None:
@@ -30,4 +33,5 @@ def test_build_query_cache_falls_back_to_memory_when_redis_unavailable() -> None
         ):
             cache = build_query_cache()
 
-    assert isinstance(cache, MemoryQueryCache)
+    assert isinstance(cache, StatsTrackingQueryCache)
+    assert isinstance(get_query_cache_storage(), MemoryQueryCache)

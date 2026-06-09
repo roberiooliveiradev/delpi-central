@@ -5,6 +5,7 @@ export const CONSOLE_ROUTES = {
   documentacao: `${CONSOLE_BASE}/documentacao`,
   verificacoes: `${CONSOLE_BASE}/verificacoes`,
   sql: `${CONSOLE_BASE}/sql`,
+  cache: `${CONSOLE_BASE}/cache`,
   explorer: `${CONSOLE_BASE}/explorer`,
   spec: `${CONSOLE_BASE}/spec`,
   history: `${CONSOLE_BASE}/history`,

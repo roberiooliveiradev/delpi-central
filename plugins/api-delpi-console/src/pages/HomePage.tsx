@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Activity, BookOpen, CheckCircle2, FileJson, ShieldCheck, Terminal, XCircle } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  CheckCircle2,
+  Database,
+  FileJson,
+  ShieldCheck,
+  Terminal,
+  XCircle,
+} from "lucide-react";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
 
 type Props = {
@@ -88,6 +97,14 @@ export function HomePage({ onNavigate }: Props) {
           </div>
           <h2>Saúde SQL</h2>
           <p>Top queries por duração e repetição — telemetria do Protheus em tempo real.</p>
+        </article>
+
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("cache")}>
+          <div className="adc-card__icon">
+            <Database size={22} />
+          </div>
+          <h2>Cache e callers</h2>
+          <p>Hits/miss LMP e estoque, breakdown por caller e comparador de deploy.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>
