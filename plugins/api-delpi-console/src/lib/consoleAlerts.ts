@@ -12,7 +12,13 @@ export type ConsoleHealthPayload = {
   status: "ok" | "warning" | "critical";
   open_alert_count: number;
   open_alerts: ConsoleAlert[];
-  recent_alerts: Array<ConsoleAlert & { recorded_at?: string; notified?: boolean }>;
+  recent_alerts: Array<
+    ConsoleAlert & {
+      recorded_at?: string;
+      notified?: boolean;
+      portal_notified?: boolean;
+    }
+  >;
   metrics: {
     p95_ms: number;
     caller_requests: number;
@@ -24,6 +30,13 @@ export type ConsoleHealthPayload = {
     slow_sql_ms: number;
   };
   webhook_configured: boolean;
+  portal_notifications_configured?: boolean;
+  captured_at?: string;
+  monitoring?: {
+    mode: string;
+    recommended_refresh_seconds: number;
+    description: string;
+  };
 };
 
 function unwrap<T>(data: unknown): T | null {

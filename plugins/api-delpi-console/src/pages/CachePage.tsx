@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { apiFetch } from "../api/httpClient";
+import { MONITOR_REFRESH_MS } from "../constants/monitoring";
+import { usePolling } from "../lib/usePolling";
 import {
   compareSnapshots,
   downloadDiffCsv,
@@ -31,9 +33,12 @@ export function CachePage({ onNavigate }: Props) {
   const [callerStats, setCallerStats] = useState<CallerStatsPayload | null>(null);
   const [stored, setStored] = useState(loadStoredSnapshots());
   const [diffRows, setDiffRows] = useState<SnapshotDiffRow[]>([]);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [cacheResponse, callerResponse] = await Promise.all([
@@ -61,13 +66,17 @@ export function CachePage({ onNavigate }: Props) {
       setCacheStats(null);
       setCallerStats(null);
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  usePolling(() => load({ silent: true }), MONITOR_REFRESH_MS, { enabled: autoRefresh });
 
   const captureSnapshot = useCallback(async (slot: "before" | "after") => {
     const response = await apiFetch("/system/observability-snapshot?limit=30");
@@ -104,6 +113,14 @@ export function CachePage({ onNavigate }: Props) {
           </p>
         </div>
         <div className="adc-header__actions">
+          <label className="adc-check">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(event) => setAutoRefresh(event.target.checked)}
+            />
+            Auto 30 s
+          </label>
           <button
             type="button"
             className="adc-btn adc-btn--ghost"

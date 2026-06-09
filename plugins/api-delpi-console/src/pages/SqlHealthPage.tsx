@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { apiFetch } from "../api/httpClient";
+import { MONITOR_REFRESH_MS } from "../constants/monitoring";
+import { navigateConsole } from "../lib/consoleNavigation";
+import { useConsoleSearchParams } from "../lib/useConsoleSearchParams";
+import { usePolling } from "../lib/usePolling";
 
 type SqlAggregate = {
   query_hash: string;
@@ -129,50 +133,76 @@ function BarChart({
 }
 
 export function SqlHealthPage({ onNavigate }: Props) {
+  const searchParams = useConsoleSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<SqlHealthPayload | null>(null);
   const [selectedOperationId, setSelectedOperationId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const highlightedQueryHash = searchParams.get("query_hash");
 
-  const load = useCallback(async (operationId?: string | null) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const query: Record<string, string> = { limit: "30" };
-      if (operationId) {
-        query.operation_id = operationId;
+  const load = useCallback(
+    async (operationId?: string | null, options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setLoading(true);
       }
-      const response = await apiFetch("/system/sql-health", { query });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      setError(null);
+      try {
+        const query: Record<string, string> = { limit: "30" };
+        if (operationId) {
+          query.operation_id = operationId;
+        }
+        const response = await apiFetch("/system/sql-health", { query });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = unwrapPayload(response.data);
+        if (!payload) {
+          throw new Error("Resposta inválida de /system/sql-health");
+        }
+        setSummary(payload);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Falha ao carregar telemetria SQL");
+        setSummary(null);
+      } finally {
+        if (!options?.silent) {
+          setLoading(false);
+        }
       }
-      const payload = unwrapPayload(response.data);
-      if (!payload) {
-        throw new Error("Resposta inválida de /system/sql-health");
-      }
-      setSummary(payload);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao carregar telemetria SQL");
-      setSummary(null);
-    } finally {
-      setLoading(false);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const operationId = searchParams.get("operation_id");
+    if (operationId) {
+      setSelectedOperationId(operationId);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     void load(selectedOperationId);
   }, [load, selectedOperationId]);
 
-  useEffect(() => {
-    if (!autoRefresh || selectedOperationId) return undefined;
+  usePolling(() => load(selectedOperationId, { silent: true }), MONITOR_REFRESH_MS, {
+    enabled: autoRefresh,
+  });
 
-    const timer = window.setInterval(() => {
-      void load(null);
-    }, 30_000);
-
-    return () => window.clearInterval(timer);
-  }, [autoRefresh, load, selectedOperationId]);
+  const selectOperation = (operationId: string | null) => {
+    setSelectedOperationId(operationId);
+    if (operationId && operationId !== "__none__") {
+      navigateConsole("sql", undefined, {
+        operation_id: operationId,
+        query_hash: highlightedQueryHash,
+      });
+      return;
+    }
+    navigateConsole(
+      "sql",
+      undefined,
+      highlightedQueryHash ? { query_hash: highlightedQueryHash } : undefined,
+    );
+  };
 
   const drillDownLabel = useMemo(() => {
     if (!selectedOperationId) return null;
@@ -187,7 +217,7 @@ export function SqlHealthPage({ onNavigate }: Props) {
         <button
           type="button"
           className="adc-op-link"
-          onClick={() => setSelectedOperationId("__none__")}
+          onClick={() => selectOperation("__none__")}
         >
           <code className="adc-mono-sm">{label}</code>
         </button>
@@ -197,7 +227,7 @@ export function SqlHealthPage({ onNavigate }: Props) {
       <button
         type="button"
         className="adc-op-link"
-        onClick={() => setSelectedOperationId(operationId)}
+        onClick={() => selectOperation(operationId)}
       >
         <code className="adc-mono-sm">{label}</code>
       </button>
@@ -225,7 +255,14 @@ export function SqlHealthPage({ onNavigate }: Props) {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={`${title}-${row.query_hash}`}>
+                <tr
+                  key={`${title}-${row.query_hash}`}
+                  className={
+                    highlightedQueryHash && row.query_hash === highlightedQueryHash
+                      ? "adc-table__row--highlight"
+                      : undefined
+                  }
+                >
                   <td>
                     <code className="adc-mono-sm">{row.query_hash}</code>
                   </td>
@@ -257,7 +294,9 @@ export function SqlHealthPage({ onNavigate }: Props) {
           <p className="adc-subtitle">
             Top queries por duração e repetição — ring buffer{" "}
             {summary?.storage_backend === "redis" ? "Redis" : "em memória"}.
-            {selectedOperationId ? " Drill-down por operation id." : " Atualização automática a cada 30 s."}
+            {selectedOperationId
+              ? " Drill-down por operation id."
+              : " Monitoramento ao vivo a cada 30 s com a aba visível."}
           </p>
         </div>
         <div className="adc-header__actions">
@@ -274,7 +313,7 @@ export function SqlHealthPage({ onNavigate }: Props) {
             <button
               type="button"
               className="adc-btn adc-btn--ghost"
-              onClick={() => setSelectedOperationId(null)}
+              onClick={() => selectOperation(null)}
             >
               Voltar ao resumo
             </button>
@@ -329,7 +368,7 @@ export function SqlHealthPage({ onNavigate }: Props) {
               valueKey="count"
               labelKey="label"
               unit="exec"
-              onSelect={setSelectedOperationId}
+              onSelect={(id) => selectOperation(id)}
             />
           )}
         </section>

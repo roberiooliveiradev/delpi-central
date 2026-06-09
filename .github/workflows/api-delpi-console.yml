@@ -49,6 +49,7 @@ jobs:
             tests/test_envelope_contract_service.py \
             tests/test_smoke_definitions_service.py \
             tests/test_console_alerts_service.py \
+            tests/test_console_portal_notification_service.py \
             tests/test_system_console_alerts_routes.py \
             -q
 

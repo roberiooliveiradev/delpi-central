@@ -12,6 +12,10 @@ from typing import Any
 
 import httpx
 
+from app.application.services.console_portal_notification_service import (
+    portal_notifications_enabled,
+    send_console_alert_portal_notifications,
+)
 from app.config import settings
 from app.domain.services.caller_request_stats_service import (
     get_caller_duration_percentile,
@@ -112,6 +116,7 @@ def evaluate_console_alerts(
                         "preview": row.get("preview"),
                         "max_ms": max_ms,
                         "operation_id": row.get("last_operation_id"),
+                        "last_repository": row.get("last_repository"),
                         "threshold_ms": _slow_sql_threshold_ms(),
                     },
                 )
@@ -156,28 +161,45 @@ def _send_webhook_sync(alerts: list[ConsoleAlert]) -> None:
 
 def store_and_notify_alerts(alerts: list[ConsoleAlert], *, notify: bool = True) -> list[dict[str, Any]]:
     stored: list[dict[str, Any]] = []
-    to_notify: list[ConsoleAlert] = []
+    to_webhook: list[ConsoleAlert] = []
+    to_portal: list[dict[str, Any]] = []
 
     for alert in alerts:
         entry = {
             **asdict(alert),
             "recorded_at": _now_iso(),
             "notified": False,
+            "portal_notified": False,
         }
         with _lock:
             _alert_history.appendleft(entry)
         stored.append(entry)
 
-        if notify and _webhook_enabled() and _should_send_webhook(alert.code):
-            to_notify.append(alert)
+        if not notify or not _should_send_webhook(alert.code):
+            continue
+
+        if _webhook_enabled() and settings.CONSOLE_ALERT_WEBHOOK_ENABLED:
+            to_webhook.append(alert)
             entry["notified"] = True
 
-    if to_notify:
+        if portal_notifications_enabled() and settings.CONSOLE_ALERT_PORTAL_ENABLED:
+            to_portal.append(asdict(alert))
+            entry["portal_notified"] = True
+
+    if to_webhook:
         threading.Thread(
             target=_send_webhook_sync,
-            args=(to_notify,),
+            args=(to_webhook,),
             daemon=True,
             name="console-alert-webhook",
+        ).start()
+
+    if to_portal:
+        threading.Thread(
+            target=send_console_alert_portal_notifications,
+            args=(to_portal,),
+            daemon=True,
+            name="console-alert-portal",
         ).start()
 
     return stored
@@ -189,7 +211,11 @@ def process_console_alerts(
     notify: bool = True,
 ) -> dict[str, Any]:
     alerts = evaluate_console_alerts(smoke_result=smoke_result)
-    stored = store_and_notify_alerts(alerts, notify=notify and settings.CONSOLE_ALERT_WEBHOOK_ENABLED)
+    should_notify = notify and (
+        (settings.CONSOLE_ALERT_WEBHOOK_ENABLED and _webhook_enabled())
+        or (settings.CONSOLE_ALERT_PORTAL_ENABLED and portal_notifications_enabled())
+    )
+    stored = store_and_notify_alerts(alerts, notify=should_notify)
     return {
         "evaluated_at": _now_iso(),
         "alert_count": len(alerts),
@@ -197,6 +223,8 @@ def process_console_alerts(
         "stored": stored,
         "webhook_enabled": _webhook_enabled(),
         "webhook_sent": any(item.get("notified") for item in stored),
+        "portal_notifications_enabled": portal_notifications_enabled(),
+        "portal_notifications_sent": any(item.get("portal_notified") for item in stored),
     }
 
 
@@ -229,6 +257,12 @@ def build_console_health_summary() -> dict[str, Any]:
             .get("hit_rate_pct", 0),
         },
         "webhook_configured": _webhook_enabled(),
+        "portal_notifications_configured": portal_notifications_enabled(),
+        "monitoring": {
+            "mode": "polling",
+            "recommended_refresh_seconds": 30,
+            "description": "Telemetria atualiza enquanto há tráfego; o console faz polling a cada 30 s com a aba visível.",
+        },
         "console_app_id": "api-delpi-console",
     }
 

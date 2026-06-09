@@ -75,7 +75,13 @@ export function StatsConsoleHealthCard() {
             <StatsMiniKpi
               label="Cache hit"
               value={`${data.metrics.cache_hit_rate_pct}%`}
-              hint={data.webhook_configured ? "Webhook configurado" : "Webhook desligado"}
+              hint={
+                data.portal_notifications_configured
+                  ? "Sino Minha DELPI ativo"
+                  : data.webhook_configured
+                    ? "Webhook configurado"
+                    : "Sem push externo"
+              }
             />
           </StatsMiniKpiRow>
 

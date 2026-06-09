@@ -1,5 +1,8 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 import { CONSOLE_BASE } from "../constants/routes";
+import { MONITOR_REFRESH_MS } from "../constants/monitoring";
+import { fetchConsoleHealth } from "../lib/consoleAlerts";
+import { usePolling } from "../lib/usePolling";
 
 type NavItem = {
   id: string;
@@ -21,11 +24,23 @@ const NAV_ITEMS: NavItem[] = [
 
 type Props = {
   activeSegment: string;
-  onNavigate: (segment: string) => void;
+  onNavigate: (
+    segment: string,
+    searchParams?: Record<string, string | null | undefined>,
+  ) => void;
   children: ReactNode;
 };
 
 export function ConsoleShell({ activeSegment, onNavigate, children }: Props) {
+  const [openAlertCount, setOpenAlertCount] = useState(0);
+
+  const refreshAlertBadge = useCallback(async () => {
+    const health = await fetchConsoleHealth();
+    setOpenAlertCount(health?.open_alert_count ?? 0);
+  }, []);
+
+  usePolling(refreshAlertBadge, MONITOR_REFRESH_MS, { immediate: true });
+
   return (
     <div className="api-delpi-console adc-app-shell">
       <nav className="adc-nav" aria-label="Navegação do console">
@@ -34,13 +49,18 @@ export function ConsoleShell({ activeSegment, onNavigate, children }: Props) {
             key={item.id}
             type="button"
             className={
-              activeSegment === item.segment
+              activeSegment === item.segment.split("?")[0]
                 ? "adc-nav__item adc-nav__item--active"
                 : "adc-nav__item"
             }
             onClick={() => onNavigate(item.segment)}
           >
             {item.label}
+            {item.id === "alertas" && openAlertCount > 0 ? (
+              <span className="adc-nav__badge" aria-label={`${openAlertCount} alertas`}>
+                {openAlertCount}
+              </span>
+            ) : null}
           </button>
         ))}
       </nav>
@@ -51,8 +71,9 @@ export function ConsoleShell({ activeSegment, onNavigate, children }: Props) {
 
 export function segmentFromPathname(pathname: string, basePath: string = CONSOLE_BASE): string {
   const base = basePath.replace(/\/+$/, "") || CONSOLE_BASE;
+  const pathOnly = pathname.split("?")[0];
   const normalized =
-    pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+    pathOnly.length > 1 && pathOnly.endsWith("/") ? pathOnly.slice(0, -1) : pathOnly;
   if (normalized === base) return "";
   if (normalized.startsWith(`${base}/`)) {
     return normalized.slice(base.length + 1);

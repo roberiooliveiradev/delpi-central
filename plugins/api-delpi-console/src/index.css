@@ -129,6 +129,89 @@
   border-color: color-mix(in srgb, var(--adc-accent) 40%, var(--adc-border));
 }
 
+.api-delpi-console .adc-nav__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.api-delpi-console .adc-nav__badge {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1rem;
+  text-align: center;
+  color: #fff;
+  background: var(--adc-err);
+}
+
+.api-delpi-console .adc-panel--alert {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.api-delpi-console .adc-alert__message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.api-delpi-console .adc-alert__guidance {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.api-delpi-console .adc-alert-details {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.api-delpi-console .adc-alert-details__row {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.api-delpi-console .adc-alert-details__row dt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--adc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.api-delpi-console .adc-alert-details__row dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.api-delpi-console .adc-alert__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.api-delpi-console .adc-monitor-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+}
+
+.api-delpi-console .adc-table__row--highlight {
+  background: color-mix(in srgb, var(--adc-warn) 12%, var(--adc-surface));
+}
+
+.api-delpi-console .adc-health__warn {
+  color: var(--adc-warn);
+}
+
 .api-delpi-console .adc-page {
   width: 100%;
   min-width: 0;

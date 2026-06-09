@@ -56,6 +56,7 @@ export interface ConsoleHealthStatus {
     slow_sql_ms: number;
   };
   webhook_configured: boolean;
+  portal_notifications_configured?: boolean;
   console_app_id: string;
   captured_at?: string;
 }

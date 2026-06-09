@@ -155,10 +155,14 @@ Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-re
 | **Avaliação** | `evaluate_console_alerts` — smoke, p95 caller e SQL lento | [x] |
 | **Webhook** | `POST` opcional com debounce 5 min (`CONSOLE_ALERT_WEBHOOK_URL`) | [x] |
 | **Endpoints** | `GET /system/console-health`, `GET /system/console-alerts`, `POST /system/console-alerts/evaluate`, `POST /system/console-alerts/smoke` | [x] |
-| **UI Console** | Aba «Alertas» + notificação automática após smoke com falha | [x] |
+| **UI Console** | Aba «Alertas» com detalhes acionáveis + link para SQL | [x] |
 | **Admin Stats** | Card «Console API DELPI» na visão geral do portal | [x] |
+| **Sino Minha DELPI** | `POST /integrations/notifications` (`CONSOLE_ALERT_PORTAL_ENABLED`) | [x] |
+| **Monitoramento** | Polling 30 s (SQL, Cache, Alertas, Início) com aba visível | [x] |
 
 **DoD:** falha na suite smoke dispara alerta crítico; p95 acima do limiar gera warning; card no Admin Stats reflete status em tempo real.
+
+**Monitoramento:** não é WebSocket — telemetria alimentada pelo tráfego HTTP/SQL real; o console atualiza a cada 30 s enquanto a aba está aberta. Reavaliação automática de alertas a cada 5 min na aba Alertas.
 
 ---
 

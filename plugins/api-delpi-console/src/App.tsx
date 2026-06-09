@@ -69,7 +69,10 @@ export default function App({
     [pathname, basePath],
   );
 
-  const onNavigate = (nextSegment: string) => navigateConsole(nextSegment, basePath);
+  const onNavigate = (
+    nextSegment: string,
+    searchParams?: Record<string, string | null | undefined>,
+  ) => navigateConsole(nextSegment, basePath, searchParams);
 
   return (
     <ConsoleShell activeSegment={segment} onNavigate={onNavigate}>

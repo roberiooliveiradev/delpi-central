@@ -174,6 +174,9 @@ class Settings:
         "CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS",
         default="2500",
     )
+    CONSOLE_ALERT_PORTAL_ENABLED: bool = (
+        _get_env("CONSOLE_ALERT_PORTAL_ENABLED", default="true").lower() == "true"
+    )
 
 
 settings = Settings()

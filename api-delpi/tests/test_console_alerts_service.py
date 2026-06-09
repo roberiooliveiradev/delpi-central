@@ -66,23 +66,28 @@ def test_process_console_alerts_stores_history() -> None:
         "app.domain.services.console_alerts_service._send_webhook_sync",
     ) as webhook_mock:
         with patch(
-            "app.domain.services.console_alerts_service.threading.Thread",
-            _SyncThread,
-        ):
-            with patch("app.domain.services.console_alerts_service.settings") as settings:
-                settings.CONSOLE_ALERT_WEBHOOK_URL = "https://example.test/hook"
-                settings.CONSOLE_ALERT_WEBHOOK_ENABLED = True
-                settings.CONSOLE_ALERT_P95_THRESHOLD_MS = "3000"
-                settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS = "2500"
+            "app.domain.services.console_alerts_service.send_console_alert_portal_notifications",
+        ) as portal_mock:
+            with patch(
+                "app.domain.services.console_alerts_service.threading.Thread",
+                _SyncThread,
+            ):
+                with patch("app.domain.services.console_alerts_service.settings") as settings:
+                    settings.CONSOLE_ALERT_WEBHOOK_URL = "https://example.test/hook"
+                    settings.CONSOLE_ALERT_WEBHOOK_ENABLED = True
+                    settings.CONSOLE_ALERT_PORTAL_ENABLED = False
+                    settings.CONSOLE_ALERT_P95_THRESHOLD_MS = "3000"
+                    settings.CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS = "2500"
 
-                result = process_console_alerts(
-                    smoke_result={"suiteId": "essencial", "passed": 0, "failed": 1, "cases": []},
-                    notify=True,
-                )
+                    result = process_console_alerts(
+                        smoke_result={"suiteId": "essencial", "passed": 0, "failed": 1, "cases": []},
+                        notify=True,
+                    )
 
     assert result["alert_count"] >= 1
     assert result["stored"]
     webhook_mock.assert_called_once()
+    portal_mock.assert_not_called()
 
 
 def test_slow_sql_alert() -> None:

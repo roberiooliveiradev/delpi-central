@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Activity,
   Bell,
@@ -10,35 +10,41 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
+import { MONITOR_REFRESH_MS } from "../constants/monitoring";
+import { fetchConsoleHealth, type ConsoleHealthPayload } from "../lib/consoleAlerts";
 import { fetchHealth, type ApiFetchResult } from "../api/httpClient";
+import { usePolling } from "../lib/usePolling";
 
 type Props = {
-  onNavigate: (path: string) => void;
+  onNavigate: (segment: string, searchParams?: Record<string, string | null | undefined>) => void;
 };
+
+function statusClass(status: ConsoleHealthPayload["status"] | undefined): string {
+  if (status === "critical") return "adc-health__err";
+  if (status === "warning") return "adc-health__warn";
+  return "adc-health__ok";
+}
 
 export function HomePage({ onNavigate }: Props) {
   const [health, setHealth] = useState<ApiFetchResult | null>(null);
+  const [consoleHealth, setConsoleHealth] = useState<ConsoleHealthPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await fetchHealth();
-        if (!cancelled) setHealth(result);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao verificar saúde");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const refresh = useCallback(async () => {
+    setError(null);
+    try {
+      const [apiHealth, monitorHealth] = await Promise.all([fetchHealth(), fetchConsoleHealth()]);
+      setHealth(apiHealth);
+      setConsoleHealth(monitorHealth);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao verificar saúde");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  usePolling(refresh, MONITOR_REFRESH_MS, { immediate: true });
 
   return (
     <div className="adc-page adc-page--scroll">
@@ -46,7 +52,7 @@ export function HomePage({ onNavigate }: Props) {
         <div>
           <h1>Console API DELPI</h1>
           <p className="adc-subtitle">
-            Documentação interativa, OpenAPI e testes HTTP com inspeção de envelope e latência.
+            Documentação interativa, OpenAPI e monitoramento contínuo da api-delpi (polling 30 s).
           </p>
         </div>
       </header>
@@ -57,7 +63,7 @@ export function HomePage({ onNavigate }: Props) {
             <Activity size={22} />
           </div>
           <h2>Saúde da API</h2>
-          {loading ? (
+          {loading && !health ? (
             <p className="adc-muted">Verificando /health…</p>
           ) : error ? (
             <p className="adc-error">{error}</p>
@@ -74,6 +80,24 @@ export function HomePage({ onNavigate }: Props) {
               </span>
             </div>
           ) : null}
+        </article>
+
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("alertas")}>
+          <div className="adc-card__icon">
+            <Bell size={22} />
+          </div>
+          <h2>Monitoramento</h2>
+          {consoleHealth ? (
+            <div className="adc-health">
+              <Activity className={statusClass(consoleHealth.status)} size={20} />
+              <span>
+                {consoleHealth.status} — {consoleHealth.open_alert_count} alerta(s) · p95{" "}
+                {consoleHealth.metrics.p95_ms} ms
+              </span>
+            </div>
+          ) : (
+            <p className="adc-muted">Carregando telemetria do console…</p>
+          )}
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("documentacao")}>
@@ -97,7 +121,7 @@ export function HomePage({ onNavigate }: Props) {
             <Activity size={22} />
           </div>
           <h2>Saúde SQL</h2>
-          <p>Top queries por duração e repetição — telemetria do Protheus em tempo real.</p>
+          <p>Top queries por duração e repetição — telemetria do Protheus ao vivo.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("cache")}>
@@ -106,14 +130,6 @@ export function HomePage({ onNavigate }: Props) {
           </div>
           <h2>Cache e callers</h2>
           <p>Hits/miss LMP e estoque, breakdown por caller e comparador de deploy.</p>
-        </article>
-
-        <article className="adc-card adc-card--action" onClick={() => onNavigate("alertas")}>
-          <div className="adc-card__icon">
-            <Bell size={22} />
-          </div>
-          <h2>Alertas</h2>
-          <p>Smoke com falha, p95 acima do limiar e SQL lento — webhook e visão no Admin Stats.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>
@@ -134,11 +150,12 @@ export function HomePage({ onNavigate }: Props) {
       </section>
 
       <section className="adc-panel adc-panel--info">
-        <h3>Integração com o portal</h3>
+        <h3>Como funciona o monitoramento</h3>
         <p>
-          Visual alinhado às variáveis do portal (<code>--primary</code>, <code>--secundary</code>,
-          light/dark). A documentação usa <code>DELPI_AUTH</code> para JWT automático; verificações
-          registram <code>operationId</code> e latência por rota.
+          O console <strong>não usa WebSocket</strong> — ele faz <strong>polling a cada 30 segundos</strong>{" "}
+          enquanto a aba está visível. A telemetria SQL e HTTP é alimentada pelo tráfego real na{" "}
+          <code>api-delpi</code> (dashboards, smoke, explorador). Alertas críticos podem ir para o{" "}
+          <strong>sino da Minha DELPI</strong> (usuários com acesso ao console) e/ou webhook externo.
         </p>
         <p className="adc-muted">
           Roadmap: <code>api-delpi/docs/roadmaps/playbook-api-delpi-console.md</code>
