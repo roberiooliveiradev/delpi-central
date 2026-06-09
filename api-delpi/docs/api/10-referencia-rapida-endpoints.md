@@ -186,15 +186,6 @@ Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicat
 
 ---
 
-## Qualidade NC PostgreSQL (não montado)
-
-Ver [07-qualidade-nc.md](./07-qualidade-nc.md). Prefixos previstos:
-
-- `/quality/internal-nc/*`
-- `/quality/external-nc/*`
-
----
-
 ## Documentação e OpenAPI
 
 | Recurso | Endpoint |

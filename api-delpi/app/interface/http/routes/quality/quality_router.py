@@ -35,14 +35,10 @@ from app.interface.http.kpi_field_labels import (
     QUALITY_KAIZEN_FIELD_LABELS,
     kpi_fields,
 )
-from app.interface.http.routes.quality.audit_5s_operational_router import (
-    router as audit_5s_operational_router,
-)
 from app.interface.http.routes.quality.ppm_routes import router as ppm_router
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
-router.include_router(audit_5s_operational_router)
 router.include_router(ppm_router)
 
 

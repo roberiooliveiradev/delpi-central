@@ -14,7 +14,6 @@ from app.startup.run_plugins_migrations_on_startup import (
     run_plugins_migrations_on_startup,
 )
 
-from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
 from delpi_auth.credential_guard import check_credentials
 from app.config import settings
@@ -188,8 +187,6 @@ app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
-
-register_audit_5s_socket_handlers()
 
 # ASGI app exposto ao uvicorn (FastAPI + Socket.IO)
 socket_app = create_socket_app(app)

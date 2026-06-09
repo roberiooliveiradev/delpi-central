@@ -22,7 +22,6 @@ Backend operacional FastAPI: TOTVS, KPIs, indicadores estratégicos, engenharia,
 | [00-visao-geral.md](../../api-delpi/docs/api/00-visao-geral.md) | Introdução |
 | [01-health.md](../../api-delpi/docs/api/01-health.md) | Health |
 | [05-indicadores-estrategicos.md](../../api-delpi/docs/api/05-indicadores-estrategicos.md) | SI |
-| [07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md) | NC (rotas não montadas) |
 | [10-referencia-rapida-endpoints.md](../../api-delpi/docs/api/10-referencia-rapida-endpoints.md) | Índice rápido |
 
 ---

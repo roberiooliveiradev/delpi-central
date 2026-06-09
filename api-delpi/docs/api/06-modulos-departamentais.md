@@ -130,7 +130,7 @@ Filtros de processos: `id`, `name_process`, `filial_id`, `sector_name`, `status`
 
 **Permissão:** `api-delpi.quality.access` **ou** `dashboard-quality.view`
 
-Consultas analíticas; **não** confundir com o módulo NC PostgreSQL ([07-qualidade-nc.md](./07-qualidade-nc.md)).
+Consultas analíticas (TOTVS Protheus e Google Sheets).
 
 | Método | Rota | Descrição |
 |---|---|---|

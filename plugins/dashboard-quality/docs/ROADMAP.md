@@ -15,8 +15,6 @@ Oferecer um painel unificado para a área de Qualidade consumir indicadores já 
 - **Auditoria 5S** (resumo)
 - **Não conformidades** listadas do Protheus (consulta analítica)
 
-> **Não é escopo deste plugin** o sistema de registro/gestão de NC em PostgreSQL documentado em `api-delpi/docs/api/07-qualidade-nc.md` (rotas ainda não montadas em `main.py`). Integração futura em fase opcional.
-
 ---
 
 ## Princípios
@@ -143,17 +141,6 @@ Depois, atribuir `dashboard-quality.view` ao perfil/grupo desejado no Keycloak o
 - [ ] Logs de erro amigáveis + telemetria opcional
 
 **Critério de pronto:** aceite da área de Qualidade + revisão de segurança (somente leitura).
-
----
-
-## Fase opcional — NC PostgreSQL (gestão)
-
-Somente quando rotas `internal-nc` / `external-nc` forem montadas em `api-delpi/main.py`:
-
-- [ ] Nova permissão `quality-nc.view` no manifesto ou plugin irmão
-- [ ] Telas de workflow separadas do dashboard analítico (evitar misturar com TOTVS)
-
-**Fora do roadmap imediato** a pedido do produto.
 
 ---
 

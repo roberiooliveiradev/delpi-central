@@ -136,7 +136,7 @@ Detalhes histórico: [supplies-estoque-historico.md](./supplies-estoque-historic
 
 ## Qualidade (`/quality`)
 
-Métricas TOTVS (não confundir com NC PostgreSQL — [07-qualidade-nc.md](./07-qualidade-nc.md)).
+Métricas TOTVS e Google Sheets (PPM, NC Protheus, kaizen, 5S resumo).
 
 | Rota | Uso |
 |---|---|

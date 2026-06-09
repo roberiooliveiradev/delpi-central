@@ -56,7 +56,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (segundos) |
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `3` | Meses materializados (consolidado) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
-| `SI_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` dev) | Migrations no boot |
+| `SI_RUN_MIGRATIONS_ON_STARTUP` | `true` (Compose prod/dev) | Migrations no boot |
 | `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Medições TOTVS via HTTP (não há pool ODBC no SI) |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 
@@ -91,7 +91,7 @@ O Compose define `depends_on: api-delpi: condition: service_healthy` no SI para 
 
 ## Produção — checklist
 
-1. `SI_RUN_MIGRATIONS_ON_STARTUP=false` — rodar migrations em pipeline ou job
+1. `SI_RUN_MIGRATIONS_ON_STARTUP=true` no Compose — migrations no boot; use `false` só se preferir pipeline/job dedicado
 2. `SI_WARMUP_ON_STARTUP=true` se aceitar carga no boot; ou cron com `warmup_si_snapshots.py`
 3. Dimensionar `TOTVS_POOL_MAX_SIZE` na **api-delpi** (não no SI) conforme burst de snapshots
 4. Logs em stdout do container; arquivo opcional em `logs/` no volume dev

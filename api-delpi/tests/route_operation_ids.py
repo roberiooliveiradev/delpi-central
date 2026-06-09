@@ -8,7 +8,7 @@ from pathlib import Path
 import app.interface.http.openapi_agent_metadata as agent_metadata
 
 ROUTES_ROOT = Path(__file__).resolve().parents[1] / "app/interface/http/routes"
-SKIP_FILES = frozenset({"internal_nc_routes.py", "external_nc_routes.py"})
+SKIP_FILES: frozenset[str] = frozenset()
 
 _LITERAL_PATTERN = re.compile(r"""operation_id\s*=\s*["']([^"']+)["']""")
 _CONST_PATTERN = re.compile(

@@ -61,8 +61,6 @@ GET /apps/api-delpi/quality/audit-5s/summary?start_date=2026-01-01&end_date=2026
 
 | Rota | Motivo |
 |---|---|
-| `/quality/internal-nc/*` | Módulo PostgreSQL; rotas não montadas em `main.py` |
-| `/quality/external-nc/*` | Idem |
 | Indicadores estratégicos SI | API dedicada `strategic-indicators-api` |
 
 ---

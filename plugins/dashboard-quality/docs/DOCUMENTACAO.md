@@ -26,7 +26,7 @@ O Portal carrega o `remoteEntry.js` e injeta o token Keycloak no cliente HTTP do
 
 ### Fora de escopo
 
-- NC em PostgreSQL (`/quality/internal-nc`, `/quality/external-nc`) — produto separado, rotas ainda não montadas na api-delpi
+- Workflow de NC em PostgreSQL — módulo removido da api-delpi (jun/2026)
 - Indicadores estratégicos (API `strategic-indicators-api`)
 
 ---

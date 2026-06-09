@@ -346,4 +346,3 @@ Começar por:
 - [pendencias-tecnicas.md](./pendencias-tecnicas.md)
 - [decisoes-tecnicas.md](./decisoes-tecnicas.md)
 - [../00-visao-geral/mapa-da-plataforma.md](../00-visao-geral/mapa-da-plataforma.md)
-- [../../api-delpi/docs/api/07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md)

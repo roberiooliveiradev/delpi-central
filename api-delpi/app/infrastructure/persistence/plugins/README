@@ -6,7 +6,7 @@ Infraestrutura de persistência PostgreSQL para os módulos plugáveis da DELPI 
 
 Este pacote existe para isolar o acesso ao banco `postgres-plugins` dentro da `api-delpi`.
 
-Ele é a base técnica para os contextos do produto **Qualidade DELPI**, mantendo separação explícita entre:
+Ele é a base técnica para módulos plugáveis em PostgreSQL (ex.: **scheduling**), mantendo separação explícita entre:
 
 - contexto legado TOTVS / SQL Server
 - contexto novo de plugins / PostgreSQL
@@ -56,12 +56,12 @@ Também não é permitido misturar query SQL Server com query PostgreSQL no mesm
 from app.infrastructure.persistence.plugins import PluginBaseRepository
 
 
-class ExternalNcRepository(PluginBaseRepository):
-    def list_cases(self) -> list[dict]:
+class SchedulingRepository(PluginBaseRepository):
+    def list_shifts(self) -> list[dict]:
         return self.fetch_all(
             \"\"\"
-            SELECT id, code, title, current_status
-            FROM quality.external_nonconformities
-            ORDER BY created_at DESC
+            SELECT id, name, starts_at
+            FROM scheduling.shifts
+            ORDER BY starts_at DESC
             \"\"\"
         )

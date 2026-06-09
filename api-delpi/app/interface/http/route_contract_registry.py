@@ -120,33 +120,6 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_ppm_internal": RouteContract("ppm_internal", "paged_list"),
     "list_ppm_external": RouteContract("ppm_external", "paged_list"),
     "get_produced_quantity": RouteContract("produced_quantity", "playbook_report"),
-    # Auditoria 5S operacional
-    "list_audit_5s_areas": RouteContract("audit_5s_area", "paged_list"),
-    "create_audit_5s_area": RouteContract("audit_5s_area", "scalar"),
-    "list_audit_5s_criteria": RouteContract("audit_5s_criterion", "paged_list"),
-    "list_audit_5s_audits": RouteContract("audit_5s_audit", "paged_list"),
-    "create_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
-    "get_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
-    "delete_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
-    "join_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
-    "upsert_audit_5s_response": RouteContract("audit_5s_response", "scalar"),
-    "complete_audit_5s_evaluation": RouteContract("audit_5s_audit", "scalar"),
-    "list_audit_5s_nc_candidates": RouteContract("audit_5s_nc_candidate", "paged_list"),
-    "list_audit_5s_nonconformities": RouteContract("audit_5s_nonconformity", "paged_list"),
-    "create_audit_5s_nonconformity": RouteContract("audit_5s_nonconformity", "scalar"),
-    "update_audit_5s_nonconformity": RouteContract("audit_5s_nonconformity", "scalar"),
-    "list_audit_5s_nc_actions": RouteContract("audit_5s_nc_action", "paged_list"),
-    "create_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
-    "list_audit_5s_nc_attachments": RouteContract("audit_5s_attachment", "paged_list"),
-    "list_audit_5s_audit_nc_attachments": RouteContract(
-        "audit_5s_attachment", "paged_list"
-    ),
-    "attach_audit_5s_evidence": RouteContract("audit_5s_attachment", "scalar"),
-    "complete_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
-    "get_audit_5s_analytics_dashboard": RouteContract(
-        "audit_5s_analytics", "composite_analysis"
-    ),
-    "close_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
     # RH
     "list_hr_branches": RouteContract("hr_branch", "scalar"),
     "get_hr_snapshot": RouteContract("hr_snapshot", "composite_analysis"),

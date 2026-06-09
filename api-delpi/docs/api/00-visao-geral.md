@@ -158,7 +158,6 @@ Consumidores TypeScript (plugins MFE): tipos em `shared/api-delpi-envelope/types
 | `api-delpi.system` | Metadados de tabelas. |
 | `api-delpi.data` | `POST /data/sql`. |
 | `api-delpi.quality.access` | Rotas em `/quality/*`. |
-| `quality-nc.view` / `quality-nc.manage` | NC PostgreSQL (rotas preparadas). |
 | `dashboard-lmps.view` | Engenharia LMP (alternativa). |
 | `strategic-indicators.view` | Leitura SI. |
 | `strategic-indicators.trends.view` | Tendências. |

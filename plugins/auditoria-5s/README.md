@@ -66,7 +66,9 @@ bash ../../scripts/homologacao/check-audit-5s-api.sh
 
 ## Migrations
 
-As migrations do 5S ficam em `api-delpi/migrations/plugins/quality/` (plugin slug **`quality`**).
+> **Jun/2026:** o backend operacional 5S (schema PostgreSQL `quality`, rotas `/quality/audit-5s/*` exceto `summary`) foi **removido** da api-delpi. Este plugin MFE depende dessas rotas e está **inoperante** até nova definição de produto. O KPI resumo (`GET /quality/audit-5s/summary`) permanece via Google Sheets no dashboard-quality.
+
+Migrations históricas (removidas): `api-delpi/migrations/plugins/quality/`.
 
 **Pré-requisito:** `delpi-postgres-plugins` em execução (`Up`, não `Restarting`). Se o log mostrar `exec format error`, repuxar a imagem AMD64:
 

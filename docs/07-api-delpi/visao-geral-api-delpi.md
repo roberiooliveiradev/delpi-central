@@ -47,8 +47,6 @@ Autenticação: `Authorization: Bearer <JWT>` via `delpi_auth` (mesmo Keycloak d
 
 **Fontes de dados por rota:** ver [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md) (homologação sem VPN TOTVS).
 
-**NC PostgreSQL** (`internal_nc_routes`, `external_nc_routes`): implementadas, **ainda não montadas** em `main.py` — ver [07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md).
-
 ---
 
 ## 4. Formato de resposta
