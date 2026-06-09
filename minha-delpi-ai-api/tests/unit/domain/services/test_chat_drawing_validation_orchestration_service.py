@@ -91,3 +91,45 @@ def test_format_report_contains_sections():
     assert "Relatório de Análise de Desenho DELPI" in report
     assert "Checklist completo" in report
     assert "Status geral" in report
+
+
+def test_format_report_lists_structure_guide_and_inspection():
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90260140",
+            "revision": "01",
+            "legible": True,
+        },
+    )
+
+    report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
+
+    assert "Estrutura (SG1010)" in report
+    assert "50212194" in report
+    assert "Roteiro (SG2010)" in report
+    assert "CORTAR TUBO MAIOR E MENOR" in report
+    assert "Inspeções (QP6" in report
+
+
+def test_format_report_pdf_section_uses_pdf_product_code():
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="10070077",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90262511",
+            "revision": "04",
+            "legible": True,
+        },
+    )
+
+    report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
+
+    assert "## 2. Dados identificados no PDF" in report
+    assert "| Código | 90262511 |" in report
+    assert "| Código | 90260140 |" in report

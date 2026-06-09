@@ -54,12 +54,15 @@ class ChatDrawingAnalysisTurnService:
                 has_pdf_attachment=has_pdf,
             )
 
-        product_code = ChatProductQueryIntentService.resolve_product_code(
-            message or "",
-            previous_messages=previous_messages,
-        )
+        if has_pdf:
+            product_code = ChatProductQueryIntentService.extract_product_code(message or "")
+        else:
+            product_code = ChatProductQueryIntentService.resolve_product_code(
+                message or "",
+                previous_messages=previous_messages,
+            )
 
-        if not product_code and attachment_context:
+        if not product_code and attachment_context and not has_pdf:
             from app.domain.services.chat_drawing_pdf_extraction_service import (
                 ChatDrawingPdfExtractionService,
             )

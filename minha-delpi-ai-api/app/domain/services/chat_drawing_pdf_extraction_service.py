@@ -97,15 +97,7 @@ class ChatDrawingPdfExtractionService:
         normalized = str(text or "").strip()
         char_count = len(normalized)
 
-        product_code = ChatProductQueryIntentService.extract_product_code(normalized)
-
-        if not product_code:
-            match = re.search(r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5})\b", normalized)
-
-            if match:
-                product_code = ChatProductQueryIntentService.normalize_product_code(
-                    match.group(1)
-                )
+        product_code = cls._extract_primary_product_code(normalized)
 
         revision = cls._extract_revision(normalized)
         customer_reference = cls._extract_labeled_value(
@@ -143,6 +135,30 @@ class ChatDrawingPdfExtractionService:
             payload["sourceMetadata"] = metadata
 
         return payload
+
+    @classmethod
+    def _extract_primary_product_code(cls, text: str) -> str | None:
+        product_code = ChatProductQueryIntentService.extract_product_code(text)
+
+        if product_code:
+            return product_code
+
+        codes_90 = re.findall(r"\b(90\d{6})\b", text)
+
+        if codes_90:
+            return ChatProductQueryIntentService.normalize_product_code(codes_90[0])
+
+        codes_10 = re.findall(r"\b(10\d{6})\b", text)
+
+        if codes_10:
+            return ChatProductQueryIntentService.normalize_product_code(codes_10[0])
+
+        match = re.search(r"\b(100\d{5})\b", text)
+
+        if match:
+            return ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+        return None
 
     @classmethod
     def _extract_revision(cls, text: str) -> str | None:

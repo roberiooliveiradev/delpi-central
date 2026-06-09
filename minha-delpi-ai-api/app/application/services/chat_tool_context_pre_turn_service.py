@@ -191,19 +191,33 @@ class ChatToolContextPreTurnService:
                 )
             )
 
-            if drawing_pdf_extract and drawing_pdf_extract.get("productCode"):
-                extracted_product_code = str(drawing_pdf_extract["productCode"])
-                extracted_source = (
-                    "document_vision"
-                    if drawing_pdf_extract.get("documentVision")
-                    else "attachment_context"
-                )
+            from app.domain.services.chat_drawing_product_code_resolution_service import (
+                ChatDrawingProductCodeResolutionService,
+            )
 
-                if not drawing_product_code:
-                    drawing_product_code = extracted_product_code
-                    drawing_product_code_source = extracted_source
-                elif str(drawing_product_code) == extracted_product_code:
-                    drawing_product_code_source = extracted_source
+            attachment_filename = (
+                ChatDrawingProductCodeResolutionService.resolve_attachment_filename(
+                    user_id=str(user_id) if user_id else None,
+                    session_id=session_id,
+                    attachment_ids=attachment_ids,
+                )
+            )
+            resolved_code, resolved_source = (
+                ChatDrawingProductCodeResolutionService.resolve(
+                    message=raw_message,
+                    has_pdf_attachment=drawing_has_pdf,
+                    pdf_extract=drawing_pdf_extract,
+                    attachment_filename=attachment_filename,
+                )
+            )
+            drawing_product_code, drawing_product_code_source = (
+                ChatDrawingProductCodeResolutionService.merge_precedence(
+                    current_code=drawing_product_code,
+                    current_source=drawing_product_code_source,
+                    resolved_code=resolved_code,
+                    resolved_source=resolved_source,
+                )
+            )
 
         if drawing_analysis_mode and on_stream_activity:
             from app.application.services.chat_stream_activity_service import (
