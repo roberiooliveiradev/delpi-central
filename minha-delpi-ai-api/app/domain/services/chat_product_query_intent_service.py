@@ -73,6 +73,24 @@ class ChatProductQueryIntentService:
         if cls._looks_like_parents_question(normalized):
             return ChatProductQueryIntent.PARENTS
 
+        if cls._looks_like_sale_pricing_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_cost_impact_simulation_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_raw_material_price_intelligence_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_last_purchase_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_purchase_price_history_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_purchase_budget_history_question(normalized):
+            return ChatProductQueryIntent.FULL
+
         from app.domain.services.chat_product_multi_scope_planning_service import (
             ChatProductMultiScopePlanningService,
         )
@@ -752,6 +770,9 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_sales_question(cls, normalized: str) -> bool:
+        if cls._looks_like_sale_pricing_question(normalized):
+            return False
+
         if cls._looks_like_stock_question(normalized):
             return False
 
@@ -953,6 +974,12 @@ class ChatProductQueryIntentService:
         if cls._looks_like_cost_impact_simulation_question(normalized):
             return False
 
+        if any(term in normalized for term in cls._terms("purchasePriceHistory", "terms")):
+            return False
+
+        if any(term in normalized for term in cls._terms("purchaseBudgetHistory", "terms")):
+            return False
+
         if any(
             term in normalized
             for term in cls._terms("rawMaterialPriceIntelligence", "excludeWhenSalePricing")
@@ -1032,9 +1059,6 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_purchase_price_history_question(cls, normalized: str) -> bool:
-        if cls._looks_like_raw_material_price_intelligence_question(normalized):
-            return False
-
         if any(term in normalized for term in cls._terms("purchasePriceHistory", "terms")):
             return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
                 normalized

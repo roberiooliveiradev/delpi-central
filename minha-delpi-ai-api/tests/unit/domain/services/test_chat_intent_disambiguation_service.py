@@ -82,3 +82,17 @@ def test_try_build_not_ambiguous_for_home_starter_queries():
             query,
             allowed_action_ids=["action-1"],
         ) is None, query
+
+
+def test_try_build_not_ambiguous_for_cost_impact_simulation():
+    assert ChatIntentDisambiguationService.try_build(
+        "Simule aumento de 10% nos materiais do produto 90261255",
+        allowed_action_ids=["action-1"],
+    ) is None
+
+
+def test_try_build_not_ambiguous_for_sale_pricing():
+    assert ChatIntentDisambiguationService.try_build(
+        "Qual o preço de venda do produto 10080001?",
+        allowed_action_ids=["action-1"],
+    ) is None

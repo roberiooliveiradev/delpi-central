@@ -177,12 +177,19 @@ def _check(label: str, ok: bool, detail: str = "") -> None:
     raise AssertionError(label)
 
 
+def _path_matches(path: str, expected: str | tuple[str, ...]) -> bool:
+    if isinstance(expected, tuple):
+        return any(fragment in path for fragment in expected)
+
+    return expected in path
+
+
 def main() -> int:
     failed = 0
     token = _token()
     agent_id = _agent_id(token)
 
-    single_turn: list[tuple[str, str, str, bool]] = [
+    single_turn: list[tuple[str, str, str | tuple[str, ...], bool]] = [
         ("R1 estoque", f"estoque do produto {_STOCK}", "/stock", True),
         ("R2 status fabril", f"status fabril do produto {_FABRIL} hoje", "/factory-status", True),
         ("R3 análise MP", f"análise de preço da matéria-prima {_MP}", "/raw-material-price-intelligence", True),
@@ -192,7 +199,7 @@ def main() -> int:
         ("F3 expedição", f"inspeção final expedição produto {_FABRIL} hoje", "/shipping-status", True),
         ("F4 exclusividade", f"quais matérias-primas exclusivas existem na estrutura do produto {_FABRIL}?", "/structure/exclusivity", True),
         ("MP1 intelligence", f"Análise de preço da matéria-prima {_MP}", "/raw-material-price-intelligence", True),
-        ("MP2 ICMS", f"Última compra e ICMS do produto {_MP}", "/raw-material-price-intelligence", True),
+        ("MP2 ICMS", f"Última compra e ICMS do produto {_MP}", ("/last-purchase", "/raw-material-price-intelligence"), True),
         ("MP3 orçamento", f"Histórico de orçamento de compra do produto {_MP}", "/purchase-budget-history", True),
         ("MP4 histórico preço", f"Histórico de preço de compra do {_MP}", "/purchase-price-history", True),
         ("MP6 simulação +10%", f"Simule aumento de 10% nos materiais do produto {_PA}", "/cost-impact-simulation", True),
@@ -214,9 +221,12 @@ def main() -> int:
                 _check(title, False, f"improvisação LLM path={path or '?'}")
 
             if expect_match:
-                _check(title, expected_fragment in path, f"path={path or '?'} elapsed={elapsed:.1f}s")
+                _check(title, _path_matches(path, expected_fragment), f"path={path or '?'} elapsed={elapsed:.1f}s")
             else:
-                _check(title, expected_fragment not in path, f"path={path or '?'}")
+                if isinstance(expected_fragment, tuple):
+                    _check(title, not any(fragment in path for fragment in expected_fragment), f"path={path or '?'}")
+                else:
+                    _check(title, expected_fragment not in path, f"path={path or '?'}")
         except AssertionError:
             failed += 1
         except Exception as exc:

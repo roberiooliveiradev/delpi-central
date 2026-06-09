@@ -506,3 +506,34 @@ def test_should_inherit_product_code_false_for_stock_list_query():
     assert not ChatProductQueryIntentService.should_inherit_product_code(
         "Liste os produtos com estoque abaixo do mínimo"
     )
+
+
+def test_detect_sale_pricing_intent_before_sales():
+    assert (
+        ChatProductQueryIntentService.detect(
+            "Qual o preço de venda do produto 10080001?"
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
+def test_sale_pricing_is_not_sales_question():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Qual o preço de venda do produto 10080001?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_sale_pricing_question(normalized)
+    assert not ChatProductQueryIntentService._looks_like_sales_question(normalized)
+
+
+def test_purchase_price_history_not_raw_material_intelligence():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Histórico de preço de compra do 10080001"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_purchase_price_history_question(
+        normalized
+    )
+    assert not ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+        normalized
+    )

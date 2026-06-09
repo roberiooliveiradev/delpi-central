@@ -193,37 +193,6 @@ class ExternalActionProductRouteSelectionService:
     ) -> list[dict]:
         normalized = str(message or "").lower()
         inherited_segment = str(route_segment or "").strip().lower()
-        wants_purchases = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "purchasesTerms",
-            )
-        )
-        wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
-            normalized
-        )
-        wants_factory_status = (
-            ChatProductQueryIntentService._looks_like_factory_status_question(
-                normalized
-            )
-        )
-        wants_production_status = (
-            ChatProductQueryIntentService._looks_like_production_status_question(
-                normalized
-            )
-        )
-        wants_shipping_status = (
-            ChatProductQueryIntentService._looks_like_shipping_status_question(
-                normalized
-            )
-        )
-        wants_structure_exclusivity = (
-            ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
-                normalized
-            )
-        )
         wants_raw_material_price_intelligence = (
             ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
                 normalized
@@ -250,14 +219,49 @@ class ExternalActionProductRouteSelectionService:
         wants_sale_pricing = ChatProductQueryIntentService._looks_like_sale_pricing_question(
             normalized
         )
+        wants_purchases = any(
+            term in normalized
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "purchasesTerms",
+            )
+        ) and not (
+            wants_last_purchase
+            or wants_purchase_price_history
+            or wants_purchase_budget_history
+            or wants_raw_material_price_intelligence
+        )
+        wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
+            normalized
+        )
+        wants_factory_status = (
+            ChatProductQueryIntentService._looks_like_factory_status_question(
+                normalized
+            )
+        )
+        wants_production_status = (
+            ChatProductQueryIntentService._looks_like_production_status_question(
+                normalized
+            )
+        )
+        wants_shipping_status = (
+            ChatProductQueryIntentService._looks_like_shipping_status_question(
+                normalized
+            )
+        )
+        wants_structure_exclusivity = (
+            ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
+                normalized
+            )
+        )
         wants_open_orders = any(
             term in normalized
             for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
         )
-        wants_sales = (
-            any(term in normalized for term in ("venda", "vendas"))
-            or ("faturamento" in normalized and not wants_billing)
-        ) and not wants_open_orders
+        wants_sales = ChatProductQueryIntentService._looks_like_sales_question(
+            normalized
+        ) and not wants_open_orders and not wants_sale_pricing
         from app.domain.services.chat_product_overview_intent_service import (
             ChatProductOverviewIntentService,
         )
@@ -309,6 +313,12 @@ class ExternalActionProductRouteSelectionService:
                 "productRouteRanking",
                 "pricingTerms",
             )
+        ) and not (
+            wants_raw_material_price_intelligence
+            or wants_cost_impact_simulation
+            or wants_last_purchase
+            or wants_purchase_price_history
+            or wants_purchase_budget_history
         )
         wants_customers = any(
             term in normalized
@@ -441,6 +451,9 @@ class ExternalActionProductRouteSelectionService:
 
             if wants_sale_pricing and "/pricing" in path:
                 value += 130
+
+            if wants_sale_pricing and "/sales" in path and "/pricing" not in path:
+                value -= 110
 
             if wants_sale_pricing and (
                 "raw-material-price-intelligence" in path

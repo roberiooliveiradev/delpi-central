@@ -1200,6 +1200,32 @@ class ChatIntentRouterService:
         if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
             return False, ()
 
+        if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
+            normalized
+        ):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+            normalized
+        ):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_last_purchase_question(normalized):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_purchase_price_history_question(
+            normalized
+        ):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
+            normalized
+        ):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_sale_pricing_question(normalized):
+            return False, ()
+
         if (
             any(
                 term in lowered
@@ -1313,6 +1339,32 @@ class ChatIntentRouterService:
 
         if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
             return "factory_status_lookup"
+
+        if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
+            normalized
+        ):
+            return "cost_impact_lookup"
+
+        if ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+            normalized
+        ):
+            return "raw_material_price_lookup"
+
+        if ChatProductQueryIntentService._looks_like_last_purchase_question(normalized):
+            return "last_purchase_lookup"
+
+        if ChatProductQueryIntentService._looks_like_purchase_price_history_question(
+            normalized
+        ):
+            return "purchase_price_history_lookup"
+
+        if ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
+            normalized
+        ):
+            return "purchase_budget_history_lookup"
+
+        if ChatProductQueryIntentService._looks_like_sale_pricing_question(normalized):
+            return "price_lookup"
 
         if ChatIntentRouterService._mentions_outbound_invoice(lowered):
             return "sales_lookup"

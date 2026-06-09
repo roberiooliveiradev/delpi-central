@@ -119,7 +119,14 @@ Use **mesma conversa** dentro de cada mini-cenário.
 ```bash
 cd minha-delpi-ai-api
 
-# Playbook produto + fabril + MP/PA
+# Perguntas deste roteiro (E2E gateway, user rober)
+SMOKE_BASE_URL=http://localhost \
+SMOKE_MP_CODE=10080001 \
+SMOKE_PA_CODE=90261255 \
+SMOKE_PRODUCT_CODE=90269002 \
+PYTHONPATH=. .venv/bin/python scripts/smoke_perguntas_teste_chat_jun2026.py
+
+# Playbook produto + fabril + MP/PA (rotas isoladas)
 SMOKE_PRODUCT_CODE=90269002 \
 SMOKE_MP_CODE=10080001 \
 SMOKE_PA_CODE=90261255 \
@@ -136,6 +143,47 @@ PYTHONPATH=. .venv/bin/pytest tests/unit/domain/services/test_chat_presentation_
 Homologação amostral completa: [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md).
 
 Checklist histórico (U1–G14, #70–79, …): [`smoke-operacional-manual.md`](smoke-operacional-manual.md).
+
+---
+
+## Homologação 09/jun/2026 — roteamento playbook MP/PA
+
+Sessão de correção e validação E2E (API gateway, usuário `rober`, agente Minha DELPI Chat). Objetivo: perguntas do roteiro acionarem a **rota correta** e respostas com markdown canônico (`### …`, `<!-- section:scope -->`).
+
+### Problemas encontrados
+
+| Sintoma | Causa raiz |
+|---------|------------|
+| `preço de venda` → `/sales` | `_looks_like_sales_question` tratava « venda do » dentro de «preço **de venda do** produto»; intent `SALES` filtrava só rotas de vendas |
+| `Histórico de preço de compra` → `/raw-material-price-intelligence` | Termo genérico «preço de compra» no vocabulário de intelligence colidia com histórico |
+| `Simule aumento de 10%…` → chips de desambiguação | `ChatIntentRouterService._operational_ambiguity` marcava pergunta como ambígua sem reconhecer simulador PA |
+| MP2, orçamento, última compra → `/purchases` | `purchasesTerms` genérico («compra», «última compra») ganhava ranking sobre rotas playbook |
+| Smoke em lote → HTTP 429 | Rate limit do gateway ao criar muitas sessões seguidas; cenários multi-turn (F6, MP10, R6, MP7) exigem pausa entre execuções |
+
+### Correções (chat base — não patch no agente)
+
+| Módulo | Mudança |
+|--------|---------|
+| `ChatProductQueryIntentService` | Rotas playbook (preço venda, intelligence, simulador, históricos) **antes** de multi-scope; `sale_pricing` não é `sales`; histórico de preço de compra não cai em intelligence |
+| `ChatIntentRouterService` | Playbook e preço de venda **não** disparam desambiguação operacional; sub-intents dedicados |
+| `ExternalActionProductRouteSelectionService` | Ranking suprime `purchases`/`pricing` genéricos quando intent playbook está claro; penaliza `/sales` em preço de venda |
+
+### Resultado dos testes (09/jun/2026)
+
+**Smoke E2E** (`smoke_perguntas_teste_chat_jun2026.py`) — **16/16 cenários single-turn OK**:
+
+| Cenário | Rota obtida | Formato |
+|---------|-------------|---------|
+| R1–R5, F2–F4 | rotas fabril / MP / PA / pricing esperadas | markdown + `section:scope` |
+| MP1–MP4, MP6, MP8–MP9, D1 | playbook MP/PA; D1 **não** intelligence | OK |
+| MP2 | `/last-purchase` *(aceito também `/raw-material-price-intelligence`)* | OK |
+| F5 | `pending=missing_date` | OK |
+
+**Multi-turn** (F6, MP10, R6, MP7): não revalidados na mesma execução por **429** após o lote single-turn — rodar isoladamente com intervalo (~2 s) ou `--case` futuro.
+
+**Pytest** (218 testes): `test_chat_product_query_intent_service`, `test_chat_intent_disambiguation_service`, `test_chat_intelligence_regression` — **OK**.
+
+**Pré-requisito deploy:** reiniciar `minha-delpi-ai-api` após pull (`docker compose … restart minha-delpi-ai-api`) para recarregar módulos Python em volume bind.
 
 ---
 
