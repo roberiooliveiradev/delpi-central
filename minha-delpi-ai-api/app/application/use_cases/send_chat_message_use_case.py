@@ -229,6 +229,10 @@ class SendChatMessageUseCase:
                 else None
             ),
             max_external_action_calls=max_tool_calls,
+            run_post_rag_web_fallback=lambda: self.turn_support.run_post_rag_web_fallback(
+                request,
+                previous_messages=previous_messages,
+            ),
         )
 
         assembly = ChatTurnLlmAssemblyService.assemble(

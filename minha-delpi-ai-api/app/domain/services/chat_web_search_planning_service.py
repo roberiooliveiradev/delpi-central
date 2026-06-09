@@ -93,10 +93,17 @@ class ChatWebSearchPlanningService:
         *,
         integration: object | None = None,
         base_query_override: str | None = None,
+        trigger_mode: str = "default",
     ) -> WebSearchPlan | None:
         raw = str(message or "").strip()
 
-        if not raw or not ChatWebSearchIntentService.matches(raw):
+        if not raw:
+            return None
+
+        if not ChatWebSearchIntentService.is_web_search_plan_eligible(
+            raw,
+            trigger_mode=trigger_mode,
+        ):
             return None
 
         base_query = str(base_query_override or "").strip() or ChatWebSearchIntentService.extract_query(raw)

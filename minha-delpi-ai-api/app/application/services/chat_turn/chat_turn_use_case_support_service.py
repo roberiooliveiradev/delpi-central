@@ -384,3 +384,21 @@ class ChatTurnUseCaseSupportService:
             attachment_ids=getattr(request, "attachment_ids", None),
             session_id=str(request.session_id) if getattr(request, "session_id", None) else None,
         )
+
+    def run_post_rag_web_fallback(
+        self,
+        request: SendChatMessageRequest,
+        *,
+        previous_messages: list | None = None,
+        on_stream_activity: Callable | None = None,
+    ) -> dict | None:
+        if not request.access_token or not self.chat_tool_context_service:
+            return None
+
+        return self.chat_tool_context_service.run_post_rag_web_fallback(
+            user_id=request.user_id,
+            access_token=request.access_token,
+            message=request.message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )

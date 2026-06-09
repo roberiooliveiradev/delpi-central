@@ -109,3 +109,73 @@ def test_should_not_augment_when_flag_disabled(_feature, _augment):
     assert not ChatWebSearchIntentService.should_augment_with_web(
         "o que vc pensa sobre o Brasil?"
     )
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_should_use_web_for_weather_without_explicit_request(_enabled):
+    message = "qual a temperatura de amanha?"
+
+    assert ChatWebSearchIntentService.should_use_web_for_public_facts(message)
+    assert ChatWebSearchIntentService.should_use_web_research(message)
+    assert ChatWebSearchIntentService.matches(message)
+    assert not ChatWebSearchIntentService.is_explicit_request(message)
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_resolve_public_fact_returns_web_search_tool(_enabled):
+    result = ChatWebSearchIntentService.resolve("qual a temperatura de amanha?")
+
+    assert result is not None
+    assert result["name"] == "web_search"
+    assert result["arguments"].get("searchTrigger") == "public_fact"
+    assert "temperatura" in result["arguments"]["query"]
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_public_fact_skips_operational_product_question(_enabled):
+    message = "qual a temperatura do produto 10080001 no estoque?"
+
+    assert not ChatWebSearchIntentService.should_use_web_for_public_facts(message)
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_should_try_web_after_empty_rag_for_capital_question(_enabled):
+    message = "qual a capital da frança?"
+
+    assert not ChatWebSearchIntentService.should_use_web_research(message)
+    assert ChatWebSearchIntentService.should_try_web_after_empty_rag(message)
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_should_not_try_post_rag_when_upfront_web_would_run(_enabled):
+    message = "qual a temperatura de amanha?"
+
+    assert ChatWebSearchIntentService.should_use_web_research(message)
+    assert not ChatWebSearchIntentService.should_try_web_after_empty_rag(message)
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_resolve_post_rag_fallback_returns_web_search_tool(_enabled):
+    result = ChatWebSearchIntentService.resolve_for_post_rag_fallback(
+        "qual a capital da frança?"
+    )
+
+    assert result is not None
+    assert result["name"] == "web_search"
+    assert result["arguments"].get("searchTrigger") == "post_rag_fallback"
+    assert "capital" in result["arguments"]["query"]
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_post_rag_fallback_skips_rewrite_task(_enabled):
+    assert not ChatWebSearchIntentService.should_try_web_after_empty_rag(
+        "reescreva este paragrafo"
+    )
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_extract_query_post_rag_fallback_separates_suffix(_enabled):
+    query = ChatWebSearchIntentService.extract_query("qual a capital da frança?")
+
+    assert "franca dados atuais internet" in query
+    assert "francadados" not in query

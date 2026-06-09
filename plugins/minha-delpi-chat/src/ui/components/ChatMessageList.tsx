@@ -543,7 +543,6 @@ export function ChatMessageList({
     }
   }, [editingMessageId, messages]);
 
-  const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
   const latestUserMessageId = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       if (messages[index]?.role === "user") {
@@ -597,6 +596,13 @@ export function ChatMessageList({
       isStreaming ||
       (isStreaming && streamingToolCalls.length > 0),
   );
+  const timelineItems = useMemo(() => {
+    const visibleMessages = isActiveStream
+      ? messages.filter((message) => !isAssistantGenerating(message))
+      : messages;
+
+    return buildChatTimelineItems(visibleMessages);
+  }, [isActiveStream, messages]);
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
   const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
   const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(

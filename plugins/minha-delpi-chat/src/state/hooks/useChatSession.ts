@@ -48,6 +48,10 @@ import {
   streamContentAlreadyDisplayed,
   type AssistantTurnHandoff,
 } from "../chatStreamHandoff";
+import {
+  shouldPatchStreamStatusForSources,
+  shouldPatchStreamStatusForToolCalls,
+} from "../chatStreamStatusGuards";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
@@ -1123,11 +1127,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           markStreamProgress();
-          const status =
-            sources.length > 0
-              ? "Consultando a base de conhecimento..."
-              : "Verificando contexto autorizado...";
-          patchStreamStatus(sessionId, status);
+          if (shouldPatchStreamStatusForSources(sources)) {
+            patchStreamStatus(sessionId, "Consultando a base de conhecimento...");
+          }
           const snapshot = patchSessionStreamUi(sessionId, { sources });
 
           if (!isStreamForActiveSession(sessionId)) {
@@ -1147,12 +1149,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           markStreamProgress();
           const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
-          const status = hasRichPresentation
-            ? "Finalizando apresentação..."
-            : toolCalls.length > 0
-              ? "Consultando sistemas autorizados..."
-              : "Gerando resposta...";
-          patchStreamStatus(sessionId, status);
+          if (shouldPatchStreamStatusForToolCalls(toolCalls)) {
+            const status = hasRichPresentation
+              ? "Finalizando apresentação..."
+              : "Consultando sistemas autorizados...";
+            patchStreamStatus(sessionId, status);
+          }
           const snapshot = patchSessionStreamUi(sessionId, { toolCalls });
 
           if (!isStreamForActiveSession(sessionId)) {
@@ -1208,6 +1210,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           if (skipReveal) {
             streamingAnswerRef.current = payload.answer;
+            playbackPayloadRef.current = null;
+            awaitingPlaybackRef.current = false;
+            finalizeAssistantTurn(
+              sessionId,
+              handoffFromPlaybackPayload(sessionId, enriched),
+            );
             return;
           }
 

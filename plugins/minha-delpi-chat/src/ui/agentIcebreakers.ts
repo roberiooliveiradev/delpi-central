@@ -106,6 +106,39 @@ export function formatIcebreakerForDisplay(
   return `${trimmed.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
+export type IcebreakerCardPresentation = {
+  title: string;
+  subtitle?: string;
+};
+
+/** Rótulo curto + exemplo para cards da home do agente. */
+export function resolveIcebreakerCardPresentation(
+  template: string,
+): IcebreakerCardPresentation {
+  const normalized = template.trim();
+  const known = AGENT_ICEBREAKER_TEMPLATES.find(
+    (item) => item.template === normalized,
+  );
+  const display = formatShortcutTemplateForDisplay(normalized);
+  const exampleMatch = display.match(/\s+Ex\.:\s+(.+)$/i);
+
+  if (known) {
+    return {
+      title: known.label,
+      subtitle: exampleMatch?.[1]?.trim(),
+    };
+  }
+
+  if (exampleMatch) {
+    return {
+      title: display.replace(/\s+Ex\.:\s+.+$/i, "").trim(),
+      subtitle: exampleMatch[1].trim(),
+    };
+  }
+
+  return { title: display };
+}
+
 /** Classe de densidade do grid conforme a quantidade de sugestões. */
 export function getIcebreakerGridDensityClass(count: number): string {
   if (count <= 3) {

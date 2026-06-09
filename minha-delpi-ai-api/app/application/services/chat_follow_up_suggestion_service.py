@@ -48,6 +48,13 @@ class ChatFollowUpSuggestionService:
         if ChatSqlIntentService.is_sql_conversation_turn(message):
             return
 
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
+
+        if ChatWebSearchFollowUpService.is_primary_web_search_turn(tool_calls):
+            return
+
         suggestions = cls.build(
             message=message,
             answer=answer,
@@ -177,6 +184,13 @@ class ChatFollowUpSuggestionService:
             )
         ) or any(token in lowered for token in ("produto", "estrutura", "fornecedor")):
             return "product"
+
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
+
+        if ChatWebSearchFollowUpService.is_primary_web_search_turn(tool_calls):
+            return "web"
 
         return "generic"
 

@@ -297,6 +297,17 @@ class StreamChatMessageUseCase:
         persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK
         assistant_placeholder = None
 
+        if direct_answer:
+            status_key = (
+                "statusAssemblingDirectAnswer"
+                if tool_calls
+                else "statusDirectAnswer"
+            )
+            yield {
+                "type": "status",
+                "message": ChatAssistantContentService.get("stream", status_key),
+            }
+
         yield {"type": "sources", "sources": sources}
 
         yield {
@@ -334,13 +345,6 @@ class StreamChatMessageUseCase:
             }
 
         if direct_answer:
-            yield {
-                "type": "status",
-                "message": ChatAssistantContentService.get(
-                    "stream",
-                    "statusAssemblingDirectAnswer",
-                ),
-            }
             answer_parts.append(direct_answer)
 
             if not persist_before_playback:

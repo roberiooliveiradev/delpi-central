@@ -15,6 +15,56 @@ def _playbook() -> dict[str, Any]:
 
 class ChatWebSearchFollowUpService:
     @classmethod
+    def is_primary_web_search_turn(
+        cls,
+        tool_calls: list | None = None,
+        *,
+        metadata: dict | None = None,
+    ) -> bool:
+        """Web_search foi a ferramenta principal do turno (sem action operacional paralela)."""
+        had_web = False
+        had_operational = False
+
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+
+            name = str(call.get("name") or "").strip()
+
+            if name == "web_search":
+                status = str((call.get("metadata") or {}).get("searchStatus") or "").strip()
+
+                if status in {"", "success"}:
+                    had_web = True
+
+                continue
+
+            if name == "execute_external_action":
+                had_operational = True
+                continue
+
+            path = str((call.get("metadata") or {}).get("path") or call.get("path") or "")
+
+            if path.startswith("/"):
+                had_operational = True
+
+        if had_web:
+            return not had_operational
+
+        if isinstance(metadata, dict):
+            research = metadata.get("webSearchResearch")
+
+            if isinstance(research, dict) and str(research.get("searchStatus") or "") == "success":
+                return True
+
+            web_search = metadata.get("webSearch")
+
+            if isinstance(web_search, dict) and web_search.get("enabled"):
+                return True
+
+        return False
+
+    @classmethod
     def attach_to_assistant_metadata(
         cls,
         metadata: dict,

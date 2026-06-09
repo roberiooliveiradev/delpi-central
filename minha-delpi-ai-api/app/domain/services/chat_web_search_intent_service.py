@@ -74,6 +74,13 @@ class ChatWebSearchIntentService:
         return cls.should_use_web_research(message)
 
     @classmethod
+    def is_web_search_plan_eligible(cls, message: str, *, trigger_mode: str = "default") -> bool:
+        if trigger_mode == "post_rag_fallback":
+            return cls.should_try_web_after_empty_rag(message)
+
+        return cls.matches(message)
+
+    @classmethod
     def should_use_web_research(cls, message: str) -> bool:
         raw = str(message or "").strip()
 
@@ -83,7 +90,94 @@ class ChatWebSearchIntentService:
         if cls.is_explicit_request(raw):
             return True
 
+        if cls.should_use_web_for_public_facts(raw):
+            return True
+
         return cls.should_augment_with_web(raw)
+
+    @classmethod
+    def should_use_web_for_public_facts(cls, message: str) -> bool:
+        if not cls.is_feature_enabled():
+            return False
+
+        raw = str(message or "").strip()
+
+        if not raw or cls.is_explicit_request(raw):
+            return False
+
+        if cls._is_excluded_from_auto_augment(raw):
+            return False
+
+        config = _public_facts_content()
+        max_length = int(config.get("maxMessageLength") or 200)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
+
+        if len(normalized) > max_length:
+            return False
+
+        trigger_terms = tuple(str(item) for item in (config.get("triggerTerms") or ()))
+
+        if not trigger_terms:
+            return False
+
+        if not ChatMessageNormalizationService.contains_any(normalized, trigger_terms):
+            return False
+
+        exclude_terms = tuple(str(item) for item in (config.get("excludeTerms") or ()))
+
+        if exclude_terms and ChatMessageNormalizationService.contains_any(
+            normalized, exclude_terms
+        ):
+            return False
+
+        return True
+
+    @classmethod
+    def should_try_web_after_empty_rag(cls, message: str) -> bool:
+        """Pergunta factual externa que não disparou web no pré-tool — tentar após RAG vazio."""
+        if not cls.is_feature_enabled():
+            return False
+
+        raw = str(message or "").strip()
+
+        if not raw or cls.is_explicit_request(raw):
+            return False
+
+        if cls.should_use_web_research(raw):
+            return False
+
+        if cls._is_excluded_from_auto_augment(raw):
+            return False
+
+        config = _post_rag_fallback_content()
+        max_length = int(config.get("maxMessageLength") or 280)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
+
+        if len(normalized) > max_length:
+            return False
+
+        exclude_terms = tuple(str(item) for item in (config.get("excludeTerms") or ()))
+
+        if exclude_terms and ChatMessageNormalizationService.contains_any(
+            normalized, exclude_terms
+        ):
+            return False
+
+        question_starters = tuple(str(item) for item in (config.get("questionStarters") or ()))
+
+        if question_starters and any(
+            normalized.startswith(str(starter).strip().lower())
+            for starter in question_starters
+            if str(starter).strip()
+        ):
+            return True
+
+        trigger_terms = tuple(str(item) for item in (config.get("triggerTerms") or ()))
+
+        return bool(
+            trigger_terms
+            and ChatMessageNormalizationService.contains_any(normalized, trigger_terms)
+        )
 
     @classmethod
     def should_augment_with_web(cls, message: str) -> bool:
@@ -151,6 +245,21 @@ class ChatWebSearchIntentService:
         )
 
     @classmethod
+    def resolve_for_post_rag_fallback(
+        cls,
+        message: str,
+        *,
+        attachment_context: str | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        return cls._resolve_web_search(
+            message,
+            attachment_context=attachment_context,
+            previous_messages=previous_messages,
+            trigger_mode="post_rag_fallback",
+        )
+
+    @classmethod
     def resolve(
         cls,
         message: str,
@@ -158,12 +267,34 @@ class ChatWebSearchIntentService:
         attachment_context: str | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
+        return cls._resolve_web_search(
+            message,
+            attachment_context=attachment_context,
+            previous_messages=previous_messages,
+            trigger_mode="default",
+        )
+
+    @classmethod
+    def _resolve_web_search(
+        cls,
+        message: str,
+        *,
+        attachment_context: str | None = None,
+        previous_messages: list | None = None,
+        trigger_mode: str = "default",
+    ) -> dict | None:
         if not cls.is_feature_enabled():
             return None
 
         raw = str(message or "").strip()
 
-        if not raw or not cls.should_use_web_research(raw):
+        if not raw:
+            return None
+
+        if trigger_mode == "post_rag_fallback":
+            if not cls.should_try_web_after_empty_rag(raw):
+                return None
+        elif not cls.should_use_web_research(raw):
             return None
 
         from app.domain.services.chat_web_search_planning_service import (
@@ -191,12 +322,23 @@ class ChatWebSearchIntentService:
             raw,
             integration=integration,
             base_query_override=security.query if security.redacted else None,
+            trigger_mode=trigger_mode,
         )
 
         if not plan:
             return None
 
-        if cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
+        if trigger_mode == "post_rag_fallback" and not cls.is_explicit_request(raw):
+            reason = str(
+                _post_rag_fallback_content().get("searchReason")
+                or "A base interna não trouxe trechos — busco na internet."
+            )
+        elif cls.should_use_web_for_public_facts(raw) and not cls.is_explicit_request(raw):
+            reason = str(
+                _public_facts_content().get("searchReason")
+                or "A pergunta pede informação pública atual na internet."
+            )
+        elif cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
             reason = str(
                 _augmentation_content().get("augmentReason")
                 or (
@@ -255,7 +397,11 @@ class ChatWebSearchIntentService:
             if integration.synthesis_note:
                 arguments["integrationSynthesisNote"] = integration.synthesis_note
 
-        if cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
+        if trigger_mode == "post_rag_fallback" and not cls.is_explicit_request(raw):
+            arguments["searchTrigger"] = "post_rag_fallback"
+        elif cls.should_use_web_for_public_facts(raw) and not cls.is_explicit_request(raw):
+            arguments["searchTrigger"] = "public_fact"
+        elif cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
             arguments["searchTrigger"] = "auto_augment"
 
         return {
@@ -269,7 +415,14 @@ class ChatWebSearchIntentService:
         query = str(message or "").strip()
         normalized = ChatMessageNormalizationService.normalize_for_matching(query) or query
 
-        if cls.should_augment_with_web(query) and not cls.is_explicit_request(query):
+        if cls.should_try_web_after_empty_rag(query) and not cls.is_explicit_request(query):
+            if not cls.should_use_web_research(query):
+                normalized = cls._extract_post_rag_fallback_query(query)
+            else:
+                normalized = cls._extract_public_fact_query(query)
+        elif cls.should_use_web_for_public_facts(query) and not cls.is_explicit_request(query):
+            normalized = cls._extract_public_fact_query(query)
+        elif cls.should_augment_with_web(query) and not cls.is_explicit_request(query):
             normalized = cls._extract_augment_topic(query)
         else:
             for pattern in cls._STRIP_PATTERNS:
@@ -286,6 +439,35 @@ class ChatWebSearchIntentService:
 
         return security.query or base
 
+    @staticmethod
+    def _join_query_suffix(normalized: str, suffix_raw: str) -> str:
+        base = re.sub(r"\s+", " ", str(normalized or "")).strip(" ?.")
+        suffix = re.sub(r"\s+", " ", str(suffix_raw or "")).strip()
+
+        if not base:
+            return suffix
+
+        if not suffix:
+            return base
+
+        return f"{base} {suffix}"
+
+    @classmethod
+    def _extract_post_rag_fallback_query(cls, message: str) -> str:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+        normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
+        suffix = str(_post_rag_fallback_content().get("querySuffix") or "")
+
+        return cls._join_query_suffix(normalized, suffix)
+
+    @classmethod
+    def _extract_public_fact_query(cls, message: str) -> str:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+        normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
+        suffix = str(_public_facts_content().get("querySuffix") or "")
+
+        return cls._join_query_suffix(normalized, suffix)
+
     @classmethod
     def _extract_augment_topic(cls, message: str) -> str:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
@@ -299,12 +481,9 @@ class ChatWebSearchIntentService:
             ).strip()
 
         normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
-        suffix = str(_augmentation_content().get("querySuffix") or "").strip()
+        suffix = str(_augmentation_content().get("querySuffix") or "")
 
-        if suffix and normalized:
-            return f"{normalized}{suffix}"
-
-        return normalized
+        return cls._join_query_suffix(normalized, suffix)
 
     @classmethod
     def _is_excluded_from_auto_augment(cls, message: str) -> bool:
@@ -413,5 +592,19 @@ class ChatWebSearchIntentService:
 @lru_cache(maxsize=1)
 def _augmentation_content() -> dict:
     node = ChatAssistantContentService.get_node("web_search", "augmentation")
+
+    return dict(node) if isinstance(node, dict) else {}
+
+
+@lru_cache(maxsize=1)
+def _public_facts_content() -> dict:
+    node = ChatAssistantContentService.get_node("web_search", "publicFacts")
+
+    return dict(node) if isinstance(node, dict) else {}
+
+
+@lru_cache(maxsize=1)
+def _post_rag_fallback_content() -> dict:
+    node = ChatAssistantContentService.get_node("web_search", "postRagFallback")
 
     return dict(node) if isinstance(node, dict) else {}

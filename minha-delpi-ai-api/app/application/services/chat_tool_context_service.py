@@ -179,7 +179,63 @@ class ChatToolContextService:
             on_stream_activity=on_stream_activity,
         )
 
+    def run_post_rag_web_fallback(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        previous_messages: list | None = None,
+        on_stream_activity=None,
+    ) -> dict | None:
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
 
+        selected_tool = ChatWebSearchIntentService.resolve_for_post_rag_fallback(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if not selected_tool:
+            return None
+
+        from app.application.services.chat_paginated_external_action_service import (
+            ChatPaginatedExternalActionService,
+        )
+
+        execution = self._execution_service.execute_selected_tools(
+            self,
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            raw_message=message,
+            allowed_action_ids=None,
+            previous_messages=previous_messages,
+            selected_tools=[selected_tool],
+            on_stream_activity=on_stream_activity,
+            paginated_service=ChatPaginatedExternalActionService(self.execute_tool_use_case),
+        )
+
+        return self._result_assembly_service.assemble_and_finalize(
+            self,
+            message=message,
+            raw_message=message,
+            previous_messages=previous_messages,
+            user_id=user_id,
+            session_id=None,
+            attachment_ids=None,
+            native_meta={"used": False, "providerSupports": False},
+            selected_external_action_meta=None,
+            execution=execution,
+            drawing_analysis_mode=False,
+            drawing_product_code=None,
+            drawing_product_code_source=None,
+            drawing_has_pdf=False,
+            drawing_pdf_extract=None,
+            drawing_runtime_skills=None,
+            on_stream_activity=on_stream_activity,
+        )
 
     # --- Apresentação rica (delegação Fase 3C lote 9) ---
 

@@ -17,6 +17,15 @@ def test_intent_router_explicit_web_request():
     assert route.decision == "web_search"
 
 
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_intent_router_public_fact_weather(_enabled):
+    route = ChatIntentRouterService.classify("qual a temperatura de amanha?")
+
+    assert route.intent == "web_search"
+    assert route.requires_web is True
+    assert route.decision == "web_search"
+
+
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=False)
 def test_select_action_skips_product_search_for_web_phrase(_enabled):
     service = ExternalActionSelectionService(MagicMock())

@@ -223,6 +223,11 @@ class ChatStreamTurnPrepareService:
                 ),
                 max_external_action_calls=max_tool_calls,
                 on_stream_activity=_on_stream_activity,
+                run_post_rag_web_fallback=lambda: self.turn_support.run_post_rag_web_fallback(
+                    request,
+                    previous_messages=previous_messages,
+                    on_stream_activity=_on_stream_activity,
+                ),
             )
 
         def _prepare_worker() -> None:

@@ -24,6 +24,9 @@ from app.application.services.chat_turn.chat_turn_preparation_post_tool_resoluti
 from app.application.services.chat_turn.chat_turn_preparation_rag_service import (
     ChatTurnPreparationRagService,
 )
+from app.application.services.chat_turn.chat_turn_preparation_rag_web_fallback_service import (
+    ChatTurnPreparationRagWebFallbackService,
+)
 from app.application.services.chat_turn.chat_turn_preparation_result_service import (
     ChatTurnPreparationResultService,
 )
@@ -114,6 +117,7 @@ class ChatTurnPreparationService:
         resolve_capabilities_answer,
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
+        run_post_rag_web_fallback=None,
     ) -> ChatTurnPreparationResult:
         """Prepara tools, resposta direta e RAG.
 
@@ -328,6 +332,25 @@ class ChatTurnPreparationService:
         sources = rag_phase.sources
         workspace_context = rag_phase.workspace_context
         conversation_context = rag_phase.conversation_context
+
+        rag_web_fallback = ChatTurnPreparationRagWebFallbackService.apply(
+            message=message,
+            skip_rag=skip_rag,
+            direct_answer=direct_answer,
+            rag=rag,
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+            sources=sources,
+            text_task_pure=text_task_pure,
+            pipeline_stages=pipeline_stages,
+            run_web_search_fallback=run_post_rag_web_fallback,
+        )
+
+        if rag_web_fallback.applied:
+            direct_answer = rag_web_fallback.direct_answer
+            tool_context = rag_web_fallback.tool_context or tool_context
+            tool_calls = rag_web_fallback.tool_calls or tool_calls
+            sources = rag_web_fallback.sources or sources
 
         return ChatTurnPreparationResultService.finalize(
             message=message,

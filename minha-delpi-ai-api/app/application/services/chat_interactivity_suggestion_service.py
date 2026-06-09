@@ -84,7 +84,11 @@ class ChatInteractivitySuggestionService:
         if sql_advanced:
             metadata["sqlAdvancedFollowUpSuggestions"] = sql_advanced
 
-        raw = cls._collect_raw(metadata, intent_route=intent_route)
+        raw = cls._collect_raw(
+            metadata,
+            intent_route=intent_route,
+            tool_calls=tool_calls,
+        )
         usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)
         enriched = [
             cls._enrich(
@@ -100,6 +104,7 @@ class ChatInteractivitySuggestionService:
             metadata=metadata,
             intent_route=intent_route,
             usage=usage,
+            tool_calls=tool_calls,
         )
         primary, more = cls._partition(ranked)
 
@@ -134,7 +139,12 @@ class ChatInteractivitySuggestionService:
         metadata: dict,
         *,
         intent_route: dict | None = None,
+        tool_calls: list | None = None,
     ) -> list[dict[str, Any]]:
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
+
         collected: list[dict[str, Any]] = []
         sub_intent = (
             str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")
@@ -142,6 +152,10 @@ class ChatInteractivitySuggestionService:
             else ""
         )
         sql_turn = sub_intent.startswith("sql_")
+        web_primary_turn = ChatWebSearchFollowUpService.is_primary_web_search_turn(
+            tool_calls,
+            metadata=metadata,
+        )
 
         for source in _content().get("metadataSources") or []:
             if not isinstance(source, dict):
@@ -165,6 +179,13 @@ class ChatInteractivitySuggestionService:
 
                 if (
                     sql_turn
+                    and key == "followUpSuggestions"
+                    and label in cls._SQL_TURN_OPERATIONAL_CHIP_LABELS
+                ):
+                    continue
+
+                if (
+                    web_primary_turn
                     and key == "followUpSuggestions"
                     and label in cls._SQL_TURN_OPERATIONAL_CHIP_LABELS
                 ):
@@ -254,7 +275,6 @@ class ChatInteractivitySuggestionService:
             "Ver relações",
             "Interpretar resultado",
             "Gerar gráfico",
-            "Colocar na lousa",
         }
 
         if label in sql_action_labels and not (workspace_context or {}).get("actionsEnabled"):
@@ -295,13 +315,22 @@ class ChatInteractivitySuggestionService:
         metadata: dict,
         intent_route: dict | None,
         usage: dict[str, int] | None = None,
+        tool_calls: list | None = None,
     ) -> list[dict[str, Any]]:
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
+
         intent = (
             str(intent_route.get("intent") or "").strip().lower()
             if isinstance(intent_route, dict)
             else ""
         )
         has_error = isinstance(metadata.get("errorHandling"), dict)
+        web_primary_turn = ChatWebSearchFollowUpService.is_primary_web_search_turn(
+            tool_calls,
+            metadata=metadata,
+        )
 
         def sort_key(item: dict[str, Any]) -> tuple[int, int, str]:
             priority = int(item.get("priority") or 100)
@@ -313,10 +342,18 @@ class ChatInteractivitySuggestionService:
             if intent.startswith("text") and item.get("group") == "formatar":
                 intent_boost = -15
 
-            if intent in {"product_lookup", "operational_query", "self_help"} and item.get(
-                "group"
-            ) == "consultar":
+            if (
+                not web_primary_turn
+                and intent in {"product_lookup", "operational_query", "self_help"}
+                and item.get("group") == "consultar"
+            ):
                 intent_boost = -15
+
+            if web_primary_turn and item.get("sourceKey") == "webSearchFollowUpSuggestions":
+                intent_boost = -30
+
+            if web_primary_turn and item.get("sourceKey") == "followUpSuggestions":
+                intent_boost = 40
 
             sub_intent = (
                 str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")

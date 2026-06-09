@@ -93,6 +93,20 @@ function resolveSourcesLabel(sources: ChatSource[]): string {
   return sources.length === 1 ? "Fonte de conhecimento" : "Fontes de conhecimento";
 }
 
+/** Cards (web, 2+) trazem host/confiança; badges ficam para RAG e fonte web única. */
+export function resolveSourcePresentation(sources: ChatSource[]): {
+  showSourceCards: boolean;
+  showSourceBadges: boolean;
+} {
+  const isWebSearch = hasWebSearchSources(sources);
+  const showSourceCards = isWebSearch && sources.length >= 2;
+
+  return {
+    showSourceCards,
+    showSourceBadges: !showSourceCards,
+  };
+}
+
 export function ChatSources({ sources, webSearchResearch }: ChatSourcesProps) {
   const [researchOpen, setResearchOpen] = useState(false);
 
@@ -104,7 +118,7 @@ export function ChatSources({ sources, webSearchResearch }: ChatSourcesProps) {
   const isWebSearch = hasWebSearchSources(sources);
   const sourceCount = webSearchResearch?.sourceCount ?? sources.length;
   const canOpenResearch = Boolean(isWebSearch && webSearchResearch);
-  const showSourceCards = isWebSearch && sources.length >= 2;
+  const { showSourceCards, showSourceBadges } = resolveSourcePresentation(sources);
 
   return (
     <>
@@ -165,6 +179,7 @@ export function ChatSources({ sources, webSearchResearch }: ChatSourcesProps) {
             <span className="mdc-chat-sources-badges__label">{label}</span>
           )}
 
+          {showSourceBadges ? (
           <ul className="mdc-chat-sources-badges__list">
             {sources.map((source, index) => {
               const href = resolveSourceHref(source);
@@ -203,6 +218,7 @@ export function ChatSources({ sources, webSearchResearch }: ChatSourcesProps) {
               );
             })}
           </ul>
+          ) : null}
         </div>
       </section>
 

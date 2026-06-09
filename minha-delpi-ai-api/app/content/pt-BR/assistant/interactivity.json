@@ -35,7 +35,12 @@
     "Resumir": "anexo",
     "Tentar novamente": "recuperar",
     "Pesquisar na web": "web",
-    "O que você pode fazer?": "ajuda"
+    "O que você pode fazer?": "ajuda",
+    "Abrir fontes": "web",
+    "Resumir pesquisa": "web",
+    "Buscar em inglês": "web",
+    "Comparar fontes": "web",
+    "Só fontes oficiais": "web"
   },
   "primaryLabels": [
     "Ver estoque",
@@ -43,7 +48,10 @@
     "Colocar na lousa",
     "Tentar novamente",
     "Resumir",
-    "Deixar mais formal"
+    "Deixar mais formal",
+    "Abrir fontes",
+    "Resumir pesquisa",
+    "Buscar em inglês"
   ],
   "sensitiveQueries": [
     "limpar a lousa",
@@ -221,7 +229,7 @@
     { "key": "textCorrectionFollowUpSuggestions", "group": "formatar", "priority": 30 },
     { "key": "textTaskFollowUpSuggestions", "group": "formatar", "priority": 31 },
     { "key": "emailFollowUpSuggestions", "group": "formatar", "priority": 32 },
-    { "key": "webSearchFollowUpSuggestions", "group": "web", "priority": 15 },
+    { "key": "webSearchFollowUpSuggestions", "group": "web", "priority": 8 },
     { "key": "drawingFollowUpSuggestions", "group": "consultar", "priority": 18 },
     { "key": "helpFollowUpSuggestions", "group": "ajuda", "priority": 40 },
     { "key": "helpErrorFollowUpSuggestions", "group": "ajuda", "priority": 6 },
