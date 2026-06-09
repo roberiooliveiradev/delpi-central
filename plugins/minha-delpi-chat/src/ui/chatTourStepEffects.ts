@@ -25,7 +25,8 @@ const DEFAULT_DEMO_SUGGESTIONS: ChatTourDemoSuggestion[] = [
 ];
 
 const STEP_TARGET_BY_ID: Record<string, string> = {
-  starters: "starter-cards",
+  welcome: "home-greeting",
+  highlights: "home-highlights",
   ask: "composer-input",
   agent: "composer-plus-menu-agents",
   attach: "composer-attach",
@@ -34,7 +35,8 @@ const STEP_TARGET_BY_ID: Record<string, string> = {
 };
 
 const STEP_DEFAULT_EFFECTS: Record<string, Partial<ChatTourStepEffect>> = {
-  starters: { pulseTarget: true },
+  welcome: { pulseTarget: true },
+  highlights: { pulseTarget: true },
   ask: {
     demoQuery: "qual o estoque do produto 10080001?",
   },

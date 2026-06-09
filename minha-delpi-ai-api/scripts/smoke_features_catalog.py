@@ -123,7 +123,7 @@ def main() -> int:
     else:
         print("OK catalog onboarding (Playbook 10)")
 
-    if tour_steps and tour_steps[0].get("id") != "starters":
+    if tour_steps and tour_steps[0].get("id") != "welcome":
         print(f"FAIL tour first step ({tour_steps[0]})", file=sys.stderr)
         failed += 1
     elif not (

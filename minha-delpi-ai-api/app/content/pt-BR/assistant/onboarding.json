@@ -1,7 +1,7 @@
 {
   "welcome": {
     "title": "Olá! Posso ajudar com textos, e-mails, consultas, documentos e pesquisa.",
-    "subtitle": "Escolha uma opção para começar ou escreva do seu jeito."
+    "subtitle": "Escreva sua pergunta no campo abaixo — do seu jeito."
   },
   "starterCards": [
     {
@@ -196,15 +196,15 @@
   ],
   "tourSteps": [
     {
-      "id": "starters",
-      "title": "Escolha um atalho",
-      "body": "Toque em um card — corrigir texto, e-mail, consultar dados, analisar documento ou pesquisar na web.",
-      "target": "starter-cards"
+      "id": "welcome",
+      "title": "Sua conversa começa aqui",
+      "body": "O assistente te cumprimenta pelo nome. Quando houver novidades do chat, elas aparecem logo abaixo — você também pode reabrir este tour pelo link «Ver tour rápido do chat».",
+      "target": "home-greeting"
     },
     {
       "id": "ask",
       "title": "Digite uma pergunta",
-      "body": "Use linguagem natural — código de produto, período ou pedido de texto.",
+      "body": "Use linguagem natural no campo abaixo — código de produto, período, texto para revisar ou pesquisa na web.",
       "target": "composer-input",
       "demoQuery": "qual o estoque do produto {{productCode}}?"
     },

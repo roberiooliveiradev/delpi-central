@@ -14,9 +14,15 @@ describe("chatTourStepEffects", () => {
       tourTargetSelector({
         id: "ask",
         title: "X",
-        target: "starter-cards",
+        target: "home-highlights",
       }),
-    ).toBe('[data-tour="starter-cards"]');
+    ).toBe('[data-tour="home-highlights"]');
+  });
+
+  it("resolve alvo da saudação na home", () => {
+    expect(
+      tourTargetSelector({ id: "welcome", title: "Bem-vindo" }),
+    ).toBe('[data-tour="home-greeting"]');
   });
 
   it("inclui demoQuery padrão para ask", () => {

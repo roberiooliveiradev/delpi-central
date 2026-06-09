@@ -30,7 +30,7 @@ export function ChatEmptyState({
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
-      <div className="mdc-chat-empty-state__hero">
+      <div className="mdc-chat-empty-state__hero" data-tour="home-greeting">
         <h2 className="mdc-chat-empty-state__headline">
           <span className="mdc-chat-empty-state__headline-main">{greeting}</span>
         </h2>
@@ -47,7 +47,12 @@ export function ChatEmptyState({
       </div>
 
       {contextualHighlights.length > 0 ? (
-        <div className="mdc-chat-empty-state__highlights" role="region" aria-label="Novidades do chat">
+        <div
+          className="mdc-chat-empty-state__highlights"
+          role="region"
+          aria-label="Novidades do chat"
+          data-tour="home-highlights"
+        >
           <p className="mdc-chat-empty-state__highlights-label">Novidades</p>
           {contextualHighlights.slice(0, 2).map((highlight) => (
             <button
