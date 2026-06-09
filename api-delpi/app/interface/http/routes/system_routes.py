@@ -31,9 +31,11 @@ from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
     CONSOLE_SMOKE_ACCESS,
+    SQL_HEALTH_ACCESS,
     SYSTEM_METADATA_ACCESS,
 )
 from app.domain.services.smoke_definitions_service import load_smoke_definitions
+from app.domain.services.sql_query_telemetry_service import get_sql_health_summary
 
 router = APIRouter()
 
@@ -271,3 +273,18 @@ def get_smoke_definitions():
     except Exception as e:
         log_error(f"Erro ao carregar smoke definitions: {e}")
         return error_response("Erro ao carregar definições de smoke.", status_code=500)
+
+
+@router.get("/sql-health", summary="Telemetria SQL recente (ring buffer em memória)")
+@require_any_permission(SQL_HEALTH_ACCESS)
+def get_sql_health(limit: int = Query(25, ge=1, le=100)):
+    try:
+        payload = get_sql_health_summary(limit=limit)
+        return api_delpi_success(
+            payload,
+            operation_id="get_sql_health",
+            message="Telemetria SQL carregada com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar telemetria SQL: {e}")
+        return error_response("Erro ao carregar telemetria SQL.", status_code=500)

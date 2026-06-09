@@ -66,52 +66,56 @@ export function VerificacoesPage({ onNavigate }: Props) {
       </header>
 
       <section className="adc-panel adc-panel--toolbar">
-        <label className="adc-field adc-field--inline">
-          <span>Suite</span>
-          <select
-            className="adc-select"
-            value={selectedSuite?.id ?? ""}
-            onChange={(e) => setSelectedSuiteId(e.target.value)}
-            disabled={running}
-          >
-            {suites.map((suite) => (
-              <option key={suite.id} value={suite.id}>
-                {suite.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          className="adc-btn adc-btn--primary"
-          onClick={() => void runSuite()}
-          disabled={running || !selectedSuite}
-        >
-          {running ? <RefreshCw size={16} className="adc-spin" /> : <Play size={16} />}
-          {running ? "Executando…" : "Executar suite"}
-        </button>
-        {result ? (
-          <>
-            <button
-              type="button"
-              className="adc-btn adc-btn--ghost"
-              onClick={() => downloadSmokeResult(result, "csv")}
+        <div className="adc-toolbar">
+          <label className="adc-field adc-field--grow">
+            <span className="adc-field__label">Suite</span>
+            <select
+              className="adc-select"
+              value={selectedSuite?.id ?? ""}
+              onChange={(e) => setSelectedSuiteId(e.target.value)}
               disabled={running}
             >
-              <Download size={16} />
-              Exportar CSV
-            </button>
+              {suites.map((suite) => (
+                <option key={suite.id} value={suite.id}>
+                  {suite.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="adc-toolbar__actions">
             <button
               type="button"
-              className="adc-btn adc-btn--ghost"
-              onClick={() => downloadSmokeResult(result, "json")}
-              disabled={running}
+              className="adc-btn adc-btn--primary"
+              onClick={() => void runSuite()}
+              disabled={running || !selectedSuite}
             >
-              <Download size={16} />
-              Exportar JSON
+              {running ? <RefreshCw size={16} className="adc-spin" /> : <Play size={16} />}
+              {running ? "Executando…" : "Executar suite"}
             </button>
-          </>
-        ) : null}
+            {result ? (
+              <>
+                <button
+                  type="button"
+                  className="adc-btn adc-btn--ghost"
+                  onClick={() => downloadSmokeResult(result, "csv")}
+                  disabled={running}
+                >
+                  <Download size={16} />
+                  Exportar CSV
+                </button>
+                <button
+                  type="button"
+                  className="adc-btn adc-btn--ghost"
+                  onClick={() => downloadSmokeResult(result, "json")}
+                  disabled={running}
+                >
+                  <Download size={16} />
+                  Exportar JSON
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       {selectedSuite ? (

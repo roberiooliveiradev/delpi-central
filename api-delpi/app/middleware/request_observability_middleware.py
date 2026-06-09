@@ -5,6 +5,11 @@ import time
 
 from fastapi import Request
 
+from app.infrastructure.observability.request_context import (
+    bind_request_context,
+    reset_request_context,
+)
+
 logger = logging.getLogger("api_delpi.request")
 
 
@@ -21,8 +26,12 @@ def _resolve_operation_id(request: Request) -> str | None:
 
 
 async def request_observability_middleware(request: Request, call_next):
+    context_tokens = bind_request_context(request)
     started_at = time.perf_counter()
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    finally:
+        reset_request_context(context_tokens)
     duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
     operation_id = _resolve_operation_id(request)
 

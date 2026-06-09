@@ -8,6 +8,7 @@ import { HistoryPage } from "./pages/HistoryPage";
 import { HomePage } from "./pages/HomePage";
 import { SpecPage } from "./pages/SpecPage";
 import { VerificacoesPage } from "./pages/VerificacoesPage";
+import { SqlHealthPage } from "./pages/SqlHealthPage";
 import { DocumentacaoPage } from "./pages/DocumentacaoPage";
 import "./index.css";
 
@@ -31,6 +32,8 @@ function renderPage(segment: string, onNavigate: (s: string) => void) {
       return <DocumentacaoPage onNavigate={onNavigate} />;
     case "verificacoes":
       return <VerificacoesPage onNavigate={onNavigate} />;
+    case "sql":
+      return <SqlHealthPage onNavigate={onNavigate} />;
     case "explorer":
       return <ExplorerPage onNavigate={onNavigate} />;
     case "spec":

@@ -9,6 +9,7 @@ Microfrontend para explorar rotas da **api-delpi**, executar requests de teste e
 | `/apps/api-delpi-console` | Início — saúde da API |
 | `/apps/api-delpi-console/documentacao` | Documentação interativa (`/apps/api-delpi/docs`) com JWT automático |
 | `/apps/api-delpi-console/verificacoes` | Smoke suites (essencial, PPM, engenharia/agendamento) com exportação CSV/JSON |
+| `/apps/api-delpi-console/sql` | Saúde SQL — top queries por duração e repetição |
 | `/apps/api-delpi-console/explorer` | Explorador OpenAPI com executor de requests |
 | `/apps/api-delpi-console/spec` | Inventário OpenAPI + download JSON |
 | `/apps/api-delpi-console/history` | Histórico local de chamadas |

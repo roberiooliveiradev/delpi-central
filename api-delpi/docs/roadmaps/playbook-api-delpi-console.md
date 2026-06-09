@@ -111,16 +111,19 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 - O `bootstrap.tsx` **não** deve chamar `mount(#root)` ao carregar o remote — isso substitui o shell do portal (sidebar some). Desenvolvimento standalone usa só `src/main.tsx`.
 - Navegação interna via `navigateConsole` (`pushState` + `popstate`), rota derivada de `pathname` repassado pelo `AppHost`.
 
-### Fase 2 — Saúde SQL (3–4 sprints)
+### Fase 2 — Saúde SQL (em andamento)
 
 Complementa o middleware HTTP já existente (`request_observability_middleware`).
 
-| Item | Detalhe |
-|------|---------|
-| **Telemetria SQL** | Hook em `BaseRepository` → `SqlQueryTelemetryService` (duração, hash, caller app) |
-| **Armazenamento** | Ring buffer Redis ou tabela PostgreSQL plugins |
-| **Endpoint** | `GET /system/sql-health` (superadmin) — top N queries por tempo e repetição |
-| **UI Console** | Aba «SQL» com gráfico e drill-down por `operationId` |
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Telemetria SQL** | Hook em `BaseRepository` → `SqlQueryTelemetryService` (duração, hash, caller app) | [x] MVP |
+| **Contexto HTTP** | `request_context` — `operationId` + `X-Delpi-Caller-App` | [x] MVP |
+| **Armazenamento** | Ring buffer em memória (800 amostras) | [x] MVP |
+| **Endpoint** | `GET /system/sql-health` — top N por tempo e repetição | [x] MVP |
+| **UI Console** | Aba «SQL» com tabelas agregadas | [x] MVP |
+| **Persistência** | Ring buffer Redis ou tabela PostgreSQL plugins | [ ] |
+| **Gráficos** | Drill-down visual por `operationId` | [ ] |
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
 

@@ -22,6 +22,8 @@
   --adc-warn: var(--warning, #f59e0b);
   --adc-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
   --adc-focus-ring: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--primary, #089bdb) 25%, transparent));
+  --adc-control-height: 42px;
+  --adc-control-padding-x: 0.75rem;
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
@@ -238,10 +240,24 @@
 }
 
 .api-delpi-console .adc-panel--toolbar {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+}
+
+.api-delpi-console .adc-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1rem;
+}
+
+.api-delpi-console .adc-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: auto;
 }
 
 .api-delpi-console .adc-panel--danger {
@@ -456,22 +472,26 @@
 }
 
 .api-delpi-console .adc-field {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-bottom: 0.5rem;
 }
 
-.api-delpi-console .adc-field--inline {
-  flex: 1;
-  min-width: 220px;
+.api-delpi-console .adc-field--grow {
+  flex: 1 1 280px;
+  min-width: min(100%, 280px);
+  max-width: 420px;
   margin-bottom: 0;
 }
 
-.api-delpi-console .adc-field span {
-  display: block;
-  font-size: 0.8rem;
+.api-delpi-console .adc-field__label,
+.api-delpi-console .adc-field > span {
+  font-size: 0.78rem;
   color: var(--adc-muted);
-  margin-bottom: 0.25rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .api-delpi-console .adc-field input,
@@ -479,12 +499,37 @@
 .api-delpi-console .adc-select,
 .api-delpi-console .adc-textarea {
   width: 100%;
+  min-height: var(--adc-control-height);
   background: var(--control-bg, var(--adc-surface));
   border: 1px solid var(--control-border, var(--adc-border-2));
   border-radius: var(--adc-control-radius);
   color: var(--control-text, var(--adc-text));
-  padding: 0.5rem 0.65rem;
+  padding: 0.55rem var(--adc-control-padding-x);
   font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.api-delpi-console .adc-select {
+  appearance: none;
+  padding-right: 2.4rem;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--adc-accent) 50%),
+    linear-gradient(135deg, var(--adc-accent) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.15rem) calc(50% - 0.12rem),
+    calc(100% - 0.8rem) calc(50% - 0.12rem);
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+}
+
+.api-delpi-console .adc-select:disabled,
+.api-delpi-console .adc-field input:disabled,
+.api-delpi-console .adc-input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .api-delpi-console .adc-field input:focus,
@@ -494,6 +539,11 @@
   outline: none;
   box-shadow: var(--adc-focus-ring);
   border-color: var(--adc-accent);
+}
+
+.api-delpi-console .adc-select option {
+  background: var(--adc-surface);
+  color: var(--adc-text);
 }
 
 .api-delpi-console .adc-textarea {
@@ -559,31 +609,68 @@
   border-color: color-mix(in srgb, var(--adc-accent) 40%, var(--adc-border));
 }
 
+.api-delpi-console .adc-panel--table {
+  margin-bottom: var(--adc-section-gap);
+}
+
+.api-delpi-console .adc-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  color: var(--adc-title);
+}
+
 .api-delpi-console .adc-table-wrap {
   overflow: auto;
   border: 1px solid var(--adc-border);
   border-radius: var(--adc-card-radius);
   box-shadow: var(--adc-shadow);
+  background: var(--adc-surface);
 }
 
 .api-delpi-console .adc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
-  background: var(--adc-surface);
+  font-size: 0.88rem;
 }
 
 .api-delpi-console .adc-table th,
 .api-delpi-console .adc-table td {
-  padding: 0.55rem 0.7rem;
+  padding: 0.7rem 0.85rem;
   border-bottom: 1px solid var(--adc-border);
   text-align: left;
+  vertical-align: top;
+}
+
+.api-delpi-console .adc-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--adc-surface-2) 55%, transparent);
+}
+
+.api-delpi-console .adc-table tbody tr:hover {
+  background: color-mix(in srgb, var(--adc-accent) 6%, var(--adc-surface));
 }
 
 .api-delpi-console .adc-table th {
-  background: var(--adc-surface-2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--adc-surface-2) 80%, var(--adc-surface));
   color: var(--adc-muted);
+  font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.api-delpi-console .adc-table__preview {
+  max-width: 28rem;
+  word-break: break-word;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: var(--adc-muted);
+}
+
+.api-delpi-console .adc-metrics--compact {
+  margin-bottom: 0.75rem;
 }
 
 .api-delpi-console .adc-mono-sm {

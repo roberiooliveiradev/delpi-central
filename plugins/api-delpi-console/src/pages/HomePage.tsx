@@ -82,6 +82,14 @@ export function HomePage({ onNavigate }: Props) {
           <p>Smoke suite das rotas críticas — LMP, estoque, qualidade e saúde.</p>
         </article>
 
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("sql")}>
+          <div className="adc-card__icon">
+            <Activity size={22} />
+          </div>
+          <h2>Saúde SQL</h2>
+          <p>Top queries por duração e repetição — telemetria do Protheus em tempo real.</p>
+        </article>
+
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>
           <div className="adc-card__icon">
             <Terminal size={22} />

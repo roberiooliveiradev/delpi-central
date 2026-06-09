@@ -1,5 +1,6 @@
 # app/infrastructure/providers/totvs/base_repository.py
 
+from app.domain.services.sql_query_telemetry_service import timed_sql_query
 from app.infrastructure.providers.totvs.database import get_connection, release_connection
 from app.utils.logger import log_error
 from app.core.exceptions import DatabaseConnectionError
@@ -63,13 +64,17 @@ class BaseRepository:
     # Execução de queries
     # --------------------------------------
 
+    def _telemetry_repo(self) -> str:
+        return self.__class__.__name__
+
     def execute_query(self, query: str, params: tuple = ()) -> list[dict]:
         """
         Executa query SQL e retorna lista de registros.
         """
 
         try:
-            self.cursor.execute(query, params)
+            with timed_sql_query(self._telemetry_repo(), query):
+                self.cursor.execute(query, params)
 
             rows = self.cursor.fetchall()
             columns = [desc[0] for desc in self.cursor.description]
@@ -89,7 +94,8 @@ class BaseRepository:
         """
 
         try:
-            self.cursor.execute(query, params)
+            with timed_sql_query(self._telemetry_repo(), query):
+                self.cursor.execute(query, params)
 
             row = self.cursor.fetchone()
 
@@ -134,7 +140,8 @@ class BaseRepository:
         result sets vazios intermediários em batches com SET NOCOUNT ON.
         """
         try:
-            self.cursor.execute(query, params)
+            with timed_sql_query(self._telemetry_repo(), query):
+                self.cursor.execute(query, params)
 
             while self.cursor.description is None:
                 if not self.cursor.nextset():
@@ -184,7 +191,8 @@ class BaseRepository:
         """
 
         try:
-            self.cursor.execute(query, params)
+            with timed_sql_query(self._telemetry_repo(), query):
+                self.cursor.execute(query, params)
 
             resultsets = []
             index = 1
