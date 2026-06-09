@@ -173,7 +173,7 @@ describe("presentationStackSections", () => {
     const profileSection = buildStackSectionChrome("profile");
 
     expect(isStackSectionVisible(profileSection, "table")).toBe(true);
-    expect(isStackSectionVisible(profileSection, "text")).toBe(false);
+    expect(isStackSectionVisible(profileSection, "text")).toBe(true);
 
     const segments: AssistantContentSegment[] = [
       { kind: "stackSection", section: buildStackSectionChrome("scope") },
@@ -186,6 +186,6 @@ describe("presentationStackSections", () => {
     expect(textOnly.some((segment) => segment.kind === "stackSection")).toBe(true);
     expect(
       textOnly.filter((segment) => segment.kind === "stackSection").length,
-    ).toBe(1);
+    ).toBe(2);
   });
 });

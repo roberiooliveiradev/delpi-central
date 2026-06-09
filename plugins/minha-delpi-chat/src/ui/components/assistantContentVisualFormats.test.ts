@@ -148,9 +148,9 @@ describe("assistantContentVisualFormats", () => {
     const textKinds = filteredText.map((segment) => segment.kind);
 
     expect(textKinds).toContain("markdown");
-    expect(textKinds).not.toContain("table");
-    expect(textKinds).not.toContain("tree");
-    expect(textKinds).not.toContain("chart");
+    expect(textKinds).toContain("table");
+    expect(textKinds).toContain("tree");
+    expect(textKinds).toContain("chart");
   });
 
   it("usa formato selecionado pela API como padrão", () => {
@@ -312,7 +312,61 @@ describe("assistantContentVisualFormats", () => {
 
     const visible = filterSegmentsByVisualKind(segments, "text");
 
-    expect(visible.some((segment) => segment.kind === "kpi")).toBe(false);
+    expect(visible.some((segment) => segment.kind === "kpi")).toBe(true);
     expect(visible.some((segment) => segment.kind === "markdown")).toBe(true);
+  });
+
+  it("no modo texto do analyser mantém narrativa intercalada com visuais", () => {
+    const analyserLike = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            layoutMode: "stack",
+            availableViews: ["text", "table", "tree"],
+            visualOrder: ["text", "table", "tree"],
+            selected: "text",
+          },
+          path: "/products/90260149/analyser",
+          presentation: {
+            type: "tree",
+            title: "Estrutura do produto 90260149",
+            root: { id: "90260149", label: "90260149", children: [] },
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Produto 90260149",
+            columns: [{ key: "campo", label: "Campo" }],
+            rows: [{ campo: "Código", valor: "90260149" }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Informações completas\n\n**Destaques**\n\n- Item.",
+          },
+          stackPresentationPlan: {
+            presentationProfile: "product_analyser",
+            humanizedSections: true,
+            sectionVisibility: {
+              scope: true,
+              profile: true,
+              highlights: true,
+              structure: true,
+              attention: false,
+            },
+            narrativeOrder: ["lead", "profileTables", "highlights", "tailVisuals"],
+            tableRoleOrder: ["profile"],
+            tailVisualOrder: ["tree"],
+          },
+        },
+      },
+    ]);
+    const segments = buildAssistantContentSegments("", analyserLike);
+    const visible = filterSegmentsByVisualKind(segments, "text");
+    const kinds = visible.map((segment) => segment.kind);
+
+    expect(kinds).toContain("markdown");
+    expect(kinds).toContain("table");
+    expect(kinds).toContain("tree");
+    expect(kinds).toContain("stackSection");
   });
 });

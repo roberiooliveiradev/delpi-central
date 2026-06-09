@@ -227,7 +227,7 @@ describe("presentationMultiRoute", () => {
     const textBody = filterSegmentsByVisualKind(stockBody, "text");
 
     expect(textBody.some((segment) => segment.kind === "markdown")).toBe(true);
-    expect(textBody.some((segment) => segment.kind === "table")).toBe(false);
+    expect(textBody.some((segment) => segment.kind === "table")).toBe(true);
     expect(stockSection.some((segment) => segment.kind === "stackSection")).toBe(true);
   });
 

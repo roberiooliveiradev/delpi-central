@@ -353,6 +353,18 @@ export function resolveDefaultVisualKind(
   return available[0] ?? null;
 }
 
+function isTextModeInterleavedSegment(segment: AssistantContentSegment): boolean {
+  if (segment.kind === "markdown" || segment.kind === "code") {
+    return true;
+  }
+
+  if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
+    return false;
+  }
+
+  return segmentVisualKind(segment) !== null;
+}
+
 export function filterSegmentsByVisualKind(
   segments: AssistantContentSegment[],
   activeKind: ContentFormatKind | null,
@@ -364,8 +376,12 @@ export function filterSegmentsByVisualKind(
           return isStackSectionVisible(segment.section, activeKind);
         }
 
+        if (activeKind === "text") {
+          return isTextModeInterleavedSegment(segment);
+        }
+
         if (segment.kind === "markdown" || segment.kind === "code") {
-          return activeKind === "text";
+          return false;
         }
 
         if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
