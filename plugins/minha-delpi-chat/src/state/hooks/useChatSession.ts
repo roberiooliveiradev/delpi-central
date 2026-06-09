@@ -354,30 +354,42 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [applyStreamUiSnapshot, isStreamForActiveSession, restoreStreamUiForSession],
   );
 
-  const loadSessions = useCallback(async () => {
-    setIsLoadingSessions(true);
-    setError(null);
+  const loadSessions = useCallback(
+    async (loadOptions?: { background?: boolean }) => {
+      const background = loadOptions?.background === true;
 
-    try {
-      const data = await listChatSessions({
-        getAccessToken: options.getAccessToken,
-      });
+      if (!background) {
+        setIsLoadingSessions(true);
+      }
 
-      setSessions(data);
+      setError(null);
 
-      setActiveSession((current) => {
-        if (!current) {
-          return null;
+      try {
+        const data = await listChatSessions({
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSessions(data);
+
+        setActiveSession((current) => {
+          if (!current) {
+            return null;
+          }
+
+          return data.some((session) => session.id === current.id) ? current : null;
+        });
+      } catch (err) {
+        if (!background) {
+          setError(err instanceof Error ? err.message : "Erro ao carregar sessões.");
         }
-
-        return data.some((session) => session.id === current.id) ? current : null;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar sessões.");
-    } finally {
-      setIsLoadingSessions(false);
-    }
-  }, [options.getAccessToken]);
+      } finally {
+        if (!background) {
+          setIsLoadingSessions(false);
+        }
+      }
+    },
+    [options.getAccessToken],
+  );
 
   const loadArchivedSessions = useCallback(async () => {
     setIsLoadingArchivedSessions(true);
@@ -501,6 +513,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ],
   );
 
+  const finishSending = useCallback(
+    (sessionId: string) => {
+      unmarkSessionPending(sessionId);
+      clearStreamActivityTracking(sessionId);
+    },
+    [clearStreamActivityTracking, unmarkSessionPending],
+  );
+
   const finalizeAssistantTurn = useCallback(
     (sessionId: string, handoff: AssistantTurnHandoff) => {
       clearSessionStreamUi(sessionId);
@@ -515,8 +535,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       streamingToolCallsRef.current = [];
 
       void loadMessages(sessionId, { background: true });
+      finishSending(sessionId);
     },
-    [loadMessages, resetStreamingUi],
+    [finishSending, loadMessages, resetStreamingUi],
   );
 
   const selectSession = useCallback(
@@ -900,14 +921,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
-  const finishSending = useCallback(
-    (sessionId: string) => {
-      unmarkSessionPending(sessionId);
-      clearStreamActivityTracking(sessionId);
-    },
-    [clearStreamActivityTracking, unmarkSessionPending],
-  );
-
   const dismissBackgroundStream = useCallback(
     (sessionId: string) => {
       userDismissedBackgroundStreamRef.current.add(sessionId);
@@ -1054,7 +1067,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             void loadMessages(sessionId);
           }
 
-          void loadSessions();
+          void loadSessions({ background: true });
         },
         onSessionRenamed: (title: string) => {
           if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
@@ -1249,9 +1262,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           });
         },
         onDone: async (response) => {
-          finishSending(sessionId);
-
           if (shouldIgnoreStreamEvent()) {
+            finishSending(sessionId);
             return;
           }
 
@@ -1259,12 +1271,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setDismissedRecoveryMessageId(null);
 
           try {
-            await loadSessions();
+            await loadSessions({ background: true });
           } catch {
             // Lista de sessões é atualização auxiliar; não bloqueia o fluxo.
           }
 
           if (!isStreamForActiveSession(sessionId)) {
+            finishSending(sessionId);
             return;
           }
 
@@ -1384,9 +1397,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           finalizeAssistantTurn(sessionId, turnHandoff);
         },
         onError: (streamError: string) => {
-          finishSending(sessionId);
-
           if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
+            finishSending(sessionId);
             return;
           }
 
@@ -1409,6 +1421,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             ),
           );
           void loadMessages(sessionId, { userDismissedBackground: true });
+          finishSending(sessionId);
           setError(streamError);
         },
       };
@@ -2100,7 +2113,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isBackgroundAwaitingResponse);
 
   const unansweredTurnRecovery = useMemo(() => {
-    if (!activeSession || isComposerBusy) {
+    if (
+      !activeSession ||
+      isComposerBusy ||
+      playbackPayload ||
+      isPlaybackActive ||
+      isBackgroundAwaitingResponse
+    ) {
       return null;
     }
 
@@ -2110,8 +2129,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, [
     activeSession,
     dismissedRecoveryMessageId,
+    isBackgroundAwaitingResponse,
     isComposerBusy,
+    isPlaybackActive,
     messages,
+    playbackPayload,
   ]);
 
   const dismissUnansweredTurnRecovery = useCallback(() => {
