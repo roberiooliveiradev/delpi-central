@@ -212,6 +212,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content,
       context,
       responseMode,
+      attachmentIds,
       onStatus,
       onActivity,
       onSources,
@@ -228,6 +229,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content: string;
       context?: string;
       responseMode?: ChatResponseModeId;
+      attachmentIds?: string[];
       onStatus?: (message: string) => void;
       onActivity?: (entry: ChatStreamActivityEntry) => void;
       onSources?: (sources: ChatSource[]) => void;
@@ -247,6 +249,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
             signal,
             context,
             responseMode,
+            attachmentIds,
           }),
         {
           onStatus,

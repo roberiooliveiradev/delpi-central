@@ -4,9 +4,7 @@ import {
   Check,
   Copy,
   Download,
-  FileText,
   GitBranch,
-  Image as ImageIcon,
   MessagesSquare,
   Pencil,
   RotateCcw,
@@ -17,7 +15,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal";
 import { useChatFeedbackReasons } from "../../state/hooks/useChatFeedbackReasons";
-import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
+import {
+  createLocalAttachmentPreviewUrl,
+  revokeAttachmentPreviewUrl,
+} from "../chatAttachmentPreview";
+import { uploadChatAttachment } from "../../data/api/chatApi";
+import {
+  isAttachmentIndexPending,
+  waitForSessionAttachmentIndexed,
+} from "../../data/chatAttachmentIndexPolling";
 
 import type {
   ChatCanvasOpenPayload,
@@ -85,6 +91,16 @@ import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
 import { resolveUserMessageTurnContextChips } from "../../state/chatComposerContext";
 import { ChatMessageEditField } from "./ChatMessageEditField";
+import {
+  ChatAttachmentCard,
+  type ChatAttachmentCardModel,
+} from "./ChatAttachmentCard";
+import {
+  ChatAttachmentPreviewModal,
+  type ChatAttachmentPreviewTarget,
+} from "./ChatAttachmentPreviewModal";
+import "./ChatAttachmentCard.css";
+import "./ChatAttachmentPreviewModal.css";
 import { ChatUserTurnContextChips } from "./ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "./chatCanvas";
@@ -116,7 +132,9 @@ type ChatMessageListProps = {
   onEditAndResendMessage?: (
     messageId: string,
     content: string,
+    attachmentIds?: string[],
   ) => Promise<ChatMessage | null>;
+  sessionId?: string | null;
   onReuseMessage?: (content: string) => void;
   onDrillDown?: (query: string) => void;
   onMessageFeedback?: (
@@ -230,73 +248,59 @@ function getMessageAttachments(message: ChatMessage): MessageAttachment[] {
   });
 }
 
-function formatAttachmentSize(size?: number): string {
-  if (!size || size < 0) {
-    return "";
-  }
+function toAttachmentCardModel(
+  attachment: MessageAttachment,
+  index: number,
+): ChatAttachmentCardModel {
+  return {
+    key: attachment.id || `attachment-${index}`,
+    serverAttachmentId: attachment.id,
+    filename:
+      attachment.original_filename || attachment.filename || `Arquivo ${index + 1}`,
+    contentType: attachment.content_type,
+    sizeBytes: attachment.size_bytes,
+    status: attachment.status,
+    readingStatus: attachment.readingStatus,
+    parsed: attachment.parsed,
+  };
+}
 
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+function toPreviewTarget(model: ChatAttachmentCardModel): ChatAttachmentPreviewTarget {
+  return {
+    filename: model.filename,
+    contentType: model.contentType,
+    sizeBytes: model.sizeBytes,
+    serverAttachmentId: model.serverAttachmentId,
+    localFile: model.localFile,
+    localPreviewUrl: model.localPreviewUrl,
+  };
 }
 
 function ChatMessageAttachments({
   attachments,
-  onDownloadAttachment,
+  getAccessToken,
+  onPreviewAttachment,
 }: {
   attachments: MessageAttachment[];
-  onDownloadAttachment?: (attachmentId: string) => Promise<void>;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  onPreviewAttachment?: (attachment: ChatAttachmentCardModel) => void;
 }) {
   if (attachments.length === 0) {
     return null;
   }
 
   return (
-    <div className="mdc-chat-message-attachments" aria-label="Arquivos anexados">
+    <div className="mdc-chat-message-attachment-cards" aria-label="Arquivos anexados">
       {attachments.map((attachment, index) => {
-        const filename =
-          attachment.original_filename ||
-          attachment.filename ||
-          `Arquivo ${index + 1}`;
-        const size = formatAttachmentSize(attachment.size_bytes);
-        const canDownload = Boolean(attachment.id && onDownloadAttachment);
-        const readingStatus =
-          attachment.readingStatus ||
-          attachmentReadingStatusLabel(attachment.status, attachment.parsed);
-        const isImage = String(attachment.content_type || "").startsWith("image/");
+        const model = toAttachmentCardModel(attachment, index);
 
         return (
-          <span
-            key={attachment.id || `${filename}-${index}`}
-            className="mdc-chat-message-attachment"
-            title={filename}
-          >
-            {isImage ? (
-              <ImageIcon size={14} aria-hidden="true" />
-            ) : (
-              <FileText size={14} aria-hidden="true" />
-            )}
-            <strong>{filename}</strong>
-            {size ? <small>{size}</small> : null}
-            <small className="mdc-chat-message-attachment__status">{readingStatus}</small>
-            {canDownload ? (
-              <button
-                type="button"
-                className="mdc-chat-message-attachment__download"
-                onClick={() => void onDownloadAttachment?.(attachment.id!)}
-                aria-label={`Baixar ${filename}`}
-                title="Baixar arquivo"
-              >
-                <Download size={14} aria-hidden="true" />
-              </button>
-            ) : null}
-          </span>
+          <ChatAttachmentCard
+            key={model.key}
+            attachment={model}
+            getAccessToken={getAccessToken}
+            onPreview={onPreviewAttachment}
+          />
         );
       })}
     </div>
@@ -474,6 +478,7 @@ export function ChatMessageList({
   isPlaybackActive = false,
   isLoading,
   onEditAndResendMessage,
+  sessionId,
   onReuseMessage,
   onDrillDown,
   onMessageFeedback,
@@ -529,6 +534,9 @@ export function ChatMessageList({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [editingAttachments, setEditingAttachments] = useState<ChatAttachmentCardModel[]>([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [previewTarget, setPreviewTarget] = useState<ChatAttachmentPreviewTarget | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [enteringAssistantId, setEnteringAssistantId] = useState<string | null>(null);
   const settleAnimationTimerRef = useRef<number | null>(null);
@@ -541,6 +549,12 @@ export function ChatMessageList({
     const stillVisible = messages.some((message) => message.id === editingMessageId);
 
     if (!stillVisible) {
+      setEditingAttachments((current) => {
+        current.forEach((attachment) => {
+          revokeAttachmentPreviewUrl(attachment.localPreviewUrl);
+        });
+        return [];
+      });
       setEditingMessageId(null);
       setEditingContent("");
     }
@@ -947,14 +961,67 @@ export function ChatMessageList({
   async function handleSaveAndResend(messageId: string) {
     const content = editingContent.trim();
 
-    if (!content || !onEditAndResendMessage) {
+    if (!content || !onEditAndResendMessage || isSavingEdit) {
       return;
     }
 
+    const attachmentsSnapshot = [...editingAttachments];
+    const hasPendingLocalUpload = attachmentsSnapshot.some(
+      (attachment) => attachment.localFile && !attachment.serverAttachmentId,
+    );
+
+    if (hasPendingLocalUpload && !sessionId) {
+      return;
+    }
+
+    setIsSavingEdit(true);
     setEditingMessageId(null);
     setEditingContent("");
+    setEditingAttachments([]);
 
-    await onEditAndResendMessage(messageId, content);
+    try {
+      const attachmentIds: string[] = [];
+
+      for (const attachment of attachmentsSnapshot) {
+        if (attachment.serverAttachmentId) {
+          attachmentIds.push(attachment.serverAttachmentId);
+          continue;
+        }
+
+        if (!attachment.localFile || !sessionId) {
+          continue;
+        }
+
+        const uploaded = await uploadChatAttachment(sessionId, attachment.localFile, {
+          getAccessToken,
+        });
+        let resolvedAttachment = uploaded;
+
+        if (isAttachmentIndexPending(uploaded.status)) {
+          const settled = await waitForSessionAttachmentIndexed(sessionId, uploaded.id, {
+            getAccessToken,
+          });
+
+          if (settled) {
+            resolvedAttachment = settled;
+          }
+        }
+
+        attachmentIds.push(resolvedAttachment.id);
+      }
+
+      attachmentsSnapshot.forEach((attachment) => {
+        revokeAttachmentPreviewUrl(attachment.localPreviewUrl);
+      });
+
+      await onEditAndResendMessage(
+        messageId,
+        content,
+        attachmentIds.length > 0 ? attachmentIds : undefined,
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   function startEditMessage(message: ChatMessage) {
@@ -966,11 +1033,50 @@ export function ChatMessageList({
 
     setEditingMessageId(message.id);
     setEditingContent(displayContent || message.content);
+    setEditingAttachments(
+      getMessageAttachments(message).map((attachment, index) =>
+        toAttachmentCardModel(attachment, index),
+      ),
+    );
   }
 
   function cancelEditMessage() {
+    editingAttachments.forEach((attachment) => {
+      revokeAttachmentPreviewUrl(attachment.localPreviewUrl);
+    });
     setEditingMessageId(null);
     setEditingContent("");
+    setEditingAttachments([]);
+  }
+
+  function handleAddEditAttachments(files: File[]) {
+    setEditingAttachments((current) => [
+      ...current,
+      ...files.map((file, index) => ({
+        key: `local-${Date.now()}-${index}`,
+        filename: file.name,
+        contentType: file.type,
+        sizeBytes: file.size,
+        localFile: file,
+        localPreviewUrl: createLocalAttachmentPreviewUrl(file),
+      })),
+    ]);
+  }
+
+  function handleRemoveEditAttachment(key: string) {
+    setEditingAttachments((current) => {
+      const target = current.find((attachment) => attachment.key === key);
+
+      if (target?.localPreviewUrl) {
+        revokeAttachmentPreviewUrl(target.localPreviewUrl);
+      }
+
+      return current.filter((attachment) => attachment.key !== key);
+    });
+  }
+
+  function handlePreviewAttachment(attachment: ChatAttachmentCardModel) {
+    setPreviewTarget(toPreviewTarget(attachment));
   }
 
   async function handleCopy(messageId: string, content: string) {
@@ -1135,10 +1241,15 @@ export function ChatMessageList({
               {editingMessageId === message.id ? (
                 <ChatMessageEditField
                   value={editingContent}
-                  disabled={Boolean(isStreaming)}
+                  disabled={Boolean(isStreaming) || isSavingEdit}
+                  attachments={editingAttachments}
+                  getAccessToken={getAccessToken}
                   onChange={setEditingContent}
                   onCancel={cancelEditMessage}
                   onSubmit={() => void handleSaveAndResend(message.id)}
+                  onAddAttachments={handleAddEditAttachments}
+                  onRemoveAttachment={handleRemoveEditAttachment}
+                  onPreviewAttachment={handlePreviewAttachment}
                 />
               ) : (
                 <>
@@ -1149,7 +1260,8 @@ export function ChatMessageList({
                   />
                   <ChatMessageAttachments
                     attachments={getMessageAttachments(message)}
-                    onDownloadAttachment={onDownloadAttachment}
+                    getAccessToken={getAccessToken}
+                    onPreviewAttachment={handlePreviewAttachment}
                   />
                   {displayContent ? (
                     <div className="mdc-chat-message-user-text">
@@ -1340,7 +1452,8 @@ export function ChatMessageList({
               <>
                 <ChatMessageAttachments
                   attachments={getMessageAttachments(message)}
-                  onDownloadAttachment={onDownloadAttachment}
+                  getAccessToken={getAccessToken}
+                  onPreviewAttachment={handlePreviewAttachment}
                 />
                 {displayContent || assistantToolCalls.length ? (
                   <ChatAssistantContent
@@ -2065,6 +2178,15 @@ export function ChatMessageList({
         >
           <ArrowDown size={18} aria-hidden="true" />
         </button>
+      ) : null}
+
+      {previewTarget ? (
+        <ChatAttachmentPreviewModal
+          target={previewTarget}
+          getAccessToken={getAccessToken}
+          onDownload={onDownloadAttachment}
+          onClose={() => setPreviewTarget(null)}
+        />
       ) : null}
     </div>
   );

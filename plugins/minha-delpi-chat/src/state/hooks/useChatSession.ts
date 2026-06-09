@@ -1792,7 +1792,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   ]);
 
   const editAndResendMessage = useCallback(
-    async (messageId: string, content: string) => {
+    async (messageId: string, content: string, attachmentIds?: string[]) => {
       const normalizedContent = content.trim();
 
       if (!activeSession) {
@@ -1879,6 +1879,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           messageId,
           content: normalizedContent,
           context: activeSession.context ?? "geral",
+          attachmentIds: attachmentIds?.filter(Boolean),
           responseMode: getResponseModeRef.current?.() ?? "normal",
           ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
         });

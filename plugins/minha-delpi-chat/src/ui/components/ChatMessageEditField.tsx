@@ -1,4 +1,6 @@
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
+import type { ChatAttachmentCardModel } from "./ChatAttachmentCard";
+import { ChatMessageEditAttachments } from "./ChatMessageEditAttachments";
 
 function resolveEditFieldLayout() {
   // O campo de edição é inline e cresce para BAIXO (a lista rola), então
@@ -22,17 +24,27 @@ function resolveEditFieldLayout() {
 type ChatMessageEditFieldProps = {
   value: string;
   disabled?: boolean;
+  attachments?: ChatAttachmentCardModel[];
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onChange: (value: string) => void;
   onCancel: () => void;
   onSubmit: () => void;
+  onAddAttachments?: (files: File[]) => void;
+  onRemoveAttachment?: (key: string) => void;
+  onPreviewAttachment?: (attachment: ChatAttachmentCardModel) => void;
 };
 
 export function ChatMessageEditField({
   value,
   disabled,
+  attachments = [],
+  getAccessToken,
   onChange,
   onCancel,
   onSubmit,
+  onAddAttachments,
+  onRemoveAttachment,
+  onPreviewAttachment,
 }: ChatMessageEditFieldProps) {
   const layout = resolveEditFieldLayout();
   const { ref, syncHeight } = useAutoGrowTextarea({
@@ -43,6 +55,17 @@ export function ChatMessageEditField({
 
   return (
     <div className="mdc-chat-message-edit mdc-chat-message-edit--inline">
+      {onAddAttachments && onRemoveAttachment && onPreviewAttachment ? (
+        <ChatMessageEditAttachments
+          attachments={attachments}
+          disabled={disabled}
+          getAccessToken={getAccessToken}
+          onAddFiles={onAddAttachments}
+          onRemoveAttachment={onRemoveAttachment}
+          onPreviewAttachment={onPreviewAttachment}
+        />
+      ) : null}
+
       <textarea
         ref={ref}
         className="mdc-chat-message-edit__input mdc-auto-grow-textarea"

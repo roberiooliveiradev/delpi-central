@@ -1871,14 +1871,18 @@ export function ChatPage({
     void handleHomeStarter(query);
   }
 
-  async function handleEditAndResendMessage(messageId: string, content: string) {
+  async function handleEditAndResendMessage(
+    messageId: string,
+    content: string,
+    attachmentIds?: string[],
+  ) {
     const resolved = await resolveShortcutQuery(content.trim(), CHAT_SHORTCUT_PROMPT_COPY.resend);
 
     if (!resolved) {
       return null;
     }
 
-    return editAndResendMessage(messageId, resolved);
+    return editAndResendMessage(messageId, resolved, attachmentIds);
   }
 
   const homeTourSteps = useMemo(
@@ -2584,6 +2588,7 @@ export function ChatPage({
                 isPlaybackActive={isPlaybackActive}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={handleEditAndResendMessage}
+                sessionId={activeSession?.id ?? null}
                 onSwitchMessageBranch={switchMessageBranch}
                 branchSwitchingMessageId={branchSwitchingMessageId}
                 onContinueFromMessage={continueFromMessage}

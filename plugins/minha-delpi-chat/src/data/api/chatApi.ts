@@ -625,6 +625,7 @@ export async function resendChatMessage(
     signal?: AbortSignal;
     context?: string;
     responseMode?: ChatResponseModeId;
+    attachmentIds?: string[];
   } = {},
 ): Promise<void> {
   await openChatMessageStream(
@@ -633,6 +634,7 @@ export async function resendChatMessage(
       content,
       context: options.context,
       responseMode: options.responseMode,
+      attachmentIds: options.attachmentIds,
     },
     callbacks,
     options,
@@ -1509,6 +1511,32 @@ async function downloadBinaryFromChat(
     "download";
 
   triggerBlobDownload(blob, filename);
+}
+
+export async function fetchChatAttachmentBlob(
+  attachmentId: string,
+  options: ChatApiOptions = {},
+): Promise<{ blob: Blob; filename: string; contentType: string | null }> {
+  const { parseContentDispositionFilename } = await import("../../utils/downloadBlob");
+
+  const response = await fetch(`${API_BASE_URL}/chat/attachments/${attachmentId}/download`, {
+    method: "GET",
+    headers: await getAuthOnlyHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+
+  const blob = await response.blob();
+
+  return {
+    blob,
+    filename:
+      parseContentDispositionFilename(response.headers.get("Content-Disposition")) ||
+      "arquivo",
+    contentType: response.headers.get("Content-Type"),
+  };
 }
 
 export async function downloadChatAttachment(
