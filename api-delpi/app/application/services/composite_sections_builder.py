@@ -11,6 +11,13 @@ SECTION_LABELS: dict[str, str] = {
     "raw_material_stock": "Estoque de MPs",
     "production": "Produção",
     "shipping": "Expedição",
+    "materials": "Impacto de MPs",
+    "summary": "Resumo de custos",
+    "simulation": "Simulação",
+    "last_purchase": "Última compra",
+    "budget_history": "Histórico de orçamento",
+    "price_history": "Histórico de preço",
+    "price_variation": "Variação de preço",
 }
 
 

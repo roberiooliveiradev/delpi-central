@@ -29,6 +29,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_product_factory_status": RouteContract(
         "product_factory_status", "composite_analysis"
     ),
+    "get_product_cost_impact_simulation": RouteContract(
+        "product_cost_impact_simulation", "composite_analysis"
+    ),
+    "get_product_last_purchase": RouteContract(
+        "product_last_purchase", "playbook_report"
+    ),
+    "get_product_purchase_price_history": RouteContract(
+        "product_purchase_price_history", "playbook_report"
+    ),
+    "get_product_purchase_budget_history": RouteContract(
+        "product_purchase_budget_history", "playbook_report"
+    ),
+    "get_product_raw_material_price_intelligence": RouteContract(
+        "product_raw_material_price_intelligence", "composite_analysis"
+    ),
     "get_product_stock": RouteContract("product_stock", "paged_list"),
     "get_product_analyser": RouteContract("product_analyser", "composite_analysis"),
     "get_product_parents": RouteContract("product_parents", "hierarchy"),

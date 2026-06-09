@@ -27,6 +27,10 @@ from app.application.dto.product.get_product_sales_open_orders_request import Ge
 from app.application.dto.product.get_product_sales_billing_request import GetProductSalesBillingRequest
 from app.application.dto.product.get_product_pricing_request import GetProductPricingRequest
 from app.application.dto.product.product_playbook_request import ProductPlaybookRequest
+from app.application.dto.product.product_cost_impact_request import ProductCostImpactRequest
+from app.application.dto.product.product_raw_material_price_request import (
+    ProductRawMaterialPriceRequest,
+)
 from app.application.dto.product.product_analyser_request import ProductAnalyserRequest
 
 from app.interface.http.openapi_agent_metadata import (
@@ -51,6 +55,11 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_PRODUCTION_STATUS,
     PRODUCT_SHIPPING_STATUS,
     PRODUCT_FACTORY_STATUS,
+    PRODUCT_COST_IMPACT_SIMULATION,
+    PRODUCT_LAST_PURCHASE,
+    PRODUCT_PURCHASE_PRICE_HISTORY,
+    PRODUCT_PURCHASE_BUDGET_HISTORY,
+    PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE,
     PRODUCT_SUMMARY,
     PRODUCT_SUPPLIERS,
 )
@@ -106,6 +115,11 @@ from app.composition.product_composer import (
     build_get_product_production_status_use_case,
     build_get_product_shipping_status_use_case,
     build_get_product_factory_status_use_case,
+    build_get_product_cost_impact_simulation_use_case,
+    build_get_product_last_purchase_use_case,
+    build_get_product_purchase_price_history_use_case,
+    build_get_product_purchase_budget_history_use_case,
+    build_get_product_raw_material_price_intelligence_use_case,
     )
 
 
@@ -467,6 +481,251 @@ def get_factory_status(
 
     except Exception as e:
         log_error(f"Erro ao buscar status fabril de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get(
+    "/{code}/cost-impact-simulation",
+    **PRODUCT_COST_IMPACT_SIMULATION,
+    response_model=CompositeAnalysisResponse,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_cost_impact_simulation(
+    code: str,
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    price_source: str = Query(
+        default="standard_cost",
+        description="Fonte de custo unitário: standard_cost (B1_CUSTD) ou last_purchase (B1_UPRC)",
+    ),
+    adjustment_percent: float = Query(
+        default=0.0,
+        ge=-100,
+        le=1000,
+        description="Reajuste percentual simulado aplicado a todas as MPs",
+    ),
+    top_n: Optional[int] = Query(
+        default=None,
+        ge=1,
+        le=200,
+        description="Limita o ranking retornado às N MPs de maior impacto",
+    ),
+):
+    try:
+        if price_source not in ("standard_cost", "last_purchase"):
+            raise ValueError(
+                "price_source inválido. Use standard_cost ou last_purchase."
+            )
+
+        dto = ProductCostImpactRequest(
+            code=code,
+            max_depth=max_depth,
+            price_source=price_source,
+            adjustment_percent=adjustment_percent,
+            top_n=top_n,
+        )
+        use_case = build_get_product_cost_impact_simulation_use_case()
+        result = use_case.execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Produto {code} não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id="get_product_cost_impact_simulation",
+            entity="product_cost_impact_simulation",
+            shape="composite_analysis",
+            code=code,
+            sections=build_composite_sections(
+                result,
+                view="full",
+                section_keys=("materials", "summary", "simulation"),
+            ),
+            message="Simulação de impacto de custos carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na simulação de custo de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao simular impacto de custo de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+def _raw_material_price_dto(
+    code: str,
+    date_start: Optional[str],
+    date_end: Optional[str],
+    branch: Optional[str],
+    history_limit: Optional[int],
+) -> ProductRawMaterialPriceRequest:
+    return ProductRawMaterialPriceRequest(
+        code=code,
+        date_start=date_start,
+        date_end=date_end,
+        branch=branch,
+        history_limit=history_limit,
+    )
+
+
+@router.get("/{code}/last-purchase", **PRODUCT_LAST_PURCHASE)
+@require_permission(API_DELPI_ACCESS)
+def get_last_purchase(
+    code: str,
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = _raw_material_price_dto(code, None, None, branch, None)
+        result = build_get_product_last_purchase_use_case().execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Produto {code} não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id=PRODUCT_LAST_PURCHASE["operation_id"],
+            entity="product_last_purchase",
+            shape="playbook_report",
+            code=code,
+            message="Última compra válida carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na última compra de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar última compra de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get("/{code}/purchase-price-history", **PRODUCT_PURCHASE_PRICE_HISTORY)
+@require_permission(API_DELPI_ACCESS)
+def get_purchase_price_history(
+    code: str,
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    history_limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = _raw_material_price_dto(code, date_start, date_end, branch, history_limit)
+        result = build_get_product_purchase_price_history_use_case().execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Produto {code} não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id=PRODUCT_PURCHASE_PRICE_HISTORY["operation_id"],
+            entity="product_purchase_price_history",
+            shape="playbook_report",
+            code=code,
+            message="Histórico de preço de compra carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação no histórico de preço de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar histórico de preço de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get("/{code}/purchase-budget-history", **PRODUCT_PURCHASE_BUDGET_HISTORY)
+@require_permission(API_DELPI_ACCESS)
+def get_purchase_budget_history(
+    code: str,
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = _raw_material_price_dto(code, date_start, date_end, branch, None)
+        result = build_get_product_purchase_budget_history_use_case().execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Produto {code} não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id=PRODUCT_PURCHASE_BUDGET_HISTORY["operation_id"],
+            entity="product_purchase_budget_history",
+            shape="playbook_report",
+            code=code,
+            message="Histórico de orçamento de compra carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação no histórico de orçamento de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar histórico de orçamento de {code}: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get(
+    "/{code}/raw-material-price-intelligence",
+    **PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE,
+    response_model=CompositeAnalysisResponse,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_raw_material_price_intelligence(
+    code: str,
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    history_limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = _raw_material_price_dto(code, date_start, date_end, branch, history_limit)
+        result = build_get_product_raw_material_price_intelligence_use_case().execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Produto {code} não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id=PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE["operation_id"],
+            entity="product_raw_material_price_intelligence",
+            shape="composite_analysis",
+            code=code,
+            sections=build_composite_sections(
+                result,
+                view="full",
+                section_keys=(
+                    "last_purchase",
+                    "budget_history",
+                    "price_history",
+                    "price_variation",
+                ),
+            ),
+            message="Análise de preço da matéria-prima carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na análise de preço de {code}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar análise de preço de {code}: {e}")
         return error_response(str(e), status_code=500)
 
 

@@ -1,0 +1,452 @@
+PLAYBOOK SQL DELPI — ANÁLISE DE PREÇO DE MATÉRIA-PRIMA
+Versão: jun/2026
+Escopo: último fornecedor, última compra, ICMS, histórico de orçamento, variação de preço
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Responder perguntas sobre preço de compra de matéria-prima (MP), incluindo:
+
+- último fornecedor e última NF válida;
+- preço unitário da última compra;
+- ICMS (valor e alíquota na NF + alíquota cadastral);
+- histórico de orçamento (solicitação SC1010 + pedido SC7010);
+- variação de preço entre compras consecutivas.
+
+Preferir rotas dedicadas da api-delpi quando existirem:
+- GET /products/{code}/raw-material-price-intelligence  (análise composta)
+- GET /products/{code}/last-purchase
+- GET /products/{code}/purchase-price-history
+- GET /products/{code}/purchase-budget-history
+
+Se a rota ainda não existir, montar SQL via POST /apps/api-delpi/data/sql.
+
+======================================================================
+2. REGRA-MÃE
+======================================================================
+
+Análise de preço MP =
+SB1010 (cadastro)
++ SD1010 (NF entrada — compra efetiva)
++ SC7010 (pedido de compra — preço cotado)
++ SC1010 (solicitação de compra — demanda)
++ SA2010 (fornecedor)
++ SA5010 (partnumber fornecedor)
+
+Preço de compra efetivo = SD1010.D1_VUNIT
+Preço cotado no pedido = SC7010.C7_PRECO
+Requisição interna = SC1010.C1_*
+
+Nunca confundir com GET /products/{code}/pricing (DA1010 = preço de VENDA).
+
+======================================================================
+3. TABELAS PERMITIDAS (allowed_tables.json)
+======================================================================
+
+Principal:
+- SB1010  cadastro produto / MP
+- SD1010  itens NF entrada (compras)
+- SC7010  pedidos de compra
+- SC1010  solicitações de compra
+- SA2010  cadastro fornecedor
+- SA5010  produto x fornecedor
+
+Auxiliar (somente se necessário):
+- SF1010  cabeçalho NF entrada
+- SF4010  TES fiscal
+
+======================================================================
+4. MAPEAMENTO DE COLUNAS (VALIDADO SQL SERVER DELPI — JUN/2026)
+======================================================================
+
+### SB1010
+B1_COD          código produto
+B1_DESC         descrição
+B1_TIPO         tipo (MP = matéria-prima)
+B1_UM           unidade
+B1_GRUPO        grupo
+B1_UPRC         último preço cadastro
+B1_UCOM         data última compra cadastro
+B1_PICM         alíquota ICMS cadastral (%)
+B1_CUSTD        custo padrão
+
+### SD1010 — base principal de compra
+D1_FILIAL       filial
+D1_COD          produto
+D1_DOC          número NF
+D1_SERIE        série NF
+D1_ITEM         item NF
+D1_EMISSAO      data emissão AAAAMMDD
+D1_DTDIGIT      data digitação
+D1_FORNECE      código fornecedor
+D1_LOJA         loja fornecedor
+D1_QUANT        quantidade
+D1_VUNIT        preço unitário NF  *** usar este ***
+D1_TOTAL        valor total item
+D1_VALICM       valor ICMS
+D1_PICM         alíquota ICMS NF (%)
+D1_PEDIDO       pedido compra (SC7010.C7_NUM)
+
+ATENÇÃO: D1_PRECO NÃO EXISTE no Protheus DELPI.
+
+Fallback preço unitário:
+CASE WHEN D1_QUANT <> 0 THEN D1_TOTAL / D1_QUANT ELSE 0 END
+
+### SA2010
+A2_COD          fornecedor
+A2_LOJA         loja
+A2_NOME         razão social
+A2_CGC          CNPJ
+A2_EST          UF
+
+### SA5010
+A5_PRODUTO      produto DELPI
+A5_FORNECE      fornecedor
+A5_LOJA         loja
+A5_CODPRF       partnumber fornecedor
+A5_NOMEFOR      nome fornecedor (cadastro vínculo)
+
+### SC1010 — solicitação / requisição (orçamento interno)
+C1_NUM          número solicitação
+C1_ITEM         item
+C1_FILIAL       filial
+C1_PRODUTO      produto
+C1_EMISSAO      data emissão
+C1_DATPRF       data necessidade
+C1_FORNECE      fornecedor
+C1_LOJA         loja
+C1_QUANT        quantidade
+C1_PRECO        preço (pode ser 0)
+C1_TOTAL        total
+C1_PEDIDO       PC gerado
+
+ATENÇÃO: C1_VLDESC NÃO EXISTE no Protheus DELPI.
+
+### SC7010 — pedido de compra (orçamento formal)
+C7_NUM          número pedido
+C7_ITEM         item
+C7_FILIAL       filial
+C7_PRODUTO      produto
+C7_EMISSAO      data emissão
+C7_DATPRF       data prevista
+C7_FORNECE      fornecedor
+C7_LOJA         loja
+C7_QUANT        quantidade
+C7_PRECO        preço unitário PC
+C7_TOTAL        total item
+
+======================================================================
+5. RELAÇÕES
+======================================================================
+
+SD1010.D1_COD = SB1010.B1_COD
+SD1010.D1_FORNECE = SA2010.A2_COD AND SD1010.D1_LOJA = SA2010.A2_LOJA
+
+SA5010.A5_PRODUTO = SD1010.D1_COD
+SA5010.A5_FORNECE = SD1010.D1_FORNECE
+SA5010.A5_LOJA = SD1010.D1_LOJA
+
+SC1010.C1_PEDIDO = SC7010.C7_NUM
+SD1010.D1_PEDIDO = SC7010.C7_NUM  (validar também fornecedor/produto)
+
+SC1010.C1_PRODUTO = SB1010.B1_COD
+SC7010.C7_PRODUTO = SB1010.B1_COD
+
+Regra:
+- compra efetiva / ICMS / variação → SD1010
+- orçamento cotado → SC7010
+- requisição → SC1010
+- fornecedor → SA2010
+- partnumber → SA5010
+
+Nunca usar SA2010 ou SA5010 como tabela principal de compra.
+
+======================================================================
+6. FILTROS OBRIGATÓRIOS
+======================================================================
+
+Registros ativos em todas as tabelas:
+D_E_L_E_T_ = ''
+
+Última NF válida — excluir:
+- fornecedores internos: D1_FORNECE NOT IN ('000019','001149')
+- transportadoras: UPPER(A2_NOME) NOT LIKE '%TRANSP%'
+
+Matéria-prima:
+SB1010.B1_TIPO = 'MP'
+
+Ordenação última NF (desempate homologado):
+1. D1_EMISSAO DESC
+2. D1_DTDIGIT DESC
+3. D1_DOC DESC
+
+======================================================================
+7. REGRAS DE DATA
+======================================================================
+
+Formato interno SQL: AAAAMMDD
+Mês fechado: campo >= 'AAAAMM01' AND campo < 'AAAAMM01 mês seguinte'
+Nunca usar BETWEEN para mês fechado quando o padrão for intervalo fechado-aberto.
+
+Campos de data:
+- SD1010 → D1_EMISSAO
+- SC7010 → C7_EMISSAO
+- SC1010 → C1_EMISSAO
+
+======================================================================
+8. QUANDO USAR CADA CONSULTA
+======================================================================
+
+### Último fornecedor / última compra / ICMS
+→ Query F (última NF válida) abaixo
+Fonte: SD1010 + SA2010 + SA5010
+
+### Variação de preço
+→ Query G (histórico com variation_percent)
+Comparar D1_VUNIT da compra N vs N+1 (mais recente primeiro)
+
+### Histórico de orçamento
+→ Query H (SC1010 UNION SC7010)
+SC1010 = requisição; SC7010 = preço formalizado
+
+### Cadastro / alíquota ICMS cadastral
+→ Query E (SB1010)
+
+### Produto não é MP
+Informar tipo B1_TIPO e prosseguir se usuário insistir em preço de compra.
+
+======================================================================
+9. MODELOS DE CONSULTA
+======================================================================
+
+### E) Cadastro da matéria-prima
+SELECT TOP 1
+  B1_COD AS COD_PRODUTO,
+  B1_DESC AS DESCRICAO,
+  B1_TIPO AS TIPO,
+  B1_UM AS UNIDADE,
+  B1_UPRC AS ULT_PRECO_CADASTRO,
+  B1_UCOM AS DATA_ULT_COMPRA_CADASTRO,
+  B1_PICM AS ALIQ_ICMS_CADASTRO,
+  B1_CUSTD AS CUSTO_PADRAO
+FROM SB1010
+WHERE D_E_L_E_T_ = ''
+  AND B1_COD = :COD_PRODUTO;
+
+### F) Última NF válida (fornecedor + preço + ICMS)
+WITH ULTIMA_NF AS (
+  SELECT
+    SD1.D1_FILIAL AS FILIAL,
+    SD1.D1_COD AS COD_PRODUTO,
+    SD1.D1_DOC AS NF_NUMERO,
+    SD1.D1_EMISSAO AS DATA_EMISSAO,
+    SD1.D1_DTDIGIT AS DATA_DIGITACAO,
+    SD1.D1_FORNECE AS FORNECEDOR_CODIGO,
+    SD1.D1_LOJA AS FORNECEDOR_LOJA,
+    SD1.D1_QUANT AS QUANTIDADE,
+    SD1.D1_VUNIT AS PRECO_UNITARIO,
+    SD1.D1_TOTAL AS VALOR_TOTAL,
+    SD1.D1_VALICM AS VALOR_ICMS,
+    SD1.D1_PICM AS ALIQ_ICMS_NF,
+    SD1.D1_PEDIDO AS PEDIDO_COMPRA,
+    SA2.A2_NOME AS FORNECEDOR_NOME,
+    SA2.A2_CGC AS FORNECEDOR_CNPJ,
+    SA2.A2_EST AS FORNECEDOR_UF,
+    A5.A5_CODPRF AS PARTNUMBER,
+    ROW_NUMBER() OVER (
+      PARTITION BY SD1.D1_COD
+      ORDER BY SD1.D1_EMISSAO DESC, SD1.D1_DTDIGIT DESC, SD1.D1_DOC DESC
+    ) AS RN
+  FROM SD1010 SD1
+  INNER JOIN SA2010 SA2
+    ON SA2.A2_COD = SD1.D1_FORNECE
+   AND SA2.A2_LOJA = SD1.D1_LOJA
+   AND SA2.D_E_L_E_T_ = ''
+  LEFT JOIN SA5010 A5
+    ON A5.A5_PRODUTO = SD1.D1_COD
+   AND A5.A5_FORNECE = SD1.D1_FORNECE
+   AND A5.A5_LOJA = SD1.D1_LOJA
+   AND A5.D_E_L_E_T_ = ''
+  WHERE SD1.D_E_L_E_T_ = ''
+    AND SD1.D1_COD = :COD_PRODUTO
+    AND SD1.D1_FORNECE NOT IN ('000019','001149')
+    AND UPPER(SA2.A2_NOME) NOT LIKE '%TRANSP%'
+)
+SELECT
+  FILIAL, COD_PRODUTO, NF_NUMERO, DATA_EMISSAO, DATA_DIGITACAO,
+  FORNECEDOR_CODIGO, FORNECEDOR_LOJA, FORNECEDOR_NOME, FORNECEDOR_CNPJ, FORNECEDOR_UF,
+  QUANTIDADE, PRECO_UNITARIO, VALOR_TOTAL, VALOR_ICMS, ALIQ_ICMS_NF,
+  PEDIDO_COMPRA, PARTNUMBER
+FROM ULTIMA_NF
+WHERE RN = 1;
+
+### G) Histórico de preço com variação percentual
+WITH COMPRAS AS (
+  SELECT
+    SD1.D1_EMISSAO AS DATA_EMISSAO,
+    SD1.D1_DOC AS NF_NUMERO,
+    SD1.D1_FORNECE AS FORNECEDOR_CODIGO,
+    SA2.A2_NOME AS FORNECEDOR_NOME,
+    SD1.D1_VUNIT AS PRECO_UNITARIO,
+    SD1.D1_VALICM AS VALOR_ICMS,
+    SD1.D1_PICM AS ALIQ_ICMS_NF,
+    ROW_NUMBER() OVER (
+      ORDER BY SD1.D1_EMISSAO DESC, SD1.D1_DTDIGIT DESC, SD1.D1_DOC DESC
+    ) AS SEQ
+  FROM SD1010 SD1
+  INNER JOIN SA2010 SA2
+    ON SA2.A2_COD = SD1.D1_FORNECE
+   AND SA2.A2_LOJA = SD1.D1_LOJA
+   AND SA2.D_E_L_E_T_ = ''
+  WHERE SD1.D_E_L_E_T_ = ''
+    AND SD1.D1_COD = :COD_PRODUTO
+    AND SD1.D1_FORNECE NOT IN ('000019','001149')
+    AND UPPER(SA2.A2_NOME) NOT LIKE '%TRANSP%'
+    AND SD1.D1_EMISSAO >= :DATA_INICIO
+    AND SD1.D1_EMISSAO < :DATA_FIM
+)
+SELECT TOP 24
+  C.DATA_EMISSAO,
+  C.NF_NUMERO,
+  C.FORNECEDOR_CODIGO,
+  C.FORNECEDOR_NOME,
+  C.PRECO_UNITARIO,
+  C.VALOR_ICMS,
+  C.ALIQ_ICMS_NF,
+  P.PRECO_UNITARIO AS PRECO_ANTERIOR,
+  CASE
+    WHEN ISNULL(P.PRECO_UNITARIO, 0) = 0 THEN NULL
+    ELSE ((C.PRECO_UNITARIO - P.PRECO_UNITARIO) / P.PRECO_UNITARIO) * 100
+  END AS VARIACAO_PERCENTUAL
+FROM COMPRAS C
+LEFT JOIN COMPRAS P ON P.SEQ = C.SEQ + 1
+ORDER BY C.SEQ;
+
+### H) Histórico de orçamento (SC1010 + SC7010)
+WITH REQUISICOES AS (
+  SELECT
+    'SC1010' AS ORIGEM,
+    C1.C1_NUM AS DOCUMENTO,
+    C1.C1_ITEM AS ITEM,
+    C1.C1_EMISSAO AS DATA_EMISSAO,
+    C1.C1_FORNECE AS FORNECEDOR,
+    C1.C1_QUANT AS QUANTIDADE,
+    C1.C1_PRECO AS PRECO_UNITARIO,
+    C1.C1_TOTAL AS VALOR_TOTAL,
+    C1.C1_PEDIDO AS PEDIDO_VINCULADO
+  FROM SC1010 C1
+  WHERE C1.D_E_L_E_T_ = ''
+    AND C1.C1_PRODUTO = :COD_PRODUTO
+    AND C1.C1_EMISSAO >= :DATA_INICIO
+    AND C1.C1_EMISSAO < :DATA_FIM
+),
+PEDIDOS AS (
+  SELECT
+    'SC7010' AS ORIGEM,
+    C7.C7_NUM AS DOCUMENTO,
+    C7.C7_ITEM AS ITEM,
+    C7.C7_EMISSAO AS DATA_EMISSAO,
+    C7.C7_FORNECE AS FORNECEDOR,
+    C7.C7_QUANT AS QUANTIDADE,
+    C7.C7_PRECO AS PRECO_UNITARIO,
+    C7.C7_TOTAL AS VALOR_TOTAL,
+    CAST(NULL AS VARCHAR(20)) AS PEDIDO_VINCULADO
+  FROM SC7010 C7
+  WHERE C7.D_E_L_E_T_ = ''
+    AND C7.C7_PRODUTO = :COD_PRODUTO
+    AND C7.C7_EMISSAO >= :DATA_INICIO
+    AND C7.C7_EMISSAO < :DATA_FIM
+)
+SELECT * FROM (
+  SELECT * FROM REQUISICOES
+  UNION ALL
+  SELECT * FROM PEDIDOS
+) H
+ORDER BY DATA_EMISSAO DESC, ORIGEM DESC;
+
+======================================================================
+10. INTERPRETAÇÃO DE VARIAÇÃO DE PREÇO
+======================================================================
+
+VARIACAO_PERCENTUAL > 0  → preço subiu vs compra anterior
+VARIACAO_PERCENTUAL < 0  → preço caiu
+NULL                     → primeira compra do período ou preço anterior zero
+
+Resumo útil para o usuário:
+- preço mínimo / máximo / médio no período
+- última variação percentual
+- comparação B1_UPRC (cadastro) vs último D1_VUNIT (NF)
+
+======================================================================
+11. ROTAS API-DELPI EXISTENTES (REAPROVEITAR)
+======================================================================
+
+GET /products/{code}/suppliers          → fornecedores + último preço PC (SC7010)
+GET /products/{code}/purchases          → pedidos de compra paginados
+GET /products/{code}/inbound-invoice-items → NFs entrada paginadas
+GET /products/{code}/summary            → B1_UPRC, B1_UCOM no cadastro
+
+Rotas novas (playbook implementação):
+GET /products/{code}/raw-material-price-intelligence
+GET /products/{code}/last-purchase
+GET /products/{code}/purchase-price-history
+GET /products/{code}/purchase-budget-history
+
+Documentação: api-delpi/docs/roadmaps/playbook-analise-preco-materia-prima.md
+
+======================================================================
+12. VALIDAÇÃO SQL
+======================================================================
+
+Endpoint: POST /apps/api-delpi/data/sql
+Body JSON: {"sql": "SELECT ..."}
+Permissão: api-delpi.data ou api-delpi.access.full
+
+Produto teste homologado: 10080001
+
+Colunas validadas jun/2026:
+OK  SD1010: D1_VUNIT, D1_VALICM, D1_PICM, D1_PEDIDO
+FAIL SD1010: D1_PRECO
+OK  SC1010: C1_PRECO, C1_TOTAL, C1_PEDIDO
+FAIL SC1010: C1_VLDESC
+OK  SC7010: C7_PRECO, C7_TOTAL
+
+======================================================================
+13. REGRA FINAL — ÁRVORE DE DECISÃO
+======================================================================
+
+Pergunta sobre preço de COMPRA de MP?
+→ SB1010 confirmar tipo MP
+→ SD1010 para compra efetiva e ICMS
+→ SC7010 para orçamento/pedido
+→ SC1010 para requisição
+→ SA2010 + SA5010 enriquecer fornecedor
+
+Pergunta sobre preço de VENDA?
+→ GET /products/{code}/pricing (DA1010) — NÃO usar neste playbook
+
+Pergunta pede variação?
+→ Query G
+
+Pergunta pede histórico de orçamento/cotação?
+→ Query H
+
+Pergunta pede último fornecedor?
+→ Query F
+
+Antes de inventar coluna nova, validar via POST /data/sql ou SX3010.
+
+======================================================================
+14. FORMA DE RESPOSTA
+======================================================================
+
+Após executar SQL ou chamar rota:
+- apresentar último fornecedor, data, preço unitário, ICMS
+- se houver histórico, mostrar variação percentual
+- distinguir SC1010 (requisição) de SC7010 (pedido com preço)
+- informar se produto não é MP
+
+Encerramento:
+Fonte: API DELPI — rota ou /data/sql
+Status: sucesso ou mensagem técnica exata

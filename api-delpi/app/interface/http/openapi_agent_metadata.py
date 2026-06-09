@@ -175,6 +175,51 @@ PRODUCT_FACTORY_STATUS = agent_route(
     operation_id="get_product_factory_status",
 )
 
+PRODUCT_COST_IMPACT_SIMULATION = agent_route(
+    summary="Simulador de impacto de custos do PA",
+    description=(
+        "Ranking das matérias-primas que mais impactam o custo de 1 PA, com base na BOM vigente (SG1010). "
+        "Suporta custo padrão ou última compra e simulação percentual de reajuste (adjustment_percent). "
+        "Use para perguntas sobre materiais críticos de custo, Pareto de MPs ou simulação de aumento de preço."
+    ),
+    operation_id="get_product_cost_impact_simulation",
+)
+
+PRODUCT_LAST_PURCHASE = agent_route(
+    summary="Última compra válida da matéria-prima",
+    description=(
+        "Retorna a última NF de entrada válida (SD1010) com fornecedor, preço unitário, ICMS e pedido vinculado. "
+        "Exclui transportadoras e fornecedores internos. Use para último fornecedor ou última aquisição de MP."
+    ),
+    operation_id="get_product_last_purchase",
+)
+
+PRODUCT_PURCHASE_PRICE_HISTORY = agent_route(
+    summary="Histórico de preço de compra da matéria-prima",
+    description=(
+        "Série temporal de NFs de entrada com preço unitário, ICMS e variação percentual entre compras consecutivas. "
+        "Filtrável por período e filial."
+    ),
+    operation_id="get_product_purchase_price_history",
+)
+
+PRODUCT_PURCHASE_BUDGET_HISTORY = agent_route(
+    summary="Histórico de orçamento de compra (SC + PC)",
+    description=(
+        "Unifica solicitações de compra (SC1010) e pedidos de compra (SC7010) para análise de cotação e requisição."
+    ),
+    operation_id="get_product_purchase_budget_history",
+)
+
+PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE = agent_route(
+    summary="Análise inteligente de preço de matéria-prima",
+    description=(
+        "Visão consolidada: cadastro, última compra, ICMS, histórico de orçamento, variação de preço e status. "
+        "Preferir quando o usuário pedir análise completa de preço/custo de compra de uma MP."
+    ),
+    operation_id="get_product_raw_material_price_intelligence",
+)
+
 PRODUCT_STOCK = agent_route(
     summary="Estoque do produto por filial e local",
     description=(

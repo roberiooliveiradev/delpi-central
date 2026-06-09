@@ -1,0 +1,129 @@
+PLAYBOOK SQL DELPI — SIMULADOR DE IMPACTO DE CUSTOS DO PA
+Versão: jun/2026
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Ranquear matérias-primas (MP) que mais impactam o custo de 1 produto acabado (PA),
+com base na BOM vigente, e simular reajuste percentual de preços.
+
+Preferir rota dedicada quando disponível:
+GET /products/{code}/cost-impact-simulation
+
+Parâmetros:
+- price_source=standard_cost | last_purchase
+- adjustment_percent=0..N  (simulação)
+- top_n=N  (limitar ranking)
+- max_depth=50
+
+======================================================================
+2. REGRA-MÃE
+======================================================================
+
+Custo estendido da MP no PA =
+quantidade acumulada da MP por 1 PA (BOM SG1010)
+× custo unitário (B1_CUSTD ou B1_UPRC)
+
+Impacto percentual no material =
+extended_cost / SUM(extended_cost de todas MPs) × 100
+
+Impacto percentual no PA =
+extended_cost / B1_CUSTD do PA × 100
+
+======================================================================
+3. TABELAS
+======================================================================
+
+SG1010 — estrutura / BOM
+SB1010 — cadastro PA e MP
+
+Colunas SB1010:
+B1_COD, B1_DESC, B1_TIPO (PA/PI/MP)
+B1_CUSTD — custo padrão
+B1_UPRC  — último preço compra
+B1_UM    — unidade
+
+Colunas SG1010:
+G1_COD, G1_COMP, G1_QUANT, G1_FIM
+
+======================================================================
+4. FILTROS OBRIGATÓRIOS
+======================================================================
+
+D_E_L_E_T_ = '' em todas as tabelas
+Vigência: G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+Agregar somente B1_TIPO = 'MP'
+Produto raiz deve ser PA (validar B1_TIPO = 'PA')
+
+======================================================================
+5. MODELO DE CONSULTA — RANKING DE IMPACTO
+======================================================================
+
+DECLARE @PRODUTO VARCHAR(30) = :COD_PA;
+DECLARE @MAX_DEPTH INT = 50;
+
+WITH ESTRUTURA AS (
+  SELECT G1.G1_COD AS parent_code, G1.G1_COMP AS component_code,
+         CAST(G1.G1_QUANT AS FLOAT) AS accumulated_qty, 1 AS level
+  FROM SG1010 G1
+  WHERE G1.D_E_L_E_T_ = '' AND G1.G1_COD = @PRODUTO
+    AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+  UNION ALL
+  SELECT G1.G1_COD, G1.G1_COMP,
+         CAST(E.accumulated_qty * CAST(G1.G1_QUANT AS FLOAT) AS FLOAT), E.level + 1
+  FROM SG1010 G1
+  INNER JOIN ESTRUTURA E ON E.component_code = G1.G1_COD
+  WHERE G1.D_E_L_E_T_ = '' AND E.level < @MAX_DEPTH
+    AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+),
+MPS AS (
+  SELECT E.component_code AS cod_mp, SUM(E.accumulated_qty) AS qtd_por_pa
+  FROM ESTRUTURA E
+  INNER JOIN SB1010 SB1 ON SB1.B1_COD = E.component_code AND SB1.D_E_L_E_T_ = '' AND SB1.B1_TIPO = 'MP'
+  GROUP BY E.component_code
+)
+SELECT TOP 20
+  M.cod_mp,
+  SB1.B1_DESC AS descricao,
+  M.qtd_por_pa,
+  SB1.B1_CUSTD AS custo_padrao,
+  SB1.B1_UPRC AS ult_preco_compra,
+  M.qtd_por_pa * ISNULL(NULLIF(SB1.B1_CUSTD,0), SB1.B1_UPRC) AS custo_estendido
+FROM MPS M
+INNER JOIN SB1010 SB1 ON SB1.B1_COD = M.cod_mp AND SB1.D_E_L_E_T_ = ''
+ORDER BY custo_estendido DESC
+OPTION (MAXRECURSION 0);
+
+======================================================================
+6. SIMULAÇÃO DE REAJUSTE
+======================================================================
+
+Após calcular custo_estendido base, aplicar:
+custo_simulado = custo_estendido × (1 + :AJUSTE_PERCENT / 100)
+
+delta_total = SUM(custo_simulado) - SUM(custo_estendido)
+
+Exemplo: adjustment_percent=10 → multiplicador 1.10
+
+======================================================================
+7. INTERPRETAÇÃO
+======================================================================
+
+- MP com maior custo_estendido = maior impacto no PA (Pareto)
+- impact_on_material_cost_percent ≈ participação no custo total de MPs
+- impact_on_pa_cost_percent ≈ participação no B1_CUSTD do PA
+- Simulação uniforme: mesmo % para todas MPs (MVP)
+
+Produto teste: 90261255
+
+======================================================================
+8. O QUE NÃO FAZER
+======================================================================
+
+- Não usar preço de VENDA (DA1010) — é rota /pricing
+- Não misturar PIs no ranking — agregar só MPs folha
+- Não ignorar filtro de vigência G1_FIM
+- Não usar SD1010 neste simulador base (opcional extensão futura: preço NF)
+
+Documentação: api-delpi/docs/roadmaps/playbook-simulador-impacto-custos-pa.md

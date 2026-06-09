@@ -45,6 +45,21 @@ from app.application.use_cases.product.get_product_shipping_status_use_case impo
 from app.application.use_cases.product.get_product_factory_status_use_case import (
     GetProductFactoryStatusUseCase,
 )
+from app.application.use_cases.product.get_product_cost_impact_simulation_use_case import (
+    GetProductCostImpactSimulationUseCase,
+)
+from app.application.use_cases.product.get_product_raw_material_price_use_cases import (
+    GetProductLastPurchaseUseCase,
+    GetProductPurchaseBudgetHistoryUseCase,
+    GetProductPurchasePriceHistoryUseCase,
+    GetProductRawMaterialPriceIntelligenceUseCase,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_cost_impact_repository import (
+    ProductCostImpactRepository,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_raw_material_price_repository import (
+    ProductRawMaterialPriceRepository,
+)
 
 
 
@@ -140,3 +155,25 @@ def build_get_product_shipping_status_use_case() -> GetProductShippingStatusUseC
 
 def build_get_product_factory_status_use_case() -> GetProductFactoryStatusUseCase:
     return GetProductFactoryStatusUseCase(ProductPlaybookRepository())
+
+
+def build_get_product_cost_impact_simulation_use_case() -> GetProductCostImpactSimulationUseCase:
+    return GetProductCostImpactSimulationUseCase(ProductCostImpactRepository())
+
+
+def build_get_product_last_purchase_use_case() -> GetProductLastPurchaseUseCase:
+    return GetProductLastPurchaseUseCase(ProductRawMaterialPriceRepository())
+
+
+def build_get_product_purchase_price_history_use_case() -> GetProductPurchasePriceHistoryUseCase:
+    return GetProductPurchasePriceHistoryUseCase(ProductRawMaterialPriceRepository())
+
+
+def build_get_product_purchase_budget_history_use_case() -> GetProductPurchaseBudgetHistoryUseCase:
+    return GetProductPurchaseBudgetHistoryUseCase(ProductRawMaterialPriceRepository())
+
+
+def build_get_product_raw_material_price_intelligence_use_case() -> (
+    GetProductRawMaterialPriceIntelligenceUseCase
+):
+    return GetProductRawMaterialPriceIntelligenceUseCase(ProductRawMaterialPriceRepository())
