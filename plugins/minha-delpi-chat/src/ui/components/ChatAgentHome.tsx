@@ -80,7 +80,7 @@ export function ChatAgentHome({
             .filter(Boolean)
             .join(" ")}
         >
-          <Bot size={28} aria-hidden="true" />
+          <Bot size={22} aria-hidden="true" />
         </div>
 
         <div className="mdc-chat-agent-home__identity">
