@@ -62,6 +62,29 @@ Wrappers especializados (mantêm API estável):
 | `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom e feedback | `ChatPersonalityContentService` |
+| `sql_intent_vocabulary.json` | Marcadores SQL (intenção, refinamento, produção, analisador) — seção **`shared`** para termos reutilizados | `ChatSqlIntentVocabularyService` → vários `ChatSql*` |
+| `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
+| `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
+| `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
+| `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
+| `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
+| `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
+
+## Vocabulário compartilhado (dicionários PT)
+
+Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.json`. Vários serviços Python leem o **mesmo** JSON via subclasses de `ChatAssistantVocabularyService`:
+
+| Método | Uso |
+|--------|-----|
+| `terms(*path)` | Lista de marcadores em caminho aninhado |
+| `merge_terms(*paths)` | Une listas do mesmo bundle sem duplicar (ex.: `shared` + seção específica) |
+| `text` / `format` | Template com `{placeholder}` |
+| `synonym_map` | Objeto chave → lista de aliases |
+| `node` / `mapping` | Nó arbitrário ou mapa chave→string |
+
+**Padrão:** definir termos canônicos uma vez em `shared.*`; métodos de conveniência no loader (ex.: `incremental_authoring_terms()`) compõem `shared` + chaves específicas. Regex, SQL e heurísticas numéricas permanecem no Python.
+
+**Novo domínio:** criar `assistant/<dominio>_vocabulary.json`, subclass com `BUNDLE = "<dominio>_vocabulary"`, consumir só via loader — não copiar listas entre serviços.
 
 ## Migração (jun/2026) — já centralizado
 

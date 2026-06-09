@@ -12,6 +12,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_sql_intent_vocabulary_service import (
     ChatSqlIntentVocabularyService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
@@ -76,119 +79,6 @@ class ChatSqlQueryRefinementService:
     _CODE_LIKE_COLUMN_RE = re.compile(
         r"(COD|CODIGO|^ID$|_ID$|NUM|SKU|PRODUTO|PRODUCT|CHAVE)",
     )
-    _COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
-        "filial": {
-            "aliases": ("filial", "cod filial", "codigo filial", "branch"),
-            "select": "OP.C2_FILIAL AS FILIAL",
-            "group_by": "OP.C2_FILIAL",
-            "result_alias": "FILIAL",
-        },
-        "descricao produto": {
-            "aliases": (
-                "descricao produto",
-                "descrição produto",
-                "descricao do produto",
-                "descrição do produto",
-                "descricao",
-                "descrição",
-            ),
-            "select": "P.B1_DESC AS DESCRICAO_PRODUTO",
-            "group_by": "P.B1_DESC",
-            "result_alias": "DESCRICAO_PRODUTO",
-        },
-        "cod produto": {
-            "aliases": ("cod produto", "codigo produto", "código produto", "produto"),
-            "select": "OP.C2_PRODUTO AS COD_PRODUTO",
-            "group_by": "OP.C2_PRODUTO",
-            "result_alias": "COD_PRODUTO",
-        },
-        "quantidade": {
-            "aliases": (
-                "quantidade",
-                "qtd planejada",
-                "qtd",
-                "quantidade planejada",
-            ),
-            "select": "OP.C2_QUANT AS QTD_PLANEJADA",
-            "group_by": "OP.C2_QUANT",
-            "result_alias": "QTD_PLANEJADA",
-        },
-        "unidade": {
-            "aliases": ("unidade", "um"),
-            "select": "OP.C2_UM AS UNIDADE",
-            "group_by": "OP.C2_UM",
-            "result_alias": "UNIDADE",
-        },
-        "data inicio": {
-            "aliases": (
-                "data inicio",
-                "data início",
-                "data inicio operacao",
-                "data início operação",
-                "inicio operacao",
-                "início operação",
-            ),
-            "select": "OA.H8_DTINI AS DATA_INICIO_OPERACAO",
-            "group_by": "OA.H8_DTINI",
-            "result_alias": "DATA_INICIO_OPERACAO",
-        },
-    }
-    _SA1_AUTHORING_COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
-        "cidade": {
-            "aliases": ("cidade", "municipio", "município", "mun"),
-            "select": "A1_MUN AS CIDADE",
-            "group_by": "A1_MUN",
-            "result_alias": "CIDADE",
-        },
-    }
-    _INVENTORY_COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
-        "filial": {
-            "aliases": ("filial", "cod filial", "codigo filial", "branch"),
-            "select": "SB2.B2_FILIAL AS branch",
-            "group_by": "SB2.B2_FILIAL",
-            "result_alias": "branch",
-        },
-        "armazem": {
-            "aliases": ("armazem", "armazém", "local", "warehouse"),
-            "select": "RTRIM(SB2.B2_LOCAL) AS warehouse",
-            "group_by": "SB2.B2_LOCAL",
-            "result_alias": "warehouse",
-        },
-        "descricao produto": {
-            "aliases": (
-                "descricao produto",
-                "descrição produto",
-                "descricao do produto",
-                "descrição do produto",
-                "descricao",
-                "descrição",
-            ),
-            "select": "RTRIM(SB1.B1_DESC) AS product_description",
-            "group_by": "SB1.B1_DESC",
-            "result_alias": "product_description",
-        },
-        "cod produto": {
-            "aliases": ("cod produto", "codigo produto", "código produto", "produto"),
-            "select": "SB2.B2_COD AS product_code",
-            "group_by": "SB2.B2_COD",
-            "result_alias": "product_code",
-        },
-        "estoque minimo": {
-            "aliases": (
-                "estoque minimo",
-                "estoque mínimo",
-                "minimo",
-                "mínimo",
-                "minimum stock",
-            ),
-            "select": (
-                "COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)) "
-                "AS minimum_stock"
-            ),
-            "group_by": "",
-            "result_alias": "minimum_stock",
-        },
-    }
 
     @classmethod
     def is_sql_follow_up(
@@ -232,7 +122,7 @@ class ChatSqlQueryRefinementService:
         if not active_sql:
             return None
 
-        title = recent.title if recent else "Consulta SQL (elaboração)"
+        title = recent.title if recent else ExternalActionResponseContentService.get("sqlQueryRefinement", "defaultTitle")
         mode = cls._resolve_refinement_mode(
             normalized,
             has_recent_execution=bool(recent),
@@ -246,7 +136,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason="Refinamento SQL: filtro de filial removido da consulta anterior.",
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeBranchFilter"),
                 )
 
         top_limit = cls._extract_top_limit(normalized)
@@ -259,7 +149,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason="Refinamento SQL: limite TOP ajustado na consulta anterior.",
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "topLimitAdjusted"),
                 )
 
         column_key = cls._extract_column_key(normalized, sql=active_sql)
@@ -272,7 +162,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason="Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "addColumn"),
                 )
 
         if column_key and cls._looks_like_remove_column(normalized):
@@ -283,7 +173,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason="Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeColumn"),
                 )
 
         if cls._looks_like_filter_adjustment(normalized):
@@ -301,10 +191,7 @@ class ChatSqlQueryRefinementService:
                         mode=mode,
                         sql=updated,
                         title=title,
-                        reason=(
-                            "Refinamento SQL: filtro por valor da linha aplicado "
-                            "na consulta anterior."
-                        ),
+                        reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "rowValueFilter"),
                     )
 
         branches = cls._extract_branch_codes(normalized)
@@ -317,7 +204,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason="Refinamento SQL: filtro de filial aplicado na consulta anterior.",
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "applyBranchFilter"),
                 )
 
         if cls._looks_like_show_query(normalized):
@@ -325,7 +212,7 @@ class ChatSqlQueryRefinementService:
                 mode="show_sql",
                 sql=active_sql,
                 title=title,
-                reason="A mensagem solicita exibir a consulta SQL da conversa.",
+                reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "showQuery"),
             )
 
         from app.domain.services.chat_sql_dynamic_column_refinement_service import (
@@ -359,10 +246,7 @@ class ChatSqlQueryRefinementService:
                     mode=mode,
                     sql=updated,
                     title=title,
-                    reason=(
-                        "Refinamento SQL: consulta de programação expandida "
-                        "para todas as filiais com coluna FILIAL."
-                    ),
+                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "productionBranchBreakdown"),
                 )
 
         return None
@@ -758,24 +642,23 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def format_show_sql_answer(cls, refinement: SqlQueryRefinement) -> str:
-        title = refinement.title or "Consulta SQL"
+        title = refinement.title or ExternalActionResponseContentService.get("sqlQueryRefinement", "fallbackTitle")
         return (
             f"### {title}\n\n"
-            "Consulta SQL utilizada na pesquisa anterior:\n\n"
+            f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerIntro')}\n\n"
             f"```sql\n{refinement.sql.strip()}\n```\n\n"
-            "Peça alterações em linguagem natural — por exemplo: "
-            "*filial 01 e 02*, *top 100* ou *acrescente a coluna de armazém*."
+            f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerHint')}"
         )
 
     @classmethod
     def _column_definitions_for_sql(cls, sql: str) -> dict[str, dict[str, Any]]:
         if "SB2010" in str(sql or "").upper():
-            return cls._INVENTORY_COLUMN_DEFINITIONS
+            return ChatSqlIntentVocabularyService.column_definitions("SB2010")
 
-        definitions = dict(cls._COLUMN_DEFINITIONS)
+        definitions = dict(ChatSqlIntentVocabularyService.column_definitions("SC2010"))
 
         if re.search(r"\bSA1\b", str(sql or ""), flags=re.I):
-            definitions.update(cls._SA1_AUTHORING_COLUMN_DEFINITIONS)
+            definitions.update(ChatSqlIntentVocabularyService.column_definitions("SA1010"))
 
         return definitions
 
@@ -845,10 +728,7 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def _incremental_authoring_terms(cls) -> tuple[str, ...]:
-        return ChatSqlIntentVocabularyService.terms(
-            "queryRefinement",
-            "incrementalAuthoringTerms",
-        )
+        return ChatSqlIntentVocabularyService.incremental_authoring_terms()
 
     @classmethod
     def _branch_predicate(cls, column: str, branches: list[str]) -> str:

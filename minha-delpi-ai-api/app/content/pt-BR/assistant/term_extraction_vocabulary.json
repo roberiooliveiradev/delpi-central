@@ -1,0 +1,29 @@
+{
+  "stopwords": [
+    "isso",
+    "aquilo",
+    "voce",
+    "você",
+    "ele",
+    "ela",
+    "esse",
+    "essa",
+    "isto",
+    "que"
+  ],
+  "definitionQuestionVerbs": [
+    "defina",
+    "definir",
+    "significado de",
+    "sentido de"
+  ],
+  "definitionQuestionPrefixes": [
+    "o que e",
+    "o que é",
+    "o que significa",
+    "o que quer dizer",
+    "que e",
+    "que é",
+    "que significa"
+  ]
+}

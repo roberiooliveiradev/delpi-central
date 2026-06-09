@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_assistant_vocabulary_service import (
+    ChatAssistantVocabularyService,
+)
 
-_BUNDLE = "analysis_intent_vocabulary"
 
-
-class ChatAnalysisIntentVocabularyService:
-    @classmethod
-    def terms(cls, *path: str) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, *path))
+class ChatAnalysisIntentVocabularyService(ChatAssistantVocabularyService):
+    BUNDLE = "analysis_intent_vocabulary"

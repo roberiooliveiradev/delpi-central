@@ -12,18 +12,15 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_session_vocabulary_service import (
+    ChatSessionVocabularyService,
+)
 
 
 class ChatActiveQuerySessionService:
-    _TOPIC_CHANGE_MARKERS = (
-        r"\bpesquis",
-        r"\bbusca\s+web\b",
-        r"\bweb\s+search\b",
-        r"\bquem\s+[eé]\s+vc\b",
-        r"\bo\s+que\s+[eé]\s+vc\b",
-        r"\bcanvas\b",
-        r"\blousa\b",
-    )
+    @classmethod
+    def _topic_change_markers(cls) -> tuple[str, ...]:
+        return ChatSessionVocabularyService.terms("topicChangeMarkers")
 
     _SUB_INTENT_TO_PRODUCT_INTENT: dict[str, str] = {
         "stock": ChatProductQueryIntent.STOCK,
@@ -251,7 +248,7 @@ class ChatActiveQuerySessionService:
         if ChatProductQueryIntentService.looks_like_scope_reset_operational_query(message):
             return True
 
-        if any(re.search(pattern, normalized) for pattern in cls._TOPIC_CHANGE_MARKERS):
+        if any(re.search(pattern, normalized) for pattern in cls._topic_change_markers()):
             return True
 
         detected = ChatProductQueryIntentService.detect(message)
@@ -327,7 +324,7 @@ class ChatActiveQuerySessionService:
 
             normalized = ChatMessageNormalizationService.normalize_for_matching(text)
 
-            if any(re.search(pattern, normalized) for pattern in cls._TOPIC_CHANGE_MARKERS):
+            if any(re.search(pattern, normalized) for pattern in cls._topic_change_markers()):
                 return False
 
             return len(normalized.split()) <= 12

@@ -1,0 +1,11 @@
+{
+  "topicChangeMarkers": [
+    "\\bpesquis",
+    "\\bbusca\\s+web\\b",
+    "\\bweb\\s+search\\b",
+    "\\bquem\\s+[eé]\\s+vc\\b",
+    "\\bo\\s+que\\s+[eé]\\s+vc\\b",
+    "\\bcanvas\\b",
+    "\\blousa\\b"
+  ]
+}

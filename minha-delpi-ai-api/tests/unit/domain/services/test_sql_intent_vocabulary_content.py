@@ -20,8 +20,8 @@ def test_sql_intent_vocabulary_bundle_has_core_sections():
     )
     assert ChatAssistantContentService.list(
         "sql_intent_vocabulary",
-        "dynamicColumnRefinement",
-        "groupByTerms",
+        "shared",
+        "previousQueryTerms",
     )
     assert ChatAssistantContentService.list(
         "sql_intent_vocabulary",
@@ -46,13 +46,39 @@ def test_dynamic_column_synonyms_loaded_from_json():
     assert "COD_PRODUTO" in synonyms["produto"]
 
 
+def test_column_definitions_loaded_from_json():
+    production = ChatSqlIntentVocabularyService.column_definitions("SC2010")
+
+    assert "filial" in production
+    assert "FILIAL" in production["filial"]["select"]
+
+
 def test_advanced_sql_specialist_vocabulary_loaded():
     assert ChatSqlIntentVocabularyService.terms(
         "advancedSqlSpecialist",
         "activationTerms",
     )
+    assert ChatSqlIntentVocabularyService.text(
+        "advancedSqlSpecialist",
+        "sqlAuthoringIntro",
+    )
     assert ChatSqlIntentVocabularyService.mode_pattern_map().get("review")
     assert ChatSqlIntentVocabularyService.planner_hints()
+
+
+def test_shared_terms_merged_without_duplication():
+    merged = ChatSqlIntentVocabularyService.incremental_authoring_terms()
+
+    assert "consulta anterior" in merged
+    assert "agrupar por" in merged
+    assert "primeiros" in merged
+    assert merged.count("consulta anterior") == 1
+
+    group_by = ChatSqlIntentVocabularyService.group_by_terms()
+
+    assert "agrupado por filial" not in group_by
+    assert "agrupado por" in group_by
+    assert group_by.count("agrupar por") == 1
 
 
 def test_query_pattern_advisor_reads_guidance_from_json():

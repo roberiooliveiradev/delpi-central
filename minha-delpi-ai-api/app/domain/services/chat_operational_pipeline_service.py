@@ -14,49 +14,19 @@ from app.domain.services.chat_technical_description_intent_service import (
     ChatTechnicalDescriptionIntentService,
 )
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+from app.domain.services.chat_operational_pipeline_vocabulary_service import (
+    ChatOperationalPipelineVocabularyService,
+)
 
 
 class ChatOperationalPipelineService:
-    _OPERATIONAL_TERMS = (
-        "produto",
-        "product",
-        "item",
-        "codigo",
-        "código",
-        "referencia",
-        "referência",
-        "ref ",
-        " sku",
-        "estoque",
-        "stock",
-        "saldo",
-        "lmp",
-        "lmps",
-        "lista de materiais",
-        "lista material",
-        "amostra",
-        "ordem de venda",
-        "sql",
-        "analisador",
-        "analyser",
-        "api delpi",
-    )
+    @classmethod
+    def _operational_terms(cls) -> tuple[str, ...]:
+        return ChatOperationalPipelineVocabularyService.terms("operationalTerms")
 
-    _DOCUMENTAL_TERMS = (
-        "explique",
-        "explica ",
-        "documentação",
-        "documentacao",
-        "política",
-        "politica",
-        "procedimento",
-        "como funciona",
-        "o que é",
-        "o que e ",
-        "descreva o processo",
-        "manual ",
-        "norma ",
-    )
+    @classmethod
+    def _documental_terms(cls) -> tuple[str, ...]:
+        return ChatOperationalPipelineVocabularyService.terms("documentalTerms")
 
     @classmethod
     def is_enabled(cls) -> bool:
@@ -111,7 +81,7 @@ class ChatOperationalPipelineService:
             return False
 
         if cls._looks_like_documental_question(normalized) and any(
-            term in normalized for term in cls._OPERATIONAL_TERMS
+            term in normalized for term in cls._operational_terms()
         ):
             return False
 
@@ -123,8 +93,8 @@ class ChatOperationalPipelineService:
         if intent in (ChatProductQueryIntent.STOCK, ChatProductQueryIntent.DESCRIPTION):
             return True
 
-        return any(term in normalized for term in cls._OPERATIONAL_TERMS)
+        return any(term in normalized for term in cls._operational_terms())
 
     @classmethod
     def _looks_like_documental_question(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._DOCUMENTAL_TERMS)
+        return any(term in normalized for term in cls._documental_terms())

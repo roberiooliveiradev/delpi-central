@@ -6,9 +6,8 @@ import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from app.domain.services.chat_date_range_intent_service import (
-    _MONTH_LABELS_PT,
-    _MONTHS_PT,
+from app.domain.services.chat_date_range_vocabulary_service import (
+    ChatDateRangeVocabularyService,
 )
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
@@ -39,7 +38,15 @@ _WEEKDAYS_PT: dict[str, int] = {
     "sab": 5,
 }
 
-_MONTH_ORDER = tuple(sorted(_MONTHS_PT.keys(), key=len, reverse=True))
+def _month_order() -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            ChatDateRangeVocabularyService.months_pt().keys(),
+            key=len,
+            reverse=True,
+        )
+    )
+
 
 _SLASH_DMY_RE = re.compile(
     r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b",
@@ -349,7 +356,7 @@ class ChatTemporalIntentService:
         normalized: str,
         reference: date,
     ) -> ResolvedTemporalPoint | None:
-        for month_name in _MONTH_ORDER:
+        for month_name in _month_order():
             pattern = (
                 rf"\b(?:dia\s+)?(\d{{1,2}})\s+de\s+{re.escape(month_name)}"
                 rf"(?:\s+de|\s+/|\s+)?(?:\s*(\d{{4}}))?\b"
@@ -359,7 +366,7 @@ class ChatTemporalIntentService:
                 continue
 
             day = int(match.group(1))
-            month = _MONTHS_PT[month_name]
+            month = ChatDateRangeVocabularyService.months_pt()[month_name]
             year_raw = match.group(2)
 
             if year_raw:
@@ -374,7 +381,10 @@ class ChatTemporalIntentService:
             if not target:
                 return None
 
-            month_label = _MONTH_LABELS_PT.get(month, month_name)
+            month_label = ChatDateRangeVocabularyService.month_labels_pt().get(
+                month,
+                month_name,
+            )
             label = ExternalActionResponseContentService.format(
                 "temporal",
                 "namedDayMonthYear",

@@ -68,10 +68,7 @@ class ChatAdvancedSqlSpecialistService:
 
     @classmethod
     def _incremental_edit_terms(cls) -> tuple[str, ...]:
-        return ChatSqlIntentVocabularyService.terms(
-            "advancedSqlSpecialist",
-            "incrementalEditTerms",
-        )
+        return ChatSqlIntentVocabularyService.incremental_edit_terms()
 
     @classmethod
     def _mode_patterns(cls) -> tuple[tuple[SqlSpecialistMode, tuple[str, ...]], ...]:
@@ -511,11 +508,18 @@ class ChatAdvancedSqlSpecialistService:
                 metadata["suppressClientPresentation"] = True
                 metadata.pop("dataCoverageNotice", None)
                 metadata["humanizedSummary"] = {
-                    "titulo": "Schema interno (uso interno)",
-                    "linhas": [
-                        "Metadados Protheus carregados para elaborar SQL.",
-                        "Não exibir catálogo de colunas ao usuário.",
-                    ],
+                    "titulo": ChatSqlIntentVocabularyService.text(
+                        "advancedSqlSpecialist",
+                        "schemaExplore",
+                        "internalTitle",
+                    ),
+                    "linhas": list(
+                        ChatSqlIntentVocabularyService.terms(
+                            "advancedSqlSpecialist",
+                            "schemaExplore",
+                            "internalLines",
+                        )
+                    ),
                 }
 
             item["metadata"] = metadata
@@ -597,32 +601,76 @@ class ChatAdvancedSqlSpecialistService:
                 break
 
         active_hint = (
-            "Filtro Protheus usual para ativos: D_E_L_E_T_ = '' (ou equivalente na tabela física, ex. SA1010)."
+            ChatSqlIntentVocabularyService.text(
+                "advancedSqlSpecialist",
+                "schemaExplore",
+                "activeFilterHint",
+            )
             if "ativ" in normalized
-            else "Use exclusão lógica D_E_L_E_T_ = '' quando aplicável."
+            else ChatSqlIntentVocabularyService.text(
+                "advancedSqlSpecialist",
+                "schemaExplore",
+                "defaultDeleteHint",
+            )
         )
 
         return {
-            "titulo": f"Schema interno {table_name} (não exibir catálogo ao usuário)",
+            "titulo": ChatSqlIntentVocabularyService.format(
+                "advancedSqlSpecialist",
+                "schemaExplore",
+                "userTitle",
+                table_name=table_name,
+            ),
             "linhas": [
-                f"Tabela: {table_name} — {len(columns)} coluna(s) no catálogo.",
-                f"Colunas para o SQL: {', '.join(prioritized) if prioritized else 'validar no SX3'}.",
+                ChatSqlIntentVocabularyService.format(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "columnCountLine",
+                    table_name=table_name,
+                    count=str(len(columns)),
+                ),
+                ChatSqlIntentVocabularyService.format(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "columnsLine",
+                    columns=", ".join(prioritized) if prioritized else "validar no SX3",
+                ),
                 active_hint,
-                "Entrega obrigatória ao usuário: bloco ```sql``` com SELECT (somente leitura), depois explicação curta.",
-                "Use exatamente estes nomes de coluna no SQL (não invente Codigo/Nome/Status genéricos).",
-                "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno.",
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "deliveryHint",
+                ),
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "columnNamesHint",
+                ),
+                ChatSqlIntentVocabularyService.text(
+                    "advancedSqlSpecialist",
+                    "schemaExplore",
+                    "noMetadataOnlyHint",
+                ),
             ],
         }
 
-    SQL_AUTHORING_INTRO = (
-        "Segue a consulta em SQL (somente leitura, sem executar no sistema). "
-        "Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:"
-    )
+    @classmethod
+    def _sql_authoring_intro(cls) -> str:
+        return ChatSqlIntentVocabularyService.text(
+            "advancedSqlSpecialist",
+            "sqlAuthoringIntro",
+        )
 
-    _SQL_AUTHORING_INTRO_RE = re.compile(
-        r"Segue a consulta em SQL\s*\(somente leitura[\s\S]*?conforme o ambiente:\s*",
-        flags=re.IGNORECASE,
-    )
+    @classmethod
+    @lru_cache(maxsize=1)
+    def _sql_authoring_intro_re(cls) -> re.Pattern[str]:
+        intro = cls._sql_authoring_intro()
+        prefix = re.escape(intro.split("(")[0].strip())
+
+        return re.compile(
+            rf"{prefix}\s*\([\s\S]*?conforme o ambiente:\s*",
+            flags=re.IGNORECASE,
+        )
     _SQL_BLOCK_RE = re.compile(r"```sql\s*[\s\S]*?```", flags=re.IGNORECASE)
 
     @classmethod
@@ -686,7 +734,7 @@ class ChatAdvancedSqlSpecialistService:
 
     @classmethod
     def _dedupe_sql_authoring_prose(cls, text: str) -> str:
-        matches = list(cls._SQL_AUTHORING_INTRO_RE.finditer(text))
+        matches = list(cls._sql_authoring_intro_re().finditer(text))
 
         if len(matches) <= 1:
             return text.strip()
@@ -699,7 +747,7 @@ class ChatAdvancedSqlSpecialistService:
 
             return ""
 
-        cleaned = cls._SQL_AUTHORING_INTRO_RE.sub(_replace, text)
+        cleaned = cls._sql_authoring_intro_re().sub(_replace, text)
         cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
         return cleaned.strip()
@@ -725,7 +773,7 @@ class ChatAdvancedSqlSpecialistService:
         paragraphs: list[str] = []
 
         for fragment in fragments:
-            scratch = cls._SQL_AUTHORING_INTRO_RE.sub("\n", fragment)
+            scratch = cls._sql_authoring_intro_re().sub("\n", fragment)
             paragraphs.extend(
                 part.strip() for part in re.split(r"\n\s*\n", scratch) if part.strip()
             )
@@ -733,7 +781,7 @@ class ChatAdvancedSqlSpecialistService:
         kept: list[str] = []
 
         for paragraph in paragraphs:
-            if cls._prose_chunks_similar(cls.SQL_AUTHORING_INTRO, paragraph):
+            if cls._prose_chunks_similar(cls._sql_authoring_intro(), paragraph):
                 continue
 
             if kept and cls._prose_chunks_similar(kept[-1], paragraph):
@@ -759,7 +807,7 @@ class ChatAdvancedSqlSpecialistService:
             return text.strip()
 
         before_first = re.split(r"```sql", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
-        custom_before = cls._SQL_AUTHORING_INTRO_RE.sub("", before_first).strip()
+        custom_before = cls._sql_authoring_intro_re().sub("", before_first).strip()
         paragraphs = cls._collect_unique_authoring_prose(text)
 
         parts: list[str] = []
@@ -767,7 +815,7 @@ class ChatAdvancedSqlSpecialistService:
         if custom_before and len(custom_before) >= 16:
             parts.append(custom_before)
         else:
-            parts.append(cls.SQL_AUTHORING_INTRO)
+            parts.append(cls._sql_authoring_intro())
 
         parts.append(f"```sql\n{sql_body}\n```")
 

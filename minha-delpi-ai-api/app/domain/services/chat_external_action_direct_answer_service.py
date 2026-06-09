@@ -194,6 +194,12 @@ class ChatExternalActionDirectAnswerService:
             return f"**{title}**\n\n{message_text}"
 
         if rows and cls._looks_like_production_schedule_row(rows[0]):
+            lines = cls._clean_lines(humanized)
+
+            if lines and not cls._is_generic_sql_rows_count_only(lines):
+                body = "\n\n".join(lines)
+                return f"**{title}**\n\n{body}".strip()
+
             from app.domain.services.external_actions.external_action_result_presenter import (
                 ExternalActionResultPresenter,
             )
@@ -338,6 +344,17 @@ class ChatExternalActionDirectAnswerService:
                 return [row for row in nested_rows if isinstance(row, dict)]
 
         return []
+
+    @classmethod
+    def _is_generic_sql_rows_count_only(cls, lines: list[str]) -> bool:
+        if len(lines) != 1:
+            return False
+
+        normalized = lines[0].lower()
+
+        return normalized.startswith("a consulta retornou") or normalized.startswith(
+            "… e mais"
+        )
 
     @classmethod
     def _looks_like_production_schedule_row(cls, row: dict) -> bool:

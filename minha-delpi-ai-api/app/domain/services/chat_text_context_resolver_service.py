@@ -24,6 +24,10 @@ class ChatTextContextResolverService:
         return ChatTextContextVocabularyService.terms("attachmentMarkers")
 
     @classmethod
+    def _inline_extract_verbs(cls) -> tuple[str, ...]:
+        return ChatTextContextVocabularyService.terms("inlineExtractVerbs")
+
+    @classmethod
     def resolve(
         cls,
         message: str | None,
@@ -109,8 +113,10 @@ class ChatTextContextResolverService:
         if not message.strip():
             return None
 
+        verbs = "|".join(re.escape(verb) for verb in cls._inline_extract_verbs())
+
         colon_match = re.search(
-            r"(?:corrija|revise|traduza|resuma|reescreva|melhore|deixe|explique|simplifique)\s*:\s*(.+)",
+            rf"(?:{verbs})\s*:\s*(.+)",
             message,
             re.IGNORECASE | re.DOTALL,
         )

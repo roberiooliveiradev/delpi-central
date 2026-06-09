@@ -146,7 +146,10 @@ def test_present_sql_resultsets_with_production_rows_by_branch():
         path="/data/sql",
     )
 
-    assert "por filial" in humanized["titulo"].lower()
+    assert humanized["linhas"][0].startswith("Consultei a programação")
+    assert any("filial **01**" in line for line in humanized["linhas"])
+    assert any("90264130" in line for line in humanized["linhas"])
+    assert len(humanized["sqlRows"]) == 1
 
     table = presenter.build_presentation(
         {
@@ -198,7 +201,8 @@ def test_present_sql_resultsets_with_production_rows():
         path="/data/sql",
     )
 
-    assert humanized["linhas"] == ["A consulta retornou **2** registro(s)."]
+    assert humanized["linhas"][0].startswith("Consultei a programação")
+    assert "2" in humanized["linhas"][1]
     assert len(humanized["sqlRows"]) == 2
 
     table = presenter.build_presentation(
@@ -256,6 +260,7 @@ def test_format_sql_direct_answer_uses_product_markdown():
 
     assert answer is not None
     assert "**Produtos programados para produção hoje**" in answer
+    assert "Consultei a programação" in answer
     assert "**`90264130`**" in answer
     assert "PARAFUSO M8" in answer
     assert "Success" not in answer

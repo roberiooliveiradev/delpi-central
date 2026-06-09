@@ -20,17 +20,6 @@ from app.domain.services.chat_product_query_intent_service import (
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
-_PRODUCT_CONTEXT_TERMS = (
-    "produto",
-    "product",
-    "item",
-    "material",
-    "insumo",
-    "sku",
-    "código",
-    "codigo",
-)
-
 
 @lru_cache(maxsize=1)
 def _parameter_content() -> dict:
@@ -50,6 +39,10 @@ class ChatOperationalParameterService:
             ChatProductQueryIntent.SUMMARY,
         }
     )
+
+    @classmethod
+    def _product_context_terms(cls) -> tuple[str, ...]:
+        return tuple(_parameter_content().get("productContextTerms") or [])
 
     @classmethod
     def resolve_missing_product_code_answer(
@@ -398,7 +391,7 @@ class ChatOperationalParameterService:
         if intent == ChatProductQueryIntent.DESCRIPTION:
             return (
                 ChatProductQueryIntentService._looks_like_description_question(normalized)
-                or any(term in normalized for term in _PRODUCT_CONTEXT_TERMS)
+                or any(term in normalized for term in cls._product_context_terms())
             )
 
         if intent == ChatProductQueryIntent.ANALYSER:

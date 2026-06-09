@@ -70,6 +70,7 @@ class ExternalActionSqlPresenter:
                 rows,
                 title=title,
                 record_total=record_total,
+                root=root,
             )
             presented["dados"] = root
             presented["sqlRows"] = rows
@@ -295,6 +296,7 @@ class ExternalActionSqlPresenter:
             *,
             title: str | None = None,
             record_total: int | None = None,
+            root: dict | None = None,
         ) -> dict:
             resolved_title = title or ExternalActionResponseContentService.get(
                 "sql",
@@ -302,6 +304,29 @@ class ExternalActionSqlPresenter:
             )
             shown = len(rows)
             total_count = record_total if record_total is not None and record_total >= shown else shown
+
+            if rows and self._looks_like_production_schedule_row(rows[0]):
+                from app.domain.services.chat_sql_production_schedule_presentation_service import (
+                    ChatSqlProductionSchedulePresentationService,
+                )
+
+                schedule = self._resolve_production_schedule_from_root(root or {})
+                linhas = ChatSqlProductionSchedulePresentationService.build_linhas(
+                    rows,
+                    schedule=schedule,
+                    record_total=total_count,
+                    include_branch_breakdown=self._looks_like_production_branch_breakdown(
+                        root or {}
+                    ),
+                    format_row=self._format_production_schedule_row,
+                )
+
+                return {
+                    "titulo": resolved_title,
+                    "linhas": linhas,
+                    "dados": {"rows": rows, "total": total_count, "shown": shown},
+                    "sqlRows": rows,
+                }
 
             linhas = [
                 ExternalActionResponseContentService.format(

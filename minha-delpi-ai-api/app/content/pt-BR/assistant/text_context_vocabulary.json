@@ -11,6 +11,17 @@
   ],
   "canvasMarkers": ["lousa", "canvas"],
   "attachmentMarkers": ["anexo", "arquivo", "pdf", "documento anex"],
+  "inlineExtractVerbs": [
+    "corrija",
+    "revise",
+    "traduza",
+    "resuma",
+    "reescreva",
+    "melhore",
+    "deixe",
+    "explique",
+    "simplifique"
+  ],
   "promptBlock": {
     "inlineTextSource": "- Texto fonte na mensagem: «{snippet}»",
     "priorAssistant": "- Use como base a resposta anterior: «{prior}»",

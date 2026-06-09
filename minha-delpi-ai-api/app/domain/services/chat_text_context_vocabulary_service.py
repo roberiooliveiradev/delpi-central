@@ -2,24 +2,10 @@
 
 from __future__ import annotations
 
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_assistant_vocabulary_service import (
+    ChatAssistantVocabularyService,
+)
 
-_BUNDLE = "text_context_vocabulary"
 
-
-class ChatTextContextVocabularyService:
-    @classmethod
-    def terms(cls, *path: str) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, *path))
-
-    @classmethod
-    def text(cls, *path: str, default: str = "", **values: str) -> str:
-        template = ChatAssistantContentService.get(_BUNDLE, *path, default=default)
-
-        if not template:
-            return default
-
-        try:
-            return template.format(**values)
-        except KeyError:
-            return template
+class ChatTextContextVocabularyService(ChatAssistantVocabularyService):
+    BUNDLE = "text_context_vocabulary"

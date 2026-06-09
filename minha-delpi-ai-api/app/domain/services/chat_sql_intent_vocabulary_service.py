@@ -2,34 +2,67 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_assistant_vocabulary_service import (
+    ChatAssistantVocabularyService,
+)
 
-_BUNDLE = "sql_intent_vocabulary"
 
-
-class ChatSqlIntentVocabularyService:
-    @classmethod
-    def terms(cls, *path: str) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, *path))
+class ChatSqlIntentVocabularyService(ChatAssistantVocabularyService):
+    BUNDLE = "sql_intent_vocabulary"
 
     @classmethod
-    def node(cls, *path: str) -> Any:
-        return ChatAssistantContentService.get_node(_BUNDLE, *path)
+    def incremental_authoring_terms(cls) -> tuple[str, ...]:
+        return cls.merge_terms(
+            ("shared", "previousQueryTerms"),
+            ("shared", "groupByCommandTerms"),
+            ("queryRefinement", "incrementalAuthoringSpecific"),
+        )
 
     @classmethod
-    def synonym_map(cls, *path: str) -> dict[str, tuple[str, ...]]:
-        raw = cls.node(*path)
+    def incremental_edit_terms(cls) -> tuple[str, ...]:
+        return cls.merge_terms(
+            ("shared", "previousQueryTerms"),
+            ("advancedSqlSpecialist", "incrementalEditSpecific"),
+        )
+
+    @classmethod
+    def group_by_terms(cls) -> tuple[str, ...]:
+        return cls.merge_terms(
+            ("shared", "groupByCommandTerms"),
+            ("shared", "groupByExtendedTerms"),
+        )
+
+    @classmethod
+    def filter_prefix_terms(cls) -> tuple[str, ...]:
+        return cls.merge_terms(
+            ("shared", "filterPrefixTerms"),
+        )
+
+    @classmethod
+    @lru_cache(maxsize=8)
+    def column_definitions(cls, table_group: str) -> dict[str, dict[str, Any]]:
+        raw = cls.node("queryRefinement", "columnDefinitions", table_group)
 
         if not isinstance(raw, dict):
             return {}
 
-        resolved: dict[str, tuple[str, ...]] = {}
+        resolved: dict[str, dict[str, Any]] = {}
 
-        for key, value in raw.items():
-            if isinstance(value, list):
-                resolved[str(key)] = tuple(str(item) for item in value if str(item).strip())
+        for key, definition in raw.items():
+            if not isinstance(definition, dict):
+                continue
+
+            aliases = definition.get("aliases") or []
+
+            resolved[str(key)] = {
+                "aliases": tuple(str(item) for item in aliases if str(item).strip()),
+                "select": str(definition.get("select") or ""),
+                "group_by": str(definition.get("group_by") or ""),
+                "result_alias": str(definition.get("result_alias") or ""),
+            }
 
         return resolved
 
@@ -99,18 +132,10 @@ class ChatSqlIntentVocabularyService:
 
     @classmethod
     def insight_text(cls, key: str, *, default: str = "", **values: str) -> str:
-        template = ChatAssistantContentService.get(
-            _BUNDLE,
+        return cls.format(
             "resultAnalyzer",
             "insights",
             key,
             default=default,
+            **values,
         )
-
-        if not template:
-            return default
-
-        try:
-            return template.format(**values)
-        except KeyError:
-            return template

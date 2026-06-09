@@ -9,6 +9,10 @@ class ChatToolContextContentService:
     _BUNDLE = "tool_context"
 
     @classmethod
+    def list(cls, *path: str) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(cls._BUNDLE, *path))
+
+    @classmethod
     def get(cls, *path: str) -> str:
         return ChatAssistantContentService.get(cls._BUNDLE, *path)
 

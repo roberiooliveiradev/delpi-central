@@ -1,4 +1,30 @@
 {
+  "shared": {
+    "previousQueryTerms": [
+      "consulta anterior",
+      "query anterior",
+      "sql anterior"
+    ],
+    "groupByCommandTerms": [
+      "agrupar por",
+      "agrupa por",
+      "group by"
+    ],
+    "groupByExtendedTerms": [
+      "agrupado por",
+      "agrupada por"
+    ],
+    "filterPrefixTerms": [
+      "filtrar por",
+      "filtre por",
+      "filtra por",
+      "filtro por",
+      "restrinja por",
+      "restringe por",
+      "somente",
+      "apenas"
+    ]
+  },
   "operationalIntent": {
     "productionPhrases": [
       "produzidos hoje",
@@ -99,7 +125,10 @@
       "detalhe por filial",
       "detalhar por filial"
     ],
-    "defaultBranches": ["01", "02"]
+    "defaultBranches": [
+      "01",
+      "02"
+    ]
   },
   "sqlIntent": {
     "executeTerms": [
@@ -334,25 +363,157 @@
       "sem filtro de filial",
       "sem filial"
     ],
-    "incrementalAuthoringTerms": [
-      "consulta anterior",
-      "query anterior",
-      "sql anterior",
+    "incrementalAuthoringSpecific": [
       "primeiros",
-      "primeiras",
-      "agrupar por",
-      "agrupa por",
-      "group by"
-    ]
+      "primeiras"
+    ],
+    "columnDefinitions": {
+      "SC2010": {
+        "filial": {
+          "aliases": [
+            "filial",
+            "cod filial",
+            "codigo filial",
+            "branch"
+          ],
+          "select": "OP.C2_FILIAL AS FILIAL",
+          "group_by": "OP.C2_FILIAL",
+          "result_alias": "FILIAL"
+        },
+        "descricao produto": {
+          "aliases": [
+            "descricao produto",
+            "descrição produto",
+            "descricao do produto",
+            "descrição do produto",
+            "descricao",
+            "descrição"
+          ],
+          "select": "P.B1_DESC AS DESCRICAO_PRODUTO",
+          "group_by": "P.B1_DESC",
+          "result_alias": "DESCRICAO_PRODUTO"
+        },
+        "cod produto": {
+          "aliases": [
+            "cod produto",
+            "codigo produto",
+            "código produto",
+            "produto"
+          ],
+          "select": "OP.C2_PRODUTO AS COD_PRODUTO",
+          "group_by": "OP.C2_PRODUTO",
+          "result_alias": "COD_PRODUTO"
+        },
+        "quantidade": {
+          "aliases": [
+            "quantidade",
+            "qtd planejada",
+            "qtd",
+            "quantidade planejada"
+          ],
+          "select": "OP.C2_QUANT AS QTD_PLANEJADA",
+          "group_by": "OP.C2_QUANT",
+          "result_alias": "QTD_PLANEJADA"
+        },
+        "unidade": {
+          "aliases": [
+            "unidade",
+            "um"
+          ],
+          "select": "OP.C2_UM AS UNIDADE",
+          "group_by": "OP.C2_UM",
+          "result_alias": "UNIDADE"
+        },
+        "data inicio": {
+          "aliases": [
+            "data inicio",
+            "data início",
+            "data inicio operacao",
+            "data início operação",
+            "inicio operacao",
+            "início operação"
+          ],
+          "select": "OA.H8_DTINI AS DATA_INICIO_OPERACAO",
+          "group_by": "OA.H8_DTINI",
+          "result_alias": "DATA_INICIO_OPERACAO"
+        }
+      },
+      "SA1010": {
+        "cidade": {
+          "aliases": [
+            "cidade",
+            "municipio",
+            "município",
+            "mun"
+          ],
+          "select": "A1_MUN AS CIDADE",
+          "group_by": "A1_MUN",
+          "result_alias": "CIDADE"
+        }
+      },
+      "SB2010": {
+        "filial": {
+          "aliases": [
+            "filial",
+            "cod filial",
+            "codigo filial",
+            "branch"
+          ],
+          "select": "SB2.B2_FILIAL AS branch",
+          "group_by": "SB2.B2_FILIAL",
+          "result_alias": "branch"
+        },
+        "armazem": {
+          "aliases": [
+            "armazem",
+            "armazém",
+            "local",
+            "warehouse"
+          ],
+          "select": "RTRIM(SB2.B2_LOCAL) AS warehouse",
+          "group_by": "SB2.B2_LOCAL",
+          "result_alias": "warehouse"
+        },
+        "descricao produto": {
+          "aliases": [
+            "descricao produto",
+            "descrição produto",
+            "descricao do produto",
+            "descrição do produto",
+            "descricao",
+            "descrição"
+          ],
+          "select": "RTRIM(SB1.B1_DESC) AS product_description",
+          "group_by": "SB1.B1_DESC",
+          "result_alias": "product_description"
+        },
+        "cod produto": {
+          "aliases": [
+            "cod produto",
+            "codigo produto",
+            "código produto",
+            "produto"
+          ],
+          "select": "SB2.B2_COD AS product_code",
+          "group_by": "SB2.B2_COD",
+          "result_alias": "product_code"
+        },
+        "estoque minimo": {
+          "aliases": [
+            "estoque minimo",
+            "estoque mínimo",
+            "minimo",
+            "mínimo",
+            "minimum stock"
+          ],
+          "select": "COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)) AS minimum_stock",
+          "group_by": "",
+          "result_alias": "minimum_stock"
+        }
+      }
+    }
   },
   "dynamicColumnRefinement": {
-    "groupByTerms": [
-      "agrupar por",
-      "agrupa por",
-      "agrupado por",
-      "agrupada por",
-      "group by"
-    ],
     "groupByMarkers": [
       "agrup",
       "group by"
@@ -367,32 +528,64 @@
       "restrinja por",
       "restringe por"
     ],
-    "filterPrefixTerms": [
-      "filtrar por",
-      "filtre por",
-      "filtra por",
-      "filtro por",
-      "restrinja por",
-      "restringe por",
-      "somente",
-      "apenas"
-    ],
     "columnSynonyms": {
-      "filial": ["FILIAL", "BRANCH", "B2_FILIAL", "C2_FILIAL", "D1_FILIAL"],
-      "produto": ["COD_PRODUTO", "PRODUCT_CODE", "B1_COD", "C2_PRODUTO", "PRODUTO"],
+      "filial": [
+        "FILIAL",
+        "BRANCH",
+        "B2_FILIAL",
+        "C2_FILIAL",
+        "D1_FILIAL"
+      ],
+      "produto": [
+        "COD_PRODUTO",
+        "PRODUCT_CODE",
+        "B1_COD",
+        "C2_PRODUTO",
+        "PRODUTO"
+      ],
       "descricao": [
         "DESCRICAO",
         "DESCRICAO_PRODUTO",
         "PRODUCT_DESCRIPTION",
         "B1_DESC"
       ],
-      "cliente": ["A1_COD", "A1_NOME", "CUSTOMER", "CLIENTE"],
-      "cidade": ["A1_MUN", "CIDADE", "MUNICIPIO"],
-      "municipio": ["A1_MUN", "CIDADE", "MUNICIPIO"],
-      "quantidade": ["QTD_PLANEJADA", "QUANTITY", "QTD", "QUANT"],
-      "unidade": ["UNIDADE", "UM", "UNIT"],
-      "armazem": ["WAREHOUSE", "B2_LOCAL", "LOCAL"],
-      "data": ["DATA", "DT", "DATE"]
+      "cliente": [
+        "A1_COD",
+        "A1_NOME",
+        "CUSTOMER",
+        "CLIENTE"
+      ],
+      "cidade": [
+        "A1_MUN",
+        "CIDADE",
+        "MUNICIPIO"
+      ],
+      "municipio": [
+        "A1_MUN",
+        "CIDADE",
+        "MUNICIPIO"
+      ],
+      "quantidade": [
+        "QTD_PLANEJADA",
+        "QUANTITY",
+        "QTD",
+        "QUANT"
+      ],
+      "unidade": [
+        "UNIDADE",
+        "UM",
+        "UNIT"
+      ],
+      "armazem": [
+        "WAREHOUSE",
+        "B2_LOCAL",
+        "LOCAL"
+      ],
+      "data": [
+        "DATA",
+        "DT",
+        "DATE"
+      ]
     }
   },
   "resultAnalyzer": {
@@ -458,10 +651,7 @@
       "explic",
       "revis"
     ],
-    "incrementalEditTerms": [
-      "consulta anterior",
-      "query anterior",
-      "sql anterior",
+    "incrementalEditSpecific": [
       "adicione a coluna",
       "adiciona a coluna",
       "remova a coluna",
@@ -473,6 +663,22 @@
       "ajuste a query",
       "ajusta a query"
     ],
+    "sqlAuthoringIntro": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:",
+    "schemaExplore": {
+      "internalTitle": "Schema interno (uso interno)",
+      "internalLines": [
+        "Metadados Protheus carregados para elaborar SQL.",
+        "Não exibir catálogo de colunas ao usuário."
+      ],
+      "userTitle": "Schema interno {table_name} (não exibir catálogo ao usuário)",
+      "columnCountLine": "Tabela: {table_name} — {count} coluna(s) no catálogo.",
+      "columnsLine": "Colunas para o SQL: {columns}.",
+      "activeFilterHint": "Filtro Protheus usual para ativos: D_E_L_E_T_ = '' (ou equivalente na tabela física, ex. SA1010).",
+      "defaultDeleteHint": "Use exclusão lógica D_E_L_E_T_ = '' quando aplicável.",
+      "deliveryHint": "Entrega obrigatória ao usuário: bloco ```sql``` com SELECT (somente leitura), depois explicação curta.",
+      "columnNamesHint": "Use exatamente estes nomes de coluna no SQL (não invente Codigo/Nome/Status genéricos).",
+      "noMetadataOnlyHint": "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno."
+    },
     "modePatterns": {
       "review": [
         "revisa",
@@ -541,27 +747,58 @@
     },
     "plannerHints": [
       {
-        "triggers": ["compar", "periodo", "período", "mes anterior", "mês anterior", "ano anterior"],
+        "triggers": [
+          "compar",
+          "periodo",
+          "período",
+          "mes anterior",
+          "mês anterior",
+          "ano anterior"
+        ],
         "hint": "use_cte_period_compare"
       },
       {
-        "triggers": ["ranking", "top ", "maior", "menor", "por categoria"],
+        "triggers": [
+          "ranking",
+          "top ",
+          "maior",
+          "menor",
+          "por categoria"
+        ],
         "hint": "use_window_rank"
       },
       {
-        "triggers": ["ultimo registro", "último registro", "mais recente por"],
+        "triggers": [
+          "ultimo registro",
+          "último registro",
+          "mais recente por"
+        ],
         "hint": "use_row_number_dedup"
       },
       {
-        "triggers": ["variacao", "variação", "percentual", "%"],
+        "triggers": [
+          "variacao",
+          "variação",
+          "percentual",
+          "%"
+        ],
         "hint": "guard_division_by_zero"
       },
       {
-        "triggers": ["deduplic", "duplicad", "unico", "único"],
+        "triggers": [
+          "deduplic",
+          "duplicad",
+          "unico",
+          "único"
+        ],
         "hint": "use_row_number_dedup"
       },
       {
-        "triggers": ["pivot", "cruzad", "matriz"],
+        "triggers": [
+          "pivot",
+          "cruzad",
+          "matriz"
+        ],
         "hint": "use_pivot_or_conditional_agg"
       }
     ]
@@ -569,32 +806,62 @@
   "queryPatternAdvisor": {
     "patterns": [
       {
-        "triggers": ["compar", "periodo", "período", "mes anterior", "mês anterior", "ano anterior"],
+        "triggers": [
+          "compar",
+          "periodo",
+          "período",
+          "mes anterior",
+          "mês anterior",
+          "ano anterior"
+        ],
         "code": "period_compare_cte",
         "guidance": "Use CTEs para isolar período atual e anterior antes do JOIN final."
       },
       {
-        "triggers": ["ranking", "top ", "maior", "menor", "por categoria"],
+        "triggers": [
+          "ranking",
+          "top ",
+          "maior",
+          "menor",
+          "por categoria"
+        ],
         "code": "window_rank",
         "guidance": "Use ROW_NUMBER() ou RANK() OVER (PARTITION BY ... ORDER BY ...) para ranking."
       },
       {
-        "triggers": ["ultimo registro", "último registro", "mais recente por", "deduplic"],
+        "triggers": [
+          "ultimo registro",
+          "último registro",
+          "mais recente por",
+          "deduplic"
+        ],
         "code": "window_dedup",
         "guidance": "Use ROW_NUMBER() OVER (PARTITION BY chave ORDER BY data DESC) = 1 para deduplicar."
       },
       {
-        "triggers": ["variacao", "variação", "percentual", "%"],
+        "triggers": [
+          "variacao",
+          "variação",
+          "percentual",
+          "%"
+        ],
         "code": "percent_change",
         "guidance": "Calcule variação com NULLIF no denominador para evitar divisão por zero."
       },
       {
-        "triggers": ["pivot", "cruzad", "matriz"],
+        "triggers": [
+          "pivot",
+          "cruzad",
+          "matriz"
+        ],
         "code": "conditional_agg",
         "guidance": "Para pivot simples, use SUM(CASE WHEN ...) GROUP BY dimensão."
       },
       {
-        "triggers": ["coorte", "cohort"],
+        "triggers": [
+          "coorte",
+          "cohort"
+        ],
         "code": "cohort_cte",
         "guidance": "Monte coorte em CTE base e agregue retenção/conversão em etapa seguinte."
       }

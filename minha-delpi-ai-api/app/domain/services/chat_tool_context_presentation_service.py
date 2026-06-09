@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
+
 
 class ChatToolContextPresentationService:
         @classmethod
@@ -142,7 +146,7 @@ class ChatToolContextPresentationService:
             titles = cls._presentation_titles(safe_tool_calls)
 
             if not titles:
-                return "Consulta concluída."
+                return ChatToolContextContentService.get("presentation", "queryCompleted")
 
             if len(titles) == 1:
                 return titles[0]

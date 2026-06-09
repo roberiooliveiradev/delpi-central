@@ -30,11 +30,41 @@
     "authoringIntro": "Consulta sugerida para `POST /data/sql` (somente leitura):",
     "authoringExecuteHint": "Para **executar** no Protheus, peça: «execute essa consulta» ou «traga os dados».",
     "stockCheckSuggestion": "Posso verificar o estoque dos componentes dos produtos programados.",
-    "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados."
+    "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados.",
+    "narrative": {
+      "scopeIntro": "Consultei a programação de produção para **{label}**.",
+      "summaryShown": "Há **{shown}** linha(s) nesta resposta",
+      "summaryTotalSuffix": " (total de **{total}** registro(s) no Protheus).",
+      "summaryShownOnly": "Há **{shown}** linha(s) nesta resposta.",
+      "distinctProducts": "**{count}** código(s) de produto distinto(s) na amostra exibida.",
+      "branchBreakdownHeader": "Distribuição por filial:",
+      "branchItem": "filial **{branch}** — **{count}** item(ns)",
+      "branchSeparator": "; ",
+      "topFamiliesHeader": "Famílias com mais itens na amostra: {families}.",
+      "familyItem": "**{prefix}** ({count})",
+      "familySeparator": ", ",
+      "previewHeader": "Alguns itens programados:",
+      "largeSetHint": "Resultado extenso — peça *agrupar por filial*, *filtrar por cod produto* ou refine com *mostre os 10 primeiros*.",
+      "truncatedSample": "… e mais **{count}** item(ns) na tabela abaixo."
+    }
   },
   "sqlColumnRefinement": {
     "groupByColumn": "Refinamento SQL: agrupamento por {column} aplicado na consulta anterior.",
     "filterByColumn": "Refinamento SQL: filtro por {column} = {value} aplicado na consulta anterior."
+  },
+  "sqlQueryRefinement": {
+    "defaultTitle": "Consulta SQL (elaboração)",
+    "fallbackTitle": "Consulta SQL",
+    "removeBranchFilter": "Refinamento SQL: filtro de filial removido da consulta anterior.",
+    "topLimitAdjusted": "Refinamento SQL: limite TOP ajustado na consulta anterior.",
+    "addColumn": "Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
+    "removeColumn": "Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
+    "rowValueFilter": "Refinamento SQL: filtro por valor da linha aplicado na consulta anterior.",
+    "applyBranchFilter": "Refinamento SQL: filtro de filial aplicado na consulta anterior.",
+    "showQuery": "A mensagem solicita exibir a consulta SQL da conversa.",
+    "productionBranchBreakdown": "Refinamento SQL: consulta de programação expandida para todas as filiais com coluna FILIAL.",
+    "showSqlAnswerIntro": "Consulta SQL utilizada na pesquisa anterior:",
+    "showSqlAnswerHint": "Peça alterações em linguagem natural — por exemplo: *filial 01 e 02*, *top 100* ou *acrescente a coluna de armazém*."
   },
   "actionSelection": {
     "suppliesOtdSuppliesDomainTerms": [

@@ -15,7 +15,52 @@
     "continueConsolidation": "Continuação da consulta paginada consolidada.",
     "fullConsolidation": "Consolidação completa da consulta paginada.",
     "errorRecovery": "Recuperação automática da consulta anterior.",
-    "formatRefinement": "Reapresentação do último resultado no formato solicitado."
+    "formatRefinement": "Reapresentação do último resultado no formato solicitado.",
+    "fullFetchTerms": [
+      "completo",
+      "completa",
+      "lista completa",
+      "listagem completa",
+      "listagem inteira",
+      "lista inteira",
+      "arvore completa",
+      "árvore completa",
+      "tabela completa",
+      "registros completos",
+      "resultado completo",
+      "resultados completos",
+      "traga tudo",
+      "trazer tudo",
+      "buscar tudo",
+      "busque tudo",
+      "todos os registros",
+      "todos os resultados",
+      "todos os pais",
+      "todos os produtos pai",
+      "traga o total",
+      "listagem total",
+      "mostre tudo",
+      "todos os itens",
+      "visualizacao completa",
+      "visualização completa"
+    ],
+    "continueTerms": [
+      "sim continue",
+      "sim, continue",
+      "pode continuar",
+      "continuar buscando",
+      "continue buscando",
+      "traga o resto",
+      "buscar o resto",
+      "sim traga",
+      "prossiga",
+      "pode prosseguir",
+      "continuar"
+    ],
+    "yesOnlyTerms": ["sim", "ok", "pode", "confirmo", "confirmar", "isso", "exato", "certo"]
+  },
+  "presentation": {
+    "queryCompleted": "Consulta concluída."
   },
   "execution": {
     "externalActionsTarget": "{count} consulta(s) DELPI",

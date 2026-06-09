@@ -1,0 +1,41 @@
+{
+  "operationalTerms": [
+    "produto",
+    "product",
+    "item",
+    "codigo",
+    "código",
+    "referencia",
+    "referência",
+    "ref ",
+    " sku",
+    "estoque",
+    "stock",
+    "saldo",
+    "lmp",
+    "lmps",
+    "lista de materiais",
+    "lista material",
+    "amostra",
+    "ordem de venda",
+    "sql",
+    "analisador",
+    "analyser",
+    "api delpi"
+  ],
+  "documentalTerms": [
+    "explique",
+    "explica ",
+    "documentação",
+    "documentacao",
+    "política",
+    "politica",
+    "procedimento",
+    "como funciona",
+    "o que é",
+    "o que e ",
+    "descreva o processo",
+    "manual ",
+    "norma "
+  ]
+}

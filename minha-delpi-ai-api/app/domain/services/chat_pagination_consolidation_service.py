@@ -11,6 +11,9 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.application.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
@@ -46,34 +49,18 @@ class PaginationFetchPlan:
 
 
 class ChatPaginationConsolidationService:
-    _FULL_FETCH_TERMS = (
-        "completo",
-        "completa",
-        "lista completa",
-        "listagem completa",
-        "listagem inteira",
-        "lista inteira",
-        "arvore completa",
-        "árvore completa",
-        "tabela completa",
-        "registros completos",
-        "resultado completo",
-        "resultados completos",
-        "traga tudo",
-        "trazer tudo",
-        "buscar tudo",
-        "busque tudo",
-        "todos os registros",
-        "todos os resultados",
-        "todos os pais",
-        "todos os produtos pai",
-        "traga o total",
-        "listagem total",
-        "mostre tudo",
-        "todos os itens",
-        "visualizacao completa",
-        "visualização completa",
-    )
+    @classmethod
+    def _full_fetch_terms(cls) -> tuple[str, ...]:
+        return ChatToolContextContentService.list("pagination", "fullFetchTerms")
+
+    @classmethod
+    def _continue_terms(cls) -> tuple[str, ...]:
+        return ChatToolContextContentService.list("pagination", "continueTerms")
+
+    @classmethod
+    def _yes_only_terms(cls) -> tuple[str, ...]:
+        return ChatToolContextContentService.list("pagination", "yesOnlyTerms")
+
     _FULL_FETCH_PATTERNS = (
         re.compile(
             r"\b(tabela|lista|listagem|registros?|resultados?|itens?)"
@@ -91,23 +78,11 @@ class ChatPaginationConsolidationService:
             re.IGNORECASE,
         ),
     )
-    _CONTINUE_TERMS = (
-        "sim continue",
-        "sim, continue",
-        "pode continuar",
-        "continuar buscando",
-        "continue buscando",
-        "traga o resto",
-        "buscar o resto",
-        "sim traga",
-        "prossiga",
-        "pode prosseguir",
-        "continuar",
-    )
-    _YES_ONLY_RE = re.compile(
-        r"^(sim|ok|pode|confirmo|confirmar|isso|exato|certo)\.?$",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _yes_only_re(cls) -> re.Pattern[str]:
+        joined = "|".join(re.escape(term) for term in cls._yes_only_terms())
+
+        return re.compile(rf"^({joined})\.?$", re.IGNORECASE)
 
     @classmethod
     def enabled(cls) -> bool:
@@ -126,7 +101,7 @@ class ChatPaginationConsolidationService:
 
         if ChatMessageNormalizationService.contains_any(
             normalized,
-            cls._FULL_FETCH_TERMS,
+            cls._full_fetch_terms(),
         ):
             return True
 
@@ -139,10 +114,10 @@ class ChatPaginationConsolidationService:
         if not normalized:
             return False
 
-        if ChatMessageNormalizationService.contains_any(normalized, cls._CONTINUE_TERMS):
+        if ChatMessageNormalizationService.contains_any(normalized, cls._continue_terms()):
             return True
 
-        return cls._YES_ONLY_RE.match(normalized.strip()) is not None
+        return cls._yes_only_re().match(normalized.strip()) is not None
 
     @classmethod
     def extract_snapshot(

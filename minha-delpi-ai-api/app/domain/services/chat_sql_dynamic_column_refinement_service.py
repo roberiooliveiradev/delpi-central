@@ -53,10 +53,7 @@ class ChatSqlDynamicColumnRefinementService:
 
     @classmethod
     def _group_by_terms(cls) -> tuple[str, ...]:
-        return ChatSqlIntentVocabularyService.terms(
-            "dynamicColumnRefinement",
-            "groupByTerms",
-        )
+        return ChatSqlIntentVocabularyService.group_by_terms()
 
     @classmethod
     def _filter_terms(cls) -> tuple[str, ...]:
@@ -74,10 +71,7 @@ class ChatSqlDynamicColumnRefinementService:
 
     @classmethod
     def _filter_prefix_terms(cls) -> tuple[str, ...]:
-        return ChatSqlIntentVocabularyService.terms(
-            "dynamicColumnRefinement",
-            "filterPrefixTerms",
-        )
+        return ChatSqlIntentVocabularyService.filter_prefix_terms()
 
     @classmethod
     def _column_synonyms(cls) -> dict[str, tuple[str, ...]]:

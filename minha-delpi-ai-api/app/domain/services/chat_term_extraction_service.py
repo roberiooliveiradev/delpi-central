@@ -1,6 +1,10 @@
 import re
 import unicodedata
 
+from app.domain.services.chat_term_extraction_vocabulary_service import (
+    ChatTermExtractionVocabularyService,
+)
+
 
 class ChatTermExtractionService:
     """Extrai e classifica termos desconhecidos de uma mensagem (playbook §9, §13).
@@ -23,18 +27,7 @@ class ChatTermExtractionService:
         ),
     )
 
-    _STOPWORDS = {
-        "isso",
-        "aquilo",
-        "voce",
-        "você",
-        "ele",
-        "ela",
-        "esse",
-        "essa",
-        "isto",
-        "que",
-    }
+    _STOPWORDS = frozenset(ChatTermExtractionVocabularyService.terms("stopwords"))
 
     @staticmethod
     def normalize(text: str) -> str:
