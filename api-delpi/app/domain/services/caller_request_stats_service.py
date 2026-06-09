@@ -45,6 +45,22 @@ def record_caller_request(
         _buffer.append(record)
 
 
+def get_caller_request_entries() -> list[CallerRequestRecord]:
+    with _lock:
+        return list(_buffer)
+
+
+def get_caller_duration_percentile(percentile: float) -> float:
+    entries = get_caller_request_entries()
+    if not entries:
+        return 0.0
+
+    clamped = min(1.0, max(0.0, percentile))
+    values = sorted(item.duration_ms for item in entries)
+    index = int(round(clamped * (len(values) - 1)))
+    return round(values[index], 2)
+
+
 def get_caller_stats_summary(*, limit: int = 25) -> dict[str, Any]:
     with _lock:
         entries = list(_buffer)

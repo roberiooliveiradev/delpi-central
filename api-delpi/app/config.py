@@ -162,5 +162,18 @@ class Settings:
     SQL_TELEMETRY_BACKEND: str = _get_env("SQL_TELEMETRY_BACKEND", default="memory")
     SQL_TELEMETRY_MAX_ENTRIES: str = _get_env("SQL_TELEMETRY_MAX_ENTRIES", default="800")
 
+    # ==========================
+    # Alertas do console (Fase 5)
+    # ==========================
+    CONSOLE_ALERT_WEBHOOK_URL: str | None = _get_env("CONSOLE_ALERT_WEBHOOK_URL")
+    CONSOLE_ALERT_WEBHOOK_ENABLED: bool = (
+        _get_env("CONSOLE_ALERT_WEBHOOK_ENABLED", default="true").lower() == "true"
+    )
+    CONSOLE_ALERT_P95_THRESHOLD_MS: str = _get_env("CONSOLE_ALERT_P95_THRESHOLD_MS", default="3000")
+    CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS: str = _get_env(
+        "CONSOLE_ALERT_SLOW_SQL_THRESHOLD_MS",
+        default="2500",
+    )
+
 
 settings = Settings()

@@ -12,6 +12,7 @@ import {
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
+import { StatsConsoleHealthCard } from "../StatsConsoleHealthCard";
 import { StatsPageIntro, type StatsPageProps, getTrackableActiveApps } from "../StatsShared";
 
 import type { StatsChartsData } from "../useAdminStats";
@@ -155,6 +156,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
           />
         </StatsChartCard>
       </div>
+
+      <StatsConsoleHealthCard />
 
       <StatsMiniKpiRow>
         <StatsMiniKpi

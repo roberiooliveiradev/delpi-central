@@ -575,6 +575,12 @@
   background: color-mix(in srgb, var(--adc-ok) 10%, var(--adc-surface));
 }
 
+.api-delpi-console .adc-badge--warn {
+  border-color: color-mix(in srgb, var(--adc-warn) 45%, var(--adc-border));
+  color: var(--adc-warn);
+  background: color-mix(in srgb, var(--adc-warn) 10%, var(--adc-surface));
+}
+
 .api-delpi-console .adc-badge--err {
   border-color: color-mix(in srgb, var(--adc-err) 45%, var(--adc-border));
   color: var(--adc-err);

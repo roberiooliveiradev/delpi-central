@@ -13,6 +13,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "verificacoes", label: "Verificações", segment: "verificacoes" },
   { id: "sql", label: "SQL", segment: "sql" },
   { id: "cache", label: "Cache", segment: "cache" },
+  { id: "alertas", label: "Alertas", segment: "alertas" },
   { id: "explorer", label: "Explorador", segment: "explorer" },
   { id: "spec", label: "OpenAPI", segment: "spec" },
   { id: "history", label: "Histórico", segment: "history" },

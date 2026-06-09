@@ -708,6 +708,52 @@
   color: var(--stats-text-muted);
 }
 
+/* ========================= CONSOLE API DELPI ========================= */
+
+.admin-stats__panel--console-health {
+  margin-top: 4px;
+}
+
+.admin-stats-console-alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-stats-console-alerts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--stats-text-muted);
+}
+
+.admin-stats-console-alerts__sev {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.admin-stats-console-alerts__sev--critical {
+  color: var(--chart-6);
+  border-color: color-mix(in srgb, var(--chart-6) 35%, var(--border));
+  background: color-mix(in srgb, var(--chart-6) 8%, var(--surface));
+}
+
+.admin-stats-console-alerts__sev--warning {
+  color: var(--chart-5);
+  border-color: color-mix(in srgb, var(--chart-5) 35%, var(--border));
+  background: color-mix(in srgb, var(--chart-5) 8%, var(--surface));
+}
+
 /* ========================= APPS WORKSPACE ========================= */
 
 .admin-stats__apps-workspace {

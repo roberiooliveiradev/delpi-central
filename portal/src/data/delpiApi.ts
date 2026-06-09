@@ -34,6 +34,32 @@ export interface HealthStatus {
   status: "online" | string;
 }
 
+export interface ConsoleHealthAlert {
+  code: string;
+  severity: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+export interface ConsoleHealthStatus {
+  status: "ok" | "warning" | "critical";
+  open_alert_count: number;
+  open_alerts: ConsoleHealthAlert[];
+  metrics: {
+    p95_ms: number;
+    caller_requests: number;
+    sql_samples: number;
+    cache_hit_rate_pct: number;
+  };
+  thresholds: {
+    p95_ms: number;
+    slow_sql_ms: number;
+  };
+  webhook_configured: boolean;
+  console_app_id: string;
+  captured_at?: string;
+}
+
 /* =========================
    API
 ========================= */
@@ -73,5 +99,13 @@ export class DelpiApi {
     return this.client.get<SystemStatus>(
       "/apps/api-delpi/system/status"
     );
+  }
+
+  getConsoleHealth() {
+    return this.client
+      .get<ApiSuccessResponse<ConsoleHealthStatus>>(
+        "/apps/api-delpi/system/console-health",
+      )
+      .then((response) => response.data);
   }
 }

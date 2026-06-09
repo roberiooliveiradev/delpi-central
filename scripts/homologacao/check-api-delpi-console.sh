@@ -8,10 +8,10 @@ TOKEN="${TOKEN:-}"
 MFE_PREFIX="$BASE_URL/apps/api-delpi-console"
 API_PREFIX="$BASE_URL/apps/api-delpi"
 
-echo "[1/9] remoteEntry.js (MFE)"
+echo "[1/15] remoteEntry.js (MFE)"
 curl -fsSI "$MFE_PREFIX/assets/remoteEntry.js" | head -n 5
 
-echo "[2/9] Saúde pública"
+echo "[2/15] Saúde pública"
 curl -fsS "$API_PREFIX/health" | python3 -m json.tool
 
 if [ -z "$TOKEN" ]; then
@@ -23,37 +23,43 @@ fi
 
 AUTH=(-H "Authorization: Bearer $TOKEN")
 
-echo "[3/9] LMP — resumo"
+echo "[3/15] LMP — resumo"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/engineering/lmps/dashboard/summary?status=Todos" | python3 -m json.tool
 
-echo "[4/9] Estoque — valor"
+echo "[4/15] Estoque — valor"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/supplies/stock-value?top_limit=5" | python3 -m json.tool
 
-echo "[5/9] Qualidade — filiais"
+echo "[5/15] Qualidade — filiais"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/quality/branches" | python3 -m json.tool
 
-echo "[6/9] PPM interno — resumo"
+echo "[6/15] PPM interno — resumo"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/quality/ppm/internal/summary" | python3 -m json.tool
 
-echo "[7/9] Transforma Mais — resumo"
+echo "[7/15] Transforma Mais — resumo"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/engineering/transforma-mais/processes/summary" | python3 -m json.tool
 
-echo "[8/9] Agendamento — recursos ES"
+echo "[8/15] Agendamento — recursos ES"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/scheduling/resources?branch=ES" | python3 -m json.tool
 
-echo "[9/11] Smoke definitions (console)"
+echo "[9/15] Smoke definitions (console)"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/smoke-definitions" | python3 -m json.tool
 
-echo "[10/11] Query cache stats"
+echo "[10/15] Query cache stats"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/query-cache/stats" | python3 -m json.tool
 
-echo "[11/13] Observability snapshot"
+echo "[11/15] Observability snapshot"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/observability-snapshot?limit=10" | python3 -m json.tool
 
-echo "[12/13] OpenAPI diff"
+echo "[12/15] OpenAPI diff"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/openapi-diff" | python3 -m json.tool
 
-echo "[13/13] Envelope contracts"
+echo "[13/15] Envelope contracts"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/system/envelope-contracts" | python3 -m json.tool
+
+echo "[14/15] Console health (Admin Stats)"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/console-health" | python3 -m json.tool
+
+echo "[15/15] Console alerts (histórico)"
+curl -fsS "${AUTH[@]}" "$API_PREFIX/system/console-alerts?limit=5" | python3 -m json.tool
 
 echo "[OK] Homologação api-delpi-console concluída."

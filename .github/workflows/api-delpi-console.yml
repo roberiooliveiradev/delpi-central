@@ -34,7 +34,7 @@ jobs:
           pip install -e ../shared[fastapi]
           pip install -r requirements.txt
 
-      - name: Testes Fases 2–4 (observabilidade e contrato)
+      - name: Testes Fases 2–5 (observabilidade, contrato e alertas)
         run: |
           pytest \
             tests/test_sql_health_aggregator.py \
@@ -48,6 +48,8 @@ jobs:
             tests/test_openapi_diff_service.py \
             tests/test_envelope_contract_service.py \
             tests/test_smoke_definitions_service.py \
+            tests/test_console_alerts_service.py \
+            tests/test_system_console_alerts_routes.py \
             -q
 
   console-build:

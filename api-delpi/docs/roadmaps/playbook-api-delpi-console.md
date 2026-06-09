@@ -148,10 +148,17 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 
 Alinhar com `playbook-contrato-respostas-ia.md` e `fase-0-inventario-contrato-respostas.md`.
 
-### Fase 5 — Alertas (opcional)
+### Fase 5 — Alertas (concluída)
 
-- Webhook quando smoke suite falha ou p95 &gt; limiar
-- Integração com Admin Stats do portal
+| Item | Detalhe | Status |
+|------|---------|--------|
+| **Avaliação** | `evaluate_console_alerts` — smoke, p95 caller e SQL lento | [x] |
+| **Webhook** | `POST` opcional com debounce 5 min (`CONSOLE_ALERT_WEBHOOK_URL`) | [x] |
+| **Endpoints** | `GET /system/console-health`, `GET /system/console-alerts`, `POST /system/console-alerts/evaluate`, `POST /system/console-alerts/smoke` | [x] |
+| **UI Console** | Aba «Alertas» + notificação automática após smoke com falha | [x] |
+| **Admin Stats** | Card «Console API DELPI» na visão geral do portal | [x] |
+
+**DoD:** falha na suite smoke dispara alerta crítico; p95 acima do limiar gera warning; card no Admin Stats reflete status em tempo real.
 
 ---
 

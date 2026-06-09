@@ -6,6 +6,7 @@ export const CONSOLE_ROUTES = {
   verificacoes: `${CONSOLE_BASE}/verificacoes`,
   sql: `${CONSOLE_BASE}/sql`,
   cache: `${CONSOLE_BASE}/cache`,
+  alertas: `${CONSOLE_BASE}/alertas`,
   explorer: `${CONSOLE_BASE}/explorer`,
   spec: `${CONSOLE_BASE}/spec`,
   history: `${CONSOLE_BASE}/history`,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, Play, RefreshCw } from "lucide-react";
+import { notifySmokeAlerts } from "../lib/consoleAlerts";
 import {
   downloadSmokeResult,
   listSmokeSuites,
@@ -46,6 +47,9 @@ export function VerificacoesPage({ onNavigate }: Props) {
     try {
       const suiteResult = await runSmokeSuite(selectedSuite);
       setResult(suiteResult);
+      if (suiteResult.failed > 0) {
+        void notifySmokeAlerts(suiteResult);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao executar verificações");
     } finally {

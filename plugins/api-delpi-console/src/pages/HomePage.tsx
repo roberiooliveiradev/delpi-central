@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
+  Bell,
   BookOpen,
   CheckCircle2,
   Database,
@@ -105,6 +106,14 @@ export function HomePage({ onNavigate }: Props) {
           </div>
           <h2>Cache e callers</h2>
           <p>Hits/miss LMP e estoque, breakdown por caller e comparador de deploy.</p>
+        </article>
+
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("alertas")}>
+          <div className="adc-card__icon">
+            <Bell size={22} />
+          </div>
+          <h2>Alertas</h2>
+          <p>Smoke com falha, p95 acima do limiar e SQL lento — webhook e visão no Admin Stats.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>

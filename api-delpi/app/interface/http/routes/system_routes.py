@@ -1,6 +1,8 @@
 # app/interface/http/routes/system_routes.py
 
-from fastapi import APIRouter, Query
+from typing import Any
+
+from fastapi import APIRouter, Body, Query
 
 from app.application.dto.system.system_requests import (
     GetTableRequest,
@@ -38,6 +40,11 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.query_cache_composer import get_query_cache_backend_name, get_query_cache_storage
 from app.config import settings
 from app.domain.services.caller_request_stats_service import get_caller_stats_summary
+from app.domain.services.console_alerts_service import (
+    build_console_health_summary,
+    list_console_alert_history,
+    process_console_alerts,
+)
 from app.domain.services.envelope_contract_service import load_envelope_contract_golden
 from app.domain.services.observability_snapshot_service import build_observability_snapshot
 from app.domain.services.openapi_diff_service import diff_openapi_against_baseline
@@ -364,6 +371,69 @@ def get_observability_snapshot(limit: int = Query(25, ge=1, le=100)):
     except Exception as e:
         log_error(f"Erro ao capturar snapshot de observabilidade: {e}")
         return error_response("Erro ao capturar snapshot de observabilidade.", status_code=500)
+
+
+@router.get("/console-health", summary="Saúde agregada do console para Admin Stats")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_console_health():
+    try:
+        payload = build_console_health_summary()
+        return api_delpi_success(
+            payload,
+            operation_id="get_console_health",
+            message="Saúde do console carregada com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar saúde do console: {e}")
+        return error_response("Erro ao carregar saúde do console.", status_code=500)
+
+
+@router.get("/console-alerts", summary="Histórico recente de alertas do console")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def get_console_alerts(limit: int = Query(25, ge=1, le=100)):
+    try:
+        payload = list_console_alert_history(limit=limit)
+        return api_delpi_success(
+            payload,
+            operation_id="get_console_alerts",
+            message="Alertas do console carregados com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao carregar alertas do console: {e}")
+        return error_response("Erro ao carregar alertas do console.", status_code=500)
+
+
+@router.post("/console-alerts/evaluate", summary="Avalia alertas (p95, SQL) e opcionalmente dispara webhook")
+@require_any_permission(OBSERVABILITY_ACCESS)
+def post_console_alerts_evaluate(notify: bool = Query(True)):
+    try:
+        payload = process_console_alerts(smoke_result=None, notify=notify)
+        return api_delpi_success(
+            payload,
+            operation_id="evaluate_console_alerts",
+            message="Alertas avaliados com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao avaliar alertas do console: {e}")
+        return error_response("Erro ao avaliar alertas do console.", status_code=500)
+
+
+@router.post("/console-alerts/smoke", summary="Registra resultado de smoke e dispara alertas")
+@require_any_permission(CONSOLE_SMOKE_ACCESS)
+def post_console_alerts_smoke(
+    smoke_result: dict[str, Any] = Body(...),
+    notify: bool = Query(True),
+):
+    try:
+        payload = process_console_alerts(smoke_result=smoke_result, notify=notify)
+        return api_delpi_success(
+            payload,
+            operation_id="notify_console_smoke_alerts",
+            message="Resultado de smoke processado com sucesso.",
+        )
+    except Exception as e:
+        log_error(f"Erro ao processar alertas de smoke: {e}")
+        return error_response("Erro ao processar alertas de smoke.", status_code=500)
 
 
 @router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)")
