@@ -1,3 +1,19 @@
+/** Marcadores internos do stack humanizado (API) — não devem aparecer na UI. */
+const PRESENTATION_SECTION_MARKER_RE =
+  /<!--\s*\/?section:[a-z_]+\s*-->\s*/gi;
+
+/**
+ * Remove comentários `<!-- section:* -->` injetados pelo pipeline de apresentação.
+ */
+export function stripPresentationSectionMarkers(
+  content: string | null | undefined,
+): string {
+  return String(content || "")
+    .replace(PRESENTATION_SECTION_MARKER_RE, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /**
  * Detecta sintaxe markdown na resposta para evitar reveal caractere-a-caractere
  * (que exibe `**` literal até o fechamento do destaque).
@@ -22,9 +38,11 @@ export function hasMarkdownSyntax(content: string | null | undefined): boolean {
 
 /** Normaliza escapes comuns vindos do LLM antes do parse markdown. */
 export function prepareMarkdownContent(content: string): string {
-  return String(content || "")
-    .replace(/\\(\*|_|`)/g, "$1")
-    .replace(/\r\n/g, "\n");
+  return stripPresentationSectionMarkers(
+    String(content || "")
+      .replace(/\\(\*|_|`)/g, "$1")
+      .replace(/\r\n/g, "\n"),
+  );
 }
 
 /**

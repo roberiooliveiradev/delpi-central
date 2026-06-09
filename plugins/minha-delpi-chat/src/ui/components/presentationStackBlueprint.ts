@@ -5,6 +5,7 @@ import {
   partitionCommentarySections,
   type CommentarySections,
 } from "./assistantContentInterleave";
+import { stripPresentationSectionMarkers } from "./chatMarkdown";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   getStackPresentationPlanFromToolCalls,
@@ -25,10 +26,9 @@ const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
 
 export function stripPresentationMarkersFromMarkdown(markdown: string): string {
-  return String(markdown || "")
-    .replace(PRESENTATION_MARKER_RE, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return stripPresentationSectionMarkers(
+    String(markdown || "").replace(PRESENTATION_MARKER_RE, ""),
+  );
 }
 
 export function stripInlineTableMarkers(markdown: string): string {

@@ -564,6 +564,16 @@ def test_sale_pricing_is_not_sales_question():
     assert not ChatProductQueryIntentService._looks_like_sales_question(normalized)
 
 
+def test_raw_material_price_intelligence_accepts_mp_shorthand_without_product_code():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "análise de preço MP"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
+        normalized
+    )
+
+
 def test_purchase_price_history_not_raw_material_intelligence():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "Histórico de preço de compra do 10080001"

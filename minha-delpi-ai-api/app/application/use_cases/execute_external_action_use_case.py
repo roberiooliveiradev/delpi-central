@@ -515,6 +515,17 @@ class ExecuteExternalActionUseCase:
 
         behavior_format = session_format or None
 
+        from app.application.services.chat_tool_context_format_service import (
+            ChatToolContextFormatService,
+        )
+
+        explicit_preference = behavior_format
+
+        if not explicit_preference and user_message:
+            explicit_preference = ChatToolContextFormatService.detect_requested_format(
+                user_message,
+            )
+
         metadata["path"] = resolved_path
 
         from app.domain.services.chat_presentation_structure_dedup_service import (
@@ -545,7 +556,7 @@ class ExecuteExternalActionUseCase:
             metadata,
             intent=str(action.get("intent") or action.get("name") or "").strip() or None,
             user_message=user_message,
-            user_preference=behavior_format or preferred_format,
+            user_preference=explicit_preference,
             axis_user_message=user_message,
         )
 

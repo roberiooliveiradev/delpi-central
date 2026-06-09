@@ -241,6 +241,44 @@ describe("assistantContentVisualFormats", () => {
     expect(resolveDefaultVisualKind(analyserCalls, options)).toBe("text");
   });
 
+  it("no stack analyser sem escolha explícita, inicia em Completo", () => {
+    const analyserCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/10070012/analyser",
+          presentationDecision: {
+            selected: "text",
+            availableViews: ["text", "table", "tree"],
+            visualOrder: ["text", "table", "tree"],
+            layoutMode: "stack",
+            reason: "consulta completa do produto — visão integrada (stack)",
+          },
+          preferredFormat: "text",
+          presentation: {
+            type: "tree",
+            title: "Estrutura do produto 10070012",
+            root: { id: "10070012", label: "10070012", children: [] },
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Produto 10070012",
+            columns: [{ key: "campo", label: "Campo" }],
+            rows: [{ campo: "Código", valor: "10070012" }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Informações completas do produto 10070012",
+          },
+        },
+      },
+    ]);
+    const segments = buildAssistantContentSegments("", analyserCalls);
+    const options = resolveAvailableVisualFormatOptions(segments, analyserCalls);
+
+    expect(resolveInitialToolbarKind(analyserCalls, options)).toBeNull();
+  });
+
   it("no stack com KPI, inicia em texto quando o formato solicitado é texto", () => {
     const kpiCalls = fixtureToolCalls([
       {
@@ -251,8 +289,10 @@ describe("assistantContentVisualFormats", () => {
             availableViews: ["text", "kpi", "table", "chart"],
             visualOrder: ["text", "kpi", "table", "chart"],
             layoutMode: "stack",
+            reason: "formato solicitado pelo usuário",
           },
           preferredFormat: "text",
+          explicitSessionFormat: "text",
           presentation: {
             type: "kpi",
             title: "Indicadores de RH",

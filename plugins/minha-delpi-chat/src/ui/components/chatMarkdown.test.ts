@@ -4,6 +4,7 @@ import {
   applySoftLineBreaks,
   hasMarkdownSyntax,
   prepareMarkdownContent,
+  stripPresentationSectionMarkers,
 } from "./chatMarkdown";
 
 describe("chatMarkdown", () => {
@@ -16,6 +17,16 @@ describe("chatMarkdown", () => {
 
   it("remove escapes de asterisco", () => {
     expect(prepareMarkdownContent("Olá \\*\\*Agente\\*\\*")).toBe("Olá **Agente**");
+  });
+
+  it("remove marcadores internos de seção do stack humanizado", () => {
+    const raw =
+      "### Escopo\n\n<!-- section:scope -->\n\nProduto 10070012.\n\n<!-- section:highlights -->\n\n**Destaques**";
+
+    expect(stripPresentationSectionMarkers(raw)).toBe(
+      "### Escopo\n\nProduto 10070012.\n\n**Destaques**",
+    );
+    expect(prepareMarkdownContent(raw)).not.toContain("<!-- section:");
   });
 });
 

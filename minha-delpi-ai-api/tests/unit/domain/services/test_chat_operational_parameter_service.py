@@ -152,6 +152,16 @@ def test_should_not_skip_tools_when_previous_messages_have_real_products():
     )
 
 
+def test_missing_product_code_for_raw_material_price_mp_shorthand():
+    answer = ChatOperationalParameterService.resolve_missing_product_code_answer(
+        "análise de preço MP",
+    )
+
+    assert answer is not None
+    assert "matéria-prima" in answer.lower() or "materia-prima" in answer.lower()
+    assert ChatOperationalParameterService.should_skip_tools("análise de preço MP")
+
+
 def test_should_skip_agentic_after_successful_kpi_presentation():
     tool_context = {
         "directAnswer": "Valor Total de Estoque",

@@ -116,4 +116,28 @@ def test_enrich_metadata_analyser_puts_tree_before_table_in_visual_order():
     order = metadata["presentationDecision"]["visualOrder"]
 
     assert order.index("table") < order.index("tree")
+    assert metadata["presentationDecision"]["selected"] == "text"
+    assert "stack" in metadata["presentationDecision"]["reason"].lower()
+
+
+def test_enrich_metadata_analyser_honors_explicit_tree_preference():
+    tree = {
+        "type": "tree",
+        "title": "Estrutura",
+        "root": {"id": "90260144", "label": "90260144", "children": []},
+    }
+    metadata = {
+        "path": "/products/90260144/analyser",
+        "presentation": tree,
+        "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "availableFormats": ["text", "tree", "table"],
+        "preferredFormat": "tree",
+    }
+
+    ChatPresentationDecisionService.enrich_metadata(
+        metadata,
+        user_preference="tree",
+        user_message="mostre em árvore",
+    )
+
     assert metadata["presentationDecision"]["selected"] == "tree"

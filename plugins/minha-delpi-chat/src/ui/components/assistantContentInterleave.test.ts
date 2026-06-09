@@ -22,6 +22,15 @@ function appendUnique(
 }
 
 describe("assistantContentInterleave", () => {
+  it("particiona lead sem vazar marcadores section:*", () => {
+    const sections = partitionCommentarySections(
+      "### Escopo\n\n<!-- section:scope -->\n\n10070012 — CABO.\n\n<!-- section:highlights -->\n\n**Destaques**\n\n- Um.",
+    );
+
+    expect(sections.lead).not.toContain("<!-- section:");
+    expect(sections.lead).toContain("10070012");
+  });
+
   it("particiona destaques e pontos de atenção", () => {
     const sections = partitionCommentarySections(
       "### Título\n\n**Destaques**\n\n- Um.\n\n**Pontos de atenção encontrados na API:**\n\n1. Dois.",
@@ -98,6 +107,67 @@ describe("assistantContentInterleave", () => {
     expect(roteiroIndex).toBeGreaterThan(destaqueIndex);
     expect(treeIndex).toBeGreaterThan(roteiroIndex);
     expect(pontosIndex).toBeGreaterThan(treeIndex);
+  });
+
+  it("não vaza marcadores section:* nos segmentos do analyser (stack completo)", () => {
+    const analyserMarkdown =
+      "### Informações completas do produto 10070012\n\n" +
+      "<!-- section:scope -->\n\n" +
+      "**10070012** — CABO PP CIRCULAR.\n\n" +
+      "<!-- section:highlights -->\n\n" +
+      "**Destaques**\n\n- Custo padrão vigente: R$ 0,98.";
+
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/products/10070012/analyser",
+          presentationDecision: { layoutMode: "stack" },
+          stackPresentationPlan: {
+            presentationProfile: "generic_stack",
+            humanizedSections: true,
+            profileFirst: true,
+            sectionVisibility: {
+              scope: true,
+              profile: true,
+              highlights: true,
+              guide: true,
+              structure: true,
+              attention: true,
+            },
+            narrativeOrder: [
+              "lead",
+              "profileTables",
+              "highlights",
+              "operationalTables",
+              "tailVisuals",
+              "attention",
+            ],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: analyserMarkdown,
+          },
+          tablePresentations: [
+            {
+              type: "table",
+              title: "Produto 10070012",
+              columns: [{ key: "campo", label: "Campo" }],
+              rows: [{ campo: "Código", valor: "10070012" }],
+            },
+          ],
+        },
+      },
+    ]);
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+    const leaked = segments.some(
+      (segment) =>
+        segment.kind === "markdown" && /<!--\s*section:/i.test(segment.markdown),
+    );
+
+    expect(leaked).toBe(false);
   });
 
   it("usa marcadores [[table:n]] embutidos no markdown", () => {

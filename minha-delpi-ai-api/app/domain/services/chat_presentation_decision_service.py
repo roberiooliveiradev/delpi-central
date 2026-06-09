@@ -128,6 +128,7 @@ class ChatPresentationDecisionService:
         dashboard_presentation: dict[str, Any] | None = None,
         text_presentation: dict[str, Any] | None = None,
         available_formats: list[str] | None = None,
+        path: str | None = None,
     ) -> dict[str, Any]:
         message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
         preferred = cls._normalize_user_preference(user_preference, message)
@@ -155,6 +156,7 @@ class ChatPresentationDecisionService:
             text_presentation=text_presentation,
             table_presentation=table_presentation,
             chart_presentation=chart_presentation,
+            path=path,
         )
 
         if intent_decision:
@@ -183,6 +185,10 @@ class ChatPresentationDecisionService:
         if cls._effective_tree_presentation(
             tree_presentation=tree_presentation,
             primary_presentation=primary_presentation,
+        ) and not cls._should_default_analyser_stack_to_text(
+            path=path,
+            text_presentation=text_presentation,
+            user_preference=preferred,
         ):
             return cls._build(
                 selected="tree",
@@ -431,12 +437,14 @@ class ChatPresentationDecisionService:
             primary_presentation=primary_presentation,
         )
 
+        path = str(metadata.get("path") or "").strip()
+
         decision = cls.decide(
             intent=intent,
             rows=cls._rows_from_presentation(metadata.get("tablePresentation"))
             or cls._rows_from_presentation(metadata.get("presentation")),
             user_message=user_message,
-            user_preference=user_preference or metadata.get("preferredFormat"),
+            user_preference=user_preference,
             primary_presentation=primary_presentation,
             table_presentation=metadata.get("tablePresentation"),
             chart_presentation=metadata.get("chartPresentation"),
@@ -449,6 +457,7 @@ class ChatPresentationDecisionService:
             ),
             text_presentation=metadata.get("textPresentation"),
             available_formats=metadata.get("availableFormats"),
+            path=path or None,
         )
 
         table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
@@ -715,6 +724,30 @@ class ChatPresentationDecisionService:
         return notices[0] if notices else None
 
     @classmethod
+    @classmethod
+    def _should_default_analyser_stack_to_text(
+        cls,
+        *,
+        path: str | None,
+        text_presentation: dict[str, Any] | None,
+        user_preference: str | None,
+    ) -> bool:
+        if user_preference:
+            return False
+
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        if not ChatPresentationRoutePolicyService.is_analyser_route(path):
+            return False
+
+        if not isinstance(text_presentation, dict):
+            return False
+
+        return bool(str(text_presentation.get("markdown") or "").strip())
+
+    @classmethod
     def _decision_for_operational_intent(
         cls,
         *,
@@ -728,7 +761,35 @@ class ChatPresentationDecisionService:
         text_presentation: dict[str, Any] | None,
         table_presentation: dict[str, Any] | None,
         chart_presentation: dict[str, Any] | None,
+        path: str | None = None,
     ) -> dict[str, Any] | None:
+        if cls._should_default_analyser_stack_to_text(
+            path=path,
+            text_presentation=text_presentation,
+            user_preference=None,
+        ):
+            table_rows = rows or cls._rows_from_presentation(
+                table_presentation
+                or (
+                    primary_presentation
+                    if isinstance(primary_presentation, dict)
+                    and primary_presentation.get("type") == "table"
+                    else None
+                )
+            )
+
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason="consulta completa do produto — visão integrada (stack)",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table", "tree", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
         has_tree = bool(
             cls._effective_tree_presentation(
                 tree_presentation=tree_presentation,
@@ -1048,6 +1109,7 @@ class ChatPresentationDecisionService:
             has_tree
             and preferred == "tree"
             and ChatPresentationRoutePolicyService.is_tree_route(path)
+            and not ChatPresentationRoutePolicyService.is_analyser_route(path)
             and decision.get("selected") in {None, "text", "table"}
         ):
             decision["selected"] = "tree"

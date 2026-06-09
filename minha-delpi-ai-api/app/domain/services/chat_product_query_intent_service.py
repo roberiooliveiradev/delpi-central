@@ -1006,11 +1006,27 @@ class ChatProductQueryIntentService:
             return False
 
         if any(term in normalized for term in cls._terms("rawMaterialPriceIntelligence", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
+            return (
+                cls._has_product_scope_reference(normalized)
+                or cls.extract_product_code(normalized) is not None
+                or cls._looks_like_raw_material_scope_shorthand(normalized)
+            )
 
         return False
+
+    @classmethod
+    def _looks_like_raw_material_scope_shorthand(cls, normalized: str) -> bool:
+        if re.search(r"\bmp\b", normalized):
+            return True
+
+        return any(
+            marker in normalized
+            for marker in (
+                "materia prima",
+                "materia-prima",
+                "mate prima",
+            )
+        )
 
     @classmethod
     def _looks_like_cost_impact_simulation_question(cls, normalized: str) -> bool:

@@ -48,6 +48,7 @@ class ChatFastPathService:
         enabled: bool = True,
         max_chars: int = 30,
         attachment_ids: list[str] | None = None,
+        previous_messages: list | None = None,
     ) -> bool:
         if not enabled:
             return False
@@ -56,6 +57,12 @@ class ChatFastPathService:
             return False
 
         text = str(message or "").strip()
+
+        if previous_messages and ChatFastPathService._requires_tools_after_session_reply(
+            text,
+            previous_messages=previous_messages,
+        ):
+            return False
 
         if not text:
             return False
@@ -83,3 +90,34 @@ class ChatFastPathService:
         word_count = len(normalized.split())
 
         return word_count <= 2 and not normalized.endswith("?")
+
+    @staticmethod
+    def _requires_tools_after_session_reply(
+        message: str,
+        *,
+        previous_messages: list,
+    ) -> bool:
+        from app.application.services.chat_active_pending_service import (
+            ChatActivePendingService,
+        )
+        from app.domain.services.chat_active_query_session_service import (
+            ChatActiveQuerySessionService,
+        )
+
+        pending = ChatActivePendingService.find_from_messages(previous_messages)
+
+        if pending:
+            resolved = ChatActivePendingService.try_resolve(message, pending)
+
+            if resolved and resolved.get("requiresTool"):
+                return True
+
+        session = ChatActiveQuerySessionService.find_session_from_messages(previous_messages)
+
+        if session and ChatActiveQuerySessionService.should_continue_session(
+            message,
+            session,
+        ):
+            return True
+
+        return False

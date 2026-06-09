@@ -16,6 +16,7 @@ import { expandTreeSegmentsToBlockTables } from "./treePresentationUtils";
 import {
   getPresentationDecisionFromToolCalls,
   getPreferredFormatFromToolCalls,
+  hasExplicitPresentationFormatChoice,
   mapPresentationDecisionToViewFormat,
   type ViewFormat,
 } from "./chatPresentation";
@@ -417,6 +418,10 @@ export function resolveInitialToolbarKind(
   }
 
   if (shouldShowCompleteStackView(toolCalls)) {
+    if (!hasExplicitPresentationFormatChoice(toolCalls)) {
+      return null;
+    }
+
     const decision = getPresentationDecisionFromToolCalls(toolCalls);
     const fromDecision = mapPresentationDecisionToViewFormat(decision?.selected);
     const available = options.map((item) => item.kind);

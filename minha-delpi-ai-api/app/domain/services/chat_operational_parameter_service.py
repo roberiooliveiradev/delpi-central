@@ -223,11 +223,14 @@ class ChatOperationalParameterService:
                     return None
 
         intent = ChatProductQueryIntentService.detect(message)
+        playbook_sub_intent = None
 
         if intent not in cls._INTENTS_REQUIRING_CODE:
-            return None
+            playbook_sub_intent = cls._playbook_missing_product_code_sub_intent(normalized)
 
-        if not cls._requires_explicit_product_context(normalized, intent):
+            if not playbook_sub_intent:
+                return None
+        elif not cls._requires_explicit_product_context(normalized, intent):
             return None
 
         if previous_messages:
@@ -278,9 +281,48 @@ class ChatOperationalParameterService:
             if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
                 return None
 
-            return intent
+            return playbook_sub_intent or intent
 
-        return intent
+        return playbook_sub_intent or intent
+
+    @classmethod
+    def _playbook_missing_product_code_sub_intent(cls, normalized: str) -> str | None:
+        checks = (
+            (
+                ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question,
+                "raw_material_price_intelligence",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_cost_impact_simulation_question,
+                "cost_impact_simulation",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_last_purchase_question,
+                "last_purchase",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_purchase_price_history_question,
+                "purchase_price_history",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_purchase_budget_history_question,
+                "purchase_budget_history",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_sale_pricing_question,
+                "sale_pricing",
+            ),
+            (
+                ChatProductQueryIntentService._looks_like_structure_exclusivity_question,
+                "structure_exclusivity",
+            ),
+        )
+
+        for matcher, sub_intent in checks:
+            if matcher(normalized):
+                return sub_intent
+
+        return None
 
     @classmethod
     def resolve_ambiguous_period_answer(

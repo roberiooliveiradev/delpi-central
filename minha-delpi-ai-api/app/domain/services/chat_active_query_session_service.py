@@ -38,6 +38,12 @@ class ChatActiveQuerySessionService:
         "last_purchase": ChatProductQueryIntent.FULL,
         "purchase_price_history": ChatProductQueryIntent.FULL,
         "purchase_budget_history": ChatProductQueryIntent.FULL,
+        "sale_pricing": ChatProductQueryIntent.FULL,
+        "structure_exclusivity": ChatProductQueryIntent.FULL,
+        "cost_impact_simulation": ChatProductQueryIntent.FULL,
+        "last_purchase": ChatProductQueryIntent.FULL,
+        "purchase_price_history": ChatProductQueryIntent.FULL,
+        "purchase_budget_history": ChatProductQueryIntent.FULL,
     }
 
     @classmethod

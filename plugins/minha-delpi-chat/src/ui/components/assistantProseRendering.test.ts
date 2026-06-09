@@ -12,6 +12,24 @@ import {
 } from "./assistantProseRendering";
 
 describe("assistantProseRendering", () => {
+  it("remove marcadores section:* do conteúdo exibido do assistente", () => {
+    const markdown =
+      "### Escopo\n\n<!-- section:scope -->\n\n10070012 — CABO PP.";
+
+    expect(
+      resolveAssistantDisplayContent(markdown, [], undefined),
+    ).toBe("### Escopo\n\n10070012 — CABO PP.");
+  });
+
+  it("remove marcadores section:* do markdown renderizável", () => {
+    const markdown =
+      "### Escopo\n\n<!-- section:scope -->\n\n10070012 — CABO PP.\n\n<!-- section:highlights -->";
+
+    expect(resolveAssistantRenderableMarkdown(markdown, [])).toBe(
+      "### Escopo\n\n10070012 — CABO PP.",
+    );
+  });
+
   it("não trata saudação com negrito como título de apresentação", () => {
     const greeting = "Olá! Sou o **Agente Minha DELPI**. O que vamos consultar?";
 

@@ -6,6 +6,7 @@
     "description": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, texto).",
     "analyser": "Para abrir a **ficha completa** do produto, informe o **código** (ex.: 10080099).",
     "summary": "Para o **resumo consolidado** do produto, informe o **código** (ex.: 10080099).",
+    "raw_material_price_intelligence": "Para a **análise de preço da matéria-prima**, informe o **código do produto** (ex.: 10080001).",
     "default": "Claro! Para consultar dados do produto, informe o **código** (ex.: 10080099). Exemplo: *me fale do produto 10080099*."
   },
   "missingSaleNumber": "Claro! Para a **LMP** ou **ordem de venda**, informe o **número da OV** (ex.: 123456). Exemplo: *consulte a OV 123456*.",

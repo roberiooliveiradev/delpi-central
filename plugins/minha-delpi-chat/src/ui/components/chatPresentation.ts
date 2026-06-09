@@ -525,6 +525,37 @@ export function getAvailableFormatsFromToolCalls(
   return [];
 }
 
+export function hasExplicitPresentationFormatChoice(
+  toolCalls?: ChatToolCall[],
+): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const explicit = String(metadata.explicitSessionFormat || "").trim();
+
+    if (explicit) {
+      return true;
+    }
+
+    const decision = metadata.presentationDecision as ChatPresentationDecision | undefined;
+    const reason = String(decision?.reason || "").trim().toLowerCase();
+
+    if (reason === "formato solicitado pelo usuário") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function getPreferredFormatFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ViewFormat | null {

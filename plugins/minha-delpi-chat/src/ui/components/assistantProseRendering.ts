@@ -1,6 +1,6 @@
 import type { ChatMessageMetadata, ChatToolCall } from "../../data/api/chatTypes";
 
-import { hasMarkdownSyntax } from "./chatMarkdown";
+import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "./chatMarkdown";
 import {
   getPresentationTitle,
   getTextMarkdownFromToolCalls,
@@ -80,7 +80,9 @@ export function resolveAssistantDisplayContent(
 
   const raw = String(content || "").trim();
 
-  return raw || getTextMarkdownFromToolCalls(toolCalls);
+  return stripPresentationSectionMarkers(
+    raw || getTextMarkdownFromToolCalls(toolCalls),
+  );
 }
 
 /**
@@ -137,7 +139,7 @@ export function resolveAssistantRenderableMarkdown(
   const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
   const presentationTitle = resolveAssistantPresentationTitle(content, toolCalls);
   const raw = String(content || "").trim();
-  const source = fromMetadata || raw;
+  const source = stripPresentationSectionMarkers(fromMetadata || raw);
 
   return stripLeadingMarkdownTitleSafely(source, presentationTitle);
 }

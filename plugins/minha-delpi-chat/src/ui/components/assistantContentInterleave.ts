@@ -27,14 +27,10 @@ function sectionStartIndex(markdown: string, pattern: RegExp): number {
 const DESTAQUES_SECTION_RE = /(?:^|\n)\s*\*\*Destaques\*\*/i;
 const PONTOS_SECTION_RE = /(?:^|\n)\s*\*\*Pontos de atenção/i;
 
-const SECTION_MARKER_RE = /<!--\s*section:[a-z_]+\s*-->\s*/gi;
-
-function stripSectionMarkers(markdown: string): string {
-  return String(markdown || "").replace(SECTION_MARKER_RE, "").trim();
-}
+import { stripPresentationSectionMarkers } from "./chatMarkdown";
 
 export function partitionCommentarySections(markdown: string): CommentarySections {
-  const trimmed = stripSectionMarkers(String(markdown || "")).trim();
+  const trimmed = stripPresentationSectionMarkers(String(markdown || ""));
 
   if (!trimmed) {
     return { hasSectionBreaks: false, lead: "", destaques: "", pontos: "" };

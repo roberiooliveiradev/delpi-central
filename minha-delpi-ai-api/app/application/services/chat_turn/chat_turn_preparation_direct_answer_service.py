@@ -103,6 +103,7 @@ class ChatTurnPreparationDirectAnswerService:
             enabled=fast_path_enabled,
             max_chars=fast_path_max_chars,
             attachment_ids=attachment_ids,
+            previous_messages=history_source,
         )
 
         if canvas_action:
