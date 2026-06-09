@@ -573,10 +573,47 @@ A regra aplicada atualmente é:
 - excluir produto vazio: `SH6.H6_PRODUTO <> ''`;
 - cruzar com `SG2010` para considerar somente a operação final do roteiro;
 - cruzar com `SB1010` para considerar somente produto acabado: `SB1.B1_TIPO = 'PA'`;
-- deduplicar por `H6_FILIAL + H6_OP + H6_PRODUTO + H6_OPERAC`;
-- usar `MAX(H6_QTDPROD)` por OP/produto/operação final;
-- excluir os grupos `B1_GRUPO IN ('9043', '9028')`;
+- cruzar com `SC2010` para obter a quantidade **programada** da OP (`C2_QUANT`);
+- deduplicar apontamentos por `H6_FILIAL + H6_OP + H6_PRODUTO + H6_OPERAC`;
+- usar `MAX(H6_QTDPROD)` como **apontado** por OP/operação final;
+- calcular quantidade produzida por OP com a regra **programado − saldo = apontado** (ver abaixo);
+- excluir os grupos `B1_GRUPO IN ('9043', '9028')` *(documentado; conferir implementação)*;
 - converter `H6_QTDPROD` de milheiro para unidade multiplicando por `1000`.
+
+---
+
+## Quantidade produzida por OP — programado − saldo = apontado
+
+Para cada OP na operação final do roteiro:
+
+| Termo | Campo | Significado |
+|---|---|---|
+| **Programado** | `SC2010.C2_QUANT` | Quantidade planejada da ordem de produção |
+| **Apontado** | `MAX(SH6010.H6_QTDPROD)` | Maior quantidade apontada na operação final (deduplica repasses) |
+| **Saldo pendente** | `max(0, programado − apontado)` | O que ainda falta produzir na OP |
+| **Produzido** | `programado − saldo` | Quantidade efetiva que entra no denominador |
+
+Em texto:
+
+```text
+saldo_pendente = max(0, programado − apontado)
+qtd_produzida_op = programado − saldo_pendente
+```
+
+Propriedades:
+
+- Quando `apontado ≤ programado`, resulta em **`apontado`** (equivale a usar o MAX do apontamento).
+- Quando `apontado > programado`, **limita ao programado** (não infla acima do planejado da OP).
+- Quando `programado` ausente ou zero, usa **`apontado`** (fallback para OPs sem `C2_QUANT`).
+
+Implementação de referência: `app/domain/services/ppm_produced_quantity.py` e `ppm_production_sql.py`.
+
+Cruzamento OP:
+
+```sql
+SC2.C2_OP = SH6.H6_OP
+OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
+```
 
 ---
 
@@ -586,6 +623,7 @@ A regra aplicada atualmente é:
 |---|---|
 | `SH6010` | Apontamentos de produção |
 | `SG2010` | Roteiro de operações; usada para identificar operação final por produto |
+| `SC2010` | Ordens de produção; quantidade programada (`C2_QUANT`) |
 | `SB1010` | Cadastro de produtos; usada para filtrar produto acabado e grupo |
 
 ---
@@ -636,7 +674,7 @@ WITH roteiro_final AS (
 )
 ```
 
-Depois, cruza-se a `SH6010` com a operação final, filtra-se PA e deduplica-se a quantidade:
+Depois, cruza-se a `SH6010` com a operação final, filtra-se PA, une-se `SC2010` e calcula-se a quantidade produzida:
 
 ```sql
 apont_final AS (
@@ -646,7 +684,14 @@ apont_final AS (
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
         SB1.B1_GRUPO,
-        MAX(ISNULL(SH6.H6_QTDPROD, 0)) AS qtd_produzida_op
+        CASE
+            WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) <= 0 THEN MAX(ISNULL(SH6.H6_QTDPROD, 0))
+            ELSE MAX(ISNULL(SC2.C2_QUANT, 0)) - CASE
+                WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) > MAX(ISNULL(SH6.H6_QTDPROD, 0))
+                THEN MAX(ISNULL(SC2.C2_QUANT, 0)) - MAX(ISNULL(SH6.H6_QTDPROD, 0))
+                ELSE 0
+            END
+        END AS qtd_produzida_op
     FROM SH6010 SH6
     INNER JOIN roteiro_final RF
         ON RF.G2_FILIAL = SH6.H6_FILIAL
@@ -656,6 +701,14 @@ apont_final AS (
         ON SB1.B1_COD = SH6.H6_PRODUTO
        AND SB1.D_E_L_E_T_ = ' '
        AND SB1.B1_TIPO = 'PA'
+    LEFT JOIN SC2010 SC2
+        ON SC2.D_E_L_E_T_ = ' '
+       AND SC2.C2_FILIAL = SH6.H6_FILIAL
+       AND SC2.C2_PRODUTO = SH6.H6_PRODUTO
+       AND (
+            SC2.C2_OP = SH6.H6_OP
+            OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
+       )
     WHERE
         SH6.D_E_L_E_T_ = ' '
         AND SH6.H6_TIPO = 'P'
@@ -747,7 +800,14 @@ apont_final AS (
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
         SB1.B1_GRUPO,
-        MAX(ISNULL(SH6.H6_QTDPROD, 0)) AS qtd_produzida_op
+        CASE
+            WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) <= 0 THEN MAX(ISNULL(SH6.H6_QTDPROD, 0))
+            ELSE MAX(ISNULL(SC2.C2_QUANT, 0)) - CASE
+                WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) > MAX(ISNULL(SH6.H6_QTDPROD, 0))
+                THEN MAX(ISNULL(SC2.C2_QUANT, 0)) - MAX(ISNULL(SH6.H6_QTDPROD, 0))
+                ELSE 0
+            END
+        END AS qtd_produzida_op
     FROM SH6010 SH6
     INNER JOIN roteiro_final RF
         ON RF.G2_FILIAL = SH6.H6_FILIAL
@@ -757,6 +817,14 @@ apont_final AS (
         ON SB1.B1_COD = SH6.H6_PRODUTO
        AND SB1.D_E_L_E_T_ = ' '
        AND SB1.B1_TIPO = 'PA'
+    LEFT JOIN SC2010 SC2
+        ON SC2.D_E_L_E_T_ = ' '
+       AND SC2.C2_FILIAL = SH6.H6_FILIAL
+       AND SC2.C2_PRODUTO = SH6.H6_PRODUTO
+       AND (
+            SC2.C2_OP = SH6.H6_OP
+            OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
+       )
     WHERE
         SH6.D_E_L_E_T_ = ' '
         -- AND SH6.H6_FILIAL = :branch, quando informado

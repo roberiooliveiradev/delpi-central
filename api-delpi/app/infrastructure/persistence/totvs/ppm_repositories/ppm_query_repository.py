@@ -7,6 +7,10 @@ from app.application.models.page import Page
 from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.ppm_item import PpmItem
 from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
+from app.infrastructure.persistence.totvs.ppm_repositories.ppm_production_sql import (
+    QTD_PRODUZIDA_OP_EXPR,
+    SC2_OP_JOIN,
+)
 
 
 class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
@@ -122,7 +126,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                     SH6.H6_PRODUTO,
                     SH6.H6_OPERAC,
                     SB1.B1_GRUPO,
-                    MAX(ISNULL(SH6.H6_QTDPROD, 0)) AS qtd_produzida_op
+                    {QTD_PRODUZIDA_OP_EXPR.strip()} AS qtd_produzida_op
                 FROM SH6010 SH6
                 INNER JOIN roteiro_final RF
                     ON RF.G2_FILIAL = SH6.H6_FILIAL
@@ -132,6 +136,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                     ON SB1.B1_COD = SH6.H6_PRODUTO
                    AND SB1.D_E_L_E_T_ = ' '
                    AND SB1.B1_TIPO = 'PA'
+                {SC2_OP_JOIN}
                 WHERE
                     SH6.D_E_L_E_T_ = ' '
                     {prod_branch_filter_sh6}
