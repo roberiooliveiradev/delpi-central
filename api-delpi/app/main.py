@@ -33,6 +33,7 @@ from app.interface.http.routes.scheduling import scheduling_router
 from app.core.responses import error_response, not_found_response
 from app.middleware.auth_middleware import jwt_middleware
 from app.middleware.app_usage_tracking_middleware import app_usage_tracking_middleware
+from app.middleware.request_observability_middleware import request_observability_middleware
 
 
 # ==========================================================
@@ -150,6 +151,7 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
 # ==========================================================
 
 app.middleware("http")(jwt_middleware)
+app.middleware("http")(request_observability_middleware)
 app.middleware("http")(app_usage_tracking_middleware)
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)

@@ -283,6 +283,26 @@ def _stock_summary_from_raw(stock_raw: dict) -> dict:
     }
 
 
+def build_turnover_raw_from_cpv(
+    *,
+    cpv_raw: dict,
+    start_date: str | None,
+    end_date: str | None,
+) -> dict:
+    summary = cpv_raw.get("summary") or {}
+    return {
+        "start_date": cpv_raw.get("start_date") or start_date or "",
+        "end_date": cpv_raw.get("end_date") or end_date or "",
+        "cpv_context": {
+            "cpv_total": summary.get("cpv_total", 0),
+            "total_movements": summary.get("total_movements", 0),
+            "total_quantity": summary.get("total_quantity", 0),
+            "start_date": cpv_raw.get("start_date") or start_date or "",
+            "end_date": cpv_raw.get("end_date") or end_date or "",
+        },
+    }
+
+
 def _cpv_context_from_turnover_raw(turnover_raw: dict) -> dict:
     cpv_ctx = turnover_raw.get("cpv_context") or {}
     return {

@@ -2,13 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.infrastructure.cache.ttl_cache import TtlCache
-
-_LMP_DASHBOARD_TTL_SECONDS = 300.0
-
-_lmp_dashboard_cache: TtlCache[dict[str, Any]] = TtlCache(
-    ttl_seconds=_LMP_DASHBOARD_TTL_SECONDS,
-)
+from app.composition.query_cache_composer import build_query_cache
 
 
 def lmp_dashboard_cache_key(
@@ -32,12 +26,15 @@ def lmp_dashboard_cache_key(
 
 
 def get_cached_lmp_dashboard(key: str) -> dict[str, Any] | None:
-    return _lmp_dashboard_cache.get(key)
+    cached = build_query_cache().get(key)
+    if isinstance(cached, dict):
+        return cached
+    return None
 
 
 def set_cached_lmp_dashboard(key: str, value: dict[str, Any]) -> None:
-    _lmp_dashboard_cache.set(key, value)
+    build_query_cache().set(key, value)
 
 
 def invalidate_lmp_dashboard_cache() -> None:
-    _lmp_dashboard_cache.invalidate_all()
+    build_query_cache().invalidate_all()

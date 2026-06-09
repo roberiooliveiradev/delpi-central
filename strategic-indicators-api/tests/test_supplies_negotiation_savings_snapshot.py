@@ -86,11 +86,6 @@ def test_supplies_metrics_snapshot_loads_negotiation_savings_from_gateway() -> N
     supplies_gateway.fetch_stock_value_raw.return_value = {
         "summary": {"total_stock_value": 0, "total_stock_quantity": 0},
     }
-    supplies_gateway.fetch_inventory_turnover_raw.return_value = {
-        "start_date": "20260501",
-        "end_date": "20260531",
-        "cpv_context": {"cpv_total": 1.0},
-    }
     supplies_gateway.fetch_otd_raw.return_value = {
         "summary": {"otd_percentage": 0},
     }
@@ -116,3 +111,4 @@ def test_supplies_metrics_snapshot_loads_negotiation_savings_from_gateway() -> N
 
     assert snapshot.negotiation_savings_by_branch == {"01": 15000.0, "02": 22000.0}
     supplies_gateway.fetch_negotiation_savings_summary.assert_called_once()
+    supplies_gateway.fetch_inventory_turnover_raw.assert_not_called()

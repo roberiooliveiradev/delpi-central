@@ -7,6 +7,7 @@ from si_app.application.services.supplies.supplies_metrics_helpers import (
     build_inventory_turnover_payload,
     build_otd_payload,
     build_stock_value_payload,
+    build_turnover_raw_from_cpv,
 )
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
@@ -121,8 +122,8 @@ class SuppliesMetricsSnapshotService:
             start_date=start_date,
             end_date=end_date,
         )
-        turnover_raw = self._supplies_gateway.fetch_inventory_turnover_raw(
-            branch=branch,
+        turnover_raw = build_turnover_raw_from_cpv(
+            cpv_raw=cpv_raw,
             start_date=start_date,
             end_date=end_date,
         )

@@ -5,6 +5,10 @@ from app.application.dto.supplies.get_stock_value_request import GetStockValueRe
 class StockValueQueryRepositoryPort(ABC):
 
     @abstractmethod
+    def get_stock_value_bundle(self, request: GetStockValueRequest) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_stock_value_summary(self, request: GetStockValueRequest) -> dict:
         raise NotImplementedError
 

@@ -12,6 +12,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.config import settings
 from si_app.domain.ports.strategic_indicators.indicator_measurements_port import (
     StrategicIndicatorsIndicatorMeasurementsPort,
 )
@@ -454,7 +455,11 @@ class RealStrategicIndicatorsMeasurementsProvider(
             dept_series = [series_collectors[0][1]()]
         else:
             dept_series = []
-            with ThreadPoolExecutor(max_workers=len(series_collectors)) as executor:
+            max_department_workers = min(
+                len(series_collectors),
+                max(1, int(getattr(settings, "SI_SERIES_MAX_PARALLEL_PERIODS", 2) or 2)),
+            )
+            with ThreadPoolExecutor(max_workers=max_department_workers) as executor:
                 future_map = {
                     submit_in_request_context(executor, fetcher): name
                     for name, fetcher in series_collectors

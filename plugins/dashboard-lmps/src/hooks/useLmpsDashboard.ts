@@ -43,21 +43,20 @@ export function useLmpsDashboard(
   const [itemsData, setItemsData] = useState<LmpsDashboardItemsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [itemsRefreshing, setItemsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [requestProgress, setRequestProgress] = useState<RequestProgress>(
     EMPTY_REQUEST_PROGRESS
   );
 
-  const stableParams = useMemo(
+  const filterParams = useMemo(
     () => ({
       date_start: params.date_start,
       date_end: params.date_end,
       branch: params.branch,
       listing_type: params.listing_type,
       status: params.status,
-      page: params.page,
-      page_size: params.page_size,
     }),
     [
       params.date_start,
@@ -65,6 +64,17 @@ export function useLmpsDashboard(
       params.branch,
       params.listing_type,
       params.status,
+    ]
+  );
+
+  const itemsParams = useMemo(
+    () => ({
+      ...filterParams,
+      page: params.page,
+      page_size: params.page_size,
+    }),
+    [
+      filterParams,
       params.page,
       params.page_size,
     ]
@@ -78,7 +88,6 @@ export function useLmpsDashboard(
 
       try {
         setError(null);
-        setItemsData(null);
 
         if (hasPreviousData) {
           setRefreshing(true);
@@ -86,35 +95,24 @@ export function useLmpsDashboard(
           setLoading(true);
         }
 
-        const TOTAL_PHASES = 3;
+        const TOTAL_PHASES = 2;
         setRequestProgress({ completed: 0, total: TOTAL_PHASES });
 
-        // Phase 1: Summary (KPIs)
         const summaryResult = await getLmpsDashboardSummary(
-          stableParams,
+          filterParams,
           controller.signal,
         );
         if (controller.signal.aborted) return;
         setSummary(summaryResult);
         setRequestProgress({ completed: 1, total: TOTAL_PHASES });
 
-        // Phase 2: Charts
         const chartsResult = await getLmpsDashboardCharts(
-          stableParams,
+          filterParams,
           controller.signal,
         );
         if (controller.signal.aborted) return;
         setCharts(chartsResult);
         setRequestProgress({ completed: 2, total: TOTAL_PHASES });
-
-        // Phase 3: Items (paginated)
-        const itemsResult = await getLmpsDashboardItems(
-          stableParams,
-          controller.signal,
-        );
-        if (controller.signal.aborted) return;
-        setItemsData(itemsResult);
-        setRequestProgress({ completed: 3, total: TOTAL_PHASES });
       } catch (err) {
         if (!controller.signal.aborted) {
           setError(
@@ -136,13 +134,61 @@ export function useLmpsDashboard(
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    stableParams.branch,
-    stableParams.date_end,
-    stableParams.date_start,
-    stableParams.listing_type,
-    stableParams.status,
-    stableParams.page,
-    stableParams.page_size,
+    filterParams.branch,
+    filterParams.date_end,
+    filterParams.date_start,
+    filterParams.listing_type,
+    filterParams.status,
+    reloadKey,
+  ]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function run() {
+      const hasPreviousItems = itemsData !== null;
+
+      try {
+        if (hasPreviousItems) {
+          setItemsRefreshing(true);
+        } else if (!summary) {
+          setLoading(true);
+        }
+
+        const itemsResult = await getLmpsDashboardItems(
+          itemsParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setItemsData(itemsResult);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erro ao carregar itens do dashboard de LMPs"
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setItemsRefreshing(false);
+          setLoading(false);
+        }
+      }
+    }
+
+    void run();
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    itemsParams.branch,
+    itemsParams.date_end,
+    itemsParams.date_start,
+    itemsParams.listing_type,
+    itemsParams.status,
+    itemsParams.page,
+    itemsParams.page_size,
     reloadKey,
   ]);
 
@@ -156,7 +202,7 @@ export function useLmpsDashboard(
     summary,
     charts,
     loading,
-    refreshing,
+    refreshing: refreshing || itemsRefreshing,
     requestProgress,
     error,
     reload,

@@ -3,14 +3,16 @@ from datetime import datetime, timedelta
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
+from app.application.services.supplies.stock_value_cache import (
+    get_cached_stock_value_bundle,
+    set_cached_stock_value_bundle,
+    stock_value_cache_key,
+)
 from app.domain.ports.supplies.stock_value_query_repository_port import (
     StockValueQueryRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
-    HISTORICAL_STOCK_BY_BRANCH_SQL,
-    HISTORICAL_STOCK_BY_LOCATION_SQL,
-    HISTORICAL_STOCK_SUMMARY_SQL,
-    HISTORICAL_STOCK_TOP_PRODUCTS_SQL,
+    HISTORICAL_STOCK_BUNDLE_BATCH_SQL,
 )
 
 
@@ -47,7 +49,10 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             return f" AND RTRIM({column}) = ?", (normalized,)
         return "", ()
 
-    def _format_historical_sql(self, template: str, request: GetStockValueRequest) -> tuple[str, tuple]:
+    def _format_historical_bundle_sql(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[str, tuple]:
         period_start, period_end_exclusive = self._resolve_historical_period(request)
         branch = request.branch
         location = (request.location or "").strip() or None
@@ -58,7 +63,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         d3_filter, d3_params = self._branch_filter_clause("D3.D3_FILIAL", branch)
         d3_loc_filter, d3_loc_params = self._location_filter_clause("D3.D3_LOCAL", location)
 
-        sql = template.format(
+        sql = HISTORICAL_STOCK_BUNDLE_BATCH_SQL.format(
             sb9_branch_filter=sb9_filter,
             sb9_branch_filter_b9=sb9_b9_filter,
             sb9_location_filter=sb9_loc_filter,
@@ -93,27 +98,109 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
 
         return qb.build()
 
-    def get_stock_value_summary(self, request: GetStockValueRequest) -> dict:
-        if self._uses_historical_estimation(request):
-            sql, params = self._format_historical_sql(HISTORICAL_STOCK_SUMMARY_SQL, request)
-            branch_label = request.branch or "consolidated"
-            location_label = request.location or "all"
+    def _labels(self, request: GetStockValueRequest) -> tuple[str, str]:
+        return request.branch or "consolidated", request.location or "all"
 
-            with self as repo:
-                result = repo.execute_one(sql, params)
+    def _normalize_summary_row(
+        self,
+        row: dict | None,
+        *,
+        branch_label: str,
+        location_label: str,
+    ) -> dict:
+        row = row or {}
+        return {
+            "branch": branch_label,
+            "location": location_label,
+            "total_stock_value": float(row.get("total_stock_value") or 0),
+            "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
+            "total_records": int(row.get("total_records") or 0),
+            "total_products": int(row.get("total_products") or 0),
+            "total_locations": int(row.get("total_locations") or 0),
+        }
 
-            result = result or {}
-            return {
-                "branch": branch_label,
-                "location": location_label,
-                "total_stock_value": float(result.get("total_stock_value") or 0),
-                "total_stock_quantity": float(result.get("total_stock_quantity") or 0),
-                "total_records": int(result.get("total_records") or 0),
-                "total_products": int(result.get("total_products") or 0),
-                "total_locations": int(result.get("total_locations") or 0),
+    def _normalize_branch_rows(self, rows: list[dict]) -> list[dict]:
+        return [
+            {
+                "branch": row.get("branch"),
+                "total_stock_value": float(row.get("total_stock_value") or 0),
+                "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
+                "total_records": int(row.get("total_records") or 0),
+                "total_products": int(row.get("total_products") or 0),
+                "total_locations": int(row.get("total_locations") or 0),
             }
+            for row in rows
+        ]
 
+    def _normalize_location_rows(self, rows: list[dict]) -> list[dict]:
+        return [
+            {
+                "branch": row.get("branch"),
+                "location": row.get("location"),
+                "total_stock_value": float(row.get("total_stock_value") or 0),
+                "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
+                "total_records": int(row.get("total_records") or 0),
+                "total_products": int(row.get("total_products") or 0),
+            }
+            for row in rows
+            if float(row.get("total_stock_value") or 0) != 0
+            or float(row.get("total_stock_quantity") or 0) != 0
+        ]
+
+    def _normalize_top_product_rows(self, rows: list[dict]) -> list[dict]:
+        return [
+            {
+                "product_code": row.get("product_code"),
+                "product_description": row.get("product_description"),
+                "total_stock_value": float(row.get("total_stock_value") or 0),
+                "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
+                "average_unit_cost": float(row.get("average_unit_cost") or 0),
+                "total_locations": int(row.get("total_locations") or 0),
+            }
+            for row in rows
+        ]
+
+    def _bundle_from_resultsets(
+        self,
+        resultsets: list[dict],
+        *,
+        branch_label: str,
+        location_label: str,
+    ) -> dict:
+        datasets = [item.get("data") or [] for item in resultsets]
+        summary_row = datasets[0][0] if datasets and datasets[0] else {}
+        by_branch_rows = datasets[1] if len(datasets) > 1 else []
+        by_location_rows = datasets[2] if len(datasets) > 2 else []
+        top_product_rows = datasets[3] if len(datasets) > 3 else []
+
+        return {
+            "summary": self._normalize_summary_row(
+                summary_row,
+                branch_label=branch_label,
+                location_label=location_label,
+            ),
+            "by_branch": self._normalize_branch_rows(by_branch_rows),
+            "by_location": self._normalize_location_rows(by_location_rows),
+            "top_products": self._normalize_top_product_rows(top_product_rows),
+        }
+
+    def _fetch_historical_bundle(self, request: GetStockValueRequest) -> dict:
+        sql, params = self._format_historical_bundle_sql(request)
+        branch_label, location_label = self._labels(request)
+
+        with self as repo:
+            resultsets = repo.execute_query_multiple(sql, params)
+
+        return self._bundle_from_resultsets(
+            resultsets,
+            branch_label=branch_label,
+            location_label=location_label,
+        )
+
+    def _fetch_current_bundle(self, request: GetStockValueRequest) -> dict:
         where_clause, params = self._build_filters(request)
+        branch_label, location_label = self._labels(request)
+        limit = max(1, int(getattr(request, "top_limit", 10) or 10))
 
         sql = f"""
             SELECT
@@ -125,48 +212,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 COUNT(DISTINCT SB2.B2_COD) AS total_products,
                 COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
             FROM SB2010 SB2
-            WHERE {where_clause}
-        """
+            WHERE {where_clause};
 
-        branch_label = request.branch or "consolidated"
-        location_label = request.location or "all"
-        final_params = (branch_label, location_label) + params
-
-        with self as repo:
-            result = repo.execute_one(sql, final_params)
-
-        return result or {
-            "branch": branch_label,
-            "location": location_label,
-            "total_stock_value": 0,
-            "total_stock_quantity": 0,
-            "total_records": 0,
-            "total_products": 0,
-            "total_locations": 0,
-        }
-
-    def get_stock_value_by_branch(self, request: GetStockValueRequest) -> list[dict]:
-        if self._uses_historical_estimation(request):
-            sql, params = self._format_historical_sql(HISTORICAL_STOCK_BY_BRANCH_SQL, request)
-
-            with self as repo:
-                rows = repo.execute_query(sql, params) or []
-
-            return [
-                {
-                    "branch": row.get("branch"),
-                    "total_stock_value": float(row.get("total_stock_value") or 0),
-                    "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
-                    "total_records": int(row.get("total_records") or 0),
-                    "total_products": int(row.get("total_products") or 0),
-                    "total_locations": int(row.get("total_locations") or 0),
-                }
-                for row in rows
-            ]
-
-        where_clause, params = self._build_filters(request)
-
-        sql = f"""
             SELECT
                 SB2.B2_FILIAL AS branch,
                 ISNULL(SUM(SB2.B2_VATU1), 0) AS total_stock_value,
@@ -177,39 +224,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             FROM SB2010 SB2
             WHERE {where_clause}
             GROUP BY SB2.B2_FILIAL
-            ORDER BY SB2.B2_FILIAL
-        """
+            ORDER BY SB2.B2_FILIAL;
 
-        with self as repo:
-            return repo.execute_query(sql, params) or []
-
-    def get_stock_value_by_location(self, request: GetStockValueRequest) -> list[dict]:
-        if self._uses_historical_estimation(request):
-            sql, params = self._format_historical_sql(
-                HISTORICAL_STOCK_BY_LOCATION_SQL,
-                request,
-            )
-
-            with self as repo:
-                rows = repo.execute_query(sql, params) or []
-
-            return [
-                {
-                    "branch": row.get("branch"),
-                    "location": row.get("location"),
-                    "total_stock_value": float(row.get("total_stock_value") or 0),
-                    "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
-                    "total_records": int(row.get("total_records") or 0),
-                    "total_products": int(row.get("total_products") or 0),
-                }
-                for row in rows
-                if float(row.get("total_stock_value") or 0) != 0
-                or float(row.get("total_stock_quantity") or 0) != 0
-            ]
-
-        where_clause, params = self._build_filters(request)
-
-        sql = f"""
             SELECT
                 SB2.B2_FILIAL AS branch,
                 SB2.B2_LOCAL AS location,
@@ -220,38 +236,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             FROM SB2010 SB2
             WHERE {where_clause}
             GROUP BY SB2.B2_FILIAL, SB2.B2_LOCAL
-            ORDER BY SB2.B2_FILIAL, SB2.B2_LOCAL
-        """
+            ORDER BY SB2.B2_FILIAL, SB2.B2_LOCAL;
 
-        with self as repo:
-            return repo.execute_query(sql, params) or []
-
-    def get_top_products_by_stock_value(self, request: GetStockValueRequest) -> list[dict]:
-        if self._uses_historical_estimation(request):
-            sql, params = self._format_historical_sql(
-                HISTORICAL_STOCK_TOP_PRODUCTS_SQL,
-                request,
-            )
-
-            with self as repo:
-                rows = repo.execute_query(sql, params) or []
-
-            return [
-                {
-                    "product_code": row.get("product_code"),
-                    "product_description": row.get("product_description"),
-                    "total_stock_value": float(row.get("total_stock_value") or 0),
-                    "total_stock_quantity": float(row.get("total_stock_quantity") or 0),
-                    "average_unit_cost": 0,
-                    "total_locations": int(row.get("total_locations") or 0),
-                }
-                for row in rows
-            ]
-
-        where_clause, params = self._build_filters(request)
-        limit = max(1, int(getattr(request, "top_limit", 10) or 10))
-
-        sql = f"""
             SELECT TOP {limit}
                 SB2.B2_COD AS product_code,
                 MAX(SB1.B1_DESC) AS product_description,
@@ -265,8 +251,42 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                AND SB1.B1_COD = SB2.B2_COD
             WHERE {where_clause}
             GROUP BY SB2.B2_COD
-            ORDER BY total_stock_value DESC, product_code
+            ORDER BY total_stock_value DESC, product_code;
         """
 
+        final_params = (branch_label, location_label) + params
+
         with self as repo:
-            return repo.execute_query(sql, params) or []
+            resultsets = repo.execute_query_multiple(sql, final_params)
+
+        return self._bundle_from_resultsets(
+            resultsets,
+            branch_label=branch_label,
+            location_label=location_label,
+        )
+
+    def get_stock_value_bundle(self, request: GetStockValueRequest) -> dict:
+        cache_key = stock_value_cache_key(request)
+        cached = get_cached_stock_value_bundle(cache_key)
+        if cached is not None:
+            return cached
+
+        if self._uses_historical_estimation(request):
+            bundle = self._fetch_historical_bundle(request)
+        else:
+            bundle = self._fetch_current_bundle(request)
+
+        set_cached_stock_value_bundle(cache_key, bundle)
+        return bundle
+
+    def get_stock_value_summary(self, request: GetStockValueRequest) -> dict:
+        return self.get_stock_value_bundle(request)["summary"]
+
+    def get_stock_value_by_branch(self, request: GetStockValueRequest) -> list[dict]:
+        return self.get_stock_value_bundle(request)["by_branch"]
+
+    def get_stock_value_by_location(self, request: GetStockValueRequest) -> list[dict]:
+        return self.get_stock_value_bundle(request)["by_location"]
+
+    def get_top_products_by_stock_value(self, request: GetStockValueRequest) -> list[dict]:
+        return self.get_stock_value_bundle(request)["top_products"]

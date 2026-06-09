@@ -10,18 +10,20 @@ from app.application.use_cases.supplies.get_stock_value_use_case import (
 
 def _build_use_case() -> GetStockValueUseCase:
     repository = MagicMock()
-    repository.get_stock_value_summary.return_value = {
-        "branch": "consolidated",
-        "location": "all",
-        "total_stock_value": 100.0,
-        "total_stock_quantity": 10.0,
-        "total_records": 1,
-        "total_products": 1,
-        "total_locations": 1,
+    repository.get_stock_value_bundle.return_value = {
+        "summary": {
+            "branch": "consolidated",
+            "location": "all",
+            "total_stock_value": 100.0,
+            "total_stock_quantity": 10.0,
+            "total_records": 1,
+            "total_products": 1,
+            "total_locations": 1,
+        },
+        "by_branch": [],
+        "by_location": [],
+        "top_products": [],
     }
-    repository.get_stock_value_by_branch.return_value = []
-    repository.get_stock_value_by_location.return_value = []
-    repository.get_top_products_by_stock_value.return_value = []
     return GetStockValueUseCase(repository)
 
 

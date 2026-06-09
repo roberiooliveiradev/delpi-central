@@ -60,11 +60,12 @@ class GetStockValueUseCase:
 
     def execute(self, request: GetStockValueRequest) -> dict:
         period = self._resolve_period(request)
+        bundle = self._repository.get_stock_value_bundle(request)
 
-        summary = self._repository.get_stock_value_summary(request)
-        by_branch = self._repository.get_stock_value_by_branch(request)
-        by_location = self._repository.get_stock_value_by_location(request)
-        top_products = self._repository.get_top_products_by_stock_value(request)
+        summary = bundle.get("summary") or {}
+        by_branch = bundle.get("by_branch") or []
+        by_location = bundle.get("by_location") or []
+        top_products = bundle.get("top_products") or []
 
         total_stock_value = float(summary.get("total_stock_value") or 0)
         total_stock_quantity = float(summary.get("total_stock_quantity") or 0)

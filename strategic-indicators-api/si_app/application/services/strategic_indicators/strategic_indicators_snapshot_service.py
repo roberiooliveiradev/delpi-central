@@ -1215,7 +1215,8 @@ class StrategicIndicatorsSnapshotService:
         department_id: str | None,
         branch: str | None,
     ) -> dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]]:
-        max_workers = min(len(periods), 3)
+        configured = max(1, int(getattr(settings, "SI_SERIES_MAX_PARALLEL_PERIODS", 2) or 2))
+        max_workers = min(len(periods), configured)
 
         def load_period(
             period: ResolvedPeriod,

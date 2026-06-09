@@ -149,4 +149,12 @@ class Settings:
         _get_env("APP_USAGE_TRACKING_ENABLED", default="true").lower() == "true"
     )
 
+    # ==========================
+    # Cache compartilhado (LMP / estoque)
+    # ==========================
+    QUERY_CACHE_BACKEND: str = _get_env("QUERY_CACHE_BACKEND", default="memory")
+    QUERY_CACHE_TTL_SECONDS: str = _get_env("QUERY_CACHE_TTL_SECONDS", default="300")
+    REDIS_URL: str | None = _get_env("REDIS_URL")
+
+
 settings = Settings()

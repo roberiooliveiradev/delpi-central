@@ -28,6 +28,9 @@ class Settings:
     SI_SNAPSHOT_CACHE_TTL_SECONDS: int = int(
         _get_env("SI_SNAPSHOT_CACHE_TTL_SECONDS", default="600") or "600"
     )
+    SI_SERIES_MAX_PARALLEL_PERIODS: int = int(
+        _get_env("SI_SERIES_MAX_PARALLEL_PERIODS", default="2") or "2"
+    )
     SI_WARMUP_ON_STARTUP: bool = (
         str(_get_env("SI_WARMUP_ON_STARTUP", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}
