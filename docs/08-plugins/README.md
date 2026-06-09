@@ -51,6 +51,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
+| `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
 
 **Atenção:** o `id` na URL de assets (`/apps/{id}/`) deve coincidir com o sufixo do container `delpi-{id}` no Nginx. Manifestos com `basePath` fora de `/apps/...` ainda precisam de rotas React no Portal compatíveis com o path registrado na Core API.
@@ -107,6 +108,7 @@ Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/a
 | dashboard-hr | `dashboard-hr` |
 | dashboard-lmps | `dashboard-lmps` |
 | dashboard-delpi | `dashboard-delpi` |
+| api-delpi-console | `api-delpi-console` |
 | eficiencia-fabril | `eficiencia-fabril` |
 | central-agendamento | `central-agendamento` |
 
@@ -137,6 +139,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Chat / IA | [Plugin README](../../plugins/minha-delpi-chat/README.md) · [API](../../minha-delpi-ai-api/docs/api/README.md) · [Status](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 | Indicadores | [Documentação SI (completa)](../../strategic-indicators-api/docs/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
+| Console API DELPI | [Plugin README](../../plugins/api-delpi-console/README.md) · [Playbook](../../api-delpi/docs/roadmaps/playbook-api-delpi-console.md) |
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
 

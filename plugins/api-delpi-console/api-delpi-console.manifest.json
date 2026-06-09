@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "api-delpi-console",
+  "name": "Console API DELPI",
+  "description": "Swagger UI, explorador OpenAPI, testes HTTP e inspeção de respostas da api-delpi",
+  "icon": "terminal",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/api-delpi-console",
+  "entry": "/apps/api-delpi-console/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "api-delpi-console.view",
+      "name": "Acesso ao console da API DELPI",
+      "description": "Permite explorar rotas, testar endpoints e inspecionar envelopes de resposta",
+      "module": "api-delpi-console"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/api-delpi-console",
+      "label": "Console API DELPI",
+      "permission": "api-delpi-console.view",
+      "icon": "terminal",
+      "order": 90,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/api-delpi-console/swagger",
+      "label": "Swagger UI",
+      "permission": "api-delpi-console.view",
+      "icon": "terminal",
+      "order": 91,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/api-delpi-console/explorer",
+      "label": "Explorador de rotas",
+      "permission": "api-delpi-console.view",
+      "icon": "terminal",
+      "order": 92,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/api-delpi-console/spec",
+      "label": "Especificação OpenAPI",
+      "permission": "api-delpi-console.view",
+      "icon": "terminal",
+      "order": 93,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/api-delpi-console/history",
+      "label": "Histórico de chamadas",
+      "permission": "api-delpi-console.view",
+      "icon": "terminal",
+      "order": 94,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

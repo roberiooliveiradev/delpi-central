@@ -564,6 +564,20 @@ services:
     networks:
       - delpi-network
 
+  api-delpi-console:
+    build:
+      context: ../plugins/api-delpi-console
+      dockerfile: Dockerfile
+
+    container_name: delpi-api-delpi-console
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-hr:
     build:
       context: ../plugins/dashboard-hr
