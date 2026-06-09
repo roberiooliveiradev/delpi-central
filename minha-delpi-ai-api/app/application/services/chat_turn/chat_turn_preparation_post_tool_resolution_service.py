@@ -276,11 +276,19 @@ class ChatTurnPreparationPostToolResolutionService:
                 )
             )
 
+            drawing_mode = bool(
+                isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode")
+            )
+            has_drawing_report = bool(
+                isinstance(tool_context, dict) and tool_context.get("drawingAnalysis")
+            )
+
             if (
                 authorized_tool_answer
                 and ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
                     tool_calls
                 )
+                and not (drawing_mode and has_drawing_report)
             ):
                 direct_answer = authorized_tool_answer
                 skip_rag = True

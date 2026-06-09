@@ -35,6 +35,12 @@ def test_attachment_turn_requires_skill_on_agent(monkeypatch):
         intent_route="attachment_document",
         has_agent=True,
     )
+    assert ChatDocumentVisionSkillService.should_run_for_attachment_turn(
+        {"documentVision": False},
+        intent_route="attachment_document",
+        has_agent=True,
+        message="descreva a imagem anexada",
+    )
     assert not ChatDocumentVisionSkillService.should_run_for_attachment_turn(
         {"documentVision": False},
         intent_route="attachment_document",

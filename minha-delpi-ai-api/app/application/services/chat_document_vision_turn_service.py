@@ -81,6 +81,8 @@ class ChatDocumentVisionTurnService:
             skills=skills,
             persist=persist,
             message=message,
+            intent_route=intent_route,
+            has_agent=has_agent,
         )
 
     @classmethod

@@ -1,6 +1,6 @@
 {
-  "agentKey": "minha-delpi-chat",
-  "exportedAt": "2026-05-29T19:12:10.671271+00:00",
+  "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
+  "exportedAt": "2026-06-09T02:59:00.463947+00:00",
   "outputDir": "/app/docs/knowledge/domains/agents/minha-delpi-chat",
   "fileCount": 12,
   "files": [
@@ -8,15 +8,15 @@
       "canonicalFilename": "api-delpi-rotas-agente.md",
       "originalFilename": "api-delpi-rotas-agente.md",
       "title": "api-delpi-rotas-agente.md",
-      "documentId": "5534acaf-87b2-49dd-94ee-a7273b00039d",
-      "chunkCount": 5,
-      "sizeBytes": 5977
+      "documentId": "e269fcbf-e87c-4f60-b6ed-9ebb2a9dc569",
+      "chunkCount": 6,
+      "sizeBytes": 7100
     },
     {
       "canonicalFilename": "api-product-instructions.md",
       "originalFilename": "product_api_instructions.md",
       "title": "product_api_instructions.md",
-      "documentId": "8784a854-969f-4d63-a957-c0d7d90ccecd",
+      "documentId": "f281fa89-d37e-4cab-b6f8-f0d372476374",
       "chunkCount": 10,
       "sizeBytes": 11861
     },
@@ -24,7 +24,7 @@
       "canonicalFilename": "api-system-instructions.md",
       "originalFilename": "system_api_instructions.md",
       "title": "system_api_instructions.md",
-      "documentId": "fac4f664-9a8b-4077-8a2e-58181f71c266",
+      "documentId": "1a4b2be7-6f17-442f-93ed-e118a2da9be0",
       "chunkCount": 4,
       "sizeBytes": 4550
     },
@@ -32,7 +32,7 @@
       "canonicalFilename": "drawing-analyser-instructions.md",
       "originalFilename": "drawing_analyser_instructions.md",
       "title": "drawing_analyser_instructions.md",
-      "documentId": "c107ad54-1015-4091-a146-c910b9269055",
+      "documentId": "27815029-dccd-4976-82f7-4bf9b0ce2ec6",
       "chunkCount": 16,
       "sizeBytes": 17578
     },
@@ -40,7 +40,7 @@
       "canonicalFilename": "drawing-requirements-delpi.md",
       "originalFilename": "drawing_requirements_delpi.md",
       "title": "drawing_requirements_delpi.md",
-      "documentId": "f83cffe9-82c0-4ee4-ad02-7c0d9aed671c",
+      "documentId": "71ba0e2b-813b-4224-91a3-8a8fac5f34db",
       "chunkCount": 9,
       "sizeBytes": 10251
     },
@@ -48,7 +48,7 @@
       "canonicalFilename": "drawing-rules-delpi.md",
       "originalFilename": "drawing_rules_delpi.md",
       "title": "drawing_rules_delpi.md",
-      "documentId": "7cd1da52-32c8-4904-ad55-91a052cf71ab",
+      "documentId": "285635fe-bd10-4b3a-8564-0664ead30549",
       "chunkCount": 7,
       "sizeBytes": 8132
     },
@@ -56,7 +56,7 @@
       "canonicalFilename": "drawing-validation-rules-delpi.md",
       "originalFilename": "validation_rules_delpi.md",
       "title": "validation_rules_delpi.md",
-      "documentId": "f4f31b7c-9bbc-4479-aa28-a8ee365aaa6e",
+      "documentId": "b90a4c5e-2765-4f46-b9f0-7d63497661ff",
       "chunkCount": 7,
       "sizeBytes": 7912
     },
@@ -64,7 +64,7 @@
       "canonicalFilename": "engenharia-codigos-intermediarios-delpi.md",
       "originalFilename": "Understanding DELPI Intermediate Product Codes.md",
       "title": "Understanding DELPI Intermediate Product Codes.md",
-      "documentId": "d44110cc-4ebe-4c1f-94db-5eb713b2161e",
+      "documentId": "a3d9514e-5e4e-407a-be35-143e8f13f985",
       "chunkCount": 5,
       "sizeBytes": 5483
     },
@@ -72,7 +72,7 @@
       "canonicalFilename": "produto-diretrizes-criacao-descricao.md",
       "originalFilename": "diretrizes_criacao_de_descricao.md",
       "title": "diretrizes_criacao_de_descricao.md",
-      "documentId": "90e85d8f-52ed-40e7-bd4d-125b2919faf1",
+      "documentId": "c457473e-8bec-4d7a-86a7-c26b8586905f",
       "chunkCount": 2,
       "sizeBytes": 2489
     },
@@ -80,7 +80,7 @@
       "canonicalFilename": "sql-data-api-instructions.md",
       "originalFilename": "data_sql_api_instructions.md",
       "title": "data_sql_api_instructions.md",
-      "documentId": "45321123-0c71-49e2-89af-362b983f9b1a",
+      "documentId": "459c812a-d349-4fe5-9842-ffab96af0cd8",
       "chunkCount": 59,
       "sizeBytes": 75176
     },
@@ -88,7 +88,7 @@
       "canonicalFilename": "sql-playbook-lmp-oportunidades-processos.txt",
       "originalFilename": "Analista SQL DELPI — Oportunidades, Processos e Estágios LMP.txt",
       "title": "Analista SQL DELPI — Oportunidades, Processos e Estágios LMP.txt",
-      "documentId": "3cbf3167-b691-467b-9d6d-d45b66584a26",
+      "documentId": "bc759e95-5e11-4dba-9049-0ca694da7677",
       "chunkCount": 53,
       "sizeBytes": 65315
     },
@@ -96,7 +96,7 @@
       "canonicalFilename": "sql-playbook-producao-suprimentos-perdas.txt",
       "originalFilename": "Analista SQL DELPI — Produção, Suprimentos e Perdas.txt",
       "title": "Analista SQL DELPI — Produção, Suprimentos e Perdas.txt",
-      "documentId": "8fe025dc-6ef7-4736-9831-6301e941df7e",
+      "documentId": "c1df7f29-379d-43ce-a94b-9876ded0a875",
       "chunkCount": 19,
       "sizeBytes": 24920
     }

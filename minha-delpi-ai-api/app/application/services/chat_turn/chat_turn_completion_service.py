@@ -223,6 +223,11 @@ class ChatTurnCompletionService:
                     isinstance(turn.tool_context, dict)
                     and turn.tool_context.get("sqlRequiresLlm")
                 )
+                or (
+                    isinstance(turn.tool_context, dict)
+                    and turn.tool_context.get("drawingAnalysisMode")
+                    and turn.tool_context.get("drawingAnalysis")
+                )
             ),
         )
 

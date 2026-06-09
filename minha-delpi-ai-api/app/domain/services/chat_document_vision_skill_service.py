@@ -32,6 +32,7 @@ class ChatDocumentVisionSkillService:
         *,
         runtime_skills: dict | None = None,
         has_agent: bool = False,
+        message: str | None = None,
     ) -> bool:
         if not cls.is_platform_enabled():
             return False
@@ -39,7 +40,18 @@ class ChatDocumentVisionSkillService:
         if cls.is_skill_active(runtime_skills):
             return True
 
-        return not has_agent
+        if not has_agent:
+            return True
+
+        if message:
+            from app.domain.services.chat_attachment_document_intent_service import (
+                ChatAttachmentDocumentIntentService,
+            )
+
+            if ChatAttachmentDocumentIntentService.is_document_content_question(message):
+                return True
+
+        return False
 
     @classmethod
     def should_run_for_drawing(cls, skills: dict | None = None) -> bool:
@@ -63,6 +75,7 @@ class ChatDocumentVisionSkillService:
         *,
         intent_route: str | None = None,
         has_agent: bool = False,
+        message: str | None = None,
     ) -> bool:
         if not cls.is_platform_enabled():
             return False
@@ -78,7 +91,15 @@ class ChatDocumentVisionSkillService:
             return cls.allows_attachment_document_turn(
                 runtime_skills=resolved,
                 has_agent=has_agent,
+                message=message,
             )
+
+        if message and cls.allows_attachment_document_turn(
+            runtime_skills=resolved,
+            has_agent=has_agent,
+            message=message,
+        ):
+            return True
 
         return False
 

@@ -89,15 +89,13 @@ class ChatToolContextAuxiliaryService:
                     arguments = tool_call.get("arguments") or {}
                     code = str(arguments.get("code") or arguments.get("productCode") or "").strip()
 
-                data = tool_call.get("data")
+                from app.domain.services.chat_drawing_analyser_payload_service import (
+                    ChatDrawingAnalyserPayloadService,
+                )
 
-                if data is None:
-                    data = metadata.get("authorizedResult") or metadata.get("data")
-
-                root = data.get("data", data) if isinstance(data, dict) else {}
-
-                if isinstance(root, dict) and isinstance(root.get("data"), dict):
-                    root = root["data"]
+                root = ChatDrawingAnalyserPayloadService.resolve_root_from_tool_call(
+                    tool_call
+                )
 
                 package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
                     product_code=code or "—",

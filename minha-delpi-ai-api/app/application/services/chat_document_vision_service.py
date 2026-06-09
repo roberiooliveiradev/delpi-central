@@ -148,6 +148,7 @@ class ChatDocumentVisionService:
         *,
         intent_route: str | None = None,
         has_agent: bool = False,
+        message: str | None = None,
     ) -> bool:
         from app.domain.services.chat_document_vision_skill_service import (
             ChatDocumentVisionSkillService,
@@ -157,6 +158,7 @@ class ChatDocumentVisionService:
             skills,
             intent_route=intent_route,
             has_agent=has_agent,
+            message=message,
         )
 
     @classmethod
@@ -239,8 +241,15 @@ class ChatDocumentVisionService:
         *,
         skills: dict | None = None,
         message: str | None = None,
+        intent_route: str | None = None,
+        has_agent: bool = False,
     ) -> dict[str, Any] | None:
-        if not cls.should_run_for_attachment(skills):
+        if not cls.should_run_for_attachment(
+            skills,
+            intent_route=intent_route,
+            has_agent=has_agent,
+            message=message,
+        ):
             return None
 
         filename = attachment.original_filename or ""
@@ -250,6 +259,18 @@ class ChatDocumentVisionService:
             return None
 
         if str(attachment.status or "").lower() == "indexed":
+            from app.domain.services.chat_document_vision_content_service import (
+                ChatDocumentVisionContentService,
+            )
+
+            purpose = cls._resolve_vision_purpose(
+                message,
+                content_type=content_type,
+                filename=filename,
+            )
+            describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
+            hybrid_purpose = ChatDocumentVisionContentService.vision_purpose("hybrid")
+
             native = cls._stage_native(
                 attachment.storage_path,
                 filename=filename,
@@ -257,8 +278,19 @@ class ChatDocumentVisionService:
             )
             text = str(native.get("fullText") or "").strip()
             min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
+            source_metadata = (
+                native.get("metadata") if isinstance(native.get("metadata"), dict) else {}
+            )
+            extractor = str(source_metadata.get("extractor") or native.get("engine") or "")
+            is_image = cls._is_image(content_type, filename)
+            metadata_only_image = is_image and extractor == "image_metadata"
+            needs_semantic_vision = purpose in {describe_purpose, hybrid_purpose}
 
-            if len(text) < min_legible:
+            if (
+                len(text) < min_legible
+                or metadata_only_image
+                or needs_semantic_vision
+            ):
                 return cls.extract_from_storage_path(
                     attachment.storage_path,
                     filename=filename,
@@ -363,6 +395,8 @@ class ChatDocumentVisionService:
         skills: dict | None = None,
         persist: bool = True,
         message: str | None = None,
+        intent_route: str | None = None,
+        has_agent: bool = False,
     ) -> dict[str, Any] | None:
         """Snapshot leve para metadata/adminDebug em turnos só com anexo (ex.: boleto PDF)."""
         attachment = cls._resolve_first_document_attachment(
@@ -378,6 +412,8 @@ class ChatDocumentVisionService:
             attachment,
             skills=skills,
             message=message,
+            intent_route=intent_route,
+            has_agent=has_agent,
         )
 
         if not vision:

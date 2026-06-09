@@ -183,6 +183,7 @@ class ChatTurnPreparationToolRoutingService:
             and ChatDocumentVisionSkillService.allows_attachment_document_turn(
                 runtime_skills=runtime_skills,
                 has_agent=has_agent,
+                message=message,
             )
             and not ChatDrawingIntentService.is_drawing_analysis_request(
                 message,
