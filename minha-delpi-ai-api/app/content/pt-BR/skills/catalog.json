@@ -67,7 +67,7 @@
     {
       "key": "document-vision-delpi",
       "label": "Visão e OCR de documentos",
-      "description": "Extrai texto e estrutura de PDFs e imagens (OCR Tesseract, texto nativo) para alimentar análise de desenhos e anexos. Processamento local no chat base.",
+      "description": "Extrai texto e estrutura de PDFs e imagens (OCR Tesseract, texto nativo). Reutilizável em anexos, leitura de documentos, imagens e como estágio da análise de desenhos. Processamento local no chat base.",
       "policyFile": "document-vision-delpi-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "documentVision",

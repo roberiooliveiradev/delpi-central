@@ -196,3 +196,40 @@ def test_stage_ollama_vlm_calls_chat_api(monkeypatch, tmp_path):
     assert "90260140" in str(result.get("fullText") or "")
     post_mock.assert_called_once()
     assert "qwen2.5vl:7b" in str(post_mock.call_args)
+
+
+def test_stage_ollama_vlm_describe_returns_image_description(monkeypatch, tmp_path):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL", "http://ollama.test:11434")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_OLLAMA_MODEL", "qwen2.5vl:7b")
+
+    image_path = tmp_path / "photo.png"
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+        b"\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x01\x01\x01\x00\x18\xdd\x8d\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+
+    response = MagicMock()
+    response.raise_for_status = MagicMock()
+    response.json.return_value = {
+        "message": {"content": "Painel industrial com botões verdes."}
+    }
+
+    image_manager = MagicMock()
+    image_manager.__enter__.return_value.convert.return_value = MagicMock()
+
+    with patch("PIL.Image.open", return_value=image_manager):
+        with patch("requests.post", return_value=response):
+            with patch.object(
+                ChatDocumentVisionService,
+                "_pil_to_base64_png",
+                return_value="aGVsbG8=",
+            ):
+                result = ChatDocumentVisionService._stage_ollama_vlm(
+                    str(image_path),
+                    filename="photo.png",
+                    content_type="image/png",
+                    purpose="describe",
+                )
+
+    assert "Painel industrial" in str(result.get("imageDescription") or "")
+    assert not str(result.get("fullText") or "").strip()

@@ -24,8 +24,9 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Concluído | Fases 1–5 + salvar fontes no projeto |
 | [playbook_autoajuda_autoconhecimento_chat_minha_delpi.md](./playbook_autoajuda_autoconhecimento_chat_minha_delpi.md) | Concluído | Fases 1–5 (catálogo, painel ?, personalização, identity sync) |
 | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | **Concluído (MVP)** | F1–4 + `AgentMiniDashboard`; refinamentos PNG multi-painel → backlog |
-| [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; Fase 3 cotas/OCR → Onda 13 |
-| [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem, métricas admin, profile `vision` |
+| [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; extração carimbo/cotas → [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) |
+| [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem; regiões hierárquicas → Onda 14 |
+| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | Backlog | Onda 14 — OCR carimbo/BOM/cotas; baseline 4/13 em `desenhos/` |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)
@@ -108,4 +109,4 @@ Nenhum arquivo desta pasta exige reimplementação completa do escopo original d
 
 Última revisão em lote: **03/06/2026** — playbook memória/contexto fechado (Fases 1–9 + Q&A); ver [`../../changelog/2026-06-contexto-manual-e-roadmap.md`](../../changelog/2026-06-contexto-manual-e-roadmap.md).
 
-**Fora do escopo desta pasta (backlog ativo):** Admin mockup 11 (aprovação produto), Onda 12/13 (cotas/OCR avançado), infra TOTVS dev, refinamentos baixos — [`BACKLOG_ROADMAP.md`](./BACKLOG_ROADMAP.md).
+**Fora do escopo desta pasta (backlog ativo):** Admin mockup 11 (aprovação produto), **Onda 14** (OCR hierárquico desenhos), refinamentos VLM/Docling pós-Onda 13, infra TOTVS dev — [`BACKLOG_ROADMAP.md`](./BACKLOG_ROADMAP.md).

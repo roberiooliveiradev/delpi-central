@@ -164,29 +164,12 @@ class ChatToolContextPreTurnService:
         drawing_pdf_extract = None
 
         if drawing_analysis_mode and drawing_has_pdf:
-            from app.application.services.chat_document_vision_service import (
-                ChatDocumentVisionService,
-            )
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
+            from app.application.services.chat_document_vision_turn_service import (
+                ChatDocumentVisionTurnService,
             )
             from app.domain.services.chat_drawing_pdf_extraction_service import (
                 ChatDrawingPdfExtractionService,
             )
-
-            vision_will_run = ChatDocumentVisionService.should_run_for_drawing(
-                drawing_runtime_skills
-            )
-
-            if vision_will_run and on_stream_activity:
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="start",
-                )
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="ocr",
-                )
 
             drawing_pdf_extract = {}
             if attachment_context:
@@ -197,12 +180,15 @@ class ChatToolContextPreTurnService:
                     or {}
                 )
 
-            drawing_pdf_extract = ChatDocumentVisionService.enrich_drawing_extract(
-                drawing_pdf_extract,
-                user_id=str(user_id) if user_id else None,
-                session_id=session_id,
-                attachment_ids=attachment_ids,
-                skills=drawing_runtime_skills,
+            drawing_pdf_extract, _vision_activation = (
+                ChatDocumentVisionTurnService.run_drawing_vision_with_progress(
+                    parsed=drawing_pdf_extract,
+                    user_id=str(user_id) if user_id else None,
+                    session_id=session_id,
+                    attachment_ids=attachment_ids,
+                    skills=drawing_runtime_skills,
+                    on_stream_activity=on_stream_activity,
+                )
             )
 
             if drawing_pdf_extract and drawing_pdf_extract.get("productCode"):
@@ -218,20 +204,6 @@ class ChatToolContextPreTurnService:
                     drawing_product_code_source = extracted_source
                 elif str(drawing_product_code) == extracted_product_code:
                     drawing_product_code_source = extracted_source
-
-            if vision_will_run and on_stream_activity and drawing_pdf_extract:
-                char_count = int(drawing_pdf_extract.get("charCount") or 0)
-                engine = (
-                    drawing_pdf_extract.get("extractor")
-                    or drawing_pdf_extract.get("visionEngine")
-                    or "document_vision"
-                )
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="complete",
-                    engine=str(engine),
-                    char_count=char_count,
-                )
 
         if drawing_analysis_mode and on_stream_activity:
             from app.application.services.chat_stream_activity_service import (

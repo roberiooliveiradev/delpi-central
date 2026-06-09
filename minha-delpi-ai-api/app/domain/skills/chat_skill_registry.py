@@ -250,13 +250,7 @@ class ChatSkillRegistry:
                 enabled = cls._drawing_analysis_available(allowed)
             elif definition.key == DOCUMENT_VISION_SKILL_KEY:
                 if not cls._has_explicit_config(agent_metadata, definition):
-                    if has_agent:
-                        enabled = cls._drawing_analysis_available(allowed) or (
-                            ChatDomainConfigService.chat_document_vision_enabled()
-                            and ChatDomainConfigService.chat_document_vision_auto_with_drawing()
-                        )
-                    else:
-                        enabled = ChatDomainConfigService.chat_document_vision_enabled()
+                    enabled = ChatDomainConfigService.chat_document_vision_enabled()
 
             derived: dict[str, bool] = {}
 

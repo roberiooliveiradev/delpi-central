@@ -24,6 +24,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Onboarding (10) | [playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | **Concluído (MVP)** — tour, perfis, marcos; materiais treinamento em backlog |
 | Análise de desenhos DELPI | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial (MVP) — skill `drawing-analysis-delpi`, smoke `smoke_drawing_analyser.py` |
 | Visão / OCR documentos (chat base) | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial (MVP) — [Onda 13](../inteligencia-chat-onda-13-skill-visao-documentos-ocr.md); Tesseract+PyMuPDF; Docling/VLM backlog |
+| **OCR hierárquico desenhos** | [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Backlog** — [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md); carimbo base-direita, resolução de código sem prefixo `902` |
 | Metadados Protheus | [api-delpi-chat-intelligence-audit.md](../api-delpi-chat-intelligence-audit.md) | `/system/tables/*` + [smoke](../../testing/smoke-system-metadata-homologacao.md) |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 

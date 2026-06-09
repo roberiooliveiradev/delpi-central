@@ -158,11 +158,32 @@ class ChatTurnPreparationToolRoutingService:
         from app.domain.services.chat_attachment_document_intent_service import (
             ChatAttachmentDocumentIntentService,
         )
+        from app.domain.services.chat_document_vision_skill_service import (
+            ChatDocumentVisionSkillService,
+        )
         from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+        from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        has_agent = bool(workspace.get("agent"))
+        runtime_skills = workspace.get("skills")
+
+        if not isinstance(runtime_skills, dict):
+            runtime_skills = ChatSkillRegistry.resolve_runtime_flags(
+                agent_metadata=workspace.get("agent")
+                if isinstance(workspace.get("agent"), dict)
+                else None,
+                allowed_action_ids=list(workspace.get("allowedActionIds") or []),
+                has_agent=has_agent,
+            )
 
         skip_tools_for_attachment_document = bool(
             request_attachment_ids
             and ChatAttachmentDocumentIntentService.is_document_content_question(message)
+            and ChatDocumentVisionSkillService.allows_attachment_document_turn(
+                runtime_skills=runtime_skills,
+                has_agent=has_agent,
+            )
             and not ChatDrawingIntentService.is_drawing_analysis_request(
                 message,
                 attachment_ids=request_attachment_ids,
@@ -394,6 +415,7 @@ class ChatTurnPreparationToolRoutingService:
                         str(item) for item in skip_flags.request_attachment_ids
                     ],
                     skills=workspace_context.get("skills"),
+                    message=message,
                 )
 
                 if vision_meta:

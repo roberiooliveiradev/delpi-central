@@ -1,8 +1,8 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** MVP fechado (13.1–13.6 + intent `attachment_document`); refinamentos: profile `vision` em homologação, contrato completo playbook, E2E gateway (maio/2026)  
+**Status:** MVP fechado (13.1–13.6 + intent `attachment_document`); refinamentos: profile `vision` em homologação, **OCR hierárquico desenhos** → [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) (jun/2026)  
 **Criado:** 2026-05-31  
-**Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`)  
+**Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`) · regiões carimbo/BOM: [playbook OCR hierárquico](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
 
 ---

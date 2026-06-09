@@ -305,3 +305,20 @@ def test_pdf_extract_from_fixture_text():
     parsed = ChatDrawingPdfExtractionService.parse_from_text("DESENHO 90260140 REV.01")
 
     assert parsed.get("productCode") == "90260140"
+
+
+def test_drawing_analysis_policy_documents_three_layers():
+    from pathlib import Path
+
+    policy = (
+        Path(__file__).resolve().parents[4]
+        / "app"
+        / "domain"
+        / "prompt_policies"
+        / "drawing-analysis-delpi-skill.md"
+    ).read_text(encoding="utf-8")
+
+    assert "documentVision" in policy
+    assert "/analyser" in policy
+    assert "drawing_validation.json" in policy
+    assert "API DELPI" in policy

@@ -284,6 +284,8 @@ Validar RAM: 7B VLM quantizado ~5–8 GB + api + postgres.
 
 Dependência: Onda 12 MVP (drawing) **concluído** antes de 13.4.
 
+**Evolução pós-MVP (jun/2026):** regiões gráficas corretas (carimbo **base direita**), BOM/cotas separados e resolução de código DELPI — [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) · [playbook OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md).
+
 ---
 
 ## 10. Testes e validação

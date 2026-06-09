@@ -178,6 +178,9 @@ class Settings:
     CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK = (
         os.getenv("CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK", "true").lower() == "true"
     )
+    CHAT_DOCUMENT_VISION_IMAGE_DESCRIBE_ENABLED = (
+        os.getenv("CHAT_DOCUMENT_VISION_IMAGE_DESCRIBE_ENABLED", "true").lower() == "true"
+    )
     CHAT_RESPONSE_MODES_ENABLED = (
         os.getenv("CHAT_RESPONSE_MODES_ENABLED", "true").lower() == "true"
     )

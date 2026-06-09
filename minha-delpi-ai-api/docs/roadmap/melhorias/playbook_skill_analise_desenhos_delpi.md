@@ -224,13 +224,13 @@ A skill deve verificar:
 
 > Para analisar o desenho, preciso que você anexe o PDF.
 
-**Serviço previsto:** `ChatDrawingPdfExtractionService` (Onda 12.2).
+**Serviço previsto:** `ChatDrawingPdfExtractionService` (Onda 12.2). Evolução **OCR hierárquico** (carimbo base-direita, BOM/cotas por região, resolução de código sem prefixo `902`): [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) · [playbook](./playbook_ocr_hierarquico_desenhos_delpi.md).
 
 ---
 
 ### 7.2 Extrair dados do PDF
 
-A skill deve extrair (schema estruturado para merge com API):
+A skill deve extrair (schema estruturado para merge com API) — ver contrato `DrawingHierarchicalExtract` no [playbook OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) §5:
 
 - código DELPI;
 - revisão;

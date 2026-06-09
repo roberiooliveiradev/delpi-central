@@ -135,9 +135,16 @@ class ChatIntelligencePipelineService:
         tool_context: dict | None,
     ) -> ChatPostToolDecisions:
         if not previous_messages:
+            from app.domain.services.chat_document_vision_context_service import (
+                ChatDocumentVisionContextService,
+            )
+
             analysis_mode = ChatAnalysisIntentService.is_comparison_or_insight_request(message)
+            enriched = ChatDocumentVisionContextService.enrich_tool_context(
+                dict(tool_context or {})
+            )
             return ChatPostToolDecisions(
-                tool_context=dict(tool_context or {}),
+                tool_context=enriched,
                 analysis_mode=analysis_mode,
             )
 
@@ -146,6 +153,12 @@ class ChatIntelligencePipelineService:
             previous_messages,
             dict(tool_context or {}),
         )
+
+        from app.domain.services.chat_document_vision_context_service import (
+            ChatDocumentVisionContextService,
+        )
+
+        updated = ChatDocumentVisionContextService.enrich_tool_context(updated)
 
         return ChatPostToolDecisions(
             tool_context=updated,

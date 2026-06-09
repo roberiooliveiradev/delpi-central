@@ -223,45 +223,40 @@ class ChatToolContextResultAssemblyService:
                     "drawingAnalysisExport"
                 ]
 
-        from app.application.services.chat_document_vision_service import (
-            ChatDocumentVisionService,
+        from app.application.services.chat_document_vision_turn_service import (
+            ChatDocumentVisionTurnService,
         )
-        from app.application.services.chat_stream_activity_service import (
-            ChatStreamActivityService,
+        from app.domain.services.chat_attachment_document_intent_service import (
+            ChatAttachmentDocumentIntentService,
         )
 
-        if (
-            attachment_ids
-            and not result_payload.get("documentVision")
-            and ChatDocumentVisionService.should_run_for_attachment(drawing_runtime_skills)
-        ):
-            if on_stream_activity and not drawing_analysis_mode:
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="start",
-                )
-                ChatStreamActivityService.emit_document_vision_progress(
-                    on_stream_activity,
-                    phase="ocr",
-                )
+        workspace = getattr(host, "_build_workspace_context", None) or {}
+        has_agent = bool(workspace.get("agent")) if isinstance(workspace, dict) else False
+        intent_route = (
+            "attachment_document"
+            if attachment_ids
+            and ChatAttachmentDocumentIntentService.is_document_content_question(raw_message)
+            else None
+        )
 
-            attachment_vision = ChatDocumentVisionService.build_attachment_vision_metadata(
-                user_id=str(user_id) if user_id else None,
-                session_id=session_id,
-                attachment_ids=attachment_ids,
-                skills=drawing_runtime_skills,
+        if attachment_ids and not result_payload.get("documentVision"):
+            attachment_vision, _activation = (
+                ChatDocumentVisionTurnService.run_attachment_vision_with_progress(
+                    user_id=str(user_id) if user_id else None,
+                    session_id=session_id,
+                    attachment_ids=attachment_ids,
+                    skills=drawing_runtime_skills,
+                    intent_route=intent_route,
+                    has_agent=has_agent,
+                    on_stream_activity=on_stream_activity
+                    if not drawing_analysis_mode
+                    else None,
+                    message=raw_message,
+                )
             )
 
             if attachment_vision:
                 result_payload["documentVision"] = attachment_vision
-
-                if on_stream_activity and not drawing_analysis_mode:
-                    ChatStreamActivityService.emit_document_vision_progress(
-                        on_stream_activity,
-                        phase="complete",
-                        engine=str(attachment_vision.get("engine") or "document_vision"),
-                        char_count=int(attachment_vision.get("charCount") or 0),
-                    )
 
         return host._finalize_tool_context_result(
             message=raw_message,

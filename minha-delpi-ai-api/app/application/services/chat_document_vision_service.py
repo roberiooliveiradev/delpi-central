@@ -35,6 +35,31 @@ class ChatDocumentVisionService:
         )
 
     @classmethod
+    def _image_describe_enabled(cls) -> bool:
+        return bool(
+            Settings.CHAT_DOCUMENT_VISION_IMAGE_DESCRIBE_ENABLED
+            and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
+        )
+
+    @classmethod
+    def _resolve_vision_purpose(
+        cls,
+        message: str | None,
+        *,
+        content_type: str = "",
+        filename: str = "",
+    ) -> str:
+        from app.domain.services.chat_document_vision_skill_service import (
+            ChatDocumentVisionSkillService,
+        )
+
+        return ChatDocumentVisionSkillService.resolve_vision_purpose(
+            message,
+            content_type=content_type,
+            filename=filename,
+        )
+
+    @classmethod
     def _needs_vlm_fallback(cls, text: str, *, legible: bool | None = None) -> bool:
         min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
         normalized = str(text or "").strip()
@@ -54,6 +79,7 @@ class ChatDocumentVisionService:
         content_type: str,
         stages: list[str],
         warnings: list[str],
+        vision_purpose: str | None = None,
     ) -> dict[str, Any]:
         if not cls._auto_vlm_fallback_enabled():
             return payload
@@ -64,12 +90,40 @@ class ChatDocumentVisionService:
         ):
             return payload
 
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
+        describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
+        fallback_purpose = (
+            describe_purpose
+            if cls._is_image(content_type, filename) and cls._image_describe_enabled()
+            else ChatDocumentVisionContentService.vision_purpose("ocr")
+        )
+        if vision_purpose:
+            fallback_purpose = vision_purpose
+
         vlm = cls._stage_ollama_vlm(
             storage_path,
             filename=filename,
             content_type=content_type,
+            purpose=fallback_purpose,
         )
         warnings.extend(vlm.get("warnings") or [])
+
+        if fallback_purpose == describe_purpose:
+            image_description = str(vlm.get("imageDescription") or "").strip()
+
+            if not image_description:
+                warnings.append("ollama_vlm_describe_fallback_empty")
+                return payload
+
+            stages.append("ollama_vlm_describe")
+            merged = dict(payload)
+            merged["imageDescription"] = image_description
+            merged["engine"] = "ollama_vlm"
+            merged["visionPurpose"] = describe_purpose
+            return merged
 
         vlm_text = str(vlm.get("fullText") or "").strip()
 
@@ -88,37 +142,30 @@ class ChatDocumentVisionService:
         )
 
     @classmethod
-    def should_run_for_attachment(cls, skills: dict | None = None) -> bool:
-        if not cls.is_enabled():
-            return False
+    def should_run_for_attachment(
+        cls,
+        skills: dict | None = None,
+        *,
+        intent_route: str | None = None,
+        has_agent: bool = False,
+    ) -> bool:
+        from app.domain.services.chat_document_vision_skill_service import (
+            ChatDocumentVisionSkillService,
+        )
 
-        resolved = skills if isinstance(skills, dict) else {}
-
-        if resolved.get("documentVision"):
-            return True
-
-        if (
-            Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING
-            and resolved.get("drawingAnalysis")
-        ):
-            return True
-
-        return cls.is_enabled()
+        return ChatDocumentVisionSkillService.should_run_for_attachment_turn(
+            skills,
+            intent_route=intent_route,
+            has_agent=has_agent,
+        )
 
     @classmethod
     def should_run_for_drawing(cls, skills: dict | None) -> bool:
-        if not cls.is_enabled():
-            return False
-
-        resolved = skills if isinstance(skills, dict) else {}
-
-        if resolved.get("documentVision"):
-            return True
-
-        return bool(
-            Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING
-            and resolved.get("drawingAnalysis")
+        from app.domain.services.chat_document_vision_skill_service import (
+            ChatDocumentVisionSkillService,
         )
+
+        return ChatDocumentVisionSkillService.should_run_for_drawing(skills)
 
     @classmethod
     def enrich_drawing_extract(
@@ -158,6 +205,10 @@ class ChatDocumentVisionService:
         bom_rows = vision.get("bomRows") if isinstance(vision.get("bomRows"), list) else []
 
         title_block = vision.get("titleBlock")
+        text_excerpt = cls._truncate_vision_text(str(vision.get("fullText") or ""))
+        image_description = cls._truncate_vision_text(
+            str(vision.get("imageDescription") or "")
+        )
 
         return {
             "schemaVersion": vision.get("schemaVersion") or cls.SCHEMA_VERSION,
@@ -174,6 +225,11 @@ class ChatDocumentVisionService:
             "tableCount": len(vision.get("tables") or [])
             if isinstance(vision.get("tables"), list)
             else 0,
+            "visionPurpose": vision.get("visionPurpose"),
+            "textExcerpt": text_excerpt or None,
+            "imageDescription": image_description or None,
+            "hasImageDescription": bool(image_description),
+            "filename": vision.get("filename"),
         }
 
     @classmethod
@@ -182,6 +238,7 @@ class ChatDocumentVisionService:
         attachment,
         *,
         skills: dict | None = None,
+        message: str | None = None,
     ) -> dict[str, Any] | None:
         if not cls.should_run_for_attachment(skills):
             return None
@@ -206,6 +263,7 @@ class ChatDocumentVisionService:
                     attachment.storage_path,
                     filename=filename,
                     content_type=content_type,
+                    message=message,
                 )
 
             started = time.perf_counter()
@@ -216,19 +274,35 @@ class ChatDocumentVisionService:
                 source_metadata=native.get("metadata") if isinstance(native.get("metadata"), dict) else {},
             )
 
-            return cls._finalize_result(
+            result = cls._finalize_result(
                 built,
                 engine=str(built.get("engine") or "native"),
                 stages=["native"],
                 warnings=[],
                 started=started,
+                vision_purpose=cls._resolve_vision_purpose(
+                    message,
+                    content_type=content_type,
+                    filename=filename,
+                ),
+            )
+            result["filename"] = filename
+            return cls._maybe_enrich_with_description(
+                result,
+                storage_path=attachment.storage_path,
+                filename=filename,
+                content_type=content_type,
+                message=message,
             )
 
-        return cls.extract_from_storage_path(
+        vision = cls.extract_from_storage_path(
             attachment.storage_path,
             filename=filename,
             content_type=content_type,
+            message=message,
         )
+        vision["filename"] = filename
+        return vision
 
     @classmethod
     def persist_attachment_vision_metadata(
@@ -288,6 +362,7 @@ class ChatDocumentVisionService:
         attachment_ids: list | None = None,
         skills: dict | None = None,
         persist: bool = True,
+        message: str | None = None,
     ) -> dict[str, Any] | None:
         """Snapshot leve para metadata/adminDebug em turnos só com anexo (ex.: boleto PDF)."""
         attachment = cls._resolve_first_document_attachment(
@@ -299,7 +374,11 @@ class ChatDocumentVisionService:
         if not attachment:
             return None
 
-        vision = cls._compute_vision_for_attachment(attachment, skills=skills)
+        vision = cls._compute_vision_for_attachment(
+            attachment,
+            skills=skills,
+            message=message,
+        )
 
         if not vision:
             return None
@@ -320,6 +399,7 @@ class ChatDocumentVisionService:
         content_type: str | None,
         extracted_content: str,
         skills: dict | None = None,
+        message: str | None = None,
     ) -> str:
         if not cls.should_run_for_attachment(skills):
             return extracted_content
@@ -327,20 +407,46 @@ class ChatDocumentVisionService:
         if not cls._is_vision_target(content_type, filename, storage_path):
             return extracted_content
 
+        resolved_type = content_type or cls._default_content_type(filename)
         vision = cls.extract_from_storage_path(
             storage_path,
             filename=filename,
-            content_type=content_type or cls._default_content_type(filename),
+            content_type=resolved_type,
+            message=message,
         )
         ocr_text = str(vision.get("fullText") or "").strip()
+        image_description = str(vision.get("imageDescription") or "").strip()
+        blocks: list[str] = []
 
-        if not ocr_text:
+        if image_description:
+            from app.domain.services.chat_document_vision_content_service import (
+                ChatDocumentVisionContentService,
+            )
+
+            blocks.append(
+                "\n".join(
+                    [
+                        ChatDocumentVisionContentService.context_label("descriptionLabel"),
+                        image_description,
+                    ]
+                )
+            )
+
+        if ocr_text:
+            blocks.append(ocr_text)
+
+        if not blocks:
             return extracted_content
 
-        if cls._should_replace_attachment_content(extracted_content, ocr_text):
-            return ocr_text
+        vision_excerpt = "\n\n".join(blocks).strip()
 
-        return f"{extracted_content.strip()}\n\n{ocr_text}".strip()
+        if cls._should_replace_attachment_content(extracted_content, vision_excerpt):
+            return vision_excerpt
+
+        if not extracted_content.strip():
+            return vision_excerpt
+
+        return f"{extracted_content.strip()}\n\n{vision_excerpt}".strip()
 
     @classmethod
     def extract_from_storage_path(
@@ -349,29 +455,43 @@ class ChatDocumentVisionService:
         *,
         filename: str = "",
         content_type: str = "application/pdf",
+        message: str | None = None,
+        vision_purpose: str | None = None,
     ) -> dict[str, Any]:
         started = time.perf_counter()
         backend = str(Settings.CHAT_DOCUMENT_VISION_BACKEND or "auto").strip().lower()
         stages: list[str] = []
         warnings: list[str] = []
+        resolved_purpose = vision_purpose or cls._resolve_vision_purpose(
+            message,
+            content_type=content_type,
+            filename=filename,
+        )
 
         if cls._is_image(content_type, filename):
-            return cls._extract_image_document(
+            result = cls._extract_image_document(
                 storage_path,
                 filename=filename,
                 content_type=content_type,
                 backend=backend,
                 started=started,
+                vision_purpose=resolved_purpose,
             )
+            result["filename"] = filename
+            result["visionPurpose"] = resolved_purpose
+            return result
 
         if backend in {"ollama_vlm", "vlm"}:
             vlm = cls._stage_ollama_vlm(
                 storage_path,
                 filename=filename,
                 content_type=content_type,
+                purpose=resolved_purpose,
             )
 
-            if str(vlm.get("fullText") or "").strip():
+            if str(vlm.get("fullText") or "").strip() or str(
+                vlm.get("imageDescription") or ""
+            ).strip():
                 stages.append("ollama_vlm")
                 return cls._finalize_result(
                     vlm,
@@ -379,6 +499,7 @@ class ChatDocumentVisionService:
                     stages=stages,
                     warnings=list(vlm.get("warnings") or []),
                     started=started,
+                    vision_purpose=resolved_purpose,
                 )
 
             warnings.append("ollama_vlm_unavailable_fallback_auto")
@@ -749,33 +870,82 @@ class ChatDocumentVisionService:
         content_type: str,
         backend: str,
         started: float,
+        vision_purpose: str | None = None,
     ) -> dict[str, Any]:
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
         stages: list[str] = []
         warnings: list[str] = []
         merged_text = ""
+        resolved_purpose = vision_purpose or ChatDocumentVisionContentService.vision_purpose(
+            "ocr"
+        )
+        describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
+        hybrid_purpose = ChatDocumentVisionContentService.vision_purpose("hybrid")
 
-        if backend in {"ollama_vlm", "vlm"}:
+        if resolved_purpose == describe_purpose and cls._image_describe_enabled():
             vlm = cls._stage_ollama_vlm(
                 storage_path,
                 filename=filename,
                 content_type=content_type,
+                purpose=describe_purpose,
             )
             warnings.extend(vlm.get("warnings") or [])
+            image_description = str(vlm.get("imageDescription") or "").strip()
 
-            if str(vlm.get("fullText") or "").strip():
-                stages.append("ollama_vlm")
+            if image_description:
+                stages.append("ollama_vlm_describe")
                 payload = cls._build_from_text(
-                    str(vlm["fullText"]),
+                    "",
                     engine="ollama_vlm",
                     stages=stages,
                     warnings=warnings,
                 )
+                payload["imageDescription"] = image_description
                 return cls._finalize_result(
                     payload,
                     engine="ollama_vlm",
                     stages=stages,
                     warnings=warnings,
                     started=started,
+                    vision_purpose=describe_purpose,
+                )
+
+            warnings.append("ollama_vlm_describe_unavailable")
+            backend = "tesseract"
+
+        if backend in {"ollama_vlm", "vlm"}:
+            vlm = cls._stage_ollama_vlm(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+                purpose=resolved_purpose,
+            )
+            warnings.extend(vlm.get("warnings") or [])
+
+            if str(vlm.get("fullText") or "").strip() or str(
+                vlm.get("imageDescription") or ""
+            ).strip():
+                stages.append("ollama_vlm")
+                payload = cls._build_from_text(
+                    str(vlm.get("fullText") or ""),
+                    engine="ollama_vlm",
+                    stages=stages,
+                    warnings=warnings,
+                )
+
+                if vlm.get("imageDescription"):
+                    payload["imageDescription"] = vlm["imageDescription"]
+
+                return cls._finalize_result(
+                    payload,
+                    engine="ollama_vlm",
+                    stages=stages,
+                    warnings=warnings,
+                    started=started,
+                    vision_purpose=resolved_purpose,
                 )
 
             warnings.append("ollama_vlm_unavailable_fallback_auto")
@@ -845,6 +1015,17 @@ class ChatDocumentVisionService:
                 content_type=content_type,
                 stages=stages,
                 warnings=warnings,
+                vision_purpose=resolved_purpose,
+            )
+
+        if resolved_purpose == hybrid_purpose and cls._image_describe_enabled():
+            payload = cls._append_image_description(
+                payload,
+                storage_path=storage_path,
+                filename=filename,
+                content_type=content_type,
+                stages=stages,
+                warnings=warnings,
             )
 
         return cls._finalize_result(
@@ -853,6 +1034,7 @@ class ChatDocumentVisionService:
             stages=stages or ["tesseract_image"],
             warnings=warnings,
             started=started,
+            vision_purpose=resolved_purpose,
         )
 
     @classmethod
@@ -997,10 +1179,17 @@ class ChatDocumentVisionService:
         stages: list[str],
         warnings: list[str],
         started: float,
+        vision_purpose: str | None = None,
     ) -> dict[str, Any]:
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
 
         bom_rows = payload.get("bomRows") if isinstance(payload.get("bomRows"), list) else []
+        full_text = str(payload.get("fullText") or "")
+        image_description = str(payload.get("imageDescription") or "").strip()
+        char_count = int(payload.get("charCount") or 0)
+
+        if not char_count and full_text:
+            char_count = len(full_text.strip())
 
         return {
             "schemaVersion": cls.SCHEMA_VERSION,
@@ -1010,7 +1199,7 @@ class ChatDocumentVisionService:
             "warnings": warnings,
             "pageCount": payload.get("pageCount"),
             "pagesProcessed": payload.get("pagesProcessed") or payload.get("pageCount"),
-            "legible": bool(payload.get("legible")),
+            "legible": bool(payload.get("legible") or full_text.strip()),
             "legibilityScore": payload.get("legibilityScore"),
             "productCode": payload.get("productCode"),
             "revision": payload.get("revision"),
@@ -1023,10 +1212,87 @@ class ChatDocumentVisionService:
             "bomRows": bom_rows,
             "bomRowCount": len(bom_rows),
             "tables": payload.get("tables") if isinstance(payload.get("tables"), list) else [],
-            "titleBlock": payload.get("titleBlock"),
-            "fullText": payload.get("fullText") or "",
-            "charCount": int(payload.get("charCount") or 0),
+            "fullText": full_text,
+            "imageDescription": image_description or None,
+            "hasImageDescription": bool(image_description),
+            "visionPurpose": vision_purpose or payload.get("visionPurpose"),
+            "charCount": char_count,
         }
+
+    @classmethod
+    def _append_image_description(
+        cls,
+        payload: dict[str, Any],
+        *,
+        storage_path: str,
+        filename: str,
+        content_type: str,
+        stages: list[str],
+        warnings: list[str],
+    ) -> dict[str, Any]:
+        if str(payload.get("imageDescription") or "").strip():
+            return payload
+
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
+        vlm = cls._stage_ollama_vlm(
+            storage_path,
+            filename=filename,
+            content_type=content_type,
+            purpose=ChatDocumentVisionContentService.vision_purpose("describe"),
+        )
+        warnings.extend(vlm.get("warnings") or [])
+        image_description = str(vlm.get("imageDescription") or "").strip()
+
+        if not image_description:
+            warnings.append("ollama_vlm_hybrid_describe_empty")
+            return payload
+
+        stages.append("ollama_vlm_describe")
+        merged = dict(payload)
+        merged["imageDescription"] = image_description
+        merged["stages"] = stages
+        merged["warnings"] = warnings
+        return merged
+
+    @classmethod
+    def _maybe_enrich_with_description(
+        cls,
+        payload: dict[str, Any],
+        *,
+        storage_path: str,
+        filename: str,
+        content_type: str,
+        message: str | None,
+    ) -> dict[str, Any]:
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
+        purpose = cls._resolve_vision_purpose(
+            message,
+            content_type=content_type,
+            filename=filename,
+        )
+        hybrid = ChatDocumentVisionContentService.vision_purpose("hybrid")
+        describe = ChatDocumentVisionContentService.vision_purpose("describe")
+
+        if purpose not in {hybrid, describe} or not cls._image_describe_enabled():
+            return payload
+
+        stages = list(payload.get("stages") or [])
+        warnings = list(payload.get("warnings") or [])
+
+        return cls._append_image_description(
+            payload,
+            storage_path=storage_path,
+            filename=filename,
+            content_type=content_type,
+            stages=stages,
+            warnings=warnings,
+        )
 
     @classmethod
     def _ocr_stamp_regions(cls, page, *, matrix, lang: str) -> str:
@@ -1119,7 +1385,12 @@ class ChatDocumentVisionService:
         *,
         filename: str,
         content_type: str,
+        purpose: str | None = None,
     ) -> dict[str, Any]:
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
         warnings: list[str] = []
         model = Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
         base_url = (
@@ -1154,13 +1425,18 @@ class ChatDocumentVisionService:
 
         if not images_b64:
             warnings.append("vlm_no_images")
-            return {"fullText": "", "warnings": warnings}
+            return {"fullText": "", "imageDescription": "", "warnings": warnings}
 
-        prompt = (
-            "Extraia todo o texto visível deste documento técnico "
-            "(carimbo, lista de materiais, cotas, notas). "
-            "Responda apenas com o texto extraído, sem comentários."
+        resolved_purpose = purpose or ChatDocumentVisionContentService.vision_purpose("ocr")
+        prompt = ChatDocumentVisionContentService.vlm_prompt(
+            resolved_purpose,
+            is_image=cls._is_image(content_type, filename),
         )
+
+        if not prompt:
+            warnings.append("vlm_prompt_missing")
+            return {"fullText": "", "imageDescription": "", "warnings": warnings}
+
         url = f"{base_url}/api/chat"
         payload = {
             "model": model,
@@ -1188,7 +1464,30 @@ class ChatDocumentVisionService:
 
         if not content:
             warnings.append("ollama_vlm_empty_response")
-            return {"fullText": "", "warnings": warnings}
+            return {"fullText": "", "imageDescription": "", "warnings": warnings}
+
+        describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
+        hybrid_purpose = ChatDocumentVisionContentService.vision_purpose("hybrid")
+
+        if resolved_purpose == describe_purpose:
+            description = cls._truncate_vision_text(content)
+            return {
+                "fullText": "",
+                "imageDescription": description,
+                "engine": "ollama_vlm",
+                "warnings": warnings,
+            }
+
+        if resolved_purpose == hybrid_purpose:
+            image_description, full_text = cls._parse_hybrid_vlm_response(content)
+            built = cls._build_from_text(
+                cls._truncate_vision_text(full_text),
+                engine="ollama_vlm",
+                stages=["ollama_vlm"],
+                warnings=warnings,
+            )
+            built["imageDescription"] = cls._truncate_vision_text(image_description)
+            return built
 
         text = cls._truncate_vision_text(content)
         return cls._build_from_text(
@@ -1197,6 +1496,35 @@ class ChatDocumentVisionService:
             stages=["ollama_vlm"],
             warnings=warnings,
         )
+
+    @classmethod
+    def _parse_hybrid_vlm_response(cls, content: str) -> tuple[str, str]:
+        import re
+
+        normalized = str(content or "").strip()
+        description = ""
+        text = normalized
+
+        description_match = re.search(
+            r"(?:DESCRIÇÃO|DESCRICAO)\s*:\s*(.*?)(?=(?:TEXTO)\s*:|$)",
+            normalized,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        text_match = re.search(
+            r"(?:TEXTO)\s*:\s*(.*)$",
+            normalized,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+
+        if description_match:
+            description = str(description_match.group(1) or "").strip()
+
+        if text_match:
+            text = str(text_match.group(1) or "").strip()
+        elif description_match:
+            text = ""
+
+        return description, text
 
     @classmethod
     def _stage_neural_backend(

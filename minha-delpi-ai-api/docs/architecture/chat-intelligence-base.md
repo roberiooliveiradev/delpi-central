@@ -89,7 +89,10 @@ Mensagem do usuário
 | `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
 | `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
-| `ChatDocumentVisionService` | Skill `document-vision-delpi` — OCR PDF/imagem (native + Tesseract); anexos da sessão (`documentVision` no tool context) e `drawing-analysis-delpi` |
+| `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
+| `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
+| `ChatDocumentVisionService` | Motor OCR PDF/imagem (native + Tesseract); anexos (`documentVision`) e `drawing-analysis-delpi` |
+| OCR hierárquico desenhos (Onda 14) | Roadmap: [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) — `ChatDrawingStampExtractionService`, regiões carimbo/BOM/cotas |
 | `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |

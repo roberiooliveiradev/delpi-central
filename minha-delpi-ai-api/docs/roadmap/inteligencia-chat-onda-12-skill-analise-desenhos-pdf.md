@@ -1,8 +1,8 @@
 # Inteligência do chat — Onda 12: Skill de análise de desenhos DELPI (PDF)
 
-**Status:** parcial (Fases 1–5 + E2E live + intent `drawing_analysis` no pipeline — maio/2026)  
+**Status:** parcial (Fases 1–5 + E2E live + intent `drawing_analysis` no pipeline — maio/2026); extração carimbo/código → [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md)  
 **Criado:** 2026-05-29  
-**Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`)  
+**Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`) · extração hierárquica: [playbook OCR hierárquico](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
 **Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
 
 ---

@@ -1,0 +1,61 @@
+{
+  "intent": {
+    "minMessageLength": 8,
+    "readContentPatterns": [
+      "\\bo\\s+que\\s+(?:esta|está|tem)\\s+(?:escrito|no|dentro)\\b",
+      "\\b(?:ler|leia|transcrev|resum[ao])\\s+(?:o|do|esse|este)\\s+(?:arquivo|pdf|anexo|documento|boleto|imagem)\\b",
+      "\\bconte[uú]do\\s+do\\s+(?:arquivo|pdf|anexo|documento|imagem)\\b",
+      "\\btexto\\s+do\\s+(?:arquivo|pdf|anexo|documento|imagem)\\b",
+      "\\bo\\s+que\\s+diz\\s+o\\s+(?:arquivo|pdf|anexo|documento|imagem)\\b",
+      "\\b(?:o\\s+que|quais?\\s+dados?).{0,40}(?:arquivo|pdf|anexo|imagem)\\b",
+      "\\b(?:ocr|extrair\\s+texto|digitaliz)\\b.{0,40}(?:pdf|anexo|documento|imagem)\\b",
+      "\\b(?:ler|leia)\\s+(?:o|a)\\s+(?:imagem|foto|scan)\\b"
+    ],
+    "describeImagePatterns": [
+      "\\b(?:descrev[ae]|explique)\\s+(?:o|a|do|da|esse|esta|este)\\s+(?:imagem|foto|figura|print|captura)\\b",
+      "\\b(?:descrev[ae]|explique)\\s+(?:o|do)\\s+(?:arquivo|pdf|anexo|documento|imagem)\\b",
+      "\\bo\\s+que\\s+(?:tem|há|aparece|mostra|vejo)\\s+(?:na|no|nesta|neste|nessa|nesse)\\s+(?:imagem|foto|figura|anexo|arquivo)\\b",
+      "\\b(?:identifique|reconhe[cç]a|analise)\\s+(?:o\\s+conte[uú]do\\s+visual|visualmente)\\b",
+      "\\b(?:o\\s+que\\s+é|que\\s+objeto|que\\s+cena)\\b.{0,40}(?:imagem|foto|figura)\\b",
+      "\\bvisão\\s+(?:da|do)\\s+(?:imagem|foto|anexo)\\b"
+    ]
+  },
+  "purposes": {
+    "ocr": "ocr",
+    "describe": "describe",
+    "hybrid": "hybrid"
+  },
+  "vlm": {
+    "prompts": {
+      "ocr": "Extraia todo o texto visível deste documento técnico (carimbo, lista de materiais, cotas, notas). Responda apenas com o texto extraído, sem comentários.",
+      "describeImage": "Descreva em português o conteúdo visual desta imagem: objetos, pessoas, cenário, cores, layout e qualquer texto legível resumido. Seja objetivo e factual; não invente detalhes ausentes.",
+      "describeDocument": "Descreva em português o conteúdo visual deste documento (layout, diagramas, tabelas, carimbo, cotas). Mencione elementos visíveis mesmo quando o OCR falhar. Não invente códigos ou revisões ausentes.",
+      "hybrid": "Responda em português com duas seções obrigatórias:\nDESCRIÇÃO: resumo visual objetivo do conteúdo.\nTEXTO: transcrição literal de todo texto visível.\nNão invente dados ausentes."
+    }
+  },
+  "context": {
+    "sectionTitle": "Resultado da visão de documentos",
+    "textLabel": "Texto extraído (OCR)",
+    "descriptionLabel": "Descrição visual",
+    "filenameLabel": "Arquivo"
+  },
+  "activation": {
+    "modes": {
+      "none": "none",
+      "attachmentTurn": "attachment_turn",
+      "drawingEnrich": "drawing_enrich",
+      "attachmentIndex": "attachment_index"
+    },
+    "reasons": {
+      "platformDisabled": "platform_disabled",
+      "skillEnabled": "skill_enabled",
+      "attachmentDocumentIntent": "attachment_document_intent",
+      "drawingAutoVision": "drawing_auto_vision",
+      "chatCommonPlatform": "chat_common_platform"
+    }
+  },
+  "supported": {
+    "imageExtensions": [".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff"],
+    "documentMimePrefixes": ["application/pdf", "image/"]
+  }
+}

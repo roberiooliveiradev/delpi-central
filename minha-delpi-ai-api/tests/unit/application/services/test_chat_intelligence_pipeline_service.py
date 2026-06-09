@@ -113,3 +113,25 @@ def test_resolve_direct_answer_returns_none_in_analysis_mode():
     )
 
     assert answer is None
+
+
+def test_finalize_after_tools_enriches_document_vision_context():
+    post = ChatIntelligencePipelineService.finalize_after_tools(
+        "descreva a imagem anexada",
+        [],
+        {
+            "context": "",
+            "toolCalls": [],
+            "documentVision": {
+                "imageDescription": "Painel com três botões verdes.",
+                "textExcerpt": "REV. 02",
+                "filename": "desenho.png",
+            },
+        },
+    )
+
+    context = post.tool_context.get("context", "")
+
+    assert "Descrição visual" in context
+    assert "Painel com três botões" in context
+    assert "REV. 02" in context

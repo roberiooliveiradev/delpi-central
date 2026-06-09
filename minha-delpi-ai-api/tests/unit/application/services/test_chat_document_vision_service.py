@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -102,7 +103,11 @@ def test_tesseract_pdf_stage_truncates_pages(tmp_path):
     fake_page.get_pixmap.return_value = fake_pix
     fake_doc.load_page.return_value = fake_page
 
-    with patch("fitz.open", return_value=fake_doc), patch(
+    fake_fitz = MagicMock()
+    fake_fitz.open.return_value = fake_doc
+    fake_fitz.Matrix = MagicMock()
+
+    with patch.dict("sys.modules", {"fitz": fake_fitz}), patch(
         "pytesseract.image_to_string",
         return_value="90260140 REV.02",
     ), patch(

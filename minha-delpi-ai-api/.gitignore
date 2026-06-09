@@ -13,7 +13,7 @@ venv/
 ENV/
 env/
 env.bak/
-
+desenhos/
 # ---- 🧰 IDEs e Editores ----
 .vscode/
 .idea/
