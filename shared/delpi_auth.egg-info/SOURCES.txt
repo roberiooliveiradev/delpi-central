@@ -1,6 +1,8 @@
 pyproject.toml
 delpi_api_client/__init__.py
 delpi_api_client/client.py
+delpi_api_client/envelope.py
+delpi_api_client/protheus_fields.py
 delpi_auth/__init__.py
 delpi_auth/authorization.py
 delpi_auth/authz_core.py
