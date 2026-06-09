@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "capturedAt": "2026-06-08",
+  "backend": "auto",
+  "pdfDirectory": "minha-delpi-ai-api/desenhos",
+  "pdfCasesInBaseline": 13,
+  "productCodeCorrect": 4,
+  "productCodeRate": 0.3076923076923077,
+  "dimensionsPartial": 0,
+  "bomStructured": 0,
+  "notes": "Homologação local CHAT_DOCUMENT_VISION_BACKEND=auto; ver playbook_ocr_hierarquico_desenhos_delpi.md §2."
+}

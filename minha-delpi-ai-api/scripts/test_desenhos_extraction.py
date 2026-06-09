@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Testa extração de desenhos PDF na pasta desenhos/ (gitignored)."""
+"""Testa extração de desenhos PDF na pasta desenhos/ (gitignored).
+
+Preferir ``scripts/run_onda14_desenhos_validation.sh`` (Onda 14 — baseline + casos H*).
+"""
 
 from __future__ import annotations
 

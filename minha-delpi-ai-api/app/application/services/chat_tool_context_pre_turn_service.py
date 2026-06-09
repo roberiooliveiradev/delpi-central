@@ -202,6 +202,12 @@ class ChatToolContextPreTurnService:
                     attachment_ids=attachment_ids,
                 )
             )
+            drawing_pdf_extract = (
+                ChatDrawingProductCodeResolutionService.enrich_pdf_extract_conflicts(
+                    drawing_pdf_extract,
+                    attachment_filename=attachment_filename,
+                )
+            )
             resolved_code, resolved_source = (
                 ChatDrawingProductCodeResolutionService.resolve(
                     message=raw_message,

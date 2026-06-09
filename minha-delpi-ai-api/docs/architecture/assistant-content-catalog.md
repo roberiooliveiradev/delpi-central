@@ -45,6 +45,7 @@ Wrappers especializados (mantêm API estável):
 | `web_search.json` | Resposta direta e follow-up pós-pesquisa | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService` |
 | `drawing_validation.json` | Relatório e checklist de análise de desenho | `ChatDrawingValidationOrchestrationService` |
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
+| `drawing_stamp.json` | Rótulos de carimbo, regiões, exclusões cliente/BOM, clarificações e gate nativo (Onda 14) | `ChatDrawingStampExtractionService` (fase 14.3+), testes de conteúdo |
 | `document_vision.json` | Padrões de intent (OCR e descrição visual); prompts VLM; rótulos de contexto; modos de ativação da skill | `ChatDocumentVisionContentService`, `ChatAttachmentDocumentIntentService`, `ChatDocumentVisionSkillService`, `ChatDocumentVisionContextService` |
 | `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |

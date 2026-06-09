@@ -26,7 +26,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | **Concluído (MVP)** | F1–4 + `AgentMiniDashboard`; refinamentos PNG multi-painel → backlog |
 | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; extração carimbo/cotas → [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) |
 | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem; regiões hierárquicas → Onda 14 |
-| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | Backlog | Onda 14 — OCR carimbo/BOM/cotas; baseline 4/13 em `desenhos/` |
+| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Em andamento** | Onda 14 Fase 14.1 ✅; OCR carimbo 14.2+ |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)

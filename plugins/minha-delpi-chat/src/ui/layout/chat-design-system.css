@@ -88,13 +88,8 @@
   width: 100%;
 }
 
-.mdc-chat-empty-composer__scroll:has(> .mdc-chat-agent-home) {
-  justify-content: flex-start;
-  gap: var(--mdc-space-2);
-  padding-block: clamp(0.35rem, 1vh, 0.65rem);
-}
-
-.mdc-chat-empty-composer .mdc-chat-empty-state {
+.mdc-chat-empty-composer .mdc-chat-empty-state,
+.mdc-chat-empty-composer .mdc-chat-agent-home {
   width: 100%;
   max-width: var(--mdc-chat-column-max);
   gap: var(--mdc-space-4);
@@ -256,7 +251,8 @@
     padding-bottom: var(--mdc-space-2);
   }
 
-  .mdc-chat-empty-composer .mdc-chat-empty-state {
+  .mdc-chat-empty-composer .mdc-chat-empty-state,
+  .mdc-chat-empty-composer .mdc-chat-agent-home {
     gap: var(--mdc-space-3);
     padding-inline: 0;
   }

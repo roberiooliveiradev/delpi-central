@@ -584,11 +584,28 @@ class ChatDocumentVisionService:
                 started=started,
             )
 
+        from app.domain.services.chat_drawing_native_text_gate_service import (
+            ChatDrawingNativeTextGateService,
+        )
+        from app.domain.services.chat_drawing_product_code_resolution_service import (
+            ChatDrawingProductCodeResolutionService,
+        )
+
+        filename_code = ChatDrawingProductCodeResolutionService.extract_product_code_from_filename(
+            filename
+        )
+        native_plausible = ChatDrawingNativeTextGateService.is_native_text_plausible(
+            full_text,
+            product_code=str(native.get("productCode") or ""),
+            filename_code=filename_code,
+        )
+
         min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
         needs_ocr = backend in {"tesseract", "auto"} and (
             backend == "tesseract"
             or char_count < min_legible
             or not native.get("legible")
+            or not native_plausible
         )
 
         if needs_ocr and cls._is_pdf(content_type, filename, storage_path):
@@ -606,7 +623,11 @@ class ChatDocumentVisionService:
                     stages=stages,
                     page_count=ocr.get("pageCount"),
                     warnings=warnings + list(ocr.get("warnings") or []),
-                    source_metadata={"stampText": str(ocr.get("stampText") or "")},
+                    source_metadata={
+                        "stampText": str(ocr.get("stampText") or ""),
+                        "regions": ocr.get("regions") if isinstance(ocr.get("regions"), dict) else {},
+                        "filename": filename,
+                    },
                 )
             elif ocr.get("warnings"):
                 warnings.extend(ocr["warnings"])
@@ -832,7 +853,7 @@ class ChatDocumentVisionService:
             text,
             engine=str(metadata.get("extractor") or "native"),
             stages=["native"],
-            source_metadata=metadata,
+            source_metadata={**metadata, "filename": filename},
         )
 
     @classmethod
@@ -872,6 +893,7 @@ class ChatDocumentVisionService:
 
             stamp_crop_used = False
             stamp_text = ""
+            regions: dict[str, Any] = {}
 
             for index in range(page_count):
                 page = document.load_page(index)
@@ -884,12 +906,21 @@ class ChatDocumentVisionService:
                     texts.append(chunk)
 
                 if index == 0 and Settings.CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED:
+                    from app.domain.services.chat_drawing_region_service import (
+                        ChatDrawingRegionService,
+                    )
+
                     cropped = cls._ocr_stamp_regions(page, matrix=matrix, lang=lang)
 
                     if cropped and cropped not in chunk:
                         texts.append(cropped)
                         stamp_text = cropped
                         stamp_crop_used = True
+                        regions["stamp"] = ChatDrawingRegionService.build_region_metadata(
+                            region="stamp",
+                            bbox=ChatDrawingRegionService.stamp_bbox(),
+                            char_count=len(stamp_text),
+                        )
         finally:
             document.close()
 
@@ -903,6 +934,7 @@ class ChatDocumentVisionService:
             "warnings": warnings,
             "stampCrop": stamp_crop_used,
             "stampText": stamp_text if stamp_crop_used else "",
+            "regions": regions,
         }
 
     @classmethod
@@ -1146,6 +1178,69 @@ class ChatDocumentVisionService:
             metadata={"extractor": engine, **(source_metadata or {})},
         )
 
+        stamp_text = str((source_metadata or {}).get("stampText") or "").strip()
+        attachment_filename = str((source_metadata or {}).get("filename") or "").strip()
+
+        from app.domain.services.chat_drawing_product_code_resolution_service import (
+            ChatDrawingProductCodeResolutionService,
+        )
+
+        filename_code = ChatDrawingProductCodeResolutionService.extract_product_code_from_filename(
+            attachment_filename
+        )
+
+        from app.domain.services.chat_drawing_stamp_extraction_service import (
+            ChatDrawingStampExtractionService,
+        )
+
+        stamp_extract = ChatDrawingStampExtractionService.extract(
+            stamp_text=stamp_text,
+            title_text=ChatDrawingPdfExtractionService._title_scope_text(
+                text,
+                stamp_text=stamp_text,
+            ),
+            filename_code=filename_code,
+        )
+
+        if stamp_extract.get("productCode"):
+            parsed["productCode"] = stamp_extract["productCode"]
+            parsed["productCodeSource"] = stamp_extract.get("productCodeSource")
+
+        if stamp_extract.get("revision") and not parsed.get("revision"):
+            parsed["revision"] = stamp_extract["revision"]
+
+        if stamp_extract.get("intermediateCodes"):
+            parsed["intermediateCodes"] = sorted(
+                set(list(parsed.get("intermediateCodes") or []))
+                | set(stamp_extract.get("intermediateCodes") or [])
+            )
+
+        if stamp_extract.get("productCodeCandidates"):
+            parsed["productCodeCandidates"] = stamp_extract["productCodeCandidates"]
+
+        if stamp_extract.get("conflicts"):
+            parsed["conflicts"] = stamp_extract["conflicts"]
+
+        if (
+            filename_code
+            and parsed.get("productCode")
+            and filename_code != parsed["productCode"]
+            and ChatDrawingProductCodeResolutionService.ocr_code_likely_filename_drift(
+                str(parsed["productCode"]),
+                filename_code,
+            )
+        ):
+            parsed["conflicts"] = list(parsed.get("conflicts") or []) + [
+                {
+                    "type": "stamp_vs_filename",
+                    "severity": "pending",
+                    "filenameCode": filename_code,
+                    "stampCode": parsed["productCode"],
+                }
+            ]
+            parsed["productCode"] = filename_code
+            parsed["productCodeSource"] = "filename_crosscheck"
+
         from app.domain.services.chat_document_vision_bom_service import (
             ChatDocumentVisionBomService,
         )
@@ -1175,12 +1270,9 @@ class ChatDocumentVisionService:
             ChatDocumentVisionTitleBlockService,
         )
 
-        stamp_text = str((source_metadata or {}).get("stampText") or "").strip()
-        title_block = ChatDocumentVisionTitleBlockService.build(
-            text=text,
-            product_code=parsed.get("productCode"),
-            revision=parsed.get("revision"),
-            stamp_text=stamp_text or None,
+        title_block = ChatDrawingStampExtractionService.build_title_block(
+            stamp_extract,
+            raw_text=stamp_text or ChatDocumentVisionTitleBlockService._extract_stamp_snippet(text),
         )
 
         result = {
@@ -1211,6 +1303,9 @@ class ChatDocumentVisionService:
             if "table_heuristic" not in stages:
                 stages = [*stages, "table_heuristic"]
                 result["stages"] = stages
+
+        if isinstance(source_metadata, dict) and isinstance(source_metadata.get("regions"), dict):
+            result["regions"] = source_metadata["regions"]
 
         return result
 
@@ -1246,6 +1341,9 @@ class ChatDocumentVisionService:
             "legible": bool(payload.get("legible") or full_text.strip()),
             "legibilityScore": payload.get("legibilityScore"),
             "productCode": payload.get("productCode"),
+            "productCodeSource": payload.get("productCodeSource"),
+            "productCodeCandidates": payload.get("productCodeCandidates") or [],
+            "conflicts": payload.get("conflicts") or [],
             "revision": payload.get("revision"),
             "customerReference": payload.get("customerReference"),
             "description": payload.get("description"),
@@ -1261,6 +1359,7 @@ class ChatDocumentVisionService:
             "hasImageDescription": bool(image_description),
             "visionPurpose": vision_purpose or payload.get("visionPurpose"),
             "charCount": char_count,
+            "regions": payload.get("regions") if isinstance(payload.get("regions"), dict) else {},
         }
 
     @classmethod
@@ -1340,31 +1439,20 @@ class ChatDocumentVisionService:
 
     @classmethod
     def _ocr_stamp_regions(cls, page, *, matrix, lang: str) -> str:
-        """Recorte heurístico do carimbo (faixa superior + canto superior direito)."""
-        try:
-            import fitz
-            import pytesseract
-            from PIL import Image
-        except ImportError:
-            return ""
-
-        width = float(page.rect.width)
-        height = float(page.rect.height)
-        regions = (
-            fitz.Rect(0, 0, width, height * 0.32),
-            fitz.Rect(width * 0.42, 0, width, height * 0.38),
+        """Recorte do carimbo DELPI — base direita (``drawing_stamp.json`` regionBboxes.stamp)."""
+        from app.domain.services.chat_drawing_region_service import (
+            ChatDrawingRegionService,
         )
-        parts: list[str] = []
 
-        for rect in regions:
-            pixmap = page.get_pixmap(matrix=matrix, clip=rect, alpha=False)
-            image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
-            text = str(pytesseract.image_to_string(image, lang=lang) or "").strip()
+        stamp_bbox = ChatDrawingRegionService.stamp_bbox()
+        text = ChatDrawingRegionService.ocr_region_text(
+            page,
+            bbox=stamp_bbox,
+            matrix=matrix,
+            lang=lang,
+        )
 
-            if text and text not in parts:
-                parts.append(text)
-
-        return "\n".join(parts).strip()
+        return text.strip()
 
     @classmethod
     def _vision_timeout_seconds(cls) -> float:

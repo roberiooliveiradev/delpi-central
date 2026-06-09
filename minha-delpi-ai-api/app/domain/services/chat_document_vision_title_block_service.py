@@ -1,21 +1,12 @@
-"""Carimbo / title block heurístico — Onda 13 (contrato DocumentVisionResult)."""
+"""Carimbo / title block heurístico — Onda 13 + parse hierárquico Onda 14."""
 
 from __future__ import annotations
 
-import re
 from typing import Any
-
-_STAMP_LINE_RE = re.compile(
-    r"(?:PRODUTO|C[ÓO]DIGO|DESENHO|REV(?:\.|IS[ÃA]O)?|CLIENTE|MATERIAL)\b",
-    re.IGNORECASE,
-)
 
 
 class ChatDocumentVisionTitleBlockService:
     """Monta `titleBlock` a partir de OCR de carimbo e campos já extraídos."""
-
-    # Faixa superior + canto superior direito (normalizado 0–1), alinhado ao crop Tesseract.
-    DEFAULT_BBOX = [0.0, 0.0, 1.0, 0.38]
 
     @classmethod
     def build(
@@ -26,49 +17,39 @@ class ChatDocumentVisionTitleBlockService:
         revision: str | None = None,
         stamp_text: str | None = None,
     ) -> dict[str, Any] | None:
-        from app.domain.services.chat_product_query_intent_service import (
-            ChatProductQueryIntentService,
+        from app.domain.services.chat_drawing_stamp_extraction_service import (
+            ChatDrawingStampExtractionService,
         )
 
-        raw = str(stamp_text or "").strip() or cls._extract_stamp_snippet(text)
-        code = str(product_code or "").strip()
-        rev = str(revision or "").strip()
+        stamp = str(stamp_text or "").strip()
+        body = str(text or "").strip()
+        extract = ChatDrawingStampExtractionService.extract(
+            stamp_text=stamp,
+            title_text=body,
+        )
 
-        if not code and raw:
-            code = ChatProductQueryIntentService.extract_product_code(raw) or ""
+        if product_code and not extract.get("productCode"):
+            extract = {
+                **extract,
+                "productCode": product_code,
+                "productCodeSource": extract.get("productCodeSource") or "context",
+            }
 
-        if not code and text:
-            code = ChatProductQueryIntentService.extract_product_code(text) or ""
+        if revision and not extract.get("revision"):
+            extract = {**extract, "revision": revision}
 
-        if not rev and raw:
-            rev_match = re.search(
-                r"REV(?:\.|IS[ÃA]O)?\s*[:.]?\s*(\d{1,3})",
-                raw,
-                re.IGNORECASE,
-            )
+        raw = stamp or cls._extract_stamp_snippet(body) or body[:800]
 
-            if rev_match:
-                rev = rev_match.group(1).strip()
-
-        if not raw and not code:
-            return None
-
-        fields: dict[str, str] = {}
-
-        if code:
-            fields["code"] = ChatProductQueryIntentService.normalize_product_code(code)
-
-        if rev:
-            fields["rev"] = rev
-
-        return {
-            "rawText": raw[:800] if raw else "",
-            "bbox": list(cls.DEFAULT_BBOX),
-            "fields": fields,
-        }
+        return ChatDrawingStampExtractionService.build_title_block(extract, raw_text=raw)
 
     @classmethod
     def _extract_stamp_snippet(cls, text: str) -> str:
+        import re
+
+        stamp_line_re = re.compile(
+            r"(?:PRODUTO|C[ÓO]DIGO|DESENHO|REV(?:\.|IS[ÃA]O)?|CLIENTE|MATERIAL|CHICOTE)\b",
+            re.IGNORECASE,
+        )
         lines: list[str] = []
 
         for line in str(text or "").splitlines():
@@ -77,7 +58,7 @@ class ChatDocumentVisionTitleBlockService:
             if len(stripped) < 4:
                 continue
 
-            if _STAMP_LINE_RE.search(stripped):
+            if stamp_line_re.search(stripped):
                 lines.append(stripped)
 
             if len(lines) >= 12:

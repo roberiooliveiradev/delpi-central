@@ -8,27 +8,27 @@ def test_build_title_block_from_stamp_and_codes():
         text="OUTRO TEXTO",
         product_code="90260140",
         revision="03",
-        stamp_text="PRODUTO 90260140\nREV. 03",
+        stamp_text="CÓDIGO DELPI 90260140\nREV. 03",
     )
 
     assert block is not None
     assert block["fields"]["code"] == "90260140"
     assert block["fields"]["rev"] == "03"
-    assert "PRODUTO" in block["rawText"]
+    assert "CÓDIGO DELPI" in block["rawText"]
     assert len(block["bbox"]) == 4
+    assert block["bbox"][1] >= 0.5
 
 
-def test_build_title_block_extracts_code_from_stamp_text():
+def test_build_title_block_extracts_code_from_chicote_title():
     block = ChatDocumentVisionTitleBlockService.build(
-        text="",
+        text="CHICOTE DE LIGAÇÃO90264236 COD:DES:REV:00",
         product_code=None,
         revision=None,
-        stamp_text="PRODUTO 90260140\nREV. 03",
+        stamp_text="",
     )
 
     assert block is not None
-    assert block["fields"]["code"] == "90260140"
-    assert block["fields"]["rev"] == "03"
+    assert block["fields"]["code"] == "90264236"
 
 
 def test_build_title_block_returns_none_without_signal():

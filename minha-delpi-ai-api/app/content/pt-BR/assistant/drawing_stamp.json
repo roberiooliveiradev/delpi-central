@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0",
+  "comment": "OCR hierárquico de desenhos DELPI — rótulos, regiões e mensagens (Onda 14). Regex/heurísticas no código; textos PT aqui.",
+  "regionBboxes": {
+    "stamp": [0.5, 0.62, 1.0, 1.0],
+    "title": [0.2, 0.0, 0.8, 0.12],
+    "bom": [0.0, 0.0, 0.55, 0.35],
+    "dimensions": [0.0, 0.12, 1.0, 0.62]
+  },
+  "stampFieldLabels": {
+    "productCode": [
+      "CODIGO DELPI",
+      "CÓDIGO DELPI",
+      "COD. DELPI",
+      "COD DELPI",
+      "CODIGO:",
+      "CÓDIGO:"
+    ],
+    "revision": ["REV.", "REV ", "REV:", "REVISAO", "REVISÃO"],
+    "customer": ["CLIENTE", "NOME CLIENTE", "NOME DO CLIENTE"],
+    "customerCode": ["COD. CLIENTE", "CÓD. CLIENTE", "COD CLIENTE"],
+    "customerDescription": ["DES. CLIENTE", "DES CLIENTE", "DESCRICAO CLIENTE", "DESCRIÇÃO CLIENTE"],
+    "description": ["DESENHO", "TITULO", "TÍTULO", "DESCRICAO", "DESCRIÇÃO"],
+    "lmp": ["LMP", "L.M.P.", "LISTA MATERIAIS PADRAO", "LISTA MATERIAIS PADRÃO"],
+    "executedBy": ["EXECUTADO", "EXECUTADO POR", "DESENHADO", "DESENHADO POR"],
+    "releasedBy": ["LIBERADO", "LIBERADO POR", "APROVADO", "APROVADO POR"],
+    "date": ["DATA", "DATA DESENHO", "DATA DO DESENHO"]
+  },
+  "titlePatterns": {
+    "chicotePrefixes": [
+      "CHICOTE DE LIGACAO",
+      "CHICOTE DE LIGAÇÃO",
+      "CHICOTE DE LIGACAO -",
+      "CHICOTE DE LIGAÇÃO -"
+    ],
+    "codeSeparators": ["/", "-", "·", "|"]
+  },
+  "customerExclusionPrefixes": [
+    "COD:",
+    "COD.",
+    "DES:",
+    "DES.",
+    "COD. CLIENTE",
+    "CÓD. CLIENTE",
+    "DES. CLIENTE"
+  ],
+  "bomRoleLabels": {
+    "position": ["POS", "POS.", "POSICAO", "POSIÇÃO", "ITEM"],
+    "code": ["CODIGO", "CÓDIGO", "COD.", "COD"],
+    "quantity": ["QTD", "QTDE", "QUANT", "QUANTIDADE"]
+  },
+  "productCodeSources": {
+    "user_message": "mensagem do usuário",
+    "stamp_labeled": "carimbo rotulado",
+    "title_pattern": "título do desenho",
+    "filename_crosscheck": "nome do arquivo (validação)",
+    "document_vision": "visão de documento",
+    "pdf_extract": "extração PDF",
+    "unresolved": "não resolvido"
+  },
+  "conflictTypes": {
+    "stamp_vs_title": {
+      "severity": "error",
+      "reportKey": "stampTitleConflict"
+    },
+    "stamp_vs_message": {
+      "severity": "critical",
+      "reportKey": "stampMessageConflict"
+    },
+    "stamp_vs_filename": {
+      "severity": "pending",
+      "reportKey": "stampFilenameConflict"
+    },
+    "multiple_stamp_codes": {
+      "severity": "error",
+      "reportKey": "multipleStampCodes"
+    },
+    "bom_code_promoted": {
+      "severity": "forbidden",
+      "reportKey": "bomCodePromoted"
+    }
+  },
+  "clarifications": {
+    "multipleStampCodes": "Encontrei mais de um código DELPI plausível no carimbo. Informe qual produto deve ser analisado.",
+    "unresolvedProductCode": "Não consegui identificar o código DELPI no carimbo ou título do desenho. Informe o código (ex.: 90260140) ou anexe um PDF com carimbo legível.",
+    "stampMessageConflict": "O código informado na mensagem difere do carimbo do PDF. A análise seguirá o código da mensagem e registrará a divergência.",
+    "stampFilenameConflict": "O código do nome do arquivo difere do carimbo. Confira o PDF antes de liberar o desenho."
+  },
+  "nativeTextGate": {
+    "stampMarkers": [
+      "CODIGO DELPI",
+      "CÓDIGO DELPI",
+      "REV.",
+      "CLIENTE",
+      "CHICOTE DE LIGACAO",
+      "CHICOTE DE LIGAÇÃO",
+      "LMP",
+      "LIBERADO",
+      "EXECUTADO"
+    ],
+    "minMarkerHits": 2
+  },
+  "dimensionLabels": {
+    "totalLength": ["COMPR", "COMPRIMENTO", "COMPR.", "COMPR TOTAL", "COMPR. TOTAL"],
+    "decape": ["DECAPE", "DECAPE MM", "DECAPEMM", "DECAPE ESQ", "DECAPE DIR"],
+    "tolerance": ["TOL", "TOLER", "TOLERANCIA", "TOLERÂNCIA"]
+  },
+  "streamStages": {
+    "stampOcr": "Lendo carimbo do desenho…",
+    "titleOcr": "Lendo título do desenho…",
+    "bomOcr": "Lendo lista de materiais…",
+    "dimensionsOcr": "Lendo cotas e decapes…"
+  }
+}

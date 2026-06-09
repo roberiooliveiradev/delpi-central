@@ -87,6 +87,12 @@
       "apply_rules": "Aplicando normas…",
       "build_report": "Gerando relatório…"
     },
+    "drawingRegionStages": {
+      "stamp_ocr": "Lendo carimbo do desenho…",
+      "title_ocr": "Lendo título do desenho…",
+      "bom_ocr": "Lendo lista de materiais…",
+      "dimensions_ocr": "Lendo cotas e decapes…"
+    },
     "verbs": {
       "thinking": "Pensando",
       "planning": "Planejando",

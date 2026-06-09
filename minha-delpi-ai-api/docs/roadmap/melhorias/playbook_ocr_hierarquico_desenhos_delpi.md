@@ -176,8 +176,8 @@ Extensão do payload já consumido por `ChatDrawingPdfExtractionService` / `Docu
 ### Visão geral
 
 ```text
-Fase 14.1 — Contrato + bundle JSON + baseline testes     [backlog]
-Fase 14.2 — Regiões gráficas + crop carimbo correto      [backlog]
+Fase 14.1 — Contrato + bundle JSON + baseline testes     [concluída jun/2026]
+Fase 14.2 — Regiões gráficas + crop carimbo correto      [concluída jun/2026 — stamp]
 Fase 14.3 — Parse carimbo/título (stamp service)         [backlog]
 Fase 14.4 — Resolução de código + conflitos              [backlog]
 Fase 14.5 — BOM por região + exclusão de componentes     [backlog]

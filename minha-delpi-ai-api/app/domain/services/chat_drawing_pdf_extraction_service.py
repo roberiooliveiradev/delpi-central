@@ -97,7 +97,18 @@ class ChatDrawingPdfExtractionService:
         normalized = str(text or "").strip()
         char_count = len(normalized)
 
-        product_code = cls._extract_primary_product_code(normalized)
+        from app.domain.services.chat_drawing_stamp_extraction_service import (
+            ChatDrawingStampExtractionService,
+        )
+
+        stamp_extract = ChatDrawingStampExtractionService.extract(
+            title_text=cls._title_scope_text(normalized),
+        )
+        product_code = stamp_extract.get("productCode")
+        stamp_source = stamp_extract.get("productCodeSource")
+
+        if not product_code:
+            product_code = cls._extract_fallback_product_code(normalized)
 
         revision = cls._extract_revision(normalized)
         customer_reference = cls._extract_labeled_value(
@@ -120,6 +131,7 @@ class ChatDrawingPdfExtractionService:
 
         payload: dict[str, Any] = {
             "productCode": product_code,
+            "productCodeSource": stamp_source,
             "revision": revision,
             "customerReference": customer_reference,
             "description": description,
@@ -131,32 +143,54 @@ class ChatDrawingPdfExtractionService:
             "extractor": (metadata or {}).get("extractor") or "text_parse",
         }
 
+        if stamp_extract.get("productCodeCandidates"):
+            payload["productCodeCandidates"] = stamp_extract["productCodeCandidates"]
+
+        if stamp_extract.get("conflicts"):
+            payload["conflicts"] = stamp_extract["conflicts"]
+
         if metadata:
             payload["sourceMetadata"] = metadata
 
         return payload
 
     @classmethod
-    def _extract_primary_product_code(cls, text: str) -> str | None:
-        product_code = ChatProductQueryIntentService.extract_product_code(text)
+    def _title_scope_text(cls, text: str, *, stamp_text: str = "") -> str:
+        from app.domain.services.chat_document_vision_title_block_service import (
+            ChatDocumentVisionTitleBlockService,
+        )
 
-        if product_code:
-            return product_code
+        parts: list[str] = []
 
+        if stamp_text.strip():
+            parts.append(stamp_text.strip())
+
+        snippet = ChatDocumentVisionTitleBlockService._extract_stamp_snippet(text)
+
+        if snippet:
+            parts.append(snippet)
+
+        if not parts:
+            parts.append(str(text or "")[:1200])
+
+        return "\n".join(parts)[:2000]
+
+    @classmethod
+    def _extract_fallback_product_code(cls, text: str) -> str | None:
         codes_90 = re.findall(r"\b(90\d{6})\b", text)
 
         if codes_90:
             return ChatProductQueryIntentService.normalize_product_code(codes_90[0])
 
-        codes_10 = re.findall(r"\b(10\d{6})\b", text)
+        product_code = ChatProductQueryIntentService.extract_product_code(text)
 
-        if codes_10:
-            return ChatProductQueryIntentService.normalize_product_code(codes_10[0])
+        if product_code and re.match(r"^90\d{6}$", product_code):
+            return product_code
 
-        match = re.search(r"\b(100\d{5})\b", text)
+        codes_50 = re.findall(r"\b(50\d{6})\b", text)
 
-        if match:
-            return ChatProductQueryIntentService.normalize_product_code(match.group(1))
+        if codes_50:
+            return ChatProductQueryIntentService.normalize_product_code(codes_50[0])
 
         return None
 
