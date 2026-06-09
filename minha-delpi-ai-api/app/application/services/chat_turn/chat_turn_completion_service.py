@@ -301,6 +301,7 @@ class ChatTurnCompletionService:
                 skip_rag=turn.skip_rag,
                 analysis_mode=turn.analysis_mode,
                 stages=turn.pipeline_stages,
+                direct_answer=turn.direct_answer,
             ),
         )
         latency_ms = int((time.perf_counter() - turn.started_at) * 1000)

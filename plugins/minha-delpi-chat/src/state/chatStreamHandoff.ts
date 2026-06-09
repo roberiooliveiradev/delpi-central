@@ -9,6 +9,7 @@ export type AssistantTurnHandoff = {
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
   adminDebug?: Record<string, unknown> | null;
+  metadata?: ChatMessage["metadata"] | null;
 };
 
 function buildReadyAssistantMetadata(
@@ -19,6 +20,7 @@ function buildReadyAssistantMetadata(
 
   return {
     ...(existing ?? {}),
+    ...(handoff.metadata ?? {}),
     sources: handoff.sources.length > 0 ? handoff.sources : existing?.sources,
     toolCalls:
       handoff.toolCalls.length > 0 ? handoff.toolCalls : existing?.toolCalls,
@@ -173,5 +175,6 @@ export function handoffFromPlaybackPayload(
     sources: payload.sources,
     toolCalls: payload.toolCalls,
     adminDebug: payload.adminDebug ?? null,
+    metadata: payload.metadata ?? null,
   };
 }

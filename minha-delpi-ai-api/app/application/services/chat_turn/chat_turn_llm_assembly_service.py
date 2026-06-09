@@ -71,6 +71,27 @@ class ChatTurnLlmAssemblyService:
         history_summary = prepared.history_summary
         rag = prepared.rag
 
+        from app.application.services.chat_drawing_turn_enrichment_service import (
+            ChatDrawingTurnEnrichmentService,
+        )
+
+        attachment_ids = getattr(request, "attachment_ids", None)
+        tool_context = ChatDrawingTurnEnrichmentService.enrich_tool_context(
+            tool_context,
+            message=message,
+            attachment_ids=attachment_ids,
+        )
+
+        report_direct = ChatDrawingTurnEnrichmentService.resolve_report_direct_answer(
+            tool_context
+        )
+
+        if report_direct and not str(direct_answer or "").strip():
+            direct_answer = report_direct
+
+        if direct_answer and isinstance(tool_context, dict):
+            tool_context = {**tool_context, "directAnswer": direct_answer}
+
         direct_answer, pipeline_stages = web_search_synthesis_service.enhance_prepared_turn(
             message=message,
             tool_context=tool_context,
@@ -90,6 +111,7 @@ class ChatTurnLlmAssemblyService:
                 skip_rag=skip_rag,
                 analysis_mode=analysis_mode,
                 stages=pipeline_stages,
+                direct_answer=direct_answer,
             ),
         )
 
@@ -159,6 +181,23 @@ class ChatTurnLlmAssemblyService:
                 previous_messages=previous_messages,
             )
 
+            from app.domain.services.chat_drawing_intent_service import (
+                ChatDrawingIntentService,
+            )
+
+            drawing_policy_addon = ChatDrawingIntentService.build_llm_fallback_policy_addon(
+                message,
+                attachment_ids=attachment_ids,
+            )
+            merged_admin_guidelines = admin_guidelines_prompt
+
+            if drawing_policy_addon:
+                merged_admin_guidelines = (
+                    f"{admin_guidelines_prompt}\n\n{drawing_policy_addon}".strip()
+                    if admin_guidelines_prompt
+                    else drawing_policy_addon
+                )
+
             llm_messages = prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
@@ -166,7 +205,7 @@ class ChatTurnLlmAssemblyService:
                 tool_context=tool_context["context"],
                 project_prompt=workspace_context.get("projectPrompt"),
                 agent_prompt=workspace_context.get("agentPrompt"),
-                admin_guidelines_prompt=admin_guidelines_prompt,
+                admin_guidelines_prompt=merged_admin_guidelines,
                 attachments=attachments,
                 attachment_context=build_attachment_context(
                     user_id=user_id,

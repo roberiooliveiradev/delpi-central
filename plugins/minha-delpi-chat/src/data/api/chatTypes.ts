@@ -711,6 +711,7 @@ export type SendChatMessageResponse = {
   playback?: boolean;
   canvasOpen?: ChatCanvasOpenPayload | null;
   adminDebug?: Record<string, unknown> | null;
+  metadata?: ChatMessageMetadata | null;
 };
 
 export type ChatPlaybackEvent = {
@@ -719,6 +720,7 @@ export type ChatPlaybackEvent = {
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
   adminDebug?: Record<string, unknown> | null;
+  metadata?: ChatMessageMetadata | null;
 };
 
 export type ChatArtifact = {

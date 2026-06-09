@@ -493,6 +493,8 @@ async function consumeChatMessageStream(
           toolCalls: (data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? [],
           adminDebug:
             (data.adminDebug as Record<string, unknown> | null | undefined) ?? null,
+          metadata:
+            (data.metadata as SendChatMessageResponse["metadata"]) ?? null,
         });
       }
 

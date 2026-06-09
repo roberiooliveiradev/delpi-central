@@ -415,6 +415,18 @@ class StreamChatMessageUseCase:
         tool_calls = completion.tool_calls
         canvas_open_payload = completion.canvas_open_payload
         client_admin_debug = completion.client_admin_debug
+        client_metadata = {
+            key: completion.assistant_metadata[key]
+            for key in (
+                "drawingAnalysisMode",
+                "drawingAnalysis",
+                "drawingAnalysisExport",
+                "drawingAnalysisMetrics",
+                "directResponse",
+                "intelligence",
+            )
+            if completion.assistant_metadata.get(key) is not None
+        }
 
         if canvas_open_payload:
             yield {
@@ -426,7 +438,7 @@ class StreamChatMessageUseCase:
             }
 
         if persist_before_playback:
-            yield {
+            playback_event = {
                 "type": "playback",
                 "messageId": str(assistant_message.id),
                 "answer": answer,
@@ -434,6 +446,11 @@ class StreamChatMessageUseCase:
                 "toolCalls": tool_calls,
                 "adminDebug": client_admin_debug,
             }
+
+            if client_metadata:
+                playback_event["metadata"] = client_metadata
+
+            yield playback_event
 
         done_event = {
             "type": "done",
@@ -444,6 +461,9 @@ class StreamChatMessageUseCase:
             "playback": persist_before_playback,
             "adminDebug": client_admin_debug,
         }
+
+        if client_metadata:
+            done_event["metadata"] = client_metadata
 
         if canvas_open_payload:
             done_event["canvasOpen"] = {

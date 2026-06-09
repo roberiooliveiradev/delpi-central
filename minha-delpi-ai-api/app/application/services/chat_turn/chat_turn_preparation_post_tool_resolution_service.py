@@ -62,7 +62,18 @@ class ChatTurnPreparationPostToolResolutionService:
         skip_tools_for_data_interpretation: bool,
         resolve_user_identity_answer: Callable[[str], str | None],
         resolve_capabilities_answer: Callable[[str], str | None],
+        attachment_ids: list[str] | None = None,
     ) -> ChatTurnPreparationPostToolResult:
+        from app.application.services.chat_drawing_turn_enrichment_service import (
+            ChatDrawingTurnEnrichmentService,
+        )
+
+        tool_context = ChatDrawingTurnEnrichmentService.enrich_tool_context(
+            tool_context,
+            message=message,
+            attachment_ids=attachment_ids,
+        )
+
         resolved_skills = workspace_context.get("skills") or {}
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
@@ -248,8 +259,17 @@ class ChatTurnPreparationPostToolResolutionService:
                     if "email_operational" not in pipeline_stages:
                         pipeline_stages.append("email_operational")
 
+        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
         drawing_mode = bool(
-            isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode")
+            isinstance(tool_context, dict)
+            and (
+                tool_context.get("drawingAnalysisMode")
+                or ChatDrawingIntentService.is_drawing_analysis_request(
+                    message,
+                    attachment_ids=attachment_ids,
+                )
+            )
         )
         has_drawing_report = bool(
             isinstance(tool_context, dict)
@@ -263,9 +283,10 @@ class ChatTurnPreparationPostToolResolutionService:
         )
 
         if drawing_mode and has_drawing_report:
-            report_direct = str(
-                (tool_context or {}).get("directAnswer") or ""
-            ).strip()
+            report_direct = (
+                ChatDrawingTurnEnrichmentService.resolve_report_direct_answer(tool_context)
+                or str((tool_context or {}).get("directAnswer") or "").strip()
+            )
 
             if report_direct:
                 direct_answer = report_direct

@@ -1289,6 +1289,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             sources: response.sources ?? [],
             toolCalls: finalToolCalls,
             adminDebug: response.adminDebug ?? null,
+            metadata: response.metadata ?? null,
           };
 
           if (response.playback || awaitingPlaybackRef.current) {
@@ -1317,6 +1318,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
               sources: turnHandoff.sources,
               toolCalls: finalToolCalls,
               adminDebug: response.adminDebug ?? null,
+              metadata: response.metadata ?? null,
               skipReveal: shouldSkipPlaybackReveal(
                 streamingAnswerRef.current,
                 streamingToolCallsRef.current,
@@ -1347,6 +1349,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
               sources: turnHandoff.sources,
               toolCalls: finalToolCalls,
               adminDebug: response.adminDebug ?? null,
+              metadata: response.metadata ?? null,
               skipReveal: streamContentAlreadyDisplayed(
                 streamingAnswerRef.current,
                 streamingToolCallsRef.current,

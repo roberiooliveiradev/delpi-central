@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { ChatSource, ChatToolCall } from "../../data/api/chatTypes";
+import type {
+  ChatMessageMetadata,
+  ChatSource,
+  ChatToolCall,
+} from "../../data/api/chatTypes";
 import { shouldBypassIncrementalTextReveal } from "../../ui/components/assistantProseRendering";
 import {
   isShortPresentationCaption,
@@ -15,6 +19,7 @@ export type ChatPlaybackPayload = {
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
   adminDebug?: Record<string, unknown> | null;
+  metadata?: ChatMessageMetadata | null;
   /** Evita reanimar texto já exibido durante o stream legado (tokens SSE). */
   skipReveal?: boolean;
 };

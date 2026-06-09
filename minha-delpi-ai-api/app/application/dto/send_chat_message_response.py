@@ -9,3 +9,4 @@ class SendChatMessageResponse:
     toolCalls: list
     canvasOpen: dict | None = None
     adminDebug: dict | None = None
+    metadata: dict | None = None

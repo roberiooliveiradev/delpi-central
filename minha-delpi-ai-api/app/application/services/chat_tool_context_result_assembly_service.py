@@ -164,9 +164,16 @@ class ChatToolContextResultAssemblyService:
                 else pagination_continue_prompt
             )
 
+        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+        drawing_turn_active = drawing_analysis_mode or ChatDrawingIntentService.is_drawing_analysis_request(
+            raw_message,
+            attachment_ids=attachment_ids,
+        )
+
         drawing_analysis_payload = None
 
-        if drawing_analysis_mode:
+        if drawing_turn_active:
             drawing_analysis_payload = host._auxiliary_service._build_drawing_analysis_enrichment(
                 safe_tool_calls=safe_tool_calls,
                 product_code=drawing_product_code,
@@ -201,9 +208,18 @@ class ChatToolContextResultAssemblyService:
             "currentMessage": raw_message,
         }
 
-        if drawing_analysis_mode:
-            result_payload["drawingAnalysisMode"] = True
+        from app.application.services.chat_drawing_turn_enrichment_service import (
+            ChatDrawingTurnEnrichmentService,
+        )
 
+        result_payload = ChatDrawingTurnEnrichmentService.enrich_tool_context(
+            result_payload,
+            message=raw_message,
+            attachment_ids=attachment_ids,
+        )
+        direct_answer = str(result_payload.get("directAnswer") or "").strip() or direct_answer
+
+        if result_payload.get("drawingAnalysisMode"):
             if drawing_pdf_extract:
                 result_payload[
                     "drawingPdfExtractSummary"
@@ -215,13 +231,22 @@ class ChatToolContextResultAssemblyService:
                 if drawing_pdf_extract.get("documentVision"):
                     result_payload["documentVision"] = drawing_pdf_extract["documentVision"]
 
-            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
-                result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
+            if drawing_analysis_payload:
+                if not result_payload.get("drawingAnalysis") and drawing_analysis_payload.get(
+                    "drawingAnalysis"
+                ):
+                    result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
 
-            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysisExport"):
-                result_payload["drawingAnalysisExport"] = drawing_analysis_payload[
+                if not result_payload.get("drawingAnalysisExport") and drawing_analysis_payload.get(
                     "drawingAnalysisExport"
-                ]
+                ):
+                    result_payload["drawingAnalysisExport"] = drawing_analysis_payload[
+                        "drawingAnalysisExport"
+                    ]
+
+        result_payload["directAnswer"] = (
+            str(result_payload.get("directAnswer") or "").strip() or direct_answer
+        )
 
         from app.application.services.chat_document_vision_turn_service import (
             ChatDocumentVisionTurnService,

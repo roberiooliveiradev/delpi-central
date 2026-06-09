@@ -307,6 +307,7 @@ class ChatTurnPreparationService:
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             resolve_user_identity_answer=resolve_user_identity_answer,
             resolve_capabilities_answer=resolve_capabilities_answer,
+            attachment_ids=getattr(request, "attachment_ids", None),
         )
         direct_answer = post_tool.direct_answer
         skip_rag = post_tool.skip_rag

@@ -289,6 +289,19 @@ class SendChatMessageUseCase:
             persistence=ChatTurnPersistenceOptions(mode="send"),
         )
 
+        client_metadata = {
+            key: completion.assistant_metadata[key]
+            for key in (
+                "drawingAnalysisMode",
+                "drawingAnalysis",
+                "drawingAnalysisExport",
+                "drawingAnalysisMetrics",
+                "directResponse",
+                "intelligence",
+            )
+            if completion.assistant_metadata.get(key) is not None
+        }
+
         return SendChatMessageResponse(
             messageId=str(completion.assistant_message.id),
             answer=completion.answer,
@@ -304,4 +317,5 @@ class SendChatMessageUseCase:
                 else None
             ),
             adminDebug=completion.client_admin_debug,
+            metadata=client_metadata or None,
         )

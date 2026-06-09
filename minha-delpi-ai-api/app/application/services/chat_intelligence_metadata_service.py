@@ -11,14 +11,18 @@ class ChatIntelligenceMetadataService:
         skip_rag: bool,
         analysis_mode: bool = False,
         stages: list[str] | None = None,
+        direct_answer: str | None = None,
     ) -> dict:
+        resolved_direct = str(direct_answer or "").strip() or str(
+            tool_context.get("directAnswer") or ""
+        ).strip()
         flags = {
             "fastPath": bool(fast_path),
             "operationalFastPath": bool(operational_optimize),
             "analysisMode": bool(
                 analysis_mode or tool_context.get("analysisMode")
             ),
-            "directResponse": bool(tool_context.get("directAnswer")),
+            "directResponse": bool(resolved_direct),
             "skipRag": bool(skip_rag),
         }
         if stages:

@@ -44,6 +44,12 @@ class ChatDrawingFollowUpService:
         if isinstance(export, dict) and export.get("markdown"):
             metadata["drawingAnalysisExport"] = export
 
+        if isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode"):
+            metadata["drawingAnalysisMode"] = True
+
+        if isinstance(drawing, dict):
+            metadata["drawingAnalysis"] = drawing
+
         from app.application.services.chat_drawing_metrics_service import (
             ChatDrawingMetricsService,
         )

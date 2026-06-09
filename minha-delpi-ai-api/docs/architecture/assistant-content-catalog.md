@@ -44,6 +44,7 @@ Wrappers especializados (mantêm API estável):
 | `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
 | `web_search.json` | Resposta direta e follow-up pós-pesquisa | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService` |
 | `drawing_validation.json` | Relatório e checklist de análise de desenho | `ChatDrawingValidationOrchestrationService` |
+| `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
 | `document_vision.json` | Padrões de intent (OCR e descrição visual); prompts VLM; rótulos de contexto; modos de ativação da skill | `ChatDocumentVisionContentService`, `ChatAttachmentDocumentIntentService`, `ChatDocumentVisionSkillService`, `ChatDocumentVisionContextService` |
 | `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
@@ -71,6 +72,7 @@ Wrappers especializados (mantêm API estável):
 - Web search direct answer → `web_search.json` (antes em `product_operational_content.webSearch`)
 - Web search follow-up (links, resumo, parâmetros, comparação) → `web_search.followUp`
 - Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
+- Intent de análise de desenho (gatilhos, vocabulário com anexo, PDF obrigatório, direct answers) → `drawing_query_intent.json`
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
