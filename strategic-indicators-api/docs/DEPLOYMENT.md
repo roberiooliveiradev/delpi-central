@@ -53,7 +53,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses no warm-up legado |
 | `SI_PERIOD_SCORES_ENABLED` | `true` | Grava/lê `period_scores` nas rotas |
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Job periódico de materialização |
-| `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (segundos) |
+| `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `3600` (1 h) | Intervalo do job (segundos) |
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `3` | Meses materializados (consolidado) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_RUN_MIGRATIONS_ON_STARTUP` | `true` (Compose prod/dev) | Migrations no boot |

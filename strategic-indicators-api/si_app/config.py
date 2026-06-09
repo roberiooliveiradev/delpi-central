@@ -53,7 +53,7 @@ class Settings:
         in {"1", "true", "yes", "on"}
     )
     SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS: int = int(
-        _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="300") or "300"
+        _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="3600") or "3600"
     )
     SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int = int(
         _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="3") or "3"

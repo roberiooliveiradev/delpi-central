@@ -56,7 +56,7 @@ Rotas de leitura (`executive-summary`, `departments`, `indicators`, `trends`, `a
 - Visão **consolidado** na API: `scope_branch = ''`.
 - Visão **por filial** (`branch=01` ou `02`): exige linha com o mesmo `scope_branch`; sem ela a API recalcula em tempo real (consulta metas + medições). Metas resolvidas usam filtro estrito `goal_scope_branch = filial` (sem fallback para `''`) — ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 
-O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 5 minutos (padrão). Após mudanças de metas ou correção de bug na resolução por filial, execute `scripts/refresh_period_scores.py` manualmente.
+O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 1 hora (padrão). Após mudanças de metas ou correção de bug na resolução por filial, execute `scripts/refresh_period_scores.py` manualmente.
 
 - **`refresh_state`** — `last_started_at`, `last_completed_at`, `last_duration_ms`, `last_periods_upserted`, `last_error` do último ciclo de materialização.
 
@@ -72,7 +72,7 @@ O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 5 minutos (padrão).
 | `measurements` | Realizados coletados (TOTVS, Sheets, RH) |
 | `measurement_errors` | Erros de coleta por indicador/fonte |
 
-Atualizado pelo mesmo job de `period_scores` (padrão: a cada 5 min, `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS=300`). Flag: `SI_CALCULATION_SNAPSHOTS_ENABLED` (default `true`).
+Atualizado pelo mesmo job de `period_scores` (padrão: a cada 1 h, `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS=3600`). Flag: `SI_CALCULATION_SNAPSHOTS_ENABLED` (default `true`).
 
 Diferença em relação a **`period_scores`**: `period_scores` guarda o **resultado** (IGD, scores, classificação); `calculation_snapshots` guarda o que entrou no cálculo.
 
