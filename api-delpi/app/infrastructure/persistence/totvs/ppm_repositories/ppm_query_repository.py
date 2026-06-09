@@ -276,7 +276,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             ORDER BY branch
         """
 
-        params = tuple(params_nc + prod_params)
+        params = tuple(list(params_nc) + prod_params)
 
         with self as repo:
             rows = repo.execute_query(sql, params)

@@ -161,6 +161,31 @@ def test_hr_branches_returns_meta(mock_build) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.quality_router.build_list_quality_branches_use_case")
+def test_quality_branches_returns_meta(mock_build) -> None:
+    from app.application.dto.quality.quality_branches_response import (
+        QualityBranchesResponse,
+    )
+    from app.interface.http.routes.quality.quality_router import list_quality_branches
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = QualityBranchesResponse(branches=["01", "02"])
+    mock_build.return_value = mock_use_case
+
+    response = list_quality_branches(
+        date_start="2026-06-01",
+        date_end="2026-06-09",
+    )
+    body = _body(response)
+    assert body.get("success") is True
+    assert body.get("data", {}).get("branches") == ["01", "02"]
+    _assert_meta(
+        body,
+        operation_id="list_quality_branches",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.system_routes.build_search_tables_by_description_use_case")
 def test_system_search_tables_returns_meta(mock_build) -> None:
     from app.interface.http.routes.system_routes import search_tables

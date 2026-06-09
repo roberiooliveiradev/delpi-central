@@ -9,7 +9,7 @@ def build_nc_where_clause(
     branch: str | None,
     date_start: str | None,
     date_end_exclusive: str | None,
-) -> tuple[str, list]:
+) -> tuple[str, tuple]:
     if ppm_type == "internal":
         type_filter = "QI2_TIPO = '1'"
     elif ppm_type == "external":
