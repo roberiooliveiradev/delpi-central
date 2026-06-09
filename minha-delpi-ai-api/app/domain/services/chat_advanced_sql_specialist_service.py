@@ -571,16 +571,56 @@ class ChatAdvancedSqlSpecialistService:
             example_sql = cls._example_join_sql_for_tables([table_name, "SA1", "SC5"])
 
             return {
-                "titulo": f"Relações internas {table_name} (não exibir catálogo ao usuário)",
+                "titulo": ChatSqlIntentVocabularyService.format(
+                    "advancedSqlSpecialist",
+                    "schemaRelations",
+                    "userTitle",
+                    table_name=table_name,
+                ),
                 "linhas": [
-                    f"Tabela consultada: {table_name} — {len(relation_lines)} relação(ões) no SX9.",
-                    *(
-                        [f"FK: {line}" for line in relation_lines]
-                        if relation_lines
-                        else ["Sem FK retornada — use convenção Protheus SC5.C5_CLIENTE = SA1.A1_COD."]
+                    ChatSqlIntentVocabularyService.format(
+                        "advancedSqlSpecialist",
+                        "schemaRelations",
+                        "tableLine",
+                        table_name=table_name,
+                        count=str(len(relation_lines)),
                     ),
-                    "Entrega obrigatória: bloco ```sql``` com JOIN de exemplo (SELECT somente leitura).",
-                    *( [f"Modelo: {example_sql}"] if example_sql else [] ),
+                    *(
+                        [
+                            ChatSqlIntentVocabularyService.text(
+                                "advancedSqlSpecialist",
+                                "schemaRelations",
+                                "fkPrefix",
+                            )
+                            + line
+                            for line in relation_lines
+                        ]
+                        if relation_lines
+                        else [
+                            ChatSqlIntentVocabularyService.text(
+                                "advancedSqlSpecialist",
+                                "schemaRelations",
+                                "noFkFallback",
+                            )
+                        ]
+                    ),
+                    ChatSqlIntentVocabularyService.text(
+                        "advancedSqlSpecialist",
+                        "schemaRelations",
+                        "deliveryHint",
+                    ),
+                    *(
+                        [
+                            ChatSqlIntentVocabularyService.text(
+                                "advancedSqlSpecialist",
+                                "schemaRelations",
+                                "examplePrefix",
+                            )
+                            + example_sql
+                        ]
+                        if example_sql
+                        else []
+                    ),
                 ],
             }
 

@@ -19,39 +19,19 @@ from app.domain.services.chat_runtime_intelligence_settings_service import (
 )
 
 
-class ChatWebSearchIntentService:
-    _TRIGGER_TERMS = (
-        "pesquise na internet",
-        "pesquisa na internet",
-        "busque na internet",
-        "busca na internet",
-        "pesquisa profunda na web",
-        "pesquisa profunda na internet",
-        "busca profunda na web",
-        "busca profunda na internet",
-        "pesquise na web",
-        "pesquisa na web",
-        "busque na web",
-        "busca na web",
-        "pesquise online",
-        "pesquisa online",
-        "google",
-        "duckduckgo",
-        "na internet sobre",
-        "web sobre",
-    )
+from app.domain.services.chat_web_search_vocabulary_service import (
+    ChatWebSearchVocabularyService,
+)
 
-    _STRIP_PATTERNS = (
-        r"^(?:por favor[, ]*)?",
-        r"^(?:me )?",
-        r"^(?:pode )?",
-        r"^(?:voce |você )?",
-        r"(?:pesquise|pesquisa|busque|busca)(?: na internet| na web| online)?(?: sobre| por)?",
-        r"(?:na internet|na web|online)",
-        r"(?:sobre|por)\s+(?:a\s+)?(?:empresa|companhia)\s+",
-        r"(?:sobre|por)\s+",
-        r"^(?:a\s+)?(?:empresa|companhia)\s+",
-    )
+
+class ChatWebSearchIntentService:
+    @classmethod
+    def _trigger_terms(cls) -> tuple[str, ...]:
+        return ChatWebSearchVocabularyService.terms("explicitRequest", "triggerTerms")
+
+    @classmethod
+    def _strip_patterns(cls) -> tuple[str, ...]:
+        return ChatWebSearchVocabularyService.terms("explicitRequest", "stripPatterns")
 
     @classmethod
     def is_feature_enabled(cls) -> bool:
@@ -67,7 +47,7 @@ class ChatWebSearchIntentService:
     @classmethod
     def is_explicit_request(cls, message: str) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        return bool(normalized) and any(term in normalized for term in cls._TRIGGER_TERMS)
+        return bool(normalized) and any(term in normalized for term in cls._trigger_terms())
 
     @classmethod
     def matches(cls, message: str) -> bool:
@@ -425,7 +405,7 @@ class ChatWebSearchIntentService:
         elif cls.should_augment_with_web(query) and not cls.is_explicit_request(query):
             normalized = cls._extract_augment_topic(query)
         else:
-            for pattern in cls._STRIP_PATTERNS:
+            for pattern in cls._strip_patterns():
                 normalized = re.sub(pattern, " ", normalized, flags=re.IGNORECASE).strip()
 
         normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")

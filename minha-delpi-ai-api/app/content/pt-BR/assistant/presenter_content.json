@@ -429,6 +429,57 @@
     "stockLocationLabel": "Fil.{branch}/{warehouse}",
     "componentTypeFallback": "Outros"
   },
+  "dashboardPresentation": {
+    "defaultTitle": "Dashboard",
+    "summaryFallbackTitle": "Resumo",
+    "itemsFallbackTitle": "Itens",
+    "panelItemsTitle": "Itens do painel",
+    "titlesByPathFragment": {
+      "eficiencia-fabril": "Painel de eficiência fabril",
+      "eficiencia_fabril": "Painel de eficiência fabril",
+      "lmp": "Dashboard de LMPs",
+      "engineering": "Painel de engenharia"
+    },
+    "chartBlockTitles": {
+      "levelData": "LMPs por nível",
+      "statusData": "LMPs por status",
+      "leadByLevel": "Lead time por nível",
+      "evolutionData": "Evolução"
+    }
+  },
+  "presentationRecommendation": {
+    "viewLabels": {
+      "line_chart": "Ver em linha",
+      "area_chart": "Ver em área",
+      "horizontal_bar": "Ver ranking",
+      "donut": "Ver participação",
+      "bar_chart": "Ver em barras",
+      "chart": "Gerar gráfico",
+      "table": "Ver como tabela",
+      "dashboard": "Ver painel",
+      "tree": "Ver árvore",
+      "kpi": "Ver como KPI"
+    },
+    "viewQueries": {
+      "line_chart": "mostre o último resultado em gráfico de linha",
+      "area_chart": "mostre o último resultado em gráfico de área",
+      "horizontal_bar": "mostre o último resultado em gráfico de barras horizontais",
+      "donut": "mostre o último resultado em gráfico de rosca",
+      "bar_chart": "mostre o último resultado em gráfico de barras",
+      "chart": "gere um gráfico com os dados acima",
+      "table": "mostre o último resultado em tabela",
+      "dashboard": "mostre o último resultado como painel",
+      "tree": "mostre o último resultado em árvore",
+      "kpi": "mostre o último resultado como indicador"
+    },
+    "efficiencyHints": [
+      "eficiencia",
+      "eficiência",
+      "fabril",
+      "produtividade",
+      "oee"
+    ]
+  },
   "productOverview": {
     "identityLine": "**{code}** — {description}.",
     "noDescription": "sem descrição cadastrada",

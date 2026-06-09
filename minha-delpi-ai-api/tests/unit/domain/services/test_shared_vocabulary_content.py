@@ -29,3 +29,23 @@ def test_date_range_vocabulary_has_months_and_phrases():
     assert ChatDateRangeVocabularyService.months_pt()["janeiro"] == 1
     assert ChatDateRangeVocabularyService.terms("periodMetricTerms")
     assert ChatDateRangeVocabularyService.week_offset_phrases().get(-1)
+    assert ChatDateRangeVocabularyService.weekdays_pt()["segunda"] == 0
+    assert ChatDateRangeVocabularyService.temporal_range_markers()
+
+
+def test_canvas_transform_vocabulary_loaded():
+    from app.domain.services.chat_canvas_transform_vocabulary_service import (
+        ChatCanvasTransformVocabularyService,
+    )
+
+    assert ChatCanvasTransformVocabularyService.kind_terms("checklist")
+    assert ChatCanvasTransformVocabularyService.template("checklistHeader")
+
+
+def test_web_search_vocabulary_loaded():
+    from app.domain.services.chat_web_search_vocabulary_service import (
+        ChatWebSearchVocabularyService,
+    )
+
+    assert ChatWebSearchVocabularyService.terms("explicitRequest", "triggerTerms")
+    assert ChatWebSearchVocabularyService.terms("planning", "deepTerms")

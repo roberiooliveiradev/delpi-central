@@ -4,16 +4,48 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-
-_CHART_BLOCK_TITLES = {
-    "levelData": "LMPs por nível",
-    "statusData": "LMPs por status",
-    "leadByLevel": "Lead time por nível",
-    "evolutionData": "Evolução",
-}
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 class ChatDashboardPresentationService:
+    @classmethod
+    def _dashboard_text(cls, *path: str, default: str = "") -> str:
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "dashboardPresentation",
+            *path,
+            default=default,
+        )
+
+    @classmethod
+    def _chart_block_titles(cls) -> dict[str, str]:
+        node = ChatAssistantContentService.get_node(
+            "presenter_content",
+            "dashboardPresentation",
+            "chartBlockTitles",
+        )
+
+        if not isinstance(node, dict):
+            return {}
+
+        return {str(key): str(value) for key, value in node.items() if value}
+
+    @classmethod
+    def _resolve_dashboard_title(cls, path: str) -> str:
+        lowered = str(path or "").lower()
+        titles = ChatAssistantContentService.get_node(
+            "presenter_content",
+            "dashboardPresentation",
+            "titlesByPathFragment",
+        )
+
+        if isinstance(titles, dict):
+            for fragment, title in titles.items():
+                if str(fragment).lower() in lowered:
+                    return str(title)
+
+        return cls._dashboard_text("defaultTitle", default="Dashboard")
+
     @classmethod
     def build(
         cls,
@@ -49,7 +81,10 @@ class ChatDashboardPresentationService:
                 panels.append(
                     {
                         "id": "summary",
-                        "title": str(kpi.get("title") or "Resumo"),
+                        "title": str(
+                            kpi.get("title")
+                            or cls._dashboard_text("summaryFallbackTitle", default="Resumo")
+                        ),
                         "presentation": kpi,
                     }
                 )
@@ -57,7 +92,7 @@ class ChatDashboardPresentationService:
         charts = root.get("charts")
 
         if isinstance(charts, dict):
-            for key, panel_title in _CHART_BLOCK_TITLES.items():
+            for key, panel_title in cls._chart_block_titles().items():
                 block = charts.get(key)
 
                 if not isinstance(block, list) or not block:
@@ -82,12 +117,18 @@ class ChatDashboardPresentationService:
             if "sale_number" in items[0] or "saleNumber" in items[0]:
                 table = build_lmp_table(items, root)
             else:
-                table = build_items_table(items, title="Itens do painel")
+                table = build_items_table(
+                    items,
+                    title=cls._dashboard_text("panelItemsTitle", default="Itens do painel"),
+                )
 
             if table and table.get("type") == "table":
                 items_panel: dict[str, Any] = {
                     "id": "items",
-                    "title": str(table.get("title") or "Itens"),
+                    "title": str(
+                        table.get("title")
+                        or cls._dashboard_text("itemsFallbackTitle", default="Itens")
+                    ),
                     "presentation": table,
                 }
 
@@ -102,18 +143,9 @@ class ChatDashboardPresentationService:
         if len(panels) < 2:
             return None
 
-        title = "Dashboard"
-
-        if "eficiencia-fabril" in lowered or "eficiencia_fabril" in lowered:
-            title = "Painel de eficiência fabril"
-        elif "lmp" in lowered:
-            title = "Dashboard de LMPs"
-        elif "engineering" in lowered:
-            title = "Painel de engenharia"
-
         return {
             "type": "dashboard",
-            "title": title,
+            "title": cls._resolve_dashboard_title(lowered),
             "panels": panels[:6],
         }
 

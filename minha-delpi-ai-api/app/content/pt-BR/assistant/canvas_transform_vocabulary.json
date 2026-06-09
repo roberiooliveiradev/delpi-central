@@ -1,0 +1,35 @@
+{
+  "kindTerms": {
+    "checklist": [
+      "checklist",
+      "lista de tarefas",
+      "lista de acoes",
+      "lista de ações"
+    ],
+    "report": ["relatorio", "relatório"],
+    "minutes": ["ata", "ata de reuniao", "ata de reunião"],
+    "announcement": ["comunicado"]
+  },
+  "kindLabels": {
+    "checklist": "Checklist",
+    "report": "Relatório",
+    "minutes": "Ata de reunião",
+    "announcement": "Comunicado",
+    "default": "Documento"
+  },
+  "templates": {
+    "checklistHeader": "# Checklist",
+    "reportHeader": "# Relatório",
+    "reportConclusionHeader": "## Conclusão",
+    "reportConclusionPlaceholder": "- (preencha recomendações e próximos passos)",
+    "minutesHeader": "# Ata de reunião",
+    "minutesParticipantsHeader": "## Participantes",
+    "minutesAgendaHeader": "## Pauta",
+    "minutesDiscussedHeader": "## Pontos discutidos",
+    "minutesDecisionsHeader": "## Decisões",
+    "minutesPendingHeader": "## Pendências",
+    "minutesPendingItem": "- [ ] ",
+    "minutesListPlaceholder": "- ",
+    "announcementHeader": "# Comunicado"
+  }
+}

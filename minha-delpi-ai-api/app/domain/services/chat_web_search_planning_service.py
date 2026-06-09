@@ -11,6 +11,10 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 from app.domain.services.web_search_query_service import WebSearchQueryService
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+from app.domain.services.chat_web_search_vocabulary_service import (
+    ChatWebSearchVocabularyService,
+)
+
 
 
 @dataclass(frozen=True)
@@ -26,46 +30,20 @@ class WebSearchPlan:
 
 
 class ChatWebSearchPlanningService:
-    _DEEP_TERMS = (
-        "pesquisa profunda",
-        "busca profunda",
-        "investigacao completa",
-        "investigação completa",
-        "investigue a fundo",
-        "pesquise a fundo",
-        "analise completa",
-        "análise completa",
-        "compare fontes",
-        "comparar fontes",
-        "valide com fontes",
-    )
+    @classmethod
+    def _deep_terms(cls) -> tuple[str, ...]:
+        return ChatWebSearchVocabularyService.terms("planning", "deepTerms")
 
-    _QUICK_TERMS = (
-        "pesquisa rapida",
-        "pesquisa rápida",
-        "busca rapida",
-        "busca rápida",
-        "resumo rapido",
-        "resumo rápido",
-    )
+    @classmethod
+    def _quick_terms(cls) -> tuple[str, ...]:
+        return ChatWebSearchVocabularyService.terms("planning", "quickTerms")
 
-    _OFFICIAL_TERMS = (
-        "manual oficial",
-        "site oficial",
-        "fonte oficial",
-        "fontes oficiais",
-        "datasheet",
-        "data sheet",
-        "ficha tecnica",
-        "ficha técnica",
-        "documentacao oficial",
-        "documentação oficial",
-        "norma abnt",
-        "norma nr",
-        "nr-",
-        "abnt",
-        "pdf oficial",
-    )
+    @classmethod
+    def _official_terms(cls) -> tuple[str, ...]:
+        return ChatWebSearchVocabularyService.terms("planning", "officialTerms")
+
+
+
 
     _KNOWN_BRAND_DOMAINS: tuple[tuple[str, str], ...] = (
         ("weg", "weg.net"),
@@ -139,20 +117,20 @@ class ChatWebSearchPlanningService:
 
     @classmethod
     def _resolve_mode(cls, normalized: str) -> str:
-        if any(term in normalized for term in cls._DEEP_TERMS):
+        if any(term in normalized for term in cls._deep_terms()):
             return "deep"
 
-        if any(term in normalized for term in cls._QUICK_TERMS):
+        if any(term in normalized for term in cls._quick_terms()):
             return "quick"
 
-        if any(term in normalized for term in cls._OFFICIAL_TERMS):
+        if any(term in normalized for term in cls._official_terms()):
             return "deep"
 
         return "quick"
 
     @classmethod
     def _prefers_official(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._OFFICIAL_TERMS)
+        return any(term in normalized for term in cls._official_terms())
 
     @classmethod
     def _resolve_intent(cls, normalized: str, *, prefer_official: bool) -> str:

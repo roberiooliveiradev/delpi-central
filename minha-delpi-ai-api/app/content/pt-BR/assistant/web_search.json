@@ -268,5 +268,78 @@
     ],
     "querySuffix": " dados atuais internet",
     "searchReason": "A base interna não trouxe trechos — busco na internet antes de responder com o modelo."
+  },
+  "explicitRequest": {
+    "triggerTerms": [
+      "pesquise na internet",
+      "pesquisa na internet",
+      "busque na internet",
+      "busca na internet",
+      "pesquisa profunda na web",
+      "pesquisa profunda na internet",
+      "busca profunda na web",
+      "busca profunda na internet",
+      "pesquise na web",
+      "pesquisa na web",
+      "busque na web",
+      "busca na web",
+      "pesquise online",
+      "pesquisa online",
+      "google",
+      "duckduckgo",
+      "na internet sobre",
+      "web sobre"
+    ],
+    "stripPatterns": [
+      "^(?:por favor[, ]*)?",
+      "^(?:me )?",
+      "^(?:pode )?",
+      "^(?:voce |você )?",
+      "(?:pesquise|pesquisa|busque|busca)(?: na internet| na web| online)?(?: sobre| por)?",
+      "(?:na internet|na web|online)",
+      "(?:sobre|por)\\s+(?:a\\s+)?(?:empresa|companhia)\\s+",
+      "(?:sobre|por)\\s+",
+      "^(?:a\\s+)?(?:empresa|companhia)\\s+"
+    ]
+  },
+  "planning": {
+    "deepTerms": [
+      "pesquisa profunda",
+      "busca profunda",
+      "investigacao completa",
+      "investigação completa",
+      "investigue a fundo",
+      "pesquise a fundo",
+      "analise completa",
+      "análise completa",
+      "compare fontes",
+      "comparar fontes",
+      "valide com fontes"
+    ],
+    "quickTerms": [
+      "pesquisa rapida",
+      "pesquisa rápida",
+      "busca rapida",
+      "busca rápida",
+      "resumo rapido",
+      "resumo rápido"
+    ],
+    "officialTerms": [
+      "manual oficial",
+      "site oficial",
+      "fonte oficial",
+      "fontes oficiais",
+      "datasheet",
+      "data sheet",
+      "ficha tecnica",
+      "ficha técnica",
+      "documentacao oficial",
+      "documentação oficial",
+      "norma abnt",
+      "norma nr",
+      "nr-",
+      "abnt",
+      "pdf oficial"
+    ]
   }
 }

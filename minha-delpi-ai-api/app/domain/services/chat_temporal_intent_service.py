@@ -16,28 +16,6 @@ from app.domain.services.external_actions.external_action_response_content_servi
     ExternalActionResponseContentService,
 )
 
-_WEEKDAYS_PT: dict[str, int] = {
-    "domingo": 6,
-    "dom": 6,
-    "segunda": 0,
-    "segunda feira": 0,
-    "seg": 0,
-    "terca": 1,
-    "terca feira": 1,
-    "ter": 1,
-    "quarta": 2,
-    "quarta feira": 2,
-    "qua": 2,
-    "quinta": 3,
-    "quinta feira": 3,
-    "qui": 3,
-    "sexta": 4,
-    "sexta feira": 4,
-    "sex": 4,
-    "sabado": 5,
-    "sab": 5,
-}
-
 def _month_order() -> tuple[str, ...]:
     return tuple(
         sorted(
@@ -52,37 +30,6 @@ _SLASH_DMY_RE = re.compile(
     r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b",
 )
 _ISO_YMD_RE = re.compile(r"\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b")
-
-_RANGE_MARKERS = (
-    "semana passada",
-    "semana anterior",
-    "semana que vem",
-    "proxima semana",
-    "esta semana",
-    "semana atual",
-    "mes passado",
-    "mes que vem",
-    "proximo mes",
-    "mes atual",
-    "este mes",
-    "ano passado",
-    "este ano",
-    "ano atual",
-    "trimestre passado",
-    "ultimo trimestre",
-    "trimestre atual",
-    "este trimestre",
-    "ultimos ",
-    "ultimas ",
-    "ultima semana",
-    "ultimos 7 dias",
-    "competencia ",
-    "dia atual",
-    "data atual",
-    "data de hoje",
-    " de ",
-    " a ",
-)
 
 _TODAY_PATTERNS = (
     r"\bhoje\b",
@@ -177,7 +124,7 @@ class ChatTemporalIntentService:
         if cls.resolve_point(message, default_today=False):
             return True
 
-        return any(marker in normalized for marker in _RANGE_MARKERS)
+        return any(marker in normalized for marker in ChatDateRangeVocabularyService.temporal_range_markers())
 
     @classmethod
     def infer_point_from_sql(cls, sql: str | None, *, today: date | None = None) -> ResolvedTemporalPoint | None:
@@ -403,12 +350,12 @@ class ChatTemporalIntentService:
             re.search(r"\b(passad[ao]|ultim[ao]|anterior)\b", normalized)
         )
 
-        ordered = sorted(_WEEKDAYS_PT.keys(), key=len, reverse=True)
+        ordered = sorted(ChatDateRangeVocabularyService.weekdays_pt().keys(), key=len, reverse=True)
         for token in ordered:
             if not re.search(rf"\b{re.escape(token)}\b", normalized):
                 continue
 
-            weekday = _WEEKDAYS_PT[token]
+            weekday = ChatDateRangeVocabularyService.weekdays_pt()[token]
             if force_past and not force_next:
                 target = cls._previous_weekday(reference, weekday)
             else:

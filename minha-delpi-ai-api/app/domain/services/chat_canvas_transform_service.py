@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 
+from app.domain.services.chat_canvas_transform_vocabulary_service import (
+    ChatCanvasTransformVocabularyService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -15,11 +18,6 @@ class ChatCanvasTransformService:
     KIND_MINUTES = "minutes"
     KIND_ANNOUNCEMENT = "announcement"
 
-    _CHECKLIST_TERMS = ("checklist", "lista de tarefas", "lista de acoes", "lista de ações")
-    _REPORT_TERMS = ("relatorio", "relatório")
-    _MINUTES_TERMS = ("ata", "ata de reuniao", "ata de reunião")
-    _ANNOUNCEMENT_TERMS = ("comunicado",)
-
     @classmethod
     def detect_kind(cls, message: str) -> str | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -27,17 +25,14 @@ class ChatCanvasTransformService:
         if not normalized:
             return None
 
-        if any(term in normalized for term in cls._CHECKLIST_TERMS):
-            return cls.KIND_CHECKLIST
-
-        if any(term in normalized for term in cls._REPORT_TERMS):
-            return cls.KIND_REPORT
-
-        if any(term in normalized for term in cls._MINUTES_TERMS):
-            return cls.KIND_MINUTES
-
-        if any(term in normalized for term in cls._ANNOUNCEMENT_TERMS):
-            return cls.KIND_ANNOUNCEMENT
+        for kind in (
+            cls.KIND_CHECKLIST,
+            cls.KIND_REPORT,
+            cls.KIND_MINUTES,
+            cls.KIND_ANNOUNCEMENT,
+        ):
+            if any(term in normalized for term in ChatCanvasTransformVocabularyService.kind_terms(kind)):
+                return kind
 
         return None
 
@@ -46,18 +41,37 @@ class ChatCanvasTransformService:
         token = str(kind or "").strip()
 
         if token == cls.KIND_CHECKLIST:
-            return cls.to_checklist(markdown), "Checklist"
+            return cls.to_checklist(markdown), ChatCanvasTransformVocabularyService.kind_label(
+                cls.KIND_CHECKLIST,
+                default="Checklist",
+            )
 
         if token == cls.KIND_REPORT:
-            return cls.to_report(markdown), "Relatório"
+            return cls.to_report(markdown), ChatCanvasTransformVocabularyService.kind_label(
+                cls.KIND_REPORT,
+                default="Relatório",
+            )
 
         if token == cls.KIND_MINUTES:
-            return cls.to_minutes(markdown), "Ata de reunião"
+            return cls.to_minutes(markdown), ChatCanvasTransformVocabularyService.kind_label(
+                cls.KIND_MINUTES,
+                default="Ata de reunião",
+            )
 
         if token == cls.KIND_ANNOUNCEMENT:
-            return cls.to_announcement(markdown), "Comunicado"
+            return cls.to_announcement(markdown), ChatCanvasTransformVocabularyService.kind_label(
+                cls.KIND_ANNOUNCEMENT,
+                default="Comunicado",
+            )
 
-        return str(markdown or "").strip(), "Documento"
+        return str(markdown or "").strip(), ChatCanvasTransformVocabularyService.kind_label(
+            "default",
+            default="Documento",
+        )
+
+    @classmethod
+    def _template(cls, key: str, *, default: str = "") -> str:
+        return ChatCanvasTransformVocabularyService.template(key, default=default)
 
     @classmethod
     def to_checklist(cls, markdown: str) -> str:
@@ -94,28 +108,33 @@ class ChatCanvasTransformService:
             output.append(f"- [ ] {stripped}")
 
         body = "\n".join(output).strip()
+        header = cls._template("checklistHeader", default="# Checklist")
 
         if body.lower().startswith("# checklist"):
             return body
 
-        return f"# Checklist\n\n{body}"
+        return f"{header}\n\n{body}"
 
     @classmethod
     def to_report(cls, markdown: str) -> str:
         body = str(markdown or "").strip()
+        header = cls._template("reportHeader", default="# Relatório")
 
         if body.lower().startswith("# relat"):
             return body
 
         return "\n".join(
             [
-                "# Relatório",
+                header,
                 "",
                 body,
                 "",
-                "## Conclusão",
+                cls._template("reportConclusionHeader", default="## Conclusão"),
                 "",
-                "- (preencha recomendações e próximos passos)",
+                cls._template(
+                    "reportConclusionPlaceholder",
+                    default="- (preencha recomendações e próximos passos)",
+                ),
             ]
         ).strip()
 
@@ -126,33 +145,36 @@ class ChatCanvasTransformService:
         if "ata de" in body.lower()[:80]:
             return body
 
+        placeholder = cls._template("minutesListPlaceholder", default="- ")
+
         return "\n".join(
             [
-                "# Ata de reunião",
+                cls._template("minutesHeader", default="# Ata de reunião"),
                 "",
-                "## Participantes",
-                "- ",
+                cls._template("minutesParticipantsHeader", default="## Participantes"),
+                placeholder,
                 "",
-                "## Pauta",
-                "- ",
+                cls._template("minutesAgendaHeader", default="## Pauta"),
+                placeholder,
                 "",
-                "## Pontos discutidos",
+                cls._template("minutesDiscussedHeader", default="## Pontos discutidos"),
                 "",
                 body,
                 "",
-                "## Decisões",
-                "- ",
+                cls._template("minutesDecisionsHeader", default="## Decisões"),
+                placeholder,
                 "",
-                "## Pendências",
-                "- [ ] ",
+                cls._template("minutesPendingHeader", default="## Pendências"),
+                cls._template("minutesPendingItem", default="- [ ] "),
             ]
         ).strip()
 
     @classmethod
     def to_announcement(cls, markdown: str) -> str:
         body = str(markdown or "").strip()
+        header = cls._template("announcementHeader", default="# Comunicado")
 
         if body.lower().startswith("# comunicado"):
             return body
 
-        return f"# Comunicado\n\n{body}"
+        return f"{header}\n\n{body}"

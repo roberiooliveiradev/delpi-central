@@ -57,3 +57,21 @@ class ChatDateRangeVocabularyService(ChatAssistantVocabularyService):
             resolved[int(key)] = tuple(str(item) for item in value if str(item).strip())
 
         return resolved
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def weekdays_pt(cls) -> dict[str, int]:
+        raw = cls.node("weekdaysPt")
+
+        if not isinstance(raw, dict):
+            return {}
+
+        return {
+            str(key): int(value)
+            for key, value in raw.items()
+            if str(key).strip() and value is not None
+        }
+
+    @classmethod
+    def temporal_range_markers(cls) -> tuple[str, ...]:
+        return cls.terms("temporalRangeMarkers")

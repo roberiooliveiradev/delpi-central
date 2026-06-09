@@ -5,35 +5,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
-
-_VIEW_LABELS: dict[str, str] = {
-    "line_chart": "Ver em linha",
-    "area_chart": "Ver em área",
-    "horizontal_bar": "Ver ranking",
-    "donut": "Ver participação",
-    "bar_chart": "Ver em barras",
-    "chart": "Gerar gráfico",
-    "table": "Ver como tabela",
-    "dashboard": "Ver painel",
-    "tree": "Ver árvore",
-    "kpi": "Ver como KPI",
-}
-
-_VIEW_QUERIES: dict[str, str] = {
-    "line_chart": "mostre o último resultado em gráfico de linha",
-    "area_chart": "mostre o último resultado em gráfico de área",
-    "horizontal_bar": "mostre o último resultado em gráfico de barras horizontais",
-    "donut": "mostre o último resultado em gráfico de rosca",
-    "bar_chart": "mostre o último resultado em gráfico de barras",
-    "chart": "gere um gráfico com os dados acima",
-    "table": "mostre o último resultado em tabela",
-    "dashboard": "mostre o último resultado como painel",
-    "tree": "mostre o último resultado em árvore",
-    "kpi": "mostre o último resultado como indicador",
-}
 
 _CHART_SELECTED = frozenset(
     {
@@ -53,10 +28,33 @@ _CHART_SELECTED = frozenset(
     }
 )
 
-_EFFICIENCY_HINTS = ("eficiencia", "eficiência", "fabril", "produtividade", "oee")
-
-
 class ChatPresentationRecommendationService:
+    @classmethod
+    def _view_labels(cls) -> dict[str, str]:
+        return ChatAssistantContentService.get_mapping(
+            "presenter_content",
+            "presentationRecommendation",
+            "viewLabels",
+        )
+
+    @classmethod
+    def _view_queries(cls) -> dict[str, str]:
+        return ChatAssistantContentService.get_mapping(
+            "presenter_content",
+            "presentationRecommendation",
+            "viewQueries",
+        )
+
+    @classmethod
+    def _efficiency_hints(cls) -> tuple[str, ...]:
+        return tuple(
+            ChatAssistantContentService.list(
+                "presenter_content",
+                "presentationRecommendation",
+                "efficiencyHints",
+            )
+        )
+
     @classmethod
     def build(
         cls,
@@ -101,14 +99,14 @@ class ChatPresentationRecommendationService:
             if not cls._view_available(token, available):
                 return
 
-            label = _VIEW_LABELS.get(token, f"Ver como {token}")
+            label = cls._view_labels().get(token, f"Ver como {token}")
 
             output.append(
                 {
                     "view": token,
                     "label": label,
                     "reason": reason,
-                    "query": _VIEW_QUERIES.get(token, f"mostre em {token}"),
+                    "query": cls._view_queries().get(token, f"mostre em {token}"),
                 }
             )
             seen.add(token)
@@ -116,7 +114,7 @@ class ChatPresentationRecommendationService:
         if ideal and ideal != selected:
             add(ideal, cls._reason_for_view(ideal, decision))
 
-        if message and any(hint in message for hint in _EFFICIENCY_HINTS):
+        if message and any(hint in message for hint in cls._efficiency_hints()):
             if selected in {"scatter", "chart", "bar_chart"}:
                 add(
                     "horizontal_bar",
