@@ -22,6 +22,8 @@ export function VerificacoesPage({ onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const selectedSuite = suites.find((s) => s.id === selectedSuiteId) ?? suites[0];
+  const displayResult =
+    result && selectedSuite && result.suiteId === selectedSuite.id ? result : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -92,12 +94,12 @@ export function VerificacoesPage({ onNavigate }: Props) {
               {running ? <RefreshCw size={16} className="adc-spin" /> : <Play size={16} />}
               {running ? "Executando…" : "Executar suite"}
             </button>
-            {result ? (
+            {displayResult ? (
               <>
                 <button
                   type="button"
                   className="adc-btn adc-btn--ghost"
-                  onClick={() => downloadSmokeResult(result, "csv")}
+                  onClick={() => displayResult && downloadSmokeResult(displayResult, "csv")}
                   disabled={running}
                 >
                   <Download size={16} />
@@ -106,7 +108,7 @@ export function VerificacoesPage({ onNavigate }: Props) {
                 <button
                   type="button"
                   className="adc-btn adc-btn--ghost"
-                  onClick={() => downloadSmokeResult(result, "json")}
+                  onClick={() => displayResult && downloadSmokeResult(displayResult, "json")}
                   disabled={running}
                 >
                   <Download size={16} />
@@ -124,22 +126,22 @@ export function VerificacoesPage({ onNavigate }: Props) {
 
       {error ? <div className="adc-panel adc-panel--danger">{error}</div> : null}
 
-      {result ? (
+      {displayResult ? (
         <>
           <div className="adc-metrics adc-metrics--grid">
             <div className="adc-stat">
               <span className="adc-stat__label">Passou</span>
-              <strong className="adc-ok">{result.passed}</strong>
+              <strong className="adc-ok">{displayResult.passed}</strong>
             </div>
             <div className="adc-stat">
               <span className="adc-stat__label">Falhou</span>
-              <strong className={result.failed > 0 ? "adc-err" : "adc-muted"}>
-                {result.failed}
+              <strong className={displayResult.failed > 0 ? "adc-err" : "adc-muted"}>
+                {displayResult.failed}
               </strong>
             </div>
             <div className="adc-stat">
               <span className="adc-stat__label">Duração total</span>
-              <strong>{result.totalMs} ms</strong>
+              <strong>{displayResult.totalMs} ms</strong>
             </div>
           </div>
 
@@ -156,7 +158,7 @@ export function VerificacoesPage({ onNavigate }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {result.cases.map((item) => (
+                {displayResult.cases.map((item) => (
                   <tr key={item.caseId}>
                     <td>
                       <span className={item.ok ? "adc-badge adc-badge--ok" : "adc-badge adc-badge--err"}>
@@ -179,6 +181,11 @@ export function VerificacoesPage({ onNavigate }: Props) {
             </table>
           </div>
         </>
+      ) : result && selectedSuite && result.suiteId !== selectedSuite.id ? (
+        <div className="adc-panel adc-muted">
+          Resultado salvo é da suite «{result.suiteId}». Execute «{selectedSuite.name}» para
+          atualizar a tabela.
+        </div>
       ) : (
         <div className="adc-panel adc-muted">
           Selecione uma suite e execute para validar rotas críticas após deploy ou mudança de contrato.
