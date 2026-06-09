@@ -7,6 +7,7 @@ import json
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
+from app.infrastructure.config.settings import Settings
 
 
 class ChatToolContextExternalActionFormatter:
@@ -74,19 +75,29 @@ class ChatToolContextExternalActionFormatter:
 
             return safe_metadata
 
-    def _build_response_preview(self, data, max_chars: int = 12000) -> str:
-            if data is None:
-                return ""
+    def _build_response_preview(
+        self,
+        data,
+        max_chars: int | None = None,
+    ) -> str:
+        limit = (
+            max_chars
+            if max_chars is not None
+            else Settings.CHAT_TOOL_RESPONSE_PREVIEW_MAX_CHARS
+        )
 
-            try:
-                text = json.dumps(data, ensure_ascii=False, indent=2)
-            except (TypeError, ValueError):
-                text = str(data)
+        if data is None:
+            return ""
 
-            if len(text) <= max_chars:
-                return text
+        try:
+            text = json.dumps(data, ensure_ascii=False, indent=2)
+        except (TypeError, ValueError):
+            text = str(data)
 
-            return f"{text[:max_chars]}\n…"
+        if len(text) <= limit:
+            return text
+
+        return f"{text[:limit]}\n…"
 
     def _format_tool_context(
             self,

@@ -79,9 +79,15 @@ class ChatToolContextPresentationService:
         ) -> str | None:
             """Resposta curta quando a UI rica já exibe tabela/gráfico/KPI (11.4.1)."""
 
+            from app.domain.services.chat_drawing_intent_service import (
+                ChatDrawingIntentService,
+            )
             from app.domain.services.chat_product_overview_intent_service import (
                 ChatProductOverviewIntentService,
             )
+
+            if ChatDrawingIntentService.blocks_presentation_only_shortcut(message):
+                return direct_answer
 
             if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
                 return direct_answer

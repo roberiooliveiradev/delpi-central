@@ -563,6 +563,7 @@ export type ChatMessageMetadata = {
     labels?: string[];
     persisted?: boolean;
   };
+  drawingAnalysisMode?: boolean;
   drawingAnalysis?: Record<string, unknown>;
   drawingAnalysisExport?: {
     filename: string;

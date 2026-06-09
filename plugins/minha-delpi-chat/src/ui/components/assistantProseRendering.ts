@@ -1,4 +1,4 @@
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatMessageMetadata, ChatToolCall } from "../../data/api/chatTypes";
 
 import { hasMarkdownSyntax } from "./chatMarkdown";
 import {
@@ -55,6 +55,81 @@ export function shouldRenderPresentationHeading(
  * Markdown principal exibido no histórico e nos segmentos do assistente.
  * Fonte única para buildAssistantContentSegments e derivados.
  */
+export function isDrawingAnalysisTurn(
+  metadata?: ChatMessageMetadata | null,
+): boolean {
+  return Boolean(
+    metadata?.drawingAnalysisMode &&
+      String(metadata?.drawingAnalysisExport?.markdown || "").trim(),
+  );
+}
+
+/** Corpo principal do assistente em turnos de análise de desenho (relatório DELPI). */
+export function resolveAssistantDisplayContent(
+  content: string,
+  toolCalls: ChatToolCall[] = [],
+  metadata?: ChatMessageMetadata | null,
+): string {
+  const reportMarkdown = String(
+    metadata?.drawingAnalysisExport?.markdown || "",
+  ).trim();
+
+  if (isDrawingAnalysisTurn(metadata) && reportMarkdown) {
+    return reportMarkdown;
+  }
+
+  const raw = String(content || "").trim();
+
+  return raw || getTextMarkdownFromToolCalls(toolCalls);
+}
+
+/**
+ * Em turno de relatório de desenho, a árvore/tabelas do analyser ficam só nos exports —
+ * o corpo da mensagem é o markdown do relatório.
+ */
+export function toolCallsForDrawingAnalysisDisplay(
+  toolCalls: ChatToolCall[] = [],
+  metadata?: ChatMessageMetadata | null,
+): ChatToolCall[] {
+  if (!isDrawingAnalysisTurn(metadata)) {
+    return toolCalls;
+  }
+
+  return toolCalls.map((call) => {
+    const path = String(call.metadata?.path || "").toLowerCase();
+
+    if (!path.includes("/analyser")) {
+      return call;
+    }
+
+    const meta = call.metadata;
+
+    if (!meta) {
+      return call;
+    }
+
+    const {
+      presentation: _presentation,
+      textPresentation: _textPresentation,
+      tablePresentation: _tablePresentation,
+      tablePresentations: _tablePresentations,
+      chartPresentation: _chartPresentation,
+      treePresentation: _treePresentation,
+      inspectionTablePresentation: _inspectionTablePresentation,
+      profileTablePresentation: _profileTablePresentation,
+      humanizedSummary: _humanizedSummary,
+      stackPresentationPlan: _stackPresentationPlan,
+      presentationDecision: _presentationDecision,
+      ...rest
+    } = meta;
+
+    return {
+      ...call,
+      metadata: rest,
+    };
+  });
+}
+
 export function resolveAssistantRenderableMarkdown(
   content: string,
   toolCalls: ChatToolCall[] = [],

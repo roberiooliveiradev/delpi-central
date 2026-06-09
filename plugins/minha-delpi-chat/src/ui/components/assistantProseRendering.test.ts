@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  resolveAssistantDisplayContent,
   resolveAssistantPresentationTitle,
   resolveAssistantRenderableMarkdown,
   resolveAssistantStreamingProseState,
   shouldBypassIncrementalTextReveal,
   shouldRenderPresentationHeading,
   stripLeadingMarkdownTitleSafely,
+  toolCallsForDrawingAnalysisDisplay,
 } from "./assistantProseRendering";
 
 describe("assistantProseRendering", () => {
@@ -69,5 +71,53 @@ describe("assistantProseRendering", () => {
       enableCharReveal: true,
       captionUsesMarkdown: false,
     });
+  });
+
+  it("prioriza markdown do relatório de desenho no corpo da mensagem", () => {
+    const report = "## Relatório de Análise de Desenho DELPI\n\n| Item | Status |";
+    const metadata = {
+      drawingAnalysisMode: true,
+      drawingAnalysisExport: { filename: "relatorio.md", mimeType: "text/markdown", markdown: report },
+    };
+
+    expect(
+      resolveAssistantDisplayContent(
+        "Informações completas do produto 90260140",
+        [
+          {
+            name: "execute_external_action",
+            metadata: {
+              path: "/products/90260140/analyser",
+              textPresentation: { markdown: "### Ficha analyser" },
+            },
+          },
+        ],
+        metadata,
+      ),
+    ).toBe(report);
+  });
+
+  it("remove apresentação rica do analyser em turno de relatório de desenho", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90260140/analyser",
+          presentation: { type: "tree", title: "Estrutura", root: { id: "90260140" } },
+          humanizedSummary: { titulo: "Ficha", linhas: [] },
+        },
+      },
+    ];
+    const stripped = toolCallsForDrawingAnalysisDisplay(toolCalls, {
+      drawingAnalysisMode: true,
+      drawingAnalysisExport: {
+        filename: "relatorio.md",
+        mimeType: "text/markdown",
+        markdown: "## Relatório",
+      },
+    });
+
+    expect(stripped[0].metadata?.presentation).toBeUndefined();
+    expect(stripped[0].metadata?.path).toContain("/analyser");
   });
 });

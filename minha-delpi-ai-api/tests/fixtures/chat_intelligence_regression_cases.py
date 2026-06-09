@@ -6,7 +6,17 @@ DRAWING_INTENT_CASES = [
     ("analise o desenho 90260140", True),
     ("validar pdf do desenho tecnico 90264130", True),
     ("gerar relatorio tecnico do desenho 90260140", True),
+    ("gerar relatorio de conformidade delpi 90260140", True),
+    ("emitir relatorio de conformidade do desenho 90264130", True),
+    ("auditar desenho tecnico 90260140", True),
+    ("validar conformidade do desenho 90260140", True),
+    ("comparar pdf com protheus 90260140", True),
+    ("liberar desenho para producao 90260140", True),
+    ("conferir bom do pdf anexado", True),
+    ("validar carimbo do desenho em pdf", True),
     ("estoque do produto 10080047", False),
+    ("informacoes completas do produto 10080055", False),
+    ("qual a descricao do produto 10080047", False),
 ]
 
 INTENT_CASES = [

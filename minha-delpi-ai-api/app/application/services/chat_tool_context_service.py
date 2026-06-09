@@ -474,7 +474,7 @@ class ChatToolContextService:
     def _build_safe_tool_metadata(self, tool_name: str, metadata: dict | None, data) -> dict:
         return self._external_action_formatter._build_safe_tool_metadata(tool_name, metadata, data)
 
-    def _build_response_preview(self, data, max_chars: int = 12000) -> str:
+    def _build_response_preview(self, data, max_chars: int | None = None) -> str:
         return self._external_action_formatter._build_response_preview(data, max_chars=max_chars)
 
     def _format_tool_context(self, name, reason, data, metadata=None, arguments=None, *, message=None) -> str:

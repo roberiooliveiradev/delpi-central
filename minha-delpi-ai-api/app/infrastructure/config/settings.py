@@ -77,6 +77,9 @@ class Settings:
     )
     MAX_CONTEXT_CHUNKS = int(os.getenv("MAX_CONTEXT_CHUNKS", "8"))
     MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "12000"))
+    CHAT_TOOL_RESPONSE_PREVIEW_MAX_CHARS = int(
+        os.getenv("CHAT_TOOL_RESPONSE_PREVIEW_MAX_CHARS", "100000")
+    )
 
     RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
     RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))

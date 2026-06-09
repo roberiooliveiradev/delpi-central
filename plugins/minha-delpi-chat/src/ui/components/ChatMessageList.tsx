@@ -44,6 +44,10 @@ import {
   type HelpSelfHelpFeedbackPayload,
 } from "./ChatHelpSelfHelpFeedback";
 import { ChatAssistantContent } from "./ChatAssistantContent";
+import {
+  resolveAssistantDisplayContent,
+  toolCallsForDrawingAnalysisDisplay,
+} from "./assistantProseRendering";
 import { ChatMarkdown } from "./ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
@@ -63,7 +67,6 @@ import {
   buildAssistantCopyText,
   buildEmailCopyText,
   getPresentationPairFromToolCalls,
-  getTextMarkdownFromToolCalls,
   isShortPresentationCaption,
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
@@ -994,8 +997,14 @@ export function ChatMessageList({
           lastSentUserText,
           message.id === latestUserMessageId,
         )
-      : String(message.content ?? "").trim() ||
-        getTextMarkdownFromToolCalls(messageToolCalls);
+      : resolveAssistantDisplayContent(
+          String(message.content ?? ""),
+          messageToolCalls,
+          message.metadata,
+        );
+    const assistantToolCalls = isUser
+      ? messageToolCalls
+      : toolCallsForDrawingAnalysisDisplay(messageToolCalls, message.metadata);
     const messageCanvasOpen = getCanvasOpenFromMetadata(message.metadata);
 
     return (
@@ -1333,10 +1342,10 @@ export function ChatMessageList({
                   attachments={getMessageAttachments(message)}
                   onDownloadAttachment={onDownloadAttachment}
                 />
-                {displayContent || messageToolCalls.length ? (
+                {displayContent || assistantToolCalls.length ? (
                   <ChatAssistantContent
                     content={displayContent}
-                    toolCalls={messageToolCalls}
+                    toolCalls={assistantToolCalls}
                     onDrillDown={onDrillDown}
                     onOpenCanvas={onOpenCanvas}
                     requestChartExplanation={

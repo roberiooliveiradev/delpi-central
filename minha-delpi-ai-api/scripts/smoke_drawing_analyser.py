@@ -49,9 +49,22 @@ def main() -> int:
             failed += 1
 
     check(
-        "intent desenho",
+        "intent desenho (relatorio tecnico)",
         ChatDrawingIntentService.is_drawing_analysis_request(
             "gerar relatorio tecnico do desenho 90260140"
+        ),
+    )
+    check(
+        "intent desenho (conformidade delpi)",
+        ChatDrawingIntentService.is_drawing_analysis_request(
+            "gerar relatorio de conformidade delpi 90260140"
+        ),
+    )
+    check(
+        "intent desenho (pdf anexado)",
+        ChatDrawingIntentService.is_drawing_analysis_request(
+            "validar carimbo do arquivo anexado do desenho",
+            attachment_ids=["att-smoke"],
         ),
     )
     check(

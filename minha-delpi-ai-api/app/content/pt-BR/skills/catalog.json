@@ -55,12 +55,18 @@
         "drawing-analyser",
         "analise de desenho",
         "desenho tecnico",
-        "validar desenho"
+        "validar desenho",
+        "relatorio de conformidade",
+        "conformidade delpi",
+        "validar pdf do desenho",
+        "auditar desenho"
       ],
       "examplePrompts": [
         "analise este desenho 90260140",
         "valide o pdf com o protheus",
-        "gerar relatorio tecnico do desenho"
+        "gerar relatorio tecnico do desenho",
+        "gerar relatorio de conformidade delpi 90260140",
+        "validar conformidade do desenho com o protheus"
       ],
       "sortOrder": 30
     },

@@ -248,6 +248,29 @@ class ChatTurnPreparationPostToolResolutionService:
                     if "email_operational" not in pipeline_stages:
                         pipeline_stages.append("email_operational")
 
+        drawing_mode = bool(
+            isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode")
+        )
+        has_drawing_report = bool(
+            isinstance(tool_context, dict)
+            and (
+                tool_context.get("drawingAnalysis")
+                or (
+                    isinstance(tool_context.get("drawingAnalysisExport"), dict)
+                    and tool_context["drawingAnalysisExport"].get("markdown")
+                )
+            )
+        )
+
+        if drawing_mode and has_drawing_report:
+            report_direct = str(
+                (tool_context or {}).get("directAnswer") or ""
+            ).strip()
+
+            if report_direct:
+                direct_answer = report_direct
+                skip_rag = True
+
         if tool_calls:
             from app.application.services.chat_tool_context_service import (
                 ChatToolContextService,
@@ -255,7 +278,7 @@ class ChatTurnPreparationPostToolResolutionService:
 
             if not (
                 isinstance(tool_context, dict) and tool_context.get("sqlRequiresLlm")
-            ):
+            ) and not (drawing_mode and has_drawing_report):
                 presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(
                     direct_answer,
                     tool_calls,
@@ -274,13 +297,6 @@ class ChatTurnPreparationPostToolResolutionService:
                 ChatToolContextService.build_authorized_answer_from_tool_calls(
                     tool_calls
                 )
-            )
-
-            drawing_mode = bool(
-                isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode")
-            )
-            has_drawing_report = bool(
-                isinstance(tool_context, dict) and tool_context.get("drawingAnalysis")
             )
 
             if (
