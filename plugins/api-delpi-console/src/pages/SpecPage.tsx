@@ -58,7 +58,7 @@ export function SpecPage({ onNavigate }: Props) {
   };
 
   return (
-    <div className="adc-page">
+    <div className="adc-page adc-page--scroll">
       <header className="adc-header adc-header--compact">
         <div>
           <button type="button" className="adc-link" onClick={() => onNavigate("")}>

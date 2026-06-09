@@ -35,7 +35,7 @@ curl -fsS "${AUTH[@]}" "$API_PREFIX/quality/branches" | python3 -m json.tool
 echo "[6/9] PPM interno — resumo"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/quality/ppm/internal/summary" | python3 -m json.tool
 
-echo "[7/8] Transforma Mais — resumo"
+echo "[7/9] Transforma Mais — resumo"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/engineering/transforma-mais/processes/summary" | python3 -m json.tool
 
 echo "[8/9] Agendamento — recursos ES"

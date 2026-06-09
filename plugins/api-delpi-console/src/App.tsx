@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { ConsoleShell, segmentFromPathname } from "./components/ConsoleShell";
 import { CONSOLE_BASE } from "./constants/routes";
 import { configureAuth } from "./lib/auth";
+import { navigateConsole } from "./lib/consoleNavigation";
 import { ExplorerPage } from "./pages/ExplorerPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { HomePage } from "./pages/HomePage";
@@ -16,10 +17,12 @@ export type AppProps = {
   pathname?: string;
 };
 
-function navigateTo(segment: string) {
-  const next = segment ? `${CONSOLE_BASE}/${segment}` : CONSOLE_BASE;
-  window.history.pushState({}, "", next);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+function normalizePathname(pathname?: string, basePath?: string): string {
+  if (!pathname) return basePath ?? CONSOLE_BASE;
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
 }
 
 function renderPage(segment: string, onNavigate: (s: string) => void) {
@@ -39,28 +42,29 @@ function renderPage(segment: string, onNavigate: (s: string) => void) {
   }
 }
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+export default function App({
+  getAccessToken,
+  basePath,
+  pathname: pathnameFromHost,
+}: AppProps) {
   configureAuth(getAccessToken);
 
-  const hostPathname =
+  const pathname = normalizePathname(
     pathnameFromHost ??
-    (typeof window !== "undefined" ? window.location.pathname : CONSOLE_BASE);
+      (typeof window !== "undefined" ? window.location.pathname : undefined),
+    basePath,
+  );
 
-  const [segment, setSegment] = useState(() => segmentFromPathname(hostPathname));
+  const segment = useMemo(
+    () => segmentFromPathname(pathname, basePath),
+    [pathname, basePath],
+  );
 
-  useEffect(() => {
-    setSegment(segmentFromPathname(hostPathname));
-  }, [hostPathname]);
-
-  useEffect(() => {
-    const onPop = () => setSegment(segmentFromPathname(window.location.pathname));
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
+  const onNavigate = (nextSegment: string) => navigateConsole(nextSegment, basePath);
 
   return (
-    <ConsoleShell activeSegment={segment} onNavigate={navigateTo}>
-      {renderPage(segment, navigateTo)}
+    <ConsoleShell activeSegment={segment} onNavigate={onNavigate}>
+      {renderPage(segment, onNavigate)}
     </ConsoleShell>
   );
 }

@@ -31,7 +31,7 @@ export function HomePage({ onNavigate }: Props) {
   }, []);
 
   return (
-    <div className="adc-page">
+    <div className="adc-page adc-page--scroll">
       <header className="adc-header">
         <div>
           <h1>Console API DELPI</h1>

@@ -106,6 +106,11 @@ curl -s http://localhost/apps/api-delpi/health | jq .
 
 **Fase 1 concluída** — próximo marco: Fase 2 (telemetria SQL).
 
+### Integração com o portal (federated)
+
+- O `bootstrap.tsx` **não** deve chamar `mount(#root)` ao carregar o remote — isso substitui o shell do portal (sidebar some). Desenvolvimento standalone usa só `src/main.tsx`.
+- Navegação interna via `navigateConsole` (`pushState` + `popstate`), rota derivada de `pathname` repassado pelo `AppHost`.
+
 ### Fase 2 — Saúde SQL (3–4 sprints)
 
 Complementa o middleware HTTP já existente (`request_observability_middleware`).

@@ -38,7 +38,4 @@ export function unmount(el?: HTMLElement) {
   roots.delete(el);
 }
 
-const devRoot = document.getElementById("root");
-if (devRoot) mount(devRoot);
-
 export default App;
