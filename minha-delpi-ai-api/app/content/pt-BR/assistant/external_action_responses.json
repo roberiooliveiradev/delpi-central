@@ -17,9 +17,10 @@
     "emptyMessage": "Nenhum produto com estoque abaixo do mínimo cadastrado.",
     "summaryWithCount": "**{count}** produto(s) com estoque abaixo do mínimo."
   },
-  "productionSchedule": {
+    "productionSchedule": {
     "title": "Produtos programados para produção {label}",
     "titleTodayFallback": "Produtos programados para produção hoje",
+    "titleByBranchBreakdown": "Produtos programados para produção {label} — por filial",
     "emptyMessage": "Nenhum produto programado para produção {label}.",
     "emptyTodayFallback": "Nenhum produto programado para produção hoje.",
     "summaryWithCount": "**{count}** produto(s) programado(s) para {label}.",

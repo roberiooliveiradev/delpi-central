@@ -66,3 +66,26 @@ def test_resolve_does_not_match_inventory_below_minimum():
     assert ChatSqlProductionQueryService.resolve(
         "Liste os produtos com estoque abaixo do mínimo"
     ) is None
+
+
+def test_resolve_execute_for_production_tomorrow_by_branch():
+    resolution = ChatSqlProductionQueryService.resolve(
+        "o que esta programado para produzir amanha por filial?"
+    )
+
+    assert resolution is not None
+    assert resolution.mode == "execute"
+    assert "OP.C2_FILIAL AS FILIAL" in resolution.sql
+    assert "OP.C2_FILIAL IN ('01', '02')" in resolution.sql
+    assert "DECLARE @FILIAL" not in resolution.sql
+    assert "por filial" in resolution.title.lower()
+
+
+def test_resolve_single_branch_without_breakdown_keeps_legacy_shape():
+    resolution = ChatSqlProductionQueryService.resolve(
+        "quais produtos serão produzidos hoje?"
+    )
+
+    assert resolution is not None
+    assert "DECLARE @FILIAL CHAR(2) = '01';" in resolution.sql
+    assert "AS FILIAL" not in resolution.sql

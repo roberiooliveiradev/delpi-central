@@ -109,6 +109,28 @@ class ExternalActionSelectionDispatchService:
         ):
             return None
 
+        if (
+            ChatSqlOperationalIntentService.requires_production_sql_knowledge(message)
+            and not ChatSqlIntentService.is_authoring_request(message)
+        ):
+            from app.domain.services.chat_sql_production_query_service import (
+                ChatSqlProductionQueryService,
+            )
+
+            production_resolution = ChatSqlProductionQueryService.resolve(message)
+
+            if production_resolution and production_resolution.mode == "execute":
+                selected = self._select_sql_or_data_action(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                    sql=production_resolution.sql,
+                    selection_reason_key="productionSqlFastPath",
+                    raw_message=sql_source,
+                )
+
+                if selected:
+                    return selected
+
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
         )
@@ -164,14 +186,10 @@ class ExternalActionSelectionDispatchService:
             from app.domain.services.chat_sql_inventory_query_service import (
                 ChatSqlInventoryQueryService,
             )
-            from app.domain.services.chat_sql_production_query_service import (
-                ChatSqlProductionQueryService,
-            )
 
             if not ChatSqlIntentService.is_authoring_request(message):
                 for resolver, reason_key in (
                     (ChatSqlInventoryQueryService, "inventorySqlFastPath"),
-                    (ChatSqlProductionQueryService, "productionSqlFastPath"),
                 ):
                     resolution = resolver.resolve(message)
 

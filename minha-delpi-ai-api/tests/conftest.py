@@ -5,6 +5,12 @@ from __future__ import annotations
 import pytest
 
 
+def pytest_configure(config):
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+
+
 @pytest.fixture(autouse=True)
 def _configure_domain_ports():
     from app.composition.content_composer import configure_domain_infrastructure_ports

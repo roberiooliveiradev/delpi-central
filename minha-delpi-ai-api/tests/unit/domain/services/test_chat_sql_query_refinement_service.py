@@ -104,6 +104,18 @@ def test_resolve_filial_01_e_02_after_inventory_sql():
     assert "SB2.B2_FILIAL IN ('01', '02')" in refinement.sql
 
 
+def test_resolve_por_filial_expands_production_sql():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "detalhe por filial",
+        previous_messages=_history_with_sql(),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "OP.C2_FILIAL AS FILIAL" in refinement.sql
+    assert "OP.C2_FILIAL IN ('01', '02')" in refinement.sql
+
+
 def test_remove_branch_filter_inventory():
     filtered = ChatSqlQueryRefinementService.apply_branch_filter(INVENTORY_SQL, ["01"])
     updated = ChatSqlQueryRefinementService.remove_branch_filter(filtered)

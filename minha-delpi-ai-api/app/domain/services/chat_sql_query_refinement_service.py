@@ -394,11 +394,31 @@ class ChatSqlQueryRefinementService:
 
         if cls._looks_like_show_query(normalized):
             return SqlQueryRefinement(
-                mode=mode,
+                mode="show_sql",
                 sql=active_sql,
                 title=title,
                 reason="A mensagem solicita exibir a consulta SQL da conversa.",
             )
+
+        if cls._looks_like_branch_breakdown_request(normalized):
+            from app.domain.services.chat_sql_production_query_service import (
+                ChatSqlProductionQueryService,
+            )
+
+            updated = ChatSqlProductionQueryService.expand_production_sql_by_branch(
+                active_sql
+            )
+
+            if updated != active_sql:
+                return SqlQueryRefinement(
+                    mode=mode,
+                    sql=updated,
+                    title=title,
+                    reason=(
+                        "Refinamento SQL: consulta de programação expandida "
+                        "para todas as filiais com coluna FILIAL."
+                    ),
+                )
 
         return None
 
@@ -933,6 +953,17 @@ class ChatSqlQueryRefinementService:
     @classmethod
     def _looks_like_remove_branch_filter(cls, normalized: str) -> bool:
         return any(term in normalized for term in cls._REMOVE_BRANCH_TERMS)
+
+    @classmethod
+    def _looks_like_branch_breakdown_request(cls, normalized: str) -> bool:
+        from app.domain.services.chat_sql_production_query_service import (
+            ChatSqlProductionQueryService,
+        )
+
+        if not ChatSqlProductionQueryService.wants_branch_breakdown(normalized):
+            return False
+
+        return not cls._extract_branch_codes(normalized)
 
     @classmethod
     def _looks_like_limit_adjustment(cls, normalized: str) -> bool:
