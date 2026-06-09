@@ -134,7 +134,7 @@ def _ppm_series_response(
         )
 
 
-@router.get("/ppm/internal/summary")
+@router.get("/ppm/internal/summary", operation_id="get_ppm_internal_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_summary(
     branch: Optional[str] = None,
@@ -149,7 +149,7 @@ def get_internal_ppm_summary(
     )
 
 
-@router.get("/ppm/external/summary")
+@router.get("/ppm/external/summary", operation_id="get_ppm_external_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_summary(
     branch: Optional[str] = None,
@@ -236,7 +236,7 @@ def list_external_ppm(
     )
 
 
-@router.get("/produced-quantity")
+@router.get("/produced-quantity", operation_id="get_produced_quantity")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_produced_quantity(
     product: list[str] = Query(

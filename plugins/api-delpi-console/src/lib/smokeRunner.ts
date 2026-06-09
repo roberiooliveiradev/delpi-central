@@ -55,6 +55,19 @@ type SmokeDefinitionsPayload = {
 
 let resolvedSuitesCache: SmokeSuite[] | null = null;
 
+function resolveOperationId(response: ApiFetchResult): string | undefined {
+  const header =
+    response.headers["x-operation-id"] ?? response.headers["X-Operation-Id"];
+  if (header) return header;
+
+  const payload = response.data;
+  if (!payload || typeof payload !== "object") return undefined;
+
+  const envelope = payload as { meta?: { operationId?: string } };
+  const operationId = envelope.meta?.operationId;
+  return typeof operationId === "string" && operationId.trim() ? operationId.trim() : undefined;
+}
+
 function unwrapSmokeDefinitions(data: unknown): SmokeSuite[] | null {
   if (!data || typeof data !== "object") return null;
   const envelope = data as ApiEnvelope<SmokeDefinitionsPayload>;
@@ -110,8 +123,7 @@ export async function runSmokeSuite(suite: SmokeSuite): Promise<SmokeSuiteResult
       message = `Lento: ${response.durationMs} ms (limite ${testCase.maxDurationMs} ms)`;
     }
 
-    const operationIdHeader =
-      response.headers["x-operation-id"] ?? response.headers["X-Operation-Id"];
+    const operationIdHeader = resolveOperationId(response);
 
     cases.push({
       caseId: testCase.id,
