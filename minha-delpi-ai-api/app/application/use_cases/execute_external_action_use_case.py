@@ -385,6 +385,36 @@ class ExecuteExternalActionUseCase:
                         table_presentation = table_presentations_list[1]
                     else:
                         table_presentation = table_presentations_list[0]
+            elif "/raw-material-price-intelligence" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = (
+                    self.presenter.build_raw_material_price_intelligence_table_presentations(
+                        root_payload,
+                        resolved_path,
+                    )
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+                    table_presentation = table_presentations_list[0]
+            elif "/cost-impact-simulation" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = (
+                    self.presenter.build_cost_impact_simulation_table_presentations(
+                        root_payload,
+                        resolved_path,
+                    )
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+                    table_presentation = table_presentations_list[0]
+            elif "/last-purchase" in path_lower and isinstance(root_payload, dict):
+                last_purchase_table = self.presenter.build_last_purchase_table_presentation(
+                    root_payload,
+                    resolved_path,
+                )
+
+                if last_purchase_table:
+                    table_presentation = last_purchase_table
             elif (
                 ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
                 and tree_presentation

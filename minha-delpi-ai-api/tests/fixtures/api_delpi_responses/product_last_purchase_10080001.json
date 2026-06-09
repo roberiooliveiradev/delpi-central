@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "message": "Última compra carregada com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10080001",
+      "description": "MP TE CONNECTIVITY",
+      "product_type": "MP"
+    },
+    "last_purchase": {
+      "supplier_code": "000002",
+      "supplier_name": "TE CONNECTIVITY",
+      "unit_price": 0.089,
+      "icms_rate": 12.0,
+      "invoice_date": "20260407"
+    }
+  }
+}

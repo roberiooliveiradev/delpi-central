@@ -77,6 +77,24 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_structure_exclusivity",
         "shape": "playbook_report",
     },
+    "product_raw_material_price_intelligence_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_raw_material_price_intelligence",
+        "entity": "product_raw_material_price_intelligence",
+        "shape": "composite_analysis",
+    },
+    "product_cost_impact_simulation_90261255.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_cost_impact_simulation",
+        "entity": "product_cost_impact_simulation",
+        "shape": "composite_analysis",
+    },
+    "product_last_purchase_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_last_purchase",
+        "entity": "product_last_purchase",
+        "shape": "playbook_report",
+    },
     "product_detail_90269001.json": {
         "dataVersion": "2026-06",
         "operationId": "get_product_detail",

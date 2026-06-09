@@ -1,0 +1,56 @@
+{
+  "success": true,
+  "message": "Análise de preço da matéria-prima carregada com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10080001",
+      "description": "MP TE CONNECTIVITY",
+      "product_type": "MP",
+      "registered_last_purchase_price": 0.0892799
+    },
+    "last_purchase": {
+      "supplier_code": "000002",
+      "supplier_name": "TE CONNECTIVITY",
+      "unit_price": 0.089,
+      "icms_rate": 12.0,
+      "invoice_number": "000123456"
+    },
+    "price_history": {
+      "items": [
+        {
+          "unit_price": 0.089,
+          "variation_percent": 1.14,
+          "supplier_code": "000002"
+        },
+        {
+          "unit_price": 0.088,
+          "variation_percent": null,
+          "supplier_code": "000002"
+        }
+      ],
+      "summary": {
+        "total_records": 2,
+        "average_unit_price": 0.0885
+      }
+    },
+    "budget_history": {
+      "items": [
+        {
+          "source": "SC7010",
+          "unit_price": 0.089,
+          "supplier_code": "000002"
+        }
+      ],
+      "summary": {
+        "total_records": 1,
+        "total_purchase_orders": 1
+      }
+    },
+    "price_status": "ESTAVEL",
+    "indicators": {
+      "dominant_supplier_code": "000002",
+      "dominant_supplier_share_percent": 100.0
+    },
+    "warnings": []
+  }
+}

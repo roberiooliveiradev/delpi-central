@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "message": "Simulação de impacto de custos carregada com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "90261255",
+      "description": "CHICOTE PA",
+      "product_type": "PA",
+      "standard_cost": 1000.0
+    },
+    "materials": {
+      "items": [
+        {
+          "rank": 1,
+          "raw_material_code": "10080002",
+          "raw_material_description": "MP B",
+          "quantity_per_pa": "2",
+          "extended_cost": 200.0,
+          "impact_on_material_cost_percent": 80.0,
+          "impact_on_pa_cost_percent": 20.0,
+          "simulated_extended_cost": 220.0
+        },
+        {
+          "rank": 2,
+          "raw_material_code": "10080001",
+          "raw_material_description": "MP A",
+          "quantity_per_pa": "10",
+          "extended_cost": 50.0,
+          "impact_on_material_cost_percent": 20.0,
+          "impact_on_pa_cost_percent": 5.0,
+          "simulated_extended_cost": 55.0
+        }
+      ]
+    },
+    "summary": {
+      "total_material_cost": 250.0,
+      "total_materials": 2,
+      "price_source": "standard_cost"
+    },
+    "simulation": {
+      "adjustment_percent": 10.0,
+      "projected_cost_delta": 25.0
+    }
+  }
+}

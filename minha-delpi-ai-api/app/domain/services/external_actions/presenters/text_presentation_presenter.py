@@ -169,6 +169,15 @@ class ExternalActionTextPresentationPresenter:
             if "/structure/exclusivity" in lowered:
                 return self._host._build_structure_exclusivity_text_presentation(root, path)
 
+            if "/raw-material-price-intelligence" in lowered:
+                return self._host._build_raw_material_price_intelligence_text_presentation(
+                    root,
+                    path,
+                )
+
+            if "/cost-impact-simulation" in lowered:
+                return self._host._build_cost_impact_simulation_text_presentation(root, path)
+
         if isinstance(root, dict) and "/parents" in lowered:
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,

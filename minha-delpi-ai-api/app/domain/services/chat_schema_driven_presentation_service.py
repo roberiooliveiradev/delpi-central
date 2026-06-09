@@ -26,6 +26,8 @@ _RICH_PROFILE_KEYS = frozenset(
         "production_status",
         "shipping_status",
         "structure_exclusivity",
+        "raw_material_price_intelligence",
+        "cost_impact_simulation",
     }
 )
 

@@ -267,3 +267,62 @@ def test_build_presentation_billing_table_from_meta_entity() -> None:
 
     assert table is not None
     assert table["type"] == "table"
+
+
+def test_present_raw_material_price_intelligence_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta(
+        "product_raw_material_price_intelligence_10080001.json"
+    )
+
+    humanized = presenter.present(
+        envelope,
+        path="/products/10080001/raw-material-price-intelligence",
+    )
+
+    assert "Análise de preço" in humanized.get("titulo", "")
+    body = "\n".join(humanized.get("linhas") or [])
+    assert "ESTAVEL" in body or "000002" in body
+
+
+def test_build_presentation_raw_material_price_intelligence_tables() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta(
+        "product_raw_material_price_intelligence_10080001.json"
+    )
+
+    tables = presenter.build_raw_material_price_intelligence_table_presentations(
+        envelope["data"],
+        "/products/10080001/raw-material-price-intelligence",
+    )
+
+    assert len(tables) >= 2
+    assert all(table["type"] == "table" for table in tables)
+
+
+def test_present_cost_impact_simulation_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_cost_impact_simulation_90261255.json")
+
+    humanized = presenter.present(
+        envelope,
+        path="/products/90261255/cost-impact-simulation",
+    )
+
+    assert "Simulador" in humanized.get("titulo", "")
+    body = "\n".join(humanized.get("linhas") or [])
+    assert "10080002" in body or "250" in body
+
+
+def test_present_last_purchase_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")
+
+    humanized = presenter.present(
+        envelope,
+        path="/products/10080001/last-purchase",
+    )
+
+    assert "Última compra" in humanized.get("titulo", "")
+    body = "\n".join(humanized.get("linhas") or [])
+    assert "000002" in body or "0.089" in body

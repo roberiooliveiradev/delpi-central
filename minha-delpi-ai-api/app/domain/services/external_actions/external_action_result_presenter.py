@@ -30,6 +30,9 @@ from app.domain.services.external_actions.presenters.product_shipping_status_pre
 from app.domain.services.external_actions.presenters.product_structure_exclusivity_presenter import (
     ExternalActionProductStructureExclusivityPresenter,
 )
+from app.domain.services.external_actions.presenters.product_raw_material_price_presenter import (
+    ExternalActionProductRawMaterialPricePresenter,
+)
 from app.domain.services.external_actions.presenters.product_list_presenter import (
     ExternalActionProductListPresenter,
 )
@@ -93,6 +96,7 @@ class ExternalActionResultPresenter:
         self._product_production_status_presenter: ExternalActionProductProductionStatusPresenter | None = None
         self._product_shipping_status_presenter: ExternalActionProductShippingStatusPresenter | None = None
         self._product_structure_exclusivity_presenter: ExternalActionProductStructureExclusivityPresenter | None = None
+        self._product_raw_material_price_presenter: ExternalActionProductRawMaterialPricePresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
         self._sql_presenter: ExternalActionSqlPresenter | None = None
         self._billing_presenter: ExternalActionBillingPresenter | None = None
@@ -149,6 +153,14 @@ class ExternalActionResultPresenter:
             )
 
         return self._product_structure_exclusivity_presenter
+
+    def _raw_material_price(self) -> ExternalActionProductRawMaterialPricePresenter:
+        if self._product_raw_material_price_presenter is None:
+            self._product_raw_material_price_presenter = (
+                ExternalActionProductRawMaterialPricePresenter(self)
+            )
+
+        return self._product_raw_material_price_presenter
 
     def _product_list(self) -> ExternalActionProductListPresenter:
         if self._product_list_presenter is None:
@@ -407,6 +419,21 @@ class ExternalActionResultPresenter:
     def _present_product_structure_exclusivity(self, root: dict, path: str) -> dict:
         return self._structure_exclusivity()._present_structure_exclusivity(root, path)
 
+    def _present_product_raw_material_price_intelligence(self, root: dict, path: str) -> dict:
+        return self._raw_material_price()._present_raw_material_price_intelligence(root, path)
+
+    def _present_product_cost_impact_simulation(self, root: dict, path: str) -> dict:
+        return self._raw_material_price()._present_cost_impact_simulation(root, path)
+
+    def _present_product_last_purchase(self, root: dict, path: str) -> dict:
+        return self._raw_material_price()._present_last_purchase(root, path)
+
+    def _present_playbook_report(self, root: dict, path: str, *, entity: str) -> dict | None:
+        return self._playbook_report()._present_playbook_report(root, path, entity=entity)
+
+    def _build_playbook_report_table(self, root: dict, path: str, *, entity: str) -> dict | None:
+        return self._playbook_report()._build_playbook_report_table(root, path, entity=entity)
+
 
 
 
@@ -618,6 +645,25 @@ class ExternalActionResultPresenter:
             path,
         )
 
+    def build_raw_material_price_intelligence_table_presentations(
+        self,
+        root: dict,
+        path: str,
+    ) -> list[dict]:
+        return self._raw_material_price().build_raw_material_price_intelligence_table_presentations(
+            root,
+            path,
+        )
+
+    def build_cost_impact_simulation_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._raw_material_price().build_cost_impact_simulation_table_presentations(
+            root,
+            path,
+        )
+
+    def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_last_purchase_table_presentation(root, path)
+
     def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._composite_analysis()._build_factory_status_text_presentation(root, path)
 
@@ -632,6 +678,16 @@ class ExternalActionResultPresenter:
             root,
             path,
         )
+
+    def _build_raw_material_price_intelligence_text_presentation(
+        self,
+        root: dict,
+        path: str,
+    ) -> dict | None:
+        return self._raw_material_price()._build_intelligence_text_presentation(root, path)
+
+    def _build_cost_impact_simulation_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price()._build_cost_impact_text_presentation(root, path)
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
         return self._presentation_builder()._build_presentation(data, path=path)

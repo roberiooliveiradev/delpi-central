@@ -71,6 +71,30 @@ class ExternalActionPresentationBuilderPresenter:
 
                 return self._host._build_playbook_report_table(root, path, entity=entity)
 
+            if entity == "product_raw_material_price_intelligence":
+                tables = self._host.build_raw_material_price_intelligence_table_presentations(
+                    root,
+                    path,
+                )
+
+                if tables:
+                    return tables[0]
+
+            if entity == "product_cost_impact_simulation":
+                tables = self._host.build_cost_impact_simulation_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
+            if entity == "product_last_purchase":
+                return self._host.build_last_purchase_table_presentation(root, path)
+
+            if entity in {
+                "product_purchase_price_history",
+                "product_purchase_budget_history",
+            }:
+                return self._host._build_playbook_report_table(root, path, entity=entity)
+
             product = root.get("product")
 
             if entity == "product_analyser" and isinstance(product, dict):

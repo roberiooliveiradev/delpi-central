@@ -351,6 +351,46 @@
       "componentsTableTitle": "Componentes com exclusividade",
       "tableVisualizationHint": "Componentes e exclusividade na **tabela** abaixo."
     },
+    "rawMaterialPriceIntelligence": {
+      "titleWithCode": "Análise de preço da matéria-prima — {code}",
+      "titleGeneric": "Análise de preço da matéria-prima",
+      "introWithDescription": "Análise de preço de compra da MP **{code}** ({description}): última NF, ICMS, orçamento e variação.",
+      "introCodeOnly": "Análise de preço de compra da matéria-prima **{code}**.",
+      "priceStatusLine": "Status de preço: **{status}**",
+      "lastPurchaseLine": "Última compra: **R$ {price}** · fornecedor **{supplier}**",
+      "priceHistorySummaryLine": "Histórico de NFs: **{count}** registro(s) · preço médio **{avg}**",
+      "budgetHistorySummaryLine": "Orçamentos/cotações: **{count}** registro(s)",
+      "dominantSupplierLine": "Fornecedor dominante no histórico: **{supplier}**",
+      "tableVisualizationHint": "Detalhes nas **tabelas** abaixo.",
+      "overviewTableTitle": "Panorama de preço",
+      "overviewProductField": "Produto",
+      "overviewStatusField": "Status de preço",
+      "lastPurchaseTableTitle": "Última compra",
+      "priceHistoryTableTitle": "Histórico de preço de compra",
+      "budgetHistoryTableTitle": "Histórico de orçamento",
+      "warningsHeader": "Pontos de atenção"
+    },
+    "costImpactSimulation": {
+      "titleWithCode": "Simulador de impacto de custos — {code}",
+      "titleGeneric": "Simulador de impacto de custos do PA",
+      "introWithDescription": "Ranking de MPs que mais impactam o custo do PA **{code}** ({description}).",
+      "introCodeOnly": "Ranking de MPs e simulação de reajuste para o PA **{code}**.",
+      "totalMaterialCostLine": "Custo total de materiais (1 PA): **R$ {value}**",
+      "topMaterialLine": "MP de maior impacto: **{code}** (**{impact}%** do custo de materiais)",
+      "simulationLine": "Simulação **{percent}%**: delta projetado **R$ {delta}**",
+      "tableVisualizationHint": "Ranking completo na **tabela** abaixo.",
+      "overviewTableTitle": "Resumo da simulação",
+      "overviewProductField": "Produto (PA)",
+      "materialsTableTitle": "Ranking de matérias-primas",
+      "highlightsHeader": "**Destaques**",
+      "materialRankLine": "{rank}. **{code}** — {impact}% do custo de materiais"
+    },
+    "lastPurchase": {
+      "titleWithCode": "Última compra — {code}",
+      "titleGeneric": "Última compra da matéria-prima",
+      "tableTitle": "Última NF de compra",
+      "emptyLine": "Nenhuma compra válida encontrada para o período consultado."
+    },
     "systemTables": {
       "searchTitle": "Busca de tabelas Protheus (SX2)",
       "noMatch": "Nenhuma tabela correspondeu à descrição informada.",
@@ -654,6 +694,26 @@
       "product_structure_exclusivity": {
         "textTitle": "Estrutura com exclusividade",
         "tableTitle": "Exclusividade de MPs"
+      },
+      "product_last_purchase": {
+        "textTitle": "Última compra da matéria-prima",
+        "tableTitle": "Última compra"
+      },
+      "product_purchase_price_history": {
+        "textTitle": "Histórico de preço de compra",
+        "tableTitle": "Histórico de preço de compra"
+      },
+      "product_purchase_budget_history": {
+        "textTitle": "Histórico de orçamento de compra",
+        "tableTitle": "Orçamentos e pedidos de compra"
+      },
+      "product_raw_material_price_intelligence": {
+        "textTitle": "Análise de preço da matéria-prima",
+        "tableTitle": "Análise de preço MP"
+      },
+      "product_cost_impact_simulation": {
+        "textTitle": "Simulador de impacto de custos",
+        "tableTitle": "Ranking de MPs por impacto"
       }
     },
     "defaultTextTitle": "Relatório do produto",

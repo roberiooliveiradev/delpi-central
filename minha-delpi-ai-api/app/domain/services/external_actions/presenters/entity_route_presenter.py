@@ -92,6 +92,24 @@ class ExternalActionEntityRoutePresenter:
             if entity == "product_structure_exclusivity" and isinstance(root, dict):
                 return self._host._present_product_structure_exclusivity(root, path)
 
+            if entity == "product_raw_material_price_intelligence" and isinstance(root, dict):
+                return self._host._present_product_raw_material_price_intelligence(root, path)
+
+            if entity == "product_cost_impact_simulation" and isinstance(root, dict):
+                return self._host._present_product_cost_impact_simulation(root, path)
+
+            if entity == "product_last_purchase" and isinstance(root, dict):
+                return self._host._present_product_last_purchase(root, path)
+
+            if entity in {
+                "product_purchase_price_history",
+                "product_purchase_budget_history",
+            } and isinstance(root, dict):
+                playbook = self._host._present_playbook_report(root, path, entity=entity)
+
+                if playbook:
+                    return playbook
+
             if entity == "product_structure" and isinstance(root, dict):
                 structure_result = self._host._present_product_structure(root, path)
 
