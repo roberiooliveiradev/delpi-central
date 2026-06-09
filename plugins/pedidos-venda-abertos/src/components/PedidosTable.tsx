@@ -1,0 +1,221 @@
+import type { CSSProperties } from "react";
+import { FileSpreadsheet } from "lucide-react";
+import { useState } from "react";
+
+import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
+import { useTableFontSize } from "../hooks/useTableFontSize";
+import { formatDisplayDate } from "../utils/dates";
+import { formatCurrency, formatQuantity } from "../utils/format";
+import { getAllocatedStock } from "../utils/stockAllocation";
+import { getLineStatus } from "../utils/statusBadges";
+import type { SortDirection, SortKey } from "../utils/sortItems";
+import { isSortableTableColumnKey, type TableColumnKey } from "../utils/tableColumns";
+import { exportPedidosExcel } from "../utils/exportPedidosExcel";
+import { StatusBadge } from "./StatusBadge";
+import { TableColumnSettings } from "./TableColumnSettings";
+import { TableFontSizeControls } from "./TableFontSizeControls";
+
+type PedidosTableProps = {
+  rows: PedidosVendaAbertosItem[];
+  exportRows: PedidosVendaAbertosItem[];
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+  loading?: boolean;
+  emptyMessage?: string;
+};
+
+function sortIndicator(active: boolean, direction: SortDirection): string {
+  if (!active) return "↕";
+  return direction === "asc" ? "↑" : "↓";
+}
+
+function rowKey(row: PedidosVendaAbertosItem): string {
+  return `${row.filial}-${row.pedido}-${row.linha}-${row.produto}`;
+}
+
+function renderCell(row: PedidosVendaAbertosItem, key: TableColumnKey) {
+  switch (key) {
+    case "nome_cliente":
+      return (
+        <div className="pva-cell-stack">
+          <strong>{row.nome_cliente || "—"}</strong>
+          <span className="pva-cell-muted">{row.tipo_entidade || "—"}</span>
+        </div>
+      );
+    case "filial":
+      return row.filial || "—";
+    case "pedido":
+      return (
+        <div className="pva-cell-stack">
+          <span>{row.pedido || "—"}</span>
+          <span className="pva-cell-muted">Linha {row.linha || "—"}</span>
+        </div>
+      );
+    case "pedido_cliente":
+      return row.pedido_cliente || "—";
+    case "produto":
+      return row.produto || "—";
+    case "codigo_cliente":
+      return row.codigo_cliente || "—";
+    case "quantidade":
+      return formatQuantity(row.quantidade);
+    case "entregue":
+      return formatQuantity(row.entregue);
+    case "saldo":
+      return formatQuantity(row.saldo);
+    case "no_estoque":
+      return formatQuantity(getAllocatedStock(row));
+    case "data_entrega":
+      return formatDisplayDate(row.data_entrega);
+    case "data_despacho":
+      return row.data_despacho ? formatDisplayDate(row.data_despacho) : "Não informado";
+    case "valor_aberto":
+      return formatCurrency(row.valor_aberto);
+    case "status":
+      return (
+        <div className="pva-badge-group pva-badge-group--status">
+          <StatusBadge badge={getLineStatus(row)} />
+        </div>
+      );
+    default:
+      return "—";
+  }
+}
+
+export function PedidosTable({
+  rows,
+  exportRows,
+  sortKey,
+  sortDirection,
+  onSort,
+  loading = false,
+  emptyMessage = "Nenhum registro encontrado.",
+}: PedidosTableProps) {
+  const [exporting, setExporting] = useState(false);
+  const { preferences, visibleColumns, visibleColumnCount, setColumnVisible, resetPreferences } =
+    useTableColumnPreferences();
+  const {
+    fontSize,
+    increase,
+    decrease,
+    reset,
+    canIncrease,
+    canDecrease,
+    isDefault,
+  } = useTableFontSize();
+
+  const tableStyle = {
+    "--pva-table-font-size": `${fontSize}px`,
+    "--pva-table-font-size-muted": `${Math.max(10, fontSize - 1)}px`,
+    "--pva-table-badge-font-size": `${Math.max(10, fontSize - 1)}px`,
+  } as CSSProperties;
+
+  const handleExportExcel = async () => {
+    if (exportRows.length === 0 || exporting) return;
+
+    try {
+      setExporting(true);
+      await exportPedidosExcel(exportRows, visibleColumns);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <section className="pva-card pva-table-card" aria-label="Pedidos em aberto" style={tableStyle}>
+      <div className="pva-table-card__toolbar">
+        <p className="pva-table-card__hint">
+          {visibleColumnCount} coluna(s) visível(is)
+          {exportRows.length > 0 ? ` · ${exportRows.length.toLocaleString("pt-BR")} linha(s) para exportar` : ""}.
+        </p>
+        <div className="pva-table-card__actions">
+          <button
+            type="button"
+            className="pva-btn pva-btn--ghost pva-btn--sm"
+            disabled={exportRows.length === 0 || exporting}
+            onClick={() => void handleExportExcel()}
+          >
+            <FileSpreadsheet size={16} aria-hidden="true" />
+            {exporting ? "Exportando…" : "Excel"}
+          </button>
+          <TableFontSizeControls
+            fontSize={fontSize}
+            canIncrease={canIncrease}
+            canDecrease={canDecrease}
+            isDefault={isDefault}
+            onIncrease={increase}
+            onDecrease={decrease}
+            onReset={reset}
+          />
+          <TableColumnSettings
+            visibility={preferences.visibility}
+            onToggleColumn={setColumnVisible}
+            onReset={resetPreferences}
+          />
+        </div>
+      </div>
+
+      <div className="pva-table-wrap">
+        <table className="pva-table">
+          <thead>
+            <tr>
+              {visibleColumns.map((column) => (
+                <th key={column.key} className={column.className}>
+                  {column.sortable ? (
+                    <button
+                      type="button"
+                      className="pva-table__sort-btn"
+                      onClick={() => {
+                        if (isSortableTableColumnKey(column.key)) {
+                          onSort(column.key);
+                        }
+                      }}
+                    >
+                      <span>{column.label}</span>
+                      <span aria-hidden="true">
+                        {sortIndicator(sortKey === column.key, sortDirection)}
+                      </span>
+                    </button>
+                  ) : (
+                    column.label
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={visibleColumnCount} className="pva-table__empty">
+                  Carregando…
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={visibleColumnCount} className="pva-table__empty">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <tr key={rowKey(row)}>
+                  {visibleColumns.map((column) => (
+                    <td
+                      key={column.key}
+                      className={column.className}
+                      data-label={column.label}
+                    >
+                      {renderCell(row, column.key)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "pedidos-venda-abertos",
+  "name": "Pedidos de Venda em Aberto",
+  "description": "Consulta operacional de pedidos de venda em aberto a partir do Protheus/TOTVS.",
+  "icon": "clipboard-list",
+  "version": "1.0.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/pedidos-venda-abertos",
+  "entry": "/apps/pedidos-venda-abertos/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "pedidos-venda-abertos.access",
+      "name": "Acessar Pedidos de Venda em Aberto",
+      "description": "Permite consultar o dashboard de pedidos de venda em aberto.",
+      "module": "pedidos-venda-abertos"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/pedidos-venda-abertos",
+      "label": "Pedidos em Aberto",
+      "permission": "pedidos-venda-abertos.access",
+      "icon": "clipboard-list",
+      "order": 14,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

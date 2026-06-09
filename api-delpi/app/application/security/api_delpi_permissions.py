@@ -31,6 +31,9 @@ CENTRAL_AGENDAMENTO_VIEW_FILIAL_SC = "central-agendamento.view.filial-sc"
 CENTRAL_AGENDAMENTO_MANAGE_FILIAL_ES = "central-agendamento.manage.filial-es"
 CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC = "central-agendamento.manage.filial-sc"
 
+# --- pedidos de venda em aberto ---
+PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
+
 # --- eficiência fabril ---
 EFICIENCIA_FABRIL_VIEW = "eficiencia-fabril.view"
 EFICIENCIA_FABRIL_VIEW_FILIAL_SC = "eficiencia-fabril.view.filial-sc"
@@ -88,6 +91,11 @@ EFICIENCIA_FABRIL_ACCESS = [
     EFICIENCIA_FABRIL_VIEW_FILIAL_SC,
     EFICIENCIA_FABRIL_VIEW_FILIAL_ES,
     DASHBOARD_PRODUCTION_VIEW,
+]
+
+PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    PEDIDOS_VENDA_ABERTOS_ACCESS,
 ]
 
 API_DELPI_CONSOLE_VIEW = "api-delpi-console.view"

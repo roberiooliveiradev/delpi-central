@@ -180,6 +180,13 @@ Legenda de permissões:
 
 ---
 
+
+## Pedidos de venda em aberto (`/pedidos-venda-abertos`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/pedidos-venda-abertos/` | A ou `pedidos-venda-abertos.access` |
+
 ## Indicadores Estratégicos
 
 Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../strategic-indicators-api/docs/API.md).

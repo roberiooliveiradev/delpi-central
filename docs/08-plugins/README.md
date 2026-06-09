@@ -25,6 +25,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 - `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
 - `./scripts/ci/build-auditoria-5s.sh` — lint + build do plugin Auditoria 5S.
 - `./scripts/ci/build-central-agendamento.sh` — lint + build do plugin Central de Agendamento.
+- `./scripts/ci/build-pedidos-venda-abertos.sh` — lint + build do plugin Pedidos de Venda em Aberto.
 
 **Homologação:**
 
@@ -47,6 +48,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
+| `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |

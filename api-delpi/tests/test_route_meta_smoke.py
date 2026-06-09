@@ -298,3 +298,28 @@ async def test_data_sql_returns_meta(mock_build) -> None:
         operation_id="execute_readonly_sql",
         shape="paged_list",
     )
+
+@patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_pedidos_venda_abertos_use_case"
+)
+def test_pedidos_venda_abertos_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_pedidos_venda_abertos_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "summary": {"total_linhas": 0},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_pedidos_venda_abertos_route()
+    _assert_meta(
+        _body(response),
+        operation_id="list_pedidos_venda_abertos",
+        shape="composite_analysis",
+    )
+
