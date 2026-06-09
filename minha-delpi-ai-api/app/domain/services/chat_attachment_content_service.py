@@ -105,6 +105,16 @@ class ChatAttachmentContentService:
         return mapping.get(normalized) or mapping.get("default") or "Aguardando envio"
 
     @classmethod
+    def reading_status_format(cls, key: str, **values: object) -> str:
+        return ChatAssistantContentService.format(
+            _BUNDLE,
+            "preview",
+            "readingStatusFormats",
+            key,
+            **values,
+        ).strip()
+
+    @classmethod
     def index_reason_label(cls, reason: str) -> str | None:
         mapping = ChatAssistantContentService.get_mapping(_BUNDLE, "preview", "indexReason")
         configured = mapping.get(str(reason or "").strip())

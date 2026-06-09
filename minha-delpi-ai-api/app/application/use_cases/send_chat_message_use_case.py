@@ -155,6 +155,9 @@ class SendChatMessageUseCase:
             supplemental_project_ids=supplemental_project_ids,
         )
         attachments = self.turn_support.get_message_attachments(request, user_id, session_id)
+        attachment_snapshots = self.turn_support.enrich_attachments_for_message_metadata(
+            attachments,
+        )
         previous_messages = self.chat_repository.list_all_messages_by_session(session_id)
         agent_meta = workspace_context.get("agent")
         from app.domain.services.chat_advanced_sql_specialist_service import (
@@ -177,7 +180,7 @@ class SendChatMessageUseCase:
                 "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
-                "attachments": attachments,
+                "attachments": attachment_snapshots,
                 **ChatLlmMetadataService.user_message_response_mode(request),
                 "delivery": {"status": "submitted"},
             },

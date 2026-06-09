@@ -200,7 +200,15 @@ class ChatDocumentVisionService:
             or cls._default_content_type(attachment.original_filename),
         )
 
-        return cls.merge_into_drawing_parse(base, vision)
+        merged = cls.merge_into_drawing_parse(base, vision)
+
+        if vision:
+            cls.persist_attachment_vision_metadata(
+                attachment,
+                cls.to_document_vision_metadata(vision),
+            )
+
+        return merged
 
     @classmethod
     def to_document_vision_metadata(cls, vision: dict[str, Any]) -> dict[str, Any]:

@@ -136,6 +136,8 @@ class ChatTurnCompletionService:
             persistence=persistence,
         )
 
+        self._patch_user_message_attachment_snapshots(turn)
+
         self._persist_session_memory(turn, assistant_message, assistant_metadata)
         self._set_active_leaf(turn, assistant_message)
         self._write_audit(
@@ -162,6 +164,25 @@ class ChatTurnCompletionService:
             client_admin_debug=client_admin_debug,
             tool_calls=finalized.tool_calls,
             sources=turn.sources,
+        )
+
+    def _patch_user_message_attachment_snapshots(self, turn: ChatTurnCompletionInput) -> None:
+        if not turn.user_message or not turn.attachments:
+            return
+
+        from app.application.services.chat_attachment_preview_service import (
+            ChatAttachmentPreviewService,
+        )
+
+        merged = ChatAttachmentPreviewService.merge_tool_context_vision_into_attachments(
+            turn.attachments,
+            turn.tool_context if isinstance(turn.tool_context, dict) else None,
+        )
+        snapshots = ChatAttachmentPreviewService.enrich_message_attachment_snapshots(merged)
+
+        self.chat_repository.patch_message_metadata(
+            turn.user_message.id,
+            {"attachments": snapshots},
         )
 
     def _finalize_answer(

@@ -110,6 +110,7 @@ class ChatAttachmentPreviewService:
         status: str | None,
         parsed: bool | None = None,
         index_reason: Any = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         legacy = cls.reading_status_from_index_reason(index_reason)
 
@@ -119,9 +120,181 @@ class ChatAttachmentPreviewService:
         normalized = str(status or "").strip().lower()
 
         if parsed or normalized == "indexed":
-            return ChatAttachmentContentService.reading_status_label("indexed")
+            base = ChatAttachmentContentService.reading_status_label("indexed")
+        else:
+            base = ChatAttachmentContentService.reading_status_label(normalized)
 
-        return ChatAttachmentContentService.reading_status_label(normalized)
+        document_vision = (metadata or {}).get("documentVision")
+
+        if isinstance(document_vision, dict) and document_vision:
+            return cls.apply_document_vision_to_reading_status(
+                base_label=base,
+                status=status,
+                parsed=parsed,
+                document_vision=document_vision,
+            )
+
+        return base
+
+    @classmethod
+    def apply_document_vision_to_reading_status(
+        cls,
+        *,
+        base_label: str,
+        status: str | None,
+        parsed: bool | None,
+        document_vision: dict[str, Any],
+    ) -> str:
+        legible = document_vision.get("legible")
+        engine = str(document_vision.get("engine") or "").strip()
+        normalized = str(status or "").strip().lower()
+
+        if legible is False:
+            suffix = ChatAttachmentContentService.reading_status_format(
+                "lowLegibilitySuffix",
+            )
+            return f"{base_label}{suffix}" if suffix else base_label
+
+        if legible is True:
+            if normalized in {"index_failed", "unsupported"}:
+                if engine:
+                    return ChatAttachmentContentService.reading_status_format(
+                        "visionReadableEngine",
+                        engine=engine,
+                    )
+                return ChatAttachmentContentService.reading_status_format("visionReadable")
+
+            if parsed or normalized == "indexed":
+                if engine:
+                    return ChatAttachmentContentService.reading_status_format(
+                        "indexedVisionEngine",
+                        engine=engine,
+                    )
+
+        return base_label
+
+    @classmethod
+    def document_vision_summary(cls, document_vision: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "engine": document_vision.get("engine"),
+            "legible": document_vision.get("legible"),
+            "legibilityScore": document_vision.get("legibilityScore"),
+            "bomRowCount": document_vision.get("bomRowCount"),
+            "hasTitleBlock": document_vision.get("hasTitleBlock"),
+            "tableCount": document_vision.get("tableCount"),
+            "stages": document_vision.get("stages") or [],
+        }
+
+    @classmethod
+    def merge_tool_context_vision_into_attachments(
+        cls,
+        attachments: list[dict] | None,
+        tool_context: dict | None,
+    ) -> list[dict]:
+        if not attachments:
+            return []
+
+        vision: dict[str, Any] | None = None
+        summary_legible = None
+
+        if isinstance(tool_context, dict):
+            summary = tool_context.get("drawingPdfExtractSummary")
+
+            if isinstance(summary, dict):
+                summary_legible = summary.get("legible")
+                summary_vision = summary.get("documentVision")
+
+                if isinstance(summary_vision, dict) and summary_vision:
+                    vision = dict(summary_vision)
+
+                    if summary_legible is not None and vision.get("legible") is None:
+                        vision["legible"] = summary_legible
+
+            if not vision:
+                tool_vision = tool_context.get("documentVision")
+
+                if isinstance(tool_vision, dict) and tool_vision:
+                    vision = dict(tool_vision)
+
+        if not vision:
+            return [dict(item) for item in attachments if isinstance(item, dict)]
+
+        merged: list[dict] = []
+
+        for item in attachments:
+            if not isinstance(item, dict):
+                continue
+
+            meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+            existing = (
+                meta.get("documentVision")
+                if isinstance(meta.get("documentVision"), dict)
+                else {}
+            )
+            next_vision = {**existing, **vision}
+
+            if summary_legible is not None and next_vision.get("legible") is None:
+                next_vision["legible"] = summary_legible
+
+            merged.append(
+                {
+                    **item,
+                    "metadata": {
+                        **meta,
+                        "documentVision": next_vision,
+                    },
+                }
+            )
+
+        return merged
+
+    @classmethod
+    def enrich_message_attachment_snapshots(
+        cls,
+        attachments: list[dict] | None,
+    ) -> list[dict[str, Any]]:
+        snapshots: list[dict[str, Any]] = []
+
+        for item in attachments or []:
+            if not isinstance(item, dict):
+                continue
+
+            name = str(
+                item.get("original_filename") or item.get("filename") or ""
+            ).strip()
+            status = str(item.get("status") or "uploaded").strip()
+            meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+            preview = meta.get("preview") if isinstance(meta.get("preview"), dict) else None
+            indexed = bool(meta.get("indexed")) or status == "indexed"
+            parsed = indexed and preview is not None
+
+            entry: dict[str, Any] = {
+                "id": str(item.get("id") or "").strip() or None,
+                "filename": item.get("filename"),
+                "original_filename": name or item.get("original_filename"),
+                "content_type": item.get("content_type"),
+                "size_bytes": item.get("size_bytes"),
+                "status": status,
+                "parsed": parsed,
+                "readingStatus": cls.reading_status_label(
+                    status=status,
+                    parsed=parsed,
+                    index_reason=meta.get("indexReason"),
+                    metadata=meta,
+                ),
+            }
+
+            document_vision = meta.get("documentVision")
+
+            if isinstance(document_vision, dict) and document_vision:
+                entry["documentVision"] = cls.document_vision_summary(document_vision)
+
+            if preview:
+                entry["preview"] = preview
+
+            snapshots.append(entry)
+
+        return snapshots
 
     @classmethod
     def summarize_attachments(cls, attachments: list[dict] | None) -> list[dict[str, Any]]:
@@ -148,6 +321,8 @@ class ChatAttachmentPreviewService:
                 "readingStatus": cls.reading_status_label(
                     status=status,
                     parsed=parsed,
+                    index_reason=meta.get("indexReason"),
+                    metadata=meta,
                 ),
             }
 

@@ -99,6 +99,23 @@ class ChatTurnUseCaseSupportService:
             for attachment in attachments
         ]
 
+    def enrich_attachments_for_message_metadata(
+        self,
+        attachments: list[dict] | None,
+        *,
+        tool_context: dict | None = None,
+    ) -> list[dict]:
+        from app.application.services.chat_attachment_preview_service import (
+            ChatAttachmentPreviewService,
+        )
+
+        merged = ChatAttachmentPreviewService.merge_tool_context_vision_into_attachments(
+            attachments,
+            tool_context,
+        )
+
+        return ChatAttachmentPreviewService.enrich_message_attachment_snapshots(merged)
+
     def attach_files_to_message(
         self,
         *,

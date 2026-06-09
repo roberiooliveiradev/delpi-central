@@ -100,3 +100,37 @@ def test_to_response_legacy_doc_reading_status():
 
     assert response.metadata is not None
     assert response.metadata["readingStatus"] == "DOC legado — salve como DOCX"
+
+
+def test_to_response_index_failed_with_legible_document_vision():
+    attachment = SimpleNamespace(
+        id=uuid4(),
+        session_id=uuid4(),
+        message_id=None,
+        project_id=None,
+        agent_id=None,
+        filename="desenho.pdf",
+        original_filename="desenho.pdf",
+        content_type="application/pdf",
+        size_bytes=1200,
+        status="index_failed",
+        metadata={
+            "indexed": False,
+            "documentVision": {
+                "engine": "tesseract",
+                "legible": True,
+                "legibilityScore": 0.82,
+                "bomRowCount": 3,
+                "hasTitleBlock": True,
+                "tableCount": 0,
+                "stages": ["native", "tesseract_pdf"],
+            },
+        },
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    response = ChatAttachmentResponseService.to_response(attachment)
+
+    assert response.metadata is not None
+    assert response.metadata["readingStatus"] == "Legível por visão (tesseract)"

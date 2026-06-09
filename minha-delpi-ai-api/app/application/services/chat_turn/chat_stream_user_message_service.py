@@ -43,6 +43,10 @@ class ChatStreamUserMessageService:
     ) -> ChatStreamUserMessagePersistResult:
         events: list[dict] = []
 
+        attachment_snapshots = turn_support.enrich_attachments_for_message_metadata(
+            attachments,
+        )
+
         if resend_from_message_id:
             user_message = cls._persist_resend_branch(
                 chat_repository=chat_repository,
@@ -52,7 +56,7 @@ class ChatStreamUserMessageService:
                 user_id=user_id,
                 session_id=session_id,
                 workspace_context=workspace_context,
-                attachments=attachments,
+                attachments=attachment_snapshots,
                 previous_messages=previous_messages,
                 resend_from_message_id=resend_from_message_id,
             )
@@ -66,7 +70,7 @@ class ChatStreamUserMessageService:
                 user_id=user_id,
                 session_id=session_id,
                 workspace_context=workspace_context,
-                attachments=attachments,
+                attachments=attachment_snapshots,
             )
 
         events.append(

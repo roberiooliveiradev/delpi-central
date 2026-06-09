@@ -103,6 +103,12 @@
       "index_failed": "Falha na leitura",
       "default": "Aguardando envio"
     },
+    "readingStatusFormats": {
+      "indexedVisionEngine": "Indexado · visão ({engine})",
+      "visionReadable": "Legível por visão",
+      "visionReadableEngine": "Legível por visão ({engine})",
+      "lowLegibilitySuffix": " · OCR com baixa legibilidade"
+    },
     "indexReason": {
       "legacy_doc_format": "DOC legado — salve como DOCX",
       "legacy_xls_format": "XLS legado — salve como XLSX"
