@@ -8,8 +8,11 @@ from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.ppm_item import PpmItem
 from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
 from app.infrastructure.persistence.totvs.ppm_repositories.ppm_production_sql import (
+    APONT_INSPECAO_CTE,
+    CT_INSPECAO_FINAL_CTE,
+    CT_INSPECAO_JOIN,
     QTD_PRODUZIDA_OP_EXPR,
-    SC2_OP_JOIN,
+    SH1_RECURSO_JOIN,
 )
 
 
@@ -69,27 +72,32 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
         where_nc, params_nc = qb_nc.build()
 
-        prod_branch_filter_g2 = ""
+        prod_branch_filter_ct = ""
         prod_branch_filter_sh6 = ""
-        prod_params = []
+        prod_params: list[str] = []
 
         if request.branch:
-            prod_branch_filter_g2 = "AND G2.G2_FILIAL = ?"
-            prod_params.append(request.branch)
-
-        prod_params.extend([
-            date_end_exclusive,
-            date_start,
-        ])
-
-        if request.branch:
+            prod_branch_filter_ct = "AND HB.HB_FILIAL = ?"
             prod_branch_filter_sh6 = "AND SH6.H6_FILIAL = ?"
             prod_params.append(request.branch)
 
+        if request.branch:
+            prod_params.append(request.branch)
+
         prod_params.extend([
             date_start,
             date_end_exclusive,
         ])
+
+        ct_inspecao_cte = CT_INSPECAO_FINAL_CTE.format(
+            ct_branch_filter=prod_branch_filter_ct,
+        )
+        apont_inspecao_cte = APONT_INSPECAO_CTE.format(
+            qtd_expr=QTD_PRODUZIDA_OP_EXPR.strip(),
+            sh1_join=SH1_RECURSO_JOIN.strip(),
+            ct_join=CT_INSPECAO_JOIN.strip(),
+            sh6_branch_filter=prod_branch_filter_sh6,
+        )
 
         sql = f"""
             WITH nc AS (
@@ -104,58 +112,12 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 FROM QI2010
                 WHERE {where_nc}
             ),
-            roteiro_final AS (
-                SELECT
-                    G2.G2_FILIAL,
-                    G2.G2_PRODUTO,
-                    MAX(G2.G2_OPERAC) AS operacao_final_roteiro
-                FROM SG2010 G2
-                WHERE
-                    G2.D_E_L_E_T_ = ' '
-                    {prod_branch_filter_g2}
-                    AND (G2.G2_DTINI = '' OR G2.G2_DTINI < ?)
-                    AND (G2.G2_DTFIM = '' OR G2.G2_DTFIM >= ?)
-                GROUP BY
-                    G2.G2_FILIAL,
-                    G2.G2_PRODUTO
-            ),
-            apont_final AS (
-                SELECT
-                    SH6.H6_FILIAL,
-                    SH6.H6_OP,
-                    SH6.H6_PRODUTO,
-                    SH6.H6_OPERAC,
-                    SB1.B1_GRUPO,
-                    {QTD_PRODUZIDA_OP_EXPR.strip()} AS qtd_produzida_op
-                FROM SH6010 SH6
-                INNER JOIN roteiro_final RF
-                    ON RF.G2_FILIAL = SH6.H6_FILIAL
-                   AND RF.G2_PRODUTO = SH6.H6_PRODUTO
-                   AND RF.operacao_final_roteiro = SH6.H6_OPERAC
-                INNER JOIN SB1010 SB1
-                    ON SB1.B1_COD = SH6.H6_PRODUTO
-                   AND SB1.D_E_L_E_T_ = ' '
-                   AND SB1.B1_TIPO = 'PA'
-                {SC2_OP_JOIN}
-                WHERE
-                    SH6.D_E_L_E_T_ = ' '
-                    {prod_branch_filter_sh6}
-                    AND SH6.H6_TIPO = 'P'
-                    AND SH6.H6_OP <> ''
-                    AND SH6.H6_PRODUTO <> ''
-                    AND SH6.H6_DTAPONT >= ?
-                    AND SH6.H6_DTAPONT < ?
-                GROUP BY
-                    SH6.H6_FILIAL,
-                    SH6.H6_OP,
-                    SH6.H6_PRODUTO,
-                    SH6.H6_OPERAC,
-                    SB1.B1_GRUPO
-            ),
+            {ct_inspecao_cte.strip()},
+            {apont_inspecao_cte.strip()},
             prod AS (
                 SELECT
                     SUM(qtd_produzida_op) AS total_produzido_milheiro
-                FROM apont_final
+                FROM apont_inspecao
             )
             SELECT
                 ISNULL(nc.total_devolvido_un, 0) AS total_devolvido_un,

@@ -11,11 +11,11 @@
 
 Foi realizada uma análise comparativa entre o **Total Produzido** informado pela planilha de inspeção **RQ 005** e o total calculado automaticamente a partir dos **apontamentos reais de produção** registrados no Protheus.
 
-**Conclusão:** a divergência observada **não se origina no indicador corporativo** (PPM / total produzido do sistema). Os números do sistema são **consistentes, repetíveis e alinhados à regra de negócio acordada** — produção de **produto acabado (PA)**, na **última operação do roteiro**, pela **data do apontamento**, sem depender de um centro de trabalho fixo por filial.
+**Conclusão:** a divergência observada **não se origina no indicador corporativo** (PPM / total produzido do sistema). Os números do sistema são **consistentes, repetíveis e alinhados à regra de negócio acordada** — apontamentos no **centro de trabalho de inspeção final** (CT dinâmico por filial via `SHB010`), incluindo **PA e PI**, pela **data do apontamento**.
 
 O principal motivo da diferença está na **forma como a planilha RQ 005 consolida o total**: ela soma lotes registrados manualmente, **inclui produtos intermediários (PI)**, **pode contar duas vezes o mesmo retrabalho** e **não utiliza a mesma regra de produto** que o cadastro oficial de produção.
 
-Em maio de 2026, o valor divulgado pelo inspetor (**136.243 unidades**) coincide **exatamente** com o indicador automático — e **não** com o total que a planilha calcula hoje (**108.991 unidades**). Isso reforça que, quando se usa a mesma base, os números convergem.
+Em **abril/2026**, inspetor, planilha e indicador automático **convergem** (diferença ≤ 2%). Nos demais meses, o inspetor repete o total da **planilha linha 4** (jan–mar muito acima do Protheus); em **maio** o inspetor (**136.243**) diverge tanto da planilha (**108.991**) quanto do indicador CT (**111.833**) — provável uso de **outra base** (ex.: regra anterior por roteiro) na divulgação daquele mês.
 
 ---
 
@@ -25,30 +25,30 @@ A área de Qualidade acompanha o **Total Produzido** na planilha RQ 005 (*Inspe�
 
 Surgiu a percepção de que o sistema “estaria errado” porque os totais mensais da planilha — especialmente de janeiro a abril — apareciam **muito acima** do indicador automático. Em maio, os valores **coincidiram**, o que levou a investigação detalhada.
 
-O objetivo deste documento é **explicar de forma clara por que a planilha diverge** e **por que o indicador corporativo deve ser tratado como referência oficial** para o total produzido de PA, reservando a planilha para seu papel de **controle de inspeção por lote**, e não como fonte única do denominador de PPM.
+O objetivo deste documento é **explicar de forma clara por que a planilha diverge** do indicador corporativo e **por que o PPM deve usar apontamentos no CT de inspeção final (Protheus)**, reservando a RQ 005 para **controle de inspeção por lote**.
 
 ---
 
-## 3. Regra acordada para “Total Produzido” no PPM
+## 3. Regra oficial do denominador PPM (vigente desde jun/2026)
 
-Em alinhamento com Produção e Qualidade, ficou definido que o denominador do PPM deve representar:
+Em alinhamento com Produção, Qualidade e o playbook de inspeção/expedição, o denominador do PPM representa:
 
 | Critério | Definição |
 |----------|-----------|
-| **O quê** | Somente **produto acabado (PA)** |
-| **Onde na produção** | Apontamento na **última operação do roteiro** do produto — ou seja, quando a peça conclui o fluxo produtivo cadastrado, **sem amarrar a um centro de inspeção fixo** (como CT-70 na filial 01), pois isso varia entre filiais e nem todo PA passa pelo mesmo centro na prática |
-| **Quando** | Pela **data do apontamento** de produção |
-| **Unidade** | Conversão de **milheiro para unidades** quando o cadastro do produto está em milheiro |
-| **Quantidade por OP** | **Programado − saldo = apontado**: usa a quantidade planejada da OP menos o que ainda falta; o apontado considerado é o **maior registro** na operação final (evita duplicar retrabalho); se o apontamento superar o programado, **limita ao programado** |
+| **O quê** | **Produto acabado (PA) e produto intermediário (PI)** apontados no CT de inspeção final |
+| **Onde** | Apontamento cujo recurso pertence a CT com nome **INSPEÇÃO FINAL** / **INSPECAO FINAL** na `SHB010` (ex.: filial 01 → CT-70; filial 02 → CT-99) — **sem fixar código de CT** |
+| **Como localizar o CT** | `UPPER(HB_NOME) LIKE '%INSPE%FINAL%'` + recurso do apontamento na `SH1010` (`H1_CTRAB`) |
+| **Quando** | Pela **data do apontamento** de produção (`H6_DTAPONT`) |
+| **Quantidade** | Soma de `H6_QTDPROD` (quantidade boa) por OP/produto/operação no CT de inspeção |
+| **Unidade** | Conversão de **milheiro para unidades** (× 1000) |
 
 Fórmula operacional:
 
 ```text
-saldo_pendente = max(0, programado − apontado)
-produzido_na_OP = programado − saldo_pendente  (= apontado, limitado ao programado)
+Total produzido = SUM(H6_QTDPROD) dos apontamentos no CT de inspeção final (PA + PI)
 ```
 
-Essa regra está documentada, implementada no indicador automático e **foi testada mês a mês** no período analisado.
+Essa regra está documentada, implementada no indicador automático e alinhada ao playbook de produção.
 
 ---
 
@@ -68,48 +68,64 @@ Ou seja: a planilha mede **volume inspecionado/registrado na rotina de qualidade
 
 ---
 
-## 5. Comparativo dos números (filial 01)
+## 5. Comparativo validado dos números (filial 01)
+
+**Fontes cruzadas em 09/06/2026** — planilha RQ 005 (linha 4), valores informados pelo inspetor e rota PPM (regra CT inspeção). Script: `api-delpi/scripts/validate_ppm_produced_quantity_rule.py`.
+
+**CTs (SHB010):** filial 01 → **CT-70**; filial 02 → **CT-99**.
 
 ### 5.1 Totais mensais (unidades)
 
-| Mês | Planilha (informado pelo inspetor) | Indicador automático (regra acordada) | Diferença |
-|-----|-----------------------------------:|--------------------------------------:|----------:|
-| Janeiro/2026 | 297.532 | 138.556 | Planilha **+115%** |
-| Fevereiro/2026 | 465.410 | 181.383 | Planilha **+157%** |
-| Março/2026 | 367.052 | 123.818 | Planilha **+196%** |
-| Abril/2026 | 135.718 | 159.023 | Planilha **−15%** |
-| Maio/2026 | 136.243 | 136.243 | **Igual** |
-| **Acumulado jan–mai** | **1.401.955** | **739.023** | Planilha **+90%** |
+| Mês | Inspetor | Planilha (linha 4) | PPM CT (PA+PI) | Insp. vs PPM | Plan. vs PPM |
+|-----|---------:|-------------------:|---------------:|-------------:|-------------:|
+| Jan/2026 | 297.532 | 299.577 | **108.223** | +175% | +177% |
+| Fev/2026 | 465.410 | 465.410 | **156.445** | +197% | +197% |
+| Mar/2026 | 367.052 | 367.052 | **116.582** | +215% | +215% |
+| Abr/2026 | 135.718 | 135.718 | **138.765** | −2% | −2% |
+| Mai/2026 | 136.243 | 108.991 | **111.833** | +22% | −3% |
+| **Acum.** | **1.401.955** | **1.376.748** | **631.848** | **+122%** | **+118%** |
 
-### 5.2 Outras referências no acumulado (jan–mai)
+### 5.2 Detalhe PA × PI no PPM (CT inspeção)
 
-| Fonte | Total acumulado | Observação |
-|-------|----------------:|------------|
-| Planilha, **somente PA** (excluindo PI manualmente) | ~627.549 | Ainda **abaixo** do inspetor e **acima** do CT inspeção em alguns meses |
-| Indicador automático (última operação do roteiro, só PA) | **739.023** | Referência oficial testada |
-| Apontamentos só no centro de **inspeção final** (CT dinâmico por filial) | ~630.671 | Mede “liberado na inspeção”, **não** “produzido no roteiro” — fica ~15% abaixo |
+| Mês | Total | PA | PI |
+|-----|------:|---:|---:|
+| Jan | 108.223 | 108.223 | 0 |
+| Fev | 156.445 | 155.678 | 767 |
+| Mar | 116.582 | 116.572 | 10 |
+| Abr | 138.765 | 138.765 | 0 |
+| Mai | 111.833 | 111.433 | 400 |
 
-### 5.3 Maio — evidência decisiva
+PIs **50232465**, **50233615**, **50233616** somam **~711 mil un.** na planilha (jan–mar) e **~1,2 mil un.** no CT-70.
 
-| Fonte | Maio/2026 |
-|-------|----------:|
-| Valor informado pelo inspetor | 136.243 |
-| Indicador automático | 136.243 |
-| Planilha RQ 005 (arquivo atual) | 108.991 |
+### 5.3 Leituras
 
-Em maio, quem divulgou o número **utilizou o indicador automático**, não o total que a planilha calcula sozinha hoje. Isso demonstra que **não há erro sistemático no cálculo corporativo** — quando a mesma base é usada, o resultado é idêntico.
+- **Jan–mar:** inspetor ≈ planilha; ambos **~2× a 3×** acima do PPM (PIs na planilha + código errado **550232465** em **Jan!LX3**).
+- **Abr:** três fontes alinhadas (Δ ≤ 2%).
+- **Mai:** planilha ≈ PPM (−3%); inspetor **136.243** (+22% vs PPM) — origem a esclarecer.
+
+### 5.4 Regra anterior (referência)
+
+Roteiro final, só PA (substituída): **739.023** acum. vs **631.848** (CT atual, −17%).
+
+### 5.5 Maio
+
+| Fonte | Un. |
+|-------|----:|
+| Inspetor | 136.243 |
+| Planilha | 108.991 |
+| **PPM CT** | **111.833** |
 
 ---
 
 ## 6. Por que a planilha diverge — cinco argumentos
 
-### Argumento 1 — A planilha inclui PI; o PPM considera só PA
+### Argumento 1 — A planilha inclui PI que não entram no CT de inspeção da mesma forma
 
-De janeiro a março, uma fatia relevante da linha 4 da planilha corresponde a **produtos intermediários (PI)** — na ordem de **52% a 68%** do total daqueles meses. PI é peça em fabricação, **não produto acabado**.
+De janeiro a março, **52% a 68%** da linha 4 da planilha são **PIs** (códigos **50232465**, **50233615**, **50233616** — cabos/fios). Na planilha somam **~711 mil un.** no período; no PPM (CT-70) aparecem **~1,2 mil un.** de PI — ou seja, esses intermediários são **registrados na planilha**, mas **não apontados no CT de inspeção final** no Protheus com o mesmo volume.
 
-O indicador de PPM, por definição de negócio, **exclui PI**. Somar PI na planilha **infla artificialmente** o “total produzido” em relação ao denominador correto do indicador.
+O PPM **inclui PA e PI** quando apontados no CT; a divergência vem do **registro manual na planilha**, não da exclusão de PI no sistema.
 
-**Impacto:** explica boa parte do gap de janeiro a março (planilha muito acima do sistema).
+**Impacto:** explica a maior parte do gap jan–mar (planilha/inspetor **~2× a 3×** acima do PPM).
 
 ---
 
@@ -117,7 +133,7 @@ O indicador de PPM, por definição de negócio, **exclui PI**. Somar PI na plan
 
 A rotina operacional da RQ 005 permite **dois registros** para o mesmo lote rejeitado: primeira inspeção e reinspeção após retrabalho. A linha 4 **soma os dois**.
 
-No sistema corporativo, apontamentos repetidos na mesma ordem e mesma operação final entram com o **maior apontamento** por ordem. A quantidade produzida segue **programado − saldo = apontado**: o que foi efetivamente reconhecido na OP, **sem ultrapassar o programado** e **sem somar repasses** como se fossem produção nova.
+No sistema corporativo, a quantidade produzida considera **somente apontamentos no CT de inspeção final** (via cadastro de CTs na `SHB010`), somando `H6_QTDPROD` por ordem de produção — **incluindo PA e PI** conforme a nova regra de negócio.
 
 **Impacto estimado no período:** cerca de **213 ordens** com mais de um apontamento na operação final. A planilha, ao somar lotes de 1ª e 2ª inspeção, reproduz inflação que o sistema evita.
 
@@ -136,14 +152,14 @@ A planilha reflete **como o inspetor preencheu**; o sistema reflete **como a pro
 
 ### Argumento 4 — A planilha é controle de inspeção; o sistema é registro de produção
 
-| | Planilha RQ 005 | Indicador corporativo |
-|---|-----------------|----------------------|
-| **Finalidade** | Controle de lotes inspecionados | Total de PA produzido para indicadores |
-| **Origem** | Digitação manual por lote | Apontamentos oficiais de produção |
-| **Granularidade** | Coluna por lote / inspeção | Ordem de produção × operação final |
-| **PI** | Entra na linha 4 | Excluído |
-| **Retrabalho** | Pode somar 1ª + 2ª inspeção | Uma quantidade por ordem na operação final |
-| **Auditoria** | Difícil rastrear sem revisar coluna a coluna | Rastreável por ordem, produto, data e operação |
+| | Planilha RQ 005 | Indicador corporativo (PPM) |
+|---|-----------------|------------------------------|
+| **Finalidade** | Controle de lotes inspecionados | Total apontado no CT de inspeção final |
+| **Origem** | Digitação manual por lote | Apontamentos oficiais SH6010 + SHB010/SH1010 |
+| **Granularidade** | Coluna por lote / inspeção | Soma por OP/produto/operação no CT |
+| **PI** | Entra na linha 4 (volume alto jan–mar) | Entra **se** apontado no CT (volume baixo vs planilha) |
+| **Retrabalho** | Pode somar 1ª + 2ª inspeção | Soma apontamentos no CT (sem planilha manual) |
+| **Auditoria** | Coluna a coluna na planilha | Rastreável por OP, produto, CT, data |
 
 Usar a planilha como **única fonte do denominador de PPM** mistura **volume inspecionado** com **volume produzido (PA)** — conceitos diferentes.
 
@@ -159,12 +175,12 @@ As diferenças vêm de **escopo** (PI, retrabalho, codificação) e **método de
 
 ## 7. O que confirma que o indicador corporativo está correto
 
-1. **Repetibilidade:** a mesma regra aplicada mês a mês produz resultados estáveis e auditáveis no Protheus.  
-2. **Alinhamento com a decisão de negócio:** só PA, última operação do roteiro, data do apontamento — sem CT fixo por filial.  
-3. **Convergência em maio:** inspetor e sistema **136.243** — prova de que, usando a mesma base, não há divergência.  
-4. **Conciliação por produto:** em **84%** dos códigos PA, planilha e sistema ficam dentro de **5%** de diferença.  
-5. **Coerência com inspeção final:** total por centro de inspeção final (~631 mil) fica **abaixo** do total por roteiro (~739 mil), como esperado — nem todo PA apontado na operação final passa imediatamente pelo CT de inspeção, e vice-versa.  
-6. **Playbook de produção:** a documentação interna alerta que somar todos os apontamentos sem regra gera **percentuais acima de 100%** da ordem — exatamente o risco que a planilha corre ao somar lotes e retrabalhos sem deduplicação.
+1. **Repetibilidade:** mesma consulta, mesmo resultado — validado em 09/06/2026 via script de validação.  
+2. **Alinhamento com playbook:** CT de inspeção final via `SHB010`, recurso em `SH1010`, apontamento em `SH6010`.  
+3. **Convergência em abril:** inspetor, planilha e PPM dentro de **2%** — mês de referência.  
+4. **Maio:** planilha e PPM CT **próximos** (−3%); inspetor **fora** — problema de **fonte divulgada**, não de cálculo automático.  
+5. **CTs explícitos:** filial 01 = CT-70; filial 02 = CT-99 (consulta dinâmica, sem hardcode único).  
+6. **PIs identificados na planilha** (50232xxx / 50233xxx) com rastreio de células — ex.: erro **550232465** em **Jan!LX3** (36 mil un.).
 
 ---
 
@@ -185,21 +201,22 @@ O ajuste necessário é de **governança do indicador**: o **Total Produzido do 
 
 ### 9.1 Imediatas
 
-1. **Oficializar** o indicador automático (regra da seção 3) como **fonte única do Total Produzido (PA)** para PPM e relatórios gerenciais.  
-2. **Renomear ou segregar** na planilha/dinâmica o que hoje aparece como “Total Produzido”, deixando claro se é:  
-   - *Total inspecionado (PA + PI + retrabalho)* — uso operacional de Qualidade; ou  
-   - *Total produzido PA (sistema)* — referência para PPM.  
-3. **Comunicar à equipe de inspeção** que divergências jan–abr não indicam falha do sistema, e sim ** diferença de método e escopo**.
+1. **Oficializar** o indicador automático (regra da seção 3 — CT inspeção, PA + PI) como **fonte única do Total Produzido** para PPM.  
+2. **Renomear ou segregar** na planilha/dinâmica o rótulo “Total Produzido”:  
+   - *Total inspecionado / registrado (planilha, PA + PI + retrabalho)* — operacional Qualidade;  
+   - *Total apontado CT inspeção (sistema)* — denominador PPM.  
+3. **Esclarecer com o inspetor** a origem do **136.243 em maio** (≠ planilha 108.991 ≠ PPM 111.833).
 
 ### 9.2 Operacionais
 
 4. **Padronizar o código do produto** na planilha conforme o apontamento de produção (ou documentar de-para PA pai × variantes).  
 5. **Marcar visualmente** colunas de retrabalho (2ª inspeção) para não entrarem em totais comparados ao PPM.  
-6. **Separar PI do total** usado em indicadores — PI pode continuar na planilha para controle, mas **fora** do denominador de PPM.
+6. **Corrigir** código **550232465** (Jan!LX3) — provável **50232465**.  
+7. **Separar na planilha** totais PA vs PI para não comparar linha 4 “cheia” com PPM CT.
 
 ### 9.3 Indicadores complementares (opcional)
 
-7. Manter, se desejado, um indicador à parte: **“PA liberado na inspeção final”** (centro de inspeção por filial) — **não substitui** o total produzido por roteiro, mas complementa a visão de expedição.
+8. Manter histórico da regra **roteiro final / só PA** (~739 mil acum. jan–mai) apenas para análise de transição — **não** usar como denominador PPM.
 
 ---
 
@@ -209,11 +226,11 @@ A investigação de janeiro a maio de 2026 na filial 01 leva a uma conclusão ob
 
 > **O problema não está no cálculo corporativo do total produzido. O problema está no uso da planilha RQ 005 como se ela medisse a mesma coisa.**
 
-A planilha soma **lotes manuais**, inclui **PI**, **pode duplicar retrabalho** e usa **codificação nem sempre igual** ao Protheus. O indicador automático aplica a **regra de negócio acordada** sobre apontamentos oficiais de **PA na última operação do roteiro**.
+A planilha soma **lotes manuais**, inclui **PIs que não refletem no CT-70**, **pode duplicar retrabalho** e contém **códigos incorretos** (ex.: 550232465). O indicador automático aplica a **regra vigente**: **SUM(H6_QTDPROD)** no **CT de inspeção final** (PA + PI), filial 01 → **CT-70**.
 
-A coincidência exata em **maio (136.243 unidades)** entre o valor informado e o sistema demonstra que, quando alinhados à mesma base, **os números fecham**.
+**Abril** valida o alinhamento (Δ ≤ 2%). **Maio** mostra planilha ≈ PPM; valor do inspetor **136.243** permanece **sem fonte única** identificada na reconciliação.
 
-**Proposta de encaminhamento:** adotar o total do sistema para PPM; manter a RQ 005 para controle de inspeção; ajustar labels e rotina da planilha para deixar explícito o que é “inspecionado” versus “produzido (PA)”.
+**Proposta:** adotar **631.848 un.** (acum. jan–mai, PPM CT) para indicadores; RQ 005 para controle de inspeção; corrigir planilha e alinhar comunicação mensal à rota PPM.
 
 ---
 
@@ -223,8 +240,8 @@ A coincidência exata em **maio (136.243 unidades)** entre o valor informado e o
 - Playbook — Situação de Produção de PA  
 - Playbook — PA, Inspeção Final e Expedição  
 - Documentação das rotas de Qualidade (denominador PPM)  
-- Implementação: `app/domain/services/ppm_produced_quantity.py` (regra **programado − saldo = apontado**)
+- Implementação: `app/domain/services/ppm_inspection_denominator.py` e `ppm_production_sql.py` (CT inspeção final, PA + PI)
 
 ---
 
-*Documento elaborado com base na reconciliação quantitativa jan–mai/2026, filial 01, cruzando planilha RQ 005, apontamentos Protheus e indicador PPM. Atualizado em jun/2026 com a formalização da regra de quantidade produzida por OP.*
+*Documento atualizado em 09/06/2026 — reconciliação jan–mai/2026, filial 01; denominador PPM: CT inspeção final (SHB010), PA + PI; totais PPM validados via `validate_ppm_produced_quantity_rule.py`.*

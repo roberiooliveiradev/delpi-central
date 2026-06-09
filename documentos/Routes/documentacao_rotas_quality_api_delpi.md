@@ -552,68 +552,52 @@ COALESCE(
 
 ## Denominador
 
-O denominador vem da produção ajustada da `SH6010`.
+O denominador vem dos **apontamentos de produção no centro de trabalho (CT) de inspeção final**, conforme playbook de PA / inspeção / expedição.
 
-A produção não deve ser calculada por soma direta de `H6_QTDPROD`, pois a `SH6010` pode conter múltiplos apontamentos para a mesma OP/produto/operação, principalmente em ambientes que apontam produção por operação.
+**Total produzido** = soma de `H6_QTDPROD` dos apontamentos cujo recurso (`H6_RECURSO`) pertence a um CT cadastrado na `SHB010` com nome de **inspeção final**, independentemente de filial (ex.: filial 01 → CT-70; filial 02 → CT-99).
 
-A soma direta de `H6_QTDPROD` pode inflar o denominador quando a mesma quantidade aparece repetida em operações intermediárias.
+Inclui **PA e PI** apontados nesse CT.
 
 ---
 
-## Regra atual do denominador ajustado
+## Regra atual do denominador
 
 A regra aplicada atualmente é:
 
 - tabela base: `SH6010`;
-- campo de quantidade: `H6_QTDPROD`;
+- campo de quantidade: `H6_QTDPROD` (somente quantidade boa; perda `H6_QTDPERD` não entra);
 - data base: `H6_DTAPONT`;
-- considerar apenas registros ativos: `SH6.D_E_L_E_T_ = ' '`;
-- considerar apenas apontamentos produtivos: `SH6.H6_TIPO = 'P'`;
-- excluir OP vazia: `SH6.H6_OP <> ''`;
-- excluir produto vazio: `SH6.H6_PRODUTO <> ''`;
-- cruzar com `SG2010` para considerar somente a operação final do roteiro;
-- cruzar com `SB1010` para considerar somente produto acabado: `SB1.B1_TIPO = 'PA'`;
-- cruzar com `SC2010` para obter a quantidade **programada** da OP (`C2_QUANT`);
-- deduplicar apontamentos por `H6_FILIAL + H6_OP + H6_PRODUTO + H6_OPERAC`;
-- usar `MAX(H6_QTDPROD)` como **apontado** por OP/operação final;
-- calcular quantidade produzida por OP com a regra **programado − saldo = apontado** (ver abaixo);
-- excluir os grupos `B1_GRUPO IN ('9043', '9028')` *(documentado; conferir implementação)*;
-- converter `H6_QTDPROD` de milheiro para unidade multiplicando por `1000`.
+- considerar apenas registros ativos: `D_E_L_E_T_ = ' '`;
+- considerar apenas apontamentos produtivos: `H6_TIPO = 'P'`;
+- excluir OP, produto ou recurso vazios;
+- localizar CTs de inspeção final na `SHB010` com `UPPER(HB_NOME) LIKE '%INSPE%FINAL%'` *(não fixar CT-70)*;
+- cruzar recurso do apontamento na `SH1010` (`H1_CODIGO = H6_RECURSO` → `H1_CTRAB`);
+- cruzar com `SB1010` para incluir **PA e PI**: `B1_TIPO IN ('PA', 'PI')`;
+- agregar por `H6_FILIAL + H6_OP + H6_PRODUTO + H6_OPERAC + B1_TIPO` com `SUM(H6_QTDPROD)`;
+- converter de milheiro para unidade multiplicando por `1000`.
+
+Implementação de referência: `ppm_production_sql.py`, `ppm_inspection_denominator.py`.
 
 ---
 
-## Quantidade produzida por OP — programado − saldo = apontado
+## CTs de inspeção final (SHB010)
 
-Para cada OP na operação final do roteiro:
-
-| Termo | Campo | Significado |
-|---|---|---|
-| **Programado** | `SC2010.C2_QUANT` | Quantidade planejada da ordem de produção |
-| **Apontado** | `MAX(SH6010.H6_QTDPROD)` | Maior quantidade apontada na operação final (deduplica repasses) |
-| **Saldo pendente** | `max(0, programado − apontado)` | O que ainda falta produzir na OP |
-| **Produzido** | `programado − saldo` | Quantidade efetiva que entra no denominador |
-
-Em texto:
-
-```text
-saldo_pendente = max(0, programado − apontado)
-qtd_produzida_op = programado − saldo_pendente
-```
-
-Propriedades:
-
-- Quando `apontado ≤ programado`, resulta em **`apontado`** (equivale a usar o MAX do apontamento).
-- Quando `apontado > programado`, **limita ao programado** (não infla acima do planejado da OP).
-- Quando `programado` ausente ou zero, usa **`apontado`** (fallback para OPs sem `C2_QUANT`).
-
-Implementação de referência: `app/domain/services/ppm_produced_quantity.py` e `ppm_production_sql.py`.
-
-Cruzamento OP:
+Consulta canônica (playbook):
 
 ```sql
-SC2.C2_OP = SH6.H6_OP
-OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
+SELECT HB_FILIAL, HB_COD, HB_NOME
+FROM SHB010
+WHERE D_E_L_E_T_ = ' '
+  AND UPPER(HB_NOME) LIKE '%INSPE%FINAL%'
+ORDER BY HB_FILIAL, HB_COD;
 ```
+
+Resultado validado:
+
+| Filial | CT | Nome |
+|---|---|---|
+| `01` | `CT-70` | `INSPEÇÃO FINAL` |
+| `02` | `CT-99` | `INSPECAO FINAL` |
 
 ---
 
@@ -622,98 +606,52 @@ OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
 | Tabela | Uso |
 |---|---|
 | `SH6010` | Apontamentos de produção |
-| `SG2010` | Roteiro de operações; usada para identificar operação final por produto |
-| `SC2010` | Ordens de produção; quantidade programada (`C2_QUANT`) |
-| `SB1010` | Cadastro de produtos; usada para filtrar produto acabado e grupo |
+| `SHB010` | Centros de trabalho; identifica CTs de inspeção final por filial |
+| `SH1010` | Recursos; liga apontamento ao CT (`H1_CTRAB`) |
+| `SB1010` | Cadastro de produtos; filtra PA e PI |
 
 ---
 
-## Identificação da operação final
-
-A operação final do roteiro é identificada por produto usando:
+## Produção ajustada — apontamento no CT de inspeção
 
 ```sql
-MAX(G2.G2_OPERAC) AS operacao_final_roteiro
-```
-
-A CTE de roteiro considera validade do roteiro:
-
-```sql
-AND (G2.G2_DTINI = '' OR G2.G2_DTINI < :date_end)
-AND (G2.G2_DTFIM = '' OR G2.G2_DTFIM >= :date_start)
-```
-
-Quando `branch` é informado, também é aplicado:
-
-```sql
-AND G2.G2_FILIAL = :branch
-```
-
----
-
-## Produção ajustada
-
-A produção ajustada é obtida em duas etapas.
-
-Primeiro, identifica-se a operação final por produto no roteiro:
-
-```sql
-WITH roteiro_final AS (
+WITH ct_inspecao_final AS (
     SELECT
-        G2.G2_FILIAL,
-        G2.G2_PRODUTO,
-        MAX(G2.G2_OPERAC) AS operacao_final_roteiro
-    FROM SG2010 G2
+        HB.HB_FILIAL,
+        HB.HB_COD AS ct_inspecao
+    FROM SHB010 HB
     WHERE
-        G2.D_E_L_E_T_ = ' '
-        AND (G2.G2_DTINI = '' OR G2.G2_DTINI < :date_end)
-        AND (G2.G2_DTFIM = '' OR G2.G2_DTFIM >= :date_start)
-    GROUP BY
-        G2.G2_FILIAL,
-        G2.G2_PRODUTO
-)
-```
-
-Depois, cruza-se a `SH6010` com a operação final, filtra-se PA, une-se `SC2010` e calcula-se a quantidade produzida:
-
-```sql
-apont_final AS (
+        HB.D_E_L_E_T_ = ' '
+        AND UPPER(HB.HB_NOME) LIKE '%INSPE%FINAL%'
+        -- AND HB.HB_FILIAL = :branch, quando informado
+),
+apont_inspecao AS (
     SELECT
         SH6.H6_FILIAL,
         SH6.H6_OP,
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
-        SB1.B1_GRUPO,
-        CASE
-            WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) <= 0 THEN MAX(ISNULL(SH6.H6_QTDPROD, 0))
-            ELSE MAX(ISNULL(SC2.C2_QUANT, 0)) - CASE
-                WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) > MAX(ISNULL(SH6.H6_QTDPROD, 0))
-                THEN MAX(ISNULL(SC2.C2_QUANT, 0)) - MAX(ISNULL(SH6.H6_QTDPROD, 0))
-                ELSE 0
-            END
-        END AS qtd_produzida_op
+        SB1.B1_TIPO,
+        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qtd_produzida_op
     FROM SH6010 SH6
-    INNER JOIN roteiro_final RF
-        ON RF.G2_FILIAL = SH6.H6_FILIAL
-       AND RF.G2_PRODUTO = SH6.H6_PRODUTO
-       AND RF.operacao_final_roteiro = SH6.H6_OPERAC
     INNER JOIN SB1010 SB1
         ON SB1.B1_COD = SH6.H6_PRODUTO
        AND SB1.D_E_L_E_T_ = ' '
-       AND SB1.B1_TIPO = 'PA'
-    LEFT JOIN SC2010 SC2
-        ON SC2.D_E_L_E_T_ = ' '
-       AND SC2.C2_FILIAL = SH6.H6_FILIAL
-       AND SC2.C2_PRODUTO = SH6.H6_PRODUTO
-       AND (
-            SC2.C2_OP = SH6.H6_OP
-            OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
-       )
+       AND SB1.B1_TIPO IN ('PA', 'PI')
+    INNER JOIN SH1010 SH1
+        ON SH1.H1_FILIAL = SH6.H6_FILIAL
+       AND SH1.H1_CODIGO = SH6.H6_RECURSO
+       AND SH1.D_E_L_E_T_ = ' '
+    INNER JOIN ct_inspecao_final CIF
+        ON CIF.HB_FILIAL = SH6.H6_FILIAL
+       AND CIF.ct_inspecao = SH1.H1_CTRAB
     WHERE
         SH6.D_E_L_E_T_ = ' '
+        -- AND SH6.H6_FILIAL = :branch, quando informado
         AND SH6.H6_TIPO = 'P'
         AND SH6.H6_OP <> ''
         AND SH6.H6_PRODUTO <> ''
+        AND SH6.H6_RECURSO <> ''
         AND SH6.H6_DTAPONT >= :date_start
         AND SH6.H6_DTAPONT < :date_end
     GROUP BY
@@ -721,21 +659,60 @@ apont_final AS (
         SH6.H6_OP,
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
-        SB1.B1_GRUPO
+        SB1.B1_TIPO
+),
+prod AS (
+    SELECT SUM(qtd_produzida_op) AS total_produzido_milheiro
+    FROM apont_inspecao
 )
+SELECT total_produzido_milheiro * 1000 AS total_produzido_un
+FROM prod;
 ```
 
-Por fim, calcula-se a produção do PPM excluindo os grupos fora do escopo atual:
+---
+
+## Validação filial 01 (jan–mai/2026)
+
+Comparativo **PPM CT inspeção** × inspetor × planilha RQ 005 (linha 4), executado em **09/06/2026** (`validate_ppm_produced_quantity_rule.py`):
+
+| Mês | Inspetor | Planilha | PPM CT | Δ Insp. vs PPM |
+|-----|---------:|---------:|-------:|---------------:|
+| Jan | 297.532 | 299.577 | 108.223 | +175% |
+| Fev | 465.410 | 465.410 | 156.445 | +197% |
+| Mar | 367.052 | 367.052 | 116.582 | +215% |
+| Abr | 135.718 | 135.718 | 138.765 | −2% |
+| Mai | 136.243 | 108.991 | 111.833 | +22% |
+| **Acum.** | **1.401.955** | **1.376.748** | **631.848** | **+122%** |
+
+Detalhe completo e argumentação: `documentos/reconciliacao_total_produzido_planilha_rq005_jan_mai_2026.md`.
+
+---
+
+## Identificação da operação final
+
+*(Regra anterior — roteiro `SG2010` — substituída por apontamento no CT de inspeção final. Mantida aqui apenas como referência histórica.)*
+
+<details>
+<summary>Roteiro SG2010 (legado)</summary>
 
 ```sql
-prod AS (
-    SELECT
-        SUM(qtd_produzida_op) AS total_produzido_milheiro
-    FROM apont_final
-    WHERE
-        B1_GRUPO NOT IN ('9043', '9028')
-)
+MAX(G2.G2_OPERAC) AS operacao_final_roteiro
 ```
+
+</details>
+
+---
+
+## Produção ajustada (legado roteiro — não usar)
+
+<details>
+<summary>SQL legado operação final do roteiro</summary>
+
+```sql
+-- Substituído por apont_inspecao + ct_inspecao_final (SHB010).
+```
+
+</details>
 
 ---
 
@@ -778,59 +755,40 @@ WITH nc AS (
         -- AND QI2_TIPO = '1', para internal
         -- AND QI2_TIPO IN ('2','3'), para external
 ),
-roteiro_final AS (
-    SELECT
-        G2.G2_FILIAL,
-        G2.G2_PRODUTO,
-        MAX(G2.G2_OPERAC) AS operacao_final_roteiro
-    FROM SG2010 G2
-    WHERE
-        G2.D_E_L_E_T_ = ' '
-        -- AND G2.G2_FILIAL = :branch, quando informado
-        AND (G2.G2_DTINI = '' OR G2.G2_DTINI < :date_end)
-        AND (G2.G2_DTFIM = '' OR G2.G2_DTFIM >= :date_start)
-    GROUP BY
-        G2.G2_FILIAL,
-        G2.G2_PRODUTO
+ct_inspecao_final AS (
+    SELECT HB.HB_FILIAL, HB.HB_COD AS ct_inspecao
+    FROM SHB010 HB
+    WHERE HB.D_E_L_E_T_ = ' '
+      AND UPPER(HB.HB_NOME) LIKE '%INSPE%FINAL%'
+      -- AND HB.HB_FILIAL = :branch, quando informado
 ),
-apont_final AS (
+apont_inspecao AS (
     SELECT
         SH6.H6_FILIAL,
         SH6.H6_OP,
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
-        SB1.B1_GRUPO,
-        CASE
-            WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) <= 0 THEN MAX(ISNULL(SH6.H6_QTDPROD, 0))
-            ELSE MAX(ISNULL(SC2.C2_QUANT, 0)) - CASE
-                WHEN MAX(ISNULL(SC2.C2_QUANT, 0)) > MAX(ISNULL(SH6.H6_QTDPROD, 0))
-                THEN MAX(ISNULL(SC2.C2_QUANT, 0)) - MAX(ISNULL(SH6.H6_QTDPROD, 0))
-                ELSE 0
-            END
-        END AS qtd_produzida_op
+        SB1.B1_TIPO,
+        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qtd_produzida_op
     FROM SH6010 SH6
-    INNER JOIN roteiro_final RF
-        ON RF.G2_FILIAL = SH6.H6_FILIAL
-       AND RF.G2_PRODUTO = SH6.H6_PRODUTO
-       AND RF.operacao_final_roteiro = SH6.H6_OPERAC
     INNER JOIN SB1010 SB1
         ON SB1.B1_COD = SH6.H6_PRODUTO
        AND SB1.D_E_L_E_T_ = ' '
-       AND SB1.B1_TIPO = 'PA'
-    LEFT JOIN SC2010 SC2
-        ON SC2.D_E_L_E_T_ = ' '
-       AND SC2.C2_FILIAL = SH6.H6_FILIAL
-       AND SC2.C2_PRODUTO = SH6.H6_PRODUTO
-       AND (
-            SC2.C2_OP = SH6.H6_OP
-            OR SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = SH6.H6_OP
-       )
+       AND SB1.B1_TIPO IN ('PA', 'PI')
+    INNER JOIN SH1010 SH1
+        ON SH1.H1_FILIAL = SH6.H6_FILIAL
+       AND SH1.H1_CODIGO = SH6.H6_RECURSO
+       AND SH1.D_E_L_E_T_ = ' '
+    INNER JOIN ct_inspecao_final CIF
+        ON CIF.HB_FILIAL = SH6.H6_FILIAL
+       AND CIF.ct_inspecao = SH1.H1_CTRAB
     WHERE
         SH6.D_E_L_E_T_ = ' '
         -- AND SH6.H6_FILIAL = :branch, quando informado
         AND SH6.H6_TIPO = 'P'
         AND SH6.H6_OP <> ''
         AND SH6.H6_PRODUTO <> ''
+        AND SH6.H6_RECURSO <> ''
         AND SH6.H6_DTAPONT >= :date_start
         AND SH6.H6_DTAPONT < :date_end
     GROUP BY
@@ -838,14 +796,11 @@ apont_final AS (
         SH6.H6_OP,
         SH6.H6_PRODUTO,
         SH6.H6_OPERAC,
-        SB1.B1_GRUPO
+        SB1.B1_TIPO
 ),
 prod AS (
-    SELECT
-        SUM(qtd_produzida_op) AS total_produzido_milheiro
-    FROM apont_final
-    WHERE
-        B1_GRUPO NOT IN ('9043', '9028')
+    SELECT SUM(qtd_produzida_op) AS total_produzido_milheiro
+    FROM apont_inspecao
 )
 SELECT
     ISNULL(nc.total_devolvido_un, 0) AS total_devolvido_un,
@@ -871,7 +826,7 @@ CROSS JOIN prod;
 Quando `branch` for informado, ele deve ser aplicado tanto no numerador quanto no denominador:
 
 - `QI2010.QI2_FILIAL`;
-- `SG2010.G2_FILIAL`;
+- `SHB010.HB_FILIAL` (CTs de inspeção da filial);
 - `SH6010.H6_FILIAL`.
 
 ### List
