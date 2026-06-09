@@ -7,7 +7,7 @@ Microfrontend para explorar rotas da **api-delpi**, executar requests de teste e
 | Path | Descrição |
 |------|-----------|
 | `/apps/api-delpi-console` | Início — saúde da API |
-| `/apps/api-delpi-console/swagger` | Swagger UI (`/apps/api-delpi/docs`) com JWT automático |
+| `/apps/api-delpi-console/documentacao` | Documentação interativa (`/apps/api-delpi/docs`) com JWT automático |
 | `/apps/api-delpi-console/explorer` | Explorador OpenAPI com executor de requests |
 | `/apps/api-delpi-console/spec` | Inventário OpenAPI + download JSON |
 | `/apps/api-delpi-console/history` | Histórico local de chamadas |
@@ -46,9 +46,9 @@ curl -X POST "http://localhost/core-api/admin/apps/register" \
   --data-binary @api-delpi-console.manifest.json
 ```
 
-## Swagger
+## Documentação interativa
 
-O console embute o Swagger customizado da api-delpi e envia o JWT do portal via `postMessage` (`DELPI_AUTH`), o mesmo contrato usado em iframes do portal. Ver `api-delpi/app/main.py` (`/docs`).
+O console embute a documentação oficial da api-delpi (`/docs`) e envia o JWT do portal via `postMessage` (`DELPI_AUTH`), o mesmo contrato usado em iframes do portal. Ver `api-delpi/app/main.py`.
 
 ## Header de rastreamento
 

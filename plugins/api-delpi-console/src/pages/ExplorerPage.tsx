@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Play, RefreshCw, Search } from "lucide-react";
-import { API_DELPI_SWAGGER_URL } from "../constants/routes";
+import { API_DELPI_DOCS_URL } from "../constants/routes";
 import { apiFetch, fetchOpenApiSpec, type ApiFetchResult } from "../api/httpClient";
 import { ResponsePanel } from "../components/ResponsePanel";
 import {
@@ -134,12 +134,12 @@ export function ExplorerPage({ onNavigate }: Props) {
         <div className="adc-header__actions">
           <a
             className="adc-btn adc-btn--ghost"
-            href={API_DELPI_SWAGGER_URL}
+            href={API_DELPI_DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
           >
             <ExternalLink size={16} />
-            Swagger
+            Documentação
           </a>
           <button type="button" className="adc-btn adc-btn--ghost" onClick={() => void loadSpec()}>
             <RefreshCw size={16} />

@@ -48,7 +48,7 @@ Portal (AppHost federado)
 | Tela | Descrição |
 |------|-----------|
 | **Início** | `GET /health` com status e latência |
-| **Swagger UI** | Iframe `/apps/api-delpi/docs` com bridge `DELPI_AUTH` / `DELPI_REFRESH_REQUEST` |
+| **Documentação da API** | Iframe `/apps/api-delpi/docs` com bridge `DELPI_AUTH` / `DELPI_REFRESH_REQUEST` |
 | **Explorador** | Lista operações do OpenAPI por tag; exemplos de schema; respostas documentadas; executor HTTP |
 | **OpenAPI / Spec** | Resumo da spec (tags, versão), inventário e download `openapi.json` |
 | **Histórico** | Últimas 50 chamadas (status, ms cliente/servidor, `operationId`) |
@@ -59,7 +59,7 @@ Portal (AppHost federado)
 - [x] Manifesto com `basePath` `/apps/api-delpi-console`
 - [x] Header `X-Delpi-Caller-App: api-delpi-console`
 - [x] Exibição de `meta` quando presente no envelope
-- [x] Swagger UI embutido com autorização JWT automática
+- [x] Documentação interativa embutida com autorização JWT automática
 - [x] Página de especificação OpenAPI (inventário + download)
 - [x] Serviço Docker `api-delpi-console`
 

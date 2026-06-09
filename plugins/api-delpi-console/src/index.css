@@ -429,7 +429,7 @@ code {
   font-size: 0.85em;
 }
 
-.adc-page--swagger {
+.adc-page--docs {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 52px);
@@ -437,7 +437,7 @@ code {
   padding-bottom: 0;
 }
 
-.adc-swagger-frame {
+.adc-docs-frame {
   flex: 1;
   width: 100%;
   min-height: 480px;

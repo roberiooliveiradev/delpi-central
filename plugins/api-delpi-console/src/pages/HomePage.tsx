@@ -36,7 +36,7 @@ export function HomePage({ onNavigate }: Props) {
         <div>
           <h1>Console API DELPI</h1>
           <p className="adc-subtitle">
-            Swagger UI, OpenAPI e testes HTTP com inspeção de envelope e latência.
+            Documentação interativa, OpenAPI e testes HTTP com inspeção de envelope e latência.
           </p>
         </div>
       </header>
@@ -66,12 +66,12 @@ export function HomePage({ onNavigate }: Props) {
           ) : null}
         </article>
 
-        <article className="adc-card adc-card--action" onClick={() => onNavigate("swagger")}>
+        <article className="adc-card adc-card--action" onClick={() => onNavigate("documentacao")}>
           <div className="adc-card__icon">
             <BookOpen size={22} />
           </div>
-          <h2>Swagger UI</h2>
-          <p>Interface FastAPI com «Try it out» e JWT autorizado automaticamente.</p>
+          <h2>Documentação da API</h2>
+          <p>Referência interativa de rotas com teste de endpoints e JWT do portal.</p>
         </article>
 
         <article className="adc-card adc-card--action" onClick={() => onNavigate("explorer")}>
@@ -92,9 +92,9 @@ export function HomePage({ onNavigate }: Props) {
       </section>
 
       <section className="adc-panel adc-panel--info">
-        <h3>Integração Swagger</h3>
+        <h3>Autenticação na documentação</h3>
         <p>
-          O Swagger embutido usa <code>/apps/api-delpi/docs</code> com bridge{" "}
+          A documentação embutida usa <code>/apps/api-delpi/docs</code> com bridge{" "}
           <code>DELPI_AUTH</code> (mesmo contrato do portal para iframes). Em 401, o iframe
           solicita reenvio do token via <code>DELPI_REFRESH_REQUEST</code>.
         </p>

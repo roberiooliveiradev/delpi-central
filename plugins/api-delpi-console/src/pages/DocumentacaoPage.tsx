@@ -1,24 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, RefreshCw, Shield } from "lucide-react";
-import { API_DELPI_SWAGGER_URL } from "../constants/routes";
+import { API_DELPI_DOCS_URL } from "../constants/routes";
 import { getAuthToken } from "../lib/auth";
-import { postAuthToSwaggerIframe, setupSwaggerMessageListener } from "../lib/swaggerBridge";
+import { postAuthToDocsIframe, setupDocsMessageListener } from "../lib/docsAuthBridge";
 
 type Props = {
   onNavigate: (path: string) => void;
 };
 
-export function SwaggerPage({ onNavigate }: Props) {
+export function DocumentacaoPage({ onNavigate }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const hasToken = Boolean(getAuthToken());
 
   useEffect(() => {
-    const cleanup = setupSwaggerMessageListener(iframeRef.current, () => {
+    const cleanup = setupDocsMessageListener(iframeRef.current, () => {
       setReloadKey((k) => k + 1);
     });
 
-    const onTokenUpdate = () => postAuthToSwaggerIframe(iframeRef.current);
+    const onTokenUpdate = () => postAuthToDocsIframe(iframeRef.current);
     window.addEventListener("DELPI_TOKEN_UPDATE", onTokenUpdate);
     window.addEventListener("focus", onTokenUpdate);
 
@@ -30,23 +30,23 @@ export function SwaggerPage({ onNavigate }: Props) {
   }, [reloadKey]);
 
   const handleLoad = () => {
-    postAuthToSwaggerIframe(iframeRef.current);
-    window.setTimeout(() => postAuthToSwaggerIframe(iframeRef.current), 400);
-    window.setTimeout(() => postAuthToSwaggerIframe(iframeRef.current), 1200);
+    postAuthToDocsIframe(iframeRef.current);
+    window.setTimeout(() => postAuthToDocsIframe(iframeRef.current), 400);
+    window.setTimeout(() => postAuthToDocsIframe(iframeRef.current), 1200);
   };
 
-  const swaggerSrc = `${API_DELPI_SWAGGER_URL}?_reload=${reloadKey}`;
+  const docsSrc = `${API_DELPI_DOCS_URL}?_reload=${reloadKey}`;
 
   return (
-    <div className="adc-page adc-page--swagger">
+    <div className="adc-page adc-page--docs">
       <header className="adc-header adc-header--compact">
         <div>
           <button type="button" className="adc-link" onClick={() => onNavigate("")}>
             ← Início
           </button>
-          <h1>Swagger UI</h1>
+          <h1>Documentação da API</h1>
           <p className="adc-subtitle">
-            Interface oficial FastAPI — «Try it out» com JWT do portal pré-autorizado.
+            Referência interativa de rotas — teste endpoints com o JWT do portal já autorizado.
           </p>
         </div>
         <div className="adc-header__actions">
@@ -67,7 +67,7 @@ export function SwaggerPage({ onNavigate }: Props) {
           </button>
           <a
             className="adc-btn adc-btn--ghost"
-            href={API_DELPI_SWAGGER_URL}
+            href={API_DELPI_DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -79,16 +79,16 @@ export function SwaggerPage({ onNavigate }: Props) {
 
       {!hasToken ? (
         <div className="adc-panel adc-panel--warn">
-          Faça login no portal para autorizar automaticamente o Bearer no Swagger.
+          Faça login no portal para autorizar automaticamente as chamadas na documentação.
         </div>
       ) : null}
 
       <iframe
         ref={iframeRef}
         key={reloadKey}
-        className="adc-swagger-frame"
-        title="Swagger UI — API DELPI"
-        src={swaggerSrc}
+        className="adc-docs-frame"
+        title="Documentação interativa — API DELPI"
+        src={docsSrc}
         onLoad={handleLoad}
       />
     </div>

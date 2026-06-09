@@ -9,7 +9,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "home", label: "Início", segment: "" },
-  { id: "swagger", label: "Swagger", segment: "swagger" },
+  { id: "documentacao", label: "Documentação", segment: "documentacao" },
   { id: "explorer", label: "Explorador", segment: "explorer" },
   { id: "spec", label: "OpenAPI", segment: "spec" },
   { id: "history", label: "Histórico", segment: "history" },

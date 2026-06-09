@@ -1,7 +1,7 @@
 import { getAuthToken, getMessageTargetOrigin } from "./auth";
 
-/** Envia JWT ao Swagger UI customizado da api-delpi (main.py → DELPI_AUTH). */
-export function postAuthToSwaggerIframe(iframe: HTMLIFrameElement | null): void {
+/** Envia JWT à documentação interativa da api-delpi (main.py → DELPI_AUTH). */
+export function postAuthToDocsIframe(iframe: HTMLIFrameElement | null): void {
   if (!iframe?.contentWindow) return;
 
   const token = getAuthToken();
@@ -13,7 +13,7 @@ export function postAuthToSwaggerIframe(iframe: HTMLIFrameElement | null): void 
   );
 }
 
-export function setupSwaggerMessageListener(
+export function setupDocsMessageListener(
   iframe: HTMLIFrameElement | null,
   onUnauthorized?: () => void,
 ): () => void {
@@ -21,13 +21,13 @@ export function setupSwaggerMessageListener(
     if (event.origin !== getMessageTargetOrigin()) return;
 
     if (event.data?.type === "DELPI_AUTH_READY") {
-      postAuthToSwaggerIframe(iframe);
+      postAuthToDocsIframe(iframe);
       return;
     }
 
     if (event.data?.type === "DELPI_REFRESH_REQUEST") {
       onUnauthorized?.();
-      window.setTimeout(() => postAuthToSwaggerIframe(iframe), 300);
+      window.setTimeout(() => postAuthToDocsIframe(iframe), 300);
     }
   };
 

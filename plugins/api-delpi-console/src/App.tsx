@@ -6,7 +6,7 @@ import { ExplorerPage } from "./pages/ExplorerPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { HomePage } from "./pages/HomePage";
 import { SpecPage } from "./pages/SpecPage";
-import { SwaggerPage } from "./pages/SwaggerPage";
+import { DocumentacaoPage } from "./pages/DocumentacaoPage";
 import "./index.css";
 
 export type AppProps = {
@@ -23,8 +23,8 @@ function navigateTo(segment: string) {
 
 function renderPage(segment: string, onNavigate: (s: string) => void) {
   switch (segment) {
-    case "swagger":
-      return <SwaggerPage onNavigate={onNavigate} />;
+    case "documentacao":
+      return <DocumentacaoPage onNavigate={onNavigate} />;
     case "explorer":
       return <ExplorerPage onNavigate={onNavigate} />;
     case "spec":

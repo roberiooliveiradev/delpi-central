@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "api-delpi-console",
   "name": "Console API DELPI",
-  "description": "Swagger UI, explorador OpenAPI, testes HTTP e inspeção de respostas da api-delpi",
+  "description": "Documentação interativa, explorador OpenAPI, testes HTTP e inspeção de respostas da api-delpi",
   "icon": "terminal",
   "version": "0.1.0",
   "type": "microfrontend",
@@ -26,8 +26,8 @@
       "showInMenu": true
     },
     {
-      "path": "/apps/api-delpi-console/swagger",
-      "label": "Swagger UI",
+      "path": "/apps/api-delpi-console/documentacao",
+      "label": "Documentação da API",
       "permission": "api-delpi-console.view",
       "icon": "terminal",
       "order": 91,
