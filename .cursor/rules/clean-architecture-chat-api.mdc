@@ -1,4 +1,11 @@
+---
+description: Clean Architecture — camadas e checklist do minha-delpi-ai-api (chat)
+alwaysApply: true
+---
+
 # Clean Architecture — minha-delpi-ai-api (chat)
+
+Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 
 ## Dependências
 

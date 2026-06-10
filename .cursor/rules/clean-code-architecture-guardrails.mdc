@@ -1,0 +1,53 @@
+---
+description: Guardrails obrigatórios de clean code e clean architecture — avisar antes de desviar
+alwaysApply: true
+---
+
+# Clean code e clean architecture — guardrails obrigatórios
+
+## Compromisso
+
+**Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
+
+Regras complementares (obrigatórias): `centralized-rules-first.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`.
+
+## O que significa «alinhado» aqui
+
+| Princípio | Aplicação neste repo |
+|-----------|----------------------|
+| **Single responsibility** | Um serviço/módulo canônico por regra de negócio; use case só orquestra. |
+| **Dependências corretas** | Domain sem infra; MFE não importa JSON da API no build. |
+| **Uma fonte de verdade** | Sem duplicar flags, semântica ou `if` entre API e MFE para o mesmo comportamento. |
+| **Contrato explícito** | Metadata (`explicitSessionFormat`, `presentationDecision`, slots) com significado único e pipeline que **consome** o serviço até o fim. |
+| **Generalização** | Preferir extensão de serviço/perfil JSON a caso especial em componente ou agente. |
+| **Teste de regressão** | Regra nova ou bugfix → teste que falha sem a regra (ideal: qualidade vs. fixture/canônico). |
+
+## Sinais de alerta — avisar o usuário imediatamente
+
+Interromper ou sinalizar com **«⚠ Desvio de clean architecture»** quando:
+
+1. **Serviço escrito mas não ligado ao pipeline** (ex.: `finalize_*` existe nos testes mas o use case não chama).
+2. **Mesmo conceito, dois significados** (ex.: `explicitSessionFormat` setado por text-first automático *e* por escolha do usuário).
+3. **Fix só no MFE** para comportamento que nasce na API (ou vice-versa) sem contrato metadata.
+4. **Patch pontual** em componente/use case/prompt quando existe módulo canônico na tabela de `centralized-rules-first.mdc`.
+5. **Teste que asserta comportamento errado** só para passar CI, em vez de corrigir a regra.
+6. **Lógica de apresentação/intenção duplicada** em `Send*` e `Stream*` sem extrair para serviço base.
+
+Formato do aviso (obrigatório quando aplicável):
+
+> **⚠ Desvio de clean architecture:** [o que está errado] → **canônico:** [módulo/serviço] → **risco:** [regressão duplicada / contrato ambíguo / etc.]
+
+Só prosseguir com desvio após confirmação explícita do usuário ou refatoração para o módulo canônico.
+
+## Checklist antes de implementar (não pular)
+
+- [ ] Identifiquei o **módulo canônico** (não o sintoma na UI/use case).
+- [ ] A regra fica **desacoplada** (serviço + perfil JSON + teste), não espalhada.
+- [ ] O **pipeline completo** chama o serviço (build → enrich → align → finalize).
+- [ ] **API e MFE** concordam no contrato (metadata); MFE não reimplementa decisão da API.
+- [ ] **Teste de regressão** cobre o bug ou a qualidade esperada (fixture/canônico quando couber).
+- [ ] Nenhum texto PT novo hardcoded fora de `assistant/*.json`.
+
+## Anti-padrão documentado (jun/2026 — apresentação)
+
+Regressão evitável: `ChatPresentationTextModeService.finalize_*` implementado + testado, mas text-first gravava `explicitSessionFormat` indevidamente e o MFE tinha fallback para segmentos visuais na aba Texto. **Lição:** implementação incompleta ou semântica duplicada **não** é «melhoria entregue» — é dívida que quebra modos Texto/Painel/Automático.
