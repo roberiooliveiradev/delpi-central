@@ -17,6 +17,8 @@
   box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
   backdrop-filter: blur(8px);
   pointer-events: auto;
+  container-type: inline-size;
+  container-name: si-tree-map-floating-panel;
 }
 
 .si-tree-map-floating--collapsed {
@@ -150,11 +152,11 @@
 
 .si-tree-map-floating__filters.si-reference-filters {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px 10px;
   min-width: 0;
-  max-width: none;
+  max-width: 100%;
   grid-template-columns: none;
 }
 
@@ -178,15 +180,15 @@
 .si-tree-map-floating__view-controls {
   display: inline-flex;
   flex-shrink: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   padding: 4px 5px;
   border-radius: 16px;
   background: color-mix(in srgb, var(--si-card-bg) 88%, var(--si-text-muted));
   border: 1px solid var(--si-card-border);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface, #ffffff) 40%, transparent);
-  white-space: nowrap;
 }
 
 .si-tree-map-floating__tree-actions {
@@ -282,31 +284,33 @@
   letter-spacing: 0.02em;
 }
 
-/* Desktop: cabeçalho em linha; filtros e zoom compartilham a segunda linha */
+/* Desktop: toolbar flexível — quebra linha quando filtros e zoom não cabem */
 @media (min-width: 1101px) {
   .si-tree-map-floating__toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "head head"
-      "filters viewport";
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
     gap: 8px 12px;
-    align-items: end;
   }
 
   .si-tree-map-floating__row--head {
-    grid-area: head;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .si-tree-map-floating__row--filters {
-    grid-area: filters;
+    flex: 1 1 auto;
     width: auto;
     min-width: 0;
+    max-width: 100%;
   }
 
   .si-tree-map-floating__row--viewport {
-    grid-area: viewport;
+    flex: 1 1 280px;
     width: auto;
+    max-width: 100%;
+    margin-left: auto;
     justify-content: flex-end;
   }
 
@@ -324,12 +328,14 @@
     gap: 8px;
   }
 
-  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--head,
-  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--viewport {
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--head {
+    flex: 0 1 auto;
     width: auto;
   }
 
   .si-tree-map-floating__panel--collapsed .si-tree-map-floating__row--viewport {
+    flex: 0 1 auto;
+    width: auto;
     margin-left: auto;
   }
 }
@@ -347,31 +353,40 @@
   }
 }
 
-/* Telas largas: uma única linha com wrap automático quando faltar espaço */
-@media (min-width: 1500px) {
-  .si-tree-map-floating__toolbar {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: "head filters viewport";
-    align-items: center;
-    gap: 10px 14px;
-  }
-
-  .si-tree-map-floating__row--head {
-    width: auto;
+/* Painel largo o suficiente: tenta uma única linha (largura real, não viewport) */
+@container si-tree-map-floating-panel (min-width: 1320px) {
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__toolbar {
     flex-wrap: nowrap;
+    align-items: center;
   }
 
-  .si-tree-map-floating__head-trail {
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__row--head {
+    flex: 0 1 auto;
+    width: auto;
+  }
+
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__head-trail {
     margin-left: 0;
   }
 
-  .si-tree-map-floating__row--filters {
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__row--filters {
+    flex: 1 1 auto;
     justify-content: center;
   }
 
-  .si-tree-map-floating__filters.si-reference-filters {
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__filters.si-reference-filters {
     justify-content: center;
-    flex-wrap: nowrap;
+  }
+
+  .si-tree-map-floating__panel:not(.si-tree-map-floating__panel--collapsed)
+    .si-tree-map-floating__row--viewport {
+    flex: 0 1 auto;
+    margin-left: 0;
   }
 }
 
@@ -412,7 +427,7 @@
   .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
     width: 100%;
     justify-content: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 6px;
   }

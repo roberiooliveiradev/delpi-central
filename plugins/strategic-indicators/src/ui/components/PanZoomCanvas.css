@@ -249,7 +249,7 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   }
 
   .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
-    padding-top: clamp(118px, 16vh, 168px);
+    padding-top: clamp(132px, 18vh, 220px);
   }
 
   .si-pan-zoom__hint-text--desktop {
