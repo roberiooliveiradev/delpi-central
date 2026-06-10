@@ -1,0 +1,194 @@
+{
+  "sections": {
+    "summaryHeader": "**Resumo**",
+    "interpretationHeader": "**Interpretação**",
+    "indicatorsHeader": "**Indicadores principais**",
+    "attentionHeader": "**Pontos de atenção**",
+    "limitationsHeader": "**Limitações da consulta**",
+    "nextActionHeader": "**Próxima ação recomendada**",
+    "nextStepsHeader": "**Próximos passos sugeridos**",
+    "computedByPlatform": "Cálculo da plataforma",
+    "computedByEstimate": "Estimativa da plataforma"
+  },
+  "alertLevels": {
+    "ok": "OK",
+    "attention": "Atenção",
+    "critical": "Crítico",
+    "unknown": "Indefinido"
+  },
+  "alertLevelLines": {
+    "ok": "Status geral: **OK** — não há bloqueio aparente nos dados consultados.",
+    "attention": "Status geral: **Atenção** — há pendências ou sinais que merecem validação.",
+    "critical": "Status geral: **Crítico** — há bloqueio, falta ou risco direto na operação.",
+    "unknown": "Status geral: **Indefinido** — os dados retornados não permitem concluir com segurança."
+  },
+  "summaryTemplates": {
+    "withInterpretation": "{summary} Na prática, {interpretation}",
+    "summaryOnly": "{summary}"
+  },
+  "limitations": {
+    "pagination": "Esta análise considera apenas os registros desta página; pode haver mais posições na consulta completa.",
+    "periodOnly": "A análise respeita o período e filtros da consulta atual; histórico completo ou dados externos não foram avaliados.",
+    "partialCoverage": "Alguns blocos operacionais podem não ter sido consultados neste turno."
+  },
+  "nextActions": {
+    "factory_status": "Validar MPs com cobertura baixa e conferir se a OP já teve apontamento no chão de fábrica.",
+    "stock": "Conferir posições com disponível negativo ou empenho acima do saldo e pedir a próxima página se a lista estiver truncada.",
+    "production_status": "Confirmar no Protheus se a OP aberta já iniciou apontamento e comparar quantidade apontada com a ordem.",
+    "shipping_status": "Revisar perdas de inspeção frente ao expedido e validar CT/recurso dos registros com divergência."
+  },
+  "recommendations": {
+    "factory_status": [
+      "Ver saldo detalhado das MPs com cobertura baixa",
+      "Listar OPs abertas sem apontamento",
+      "Comparar expedição com produção finalizada"
+    ],
+    "stock": [
+      "Mostrar apenas posições com disponível negativo",
+      "Ver concentração por filial",
+      "Pedir a próxima página de estoque"
+    ],
+    "production_status": [
+      "Detalhar apontamentos SH6010 do período",
+      "Comparar quantidade da OP com apontamento",
+      "Ver status fabril completo do produto"
+    ],
+    "shipping_status": [
+      "Listar registros com perda de inspeção",
+      "Comparar com o período anterior",
+      "Ver status fabril do mesmo produto"
+    ],
+    "generic_list": [
+      "Filtrar os registros por critério relevante",
+      "Pedir a próxima página se a lista estiver truncada",
+      "Detalhar um registro específico da lista"
+    ]
+  },
+  "recommendationQueries": {
+    "factory_status": [
+      {
+        "label": "Ver saldo detalhado das MPs com cobertura baixa",
+        "query": "Mostrar saldo das matérias-primas com cobertura baixa",
+        "reason": "Validar risco de ruptura antes de liberar produção"
+      },
+      {
+        "label": "Listar OPs abertas sem apontamento",
+        "query": "Listar ordens de produção abertas sem apontamento",
+        "reason": "Confirmar se a produção já iniciou no chão de fábrica"
+      },
+      {
+        "label": "Comparar expedição com produção finalizada",
+        "query": "Comparar expedição com produção finalizada do produto",
+        "reason": "Entender gargalo entre produção e saída"
+      }
+    ],
+    "stock": [
+      {
+        "label": "Mostrar apenas posições com disponível negativo",
+        "query": "Filtrar estoque com disponível negativo",
+        "reason": "Priorizar posições com risco de empenho acima do físico"
+      },
+      {
+        "label": "Ver concentração por filial",
+        "query": "Mostrar concentração de estoque por filial",
+        "reason": "Identificar onde o saldo está concentrado"
+      },
+      {
+        "label": "Pedir a próxima página de estoque",
+        "query": "Mostrar a próxima página de estoque",
+        "reason": "Ampliar cobertura quando a lista estiver truncada"
+      }
+    ],
+    "production_status": [
+      {
+        "label": "Detalhar apontamentos SH6010 do período",
+        "query": "Detalhar apontamentos SH6010 do período",
+        "reason": "Conferir movimentação real da OP"
+      },
+      {
+        "label": "Comparar quantidade da OP com apontamento",
+        "query": "Comparar quantidade da OP com apontamento",
+        "reason": "Detectar divergência entre planejado e apontado"
+      },
+      {
+        "label": "Ver status fabril completo do produto",
+        "query": "Ver status fabril completo do produto",
+        "reason": "Contextualizar a OP no panorama fabril"
+      }
+    ],
+    "shipping_status": [
+      {
+        "label": "Listar registros com perda de inspeção",
+        "query": "Listar expedições com perda de inspeção",
+        "reason": "Isolar registros com qualidade comprometida"
+      },
+      {
+        "label": "Comparar com o período anterior",
+        "query": "Comparar expedição com o período anterior",
+        "reason": "Avaliar tendência de saída"
+      },
+      {
+        "label": "Ver status fabril do mesmo produto",
+        "query": "Ver status fabril do mesmo produto",
+        "reason": "Relacionar expedição com produção e estoque"
+      }
+    ],
+    "generic_list": [
+      {
+        "label": "Filtrar os registros por critério relevante",
+        "query": "Filtrar esta lista por critério relevante",
+        "reason": "Reduzir ruído em listas extensas"
+      },
+      {
+        "label": "Pedir a próxima página se a lista estiver truncada",
+        "query": "Mostrar a próxima página desta consulta",
+        "reason": "Ampliar cobertura quando houver paginação"
+      },
+      {
+        "label": "Detalhar um registro específico da lista",
+        "query": "Detalhar um registro específico desta lista",
+        "reason": "Aprofundar em um item de interesse"
+      }
+    ]
+  },
+  "generic": {
+    "emptyList": "A consulta não retornou registros.",
+    "rowCount": "Foram retornados **{count}** registros.",
+    "shapeRecommend": "O formato dos dados sugere apresentação em **{visual}**.",
+    "largeList": "A lista é extensa; considere filtros ou paginação para focar o que importa.",
+    "numericTotal": "Total de **{field}**: **{total}**."
+  },
+  "anomalies": {
+    "empty_list": "Não há registros na consulta ({scope}).",
+    "negative_value": "Valor negativo em **{field}** ({scope}).",
+    "zero_value": "Valor zerado em **{field}** ({scope}).",
+    "truncated_result": "Resultado possivelmente truncado ({scope})."
+  },
+  "visualHints": {
+    "time_series": "série temporal",
+    "categorical_ranking": "ranking categórico",
+    "composition": "composição",
+    "hierarchy": "hierarquia",
+    "kpi_set": "indicadores",
+    "generic_list": "tabela",
+    "field_value_profile": "perfil campo-valor",
+    "table": "tabela",
+    "line_chart": "gráfico de linha",
+    "horizontal_bar": "barras horizontais",
+    "donut": "gráfico de rosca",
+    "tree": "árvore",
+    "kpi": "indicadores",
+    "text": "texto"
+  },
+  "readingLayers": {
+    "quick": ["summary", "alertLevel", "nextAction"],
+    "diagnostic": ["highlights", "attention", "interpretation", "analysis"],
+    "evidence": ["tables", "charts", "tree", "sourceMeta"]
+  },
+  "policyMarkers": {
+    "dataAnswer": "dataAnswer",
+    "dataCommentary": "dataCommentary",
+    "presentationDecision": "presentationDecision",
+    "humanizedSummary": "humanizedSummary"
+  }
+}

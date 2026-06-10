@@ -10,6 +10,7 @@ Relacionado:
 - [apresentacao-dados-generalizada-jun2026.md](./apresentacao-dados-generalizada-jun2026.md) — onda 1 (fases 0–6, **concluída**)
 - [humanized-narrative-stack-jun2026.md](../architecture/humanized-narrative-stack-jun2026.md) — narrativa humanizada
 - [playbook-09-apresentacao-rica.md](./playbook-09-apresentacao-rica.md) — decisor + MFE unificado
+- [playbook-13-respostas-humanizadas-dados.md](./playbook-13-respostas-humanizadas-dados.md) — camada semântica (`dataAnswer`), score, DecisionCard, perfis `generic_*`
 - [chat-assistant-content-presentation.md](../architecture/chat-assistant-content-presentation.md) — contrato metadata
 
 **Commits de referência (onda 1 parcial):** `70d9556f`, `cc4ce7d8`, `6afa8243`, `072b3503`.

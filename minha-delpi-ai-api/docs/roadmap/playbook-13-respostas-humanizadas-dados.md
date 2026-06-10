@@ -1,18 +1,22 @@
-# Playbook 13 — Respostas humanizadas com dados
+# Playbook 13 — Apresentação humanizada e generalizada de dados
 
 **Projeto:** Minha DELPI Chat IA  
-**Escopo:** qualquer resposta que envolva dados — financeiro, vendas, estoque, produção, atendimento, RH, projetos, qualidade, indicadores, relatórios, integrações, APIs ou bases internas.  
-**Status:** H0 documentado (jun/2026) · H1–H6 planejadas  
+**Escopo:** qualquer resposta baseada em dados — financeiro, vendas, estoque, produção, atendimento, RH, projetos, qualidade, indicadores, relatórios, integrações, APIs ou bases internas.  
+**Status:** P1 parcial (H0–H2) · P2–P5 planejadas (jun/2026)  
 **Público:** backend, frontend MFE, revisores de PR, agentes Cursor
 
-> **Regra central:** a IA não deve apenas apresentar dados. Deve transformar dados em **entendimento, contexto e próximos passos**.
+> **Regra de ouro:** a IA não deve mostrar primeiro os dados. Deve primeiro explicar o que os dados significam. A apresentação visual é **evidência** da resposta, não substituto da interpretação.
+
+```text
+Dados brutos → interpretação estruturada → decisão de visual → narrativa humana → evidências auditáveis
+```
 
 Relacionado:
 
 - [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) — pipeline único herdado por agentes e projetos
 - [`humanized-narrative-stack-jun2026.md`](../architecture/humanized-narrative-stack-jun2026.md) — narrativa antes dos painéis
-- [`playbook-09-apresentacao-rica.md`](./playbook-09-apresentacao-rica.md) — decisão de formato e insight
-- [`playbook-12-apresentacao-declarativa-refatoracao.md`](./playbook-12-apresentacao-declarativa-refatoracao.md) — perfis declarativos e stack
+- [`playbook-09-apresentacao-rica.md`](./playbook-09-apresentacao-rica.md) — decisão de formato, insight, data shape
+- [`playbook-12-apresentacao-declarativa-refatoracao.md`](./playbook-12-apresentacao-declarativa-refatoracao.md) — perfis declarativos e stack (onda 1 concluída)
 - [`playbook-10-contrato-respostas-api-delpi.md`](./playbook-10-contrato-respostas-api-delpi.md) — contrato api-delpi → presenter
 - [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md) — bundles JSON PT-BR
 
@@ -22,414 +26,603 @@ Relacionado:
 
 ## 1. Objetivo
 
-Padronizar respostas com dados para que **toda** consulta operacional (action, SQL, KPI, multi-rota) siga a mesma lógica:
+Evoluir a apresentação do Minha DELPI Chat para que **qualquer** retorno com dados seja convertido em resposta clara, humana, visual e orientada à decisão.
+
+A IA deve explicar:
 
 ```text
-Primeiro responde → depois mostra evidências
-Primeiro orienta  → depois detalha
-Primeiro explica o impacto → depois apresenta campos técnicos
+O que foi encontrado.
+O que isso significa.
+Qual é o ponto de atenção.
+Qual é o próximo passo recomendado.
+Quais evidências sustentam a conclusão.
 ```
 
-**Critério de sucesso:**
+**Critérios de sucesso:**
 
 | Métrica | Hoje (jun/2026) | Alvo |
 |---------|-----------------|------|
-| Perfis com `dataCommentary` estruturado | `factory_status` (+ narrativa parcial em outras rotas) | ≥ 90% das rotas tier A/B com commentary ou narrativa equivalente |
-| Resposta começa com conclusão | Parcial (stack texto + insight) | 100% dos turnos com dados via gate de qualidade |
-| Separação fato / análise / hipótese | Implícita no LLM | Explícita no metadata + prosa |
-| Níveis de alerta padronizados | Pontos de atenção livres | `OK` / `Atenção` / `Crítico` / `Indefinido` em metadata |
-| Visualizações com propósito | `presentationDecision` + perfis | Toda visual com `purpose` + pergunta respondida |
-| Checklist §19 automatizado | Manual | Fixture de regressão + smoke E2E |
+| Conclusão antes dos visuais | Parcial (`<!-- section:summary -->` + `dataCommentary`) | 100% dos turnos com dados |
+| Camada semântica (`dataAnswer`) | `dataCommentary` parcial | `dataAnswer` unificado em metadata |
+| Perfis com interpretação estruturada | `factory_status`, `stock`, `production_status`, `shipping_status` | ≥ 90% rotas tier A/B + shapes genéricos |
+| Decisão por forma dos dados | `ChatPresentationDataShapeAnalyzer` + perfis | Score auditável em `presentationDecision.scores` |
+| Preferência explícita ponta a ponta | Composer + `ChatPresentationPrimaryViewService` | Pipeline ordenado (§5) sem drift API↔MFE |
+| Visual com propósito | `reason` parcial | `purpose` + pergunta respondida por visual |
+| Recomendações clicáveis | Chips removidos pós-resposta; JSON parcial | `recommendations[]` com `label` + `query` |
+| Testes por shape | Casos por rota (P1–P16) | Fixture por shape genérico (§17) |
+| Auditoria de cobertura | `audit_presentation_coverage.py` (rotas) | + colunas narrativa/limitações/recomendações |
 
 ---
 
 ## 2. Princípio de arquitetura
 
-Inteligência **no chat base** — agentes adicionam restrições e escopo, não reimplementam narrativa.
+Inteligência **no chat base** — agentes adicionam restrições; não reimplementam narrativa nem decisão de formato.
+
+### 2.1 Pipeline alvo
 
 ```text
 Dados brutos (api-delpi / SQL / action)
-  → Presenter (tabela, gráfico, KPI, árvore)          ← evidência (camada 3)
-  → ChatOperationalDataCommentaryService (+ extensões) ← diagnóstico determinístico (camada 2)
-  → ChatPresentationHumanizedNarrativeService          ← prosa fina no markdown
-  → ChatPresentationDecisionService                    ← ordem, formato, insight
-  → ChatOperationalCommentaryEnrichmentService         ← metadata.dataCommentary
-  → MFE ChatAssistantContent                           ← render em camadas (texto → KPI → gráfico → tabela)
-  → LLM (quando necessário)                          ← complemento, nunca substituto do commentary base
+  → ChatDataInsightService                    ← interpretação estruturada (dataAnswer)     [P1]
+  → ChatPresentationDataShapeAnalyzer         ← forma dos dados (shape)                  [existe]
+  → Presenter / visual builders               ← evidências (table/chart/tree/kpi/…)      [existe]
+  → ChatPresentationDecisionService           ← preferência + score + primário           [P3]
+  → ChatPresentationHumanizedNarrativeService ← narrativa markdown                       [P1 evoluir]
+  → ChatPresentationStackOrderService         ← stack summary_then_evidence              [existe]
+  → MFE ChatAssistantContent                  ← DecisionCard / story / painéis           [P4]
+  → LLM                                       ← complemento; nunca substituto base
 ```
+
+### 2.2 Separação de responsabilidades
+
+| Camada | Responsabilidade | Não faz |
+|--------|------------------|---------|
+| **Insight** (`ChatDataInsightService`) | Significado: fatos, análise, hipótese, risco, métricas derivadas, limitações, `visualHints` | Renderizar tabela/gráfico |
+| **Presenter** | Montar `presentation`, `tablePresentation`, `chartPresentation`, … | Decidir «o que significa» para o usuário |
+| **Decisor** (`ChatPresentationDecisionService`) | Formato primário, score, `purpose`, ordem do stack | Texto PT hardcoded |
+| **MFE** | Orquestrar segmentos visuais | Regra de negócio duplicada da API |
+
+### 2.3 Ordem de decisão de formato (generalização)
+
+```text
+1. Preferência explícita do usuário (composer / mensagem)
+2. Forma dos dados (shape)
+3. Perfil da entidade (presentation_profiles.json)
+4. Rota/path como hint
+5. Default global
+```
+
+### 2.4 Regras shape → visual
+
+| Forma dos dados | Visual preferencial |
+|-----------------|---------------------|
+| Objeto campo/valor | Ficha / card resumo / KPI |
+| Lista de registros | Tabela |
+| Lista categoria + valor | Gráfico de barras |
+| Série temporal | Gráfico de linha |
+| Partes de um total | Composição / donut |
+| Hierarquia pai-filho | Árvore |
+| Poucos indicadores | KPI cards |
+| Múltiplos blocos ricos | Dashboard / stack |
+| Texto longo / relatório | Canvas / lousa |
 
 **Proibido:**
 
-- Regra de «começar pela conclusão» só no `system_prompt` de um agente
-- `if` de domínio no MFE para decidir narrativa
-- Strings PT novas em Python/TS fora de `app/content/pt-BR/assistant/*.json`
-- Duplicar a mesma regra em `Send*` e `Stream*` sem serviço compartilhado
+- Conclusão só no `system_prompt` do agente
+- `if` de domínio no MFE para narrativa ou formato
+- Strings PT em Python/TS fora de `assistant/*.json`
+- Preferência que altera só `selected` mas a UI mostra outro primário
+- Gráfico/tabela «decorativa» sem `purpose`
 
 ---
 
-## 3. Mapa das diretrizes → módulo canônico
+## 3. Mapa unificado — diretriz → módulo canônico
 
-| § | Diretriz | Módulo canônico | Artefato / contrato | Status |
+Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook anterior.
+
+| § | Diretriz | Módulo canônico | Contrato / artefato | Status |
 |---|----------|-----------------|---------------------|--------|
-| 1 | Começar pela resposta | `ChatOperationalDataCommentaryService` + `ChatPresentationHumanizedNarrativeService` | `dataCommentary.summary`, `textPresentation.markdown` (seção Resumo) | 🟡 Parcial |
-| 2 | Fato / análise / hipótese / recomendação | **Novo** `ChatHumanizedDataResponseService` | `dataCommentary.facts[]`, `analysis[]`, `hypotheses[]`, `recommendations[]` | ⬜ |
-| 3 | Números com significado | Commentary + `ChatPresentationFieldNormalizationService` | Frases com interpretação por métrica em JSON de perfil | 🟡 |
-| 4 | Estrutura padrão de resposta | `ChatPresentationStackOrderService` + `presentation_profiles.json` | Ordem fixa: resumo → KPI → atenção → prosa → visuais → detalhes → ações | 🟡 |
-| 5 | Níveis de leitura (rápida / diagnóstico / evidência) | `ChatPresentationDecisionService` + MFE segmentos | `presentationDecision.readingLayers` | ⬜ |
-| 6 | Priorizar indicadores relevantes | Commentary + `ChatPresentationKpiAssemblyService` | KPI cards filtrados por `relevanceScore` | 🟡 |
-| 7 | Destacar anomalias | **Novo** `ChatDataAnomalyDetectionService` | `dataCommentary.anomalies[]` | ⬜ |
-| 8 | Visualizações com propósito | `ChatPresentationDecisionService` + `ChatChartTypeSelectionService` | `presentation.purpose`, `presentationDecision.reason` | 🟡 |
-| 9 | Métricas derivadas | Commentary (cálculo determinístico) | `dataCommentary.derivedMetrics[]` com flag `computedBy: "ai"` | ⬜ |
-| 10 | Níveis de alerta | Commentary + JSON | `dataCommentary.alertLevel`: `ok` \| `attention` \| `critical` \| `unknown` | ⬜ |
-| 11 | Limitações da consulta | `ChatPresentationCoverageService` + commentary | `dataCommentary.limitations[]`, `coverageNotice` existente | 🟡 |
-| 12 | Linguagem natural | `humanized_data_response.json` + policies | Templates de frase por perfil | ⬜ |
-| 13 | Precisão adequada | `ChatPresentationFieldNormalizationService` | Arredondamento por `fieldFormats` | ✅ |
-| 14 | Próximas ações | `ChatFollowUpRecommendationService` (evoluir) | Chips sugeridos em JSON, não hardcoded | 🟡 |
-| 15 | Não inventar causa | Policy + commentary | `hypotheses[]` obrigatório com `confirmed: false` | ⬜ |
-| 16 | Template universal | `humanized_data_response.json` | Seções e placeholders | ⬜ |
-| 17 | Prompt desacoplado | `prompt_policies/humanized-data-response.md` | Registro em `PromptPolicyService` (modo global) | ⬜ |
-| 18 | Regra central | Este playbook + `chat-intelligence-base.md` | — | ✅ |
-| 19 | Checklist de validação | **Novo** `ChatHumanizedResponseQualityService` | Fixture `humanized_data_response_cases.py` | ⬜ |
+| A1 | Resposta começa pela conclusão | `ChatHumanizedDataResponseService` + enrichment | `dataAnswer.summary` / `dataCommentary` + `<!-- section:summary -->` | 🟡 |
+| A2 | Camada semântica antes do visual | **`ChatDataInsightService`** (evolui commentary) | `metadata.dataAnswer` | ⬜ |
+| A3 | Fato / análise / hipótese / recomendação | `ChatDataInsightService` | `facts[]`, `analysis[]`, `hypotheses[]`, `recommendations[]` | 🟡 |
+| A4 | Generalizar por forma, não por path | `ChatPresentationDataShapeAnalyzer` + `presentation_profiles.json` | `dataShape`, perfis `generic_*` | 🟡 |
+| A5 | Preferência ponta a ponta | `ChatPresentationPrimaryViewService` + `ExecuteExternalActionUseCase` | Pipeline §5.4 | 🟡 |
+| A6 | Serviço de insights desacoplado | **`ChatDataInsightService`** | Produz interpretação; presenter produz visuais | ⬜ |
+| A7 | Narrativa humanizada evoluída | `ChatPresentationHumanizedNarrativeService` | Consome `dataAnswer`; detectores genéricos | 🟡 |
+| A8 | Perfis declarativos | `presentation_profiles.json` + `ChatPresentationProfileService` | `defaultView`, `stackPlan`, `narrativePolicy`, `followUps` | 🟡 |
+| A9 | Modo automático por score | `ChatPresentationDecisionService` | `presentationDecision.scores` | ⬜ |
+| A10 | Visual com propósito | `ChatPresentationDecisionService` + builders | `purpose`, `message`, `reason` | 🟡 |
+| A11 | Métricas derivadas antes do gráfico | `ChatDataInsightService` | `derivedMetrics[]`, `computedBy` | ⬜ |
+| A12 | Limitações humanizadas | `ChatDataCoverageNoticeService` + insight | `limitations[]`, `coverageNotice` | 🟡 |
+| A13 | Card de decisão (MFE) | **`ChatDecisionCard`** + segment registry | Segmento `decision` / `story.verdict` | ⬜ |
+| A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
+| A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ⬜ |
+| A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
+| A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ⬜ |
+| A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | 🟡 |
 
 Legenda: ✅ entregue · 🟡 parcial · ⬜ planejado
 
----
+### 3.1 Migração `dataCommentary` → `dataAnswer`
 
-## 4. Contrato alvo — `metadata.dataCommentary`
-
-Evolução do contrato já consumido por `ChatDataInterpretationAnswerService`, `chat_tool_context_external_action_formatter` e enrichment pós-tool.
+H1 entregou `dataCommentary` normalizado. P1 unifica sob `dataAnswer` sem quebrar consumidores:
 
 ```json
 {
-  "profileKey": "factory_status",
-  "alertLevel": "attention",
-  "summary": "O produto está em produção, com cobertura de MP baixa em dois componentes.",
-  "interpretation": "Na prática, a fábrica pode seguir no curto prazo, mas há risco de ruptura se o consumo se mantiver.",
-  "nextAction": "Verificar saldo detalhado dos códigos 10080063 e 10130006 e comparar com consumo médio.",
-  "highlights": ["Indicador 1: …", "Indicador 2: …"],
-  "attention": ["Cobertura de MP abaixo de 3 dias para PA."],
-  "facts": [
-    { "label": "Saldo PA consolidado", "value": "4.638", "unit": "UN" }
-  ],
-  "analysis": [
-    { "text": "A queda de saldo está concentrada em duas MPs." }
-  ],
-  "hypotheses": [
-    { "text": "Pode haver atraso de recebimento de MP.", "confirmed": false }
-  ],
-  "recommendations": [
-    { "text": "Listar apenas exceções de estoque.", "intent": "filter_exceptions" }
-  ],
-  "anomalies": [
-    { "type": "zero_value", "field": "available_quantity", "scope": "Fil.01", "impact": "Indefinido sem histórico" }
-  ],
-  "derivedMetrics": [
-    { "key": "mp_coverage_days", "label": "Cobertura estimada de MP", "value": "2,1", "unit": "dias", "computedBy": "platform" }
-  ],
-  "limitations": [
-    "Análise considera apenas estoque autorizado na consulta atual; histórico completo não foi avaliado."
-  ],
-  "narrativeInsight": "…",
-  "readingLayer": {
-    "quick": ["summary", "alertLevel", "nextAction"],
-    "diagnostic": ["highlights", "attention", "analysis", "anomalies"],
-    "evidence": ["tables", "charts", "sourceMeta"]
+  "dataAnswer": {
+    "summary": {
+      "answer": "Conclusão principal",
+      "meaning": "O que isso significa na prática",
+      "riskLevel": "ok | attention | critical | undefined",
+      "nextAction": "Próximo passo sugerido",
+      "attention": "Ponto de atenção principal"
+    },
+    "facts": [{ "text": "…" }],
+    "analysis": [{ "text": "…" }],
+    "hypotheses": [{ "text": "…", "confirmed": false }],
+    "recommendations": [
+      { "label": "Ver apenas itens críticos", "query": "mostre apenas os itens críticos", "reason": "…" }
+    ],
+    "limitations": ["…"],
+    "derivedMetrics": [
+      { "key": "coverage_days", "label": "Cobertura estimada", "value": "2,1", "unit": "dias", "computedBy": "platform" }
+    ],
+    "visualHints": ["categorical_ranking", "kpi_set"],
+    "profileKey": "factory_status",
+    "anomalies": []
   }
 }
 ```
 
-**Compatibilidade:** campos legados `highlights`, `attention`, `narrativeInsight` permanecem; novos campos são opcionais na H1 e obrigatórios por perfil a partir da H3.
+| Campo legado (`dataCommentary`) | Campo novo (`dataAnswer`) |
+|--------------------------------|---------------------------|
+| `summary` | `summary.answer` |
+| `interpretation` | `summary.meaning` |
+| `alertLevel` | `summary.riskLevel` |
+| `nextAction` | `summary.nextAction` |
+| `attention[]` | `summary.attention` + bloco diagnóstico |
+| `highlights[]` | `facts[]` (migração gradual) |
+| `narrativeInsight` | derivado de `summary` (compat) |
+
+`ChatOperationalCommentaryEnrichmentService` passa a gravar **ambos** durante P1; consumidores migram para `dataAnswer` em P2.
 
 ---
 
-## 5. Bundles JSON e policies
-
-| Tipo | Arquivo | Serviço |
-|------|---------|---------|
-| Templates de seção (Resumo, Diagnóstico, …) | `humanized_data_response.json` (**novo**) | `ChatHumanizedDataResponseContentService` (**novo**) |
-| Insights por perfil operacional | `presenter_content.json` → `compositeAnalysisInsights` | `ChatOperationalDataCommentaryService` |
-| Interpretação pós-consulta | `data_interpretation.json` | `ChatDataInterpretationContentService` |
-| Chips de próxima ação | `follow_up_recommendations.json` (evoluir) | `ChatFollowUpRecommendationService` |
-| Activity / direct answer | `turn_preparation.json` | `ChatTurnPreparationContentService` |
-| Policy global LLM | `prompt_policies/humanized-data-response.md` (**novo**) | `PromptPolicyService` |
-
----
-
-## 6. Pipeline alvo por camada de leitura
-
-### Camada 1 — Visão rápida (§5)
+## 4. Contratos de metadata (coexistência)
 
 ```text
-Resumo + alertLevel + próxima ação
+dataAnswer          ← interpretação (novo, canônico P1+)
+dataCommentary      ← alias legado H1 (deprecar em P3)
+textPresentation    ← markdown narrativo
+presentation*       ← visuais (table, chart, tree, kpi, dashboard)
+presentationDecision← formato, score, purpose, readingLayers
+stackPresentationPlan← ordem de seções e perfil
+humanizedSummary    ← linhas curtas para tool context / LLM
 ```
 
-- Fonte: `dataCommentary.summary` + `alertLevel` + `nextAction`
-- Render: primeiro segmento `text` no stack; KPI compacto quando `presentationDecision.selected` incluir `kpi`
-- MFE: sem scroll obrigatório; título do painel opcionalmente oculto em modo «rápido»
+### 4.1 Bloco de decisão (camada 1 — antes de qualquer visual)
 
-### Camada 2 — Diagnóstico (§5)
+Formato recomendado na UI e no markdown:
 
 ```text
-Indicadores-chave, comparações, tendências, anomalias
+Resumo: [conclusão]
+Interpretação: [significado prático]
+Ponto de atenção: [risco / pendência / oportunidade]
+Próxima ação: [ação sugerida]
+Nível de risco: OK | Atenção | Crítico | Indefinido
 ```
 
-- Fonte: `highlights`, `attention`, `analysis`, `anomalies`, `derivedMetrics`
-- Render: markdown estruturado + KPI grid + insight (`presentationDecision.insight`)
+Implementação atual: `ChatHumanizedDataResponseService.render_quick_layer_markdown()` + evolução para `ChatDecisionCard`.
 
-### Camada 3 — Evidência (§5)
-
-```text
-Tabelas, gráficos, árvore, fonte, filtros, período
-```
-
-- Fonte: `tablePresentation`, `chartPresentation`, `treePresentation`, `apiDelpiResponseMeta`
-- Render: painéis ricos; detalhes técnicos e metadados em rodapé discreto ou seção colapsável (futuro)
-
----
-
-## 7. Regras de visualização (§8)
-
-Integrar ao decisor existente — **não** criar segundo decisor.
-
-| Pergunta do usuário | Formato | Serviço |
-|---------------------|---------|---------|
-| Comparar registros / auditar | `table` | `ChatPresentationDecisionService` |
-| Ranking / maiores / menores | `horizontal_bar` ou `bar` | `ChatChartTypeSelectionService` |
-| Evolução / tendência | `line` / `multi_line` | idem |
-| Participação no total | `donut` / composição | idem + `ChatPresentationChartPolicyService` |
-| Hierarquia / BOM | `tree` | `ChatPresentationCompositeVisualBuilder` |
-| Poucos números decisivos | `kpi` | `ChatPresentationKpiAssemblyService` |
-
-**Nova chave em metadata:**
+### 4.2 `presentationDecision` com score (P3)
 
 ```json
 {
   "presentationDecision": {
-    "purpose": "Responder: quais MPs concentram o saldo disponível?",
-    "message": "Três códigos respondem por 92% do saldo consolidado."
+    "selected": "chart",
+    "fallback": "table",
+    "reason": "Dados categóricos com métrica numérica; barras facilitam comparação.",
+    "purpose": "Quais itens concentram o saldo disponível?",
+    "message": "Três códigos respondem por 92% do total.",
+    "scores": {
+      "text": 40,
+      "table": 70,
+      "chart": 92,
+      "tree": 0,
+      "kpi": 35,
+      "dashboard": 20,
+      "canvas": 0
+    },
+    "readingLayers": {
+      "quick": ["summary", "riskLevel", "nextAction"],
+      "diagnostic": ["facts", "analysis", "attention"],
+      "evidence": ["tables", "charts", "tree"]
+    }
   }
 }
 ```
 
-Textos de `purpose` e `message` → JSON (`presenter_content.json` ou `humanized_data_response.json`), nunca string literal no decisor.
+Exemplos de pontuação (heurística inicial):
+
+```text
+Série temporal        → score_chart.line +40
+Categoria + valor     → score_chart.bar +45
+Hierarquia            → score_tree +50
+Lista grande          → score_table +35
+Poucos indicadores    → score_kpi +40
+Pergunta resumo/status→ score_text +30
+Pergunta ranking      → score_chart +25
+Relatório longo       → score_canvas +35
+```
+
+### 4.3 Tipo `story` (P4)
+
+```json
+{
+  "type": "story",
+  "title": "Status fabril — 90262404",
+  "blocks": [
+    { "kind": "verdict", "title": "Conclusão", "text": "…", "status": "attention" },
+    { "kind": "fact", "text": "…" },
+    { "kind": "analysis", "text": "…" },
+    { "kind": "hypothesis", "text": "…", "confirmed": false },
+    { "kind": "recommendation", "text": "…", "query": "…" },
+    { "kind": "limitation", "text": "…" }
+  ]
+}
+```
+
+Reduz dependência de markdown para blocos críticos; alimentado por `dataAnswer`.
+
+### 4.4 Perfis genéricos mínimos (P2)
+
+Evoluir `presentation_profiles.json`:
+
+```text
+generic_object
+generic_list
+field_value_profile
+time_series
+categorical_ranking
+composition
+hierarchy
+kpi_set
+dashboard_bundle
+document_report
+```
+
+Esqueleto declarativo por perfil:
+
+```json
+{
+  "defaultView": "text",
+  "allowedViews": ["text", "table", "chart"],
+  "stackPlan": "summary_then_evidence",
+  "narrativePolicy": "generic_data_summary",
+  "chartPolicy": "auto_if_possible",
+  "commentaryProfileKey": null,
+  "followUps": []
+}
+```
 
 ---
 
-## 8. Roadmap por fases
+## 5. Pipeline de preferência explícita (§5)
+
+Fluxo canônico — **ordem obrigatória** no `ExecuteExternalActionUseCase`:
+
+```text
+1. Montar todos os visuais disponíveis (presenter + visual bundle)
+2. Gerar dataAnswer (ChatDataInsightService)
+3. Detectar preferência explícita (sessão + mensagem)
+4. Aplicar preferência antes de fixar primário
+5. Calcular presentationDecision (score + selected)
+6. Enriquecer narrativa (HumanizedNarrative + stack markdown)
+7. Montar stack final (StackOrder + section markers)
+```
+
+Serviços envolvidos (já existentes / evoluir):
+
+- `ChatPresentationVisualBundleService` — passo 1
+- `ChatOperationalCommentaryEnrichmentService` → `ChatDataInsightEnrichmentService` — passo 2
+- `ChatPresentationPrimaryViewService` — passo 3–4
+- `ChatPresentationDecisionService` — passo 5
+- `ChatPresentationHumanizedNarrativeService` + `ChatPresentationStackMarkdownService` — passo 6–7
+
+---
+
+## 6. Bundles JSON e policies
+
+| Tipo | Arquivo | Serviço |
+|------|---------|---------|
+| Templates resumo / alerta / limitações | `humanized_data_response.json` | `ChatHumanizedDataResponseContentService` |
+| Insights por domínio operacional | `presenter_content.json` → `compositeAnalysisInsights` | `ChatOperationalDataCommentaryService` → `ChatDataInsightService` |
+| Perfis e shapes | `presentation_profiles.json` | `ChatPresentationProfileService` |
+| Motivos de decisão / score labels | `presentation_vocabulary.json` | `ChatPresentationVocabularyService` |
+| Recomendações clicáveis | `humanized_data_response.json` → `recommendations` | `ChatPresentationRecommendationService` |
+| Cobertura / escopo | `data_coverage.json` | `ChatDataCoverageNoticeService` |
+| Policy LLM | `prompt_policies/humanized-data-response.md` | `PromptPolicyService` |
+
+---
+
+## 7. Frontend — diretrizes MFE (P4)
+
+### 7.1 `ChatDecisionCard`
+
+Segmento semântico **antes** dos painéis, alimentado por `dataAnswer.summary`:
+
+```text
+Conclusão · Status · Nível de risco · Ponto de atenção · Próxima ação · Escopo/confiança
+```
+
+Registro: `registerAssistantSegmentRenderer("decision", …)` — mesmo padrão de `assistantContentRegistry`.
+
+### 7.2 Refatoração de componentes (§15)
+
+Extrair hooks; componentes como orquestradores:
+
+```text
+useAssistantContentSegments
+useAssistantContentRouteSections
+useAssistantContentChrome
+useDecisionCard
+useChartExplanationTrigger
+```
+
+Dividir `assistantContentSegments.ts`:
+
+```text
+sqlMarkdownNormalizer.ts
+visualSegmentCollector.ts
+stackSegmentBuilder.ts
+markerSegmentBuilder.ts
+nativeSingleViewBuilder.ts
+segmentDedupe.ts
+```
+
+**Regra:** MFE não reimplementa score, shape nem interpretação — só renderiza metadata.
+
+---
+
+## 8. Roadmap macro — fases P1 a P5
 
 Atualizar **Status** ao concluir cada fase.
 
-| Fase | Tema | Entregas | Testes | Status |
-|------|------|----------|--------|--------|
-| **H0** | Baseline e playbook | Este documento; inventário §3; alinhamento com narrativa stack jun/2026 | — | ✅ |
-| **H1** | Contrato e conteúdo base | `humanized_data_response.json`; `ChatHumanizedDataResponseContentService`; extensão opcional de `dataCommentary`; policy `humanized-data-response.md` registrada | `test_humanized_data_response_content.py` | ⬜ |
-| **H2** | Commentary determinístico multi-perfil | Estender `ChatOperationalDataCommentaryService` para `stock`, `production_status`, `shipping_status`, SQL tabular genérico; `alertLevel` + `summary` + `nextAction` | `test_chat_operational_data_commentary_service.py` + casos em `chat_intelligence_regression_cases.py` | ⬜ |
-| **H3** | Anomalias e métricas derivadas | `ChatDataAnomalyDetectionService` (zeros, picos, quedas, ausência, outliers simples); `derivedMetrics` com `computedBy`; separação `facts` / `analysis` / `hypotheses` | `test_chat_data_anomaly_detection_service.py` | ⬜ |
-| **H4** | Camadas de leitura e propósito visual | `presentationDecision.readingLayers` + `purpose`; ordem de segmentos no MFE via metadata (sem `if` local); integração com `ChatPresentationInsightService` | `assistantContentVisualFormats.test.ts` + `test_rich_presentation.py` | ⬜ |
-| **H5** | Próximas ações e interpretação | Evoluir `ChatDataInterpretationAnswerService` para novo contrato; chips de continuidade em JSON; LLM só preenche lacunas (`confirmed: false` em hipóteses) | `test_chat_data_interpretation_answer_service.py` | ⬜ |
-| **H6** | Qualidade e encerramento | `ChatHumanizedResponseQualityService` + checklist §19; smoke E2E «status fabril», «estoque», «SQL»; métrica admin `% respostas com summary` | `humanized_data_response_cases.py` + `smoke_e2e_scenarios.json` | ⬜ |
+| Fase | Tema | Entregas principais | Testes / CI | Status |
+|------|------|---------------------|-------------|--------|
+| **P1** | Interpretação universal | `ChatDataInsightService`; `dataAnswer`; detectores genéricos; narrativa consome insight; migração `dataCommentary` | `test_chat_data_insight_service.py`; casos H-01–H-10 | 🟡 |
+| **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-profiles`; tier A | ⬜ |
+| **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ⬜ |
+| **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ⬜ |
+| **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ⬜ |
 
-### H1 — Detalhamento (próxima sprint)
+### 8.1 P1 — Interpretação universal (detalhamento)
 
-1. Criar bundle `humanized_data_response.json` com:
-   - templates de seção (§16);
-   - rótulos de `alertLevel`;
-   - frases de limitação (§11);
-   - marcadores «Cálculo da plataforma» vs «Estimativa» (§9).
-2. Criar `ChatHumanizedDataResponseContentService` (domain) com `get` / `format`.
-3. Adicionar `prompt_policies/humanized-data-response.md` (§17) e registrar em `PromptPolicyService` como policy global em turnos com `dataCommentary` ou `presentationDecision`.
-4. Documentar contrato em [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md).
+**Já entregue (sprints H0–H1):**
 
-### H2 — Detalhamento
+- `humanized_data_response.json`
+- `ChatHumanizedDataResponseService` / `ChatHumanizedDataResponseContentService`
+- Policy `humanized-data-response.md` no `PromptPolicyService`
+- `<!-- section:summary -->` no markdown
 
-1. Generalizar builders em `ChatOperationalDataCommentaryService` (hoje só `factory_status` completo).
-2. Mapear perfis em `presentation_profiles.json` → `commentaryProfileKey`.
-3. Garantir enrichment em **um** ponto: `ChatOperationalCommentaryEnrichmentService` (já ligado ao pipeline pós-tool).
-4. Prosa inicial no stack: `ChatPresentationHumanizedNarrativeService` consome `summary` antes de montar markdown longo.
+**Em curso (H2):**
 
-### H3 — Detalhamento
+- `ChatOperationalDataCommentaryService`: `factory_status`, `stock`, `production_status`, `shipping_status`
 
-1. `ChatDataAnomalyDetectionService` recebe linhas normalizadas + perfil; retorna `anomalies[]` tipadas.
-2. Regras iniciais (sem ML): valor zero inesperado, negativo, queda > X% vs mediana, campo nulo crítico, contagem zerada.
-3. Limiares por perfil em JSON (`humanized_data_response.json` → `anomalyThresholds`).
-4. Hipóteses **só** quando anomalia sem causa nos dados; sempre `confirmed: false`.
+**Próximo em P1:**
 
-### H4 — Detalhamento
+1. Criar `ChatDataInsightService` — facade que:
+   - delega perfis operacionais ao commentary existente;
+   - adiciona caminho genérico por `ChatPresentationDataShapeAnalyzer`;
+   - detecta anomalias (zeros, negativos, paginação, lista vazia);
+   - calcula `derivedMetrics` simples;
+   - emite `dataAnswer` + espelho `dataCommentary`.
+2. Renomear/evoluir enrichment → `ChatDataInsightEnrichmentService` (único ponto pós-tool).
+3. `ChatPresentationHumanizedNarrativeService` lê `dataAnswer.summary` primeiro.
+4. Detectores genéricos (§7): zerados, negativos, ausentes, truncados, pico, queda, outlier simples.
 
-1. API passa `readingLayers` no `presentationDecision`.
-2. MFE `buildAssistantContentSegments` respeita ordem sem reordenar por heurística local.
-3. Cada visual inclui `purpose` (pergunta) visível no título auxiliar ou `insight` — não gráfico decorativo.
+### 8.2 P2 — Perfis declarativos
 
-### H5 — Detalhamento
+1. Adicionar perfis `generic_*` em `presentation_profiles.json`.
+2. Mapear `commentaryProfileKey` e `narrativePolicy` por perfil.
+3. Migrar regras residuais por path para perfil + shape.
+4. Documentar em `presentation_profiles.json` e catálogo.
 
-1. Perguntas «explique», «resuma», «traduz» usam camadas 1–2 do commentary antes do LLM.
-2. Chips «Próximos passos» derivados de `recommendations[]` (máx. 5), textos no JSON.
-3. Policy reforça §15: causa não confirmada → hipótese, nunca afirmação.
+### 8.3 P3 — Preferência e automático
 
-### H6 — Detalhamento
+1. Reordenar `ExecuteExternalActionUseCase._build_presentation_metadata` conforme §5.
+2. Implementar `ChatPresentationDecisionService.compute_scores()`.
+3. Persistir `scores` + `purpose` no metadata.
+4. Garantir paridade send/stream e MFE (`chatPresentation.ts`).
 
-1. Serviço de qualidade valida checklist §19 no metadata antes de persistir mensagem do assistente (warn em dev, métrica em prod).
-2. Fixture com 15 cenários cross-domínio.
-3. Atualizar [`perguntas-teste-chat-jun2026.md`](../testing/perguntas-teste-chat-jun2026.md).
+### 8.4 P4 — UX premium
+
+1. `storyPresentation` na API quando `dataAnswer` presente.
+2. `ChatDecisionCard` no MFE.
+3. Chips de `recommendations[]` com `query` (composer pré-preenchido).
+4. Refatorar `assistantContentSegments.ts` (hooks + módulos §15).
+
+### 8.5 P5 — Governança
+
+1. Estender `audit_presentation_coverage.py`:
+
+```text
+rota | entidade | shape | tier | formatos | default | narrativa? | limitações? | recomendações? | teste? | gaps
+```
+
+2. `ChatHumanizedResponseQualityService` — checklist automatizado.
+3. Fixture `tests/fixtures/humanized_data_response_cases.py` por **shape**, não só rota.
+4. Gate CI opcional `--check-humanized-answer`.
 
 ---
 
-## 9. Integração com trabalho recente (jun/2026)
+## 9. Sprints legadas H0–H6 (referência)
 
-| Entrega recente | Relação com Playbook 13 |
-|-----------------|-------------------------|
-| `ChatOperationalDataCommentaryService` | Núcleo do H2 — expandir perfis |
-| `ChatOperationalCommentaryEnrichmentService` | Ponto único de merge no metadata |
-| Narrativa stack (`humanized-narrative-stack-jun2026.md`) | Camada 1–2 no markdown |
-| `presentationDecision` + remoção de toggle pós-resposta | Evidência fixa (camada 3); foco em prosa inicial |
-| Cores Recharts / tema claro | Legibilidade da camada evidência — não substitui commentary |
-| `ChatPresentationInsightService` | Insight curto alinhado ao §3 (significado do número) |
+Mapa das sprints anteriores dentro do roadmap macro:
+
+| Sprint | Conteúdo | Fase macro |
+|--------|----------|------------|
+| H0 | Baseline playbook | P1 |
+| H1 | Contrato + JSON + policy | P1 ✅ |
+| H2 | Commentary multi-perfil | P1 🟡 |
+| H3 | Anomalias + derivedMetrics | P1 |
+| H4 | readingLayers + purpose | P3 |
+| H5 | Interpretação + chips | P4 |
+| H6 | Qualidade + E2E | P5 |
 
 ---
 
-## 10. Template universal (referência §16)
+## 10. Detectores genéricos (`ChatDataInsightService`)
 
-Ordem canônica para **qualquer** domínio — implementada via stack + commentary, não copiada no prompt do agente.
+| Detector | Entrada | Saída |
+|----------|---------|-------|
+| Valores zerados relevantes | coluna numérica + contexto | `anomalies[]` |
+| Valores negativos | estoque, saldo, quantidade | `attention` + `riskLevel` |
+| Campos ausentes | schema / linhas | `limitations[]` |
+| Lista vazia | `items.length === 0` | `riskLevel: undefined` |
+| Lista muito grande | cardinalidade | `limitations` + hint tabela |
+| Paginação incompleta | `total > shown` | `limitations` |
+| Queda / pico | série temporal | `analysis` + `hypothesis` |
+| Empenho > saldo | estoque | `attention` |
+| Status pendente | enums operacionais | `facts` |
+
+Hipóteses: **sempre** `confirmed: false` quando causa não está nos dados.
+
+---
+
+## 11. Template universal (markdown + story)
 
 ```markdown
-### {título da consulta}
+### {título}
 
 <!-- section:summary -->
-**Resumo:** {conclusão principal}. Na prática, {interpretação}.
-**Status:** {alertLevel}
+**Resumo:** {answer}
+**Interpretação:** {meaning}
+**Ponto de atenção:** {attention}
 **Próxima ação:** {nextAction}
+**Nível de risco:** {riskLevel}
 
-<!-- section:indicators -->
-**Indicadores principais**
-- {indicador}: {valor} — {significado}
+<!-- section:facts -->
+**Fatos principais**
+- …
 
 <!-- section:diagnostic -->
-**Diagnóstico**
-{analysis em prosa curta}
-{anomalies destacadas}
+**Leitura dos dados** / **Pontos de atenção**
 
 <!-- section:limitations -->
-_{limitations}_
+**Escopo da análise:** …
 
 <!-- section:panels -->
-{painéis: KPI, gráfico, tabela, árvore — conforme presentationDecision}
+{painéis — evidência}
 
 <!-- section:next_steps -->
 **Próximos passos sugeridos**
-{recommendations como lista ou chips}
 ```
 
-Marcadores `<!-- section:* -->` já compatíveis com `ChatPresentationStackMarkdownService`.
+Marcadores compatíveis com `ChatPresentationStackMarkdownService`.
 
 ---
 
-## 11. Checklist de validação (§19)
+## 12. Testes por forma de dados (§17)
 
-Antes de merge em H6, cada resposta com dados deve passar:
+| Shape | Fixture | Critérios de aceite |
+|-------|---------|-------------------|
+| `field_value_profile` | objeto campo/valor | conclusão + ficha/KPI |
+| `generic_list` | lista simples | tabela + summary |
+| `categorical_ranking` | categoria + métrica | chart bar + purpose |
+| `time_series` | datas + valores | chart line + derivedMetrics variação |
+| `hierarchy` | pai-filho | tree na evidência; resumo primeiro |
+| `kpi_set` | poucos números | KPI cards + interpretação |
+| `empty_list` | `items: []` | `riskLevel: undefined` + limitations |
+| `large_list` | > N linhas | tabela + aviso paginação |
+| `truncated` | partial coverage | limitations humanizadas |
+| `logical_error` | erro API 422 | sem dataAnswer; erro amigável |
 
-```text
-[ ] A resposta começa com uma conclusão (summary)?
-[ ] Os principais números foram interpretados (highlights / derivedMetrics)?
-[ ] Há separação entre fato, análise, hipótese e recomendação?
-[ ] Existem alertas ou anomalias destacados quando aplicável?
-[ ] As visualizações têm propósito claro (purpose / reason)?
-[ ] As limitações foram informadas quando relevantes?
-[ ] Há próximas ações sugeridas (nextAction / recommendations)?
-[ ] A linguagem está simples e orientada à decisão?
-[ ] Nenhuma causa não confirmada foi afirmada como fato?
-[ ] Textos PT vieram de JSON, não de literals no código?
-```
-
-Automação alvo: `ChatHumanizedResponseQualityService.evaluate(metadata) → { passed, failures[] }`.
-
----
-
-## 12. Testes de regressão planejados
-
-| ID | Cenário | Esperado |
-|----|---------|----------|
-| H-01 | Status fabril com MP crítica | `alertLevel=attention`, summary primeiro, gráfico com `purpose` |
-| H-02 | Estoque multi-filial com zero | anomalia `zero_value`, recomendação «ver exceções» |
-| H-03 | SQL com 1 linha KPI | camada rápida só KPI + summary |
-| H-04 | Ranking vendas | `horizontal_bar`, não tabela completa primeiro |
-| H-05 | BOM / estrutura | árvore na evidência, resumo na camada 1 |
-| H-06 | Dados insuficientes | `alertLevel=unknown`, limitations preenchido |
-| H-07 | «Explique esse painel» | `ChatDataInterpretationAnswerService` usa commentary sem nova tool |
-| H-08 | Queda abrupta série temporal | anomalia `sharp_drop`, hipótese não confirmada |
-| H-09 | Métrica derivada cobertura | `derivedMetrics` com `computedBy=platform` |
-| H-10 | Comparação dois produtos | analysis + facts; sem causa inventada |
-
-Arquivos alvo:
+Arquivos:
 
 - `tests/fixtures/humanized_data_response_cases.py`
-- `tests/unit/domain/services/test_chat_operational_data_commentary_service.py`
-- `tests/unit/application/services/test_chat_data_interpretation_answer_service.py`
+- `tests/fixtures/rich_presentation_cases.py` (evoluir)
 - `plugins/minha-delpi-chat/src/ui/components/assistantContentVisualFormats.test.ts`
 
 ---
 
-## 13. Prompt desacoplado (§17 — implementar em H1)
+## 13. Checklist de validação (antes de merge P5)
 
-Arquivo: `app/domain/prompt_policies/humanized-data-response.md`
-
-```markdown
-Ao responder perguntas que envolvam dados, não apresente apenas os dados brutos.
-Transforme os dados em uma explicação clara, humana e acionável.
-
-Use o bloco metadata.dataCommentary e textPresentation como fonte primária.
-A resposta deve começar com a conclusão principal, o significado, o ponto de atenção e a próxima ação.
-
-Organize em camadas: resumo executivo → indicadores → atenção → interpretação → visuais → detalhes → próximas ações.
-Para cada número importante, explique o significado prático.
-Diferencie fatos, análises, hipóteses (sempre não confirmadas) e recomendações.
-Não invente causas quando os dados não permitirem concluir.
-Informe limitações, filtros, período e dados ausentes quando forem relevantes.
-
-Use tabelas, gráficos, cards, árvores ou fluxos somente quando ajudarem a responder melhor.
-Todo gráfico deve ter uma pergunta clara (presentationDecision.purpose).
-Linguagem simples, direta e orientada à decisão.
+```text
+[ ] Resposta começa com conclusão (dataAnswer.summary.answer)?
+[ ] Números importantes têm interpretação (meaning / derivedMetrics)?
+[ ] Separação fato / análise / hipótese / recomendação?
+[ ] Anomalias em pontos de atenção quando aplicável?
+[ ] Cada visual tem purpose claro?
+[ ] Limitações e escopo informados?
+[ ] Próximas ações com label + query?
+[ ] Preferência explícita respeitada ponta a ponta?
+[ ] presentationDecision.scores auditável?
+[ ] Textos PT só em JSON?
+[ ] Nenhuma causa não confirmada afirmada como fato?
 ```
 
-Registrar em `PromptPolicyService` para turnos com tools operacionais — **complementa**, não substitui, o commentary determinístico.
+Automação: `ChatHumanizedResponseQualityService.evaluate(metadata)`.
 
 ---
 
-## 14. PR checklist (obrigatório por fase)
+## 14. Integração com entregas existentes (jun/2026)
 
-1. Regra nova está no **módulo canônico** da tabela §3?
+| Entrega | Fase | Próximo passo |
+|---------|------|---------------|
+| `ChatOperationalDataCommentaryService` | P1 | Absorvido por `ChatDataInsightService` |
+| `ChatHumanizedDataResponseService` | P1 | Mapper `dataCommentary` → `dataAnswer` |
+| `ChatPresentationDataShapeAnalyzer` | P2/P3 | Alimentar score automático |
+| `presentation_profiles.json` (130 rotas) | P2 | Perfis `generic_*` |
+| `audit_presentation_coverage.py` | P5 | Colunas humanização |
+| `ChatPresentationRecommendationService` | P4 | `label` + `query` + chips |
+| Remoção toggle pós-resposta | P3 | Preferência só no composer |
+| Cores Recharts / Mermaid tema | P4 | Legibilidade evidência |
+
+---
+
+## 15. PR checklist
+
+1. Regra no **módulo canônico** (§3)?
 2. Domain sem import de infra?
-3. Texto PT novo só em `assistant/*.json`?
-4. Send e stream usam o mesmo serviço?
-5. Teste ou caso em fixture de regressão?
-6. `chat-intelligence-base.md` atualizado se novo serviço público?
-7. Agente default **não** ganhou lógica exclusiva de narrativa?
+3. Texto PT só em `assistant/*.json`?
+4. Send/stream mesmo serviço?
+5. Teste por **shape** ou regressão?
+6. `chat-intelligence-base.md` + catálogo atualizados?
+7. Agente sem lógica exclusiva de narrativa/decisão?
+8. Preferência não altera só metadata sem efeito no MFE?
 
 ---
 
-## 15. Ordem de execução recomendada
+## 16. Ordem de execução recomendada
 
 ```text
-H1 (contrato + JSON + policy)
-  → H2 (commentary multi-perfil)     ← maior impacto visível
-    → H3 (anomalias + métricas)
-      → H4 (camadas + purpose visual)
-        → H5 (interpretação + chips)
-          → H6 (qualidade + CI)
+P1 (dataAnswer + ChatDataInsightService + perfis operacionais restantes)
+  → P2 (perfis generic_* + menos if por path)
+    → P3 (score + pipeline preferência + purpose)
+      → P4 (DecisionCard + story + chips + hooks MFE)
+        → P5 (auditoria + qualidade + CI)
 ```
 
-**Quick win imediato (pode antecipar H2):** completar commentary de `stock` e `production_status` reutilizando padrão `factory_status` — valida o playbook com o caso **90262404** (status fabril + saldo MP) antes da generalização completa.
+**Quick win atual:** validar caso **90262404** (status fabril) com `<!-- section:summary -->` + gráfico com `purpose` após P3.
 
 ---
 
-## 16. Referência — diretrizes originais
+## 17. Referências — corpos de diretriz
 
-As 19 seções do documento de diretrizes gerais («Começar pela resposta», «Separar fato/análise», … «Checklist rápido») são a **especificação funcional** deste playbook. Este arquivo traduz essas diretrizes em módulos, contratos, fases e testes do repositório Minha DELPI.
+Este playbook consolida:
 
-**Regra central (§18):**
+1. **Diretrizes gerais** — respostas humanizadas com dados (19 seções, jun/2026).
+2. **Diretriz de apresentação generalizada** — camada semântica, shape-first, score, DecisionCard, story (18 seções, jun/2026).
+
+**Regra de ouro (ambas):**
 
 ```text
-A IA deve converter dados em entendimento.
-Primeiro responde, depois mostra evidências.
-Primeiro orienta, depois detalha.
-Primeiro explica o impacto, depois apresenta os campos técnicos.
+A IA não deve mostrar primeiro os dados.
+Ela deve primeiro explicar o que os dados significam.
+
+A apresentação visual deve ser evidência da resposta,
+não substituto da interpretação.
+
+A escolha do visual deve nascer da forma dos dados,
+da preferência do usuário e da decisão que ele precisa tomar.
 ```

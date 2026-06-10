@@ -95,7 +95,11 @@ class ChatToolContextExternalActionFormatter:
 
     @staticmethod
     def _merge_data_commentary_into_humanized_summary(metadata: dict) -> None:
-        commentary = metadata.get("dataCommentary")
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(metadata)
         humanized = metadata.get("humanizedSummary")
 
         if not isinstance(commentary, dict) or not isinstance(humanized, dict):
@@ -111,6 +115,11 @@ class ChatToolContextExternalActionFormatter:
             for line in (commentary.get("highlights") or [])
             if str(line or "").strip()
         ]
+        summary = str(commentary.get("summary") or "").strip()
+
+        if summary and summary not in extras:
+            extras.insert(0, summary)
+
         narrative = str(commentary.get("narrativeInsight") or "").strip()
 
         if narrative and narrative not in extras:
@@ -241,7 +250,14 @@ class ChatToolContextExternalActionFormatter:
             ):
                 titulo = "Eficiência fabril"
 
-            data_commentary = metadata.get("dataCommentary")
+            from app.domain.services.chat_humanized_data_response_service import (
+                ChatHumanizedDataResponseService,
+            )
+
+            data_answer = metadata.get("dataAnswer")
+            data_commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
+                metadata
+            )
 
             payload = {
                 "tool": "execute_external_action",
@@ -257,10 +273,14 @@ class ChatToolContextExternalActionFormatter:
                 },
             }
 
+            if isinstance(data_answer, dict) and data_answer.get("summary"):
+                payload["dataAnswer"] = data_answer
+
             if isinstance(data_commentary, dict) and (
                 data_commentary.get("highlights")
                 or data_commentary.get("attention")
                 or data_commentary.get("narrativeInsight")
+                or data_commentary.get("summary")
             ):
                 payload["dataCommentary"] = data_commentary
 

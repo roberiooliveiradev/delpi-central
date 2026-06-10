@@ -183,6 +183,8 @@ class ChatDataInterpretationAnswerService:
                 default="Consulta anterior",
             )
         ).strip()
+        summary = str(commentary.get("summary") or "").strip()
+        next_action = str(commentary.get("nextAction") or "").strip()
         highlights = [
             str(line).strip()
             for line in (commentary.get("highlights") or [])
@@ -195,11 +197,16 @@ class ChatDataInterpretationAnswerService:
         ]
         narrative = str(commentary.get("narrativeInsight") or "").strip()
 
-        if not highlights and not attention and not narrative:
+        if not summary and not highlights and not attention and not narrative:
             return None
 
         if normalized in {"resume", "resuma", "resumir"} or normalized.startswith("resume "):
-            lines = highlights[:6] or ([narrative] if narrative else [])
+            lines = ([summary] if summary else []) + highlights[:5]
+            lines = lines[:6] or ([narrative] if narrative else [])
+
+            if next_action and next_action not in lines:
+                lines.append(f"Próxima ação: {next_action}")
+
             return cls._format_summary(title, lines, heading="Resumo")
 
         if any(term in normalized for term in ("traduz", "traduca", "traduza", "traduzir")):
@@ -274,12 +281,19 @@ class ChatDataInterpretationAnswerService:
                 if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
                     continue
 
-                commentary = tool_meta.get("dataCommentary")
+                from app.domain.services.chat_humanized_data_response_service import (
+                    ChatHumanizedDataResponseService,
+                )
+
+                commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
+                    tool_meta
+                )
 
                 if isinstance(commentary, dict) and (
                     commentary.get("highlights")
                     or commentary.get("attention")
                     or commentary.get("narrativeInsight")
+                    or commentary.get("summary")
                 ):
                     return commentary
 
@@ -345,15 +359,24 @@ class ChatDataInterpretationAnswerService:
     def _resolve_tool_summary(cls, tool_meta: dict) -> dict | None:
         path = str(tool_meta.get("path") or "").strip()
         humanized = tool_meta.get("humanizedSummary")
-        commentary = tool_meta.get("dataCommentary")
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(tool_meta)
         commentary_lines: list[str] = []
 
         if isinstance(commentary, dict):
-            commentary_lines = [
+            summary = str(commentary.get("summary") or "").strip()
+
+            if summary:
+                commentary_lines.append(summary)
+
+            commentary_lines.extend(
                 str(line).strip()
                 for line in (commentary.get("highlights") or [])
-                if str(line or "").strip()
-            ]
+                if str(line or "").strip() and str(line).strip() not in commentary_lines
+            )
             narrative = str(commentary.get("narrativeInsight") or "").strip()
 
             if narrative and narrative not in commentary_lines:

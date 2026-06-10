@@ -31,13 +31,19 @@ def test_enrich_metadata_attaches_commentary_and_quick_reading():
 
     ChatOperationalCommentaryEnrichmentService.enrich_metadata(metadata, data=data)
 
+    data_answer = metadata.get("dataAnswer")
     commentary = metadata.get("dataCommentary")
 
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("summary", {}).get("answer")
     assert isinstance(commentary, dict)
     assert commentary.get("highlights")
-    assert commentary.get("narrativeInsight")
+    assert commentary.get("summary")
+    assert commentary.get("alertLevel")
+    assert commentary.get("nextAction")
 
     markdown = str(metadata["textPresentation"]["markdown"])
 
+    assert "<!-- section:summary -->" in markdown
     assert "Destaques" in markdown
-    assert "Leitura rápida" in markdown
+    assert "Próxima ação" in markdown

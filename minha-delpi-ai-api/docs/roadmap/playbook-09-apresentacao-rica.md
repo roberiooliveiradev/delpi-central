@@ -7,6 +7,8 @@ Escopo: tabelas, gráficos, KPIs, árvores, cards, checklists, lousa, dashboards
 
 Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md), [`melhorias/playbook_ampliacao_graficos_minha_delpi_chat.md`](./melhorias/playbook_ampliacao_graficos_minha_delpi_chat.md), [`melhorias/playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md`](./melhorias/playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md).
 
+**Evolução (jun/2026):** interpretação humanizada, score automático e UX de decisão → [`playbook-13-respostas-humanizadas-dados.md`](./playbook-13-respostas-humanizadas-dados.md).
+
 ---
 
 ## Implementação (jun/2026)

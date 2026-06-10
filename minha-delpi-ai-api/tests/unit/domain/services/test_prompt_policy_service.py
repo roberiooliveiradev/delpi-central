@@ -189,3 +189,27 @@ def test_contextual_prompt_includes_session_knowledge_policy_for_attachment_cont
 
     assert "Instruções para fontes anexadas à conversa" in prompt
     assert "fontes de conhecimento da sessão atual" in prompt
+
+
+def test_contextual_prompt_includes_humanized_data_policy_when_commentary_present():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context='{"dataCommentary": {"summary": "Saldo confortável", "alertLevel": "ok"}}',
+    )
+
+    assert "Modo resposta humanizada com dados" in prompt
+    assert "dataCommentary" in prompt or "conclusão" in prompt.lower()
+
+
+def test_contextual_prompt_includes_humanized_data_policy_when_data_answer_present():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context='{"dataAnswer": {"summary": {"answer": "Saldo confortável", "riskLevel": "ok"}}}',
+    )
+
+    assert "Modo resposta humanizada com dados" in prompt
+    assert "dataAnswer" in prompt or "conclusão" in prompt.lower()

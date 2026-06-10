@@ -49,6 +49,7 @@ Wrappers especializados (mantêm API estável):
 | `document_vision.json` | Padrões de intent (OCR e descrição visual); prompts VLM; rótulos de contexto; modos de ativação da skill | `ChatDocumentVisionContentService`, `ChatAttachmentDocumentIntentService`, `ChatDocumentVisionSkillService`, `ChatDocumentVisionContextService` |
 | `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
+| `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações e camadas de leitura (Playbook 13) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
 | `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
 | `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService` |

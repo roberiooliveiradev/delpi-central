@@ -90,6 +90,15 @@ Comportamento esperado:
         "statusCode",
     )
 
+    HUMANIZED_DATA_MARKERS = (
+        "dataAnswer",
+        "dataCommentary",
+        "presentationDecision",
+        "narrativeInsight",
+        "alertLevel",
+        "riskLevel",
+    )
+
     API_DELPI_MARKERS = (
         "api_delpi",
         "api-delpi",
@@ -400,6 +409,14 @@ Comportamento esperado:
                 self._load_policy(
                     "external-actions.md",
                     self.EXTERNAL_ACTIONS_POLICY_FALLBACK,
+                )
+            )
+
+        if self._contains_any(normalized_tool_context, self.HUMANIZED_DATA_MARKERS):
+            sections.append(
+                self._load_policy(
+                    "humanized-data-response.md",
+                    "Transforme dados em entendimento: conclusão primeiro, depois evidências.",
                 )
             )
 

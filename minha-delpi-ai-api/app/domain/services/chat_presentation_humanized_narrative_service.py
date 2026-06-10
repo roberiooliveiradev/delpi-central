@@ -60,6 +60,9 @@ class ChatPresentationHumanizedNarrativeService:
         if cls._resolve_narrative_mode(metadata) == "skip":
             return False
 
+        if "<!-- section:summary -->" in markdown:
+            return False
+
         visuals = ChatRichPresentationTextService.count_complementary_visuals(metadata)
 
         if visuals.get("table", 0) + visuals.get("kpi", 0) + visuals.get("chart", 0) < 1:

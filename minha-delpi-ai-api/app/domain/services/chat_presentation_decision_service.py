@@ -133,7 +133,11 @@ class ChatPresentationDecisionService:
 
     @classmethod
     def _stack_commentary_insight(cls, metadata: dict[str, Any]) -> str:
-        commentary = metadata.get("dataCommentary")
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(metadata)
 
         if not isinstance(commentary, dict):
             return ""
@@ -142,6 +146,11 @@ class ChatPresentationDecisionService:
 
         if narrative:
             return narrative
+
+        summary = str(commentary.get("summary") or "").strip()
+
+        if summary:
+            return summary
 
         highlights = [
             str(line).strip()
