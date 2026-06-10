@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -103,13 +107,26 @@ class ExternalActionProductPricingPresenter:
         prices = self._prices(root)
 
         if prices:
-            prices_table = self._host._build_items_table(
-                prices,
-                title=self._route("pricesTableTitle"),
-                path=path,
+            shown, total = _OpsTable.limit_items(prices, sort_key="table_code", reverse=False)
+            title = (
+                self._route(
+                    "pricesTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("pricesTableTitle")
             )
-            prices_table["role"] = "list"
-            tables.append(prices_table)
+            prices_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="salePricingDetail",
+                title=title,
+                role="list",
+            )
+
+            if prices_table:
+                tables.append(prices_table)
 
         return tables
 

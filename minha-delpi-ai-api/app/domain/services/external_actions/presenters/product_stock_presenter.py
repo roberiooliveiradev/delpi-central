@@ -5,6 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -379,7 +383,7 @@ class ExternalActionProductStockPresenter:
             parts.extend(["", self._insight("attentionHeader"), ""])
             parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
-        return "\n".join(part for part in parts if part is not None).strip()
+        return _OpsTable.join_markdown_blocks(parts)
 
     def _present_product_stock(
         self,
@@ -523,14 +527,38 @@ class ExternalActionProductStockPresenter:
         if overview:
             tables.append(overview)
 
-        positions = self._host._build_items_table(
-            items,
-            title=self._route("positionsTableTitle"),
-            path=path,
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        product_code = str(
+            product.get("product_code")
+            or product.get("code")
+            or self._host._extract_product_code_from_path(path)
+            or ""
+        ).strip()
+        description = str(product.get("description") or "").strip()
+        enriched = _OpsTable.enrich_stock_position_rows(
+            [item for item in items if isinstance(item, dict)],
+            product_code=product_code,
+            description=description,
+        )
+        shown, total = _OpsTable.limit_items(enriched, sort_key="branch", reverse=False)
+        title = (
+            self._route(
+                "positionsTableTitleTruncated",
+                shown=str(len(shown)),
+                total=str(total),
+            )
+            if total > len(shown)
+            else self._route("positionsTableTitle")
+        )
+        positions = _OpsTable.build_fixed_items_table(
+            self._host,
+            shown,
+            table_id="stockProductPositions",
+            title=title,
+            role="list",
         )
 
-        if isinstance(positions, dict):
-            positions["role"] = "list"
+        if positions:
             tables.append(positions)
 
         return tables

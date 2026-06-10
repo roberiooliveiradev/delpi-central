@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
@@ -295,24 +298,54 @@ class ExternalActionProductRawMaterialPricePresenter:
         price_items = self._section_block(root, "price_history").get("items")
 
         if isinstance(price_items, list) and price_items:
-            history_table = self._host._build_items_table(
-                price_items,
-                title=self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle"),
-                path=path,
+            price_dicts = [item for item in price_items if isinstance(item, dict)]
+            shown, total = _OpsTable.limit_items(price_dicts, sort_key="issue_date")
+            history_title = (
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "priceHistoryTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle")
             )
-            history_table["role"] = "list"
-            tables.append(history_table)
+            history_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="mpPriceHistoryDetail",
+                title=history_title,
+                role="list",
+            )
+
+            if history_table:
+                tables.append(history_table)
 
         budget_items = self._section_block(root, "budget_history").get("items")
 
         if isinstance(budget_items, list) and budget_items:
-            budget_table = self._host._build_items_table(
-                budget_items,
-                title=self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle"),
-                path=path,
+            budget_dicts = [item for item in budget_items if isinstance(item, dict)]
+            shown, total = _OpsTable.limit_items(budget_dicts, sort_key="source", reverse=False)
+            budget_title = (
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "budgetHistoryTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle")
             )
-            budget_table["role"] = "other"
-            tables.append(budget_table)
+            budget_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="mpBudgetHistoryDetail",
+                title=budget_title,
+                role="other",
+            )
+
+            if budget_table:
+                tables.append(budget_table)
 
         return [table for table in tables if isinstance(table, dict)]
 
@@ -331,13 +364,28 @@ class ExternalActionProductRawMaterialPricePresenter:
         material_items = self._section_block(root, "materials").get("items")
 
         if isinstance(material_items, list) and material_items:
-            materials_table = self._host._build_items_table(
-                material_items,
-                title=self._route("costImpactSimulation", "materialsTableTitle"),
-                path=path,
+            material_dicts = [item for item in material_items if isinstance(item, dict)]
+            shown, total = _OpsTable.limit_items(material_dicts, sort_key="rank", reverse=False)
+            materials_title = (
+                self._route(
+                    "costImpactSimulation",
+                    "materialsTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("costImpactSimulation", "materialsTableTitle")
             )
-            materials_table["role"] = "list"
-            tables.append(materials_table)
+            materials_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="costImpactMaterials",
+                title=materials_title,
+                role="list",
+            )
+
+            if materials_table:
+                tables.append(materials_table)
 
         return [table for table in tables if isinstance(table, dict)]
 

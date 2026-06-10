@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
@@ -266,7 +269,7 @@ class ExternalActionProductProductionStatusPresenter:
             parts.extend(["", self._insight("attentionHeader"), ""])
             parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
-        return "\n".join(part for part in parts if part is not None).strip()
+        return _OpsTable.join_markdown_blocks(parts)
 
     def _build_production_status_text_presentation(self, root: dict, path: str) -> dict | None:
         from app.domain.services.chat_product_operational_content_service import (
@@ -329,17 +332,28 @@ class ExternalActionProductProductionStatusPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        items = self._items(root)
+        items = [item for item in self._items(root) if isinstance(item, dict)]
 
         if items:
-            table = self._host._build_items_table(
-                items,
-                title=self._route("ordersTableTitle"),
-                path=path,
+            shown, total = _OpsTable.limit_items(items, sort_key="production_order")
+            title = (
+                self._route(
+                    "ordersTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("ordersTableTitle")
+            )
+            table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="factoryProductionDetail",
+                title=title,
+                role="list",
             )
 
             if table:
-                table["role"] = "list"
                 tables.append(table)
 
         return [table for table in tables if isinstance(table, dict)]
@@ -351,13 +365,7 @@ class ExternalActionProductProductionStatusPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = [
-            {
-                "campo": self._host._humanize_key(str(key)),
-                "valor": self._host._format_field_value(str(key), value),
-            }
-            for key, value in summary.items()
-        ]
+        rows = _OpsTable.summary_kv_rows(self._host, summary)
 
         reference_date = str(root.get("reference_date") or "").strip()
 

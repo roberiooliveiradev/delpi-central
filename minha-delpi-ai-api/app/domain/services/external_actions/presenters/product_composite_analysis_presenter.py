@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
@@ -20,6 +23,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
     """Perfil configurável via `presenter_content.json` — reutilizável por outras APIs."""
 
     _FACTORY_ENTITY = "product_factory_status"
+    _MP_LOW_COVERAGE_PA_THRESHOLD = 3.0
 
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
@@ -251,6 +255,76 @@ class ExternalActionProductCompositeAnalysisPresenter:
             else:
                 highlights.append(self._insight("factoryStatus", "shippingNoMovement"))
 
+        stock_items = self._section_block(root, "raw_material_stock").get("items")
+        mp_summary = self._aggregate_mp_stock_rows(stock_items)
+
+        if mp_summary:
+            exclusive_count = 0
+            structure_items = self._section_block(root, "structure").get("items")
+
+            if isinstance(structure_items, list):
+                exclusive_count = sum(
+                    1
+                    for item in structure_items
+                    if isinstance(item, dict) and item.get("exclusive_raw_material") in (
+                        True,
+                        "SIM",
+                        "Sim",
+                    )
+                )
+
+            if exclusive_count == 0:
+                highlights.append(self._insight("factoryStatus", "sharedMpWarning"))
+
+            for row in mp_summary:
+                coverage = row.get("pa_coverage_estimate")
+
+                if coverage is None:
+                    continue
+
+                try:
+                    pa_count = float(coverage)
+                except (TypeError, ValueError):
+                    continue
+
+                code = str(row.get("raw_material_code") or "").strip()
+
+                if not code:
+                    continue
+
+                if pa_count <= self._MP_LOW_COVERAGE_PA_THRESHOLD:
+                    highlights.append(
+                        self._insight(
+                            "factoryStatus",
+                            "mpLowCoverage",
+                            code=code,
+                            required=str(row.get("quantity_required_for_one_pa") or "—"),
+                            unit=str(row.get("unit") or ""),
+                            available=_Narrative.format_quantity(
+                                self._host,
+                                row.get("available_quantity_total"),
+                                field_key="available_quantity",
+                            ),
+                            paCount=f"{pa_count:.1f}".rstrip("0").rstrip("."),
+                        )
+                    )
+
+        stock_summary = self._section_block(root, "raw_material_stock").get("summary")
+
+        if isinstance(stock_summary, dict):
+            without_stock = int(stock_summary.get("total_without_stock_for_one_pa") or 0)
+
+            if without_stock > 0:
+                highlights.append(
+                    self._insight(
+                        "factoryStatus",
+                        "conclusionBlocked",
+                        count=str(without_stock),
+                    )
+                )
+            elif "LIBERADO" in status.upper():
+                highlights.append(self._insight("factoryStatus", "conclusionReleased"))
+
         return highlights
 
     def _build_factory_attention(self, root: dict) -> list[str]:
@@ -280,14 +354,15 @@ class ExternalActionProductCompositeAnalysisPresenter:
         compact_for_rich_ui: bool = False,
     ) -> str:
         parts: list[str] = []
-        parts.extend(
-            self._build_factory_narrative_lines(
-                root,
-                code=code,
-                description=description,
-                compact_for_rich_ui=compact_for_rich_ui,
-            )
+        narrative_lines = self._build_factory_narrative_lines(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
         )
+
+        if narrative_lines:
+            parts.append("\n\n".join(line for line in narrative_lines if line))
 
         highlights = self._build_factory_highlights(root)
 
@@ -301,7 +376,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
             parts.extend(["", self._insight("factoryStatus", "attentionHeader"), ""])
             parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
-        return "\n".join(part for part in parts if part is not None).strip()
+        return _OpsTable.join_markdown_blocks(parts)
 
     def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
         from app.domain.services.chat_product_operational_content_service import (
@@ -380,43 +455,146 @@ class ExternalActionProductCompositeAnalysisPresenter:
         stock_items = self._section_block(root, "raw_material_stock").get("items")
 
         if isinstance(stock_items, list) and stock_items:
-            stock_table = self._host._build_items_table(
-                stock_items,
-                title=self._route("factoryStatus", "sectionStockTitle"),
-                path=path,
-            )
+            mp_summary_table = self._build_factory_mp_stock_summary_table(stock_items)
 
-            if isinstance(stock_table, dict):
-                stock_table["role"] = "stock"
+            if mp_summary_table:
+                tables.append(mp_summary_table)
+
+            stock_table = self._build_factory_stock_detail_table(stock_items)
+
+            if stock_table:
                 tables.append(stock_table)
 
         production_items = self._section_block(root, "production").get("items")
 
         if isinstance(production_items, list) and production_items:
-            production_table = self._host._build_items_table(
-                production_items,
-                title=self._route("factoryStatus", "sectionProductionTitle"),
-                path=path,
-            )
+            production_table = self._build_factory_production_table(production_items)
 
-            if isinstance(production_table, dict):
-                production_table["role"] = "list"
+            if production_table:
                 tables.append(production_table)
 
         shipping_items = self._section_block(root, "shipping").get("items")
 
         if isinstance(shipping_items, list) and shipping_items:
-            shipping_table = self._host._build_items_table(
-                shipping_items,
-                title=self._route("factoryStatus", "sectionShippingTitle"),
-                path=path,
+            shipping_dicts = [item for item in shipping_items if isinstance(item, dict)]
+            shown, total = _OpsTable.limit_items(
+                shipping_dicts,
+                sort_key="production_order",
+            )
+            shipping_title = (
+                self._route(
+                    "factoryStatus",
+                    "sectionShippingTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("factoryStatus", "sectionShippingTitle")
+            )
+            shipping_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="shippingStatusDetail",
+                title=shipping_title,
+                role="other",
             )
 
-            if isinstance(shipping_table, dict):
-                shipping_table["role"] = "other"
+            if shipping_table:
                 tables.append(shipping_table)
 
         return [table for table in tables if isinstance(table, dict)]
+
+    def _aggregate_mp_stock_rows(self, stock_items: object) -> list[dict[str, Any]]:
+        if not isinstance(stock_items, list):
+            return []
+
+        grouped: dict[str, dict[str, Any]] = {}
+
+        for item in stock_items:
+            if not isinstance(item, dict):
+                continue
+
+            code = str(item.get("raw_material_code") or "").strip()
+
+            if not code:
+                continue
+
+            bucket = grouped.setdefault(
+                code,
+                {
+                    "raw_material_code": code,
+                    "raw_material_description": str(item.get("raw_material_description") or "").strip(),
+                    "unit": str(item.get("unit") or "").strip(),
+                    "quantity_required_for_one_pa": item.get("quantity_required_for_one_pa"),
+                    "available_quantity_total": 0.0,
+                    "has_stock_for_one_pa_label": item.get("has_stock_for_one_pa_label"),
+                },
+            )
+            bucket["available_quantity_total"] += _OpsTable.parse_quantity(
+                item.get("available_quantity")
+            )
+
+            if item.get("has_stock_for_one_pa_label"):
+                bucket["has_stock_for_one_pa_label"] = item.get("has_stock_for_one_pa_label")
+
+        rows: list[dict[str, Any]] = []
+
+        for code in sorted(grouped):
+            row = grouped[code]
+            required = _OpsTable.parse_quantity(row.get("quantity_required_for_one_pa"))
+            available = float(row.get("available_quantity_total") or 0)
+
+            if required > 0:
+                row["pa_coverage_estimate"] = round(available / required, 2)
+            else:
+                row["pa_coverage_estimate"] = None
+
+            row["available_quantity_total"] = available
+            rows.append(row)
+
+        return rows
+
+    def _build_factory_mp_stock_summary_table(self, stock_items: list) -> dict | None:
+        rows = self._aggregate_mp_stock_rows(stock_items)
+
+        return _OpsTable.build_fixed_items_table(
+            self._host,
+            rows,
+            table_id="factoryMpStockSummary",
+            title=self._route("factoryStatus", "sectionMpStockSummaryTitle"),
+            role="stock",
+        )
+
+    def _build_factory_stock_detail_table(self, stock_items: list) -> dict | None:
+        return _OpsTable.build_fixed_items_table(
+            self._host,
+            [item for item in stock_items if isinstance(item, dict)],
+            table_id="factoryRawMaterialStockDetail",
+            title=self._route("factoryStatus", "sectionStockTitle"),
+            role="stock",
+        )
+
+    def _build_factory_production_table(self, production_items: list) -> dict | None:
+        items = [item for item in production_items if isinstance(item, dict)]
+        shown_items, total = _OpsTable.limit_items(items, sort_key="production_order")
+        title = (
+            self._route(
+                "factoryStatus",
+                "sectionProductionTitleTruncated",
+                shown=str(len(shown_items)),
+                total=str(total),
+            )
+            if total > len(shown_items)
+            else self._route("factoryStatus", "sectionProductionTitle")
+        )
+
+        return _OpsTable.build_fixed_items_table(
+            self._host,
+            shown_items,
+            table_id="factoryProductionDetail",
+            title=title,
+            role="list",
+        )
 
     def _build_factory_overview_table(self, root: dict, path: str) -> dict | None:
         code, description = self._product_context(root, path)
@@ -442,7 +620,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         for key, value in list(indicators.items())[:8]:
             rows.append(
                 {
-                    "campo": self._host._humanize_key(str(key)),
+                    "campo": self._host._column_labels.label_for(str(key)),
                     "valor": self._host._format_field_value(str(key), value),
                 }
             )
@@ -634,17 +812,15 @@ class ExternalActionProductCompositeAnalysisPresenter:
             return None
 
         chart_data: list[dict[str, Any]] = []
-        quantity_label = self._host._humanize_key("available_quantity")
+        quantity_label = self._host._column_labels.label_for("available_quantity_total")
+        aggregated = self._aggregate_mp_stock_rows(stock_items)
 
-        for item in stock_items[:20]:
-            if not isinstance(item, dict):
-                continue
-
-            code = str(item.get("raw_material_code") or "—")
+        for row in aggregated[:20]:
+            code = str(row.get("raw_material_code") or "—")
             chart_data.append(
                 {
                     "name": code,
-                    quantity_label: float(item.get("available_quantity") or 0),
+                    quantity_label: _OpsTable.parse_quantity(row.get("available_quantity_total")),
                 }
             )
 

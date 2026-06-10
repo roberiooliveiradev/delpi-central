@@ -24,6 +24,12 @@ def test_raw_material_price_table_presentations_assign_stack_roles():
     assert any(table.get("role") == "list" for table in tables)
     assert any(table.get("role") == "other" for table in tables)
 
+    history = next(table for table in tables if table.get("role") == "list")
+    history_keys = [column["key"] for column in history.get("columns") or []]
+
+    assert "issue_date" in history_keys
+    assert "unit_price" in history_keys
+
 
 def test_visual_bundle_enriches_raw_material_price_with_auxiliary_slots():
     presenter = ExternalActionResultPresenter()

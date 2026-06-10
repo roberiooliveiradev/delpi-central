@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -204,7 +208,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
         else:
             parts.append(self._route(path, "itemsEmptyLine"))
 
-        return "\n".join(part for part in parts if part).strip()
+        return _OpsTable.join_narrative_lines(parts)
 
     def build_purchase_history_table_presentations(self, root: dict, path: str) -> list[dict]:
         tables: list[dict] = []
@@ -214,17 +218,34 @@ class ExternalActionProductPurchaseHistoryPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        items = self._items(root)
+        items = [item for item in self._items(root) if isinstance(item, dict)]
 
         if items:
-            table = self._host._build_items_table(
-                items,
-                title=self._route(path, "itemsTableTitle"),
-                path=path,
+            shown, total = _OpsTable.limit_items(items, sort_key="issue_date")
+            title = (
+                self._route(
+                    path,
+                    "itemsTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route(path, "itemsTableTitle")
+            )
+            table_id = (
+                "purchaseBudgetHistoryDetail"
+                if self._route_namespace(path) == "purchaseBudgetHistory"
+                else "mpPriceHistoryDetail"
+            )
+            table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id=table_id,
+                title=title,
+                role="list",
             )
 
             if table:
-                table["role"] = "list"
                 tables.append(table)
 
         return [table for table in tables if isinstance(table, dict)]

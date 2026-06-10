@@ -17,6 +17,12 @@ def test_cost_impact_table_presentations_assign_stack_roles():
     assert tables[0].get("role") == "profile"
     assert any(table.get("role") == "list" for table in tables)
 
+    materials = next(table for table in tables if table.get("role") == "list")
+    material_keys = [column["key"] for column in materials.get("columns") or []]
+
+    assert "raw_material_code" in material_keys
+    assert "impact_on_pa_cost_percent" in material_keys
+
 
 def test_visual_bundle_enriches_cost_impact_with_auxiliary_slots():
     presenter = ExternalActionResultPresenter()

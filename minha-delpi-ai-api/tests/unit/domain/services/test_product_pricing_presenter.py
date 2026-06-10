@@ -31,6 +31,12 @@ def test_product_pricing_table_presentations_assign_stack_roles():
     assert tables[0].get("role") == "profile"
     assert any(table.get("role") == "list" for table in tables)
 
+    prices = next(table for table in tables if table.get("role") == "list")
+    price_keys = [column["key"] for column in prices.get("columns") or []]
+
+    assert "sale_price" in price_keys
+    assert "table_description" in price_keys
+
 
 def test_visual_bundle_enriches_sale_pricing_with_auxiliary_slots():
     presenter = ExternalActionResultPresenter()

@@ -113,7 +113,28 @@
     "production_started": "Produção iniciada",
     "raw_material_code": "Cód. MP",
     "raw_material_description": "Descrição MP",
+    "quantity_required_for_one_pa": "Necessário p/ 1 PA",
     "quantity_per_pa": "Qtd. por PA",
+    "order_quantity": "Qtd. da OP",
+    "produced_quantity_sc2": "Qtd. produzida (SC2)",
+    "reported_quantity": "Qtd. apontada",
+    "planned_start_date": "Início planejado",
+    "planned_end_date": "Fim planejado",
+    "actual_end_date": "Fim real",
+    "order_status": "Status OP",
+    "order_production_percent": "% produção OP",
+    "production_started_label": "Produção iniciada",
+    "has_stock_for_one_pa_label": "Saldo p/ 1 PA",
+    "available_quantity_total": "Saldo disponível (consolidado)",
+    "pa_coverage_estimate": "Cobertura estimada (PA)",
+    "total_intermediates": "Total de intermediários",
+    "total_raw_materials": "Total de MPs",
+    "total_exclusive_raw_materials": "MPs exclusivas",
+    "total_raw_materials_without_stock_for_one_pa": "MPs sem saldo p/ 1 PA",
+    "total_pa_orders": "OPs de PA",
+    "total_pi_orders": "OPs de PI",
+    "total_pa_reported_quantity": "Apontado no PA",
+    "total_pi_reported_quantity": "Apontado nos PI",
     "registered_last_purchase_price": "Últ. preço cadastro",
     "dominant_supplier_code": "Fornecedor dominante",
     "total_material_cost": "Custo total materiais",
@@ -649,10 +670,128 @@
         {"key": "description", "label": "Descrição"},
         {"key": "type", "label": "Tipo"},
         {"key": "unit", "label": "Unidade"}
+      ],
+      "factoryMpStockSummary": [
+        {"key": "raw_material_code", "label": "Cód. MP"},
+        {"key": "raw_material_description", "label": "Descrição MP"},
+        {"key": "unit", "label": "Unidade"},
+        {"key": "quantity_required_for_one_pa", "label": "Necessário p/ 1 PA", "dataType": "quantity"},
+        {"key": "available_quantity_total", "label": "Saldo disponível (consolidado)", "dataType": "quantity"},
+        {"key": "has_stock_for_one_pa_label", "label": "Saldo p/ 1 PA"},
+        {"key": "pa_coverage_estimate", "label": "Cobertura estimada (PA)"}
+      ],
+      "factoryRawMaterialStockDetail": [
+        {"key": "raw_material_code", "label": "Cód. MP"},
+        {"key": "raw_material_description", "label": "Descrição MP"},
+        {"key": "unit", "label": "Unidade"},
+        {"key": "quantity_required_for_one_pa", "label": "Necessário p/ 1 PA", "dataType": "quantity"},
+        {"key": "branch", "label": "Filial"},
+        {"key": "warehouse", "label": "Armazém"},
+        {"key": "current_quantity", "label": "Qtd. atual", "dataType": "quantity"},
+        {"key": "available_quantity", "label": "Qtd. disponível", "dataType": "quantity"},
+        {"key": "committed_quantity", "label": "Qtd. empenhada", "dataType": "quantity"},
+        {"key": "reserved_quantity", "label": "Qtd. reservada", "dataType": "quantity"},
+        {"key": "has_stock_for_one_pa_label", "label": "Saldo p/ 1 PA"}
+      ],
+      "factoryProductionDetail": [
+        {"key": "production_order", "label": "Ordem produção"},
+        {"key": "product_code", "label": "Produto"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "product_type", "label": "Tipo"},
+        {"key": "order_quantity", "label": "Qtd. da OP", "dataType": "quantity"},
+        {"key": "produced_quantity_sc2", "label": "Qtd. produzida (SC2)", "dataType": "quantity"},
+        {"key": "reported_quantity", "label": "Qtd. apontada", "dataType": "quantity"},
+        {"key": "planned_start_date", "label": "Início planejado", "dataType": "date"},
+        {"key": "planned_end_date", "label": "Fim planejado", "dataType": "date"},
+        {"key": "actual_end_date", "label": "Fim real", "dataType": "date"},
+        {"key": "order_production_percent", "label": "% produção OP", "dataType": "percent"},
+        {"key": "production_started_label", "label": "Produção iniciada"},
+        {"key": "branch", "label": "Filial"}
+      ],
+      "shippingStatusDetail": [
+        {"key": "production_order", "label": "Ordem produção"},
+        {"key": "product_code", "label": "Produto"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "shipped_quantity", "label": "Qtd. expedida", "dataType": "quantity"},
+        {"key": "inspection_loss_quantity", "label": "Perda inspeção", "dataType": "quantity"},
+        {"key": "total_reports", "label": "Apontamentos"},
+        {"key": "work_center", "label": "Centro de trabalho"},
+        {"key": "resource_code", "label": "Recurso"},
+        {"key": "branch", "label": "Filial"}
+      ],
+      "structureExclusivityDetail": [
+        {"key": "level", "label": "Nível"},
+        {"key": "component_type", "label": "Tipo"},
+        {"key": "product_code", "label": "Código"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "accumulated_quantity", "label": "Qtd. acumulada", "dataType": "quantity"},
+        {"key": "exclusive_raw_material_label", "label": "MP exclusiva"}
+      ],
+      "stockProductPositions": [
+        {"key": "product_code", "label": "Produto"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "branch", "label": "Filial"},
+        {"key": "warehouse", "label": "Armazém"},
+        {"key": "current_quantity", "label": "Qtd. atual", "dataType": "quantity"},
+        {"key": "available_quantity", "label": "Qtd. disponível", "dataType": "quantity"},
+        {"key": "committed_quantity", "label": "Qtd. empenhada", "dataType": "quantity"},
+        {"key": "reserved_quantity", "label": "Qtd. reservada", "dataType": "quantity"},
+        {"key": "physical_location", "label": "Localização"}
+      ],
+      "costImpactMaterials": [
+        {"key": "rank", "label": "Posição"},
+        {"key": "raw_material_code", "label": "Cód. MP"},
+        {"key": "raw_material_description", "label": "Descrição MP"},
+        {"key": "quantity_per_pa", "label": "Qtd. p/ PA", "dataType": "quantity"},
+        {"key": "extended_cost", "label": "Custo estendido", "dataType": "currency"},
+        {"key": "impact_on_pa_cost_percent", "label": "% impacto no PA", "dataType": "percent"},
+        {"key": "simulated_extended_cost", "label": "Custo simulado", "dataType": "currency"}
+      ],
+      "mpPriceHistoryDetail": [
+        {"key": "issue_date", "label": "Data", "dataType": "date"},
+        {"key": "supplier_code", "label": "Fornecedor"},
+        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
+        {"key": "variation_percent", "label": "Variação %", "dataType": "percent"}
+      ],
+      "mpBudgetHistoryDetail": [
+        {"key": "source", "label": "Origem"},
+        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
+        {"key": "supplier_code", "label": "Fornecedor"}
+      ],
+      "purchaseBudgetHistoryDetail": [
+        {"key": "source", "label": "Origem"},
+        {"key": "document_number", "label": "Documento"},
+        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
+        {"key": "supplier_code", "label": "Fornecedor"},
+        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
+        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
+        {"key": "purchase_order", "label": "Pedido compra"}
+      ],
+      "purchaseOrderList": [
+        {"key": "order_number", "label": "Pedido"},
+        {"key": "supplier_name", "label": "Fornecedor"},
+        {"key": "product_code", "label": "Produto"},
+        {"key": "ordered_quantity", "label": "Qtd. pedida", "dataType": "quantity"},
+        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
+        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
+        {"key": "delivery_date", "label": "Entrega", "dataType": "date"},
+        {"key": "status", "label": "Status"}
+      ],
+      "salePricingDetail": [
+        {"key": "table_code", "label": "Tabela"},
+        {"key": "table_description", "label": "Descrição tabela"},
+        {"key": "sale_price", "label": "Preço venda", "dataType": "currency"},
+        {"key": "max_price", "label": "Preço máximo", "dataType": "currency"},
+        {"key": "discount_percent", "label": "Desconto %", "dataType": "percent"},
+        {"key": "lot_quantity", "label": "Lote", "dataType": "quantity"},
+        {"key": "state", "label": "UF"},
+        {"key": "valid_from", "label": "Válido desde", "dataType": "date"}
       ]
     }
   },
   "profilePriority": [
+    "factoryRawMaterialStock",
+    "factoryProductionOrder",
     "stock",
     "eficienciaFabril",
     "production",
@@ -668,6 +807,44 @@
     "kpi"
   ],
   "tableProfiles": {
+    "factoryRawMaterialStock": {
+      "detect": {
+        "allKeys": ["raw_material_code", "available_quantity"]
+      },
+      "preferredColumns": [
+        ["raw_material_code", "Cód. MP"],
+        ["raw_material_description", "Descrição MP"],
+        ["unit", "Unidade"],
+        ["quantity_required_for_one_pa", "Necessário p/ 1 PA"],
+        ["branch", "Filial"],
+        ["warehouse", "Armazém"],
+        ["current_quantity", "Qtd. atual"],
+        ["available_quantity", "Qtd. disponível"],
+        ["committed_quantity", "Qtd. empenhada"],
+        ["reserved_quantity", "Qtd. reservada"],
+        ["has_stock_for_one_pa_label", "Saldo p/ 1 PA"]
+      ]
+    },
+    "factoryProductionOrder": {
+      "detect": {
+        "allKeys": ["production_order", "order_quantity"]
+      },
+      "preferredColumns": [
+        ["production_order", "Ordem produção"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["product_type", "Tipo"],
+        ["order_quantity", "Qtd. da OP"],
+        ["produced_quantity_sc2", "Qtd. produzida (SC2)"],
+        ["reported_quantity", "Qtd. apontada"],
+        ["planned_start_date", "Início planejado"],
+        ["planned_end_date", "Fim planejado"],
+        ["actual_end_date", "Fim real"],
+        ["order_production_percent", "% produção OP"],
+        ["production_started_label", "Produção iniciada"],
+        ["branch", "Filial"]
+      ]
+    },
     "stock": {
       "detect": {
         "anyKeys": ["current_quantity", "available_quantity"]

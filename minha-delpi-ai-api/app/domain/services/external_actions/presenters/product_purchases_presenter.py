@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -119,17 +123,28 @@ class ExternalActionProductPurchasesPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        items = self._items(root)
+        items = [item for item in self._items(root) if isinstance(item, dict)]
 
         if items:
-            table = self._host._build_items_table(
-                items,
-                title=self._route("ordersTableTitle"),
-                path=path,
+            shown, total = _OpsTable.limit_items(items, sort_key="issue_date")
+            title = (
+                self._route(
+                    "ordersTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("ordersTableTitle")
+            )
+            table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="purchaseOrderList",
+                title=title,
+                role="list",
             )
 
             if table:
-                table["role"] = "list"
                 tables.append(table)
 
         return [table for table in tables if isinstance(table, dict)]
