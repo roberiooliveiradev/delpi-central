@@ -39,6 +39,43 @@ def test_visual_bundle_skips_stock_auxiliaries_on_demand() -> None:
     assert "chart" in (metadata.get("availableFormats") or [])
 
 
+def test_visual_bundle_enriches_stock_tree_when_tree_explicit() -> None:
+    presenter = ExternalActionResultPresenter()
+    path = "/products/10080022/stock"
+    wrapped = {
+        "stock": {
+            "items": [
+                {
+                    "branch": "01",
+                    "warehouse": "01",
+                    "current_quantity": 10,
+                    "available_quantity": 8,
+                    "committed_quantity": 2,
+                },
+            ]
+        }
+    }
+    text = presenter._build_stock_text_presentation(wrapped["stock"], path)
+
+    metadata = {
+        "presentation": None,
+        "textPresentation": text,
+        "availableFormats": ["text", "table"],
+    }
+
+    ChatPresentationVisualBundleService.enrich_metadata(
+        metadata,
+        path=path,
+        data=wrapped,
+        presenter=presenter,
+        explicit_format="tree",
+        entity="product_stock",
+    )
+
+    assert metadata.get("treePresentation", {}).get("type") == "tree"
+    assert "tree" in (metadata.get("availableFormats") or [])
+
+
 def test_visual_bundle_enriches_stock_when_chart_explicit() -> None:
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")

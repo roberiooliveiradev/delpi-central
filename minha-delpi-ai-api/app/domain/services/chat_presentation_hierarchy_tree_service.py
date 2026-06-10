@@ -204,6 +204,22 @@ class ChatPresentationHierarchyTreeService:
             group_subtitle = ""
             sample = bucket_items[0] if bucket_items else {}
 
+            from app.domain.services.chat_presentation_vocabulary_service import (
+                ChatPresentationVocabularyService,
+            )
+
+            humanized_label = ChatPresentationVocabularyService.hierarchy_group_node_label(
+                key,
+                bucket_key,
+            )
+            humanized_badge = ChatPresentationVocabularyService.hierarchy_group_badge_label(key)
+
+            if humanized_label and humanized_label != bucket_key:
+                group_label = humanized_label
+
+            if humanized_badge is not None:
+                group_badge = humanized_badge
+
             if key == "supplier_group" and isinstance(sample, dict):
                 group_label = bucket_key
                 group_badge = ""

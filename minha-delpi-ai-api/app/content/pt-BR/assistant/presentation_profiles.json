@@ -323,6 +323,10 @@
         "requiresItems": true,
         "dashboardListRole": "list"
       },
+      "operationalRoot": {
+        "itemsKey": "items",
+        "wrapperKeys": ["stock"]
+      },
       "visualBuilders": {
         "kpi": "build_stock_kpi",
         "tree": "build_stock_tree",

@@ -25,6 +25,31 @@ def test_build_multi_level_groups_branch_and_warehouse() -> None:
     assert len(root.get("children") or []) == 2
 
 
+def test_build_multi_level_humanizes_branch_and_warehouse_labels() -> None:
+    items = [
+        {"branch": "01", "warehouse": "50", "available_quantity": 10},
+        {"branch": "02", "warehouse": "01", "available_quantity": 3},
+    ]
+
+    tree = ChatPresentationHierarchyTreeService.build_multi_level(
+        title="Estoque",
+        root_id="100",
+        root_label="Produto 100",
+        items=items,
+        group_keys=["branch", "warehouse"],
+    )
+
+    assert tree is not None
+
+    branch = tree["root"]["children"][0]
+    assert branch["label"] == "Filial 01"
+    assert branch.get("badge") in {None, ""}
+
+    warehouse = branch["children"][0]
+    assert warehouse["label"] == "Armazém 50"
+    assert warehouse.get("badge") in {None, ""}
+
+
 def test_build_flat_bom_tree_nests_pa_pi_mp() -> None:
     items = [
         {

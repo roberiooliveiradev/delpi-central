@@ -5,6 +5,7 @@ import type { ChatTreeNode } from "../../data/api/chatTypes";
 import {
   collectTreeBlockSections,
   expandTreeSegmentsToBlockTables,
+  formatTreeNodeMeta,
   treePresentationToBlockTables,
 } from "./treePresentationUtils";
 
@@ -60,6 +61,21 @@ function buildSampleTree(): ChatTreeNode {
 }
 
 describe("treePresentationUtils blocks", () => {
+  it("formata meta de estoque com quantidades disponível/atual/empenhado", () => {
+    expect(
+      formatTreeNodeMeta({
+        available_quantity: 455000,
+        current_quantity: 455000,
+        committed_quantity: 0,
+        unit: "un.",
+      }),
+    ).toBe("Disponível: 455.000 · Saldo atual: 455.000 · Empenhado: 0 un.");
+  });
+
+  it("formata meta BOM com quantity e unit", () => {
+    expect(formatTreeNodeMeta({ quantity: 142, unit: "MT" })).toBe("142 MT");
+  });
+
   it("gera bloco para cada nível com filhos", () => {
     const blocks = collectTreeBlockSections(buildSampleTree());
 

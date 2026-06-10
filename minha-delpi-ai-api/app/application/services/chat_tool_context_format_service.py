@@ -79,6 +79,43 @@ class ChatToolContextFormatService:
             previous_messages,
         )
 
+    def _force_tree_presentation(
+        self,
+        meta: dict,
+        last_data,
+        *,
+        path: str,
+    ) -> dict | None:
+        tree_pres = meta.get("treePresentation") or meta.get("presentation")
+
+        if isinstance(tree_pres, dict) and tree_pres.get("type") == "tree":
+            return tree_pres
+
+        if last_data is None:
+            return None
+
+        from app.domain.services.chat_presentation_profile_visual_bundle_service import (
+            ChatPresentationProfileVisualBundleService,
+        )
+
+        path_token = str(path or "")
+        profile_tree = ChatPresentationProfileVisualBundleService.build_profile_view(
+            self._presenter,
+            path=path_token,
+            view="tree",
+            data=last_data,
+        )
+
+        if isinstance(profile_tree, dict) and profile_tree.get("type") == "tree":
+            return profile_tree
+
+        forced_tree = self._presenter.build_tree_presentation(last_data, path=path_token)
+
+        if isinstance(forced_tree, dict) and forced_tree.get("type") == "tree":
+            return forced_tree
+
+        return None
+
     def apply_format_override(
         self,
         safe_tool_calls: list[dict],
@@ -140,18 +177,15 @@ class ChatToolContextFormatService:
 
             elif requested_format == "tree":
                 meta["preferredFormat"] = "tree"
-                tree_pres = meta.get("treePresentation") or meta.get("presentation")
-                if tree_pres and tree_pres.get("type") == "tree":
-                    meta["presentation"] = tree_pres
+                forced_tree = self._force_tree_presentation(
+                    meta,
+                    last_data,
+                    path=str(meta.get("path") or ""),
+                )
+
+                if forced_tree:
+                    meta["presentation"] = forced_tree
                     meta["treePresentation"] = None
-                elif last_data:
-                    path = meta.get("path") or ""
-                    forced_tree = self._presenter.build_tree_presentation(
-                        last_data, path=path
-                    )
-                    if forced_tree:
-                        meta["presentation"] = forced_tree
-                        meta["treePresentation"] = None
 
                 self._align_decision_for_format(meta, "tree")
 

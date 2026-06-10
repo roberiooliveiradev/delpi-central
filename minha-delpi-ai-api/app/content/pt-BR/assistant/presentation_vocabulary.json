@@ -65,7 +65,29 @@
     "defaultHierarchyTitle": "Hierarquia",
     "defaultStructureTitle": "Estrutura",
     "defaultRootLabel": "Raiz",
-    "emptyLabel": "—"
+    "emptyLabel": "—",
+    "groupBadgeLabels": {
+      "branch": "",
+      "warehouse": ""
+    },
+    "groupNodeLabels": {
+      "branch": "Filial {value}",
+      "warehouse": "Armazém {value}"
+    },
+    "operationalRootItemsKey": "items",
+    "operationalRootWrapperKeys": ["stock"],
+    "metaCaption": {
+      "quantityField": "quantity",
+      "unitField": "unit",
+      "availableQuantityField": "available_quantity",
+      "defaultUnit": "un.",
+      "skipFields": ["quantity", "unit"],
+      "fieldOrder": [
+        "available_quantity",
+        "current_quantity",
+        "committed_quantity"
+      ]
+    }
   },
   "operationalDecision": {
     "structureIntent": ["structure", "structure_lookup", "parent"],

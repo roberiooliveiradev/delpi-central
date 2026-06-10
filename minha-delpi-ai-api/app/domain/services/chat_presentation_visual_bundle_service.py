@@ -46,7 +46,7 @@ class ChatPresentationVisualBundleService:
         if not isinstance(metadata, dict):
             return
 
-        root = presenter._unwrap_data(data)
+        root = cls._resolve_bundle_root(presenter, data, path=path)
 
         if not isinstance(root, dict):
             return
@@ -321,6 +321,31 @@ class ChatPresentationVisualBundleService:
             formats.append("canvas")
 
         metadata["availableFormats"] = formats
+
+    @classmethod
+    def _resolve_bundle_root(
+        cls,
+        presenter: ExternalActionResultPresenter,
+        data: Any,
+        *,
+        path: str = "",
+    ) -> dict | None:
+        root = presenter._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        from app.domain.services.chat_presentation_operational_root_service import (
+            ChatPresentationOperationalRootService,
+        )
+
+        entity = cls._resolve_entity(data, path=path)
+
+        return ChatPresentationOperationalRootService.resolve_bundle_root(
+            root,
+            path=path,
+            entity=entity,
+        )
 
     @classmethod
     def _resolve_entity(cls, data: Any, *, path: str) -> str | None:

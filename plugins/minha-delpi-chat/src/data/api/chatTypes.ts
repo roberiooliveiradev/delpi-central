@@ -45,6 +45,8 @@ export type ChatTreeNode = {
   subtitle?: string;
   badge?: string;
   meta?: Record<string, string | number>;
+  /** Legenda humanizada gerada pela API (estoque, etc.). */
+  metaCaption?: string;
   children?: ChatTreeNode[];
 };
 

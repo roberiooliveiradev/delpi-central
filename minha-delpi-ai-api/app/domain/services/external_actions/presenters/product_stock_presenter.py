@@ -39,6 +39,15 @@ class _StockAggregation:
 class ExternalActionProductStockPresenter:
     _DETAIL_PREVIEW_MAX = 8
 
+    @staticmethod
+    def resolve_operational_root(root: dict | None) -> dict | None:
+        """Normaliza envelope operacional — delega ao serviço canônico."""
+        from app.domain.services.chat_presentation_operational_root_service import (
+            ChatPresentationOperationalRootService,
+        )
+
+        return ChatPresentationOperationalRootService.resolve_items_root(root)
+
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
 
@@ -705,6 +714,19 @@ class ExternalActionProductStockPresenter:
 
         return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
 
+    def _stock_tree_leaf_meta(self, item: dict[str, Any]) -> dict[str, float | str]:
+        available = float(item.get("available_quantity") or 0)
+        current = float(item.get("current_quantity") or 0)
+        committed = float(item.get("committed_quantity") or 0)
+
+        return {
+            "quantity": available,
+            "unit": self._route("treeMetaUnit") or "un.",
+            "available_quantity": available,
+            "current_quantity": current,
+            "committed_quantity": committed,
+        }
+
     def build_stock_tree_presentation(self, root: dict, path: str) -> dict | None:
         from app.domain.services.chat_presentation_hierarchy_tree_service import (
             ChatPresentationHierarchyTreeService,
@@ -728,14 +750,10 @@ class ExternalActionProductStockPresenter:
                 node_id=f"wh:{item.get('branch')}:{warehouse}",
                 label=self._route("treeLeafLabel", warehouse=warehouse),
                 subtitle=str(item.get("physical_location") or "").strip(),
-                meta={
-                    "available_quantity": float(item.get("available_quantity") or 0),
-                    "current_quantity": float(item.get("current_quantity") or 0),
-                    "committed_quantity": float(item.get("committed_quantity") or 0),
-                },
+                meta=self._stock_tree_leaf_meta(item),
             )
 
-        return ChatPresentationHierarchyTreeService.build_multi_level(
+        tree = ChatPresentationHierarchyTreeService.build_multi_level(
             title=title,
             root_id=agg.product_code or "stock",
             root_label=(
@@ -747,6 +765,8 @@ class ExternalActionProductStockPresenter:
             group_keys=["branch", "warehouse"],
             leaf_builder=_leaf,
         )
+
+        return tree
 
     def build_stock_dashboard_presentation(
         self,

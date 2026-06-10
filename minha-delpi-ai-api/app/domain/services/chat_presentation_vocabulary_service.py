@@ -47,6 +47,27 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.text("hierarchyTree", key, default=default)
 
     @classmethod
+    def hierarchy_tree_terms(cls, *path: str) -> tuple[str, ...]:
+        return cls.terms("hierarchyTree", *path)
+
+    @classmethod
+    def hierarchy_group_badge_label(cls, group_key: str) -> str:
+        token = str(group_key or "").strip().lower()
+
+        return cls.text("hierarchyTree", "groupBadgeLabels", token, default="")
+
+    @classmethod
+    def hierarchy_group_node_label(cls, group_key: str, value: str) -> str:
+        token = str(group_key or "").strip().lower()
+        bucket = str(value or "").strip() or cls.hierarchy_tree_text("emptyLabel", default="—")
+        template = cls.text("hierarchyTree", "groupNodeLabels", token, default="")
+
+        if template and "{value}" in template:
+            return template.replace("{value}", bucket)
+
+        return bucket
+
+    @classmethod
     @lru_cache(maxsize=1)
     def absence_insight_pattern(cls) -> re.Pattern[str]:
         pattern = cls.text(

@@ -1329,17 +1329,18 @@ class ChatPresentationDecisionService:
 
         if (
             ChatPresentationRoutePolicyService.is_stock_route(path)
-            and preferred in {"chart", "table"}
+            and preferred in {"chart", "table", "tree"}
             and preferred in set(views)
             and str(decision.get("selected") or "").strip().lower() != "text"
             and str(decision.get("layoutMode") or "").strip().lower() != "stack"
         ):
             decision["selected"] = preferred
-            decision["reason"] = (
-                cls._route_reason("stockChart")
-                if preferred == "chart"
-                else cls._route_reason("stockTable")
-            )
+            if preferred == "chart":
+                decision["reason"] = cls._route_reason("stockChart")
+            elif preferred == "table":
+                decision["reason"] = cls._route_reason("stockTable")
+            else:
+                decision["reason"] = cls._reason("treePrimaryView")
 
         if (
             ChatPresentationRoutePolicyService.is_table_route(path)

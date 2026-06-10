@@ -5,6 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, TYPE_CHECKING
 
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
+from app.domain.services.chat_presentation_tree_meta_caption_service import (
+    ChatPresentationTreeMetaCaptionService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -161,7 +168,76 @@ class ChatPresentationProfileVisualBundleService:
             else:
                 presentation = builder(root, path)
 
+            if view == "tree" and isinstance(presentation, dict):
+                ChatPresentationTreeMetaCaptionService.enrich(presentation, path=path)
+
             if presentation:
                 attach_auxiliary(metadata, view, presentation, primary_type=primary_type)
 
         return True
+
+    @classmethod
+    def build_profile_view(
+        cls,
+        presenter: ExternalActionResultPresenter,
+        *,
+        path: str,
+        view: str,
+        data: Any,
+        entity: str | None = None,
+    ) -> dict[str, Any] | None:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+        from app.domain.services.chat_presentation_operational_root_service import (
+            ChatPresentationOperationalRootService,
+        )
+
+        normalized_view = str(view or "").strip().lower()
+
+        if not normalized_view:
+            return None
+
+        entity = entity or cls._resolve_entity(data, path=path)
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        builder_name = cls.visual_builders(profile).get(normalized_view)
+
+        if not builder_name:
+            return None
+
+        builder = cls.builder_registry(presenter).get(builder_name)
+
+        if not builder:
+            return None
+
+        root = presenter._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        builder_root = ChatPresentationOperationalRootService.resolve_bundle_root(
+            root,
+            path=path,
+            entity=entity,
+        )
+
+        if builder_root is None:
+            return None
+
+        presentation = builder(builder_root, path)
+
+        if normalized_view == "tree" and isinstance(presentation, dict):
+            ChatPresentationTreeMetaCaptionService.enrich(presentation, path=path)
+
+        return presentation if isinstance(presentation, dict) else None
+
+    @classmethod
+    def _resolve_entity(cls, data: Any, *, path: str) -> str | None:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        entity = str(profile.entity or "").strip()
+
+        return entity or None

@@ -1,3 +1,6 @@
+from app.domain.services.chat_presentation_tree_meta_caption_service import (
+    ChatPresentationTreeMetaCaptionService,
+)
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -77,3 +80,43 @@ def test_stock_table_presentations_use_fixed_position_columns() -> None:
     assert "branch" in keys
     assert "warehouse" in keys
     assert "available_quantity" in keys
+
+
+def test_stock_tree_leaf_meta_exposes_quantity_for_ui() -> None:
+    presenter = ExternalActionResultPresenter()
+    items = [
+        {
+            "branch": "01",
+            "warehouse": "01",
+            "current_quantity": 100.0,
+            "available_quantity": 80.0,
+            "committed_quantity": 20.0,
+        },
+        {
+            "branch": "02",
+            "warehouse": "01",
+            "current_quantity": 5.0,
+            "available_quantity": 5.0,
+            "committed_quantity": 0.0,
+        },
+    ]
+    tree = presenter.build_stock_tree_presentation({"items": items}, "/products/10080022/stock")
+    ChatPresentationTreeMetaCaptionService.enrich(tree, path="/products/10080022/stock")
+
+    assert tree is not None
+
+    branch = tree["root"]["children"][0]
+    branch_meta = branch.get("meta") or {}
+    assert branch_meta.get("quantity") == 80.0
+    assert branch.get("label") == "Filial 01"
+    assert branch.get("badge") in {None, ""}
+    assert "Qtd. disponível:" in str(branch.get("metaCaption") or "")
+
+    warehouse = branch["children"][0]
+    leaf_meta = warehouse.get("meta") or {}
+    assert leaf_meta.get("quantity") == 80.0
+    assert leaf_meta.get("available_quantity") == 80.0
+    assert leaf_meta.get("current_quantity") == 100.0
+    assert leaf_meta.get("committed_quantity") == 20.0
+    assert warehouse.get("label") == "Armazém 01"
+    assert "Qtd. atual:" in str(warehouse.get("metaCaption") or "")

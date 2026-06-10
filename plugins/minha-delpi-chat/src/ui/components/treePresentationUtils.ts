@@ -53,14 +53,60 @@ function formatQuantity(value: string | number | undefined): string {
   return String(value);
 }
 
+/** Meta de nó de árvore — BOM (`quantity`/`unit`) e estoque (`available_quantity`, etc.). */
+export function formatTreeNodeMeta(meta?: Record<string, string | number>): string {
+  if (!meta) {
+    return "";
+  }
+
+  const unit = String(meta.unit ?? "un.").trim();
+  const hasStockDetail =
+    meta.available_quantity !== undefined ||
+    meta.current_quantity !== undefined ||
+    meta.committed_quantity !== undefined;
+
+  if (hasStockDetail) {
+    const parts: string[] = [];
+    const available = meta.available_quantity ?? meta.quantity;
+
+    if (available !== undefined && available !== null && available !== "") {
+      parts.push(`Disponível: ${formatQuantity(available)}`);
+    }
+
+    if (meta.current_quantity !== undefined && meta.current_quantity !== null && meta.current_quantity !== "") {
+      parts.push(`Saldo atual: ${formatQuantity(meta.current_quantity)}`);
+    }
+
+    if (
+      meta.committed_quantity !== undefined &&
+      meta.committed_quantity !== null &&
+      meta.committed_quantity !== ""
+    ) {
+      parts.push(`Empenhado: ${formatQuantity(meta.committed_quantity)}`);
+    }
+
+    if (parts.length) {
+      return `${parts.join(" · ")}${unit ? ` ${unit}` : ""}`.trim();
+    }
+  }
+
+  if (meta.quantity !== undefined && meta.quantity !== null && meta.quantity !== "") {
+    const formatted = formatQuantity(meta.quantity);
+
+    return unit ? `${formatted} ${unit}` : `Qtd: ${formatted}`;
+  }
+
+  return "";
+}
+
 function treeNodeToChildRow(node: ChatTreeNode, depth: number): TreeFlatRow {
   return {
     nivel: depth,
     codigo: node.label || node.id,
     descricao: node.subtitle || "",
     tipo: node.badge || "",
-    unidade: String(node.meta?.unit ?? ""),
-    quantidade: formatQuantity(node.meta?.quantity),
+    unidade: String(node.meta?.unit ?? "un."),
+    quantidade: formatQuantity(node.meta?.available_quantity ?? node.meta?.quantity),
   };
 }
 
@@ -68,7 +114,7 @@ export function formatTreeBlockHeading(node: ChatTreeNode, depth: number): strin
   const code = String(node.label || node.id || "").trim();
   const description = String(node.subtitle || "").trim();
   const badge = String(node.badge || "").trim();
-  const quantity = formatQuantity(node.meta?.quantity);
+  const quantity = formatQuantity(node.meta?.available_quantity ?? node.meta?.quantity);
   const unit = String(node.meta?.unit ?? "").trim();
   const label = description ? `${code} — ${description}` : code;
   const metaParts = [

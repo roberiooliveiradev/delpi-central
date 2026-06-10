@@ -175,6 +175,21 @@ class ChatPresentationPrimaryViewService:
 
             if forced and cls._presentation_type(forced) == "tree":
                 cls._set_primary(metadata, forced)
+                return
+
+            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
+                ChatPresentationProfileVisualBundleService,
+            )
+
+            profile_tree = ChatPresentationProfileVisualBundleService.build_profile_view(
+                presenter,
+                path=path,
+                view="tree",
+                data=data,
+            )
+
+            if profile_tree and cls._presentation_type(profile_tree) == "tree":
+                cls._set_primary(metadata, profile_tree)
 
     @classmethod
     def _apply_chart_primary(

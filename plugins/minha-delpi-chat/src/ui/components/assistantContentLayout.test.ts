@@ -156,4 +156,35 @@ describe("assistantContentLayout", () => {
       false,
     );
   });
+
+  it("usa explicitSessionFormat=tree quando selected=text (text-first stale)", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          explicitSessionFormat: "tree",
+          preferredFormat: "tree",
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "single",
+            visualOrder: ["text", "tree"],
+          },
+          presentation: {
+            type: "tree",
+            title: "Estoque do produto",
+            root: { id: "10080022", label: "10080022", children: [] },
+          },
+        },
+      },
+    ] as const;
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: true,
+      kind: "tree",
+    });
+
+    const segments = buildAssistantContentSegments("Estoque do produto", [...toolCalls]);
+
+    expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
+  });
 });

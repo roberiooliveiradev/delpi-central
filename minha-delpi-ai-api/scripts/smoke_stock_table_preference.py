@@ -195,6 +195,35 @@ def main() -> int:
             print("FAIL [sessão table] presentation primária não é tabela", file=sys.stderr)
             failed += 1
 
+    # Cenário 2b — responseFormat=tree no turno (estoque hierárquico)
+    session_id = _create_session(token, agent_id)
+    print(f"OK sessão turno tree {session_id}")
+
+    resp = _send(token, session_id, agent_id, message, response_format="tree")
+    meta = _stock_meta(resp)
+
+    if not meta:
+        print("FAIL [turno tree] sem toolCall de estoque", file=sys.stderr)
+        failed += 1
+    else:
+        decision = meta.get("presentationDecision") or {}
+        presentation = meta.get("presentation") or {}
+        print(
+            f"OK [turno tree] path={meta.get('path')} "
+            f"selected={decision.get('selected')!r} presentation={presentation.get('type')!r}"
+        )
+
+        if meta.get("preferredFormat") != "tree" or decision.get("selected") != "tree":
+            print("FAIL [turno tree] metadata não reflete árvore", file=sys.stderr)
+            failed += 1
+
+        if presentation.get("type") != "tree":
+            tree_pres = meta.get("treePresentation") or {}
+
+            if tree_pres.get("type") != "tree":
+                print("FAIL [turno tree] presentation primária não é árvore", file=sys.stderr)
+                failed += 1
+
     # Cenário 3 — texto-first (auto) e refinamento «último resultado em tabela»
     session_id = _create_session(token, agent_id)
     print(f"OK sessão texto-first + refinamento {session_id}")

@@ -5,6 +5,7 @@ import { ChatTableRowMenu, type TableRowMenuAnchor } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 import {
   exportTreeToCsv,
+  formatTreeNodeMeta,
   treePresentationToClipboardText,
 } from "./treePresentationUtils";
 import "./ChatRichTree.css";
@@ -60,24 +61,6 @@ const BADGE_COLORS: Record<string, string> = {
   MP: "mdc-rich-tree__badge--mp",
 };
 
-function formatMeta(meta?: Record<string, string | number>): string {
-  if (!meta) {
-    return "";
-  }
-
-  const parts: string[] = [];
-
-  if (meta.quantity !== undefined && meta.quantity !== null && meta.quantity !== "") {
-    parts.push(`Qtd: ${meta.quantity}`);
-  }
-
-  if (meta.unit) {
-    parts.push(String(meta.unit));
-  }
-
-  return parts.join(" · ");
-}
-
 function countNodes(node: ChatTreeNode): number {
   const children = node.children ?? [];
 
@@ -98,7 +81,7 @@ function TreeNodeRow({
   const hasChildren = Boolean(node.children?.length);
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
   const badgeClass = BADGE_COLORS[String(node.badge || "").toUpperCase()] ?? "";
-  const metaText = formatMeta(node.meta);
+  const metaText = String(node.metaCaption ?? "").trim() || formatTreeNodeMeta(node.meta);
   const menuActions = onDrillDown ? buildTreePointMenuActions(node) : [];
   const hasMenu = menuActions.length > 0;
   const contentRef = useRef<HTMLDivElement>(null);

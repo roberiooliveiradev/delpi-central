@@ -155,14 +155,8 @@ def test_stock_session_tree_prefers_tree_primary():
     )
 
     decision = meta["presentationDecision"]
-    pres_type = (meta.get("presentation") or {}).get("type")
-    assert pres_type == "tree", (
-        f"pres={pres_type!r} selected={decision.get('selected')!r} "
-        f"explicit={meta.get('explicitSessionFormat')!r} "
-        f"treeSlot={(meta.get('treePresentation') or {}).get('type')!r} "
-        f"avail={meta.get('availableFormats')!r}"
-    )
 
+    assert meta["presentation"]["type"] == "tree"
     assert decision["selected"] == "tree"
     assert decision["layoutMode"] == "single"
     assert meta.get("explicitSessionFormat") == "tree"
