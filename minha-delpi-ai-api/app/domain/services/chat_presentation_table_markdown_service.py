@@ -184,7 +184,16 @@ class ChatPresentationTableMarkdownService:
 
     @classmethod
     def _should_embed_tables(cls, metadata: dict[str, Any]) -> bool:
-        if ChatRichPresentationTextService.is_stack_layout(metadata):
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        explicit_text_embed = ChatPresentationTextModeService.should_embed_in_markdown(metadata)
+
+        if (
+            ChatRichPresentationTextService.is_stack_layout(metadata)
+            and not explicit_text_embed
+        ):
             return False
 
         if not cls._is_text_selected(metadata):

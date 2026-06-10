@@ -5,7 +5,7 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 import { buildAssistantMessageMenuActions } from "./chatAssistantMessageActions";
 
 describe("buildAssistantMessageMenuActions", () => {
-  it("expõe ações de formato a partir de presentationDecision", () => {
+  it("não expõe troca de formato pós-resposta", () => {
     const actions = buildAssistantMessageMenuActions([
       {
         name: "execute_external_action",
@@ -19,10 +19,6 @@ describe("buildAssistantMessageMenuActions", () => {
       },
     ] as ChatToolCall[]);
 
-    const labels = actions.map((action) => action.label);
-
-    expect(labels).toContain("Ver como tabela");
-    expect(labels).toContain("Ver em gráfico");
-    expect(labels).toContain("Colocar na lousa");
+    expect(actions).toEqual([]);
   });
 });

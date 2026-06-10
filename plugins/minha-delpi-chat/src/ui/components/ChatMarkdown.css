@@ -1,12 +1,18 @@
 .mdc-chat-markdown {
   color: var(--mdc-chat-prose, var(--mdc-text));
   line-height: 1.65;
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: break-word;
   word-break: normal;
 }
 
 .mdc-chat-markdown > *:first-child {
   margin-top: 0;
+}
+
+.mdc-chat-markdown__absorbed-heading {
+  display: none;
 }
 
 .mdc-chat-markdown > *:last-child {
@@ -153,10 +159,34 @@
   white-space: pre;
 }
 
-.mdc-chat-markdown table {
-  width: 100%;
-  border-collapse: collapse;
+.mdc-chat-code-block--table {
   margin: 0.85rem 0;
+}
+
+.mdc-chat-code-block--table .mdc-chat-markdown__table-wrap {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+}
+
+.mdc-chat-markdown__table-wrap {
+  max-width: 100%;
+  margin: 0.85rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm, 8px);
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  scrollbar-width: thin;
+}
+
+.mdc-chat-markdown table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  margin: 0;
   font-size: 0.92rem;
 }
 
@@ -165,6 +195,10 @@
   border: 1px solid var(--mdc-card-border);
   padding: 0.55rem 0.7rem;
   text-align: left;
+  vertical-align: top;
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mdc-chat-markdown th {
@@ -212,18 +246,22 @@
   }
 
   .mdc-chat-markdown table {
-    display: block;
-    overflow-x: auto;
     font-size: 0.82rem;
+  }
+
+  .mdc-chat-markdown th,
+  .mdc-chat-markdown td {
+    padding: 0.45rem 0.55rem;
+    max-width: 12rem;
   }
 }
 
 .mdc-chat-mermaid {
   margin: 0.85rem 0;
   overflow-x: auto;
-  border: 1px solid var(--mdc-border, rgba(255, 255, 255, 0.12));
+  border: 1px solid var(--mdc-card-border);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--mdc-surface, #111) 92%, transparent);
+  background: var(--mdc-card-bg);
   padding: 0.75rem;
 }
 

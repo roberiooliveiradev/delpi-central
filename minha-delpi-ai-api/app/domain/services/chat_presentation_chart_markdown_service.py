@@ -46,6 +46,8 @@ _TABLE_FALLBACK_CHART_TYPES = frozenset(
         "grouped_bar",
         "stacked",
         "grouped",
+        # xychart-beta do Mermaid não suporta barras horizontais de forma confiável.
+        "horizontal_bar",
     }
 )
 
@@ -485,10 +487,7 @@ class ChatPresentationChartMarkdownService:
     def _format_x_label(cls, value: Any) -> str:
         label = cls._sanitize_axis_label(str(value or "—"))
 
-        if re.search(r"[\[\],\"']", label):
-            return f'"{cls._escape_mermaid_text(label)}"'
-
-        return label
+        return f'"{cls._escape_mermaid_text(label)}"'
 
     @classmethod
     def _sanitize_axis_label(cls, label: str) -> str:
@@ -502,7 +501,16 @@ class ChatPresentationChartMarkdownService:
 
     @classmethod
     def _should_embed_charts(cls, metadata: dict[str, Any]) -> bool:
-        if ChatRichPresentationTextService.is_stack_layout(metadata):
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        explicit_text_embed = ChatPresentationTextModeService.should_embed_in_markdown(metadata)
+
+        if (
+            ChatRichPresentationTextService.is_stack_layout(metadata)
+            and not explicit_text_embed
+        ):
             return False
 
         if not cls._is_text_selected(metadata):
@@ -512,7 +520,12 @@ class ChatPresentationChartMarkdownService:
         entity = cls._resolve_entity(path)
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
 
-        return profile.get("textEmbedChartsInMarkdown") is True
+        if profile.get("textEmbedChartsInMarkdown") is not True:
+            return False
+
+        chart_policy = str(profile.get("chartPolicy") or "auto").strip().lower()
+
+        return chart_policy != "skip"
 
     @classmethod
     def _is_text_selected(cls, metadata: dict[str, Any]) -> bool:

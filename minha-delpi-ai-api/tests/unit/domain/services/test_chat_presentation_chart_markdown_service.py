@@ -49,7 +49,71 @@ def test_mermaid_xychart_from_bar_chart():
     assert "```mermaid" in section
     assert "xychart-beta" in section
     assert "bar [" in section
-    assert "01" in section
+    assert '"01"' in section
+
+
+def test_horizontal_bar_falls_back_to_markdown_table():
+    chart = {
+        "type": "chart",
+        "title": "Saldo de MP — 90262404",
+        "chartType": "horizontal_bar",
+        "config": {"xAxis": "raw_material_code", "yAxis": "available_quantity_total"},
+        "data": [
+            {"raw_material_code": "10080063", "available_quantity_total": 0},
+            {"raw_material_code": "10130006", "available_quantity_total": 0},
+        ],
+    }
+
+    section = ChatPresentationChartMarkdownService._chart_section(
+        chart,
+        metadata={"path": "/products/90262404/factory-status"},
+    )
+
+    assert "```mermaid" not in section
+    assert "|" in section
+    assert "10080063" in section
+
+
+def test_embed_charts_skips_when_chart_policy_is_skip():
+    metadata = {
+        "path": "/products/90262404/factory-status",
+        "explicitSessionFormat": "text",
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Status fabril\n\nResumo.",
+        },
+        "chartPresentation": {
+            "type": "chart",
+            "title": "Saldo de MP",
+            "chartType": "horizontal_bar",
+            "data": [{"raw_material_code": "10080063", "available_quantity_total": 0}],
+        },
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+        },
+    }
+
+    ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
+
+    assert "```mermaid" not in metadata["textPresentation"]["markdown"]
+
+
+def test_mermaid_xychart_quotes_branch_labels_with_slash_and_dot():
+    chart = {
+        "type": "chart",
+        "title": "Estoque por filial/armazém",
+        "chartType": "bar",
+        "config": {"xAxis": "branch", "yAxis": "quantity"},
+        "data": [{"branch": "Fil.01/01", "quantity": 0}],
+    }
+
+    section = ChatPresentationChartMarkdownService._chart_section(
+        chart,
+        metadata={"path": "/products/90269001/stock"},
+    )
+
+    assert 'x-axis ["Fil.01/01"]' in section
 
 
 def test_heatmap_falls_back_to_markdown_table():
@@ -96,7 +160,7 @@ def test_embed_charts_in_text_presentation_when_text_selected():
     assert metadata.get("chartPresentation") is None
 
 
-def test_embed_charts_skips_stack_layout():
+def test_embed_charts_skips_stack_layout_without_explicit_text():
     metadata = {
         "path": "/products/90269001/analyser",
         "textPresentation": {
@@ -113,3 +177,24 @@ def test_embed_charts_skips_stack_layout():
     ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
 
     assert "pie showData" not in metadata["textPresentation"]["markdown"]
+
+
+def test_embed_charts_in_explicit_text_stack_layout():
+    metadata = {
+        "path": "/products/90269001/analyser",
+        "explicitSessionFormat": "text",
+        "preferredFormat": "text",
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Analyser\n\nResumo.",
+        },
+        "chartPresentation": _donut_chart(),
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+        },
+    }
+
+    ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
+
+    assert "pie showData" in metadata["textPresentation"]["markdown"]

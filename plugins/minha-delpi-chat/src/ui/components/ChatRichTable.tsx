@@ -10,6 +10,8 @@ import {
 } from "./presentationCategoryFilter";
 import { formatChartColumnLabel } from "./chartAxisSelection";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
+import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
+import { tablePresentationToMarkdown } from "./chatPresentation";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -39,7 +41,6 @@ export function ChatRichTable({
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
   const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [rowMenu, setRowMenu] = useState<{
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildTableRowMenuActions>;
@@ -124,20 +125,6 @@ export function ChatRichTable({
     URL.revokeObjectURL(url);
   }
 
-  function copyToClipboard() {
-    const header = columns.map((c) => c.label).join("\t");
-    const body = filteredRows
-      .map((row) =>
-        columns.map((col) => String(row[col.key] ?? "")).join("\t"),
-      )
-      .join("\n");
-
-    navigator.clipboard.writeText(header + "\n" + body).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
   const sorted = sortedRows();
 
   return (
@@ -207,13 +194,20 @@ export function ChatRichTable({
                 ) : null}
               </>
             ) : null}
-            <button
-              className="mdc-rich-table__btn"
-              onClick={copyToClipboard}
-              title="Copiar tabela"
-            >
-              {copied ? "✓ Copiado" : "Copiar"}
-            </button>
+            <ChatPresentationCopyButton
+              getText={() =>
+                tablePresentationToMarkdown(
+                  {
+                    ...presentation,
+                    columns,
+                    rows: filteredRows,
+                  },
+                  { includeTitle: true },
+                )
+              }
+              copyAriaLabel="Copiar tabela"
+              copiedAriaLabel="Tabela copiada"
+            />
             <button
               className="mdc-rich-table__btn"
               onClick={exportCsv}

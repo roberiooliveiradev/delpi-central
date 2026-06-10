@@ -1682,7 +1682,7 @@ export function resolveStackCommentaryBody(
 
   body = stripCoverageNoticeFromMarkdown(body);
 
-  if (hasRichStackPresentation(toolCalls)) {
+  if (hasRichStackPresentation(toolCalls) && !isExplicitTextSessionMode(toolCalls)) {
     body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
   }
 
@@ -1726,7 +1726,7 @@ export function resolveCommentaryTextBody(
     body = stripRedundantInspectionFromMarkdown(body);
   }
 
-  if (hasRichStackPresentation(toolCalls)) {
+  if (hasRichStackPresentation(toolCalls) && !isExplicitTextSessionMode(toolCalls)) {
     body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
   }
 

@@ -112,10 +112,37 @@ function normalizeLeadProse(lead: string): string {
       continue;
     }
 
+    if (
+      unique.some(
+        (item) =>
+          (item.length >= 24 &&
+            key.length >= 24 &&
+            (item.includes(key) || key.includes(item))) ||
+          (item.includes("visão integrada") && key.includes("visão integrada")),
+      )
+    ) {
+      continue;
+    }
+
     unique.push(paragraph);
   }
 
   return unique.join("\n\n");
+}
+
+function shouldSkipScopeSectionFraming(leadProse: string, framing: string): boolean {
+  const lead = String(leadProse || "").trim().toLowerCase();
+  const scope = String(framing || "").trim().toLowerCase();
+
+  if (!lead || !scope) {
+    return false;
+  }
+
+  if (lead.includes(scope) || scope.includes(lead.slice(0, Math.min(lead.length, 96)))) {
+    return true;
+  }
+
+  return lead.includes("visão integrada") && scope.includes("visão integrada");
 }
 
 function pushMarkdownSegments(
@@ -313,11 +340,15 @@ export function buildPlanOrderedStackSegments(
         }
 
         maybePushStackSection(plan, segments, "scope", appendUnique);
-        pushSectionFraming(plan, segments, "scope", parseMarkdown, appendUnique);
 
         const leadProse = sections.lead
           ? normalizeLeadProse(sections.lead)
           : normalizeLeadProse(commentary);
+        const scopeFraming = String(plan.sectionFraming?.scope || "").trim();
+
+        if (!shouldSkipScopeSectionFraming(leadProse, scopeFraming)) {
+          pushSectionFraming(plan, segments, "scope", parseMarkdown, appendUnique);
+        }
 
         if (leadProse) {
           pushMarkdownSegments(segments, leadProse, parseMarkdown, appendUnique);

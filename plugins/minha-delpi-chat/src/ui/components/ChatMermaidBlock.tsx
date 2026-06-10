@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from "react";
 
+import { resolveMermaidTheme, useMdcDarkMode } from "../theme/mdcCssVars";
+
 type ChatMermaidBlockProps = {
   code: string;
 };
@@ -11,26 +13,37 @@ type MermaidRenderer = {
 
 let mermaidModulePromise: Promise<MermaidRenderer> | null = null;
 
-function loadMermaid(): Promise<MermaidRenderer> {
+function loadMermaidModule(): Promise<MermaidRenderer> {
   if (!mermaidModulePromise) {
-    mermaidModulePromise = import("mermaid").then((module) => {
-      const mermaid = module.default as MermaidRenderer;
-
-      mermaid.initialize({
-        startOnLoad: false,
-        securityLevel: "strict",
-        theme: "dark",
-      });
-
-      return mermaid;
-    });
+    mermaidModulePromise = import("mermaid").then(
+      (module) => module.default as MermaidRenderer,
+    );
   }
 
   return mermaidModulePromise;
 }
 
+function initializeMermaid(mermaid: MermaidRenderer, isDark: boolean): void {
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: "strict",
+    theme: resolveMermaidTheme(isDark),
+  });
+}
+
+function isMermaidErrorSvg(svg: string): boolean {
+  const normalized = String(svg || "");
+
+  return (
+    /Syntax error/i.test(normalized) ||
+    /class="error-icon"/i.test(normalized) ||
+    /class='error-icon'/i.test(normalized)
+  );
+}
+
 export function ChatMermaidBlock({ code }: ChatMermaidBlockProps) {
   const reactId = useId().replace(/:/g, "");
+  const isDark = useMdcDarkMode();
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
@@ -47,12 +60,21 @@ export function ChatMermaidBlock({ code }: ChatMermaidBlockProps) {
       };
     }
 
-    void loadMermaid()
+    void loadMermaidModule()
       .then(async (mermaid) => {
+        initializeMermaid(mermaid, isDark);
         const renderId = `mdc-mermaid-${reactId}-${Date.now()}`;
         const result = await mermaid.render(renderId, diagram);
 
         if (!cancelled) {
+          if (isMermaidErrorSvg(result.svg)) {
+            setSvg("");
+            setError(
+              "Não foi possível renderizar o diagrama Mermaid (sintaxe inválida).",
+            );
+            return;
+          }
+
           setSvg(result.svg);
           setError(null);
         }
@@ -71,7 +93,7 @@ export function ChatMermaidBlock({ code }: ChatMermaidBlockProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, reactId]);
+  }, [code, isDark, reactId]);
 
   if (error) {
     return (

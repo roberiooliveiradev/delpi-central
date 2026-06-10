@@ -77,16 +77,17 @@
   --mdc-chart-tooltip-border: var(--mdc-card-border);
   --mdc-chart-tooltip-text: var(--mdc-text);
   --mdc-chart-export-bg: var(--mdc-card-bg);
-  --mdc-chart-series-1: var(--mdc-primary);
-  --mdc-chart-series-2: color-mix(in srgb, var(--mdc-secondary) 45%, var(--mdc-primary));
-  --mdc-chart-series-3: var(--mdc-success);
-  --mdc-chart-series-4: var(--mdc-warning);
-  --mdc-chart-series-5: var(--mdc-danger);
-  --mdc-chart-series-6: color-mix(in srgb, var(--mdc-primary) 65%, var(--mdc-success));
-  --mdc-chart-series-7: color-mix(in srgb, var(--mdc-secondary) 35%, var(--mdc-primary));
-  --mdc-chart-series-8: color-mix(in srgb, var(--mdc-warning) 75%, var(--mdc-primary));
-  --mdc-chart-series-9: color-mix(in srgb, var(--mdc-danger) 55%, var(--mdc-secondary));
-  --mdc-chart-series-10: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-text-muted));
+  /* Paleta saturada — contraste em fundo claro (evita lavanda padrão do Recharts). */
+  --mdc-chart-series-1: #0478b5;
+  --mdc-chart-series-2: #0d6e8c;
+  --mdc-chart-series-3: #067647;
+  --mdc-chart-series-4: #b45309;
+  --mdc-chart-series-5: #b42318;
+  --mdc-chart-series-6: #5b21b6;
+  --mdc-chart-series-7: #0369a1;
+  --mdc-chart-series-8: #15803d;
+  --mdc-chart-series-9: #9f1239;
+  --mdc-chart-series-10: #003866;
 
   --mdc-code-surface: color-mix(in srgb, var(--mdc-bg-muted) 38%, var(--mdc-card-bg));
   --mdc-code-surface-end: color-mix(in srgb, var(--mdc-bg-muted) 22%, var(--mdc-card-bg));
@@ -196,6 +197,17 @@
   --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
   --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
   --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+
+  --mdc-chart-series-1: #38bdf8;
+  --mdc-chart-series-2: #2dd4bf;
+  --mdc-chart-series-3: #4ade80;
+  --mdc-chart-series-4: #fbbf24;
+  --mdc-chart-series-5: #f87171;
+  --mdc-chart-series-6: #a78bfa;
+  --mdc-chart-series-7: #60a5fa;
+  --mdc-chart-series-8: #86efac;
+  --mdc-chart-series-9: #fb7185;
+  --mdc-chart-series-10: #93c5fd;
 }
 
 /* =========================================
@@ -247,6 +259,17 @@
     --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
     --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
     --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+
+    --mdc-chart-series-1: #38bdf8;
+    --mdc-chart-series-2: #2dd4bf;
+    --mdc-chart-series-3: #4ade80;
+    --mdc-chart-series-4: #fbbf24;
+    --mdc-chart-series-5: #f87171;
+    --mdc-chart-series-6: #a78bfa;
+    --mdc-chart-series-7: #60a5fa;
+    --mdc-chart-series-8: #86efac;
+    --mdc-chart-series-9: #fb7185;
+    --mdc-chart-series-10: #93c5fd;
   }
 }
 

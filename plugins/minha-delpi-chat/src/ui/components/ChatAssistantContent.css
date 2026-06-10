@@ -1,5 +1,7 @@
 .mdc-assistant-content {
   color: var(--mdc-chat-prose, var(--mdc-text));
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mdc-assistant-content__format-toolbar {
@@ -42,6 +44,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--mdc-space-3);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mdc-assistant-content__segments > .mdc-stack-section,

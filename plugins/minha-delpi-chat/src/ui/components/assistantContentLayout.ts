@@ -184,6 +184,12 @@ export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
   active: boolean;
   kind: ContentFormatKind | null;
 } {
+  const explicitKind = explicitNativeFormatFromToolCalls(toolCalls);
+
+  if (explicitKind) {
+    return { active: true, kind: explicitKind };
+  }
+
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
 
   if (decision?.layoutMode === "stack") {
@@ -194,12 +200,6 @@ export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
 
   if (selectedKind) {
     return { active: true, kind: selectedKind };
-  }
-
-  const explicitKind = explicitNativeFormatFromToolCalls(toolCalls);
-
-  if (explicitKind) {
-    return { active: true, kind: explicitKind };
   }
 
   return { active: false, kind: null };

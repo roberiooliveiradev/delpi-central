@@ -67,7 +67,14 @@
 
 .mdc-rich-table__actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.4rem;
+}
+
+.mdc-rich-table__actions .mdc-chat-code-block__copy,
+.mdc-rich-tree__actions .mdc-chat-code-block__copy {
+  flex: 0 0 auto;
 }
 
 .mdc-rich-chart__toolbar {

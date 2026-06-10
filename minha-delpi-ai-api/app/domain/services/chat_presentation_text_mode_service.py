@@ -108,4 +108,17 @@ class ChatPresentationTextModeService:
         if not cls.is_user_explicit_text_mode(metadata):
             return
 
+        from app.domain.services.chat_presentation_chart_markdown_service import (
+            ChatPresentationChartMarkdownService,
+        )
+        from app.domain.services.chat_presentation_table_markdown_service import (
+            ChatPresentationTableMarkdownService,
+        )
+        from app.domain.services.chat_presentation_tree_markdown_service import (
+            ChatPresentationTreeMarkdownService,
+        )
+
+        ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
+        ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
+        ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
         cls.align_explicit_session_decision(metadata)

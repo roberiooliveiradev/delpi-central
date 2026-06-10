@@ -5,6 +5,8 @@ import {
   hasMarkdownSyntax,
   prepareMarkdownContent,
   stripPresentationSectionMarkers,
+  tableRowsToClipboardText,
+  tableRowsToGfmMarkdown,
 } from "./chatMarkdown";
 
 describe("chatMarkdown", () => {
@@ -17,6 +19,25 @@ describe("chatMarkdown", () => {
 
   it("remove escapes de asterisco", () => {
     expect(prepareMarkdownContent("Olá \\*\\*Agente\\*\\*")).toBe("Olá **Agente**");
+  });
+
+  it("serializa linhas em markdown GFM para copiar como texto", () => {
+    expect(
+      tableRowsToGfmMarkdown([
+        ["Campo", "Valor"],
+        ["OPs de PA", "305"],
+      ]),
+    ).toBe("| Campo | Valor |\n| --- | --- |\n| OPs de PA | 305 |");
+  });
+
+  it("serializa linhas tabuladas para copiar em planilha", () => {
+    expect(
+      tableRowsToClipboardText([
+        ["Cód.", "Qtd."],
+        ["10080063", "350000"],
+        ["10130006", "3104"],
+      ]),
+    ).toBe("Cód.\tQtd.\n10080063\t350000\n10130006\t3104");
   });
 
   it("remove marcadores internos de seção do stack humanizado", () => {

@@ -28,7 +28,11 @@ def test_factory_section_rules_resolve_tail_visuals():
 
     assert plan["presentationProfile"] == "product_factory_status"
     assert plan["sectionVisibility"]["profile"] is True
-    assert "tailVisuals" in plan["narrativeOrder"]
+    narrative = plan["narrativeOrder"]
+    assert "profileTables" in narrative
+    assert "operationalTables" not in narrative
+    assert narrative.index("profileTables") < narrative.index("highlights")
+    assert "tailVisuals" in narrative
 
 
 def test_sale_pricing_section_rules_use_visual_panels():

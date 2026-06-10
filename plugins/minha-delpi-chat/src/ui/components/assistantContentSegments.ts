@@ -17,9 +17,9 @@ import {
 import {
   getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
-  getTextMarkdownFromToolCalls,
   isExplicitTextSessionMode,
   resolveStackCommentaryBody,
+  tablePresentationToMarkdown,
 } from "./chatPresentation";
 import { buildInterleavedStackSegments } from "./assistantContentInterleave";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
@@ -519,14 +519,74 @@ function buildStackedSegments(
   );
 }
 
+function appendEmbeddedTablesForExplicitText(
+  markdown: string,
+  toolCalls: ChatToolCall[],
+): string {
+  const body = String(markdown || "").trim();
+
+  if (!body || body.includes("|")) {
+    return body;
+  }
+
+  const sections: string[] = [body];
+  const seen = new Set<string>();
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const candidates: Extract<ChatPresentation, { type: "table" }>[] = [];
+
+    const pushTable = (value: unknown) => {
+      if (
+        value &&
+        typeof value === "object" &&
+        (value as ChatPresentation).type === "table"
+      ) {
+        candidates.push(value as Extract<ChatPresentation, { type: "table" }>);
+      }
+    };
+
+    pushTable(metadata.presentation);
+    pushTable(metadata.profileTablePresentation);
+    pushTable(metadata.tablePresentation);
+    pushTable(metadata.inspectionTablePresentation);
+
+    const bundled = metadata.tablePresentations;
+
+    if (Array.isArray(bundled)) {
+      for (const item of bundled) {
+        pushTable(item);
+      }
+    }
+
+    for (const table of dedupeTablePresentations(candidates)) {
+      const section = tablePresentationToMarkdown(table).trim();
+
+      if (!section || seen.has(section)) {
+        continue;
+      }
+
+      seen.add(section);
+      sections.push(section);
+    }
+  }
+
+  return sections.join("\n\n").trim();
+}
+
 export function buildAssistantContentSegments(
   content: string,
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   if (isExplicitTextSessionMode(toolCalls)) {
-    const markdown =
-      getTextMarkdownFromToolCalls(toolCalls) ||
-      resolveAssistantRenderableMarkdown(content, toolCalls);
+    const markdown = appendEmbeddedTablesForExplicitText(
+      resolveAssistantRenderableMarkdown(content, toolCalls),
+      toolCalls,
+    );
 
     return parseMarkdownAndCodeSegments(markdown);
   }

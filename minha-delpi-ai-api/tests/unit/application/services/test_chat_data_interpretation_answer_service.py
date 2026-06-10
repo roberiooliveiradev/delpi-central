@@ -77,3 +77,45 @@ def test_build_resume_from_stock_preview():
 
 def test_returns_none_without_tool_history():
     assert ChatDataInterpretationAnswerService.build_answer("resume", []) is None
+
+
+def test_build_answer_prefers_data_commentary_over_generic_summary():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90262404/factory-status",
+                            "humanizedSummary": {
+                                "titulo": "Status fabril — 90262404",
+                                "linhas": ["Situação consolidada: **PA PRODUZIDO**"],
+                            },
+                            "dataCommentary": {
+                                "profileKey": "factory_status",
+                                "highlights": [
+                                    "Produção **em andamento** — PA **Sim** · PI **Não**.",
+                                    "MP **10160001** com cobertura baixa.",
+                                ],
+                                "attention": ["Validar compra ou substituição."],
+                                "narrativeInsight": "Produção ativa com atenção em MP 10160001.",
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    answer = ChatDataInterpretationAnswerService.build_answer(
+        "explique isso",
+        history,
+    )
+
+    assert answer
+    assert "10160001" in answer
+    assert "Produção" in answer
+    assert "Atenção" in answer or "Validar compra" in answer

@@ -64,3 +64,53 @@ export function applySoftLineBreaks(content: string): string {
     })
     .join("");
 }
+
+/** Texto tabulado para colar em planilha — mesma convenção do ChatRichTable. */
+export function tableRowsToClipboardText(rows: string[][]): string {
+  return rows
+    .map((row) =>
+      row.map((cell) => cell.replace(/\s+/g, " ").trim()).join("\t"),
+    )
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
+export function tableElementToClipboardText(table: HTMLTableElement): string {
+  const rows = Array.from(table.querySelectorAll("tr")).map((row) =>
+    Array.from(row.querySelectorAll("th, td")).map((cell) => cell.textContent ?? ""),
+  );
+
+  return tableRowsToClipboardText(rows);
+}
+
+function escapeGfmTableCell(value: string): string {
+  return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+}
+
+/** GFM para copiar no mesmo espírito do bloco TEXT (conteúdo textual fiel). */
+export function tableRowsToGfmMarkdown(rows: string[][]): string {
+  const normalized = rows
+    .map((row) => row.map((cell) => escapeGfmTableCell(cell)))
+    .filter((row) => row.some((cell) => cell.length > 0));
+
+  if (!normalized.length) {
+    return "";
+  }
+
+  const [header, ...body] = normalized;
+  const separator = header.map(() => "---");
+
+  return [
+    `| ${header.join(" | ")} |`,
+    `| ${separator.join(" | ")} |`,
+    ...body.map((row) => `| ${row.join(" | ")} |`),
+  ].join("\n");
+}
+
+export function tableElementToGfmMarkdown(table: HTMLTableElement): string {
+  const rows = Array.from(table.querySelectorAll("tr")).map((row) =>
+    Array.from(row.querySelectorAll("th, td")).map((cell) => cell.textContent ?? ""),
+  );
+
+  return tableRowsToGfmMarkdown(rows);
+}

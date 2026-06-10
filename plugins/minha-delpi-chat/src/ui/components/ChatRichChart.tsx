@@ -24,7 +24,12 @@ import {
   Cell,
 } from "recharts";
 import type { ChatPresentation } from "../../data/api/chatTypes";
-import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
+import {
+  readMdcChartTheme,
+  resolveChartSeriesColor,
+  resolveChartSeriesColors,
+  useMdcDarkMode,
+} from "../theme/mdcCssVars";
 import { buildChartPointMenuActions } from "./chatDrillDown";
 import {
   applyChartTopFilter,
@@ -254,7 +259,10 @@ export function ChatRichChart({
   const fieldFormats = config?.fieldFormats;
 
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
-  const colors = config?.colors || chartTheme.seriesColors;
+  const colors = useMemo(
+    () => resolveChartSeriesColors(config?.colors, isDark),
+    [config?.colors, isDark],
+  );
   const showLegend = config?.legend !== false && displayYAxes.length > 1;
   const { gridColor, tickFill, tooltipStyle } = chartTheme;
   const tickStyle = { fontSize: 11, fill: tickFill };
@@ -692,6 +700,7 @@ export function ChatRichChart({
               onDrillDown ? openPointMenu : undefined,
               fieldLabels,
               fieldFormats,
+              isDark,
             )}
           </ResponsiveContainer>
         )}
@@ -764,6 +773,25 @@ function seriesLabel(key: string, fieldLabels?: FieldLabels | null) {
   return formatChartColumnLabel(key, fieldLabels);
 }
 
+function renderBarCategoryCells(
+  data: Record<string, unknown>[],
+  colors: string[],
+  seriesIndex: number,
+  isDark: boolean,
+  multiColorPerCategory: boolean,
+) {
+  if (!multiColorPerCategory || data.length <= 1) {
+    return null;
+  }
+
+  return data.map((_, dataIndex) => (
+    <Cell
+      key={`bar-cell-${seriesIndex}-${dataIndex}`}
+      fill={resolveChartSeriesColor(colors, dataIndex, isDark)}
+    />
+  ));
+}
+
 function renderChart(
   type: string,
   data: Record<string, unknown>[],
@@ -776,7 +804,9 @@ function renderChart(
   onPointClick?: ChartPointClickHandler,
   fieldLabels?: FieldLabels | null,
   fieldFormats?: FieldFormats | null,
+  isDark = false,
 ) {
+  const multiColorBars = yAxes.length === 1;
   const commonProps = { data, margin: { top: 10, right: 20, left: 10, bottom: 5 } };
   const interactiveCursor = onPointClick ? "pointer" : undefined;
   const xAxisTickFormatter = buildAxisTickFormatter(xAxis, fieldFormats);
@@ -797,7 +827,7 @@ function renderChart(
               name={seriesLabel(key, fieldLabels)}
               type="monotone"
               dataKey={key}
-              stroke={colors[i % colors.length]}
+              stroke={resolveChartSeriesColor(colors, i, isDark)}
               strokeWidth={2}
               dot={{ r: 3, cursor: interactiveCursor }}
               activeDot={{
@@ -826,8 +856,8 @@ function renderChart(
               name={seriesLabel(key, fieldLabels)}
               type="monotone"
               dataKey={key}
-              stroke={colors[i % colors.length]}
-              fill={colors[i % colors.length]}
+              stroke={resolveChartSeriesColor(colors, i, isDark)}
+              fill={resolveChartSeriesColor(colors, i, isDark)}
               fillOpacity={0.2}
               activeDot={{
                 r: 5,
@@ -865,7 +895,7 @@ function renderChart(
             labelLine={false}
           >
             {data.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
+              <Cell key={i} fill={resolveChartSeriesColor(colors, i, isDark)} />
             ))}
           </Pie>
         </PieChart>
@@ -890,13 +920,15 @@ function renderChart(
               key={key}
               name={seriesLabel(key, fieldLabels)}
               dataKey={key}
-              fill={colors[i % colors.length]}
+              fill={resolveChartSeriesColor(colors, i, isDark)}
               radius={[0, 4, 4, 0]}
               cursor={interactiveCursor}
               onClick={(bar, _index, event) => {
                 chartPointFromEvent(bar, event, onPointClick);
               }}
-            />
+            >
+              {renderBarCategoryCells(data, colors, i, isDark, multiColorBars)}
+            </Bar>
           ))}
         </BarChart>
       );
@@ -916,17 +948,19 @@ function renderChart(
             <Bar
               name={seriesLabel(barKey, fieldLabels)}
               dataKey={barKey}
-              fill={colors[0]}
+              fill={resolveChartSeriesColor(colors, 0, isDark)}
               radius={[4, 4, 0, 0]}
               cursor={interactiveCursor}
-            />
+            >
+              {renderBarCategoryCells(data, colors, 0, isDark, multiColorBars)}
+            </Bar>
           ) : null}
           {lineKey ? (
             <Line
               name={seriesLabel(lineKey, fieldLabels)}
               type="monotone"
               dataKey={lineKey}
-              stroke={colors[1 % colors.length]}
+              stroke={resolveChartSeriesColor(colors, 1, isDark)}
               strokeWidth={2}
               dot={{ r: 3, cursor: interactiveCursor }}
             />
@@ -959,7 +993,7 @@ function renderChart(
           <Scatter
             name="Dados"
             data={data}
-            fill={colors[0]}
+            fill={resolveChartSeriesColor(colors, 0, isDark)}
             cursor={interactiveCursor}
             onClick={(point, _index, event) => {
               chartPointFromEvent(point, event, onPointClick);
@@ -984,7 +1018,7 @@ function renderChart(
               name={seriesLabel(key, fieldLabels)}
               dataKey={key}
               stackId="stack"
-              fill={colors[i % colors.length]}
+              fill={resolveChartSeriesColor(colors, i, isDark)}
               radius={i === yAxes.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
               cursor={interactiveCursor}
               onClick={(bar, _index, event) => {
@@ -1003,7 +1037,9 @@ function renderChart(
       const rawTarget = Number(row[targetKey ?? ""] ?? rawValue);
       const maxValue = rawTarget > 0 ? rawTarget : Math.max(rawValue, 1);
       const fill = Math.min(100, Math.round((rawValue / maxValue) * 100));
-      const gaugeData = [{ name: "Atual", value: fill, fill: colors[0] }];
+      const gaugeData = [
+        { name: "Atual", value: fill, fill: resolveChartSeriesColor(colors, 0, isDark) },
+      ];
 
       return (
         <RadialBarChart
@@ -1037,13 +1073,15 @@ function renderChart(
               key={key}
               name={seriesLabel(key, fieldLabels)}
               dataKey={key}
-              fill={colors[i % colors.length]}
+              fill={resolveChartSeriesColor(colors, i, isDark)}
               radius={[4, 4, 0, 0]}
               cursor={interactiveCursor}
               onClick={(bar, _index, event) => {
                 chartPointFromEvent(bar, event, onPointClick);
               }}
-            />
+            >
+              {renderBarCategoryCells(data, colors, i, isDark, multiColorBars)}
+            </Bar>
           ))}
         </BarChart>
       );

@@ -49,7 +49,7 @@ def test_embed_tables_in_text_presentation_when_text_selected():
     assert "PA PRODUZIDO" in markdown
 
 
-def test_embed_tables_skips_stack_layout():
+def test_embed_tables_skips_stack_layout_without_explicit_text():
     metadata = {
         "path": "/products/90269002/factory-status",
         "textPresentation": {
@@ -66,3 +66,24 @@ def test_embed_tables_skips_stack_layout():
     ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
 
     assert "| Campo | Valor |" not in metadata["textPresentation"]["markdown"]
+
+
+def test_embed_tables_in_explicit_text_stack_layout():
+    metadata = {
+        "path": "/products/90269002/factory-status",
+        "explicitSessionFormat": "text",
+        "preferredFormat": "text",
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Status fabril\n\nResumo.",
+        },
+        "tablePresentations": [_sample_table()],
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+        },
+    }
+
+    ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
+
+    assert "| Campo | Valor |" in metadata["textPresentation"]["markdown"]

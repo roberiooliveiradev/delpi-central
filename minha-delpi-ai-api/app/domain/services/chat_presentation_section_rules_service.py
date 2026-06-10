@@ -296,14 +296,13 @@ class ChatPresentationSectionRulesService:
     ) -> list[str]:
         order = ["lead"]
 
+        if visibility.get(cls._PROFILE):
+            order.append("profileTables")
+
         if visibility.get(cls._HIGHLIGHTS):
             order.append("highlights")
 
-        if (
-            visibility.get(cls._PROFILE)
-            or visibility.get(cls._STRUCTURE)
-            or visibility.get(cls._GUIDE)
-        ):
+        if visibility.get(cls._STRUCTURE) or visibility.get(cls._GUIDE):
             order.append("operationalTables")
 
         if cls._should_include_tail_visuals(metadata, visibility):

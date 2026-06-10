@@ -76,6 +76,11 @@ class ChatDataInterpretationAnswerService:
                 )
                 return text or None
 
+        commentary_answer = cls._build_commentary_answer(message, previous_messages)
+
+        if commentary_answer:
+            return commentary_answer
+
         summaries = cls._collect_summaries(previous_messages)
 
         if not summaries:
@@ -117,7 +122,11 @@ class ChatDataInterpretationAnswerService:
                 intro="Vou explicar de outro jeito o que os dados anteriores mostram:",
             )
 
-        if "o que isso quer dizer" in normalized or "o que significa" in normalized:
+        if (
+            "o que isso quer dizer" in normalized
+            or "o que isso significa" in normalized
+            or "o que significa" in normalized
+        ):
             return cls._format_summary(
                 title,
                 lines,
@@ -155,6 +164,155 @@ class ChatDataInterpretationAnswerService:
         return "\n\n".join(parts)
 
     @classmethod
+    def _build_commentary_answer(
+        cls,
+        message: str,
+        previous_messages: list[Any] | None,
+    ) -> str | None:
+        commentary = cls._resolve_latest_data_commentary(previous_messages)
+
+        if not commentary:
+            return None
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        title = str(
+            cls._resolve_commentary_title(previous_messages)
+            or ChatAssistantContentService.get(
+                _CONTENT_BUNDLE,
+                "defaultTitle",
+                default="Consulta anterior",
+            )
+        ).strip()
+        highlights = [
+            str(line).strip()
+            for line in (commentary.get("highlights") or [])
+            if str(line or "").strip()
+        ]
+        attention = [
+            str(line).strip()
+            for line in (commentary.get("attention") or [])
+            if str(line or "").strip()
+        ]
+        narrative = str(commentary.get("narrativeInsight") or "").strip()
+
+        if not highlights and not attention and not narrative:
+            return None
+
+        if normalized in {"resume", "resuma", "resumir"} or normalized.startswith("resume "):
+            lines = highlights[:6] or ([narrative] if narrative else [])
+            return cls._format_summary(title, lines, heading="Resumo")
+
+        if any(term in normalized for term in ("traduz", "traduca", "traduza", "traduzir")):
+            lines = highlights[:8] or ([narrative] if narrative else [])
+            return cls._format_summary(
+                title,
+                lines,
+                heading="Tradução em linguagem simples",
+                intro="Reformulei os dados da consulta anterior em linguagem mais acessível:",
+            )
+
+        if "nao entendi" in normalized or "não entendi" in normalized:
+            lines = (highlights + attention)[:8] or ([narrative] if narrative else [])
+            return cls._format_summary(
+                title,
+                lines,
+                heading="Explicação",
+                intro="Vou explicar de outro jeito o que os dados anteriores mostram:",
+            )
+
+        if (
+            "o que isso quer dizer" in normalized
+            or "o que isso significa" in normalized
+            or "o que significa" in normalized
+        ):
+            lines = (highlights + attention)[:8] or ([narrative] if narrative else [])
+            return cls._format_summary(
+                title,
+                lines,
+                heading="Significado dos dados",
+                intro="Em termos práticos, os dados da consulta anterior indicam o seguinte:",
+            )
+
+        lines = highlights[:6]
+
+        if attention:
+            lines.extend(f"[Atenção] {line}" for line in attention[:3])
+
+        if narrative and narrative not in lines:
+            lines.insert(0, narrative)
+
+        if not lines:
+            return None
+
+        return cls._format_summary(
+            title,
+            lines,
+            heading="Explicação dos dados",
+            intro="Com base na consulta operacional já feita nesta conversa:",
+        )
+
+    @classmethod
+    def _resolve_latest_data_commentary(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> dict | None:
+        if not previous_messages:
+            return None
+
+        for item in reversed(previous_messages[-12:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+                    continue
+
+                commentary = tool_meta.get("dataCommentary")
+
+                if isinstance(commentary, dict) and (
+                    commentary.get("highlights")
+                    or commentary.get("attention")
+                    or commentary.get("narrativeInsight")
+                ):
+                    return commentary
+
+        return None
+
+    @classmethod
+    def _resolve_commentary_title(cls, previous_messages: list[Any] | None) -> str:
+        if not previous_messages:
+            return ""
+
+        for item in reversed(previous_messages[-12:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if not isinstance(tool_meta, dict):
+                    continue
+
+                humanized = tool_meta.get("humanizedSummary")
+
+                if isinstance(humanized, dict):
+                    title = str(humanized.get("titulo") or "").strip()
+
+                    if title:
+                        return title
+
+        return ""
+
+    @classmethod
     def _collect_summaries(cls, previous_messages: list[Any] | None) -> list[dict]:
         if not previous_messages:
             return []
@@ -187,6 +345,28 @@ class ChatDataInterpretationAnswerService:
     def _resolve_tool_summary(cls, tool_meta: dict) -> dict | None:
         path = str(tool_meta.get("path") or "").strip()
         humanized = tool_meta.get("humanizedSummary")
+        commentary = tool_meta.get("dataCommentary")
+        commentary_lines: list[str] = []
+
+        if isinstance(commentary, dict):
+            commentary_lines = [
+                str(line).strip()
+                for line in (commentary.get("highlights") or [])
+                if str(line or "").strip()
+            ]
+            narrative = str(commentary.get("narrativeInsight") or "").strip()
+
+            if narrative and narrative not in commentary_lines:
+                commentary_lines.insert(0, narrative)
+
+            attention = [
+                str(line).strip()
+                for line in (commentary.get("attention") or [])
+                if str(line or "").strip()
+            ]
+            commentary_lines.extend(
+                line for line in attention if line not in commentary_lines
+            )
 
         if isinstance(humanized, dict):
             title = str(humanized.get("titulo") or "").strip()
@@ -195,6 +375,10 @@ class ChatDataInterpretationAnswerService:
                 for line in (humanized.get("linhas") or [])
                 if str(line or "").strip()
             ]
+
+            for line in commentary_lines:
+                if line not in lines:
+                    lines.append(line)
 
             if (
                 title
@@ -209,6 +393,13 @@ class ChatDataInterpretationAnswerService:
                     "linhas": lines,
                     "path": path,
                 }
+
+        if cls._has_substantive_lines(commentary_lines):
+            return {
+                "titulo": cls._title_from_path(path),
+                "linhas": commentary_lines,
+                "path": path,
+            }
 
         preview = str(tool_meta.get("responsePreview") or "").strip()
 

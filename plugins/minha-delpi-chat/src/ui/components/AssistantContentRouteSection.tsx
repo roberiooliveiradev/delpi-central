@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   filterSegmentsByVisualKind,
@@ -7,7 +7,6 @@ import {
   type VisualFormatOption,
 } from "./assistantContentVisualFormats";
 import type { ContentFormatKind } from "./assistantContentLayout";
-import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import {
   renderAssistantContentSegment,
   type AssistantSegmentRenderContext,
@@ -50,21 +49,13 @@ export function AssistantContentRouteSection({
     return resolveRouteSectionFormatOptions(sectionSegments, routeKey, toolCall);
   }, [routeKey, sectionSegments, toolCall]);
 
-  const initialVisualKind = useMemo((): ContentFormatKind | null => {
+  const resolvedVisualKind = useMemo((): ContentFormatKind | null => {
     if (!routeKey) {
       return null;
     }
 
     return resolveInitialToolbarKindForRoute(routeKey, visualFormatOptions, toolCall);
   }, [routeKey, toolCall, visualFormatOptions]);
-
-  const [activeVisualKind, setActiveVisualKind] = useState<ContentFormatKind | null>(
-    initialVisualKind,
-  );
-
-  useEffect(() => {
-    setActiveVisualKind(initialVisualKind);
-  }, [group.section.id, initialVisualKind]);
 
   const { headerSegments, bodySegments } = useMemo(() => {
     const header: typeof sectionSegments = [];
@@ -87,7 +78,7 @@ export function AssistantContentRouteSection({
   );
 
   const visibleBodySegments = useMemo(() => {
-    if (activeVisualKind === "text" && textDetailMarkdown.trim()) {
+    if (resolvedVisualKind === "text" && textDetailMarkdown.trim()) {
       return parseMarkdownAndCodeSegments(textDetailMarkdown);
     }
 
@@ -95,15 +86,13 @@ export function AssistantContentRouteSection({
       return bodySegments;
     }
 
-    return filterSegmentsByVisualKind(bodySegments, activeVisualKind);
+    return filterSegmentsByVisualKind(bodySegments, resolvedVisualKind);
   }, [
-    activeVisualKind,
+    resolvedVisualKind,
     bodySegments,
     textDetailMarkdown,
     visualFormatOptions.length,
   ]);
-
-  const showFormatToolbar = visualFormatOptions.length >= 2;
   const dataCoverageNotice = useMemo(
     () => getDataCoverageNoticeFromToolCall(toolCall),
     [toolCall],
@@ -119,14 +108,6 @@ export function AssistantContentRouteSection({
       {headerSegments.map((segment, index) =>
         renderAssistantContentSegment(segment, index, renderContext),
       )}
-      {showFormatToolbar ? (
-        <AssistantContentFormatToolbar
-          options={visualFormatOptions}
-          activeKind={activeVisualKind}
-          showCompleteOption
-          onChange={setActiveVisualKind}
-        />
-      ) : null}
       {dataCoverageNotice ? (
         <AssistantContentRouteCoverage
           message={dataCoverageNotice.message}

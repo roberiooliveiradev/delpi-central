@@ -246,12 +246,30 @@ function isTextModeInterleavedSegment(segment: AssistantContentSegment): boolean
   return segment.kind === "markdown" || segment.kind === "code";
 }
 
+function suppressRedundantStandaloneVisuals(
+  segments: AssistantContentSegment[],
+): AssistantContentSegment[] {
+  const hasDashboard = segments.some((segment) => segment.kind === "dashboard");
+
+  if (!hasDashboard) {
+    return segments;
+  }
+
+  return segments.filter((segment) => {
+    if (segment.kind === "kpi" || segment.kind === "chart" || segment.kind === "tree") {
+      return false;
+    }
+
+    return true;
+  });
+}
+
 export function filterSegmentsByVisualKind(
   segments: AssistantContentSegment[],
   activeKind: ContentFormatKind | null,
 ): AssistantContentSegment[] {
   const filtered = !activeKind
-    ? segments
+    ? suppressRedundantStandaloneVisuals(segments)
     : segments.filter((segment) => {
         if (segment.kind === "stackSection") {
           return isStackSectionVisible(segment.section, activeKind);

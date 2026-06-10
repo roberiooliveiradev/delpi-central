@@ -23,7 +23,6 @@ class ExternalActionProductCompositeAnalysisPresenter:
     """Perfil configurável via `presenter_content.json` — reutilizável por outras APIs."""
 
     _FACTORY_ENTITY = "product_factory_status"
-    _MP_LOW_COVERAGE_PA_THRESHOLD = 3.0
 
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
@@ -78,6 +77,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         code: str,
         description: str,
         compact_for_rich_ui: bool = False,
+        skip_product_intro: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
 
@@ -90,6 +90,8 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
             if compact_line:
                 linhas.append(compact_line)
+        elif skip_product_intro:
+            pass
         elif description:
             linhas.append(
                 self._route(
@@ -184,166 +186,36 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
 
+    def _resolve_factory_commentary(self, root: dict) -> dict | None:
+        from app.domain.services.chat_operational_data_commentary_service import (
+            ChatOperationalDataCommentaryService,
+        )
+
+        return ChatOperationalDataCommentaryService.build(
+            "factory_status",
+            root,
+            format_quantity=lambda value, field_key=None: _Narrative.format_quantity(
+                self._host,
+                value,
+                field_key=str(field_key or "available_quantity"),
+            ),
+        )
+
     def _build_factory_highlights(self, root: dict) -> list[str]:
-        highlights: list[str] = []
-        status = str(root.get("factory_status") or "").strip()
+        commentary = self._resolve_factory_commentary(root)
 
-        if status:
-            highlights.append(
-                self._insight("factoryStatus", "headlineStatus", status=status)
-            )
+        if not commentary:
+            return []
 
-        if "SEM ESTRUTURA" in status.upper():
-            highlights.append(self._insight("factoryStatus", "noStructure"))
-
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
-        without_stock = indicators.get("total_raw_materials_without_stock_for_one_pa")
-
-        if without_stock not in (None, "", 0, "0"):
-            highlights.append(
-                self._insight(
-                    "factoryStatus",
-                    "exclusiveWithoutStock",
-                    count=str(without_stock),
-                )
-            )
-
-        production_summary = self._section_block(root, "production").get("summary")
-
-        if isinstance(production_summary, dict):
-            total_orders = int(production_summary.get("total_pa_orders") or 0) + int(
-                production_summary.get("total_pi_orders") or 0
-            )
-            pa_started = _Narrative.is_production_started(
-                production_summary.get("pa_production_started")
-            )
-            pi_started = _Narrative.is_production_started(
-                production_summary.get("pi_production_started")
-            )
-
-            if total_orders == 0 and "SEM ESTRUTURA" not in status.upper():
-                highlights.append(self._insight("factoryStatus", "noProductionOrders"))
-            elif not pa_started and not pi_started and total_orders > 0:
-                highlights.append(self._insight("factoryStatus", "productionNotStarted"))
-            else:
-                highlights.append(
-                    self._insight(
-                        "factoryStatus",
-                        "productionStarted",
-                        pa=_Narrative.format_production_flag(
-                            production_summary.get("pa_production_started")
-                        ),
-                        pi=_Narrative.format_production_flag(
-                            production_summary.get("pi_production_started")
-                        ),
-                    )
-                )
-
-        shipping_summary = self._section_block(root, "shipping").get("summary")
-
-        if isinstance(shipping_summary, dict):
-            shipped = float(shipping_summary.get("total_shipped_quantity") or 0)
-
-            if shipped > 0:
-                highlights.append(
-                    self._insight(
-                        "factoryStatus",
-                        "shippingWithMovement",
-                        shipped=str(shipped),
-                    )
-                )
-            else:
-                highlights.append(self._insight("factoryStatus", "shippingNoMovement"))
-
-        stock_items = self._section_block(root, "raw_material_stock").get("items")
-        mp_summary = self._aggregate_mp_stock_rows(stock_items)
-
-        if mp_summary:
-            exclusive_count = 0
-            structure_items = self._section_block(root, "structure").get("items")
-
-            if isinstance(structure_items, list):
-                exclusive_count = sum(
-                    1
-                    for item in structure_items
-                    if isinstance(item, dict) and item.get("exclusive_raw_material") in (
-                        True,
-                        "SIM",
-                        "Sim",
-                    )
-                )
-
-            if exclusive_count == 0:
-                highlights.append(self._insight("factoryStatus", "sharedMpWarning"))
-
-            for row in mp_summary:
-                coverage = row.get("pa_coverage_estimate")
-
-                if coverage is None:
-                    continue
-
-                try:
-                    pa_count = float(coverage)
-                except (TypeError, ValueError):
-                    continue
-
-                code = str(row.get("raw_material_code") or "").strip()
-
-                if not code:
-                    continue
-
-                if pa_count <= self._MP_LOW_COVERAGE_PA_THRESHOLD:
-                    highlights.append(
-                        self._insight(
-                            "factoryStatus",
-                            "mpLowCoverage",
-                            code=code,
-                            required=str(row.get("quantity_required_for_one_pa") or "—"),
-                            unit=str(row.get("unit") or ""),
-                            available=_Narrative.format_quantity(
-                                self._host,
-                                row.get("available_quantity_total"),
-                                field_key="available_quantity",
-                            ),
-                            paCount=f"{pa_count:.1f}".rstrip("0").rstrip("."),
-                        )
-                    )
-
-        stock_summary = self._section_block(root, "raw_material_stock").get("summary")
-
-        if isinstance(stock_summary, dict):
-            without_stock = int(stock_summary.get("total_without_stock_for_one_pa") or 0)
-
-            if without_stock > 0:
-                highlights.append(
-                    self._insight(
-                        "factoryStatus",
-                        "conclusionBlocked",
-                        count=str(without_stock),
-                    )
-                )
-            elif "LIBERADO" in status.upper():
-                highlights.append(self._insight("factoryStatus", "conclusionReleased"))
-
-        return highlights
+        return list(commentary.get("highlights") or [])
 
     def _build_factory_attention(self, root: dict) -> list[str]:
-        attention: list[str] = []
-        status = str(root.get("factory_status") or "").strip()
+        commentary = self._resolve_factory_commentary(root)
 
-        if "SEM ESTRUTURA" in status.upper():
-            attention.append(self._insight("factoryStatus", "attentionNoStructure"))
+        if not commentary:
+            return []
 
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
-        without_stock = indicators.get("total_raw_materials_without_stock_for_one_pa")
-
-        if without_stock not in (None, "", 0, "0"):
-            attention.append(self._insight("factoryStatus", "attentionExclusiveStock"))
-
-        if "NÃO INICIADO" in status.upper() or "NAO INICIADO" in status.upper():
-            attention.append(self._insight("factoryStatus", "attentionOpNotStarted"))
-
-        return attention
+        return list(commentary.get("attention") or [])
 
     def _build_factory_markdown_body(
         self,
@@ -352,6 +224,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         code: str,
         description: str,
         compact_for_rich_ui: bool = False,
+        skip_product_intro: bool = False,
     ) -> str:
         parts: list[str] = []
         narrative_lines = self._build_factory_narrative_lines(
@@ -359,18 +232,19 @@ class ExternalActionProductCompositeAnalysisPresenter:
             code=code,
             description=description,
             compact_for_rich_ui=compact_for_rich_ui,
+            skip_product_intro=skip_product_intro,
         )
 
         if narrative_lines:
             parts.append("\n\n".join(line for line in narrative_lines if line))
 
-        highlights = self._build_factory_highlights(root)
+        commentary = self._resolve_factory_commentary(root)
+        highlights = list((commentary or {}).get("highlights") or [])
+        attention = list((commentary or {}).get("attention") or [])
 
         if highlights:
             parts.extend(["", self._insight("factoryStatus", "highlightsHeader"), ""])
             parts.extend(f"- {line}" for line in highlights)
-
-        attention = self._build_factory_attention(root)
 
         if attention:
             parts.extend(["", self._insight("factoryStatus", "attentionHeader"), ""])
@@ -403,11 +277,21 @@ class ExternalActionProductCompositeAnalysisPresenter:
         compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
             table_presentations=auxiliary_tables,
         )
+        scope_line = ""
+
+        if not compact_for_rich_ui:
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "factoryStatus",
+                "scopeIntro",
+            ).strip()
+
         body = self._build_factory_markdown_body(
             root,
             code=code,
             description=description,
             compact_for_rich_ui=compact_for_rich_ui,
+            skip_product_intro=bool(scope_line),
         )
 
         if not body:
@@ -415,21 +299,66 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         markdown_parts = [f"### {title}", ""]
 
-        if not compact_for_rich_ui:
-            scope_line = ChatProductOperationalContentService.get(
-                "presenter",
-                "factoryStatus",
-                "scopeIntro",
-            )
+        if scope_line:
             markdown_parts.extend([scope_line, ""])
 
         markdown_parts.append(body)
 
+        markdown = "\n".join(markdown_parts).strip()
+        markdown = self._dedupe_factory_scope_intro(
+            markdown,
+            scope_line=scope_line,
+            code=code,
+            description=description,
+        )
+
         return {
             "type": "markdown",
             "title": title,
-            "markdown": "\n".join(markdown_parts).strip(),
+            "markdown": markdown,
         }
+
+    def _dedupe_factory_scope_intro(
+        self,
+        markdown: str,
+        *,
+        scope_line: str,
+        code: str,
+        description: str,
+    ) -> str:
+        """Evita escopo genérico + intro do produto na mesma resposta em modo Texto."""
+        normalized = str(markdown or "").strip()
+        scope = str(scope_line or "").strip()
+
+        if not normalized or not scope:
+            return normalized
+
+        candidates: list[str] = []
+
+        if code and description:
+            candidates.append(
+                self._route(
+                    "factoryStatus",
+                    "introWithDescription",
+                    code=code,
+                    description=description,
+                )
+            )
+
+        if code:
+            candidates.append(self._route("factoryStatus", "introCodeOnly", code=code))
+
+        for intro in candidates:
+            token = str(intro or "").strip()
+
+            if not token or token not in normalized:
+                continue
+
+            normalized = normalized.replace(f"\n\n{token}", "\n", 1)
+            normalized = normalized.replace(f"{token}\n\n", "", 1)
+            normalized = normalized.replace(token, "", 1)
+
+        return _OpsTable.join_markdown_blocks([normalized])
 
     def build_factory_status_table_presentations(self, root: dict, path: str) -> list[dict]:
         tables: list[dict] = []
@@ -520,54 +449,11 @@ class ExternalActionProductCompositeAnalysisPresenter:
         return [table for table in tables if isinstance(table, dict)]
 
     def _aggregate_mp_stock_rows(self, stock_items: object) -> list[dict[str, Any]]:
-        if not isinstance(stock_items, list):
-            return []
+        from app.domain.services.chat_operational_data_commentary_service import (
+            ChatOperationalDataCommentaryService,
+        )
 
-        grouped: dict[str, dict[str, Any]] = {}
-
-        for item in stock_items:
-            if not isinstance(item, dict):
-                continue
-
-            code = str(item.get("raw_material_code") or "").strip()
-
-            if not code:
-                continue
-
-            bucket = grouped.setdefault(
-                code,
-                {
-                    "raw_material_code": code,
-                    "raw_material_description": str(item.get("raw_material_description") or "").strip(),
-                    "unit": str(item.get("unit") or "").strip(),
-                    "quantity_required_for_one_pa": item.get("quantity_required_for_one_pa"),
-                    "available_quantity_total": 0.0,
-                    "has_stock_for_one_pa_label": item.get("has_stock_for_one_pa_label"),
-                },
-            )
-            bucket["available_quantity_total"] += _OpsTable.parse_quantity(
-                item.get("available_quantity")
-            )
-
-            if item.get("has_stock_for_one_pa_label"):
-                bucket["has_stock_for_one_pa_label"] = item.get("has_stock_for_one_pa_label")
-
-        rows: list[dict[str, Any]] = []
-
-        for code in sorted(grouped):
-            row = grouped[code]
-            required = _OpsTable.parse_quantity(row.get("quantity_required_for_one_pa"))
-            available = float(row.get("available_quantity_total") or 0)
-
-            if required > 0:
-                row["pa_coverage_estimate"] = round(available / required, 2)
-            else:
-                row["pa_coverage_estimate"] = None
-
-            row["available_quantity_total"] = available
-            rows.append(row)
-
-        return rows
+        return ChatOperationalDataCommentaryService.aggregate_mp_stock_rows(stock_items)
 
     def _build_factory_mp_stock_summary_table(self, stock_items: list) -> dict | None:
         rows = self._aggregate_mp_stock_rows(stock_items)

@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTypes";
 
-import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import { AssistantContentChrome } from "./AssistantContentChrome";
-import type { ContentFormatKind } from "./assistantContentLayout";
 import { buildAssistantContentSegments, parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import {
   resolveAssistantPresentationTitle,
   resolveAssistantRenderableMarkdown,
   shouldRenderPresentationHeading,
+  stripLeadingMarkdownTitleSafely,
 } from "./assistantProseRendering";
 import { renderAssistantContentSegment } from "./assistantContentRegistry";
 import {
@@ -70,17 +69,10 @@ export function ChatAssistantContent({
     () => resolveAvailableVisualFormatOptions(segments, toolCalls),
     [segments, toolCalls],
   );
-  const initialVisualKind = useMemo(
+  const resolvedVisualKind = useMemo(
     () => resolveInitialToolbarKind(toolCalls, visualFormatOptions),
     [toolCalls, visualFormatOptions],
   );
-  const [activeVisualKind, setActiveVisualKind] = useState<ContentFormatKind | null>(
-    initialVisualKind,
-  );
-
-  useEffect(() => {
-    setActiveVisualKind(initialVisualKind);
-  }, [initialVisualKind, toolCalls, segments]);
 
   const perSectionToolbar = useMemo(
     () => shouldUsePerSectionFormatToolbar(toolCalls),
@@ -111,12 +103,10 @@ export function ChatAssistantContent({
     }
 
     const explicitTextSession = isExplicitTextSessionMode(toolCalls);
-    const toolbarTextOnly = activeVisualKind === "text";
+    const resolvedTextOnly = resolvedVisualKind === "text";
 
-    if (explicitTextSession || toolbarTextOnly) {
-      const markdown =
-        getTextMarkdownFromToolCalls(toolCalls) ||
-        resolveAssistantRenderableMarkdown(content, toolCalls);
+    if (explicitTextSession || resolvedTextOnly) {
+      const markdown = resolveAssistantRenderableMarkdown(content, toolCalls);
 
       if (markdown.trim()) {
         return parseMarkdownAndCodeSegments(markdown);
@@ -131,9 +121,9 @@ export function ChatAssistantContent({
       return renumberStackSectionTitles(segments, null);
     }
 
-    return filterSegmentsByVisualKind(segments, activeVisualKind);
+    return filterSegmentsByVisualKind(segments, resolvedVisualKind);
   }, [
-    activeVisualKind,
+    resolvedVisualKind,
     content,
     perSectionToolbar,
     segments,
@@ -177,16 +167,18 @@ export function ChatAssistantContent({
       return;
     }
 
-    if (activeVisualKind === "chart" || visualFormatOptions.some((item) => item.kind === "chart")) {
-      setActiveVisualKind("chart");
+    if (
+      resolvedVisualKind === "chart" ||
+      visualFormatOptions.some((item) => item.kind === "chart")
+    ) {
       setChartExplanationOpen(true);
     }
 
     onChartExplanationHandled?.();
   }, [
-    activeVisualKind,
     onChartExplanationHandled,
     requestChartExplanation,
+    resolvedVisualKind,
     visualFormatOptions,
   ]);
 
@@ -197,19 +189,34 @@ export function ChatAssistantContent({
   const showTitle =
     !perSectionToolbar &&
     shouldRenderPresentationHeading(title) &&
-    !visibleSegments.some(
-      (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
-    );
+    !visibleSegments.some((segment) => {
+      if (segment.kind !== "markdown") {
+        return false;
+      }
+
+      const prose = segment.markdown.trim();
+
+      if (!prose || prose === title) {
+        return true;
+      }
+
+      const withoutTitle = stripLeadingMarkdownTitleSafely(prose, title).trim();
+      const firstLine = prose.split("\n")[0]?.trim() ?? "";
+
+      return (
+        withoutTitle !== prose ||
+        firstLine === title ||
+        firstLine === `### ${title}` ||
+        firstLine === `## ${title}` ||
+        firstLine === `# ${title}`
+      );
+    });
 
   const stackPlan = useMemo(
     () => getStackPresentationPlanFromToolCalls(toolCalls),
     [toolCalls],
   );
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
-  const showFormatToolbar =
-    !perSectionToolbar &&
-    !isExplicitTextSessionMode(toolCalls) &&
-    visualFormatOptions.length >= 2;
   const segmentRenderContext = {
     onDrillDown,
     onOpenCanvas,
@@ -251,15 +258,6 @@ export function ChatAssistantContent({
       ) : null}
 
       {showTitle ? <h3 className="mdc-rich-presentation__heading">{title}</h3> : null}
-
-      {showFormatToolbar ? (
-        <AssistantContentFormatToolbar
-          options={visualFormatOptions}
-          activeKind={activeVisualKind}
-          showCompleteOption={showCompleteStackView}
-          onChange={setActiveVisualKind}
-        />
-      ) : null}
 
       <div className="mdc-assistant-content__segments">
         {routePresentation ? (

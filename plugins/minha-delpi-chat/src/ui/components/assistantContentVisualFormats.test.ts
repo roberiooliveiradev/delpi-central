@@ -400,4 +400,63 @@ describe("assistantContentVisualFormats", () => {
     expect(resolveInitialToolbarKind(kpiCalls, options)).toBe("kpi");
     expect(resolveDefaultVisualKind(kpiCalls, options)).toBe("kpi");
   });
+
+  it("visão completa suprime KPI/árvore/gráfico avulsos quando há dashboard", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            layoutMode: "stack",
+            selected: "text",
+            availableViews: ["text", "kpi", "tree", "chart", "dashboard"],
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicadores fabris",
+            cards: [{ label: "OPs", value: 305 }],
+          },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura fabril",
+            root: { id: "90262404", label: "90262404", children: [] },
+          },
+          chartPresentation: {
+            type: "chart",
+            title: "Saldo de MP",
+            chartType: "horizontal_bar",
+            data: [{ name: "10160001", value: 6082 }],
+            config: { xAxis: "name", yAxis: ["value"] },
+          },
+          dashboardPresentation: {
+            type: "dashboard",
+            title: "Painel fabril",
+            panels: [
+              {
+                id: "summary",
+                title: "Indicadores fabris",
+                presentation: {
+                  type: "kpi",
+                  cards: [{ label: "OPs", value: 305 }],
+                },
+              },
+            ],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Status fabril\n\nResumo integrado.",
+          },
+        },
+      },
+    ]);
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+    const visible = filterSegmentsByVisualKind(segments, null);
+    const kinds = visible.map((segment) => segment.kind);
+
+    expect(kinds).toContain("dashboard");
+    expect(kinds.filter((kind) => kind === "kpi")).toHaveLength(0);
+    expect(kinds.filter((kind) => kind === "tree")).toHaveLength(0);
+    expect(kinds.filter((kind) => kind === "chart")).toHaveLength(0);
+  });
 });

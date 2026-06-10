@@ -187,4 +187,45 @@ describe("assistantContentLayout", () => {
 
     expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
   });
+
+  it("usa explicitSessionFormat=dashboard mesmo com layoutMode stack", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          explicitSessionFormat: "dashboard",
+          preferredFormat: "dashboard",
+          presentationDecision: {
+            selected: "dashboard",
+            layoutMode: "stack",
+            visualOrder: ["text", "table", "tree", "chart", "kpi", "dashboard"],
+          },
+          dashboardPresentation: {
+            type: "dashboard",
+            title: "Painel fabril — 90262404",
+            panels: [],
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicadores fabris — 90262404",
+            cards: [{ key: "total", label: "Componentes", value: 3 }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Status fabril\n\nResumo.",
+          },
+        },
+      },
+    ] as const;
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: true,
+      kind: "dashboard",
+    });
+
+    const segments = buildAssistantContentSegments("Status fabril", [...toolCalls]);
+
+    expect(segments.filter((segment) => segment.kind === "dashboard")).toHaveLength(1);
+    expect(segments.some((segment) => segment.kind === "kpi")).toBe(false);
+  });
 });

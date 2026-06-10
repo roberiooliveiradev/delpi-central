@@ -178,6 +178,7 @@ class ChatToolContextFormatService:
 
             if requested_format == "text":
                 meta["preferredFormat"] = "text"
+                meta["explicitSessionFormat"] = "text"
                 decision = meta.get("presentationDecision")
 
                 if isinstance(decision, dict):

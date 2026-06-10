@@ -192,6 +192,8 @@ Mensagem do usuário
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
 | `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; estoque com `linhas` (resumo) + `linhas_detalhe` (modo Texto); `chartPresentation` com tipos ampliados |
 | `ChatPresentationHumanizedNarrativeService` | Enriquece `textPresentation` fino antes do stack (panorama, leitura, atenção, conclusão) — ver [`humanized-narrative-stack-jun2026.md`](./humanized-narrative-stack-jun2026.md) |
+| `ChatOperationalDataCommentaryService` | Análise/comentário de dados operacionais por perfil (`factory_status`, …) — textos em `presenter_content.json` → `compositeAnalysisInsights`; **não** duplicar em presenters nem agentes. Roadmap: [`playbook-13-respostas-humanizadas-dados.md`](../roadmap/playbook-13-respostas-humanizadas-dados.md) |
+| `ChatOperationalCommentaryEnrichmentService` | Liga `dataCommentary` ao metadata pós-tool (`humanizedSummary`, `textPresentation`, contexto LLM) |
 | `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
 | `ChatSimpleTurnGateService` | Gate de turno simples (identidade, saudação, agradecimento, hora/data, capacidades, «não entendi») — decide, **antes** de qualquer atividade técnica, que o turno não deve exibir etapas no streaming |
 | `ChatUnclearRequestService` | Fallback honesto: pedidos vagos sem referente («faz isso», «arruma», «isso») recebem pedido de esclarecimento — sem inventar intenção nem chamar ferramentas |

@@ -193,6 +193,18 @@ def test_factory_highlights_warn_low_mp_coverage():
     assert "cobertura baixa" in combined.lower()
 
 
+def test_factory_status_text_dedupes_scope_and_product_intro():
+    presenter = ExternalActionResultPresenter()
+    composite = presenter._composite_analysis()
+    envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")
+    path = "/products/90269002/factory-status"
+    text = composite._build_factory_status_text_presentation(envelope["data"], path)
+    markdown = str((text or {}).get("markdown") or "")
+
+    assert "Visão integrada" in markdown
+    assert markdown.count("Visão integrada do produto") <= 1
+
+
 def test_visual_bundle_enriches_factory_with_auxiliary_slots():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")

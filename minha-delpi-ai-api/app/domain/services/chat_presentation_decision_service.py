@@ -132,6 +132,29 @@ class ChatPresentationDecisionService:
         return False
 
     @classmethod
+    def _stack_commentary_insight(cls, metadata: dict[str, Any]) -> str:
+        commentary = metadata.get("dataCommentary")
+
+        if not isinstance(commentary, dict):
+            return ""
+
+        narrative = str(commentary.get("narrativeInsight") or "").strip()
+
+        if narrative:
+            return narrative
+
+        highlights = [
+            str(line).strip()
+            for line in (commentary.get("highlights") or [])
+            if str(line or "").strip()
+        ]
+
+        if not highlights:
+            return ""
+
+        return highlights[0]
+
+    @classmethod
     def _effective_tree_presentation(
         cls,
         *,
@@ -559,7 +582,9 @@ class ChatPresentationDecisionService:
         )
 
         if str(decision.get("layoutMode") or "") == "stack" and narrative_markdown:
-            decision["insight"] = ""
+            commentary_insight = cls._stack_commentary_insight(metadata)
+
+            decision["insight"] = commentary_insight
 
         policy_notice = cls._apply_chart_policy_to_metadata(
             metadata,

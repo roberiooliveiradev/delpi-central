@@ -66,6 +66,40 @@ export function readMdcCssVar(name: string, fallback = ""): string {
   return value || fallback;
 }
 
+const CHART_SERIES_FALLBACK_LIGHT = [
+  "#0478b5",
+  "#0d6e8c",
+  "#067647",
+  "#b45309",
+  "#b42318",
+  "#5b21b6",
+  "#0369a1",
+  "#15803d",
+  "#9f1239",
+  "#003866",
+] as const;
+
+const CHART_SERIES_FALLBACK_DARK = [
+  "#38bdf8",
+  "#2dd4bf",
+  "#4ade80",
+  "#fbbf24",
+  "#f87171",
+  "#a78bfa",
+  "#60a5fa",
+  "#86efac",
+  "#fb7185",
+  "#93c5fd",
+] as const;
+
+function sanitizeChartColors(colors: string[] | undefined): string[] {
+  if (!Array.isArray(colors)) {
+    return [];
+  }
+
+  return colors.map((color) => color.trim()).filter(Boolean);
+}
+
 export function readMdcChartSeries(count = 10): string[] {
   const colors: string[] = [];
 
@@ -73,12 +107,47 @@ export function readMdcChartSeries(count = 10): string[] {
     colors.push(readMdcCssVar(`--mdc-chart-series-${index}`, readMdcCssVar("--mdc-primary")));
   }
 
-  return colors;
+  return sanitizeChartColors(colors);
+}
+
+/** Paleta efetiva: config da API → tokens CSS → fallback saturado por tema. */
+export function resolveChartSeriesColors(
+  configColors: string[] | undefined,
+  isDark: boolean,
+): string[] {
+  const fromConfig = sanitizeChartColors(configColors);
+
+  if (fromConfig.length > 0) {
+    return fromConfig;
+  }
+
+  const fromCss = readMdcChartSeries();
+
+  if (fromCss.length > 0) {
+    return fromCss;
+  }
+
+  return [...(isDark ? CHART_SERIES_FALLBACK_DARK : CHART_SERIES_FALLBACK_LIGHT)];
+}
+
+export function resolveChartSeriesColor(
+  colors: string[],
+  index: number,
+  isDark: boolean,
+): string {
+  if (colors.length > 0) {
+    return colors[index % colors.length] || colors[0];
+  }
+
+  const fallback = isDark ? CHART_SERIES_FALLBACK_DARK : CHART_SERIES_FALLBACK_LIGHT;
+  return fallback[index % fallback.length];
+}
+
+export function resolveMermaidTheme(isDark: boolean): "dark" | "default" {
+  return isDark ? "dark" : "default";
 }
 
 export function readMdcChartTheme(isDark: boolean) {
-  void isDark;
-
   return {
     gridColor: readMdcCssVar("--mdc-chart-grid"),
     tickFill: readMdcCssVar("--mdc-chart-tick"),
@@ -88,7 +157,7 @@ export function readMdcChartTheme(isDark: boolean) {
       color: readMdcCssVar("--mdc-chart-tooltip-text"),
     },
     exportBackground: readMdcCssVar("--mdc-chart-export-bg"),
-    seriesColors: readMdcChartSeries(),
+    seriesColors: resolveChartSeriesColors(undefined, isDark),
   };
 }
 

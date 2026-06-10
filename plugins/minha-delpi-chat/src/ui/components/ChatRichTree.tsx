@@ -3,6 +3,7 @@ import type { ChatPresentation, ChatTreeNode } from "../../data/api/chatTypes";
 import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu, type TableRowMenuAnchor } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
+import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import {
   exportTreeToCsv,
   formatTreeNodeMeta,
@@ -223,15 +224,6 @@ export function ChatRichTree({
 }) {
   const { title, root } = presentation;
   const nodeCount = useMemo(() => countNodes(root), [root]);
-  const [copied, setCopied] = useState(false);
-
-  function copyToClipboard() {
-    navigator.clipboard?.writeText(treePresentationToClipboardText(presentation)).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
   return (
     <div
       className={[
@@ -250,14 +242,11 @@ export function ChatRichTree({
             {hideTitle ? null : title}
           </span>
           <div className="mdc-rich-tree__actions">
-            <button
-              type="button"
-              className="mdc-rich-table__btn"
-              onClick={copyToClipboard}
-              title="Copiar árvore"
-            >
-              {copied ? "✓ Copiado" : "Copiar"}
-            </button>
+            <ChatPresentationCopyButton
+              getText={() => treePresentationToClipboardText(presentation)}
+              copyAriaLabel="Copiar árvore"
+              copiedAriaLabel="Árvore copiada"
+            />
             <button
               type="button"
               className="mdc-rich-table__btn"

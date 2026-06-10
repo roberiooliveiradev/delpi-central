@@ -36,8 +36,25 @@ class ChatToolContextExternalActionFormatter:
             if tool_name == "execute_external_action":
                 safe_metadata["responsePreview"] = self._build_response_preview(data)
                 path = str(safe_metadata.get("path") or "")
+                attached_data = self._attach_request_sql(data, None, safe_metadata)
+                operational_root = self._presenter._unwrap_data(attached_data)
+
+                if isinstance(operational_root, dict):
+                    from app.domain.services.chat_operational_commentary_enrichment_service import (
+                        ChatOperationalCommentaryEnrichmentService,
+                    )
+
+                    ChatOperationalCommentaryEnrichmentService.enrich_metadata(
+                        safe_metadata,
+                        data=operational_root,
+                        format_quantity=lambda value, field_key=None: self._presenter._format_field_value(
+                            str(field_key or "available_quantity"),
+                            value,
+                        ),
+                    )
+
                 humanized = self._presenter.present(
-                    self._attach_request_sql(data, None, safe_metadata),
+                    attached_data,
                     path=path,
                 )
 
@@ -72,8 +89,39 @@ class ChatToolContextExternalActionFormatter:
                             "titulo": titulo,
                             "linhas": linhas,
                         }
+                        self._merge_data_commentary_into_humanized_summary(safe_metadata)
 
             return safe_metadata
+
+    @staticmethod
+    def _merge_data_commentary_into_humanized_summary(metadata: dict) -> None:
+        commentary = metadata.get("dataCommentary")
+        humanized = metadata.get("humanizedSummary")
+
+        if not isinstance(commentary, dict) or not isinstance(humanized, dict):
+            return
+
+        lines = [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+        extras = [
+            str(line).strip()
+            for line in (commentary.get("highlights") or [])
+            if str(line or "").strip()
+        ]
+        narrative = str(commentary.get("narrativeInsight") or "").strip()
+
+        if narrative and narrative not in extras:
+            extras.insert(0, narrative)
+
+        for line in extras:
+            if line not in lines:
+                lines.append(line)
+
+        if lines:
+            humanized["linhas"] = lines[:12]
 
     def _build_response_preview(
         self,
@@ -193,6 +241,8 @@ class ChatToolContextExternalActionFormatter:
             ):
                 titulo = "Eficiência fabril"
 
+            data_commentary = metadata.get("dataCommentary")
+
             payload = {
                 "tool": "execute_external_action",
                 "reason": reason,
@@ -207,6 +257,23 @@ class ChatToolContextExternalActionFormatter:
                 },
             }
 
+            if isinstance(data_commentary, dict) and (
+                data_commentary.get("highlights")
+                or data_commentary.get("attention")
+                or data_commentary.get("narrativeInsight")
+            ):
+                payload["dataCommentary"] = data_commentary
+
+            from app.domain.services.chat_assistant_content_service import (
+                ChatAssistantContentService,
+            )
+
+            commentary_rule = ChatAssistantContentService.get(
+                "data_interpretation",
+                "toolContextCommentaryRule",
+                default="",
+            )
+
             return (
                 "[Ferramenta autorizada: execute_external_action]\n"
                 "A API externa/interna foi consultada com o token autorizado do usuário.\n"
@@ -217,6 +284,7 @@ class ChatToolContextExternalActionFormatter:
                 f"Sucesso: {ok}\n"
                 "Regra obrigatória: responda ao usuário em português natural, sem mostrar JSON bruto.\n"
                 "Use o resumo humanizado como fonte principal.\n"
+                f"{commentary_rule}\n"
                 "Se precisar de algum dado técnico, use apenas o resumo técnico compacto.\n"
                 f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
             )

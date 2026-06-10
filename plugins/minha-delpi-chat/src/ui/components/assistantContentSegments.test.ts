@@ -212,4 +212,43 @@ describe("assistantContentSegments", () => {
       ),
     ).toBe(false);
   });
+
+  it("modo Texto explícito inclui tabelas do metadata quando o markdown não as embute", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          explicitSessionFormat: "text",
+          textPresentation: {
+            type: "markdown",
+            title: "Status completo na fábrica — 90262404",
+            markdown:
+              "### Status completo na fábrica — 90262404\n\nSituação consolidada: **PA PRODUZIDO**",
+          },
+          tablePresentations: [
+            {
+              type: "table",
+              title: "Panorama fabril",
+              columns: [
+                { key: "campo", label: "Campo" },
+                { key: "valor", label: "Valor" },
+              ],
+              rows: [{ campo: "OPs de PA", valor: "305" }],
+            },
+          ],
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+    const markdown = segments
+      .filter((item) => item.kind === "markdown")
+      .map((item) => item.markdown)
+      .join("\n");
+
+    expect(markdown).toContain("|");
+    expect(markdown).toContain("Panorama fabril");
+    expect(markdown).toContain("305");
+  });
 });

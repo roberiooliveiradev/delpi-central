@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState, type TableHTMLAttributes } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
-import { Check, Code2, Copy } from "lucide-react";
+import { Code2, Table2 } from "lucide-react";
 import remarkGfm from "remark-gfm";
 
-import { applySoftLineBreaks, prepareMarkdownContent } from "./chatMarkdown";
+import {
+  applySoftLineBreaks,
+  prepareMarkdownContent,
+  tableElementToGfmMarkdown,
+} from "./chatMarkdown";
+import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatMermaidBlock } from "./ChatMermaidBlock";
 
 import "./ChatMarkdown.css";
@@ -22,18 +27,7 @@ type ChatCodeBlockProps = {
 };
 
 function ChatCodeBlock({ language, code }: ChatCodeBlockProps) {
-  const [copied, setCopied] = useState(false);
   const label = (language || "text").toUpperCase();
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      /* clipboard indisponível */
-    }
-  }
 
   return (
     <div className="mdc-chat-code-block">
@@ -42,19 +36,85 @@ function ChatCodeBlock({ language, code }: ChatCodeBlockProps) {
           <Code2 size={15} aria-hidden="true" />
           {label}
         </span>
-        <button
-          type="button"
-          className="mdc-chat-code-block__copy"
-          onClick={() => void handleCopy()}
-          aria-label={copied ? "Código copiado" : "Copiar código"}
-        >
-          {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-          <span>{copied ? "Copiado" : "Copiar"}</span>
-        </button>
+        <ChatPresentationCopyButton
+          getText={() => code}
+          copyAriaLabel="Copiar código"
+          copiedAriaLabel="Código copiado"
+        />
       </div>
       <pre className="mdc-chat-code-block__pre">
         <code className={`mdc-chat-code-block__code language-${language}`}>{code}</code>
       </pre>
+    </div>
+  );
+}
+
+function resolvePrecedingTableTitle(block: HTMLElement | null): string {
+  const previous = block?.previousElementSibling;
+
+  if (!(previous instanceof HTMLElement)) {
+    return "TABELA";
+  }
+
+  const tag = previous.tagName.toUpperCase();
+
+  if (!/^H[1-6]$/.test(tag)) {
+    return "TABELA";
+  }
+
+  const title = previous.textContent?.replace(/\s+/g, " ").trim();
+
+  if (!title) {
+    return "TABELA";
+  }
+
+  previous.classList.add("mdc-chat-markdown__absorbed-heading");
+  previous.setAttribute("aria-hidden", "true");
+
+  return title.length > 72 ? `${title.slice(0, 69)}…` : title;
+}
+
+function ChatMarkdownTable({
+  children,
+  ...props
+}: TableHTMLAttributes<HTMLTableElement>) {
+  const blockRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [blockLabel, setBlockLabel] = useState("TABELA");
+
+  useLayoutEffect(() => {
+    setBlockLabel(resolvePrecedingTableTitle(blockRef.current));
+  }, [children]);
+
+  return (
+    <div ref={blockRef} className="mdc-chat-code-block mdc-chat-code-block--table">
+      <div className="mdc-chat-code-block__header">
+        <span className="mdc-chat-code-block__lang">
+          <Table2 size={15} aria-hidden="true" />
+          {blockLabel}
+        </span>
+        <ChatPresentationCopyButton
+          getText={() => {
+            const table = tableRef.current;
+
+            if (!table) {
+              return "";
+            }
+
+            const markdown = tableElementToGfmMarkdown(table).trim();
+            const title = blockLabel !== "TABELA" ? blockLabel : "";
+
+            return title ? `### ${title}\n\n${markdown}` : markdown;
+          }}
+          copyAriaLabel="Copiar tabela"
+          copiedAriaLabel="Tabela copiada"
+        />
+      </div>
+      <div className="mdc-chat-markdown__table-wrap" tabIndex={0}>
+        <table ref={tableRef} {...props}>
+          {children}
+        </table>
+      </div>
     </div>
   );
 }
@@ -96,6 +156,9 @@ const markdownComponents: Components = {
         {children}
       </a>
     );
+  },
+  table({ children, ...props }) {
+    return <ChatMarkdownTable {...props}>{children}</ChatMarkdownTable>;
   },
   code({ className, children, ...props }) {
     const match = /language-([\w-]+)/i.exec(className ?? "");
