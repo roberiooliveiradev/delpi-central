@@ -26,9 +26,11 @@ Relacionado: [playbook-13](../roadmap/playbook-13-respostas-humanizadas-dados.md
 | **Texto** (`text`) | Markdown completo: tabelas embutidas, composição em code fence, gráfico em markdown quando aplicável | Segmentos visuais suprimidos ou secundários conforme layout texto |
 | **Painel** (`dashboard`) | Lead curto (`_compact_native_view_lead`) — sem repetir dados do dashboard | Apenas componente dashboard; `operationalTables` vazio no plano |
 
-### `factory_status` — painel sob demanda
+### `factory_status` — painel sob demanda, árvore/gráfico nativos
 
-No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o painel fabril só entra com `explicitSessionFormat: "dashboard"` (composer **Painel** ou pedido explícito). Tabelas e árvore permanecem como evidência com texto explicativo inline (sem divisões «1. Escopo…» / «2. Roteiro…»).
+No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o painel fabril só entra com `explicitSessionFormat: "dashboard"`. Em vez de deixar o tail vazio (`dashboard_only`), a API preenche com visuais nativos disponíveis (`kpi`, `tree`, `chart`) e mantém o slot `tailVisuals` no plano. Assim a composição não fica como bloco `TEXT` no markdown: vai para o componente **árvore**; gráficos vão para **gráfico**, não para fallback em tabela no texto.
+
+`finalize_narrative_after_embeds` reaplica o strip de markdown embutido após os serviços de embed (segurança).
 
 ---
 
@@ -36,7 +38,7 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 
 | Serviço | Mudança |
 |---------|---------|
-| `ChatPresentationEvidenceFirstLayoutService` | `compose()` sem `storyPresentation`; `_resolve_evidence_first_tail_visual_order` omite `dashboard` no Automático; `_prune_empty_tail_visual_slot` remove slot `tailVisuals` vazio; `_apply_native_view_stack_plan` para Painel explícito |
+| `ChatPresentationEvidenceFirstLayoutService` | `compose()` sem `storyPresentation`; `_resolve_evidence_first_tail_visual_order` troca `dashboard` por `kpi`/`tree`/`chart`; `_sync_tail_visuals_narrative_slot`; `finalize_narrative_after_embeds` pós-embed |
 | `ChatRichPresentationTextService` | `prepare_evidence_first_chat_narrative`: em stack automático remove embutidos de tabela/árvore/gráfico/composição; em `explicitSessionFormat=dashboard` compacta lead |
 | `ChatPresentationTableMarkdownService` | `should_embed_in_markdown` — embed só com Texto explícito |
 | `ChatPresentationTreeMarkdownService` | Idem |

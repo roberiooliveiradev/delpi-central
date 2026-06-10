@@ -172,4 +172,49 @@ describe("presentationStackPlan humanized gating", () => {
     ).toBe(true);
     expect(segments.some((segment) => segment.kind === "table")).toBe(true);
   });
+
+  it("injeta árvore nativa no tail em summary_then_evidence automático", () => {
+    const commentary = "### Status fabril\n\nSituação consolidada.";
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "tree",
+        presentation: {
+          type: "tree",
+          title: "Estrutura fabril",
+          root: { id: "90262404", label: "Produto 90262404", children: [] },
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90262404/factory-status",
+          presentationDecision: {
+            presentationMode: "summary_then_evidence",
+            layoutMode: "stack",
+          },
+          stackPresentationPlan: {
+            presentationMode: "summary_then_evidence",
+            humanizedSections: true,
+            narrativeOrder: ["lead", "tailVisuals"],
+            tailVisualOrder: ["tree"],
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildCanonicalStackSegments(
+      commentary,
+      visuals,
+      (prose) => [{ kind: "markdown", markdown: prose }],
+      (target, segment) => {
+        target.push(segment);
+      },
+      toolCalls,
+    );
+
+    expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
+    expect(segments.some((segment) => segment.kind === "stackSection")).toBe(false);
+  });
 });

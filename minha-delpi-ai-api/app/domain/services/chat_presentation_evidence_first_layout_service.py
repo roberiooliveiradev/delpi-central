@@ -98,7 +98,7 @@ class ChatPresentationEvidenceFirstLayoutService:
 
         plan["presentationMode"] = PRESENTATION_MODE
         plan["tailVisualOrder"] = cls._resolve_evidence_first_tail_visual_order(metadata)
-        cls._prune_empty_tail_visual_slot(plan)
+        cls._sync_tail_visuals_narrative_slot(plan)
         cls._apply_native_view_stack_plan(metadata, plan)
 
         nested = decision.get("stackPresentationPlan")
@@ -106,7 +106,7 @@ class ChatPresentationEvidenceFirstLayoutService:
         if isinstance(nested, dict):
             nested["presentationMode"] = PRESENTATION_MODE
             nested["tailVisualOrder"] = plan["tailVisualOrder"]
-            cls._prune_empty_tail_visual_slot(nested)
+            cls._sync_tail_visuals_narrative_slot(nested)
             cls._apply_native_view_stack_plan(metadata, nested)
 
     @classmethod
@@ -118,6 +118,14 @@ class ChatPresentationEvidenceFirstLayoutService:
         return ChatPresentationStackOrderService._resolve_tail_visual_order(metadata)
 
     @classmethod
+    def finalize_narrative_after_embeds(cls, metadata: dict[str, Any]) -> None:
+        """Reaplica strip de markdown embutido após serviços de embed do modo Texto."""
+        if not cls.is_active(metadata):
+            return
+
+        ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+
+    @classmethod
     def _resolve_evidence_first_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
         explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
         order = cls._resolve_tail_visual_order(metadata)
@@ -125,23 +133,50 @@ class ChatPresentationEvidenceFirstLayoutService:
         if explicit == "dashboard":
             return order
 
-        return [token for token in order if str(token).strip().lower() != "dashboard"]
+        filtered = [
+            token
+            for token in order
+            if str(token).strip().lower() != "dashboard"
+        ]
+
+        if filtered:
+            return filtered
+
+        return cls._available_evidence_tail_visuals(metadata)
 
     @classmethod
-    def _prune_empty_tail_visual_slot(cls, plan: dict[str, Any]) -> None:
-        if plan.get("tailVisualOrder"):
-            return
+    def _available_evidence_tail_visuals(cls, metadata: dict[str, Any]) -> list[str]:
+        counts = ChatRichPresentationTextService.count_complementary_visuals(metadata)
+        order: list[str] = []
 
+        for token in ("kpi", "tree", "chart"):
+            if int(counts.get(token) or 0) >= 1:
+                order.append(token)
+
+        return order
+
+    @classmethod
+    def _sync_tail_visuals_narrative_slot(cls, plan: dict[str, Any]) -> None:
+        tail_order = plan.get("tailVisualOrder") or []
         narrative_order = plan.get("narrativeOrder")
 
         if not isinstance(narrative_order, list):
-            return
+            narrative_order = []
 
-        plan["narrativeOrder"] = [
-            slot
-            for slot in narrative_order
-            if str(slot).strip().lower() != "tailvisuals"
-        ]
+        has_tail_slot = any(
+            str(slot).strip().lower() == "tailvisuals" for slot in narrative_order
+        )
+
+        if tail_order and not has_tail_slot:
+            narrative_order = [*narrative_order, "tailVisuals"]
+        elif not tail_order and has_tail_slot:
+            narrative_order = [
+                slot
+                for slot in narrative_order
+                if str(slot).strip().lower() != "tailvisuals"
+            ]
+
+        plan["narrativeOrder"] = narrative_order
 
     @classmethod
     def _apply_native_view_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> None:

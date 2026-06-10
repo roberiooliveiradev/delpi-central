@@ -392,7 +392,11 @@ class ChatPresentationSectionRulesService:
         if visibility.get(cls._GUIDE) or visibility.get(cls._INSPECTION):
             order.append("operationalTables")
 
-        if cls._slot_has_type(metadata, "chart"):
+        if (
+            cls._slot_has_type(metadata, "chart")
+            or cls._slot_has_type(metadata, "tree")
+            or cls._slot_has_type(metadata, "kpi")
+        ):
             order.append("tailVisuals")
 
         if visibility.get(cls._ATTENTION):

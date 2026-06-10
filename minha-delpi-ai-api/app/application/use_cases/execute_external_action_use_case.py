@@ -658,6 +658,8 @@ class ExecuteExternalActionUseCase:
 
         ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
 
+        ChatPresentationEvidenceFirstLayoutService.finalize_narrative_after_embeds(metadata)
+
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
 

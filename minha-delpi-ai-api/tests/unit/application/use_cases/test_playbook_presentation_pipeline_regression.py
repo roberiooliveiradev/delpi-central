@@ -67,8 +67,10 @@ def test_factory_status_integrated_stack_with_visuals():
     presentation_mode = str(plan.get("presentationMode") or "").strip()
 
     if presentation_mode == "summary_then_evidence":
-        assert (plan.get("tailVisualOrder") or []) == []
-        assert "tailVisuals" not in (plan.get("narrativeOrder") or [])
+        tail_order = plan.get("tailVisualOrder") or []
+        assert "dashboard" not in tail_order
+        assert "tree" in tail_order
+        assert "tailVisuals" in (plan.get("narrativeOrder") or [])
     else:
         assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
         assert "tailVisuals" in (plan.get("narrativeOrder") or [])

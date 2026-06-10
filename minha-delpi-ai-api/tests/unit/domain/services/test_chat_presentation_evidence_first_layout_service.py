@@ -101,6 +101,8 @@ def test_compose_omits_dashboard_tail_in_automatic_mode():
             "narrativeOrder": ["lead", "operationalTables", "tailVisuals"],
             "tailVisualOrder": ["dashboard"],
         },
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1", "children": []}},
+        "chartPresentation": {"type": "chart", "title": "Saldo MP", "data": []},
         "dashboardPresentation": {"type": "dashboard", "title": "Painel fabril", "panels": []},
         "textPresentation": {"markdown": "### Status\n\nSituação consolidada."},
     }
@@ -109,8 +111,8 @@ def test_compose_omits_dashboard_tail_in_automatic_mode():
 
     plan = metadata["stackPresentationPlan"]
 
-    assert plan["tailVisualOrder"] == []
-    assert "tailVisuals" not in plan["narrativeOrder"]
+    assert plan["tailVisualOrder"] == ["tree", "chart"]
+    assert "tailVisuals" in plan["narrativeOrder"]
 
 
 def test_compose_keeps_dashboard_tail_when_session_requests_panel():
@@ -135,3 +137,27 @@ def test_compose_keeps_dashboard_tail_when_session_requests_panel():
 
     assert plan["tailVisualOrder"] == ["dashboard"]
     assert "tailVisuals" in plan["narrativeOrder"]
+
+
+def test_finalize_narrative_after_embeds_strips_composition_fence():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "textPresentation": {
+            "markdown": (
+                "### Status\n\nSituação consolidada.\n\n"
+                "**Composição**\n\n```text\nProduto 90262404\n└── 10160001 (MP)\n```"
+            ),
+        },
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.finalize_narrative_after_embeds(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "Composição" not in markdown
+    assert "```text" not in markdown
+    assert "Situação consolidada" in markdown
