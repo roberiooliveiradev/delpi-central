@@ -229,6 +229,24 @@ Sessão de correção e validação E2E (API gateway, usuário `rober`, agente M
 
 ---
 
+## Homologação R13 — pós-E2E apresentação (10/jun/2026)
+
+**Commit:** `16052f98` · **Smoke completo:** **21/21 OK** · **Regressão R13:** `--case R13`.
+
+| Caso | Resultado |
+|------|-----------|
+| E1 «Como está a fábrica… **hoje**» | `/factory-status` *(sem data → `missing_date`, F5)* |
+| E3 «analise de preço 90260145» | `/pricing` |
+| E4 fabril após estoque na sessão | `/factory-status` |
+| E6 `metadata.interactivity` no POST | OK |
+
+```bash
+cd minha-delpi-ai-api
+SMOKE_PAUSE_SECONDS=2 python3 scripts/smoke_perguntas_teste_chat_jun2026.py --case R13
+```
+
+---
+
 ## Homologação apresentação + roteiro completo (jun/2026)
 
 Revalidação após **stack rico** (narrativa + KPI/árvore/gráfico/dashboard), árvore BOM, dedup estrutura e vocabulário centralizado (`presentation_vocabulary.json`).

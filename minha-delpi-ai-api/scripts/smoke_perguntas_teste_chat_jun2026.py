@@ -362,6 +362,90 @@ def main() -> int:
             print(f"FAIL MP7 — {exc}", file=sys.stderr)
             failed += 1
 
+    if _case_selected("R13", args.case):
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "R13E1 fábrica coloquial")
+            response, elapsed = _send(
+                token,
+                session_id,
+                agent_id,
+                f"Como está a fábrica do produto {_FABRIL} hoje?",
+            )
+            path = _action_path(response)
+            _check(
+                "R13E1 fábrica coloquial",
+                "/factory-status" in path and not _llm_improvised(response),
+                f"path={path or '?'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL R13E1 — {exc}", file=sys.stderr)
+            failed += 1
+
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "R13E3 analise preço")
+            response, elapsed = _send(
+                token,
+                session_id,
+                agent_id,
+                "analise de preço 90260145",
+            )
+            path = _action_path(response)
+            _check(
+                "R13E3 analise preço",
+                _path_matches(
+                    path,
+                    ("/analyser", "/pricing", "/raw-material-price-intelligence"),
+                ),
+                f"path={path or '?'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL R13E3 — {exc}", file=sys.stderr)
+            failed += 1
+
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "R13E4 pós-estoque")
+            _send(token, session_id, agent_id, f"estoque do produto {_MP}")
+            follow, elapsed = _send(
+                token,
+                session_id,
+                agent_id,
+                f"status fabril do produto {_FABRIL} hoje",
+            )
+            path = _action_path(follow)
+            _check(
+                "R13E4 fabril após estoque",
+                "/factory-status" in path,
+                f"path={path or '?'} elapsed={elapsed:.1f}s",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL R13E4 — {exc}", file=sys.stderr)
+            failed += 1
+
+        try:
+            time.sleep(_PAUSE_S)
+            session_id = _session(token, agent_id, "R13E6 interactivity POST")
+            response, _elapsed = _send(token, session_id, agent_id, f"estoque do produto {_STOCK}")
+            metadata = response.get("metadata") or {}
+            _check(
+                "R13E6 interactivity metadata",
+                isinstance(metadata.get("interactivity"), dict),
+                f"keys={sorted(metadata.keys())}",
+            )
+        except AssertionError:
+            failed += 1
+        except Exception as exc:
+            print(f"FAIL R13E6 — {exc}", file=sys.stderr)
+            failed += 1
+
     if failed:
         print(f"\n{failed} cenário(s) falharam", file=sys.stderr)
         return 1

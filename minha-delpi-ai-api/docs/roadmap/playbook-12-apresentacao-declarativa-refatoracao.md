@@ -33,7 +33,7 @@ Relacionado:
 | **R10** | Fechamento tier A (visualBuilders + cobertura) | ✅ Concluído |
 | **R11** | Chips pós-resposta API↔MFE | ✅ Concluído |
 | **R12** | Regressão entity contract + CI consolidado | ✅ Concluído |
-| **R13** | Correções pós-E2E (roteamento, chips POST, narrativa) | 🔄 Em andamento (lote 2: E8 ✅, E9 doc) |
+| **R13** | Correções pós-E2E (roteamento, chips POST, narrativa) | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -515,7 +515,19 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | E5 | `kpiHighlightExcludeLabels`; conclusão só com painéis significativos |
 | E6/E7 | `ChatMessageDeliveryService.client_metadata_for_response` — send/stream incluem `interactivity` |
 
-**Pendente R13:** homologação H1–H11 pós-fix (credenciais Keycloak locais); E9 já coberto por `SMOKE_PAUSE_SECONDS=2` no smoke.
+**Pendente R13:** — *(encerrado 10/jun/2026 — ver homologação abaixo).*
+
+**Homologação R13 (10/jun/2026, `rober`/`1234`, gateway `localhost`):**
+
+| Verificação | Resultado |
+|-------------|-----------|
+| `smoke_perguntas_teste_chat_jun2026.py` (21 cenários) | **OK** |
+| E1 coloquial + `hoje` | `/factory-status` *(sem data → `missing_date`, esperado F5)* |
+| E3 «analise de preço 90260145» | `/pricing` |
+| E4 pós-estoque | `/factory-status` |
+| E6 `metadata.interactivity` no POST | **presente** |
+| E7 chip «Ver em gráfico» | chips operacionais de refinamento na primary; menu de formato via `presentationDecision` no MFE |
+| `--check-playbook12` | **OK** |
 
 **R13 lote 2 (jun/2026):**
 
