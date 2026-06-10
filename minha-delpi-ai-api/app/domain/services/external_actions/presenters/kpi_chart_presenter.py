@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Any
 from app.domain.services.chat_api_delpi_response_profile_service import (
     ChatApiDelpiResponseProfileService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
@@ -252,6 +255,18 @@ class ExternalActionKpiChartPresenter:
             if analyser_chart:
                 return analyser_chart
 
+        if not force and path:
+            entity = ChatApiDelpiResponseProfileService.resolve(
+                root if isinstance(root, dict) else {},
+                path=path,
+            ).entity
+            profile = ChatPresentationProfileService.resolve_profile(path, entity)
+
+            if (
+                str(profile.get("chartPolicy") or "auto").strip().lower() == "skip"
+            ):
+                return None
+
         if not isinstance(root, dict):
             if isinstance(root, list) and root and isinstance(root[0], dict):
                 return self.try_chart_from_rows(root, force=force, path=path)
@@ -292,9 +307,6 @@ class ExternalActionKpiChartPresenter:
 
             return kpi_chart
 
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
-        )
         from app.domain.services.chat_schema_driven_presentation_service import (
             ChatSchemaDrivenPresentationService,
         )

@@ -60,6 +60,7 @@ def test_build_stock_chart_from_nested_stock_items():
     chart = presenter.build_chart_presentation(
         data,
         path="/products/10070014/stock",
+        force=True,
     )
 
     assert chart is not None
@@ -104,8 +105,11 @@ def test_presentation_metadata_nested_stock_includes_chart():
         assert meta.get("textPresentation", {}).get("markdown")
         assert meta["preferredFormat"] == "text"
     else:
-        assert meta["presentation"]["type"] == "chart"
-        assert meta["preferredFormat"] == "table"
+        assert decision.get("selected") == "text"
+        assert decision.get("layoutMode") == "single"
+        assert meta.get("chartPresentation") is None
+        assert meta.get("textPresentation", {}).get("markdown")
+        assert meta["preferredFormat"] == "text"
 
 
 def test_presentation_metadata_flat_parents_includes_tree():
@@ -137,4 +141,4 @@ def test_presentation_metadata_flat_parents_includes_tree():
     assert meta["presentation"]["type"] == "tree"
     assert meta["tablePresentation"]["type"] == "table"
     assert meta["preferredFormat"] == "tree"
-    assert "chart" not in meta["availableFormats"]
+    assert meta.get("chartPresentation") is None

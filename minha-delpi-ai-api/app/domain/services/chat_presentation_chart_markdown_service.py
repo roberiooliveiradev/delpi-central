@@ -147,16 +147,38 @@ class ChatPresentationChartMarkdownService:
         if not rows:
             return ""
 
+        if preferred == "mermaid":
+            mermaid = cls._mermaid_block_for_embed(chart, rows)
+
+            if mermaid:
+                return mermaid
+
+            return cls._table_fallback(chart, rows)
+
         if preferred == "table" or chart_type in _TABLE_FALLBACK_CHART_TYPES:
             return cls._table_fallback(chart, rows)
 
-        if preferred == "mermaid" or preferred == "auto":
-            mermaid = cls._mermaid_block(chart, rows)
+        if preferred == "auto":
+            mermaid = cls._mermaid_block_for_embed(chart, rows)
 
             if mermaid:
                 return mermaid
 
         return cls._table_fallback(chart, rows)
+
+    @classmethod
+    def _mermaid_block_for_embed(
+        cls,
+        chart: dict[str, Any],
+        rows: list[dict[str, Any]],
+    ) -> str:
+        chart_type = str(chart.get("chartType") or "bar").strip().lower()
+        mermaid_chart = chart
+
+        if chart_type == "horizontal_bar":
+            mermaid_chart = {**chart, "chartType": "bar"}
+
+        return cls._mermaid_block(mermaid_chart, rows)
 
     @classmethod
     def _mermaid_block(cls, chart: dict[str, Any], rows: list[dict[str, Any]]) -> str:
@@ -525,7 +547,10 @@ class ChatPresentationChartMarkdownService:
 
         chart_policy = str(profile.get("chartPolicy") or "auto").strip().lower()
 
-        return chart_policy != "skip"
+        if chart_policy == "skip":
+            return explicit_text_embed
+
+        return True
 
     @classmethod
     def _is_text_selected(cls, metadata: dict[str, Any]) -> bool:

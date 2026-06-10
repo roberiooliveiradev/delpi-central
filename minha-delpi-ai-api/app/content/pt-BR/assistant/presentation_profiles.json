@@ -325,7 +325,7 @@
       ],
       "chartPolicy": "skip",
       "textEmbedChartsInMarkdown": true,
-      "textEmbedChartFormat": "auto",
+      "textEmbedChartFormat": "mermaid",
       "visualBundle": {
         "requiresItems": true,
         "dashboardListRole": "list"
