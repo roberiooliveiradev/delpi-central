@@ -411,9 +411,16 @@ class ExternalActionProductRawMaterialPricePresenter:
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if last_purchase:
-            detail = self._build_kv_table(last_purchase, self._route("lastPurchase", "tableTitle"))
-            detail["role"] = "list"
-            tables.append(detail)
+            detail = _OpsTable.build_fixed_items_table(
+                self._host,
+                [last_purchase],
+                table_id="lastPurchaseDetail",
+                title=self._route("lastPurchase", "tableTitle"),
+                role="list",
+            )
+
+            if detail:
+                tables.append(detail)
 
         return [table for table in tables if isinstance(table, dict)]
 
@@ -432,14 +439,22 @@ class ExternalActionProductRawMaterialPricePresenter:
             },
         ]
 
-        for key in ("unit_price", "supplier_code", "supplier_name", "icms_rate", "invoice_date"):
-            if key in last_purchase:
-                rows.append(
-                    {
-                        "campo": self._host._humanize_key(key),
-                        "valor": self._host._format_field_value(key, last_purchase.get(key)),
-                    }
-                )
+        rows.extend(
+            _OpsTable.kv_rows_from_mapping(
+                self._host,
+                {
+                    key: last_purchase[key]
+                    for key in (
+                        "unit_price",
+                        "supplier_code",
+                        "supplier_name",
+                        "icms_rate",
+                        "invoice_date",
+                    )
+                    if key in last_purchase
+                },
+            )
+        )
 
         return {
             "type": "table",
@@ -689,13 +704,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
 
-        for key, value in list(indicators.items())[:6]:
-            rows.append(
-                {
-                    "campo": self._host._humanize_key(str(key)),
-                    "valor": self._host._format_field_value(str(key), value),
-                }
-            )
+        rows.extend(_OpsTable.summary_kv_rows(self._host, indicators)[:6])
 
         return {
             "type": "table",
@@ -716,6 +725,8 @@ class ExternalActionProductRawMaterialPricePresenter:
             },
         ]
 
+        merged: dict[str, Any] = {}
+
         for key in (
             "total_material_cost",
             "total_materials",
@@ -724,13 +735,9 @@ class ExternalActionProductRawMaterialPricePresenter:
             "projected_cost_delta",
         ):
             if key in summary or key in simulation:
-                value = simulation.get(key, summary.get(key))
-                rows.append(
-                    {
-                        "campo": self._host._humanize_key(key),
-                        "valor": self._host._format_field_value(key, value),
-                    }
-                )
+                merged[key] = simulation.get(key, summary.get(key))
+
+        rows.extend(_OpsTable.summary_kv_rows(self._host, merged))
 
         return {
             "type": "table",
@@ -741,19 +748,12 @@ class ExternalActionProductRawMaterialPricePresenter:
 
     def _build_kv_table(self, payload: dict, title: str) -> dict:
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = [
-            {
-                "campo": self._host._humanize_key(str(key)),
-                "valor": self._host._format_field_value(str(key), value),
-            }
-            for key, value in payload.items()
-        ]
 
         return {
             "type": "table",
             "title": title,
             "columns": columns,
-            "rows": rows,
+            "rows": _OpsTable.kv_rows_from_mapping(self._host, payload),
         }
 
     def _build_intelligence_text_presentation(self, root: dict, path: str) -> dict | None:

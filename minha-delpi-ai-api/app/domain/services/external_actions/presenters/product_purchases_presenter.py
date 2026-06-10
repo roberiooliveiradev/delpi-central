@@ -104,7 +104,7 @@ class ExternalActionProductPurchasesPresenter:
         else:
             body_parts.append(self._route("itemsEmptyLine"))
 
-        body = "\n".join(body_parts).strip()
+        body = _OpsTable.join_narrative_lines(body_parts)
 
         if not body:
             return None

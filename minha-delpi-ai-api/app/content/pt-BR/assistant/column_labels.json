@@ -777,6 +777,13 @@
         {"key": "delivery_date", "label": "Entrega", "dataType": "date"},
         {"key": "status", "label": "Status"}
       ],
+      "lastPurchaseDetail": [
+        {"key": "supplier_code", "label": "Fornecedor"},
+        {"key": "supplier_name", "label": "Nome fornecedor"},
+        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
+        {"key": "icms_rate", "label": "Alíquota ICMS", "dataType": "percent"},
+        {"key": "invoice_date", "label": "Data NF", "dataType": "date"}
+      ],
       "salePricingDetail": [
         {"key": "table_code", "label": "Tabela"},
         {"key": "table_description", "label": "Descrição tabela"},

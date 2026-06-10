@@ -257,13 +257,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = [
-            {
-                "campo": self._host._humanize_key(str(key)),
-                "valor": self._host._format_field_value(str(key), value),
-            }
-            for key, value in summary.items()
-        ]
+        rows = _OpsTable.summary_kv_rows(self._host, summary)
 
         period_start = str(root.get("date_start") or "").strip()
         period_end = str(root.get("date_end_exclusive") or "").strip()

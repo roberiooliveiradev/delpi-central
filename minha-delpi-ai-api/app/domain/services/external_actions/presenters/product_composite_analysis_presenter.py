@@ -442,14 +442,29 @@ class ExternalActionProductCompositeAnalysisPresenter:
         structure_items = self._section_block(root, "structure").get("items")
 
         if isinstance(structure_items, list) and structure_items:
-            structure_table = self._host._build_items_table(
-                structure_items,
-                title=self._route("factoryStatus", "sectionStructureTitle"),
-                path=path,
+            enriched = _OpsTable.enrich_structure_rows(
+                [item for item in structure_items if isinstance(item, dict)]
+            )
+            shown, total = _OpsTable.limit_items(enriched, sort_key="level", reverse=False)
+            structure_title = (
+                self._route(
+                    "factoryStatus",
+                    "sectionStructureTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("factoryStatus", "sectionStructureTitle")
+            )
+            structure_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                shown,
+                table_id="structureExclusivityDetail",
+                title=structure_title,
+                role="structure",
             )
 
-            if isinstance(structure_table, dict):
-                structure_table["role"] = "structure"
+            if structure_table:
                 tables.append(structure_table)
 
         stock_items = self._section_block(root, "raw_material_stock").get("items")

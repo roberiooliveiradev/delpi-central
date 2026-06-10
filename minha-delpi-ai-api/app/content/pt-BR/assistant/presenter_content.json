@@ -323,6 +323,7 @@
       "productionSummary": "Produção: PA **{paStarted}** · PI **{piStarted}** — **{paOrders}** OP(s) PA e **{piOrders}** OP(s) PI.",
       "shippingSummary": "Expedição no período: **{shipped}** expedido(s) · **{loss}** perda(s) de inspeção.",
       "sectionStructureTitle": "Estrutura (BOM + exclusividade)",
+      "sectionStructureTitleTruncated": "Estrutura (BOM + exclusividade) — {shown} de {total}",
       "sectionStockTitle": "Estoque de matérias-primas",
       "sectionMpStockSummaryTitle": "Saldo consolidado por matéria-prima",
       "sectionProductionTitle": "Produção (PA / PI / OP / apontamentos)",

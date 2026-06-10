@@ -48,6 +48,10 @@ def test_factory_table_presentations_assign_stack_roles():
 
     assert len(tables) >= 3
     assert tables[0].get("role") == "profile"
+    structure = next(table for table in tables if table.get("role") == "structure")
+    structure_keys = [column["key"] for column in structure.get("columns") or []]
+
+    assert "exclusive_raw_material_label" in structure_keys
     assert any(table.get("role") == "structure" for table in tables)
     assert any(table.get("role") == "stock" for table in tables)
     assert any(table.get("role") == "list" for table in tables)

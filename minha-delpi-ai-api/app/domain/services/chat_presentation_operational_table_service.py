@@ -122,6 +122,20 @@ class ChatPresentationOperationalTableService:
         return ordered[:effective_limit], total
 
     @classmethod
+    def kv_rows_from_mapping(
+        cls,
+        host: ExternalActionResultPresenter,
+        payload: dict[str, Any],
+    ) -> list[dict[str, str]]:
+        return [
+            {
+                "campo": host._column_labels.label_for(str(key)),
+                "valor": host._format_field_value(str(key), value),
+            }
+            for key, value in payload.items()
+        ]
+
+    @classmethod
     def summary_kv_rows(
         cls,
         host: ExternalActionResultPresenter,
