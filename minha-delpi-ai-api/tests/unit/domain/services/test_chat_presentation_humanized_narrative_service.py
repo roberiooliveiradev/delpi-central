@@ -100,3 +100,45 @@ def test_enrich_metadata_skips_conclusion_for_pagination_only_kpi():
 
     assert "Total Pages" not in markdown
     assert "painéis abaixo" not in markdown.lower()
+
+
+def test_enrich_metadata_skips_panorama_for_structure_components_table():
+    metadata = {
+        "path": "/products/90260149/structure",
+        "apiDelpiResponseMeta": {"entity": "product_structure"},
+        "textPresentation": {
+            "title": "Estrutura do produto 90260149",
+            "markdown": (
+                "### Estrutura do produto 90260149\n\n"
+                "Produto **90260149**: CHICOTE.\n\n"
+                "A composição possui **6** componente(s) de nível 1."
+            ),
+        },
+        "profileTablePresentation": {
+            "type": "table",
+            "title": "Componentes da estrutura 90260149",
+            "columns": [
+                {"key": "parent_code", "label": "PI pai"},
+                {"key": "component_code", "label": "Componente"},
+            ],
+            "rows": [
+                {
+                    "parent_code": "90260149",
+                    "component_code": "C1",
+                    "description": "COMP",
+                    "quantity": 1.0,
+                }
+            ],
+        },
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estrutura do produto 90260149",
+            "root": {"id": "90260149", "label": "90260149", "children": []},
+        },
+    }
+
+    ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "**Panorama**" not in markdown
+    assert "—:" not in markdown

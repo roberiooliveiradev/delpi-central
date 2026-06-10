@@ -152,10 +152,29 @@ class ChatPresentationHumanizedNarrativeService:
         return "\n\n".join(lines[:4]).strip()
 
     @classmethod
+    def _is_field_value_profile_table(cls, table: dict[str, Any] | None) -> bool:
+        if not isinstance(table, dict) or table.get("type") != "table":
+            return False
+
+        rows = table.get("rows") or []
+
+        if not isinstance(rows, list) or not rows:
+            return False
+
+        sample = rows[0]
+
+        if not isinstance(sample, dict):
+            return False
+
+        keys = {str(key).strip().lower() for key in sample.keys()}
+
+        return keys == {"campo", "valor"} or keys == {"field", "value"}
+
+    @classmethod
     def _build_panorama_from_profile_table(cls, metadata: dict[str, Any]) -> str | None:
         profile = cls._find_profile_table(metadata)
 
-        if not profile:
+        if not profile or not cls._is_field_value_profile_table(profile):
             return None
 
         rows = profile.get("rows") or []
@@ -165,9 +184,14 @@ class ChatPresentationHumanizedNarrativeService:
 
         header = cls._text("panoramaHeader")
         bullets = [
-            f"- **{row.get('campo') or row.get('label') or '—'}:** {row.get('valor') or row.get('value') or '—'}"
+            f"- **{row.get('campo') or row.get('field') or '—'}:** "
+            f"{row.get('valor') or row.get('value') or '—'}"
             for row in rows
             if isinstance(row, dict)
+            and (
+                str(row.get("campo") or row.get("field") or "").strip()
+                or str(row.get("valor") or row.get("value") or "").strip()
+            )
         ]
 
         if not bullets:
@@ -310,19 +334,27 @@ class ChatPresentationHumanizedNarrativeService:
         profile = metadata.get("profileTablePresentation")
 
         if isinstance(profile, dict) and profile.get("type") == "table":
-            return profile
+            return profile if cls._is_field_value_profile_table(profile) else None
 
         bulk = metadata.get("tablePresentations")
 
         if isinstance(bulk, list):
             for table in bulk:
-                if isinstance(table, dict) and str(table.get("role") or "").strip() == "profile":
+                if (
+                    isinstance(table, dict)
+                    and str(table.get("role") or "").strip() == "profile"
+                    and cls._is_field_value_profile_table(table)
+                ):
                     return table
 
         for key in ("tablePresentation", "presentation"):
             table = metadata.get(key)
 
-            if isinstance(table, dict) and str(table.get("role") or "").strip() == "profile":
+            if (
+                isinstance(table, dict)
+                and str(table.get("role") or "").strip() == "profile"
+                and cls._is_field_value_profile_table(table)
+            ):
                 return table
 
         return None

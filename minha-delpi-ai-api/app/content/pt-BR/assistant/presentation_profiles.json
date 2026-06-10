@@ -367,9 +367,10 @@
       "textBuilder": "build_tree_hierarchy_text",
       "tableAssembly": {
         "builder": "build_tree_hierarchy_table_presentations",
-        "layout": "profile_only",
+        "layout": "single_table",
         "requiresItems": true
       },
+      "humanizedNarrative": "skip",
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       }

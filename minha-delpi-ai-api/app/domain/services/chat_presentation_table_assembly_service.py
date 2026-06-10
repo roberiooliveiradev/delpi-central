@@ -149,6 +149,8 @@ class ChatPresentationTableAssemblyService:
             result = cls._layout_analyser_slots(tables, table_presentation=table_presentation)
         elif layout == "profile_only":
             result = cls._layout_profile_only(tables)
+        elif layout == "single_table":
+            result = cls._layout_single_table(tables)
         else:
             profile_index = int(config.get("profileTableIndex", 0))
             primary_index = int(config.get("primaryTableIndex", 1))
@@ -205,6 +207,17 @@ class ChatPresentationTableAssemblyService:
             table_presentations=tables,
             table_presentation=primary,
             profile_table_presentation=primary,
+            inspection_table_presentation=None,
+        )
+
+    @classmethod
+    def _layout_single_table(cls, tables: list[dict[str, Any]]) -> TableAssemblyResult:
+        primary = tables[0]
+
+        return TableAssemblyResult(
+            table_presentations=tables,
+            table_presentation=primary,
+            profile_table_presentation=None,
             inspection_table_presentation=None,
         )
 
