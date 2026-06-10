@@ -390,8 +390,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         ];
       });
 
-      await coreApi.addFavoriteApp(appId);
-      await loadFavoritesData();
+      try {
+        await coreApi.addFavoriteApp(appId);
+      } catch {
+        await loadFavoritesData();
+      }
     },
     [apps, buildCoreApi, loadFavoritesData]
   );
@@ -399,13 +402,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const removeFavorite = useCallback(
     async (appId: string) => {
       const coreApi = buildCoreApi();
+      const previous = favorites;
 
       setFavorites((prev) => prev.filter((f) => f.id !== appId));
 
-      await coreApi.removeFavoriteApp(appId);
-      await loadFavoritesData();
+      try {
+        await coreApi.removeFavoriteApp(appId);
+      } catch {
+        setFavorites(previous);
+        await loadFavoritesData();
+      }
     },
-    [buildCoreApi, loadFavoritesData]
+    [buildCoreApi, favorites, loadFavoritesData]
   );
 
   const reorderFavorites = useCallback(

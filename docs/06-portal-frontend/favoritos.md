@@ -2,7 +2,7 @@
 
 > **Arquivo:** `docs/06-portal-frontend/favoritos.md`  
 > **Status:** documentação oficial  
-> **Implementação:** `AuthContext.addFavorite/removeFavorite`, `coreApi.ts`, `Sidebar` / `AppLauncher`  
+> **Implementação:** `AuthContext.addFavorite/removeFavorite/reorderFavorites`, `coreApi.ts`, `AppLauncherCard`, `AppLauncherReorderList`, `SidebarFavoritesList`, `HomePage`, `MyProfile`, `AppLauncher`  
 > **Produto:** Minha DELPI  
 > **Escopo:** favoritos de apps no Portal e Core API
 
@@ -53,6 +53,7 @@ user_id + app_id
 | Exibir favoritos | Sim | Fornece dados |
 | Adicionar favorito | Solicita | Valida e persiste |
 | Remover favorito | Solicita | Remove vínculo |
+| Reordenar favoritos | Solicita | Atualiza `order_index` |
 | Validar usuário autenticado | Envia token | Valida JWT |
 | Validar app existente | Não | Sim |
 | Filtrar favoritos autorizados | Não | Sim |
@@ -69,7 +70,23 @@ Endpoints usados pelo Portal:
 GET    /me/apps/favorites
 POST   /me/apps/favorites/<app_id>
 DELETE /me/apps/favorites/<app_id>
+PUT    /me/apps/favorites/order
 ```
+
+### Reordenar favoritos
+
+```http
+PUT /me/apps/favorites/order
+Content-Type: application/json
+
+{
+  "app_ids": ["app-a", "app-b", "app-c"]
+}
+```
+
+- `app_ids` deve conter **todos** os favoritos persistidos do usuário, na ordem desejada.
+- Resposta: `{ "ok": true }` ou `400` se a lista for inválida (IDs duplicados ou conjunto diferente dos favoritos atuais).
+- Implementação: `ReorderFavoriteAppsUseCase`, `FavoriteAppRepository.reorder`.
 
 Todos exigem usuário autenticado.
 
@@ -354,15 +371,25 @@ A tabela `user_favorite_apps` possui campo:
 order_index
 ```
 
-Esse campo permite ordenar favoritos por usuário.
+### Backend (implementado)
+
+- Endpoint `PUT /me/apps/favorites/order` com body `{ "app_ids": [...] }`.
+- Use case: `ReorderFavoriteAppsUseCase` (`core-api/app/application/use_cases/`).
+- Repositório: `FavoriteAppRepository.reorder` atualiza índices `0..n-1`.
+
+### Portal (implementado)
+
+- **Sidebar:** reordenar por **segurar + arrastar** no card do app (`AppLauncherReorderList` + `AppLauncherCard` com `reorderable`).
+- Ordem otimista em `AuthContext.reorderFavorites`; rollback em erro.
+- Apps favoritos não visíveis na sidebar (sem rotas / não lançáveis) mantêm posição relativa via `mergeFavoriteOrder` (`portal/src/utils/favoriteOrder.ts`).
+
+Detalhes de UX (hold, Firefox, grid): [app-launcher-cards.md](./app-launcher-cards.md).
 
 Uso esperado:
 
-- manter ordem de exibição;
-- permitir futura reorganização por drag and drop;
-- exibir favoritos em ordem consistente.
-
-Se ainda não houver endpoint de reordenação, o Portal deve apenas respeitar a ordem retornada pela Core API.
+- manter ordem de exibição na sidebar e demais superfícies que respeitam `order_index`;
+- reorganização por drag-and-drop na sidebar;
+- exibir favoritos em ordem consistente retornada pela Core API.
 
 ---
 
@@ -429,6 +456,34 @@ Se sucesso, remover favorito da UI
 Se erro, restaurar e mostrar mensagem
 ```
 
+### 17.3 Reordenar favoritos (sidebar)
+
+```text
+Usuário segura o card na sidebar (~380ms)
+  ↓
+UI indica modo arraste
+  ↓
+Usuário move e solta sobre outro favorito
+  ↓
+PUT /me/apps/favorites/order
+  ↓
+Se sucesso, ordem atualizada na UI
+  ↓
+Se erro, restaurar ordem anterior
+```
+
+### 17.4 Favoritar a partir da home / perfil
+
+```text
+Usuário passa o mouse no card (Continuar trabalhando, Favoritos ou Perfil)
+  ↓
+Clica no pin
+  ↓
+POST ou DELETE /me/apps/favorites/<app_id>
+  ↓
+App aparece ou some da sidebar conforme favorito
+```
+
 ---
 
 ## 18. Estados de UI
@@ -440,6 +495,7 @@ A UI deve tratar:
 - erro ao carregar favoritos;
 - adicionando favorito;
 - removendo favorito;
+- reordenando favoritos (hold + drag na sidebar);
 - app sem permissão;
 - app removido/desativado;
 - sessão expirada.
@@ -500,13 +556,13 @@ Regras:
 
 Possíveis melhorias:
 
-- endpoint para reordenar favoritos;
 - favoritos por rota, não apenas por app;
 - limite máximo de favoritos;
 - grupos de favoritos;
 - sincronização entre dispositivos;
 - favoritos sugeridos por perfil/grupo;
-- auditoria de alterações de favoritos.
+- auditoria de alterações de favoritos;
+- reordenar favoritos fora da sidebar (ex.: home).
 
 ---
 

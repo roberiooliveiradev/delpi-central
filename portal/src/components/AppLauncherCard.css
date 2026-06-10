@@ -2,6 +2,21 @@
    APP LAUNCHER CARD
 ========================================= */
 
+/* GRID (home, perfil, modal de apps) */
+
+.launcher-pinned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 120px));
+  gap: 12px;
+  align-items: start;
+  justify-content: center;
+}
+
+.launcher-pinned-grid .launcher-app-tile {
+  width: 100%;
+  max-width: 120px;
+}
+
 .launcher-app-tile {
   position: relative;
   border: 1px solid var(--border);

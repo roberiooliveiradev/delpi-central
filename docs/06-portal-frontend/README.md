@@ -15,7 +15,8 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [menu-dinamico.md](./menu-dinamico.md) | `/me/apps`, Sidebar |
 | [app-authorization.md](./app-authorization.md) | Guards, permissões na UI |
 | [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, Module Federation, iframe |
-| [favoritos.md](./favoritos.md) | `/me/apps/favorites` |
+| [favoritos.md](./favoritos.md) | `/me/apps/favorites`, reorder, pin |
+| [app-launcher-cards.md](./app-launcher-cards.md) | `AppLauncherCard`, grid, drag na sidebar |
 | [notificacoes.md](./notificacoes.md) | Sino, `/notifications`, preferências |
 | [admin-estatisticas.md](./admin-estatisticas.md) | Aba Estatísticas no `/admin` |
 

@@ -20,7 +20,8 @@
 
 .launcher-modal.startmenu {
   width: clamp(320px, 90vw, 760px);
-  height: clamp(80vh, 85vh, 640px);
+  max-height: min(85vh, 640px);
+  height: auto;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--border);
   border-radius: 22px;
@@ -123,23 +124,17 @@
   background: var(--border);
 }
 
-/* GRID */
-
-.launcher-pinned-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 12px;
-  align-items: start;
-}
-
 /* SEARCH RESULTS */
 
 .launcher-results {
   border: 1px solid var(--border);
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-3) 75%, transparent);
-  min-height: 220px;
   overflow: auto;
+}
+
+.launcher-results .launcher-pinned-grid {
+  padding: 12px;
 }
 
 /* EMPTY STATE */
@@ -286,10 +281,12 @@
 ========================================= */
 
 .launcher-body {
-  flex: 1;
+  flex: 0 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  overflow-anchor: none;
+  scroll-behavior: auto;
+  max-height: calc(min(85vh, 640px) - 132px);
   min-height: 0;
   padding-right: 6px; /* evita cortar scrollbar */
 }

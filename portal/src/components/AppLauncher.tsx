@@ -1,6 +1,6 @@
 // src/components/AppLauncher.tsx
 
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import {
@@ -67,6 +67,8 @@ export const AppLauncher = ({
   const [query, setQuery] = useState("");
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const pendingScrollTopRef = useRef<number | null>(null);
 
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const [openSearchAppId, setOpenSearchAppId] = useState<string | null>(null);
@@ -151,6 +153,10 @@ export const AppLauncher = ({
     const catalogApp = apps.find((app) => app.id === appId);
     if (!isLaunchableApp(catalogApp)) return;
 
+    if (bodyRef.current) {
+      pendingScrollTopRef.current = bodyRef.current.scrollTop;
+    }
+
     const isPinned = favorites.some(f => f.id === appId);
 
     if (isPinned) {
@@ -159,6 +165,13 @@ export const AppLauncher = ({
       await addFavorite(appId);
     }
   };
+
+  useLayoutEffect(() => {
+    if (pendingScrollTopRef.current === null || !bodyRef.current) return;
+
+    bodyRef.current.scrollTop = pendingScrollTopRef.current;
+    pendingScrollTopRef.current = null;
+  }, [favorites]);
 
   const launchableApps = useMemo(() => filterLaunchableApps(apps), [apps]);
 
@@ -246,7 +259,7 @@ export const AppLauncher = ({
             aria-label="Pesquisar aplicativos"
           />
         </div>
-        <div className="launcher-body">
+        <div className="launcher-body" ref={bodyRef}>
           {!isSearching ? (
             <div className="launcher-section">
               <div className="launcher-section-header">
