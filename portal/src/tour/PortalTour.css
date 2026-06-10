@@ -47,12 +47,22 @@ html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin.
 }
 
 html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin:not(.pinned) {
-  opacity: 0.5;
+  opacity: 0.38;
   pointer-events: auto;
 }
 
 html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-app-tile:hover .launcher-pin:not(.pinned) {
-  opacity: 0.62;
+  opacity: 0.48;
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin:not(.pinned) {
+    opacity: 0.52;
+  }
+
+  html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin.pinned {
+    opacity: 0.9;
+  }
 }
 
 html[data-portal-tour-companion="true"] .notif-dropdown,

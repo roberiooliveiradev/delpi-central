@@ -127,7 +127,10 @@
 }
 
 .launcher-app-tile:hover .launcher-pin:not(.pinned) {
-  opacity: 0.5;
+  opacity: 0.38;
+  color: color-mix(in srgb, var(--text-muted) 72%, var(--text));
+  background: color-mix(in srgb, var(--surface) 28%, transparent);
+  box-shadow: none;
 }
 
 /* quando está pinado — visível, porém suave */
@@ -141,6 +144,58 @@
   opacity: 0.88;
   color: color-mix(in srgb, var(--primary) 78%, var(--text));
   background: color-mix(in srgb, var(--surface) 58%, transparent);
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .launcher-app-tile.home-variant,
+  .launcher-pinned-grid .launcher-app-tile {
+    padding-top: 18px;
+    padding-right: 12px;
+  }
+
+  .launcher-pin {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .launcher-pin svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* touch não tem hover — pin desativado visível, porém bem suave */
+  .launcher-pin:not(.pinned) {
+    opacity: 0.52;
+    color: color-mix(in srgb, var(--text-muted) 62%, transparent);
+    background: color-mix(in srgb, var(--surface) 24%, transparent);
+    box-shadow: none;
+    backdrop-filter: blur(4px);
+  }
+
+  .launcher-pin.pinned {
+    opacity: 0.9;
+    color: color-mix(in srgb, var(--primary) 68%, var(--text-muted));
+    background: color-mix(in srgb, var(--surface) 52%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+    box-shadow: 0 1px 6px color-mix(in srgb, var(--bg) 16%, transparent);
+  }
+
+  .launcher-pin:not(.pinned):active {
+    transform: scale(0.96);
+    opacity: 0.72;
+    background: color-mix(in srgb, var(--surface) 42%, transparent);
+  }
+
+  .launcher-pin.pinned:active {
+    transform: scale(0.94);
+    background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  }
 }
 
 /* CHEVRON */
