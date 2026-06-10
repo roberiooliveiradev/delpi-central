@@ -221,7 +221,13 @@ class SqlAlchemyPortalTourRepository(PortalTourRepository):
             )
             .join(User, User.id == PortalTourQuestEvent.user_id)
             .filter(PortalTourQuestEvent.completed_at >= since)
-            .group_by(
+        )
+
+        if tour_version:
+            query = query.filter(PortalTourQuestEvent.tour_version == tour_version)
+
+        query = (
+            query.group_by(
                 PortalTourQuestEvent.user_id,
                 PortalTourQuestEvent.tour_version,
                 User.name,
@@ -230,9 +236,6 @@ class SqlAlchemyPortalTourRepository(PortalTourRepository):
             .order_by(func.count(PortalTourQuestEvent.id).desc())
             .limit(limit)
         )
-
-        if tour_version:
-            query = query.filter(PortalTourQuestEvent.tour_version == tour_version)
 
         return [
             PortalTourTopExplorerDTO(

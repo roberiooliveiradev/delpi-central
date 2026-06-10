@@ -39,7 +39,8 @@ export function StatsTourPage() {
     topData,
     summary,
     loading,
-    error,
+    listError,
+    topError,
     lastUpdatedAt,
     reload,
   } = usePortalTourAdminMonitoring();
@@ -165,8 +166,8 @@ export function StatsTourPage() {
 
           {loading && !topItems.length ? (
             <p className="admin-stats__empty">Carregando ranking…</p>
-          ) : error && !topItems.length ? (
-            <p className="admin-stats__empty">{error}</p>
+          ) : topError && !topItems.length ? (
+            <p className="admin-stats__empty admin-stats__empty--error">{topError}</p>
           ) : topItems.length === 0 ? (
             <p className="admin-stats__empty">
               Nenhum desafio concluído nos últimos {periodDays} dias.
@@ -241,8 +242,8 @@ export function StatsTourPage() {
 
           {loading && !items.length ? (
             <p className="admin-stats__empty">Carregando exploradores…</p>
-          ) : error && !items.length ? (
-            <p className="admin-stats__empty">{error}</p>
+          ) : listError && !items.length ? (
+            <p className="admin-stats__empty admin-stats__empty--error">{listError}</p>
           ) : items.length === 0 ? (
             <p className="admin-stats__empty">
               Nenhum usuário com status «{PORTAL_TOUR_STATUS_LABELS[statusFilter]}».
@@ -275,6 +276,19 @@ export function StatsTourPage() {
                           {item.requiredQuestDone}/{item.requiredQuestTotal} obrigatórios
                         </span>
                       </div>
+                    </div>
+                    <div
+                      className="admin-stats-tour-progress"
+                      role="progressbar"
+                      aria-valuenow={item.progressPercent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Progresso de ${item.name}`}
+                    >
+                      <div
+                        className="admin-stats-tour-progress__fill"
+                        style={{ width: `${Math.min(100, Math.max(0, item.progressPercent))}%` }}
+                      />
                     </div>
                     <div className="admin-stats-least-engaged-item__meta">
                       <span>Início: {formatGeneratedAt(item.startedAt)}</span>

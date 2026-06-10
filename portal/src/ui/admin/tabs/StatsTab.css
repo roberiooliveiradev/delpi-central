@@ -134,6 +134,7 @@
 }
 
 .admin-stats-subnav__item {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -160,9 +161,26 @@
 
 .admin-stats-subnav__item.active {
   border-color: transparent;
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 153, 220, 0.3);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.admin-stats-subnav__item.active::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 58%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+.admin-stats-subnav__item.active svg {
+  color: color-mix(in srgb, var(--primary) 72%, var(--text));
 }
 
 .admin-stats-subnav__label {
@@ -1448,6 +1466,34 @@
 .admin-stats-tour-pagination__btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.admin-stats__empty--error {
+  color: var(--danger, #c0392b);
+  font-weight: 600;
+}
+
+.admin-stats-tour-progress {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+
+.admin-stats-tour-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 70%, transparent),
+    var(--primary)
+  );
+  transition: width 0.35s ease;
+}
+
+.admin-stats-page--tour .admin-stats__panel {
+  animation: admin-stats-fade-in 0.3s ease;
 }
 
 .admin-stats-tour-teaser .admin-stats__panel-link {

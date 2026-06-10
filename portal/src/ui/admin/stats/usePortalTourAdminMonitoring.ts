@@ -12,6 +12,31 @@ import type { PortalTourStatusFilter } from "./portalTourAdminLabels";
 
 const PAGE_SIZE = 20;
 
+function normalizeTourAdminError(err: unknown): string {
+  if (!(err instanceof Error)) {
+    return "Falha ao carregar acompanhamento do tour.";
+  }
+
+  const message = err.message.trim();
+  if (
+    message.includes("<!doctype") ||
+    message.includes("<html") ||
+    message.includes("Internal Server Error")
+  ) {
+    return "Erro no servidor. Tente atualizar em instantes.";
+  }
+
+  return message.length > 280 ? `${message.slice(0, 277)}…` : message;
+}
+
+function settledValue<T>(result: PromiseSettledResult<T>): T | null {
+  return result.status === "fulfilled" ? result.value : null;
+}
+
+function settledError(result: PromiseSettledResult<unknown>): string | null {
+  return result.status === "rejected" ? normalizeTourAdminError(result.reason) : null;
+}
+
 export type PortalTourMonitoringSummary = {
   exploring: number;
   completed: number;
@@ -28,7 +53,8 @@ export function usePortalTourAdminMonitoring() {
   const [topData, setTopData] = useState<PortalTourTopExplorersResponse | null>(null);
   const [summary, setSummary] = useState<PortalTourMonitoringSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [topError, setTopError] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
   const adminApi = useMemo(
@@ -46,58 +72,73 @@ export function usePortalTourAdminMonitoring() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setListError(null);
+    setTopError(null);
 
     try {
       const offset = page * PAGE_SIZE;
-      const [exploringRes, completedRes, dismissedRes, allRes, listRes, topRes] =
-        await Promise.all([
-          adminApi.listPortalTourExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            status: "exploring",
-            limit: 1,
-          }),
-          adminApi.listPortalTourExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            status: "completed",
-            limit: 1,
-          }),
-          adminApi.listPortalTourExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            status: "dismissed",
-            limit: 1,
-          }),
-          adminApi.listPortalTourExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            status: "all",
-            limit: 1,
-          }),
-          adminApi.listPortalTourExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            status: statusFilter === "all" ? "all" : statusFilter,
-            limit: PAGE_SIZE,
-            offset,
-          }),
-          adminApi.listPortalTourTopExplorers({
-            tourVersion: PORTAL_TOUR_VERSION,
-            periodDays,
-            limit: 10,
-          }),
-        ]);
+      const [
+        exploringRes,
+        completedRes,
+        dismissedRes,
+        allRes,
+        listRes,
+        topRes,
+      ] = await Promise.allSettled([
+        adminApi.listPortalTourExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          status: "exploring",
+          limit: 1,
+        }),
+        adminApi.listPortalTourExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          status: "completed",
+          limit: 1,
+        }),
+        adminApi.listPortalTourExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          status: "dismissed",
+          limit: 1,
+        }),
+        adminApi.listPortalTourExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          status: "all",
+          limit: 1,
+        }),
+        adminApi.listPortalTourExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          status: statusFilter === "all" ? "all" : statusFilter,
+          limit: PAGE_SIZE,
+          offset,
+        }),
+        adminApi.listPortalTourTopExplorers({
+          tourVersion: PORTAL_TOUR_VERSION,
+          periodDays,
+          limit: 10,
+        }),
+      ]);
+
+      const exploring = settledValue(exploringRes);
+      const completed = settledValue(completedRes);
+      const dismissed = settledValue(dismissedRes);
+      const all = settledValue(allRes);
+      const list = settledValue(listRes);
+      const top = settledValue(topRes);
 
       setSummary({
-        exploring: exploringRes.total,
-        completed: completedRes.total,
-        dismissed: dismissedRes.total,
-        total: allRes.total,
+        exploring: exploring?.total ?? 0,
+        completed: completed?.total ?? 0,
+        dismissed: dismissed?.total ?? 0,
+        total: all?.total ?? 0,
       });
-      setListData(listRes);
-      setTopData(topRes);
+      setListData(list);
+      setTopData(top);
+      setListError(settledError(listRes));
+      setTopError(settledError(topRes));
       setLastUpdatedAt(new Date().toISOString());
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Falha ao carregar acompanhamento do tour",
-      );
+      setListError(normalizeTourAdminError(err));
+      setTopError(normalizeTourAdminError(err));
     } finally {
       setLoading(false);
     }
@@ -141,7 +182,8 @@ export function usePortalTourAdminMonitoring() {
     topData,
     summary,
     loading,
-    error,
+    listError,
+    topError,
     lastUpdatedAt,
     reload: load,
   };
