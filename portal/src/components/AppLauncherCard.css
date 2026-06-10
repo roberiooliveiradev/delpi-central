@@ -84,10 +84,10 @@
 
 .launcher-pin {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   border: none;
   background: color-mix(in srgb, var(--surface) 42%, transparent);
@@ -116,26 +116,29 @@
 }
 
 .launcher-pin svg {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   margin: 0;
 }
 
-/* quando NÃO está pinado — oculto até hover */
+/* quando NÃO está pinado — oculto até hover (desktop) */
 .launcher-pin:not(.pinned) {
   opacity: 0;
+  pointer-events: none;
 }
 
 .launcher-app-tile:hover .launcher-pin:not(.pinned) {
   opacity: 0.38;
+  pointer-events: auto;
   color: color-mix(in srgb, var(--text-muted) 72%, var(--text));
   background: color-mix(in srgb, var(--surface) 28%, transparent);
   box-shadow: none;
 }
 
-/* quando está pinado — visível, porém suave */
+/* quando está pinado — sempre visível, porém suave */
 .launcher-pin.pinned {
   opacity: 0.62;
+  pointer-events: auto;
   color: color-mix(in srgb, var(--primary) 55%, var(--text-muted));
   background: color-mix(in srgb, var(--surface) 38%, transparent);
 }
@@ -165,13 +168,14 @@
   }
 
   .launcher-pin svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   /* touch não tem hover — pin desativado visível, porém bem suave */
   .launcher-pin:not(.pinned) {
     opacity: 0.52;
+    pointer-events: auto;
     color: color-mix(in srgb, var(--text-muted) 62%, transparent);
     background: color-mix(in srgb, var(--surface) 24%, transparent);
     box-shadow: none;

@@ -47,16 +47,22 @@ html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin.
 }
 
 html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin:not(.pinned) {
-  opacity: 0.38;
-  pointer-events: auto;
+  opacity: 0;
+  pointer-events: none;
 }
 
 html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-app-tile:hover .launcher-pin:not(.pinned) {
   opacity: 0.48;
+  pointer-events: auto;
 }
 
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin:not(.pinned) {
+    opacity: 0.52;
+    pointer-events: auto;
+  }
+
+  html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-app-tile:hover .launcher-pin:not(.pinned) {
     opacity: 0.52;
   }
 
