@@ -755,7 +755,7 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "sale_pricing"
     },
     {
       "method": "GET",
@@ -781,7 +781,7 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "purchase_list"
     },
     {
       "method": "GET",

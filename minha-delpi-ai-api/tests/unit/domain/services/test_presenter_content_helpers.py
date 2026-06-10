@@ -196,3 +196,17 @@ def test_present_dict_fallback_uses_content():
 
     assert result is not None
     assert any("total" in line.lower() or "Total" in line for line in result["linhas"])
+
+
+def test_route_presentation_keys_exist_for_mp_purchase_profiles():
+    presenter = ExternalActionResultPresenter()
+
+    assert "Preço de venda" in presenter._route_presentation(
+        "salePricing",
+        "titleWithCode",
+        code="10080001",
+    )
+    assert presenter._route_presentation("lastPurchase", "kpiUnitPrice")
+    assert presenter._route_presentation("purchasePriceHistory", "kpiLastVariation")
+    assert presenter._route_presentation("purchaseBudgetHistory", "kpiPurchaseOrders")
+    assert presenter._route_presentation("purchaseList", "ordersTableTitle")

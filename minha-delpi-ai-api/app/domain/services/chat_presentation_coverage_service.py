@@ -27,6 +27,8 @@ _RICH_PRODUCT_PATH_TOKENS: tuple[str, ...] = (
     "/last-purchase",
     "/purchase-price-history",
     "/purchase-budget-history",
+    "/pricing",
+    "/purchases",
 )
 
 _TIER_ORDER = ("A", "B", "C", "D")
@@ -78,19 +80,70 @@ class ChatPresentationCoverageService:
         return repo_root / "docs" / "architecture" / "presentation-coverage-baseline.json"
 
     @classmethod
+    def _openapi_candidates(cls, baseline_path: Path | None = None) -> list[Path]:
+        if baseline_path is not None:
+            return [baseline_path]
+
+        repo_root = Path(__file__).resolve().parents[4]
+        return [
+            repo_root / "api-delpi" / "app" / "content" / "openapi_baseline.json",
+            Path(__file__).resolve().parents[3]
+            / "docs"
+            / "architecture"
+            / "openapi_baseline.snapshot.json",
+        ]
+
+    @classmethod
+    def _operations_from_stored_baseline(cls) -> list[dict[str, Any]]:
+        stored = cls.load_stored_baseline()
+        rows = stored.get("rows") or []
+        operations: list[dict[str, Any]] = []
+
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+
+            operation_id = str(row.get("operation_id") or row.get("operationId") or "").strip()
+
+            if not operation_id:
+                continue
+
+            raw_tags = row.get("tags") or []
+            tags = [str(tag).strip() for tag in raw_tags if str(tag).strip()]
+
+            operations.append(
+                {
+                    "method": str(row.get("method") or "GET").upper(),
+                    "path": str(row.get("path") or "").strip(),
+                    "operationId": operation_id,
+                    "tags": tags,
+                }
+            )
+
+        return operations
+
+    @classmethod
     def load_openapi_operations(cls, baseline_path: Path | None = None) -> list[dict[str, Any]]:
-        path = baseline_path or cls.default_openapi_baseline_path()
+        for candidate in cls._openapi_candidates(baseline_path):
+            if not candidate.is_file():
+                continue
 
-        if not path.is_file():
-            raise FileNotFoundError(f"OpenAPI baseline não encontrado: {path}")
+            payload = json.loads(candidate.read_text(encoding="utf-8"))
+            operations = payload.get("operations")
 
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        operations = payload.get("operations")
+            if not isinstance(operations, list):
+                raise ValueError(f"OpenAPI baseline inválido: campo operations ausente ({candidate})")
 
-        if not isinstance(operations, list):
-            raise ValueError("OpenAPI baseline inválido: campo operations ausente")
+            return [op for op in operations if isinstance(op, dict)]
 
-        return [op for op in operations if isinstance(op, dict)]
+        fallback = cls._operations_from_stored_baseline()
+
+        if fallback:
+            return fallback
+
+        raise FileNotFoundError(
+            "OpenAPI baseline não encontrado e docs/architecture/presentation-coverage-baseline.json está vazio"
+        )
 
     @classmethod
     def load_stored_baseline(cls, baseline_path: Path | None = None) -> dict[str, Any]:
