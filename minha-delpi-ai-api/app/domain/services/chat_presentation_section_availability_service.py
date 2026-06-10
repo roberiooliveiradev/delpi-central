@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_presentation_route_policy_service import (
     ChatPresentationRoutePolicyService,
 )
@@ -124,7 +127,17 @@ class ChatPresentationSectionAvailabilityService:
             plan["narrativeOrder"] = cls._narrative_order_for_tree_hierarchy(visibility)
             return plan
 
-        plan["presentationProfile"] = "generic_stack"
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+        plan["presentationProfile"] = profile_key
         plan["humanizedSections"] = False
         plan["sectionVisibility"] = {}
         plan["sectionFraming"] = {}

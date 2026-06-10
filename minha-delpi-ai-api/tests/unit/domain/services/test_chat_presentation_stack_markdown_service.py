@@ -54,6 +54,43 @@ def test_apply_section_markers_is_idempotent():
     assert metadata["textPresentation"]["markdown"] == first
 
 
+def test_kpi_series_stack_gets_humanized_sections_and_framing():
+    metadata = {
+        "path": "/quality/nonconformities/series",
+        "apiDelpiResponseMeta": {"entity": "nonconformity_series"},
+        "textPresentation": {
+            "markdown": (
+                "### Não conformidades\n\n"
+                "<!-- section:scope -->\n\n"
+                "Série temporal com 2 ponto(s)."
+            ),
+        },
+        "tablePresentation": {
+            "type": "table",
+            "title": "Série",
+            "rows": [
+                {"period": "jan/2026", "value": 4},
+                {"period": "fev/2026", "value": 6},
+            ],
+        },
+        "chartPresentation": {
+            "type": "chart",
+            "chartType": "line",
+            "data": [],
+        },
+    }
+
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan["humanizedSections"] is True
+    assert plan["presentationProfile"] == "kpi_series"
+    assert plan["sectionVisibility"]["scope"] is True
+    assert plan["sectionVisibility"]["guide"] is True
+    assert plan["sectionVisibility"]["structure"] is True
+    assert plan["sectionFraming"]["scope"]
+    assert "temporal" in plan["sectionFraming"]["scope"].lower()
+
+
 def test_inject_scope_marker_after_title():
     metadata = {
         "textPresentation": {

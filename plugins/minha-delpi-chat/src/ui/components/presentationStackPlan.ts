@@ -32,13 +32,7 @@ export type StackPresentationPlan = {
   tailVisualOrder: string[];
   narrativeOrder: StackNarrativeSlot[];
   /** Inteligência da API: mockup humanizado no analyser e rotas compostas de produto. */
-  presentationProfile?:
-    | "product_analyser"
-    | "product_factory_status"
-    | "product_production_status"
-    | "product_shipping_status"
-    | "product_structure_exclusivity"
-    | "generic_stack";
+  presentationProfile?: string;
   humanizedSections?: boolean;
   sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
   /** Texto explicativo por seção (API) — renderizado como markdown normal, sem repetir tabela/bullets. */

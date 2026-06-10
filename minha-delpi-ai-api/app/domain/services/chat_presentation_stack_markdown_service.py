@@ -27,10 +27,15 @@ _ATTENTION_HEADER_RE = re.compile(r"(?m)^\*\*Pontos de atenção")
 class ChatPresentationStackMarkdownService:
     @classmethod
     def enrich_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
-        profile_key = str(plan.get("presentationProfileKey") or "").strip()
+        profile_key = str(
+            plan.get("presentationProfileKey")
+            or plan.get("presentationProfile")
+            or cls.resolve_profile_key(metadata)
+            or ""
+        ).strip()
 
-        if plan.get("presentationProfile") == "generic_stack":
-            plan = cls._enrich_generic_stack_plan(metadata, plan, profile_key=profile_key)
+        if not plan.get("humanizedSections"):
+            plan = cls._enrich_profile_stack_plan(metadata, plan, profile_key=profile_key)
 
         cls.apply_section_markers(metadata, plan)
         return plan
@@ -53,7 +58,7 @@ class ChatPresentationStackMarkdownService:
             text_presentation["markdown"] = enriched
 
     @classmethod
-    def _enrich_generic_stack_plan(
+    def _enrich_profile_stack_plan(
         cls,
         metadata: dict[str, Any],
         plan: dict[str, Any],
@@ -61,13 +66,14 @@ class ChatPresentationStackMarkdownService:
         profile_key: str,
     ) -> dict[str, Any]:
         markdown = cls._text_markdown(metadata)
-        visibility = cls._resolve_generic_visibility(metadata, markdown)
+        visibility = cls._resolve_stack_visibility(metadata, markdown)
         has_humanized = any(visibility.values())
 
         if not has_humanized:
             return plan
 
         plan["humanizedSections"] = True
+        plan["presentationProfile"] = profile_key or plan.get("presentationProfile")
         plan["sectionVisibility"] = visibility
         plan["sectionFraming"] = cls._build_generic_section_framing(visibility, profile_key)
         plan["narrativeOrder"] = cls._narrative_order_for_visibility(
@@ -79,18 +85,25 @@ class ChatPresentationStackMarkdownService:
         return plan
 
     @classmethod
-    def _resolve_generic_visibility(
+    def _resolve_stack_visibility(
         cls,
         metadata: dict[str, Any],
         markdown: str,
     ) -> dict[str, bool]:
+        has_visual_tail = (
+            cls._has_tree(metadata)
+            or cls._has_chart(metadata)
+            or cls._has_kpi(metadata)
+            or cls._has_dashboard(metadata)
+        )
+
         return {
             "scope": bool(markdown.strip()),
             "profile": cls._has_profile_table(metadata),
             "highlights": cls._has_highlights(markdown),
             "guide": cls._has_operational_tables(metadata),
             "inspection": False,
-            "structure": cls._has_tree(metadata),
+            "structure": has_visual_tail,
             "attention": cls._has_attention(markdown),
         }
 
@@ -289,6 +302,36 @@ class ChatPresentationStackMarkdownService:
             presentation = metadata.get(key)
 
             if isinstance(presentation, dict) and presentation.get("type") == "tree":
+                return True
+
+        return False
+
+    @classmethod
+    def _has_chart(cls, metadata: dict[str, Any]) -> bool:
+        for key in ("chartPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type") == "chart":
+                return True
+
+        return False
+
+    @classmethod
+    def _has_kpi(cls, metadata: dict[str, Any]) -> bool:
+        for key in ("kpiPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type") == "kpi":
+                return True
+
+        return False
+
+    @classmethod
+    def _has_dashboard(cls, metadata: dict[str, Any]) -> bool:
+        for key in ("dashboardPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type") == "dashboard":
                 return True
 
         return False

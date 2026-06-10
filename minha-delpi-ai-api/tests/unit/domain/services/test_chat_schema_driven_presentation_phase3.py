@@ -115,4 +115,11 @@ def test_schema_driven_metadata_pipeline(case):
         assert meta.get("treePresentation") or meta.get("presentation", {}).get("type") == "tree"
 
     if expected_primary == "kpi" or expected_rows:
-        assert meta.get("textPresentation", {}).get("type") == "markdown"
+        text = meta.get("textPresentation", {})
+        assert text.get("type") == "markdown"
+        assert "<!-- section:scope -->" in str(text.get("markdown") or "")
+
+    stack_plan = meta.get("stackPresentationPlan") or {}
+
+    if case.get("expected_primary_type") == "kpi" or case.get("expected_table_rows"):
+        assert stack_plan.get("humanizedSections") is True

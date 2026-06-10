@@ -384,7 +384,7 @@ class ChatSchemaDrivenPresentationService:
         else:
             return None
 
-        markdown = f"### {title}\n\n{lead}".strip()
+        markdown = f"### {title}\n\n<!-- section:scope -->\n\n{lead}".strip()
 
         return {
             "type": "markdown",

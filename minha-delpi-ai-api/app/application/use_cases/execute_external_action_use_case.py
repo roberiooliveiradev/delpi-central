@@ -529,8 +529,12 @@ class ExecuteExternalActionUseCase:
 
         preferred_format = None
 
-        if session_format in {"table", "text", "tree", "chart", "topics", "canvas"}:
-            preferred_format = session_format if session_format != "topics" else "text"
+        if session_format == "canvas":
+            preferred_format = "canvas"
+        elif session_format == "topics":
+            preferred_format = "text"
+        elif session_format in {"table", "text", "tree", "chart"}:
+            preferred_format = session_format
         elif dashboard_presentation:
             preferred_format = "dashboard"
         elif price_like and text_presentation and not session_format:
@@ -690,6 +694,15 @@ class ExecuteExternalActionUseCase:
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
+
+        from app.domain.services.chat_presentation_stack_markdown_service import (
+            ChatPresentationStackMarkdownService,
+        )
+
+        stack_plan = metadata.get("stackPresentationPlan")
+
+        if isinstance(stack_plan, dict):
+            ChatPresentationStackMarkdownService.apply_section_markers(metadata, stack_plan)
 
         return metadata
 

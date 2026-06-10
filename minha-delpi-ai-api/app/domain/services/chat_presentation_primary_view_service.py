@@ -71,12 +71,17 @@ class ChatPresentationPrimaryViewService:
             text_presentation = metadata.get("textPresentation")
 
             if isinstance(text_presentation, dict):
-                title = str(
-                    text_presentation.get("title")
-                    or kpi_presentation.get("title")
-                    or ""
-                ).strip()
-                text_presentation["markdown"] = f"### {title}".strip() if title else ""
+                from app.domain.services.chat_rich_presentation_text_service import (
+                    ChatRichPresentationTextService,
+                )
+
+                if not ChatRichPresentationTextService._uses_humanized_stack_sections(metadata):
+                    title = str(
+                        text_presentation.get("title")
+                        or kpi_presentation.get("title")
+                        or ""
+                    ).strip()
+                    text_presentation["markdown"] = f"### {title}".strip() if title else ""
 
             return
 

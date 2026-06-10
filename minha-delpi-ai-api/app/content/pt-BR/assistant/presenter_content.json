@@ -143,6 +143,19 @@
       "tree_hierarchy": {
         "structure": "Hierarquia de composição ou vínculos entre itens."
       },
+      "kpi_series": {
+        "scope": "Indicador ou série temporal retornado pela consulta.",
+        "guide": "Detalhamento tabular para auditoria dos pontos.",
+        "structure": "Visualização gráfica ou cartões do indicador."
+      },
+      "kpi_snapshot": {
+        "scope": "Panorama consolidado do indicador consultado.",
+        "guide": "Métricas e comparativos em tabela."
+      },
+      "kpi_dashboard": {
+        "scope": "Painel operacional com visão composta.",
+        "structure": "Gráficos e painéis complementares."
+      },
       "generic": {
         "scope": "Resumo interpretativo desta consulta."
       }

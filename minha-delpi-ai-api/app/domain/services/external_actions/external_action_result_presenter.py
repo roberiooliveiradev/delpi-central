@@ -1397,12 +1397,42 @@ class ExternalActionResultPresenter:
         )
 
         return {
-            "text_presentation": text_presentation or bundle.text,
+            "text_presentation": self._merge_schema_text_presentation(
+                text_presentation,
+                bundle.text,
+            ),
             "tree_presentation": tree_presentation or bundle.tree,
             "table_presentation": table_presentation or bundle.table,
             "chart_presentation": chart_presentation or bundle.chart,
             "kpi_presentation": kpi_presentation or bundle.kpi,
         }
+
+    @staticmethod
+    def _merge_schema_text_presentation(
+        existing: dict | None,
+        schema_text: dict | None,
+    ) -> dict | None:
+        if not isinstance(schema_text, dict):
+            return existing
+
+        if not isinstance(existing, dict):
+            return schema_text
+
+        existing_md = str(existing.get("markdown") or "").strip()
+        schema_md = str(schema_text.get("markdown") or "").strip()
+
+        if not schema_md:
+            return existing
+
+        if "<!-- section:scope -->" in schema_md and (
+            not existing_md or existing_md.count("\n") < 2
+        ):
+            return schema_text
+
+        if len(schema_md) > len(existing_md) + 24:
+            return schema_text
+
+        return existing
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
         return self._kpi_chart().build_chart_presentation(data, path=path, force=force)

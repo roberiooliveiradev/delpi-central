@@ -54,6 +54,28 @@ def test_apply_session_preference_promotes_tree_over_table_primary():
     assert metadata["treePresentation"] == tree
 
 
+def test_finalize_decision_alignment_preserves_humanized_kpi_narrative():
+    markdown = (
+        "### Taxa de Conversão de Vendas\n\n"
+        "<!-- section:scope -->\n\n"
+        "Taxa de Conversão de Vendas: indicador com 3 métrica(s) disponível(is)."
+    )
+    metadata = {
+        "presentationDecision": {"selected": "kpi"},
+        "stackPresentationPlan": {"humanizedSections": True},
+        "textPresentation": {"type": "markdown", "markdown": markdown},
+        "kpiPresentation": {"type": "kpi", "title": "Taxa de Conversão de Vendas"},
+    }
+
+    ChatPresentationPrimaryViewService.finalize_decision_alignment(
+        metadata,
+        kpi_presentation=metadata["kpiPresentation"],
+    )
+
+    assert "<!-- section:scope -->" in metadata["textPresentation"]["markdown"]
+    assert "indicador com 3 métrica" in metadata["textPresentation"]["markdown"]
+
+
 def test_finalize_decision_alignment_single_layout_for_explicit_table():
     metadata = {
         "explicitSessionFormat": "table",
