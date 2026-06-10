@@ -188,6 +188,15 @@
     "diagnostic": ["highlights", "attention", "interpretation", "analysis"],
     "evidence": ["tables", "charts", "tree", "sourceMeta"]
   },
+  "storyBlocks": {
+    "defaultTitle": "Resumo dos dados",
+    "verdictTitle": "Conclusão",
+    "attentionTitle": "Ponto de atenção",
+    "analysisTitle": "Leitura dos dados",
+    "nextActionTitle": "Próxima ação",
+    "limitationTitle": "Escopo da análise",
+    "riskLevelLine": "Nível de risco: **{riskLevel}**"
+  },
   "policyMarkers": {
     "dataAnswer": "dataAnswer",
     "dataCommentary": "dataCommentary",

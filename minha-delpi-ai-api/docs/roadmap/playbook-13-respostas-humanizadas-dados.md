@@ -392,7 +392,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P1** | Interpretação universal | `ChatDataInsightService`; `dataAnswer`; detectores genéricos; narrativa consome insight; migração `dataCommentary` | `test_chat_data_insight_service.py`; casos H-01–H-10 | ✅ |
 | **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-commentary-profiles`; tier A | ✅ |
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
-| **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ⬜ |
+| **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | 🟡 |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ⬜ |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
@@ -445,10 +445,18 @@ Atualizar **Status** ao concluir cada fase.
 
 ### 8.4 P4 — UX premium
 
-1. `storyPresentation` na API quando `dataAnswer` presente.
-2. `ChatDecisionCard` no MFE.
-3. Chips de `recommendations[]` com `query` (composer pré-preenchido).
-4. Refatorar `assistantContentSegments.ts` (hooks + módulos §15).
+**Entregue (jun/2026):**
+
+- `ChatPresentationStoryService` → `metadata.storyPresentation` quando `dataAnswer` presente
+- `ChatDecisionCard` + segmento `decision` no registry e `buildAssistantContentSegments`
+- Recomendações de `dataAnswer` mescladas em `getPresentationRecommendationsFromToolCalls` (chips com `query`)
+- Deduplicação do bloco `<!-- section:summary -->` quando o card de decisão está ativo
+
+**Pendente em P4:**
+
+1. Refatorar `assistantContentSegments.ts` (hooks + módulos §15).
+2. Coverage notice humanizado no chrome.
+3. Renderer dedicado `story` fora do card (blocos avulsos em stack).
 
 ### 8.5 P5 — Governança
 

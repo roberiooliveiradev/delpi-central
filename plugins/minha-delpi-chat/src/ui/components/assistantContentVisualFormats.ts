@@ -271,6 +271,10 @@ export function filterSegmentsByVisualKind(
   const filtered = !activeKind
     ? suppressRedundantStandaloneVisuals(segments)
     : segments.filter((segment) => {
+        if (segment.kind === "decision") {
+          return true;
+        }
+
         if (segment.kind === "stackSection") {
           return isStackSectionVisible(segment.section, activeKind);
         }

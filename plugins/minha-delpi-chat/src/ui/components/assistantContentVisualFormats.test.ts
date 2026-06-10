@@ -459,4 +459,54 @@ describe("assistantContentVisualFormats", () => {
     expect(kinds.filter((kind) => kind === "tree")).toHaveLength(0);
     expect(kinds.filter((kind) => kind === "chart")).toHaveLength(0);
   });
+
+  it("inclui ChatDecisionCard quando storyPresentation está no metadata", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "stack",
+            availableViews: ["text", "table"],
+          },
+          storyPresentation: {
+            type: "story",
+            title: "Estoque do produto",
+            blocks: [
+              {
+                kind: "verdict",
+                title: "Conclusão",
+                text: "Saldo confortável em duas filiais.",
+                status: "ok",
+              },
+              {
+                kind: "recommendation",
+                text: "Ver concentração por filial",
+                query: "Mostrar concentração de estoque por filial",
+              },
+            ],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown:
+              "### Estoque\n\n<!-- section:summary -->\n**Resumo**\n\nSaldo confortável.\n\n<!-- section:highlights -->\n**Destaques**",
+          },
+        },
+      },
+    ]);
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+
+    expect(segments[0]?.kind).toBe("decision");
+    if (segments[0]?.kind === "decision") {
+      expect(segments[0].presentation.blocks[0]?.text).toContain("Saldo confortável");
+    }
+
+    const markdownSegment = segments.find((segment) => segment.kind === "markdown");
+
+    if (markdownSegment?.kind === "markdown") {
+      expect(markdownSegment.markdown).not.toContain("<!-- section:summary -->");
+    }
+  });
 });

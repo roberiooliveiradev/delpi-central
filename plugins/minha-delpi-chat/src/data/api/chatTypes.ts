@@ -135,6 +135,51 @@ export type ChatPresentation =
       markdown: string;
     };
 
+export type ChatStoryBlockKind =
+  | "verdict"
+  | "fact"
+  | "analysis"
+  | "hypothesis"
+  | "recommendation"
+  | "limitation";
+
+export type ChatStoryBlock = {
+  kind: ChatStoryBlockKind;
+  title?: string | null;
+  text: string;
+  status?: "ok" | "attention" | "critical" | "unknown" | null;
+  confirmed?: boolean | null;
+  query?: string | null;
+};
+
+export type ChatStoryPresentation = {
+  type: "story";
+  title?: string | null;
+  blocks: ChatStoryBlock[];
+};
+
+export type ChatDataAnswerSummary = {
+  answer?: string | null;
+  meaning?: string | null;
+  riskLevel?: "ok" | "attention" | "critical" | "undefined" | null;
+  nextAction?: string | null;
+  attention?: string[] | null;
+};
+
+export type ChatDataAnswer = {
+  summary?: ChatDataAnswerSummary | null;
+  facts?: Array<{ text?: string }> | null;
+  analysis?: string[] | null;
+  hypotheses?: Array<{ text?: string; confirmed?: boolean }> | null;
+  recommendations?: Array<{
+    label?: string;
+    query?: string;
+    reason?: string;
+  }> | null;
+  limitations?: string[] | null;
+  profileKey?: string | null;
+};
+
 export type ChatDataCoverageNotice = {
   kind?: "pagination" | "depth" | "preview" | "partial" | string;
   message: string;
@@ -275,6 +320,8 @@ export type ChatToolCall = {
   reason?: string | null;
   metadata?: (Record<string, unknown> & {
     presentationDecision?: ChatPresentationDecision | null;
+    storyPresentation?: ChatStoryPresentation | null;
+    dataAnswer?: ChatDataAnswer | null;
     presentation?: ChatPresentation | null;
     responsePreview?: string | null;
     actionId?: string | null;

@@ -1,9 +1,11 @@
 import type {
+  ChatDataAnswer,
   ChatDataCoverageNotice,
   ChatDepthState,
   ChatPaginationState,
   ChatPresentation,
   ChatPresentationDecision,
+  ChatStoryPresentation,
   ChatToolCall,
 } from "../../data/api/chatTypes";
 
@@ -427,6 +429,51 @@ export function getPresentationInsightFromToolCalls(
   return String(decision?.reason ?? "").trim();
 }
 
+function isStoryPresentation(value: unknown): value is ChatStoryPresentation {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as ChatStoryPresentation).type === "story" &&
+    Array.isArray((value as ChatStoryPresentation).blocks)
+  );
+}
+
+export function getStoryPresentationFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatStoryPresentation | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const story = (toolCall.metadata as Record<string, unknown> | undefined)?.storyPresentation;
+
+    if (isStoryPresentation(story)) {
+      return story;
+    }
+  }
+
+  return null;
+}
+
+export function getDataAnswerFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatDataAnswer | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const dataAnswer = (toolCall.metadata as Record<string, unknown> | undefined)?.dataAnswer;
+
+    if (dataAnswer && typeof dataAnswer === "object") {
+      return dataAnswer as ChatDataAnswer;
+    }
+  }
+
+  return null;
+}
+
 export function getPresentationPurposeFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): string {
@@ -481,14 +528,49 @@ export function getPresentationRecommendationsFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): Array<{ label: string; reason?: string; query: string }> {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const dataAnswer = getDataAnswerFromToolCalls(toolCalls);
+  const merged: Array<{ label: string; reason?: string; query: string }> = [];
+  const seen = new Set<string>();
 
-  if (!decision?.recommendations || !Array.isArray(decision.recommendations)) {
+  const pushRecommendation = (item: {
+    label?: string | null;
+    reason?: string | null;
+    query?: string | null;
+  }) => {
+    const label = String(item.label ?? "").trim();
+    const query = String(item.query ?? label).trim();
+
+    if (!label || !query || seen.has(query)) {
+      return;
+    }
+
+    seen.add(query);
+    merged.push({
+      label,
+      query,
+      reason: item.reason ? String(item.reason).trim() : undefined,
+    });
+  };
+
+  for (const item of dataAnswer?.recommendations ?? []) {
+    if (item && typeof item === "object") {
+      pushRecommendation(item);
+    }
+  }
+
+  for (const item of decision?.recommendations ?? []) {
+    if (item && typeof item === "object") {
+      pushRecommendation(item);
+    }
+  }
+
+  if (!merged.length) {
     return [];
   }
 
-  const selected = String(decision.selected ?? "").trim().toLowerCase();
+  const selected = String(decision?.selected ?? "").trim().toLowerCase();
 
-  return decision.recommendations
+  return merged
     .map((item) => ({
       label: String(item.label ?? "").trim(),
       reason: item.reason ? String(item.reason).trim() : undefined,

@@ -1,0 +1,88 @@
+.mdc-decision-card {
+  border: 1px solid var(--mdc-border-subtle, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: var(--mdc-surface-elevated, #f8fafc);
+}
+
+.mdc-decision-card__title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mdc-decision-card__blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mdc-decision-card__verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mdc-decision-card__verdict-text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.mdc-decision-card__status-pill {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.mdc-decision-card__verdict--ok .mdc-decision-card__status-pill {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.mdc-decision-card__verdict--attention .mdc-decision-card__status-pill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.mdc-decision-card__verdict--critical .mdc-decision-card__status-pill {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.mdc-decision-card__verdict--unknown .mdc-decision-card__status-pill {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.mdc-decision-card__block-title {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mdc-decision-card__block-text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.mdc-decision-card__hypothesis-note {
+  color: var(--mdc-text-muted, #64748b);
+  font-size: 0.9em;
+}
+
+.mdc-decision-card__chip {
+  border: 1px solid var(--mdc-border-subtle, #cbd5e1);
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.mdc-decision-card__chip:hover {
+  border-color: var(--mdc-accent, #2563eb);
+  color: var(--mdc-accent, #2563eb);
+}

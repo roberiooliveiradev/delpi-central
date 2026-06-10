@@ -622,6 +622,12 @@ class ExecuteExternalActionUseCase:
             user_preference=explicit_preference,
             axis_user_message=user_message,
         )
+
+        from app.domain.services.chat_presentation_story_service import (
+            ChatPresentationStoryService,
+        )
+
+        ChatPresentationStoryService.enrich_metadata(metadata)
         ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
         ChatPresentationStackOrderService.enrich_metadata(metadata)
 

@@ -10,6 +10,7 @@ import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichTree } from "./ChatRichTree";
 import { AssistantStackSection } from "./AssistantStackSection";
 import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatDecisionCard } from "./ChatDecisionCard";
 
 export type AssistantSegmentRenderContext = {
   onDrillDown?: (query: string) => void;
@@ -26,6 +27,19 @@ export type AssistantSegmentRenderer = (
 ) => ReactNode;
 
 const BASE_RENDERERS: Record<AssistantContentSegment["kind"], AssistantSegmentRenderer> = {
+  decision: (segment, index, context) => {
+    if (segment.kind !== "decision") {
+      return null;
+    }
+
+    return (
+      <ChatDecisionCard
+        key={`decision-${index}`}
+        presentation={segment.presentation}
+        onDrillDown={context.onDrillDown}
+      />
+    );
+  },
   stackSection: (segment, index) => {
     if (segment.kind !== "stackSection") {
       return null;

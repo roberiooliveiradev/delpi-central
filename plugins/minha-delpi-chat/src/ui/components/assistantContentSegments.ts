@@ -17,6 +17,7 @@ import {
 import {
   getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
+  getStoryPresentationFromToolCalls,
   isExplicitTextSessionMode,
   resolveStackCommentaryBody,
   tablePresentationToMarkdown,
@@ -275,6 +276,10 @@ function sameAssistantSegment(
     return left.section.id === right.section.id;
   }
 
+  if (left.kind === "decision" && right.kind === "decision") {
+    return left.presentation.title === right.presentation.title;
+  }
+
   if (
     left.kind === "chart" ||
     left.kind === "tree" ||
@@ -291,6 +296,67 @@ function sameAssistantSegment(
   }
 
   return false;
+}
+
+function stripSummarySectionFromMarkdown(markdown: string): string {
+  const marker = "<!-- section:summary -->";
+  const index = markdown.indexOf(marker);
+
+  if (index < 0) {
+    return markdown;
+  }
+
+  const tail = markdown.slice(index + marker.length);
+  const nextMarkerMatch = tail.match(/\n<!-- section:[^>]+ -->/);
+
+  if (nextMarkerMatch?.index != null) {
+    const head = markdown.slice(0, index).trim();
+    const remainder = tail.slice(nextMarkerMatch.index + 1).trim();
+
+    return [head, remainder].filter(Boolean).join("\n\n").trim();
+  }
+
+  const highlightsIndex = tail.search(/\n\*\*Indicadores principais\*\*|\n\*\*Destaques\*\*/);
+
+  if (highlightsIndex >= 0) {
+    const head = markdown.slice(0, index).trim();
+    const remainder = tail.slice(highlightsIndex + 1).trim();
+
+    return [head, remainder].filter(Boolean).join("\n\n").trim();
+  }
+
+  return markdown.slice(0, index).trim();
+}
+
+function withDecisionLayer(
+  segments: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  const story = getStoryPresentationFromToolCalls(toolCalls);
+
+  if (!story?.blocks?.length) {
+    return segments;
+  }
+
+  const decisionSegment: AssistantContentSegment = {
+    kind: "decision",
+    presentation: story,
+  };
+  const normalized = segments.map((segment) => {
+    if (segment.kind !== "markdown") {
+      return segment;
+    }
+
+    const stripped = stripSummarySectionFromMarkdown(segment.markdown).trim();
+
+    if (!stripped) {
+      return segment;
+    }
+
+    return { ...segment, markdown: stripped };
+  });
+
+  return [decisionSegment, ...normalized];
 }
 
 function appendVisualSegment(
@@ -588,7 +654,7 @@ export function buildAssistantContentSegments(
       toolCalls,
     );
 
-    return parseMarkdownAndCodeSegments(markdown);
+    return withDecisionLayer(parseMarkdownAndCodeSegments(markdown), toolCalls);
   }
 
   const pair = getPresentationPairFromToolCalls(toolCalls);
@@ -604,7 +670,7 @@ export function buildAssistantContentSegments(
     selected === "text" &&
     !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
   ) {
-    return parseMarkdownAndCodeSegments(rawMarkdown);
+    return withDecisionLayer(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls);
   }
 
   if (
@@ -628,22 +694,25 @@ export function buildAssistantContentSegments(
       }
     }
 
-    return segments.length ? segments : orderedVisuals;
+    return withDecisionLayer(segments.length ? segments : orderedVisuals, toolCalls);
   }
 
   if (layoutMode === "stack") {
-    return buildStackedSegments(content, toolCalls, visuals);
+    return withDecisionLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
   }
 
   if (/\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(rawMarkdown)) {
-    return splitMarkdownWithPresentationMarkers(rawMarkdown, visuals);
+    return withDecisionLayer(
+      splitMarkdownWithPresentationMarkers(rawMarkdown, visuals),
+      toolCalls,
+    );
   }
 
   const textSegments = parseMarkdownAndCodeSegments(rawMarkdown);
   const usedVisuals = new Set<AssistantContentSegment>();
 
   if (!visuals.length) {
-    return textSegments;
+    return withDecisionLayer(textSegments, toolCalls);
   }
 
   const proseOnly = textSegments.every((item) => item.kind === "markdown" || item.kind === "code");
@@ -693,14 +762,17 @@ export function buildAssistantContentSegments(
         return !proseChunksSimilar(beforeMarkdown, segment.markdown);
       });
 
-      return dedupedAroundCode.length ? dedupedAroundCode : textSegments;
+      return withDecisionLayer(
+        dedupedAroundCode.length ? dedupedAroundCode : textSegments,
+        toolCalls,
+      );
     }
 
-    return filtered.length ? filtered : textSegments;
+    return withDecisionLayer(filtered.length ? filtered : textSegments, toolCalls);
   }
 
   if (textSegments.length && visuals.length) {
-    return buildStackedSegments(content, toolCalls, visuals);
+    return withDecisionLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
   }
 
   const combined = [...textSegments];
@@ -710,7 +782,7 @@ export function buildAssistantContentSegments(
     usedVisuals.add(visual);
   }
 
-  return combined;
+  return withDecisionLayer(combined, toolCalls);
 }
 
 export function hasAssistantContentSegments(
