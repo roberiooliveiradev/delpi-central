@@ -352,6 +352,8 @@
         "narrativeFirstMaxRows": 6,
         "tablePreferredMaxRows": 3
       },
+      "commentaryProfileKey": "stock",
+      "narrativePolicy": "operational_stock_summary",
       "humanizedNarrative": "skip"
     },
     "tree_hierarchy": {
@@ -393,7 +395,44 @@
       "stackPlan": "table_list",
       "flags": [
         "table"
-      ]
+      ],
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
+    },
+    "generic_list": {
+      "defaultViewPolicy": "table_when_available",
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
+      "stackPlan": "table_list",
+      "flags": [
+        "table"
+      ],
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
+    },
+    "generic_kpi_series": {
+      "defaultViewPolicy": "kpi_when_available",
+      "viewOrder": [
+        "text",
+        "kpi",
+        "chart",
+        "table",
+        "dashboard"
+      ],
+      "stackPlan": "kpi_series",
+      "flags": [
+        "kpi"
+      ],
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
     },
     "factory_status": {
       "defaultViewPolicy": "tree_when_available",
@@ -436,7 +475,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "factory_status"
+      "compositeVisualSpec": "factory_status",
+      "commentaryProfileKey": "factory_status",
+      "narrativePolicy": "operational_factory_summary"
     },
     "production_status": {
       "defaultViewPolicy": "generic",
@@ -478,7 +519,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "production_status"
+      "compositeVisualSpec": "production_status",
+      "commentaryProfileKey": "production_status",
+      "narrativePolicy": "operational_production_summary"
     },
     "shipping_status": {
       "defaultViewPolicy": "generic",
@@ -520,7 +563,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "shipping_status"
+      "compositeVisualSpec": "shipping_status",
+      "commentaryProfileKey": "shipping_status",
+      "narrativePolicy": "operational_shipping_summary"
     },
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
@@ -909,7 +954,10 @@
         "dashboard"
       ],
       "stackPlan": "default",
-      "flags": []
+      "flags": [],
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
     }
   },
   "stackPlans": {

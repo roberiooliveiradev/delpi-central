@@ -389,8 +389,8 @@ Atualizar **Status** ao concluir cada fase.
 
 | Fase | Tema | Entregas principais | Testes / CI | Status |
 |------|------|---------------------|-------------|--------|
-| **P1** | Interpretação universal | `ChatDataInsightService`; `dataAnswer`; detectores genéricos; narrativa consome insight; migração `dataCommentary` | `test_chat_data_insight_service.py`; casos H-01–H-10 | 🟡 |
-| **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-profiles`; tier A | ⬜ |
+| **P1** | Interpretação universal | `ChatDataInsightService`; `dataAnswer`; detectores genéricos; narrativa consome insight; migração `dataCommentary` | `test_chat_data_insight_service.py`; casos H-01–H-10 | ✅ |
+| **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-profiles`; tier A | 🟡 |
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ⬜ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ⬜ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ⬜ |
@@ -404,28 +404,30 @@ Atualizar **Status** ao concluir cada fase.
 - Policy `humanized-data-response.md` no `PromptPolicyService`
 - `<!-- section:summary -->` no markdown
 
-**Em curso (H2):**
+**Entregue (P1 — jun/2026):**
 
-- `ChatOperationalDataCommentaryService`: `factory_status`, `stock`, `production_status`, `shipping_status`
+- `ChatDataInsightService` + `ChatDataAnomalyDetectionService`
+- `ChatDataInsightEnrichmentService` (alias `ChatOperationalCommentaryEnrichmentService`)
+- Contrato `dataAnswer` + espelho `dataCommentary`
+- `derivedMetrics` simples (contagem, total, média)
+- `ChatPresentationHumanizedNarrativeService` prioriza `dataAnswer.summary`
+- Detectores: lista vazia, zerados, negativos, truncamento
 
-**Próximo em P1:**
-
-1. Criar `ChatDataInsightService` — facade que:
-   - delega perfis operacionais ao commentary existente;
-   - adiciona caminho genérico por `ChatPresentationDataShapeAnalyzer`;
-   - detecta anomalias (zeros, negativos, paginação, lista vazia);
-   - calcula `derivedMetrics` simples;
-   - emite `dataAnswer` + espelho `dataCommentary`.
-2. Renomear/evoluir enrichment → `ChatDataInsightEnrichmentService` (único ponto pós-tool).
-3. `ChatPresentationHumanizedNarrativeService` lê `dataAnswer.summary` primeiro.
-4. Detectores genéricos (§7): zerados, negativos, ausentes, truncados, pico, queda, outlier simples.
+**Pendente pós-P1 (H3+):** pico, queda, outlier simples; score automático (P3).
 
 ### 8.2 P2 — Perfis declarativos
 
-1. Adicionar perfis `generic_*` em `presentation_profiles.json`.
-2. Mapear `commentaryProfileKey` e `narrativePolicy` por perfil.
-3. Migrar regras residuais por path para perfil + shape.
-4. Documentar em `presentation_profiles.json` e catálogo.
+**Em curso (jun/2026):**
+
+- Perfis `generic_list`, `generic_kpi_series` em `presentation_profiles.json`
+- `commentaryProfileKey` + `narrativePolicy` em perfis operacionais e `table_list` / `generic`
+- `ChatPresentationProfileService.commentary_profile_key()`
+- `ChatOperationalDataCommentaryService.resolve_profile_key()` lê perfil declarativo (sem `if` por path)
+
+**Próximo em P2:**
+
+1. Migrar regras residuais por path restantes para perfil + shape.
+2. Documentar registry no catálogo e estender `audit_presentation_coverage`.
 
 ### 8.3 P3 — Preferência e automático
 

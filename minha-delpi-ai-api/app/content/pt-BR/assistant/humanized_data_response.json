@@ -151,6 +151,9 @@
       }
     ]
   },
+  "derivedMetrics": {
+    "averageLabel": "Média"
+  },
   "generic": {
     "emptyList": "A consulta não retornou registros.",
     "rowCount": "Foram retornados **{count}** registros.",

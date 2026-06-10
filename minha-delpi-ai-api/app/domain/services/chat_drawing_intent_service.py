@@ -139,9 +139,9 @@ class ChatDrawingIntentService:
 
         from app.domain.services.prompt_policy_service import PromptPolicyService
 
-        policy_body = PromptPolicyService()._load_policy(
-            policy_file,
-            f"Modo fallback de relatório de desenho DELPI — título canônico: {title}.",
-        )
+        policy_body = PromptPolicyService()._load_policy(policy_file)
+
+        if not policy_body:
+            return ""
 
         return f"\n\n{policy_body}".strip()

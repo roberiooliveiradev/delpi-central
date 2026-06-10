@@ -76,6 +76,9 @@ class ChatDataInsightService:
         if visual_hints:
             commentary["visualHints"] = visual_hints
 
+        if not commentary.get("derivedMetrics"):
+            commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
+
         data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
 
         if not data_answer:
@@ -174,6 +177,7 @@ class ChatDataInsightService:
         commentary["highlights"] = highlights
         commentary["attention"] = attention
         commentary["summaryLines"] = highlights[:4]
+        commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
 
         return ChatHumanizedDataResponseService.normalize(
             commentary,
@@ -236,6 +240,58 @@ class ChatDataInsightService:
         hint = mapping.get(recommended)
 
         return [hint] if hint else []
+
+    @classmethod
+    def _build_derived_metrics(
+        cls,
+        *,
+        rows: list[dict[str, Any]] | None,
+        shape: dict[str, Any],
+    ) -> list[dict[str, str]]:
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
+        metrics: list[dict[str, str]] = [
+            {
+                "label": "Registros",
+                "value": str(len(safe_rows)),
+            }
+        ]
+
+        numeric_keys = shape.get("numericKeys") or []
+
+        if numeric_keys and safe_rows:
+            key = str(numeric_keys[0])
+            values = [
+                float(row.get(key))
+                for row in safe_rows
+                if isinstance(row.get(key), (int, float)) and not isinstance(row.get(key), bool)
+            ]
+
+            if values:
+                total = sum(values)
+                metrics.append(
+                    {
+                        "label": key,
+                        "value": cls._format_number(total),
+                    }
+                )
+
+                if len(values) > 1:
+                    metrics.append(
+                        {
+                            "label": ChatHumanizedDataResponseContentService.get(
+                                "derivedMetrics",
+                                "averageLabel",
+                                default="Média",
+                            ),
+                            "value": cls._format_number(total / len(values)),
+                        }
+                    )
+
+        return metrics[:6]
 
     @classmethod
     def _format_number(cls, value: float) -> str:

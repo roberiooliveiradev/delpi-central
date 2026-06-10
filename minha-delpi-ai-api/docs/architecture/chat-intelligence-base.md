@@ -202,7 +202,7 @@ Mensagem do usuário
 | `ChatUnclearRequestService` | Fallback honesto: pedidos vagos sem referente («faz isso», «arruma», «isso») recebem pedido de esclarecimento — sem inventar intenção nem chamar ferramentas |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, «como vc s chama»→«como voce se chama», «oq vc faz», «num entendi»→«nao entendi», …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
-| `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
+| `PromptPolicyService` | Policies globais em `domain/prompt_policies/*.md` (sem fallback PT em Python); cabeçalhos RAG/tool via `stream.json` |
 | `ChatWorkingMemoryService` | Snapshot pré/pós-turno: follow-up, referências; foco operacional via `ChatUserContextItemService.sync_operational_focus` |
 | `ChatUserContextItemService` | Contexto do usuário (`userContextItems`), classificação, prompt «Contexto adicionado…», prioridade em `resolve_product_code` |
 | `ChatConversationMemoryService` | Orquestrador playbook memória (Fases 1–6): ver [`session-memory.md`](./session-memory.md) |

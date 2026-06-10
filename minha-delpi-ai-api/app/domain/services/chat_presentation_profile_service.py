@@ -55,6 +55,40 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return False
 
     @classmethod
+    def commentary_profile_key(
+        cls,
+        profile_key: str | None = None,
+        *,
+        path: str | None = None,
+        entity: str | None = None,
+    ) -> str | None:
+        key = str(profile_key or "").strip()
+
+        if not key:
+            key = cls.resolve_profile_key(path, entity)
+
+        profile = cls.profile(key)
+        explicit = str(profile.get("commentaryProfileKey") or "").strip()
+
+        if explicit:
+            return explicit
+
+        operational_keys = {
+            "factory_status",
+            "stock",
+            "production_status",
+            "shipping_status",
+        }
+
+        if key in operational_keys:
+            return key
+
+        if key in {"table_list", "generic"}:
+            return "generic_list"
+
+        return None
+
+    @classmethod
     def profile(cls, profile_key: str | None = None) -> dict[str, Any]:
         key = str(profile_key or "generic").strip() or "generic"
         resolved = cls.node("profiles", key)

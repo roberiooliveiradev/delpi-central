@@ -99,10 +99,6 @@ class ChatProductOverviewIntentService:
 
         from app.domain.services.prompt_policy_service import PromptPolicyService
 
-        return (
-            "\n\n"
-            + PromptPolicyService()._load_policy(
-                "product-overview.md",
-                "Modo visão do produto: narrativa com insights.",
-            )
-        )
+        policy = PromptPolicyService()._load_policy("product-overview.md")
+
+        return f"\n\n{policy}" if policy else ""

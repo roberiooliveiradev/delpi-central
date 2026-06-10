@@ -99,3 +99,8 @@ def test_build_generic_categorical_shape_adds_visual_hint():
         "kpi_set",
         "time_series",
     }
+
+    derived_metrics = data_answer.get("derivedMetrics") or []
+
+    assert derived_metrics
+    assert derived_metrics[0].get("label") == "Registros"

@@ -1,11 +1,3 @@
-_FAST_PATH_SYSTEM_PROMPT = (
-    "Você é o assistente Minha DELPI. "
-    "Responda de forma breve e cordial em português. "
-    "Use só o contexto desta conversa; não invente dados, permissões ou módulos. "
-    "Conclusão primeiro; se faltar informação, diga claramente."
-)
-
-
 class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
@@ -18,13 +10,9 @@ class ChatPromptBuilderService:
         if not ChatAssistantIdentityService.is_assistant_identity_question(current_message):
             return ""
 
-        return (
-            "\n\n"
-            + self.prompt_policy_service._load_policy(
-                "chat-assistant-identity.md",
-                "Apresente-se de forma humana; não peça e-mail só por quem você é.",
-            )
-        )
+        policy = self.prompt_policy_service._load_policy("chat-assistant-identity.md")
+
+        return f"\n\n{policy}" if policy else ""
 
     def _capabilities_policy_addon(self, current_message: str) -> str:
         from app.application.services.chat_capabilities_service import (
@@ -34,13 +22,9 @@ class ChatPromptBuilderService:
         if not ChatCapabilitiesService.is_capabilities_question(current_message):
             return ""
 
-        return (
-            "\n\n"
-            + self.prompt_policy_service._load_policy(
-                "chat-capabilities.md",
-                "Quando perguntarem suas capacidades, liste ferramentas e actions autorizadas.",
-            )
-        )
+        policy = self.prompt_policy_service._load_policy("chat-capabilities.md")
+
+        return f"\n\n{policy}" if policy else ""
 
     def _technical_description_policy_addon(self, current_message: str) -> str:
         from app.domain.services.chat_technical_description_intent_service import (
@@ -50,13 +34,9 @@ class ChatPromptBuilderService:
         if not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(current_message):
             return ""
 
-        return (
-            "\n\n"
-            + self.prompt_policy_service._load_policy(
-                "technical-description-normas.md",
-                "Use Normas_Tecnicas_DELPI.md para explicar descrições técnicas de matérias-primas.",
-            )
-        )
+        policy = self.prompt_policy_service._load_policy("technical-description-normas.md")
+
+        return f"\n\n{policy}" if policy else ""
 
     def _product_overview_policy_addon(self, current_message: str) -> str:
         from app.domain.services.chat_product_overview_intent_service import (
@@ -72,7 +52,7 @@ class ChatPromptBuilderService:
         history: list | None = None,
         skills: dict | None = None,
     ) -> list[dict]:
-        system_prompt = _FAST_PATH_SYSTEM_PROMPT
+        system_prompt = self.prompt_policy_service._load_policy("fast-path.md")
         skill_sections = self.prompt_policy_service.build_active_skill_policy_sections(
             skills
         )

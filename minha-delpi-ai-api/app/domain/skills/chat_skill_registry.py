@@ -170,7 +170,7 @@ class ChatSkillRegistry:
         if definition.policy_file:
             from app.domain.services.prompt_policy_service import PromptPolicyService
 
-            return PromptPolicyService._load_policy(definition.policy_file, "")
+            return PromptPolicyService._load_policy(definition.policy_file)
 
         return ""
 

@@ -11,6 +11,9 @@ from app.domain.services.chat_humanized_data_response_service import (
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
@@ -42,12 +45,10 @@ class ChatOperationalDataCommentaryService:
     ) -> str | None:
         meta = metadata if isinstance(metadata, dict) else {}
         stack_plan = meta.get("stackPresentationPlan")
+        presentation_key = ""
 
         if isinstance(stack_plan, dict):
-            profile_key = str(stack_plan.get("presentationProfileKey") or "").strip()
-
-            if profile_key:
-                return profile_key
+            presentation_key = str(stack_plan.get("presentationProfileKey") or "").strip()
 
         entity_token = str(entity or "").strip()
 
@@ -58,21 +59,22 @@ class ChatOperationalDataCommentaryService:
                 entity_token = str(api_meta.get("entity") or "").strip()
 
         if entity_token in _ENTITY_PROFILE_MAP:
-            return _ENTITY_PROFILE_MAP[entity_token]
+            presentation_key = presentation_key or _ENTITY_PROFILE_MAP[entity_token]
 
-        lowered = str(path or "").lower()
+        if not presentation_key:
+            presentation_key = ChatPresentationProfileService.resolve_profile_key(
+                path,
+                entity_token or None,
+            )
 
-        if "/factory-status" in lowered:
-            return "factory_status"
+        commentary_key = ChatPresentationProfileService.commentary_profile_key(
+            presentation_key,
+            path=path,
+            entity=entity_token or None,
+        )
 
-        if "/production-status" in lowered:
-            return "production_status"
-
-        if "/shipping-status" in lowered:
-            return "shipping_status"
-
-        if "/stock" in lowered:
-            return "stock"
+        if commentary_key:
+            return commentary_key
 
         return None
 

@@ -135,3 +135,21 @@ def test_stack_plan_stock_path_uses_stock_roles() -> None:
 
     assert plan["tableRoleOrder"] == ["profile", "stock", "other"]
     assert plan["presentationProfileKey"] == "stock"
+
+
+def test_commentary_profile_key_maps_operational_and_generic_profiles() -> None:
+    assert (
+        ChatPresentationProfileService.commentary_profile_key("factory_status")
+        == "factory_status"
+    )
+    assert ChatPresentationProfileService.commentary_profile_key("stock") == "stock"
+    assert (
+        ChatPresentationProfileService.commentary_profile_key("table_list")
+        == "generic_list"
+    )
+    assert (
+        ChatPresentationProfileService.commentary_profile_key(
+            path="/products/90260144/guide"
+        )
+        == "generic_list"
+    )

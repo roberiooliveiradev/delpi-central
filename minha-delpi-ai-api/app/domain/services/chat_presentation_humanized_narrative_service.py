@@ -113,6 +113,11 @@ class ChatPresentationHumanizedNarrativeService:
         if intro:
             parts.append(f"{_SCOPE_MARKER}\n\n{intro}")
 
+        data_answer_opening = cls._build_opening_from_data_answer(metadata)
+
+        if data_answer_opening:
+            parts.append(data_answer_opening)
+
         panorama = cls._build_panorama_from_profile_table(metadata)
 
         if panorama:
@@ -440,6 +445,36 @@ class ChatPresentationHumanizedNarrativeService:
             return template.format(**values)
         except KeyError:
             return template
+
+    @classmethod
+    def _build_opening_from_data_answer(cls, metadata: dict[str, Any]) -> str | None:
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        data_answer = metadata.get("dataAnswer")
+
+        if not isinstance(data_answer, dict):
+            return None
+
+        summary = data_answer.get("summary")
+
+        if not isinstance(summary, dict):
+            return None
+
+        answer = str(summary.get("answer") or "").strip()
+
+        if not answer:
+            return None
+
+        commentary = ChatHumanizedDataResponseService.to_commentary_mirror(data_answer)
+
+        if not isinstance(commentary, dict):
+            return None
+
+        rendered = ChatHumanizedDataResponseService.render_quick_layer_markdown(commentary)
+
+        return rendered or None
 
     @classmethod
     def _metadata_entity(cls, metadata: dict[str, Any]) -> str | None:
