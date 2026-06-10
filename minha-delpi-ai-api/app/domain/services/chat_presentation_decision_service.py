@@ -471,6 +471,34 @@ class ChatPresentationDecisionService:
         )
 
     @classmethod
+    def _resolve_effective_user_preference(
+        cls,
+        metadata: dict[str, Any],
+        user_preference: str | None,
+    ) -> str | None:
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        normalized = ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+            user_preference,
+        )
+
+        if normalized:
+            return normalized
+
+        explicit = ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+            metadata.get("explicitSessionFormat"),
+        )
+
+        if explicit:
+            return explicit
+
+        return ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+            metadata.get("preferredFormat"),
+        )
+
+    @classmethod
     def enrich_metadata(
         cls,
         metadata: dict[str, Any],
@@ -487,13 +515,17 @@ class ChatPresentationDecisionService:
         )
 
         path = str(metadata.get("path") or "").strip()
+        effective_preference = cls._resolve_effective_user_preference(
+            metadata,
+            user_preference,
+        )
 
         decision = cls.decide(
             intent=intent,
             rows=cls._rows_from_presentation(metadata.get("tablePresentation"))
             or cls._rows_from_presentation(metadata.get("presentation")),
             user_message=user_message,
-            user_preference=user_preference,
+            user_preference=effective_preference,
             primary_presentation=primary_presentation,
             table_presentation=metadata.get("tablePresentation"),
             chart_presentation=metadata.get("chartPresentation"),
@@ -617,7 +649,7 @@ class ChatPresentationDecisionService:
         if ChatPresentationTextFirstPolicyService.should_default_to_text_only(
             path=path or None,
             entity=entity,
-            explicit_format=user_preference,
+            explicit_format=effective_preference,
             user_message=user_message,
         ):
             latent = ChatPresentationTextFirstPolicyService.latent_available_views(

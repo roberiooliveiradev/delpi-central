@@ -330,6 +330,14 @@ class ChatRichPresentationTextService:
             if not str(text_presentation.get("markdown") or "").strip():
                 continue
 
+            decision = metadata.get("presentationDecision") or {}
+            selected = str(decision.get("selected") or metadata.get("preferredFormat") or "").strip().lower()
+
+            if selected in {"table", "tree", "chart", "kpi", "dashboard"} and not cls.is_stack_layout(
+                metadata
+            ):
+                continue
+
             if cls.is_stack_layout(metadata) or cls.has_complementary_visuals(metadata):
                 return True
 

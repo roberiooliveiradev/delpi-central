@@ -89,6 +89,21 @@ export function useChatPresentationFormat(options: UseChatPresentationFormatOpti
     }
   }, []);
 
+  useEffect(() => {
+    const sessionId = String(options.sessionId ?? "").trim();
+    const normalized = normalizeFormat(presentationFormat);
+
+    if (!sessionId || normalized === "auto") {
+      return;
+    }
+
+    void setChatSessionResponseFormat(sessionId, normalized, {
+      getAccessToken: options.getAccessToken,
+    }).catch(() => {
+      /* preferência local ainda vale via responseFormat no POST */
+    });
+  }, [options.getAccessToken, options.sessionId, presentationFormat]);
+
   const syncFromSessionChips = useCallback((chips: SessionFormatChip[] | undefined) => {
     const formatChip = (chips ?? []).find((chip) => chip.kind === "format");
     const value = String(formatChip?.value ?? "").trim().toLowerCase();

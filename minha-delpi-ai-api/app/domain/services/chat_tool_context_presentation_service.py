@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.application.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
@@ -112,7 +114,28 @@ class ChatToolContextPresentationService:
             normalized = str(direct_answer or "").strip()
 
             if normalized and normalized != presentation:
+                selected_views = {
+                    cls._selected_presentation_view(tool_call.get("metadata") or {})
+                    for tool_call in cls._successful_external_action_tool_calls(safe_tool_calls)
+                }
+                prefers_native_view = bool(
+                    selected_views
+                    & {
+                        "table",
+                        "tree",
+                        "chart",
+                        "kpi",
+                        "dashboard",
+                        "line_chart",
+                        "bar_chart",
+                        "horizontal_bar",
+                        "donut",
+                    }
+                )
                 looks_tabular = "|" in normalized or normalized.count("\n") > 6
+
+                if prefers_native_view:
+                    return presentation
 
                 if not looks_tabular and (
                     "\n" in normalized or len(normalized) > len(presentation) + 30
@@ -120,6 +143,18 @@ class ChatToolContextPresentationService:
                     return normalized
 
             return presentation
+
+        @classmethod
+        def _selected_presentation_view(cls, metadata: dict[str, Any]) -> str:
+            decision = metadata.get("presentationDecision")
+
+            if isinstance(decision, dict):
+                selected = str(decision.get("selected") or "").strip().lower()
+
+                if selected:
+                    return selected
+
+            return str(metadata.get("preferredFormat") or "").strip().lower()
 
         @classmethod
         def _extract_pagination_continuation_suffix(cls, direct_answer: str | None) -> str | None:

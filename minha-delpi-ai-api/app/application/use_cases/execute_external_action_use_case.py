@@ -572,6 +572,13 @@ class ExecuteExternalActionUseCase:
             presenter=self.presenter,
         )
 
+        if not explicit_preference:
+            explicit_preference = (
+                ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+                    metadata.get("explicitSessionFormat"),
+                )
+            )
+
         from app.domain.services.chat_presentation_humanized_narrative_service import (
             ChatPresentationHumanizedNarrativeService,
         )

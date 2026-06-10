@@ -73,6 +73,36 @@ def test_should_prefer_authorized_answer_for_any_stack_tool_call():
     )
 
 
+def test_should_not_prefer_authorized_markdown_for_single_table_layout():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": "### Estoque\n\n- Filial 01",
+                },
+                "presentation": {
+                    "type": "table",
+                    "title": "Estoque",
+                    "columns": [{"key": "branch", "label": "Filial"}],
+                    "rows": [{"branch": "01"}],
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                    "visualOrder": ["table"],
+                },
+            },
+        }
+    ]
+
+    assert not ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+        tool_calls
+    )
+
+
 def test_embed_visual_markers_for_analyser_sections():
     markdown = (
         "### Informações completas do produto 90260149\n\n"
