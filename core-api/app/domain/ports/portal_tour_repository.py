@@ -30,6 +30,23 @@ class PortalTourExplorerDTO:
     completed_at: datetime | None
 
 
+@dataclass
+class PortalTourQuestEventDTO:
+    quest_id: str
+    tour_version: str
+    completed_at: datetime
+
+
+@dataclass
+class PortalTourTopExplorerDTO:
+    user_id: str
+    name: str
+    email: str
+    tour_version: str
+    quests_in_period: int
+    last_activity_at: datetime | None
+
+
 class PortalTourRepository(Protocol):
 
     def get_progress(self, user_id: str) -> PortalTourProgressDTO | None:
@@ -67,4 +84,21 @@ class PortalTourRepository(Protocol):
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[PortalTourExplorerDTO], int]:
+        ...
+
+    def list_quest_events(
+        self,
+        user_id: str,
+        *,
+        tour_version: str | None = None,
+    ) -> list[PortalTourQuestEventDTO]:
+        ...
+
+    def list_top_explorers(
+        self,
+        *,
+        tour_version: str | None = None,
+        period_days: int = 7,
+        limit: int = 10,
+    ) -> list[PortalTourTopExplorerDTO]:
         ...

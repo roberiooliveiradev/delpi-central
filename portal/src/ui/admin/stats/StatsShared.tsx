@@ -3,6 +3,7 @@
 import { ArrowRight, RefreshCw } from "lucide-react";
 import type { AdminTab } from "../AdminPage";
 import type { AdminStatistics } from "../../../data/adminApi";
+import type { StatsSubPage } from "./statsTheme";
 
 export function formatGeneratedAt(value: string) {
   const date = new Date(value);
@@ -114,6 +115,7 @@ export function StatsRefreshBar({
 export type StatsPageProps = {
   stats: AdminStatistics;
   onNavigateTab?: (tab: AdminTab) => void;
+  onNavigateStatsSubPage?: (page: StatsSubPage) => void;
 };
 
 export { statPercent, formatPercent } from "./StatsEnrichment";

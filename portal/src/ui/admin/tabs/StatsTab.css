@@ -1347,3 +1347,115 @@
     font-size: 16px;
   }
 }
+
+/* ========================= TOUR ACOMPANHAMENTO ========================= */
+
+.admin-stats-tour-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.admin-stats-tour-period,
+.admin-stats-tour-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.admin-stats-tour-period__btn,
+.admin-stats-tour-filters__btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--stats-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.admin-stats-tour-period__btn.is-active,
+.admin-stats-tour-filters__btn.is-active {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+}
+
+.admin-stats-tour-period__btn:focus-visible,
+.admin-stats-tour-filters__btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.admin-stats-tour-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.admin-stats-tour-status--exploring {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.admin-stats-tour-status--completed {
+  background: color-mix(in srgb, var(--chart-4) 18%, transparent);
+  color: var(--chart-4);
+}
+
+.admin-stats-tour-status--dismissed {
+  background: color-mix(in srgb, var(--chart-5) 18%, transparent);
+  color: var(--chart-5);
+}
+
+.admin-stats-tour-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-stats-tour-pagination__info {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--stats-text-muted);
+}
+
+.admin-stats-tour-pagination__btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-stats-tour-pagination__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-stats-tour-teaser .admin-stats__panel-link {
+  margin-top: 4px;
+}
+
+@media (max-width: 960px) {
+  .admin-stats-tour-grid {
+    grid-template-columns: 1fr;
+  }
+}

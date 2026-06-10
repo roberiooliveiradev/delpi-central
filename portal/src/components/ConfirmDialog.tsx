@@ -9,10 +9,11 @@ type Props = {
   confirmText?: string;
   cancelText?: string;
   danger?: boolean;
+  showCancel?: boolean;
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   loading?: boolean;
-  size?: ModalSize; // ✅ NOVO
+  size?: ModalSize;
 };
 
 export const ConfirmDialog = ({
@@ -22,6 +23,7 @@ export const ConfirmDialog = ({
   confirmText = "Confirmar",
   cancelText = "Cancelar",
   danger = true,
+  showCancel = true,
   onConfirm,
   onCancel,
   loading,
@@ -35,10 +37,13 @@ export const ConfirmDialog = ({
       size={size}
       footer={
         <>
-          <button onClick={onCancel} disabled={loading}>
-            {cancelText}
-          </button>
+          {showCancel ? (
+            <button type="button" onClick={onCancel} disabled={loading}>
+              {cancelText}
+            </button>
+          ) : null}
           <button
+            type="button"
             className={danger ? "btn-danger" : ""}
             onClick={onConfirm}
             disabled={loading}
@@ -48,7 +53,7 @@ export const ConfirmDialog = ({
         </>
       }
     >
-      <p style={{ color: "var(--text-muted)" }}>{message}</p>
+      <p className="confirm-dialog-message">{message}</p>
     </Modal>
   );
 };

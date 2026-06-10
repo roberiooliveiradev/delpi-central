@@ -319,6 +319,12 @@ export interface DataExportResponse {
 
 export type PortalTourStatus = "exploring" | "completed" | "dismissed";
 
+export type PortalTourInsights = {
+  explorationDurationSeconds: number | null;
+  questsCompletedAfterReturn: number;
+  returnStreakMessage: string | null;
+};
+
 export type PortalTourProgressResponse = {
   tourVersion: string | null;
   status: PortalTourStatus | null;
@@ -326,6 +332,7 @@ export type PortalTourProgressResponse = {
   startedAt: string | null;
   lastActivityAt: string | null;
   completedAt: string | null;
+  insights?: PortalTourInsights | null;
 };
 
 export type PortalTourExplorerItem = {
@@ -346,6 +353,64 @@ export type PortalTourExplorersResponse = {
   status: string | null;
   total: number;
   items: PortalTourExplorerItem[];
+};
+
+export type PortalTourTopExplorerItem = {
+  userId: string;
+  name: string;
+  email: string;
+  tourVersion: string;
+  questsInPeriod: number;
+  lastActivityAt: string | null;
+};
+
+export type PortalTourTopExplorersResponse = {
+  periodDays: number;
+  tourVersion: string | null;
+  items: PortalTourTopExplorerItem[];
+};
+
+export type PortalTourAchievementItem = {
+  id: string;
+  title: string;
+  description: string;
+  kind: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+};
+
+export type PortalTourAchievementsResponse = {
+  tourVersion: string;
+  unlockedCount: number;
+  totalCount: number;
+  progressPercent: number;
+  explorerLevel: string;
+  items: PortalTourAchievementItem[];
+};
+
+export type PortalTourCatalogQuestItem = {
+  id: string;
+  title: string;
+  hint: string;
+  category: string;
+  categoryLabel: string;
+  scope: string;
+  optional: boolean;
+  introducedInVersion: string;
+  isNew: boolean;
+};
+
+export type PortalTourCatalogResponse = {
+  tourVersion: string;
+  quests: PortalTourCatalogQuestItem[];
+  requiredQuestIds: string[];
+  optionalQuestIds: string[];
+  newQuestIds: string[];
+  progressPercent: number;
+  explorerLevel: string;
+  earnedXp: number;
+  categoryLabels: Record<string, string>;
+  categoryOrder: string[];
 };
 
 export class CoreApi {
@@ -573,6 +638,15 @@ export class CoreApi {
     return this.client.get<PortalTourProgressResponse>("/core-api/me/portal-tour");
   }
 
+  getPortalTourCatalog(tourVersion?: string) {
+    const query = tourVersion
+      ? `?tourVersion=${encodeURIComponent(tourVersion)}`
+      : "";
+    return this.client.get<PortalTourCatalogResponse>(
+      `/core-api/me/portal-tour/catalog${query}`,
+    );
+  }
+
   syncPortalTourProgress(payload: {
     tourVersion: string;
     status: PortalTourStatus;
@@ -587,6 +661,15 @@ export class CoreApi {
 
   resetPortalTourProgress() {
     return this.client.delete<{ ok: boolean }>("/core-api/me/portal-tour");
+  }
+
+  getPortalTourAchievements(tourVersion?: string) {
+    const query = tourVersion
+      ? `?tourVersion=${encodeURIComponent(tourVersion)}`
+      : "";
+    return this.client.get<PortalTourAchievementsResponse>(
+      `/core-api/me/portal-tour/achievements${query}`,
+    );
   }
 
   getDataExport() {

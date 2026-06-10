@@ -20,6 +20,7 @@ import type {
   NotificationDispatchRevokedFilter,
   NotificationDispatchStatus,
 } from "../../data/coreApi";
+import { useConfirmDialog } from "../ConfirmDialogProvider";
 import { isEditableScheduledDispatch } from "./dispatchEditForm";
 import {
   bulkDeleteConfirmMessage,
@@ -72,6 +73,7 @@ export function NotificationDispatchHistory({
   coreApi,
   onEditDispatch,
 }: NotificationDispatchHistoryProps) {
+  const confirm = useConfirmDialog();
   const [items, setItems] = useState<NotificationDispatchItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -158,7 +160,13 @@ export function NotificationDispatchHistory({
 
   async function handleDeleteDispatch(item: NotificationDispatchItem) {
     if (!canDeleteDispatch(item)) return;
-    if (!window.confirm(singleDeleteConfirmMessage(item))) return;
+    const confirmed = await confirm({
+      title: "Excluir envio",
+      message: singleDeleteConfirmMessage(item),
+      confirmText: "Excluir",
+      danger: true,
+    });
+    if (!confirmed) return;
 
     setDeletingId(item.id);
     setError(null);
@@ -184,7 +192,13 @@ export function NotificationDispatchHistory({
     });
 
     if (!ids.length) return;
-    if (!window.confirm(bulkDeleteConfirmMessage(ids.length))) return;
+    const confirmed = await confirm({
+      title: "Excluir envios",
+      message: bulkDeleteConfirmMessage(ids.length),
+      confirmText: "Excluir",
+      danger: true,
+    });
+    if (!confirmed) return;
 
     setBulkBusy(true);
     setError(null);

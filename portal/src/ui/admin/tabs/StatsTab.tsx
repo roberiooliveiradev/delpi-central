@@ -5,6 +5,7 @@ import {
   Activity,
   BarChart3,
   Bell,
+  Compass,
   LayoutGrid,
   LayoutDashboard,
   Shield,
@@ -20,6 +21,7 @@ import { StatsUsersPage } from "../stats/pages/StatsUsersPage";
 import { StatsAppsPage } from "../stats/pages/StatsAppsPage";
 import { StatsAccessPage } from "../stats/pages/StatsAccessPage";
 import { StatsNotificationsPage } from "../stats/pages/StatsNotificationsPage";
+import { StatsTourPage } from "../stats/pages/StatsTourPage";
 
 import "./StatsTab.css";
 
@@ -33,6 +35,7 @@ const SUB_PAGE_ICONS: Record<StatsSubPage, typeof LayoutDashboard> = {
   apps: LayoutGrid,
   access: Shield,
   notifications: Bell,
+  tour: Compass,
 };
 
 export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
@@ -66,7 +69,7 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
     return <div className="admin-stats__state">Nenhum dado disponível.</div>;
   }
 
-  const pageProps = { stats, charts, onNavigateTab };
+  const pageProps = { stats, charts, onNavigateTab, onNavigateStatsSubPage: setPage };
 
   return (
     <section className="admin-stats" aria-labelledby="admin-stats-title">
@@ -124,6 +127,7 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
         {page === "notifications" ? (
           <StatsNotificationsPage {...pageProps} />
         ) : null}
+        {page === "tour" ? <StatsTourPage /> : null}
       </div>
     </section>
   );

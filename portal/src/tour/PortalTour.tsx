@@ -1,10 +1,18 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
-import { Check, ChevronDown, ChevronUp, Lightbulb, Sparkles, Trophy } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Star,
+  Trophy,
+  X,
+} from "lucide-react";
 import { AuthContext } from "../state/AuthContext";
 import { ApiClient } from "../data/apiClient";
-import { CoreApi } from "../data/coreApi";
+import { CoreApi, type PortalTourCatalogResponse } from "../data/coreApi";
 import "./PortalTour.css";
 import {
   clearTourPulseTargets,
@@ -15,19 +23,27 @@ import {
   loadPortalTourProgress,
   markPortalTourCompletedEverywhere,
   resolveShouldShowPortalTour,
-  syncPortalTourFinished,
+  syncPortalTourCompleted,
   syncPortalTourQuestCompleted,
   syncPortalTourStarted,
+  shouldAutoOpenPortalTourPanel,
+  isResumablePortalTourProgress,
 } from "./portalTourPersistence";
 import {
-  countCompletedRequired,
-  countRequiredQuests,
   getPortalTourQuests,
   groupQuestsByCategory,
   isQuestAvailable,
   PORTAL_TOUR_CATEGORY_LABELS,
   PORTAL_TOUR_CATEGORY_ORDER,
 } from "./portalTourQuests";
+import {
+  alignQuestsWithCatalog,
+  isQuestMarkedNew,
+  resolveCompletedRequiredCount,
+  resolveNewQuestsBannerMessage,
+  resolveProgressPercentFromCatalog,
+  resolveRequiredQuestTotal,
+} from "./portalTourCatalogSync";
 import {
   getTourContextLabel,
   resolveQuestGuide,
@@ -36,6 +52,29 @@ import { setPortalTourSidebarPanel } from "./portalTourSidebar";
 import { clearPortalTourTimers, schedulePortalTourTimer } from "./portalTourTimers";
 import { closeAppLauncher } from "../utils/appLauncher";
 import { usePortalTourHighlights } from "./usePortalTourHighlights";
+import { PortalTourCompletionModal } from "./PortalTourCompletionModal";
+import { runPortalTourConfetti } from "./portalTourCelebration";
+import {
+  formatExplorationDuration,
+  resolveExplorationDurationSeconds,
+} from "./portalTourInsights";
+import { shouldPlayPortalTourAnimations } from "./portalTourPreferences";
+import {
+  computeEarnedXp,
+  milestoneMessage,
+  resolveCategoryJustCompleted,
+  resolveExplorerLevel,
+  resolveNewMilestone,
+  resolveQuestXp,
+  type QuestCelebrationToast,
+} from "./portalTourGamification";
+
+import {
+  DELPI_PORTAL_TOUR_OPEN_PANEL_EVENT,
+  DELPI_PORTAL_TOUR_RESUME_EVENT,
+  publishPortalTourSession,
+  resetPortalTourSessionSnapshot,
+} from "./portalTourSession";
 
 export const DELPI_PORTAL_TOUR_START_EVENT = "DELPI_PORTAL_TOUR_START";
 
@@ -43,20 +82,35 @@ export function startPortalTour() {
   window.dispatchEvent(new CustomEvent(DELPI_PORTAL_TOUR_START_EVENT));
 }
 
-type QuestToast = {
+type QuestBanner = {
   id: string;
-  title: string;
+  message: string;
 };
 
 export function PortalTour() {
   const { user, coreLoaded, getAccessToken, refreshToken } = useContext(AuthContext);
   const location = useLocation();
   const [active, setActive] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set());
-  const [toast, setToast] = useState<QuestToast | null>(null);
+  const [toast, setToast] = useState<QuestCelebrationToast | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
   const [hintQuestId, setHintQuestId] = useState<string | null>(null);
+  const [successFlashQuestId, setSuccessFlashQuestId] = useState<string | null>(
+    null,
+  );
+  const [justCompletedQuestId, setJustCompletedQuestId] = useState<string | null>(
+    null,
+  );
+  const [xpBarBump, setXpBarBump] = useState(false);
+  const [banner, setBanner] = useState<QuestBanner | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [explorationDurationLabel, setExplorationDurationLabel] = useState<
+    string | null
+  >(null);
+  const [catalog, setCatalog] = useState<PortalTourCatalogResponse | null>(null);
+  const confettiCleanupRef = useRef<(() => void) | null>(null);
   const completedRef = useRef(completedIds);
   const remoteProgressRef = useRef<Awaited<ReturnType<typeof loadPortalTourProgress>>>(null);
   const autoStartCheckedRef = useRef(false);
@@ -82,9 +136,14 @@ export function PortalTour() {
     [user?.is_superadmin, user?.permissions],
   );
 
-  const quests = useMemo(
+  const localQuests = useMemo(
     () => getPortalTourQuests({ canAccessAdmin }),
     [canAccessAdmin],
+  );
+
+  const quests = useMemo(
+    () => alignQuestsWithCatalog(localQuests, catalog),
+    [localQuests, catalog],
   );
 
   const questsByCategory = useMemo(
@@ -92,16 +151,32 @@ export function PortalTour() {
     [quests],
   );
 
-  const requiredTotal = useMemo(() => countRequiredQuests(quests), [quests]);
+  const requiredTotal = useMemo(
+    () => resolveRequiredQuestTotal(catalog, quests),
+    [catalog, quests],
+  );
   const requiredDone = useMemo(
-    () => countCompletedRequired(quests, completedIds),
+    () => resolveCompletedRequiredCount(catalog, quests, completedIds),
+    [catalog, quests, completedIds],
+  );
+  const progressPercent = useMemo(
+    () => resolveProgressPercentFromCatalog(catalog, quests, completedIds),
+    [catalog, quests, completedIds],
+  );
+  const explorerLevel = useMemo(
+    () => resolveExplorerLevel(progressPercent),
+    [progressPercent],
+  );
+  const earnedXp = useMemo(
+    () => computeEarnedXp(quests, completedIds),
     [quests, completedIds],
   );
-  const progressPercent =
-    requiredTotal > 0 ? Math.round((requiredDone / requiredTotal) * 100) : 0;
-  const allRequiredDone = requiredDone >= requiredTotal;
 
-  const highlights = usePortalTourHighlights(active, quests, completedIds);
+  const highlights = usePortalTourHighlights(
+    active && panelOpen,
+    quests,
+    completedIds,
+  );
 
   const contextLabel = useMemo(
     () => (active ? getTourContextLabel() : ""),
@@ -112,28 +187,93 @@ export function PortalTour() {
     completedRef.current = completedIds;
   }, [completedIds]);
 
-  const finish = useCallback(
-    (completed: boolean) => {
-      if (user?.id) {
-        if (completed) {
-          markPortalTourCompletedEverywhere(user.id);
-        }
-        syncPortalTourFinished(coreApi, completed, Array.from(completedRef.current));
-      }
-      clearTourPulseTargets();
-      clearPortalTourTimers();
-      closeAppLauncher();
-      setPortalTourSidebarPanel("none");
-      document.documentElement.dataset.portalTourActive = "false";
-      document.documentElement.dataset.portalTourCompanion = "false";
-      setActive(false);
-      setExpanded(true);
-      setCompletedIds(new Set());
-      setToast(null);
-      setHintQuestId(null);
-    },
-    [user?.id, coreApi],
-  );
+  useEffect(() => {
+    publishPortalTourSession({
+      sessionActive: active,
+      panelOpen,
+      completed: false,
+      requiredDone,
+      requiredTotal,
+      progressPercent,
+      explorerLevel: explorerLevel.label,
+    });
+  }, [
+    active,
+    panelOpen,
+    requiredDone,
+    requiredTotal,
+    progressPercent,
+    explorerLevel.label,
+  ]);
+
+  const completeSession = useCallback(() => {
+    if (user?.id) {
+      markPortalTourCompletedEverywhere(user.id);
+      syncPortalTourCompleted(coreApi, Array.from(completedRef.current));
+    }
+    clearTourPulseTargets();
+    clearPortalTourTimers();
+    closeAppLauncher();
+    setPortalTourSidebarPanel("none");
+    document.documentElement.dataset.portalTourActive = "false";
+    document.documentElement.dataset.portalTourCompanion = "false";
+    setActive(false);
+    setPanelOpen(false);
+    setExpanded(true);
+    setToast(null);
+    setHintQuestId(null);
+    setSuccessFlashQuestId(null);
+    setJustCompletedQuestId(null);
+    setXpBarBump(false);
+    setBanner(null);
+    setShowCompletionModal(false);
+    confettiCleanupRef.current?.();
+    confettiCleanupRef.current = null;
+    publishPortalTourSession({
+      sessionActive: false,
+      panelOpen: false,
+      completed: true,
+      requiredDone,
+      requiredTotal,
+      progressPercent: 100,
+      explorerLevel: explorerLevel.label,
+    });
+  }, [user?.id, coreApi, requiredDone, requiredTotal, explorerLevel.label]);
+
+  const hidePanel = useCallback(() => {
+    setPanelOpen(false);
+    setExpanded(false);
+    setShowCompletionModal(false);
+    confettiCleanupRef.current?.();
+    confettiCleanupRef.current = null;
+    document.documentElement.dataset.portalTourActive = "false";
+    document.documentElement.dataset.portalTourCompanion = "false";
+    clearTourPulseTargets();
+  }, []);
+
+  const showPanel = useCallback(() => {
+    setPanelOpen(true);
+    setExpanded(true);
+  }, []);
+
+  const openCompletionCelebration = useCallback(() => {
+    const remote = remoteProgressRef.current;
+    const durationSeconds = resolveExplorationDurationSeconds(
+      remote?.startedAt,
+      remote?.insights?.explorationDurationSeconds,
+    );
+    setExplorationDurationLabel(formatExplorationDuration(durationSeconds));
+    setShowCompletionModal(true);
+    confettiCleanupRef.current?.();
+    confettiCleanupRef.current = runPortalTourConfetti();
+  }, []);
+
+  const closeCompletionCelebration = useCallback(() => {
+    confettiCleanupRef.current?.();
+    confettiCleanupRef.current = null;
+    setShowCompletionModal(false);
+    completeSession();
+  }, [completeSession]);
 
   const toggleQuestHint = useCallback((questId: string) => {
     setHintQuestId((current) => (current === questId ? null : questId));
@@ -146,30 +286,112 @@ export function PortalTour() {
       const quest = quests.find((item) => item.id === questId);
       if (!quest) return;
 
-      setCompletedIds((current) => {
-        if (current.has(questId)) return current;
-        const next = new Set(current);
-        next.add(questId);
-        syncPortalTourQuestCompleted(coreApi, Array.from(next), questId);
-        return next;
-      });
+      const beforeIds = completedRef.current;
+      const previousPercent = resolveProgressPercentFromCatalog(
+        catalog,
+        quests,
+        beforeIds,
+      );
+      const nextIds = new Set(beforeIds);
+      nextIds.add(questId);
+      const nextPercent = resolveProgressPercentFromCatalog(
+        catalog,
+        quests,
+        nextIds,
+      );
+      const nextRequiredDone = resolveCompletedRequiredCount(
+        catalog,
+        quests,
+        nextIds,
+      );
 
-      setToast({ id: questId, title: quest.title });
+      setCompletedIds(nextIds);
+      syncPortalTourQuestCompleted(coreApi, Array.from(nextIds), questId);
+
+      setToast({
+        id: questId,
+        title: quest.title,
+        xp: resolveQuestXp(quest),
+        categoryLabel: PORTAL_TOUR_CATEGORY_LABELS[quest.category],
+      });
       schedulePortalTourTimer(() => {
         setToast((current) => (current?.id === questId ? null : current));
-      }, 2600);
+      }, 2800);
+
+      setSuccessFlashQuestId(questId);
+      schedulePortalTourTimer(() => {
+        setSuccessFlashQuestId((current) => (current === questId ? null : current));
+      }, 480);
+
+      setJustCompletedQuestId(questId);
+      schedulePortalTourTimer(() => {
+        setJustCompletedQuestId((current) => (current === questId ? null : current));
+      }, 720);
+
+      if (shouldPlayPortalTourAnimations()) {
+        setXpBarBump(true);
+        schedulePortalTourTimer(() => setXpBarBump(false), 420);
+      }
+
+      const categoryLabel = resolveCategoryJustCompleted(
+        quests,
+        beforeIds,
+        nextIds,
+        quest.category,
+      );
+      if (categoryLabel) {
+        const bannerId = `category-${quest.category}`;
+        setBanner({
+          id: bannerId,
+          message: `Área «${categoryLabel}» concluída!`,
+        });
+        schedulePortalTourTimer(() => {
+          setBanner((current) => (current?.id === bannerId ? null : current));
+        }, 3400);
+      }
+
+      const milestone = resolveNewMilestone(previousPercent, nextPercent);
+      if (milestone) {
+        const bannerId = `milestone-${milestone}`;
+        setBanner({
+          id: bannerId,
+          message: milestoneMessage(milestone),
+        });
+        schedulePortalTourTimer(() => {
+          setBanner((current) => (current?.id === bannerId ? null : current));
+        }, 3400);
+      }
+
+      if (nextRequiredDone >= requiredTotal) {
+        schedulePortalTourTimer(() => openCompletionCelebration(), 900);
+      }
     },
-    [quests, coreApi],
+    [quests, coreApi, requiredTotal, openCompletionCelebration, catalog],
   );
 
   useEffect(() => {
     if (!coreLoaded || !user?.id) return;
 
     let cancelled = false;
-    void loadPortalTourProgress(coreApi).then((remote) => {
+    void Promise.all([
+      loadPortalTourProgress(coreApi, user.id),
+      coreApi.getPortalTourCatalog().catch(() => null),
+    ]).then(([remote, remoteCatalog]) => {
       if (cancelled) return;
       remoteProgressRef.current = remote;
+      if (remoteCatalog) setCatalog(remoteCatalog);
       setRemoteReady(true);
+
+      const streakMessage = remote?.insights?.returnStreakMessage;
+      const newQuestsMessage = resolveNewQuestsBannerMessage(remoteCatalog);
+      const bannerMessage = streakMessage ?? newQuestsMessage;
+      if (bannerMessage) {
+        const bannerId = streakMessage ? "return-streak" : "new-quests";
+        setBanner({ id: bannerId, message: bannerMessage });
+        schedulePortalTourTimer(() => {
+          setBanner((current) => (current?.id === bannerId ? null : current));
+        }, 4500);
+      }
     });
 
     return () => {
@@ -183,13 +405,16 @@ export function PortalTour() {
     autoStartCheckedRef.current = true;
 
     const remote = remoteProgressRef.current;
-    if (remote?.status === "exploring" && remote.completedQuestIds.length > 0) {
+    if (isResumablePortalTourProgress(remote)) {
       setCompletedIds(hydrateCompletedQuestIds(remote));
     }
 
     if (!resolveShouldShowPortalTour(user.id, remote)) return;
 
-    const timer = window.setTimeout(() => setActive(true), 900);
+    const timer = window.setTimeout(() => {
+      setActive(true);
+      setPanelOpen(shouldAutoOpenPortalTourPanel(remote));
+    }, 900);
     return () => window.clearTimeout(timer);
   }, [remoteReady, coreLoaded, user?.id]);
 
@@ -199,28 +424,63 @@ export function PortalTour() {
   }, [active, coreApi]);
 
   useEffect(() => {
-    document.documentElement.dataset.portalTourActive = active ? "true" : "false";
-    document.documentElement.dataset.portalTourCompanion = active ? "true" : "false";
+    const tourUiActive = active && panelOpen && !showCompletionModal;
+    document.documentElement.dataset.portalTourActive = tourUiActive
+      ? "true"
+      : "false";
+    document.documentElement.dataset.portalTourCompanion = tourUiActive
+      ? "true"
+      : "false";
     return () => {
       document.documentElement.dataset.portalTourActive = "false";
       document.documentElement.dataset.portalTourCompanion = "false";
     };
-  }, [active]);
+  }, [active, panelOpen, showCompletionModal]);
 
   useEffect(() => {
     const onStart = () => {
       clearPortalTourTimers();
       autoStartCheckedRef.current = true;
+      resetPortalTourSessionSnapshot();
       setCompletedIds(new Set());
       setToast(null);
       setHintQuestId(null);
+      setBanner(null);
+      setShowCompletionModal(false);
+      confettiCleanupRef.current?.();
+      confettiCleanupRef.current = null;
       setExpanded(true);
       setActive(true);
+      setPanelOpen(true);
+    };
+    const onOpenPanel = () => {
+      if (!active) {
+        const remote = remoteProgressRef.current;
+        if (isResumablePortalTourProgress(remote)) {
+          setCompletedIds(hydrateCompletedQuestIds(remote));
+        }
+        setActive(true);
+      }
+      showPanel();
+    };
+    const onResume = () => {
+      autoStartCheckedRef.current = true;
+      const remote = remoteProgressRef.current;
+      if (isResumablePortalTourProgress(remote)) {
+        setCompletedIds(hydrateCompletedQuestIds(remote));
+      }
+      setActive(true);
+      showPanel();
     };
     window.addEventListener(DELPI_PORTAL_TOUR_START_EVENT, onStart);
-    return () =>
+    window.addEventListener(DELPI_PORTAL_TOUR_OPEN_PANEL_EVENT, onOpenPanel);
+    window.addEventListener(DELPI_PORTAL_TOUR_RESUME_EVENT, onResume);
+    return () => {
       window.removeEventListener(DELPI_PORTAL_TOUR_START_EVENT, onStart);
-  }, []);
+      window.removeEventListener(DELPI_PORTAL_TOUR_OPEN_PANEL_EVENT, onOpenPanel);
+      window.removeEventListener(DELPI_PORTAL_TOUR_RESUME_EVENT, onResume);
+    };
+  }, [active, showPanel, catalog]);
 
   useEffect(() => {
     if (!active) return;
@@ -235,21 +495,28 @@ export function PortalTour() {
   }, [active, quests, completeQuest]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || !panelOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        finish(false);
+        if (showCompletionModal) {
+          closeCompletionCelebration();
+          return;
+        }
+        hidePanel();
       }
     };
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [active, finish]);
+  }, [active, panelOpen, hidePanel, showCompletionModal, closeCompletionCelebration]);
 
   if (!active) return null;
+
+  const showOverlayUi = panelOpen || showCompletionModal;
+  if (!showOverlayUi) return null;
 
   return createPortal(
     <div
@@ -260,7 +527,7 @@ export function PortalTour() {
       {highlights.map((rect) => (
         <div
           key={rect.questId}
-          className="portal-tour-highlight-ring"
+          className={`portal-tour-highlight-ring${successFlashQuestId === rect.questId ? " is-success" : ""}`}
           style={{
             top: rect.top,
             left: rect.left,
@@ -274,36 +541,69 @@ export function PortalTour() {
       {toast ? (
         <div className="portal-tour-toast" role="status" aria-live="polite">
           <Check size={16} aria-hidden />
-          <span>
-            <strong>{toast.title}</strong> concluído!
+          <span className="portal-tour-toast-copy">
+            <strong>{toast.title}</strong>
+            <span className="portal-tour-toast-meta">
+              +{toast.xp} XP · {toast.categoryLabel}
+            </span>
           </span>
         </div>
       ) : null}
 
+      {banner ? (
+        <div className="portal-tour-banner" role="status" aria-live="polite">
+          <Star size={15} aria-hidden />
+          <span>{banner.message}</span>
+        </div>
+      ) : null}
+
+      {showCompletionModal ? (
+        <PortalTourCompletionModal
+          explorerLevel={explorerLevel}
+          earnedXp={earnedXp}
+          requiredDone={requiredDone}
+          requiredTotal={requiredTotal}
+          explorationDurationLabel={explorationDurationLabel}
+          onClose={() => closeCompletionCelebration()}
+        />
+      ) : null}
+
+      {panelOpen ? (
       <div
         className={`portal-tour-quest-panel${expanded ? " is-expanded" : " is-collapsed"}`}
       >
-        <button
-          type="button"
-          className="portal-tour-quest-toggle"
-          onClick={() => setExpanded((current) => !current)}
-          aria-expanded={expanded}
-        >
-          <span className="portal-tour-quest-toggle-main">
-            <Trophy size={18} aria-hidden />
-            <span className="portal-tour-quest-toggle-label">
-              Descubra o portal
+        <div className="portal-tour-quest-toggle-row">
+          <button
+            type="button"
+            className="portal-tour-quest-toggle"
+            onClick={() => setExpanded((current) => !current)}
+            aria-expanded={expanded}
+          >
+            <span className="portal-tour-quest-toggle-main">
+              <Trophy size={18} aria-hidden />
+              <span className="portal-tour-quest-toggle-label">
+                Descubra o portal
+              </span>
+              <span className="portal-tour-quest-badge" aria-hidden>
+                {requiredDone}/{requiredTotal}
+              </span>
+              <span className="portal-tour-level-badge">{explorerLevel.label}</span>
             </span>
-            <span className="portal-tour-quest-badge" aria-hidden>
-              {requiredDone}/{requiredTotal}
-            </span>
-          </span>
-          {expanded ? (
-            <ChevronDown size={18} aria-hidden />
-          ) : (
-            <ChevronUp size={18} aria-hidden />
-          )}
-        </button>
+            {expanded ? (
+              <ChevronDown size={18} aria-hidden />
+            ) : (
+              <ChevronUp size={18} aria-hidden />
+            )}
+          </button>
+          <button
+            type="button"
+            className="portal-tour-quest-close"
+            onClick={hidePanel}
+            aria-label="Fechar painel de descobertas"
+          >
+            <X size={18} aria-hidden />
+          </button>
+        </div>
 
         {expanded ? (
           <div className="portal-tour-quest-body">
@@ -322,13 +622,16 @@ export function PortalTour() {
               aria-valuenow={progressPercent}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`Progresso: ${requiredDone} de ${requiredTotal} desafios`}
+              aria-label={`Progresso: ${requiredDone} de ${requiredTotal} desafios — ${earnedXp} XP`}
             >
               <div
-                className="portal-tour-xp-bar-fill"
+                className={`portal-tour-xp-bar-fill${xpBarBump ? " is-bump" : ""}`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
+            <p className="portal-tour-xp-summary" aria-hidden>
+              {earnedXp} XP · {progressPercent}%
+            </p>
 
             <ul className="portal-tour-quest-list">
               {PORTAL_TOUR_CATEGORY_ORDER.map((category) => {
@@ -350,7 +653,7 @@ export function PortalTour() {
                         return (
                           <li
                             key={quest.id}
-                            className={`portal-tour-quest-item${done ? " is-done" : ""}${!done && available ? " is-available" : ""}${!available && !done ? " is-unavailable" : ""}${hintOpen ? " is-hint-open" : ""}`}
+                            className={`portal-tour-quest-item${done ? " is-done" : ""}${!done && available ? " is-available" : ""}${!available && !done ? " is-unavailable" : ""}${hintOpen ? " is-hint-open" : ""}${justCompletedQuestId === quest.id ? " is-just-done" : ""}`}
                           >
                             <span className="portal-tour-quest-check" aria-hidden>
                               {done ? <Check size={14} strokeWidth={3} /> : null}
@@ -358,6 +661,11 @@ export function PortalTour() {
                             <div className="portal-tour-quest-copy">
                               <span className="portal-tour-quest-title">
                                 {quest.title}
+                                {isQuestMarkedNew(catalog, quest.id) ? (
+                                  <span className="portal-tour-quest-new">
+                                    novidade
+                                  </span>
+                                ) : null}
                                 {quest.optional ? (
                                   <span className="portal-tour-quest-optional">
                                     opcional
@@ -411,33 +719,10 @@ export function PortalTour() {
                 );
               })}
             </ul>
-
-            <div className="portal-tour-quest-footer">
-              <button
-                type="button"
-                className="portal-tour-btn portal-tour-btn--ghost"
-                onClick={() => finish(false)}
-              >
-                Pular
-              </button>
-              <button
-                type="button"
-                className="portal-tour-btn portal-tour-btn--primary"
-                onClick={() => finish(true)}
-              >
-                {allRequiredDone ? (
-                  <>
-                    <Sparkles size={16} aria-hidden />
-                    Concluir
-                  </>
-                ) : (
-                  `Concluir (${requiredDone}/${requiredTotal})`
-                )}
-              </button>
-            </div>
           </div>
         ) : null}
       </div>
+      ) : null}
     </div>,
     document.body,
   );

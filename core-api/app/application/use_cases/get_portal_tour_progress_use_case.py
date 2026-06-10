@@ -33,9 +33,29 @@ class GetPortalTourProgressUseCase:
                 completed_at=None,
             )
 
+        status = progress.status
+        if status in {"dismissed", "completed"} and not progress.completed_quest_ids:
+            progress = self.uow.portal_tour.upsert_progress(
+                user_id=user_id,
+                tour_version=progress.tour_version,
+                status="exploring",
+                completed_quest_ids=list(progress.completed_quest_ids),
+                completed_at=None,
+            )
+            status = progress.status
+        elif status == "dismissed":
+            progress = self.uow.portal_tour.upsert_progress(
+                user_id=user_id,
+                tour_version=progress.tour_version,
+                status="exploring",
+                completed_quest_ids=list(progress.completed_quest_ids),
+                completed_at=progress.completed_at,
+            )
+            status = progress.status
+
         return PortalTourProgressResult(
             tour_version=progress.tour_version,
-            status=progress.status,
+            status=status,
             completed_quest_ids=list(progress.completed_quest_ids),
             started_at=progress.started_at,
             last_activity_at=progress.last_activity_at,

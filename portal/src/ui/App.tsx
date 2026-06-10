@@ -22,6 +22,7 @@ import { NotificationsPage } from "./NotificationsPage";
 import { PrivacyPage } from "./PrivacyPage";
 import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 
+import { ConfirmDialogProvider } from "../components/ConfirmDialogProvider";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 
@@ -260,5 +261,9 @@ export default function App() {
   if (consentStatus === "loading") return <Loader />;
   if (consentStatus === "pending") return <ConsentModal onAccepted={markAccepted} />;
 
-  return <AppShell />;
+  return (
+    <ConfirmDialogProvider>
+      <AppShell />
+    </ConfirmDialogProvider>
+  );
 }

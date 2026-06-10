@@ -1,0 +1,133 @@
+.portal-tour-achievements-panel .portal-tour-achievements-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.portal-tour-achievements-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.portal-tour-achievements-level {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.portal-tour-achievements-count {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.portal-tour-achievements-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.portal-tour-preferences-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-muted, #f4f4f5) 88%, transparent);
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.portal-tour-preferences-toggle input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.portal-tour-achievements-group + .portal-tour-achievements-group {
+  margin-top: 16px;
+}
+
+.portal-tour-achievements-group-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.portal-tour-achievements-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.portal-tour-achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 112px;
+  padding: 12px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  text-align: center;
+}
+
+.portal-tour-achievement-card.is-unlocked {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+}
+
+.portal-tour-achievement-card.is-locked {
+  opacity: 0.72;
+}
+
+.portal-tour-achievement-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+}
+
+.portal-tour-achievement-card.is-locked .portal-tour-achievement-icon {
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+  color: var(--text-muted);
+}
+
+.portal-tour-achievement-title {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.portal-tour-achievement-meta {
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .portal-tour-achievements-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portal-tour-achievements-summary {
+    display: none;
+  }
+}

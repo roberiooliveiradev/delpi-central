@@ -122,6 +122,37 @@ class ExportUserDataUseCase:
             for event in quest_events_q
         ]
 
+        from app.application.use_cases.get_portal_tour_achievements_use_case import (
+            GetPortalTourAchievementsUseCase,
+        )
+        from app.domain.portal_tour.portal_tour_availability_service import (
+            PortalTourUserContext,
+        )
+        from app.domain.services.permission_resolver import PermissionResolver
+
+        permission_codes = PermissionResolver(
+            self._uow.permission_queries,
+            self._uow.cache,
+        ).resolve(uid, bool(user.is_superadmin))
+        tour_context = PortalTourUserContext(
+            permissions=frozenset(permission_codes),
+            is_superadmin=bool(user.is_superadmin),
+        )
+        achievements = GetPortalTourAchievementsUseCase(self._uow).execute(
+            user_id,
+            tour_context,
+        )
+        portal_tour_achievements = [
+            {
+                "id": item.id,
+                "title": item.title,
+                "unlocked": item.unlocked,
+                "unlockedAt": item.unlocked_at.isoformat() if item.unlocked_at else None,
+            }
+            for item in achievements.items
+            if item.unlocked
+        ]
+
         return {
             "exportDate": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
             "profile": profile,
@@ -131,4 +162,5 @@ class ExportUserDataUseCase:
             "auditLogs": audit_logs,
             "portalTour": portal_tour,
             "portalTourQuestEvents": portal_tour_quest_events,
+            "portalTourAchievements": portal_tour_achievements,
         }

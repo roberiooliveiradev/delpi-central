@@ -18,6 +18,7 @@ import {
   resolvePreviewRecipientName,
 } from "./notificationTemplates";
 import { useNotificationTemplates } from "./useNotificationTemplates";
+import { useConfirmDialog } from "../ConfirmDialogProvider";
 
 import "./AdminNotificationTemplateSection.css";
 
@@ -44,6 +45,7 @@ export function AdminNotificationTemplateSection({
   previewUserName,
   action,
 }: AdminNotificationTemplateSectionProps) {
+  const confirm = useConfirmDialog();
   const { templates, loading, reload } = useNotificationTemplates(coreApi);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -91,9 +93,13 @@ export function AdminNotificationTemplateSection({
     if (!selectedTemplate || isSystem) {
       return;
     }
-    if (!window.confirm(`Excluir o template "${selectedTemplate.label}"?`)) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "Excluir template",
+      message: `Excluir o template "${selectedTemplate.label}"?`,
+      confirmText: "Excluir",
+      danger: true,
+    });
+    if (!confirmed) return;
     await coreApi.deleteNotificationTemplate(selectedTemplate.id);
     await reload();
     const fallback = templates.find((item) => item.isSystem)?.id ?? "welcome_v1";

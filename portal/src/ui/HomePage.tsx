@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
 import { useAppsById } from "../hooks/useAppsById";
 import { isLaunchableApp } from "../utils/launchableApps";
+import { PortalTourHomeEntry } from "../tour/PortalTourHomeEntry";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -126,6 +127,8 @@ export const HomePage = () => {
         variants={fadeUp}
         custom={1}
       >
+        <PortalTourHomeEntry />
+
         <SummaryCard
           icon={<Bell size={18} />}
           title="Notificações"

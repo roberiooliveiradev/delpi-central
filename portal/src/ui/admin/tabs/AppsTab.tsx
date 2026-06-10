@@ -19,6 +19,7 @@ import type { AdminApp } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import { ManifestRegisterModal } from "../modals/ManifestRegisterModal";
 import { resolveIcon } from "../../../utils/iconResolver";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
@@ -135,6 +136,7 @@ const hasActiveDateFilters = (filters: AppDateFilters) =>
 
 export const AppsTab = () => {
   const { getAccessToken } = useContext(AuthContext);
+  const showAlert = useAppAlert();
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -280,9 +282,12 @@ export const AppsTab = () => {
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
-        alert(err.message);
+        await showAlert({ title: "Erro", message: err.message });
       } else {
-        alert("Erro inesperado ao ativar aplicações.");
+        await showAlert({
+          title: "Erro",
+          message: "Erro inesperado ao ativar aplicações.",
+        });
       }
     }
   };
@@ -296,9 +301,12 @@ export const AppsTab = () => {
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
-        alert(err.message);
+        await showAlert({ title: "Erro", message: err.message });
       } else {
-        alert("Erro inesperado ao desativar aplicações.");
+        await showAlert({
+          title: "Erro",
+          message: "Erro inesperado ao desativar aplicações.",
+        });
       }
     }
   };
@@ -312,9 +320,12 @@ export const AppsTab = () => {
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
-        alert(err.message);
+        await showAlert({ title: "Erro", message: err.message });
       } else {
-        alert("Erro inesperado ao excluir aplicações.");
+        await showAlert({
+          title: "Erro",
+          message: "Erro inesperado ao excluir aplicações.",
+        });
       }
     } finally {
       setConfirmBulkDelete(false);
@@ -329,9 +340,12 @@ export const AppsTab = () => {
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
-        alert(err.message);
+        await showAlert({ title: "Erro", message: err.message });
       } else {
-        alert("Erro inesperado ao excluir aplicação.");
+        await showAlert({
+          title: "Erro",
+          message: "Erro inesperado ao excluir aplicação.",
+        });
       }
     } finally {
       setDeleteOneId(null);

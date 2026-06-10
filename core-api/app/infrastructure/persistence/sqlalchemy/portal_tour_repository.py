@@ -1,13 +1,16 @@
 # app/infrastructure/persistence/sqlalchemy/portal_tour_repository.py
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.domain.ports.portal_tour_repository import (
     PortalTourExplorerDTO,
     PortalTourProgressDTO,
+    PortalTourQuestEventDTO,
+    PortalTourTopExplorerDTO,
     PortalTourRepository,
 )
 from app.infrastructure.db.models.user import User
@@ -172,3 +175,72 @@ class SqlAlchemyPortalTourRepository(PortalTourRepository):
             for progress, user in rows
         ]
         return items, total
+
+    def list_quest_events(
+        self,
+        user_id: str,
+        *,
+        tour_version: str | None = None,
+    ) -> list[PortalTourQuestEventDTO]:
+        uid = UUID(user_id)
+        query = (
+            self.session.query(PortalTourQuestEvent)
+            .filter_by(user_id=uid)
+            .order_by(PortalTourQuestEvent.completed_at.asc())
+        )
+        if tour_version:
+            query = query.filter_by(tour_version=tour_version)
+
+        return [
+            PortalTourQuestEventDTO(
+                quest_id=row.quest_id,
+                tour_version=row.tour_version,
+                completed_at=row.completed_at,
+            )
+            for row in query.all()
+        ]
+
+    def list_top_explorers(
+        self,
+        *,
+        tour_version: str | None = None,
+        period_days: int = 7,
+        limit: int = 10,
+    ) -> list[PortalTourTopExplorerDTO]:
+        since = datetime.utcnow() - timedelta(days=period_days)
+
+        query = (
+            self.session.query(
+                PortalTourQuestEvent.user_id,
+                PortalTourQuestEvent.tour_version,
+                func.count(PortalTourQuestEvent.id).label("quests_in_period"),
+                func.max(PortalTourQuestEvent.completed_at).label("last_activity_at"),
+                User.name,
+                User.email,
+            )
+            .join(User, User.id == PortalTourQuestEvent.user_id)
+            .filter(PortalTourQuestEvent.completed_at >= since)
+            .group_by(
+                PortalTourQuestEvent.user_id,
+                PortalTourQuestEvent.tour_version,
+                User.name,
+                User.email,
+            )
+            .order_by(func.count(PortalTourQuestEvent.id).desc())
+            .limit(limit)
+        )
+
+        if tour_version:
+            query = query.filter(PortalTourQuestEvent.tour_version == tour_version)
+
+        return [
+            PortalTourTopExplorerDTO(
+                user_id=str(row.user_id),
+                name=row.name,
+                email=row.email,
+                tour_version=row.tour_version,
+                quests_in_period=int(row.quests_in_period),
+                last_activity_at=row.last_activity_at,
+            )
+            for row in query.all()
+        ]

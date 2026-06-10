@@ -16,10 +16,13 @@ Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via t
 | **Aplicações** | Quem usa cada app agora, top 30d, fantasmas (sem backend-only), trackable vs backend-only, tipos |
 | **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
 | **Notificações** | Status dos envios de campanha |
+| **Acompanhamento** | Tour gamificado — exploradores, conclusões, ranking semanal (`GET /core-api/admin/portal-tour/*`) |
 
-Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, componentes em `StatsEnrichment.tsx`, painel de tour em `PortalTourExplorersPanel.tsx`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
+Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, acompanhamento do tour em `StatsTourPage.tsx` + `usePortalTourAdminMonitoring.ts`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
 
-**Usuários — tour:** lista quem está com status `exploring` na versão atual do tour (`GET /core-api/admin/portal-tour/explorers`). Ver [portal-tour.md](./portal-tour.md).
+**Acompanhamento — tour:** KPIs (explorando, concluíram, total), ranking top exploradores (7/30 dias), lista paginada com filtro por status. Ver [portal-tour.md](./portal-tour.md).
+
+**Usuários:** atalho «Abrir acompanhamento» leva à subpágina dedicada do tour.
 
 **Aplicações:** layout em duas colunas — uso ao vivo ocupa a área principal; ranking 30d e lista compacta de apps fantasmas (rolável, expansível) ficam na coluna lateral, sem tags que estouram a tela. Apps **`backend-only`** não aparecem como fantasmas; KPI **Apps rastreáveis** exclui serviços só-backend.
 

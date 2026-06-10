@@ -38,7 +38,6 @@ import {
 import { DELPI_SIDEBAR_EXPAND_EVENT } from "../utils/sidebar";
 import {
   DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
-  isPortalTourActive,
   type PortalTourSidebarPanel,
 } from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
@@ -73,7 +72,10 @@ export const Sidebar = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
+  const notifTriggerRef = useRef<HTMLDivElement>(null);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const themeTriggerRef = useRef<HTMLDivElement>(null);
+  const userTriggerRef = useRef<HTMLDivElement>(null);
 
   /* ===============================
      ESTADOS
@@ -235,35 +237,34 @@ export const Sidebar = () => {
     }
   }, [collapsed]);
 
-  // Fecha dropdown ao clicar fora
+  // Fecha dropdown ao clicar fora (mantém aberto ao clicar no gatilho — o toggle trata)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (document.documentElement.dataset.portalTourActive === "true") {
-        return;
-      }
+    const containsNode = (root: HTMLElement | null, target: Node) =>
+      Boolean(root?.contains(target));
 
+    const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
       if (
         themeOpen &&
-        themeDropdownRef.current &&
-        !themeDropdownRef.current.contains(target)
+        !containsNode(themeDropdownRef.current, target) &&
+        !containsNode(themeTriggerRef.current, target)
       ) {
         setThemeOpen(false);
       }
 
       if (
         notifOpen &&
-        notifDropdownRef.current &&
-        !notifDropdownRef.current.contains(target)
+        !containsNode(notifDropdownRef.current, target) &&
+        !containsNode(notifTriggerRef.current, target)
       ) {
         setNotifOpen(false);
       }
 
       if (
         userOpen &&
-        userDropdownRef.current &&
-        !userDropdownRef.current.contains(target)
+        !containsNode(userDropdownRef.current, target) &&
+        !containsNode(userTriggerRef.current, target)
       ) {
         setUserOpen(false);
       }
@@ -429,12 +430,8 @@ export const Sidebar = () => {
               <div
                 className="sidebar-footer-item"
                 data-tour="sidebar-notifications"
+                ref={notifTriggerRef}
                 onClick={() => {
-                  if (isPortalTourActive()) {
-                    if (!notifOpen) void reloadNotifications();
-                    setNotifOpen(true);
-                    return;
-                  }
                   setNotifOpen((open) => {
                     if (!open) void reloadNotifications();
                     return !open;
@@ -507,13 +504,8 @@ export const Sidebar = () => {
               <div
                 className="sidebar-footer-item"
                 data-tour="sidebar-theme"
-                onClick={() => {
-                  if (isPortalTourActive()) {
-                    setThemeOpen(true);
-                    return;
-                  }
-                  setThemeOpen(!themeOpen);
-                }}
+                ref={themeTriggerRef}
+                onClick={() => setThemeOpen((open) => !open)}
               >
                 {theme === "dark" ? (
                   <Moon size={18} />
@@ -567,13 +559,8 @@ export const Sidebar = () => {
               <div
                 className="sidebar-footer-item"
                 data-tour="sidebar-profile"
-                onClick={() => {
-                  if (isPortalTourActive()) {
-                    setUserOpen(true);
-                    return;
-                  }
-                  setUserOpen(!userOpen);
-                }}
+                ref={userTriggerRef}
+                onClick={() => setUserOpen((open) => !open)}
               >
                 <div className="avatar small">{initials}</div>
                 <span>{user?.name}</span>

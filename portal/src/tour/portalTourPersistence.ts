@@ -34,39 +34,129 @@ function enqueueSync(api: CoreApi, payload: PortalTourSyncPayload) {
   }, 650);
 }
 
-export function resolveShouldShowPortalTour(
+export function isPortalTourFullyCompleted(
   userId: string | undefined,
   remote: PortalTourProgressResponse | null,
 ): boolean {
-  if (!userId) return false;
+  if (!userId) return true;
 
   if (
     remote?.tourVersion === PORTAL_TOUR_VERSION &&
     remote.status === "completed"
   ) {
-    return false;
+    return true;
   }
 
-  return shouldShowPortalTour(userId);
+  return !shouldShowPortalTour(userId);
+}
+
+export function resolveShouldShowPortalTour(
+  userId: string | undefined,
+  remote: PortalTourProgressResponse | null,
+): boolean {
+  return !isPortalTourFullyCompleted(userId, remote);
+}
+
+export function isResumablePortalTourProgress(
+  remote: PortalTourProgressResponse | null,
+): boolean {
+  if (!remote?.tourVersion || remote.tourVersion !== PORTAL_TOUR_VERSION) {
+    return false;
+  }
+  if (remote.status === "completed") return false;
+  return (
+    remote.status === "exploring" ||
+    remote.status === "dismissed" ||
+    remote.completedQuestIds.length > 0 ||
+    Boolean(remote.startedAt)
+  );
+}
+
+export function shouldAutoOpenPortalTourPanel(
+  remote: PortalTourProgressResponse | null,
+): boolean {
+  return !isResumablePortalTourProgress(remote);
+}
+
+export function normalizePortalTourProgressResponse(
+  remote: PortalTourProgressResponse | null,
+): PortalTourProgressResponse | null {
+  if (!remote?.tourVersion || remote.tourVersion !== PORTAL_TOUR_VERSION) {
+    return remote;
+  }
+  if (remote.status !== "dismissed") {
+    return remote;
+  }
+  return {
+    ...remote,
+    status: "exploring",
+  };
+}
+
+export async function repairLegacyDismissedPortalTour(
+  api: CoreApi,
+  remote: PortalTourProgressResponse | null,
+): Promise<PortalTourProgressResponse | null> {
+  const normalized = normalizePortalTourProgressResponse(remote);
+  if (
+    !remote ||
+    remote.tourVersion !== PORTAL_TOUR_VERSION ||
+    remote.status !== "dismissed"
+  ) {
+    return normalized;
+  }
+
+  try {
+    await api.syncPortalTourProgress({
+      tourVersion: PORTAL_TOUR_VERSION,
+      status: "exploring",
+      completedQuestIds: remote.completedQuestIds,
+    });
+  } catch {
+    // Falha remota não bloqueia retomada local
+  }
+
+  return normalized;
 }
 
 export function hydrateCompletedQuestIds(
   remote: PortalTourProgressResponse | null,
 ): Set<string> {
-  if (
-    !remote?.completedQuestIds?.length ||
-    remote.tourVersion !== PORTAL_TOUR_VERSION
-  ) {
+  if (!remote?.completedQuestIds?.length) {
     return new Set();
+  }
+  if (remote.tourVersion !== PORTAL_TOUR_VERSION) {
+    return new Set();
+  }
+  if (remote.status === "completed") {
+    return new Set(remote.completedQuestIds);
   }
   return new Set(remote.completedQuestIds);
 }
 
+export function repairLocalCompletedWhenRemoteIncomplete(
+  userId: string,
+  remote: PortalTourProgressResponse | null,
+): void {
+  if (!userId || !remote?.tourVersion) return;
+  if (remote.tourVersion !== PORTAL_TOUR_VERSION) return;
+  if (remote.status === "completed") return;
+  if (!shouldShowPortalTour(userId)) {
+    resetPortalTour(userId);
+  }
+}
+
 export async function loadPortalTourProgress(
   api: CoreApi,
+  userId?: string,
 ): Promise<PortalTourProgressResponse | null> {
   try {
-    return await api.getPortalTourProgress();
+    const remote = await api.getPortalTourProgress();
+    const repaired = await repairLegacyDismissedPortalTour(api, remote);
+    if (userId) {
+      repairLocalCompletedWhenRemoteIncomplete(userId, repaired);
+    }
+    return repaired;
   } catch {
     return null;
   }
@@ -93,9 +183,8 @@ export function syncPortalTourQuestCompleted(
   });
 }
 
-export function syncPortalTourFinished(
+export function syncPortalTourCompleted(
   api: CoreApi,
-  completed: boolean,
   completedQuestIds: string[],
 ) {
   if (syncTimer !== null) {
@@ -104,17 +193,29 @@ export function syncPortalTourFinished(
   }
   pendingSync = null;
 
-  const status: PortalTourStatus = completed ? "completed" : "dismissed";
   syncChain = syncChain
     .then(() =>
       api.syncPortalTourProgress({
         tourVersion: PORTAL_TOUR_VERSION,
-        status,
+        status: "completed",
         completedQuestIds,
       }),
     )
     .then(() => undefined)
     .catch(() => undefined);
+}
+
+/** @deprecated Use syncPortalTourCompleted — «pular» não existe mais. */
+export function syncPortalTourFinished(
+  api: CoreApi,
+  completed: boolean,
+  completedQuestIds: string[],
+) {
+  if (completed) {
+    syncPortalTourCompleted(api, completedQuestIds);
+    return;
+  }
+  syncPortalTourStarted(api, completedQuestIds);
 }
 
 export async function restartPortalTourRemote(

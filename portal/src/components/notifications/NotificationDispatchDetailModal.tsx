@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 
 import { Modal } from "../Modal";
+import { useConfirmDialog } from "../ConfirmDialogProvider";
 import type {
   CoreApi,
   NotificationCategory,
@@ -114,6 +115,7 @@ export function NotificationDispatchDetailModal({
   onClose,
   onDeleted,
 }: Props) {
+  const confirm = useConfirmDialog();
   const [detail, setDetail] = useState<NotificationDispatchDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -176,7 +178,13 @@ export function NotificationDispatchDetailModal({
 
   async function handleDelete() {
     if (!detail || !canDeleteDispatch(detail)) return;
-    if (!window.confirm(singleDeleteConfirmMessage(detail))) return;
+    const confirmed = await confirm({
+      title: "Excluir envio",
+      message: singleDeleteConfirmMessage(detail),
+      confirmText: "Excluir",
+      danger: true,
+    });
+    if (!confirmed) return;
 
     setDeleting(true);
     setError(null);

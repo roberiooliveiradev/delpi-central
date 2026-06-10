@@ -15,6 +15,7 @@ import type {
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
 import { UserRbacModal } from "../modals/UserRbacModal";
 
@@ -71,6 +72,7 @@ const formatBrazilDateTime = (value?: string | null) => {
 
 export const RbacTab = () => {
   const { getAccessToken } = useContext(AuthContext);
+  const showAlert = useAppAlert();
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{
@@ -279,7 +281,10 @@ export const RbacTab = () => {
       await api.anonymizeUser(anonymizing.id);
       usersResource.refetch();
     } catch {
-      alert("Erro ao anonimizar dados do usuário.");
+      await showAlert({
+        title: "Erro",
+        message: "Erro ao anonimizar dados do usuário.",
+      });
     } finally {
       setAnonymizing(null);
     }

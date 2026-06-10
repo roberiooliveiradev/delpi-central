@@ -16,7 +16,13 @@ export const STATS_CHART_COLORS = {
   danger: "var(--chart-6)",
 } as const;
 
-export type StatsSubPage = "overview" | "users" | "apps" | "access" | "notifications";
+export type StatsSubPage =
+  | "overview"
+  | "users"
+  | "apps"
+  | "access"
+  | "notifications"
+  | "tour";
 
 /** Alinhado ao ping de uso de apps (45s) e TTL ao vivo (90s). */
 export const STATS_AUTO_REFRESH_MS = 45_000;
@@ -50,5 +56,10 @@ export const STATS_SUB_PAGES: {
     id: "notifications",
     label: "Notificações",
     description: "Campanhas e envios agendados",
+  },
+  {
+    id: "tour",
+    label: "Acompanhamento",
+    description: "Tour gamificado — exploradores, conclusões e ranking",
   },
 ];

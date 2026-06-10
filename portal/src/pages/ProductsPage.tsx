@@ -5,8 +5,10 @@ import { useProducts } from "../hooks/useProducts";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import type { Product } from "../data/delpiApi";
 import { Eye } from "lucide-react";
+import { useAppAlert } from "../components/ConfirmDialogProvider";
 
 export const ProductsPage: React.FC = () => {
+  const showAlert = useAppAlert();
   // ===============================
   // Estado da tabela (server-side)
   // ===============================
@@ -74,7 +76,12 @@ export const ProductsPage: React.FC = () => {
         actions={(row) => (
           <button
             className="datatable-action-btn"
-            onClick={() => alert(`Produto: ${row.description}`)}
+            onClick={() =>
+              void showAlert({
+                title: row.description,
+                message: `Código ${row.code}`,
+              })
+            }
           >
             <Eye size={16} />
           </button>

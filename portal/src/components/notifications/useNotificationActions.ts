@@ -1,11 +1,13 @@
 import { useCallback, useContext } from "react";
 
+import { useConfirmDialog } from "../ConfirmDialogProvider";
 import { AuthContext } from "../../state/AuthContext";
 
 const DELETE_CONFIRM =
   "Excluir esta notificação? Ela não aparecerá mais no seu histórico.";
 
 export function useNotificationActions() {
+  const confirm = useConfirmDialog();
   const {
     markNotificationRead,
     markAllNotificationsRead,
@@ -15,12 +17,16 @@ export function useNotificationActions() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm(DELETE_CONFIRM)) {
-        return;
-      }
+      const confirmed = await confirm({
+        title: "Excluir notificação",
+        message: DELETE_CONFIRM,
+        confirmText: "Excluir",
+        danger: true,
+      });
+      if (!confirmed) return;
       await deleteNotification(id);
     },
-    [deleteNotification],
+    [confirm, deleteNotification],
   );
 
   const handleToggleImportant = useCallback(
@@ -50,13 +56,20 @@ export function useNotificationActions() {
           ? DELETE_CONFIRM
           : `Excluir ${unique.length} notificações? Elas não aparecerão mais no seu histórico.`;
 
-      if (!window.confirm(message)) {
-        return;
-      }
+      const confirmed = await confirm({
+        title:
+          unique.length === 1
+            ? "Excluir notificação"
+            : "Excluir notificações",
+        message,
+        confirmText: "Excluir",
+        danger: true,
+      });
+      if (!confirmed) return;
 
       await Promise.all(unique.map((id) => deleteNotification(id)));
     },
-    [deleteNotification],
+    [confirm, deleteNotification],
   );
 
   return {

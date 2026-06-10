@@ -27,6 +27,8 @@ export type PortalTourQuest = {
   scope: PortalTourQuestScope;
   category: PortalTourQuestCategory;
   optional?: boolean;
+  /** XP simbólico ao concluir (padrão: 10 obrigatório, 5 opcional). */
+  xpReward?: number;
   isAvailable?: () => boolean;
 };
 

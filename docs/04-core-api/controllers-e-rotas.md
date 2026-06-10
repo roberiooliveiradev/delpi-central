@@ -66,6 +66,8 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | POST | `/me/notifications/test` | Teste (403 se `FLASK_ENV=production`) |
 | GET | `/me/dashboard` | `{ "appsCount", "apps" }` |
 | GET/PATCH/DELETE | `/me/portal-tour` | Progresso do tour gamificado do portal — ver [portal-tour.md](../06-portal-frontend/portal-tour.md) |
+| GET | `/me/portal-tour/catalog` | Catálogo de desafios disponíveis ao usuário (RBAC + novidades) |
+| GET | `/me/portal-tour/achievements` | Conquistas do tour (selos desbloqueados) |
 
 Arquivo: `portal_tour_controller.py` (`portal_tour_bp`).
 

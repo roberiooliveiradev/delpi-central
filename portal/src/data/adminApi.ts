@@ -1,7 +1,10 @@
 // src/data/adminApi.ts
 
 import { ApiClient } from "./apiClient";
-import type { PortalTourExplorersResponse } from "./coreApi";
+import type {
+  PortalTourExplorersResponse,
+  PortalTourTopExplorersResponse,
+} from "./coreApi";
 
 export type PaginationMeta = {
   page: number;
@@ -502,6 +505,23 @@ export class AdminApi {
     const query = search.toString();
     return this.client.get<PortalTourExplorersResponse>(
       `/core-api/admin/portal-tour/explorers${query ? `?${query}` : ""}`,
+    );
+  }
+
+  listPortalTourTopExplorers(params?: {
+    tourVersion?: string;
+    periodDays?: number;
+    limit?: number;
+  }) {
+    const search = new URLSearchParams();
+    if (params?.tourVersion) search.set("tourVersion", params.tourVersion);
+    if (params?.periodDays != null) {
+      search.set("periodDays", String(params.periodDays));
+    }
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    const query = search.toString();
+    return this.client.get<PortalTourTopExplorersResponse>(
+      `/core-api/admin/portal-tour/top-explorers${query ? `?${query}` : ""}`,
     );
   }
 

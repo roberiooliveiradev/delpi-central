@@ -15,6 +15,7 @@ import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { startPortalTour } from "../tour/PortalTour";
 import { restartPortalTourRemote } from "../tour/portalTourPersistence";
+import { PortalTourAchievementsPanel } from "../tour/PortalTourAchievementsPanel";
 import { DataTable } from "../components/DataTable";
 import type {
   DataTableColumn,
@@ -515,6 +516,15 @@ export const MyProfile = () => {
             </button>
           </div>
         </motion.section>
+
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          custom={2.5}
+        >
+          <PortalTourAchievementsPanel />
+        </motion.div>
 
         {/* GROUPS */}
 

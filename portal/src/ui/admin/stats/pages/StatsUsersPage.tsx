@@ -1,5 +1,6 @@
 // src/ui/admin/stats/pages/StatsUsersPage.tsx
 
+import { ArrowRight, Compass } from "lucide-react";
 import { BarChart, DonutChart } from "../StatsCharts";
 import {
   StatsChartCard,
@@ -11,7 +12,6 @@ import {
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
-import { PortalTourExplorersPanel } from "../PortalTourExplorersPanel";
 import { PanelNav, StatsPageIntro, type StatsPageProps } from "../StatsShared";
 import { STATS_CHART_COLORS } from "../statsTheme";
 
@@ -21,7 +21,12 @@ type StatsUsersPageProps = StatsPageProps & {
   charts: StatsChartsData;
 };
 
-export function StatsUsersPage({ stats, charts, onNavigateTab }: StatsUsersPageProps) {
+export function StatsUsersPage({
+  stats,
+  charts,
+  onNavigateTab,
+  onNavigateStatsSubPage,
+}: StatsUsersPageProps) {
   const login7Pct = statPercent(stats.users.loggedInLast7Days, stats.users.total);
   const login30Pct = statPercent(stats.users.loggedInLast30Days, stats.users.total);
   const onlinePct = statPercent(stats.users.online, stats.users.active);
@@ -132,7 +137,29 @@ export function StatsUsersPage({ stats, charts, onNavigateTab }: StatsUsersPageP
       </div>
 
       <LeastEngagedUsersPanel data={stats.users.leastEngaged} />
-      <PortalTourExplorersPanel />
+
+      {onNavigateStatsSubPage ? (
+        <section className="admin-stats__panel admin-stats-tour-teaser">
+          <div className="admin-stats-panel__title-row">
+            <h5>
+              <Compass size={14} aria-hidden="true" />
+              Tour gamificado do portal
+            </h5>
+          </div>
+          <p className="admin-stats-panel__lede">
+            Acompanhe quem está explorando, quem concluiu e o ranking semanal de
+            desafios na aba dedicada.
+          </p>
+          <button
+            type="button"
+            className="admin-stats__panel-link"
+            onClick={() => onNavigateStatsSubPage("tour")}
+          >
+            Abrir acompanhamento
+            <ArrowRight size={14} aria-hidden="true" />
+          </button>
+        </section>
+      ) : null}
     </div>
   );
 }

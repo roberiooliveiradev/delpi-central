@@ -53,6 +53,42 @@ def test_sync_portal_tour_progress_merges_single_quest(uow):
     assert kwargs["completed_quest_ids"] == ["open-apps", "pin-app"]
 
 
+def test_sync_portal_tour_progress_downgrades_invalid_completed_to_exploring(uow):
+    user_id = str(uuid4())
+    uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(
+        user_id=user_id,
+        tour_version="2026-06-portal-v6-explore",
+        status="exploring",
+        completed_quest_ids=[],
+        started_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+        completed_at=None,
+    )
+    uow.portal_tour.upsert_progress.return_value = PortalTourProgressDTO(
+        user_id=user_id,
+        tour_version="2026-06-portal-v6-explore",
+        status="exploring",
+        completed_quest_ids=[],
+        started_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+        completed_at=None,
+    )
+
+    from app.domain.portal_tour.portal_tour_availability_service import PortalTourUserContext
+
+    SyncPortalTourProgressUseCase(uow).execute(
+        user_id,
+        tour_version="2026-06-portal-v6-explore",
+        status="completed",
+        completed_quest_ids=[],
+        user_context=PortalTourUserContext(permissions=frozenset(), is_superadmin=False),
+    )
+
+    kwargs = uow.portal_tour.upsert_progress.call_args.kwargs
+    assert kwargs["status"] == "exploring"
+    assert kwargs["completed_at"] is None
+
+
 def test_sync_portal_tour_progress_rejects_invalid_status(uow):
     with pytest.raises(ValueError, match="status must be"):
         SyncPortalTourProgressUseCase(uow).execute(
