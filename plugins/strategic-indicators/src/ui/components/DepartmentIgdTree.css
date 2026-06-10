@@ -1,17 +1,9 @@
 /* Organograma: IGD → Departamentos → Indicadores */
 
 .si-org-chart--single-scope {
-  --si-dept-gap: clamp(12px, 2cqw, 28px);
-  --si-dept-slot-width: clamp(
-    220px,
-    calc(
-      (
-          100cqw - var(--si-dept-gap, 16px) * max(0, var(--si-dept-count, 4) - 1) -
-            48px
-        ) / max(1, var(--si-dept-count, 4))
-    ),
-    420px
-  );
+  --si-dept-gap: clamp(16px, 2cqw, 32px);
+  /* Largura fixa legível por card; o pan-zoom ajusta quando há muitos departamentos. */
+  --si-dept-slot-width: clamp(300px, 36cqw, 420px);
   --si-igd-card-max-width: min(640px, 100%);
   --si-tree-card-radius: 26px;
   padding: clamp(12px, 2cqw, 20px) clamp(14px, 2.5cqw, 24px)
@@ -19,6 +11,8 @@
 }
 
 .si-org-chart--single-scope .si-org-chart__department-column {
+  display: flex;
+  flex-direction: column;
   min-width: var(--si-dept-slot-width, 420px);
   max-width: var(--si-dept-slot-width, 420px);
 }
@@ -235,7 +229,6 @@
     var(--si-dept-count, 7) * var(--si-dept-slot-width, 360px) +
       max(0, var(--si-dept-count, 7) - 1) * var(--si-dept-gap, 24px)
   );
-  max-width: 100%;
   padding-top: 28px;
 }
 
@@ -273,7 +266,7 @@
     var(--si-dept-slot-width, 360px)
   );
   gap: var(--si-dept-gap, 24px);
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   padding: 14px 0 12px;
 }
@@ -465,6 +458,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .si-tree-dept-card {
@@ -474,13 +469,28 @@
 
 .si-org-chart--single-scope .si-tree-dept-card.si-department-card,
 .si-org-chart--single-scope .si-tree-dept-wrap .si-department-card {
+  flex: 1;
+  height: 100%;
   padding: 28px;
   gap: 22px;
   border-radius: var(--si-tree-card-radius, 24px);
 }
 
+.si-org-chart--single-scope .si-tree-dept-card__link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.si-org-chart--single-scope .si-department-card__identity > div {
+  min-width: 0;
+  flex: 1;
+}
+
 .si-org-chart--single-scope .si-department-card__title {
   font-size: 23px;
+  overflow-wrap: anywhere;
 }
 
 .si-org-chart--single-scope .si-department-card__weight {
@@ -544,7 +554,8 @@
 }
 
 .si-tree-dept-card .si-department-card__summary {
-  min-height: 0;
+  flex: 1;
+  min-height: 4.5em;
 }
 
 .si-tree-dept-card__trend {
@@ -570,6 +581,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
   padding: 14px 16px 16px;
 }
 
