@@ -11,6 +11,7 @@ Pergunta de referência: *«qual o status do produto 90262404 na fábrica hoje?�
 3. Modo **Painel** repetia tabelas e explicação antes do dashboard.
 4. Divisões numeradas («1. Escopo da consulta», «2. Roteiro de produção») quebravam o fluxo conversacional.
 5. Painel fabril (`dashboard`) aparecia no **Automático** sem o usuário pedir.
+6. Regressão: ao omitir o painel, `tailVisualOrder` ficava vazio — árvore/gráfico viravam blocos `TEXT`/tabela no markdown em vez de componentes nativos.
 
 **Princípio:** em `summary_then_evidence`, a interpretação vive na **prosa do chat**; visuais são **evidência** renderizada por componentes. Markdown embutido (tabelas, árvore, gráfico, composição) é exclusivo do modo **Texto** explícito.
 
@@ -22,7 +23,7 @@ Relacionado: [playbook-13](../roadmap/playbook-13-respostas-humanizadas-dados.md
 
 | Modo (`explicitSessionFormat`) | Markdown (`textPresentation`) | Componentes MFE |
 |--------------------------------|------------------------------|-----------------|
-| **Automático** (ausente / `auto`) | Prosa compacta: resumo, fatos, leitura — **sem** tabelas GFM, composição em fence nem títulos de seção duplicados | TABELA e árvore como evidência; `sectionFraming` vira prosa inline antes de cada bloco; **sem** `dashboard` no tail |
+| **Automático** (ausente / `auto`) | Prosa compacta: resumo, fatos, leitura — **sem** tabelas GFM, composição em fence nem títulos de seção duplicados | TABELA + árvore + gráfico/KPI nativos (`tailVisuals`); `sectionFraming` inline; **sem** `dashboard` |
 | **Texto** (`text`) | Markdown completo: tabelas embutidas, composição em code fence, gráfico em markdown quando aplicável | Segmentos visuais suprimidos ou secundários conforme layout texto |
 | **Painel** (`dashboard`) | Lead curto (`_compact_native_view_lead`) — sem repetir dados do dashboard | Apenas componente dashboard; `operationalTables` vazio no plano |
 
@@ -60,13 +61,22 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 
 | Pacote | Arquivo | O que valida |
 |--------|---------|--------------|
-| API | `test_playbook_presentation_pipeline_regression.py` | `tailVisualOrder` vazio em `summary_then_evidence` automático; `["dashboard"]` só fora do modo |
-| API | `test_chat_presentation_evidence_first_layout_service.py` | Omite dashboard no Automático; mantém com `explicitSessionFormat: "dashboard"` |
+| API | `test_playbook_presentation_pipeline_regression.py` | Automático: `dashboard` ausente, `tree` no tail, slot `tailVisuals` presente |
+| API | `test_chat_presentation_evidence_first_layout_service.py` | Troca `dashboard` por `tree`/`chart`; `finalize_narrative_after_embeds` remove Composição |
 | API | `test_chat_rich_presentation_text_service.py` | Strip de visuais embutidos em stack automático |
 | API | `test_chat_presentation_table_markdown_service.py` | Embed exige `explicitSessionFormat: "text"` |
 | API | `test_chat_presentation_tree_markdown_service.py` | Idem |
 | MFE | `richStackPresentation.test.ts` | Strip de Composição em code fence |
-| MFE | `presentationStackPlan.humanized.test.ts` | Sem `stackSection` numerado em `summary_then_evidence`; framing inline antes da tabela |
+| MFE | `presentationStackPlan.humanized.test.ts` | Sem `stackSection` numerado; framing inline; árvore nativa no `tailVisuals` |
+
+## Commits do arco (jun/2026)
+
+| Hash | Escopo |
+|------|--------|
+| `fe62999f` | Narrativa no chat sem card de decisão |
+| `9aee91bb` | Componentes ricos no Automático; embed markdown só no Texto |
+| `0eba2dbc` | Sem divisões numeradas; painel só sob demanda |
+| `7fe2fc41` | Árvore/gráfico nativos no tail ao omitir dashboard |
 
 **Nota:** `test_factory_status_auto_quality_matches_fixture_analyst_narrative` pode falhar em `reference_date` no markdown auto — qualidade de narrativa, não regressão de layout.
 
@@ -75,7 +85,7 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 ## Validação manual sugerida
 
 1. Nova conversa; pergunta status fabril 90262404.
-2. **Automático:** prosa no topo + frases explicativas + tabelas/árvore; **sem** divisões numeradas nem painel fabril.
+2. **Automático:** prosa + tabelas + **árvore** + **gráfico** nativos; **sem** bloco `TEXT` de Composição, divisões numeradas nem painel fabril.
 3. **Texto:** markdown completo com tabelas e composição.
 4. **Painel:** lead curto + dashboard único, sem tabelas soltas repetindo o painel.
 
