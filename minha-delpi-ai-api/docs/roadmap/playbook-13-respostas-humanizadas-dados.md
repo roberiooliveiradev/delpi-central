@@ -2,7 +2,7 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Escopo:** qualquer resposta baseada em dados — financeiro, vendas, estoque, produção, atendimento, RH, projetos, qualidade, indicadores, relatórios, integrações, APIs ou bases internas.  
-**Status:** P1 parcial (H0–H2) · P2–P5 planejadas (jun/2026)  
+**Status:** P1–P5 entregues (jun/2026) · **P6 planejada** — MFE render-only (sem lógica duplicada)  
 **Público:** backend, frontend MFE, revisores de PR, agentes Cursor
 
 > **Regra de ouro:** a IA não deve mostrar primeiro os dados. Deve primeiro explicar o que os dados significam. A apresentação visual é **evidência** da resposta, não substituto da interpretação.
@@ -79,7 +79,7 @@ Dados brutos (api-delpi / SQL / action)
 | **Insight** (`ChatDataInsightService`) | Significado: fatos, análise, hipótese, risco, métricas derivadas, limitações, `visualHints` | Renderizar tabela/gráfico |
 | **Presenter** | Montar `presentation`, `tablePresentation`, `chartPresentation`, … | Decidir «o que significa» para o usuário |
 | **Decisor** (`ChatPresentationDecisionService`) | Formato primário, score, `purpose`, ordem do stack | Texto PT hardcoded |
-| **MFE** | Orquestrar segmentos visuais | Regra de negócio duplicada da API |
+| **MFE** | Renderizar segmentos na ordem do metadata | Decidir formato, suprimir visuais, strip de markdown, dedup estrutural |
 
 ### 2.3 Ordem de decisão de formato (generalização)
 
@@ -108,7 +108,7 @@ Dados brutos (api-delpi / SQL / action)
 **Proibido:**
 
 - Conclusão só no `system_prompt` do agente
-- `if` de domínio no MFE para narrativa ou formato
+- `if` de domínio no MFE para narrativa, formato ou supressão de visuais (ver **P6 §8.6**)
 - Strings PT em Python/TS fora de `assistant/*.json`
 - Preferência que altera só `selected` mas a UI mostra outro primário
 - Gráfico/tabela «decorativa» sem `purpose`
@@ -136,6 +136,7 @@ Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook 
 | A13 | Card de decisão (MFE) | **`ChatDecisionCard`** + segment registry | Segmento `decision` / `story.verdict` | ⬜ |
 | A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
 | A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ✅ |
+| A19 | MFE render-only (P6) | `ChatPresentationRenderPlanService` + prune payload | `renderPlan` / omissão de campos | ⬜ |
 | A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
 | A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ✅ |
 | A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | ✅ |
@@ -379,7 +380,7 @@ nativeSingleViewBuilder.ts
 segmentDedupe.ts
 ```
 
-**Regra:** MFE não reimplementa score, shape nem interpretação — só renderiza metadata.
+**Regra (alvo P6):** MFE **não** reimplementa score, shape, interpretação, modo de sessão nem supressão de visuais — só materializa o que a API já decidiu enviar. Ver **§8.6**.
 
 ---
 
@@ -394,6 +395,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
+| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | ⬜ |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -486,6 +488,148 @@ Módulos: `ChatPresentationEvidenceFirstLayoutService`, `ChatRichPresentationTex
 2. `ChatHumanizedResponseQualityService.evaluate(metadata)` — checklist §13 automatizado
 3. `tests/fixtures/humanized_data_response_cases.py` — 10 shapes §17 + gate `humanized_data_response_gate.py`
 4. CI `--check-humanized-answer` no workflow `minha-delpi-ai-api-presentation.yml`
+
+### 8.6 P6 — MFE render-only (próxima fase)
+
+**Motivação (jun/2026):** correções de regressão (`tailVisualPolicy: allowlist`, supressão de `dashboard` no Automático) reintroduziram **lógica de decisão no MFE** (`shouldRenderDashboardSegment`, fallback órfão em `appendTailVisuals`, inferência de `allowlist` quando o campo falta). Isso viola §2.2 e gera drift API↔MFE — o sintoma reaparece no frontend mesmo com o backend correto.
+
+**Princípio:**
+
+```text
+API decide e filtra → metadata contém só o que deve aparecer → MFE monta segmentos mecanicamente
+```
+
+O MFE permanece responsável por **mecânica de UI** (registry de componentes, markdown/prosa, streaming reveal, toolbar de formato do composer, dedupe de keys React). Toda **regra de negócio de apresentação** fica na API.
+
+#### 8.6.1 Inventário de lógica duplicada no MFE (auditoria jun/2026)
+
+| Área | Arquivo(s) MFE | O que decide hoje | Canônico API (alvo) |
+|------|----------------|-------------------|---------------------|
+| Modo de sessão | `chatPresentation.ts` — `isExplicitTextSessionMode`, `isExplicitDashboardSession`, `hasExplicitPresentationFormatChoice` | Texto vs Painel vs escolha explícita | `explicitSessionFormat` já na metadata; **não re-interpretar** — usar flags do plano |
+| Perfil evidence-first | `isSummaryThenEvidenceMode`, `assistantContentDecisionLayer.ts` | Suprimir card / stackSection | `presentationDecision.presentationMode` + API já omite `storyPresentation` |
+| Tail / painel | `shouldRenderDashboardSegment`, `usesStrictTailVisualAllowlist`, `visualSegmentCollector.ts`, `presentationStackBlueprint.ts` | Coletar ou não `dashboard`; fallback órfão | `ChatPresentationEvidenceFirstLayoutService` + **omitir** `dashboardPresentation` do payload quando fora do tail |
+| Inferência de policy | `presentationStackPlan.ts` — default `allowlist` se `summary_then_evidence` | Política quando campo ausente | API **sempre** envia `tailVisualPolicy` explícito |
+| Strip de markdown | `stripRichUiRedundantProseFromMarkdown`, `stripCompositionCodeFenceFromMarkdown` em `chatPresentation.ts` | Remover embeds/composição no Automático | `ChatRichPresentationTextService.prepare_evidence_first_chat_narrative` — texto final no `textPresentation` |
+| Dedup estrutural | `presentationStructureDedup.ts` — `shouldSkipTableSegment`, heurística de colunas/título | Ocultar tabela plana quando há árvore | Presenter + `structureDedupApplied: true` (padrão já usado); API não envia tabela duplicada |
+| Seções humanizadas | `planUsesHumanizedSections` + gate em `presentationStackBlueprint.ts` | `stackSection` numerado vs prosa inline | `stackPresentationPlan.humanizedSections` + `sectionVisibility` — API define slots; MFE só expande |
+| Roteamento de layout | `assistantContentSegments.ts`, `nativeSingleViewBuilder.ts` | stack vs single vs markers vs texto | `presentationDecision.layoutMode` + plano fechado; evoluir para `renderPlan` |
+| Formato visual ativo | `assistantContentVisualFormats.ts` | Toolbar quando há escolha explícita | `presentationDecision.availableViews` + `explicitSessionFormat` — sem heurística de `preferredFormat`≠`selected` |
+
+**Dívida introduzida na hotfix `allowlist` (commit `c1c455f6`):** funções `shouldRenderDashboardSegment` / `isExplicitDashboardSession` são **paliativo** até P6 — documentadas como removíveis quando a API deixar de enviar `dashboardPresentation` fora do contrato.
+
+#### 8.6.2 Contrato alvo (metadata)
+
+Evolução incremental — não quebrar consumidores atuais:
+
+**Fase P6-A — omissão no payload (quick win)**
+
+A API **não serializa** campos suprimidos no turno (em vez do MFE filtrar na coleta):
+
+```text
+Automático + summary_then_evidence:
+  ✓ textPresentation (prosa final, sem embeds)
+  ✓ tablePresentation / treePresentation / chartPresentation conforme tailVisualOrder
+  ✗ dashboardPresentation (omitido)
+  ✗ storyPresentation (já omitido)
+
+Painel explícito:
+  ✓ dashboardPresentation
+  ✗ operationalTables no stackPlan (já feito)
+```
+
+Flags existentes reforçadas: `structureDedupApplied`, `tailVisualPolicy`, `tailVisualOrder`, `sectionVisibility`.
+
+**Fase P6-B — `stackPresentationPlan.renderHints` (opcional)**
+
+Campos declarativos só para telemetria/depuração — **não** para o MFE re-decidir:
+
+```json
+{
+  "renderHints": {
+    "suppressedKinds": ["dashboard"],
+    "textRenderMode": "compact",
+    "tailVisualPolicy": "allowlist"
+  }
+}
+```
+
+**Fase P6-C — `renderPlan` (estado final)**
+
+Lista ordenada de segmentos já resolvidos pela API (espelho do que `buildAssistantContentSegments` produz hoje):
+
+```json
+{
+  "renderPlan": {
+    "version": 1,
+    "segments": [
+      { "kind": "markdown", "slot": "lead", "source": "textPresentation" },
+      { "kind": "table", "slot": "operationalTables", "source": "tablePresentation" },
+      { "kind": "tree", "slot": "tailVisuals", "source": "treePresentation" }
+    ]
+  }
+}
+```
+
+MFE: `buildSegmentsFromRenderPlan(metadata)` — substitui `presentationStackBlueprint` progressivamente.
+
+#### 8.6.3 Serviços API a estender (módulo canônico)
+
+| Serviço | Entrega P6 |
+|---------|------------|
+| `ChatPresentationEvidenceFirstLayoutService` | `_prune_suppressed_presentations(metadata)` — remove `dashboardPresentation` e visuais fora de `tailVisualOrder` |
+| `ChatPresentationStackOrderService` | Garantir `tailVisualPolicy` sempre explícito no plano |
+| `ExternalActionResultPresenter` / presenters | Dedup estrutural antes de gravar metadata (sem depender de heurística MFE) |
+| `ChatRichPresentationTextService` | Único responsável por markdown compacto vs completo |
+| **`ChatPresentationRenderPlanService`** (novo) | Monta `renderPlan` ou valida paridade com builder MFE legado |
+
+Ponto de encaixe no pipeline (após §5 passo 7):
+
+```text
+… ChatPresentationEvidenceFirstLayoutService.compose()
+  → ChatPresentationRenderPlanService.build(metadata)   [P6-C]
+  → ChatPresentationPayloadPruningService.prune(metadata) [P6-A]
+```
+
+#### 8.6.4 Plano de remoção no MFE (ordem)
+
+```text
+1. P6-A API omite dashboard → remover shouldRenderDashboardSegment + filtro em visualSegmentCollector
+2. P6-A API omite tabelas duplicadas → remover shouldSkipTableSegment / isHierarchyDuplicateTable
+3. P6-A texto final na API → remover stripRichUi* do resolveAssistantRenderableMarkdown
+4. API tailVisualPolicy obrigatório → remover inferência em presentationStackPlan.parsePlan
+5. API renderPlan estável → reduzir presentationStackBlueprint a executor de renderPlan
+6. Remover fallback órfão legacy em appendTailVisuals (manter só allowlist)
+```
+
+**Permanece no MFE:** `assistantProseRendering.ts` (reveal/streaming), `assistantContentRegistry`, toolbar do composer (`useChatPresentationFormat`), testes de snapshot de componentes.
+
+#### 8.6.5 Testes e governança P6
+
+| Artefato | Função |
+|----------|--------|
+| `tests/unit/domain/services/test_presentation_render_contract.py` | Por modo (auto/text/dashboard) + perfil: campos presentes/ausentes, ordem do tail |
+| `tests/unit/application/test_presentation_mfe_parity.py` | Opcional: JSON fixture → segmentos esperados (contrato, não reimplementação TS) |
+| `scripts/audit_mfe_presentation_logic.py` | Lista símbolos proibidos no MFE (`shouldRender*`, `isExplicit*Session`, `stripRich*`) — gate CI |
+| Atualizar `presentationStackPlan.humanized.test.ts` | Assertar comportamento via metadata **pruned**, não via `if` local |
+
+**Critérios de aceite P6:**
+
+```text
+[ ] Nenhum `if` de modo de sessão em chatPresentation.ts para suprimir visuais
+[ ] dashboardPresentation ausente no JSON quando Automático + summary_then_evidence
+[ ] textPresentation sem embeds no Automático (assert API, não strip MFE)
+[ ] tailVisualPolicy sempre presente no stackPresentationPlan
+[ ] Regressão 90262404: Automático sem painel — validada só com payload API
+[ ] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
+```
+
+#### 8.6.6 PR checklist (P6)
+
+1. Regra nova só em serviço API (§8.6.3)?
+2. MFE alterado apenas para **consumir** campo novo ou **remover** `if`?
+3. Teste de contrato de payload (não só snapshot MFE)?
+4. Changelog + este §8.6 atualizados?
+5. Sem texto PT novo fora de JSON?
 
 ---
 
@@ -635,9 +779,10 @@ P1 (dataAnswer + ChatDataInsightService + perfis operacionais restantes)
     → P3 (score + pipeline preferência + purpose)
       → P4 (DecisionCard + story + chips + hooks MFE)
         → P5 (auditoria + qualidade + CI)
+          → P6 (MFE render-only — API envia payload final, sem lógica duplicada no frontend)
 ```
 
-**Quick win atual:** validar caso **90262404** (status fabril) com `<!-- section:summary -->` + gráfico com `purpose` após P3.
+**Quick win atual (P6-A):** `ChatPresentationEvidenceFirstLayoutService` passa a **omitir** `dashboardPresentation` no Automático — permite remover `shouldRenderDashboardSegment` do MFE na mesma sprint.
 
 ---
 

@@ -10,10 +10,12 @@ Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanize
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **API (chat base)** | Montar `presentation` + visuais secundários, `textPresentation`, `presentationDecision` (o que combinar e em que ordem) |
-| **MFE** | `ChatAssistantContent` monta segmentos; **uma rota** ou analyser: narrativa + barra global de formato; **várias rotas** do mesmo produto: seções numeradas com toolbar **por bloco** (ver [Consulta multi-rota](#consulta-multi-rota-mesmo-produto-jun2026)) |
+| **API (chat base)** | Decidir formato, ordem, supressões e narrativa; serializar **somente** o que deve aparecer (`textPresentation`, visuais, `stackPresentationPlan`, `presentationDecision`) |
+| **MFE** | Materializar segmentos a partir do metadata — registry, markdown/prosa, streaming; **sem** regras de negócio de apresentação (modo de sessão, omitir painel, strip de embeds, dedup estrutural) |
 
 Agentes **não** reimplementam layout; herdam metadata das tools.
+
+**Próxima fase (P6):** ver [playbook-13 §8.6](../roadmap/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only-próxima-fase) — inventário de lógica duplicada no MFE, contrato `renderPlan` e remoção progressiva de `shouldRender*` / `isExplicit*` no frontend.
 
 ---
 
