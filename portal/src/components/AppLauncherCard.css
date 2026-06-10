@@ -79,10 +79,6 @@
   padding: 12px;
 }
 
-.launcher-app-tile.home-variant .launcher-app-name {
-  font-size: 13px;
-}
-
 /* ICON + NAME */
 
 .launcher-app-icon {
@@ -113,7 +109,7 @@
 }
 
 .launcher-app-name {
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
   line-height: 1.25;
   word-break: normal;
@@ -121,8 +117,9 @@
   hyphens: auto;
 }
 
-/* Até 2 linhas no tile; nome completo no title */
+/* Grid / home / modal — nome do app (até 2 linhas; title com nome completo) */
 .launcher-app-tile:not(.sidebar-variant) .launcher-app-name {
+  font-size: 15px;
   width: 100%;
   max-width: 100%;
   display: -webkit-box;
@@ -133,23 +130,23 @@
 }
 
 .launcher-app-name[data-name-tier="medium"] {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
-.launcher-app-tile.home-variant .launcher-app-name[data-name-tier="medium"] {
-  font-size: 12px;
+.launcher-app-tile:not(.sidebar-variant) .launcher-app-name[data-name-tier="medium"] {
+  font-size: 14px;
 }
 
 .launcher-app-name[data-name-tier="long"] {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
-.launcher-app-tile.home-variant .launcher-app-name[data-name-tier="long"] {
-  font-size: 11px;
+.launcher-app-tile:not(.sidebar-variant) .launcher-app-name[data-name-tier="long"] {
+  font-size: 13px;
 }
 
 /* PIN */
@@ -317,7 +314,7 @@
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text);
   transition: 0.15s ease;
 }
@@ -628,7 +625,7 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 }
 
 .launcher-app-tile.sidebar-variant .launcher-app-name {
-  font-size: 14px;
+  font-size: 15px;
   text-align: left;
   flex: 1;
   min-width: 0;
@@ -656,6 +653,7 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   padding: 6px 8px;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 13px;
   color: var(--text-muted);
   transition: background 0.28s ease, color 0.28s ease;
 }
