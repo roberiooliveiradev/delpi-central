@@ -82,7 +82,10 @@ class ChatPresentationSectionAvailabilityService:
             plan["narrativeOrder"] = cls._narrative_order_for_structure_exclusivity(visibility)
             return plan
 
-        if ChatPresentationRoutePolicyService.is_stock_route(lowered):
+        if ChatPresentationRoutePolicyService.is_stock_route(
+            lowered,
+            entity=cls._metadata_entity(metadata),
+        ):
             visibility = cls._resolve_stock_visibility(metadata)
             plan["presentationProfile"] = "product_stock"
             plan["humanizedSections"] = True
@@ -1096,3 +1099,20 @@ class ChatPresentationSectionAvailabilityService:
             return ""
 
         return str(text_presentation.get("markdown") or "").strip()
+
+    @classmethod
+    def _metadata_entity(cls, metadata: dict[str, Any]) -> str | None:
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                return raw_entity.strip()
+
+        raw = metadata.get("entity")
+
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
+
+        return None

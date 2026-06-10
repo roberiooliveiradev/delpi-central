@@ -46,6 +46,46 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         return {}
 
+    def _enrich_history_items(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        product_code: str,
+    ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_presentation_detail_action_service import (
+            ChatPresentationDetailActionService,
+        )
+        from app.domain.services.chat_presentation_supplier_display_service import (
+            ChatPresentationSupplierDisplayService,
+        )
+
+        enriched: list[dict[str, Any]] = []
+
+        for raw in items:
+            if not isinstance(raw, dict):
+                continue
+
+            item = ChatPresentationSupplierDisplayService.enrich_item(raw)
+
+            if product_code:
+                item["product_code"] = product_code
+
+            document = str(item.get("document_number") or item.get("purchase_order") or "").strip()
+            source = str(item.get("source") or "").strip()
+
+            if product_code and document and source:
+                item["_detailMeta"] = ChatPresentationDetailActionService.purchase_record_detail_meta(
+                    product_code=product_code,
+                    document_number=document,
+                    source=source,
+                    supplier_code=ChatPresentationSupplierDisplayService.supplier_code(item),
+                    supplier_store=ChatPresentationSupplierDisplayService.supplier_store(item),
+                )
+
+            enriched.append(item)
+
+        return enriched
+
     def _insight(self, key: str, **values: str) -> str:
         return self._host._presenter_text(
             "compositeAnalysisInsights",
@@ -375,8 +415,13 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         price_items = self._section_block(root, "price_history").get("items")
 
+        code, _description = self._product_context(root, path)
+
         if isinstance(price_items, list) and price_items:
-            price_dicts = [item for item in price_items if isinstance(item, dict)]
+            price_dicts = self._enrich_history_items(
+                [item for item in price_items if isinstance(item, dict)],
+                product_code=code,
+            )
             shown, total = _OpsTable.limit_items(price_dicts, sort_key="issue_date")
             history_title = (
                 self._route(
@@ -402,7 +447,10 @@ class ExternalActionProductRawMaterialPricePresenter:
         budget_items = self._section_block(root, "budget_history").get("items")
 
         if isinstance(budget_items, list) and budget_items:
-            budget_dicts = [item for item in budget_items if isinstance(item, dict)]
+            budget_dicts = self._enrich_history_items(
+                [item for item in budget_items if isinstance(item, dict)],
+                product_code=code,
+            )
             shown, total = _OpsTable.limit_items(budget_dicts, sort_key="source", reverse=False)
             budget_title = (
                 self._route(
@@ -1485,25 +1533,29 @@ class ExternalActionProductRawMaterialPricePresenter:
             ChatPresentationHierarchyTreeService,
         )
 
+        code, _description = self._product_context(root, path)
         combined: list[dict[str, Any]] = []
         price_items = self._section_block(root, "price_history").get("items")
 
         if isinstance(price_items, list):
-            for item in price_items:
-                if isinstance(item, dict):
-                    combined.append({**item, "record_kind": "nf"})
+            for item in self._enrich_history_items(
+                [row for row in price_items if isinstance(row, dict)],
+                product_code=code,
+            ):
+                combined.append({**item, "record_kind": "nf"})
 
         budget_items = self._section_block(root, "budget_history").get("items")
 
         if isinstance(budget_items, list):
-            for item in budget_items:
-                if isinstance(item, dict):
-                    combined.append({**item, "record_kind": "orcamento"})
+            for item in self._enrich_history_items(
+                [row for row in budget_items if isinstance(row, dict)],
+                product_code=code,
+            ):
+                combined.append({**item, "record_kind": "orcamento"})
 
         if not combined:
             return None
 
-        code, _description = self._product_context(root, path)
         title = (
             self._route("rawMaterialPriceIntelligence", "treeSuppliersTitle", code=code)
             if code
@@ -1511,21 +1563,35 @@ class ExternalActionProductRawMaterialPricePresenter:
         )
 
         def _leaf(item: dict[str, Any]) -> dict[str, Any]:
-            supplier = str(item.get("supplier_code") or "—")
+            from app.domain.services.chat_presentation_supplier_display_service import (
+                ChatPresentationSupplierDisplayService,
+            )
+
+            supplier = ChatPresentationSupplierDisplayService.format_supplier_label(
+                supplier_code=ChatPresentationSupplierDisplayService.supplier_code(item),
+                supplier_name=ChatPresentationSupplierDisplayService.supplier_name(item),
+                supplier_store=ChatPresentationSupplierDisplayService.supplier_store(item),
+            )
             price = self._host._format_field_value("unit_price", item.get("unit_price"))
+            detail_meta = item.get("_detailMeta") if isinstance(item.get("_detailMeta"), dict) else None
+            meta = {
+                "record_kind": str(item.get("record_kind") or ""),
+                "unit_price": item.get("unit_price"),
+            }
+
+            if isinstance(detail_meta, dict):
+                meta.update(detail_meta)
 
             return ChatPresentationHierarchyTreeService._serialize_node(
                 node_id=f"mp:{supplier}:{item.get('record_kind')}:{price}",
                 label=self._route(
-                    "rawMaterialPriceIntelligence",
-                    "treeSupplierLeafLabel",
+                    "purchaseHistoryShared",
+                    "treePriceLeafLabel",
+                    supplier=supplier,
                     price=price,
                 ),
-                subtitle=supplier,
-                meta={
-                    "record_kind": str(item.get("record_kind") or ""),
-                    "unit_price": item.get("unit_price"),
-                },
+                subtitle=str(item.get("record_kind") or "").strip(),
+                meta=meta,
             )
 
         return ChatPresentationHierarchyTreeService.build_multi_level(
@@ -1537,7 +1603,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                 else title
             ),
             items=combined,
-            group_keys=["supplier_code"],
+            group_keys=["supplier_group"],
             leaf_builder=_leaf,
         )
 

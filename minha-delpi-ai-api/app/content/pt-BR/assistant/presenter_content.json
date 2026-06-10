@@ -516,7 +516,6 @@
       "treeSuppliersTitle": "Fornecedores no histórico — {code}",
       "treeSuppliersTitleGeneric": "Fornecedores no histórico",
       "treeRootLabel": "MP {code}",
-      "treeSupplierLeafLabel": "NF/orçamento · R$ {price}",
       "dashboardTitle": "Painel de preço MP — {code}",
       "dashboardTitleGeneric": "Painel de preço da matéria-prima"
     },
@@ -612,6 +611,14 @@
       "dashboardTitle": "Painel da última compra — {code}",
       "dashboardTitleGeneric": "Painel da última compra"
     },
+    "purchaseHistoryShared": {
+      "supplierStoreLabel": "loja {store}",
+      "supplierLabelWithNameStore": "{name} ({code} · {store})",
+      "supplierLabelWithName": "{name} ({code})",
+      "supplierLabelCodeStore": "{code} · {store}",
+      "treeBudgetLeafLabel": "{source} · doc. {document} · {supplier}",
+      "treePriceLeafLabel": "{supplier} — R$ {price}"
+    },
     "purchasePriceHistory": {
       "titleWithCode": "Histórico de preço de compra — {code}",
       "titleGeneric": "Histórico de preço de compra",
@@ -636,7 +643,6 @@
       "treeTitle": "NFs por fornecedor — {code}",
       "treeTitleGeneric": "Histórico por fornecedor",
       "treeRootLabel": "MP {code}",
-      "treePriceLeafLabel": "{supplier} — R$ {price}",
       "dashboardTitle": "Painel do histórico — {code}",
       "dashboardTitleGeneric": "Painel do histórico de compra"
     },
@@ -663,7 +669,6 @@
       "treeTitle": "Orçamentos por origem — {code}",
       "treeTitleGeneric": "Orçamentos SC/PC",
       "treeRootLabel": "MP {code}",
-      "treeBudgetLeafLabel": "{source} — doc. {document}",
       "dashboardTitle": "Painel de orçamentos — {code}",
       "dashboardTitleGeneric": "Painel de orçamentos"
     },

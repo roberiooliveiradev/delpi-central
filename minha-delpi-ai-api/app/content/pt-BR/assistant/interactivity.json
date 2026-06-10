@@ -263,5 +263,9 @@
     { "key": "operationalRefinementFollowUpSuggestions", "group": "refinar", "priority": 8 },
     { "key": "sqlAuthoringFollowUpSuggestions", "group": "consultar", "priority": 14 },
     { "key": "sqlAdvancedFollowUpSuggestions", "group": "consultar", "priority": 13 }
-  ]
+  ],
+  "presentationDetailQueries": {
+    "supplier": "detalhe fornecedor {supplierCode} loja {supplierStore} do produto {productCode}",
+    "purchaseRecord": "detalhe documento {documentNumber} origem {source} do produto {productCode}"
+  }
 }

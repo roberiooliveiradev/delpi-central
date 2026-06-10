@@ -23,8 +23,13 @@ class ChatPresentationRoutePolicyService:
         return "table" in flags or "analyser" in flags
 
     @classmethod
-    def is_stock_route(cls, path: str | None) -> bool:
-        return ChatPresentationProfileService.has_flag(path, "stock")
+    def is_stock_route(cls, path: str | None, entity: str | None = None) -> bool:
+        lowered = cls.path_lowered(path)
+
+        if "/supplies/" in lowered:
+            return False
+
+        return ChatPresentationProfileService.has_flag(path, "stock", entity=entity)
 
     @classmethod
     def is_analyser_route(cls, path: str | None) -> bool:

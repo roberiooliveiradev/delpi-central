@@ -126,6 +126,37 @@ def test_factory_route_includes_tail_visuals_when_kpi_present():
     assert "kpi" in plan["tailVisualOrder"]
 
 
+def test_supplies_stock_value_does_not_use_product_stock_stack():
+    metadata = {
+        "path": "/supplies/stock-value",
+        "apiDelpiResponseMeta": {"entity": "supplies_stock_value"},
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": (
+                "### Valor total de estoque\n\n"
+                "<!-- section:scope -->\n\n"
+                "Indicador consolidado de suprimentos."
+            ),
+        },
+        "kpiPresentation": {
+            "type": "kpi",
+            "title": "Estoque empresa",
+            "cards": [{"label": "Valor", "value": "12.5", "unit": "M"}],
+        },
+        "chartPresentation": {
+            "type": "chart",
+            "chartType": "line",
+            "data": [],
+        },
+    }
+
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan["presentationProfileKey"] == "kpi_series"
+    assert plan["presentationProfile"] != "product_stock"
+    assert "tailVisuals" in plan["narrativeOrder"]
+
+
 def test_filter_analyser_highlights_drops_absence_bullets():
     insights = [
         "Estrutura com 6 itens.",

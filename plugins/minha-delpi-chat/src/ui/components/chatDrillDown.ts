@@ -56,10 +56,46 @@ export function extractRowContext(
   };
 }
 
+function readPresentationDetailQuery(
+  source: Record<string, unknown> | undefined,
+): string | null {
+  const detailMeta = source?._detailMeta;
+
+  if (detailMeta && typeof detailMeta === "object") {
+    const detailQuery = String(
+      (detailMeta as Record<string, unknown>).detailQuery ?? "",
+    ).trim();
+
+    if (detailQuery) {
+      return detailQuery;
+    }
+  }
+
+  const meta = source?.meta;
+
+  if (meta && typeof meta === "object") {
+    const detailQuery = String(
+      (meta as Record<string, unknown>).detailQuery ?? "",
+    ).trim();
+
+    if (detailQuery) {
+      return detailQuery;
+    }
+  }
+
+  return null;
+}
+
 export function buildDrillDownQuery(
   row: Record<string, unknown>,
   columns: DrillDownColumn[],
 ): string | null {
+  const presentationDetailQuery = readPresentationDetailQuery(row);
+
+  if (presentationDetailQuery) {
+    return presentationDetailQuery;
+  }
+
   const { code, desc, branch, warehouse } = extractRowContext(row, columns);
 
   if (branch || warehouse) {
@@ -265,7 +301,16 @@ export function buildTreeDrillDownQuery(node: {
   id?: string;
   label?: string;
   subtitle?: string;
+  meta?: Record<string, string | number>;
 }): string | null {
+  const presentationDetailQuery = readPresentationDetailQuery(
+    node as Record<string, unknown>,
+  );
+
+  if (presentationDetailQuery) {
+    return presentationDetailQuery;
+  }
+
   return buildDrillDownQuery(
     {
       code: node.label || node.id || "",
@@ -304,6 +349,7 @@ export function buildTreePointMenuActions(node: {
   id?: string;
   label?: string;
   subtitle?: string;
+  meta?: Record<string, string | number>;
 }): TableRowMenuAction[] {
   const detailQuery = buildTreeDrillDownQuery(node);
   const code = extractTreeNodeCode(node);

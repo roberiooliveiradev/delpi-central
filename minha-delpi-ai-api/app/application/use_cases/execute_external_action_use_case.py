@@ -24,6 +24,8 @@ class ExecuteExternalActionUseCase:
         "query_text",
         "userMessage",
         "user_message",
+        "presentationDetailFilter",
+        "sessionResponseFormat",
     }
 
     def __init__(
@@ -72,6 +74,18 @@ class ExecuteExternalActionUseCase:
         )
 
         sanitized_data = self.policy.sanitize_response(result["data"])
+        detail_filter = request_parameters.get("presentationDetailFilter")
+
+        if isinstance(detail_filter, dict) and detail_filter:
+            from app.domain.services.chat_presentation_detail_filter_service import (
+                ChatPresentationDetailFilterService,
+            )
+
+            sanitized_data = ChatPresentationDetailFilterService.apply(
+                sanitized_data,
+                detail_filter,
+            )
+
         action_path = action.get("path") or ""
         resolved_path = self._resolve_action_path(action_path, request_parameters)
         from app.domain.services.chat_sql_execution_error_interpretation_service import (

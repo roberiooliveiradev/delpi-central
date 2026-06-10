@@ -15,6 +15,8 @@
         "document_number": "164708",
         "issue_date": "20260430",
         "supplier_code": "000002",
+        "supplier_store": "01",
+        "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
         "quantity": 300000.0,
         "unit_price": 0.0,
         "purchase_order": "041446"
@@ -24,6 +26,8 @@
         "document_number": "041446",
         "issue_date": "20260430",
         "supplier_code": "000002",
+        "supplier_store": "01",
+        "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
         "quantity": 294000.0,
         "unit_price": 0.0892799,
         "total_value": 26248.29

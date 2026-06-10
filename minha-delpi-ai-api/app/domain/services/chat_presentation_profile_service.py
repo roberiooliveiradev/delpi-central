@@ -39,9 +39,20 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             fragment = str(rule.get("contains") or "").strip().lower()
 
             if fragment and fragment in lowered:
+                if cls._path_rule_suppressed(fragment, lowered):
+                    continue
+
                 return str(rule.get("profile") or "generic")
 
         return "generic"
+
+    @classmethod
+    def _path_rule_suppressed(cls, fragment: str, lowered_path: str) -> bool:
+        """Evita colisões de fragmentos genéricos com rotas KPI de outros domínios."""
+        if fragment == "/stock" and "/supplies/" in lowered_path:
+            return True
+
+        return False
 
     @classmethod
     def profile(cls, profile_key: str | None = None) -> dict[str, Any]:

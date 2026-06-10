@@ -199,13 +199,34 @@ class ChatPresentationHierarchyTreeService:
                 leaf_builder=leaf_builder,
             )
 
+            group_label = bucket_key
+            group_badge = str(key).upper()
+            group_subtitle = ""
+            sample = bucket_items[0] if bucket_items else {}
+
+            if key == "supplier_group" and isinstance(sample, dict):
+                group_label = bucket_key
+                group_badge = ""
+                store = str(sample.get("supplier_store") or "").strip()
+
+                if store:
+                    from app.domain.services.chat_presentation_supplier_display_service import (
+                        ChatPresentationSupplierDisplayService,
+                    )
+
+                    group_subtitle = ChatPresentationSupplierDisplayService.format_store_label(store)
+
             nodes.append(
                 cls._serialize_node(
                     node_id=f"{key}:{bucket_key}",
-                    label=bucket_key,
-                    badge=str(key).upper(),
+                    label=group_label,
+                    subtitle=group_subtitle,
+                    badge=group_badge,
                     children=child_nodes or None,
-                    meta=cls._aggregate_meta(bucket_items),
+                    meta=cls._merge_meta(
+                        cls._aggregate_meta(bucket_items),
+                        cls._supplier_group_detail_meta(sample, bucket_items),
+                    ),
                 )
             )
 
@@ -220,6 +241,57 @@ class ChatPresentationHierarchyTreeService:
                 meta[str(field)] = value
 
         return meta
+
+    @classmethod
+    def _merge_meta(
+        cls,
+        base: dict[str, float | int] | None,
+        extra: dict[str, str] | None,
+    ) -> dict[str, str | float | int] | None:
+        merged: dict[str, str | float | int] = {}
+
+        if isinstance(base, dict):
+            merged.update(base)
+
+        if isinstance(extra, dict):
+            merged.update(extra)
+
+        return merged or None
+
+    @classmethod
+    def _supplier_group_detail_meta(
+        cls,
+        sample: dict[str, Any],
+        bucket_items: list[dict[str, Any]],
+    ) -> dict[str, str] | None:
+        if not isinstance(sample, dict):
+            return None
+
+        product_code = str(sample.get("product_code") or "").strip()
+        supplier_code = str(sample.get("supplier_code") or "").strip()
+        supplier_store = str(sample.get("supplier_store") or "").strip()
+
+        if not supplier_code:
+            return None
+
+        from app.domain.services.chat_presentation_detail_action_service import (
+            ChatPresentationDetailActionService,
+        )
+
+        if not product_code:
+            for item in bucket_items:
+                if isinstance(item, dict) and str(item.get("product_code") or "").strip():
+                    product_code = str(item.get("product_code") or "").strip()
+                    break
+
+        if not product_code:
+            return None
+
+        return ChatPresentationDetailActionService.supplier_detail_meta(
+            product_code=product_code,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+        )
 
     @classmethod
     def _aggregate_meta(cls, items: list[dict[str, Any]]) -> dict[str, float | int]:

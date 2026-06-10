@@ -303,3 +303,100 @@ class ExternalActionRefinementRouteSelectionService:
             },
             "reason": reason,
         }
+
+    def select_presentation_detail(
+        self,
+        plan,
+        *,
+        allowed_action_ids: list[str],
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        if not candidates_loader:
+            return None
+
+        allowed = set(allowed_action_ids or [])
+        product_code = str(plan.product_code or "").strip()
+        path_fragment = str(plan.path_fragment or "").strip().lower()
+
+        if not product_code or not path_fragment:
+            return None
+
+        candidates = candidates_loader(allowed_action_ids=allowed_action_ids)
+        selected_action = None
+
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                continue
+
+            action_id = str(candidate.get("actionId") or "").strip()
+            path = str(candidate.get("path") or "").lower()
+
+            if action_id not in allowed:
+                continue
+
+            if path_fragment not in path:
+                continue
+
+            if f"/products/{{code}}/{path_fragment.lstrip('/')}" in path.replace(product_code, "{code}"):
+                selected_action = candidate
+                break
+
+            if path_fragment.lstrip("/") in path and product_code in path:
+                selected_action = candidate
+                break
+
+            if path_fragment in path:
+                selected_action = candidate
+                break
+
+        if not selected_action:
+            for candidate in candidates:
+                if not isinstance(candidate, dict):
+                    continue
+
+                path = str(candidate.get("path") or "").lower()
+
+                if path_fragment not in path:
+                    continue
+
+                action_id = str(candidate.get("actionId") or "").strip()
+
+                if action_id in allowed:
+                    selected_action = candidate
+                    break
+
+        if not selected_action:
+            return None
+
+        parameters = dict(plan.previous_parameters or {})
+        parameters["code"] = product_code
+
+        detail_filter = dict(plan.detail_filter or {})
+
+        if detail_filter:
+            parameters["presentationDetailFilter"] = detail_filter
+
+        reason = ExternalActionResponseContentService.get(
+            "selectionReasons",
+            "presentationDetailDefault",
+        )
+
+        if plan.kind == "supplier_detail":
+            reason = ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "presentationDetailSupplier",
+            )
+        elif plan.kind == "purchase_record_detail":
+            reason = ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "presentationDetailPurchaseRecord",
+            )
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": selected_action["actionId"],
+                "parameters": parameters,
+            },
+            "reason": reason,
+        }

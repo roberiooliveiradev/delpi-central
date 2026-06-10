@@ -184,11 +184,16 @@ class ProductRawMaterialPriceRepository(
                 C1.C1_DATPRF AS required_date,
                 C1.C1_FORNECE AS supplier_code,
                 C1.C1_LOJA AS supplier_store,
+                SA2.A2_NOME AS supplier_name,
                 C1.C1_QUANT AS quantity,
                 C1.C1_PRECO AS unit_price,
                 C1.C1_TOTAL AS total_value,
                 C1.C1_PEDIDO AS purchase_order
             FROM SC1010 C1 WITH (NOLOCK)
+            LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+                ON SA2.A2_COD = C1.C1_FORNECE
+               AND SA2.A2_LOJA = C1.C1_LOJA
+               AND SA2.D_E_L_E_T_ = ''
             WHERE C1.D_E_L_E_T_ = ''
               AND C1.C1_PRODUTO = ?
               AND C1.C1_EMISSAO >= ?
@@ -205,11 +210,16 @@ class ProductRawMaterialPriceRepository(
                 C7.C7_DATPRF AS required_date,
                 C7.C7_FORNECE AS supplier_code,
                 C7.C7_LOJA AS supplier_store,
+                SA2.A2_NOME AS supplier_name,
                 C7.C7_QUANT AS quantity,
                 C7.C7_PRECO AS unit_price,
                 C7.C7_TOTAL AS total_value,
                 CAST(NULL AS VARCHAR(20)) AS purchase_order
             FROM SC7010 C7 WITH (NOLOCK)
+            LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+                ON SA2.A2_COD = C7.C7_FORNECE
+               AND SA2.A2_LOJA = C7.C7_LOJA
+               AND SA2.D_E_L_E_T_ = ''
             WHERE C7.D_E_L_E_T_ = ''
               AND C7.C7_PRODUTO = ?
               AND C7.C7_EMISSAO >= ?

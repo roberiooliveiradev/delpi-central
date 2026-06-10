@@ -53,6 +53,27 @@ describe("buildDrillDownQuery", () => {
     expect(query).toBe("Detalhe do item 90260077 (Parafuso)");
   });
 
+  it("prioriza detailQuery canônico da API em vez de montar pelo rótulo da linha", () => {
+    const query = buildDrillDownQuery(
+      {
+        source: "SC7010",
+        document_number: "041446",
+        _detailMeta: {
+          detailQuery:
+            "detalhe documento 041446 origem SC7010 do produto 10080001",
+        },
+      },
+      [
+        { key: "source", label: "Origem" },
+        { key: "document_number", label: "Documento" },
+      ],
+    );
+
+    expect(query).toBe(
+      "detalhe documento 041446 origem SC7010 do produto 10080001",
+    );
+  });
+
   it("não assume produto em colunas genéricas: interpreta o último resultado", () => {
     const query = buildDrillDownQuery(
       { A1_COD: "000224", A1_NOME: "ACRILMASTER INDUSTRIA DE ACRILICOS LTDA" },

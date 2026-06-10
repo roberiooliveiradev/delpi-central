@@ -333,6 +333,19 @@ class ExternalActionRouteSelectionService:
             clamp_max_depth=clamp_max_depth,
         )
 
+    def select_presentation_detail(
+        self,
+        plan,
+        *,
+        allowed_action_ids: list[str],
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._refinement_route.select_presentation_detail(
+            plan,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
     def select_generic(
         self,
         message: str,

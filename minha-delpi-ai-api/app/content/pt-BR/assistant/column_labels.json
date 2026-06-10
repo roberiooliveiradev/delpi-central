@@ -761,14 +761,19 @@
       ],
       "mpBudgetHistoryDetail": [
         {"key": "source", "label": "Origem"},
+        {"key": "document_number", "label": "Documento"},
+        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
+        {"key": "supplier_name", "label": "Fornecedor"},
+        {"key": "supplier_store", "label": "Loja"},
         {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "supplier_code", "label": "Fornecedor"}
+        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"}
       ],
       "purchaseBudgetHistoryDetail": [
         {"key": "source", "label": "Origem"},
         {"key": "document_number", "label": "Documento"},
         {"key": "issue_date", "label": "Emissão", "dataType": "date"},
-        {"key": "supplier_code", "label": "Fornecedor"},
+        {"key": "supplier_name", "label": "Fornecedor"},
+        {"key": "supplier_store", "label": "Loja"},
         {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
         {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
         {"key": "purchase_order", "label": "Pedido compra"}

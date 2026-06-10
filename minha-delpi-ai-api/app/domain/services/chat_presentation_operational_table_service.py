@@ -84,11 +84,18 @@ class ChatPresentationOperationalTableService:
         if not col_keys:
             return None
 
-        rows = [
-            {key: item.get(key) for key in col_keys}
-            for item in items
-            if isinstance(item, dict)
-        ]
+        rows = []
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            row = {key: item.get(key) for key in col_keys}
+
+            if isinstance(item.get("_detailMeta"), dict):
+                row["_detailMeta"] = dict(item["_detailMeta"])
+
+            rows.append(row)
 
         if not rows:
             return None

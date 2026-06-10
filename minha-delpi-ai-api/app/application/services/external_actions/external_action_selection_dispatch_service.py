@@ -224,6 +224,25 @@ class ExternalActionSelectionDispatchService:
         if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
             return None
 
+        from app.domain.services.chat_presentation_detail_action_service import (
+            ChatPresentationDetailActionService,
+        )
+
+        detail_plan = ChatPresentationDetailActionService.detect_plan(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if detail_plan:
+            selected = self._route_selection.select_presentation_detail(
+                detail_plan,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=self._list_allowed_candidates,
+            )
+
+            if selected:
+                return selected
+
         refinement = ChatOperationalRefinementService.detect(
             message,
             conversation_context=conversation_context,

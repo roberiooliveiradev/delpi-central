@@ -57,6 +57,42 @@ class ExternalActionProductPurchaseHistoryPresenter:
 
         return []
 
+    def _enriched_items(self, root: dict, path: str) -> list[dict[str, Any]]:
+        from app.domain.services.chat_presentation_detail_action_service import (
+            ChatPresentationDetailActionService,
+        )
+        from app.domain.services.chat_presentation_supplier_display_service import (
+            ChatPresentationSupplierDisplayService,
+        )
+
+        code, _description = self._product_context(root, path)
+        enriched: list[dict[str, Any]] = []
+
+        for raw in self._items(root):
+            if not isinstance(raw, dict):
+                continue
+
+            item = ChatPresentationSupplierDisplayService.enrich_item(raw)
+
+            if code:
+                item["product_code"] = code
+
+            document = str(item.get("document_number") or item.get("purchase_order") or "").strip()
+            source = str(item.get("source") or "").strip()
+
+            if code and document and source:
+                item["_detailMeta"] = ChatPresentationDetailActionService.purchase_record_detail_meta(
+                    product_code=code,
+                    document_number=document,
+                    source=source,
+                    supplier_code=ChatPresentationSupplierDisplayService.supplier_code(item),
+                    supplier_store=ChatPresentationSupplierDisplayService.supplier_store(item),
+                )
+
+            enriched.append(item)
+
+        return enriched
+
     def _present_purchase_history(self, root: dict, path: str) -> dict:
         code, description = self._product_context(root, path)
         markdown = self._build_purchase_history_text_presentation(root, path)
@@ -218,7 +254,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        items = [item for item in self._items(root) if isinstance(item, dict)]
+        items = self._enriched_items(root, path)
 
         if items:
             shown, total = _OpsTable.limit_items(items, sort_key="issue_date")
@@ -369,7 +405,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
         return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
 
     def build_purchase_history_chart_presentation(self, root: dict, path: str) -> dict | None:
-        items = [item for item in self._items(root) if isinstance(item, dict)]
+        items = self._enriched_items(root, path)
 
         if len(items) < 2:
             return None
@@ -382,7 +418,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
             chart_data: list[dict[str, Any]] = []
 
             for index, item in enumerate(items[:20], start=1):
-                supplier = str(item.get("supplier_code") or "").strip()
+                supplier = str(item.get("supplier_group") or item.get("supplier_name") or item.get("supplier_code") or "").strip()
                 label = supplier or f"#{index}"
                 chart_data.append(
                     {
@@ -445,7 +481,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
             ChatPresentationHierarchyTreeService,
         )
 
-        items = [item for item in self._items(root) if isinstance(item, dict)]
+        items = self._enriched_items(root, path)
 
         if not items:
             return None
@@ -457,17 +493,35 @@ class ExternalActionProductPurchaseHistoryPresenter:
             if code
             else self._route(path, "treeTitleGeneric")
         )
-        group_keys = ["supplier_code"] if namespace == "purchasePriceHistory" else ["source"]
+        group_keys = ["supplier_group"]
 
         def _leaf(item: dict[str, Any]) -> dict[str, Any]:
+            from app.domain.services.chat_presentation_detail_action_service import (
+                ChatPresentationDetailActionService,
+            )
+            from app.domain.services.chat_presentation_supplier_display_service import (
+                ChatPresentationSupplierDisplayService,
+            )
+
+            supplier = ChatPresentationSupplierDisplayService.format_supplier_label(
+                supplier_code=ChatPresentationSupplierDisplayService.supplier_code(item),
+                supplier_name=ChatPresentationSupplierDisplayService.supplier_name(item),
+                supplier_store=ChatPresentationSupplierDisplayService.supplier_store(item),
+            )
+
             if namespace == "purchasePriceHistory":
-                supplier = str(item.get("supplier_code") or "—")
                 price = str(item.get("unit_price") or "—")
 
                 return ChatPresentationHierarchyTreeService._serialize_node(
                     node_id=f"nf:{supplier}:{price}",
-                    label=self._route(path, "treePriceLeafLabel", supplier=supplier, price=price),
+                    label=self._host._route_presentation(
+                        "purchaseHistoryShared",
+                        "treePriceLeafLabel",
+                        supplier=supplier,
+                        price=price,
+                    ),
                     subtitle=str(item.get("variation_percent") or "").strip(),
+                    meta=item.get("_detailMeta") if isinstance(item.get("_detailMeta"), dict) else None,
                 )
 
             source = str(item.get("source") or "—")
@@ -475,8 +529,17 @@ class ExternalActionProductPurchaseHistoryPresenter:
 
             return ChatPresentationHierarchyTreeService._serialize_node(
                 node_id=f"budget:{source}:{document}",
-                label=self._route(path, "treeBudgetLeafLabel", source=source, document=document),
-                subtitle=str(item.get("supplier_code") or "").strip(),
+                label=self._host._route_presentation(
+                    "purchaseHistoryShared",
+                    "treeBudgetLeafLabel",
+                    source=source,
+                    document=document,
+                    supplier=supplier,
+                ),
+                subtitle=ChatPresentationSupplierDisplayService.format_store_label(
+                    ChatPresentationSupplierDisplayService.supplier_store(item)
+                ),
+                meta=item.get("_detailMeta") if isinstance(item.get("_detailMeta"), dict) else None,
             )
 
         return ChatPresentationHierarchyTreeService.build_multi_level(

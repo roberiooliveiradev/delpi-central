@@ -18,7 +18,8 @@ from app.domain.services.chat_presentation_stack_order_service import (
         ("/products/90260144/stock", "stock"),
         ("/products/90260144/analyser", "analyser"),
         ("/products/90260144/guide", "table_list"),
-        ("/supplies/cpv", "generic"),
+        ("/supplies/cpv", "kpi_series"),
+        ("/supplies/stock-value", "kpi_series"),
         ("/system/tables/search", "system"),
         ("/data/sql", "sql"),
     ],
@@ -60,6 +61,7 @@ def test_resolve_default_preferred_format_structure_tree() -> None:
 
 def test_route_policy_delegates_to_profile_service() -> None:
     assert ChatPresentationRoutePolicyService.is_stock_route("/products/1/stock")
+    assert not ChatPresentationRoutePolicyService.is_stock_route("/supplies/stock-value")
     assert ChatPresentationRoutePolicyService.is_analyser_route("/products/1/analyser")
     assert ChatPresentationRoutePolicyService.is_tree_route("/products/1/structure")
 
