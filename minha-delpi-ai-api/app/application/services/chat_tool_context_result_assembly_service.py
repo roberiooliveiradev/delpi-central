@@ -157,6 +157,16 @@ class ChatToolContextResultAssemblyService:
                 safe_tool_calls,
             )
 
+        presentation_answer = ChatToolContextPresentationService.prefer_presentation_direct_answer(
+            direct_answer,
+            safe_tool_calls,
+            message=raw_message,
+        )
+
+        if presentation_answer:
+            direct_answer = presentation_answer
+            skip_rag = True
+
         if pagination_continue_prompt:
             direct_answer = (
                 f"{direct_answer}\n\n{pagination_continue_prompt}".strip()

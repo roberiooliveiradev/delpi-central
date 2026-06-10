@@ -34,6 +34,16 @@ class ChatToolContextPresentationService:
                     if nested_type in {"table", "chart", "kpi"}:
                         return nested
 
+            bulk = metadata.get("tablePresentations")
+
+            if isinstance(bulk, list):
+                for candidate in bulk:
+                    if not isinstance(candidate, dict):
+                        continue
+
+                    if str(candidate.get("type") or "").strip().lower() == "table" and candidate.get("rows"):
+                        return candidate
+
             return None
 
         @classmethod

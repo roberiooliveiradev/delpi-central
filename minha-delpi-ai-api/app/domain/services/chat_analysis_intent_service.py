@@ -83,6 +83,13 @@ class ChatAnalysisIntentService:
         if not normalized:
             return False
 
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return False
+
         if previous_messages and cls._has_recent_successful_tool_data(previous_messages):
             if cls._is_sql_result_interpretation_request(normalized):
                 return True

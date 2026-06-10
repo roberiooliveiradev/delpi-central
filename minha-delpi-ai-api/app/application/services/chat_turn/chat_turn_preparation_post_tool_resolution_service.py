@@ -345,9 +345,12 @@ class ChatTurnPreparationPostToolResolutionService:
                     ChatProductOverviewIntentService,
                 )
 
-                if ChatProductOverviewIntentService.should_force_llm_synthesis(
-                    message,
-                    tool_calls,
+                if (
+                    not direct_answer
+                    and ChatProductOverviewIntentService.should_force_llm_synthesis(
+                        message,
+                        tool_calls,
+                    )
                 ):
                     if authorized_tool_answer:
                         direct_answer = authorized_tool_answer
