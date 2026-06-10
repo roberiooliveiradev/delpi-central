@@ -73,6 +73,9 @@ Wrappers especializados (mantêm API estável):
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
 | `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
 | `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
+| `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService` |
+| `presenter_content.json` → `stackSectionFraming` | Frases de framing por seção (`default`, `byProfile.sale_pricing`, …) | `ChatPresentationStackMarkdownService`, `ChatPresentationSectionAvailabilityService` |
+| `presenter_content.json` → `routes.salePricing` | Narrativa de precificação: panorama, leitura, atenção, conclusão, KPI | `ExternalActionProductPricingPresenter` |
 
 ## Vocabulário compartilhado (dicionários PT)
 

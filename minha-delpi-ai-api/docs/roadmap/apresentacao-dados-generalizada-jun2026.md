@@ -76,10 +76,14 @@ execute_external_action
               ChatPresentationDecisionService
                      │ user_preference (sessão) > shape > perfil.defaultView
                      ▼
+              ChatPresentationHumanizedNarrativeService.enrich_metadata
+                     ▼
               presentationDecision + stackPresentationPlan
                      ▼
               MFE ChatAssistantContent (render único)
 ```
+
+**Narrativa humanizada (jun/2026):** ver [`humanized-narrative-stack-jun2026.md`](../architecture/humanized-narrative-stack-jun2026.md) — texto interpretativo obrigatório antes de painéis; default `selected=text` + `layoutMode=stack` em rotas ricas.
 
 - **Perfil de resposta** por `meta.entity` (já usado em Fase 7) — estender para **todas** as entidades mapeadas no presenter.
 - **Path** vira apenas *hint* de ordem stack e títulos (`presenter_content.json`), não decisão de tipo visual.

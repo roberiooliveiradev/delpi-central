@@ -242,6 +242,22 @@ SMOKE_BASE_URL=http://localhost PYTHONPATH=. python3 scripts/smoke_perguntas_tes
 
 Lote ampliado (intent + apresentação): **219 passed** — `test_chat_intelligence_regression`, `test_chat_product_query_intent_service`, `test_playbook_presentation_pipeline_regression`.
 
+### Narrativa humanizada — roteiro R1–R5 (jun/2026)
+
+**Commits:** `70d9556f`, `cc4ce7d8` · Doc: [`humanized-narrative-stack-jun2026.md`](../architecture/humanized-narrative-stack-jun2026.md)
+
+`pytest tests/unit/application/use_cases/test_roteiro_rapido_humanization.py` — **7/7 OK**:
+
+| Caso | Pergunta (resumo) | O que valida |
+|------|-------------------|--------------|
+| R1 | estoque `10080022` | `selected=text`, `layoutMode=stack`, `humanizedSections`, markdown narrativo |
+| R2 | status fabril `90269002` | idem |
+| R3 | análise MP `10080001` | idem + «Leitura do histórico» e «Pontos de atenção» |
+| R4 | simulador PA `90261255` | stack humanizado |
+| R5 | preço venda `10080001` | «Panorama», «Leitura rápida», «Conclusão»; sem `R$ R$` |
+
+Homologação manual recomendada: `analise de preço 90260145` — aba **Completo/Texto** deve mostrar narrativa antes de KPI/gráfico/árvore (21 tabelas WEG LINHARES).
+
 ### Não coberto por smoke automatizado
 
 | # | Tipo | Notas |

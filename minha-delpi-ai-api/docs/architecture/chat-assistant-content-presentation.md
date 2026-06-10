@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
 
 ---
 
@@ -30,6 +30,8 @@ execute_external_action
        presentationDecision.layoutMode = "stack" | "single"
        presentationDecision.visualOrder = ["text","table","tree","chart",…]
        presentationDecision.availableViews, selected, insight, recommendations
+  → ChatPresentationHumanizedNarrativeService.enrich_metadata
+       narrativa fina → panorama/leitura/atenção/conclusão (qualquer action com painéis)
   → ChatPresentationStackOrderService.enrich_metadata
        stackPresentationPlan (ordem narrativa + papéis de tabela por rota)
   → toolCalls[].metadata no turno do chat
@@ -71,11 +73,13 @@ Gerado por `ChatPresentationStackOrderService` a partir do `path` e do markdown 
 5. `tailVisuals` — árvore (e gráfico, se houver)  
 6. `attention` — **Pontos de atenção** (sempre no final)
 
-**Inteligência (API):** `ChatPresentationSectionAvailabilityService` calcula `humanizedSections`, `presentationProfile` e `sectionVisibility` no `stackPresentationPlan` — só rota **`/analyser`**. Seção sem dado (ex.: inspeção vazia) não entra no plano nem na narrativa; destaques de “ainda não cadastrado” são filtrados no presenter.
+**Inteligência (API):** `ChatPresentationSectionAvailabilityService` calcula `humanizedSections`, `presentationProfile` e `sectionVisibility` no `stackPresentationPlan` para **todas as rotas ricas** (analyser, estoque, fabril, MP, simulador, precificação, estrutura, …). Rotas sem builder dedicado recebem plano genérico via `ChatPresentationStackMarkdownService.apply_generic_humanized_stack_plan`. Seção sem dado (ex.: inspeção vazia) não entra no plano nem na narrativa; destaques de “ainda não cadastrado” são filtrados no presenter.
 
-O MFE injeta `stackSection` (só título) e, em seguida, `sectionFraming[id]` da API como **markdown normal** — frase interpretiva que não repete tabela nem bullets. Em **Completo** do analyser, insight/recomendação genérico fica oculto.
+`ChatPresentationHumanizedNarrativeService` complementa markdown **fino** antes do stack plan (panorama a partir da tabela profile, leitura a partir de KPI, conclusão orientando painéis). Precificação (`/pricing`) e MP usam narrativa **completa** no presenter dedicado — ver [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md).
 
-Outras rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, …). O MFE infere o papel de cada tabela pelo título quando o plano não veio no metadata.
+O MFE injeta `stackSection` (só título) e, em seguida, `sectionFraming[id]` da API como **markdown normal** — frase interpretiva que não repete tabela nem bullets. Em **Completo**, insight/recomendação genérico fica oculto quando há seções humanizadas.
+
+Demais rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, `sale_pricing`, …). O MFE infere o papel de cada tabela pelo título ou `role` quando o plano não veio no metadata.
 
 ### Mockup de referência — `GET /products/{code}/analyser` (Completo)
 
@@ -128,7 +132,7 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 | Modo | Quando | Comportamento |
 |------|--------|----------------|
-| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa intercalada; **analyser** usa `stackPresentationPlan` + seções humanizadas; demais rotas empilham sem cabeçalhos 1–7. Em stack, `textPresentation` compacto **sem** marcadores `[[table]]`/`[[arvore]]` |
+| **stack** | `layoutMode === "stack"` (default em rotas ricas com painéis; ver `ChatPresentationRichStackPolicyService`) | Narrativa intercalada com `stackPresentationPlan` + `humanizedSections`; analyser mantém mockup 1–7; demais rotas usam seções Panorama/Leitura/Atenção/Conclusão. Em stack humanizado, `textPresentation` **não** é compactado e **sem** marcadores `[[table]]`/`[[arvore]]` |
 | **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
 | **text-only** | Sem visual rico | Só markdown/código |
 
