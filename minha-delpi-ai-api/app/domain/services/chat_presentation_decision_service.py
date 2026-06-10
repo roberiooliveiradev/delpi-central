@@ -665,8 +665,11 @@ class ChatPresentationDecisionService:
             if not str(decision.get("reason") or "").strip():
                 decision["reason"] = cls._reason("textFirstDefault")
 
-        if ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
-            user_message,
+        if (
+            not effective_preference
+            and ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+                user_message,
+            )
         ):
             merged_views = cls._merge_views(
                 metadata.get("availableFormats"),

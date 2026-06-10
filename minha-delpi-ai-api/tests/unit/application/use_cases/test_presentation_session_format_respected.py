@@ -382,7 +382,7 @@ def test_structure_text_mode_embeds_tree_outline_markdown():
     markdown = str(meta["textPresentation"]["markdown"])
 
     assert meta["presentationDecision"]["selected"] == "text"
-    assert isinstance(meta.get("treePresentation"), dict)
+    assert meta.get("treePresentation") is None
     assert "**Composição**" in markdown
     assert "50230130" in markdown
     assert "└── 50230130" in markdown or "├── 50230130" in markdown

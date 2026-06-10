@@ -16,15 +16,18 @@ const TREND_ICONS: Record<string, string> = {
 
 export function ChatRichKpi({
   presentation,
+  suppressTitle = false,
 }: {
   presentation: KpiPresentation;
+  /** Evita título duplicado quando o painel pai já exibe o mesmo rótulo. */
+  suppressTitle?: boolean;
 }) {
   const { title, cards: rawCards } = presentation;
   const cards = Array.isArray(rawCards) ? rawCards : [];
 
   return (
     <div className="mdc-rich-kpi">
-      {title && <div className="mdc-rich-kpi__title">{title}</div>}
+      {title && !suppressTitle ? <div className="mdc-rich-kpi__title">{title}</div> : null}
       <div
         className="mdc-rich-kpi__grid"
         style={{ gridTemplateColumns: `repeat(${Math.min(cards.length, 4)}, 1fr)` }}

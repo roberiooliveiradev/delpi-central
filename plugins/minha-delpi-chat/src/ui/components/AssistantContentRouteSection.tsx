@@ -87,19 +87,15 @@ export function AssistantContentRouteSection({
   );
 
   const visibleBodySegments = useMemo(() => {
-    let body =
-      visualFormatOptions.length < 2
-        ? bodySegments
-        : filterSegmentsByVisualKind(bodySegments, activeVisualKind);
-
-    if (activeVisualKind === "text" && textDetailMarkdown) {
-      body = [
-        ...body,
-        ...parseMarkdownAndCodeSegments(textDetailMarkdown),
-      ];
+    if (activeVisualKind === "text" && textDetailMarkdown.trim()) {
+      return parseMarkdownAndCodeSegments(textDetailMarkdown);
     }
 
-    return body;
+    if (visualFormatOptions.length < 2) {
+      return bodySegments;
+    }
+
+    return filterSegmentsByVisualKind(bodySegments, activeVisualKind);
   }, [
     activeVisualKind,
     bodySegments,

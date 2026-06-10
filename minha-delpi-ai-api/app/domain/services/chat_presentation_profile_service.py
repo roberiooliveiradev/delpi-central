@@ -228,6 +228,15 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             ):
                 return
 
+            explicit = (
+                str(metadata.get("explicitSessionFormat") or "").strip().lower()
+                if isinstance(metadata, dict)
+                else ""
+            )
+
+            if explicit and str(decision.get("layoutMode") or "") == "single":
+                return
+
             if selected == "text" and str(decision.get("layoutMode") or "") == "single":
                 return
 

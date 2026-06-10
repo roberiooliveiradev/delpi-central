@@ -9,6 +9,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 )
 
 _EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart", "canvas", "dashboard"})
+_EXPLICIT_NATIVE_SINGLE = frozenset({"table", "tree", "chart", "dashboard", "kpi"})
 _VIEW_SLOT_BY_TYPE = {
     "table": "tablePresentation",
     "tree": "treePresentation",
@@ -125,6 +126,57 @@ class ChatPresentationPrimaryViewService:
             cls._align_primary_to_selected(metadata, selected)
             decision["layoutMode"] = "single"
             decision["visualOrder"] = [selected]
+
+    @classmethod
+    def finalize_explicit_native_single_view(cls, metadata: dict[str, Any]) -> None:
+        """Pós-pipeline: modo nativo explícito (Painel/Tabela/…) — só a visão escolhida no payload."""
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if explicit not in _EXPLICIT_NATIVE_SINGLE:
+            return
+
+        cls._promote_view(metadata, explicit)
+
+        preserved = metadata.get("presentation")
+
+        for slot in (
+            "tablePresentation",
+            "tablePresentations",
+            "treePresentation",
+            "chartPresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
+            "inspectionTablePresentation",
+            "profileTablePresentation",
+        ):
+            metadata.pop(slot, None)
+
+        if isinstance(preserved, dict):
+            metadata["presentation"] = preserved
+
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            decision["selected"] = explicit
+            decision["layoutMode"] = "single"
+            decision["visualOrder"] = [explicit]
+
+        metadata["preferredFormat"] = explicit
+
+        text_presentation = metadata.get("textPresentation")
+
+        if isinstance(text_presentation, dict):
+            title = str(
+                text_presentation.get("title")
+                or (preserved.get("title") if isinstance(preserved, dict) else "")
+                or "",
+            ).strip()
+            text_presentation["markdown"] = f"### {title}".strip() if title else ""
+
+    @classmethod
+    def relocate_primary_to_text_auxiliary_slots(cls, metadata: dict[str, Any]) -> None:
+        """Move visão primária para slots auxiliares sem marcar preferência explícita da sessão."""
+        cls._apply_text_primary(metadata)
 
     @classmethod
     def _apply_text_primary(cls, metadata: dict[str, Any]) -> None:

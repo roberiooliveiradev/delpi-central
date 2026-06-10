@@ -18,6 +18,23 @@ import "./ChatRichDashboard.css";
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
+function normalizePanelTitle(value: string | undefined): string {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function shouldSuppressNestedKpiTitle(
+  panelTitle: string | undefined,
+  kpiTitle: string | undefined,
+): boolean {
+  const panel = normalizePanelTitle(panelTitle);
+  const kpi = normalizePanelTitle(kpiTitle);
+
+  return Boolean(panel && kpi && panel === kpi);
+}
+
 function renderAuxChartPanel(
   presentation: ChartPresentation,
   onDrillDown?: (query: string) => void,
@@ -169,7 +186,13 @@ export function ChatRichDashboard({
                     <h4 className="mdc-rich-dashboard__panel-title">{panel.title}</h4>
                   ) : null}
                   <div className="mdc-rich-dashboard__panel-body">
-                    <ChatRichKpi presentation={panel.presentation} />
+                    <ChatRichKpi
+                      presentation={panel.presentation}
+                      suppressTitle={shouldSuppressNestedKpiTitle(
+                        panel.title,
+                        panel.presentation.title,
+                      )}
+                    />
                   </div>
                 </section>
               ) : null,

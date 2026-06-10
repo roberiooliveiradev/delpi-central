@@ -8,6 +8,7 @@ import type { ContentFormatKind } from "./assistantContentLayout";
 import { buildAssistantContentSegments, parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import {
   resolveAssistantPresentationTitle,
+  resolveAssistantRenderableMarkdown,
   shouldRenderPresentationHeading,
 } from "./assistantProseRendering";
 import { renderAssistantContentSegment } from "./assistantContentRegistry";
@@ -24,7 +25,10 @@ import {
   collectProductRouteBlocks,
   groupSegmentsByRouteSections,
 } from "./presentationMultiRoute";
-import { getTextMarkdownFromToolCalls, isExplicitTextSessionMode } from "./chatPresentation";
+import {
+  getTextMarkdownFromToolCalls,
+  isExplicitTextSessionMode,
+} from "./chatPresentation";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
@@ -106,11 +110,20 @@ export function ChatAssistantContent({
       return renumberStackSectionTitles(segments, null);
     }
 
-    if (isExplicitTextSessionMode(toolCalls)) {
-      const markdown = getTextMarkdownFromToolCalls(toolCalls);
+    const explicitTextSession = isExplicitTextSessionMode(toolCalls);
+    const toolbarTextOnly = activeVisualKind === "text";
+
+    if (explicitTextSession || toolbarTextOnly) {
+      const markdown =
+        getTextMarkdownFromToolCalls(toolCalls) ||
+        resolveAssistantRenderableMarkdown(content, toolCalls);
 
       if (markdown.trim()) {
         return parseMarkdownAndCodeSegments(markdown);
+      }
+
+      if (explicitTextSession) {
+        return [];
       }
     }
 
@@ -118,16 +131,15 @@ export function ChatAssistantContent({
       return renumberStackSectionTitles(segments, null);
     }
 
-    if (activeVisualKind === "text") {
-      const markdown = getTextMarkdownFromToolCalls(toolCalls);
-
-      if (markdown.trim()) {
-        return parseMarkdownAndCodeSegments(markdown);
-      }
-    }
-
     return filterSegmentsByVisualKind(segments, activeVisualKind);
-  }, [activeVisualKind, perSectionToolbar, segments, toolCalls, visualFormatOptions.length]);
+  }, [
+    activeVisualKind,
+    content,
+    perSectionToolbar,
+    segments,
+    toolCalls,
+    visualFormatOptions.length,
+  ]);
 
   const title = useMemo(
     () => resolveAssistantPresentationTitle(content, toolCalls),

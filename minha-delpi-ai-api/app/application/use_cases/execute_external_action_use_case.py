@@ -401,7 +401,7 @@ class ExecuteExternalActionUseCase:
             preferred_format = "canvas"
         elif session_format == "topics":
             preferred_format = "text"
-        elif session_format in {"table", "text", "tree", "chart"}:
+        elif session_format in {"table", "text", "tree", "chart", "dashboard"}:
             preferred_format = session_format
         elif dashboard_presentation:
             preferred_format = "dashboard"
@@ -511,7 +511,7 @@ class ExecuteExternalActionUseCase:
             ChatPresentationPrimaryViewService,
         )
 
-        if session_format in {"text", "table", "tree", "chart", "canvas"}:
+        if session_format in {"text", "table", "tree", "chart", "canvas", "dashboard"}:
             ChatPresentationPrimaryViewService.apply_session_preference(
                 metadata,
                 session_format,
@@ -637,6 +637,14 @@ class ExecuteExternalActionUseCase:
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
+
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        ChatPresentationTextModeService.finalize_explicit_text_mode(metadata)
+
+        ChatPresentationPrimaryViewService.finalize_explicit_native_single_view(metadata)
 
         from app.domain.services.chat_presentation_stack_markdown_service import (
             ChatPresentationStackMarkdownService,

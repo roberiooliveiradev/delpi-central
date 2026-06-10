@@ -101,7 +101,9 @@ def test_factory_status_text_mode_embeds_tables_in_markdown():
     assert decision["layoutMode"] == "single"
     assert "|" in markdown
     assert "**Panorama fabril**" in markdown or "Panorama fabril" in markdown
-    assert isinstance(meta.get("treePresentation"), dict)
+    assert meta.get("treePresentation") is None
+    assert meta.get("tablePresentations") is None
+    assert meta.get("dashboardPresentation") is None
     assert "Composição" in markdown or "└──" in markdown or "├──" in markdown
 
 

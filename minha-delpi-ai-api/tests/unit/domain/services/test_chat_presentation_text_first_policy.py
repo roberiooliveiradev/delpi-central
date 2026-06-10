@@ -77,6 +77,7 @@ def test_apply_text_primary_strips_auxiliary_presentations_for_stock():
 
     assert applied is True
     assert metadata.get("presentation") is None
-    assert "chartPresentation" not in metadata
+    assert "explicitSessionFormat" not in metadata
     assert "treePresentation" not in metadata
     assert metadata.get("tablePresentation", {}).get("type") == "table"
+    assert metadata.get("chartPresentation", {}).get("type") == "chart"

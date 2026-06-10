@@ -67,3 +67,12 @@ class ChatPresentationTextModeService:
             decision["visualOrder"] = ["text"]
 
         metadata["preferredFormat"] = "text"
+
+    @classmethod
+    def finalize_explicit_text_mode(cls, metadata: dict[str, Any]) -> None:
+        """Pós-embed: garante decisão single + payload só markdown para Texto explícito."""
+        if not cls.is_user_explicit_text_mode(metadata):
+            return
+
+        cls.enforce_single_text_decision(metadata)
+        cls.strip_native_visual_slots(metadata)

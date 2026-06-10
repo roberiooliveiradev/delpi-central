@@ -217,7 +217,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             ChatPresentationPrimaryViewService,
         )
 
-        ChatPresentationPrimaryViewService.apply_session_preference(metadata, "text")
+        ChatPresentationPrimaryViewService.relocate_primary_to_text_auxiliary_slots(metadata)
         metadata["preferredFormat"] = "text"
 
         presentation = metadata.get("presentation")

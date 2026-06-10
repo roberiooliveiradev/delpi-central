@@ -63,3 +63,45 @@ def test_finalize_decision_alignment_recovers_stale_text_explicit_for_table():
     assert metadata["explicitSessionFormat"] == "table"
     assert metadata["presentation"] == table
     assert metadata["presentationDecision"]["visualOrder"] == ["table"]
+
+
+def test_finalize_explicit_dashboard_strips_orphan_visuals():
+    dashboard = {
+        "type": "dashboard",
+        "title": "Painel fabril — 90269002",
+        "panels": [
+            {
+                "id": "kpi",
+                "title": "Indicadores fabris — 90269002",
+                "presentation": {
+                    "type": "kpi",
+                    "title": "Indicadores fabris — 90269002",
+                    "cards": [{"label": "OPs", "value": "1"}],
+                },
+            },
+        ],
+    }
+    metadata = {
+        "explicitSessionFormat": "dashboard",
+        "preferredFormat": "dashboard",
+        "presentation": dashboard,
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {}},
+        "chartPresentation": {"type": "chart", "data": []},
+        "textPresentation": {
+            "type": "markdown",
+            "title": "Status fabril",
+            "markdown": "### Status\n\nNarrativa longa que não deve ir junto ao painel.",
+        },
+        "presentationDecision": {
+            "selected": "dashboard",
+            "layoutMode": "single",
+            "visualOrder": ["dashboard"],
+        },
+    }
+
+    ChatPresentationPrimaryViewService.finalize_explicit_native_single_view(metadata)
+
+    assert metadata.get("presentation", {}).get("type") == "dashboard"
+    assert metadata.get("treePresentation") is None
+    assert metadata.get("chartPresentation") is None
+    assert metadata["textPresentation"]["markdown"] == "### Status fabril"
