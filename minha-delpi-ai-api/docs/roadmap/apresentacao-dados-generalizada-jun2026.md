@@ -320,7 +320,13 @@ Abrir **Fase 1** com PR focado:
 
 Atualizar este doc ao concluir cada fase (checkbox no topo).
 
-**Status jun/2026:** ✅ Fases 0–6 concluídas. Roadmap de apresentação generalizada encerrado.
+**Status jun/2026:** ✅ Fases 0–6 concluídas. Roadmap de apresentação generalizada (onda 1) encerrado.
+
+### Onda 2 — refatoração declarativa (backlog)
+
+Entregas parciais antes do playbook 12: narrativa humanizada (`70d9556f`, `cc4ce7d8`), KPI cards generalizados (`6afa8243`, `072b3503`).
+
+**Playbook:** [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) — fases R0–R9 (`role` em tabelas, registry de bundles, table assembly, section availability declarativa, presenters unificados, MFE sem re-decidir formato).
 
 ### Fase 0 — entregue
 
