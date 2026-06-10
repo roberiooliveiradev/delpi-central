@@ -686,10 +686,14 @@ class ExecuteExternalActionUseCase:
             presenter=self.presenter,
         )
 
+        from app.domain.services.chat_presentation_humanized_narrative_service import (
+            ChatPresentationHumanizedNarrativeService,
+        )
         from app.domain.services.chat_presentation_stack_order_service import (
             ChatPresentationStackOrderService,
         )
 
+        ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
         ChatPresentationStackOrderService.enrich_metadata(metadata)
 
         ChatPresentationDecisionService.enrich_metadata(

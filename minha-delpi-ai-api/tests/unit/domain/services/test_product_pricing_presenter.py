@@ -38,6 +38,46 @@ def test_product_pricing_table_presentations_assign_stack_roles():
     assert "table_description" in price_keys
 
 
+def test_product_pricing_text_presentation_is_fully_humanized():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_pricing_10080001.json")
+    path = "/products/10080001/pricing"
+    text = presenter._build_product_pricing_text_presentation(envelope["data"], path)
+
+    assert text is not None
+    markdown = str(text.get("markdown") or "")
+
+    assert "**Panorama**" in markdown
+    assert "**Leitura rápida**" in markdown
+    assert "**Conclusão**" in markdown
+    assert "R$ R$" not in markdown
+    assert "<!-- section:scope -->" in markdown
+
+
+def test_product_pricing_kpi_prefers_sale_price_ceiling_when_max_price_missing():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_pricing_10080001.json")
+    root = envelope["data"]
+    root["prices"] = [
+        {
+            **root["prices"][0],
+            "max_price": 0.0,
+            "discount_percent": 0.0,
+        },
+        {
+            **root["prices"][1],
+            "max_price": 0.0,
+            "discount_percent": 0.0,
+        },
+    ]
+    path = "/products/10080001/pricing"
+    kpi = presenter.build_product_pricing_kpi_presentation(root, path)
+    labels = [card.get("label") for card in (kpi or {}).get("cards") or []]
+
+    assert "Maior preço de venda" in labels
+    assert "Teto de preço" not in labels
+
+
 def test_visual_bundle_enriches_sale_pricing_with_auxiliary_slots():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_pricing_10080001.json")

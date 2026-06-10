@@ -63,24 +63,41 @@ def _build(fixture: str, path: str, user_message: str) -> dict:
     )
 
 
-def _assert_humanized_response(meta: dict) -> None:
+def _assert_humanized_response(meta: dict, *, min_chars: int = 120) -> None:
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "").strip()
     plan = meta.get("stackPresentationPlan") or {}
     decision = meta.get("presentationDecision") or {}
 
     assert markdown, "textPresentation.markdown ausente"
+    assert len(markdown) >= min_chars, "narrativa humanizada muito curta"
     assert plan.get("humanizedSections") is True
     assert plan.get("sectionFraming"), "sectionFraming vazio"
     assert decision.get("selected") == "text"
     assert decision.get("layoutMode") == "stack"
     assert "<!-- section:scope -->" in markdown or "**" in markdown
     assert not markdown.startswith("|"), "narrativa não deve começar como tabela markdown"
+    assert "R$ R$" not in markdown
 
 
 @pytest.mark.parametrize("fixture,path,user_message", _ROTEIRO)
 def test_roteiro_rapido_entrega_stack_humanizado(fixture: str, path: str, user_message: str):
     meta = _build(fixture, path, user_message)
     _assert_humanized_response(meta)
+
+
+def test_r5_pricing_inclui_panorama_leitura_e_conclusao():
+    meta = _build(
+        "product_pricing_10080001.json",
+        "/products/10080001/pricing",
+        "qual o preço de venda do produto 10080001?",
+    )
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+
+    _assert_humanized_response(meta)
+    assert "**Panorama**" in markdown
+    assert "**Leitura rápida**" in markdown
+    assert "**Conclusão**" in markdown
+    assert "Pontos de atenção" in markdown or "tabela" in markdown.lower()
 
 
 def test_r3_mp_price_inclui_leitura_e_atencao():

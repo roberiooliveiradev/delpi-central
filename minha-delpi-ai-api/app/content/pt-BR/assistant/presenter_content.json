@@ -114,6 +114,14 @@
     "stockTextDetailHeader": "Detalhamento por filial e armazém",
     "itemsTableDefaultTitle": "Dados retornados"
   },
+  "humanizedNarrative": {
+    "panoramaHeader": "**Panorama**",
+    "quickReadingHeader": "**Leitura rápida**",
+    "attentionHeader": "**Pontos de atenção**",
+    "conclusionHeader": "**Conclusão**",
+    "attentionLargeList": "A consulta retornou **{count}** linhas — use filtros ou a tabela para auditar casos específicos.",
+    "conclusionPanelsHint": "Use as tabelas e painéis abaixo para conferir cada registro ou alternar entre KPI, gráfico e lista."
+  },
   "schemaDriven": {
     "tableTitleFallback": "Resultado da consulta",
     "listSummary": "{title}: **{count}** registro(s) retornado(s). Resumo abaixo; tabelas e painéis trazem o detalhe linha a linha.",
@@ -159,6 +167,13 @@
       },
       "generic": {
         "scope": "Resumo interpretativo desta consulta."
+      },
+      "sale_pricing": {
+        "scope": "Precificação e tabelas de venda do produto consultado.",
+        "profile": "Resumo de preços e condições comerciais.",
+        "guide": "Detalhe linha a linha das tabelas de preço.",
+        "structure": "KPI e gráfico de composição de preço quando disponíveis.",
+        "attention": "Divergências de tabela ou vigência pedem validação comercial."
       }
     }
   },
@@ -528,9 +543,23 @@
       "titleGeneric": "Preço de venda do produto",
       "introWithDescription": "Tabelas de preço de venda do produto **{code}** ({description}).",
       "introCodeOnly": "Consulta de preço de venda do produto **{code}**.",
-      "primarySalePriceLine": "Preço de venda principal (**{table}**): **R$ {price}**",
+      "primarySalePriceLine": "Preço de venda principal (**{table}**): **{price}**",
       "tablesCountLine": "Foram encontradas **{count}** tabela(s) de preço de venda.",
       "tableVisualizationHint": "Detalhes por tabela na **lista** abaixo.",
+      "sectionPanoramaHeader": "**Panorama**",
+      "sectionQuickReadingHeader": "**Leitura rápida**",
+      "attentionHeader": "**Pontos de atenção**",
+      "conclusionHeader": "**Conclusão**",
+      "panoramaProductLine": "O produto **{code} — {description}** (unidade **{unit}**) possui **{count}** tabela(s) de preço ativas.",
+      "panoramaMinLine": "- Menor preço de venda: **{price}** — tabela **{tableCode}** ({table})",
+      "panoramaMaxLine": "- Maior preço de venda: **{price}** — tabela **{tableCode}** ({table})",
+      "panoramaRangeLine": "- Amplitude entre menor e maior: **{delta}** ({percent}%)",
+      "quickReadingEscalationLine": "Os valores formam uma escada progressiva por faixa; a tabela **{tableCode}** concentra o menor valor — em geral é a referência de entrada para cotação.",
+      "quickReadingSingleTableLine": "Há apenas uma tabela de preço ativa para este produto.",
+      "attentionZeroMaxPrice": "Teto de preço (`max_price`) zerado em todas as tabelas — validar política comercial.",
+      "attentionNoDiscount": "Nenhum desconto percentual configurado nas tabelas retornadas.",
+      "attentionOldValidity": "Vigência desde **{date}** — conferir se ainda está atual.",
+      "conclusionEntryPrice": "Para o **{code}**, o preço de venda de entrada é **{price}**. Use a lista abaixo para comparar tabelas ou o gráfico para ver a progressão por faixa.",
       "overviewTableTitle": "Panorama de preço de venda",
       "overviewProductField": "Produto",
       "overviewUnitField": "Unidade",
@@ -543,6 +572,7 @@
       "kpiTitleGeneric": "Indicadores de preço de venda",
       "kpiPrimarySalePrice": "Menor preço de venda",
       "kpiMaxSalePrice": "Teto de preço",
+      "kpiHighestSalePrice": "Maior preço de venda",
       "kpiPriceTables": "Tabelas ativas",
       "kpiMaxDiscount": "Maior desconto (%)",
       "chartSalePriceTitle": "Preço de venda por tabela — {code}",
@@ -551,7 +581,7 @@
       "treePricingTitle": "Tabelas de preço — {code}",
       "treePricingTitleGeneric": "Tabelas de preço de venda",
       "treeRootLabel": "Produto {code}",
-      "treeTableLeafLabel": "{table} — R$ {price}",
+      "treeTableLeafLabel": "{table} — {price}",
       "dashboardTitle": "Painel de preço de venda — {code}",
       "dashboardTitleGeneric": "Painel de preço de venda"
     },

@@ -264,28 +264,11 @@ class ChatPresentationStackMarkdownService:
 
     @classmethod
     def _has_profile_table(cls, metadata: dict[str, Any]) -> bool:
-        for key in ("profileTablePresentation", "tablePresentation", "presentation"):
-            presentation = metadata.get(key)
+        from app.domain.services.chat_presentation_section_availability_service import (
+            ChatPresentationSectionAvailabilityService,
+        )
 
-            if isinstance(presentation, dict) and presentation.get("type") == "table":
-                rows = presentation.get("rows") or []
-
-                if rows:
-                    return True
-
-        bulk = metadata.get("tablePresentations")
-
-        if isinstance(bulk, list):
-            for presentation in bulk:
-                if not isinstance(presentation, dict):
-                    continue
-
-                title = str(presentation.get("title") or "").lower()
-
-                if title.startswith("produto ") and presentation.get("rows"):
-                    return True
-
-        return False
+        return ChatPresentationSectionAvailabilityService._has_profile_table(metadata)
 
     @classmethod
     def _has_operational_tables(cls, metadata: dict[str, Any]) -> bool:

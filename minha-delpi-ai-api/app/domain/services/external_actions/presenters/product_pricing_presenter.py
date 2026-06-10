@@ -170,43 +170,167 @@ class ExternalActionProductPricingPresenter:
         }
 
     def _build_pricing_text_presentation(self, root: dict, path: str) -> dict | None:
-        code, _description, _unit = self._product_context(root, path)
+        code, description, unit = self._product_context(root, path)
         title = (
             self._route("titleWithCode", code=code)
             if code
             else self._route("titleGeneric")
         )
-        highlights = self._build_pricing_highlights(root)
+        body = self._build_pricing_markdown_body(
+            root,
+            code=code,
+            description=description,
+            unit=unit,
+        )
 
-        if not highlights:
+        if not body:
             return None
+
+        intro = (
+            self._route("introWithDescription", code=code, description=description)
+            if description
+            else self._route("introCodeOnly", code=code)
+            if code
+            else ""
+        )
+        markdown_parts = [f"### {title}", "", "<!-- section:scope -->", ""]
+
+        if intro:
+            markdown_parts.append(intro)
+
+        markdown_parts.append("")
+        markdown_parts.append(body)
 
         return {
             "type": "markdown",
             "title": title,
-            "markdown": f"### {title}\n\n{highlights}".strip(),
+            "markdown": "\n".join(markdown_parts).strip(),
         }
 
-    def _build_pricing_highlights(self, root: dict) -> str:
+    def _price_extremes(self, prices: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
+        ordered = sorted(prices, key=lambda item: float(item.get("sale_price") or 0))
+        return ordered[0], ordered[-1]
+
+    def _build_pricing_markdown_body(
+        self,
+        root: dict,
+        *,
+        code: str,
+        description: str,
+        unit: str,
+    ) -> str:
         prices = self._prices(root)
 
         if not prices:
             return ""
 
-        parts: list[str] = []
-        top = prices[0]
-        parts.append(
+        parts: list[str | None] = []
+        min_item, max_item = self._price_extremes(prices)
+        min_price = float(min_item.get("sale_price") or 0)
+        max_price = float(max_item.get("sale_price") or 0)
+        panorama_lines = [self._route("sectionPanoramaHeader")]
+
+        if description or unit:
+            panorama_lines.append(
+                self._route(
+                    "panoramaProductLine",
+                    code=code or "—",
+                    description=description or "—",
+                    unit=unit or "—",
+                    count=str(len(prices)),
+                )
+            )
+
+        panorama_lines.append(
             self._route(
-                "primarySalePriceLine",
-                table=str(top.get("table_description") or top.get("table_code") or "—"),
-                price=self._host._format_field_value("sale_price", top.get("sale_price")),
+                "panoramaMinLine",
+                price=self._host._format_field_value("sale_price", min_price),
+                tableCode=str(min_item.get("table_code") or "—"),
+                table=str(min_item.get("table_description") or min_item.get("table_code") or "—"),
             )
         )
 
         if len(prices) > 1:
-            parts.append(self._route("tablesCountLine", count=str(len(prices))))
+            panorama_lines.append(
+                self._route(
+                    "panoramaMaxLine",
+                    price=self._host._format_field_value("sale_price", max_price),
+                    tableCode=str(max_item.get("table_code") or "—"),
+                    table=str(max_item.get("table_description") or max_item.get("table_code") or "—"),
+                )
+            )
 
-        return "\n\n".join(parts)
+            delta = max_price - min_price
+            percent = (delta / min_price * 100) if min_price else 0.0
+            panorama_lines.append(
+                self._route(
+                    "panoramaRangeLine",
+                    delta=self._host._format_field_value("sale_price", delta),
+                    percent=self._host._format_field_value("discount_percent", round(percent, 1)),
+                )
+            )
+
+        parts.append("\n".join(panorama_lines))
+
+        reading_lines = [self._route("sectionQuickReadingHeader")]
+
+        if len(prices) > 1:
+            reading_lines.append(
+                self._route(
+                    "quickReadingEscalationLine",
+                    tableCode=str(min_item.get("table_code") or "—"),
+                )
+            )
+        else:
+            reading_lines.append(self._route("quickReadingSingleTableLine"))
+
+        parts.append("\n".join(reading_lines))
+
+        attention = self._build_pricing_attention_lines(prices)
+
+        if attention:
+            parts.append(self._route("attentionHeader"))
+            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
+
+        parts.append(
+            self._route(
+                "conclusionHeader",
+            )
+        )
+        parts.append(
+            self._route(
+                "conclusionEntryPrice",
+                code=code or "—",
+                price=self._host._format_field_value("sale_price", min_price),
+            )
+        )
+
+        return _OpsTable.join_markdown_blocks(parts)
+
+    def _build_pricing_attention_lines(self, prices: list[dict[str, Any]]) -> list[str]:
+        lines: list[str] = []
+
+        if prices and all(float(item.get("max_price") or 0) == 0 for item in prices):
+            lines.append(self._route("attentionZeroMaxPrice"))
+
+        if prices and all(float(item.get("discount_percent") or 0) == 0 for item in prices):
+            lines.append(self._route("attentionNoDiscount"))
+
+        validity_dates = [
+            str(item.get("valid_from") or "").strip()
+            for item in prices
+            if str(item.get("valid_from") or "").strip()
+        ]
+
+        if validity_dates and min(validity_dates) < "20200101":
+            lines.append(
+                self._route(
+                    "attentionOldValidity",
+                    date=self._host._format_field_value("valid_from", min(validity_dates)),
+                )
+            )
+
+        return lines
 
     def build_product_pricing_kpi_presentation(self, root: dict, path: str) -> dict | None:
         from app.domain.services.chat_presentation_kpi_assembly_service import (
@@ -220,7 +344,11 @@ class ExternalActionProductPricingPresenter:
             return None
 
         sale_values = [float(item.get("sale_price") or 0) for item in prices]
-        max_values = [float(item.get("max_price") or 0) for item in prices if item.get("max_price") is not None]
+        positive_max_prices = [
+            float(item.get("max_price") or 0)
+            for item in prices
+            if float(item.get("max_price") or 0) > 0
+        ]
         discount_values = [
             float(item.get("discount_percent") or 0)
             for item in prices
@@ -249,11 +377,21 @@ class ExternalActionProductPricingPresenter:
             ),
         ]
 
-        if max_values:
+        if positive_max_prices:
             cards.append(
                 ChatPresentationKpiAssemblyService.metric_card(
                     label=self._route("kpiMaxSalePrice"),
-                    value=max(max_values),
+                    value=max(positive_max_prices),
+                    unit="R$",
+                    color="#0ea5e9",
+                    key="max_sale_price",
+                )
+            )
+        elif len(sale_values) > 1:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("kpiHighestSalePrice"),
+                    value=max(sale_values),
                     unit="R$",
                     color="#0ea5e9",
                     key="max_sale_price",
