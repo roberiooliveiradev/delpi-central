@@ -12,6 +12,7 @@ Pergunta de referência: *«qual o status do produto 90262404 na fábrica hoje?�
 4. Divisões numeradas («1. Escopo da consulta», «2. Roteiro de produção») quebravam o fluxo conversacional.
 5. Painel fabril (`dashboard`) aparecia no **Automático** sem o usuário pedir.
 6. Regressão: ao omitir o painel, `tailVisualOrder` ficava vazio — árvore/gráfico viravam blocos `TEXT`/tabela no markdown em vez de componentes nativos.
+7. Regressão: MFE `appendTailVisuals` tinha fallback órfão que **reinjetava `dashboard`** mesmo fora do `tailVisualOrder` (allowlist violada).
 
 **Princípio:** em `summary_then_evidence`, a interpretação vive na **prosa do chat**; visuais são **evidência** renderizada por componentes. Markdown embutido (tabelas, árvore, gráfico, composição) é exclusivo do modo **Texto** explícito.
 
@@ -33,13 +34,22 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 
 `finalize_narrative_after_embeds` reaplica o strip de markdown embutido após os serviços de embed (segurança).
 
+### Contrato `tailVisualPolicy: allowlist` (Playbook 13)
+
+A API define no `stackPresentationPlan`:
+
+- `tailVisualOrder` — lista fechada de visuais no tail (`kpi`, `tree`, `chart`; `dashboard` só com Painel explícito)
+- `tailVisualPolicy: "allowlist"` — o MFE **não** faz fallback de visuais órfãos
+
+O MFE (`visualSegmentCollector`, `appendTailVisuals`) só materializa `dashboard` quando `explicitSessionFormat: "dashboard"` ou o token está no `tailVisualOrder`.
+
 ---
 
 ## Módulos canônicos (API)
 
 | Serviço | Mudança |
 |---------|---------|
-| `ChatPresentationEvidenceFirstLayoutService` | `compose()` sem `storyPresentation`; `_resolve_evidence_first_tail_visual_order` troca `dashboard` por `kpi`/`tree`/`chart`; `_sync_tail_visuals_narrative_slot`; `finalize_narrative_after_embeds` pós-embed |
+| `ChatPresentationEvidenceFirstLayoutService` | `compose()` sem `storyPresentation`; `_apply_evidence_first_stack_plan` com `tailVisualPolicy: allowlist`; tail sem `dashboard` no Automático; `finalize_narrative_after_embeds` pós-embed |
 | `ChatRichPresentationTextService` | `prepare_evidence_first_chat_narrative`: em stack automático remove embutidos de tabela/árvore/gráfico/composição; em `explicitSessionFormat=dashboard` compacta lead |
 | `ChatPresentationTableMarkdownService` | `should_embed_in_markdown` — embed só com Texto explícito |
 | `ChatPresentationTreeMarkdownService` | Idem |
@@ -53,7 +63,9 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 |--------|---------|
 | `assistantContentDecisionLayer.ts` | `withDecisionLayer` não injeta card quando perfil é `summary_then_evidence` |
 | `chatPresentation.ts` | `stripCompositionCodeFenceFromMarkdown`, `stripChartMarkdownFallbackFromMarkdown`; `stripRichUiRedundantProseFromMarkdown` quando há `treePresentation`/`chartPresentation` |
-| `presentationStackBlueprint.ts` | Sem `stackSection` numerado em `summary_then_evidence`; `sectionFraming` vira prosa antes das tabelas; painel omitido no tail automático |
+| `presentationStackBlueprint.ts` | `usesStrictTailVisualAllowlist` — sem fallback órfão; `shouldRenderDashboardSegment` no tail |
+| `visualSegmentCollector.ts` | Não coleta `dashboard` fora do contrato allowlist |
+| `presentationStackPlan.ts` | Parse de `tailVisualPolicy` + `presentationMode` |
 
 ---
 
@@ -67,7 +79,8 @@ No modo **Automático**, `tailVisualOrder` **não** inclui `dashboard` — o pai
 | API | `test_chat_presentation_table_markdown_service.py` | Embed exige `explicitSessionFormat: "text"` |
 | API | `test_chat_presentation_tree_markdown_service.py` | Idem |
 | MFE | `richStackPresentation.test.ts` | Strip de Composição em code fence |
-| MFE | `presentationStackPlan.humanized.test.ts` | Sem `stackSection` numerado; framing inline; árvore nativa no `tailVisuals` |
+| MFE | `presentationStackPlan.humanized.test.ts` | Sem `stackSection`; árvore no tail; **sem dashboard** com allowlist |
+| MFE | `visualSegmentCollector.test.ts` | Coleta omite dashboard no Automático; mantém no Painel explícito |
 
 ## Commits do arco (jun/2026)
 

@@ -736,6 +736,43 @@ export function getAvailableFormatsFromToolCalls(
   return [];
 }
 
+export function isExplicitDashboardSession(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const explicit = String(metadata.explicitSessionFormat || "").trim().toLowerCase();
+
+    if (explicit === "dashboard") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function shouldRenderDashboardSegment(
+  toolCalls?: ChatToolCall[],
+  tailVisualOrder: string[] = [],
+): boolean {
+  if (isExplicitDashboardSession(toolCalls)) {
+    return true;
+  }
+
+  if (isSummaryThenEvidenceMode(toolCalls)) {
+    return tailVisualOrder.includes("dashboard");
+  }
+
+  return true;
+}
+
 export function isExplicitTextSessionMode(toolCalls?: ChatToolCall[]): boolean {
   if (!Array.isArray(toolCalls)) {
     return false;

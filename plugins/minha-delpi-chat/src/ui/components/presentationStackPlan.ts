@@ -24,6 +24,8 @@ export type StackNarrativeSlot =
   | "tailVisuals"
   | "attention";
 
+export type TailVisualPolicy = "allowlist" | "legacy";
+
 export type StackPresentationPlan = {
   profileFirst: boolean;
   highlightsAfterProfile: boolean;
@@ -31,6 +33,10 @@ export type StackPresentationPlan = {
   tableRoleOrder: StackTableRole[];
   tailVisualOrder: string[];
   narrativeOrder: StackNarrativeSlot[];
+  /** Playbook 13 — narrativa no chat + evidências em componentes. */
+  presentationMode?: string;
+  /** allowlist: só renderiza visuais listados em tailVisualOrder (sem fallback órfão). */
+  tailVisualPolicy?: TailVisualPolicy;
   /** Inteligência da API: mockup humanizado no analyser e rotas compostas de produto. */
   presentationProfile?: string;
   humanizedSections?: boolean;
@@ -180,9 +186,23 @@ function resolvePresentationProfile(
   return undefined;
 }
 
+function normalizeTailVisualPolicy(value: unknown): TailVisualPolicy | undefined {
+  const token = String(value || "").trim().toLowerCase();
+
+  if (token === "allowlist" || token === "legacy") {
+    return token;
+  }
+
+  return undefined;
+}
+
 function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
   const profile = String(raw.presentationProfile || "").trim();
   const humanizedSections = raw.humanizedSections === true;
+  const presentationMode = String(raw.presentationMode || "").trim() || undefined;
+  const tailVisualPolicy =
+    normalizeTailVisualPolicy(raw.tailVisualPolicy) ??
+    (presentationMode === "summary_then_evidence" ? "allowlist" : undefined);
 
   return {
     profileFirst: raw.profileFirst !== false,
@@ -193,6 +213,8 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
       ? raw.tailVisualOrder.map((item) => String(item))
       : DEFAULT_PLAN.tailVisualOrder,
     narrativeOrder: normalizeNarrativeOrder(raw.narrativeOrder),
+    presentationMode,
+    tailVisualPolicy,
     presentationProfile: resolvePresentationProfile(profile, humanizedSections),
     humanizedSections,
     sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
@@ -200,6 +222,10 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
       raw.sectionFraming ?? raw.sectionIntros,
     ),
   };
+}
+
+export function usesStrictTailVisualAllowlist(plan: StackPresentationPlan): boolean {
+  return plan.tailVisualPolicy === "allowlist";
 }
 
 export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {

@@ -96,18 +96,12 @@ class ChatPresentationEvidenceFirstLayoutService:
         if not isinstance(plan, dict):
             return
 
-        plan["presentationMode"] = PRESENTATION_MODE
-        plan["tailVisualOrder"] = cls._resolve_evidence_first_tail_visual_order(metadata)
-        cls._sync_tail_visuals_narrative_slot(plan)
-        cls._apply_native_view_stack_plan(metadata, plan)
+        cls._apply_evidence_first_stack_plan(metadata, plan)
 
         nested = decision.get("stackPresentationPlan")
 
         if isinstance(nested, dict):
-            nested["presentationMode"] = PRESENTATION_MODE
-            nested["tailVisualOrder"] = plan["tailVisualOrder"]
-            cls._sync_tail_visuals_narrative_slot(nested)
-            cls._apply_native_view_stack_plan(metadata, nested)
+            cls._apply_evidence_first_stack_plan(metadata, nested, source_plan=plan)
 
     @classmethod
     def _resolve_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
@@ -154,6 +148,25 @@ class ChatPresentationEvidenceFirstLayoutService:
                 order.append(token)
 
         return order
+
+    @classmethod
+    def _apply_evidence_first_stack_plan(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+        *,
+        source_plan: dict[str, Any] | None = None,
+    ) -> None:
+        if isinstance(source_plan, dict):
+            tail_order = list(source_plan.get("tailVisualOrder") or [])
+        else:
+            tail_order = cls._resolve_evidence_first_tail_visual_order(metadata)
+
+        plan["presentationMode"] = PRESENTATION_MODE
+        plan["tailVisualPolicy"] = "allowlist"
+        plan["tailVisualOrder"] = tail_order
+        cls._sync_tail_visuals_narrative_slot(plan)
+        cls._apply_native_view_stack_plan(metadata, plan)
 
     @classmethod
     def _sync_tail_visuals_narrative_slot(cls, plan: dict[str, Any]) -> None:

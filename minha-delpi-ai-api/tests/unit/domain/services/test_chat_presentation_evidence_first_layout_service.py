@@ -112,6 +112,8 @@ def test_compose_omits_dashboard_tail_in_automatic_mode():
     plan = metadata["stackPresentationPlan"]
 
     assert plan["tailVisualOrder"] == ["tree", "chart"]
+    assert plan["tailVisualPolicy"] == "allowlist"
+    assert "dashboard" not in plan["tailVisualOrder"]
     assert "tailVisuals" in plan["narrativeOrder"]
 
 

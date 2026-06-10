@@ -11,6 +11,7 @@ import {
   getStackPresentationPlanFromToolCalls,
   resolveTableRole,
   planUsesHumanizedSections,
+  usesStrictTailVisualAllowlist,
   type StackPresentationPlan,
   type StackTableRole,
 } from "./presentationStackPlan";
@@ -22,7 +23,10 @@ import {
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
-import { isSummaryThenEvidenceMode } from "./chatPresentation";
+import {
+  isSummaryThenEvidenceMode,
+  shouldRenderDashboardSegment,
+} from "./chatPresentation";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -277,14 +281,26 @@ function appendTailVisuals(
     }
 
     if (token === "dashboard") {
+      if (!shouldRenderDashboardSegment(toolCalls, plan.tailVisualOrder)) {
+        continue;
+      }
+
       for (const segment of byKind.get("dashboard") ?? []) {
         appendUnique(segments, segment);
       }
     }
   }
 
+  if (usesStrictTailVisualAllowlist(plan)) {
+    return;
+  }
+
   for (const [kind, list] of byKind.entries()) {
     if (plan.tailVisualOrder.includes(kind) || kind === "chart") {
+      continue;
+    }
+
+    if (kind === "dashboard" && !shouldRenderDashboardSegment(toolCalls, plan.tailVisualOrder)) {
       continue;
     }
 
