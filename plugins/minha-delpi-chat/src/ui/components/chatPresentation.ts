@@ -529,13 +529,14 @@ export function getPresentationRecommendationsFromToolCalls(
 ): Array<{ label: string; reason?: string; query: string }> {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const dataAnswer = getDataAnswerFromToolCalls(toolCalls);
-  const merged: Array<{ label: string; reason?: string; query: string }> = [];
+  const merged: Array<{ label: string; reason?: string; query: string; view?: string }> = [];
   const seen = new Set<string>();
 
   const pushRecommendation = (item: {
     label?: string | null;
     reason?: string | null;
     query?: string | null;
+    view?: string | null;
   }) => {
     const label = String(item.label ?? "").trim();
     const query = String(item.query ?? label).trim();
@@ -549,6 +550,7 @@ export function getPresentationRecommendationsFromToolCalls(
       label,
       query,
       reason: item.reason ? String(item.reason).trim() : undefined,
+      view: item.view ? String(item.view).trim() : undefined,
     });
   };
 
