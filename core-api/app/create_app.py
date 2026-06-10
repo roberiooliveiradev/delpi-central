@@ -25,6 +25,10 @@ from app.interfaces.http.notifications_controller import (
 from app.interfaces.http.presence_controller import admin_presence_bp
 from app.interfaces.http.app_usage_controller import admin_app_usage_bp
 from app.interfaces.http.admin_statistics_controller import admin_statistics_bp
+from app.interfaces.http.portal_tour_controller import (
+    admin_portal_tour_bp,
+    portal_tour_bp,
+)
 
 from app.interfaces.http.auth_middleware import authenticate
 
@@ -89,6 +93,8 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(admin_presence_bp)
     app.register_blueprint(admin_app_usage_bp)
     app.register_blueprint(admin_statistics_bp)
+    app.register_blueprint(portal_tour_bp)
+    app.register_blueprint(admin_portal_tour_bp)
 
     # ==========================================================
     # DB INIT

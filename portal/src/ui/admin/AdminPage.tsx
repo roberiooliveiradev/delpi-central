@@ -50,7 +50,7 @@ export const AdminPage = () => {
   const ActiveIcon = activeItem.icon;
 
   return (
-    <div className="admin-page">
+    <div className="admin-page" data-tour="admin-page">
       {/* DESKTOP / TABLET NAV */}
       <nav className="admin-navbar" aria-label="Navegação de administração">
         <div className="admin-navbar-inner">
@@ -62,6 +62,7 @@ export const AdminPage = () => {
               <button
                 key={item.key}
                 type="button"
+                data-tour={`admin-nav-${item.key}`}
                 className={`admin-nav-item ${isActive ? "active" : ""}`}
                 onClick={() => setTab(item.key)}
                 aria-current={isActive ? "page" : undefined}
@@ -78,6 +79,7 @@ export const AdminPage = () => {
           <button
             type="button"
             className="admin-mobile-trigger"
+            data-tour="admin-mobile-nav"
             onClick={() => setMobileOpen((p) => !p)}
           >
             <ActiveIcon size={18} />
@@ -92,6 +94,8 @@ export const AdminPage = () => {
                 return (
                   <button
                     key={item.key}
+                    type="button"
+                    data-tour={`admin-nav-${item.key}`}
                     onClick={() => {
                       setTab(item.key);
                       setMobileOpen(false);

@@ -12,6 +12,7 @@ import { AdminPage } from "./admin/AdminPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
+import { PortalTour } from "../tour/PortalTour";
 
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
@@ -132,6 +133,7 @@ function AppShell() {
   return (
     <div className="app-shell">
       <Sidebar />
+      <PortalTour />
 
       <div className="main-area">
         <div className="content">

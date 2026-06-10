@@ -387,14 +387,11 @@ body:has(.app-shell) {
   background: var(--app-canvas);
 }
 
-/* Drawer da sidebar (≤1024px): desloca o conteúdo para não ficar sob o menu */
+/* Sidebar ≤1024px: drawer fixo sobre o conteúdo (sem empurrar .main-area) */
 @media (max-width: 1024px) {
   .main-area {
-    transition: padding-left 0.35s ease;
-  }
-
-  html[data-sidebar-collapsed="false"] .main-area {
-    padding-left: var(--portal-sidebar-width, 280px);
+    width: 100%;
+    padding-left: 0;
   }
 }
 

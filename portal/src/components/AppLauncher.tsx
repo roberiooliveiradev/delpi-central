@@ -78,7 +78,12 @@ export const AppLauncher = ({
     inputRef.current?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (document.documentElement.dataset.portalTourActive === "true") {
+          return;
+        }
+        onClose();
+      }
 
       // Enter abre o primeiro resultado quando estiver pesquisando
       if (e.key === "Enter") {
@@ -235,9 +240,13 @@ export const AppLauncher = ({
       className="launcher-overlay" 
       data-dock={dock}
     >
-      <div className={`launcher-modal startmenu ${
+      <div
+        className={`launcher-modal startmenu ${
           dock === "sidebar" ? "dock-sidebar" : ""
-        }`} onClick={(e) => e.stopPropagation()}>
+        }`}
+        data-tour="launcher-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         <div className="launcher-header">
           <span>Aplicativos</span>
@@ -249,7 +258,7 @@ export const AppLauncher = ({
             ✕
           </button>
         </div>
-        <div className="launcher-searchbar">
+        <div className="launcher-searchbar" data-tour="launcher-search">
           <Search size={18} />
           <input
             ref={inputRef}
@@ -279,7 +288,7 @@ export const AppLauncher = ({
                   </p>
                 </div>
               ) : (
-                <div className="launcher-pinned-grid">
+                <div className="launcher-pinned-grid" data-tour="launcher-grid">
                   {availableApps.map((app) => {
                     const isPinned = favorites.some(f => f.id === app.id);
                     const isOpen = openAppId === app.id;

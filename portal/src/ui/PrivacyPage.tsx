@@ -135,7 +135,7 @@ export const PrivacyPage = () => {
   }
 
   return (
-    <div className="privacy-page">
+    <div className="privacy-page" data-tour="privacy-page">
       <motion.div
         className="privacy-page__header"
         initial="hidden"
@@ -166,6 +166,7 @@ export const PrivacyPage = () => {
         {/* CONSENTS */}
         <motion.section
           className="privacy-page__card"
+          data-tour="privacy-consent"
           initial="hidden"
           animate="show"
           variants={fadeUp}
@@ -220,6 +221,7 @@ export const PrivacyPage = () => {
         {/* DATA EXPORT */}
         <motion.section
           className="privacy-page__card"
+          data-tour="privacy-export"
           initial="hidden"
           animate="show"
           variants={fadeUp}

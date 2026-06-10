@@ -93,6 +93,35 @@ class ExportUserDataUseCase:
             for c in consents
         ]
 
+        tour_progress = self._uow.portal_tour.get_progress(user_id)
+        portal_tour = None
+        if tour_progress:
+            portal_tour = {
+                "tourVersion": tour_progress.tour_version,
+                "status": tour_progress.status,
+                "completedQuestIds": list(tour_progress.completed_quest_ids),
+                "startedAt": tour_progress.started_at.isoformat() if tour_progress.started_at else None,
+                "lastActivityAt": tour_progress.last_activity_at.isoformat() if tour_progress.last_activity_at else None,
+                "completedAt": tour_progress.completed_at.isoformat() if tour_progress.completed_at else None,
+            }
+
+        from app.infrastructure.db.models.user_portal_tour_progress import PortalTourQuestEvent
+        quest_events_q = (
+            session.query(PortalTourQuestEvent)
+            .filter_by(user_id=uid)
+            .order_by(PortalTourQuestEvent.completed_at.desc())
+            .limit(500)
+            .all()
+        )
+        portal_tour_quest_events = [
+            {
+                "tourVersion": event.tour_version,
+                "questId": event.quest_id,
+                "completedAt": event.completed_at.isoformat() if event.completed_at else None,
+            }
+            for event in quest_events_q
+        ]
+
         return {
             "exportDate": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
             "profile": profile,
@@ -100,4 +129,6 @@ class ExportUserDataUseCase:
             "notifications": notifications,
             "usageEvents": usage_events,
             "auditLogs": audit_logs,
+            "portalTour": portal_tour,
+            "portalTourQuestEvents": portal_tour_quest_events,
         }

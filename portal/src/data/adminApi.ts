@@ -1,6 +1,7 @@
 // src/data/adminApi.ts
 
 import { ApiClient } from "./apiClient";
+import type { PortalTourExplorersResponse } from "./coreApi";
 
 export type PaginationMeta = {
   page: number;
@@ -485,6 +486,23 @@ export class AdminApi {
 
   getAdminStatistics() {
     return this.client.get<AdminStatistics>("/core-api/admin/statistics");
+  }
+
+  listPortalTourExplorers(params?: {
+    tourVersion?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    const search = new URLSearchParams();
+    if (params?.tourVersion) search.set("tourVersion", params.tourVersion);
+    if (params?.status) search.set("status", params.status);
+    if (params?.limit != null) search.set("limit", String(params.limit));
+    if (params?.offset != null) search.set("offset", String(params.offset));
+    const query = search.toString();
+    return this.client.get<PortalTourExplorersResponse>(
+      `/core-api/admin/portal-tour/explorers${query ? `?${query}` : ""}`,
+    );
   }
 
   getAppUsage() {

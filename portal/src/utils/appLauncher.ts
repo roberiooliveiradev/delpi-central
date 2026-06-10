@@ -8,6 +8,7 @@ import { normalizeAppPath } from "./embeddedAppNotification";
 export const PORTAL_APP_LAUNCHER_ROUTE = "/__apps";
 
 export const DELPI_OPEN_APP_LAUNCHER_EVENT = "DELPI_OPEN_APP_LAUNCHER";
+export const DELPI_CLOSE_APP_LAUNCHER_EVENT = "DELPI_CLOSE_APP_LAUNCHER";
 
 export function isAppLauncherRoute(target: string | null | undefined): boolean {
   return normalizeAppPath(target ?? "") === PORTAL_APP_LAUNCHER_ROUTE;
@@ -49,4 +50,8 @@ export function shouldOpenAppLauncher(
 
 export function openAppLauncher() {
   window.dispatchEvent(new CustomEvent(DELPI_OPEN_APP_LAUNCHER_EVENT));
+}
+
+export function closeAppLauncher() {
+  window.dispatchEvent(new CustomEvent(DELPI_CLOSE_APP_LAUNCHER_EVENT));
 }

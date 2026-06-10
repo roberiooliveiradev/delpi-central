@@ -317,6 +317,37 @@ export interface DataExportResponse {
   auditLogs: Record<string, unknown>[];
 }
 
+export type PortalTourStatus = "exploring" | "completed" | "dismissed";
+
+export type PortalTourProgressResponse = {
+  tourVersion: string | null;
+  status: PortalTourStatus | null;
+  completedQuestIds: string[];
+  startedAt: string | null;
+  lastActivityAt: string | null;
+  completedAt: string | null;
+};
+
+export type PortalTourExplorerItem = {
+  userId: string;
+  name: string;
+  email: string;
+  tourVersion: string;
+  status: PortalTourStatus;
+  completedQuestIds: string[];
+  completedQuestCount: number;
+  startedAt: string;
+  lastActivityAt: string;
+  completedAt: string | null;
+};
+
+export type PortalTourExplorersResponse = {
+  tourVersion: string | null;
+  status: string | null;
+  total: number;
+  items: PortalTourExplorerItem[];
+};
+
 export class CoreApi {
   private client: ApiClient;
 
@@ -532,6 +563,30 @@ export class CoreApi {
       ),
       data_subject_rights: raw.rights ?? [],
     };
+  }
+
+  // -------------------------------------------------------
+  // PORTAL TOUR
+  // -------------------------------------------------------
+
+  getPortalTourProgress() {
+    return this.client.get<PortalTourProgressResponse>("/core-api/me/portal-tour");
+  }
+
+  syncPortalTourProgress(payload: {
+    tourVersion: string;
+    status: PortalTourStatus;
+    completedQuestIds?: string[];
+    completedQuestId?: string;
+  }) {
+    return this.client.patch<PortalTourProgressResponse>(
+      "/core-api/me/portal-tour",
+      payload,
+    );
+  }
+
+  resetPortalTourProgress() {
+    return this.client.delete<{ ok: boolean }>("/core-api/me/portal-tour");
   }
 
   getDataExport() {

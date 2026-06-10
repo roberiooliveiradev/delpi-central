@@ -82,7 +82,7 @@ export const HomePage = () => {
   const topNotifications = notifications.slice(0, 4);
 
   return (
-    <div id="home-page" className="home-wrap">
+    <div id="home-page" className="home-wrap" data-tour="home-page">
       {/* HEADER */}
       <motion.div
         className="home-header"
@@ -132,6 +132,7 @@ export const HomePage = () => {
           value={unreadCount}
           subtitle={unreadCount === 1 ? "não lida" : "não lidas"}
           onClick={() => navigate("/notifications")}
+          dataTour="home-summary-notifications"
         />
 
         <SummaryCard
@@ -379,17 +380,20 @@ function SummaryCard({
   value,
   subtitle,
   onClick,
+  dataTour,
 }: {
   icon: React.ReactNode;
   title: string;
   value: number | string;
   subtitle: string;
   onClick?: () => void;
+  dataTour?: string;
 }) {
   return (
     <motion.button
       type="button"
       className="home-summary-card"
+      data-tour={dataTour}
       onClick={onClick}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}

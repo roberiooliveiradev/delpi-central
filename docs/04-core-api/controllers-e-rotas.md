@@ -65,6 +65,9 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET/PATCH | `/me/notifications/preferences` | Categorias silenciadas |
 | POST | `/me/notifications/test` | Teste (403 se `FLASK_ENV=production`) |
 | GET | `/me/dashboard` | `{ "appsCount", "apps" }` |
+| GET/PATCH/DELETE | `/me/portal-tour` | Progresso do tour gamificado do portal — ver [portal-tour.md](../06-portal-frontend/portal-tour.md) |
+
+Arquivo: `portal_tour_controller.py` (`portal_tour_bp`).
 
 Admin notificações (`notifications_controller.py`, superadmin): `POST /admin/notifications`, `GET/PUT /admin/notifications/dispatches/:id`, `GET /admin/notifications/dispatches`, `POST .../process-pending`, templates CRUD — ver [notificacoes.md](./notificacoes.md).
 
@@ -235,6 +238,9 @@ Arquivos: `admin_statistics_controller.py`, `presence_controller.py`.
 | GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online, uso de apps |
 | GET | `/admin/users/presence` | Superadmin | Usuários com portal conectado (Socket.IO) |
 | GET | `/admin/apps/usage` | `rbac.manage` | Apps em uso agora, ranking 30 dias, apps fantasmas (excl. backend-only), trackableActive |
+| GET | `/admin/portal-tour/explorers` | `rbac.manage` | Usuários explorando o tour (`tourVersion`, `status`, `limit`, `offset`) |
+
+Arquivo tour admin: `portal_tour_controller.py` (`admin_portal_tour_bp`).
 
 ### Integrações (token de serviço)
 

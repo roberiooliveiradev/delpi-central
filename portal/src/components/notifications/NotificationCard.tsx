@@ -191,6 +191,7 @@ export function NotificationCard({
 
     return (
       <article
+        data-tour="notification-card"
         className={[
           "notification-card",
           "notification-card--page",

@@ -11,6 +11,7 @@ import {
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
+import { PortalTourExplorersPanel } from "../PortalTourExplorersPanel";
 import { PanelNav, StatsPageIntro, type StatsPageProps } from "../StatsShared";
 import { STATS_CHART_COLORS } from "../statsTheme";
 
@@ -131,6 +132,7 @@ export function StatsUsersPage({ stats, charts, onNavigateTab }: StatsUsersPageP
       </div>
 
       <LeastEngagedUsersPanel data={stats.users.leastEngaged} />
+      <PortalTourExplorersPanel />
     </div>
   );
 }

@@ -12,12 +12,14 @@ Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via t
 | Subpágina | Conteúdo |
 |-----------|----------|
 | **Visão geral** | KPIs + donuts resumidos (usuários, apps, notificações) |
-| **Usuários** | Online, logins, ativos/inativos |
+| **Usuários** | Online, logins, ativos/inativos, **tour do portal (exploradores)** |
 | **Aplicações** | Quem usa cada app agora, top 30d, fantasmas (sem backend-only), trackable vs backend-only, tipos |
 | **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
 | **Notificações** | Status dos envios de campanha |
 
-Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, componentes em `StatsEnrichment.tsx`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
+Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, componentes em `StatsEnrichment.tsx`, painel de tour em `PortalTourExplorersPanel.tsx`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
+
+**Usuários — tour:** lista quem está com status `exploring` na versão atual do tour (`GET /core-api/admin/portal-tour/explorers`). Ver [portal-tour.md](./portal-tour.md).
 
 **Aplicações:** layout em duas colunas — uso ao vivo ocupa a área principal; ranking 30d e lista compacta de apps fantasmas (rolável, expansível) ficam na coluna lateral, sem tags que estouram a tela. Apps **`backend-only`** não aparecem como fantasmas; KPI **Apps rastreáveis** exclui serviços só-backend.
 

@@ -66,6 +66,7 @@ class AnonymizeUserDataUseCase:
 
         consent_count = session.query(UserConsent).filter_by(user_id=uid).delete()
         usage_events_removed = purge_usage_tracking_data(self._uow, user_id=uid)
+        self._uow.portal_tour.delete_progress(str(uid))
 
         self._uow.commit()
 

@@ -6,11 +6,15 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import { AuthContext } from "../state/AuthContext";
+import { ApiClient } from "../data/apiClient";
+import { CoreApi } from "../data/coreApi";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
 import { useAppsById } from "../hooks/useAppsById";
 import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { startPortalTour } from "../tour/PortalTour";
+import { restartPortalTourRemote } from "../tour/portalTourPersistence";
 import { DataTable } from "../components/DataTable";
 import type {
   DataTableColumn,
@@ -70,10 +74,29 @@ const fadeUp = {
 ========================================= */
 
 export const MyProfile = () => {
-  const { user, apps, favorites, addFavorite, removeFavorite } =
-    useContext(AuthContext);
+  const {
+    user,
+    apps,
+    favorites,
+    addFavorite,
+    removeFavorite,
+    getAccessToken,
+    refreshToken,
+  } = useContext(AuthContext);
 
   const navigate = useNavigate();
+  const coreApi = useMemo(
+    () =>
+      new CoreApi(
+        new ApiClient("", getAccessToken, {
+          refreshToken: async () => {
+            await refreshToken();
+            return Boolean(getAccessToken());
+          },
+        }),
+      ),
+    [getAccessToken, refreshToken],
+  );
   const routesByApp = useRoutesByApp();
   const appsById = useAppsById();
 
@@ -355,7 +378,7 @@ export const MyProfile = () => {
   ========================================= */
 
   return (
-    <div className="home-wrap">
+    <div className="home-wrap" data-tour="profile-page">
 
       {/* HEADER */}
 
@@ -387,6 +410,7 @@ export const MyProfile = () => {
 
       <motion.div
         className="home-summary"
+        data-tour="profile-rbac-summary"
         initial="hidden"
         animate="show"
         variants={fadeUp}
@@ -454,6 +478,7 @@ export const MyProfile = () => {
         <motion.section
           id="profile-info"
           className="home-panel"
+          data-tour="profile-info"
           initial="hidden"
           animate="show"
           variants={fadeUp}
@@ -472,6 +497,22 @@ export const MyProfile = () => {
               label="Superadmin"
               value={user?.is_superadmin ? "Sim" : "Não"}
             />
+            <button
+              type="button"
+              className="profile-tour-link"
+              data-tour="profile-tour-restart"
+              onClick={() => {
+                void (async () => {
+                  if (user?.id) {
+                    await restartPortalTourRemote(coreApi, user.id);
+                  }
+                  startPortalTour();
+                  navigate("/");
+                })();
+              }}
+            >
+              Ver tour do portal novamente
+            </button>
           </div>
         </motion.section>
 
@@ -481,6 +522,7 @@ export const MyProfile = () => {
           <motion.section
             id="profile-groups"
             className="home-panel"
+            data-tour="profile-groups"
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -510,6 +552,7 @@ export const MyProfile = () => {
           <motion.section
             id="profile-roles"
             className="home-panel"
+            data-tour="profile-roles"
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -539,6 +582,7 @@ export const MyProfile = () => {
           <motion.section
             id="profile-permissions"
             className="home-panel"
+            data-tour="profile-permissions"
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -568,6 +612,7 @@ export const MyProfile = () => {
         <motion.section
           id="profile-apps"
           className="home-panel home-panel-wide"
+          data-tour="profile-apps"
           initial="hidden"
           animate="show"
           variants={fadeUp}

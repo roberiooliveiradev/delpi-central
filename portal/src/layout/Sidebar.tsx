@@ -31,8 +31,16 @@ import {
 
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
-import { DELPI_OPEN_APP_LAUNCHER_EVENT } from "../utils/appLauncher";
+import {
+  DELPI_CLOSE_APP_LAUNCHER_EVENT,
+  DELPI_OPEN_APP_LAUNCHER_EVENT,
+} from "../utils/appLauncher";
 import { DELPI_SIDEBAR_EXPAND_EVENT } from "../utils/sidebar";
+import {
+  DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
+  isPortalTourActive,
+  type PortalTourSidebarPanel,
+} from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
 
 type GroupedRoutes = Record<
@@ -97,8 +105,45 @@ export const Sidebar = () => {
 
   useEffect(() => {
     const openLauncher = () => setLauncherOpen(true);
+    const closeLauncher = () => setLauncherOpen(false);
     window.addEventListener(DELPI_OPEN_APP_LAUNCHER_EVENT, openLauncher);
-    return () => window.removeEventListener(DELPI_OPEN_APP_LAUNCHER_EVENT, openLauncher);
+    window.addEventListener(DELPI_CLOSE_APP_LAUNCHER_EVENT, closeLauncher);
+    return () => {
+      window.removeEventListener(DELPI_OPEN_APP_LAUNCHER_EVENT, openLauncher);
+      window.removeEventListener(DELPI_CLOSE_APP_LAUNCHER_EVENT, closeLauncher);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onTourPanel = (event: Event) => {
+      const panel = (event as CustomEvent<{ panel?: PortalTourSidebarPanel }>)
+        .detail?.panel;
+
+      if (
+        panel === "notifications" ||
+        panel === "theme" ||
+        panel === "profile"
+      ) {
+        setLauncherOpen(false);
+      }
+
+      setNotifOpen(panel === "notifications");
+      setThemeOpen(panel === "theme");
+      setUserOpen(panel === "profile");
+
+      if (panel === "none" || !panel) {
+        setNotifOpen(false);
+        setThemeOpen(false);
+        setUserOpen(false);
+      }
+    };
+
+    window.addEventListener(DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT, onTourPanel);
+    return () =>
+      window.removeEventListener(
+        DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
+        onTourPanel,
+      );
   }, []);
 
   const openSidebarFromEdge = useCallback(() => {
@@ -193,6 +238,10 @@ export const Sidebar = () => {
   // Fecha dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (document.documentElement.dataset.portalTourActive === "true") {
+        return;
+      }
+
       const target = event.target as Node;
 
       if (
@@ -286,6 +335,15 @@ export const Sidebar = () => {
 
   return (
     <>
+      {!collapsed ? (
+        <button
+          type="button"
+          className="sidebar-mobile-backdrop"
+          aria-label="Fechar menu lateral"
+          onClick={() => setCollapsed(true)}
+        />
+      ) : null}
+
       {collapsed && (
         <>
           <button
@@ -339,7 +397,7 @@ export const Sidebar = () => {
               </button>
             </div>
 
-            <div className="sidebar-content">
+            <div className="sidebar-content" data-tour="sidebar-favorites">
               <SidebarFavoritesList
                 entries={pinnedGroupedEntries}
                 favorites={favorites}
@@ -358,7 +416,11 @@ export const Sidebar = () => {
 
             <div className="sidebar-footer">
               {canAccessAdmin && (
-                <NavLink to="/admin" className="sidebar-footer-item">
+                <NavLink
+                  to="/admin"
+                  className="sidebar-footer-item"
+                  data-tour="sidebar-admin"
+                >
                   <Shield size={18} />
                   <span>Admin</span>
                 </NavLink>
@@ -366,7 +428,13 @@ export const Sidebar = () => {
 
               <div
                 className="sidebar-footer-item"
+                data-tour="sidebar-notifications"
                 onClick={() => {
+                  if (isPortalTourActive()) {
+                    if (!notifOpen) void reloadNotifications();
+                    setNotifOpen(true);
+                    return;
+                  }
                   setNotifOpen((open) => {
                     if (!open) void reloadNotifications();
                     return !open;
@@ -383,6 +451,7 @@ export const Sidebar = () => {
               {notifOpen && (
                 <div
                   className="notif-dropdown sidebar-notif"
+                  data-tour="sidebar-notifications-panel"
                   ref={notifDropdownRef}
                 >
                   {notifications.length === 0 && (
@@ -428,6 +497,7 @@ export const Sidebar = () => {
 
               <div
                 className="sidebar-footer-item"
+                data-tour="sidebar-apps"
                 onClick={() => setLauncherOpen(true)}
               >
                 <Grid size={18} />
@@ -436,7 +506,14 @@ export const Sidebar = () => {
 
               <div
                 className="sidebar-footer-item"
-                onClick={() => setThemeOpen(!themeOpen)}
+                data-tour="sidebar-theme"
+                onClick={() => {
+                  if (isPortalTourActive()) {
+                    setThemeOpen(true);
+                    return;
+                  }
+                  setThemeOpen(!themeOpen);
+                }}
               >
                 {theme === "dark" ? (
                   <Moon size={18} />
@@ -452,6 +529,7 @@ export const Sidebar = () => {
               {themeOpen && (
                 <div
                   className="dropdown sidebar-user"
+                  data-tour="sidebar-theme-menu"
                   ref={themeDropdownRef}
                 >
                   <div
@@ -488,7 +566,14 @@ export const Sidebar = () => {
 
               <div
                 className="sidebar-footer-item"
-                onClick={() => setUserOpen(!userOpen)}
+                data-tour="sidebar-profile"
+                onClick={() => {
+                  if (isPortalTourActive()) {
+                    setUserOpen(true);
+                    return;
+                  }
+                  setUserOpen(!userOpen);
+                }}
               >
                 <div className="avatar small">{initials}</div>
                 <span>{user?.name}</span>
@@ -498,6 +583,7 @@ export const Sidebar = () => {
               {userOpen && (
                 <div
                   className="dropdown sidebar-user"
+                  data-tour="sidebar-profile-menu"
                   ref={userDropdownRef}
                 >
                   <div

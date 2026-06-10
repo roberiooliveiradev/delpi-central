@@ -233,7 +233,7 @@ export function NotificationsPage() {
   const activeSection = SECTION_TABS.find((tab) => tab.value === section)!;
 
   return (
-    <section className="notifications-page">
+    <section className="notifications-page" data-tour="notifications-page">
       <div className="notifications-page__header">
         <div className="notifications-page__header-icon" aria-hidden="true">
           <Bell size={22} />
@@ -286,7 +286,7 @@ export function NotificationsPage() {
           aria-labelledby="notifications-section-inbox"
           className="notifications-page__panel"
         >
-          <div className="notifications-page__controls">
+          <div className="notifications-page__controls" data-tour="notifications-filters">
             <div className="notifications-page__controls-row">
               <div
                 className="notifications-page__status-tabs"
@@ -438,7 +438,7 @@ export function NotificationsPage() {
                 <p>Nenhuma notificação neste filtro.</p>
               </div>
             ) : (
-              <ul className="notifications-page__list">
+              <ul className="notifications-page__list" data-tour="notifications-list">
                 {items.map((notification) => (
                   <li key={notification.id}>
                     <NotificationCard
@@ -490,11 +490,13 @@ export function NotificationsPage() {
           aria-labelledby="notifications-section-preferences"
           className="notifications-page__panel notifications-page__panel--preferences"
         >
-          <NotificationPreferencesPanel
-            variant="page"
-            coreApi={coreApi}
-            onSaved={() => void reloadNotifications()}
-          />
+          <div data-tour="notifications-preferences">
+            <NotificationPreferencesPanel
+              variant="page"
+              coreApi={coreApi}
+              onSaved={() => void reloadNotifications()}
+            />
+          </div>
         </div>
       )}
 
