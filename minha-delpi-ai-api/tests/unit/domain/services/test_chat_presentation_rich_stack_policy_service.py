@@ -57,6 +57,22 @@ def test_decision_service_uses_rich_stack_for_factory_status():
     assert "tree" in decision["availableViews"]
 
 
+def test_stock_route_does_not_default_to_text_stack_without_user_preference():
+    metadata = {
+        "path": "/products/90269001/stock",
+        "apiDelpiResponseMeta": {"entity": "product_stock"},
+        "textPresentation": {"type": "markdown", "markdown": "### Estoque\n\nResumo."},
+        "presentation": {"type": "table", "title": "Posições", "rows": []},
+        "chartPresentation": {"type": "chart", "title": "Saldo", "data": []},
+    }
+
+    assert not ChatPresentationRichStackPolicyService.should_default_to_text_stack(
+        path=metadata["path"],
+        metadata=metadata,
+        entity="product_stock",
+    )
+
+
 def test_tail_visual_order_follows_profile_view_order():
     metadata = {
         "path": "/products/90261805/structure/exclusivity",

@@ -257,6 +257,13 @@ PATH_ENTITY_FALLBACKS: tuple[tuple[str, str], ...] = (
     ("/sales", "product_sales"),
     ("/summary", "product"),
     ("/search", "product_search"),
+    ("/branch_rol_target_pct", "commercial_rol_target"),
+    ("/finacial/rol", "financial_rol"),
+    ("/finacial/ebitda_pct", "financial_ebitda_pct"),
+    ("/finacial/fixed_cost_pct", "financial_fixed_cost_pct"),
+    ("/finacial/pmr", "financial_pmr"),
+    ("/engineering/lmps/", "lmp"),
+    ("/quality/audit-5s/summary", "audit_5s_summary"),
 )
 
 
@@ -400,9 +407,9 @@ class ChatApiDelpiResponseProfileService:
         parts = lowered.rstrip("/").split("/")
 
         if (
-            len(parts) >= 3
-            and parts[-2] == "products"
-            and parts[-1].isdigit()
+            len(parts) == 3
+            and parts[1] == "products"
+            and (parts[2].isdigit() or parts[2] in {"{code}", "0"})
         ):
             return "product"
 

@@ -122,6 +122,14 @@ class ChatPresentationRichStackPolicyService:
         if user_preference:
             return False
 
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        # Estoque: tabela nativa por defaultViewPolicy; stack narrativo só com mensagem do usuário.
+        if ChatPresentationRoutePolicyService.is_stock_route(path):
+            return False
+
         if not cls.is_rich_playbook_route(path, entity=entity):
             return False
 
