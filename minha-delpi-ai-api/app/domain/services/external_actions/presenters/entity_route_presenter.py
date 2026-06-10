@@ -101,6 +101,9 @@ class ExternalActionEntityRoutePresenter:
             if entity == "product_last_purchase" and isinstance(root, dict):
                 return self._host._present_product_last_purchase(root, path)
 
+            if entity == "product_pricing" and isinstance(root, dict):
+                return self._host._present_product_pricing(root, path)
+
             if entity in {
                 "product_purchase_price_history",
                 "product_purchase_budget_history",
@@ -194,22 +197,6 @@ class ExternalActionEntityRoutePresenter:
 
                 if billing:
                     return billing
-
-            if entity == "product_pricing" and isinstance(root, dict):
-                prices = root.get("prices")
-
-                if isinstance(prices, list) and prices:
-                    title = self._host._infer_items_title(prices, effective_path)
-
-                    return self._host._present_items(
-                        prices,
-                        title=title or self._host._presenter_text("productDetailTitles", "prices", code=""),
-                    )
-
-                pricing_fallback = self._host._present_dict_fallback(root, effective_path)
-
-                if pricing_fallback:
-                    return pricing_fallback
 
             if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
                 items = root.get("items") if isinstance(root, dict) else None

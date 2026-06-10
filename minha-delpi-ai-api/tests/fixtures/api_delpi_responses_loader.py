@@ -95,6 +95,12 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_last_purchase",
         "shape": "playbook_report",
     },
+    "product_pricing_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_pricing",
+        "entity": "product_pricing",
+        "shape": "scalar",
+    },
     "product_detail_90269001.json": {
         "dataVersion": "2026-06",
         "operationId": "get_product_detail",

@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "message": "Preços de venda carregados com sucesso.",
+  "data": {
+    "product": {
+      "code": "10080001",
+      "description": "MP TE CONNECTIVITY",
+      "unit": "UN"
+    },
+    "prices": [
+      {
+        "table_code": "001",
+        "table_description": "Tabela padrao",
+        "sale_price": 1.25,
+        "max_price": 1.5,
+        "discount_value": 0.0,
+        "discount_percent": 0.0,
+        "lot_quantity": 1.0,
+        "state": "SP",
+        "operation_type": "01",
+        "currency": "BRL",
+        "valid_from": "20260101",
+        "active": true
+      },
+      {
+        "table_code": "002",
+        "table_description": "Tabela exportacao",
+        "sale_price": 1.35,
+        "max_price": 1.6,
+        "discount_value": 0.05,
+        "discount_percent": 3.7,
+        "lot_quantity": 10.0,
+        "state": "SP",
+        "operation_type": "01",
+        "currency": "BRL",
+        "valid_from": "20260201",
+        "active": true
+      }
+    ]
+  }
+}

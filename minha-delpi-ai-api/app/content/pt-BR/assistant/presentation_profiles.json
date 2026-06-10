@@ -34,7 +34,7 @@
     "product_guide": "table_list",
     "product_inspection": "table_list",
     "product_search": "table_list",
-    "product_pricing": "table_list",
+    "product_pricing": "sale_pricing",
     "product_purchases": "table_list",
     "product_suppliers": "table_list",
     "product_customers": "table_list",
@@ -71,7 +71,7 @@
     { "contains": "/customers", "profile": "table_list" },
     { "contains": "/purchases", "profile": "table_list" },
     { "contains": "/sales", "profile": "table_list" },
-    { "contains": "/pricing", "profile": "table_list" },
+    { "contains": "/pricing", "profile": "sale_pricing" },
     { "contains": "/prices", "profile": "table_list" },
     { "contains": "/movements", "profile": "table_list" },
     { "contains": "/invoices", "profile": "table_list" },
@@ -140,6 +140,12 @@
       "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
       "stackPlan": "cost_impact_simulation",
       "flags": ["cost_impact_simulation"]
+    },
+    "sale_pricing": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "sale_pricing",
+      "flags": ["sale_pricing"]
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
@@ -224,6 +230,11 @@
       "highlightsAfterProfile": true
     },
     "cost_impact_simulation": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "sale_pricing": {
       "tableRoleOrder": ["profile", "list", "other"],
       "profileFirst": true,
       "highlightsAfterProfile": true

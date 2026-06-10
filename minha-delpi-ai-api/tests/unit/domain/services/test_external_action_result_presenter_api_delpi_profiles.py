@@ -350,6 +350,20 @@ def test_present_cost_impact_simulation_fixture_by_meta_entity() -> None:
     assert "10080002" in body or "250" in body
 
 
+def test_present_product_pricing_fixture_by_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_pricing_10080001.json")
+
+    humanized = presenter.present(
+        envelope,
+        path="/products/10080001/pricing",
+    )
+
+    assert "Preço de venda" in humanized.get("titulo", "")
+    body = "\n".join(humanized.get("linhas") or [])
+    assert "1.25" in body or "Tabela" in body
+
+
 def test_present_last_purchase_fixture_by_meta_entity() -> None:
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")

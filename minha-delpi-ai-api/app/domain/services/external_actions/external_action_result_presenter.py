@@ -30,6 +30,9 @@ from app.domain.services.external_actions.presenters.product_shipping_status_pre
 from app.domain.services.external_actions.presenters.product_structure_exclusivity_presenter import (
     ExternalActionProductStructureExclusivityPresenter,
 )
+from app.domain.services.external_actions.presenters.product_pricing_presenter import (
+    ExternalActionProductPricingPresenter,
+)
 from app.domain.services.external_actions.presenters.product_raw_material_price_presenter import (
     ExternalActionProductRawMaterialPricePresenter,
 )
@@ -99,6 +102,7 @@ class ExternalActionResultPresenter:
         self._product_production_status_presenter: ExternalActionProductProductionStatusPresenter | None = None
         self._product_shipping_status_presenter: ExternalActionProductShippingStatusPresenter | None = None
         self._product_structure_exclusivity_presenter: ExternalActionProductStructureExclusivityPresenter | None = None
+        self._product_pricing_presenter: ExternalActionProductPricingPresenter | None = None
         self._product_raw_material_price_presenter: ExternalActionProductRawMaterialPricePresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
         self._product_stock_presenter: ExternalActionProductStockPresenter | None = None
@@ -157,6 +161,12 @@ class ExternalActionResultPresenter:
             )
 
         return self._product_structure_exclusivity_presenter
+
+    def _product_pricing(self) -> ExternalActionProductPricingPresenter:
+        if self._product_pricing_presenter is None:
+            self._product_pricing_presenter = ExternalActionProductPricingPresenter(self)
+
+        return self._product_pricing_presenter
 
     def _raw_material_price(self) -> ExternalActionProductRawMaterialPricePresenter:
         if self._product_raw_material_price_presenter is None:
@@ -433,6 +443,9 @@ class ExternalActionResultPresenter:
 
     def _present_product_cost_impact_simulation(self, root: dict, path: str) -> dict:
         return self._raw_material_price()._present_cost_impact_simulation(root, path)
+
+    def _present_product_pricing(self, root: dict, path: str) -> dict:
+        return self._product_pricing()._present_product_pricing(root, path)
 
     def _present_product_last_purchase(self, root: dict, path: str) -> dict:
         return self._raw_material_price()._present_last_purchase(root, path)
@@ -748,6 +761,35 @@ class ExternalActionResultPresenter:
             table=table,
         )
 
+    def build_product_pricing_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._product_pricing().build_product_pricing_table_presentations(root, path)
+
+    def build_product_pricing_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._product_pricing().build_product_pricing_kpi_presentation(root, path)
+
+    def build_product_pricing_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._product_pricing().build_product_pricing_chart_presentation(root, path)
+
+    def build_product_pricing_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._product_pricing().build_product_pricing_tree_presentation(root, path)
+
+    def build_product_pricing_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._product_pricing().build_product_pricing_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
     def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
         return self._raw_material_price().build_last_purchase_table_presentation(root, path)
 
@@ -804,6 +846,9 @@ class ExternalActionResultPresenter:
 
     def _build_cost_impact_simulation_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._raw_material_price()._build_cost_impact_text_presentation(root, path)
+
+    def _build_product_pricing_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._product_pricing()._build_pricing_text_presentation(root, path)
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
         return self._presentation_builder()._build_presentation(data, path=path)

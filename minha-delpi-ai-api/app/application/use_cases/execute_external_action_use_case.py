@@ -428,6 +428,19 @@ class ExecuteExternalActionUseCase:
                 if table_presentations_list:
                     profile_table_presentation = table_presentations_list[0]
                     table_presentation = table_presentations_list[0]
+            elif "/pricing" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = self.presenter.build_product_pricing_table_presentations(
+                    root_payload,
+                    resolved_path,
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
             elif "/last-purchase" in path_lower and isinstance(root_payload, dict):
                 last_purchase_table = self.presenter.build_last_purchase_table_presentation(
                     root_payload,

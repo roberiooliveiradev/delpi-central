@@ -86,6 +86,12 @@ class ExternalActionPresentationBuilderPresenter:
                 if tables:
                     return tables[0]
 
+            if entity == "product_pricing":
+                tables = self._host.build_product_pricing_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
             if entity == "product_last_purchase":
                 return self._host.build_last_purchase_table_presentation(root, path)
 
@@ -189,13 +195,6 @@ class ExternalActionPresentationBuilderPresenter:
 
                     if len(items) >= 2 or self._host._is_tabular_data(items[0]):
                         return self._host._build_items_table(items, title=title, path=effective_path)
-
-            if entity == "product_pricing" and isinstance(root.get("prices"), list):
-                prices = root["prices"]
-
-                if prices and isinstance(prices[0], dict):
-                    title = self._host._infer_items_title(prices, effective_path)
-                    return self._host._build_items_table(prices, title=title, path=effective_path)
 
             if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
                 items = root.get("items")
