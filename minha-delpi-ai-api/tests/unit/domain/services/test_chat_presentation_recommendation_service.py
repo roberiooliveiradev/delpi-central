@@ -118,6 +118,22 @@ def test_kpi_entity_family_recommends_kpi_when_text_selected():
     assert any(item["view"] == "kpi" for item in recommendations)
 
 
+def test_kpi_series_chart_selected_recommends_table_and_text():
+    decision = {
+        "selected": "line_chart",
+        "availableViews": ["text", "table", "chart", "line_chart"],
+        "presentationProfileKey": "kpi_snapshot",
+        "dataShape": {"rows": 2, "hasDate": True, "hasNumeric": True},
+    }
+
+    recommendations = ChatPresentationRecommendationService.build(decision=decision)
+
+    views = {item["view"] for item in recommendations}
+
+    assert "table" in views
+    assert "text" in views
+
+
 def test_kpi_profile_extra_chips_from_interactivity():
     metadata = {
         "ok": True,

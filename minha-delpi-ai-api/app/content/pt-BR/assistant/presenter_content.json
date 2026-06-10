@@ -988,6 +988,21 @@
             "view": "line_chart",
             "reasonKey": "kpiSeriesChart",
             "requiresShape": "hasDate"
+          },
+          {
+            "whenSelected": "line_chart",
+            "view": "table",
+            "reasonKey": "tabularListDetail"
+          },
+          {
+            "whenSelected": "line_chart",
+            "view": "text",
+            "reasonKey": "operationalTextSummary"
+          },
+          {
+            "whenSelected": "chart",
+            "view": "table",
+            "reasonKey": "tabularListDetail"
           }
         ]
       }
