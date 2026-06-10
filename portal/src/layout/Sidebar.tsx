@@ -7,7 +7,7 @@ import {
   useRef,
   useCallback,
 } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
@@ -42,6 +42,24 @@ import {
 } from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
 
+function sidebarFooterItemClass(options?: { active?: boolean; open?: boolean }) {
+  return [
+    "sidebar-footer-item",
+    options?.active ? "active" : "",
+    options?.open ? "is-open" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function isProfileFooterRoute(pathname: string) {
+  return (
+    pathname === "/profile" ||
+    pathname.startsWith("/profile/") ||
+    pathname === "/privacy"
+  );
+}
+
 type GroupedRoutes = Record<
   string,
   {
@@ -67,6 +85,7 @@ export const Sidebar = () => {
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, setTheme } = useTheme();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -419,7 +438,9 @@ export const Sidebar = () => {
               {canAccessAdmin && (
                 <NavLink
                   to="/admin"
-                  className="sidebar-footer-item"
+                  className={({ isActive }) =>
+                    sidebarFooterItemClass({ active: isActive })
+                  }
                   data-tour="sidebar-admin"
                 >
                   <Shield size={18} />
@@ -428,7 +449,10 @@ export const Sidebar = () => {
               )}
 
               <div
-                className="sidebar-footer-item"
+                className={sidebarFooterItemClass({
+                  active: location.pathname.startsWith("/notifications"),
+                  open: notifOpen,
+                })}
                 data-tour="sidebar-notifications"
                 ref={notifTriggerRef}
                 onClick={() => {
@@ -493,7 +517,7 @@ export const Sidebar = () => {
               )}
 
               <div
-                className="sidebar-footer-item"
+                className={sidebarFooterItemClass({ open: launcherOpen })}
                 data-tour="sidebar-apps"
                 onClick={() => setLauncherOpen(true)}
               >
@@ -502,7 +526,7 @@ export const Sidebar = () => {
               </div>
 
               <div
-                className="sidebar-footer-item"
+                className={sidebarFooterItemClass({ open: themeOpen })}
                 data-tour="sidebar-theme"
                 ref={themeTriggerRef}
                 onClick={() => setThemeOpen((open) => !open)}
@@ -557,7 +581,10 @@ export const Sidebar = () => {
               )}
 
               <div
-                className="sidebar-footer-item"
+                className={sidebarFooterItemClass({
+                  active: isProfileFooterRoute(location.pathname),
+                  open: userOpen,
+                })}
                 data-tour="sidebar-profile"
                 ref={userTriggerRef}
                 onClick={() => setUserOpen((open) => !open)}
@@ -618,7 +645,9 @@ export const Sidebar = () => {
 
               <NavLink
                 to="/privacy-policy"
-                className="sidebar-footer__privacy-link"
+                className={({ isActive }) =>
+                  `sidebar-footer__privacy-link${isActive ? " active" : ""}`
+                }
               >
                 Política de Privacidade
               </NavLink>

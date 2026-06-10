@@ -295,6 +295,20 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   background: rgba(0, 153, 220, 0.08);
 }
 
+.launcher-app-tile.sidebar-variant.expanded {
+  box-shadow: none;
+}
+
+.launcher-app-tile.sidebar-variant.active {
+  background: rgba(0, 153, 220, 0.12);
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.launcher-app-tile.sidebar-variant .launcher-app-main.active .launcher-app-icon {
+  box-shadow: none;
+}
+
 .launcher-app-main{
     display: flex;
     flex-direction: column;
@@ -427,10 +441,6 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   background: color-mix(in srgb, var(--surface-2) 92%, transparent);
   box-shadow: var(--shadow);
   border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-}
-
-.launcher-app-tile.sidebar-variant.active {
-  background: rgba(0, 153, 220, 0.12);
 }
 
 .launcher-app-main.active .launcher-app-name {

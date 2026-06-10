@@ -378,11 +378,51 @@
   position: relative;
   font-size: 14px;
   color: var(--text);
+  border: 1px solid transparent;
+}
+
+a.sidebar-footer-item {
+  text-decoration: none;
 }
 
 .sidebar-footer-item:hover {
   background: var(--surface-3);
   color: var(--primary);
+}
+
+.sidebar-footer-item.active {
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  border-color: transparent;
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.sidebar-footer-item.active::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 58%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+.sidebar-footer-item.is-open:not(.active) {
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface-2));
+  color: var(--text);
+  border-color: transparent;
+}
+
+.sidebar-footer-item.active svg,
+.sidebar-footer-item.is-open svg {
+  color: color-mix(in srgb, var(--primary) 72%, var(--text));
+}
+
+.sidebar-footer-item.active .avatar.small {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .sidebar-footer__privacy-link {
@@ -401,6 +441,12 @@
 .sidebar-footer__privacy-link:hover {
   opacity: 1;
   color: var(--primary);
+}
+
+.sidebar-footer__privacy-link.active {
+  opacity: 0.95;
+  color: color-mix(in srgb, var(--primary) 70%, var(--text-muted));
+  font-weight: 500;
 }
 
 /* =========================================
