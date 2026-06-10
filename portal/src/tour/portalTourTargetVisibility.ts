@@ -42,6 +42,7 @@ const HIGHLIGHT_PRIORITY: Record<string, number> = {
   "page-privacy-export": 56,
   "page-profile-apps": 55,
   "page-profile-tour-restart": 54,
+  "profile-tour-resume": 54,
   "sidebar-admin": 53,
   "page-admin-roles": 52,
   "page-admin-permissions": 51,

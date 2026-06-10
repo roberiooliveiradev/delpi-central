@@ -371,17 +371,17 @@ export function getPortalTourQuests({
       title: "Repetir o tour",
       hint: "Revise as funcionalidades quando quiser.",
       steps: [
-        'Em Meu Perfil, clique em "Ver tour do portal novamente".',
-        "O painel de descobertas reaparece na home.",
-        "Explore no seu ritmo — a ordem é livre.",
+        'Em Meu Perfil, clique em "Continuar explorando".',
+        "O painel de descobertas reaparece na home com seu progresso.",
+        "Para zerar conquistas e XP, use «Zerar progresso e recomeçar».",
       ],
-      unlockHint: "Abra Meu Perfil para encontrar o link do tour.",
+      unlockHint: "Abra Meu Perfil para retomar o tour.",
       scope: "profile",
       category: "profile",
-      actionSelector: '[data-tour="profile-tour-restart"]',
+      actionSelector: '[data-tour="profile-tour-resume"]',
       isAvailable: () =>
         isProfileRoute() &&
-        hasVisibleTarget('[data-tour="profile-tour-restart"]'),
+        hasVisibleTarget('[data-tour="profile-tour-resume"]'),
     },
 
     // —— Privacidade ——

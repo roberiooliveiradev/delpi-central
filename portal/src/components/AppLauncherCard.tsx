@@ -236,7 +236,7 @@ export const AppLauncherCard = ({
           }}
           aria-label={isPinned ? "Desafixar aplicativo" : "Fixar aplicativo"}
         >
-          <Pin size={14} />
+          <Pin size={12} strokeWidth={1.75} />
         </button>
       )}
 

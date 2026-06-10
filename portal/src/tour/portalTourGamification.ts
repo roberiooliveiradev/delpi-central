@@ -99,6 +99,32 @@ export function resolveNewMilestone(
   return null;
 }
 
+export function resolveExplorerLevelUp(
+  previousPercent: number,
+  nextPercent: number,
+): ExplorerLevel | null {
+  const before = resolveExplorerLevel(previousPercent);
+  const after = resolveExplorerLevel(nextPercent);
+  if (before.minPercent === after.minPercent) return null;
+  if (after.minPercent <= 0) return null;
+  return after;
+}
+
+export function levelUpMessage(level: ExplorerLevel): string {
+  switch (level.minPercent) {
+    case 25:
+      return "Você subiu de nível — bem-vindo ao clube Curioso!";
+    case 50:
+      return "Nível Expert desbloqueado — você está arrasando!";
+    case 75:
+      return "Embaixador DELPI — quase no topo!";
+    case 100:
+      return "Mestre DELPI — você dominou o portal!";
+    default:
+      return `Parabéns! Novo nível: ${level.label}!`;
+  }
+}
+
 export function milestoneMessage(milestone: number): string {
   switch (milestone) {
     case 25:

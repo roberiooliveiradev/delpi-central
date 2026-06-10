@@ -52,6 +52,7 @@ export type DataTableProps<T> = {
   onSelectionChange?: (ids: string[]) => void;
 
   emptyText?: string;
+  className?: string;
 };
 
 export function DataTable<T>({
@@ -73,6 +74,7 @@ export function DataTable<T>({
   selectedRows = [],
   onSelectionChange,
   emptyText = "Nenhum registro encontrado.",
+  className,
 }: DataTableProps<T>) {
   const hasSearch = typeof onSearchChange === "function";
   const hasPagination = !!pagination && typeof onPageChange === "function";
@@ -143,7 +145,7 @@ export function DataTable<T>({
     columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0);
 
   return (
-    <div className="datatable-wrapper">
+    <div className={["datatable-wrapper", className].filter(Boolean).join(" ")}>
       <div className="datatable-toolbar">
         <div className="datatable-toolbar-left">{toolbar}</div>
 

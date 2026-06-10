@@ -13,14 +13,12 @@ import { useAppsById } from "../hooks/useAppsById";
 import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { useConfirmDialog } from "../components/ConfirmDialogProvider";
 import { startPortalTour } from "../tour/PortalTour";
 import { restartPortalTourRemote } from "../tour/portalTourPersistence";
+import { resumePortalTour } from "../tour/portalTourSession";
 import { PortalTourAchievementsPanel } from "../tour/PortalTourAchievementsPanel";
-import { DataTable } from "../components/DataTable";
-import type {
-  DataTableColumn,
-  DataTableSort,
-} from "../components/DataTable";
+import { ProfileRbacCardGrid } from "./profile/ProfileRbacCardGrid";
 
 import {
   Grid,
@@ -28,6 +26,8 @@ import {
   Users,
   Shield,
   Compass,
+  RotateCcw,
+  KeyRound,
 } from "lucide-react";
 
 import {
@@ -87,6 +87,7 @@ export const MyProfile = () => {
   } = useContext(AuthContext);
 
   const navigate = useNavigate();
+  const confirm = useConfirmDialog();
   const coreApi = useMemo(
     () =>
       new CoreApi(
@@ -104,28 +105,8 @@ export const MyProfile = () => {
 
   const [query, setQuery] = useState("");
 
-  const [roleSort, setRoleSort] = useState<DataTableSort>({
-    sort: "name",
-    direction: "asc",
-  });
-
-  const [groupSort, setGroupSort] = useState<DataTableSort>({
-    sort: "name",
-    direction: "asc",
-  });
-
-  const [permissionSort, setPermissionSort] = useState<DataTableSort>({
-    sort: "name",
-    direction: "asc",
-  });
-
-  const [rolePage, setRolePage] = useState(1);
-  const [groupPage, setGroupPage] = useState(1);
   const [permissionPage, setPermissionPage] = useState(1);
-
-  const [rolePageSize, setRolePageSize] = useState(5);
-  const [groupPageSize, setGroupPageSize] = useState(5);
-  const [permissionPageSize, setPermissionPageSize] = useState(5);
+  const [permissionPageSize, setPermissionPageSize] = useState(12);
 
   /* =========================================
      FAVORITES
@@ -247,24 +228,8 @@ export const MyProfile = () => {
      SORTING
   ========================================= */
 
-  function sortRows<T extends Record<string, any>>(
-    rows: T[],
-    sort?: DataTableSort
-  ) {
-    if (!sort?.sort) return rows;
-
-    const dir = sort.direction === "desc" ? -1 : 1;
-    const key = sort.sort;
-
-    return [...rows].sort((a, b) => {
-      const av = a[key];
-      const bv = b[key];
-
-      if (av == null) return -1 * dir;
-      if (bv == null) return 1 * dir;
-
-      return String(av).localeCompare(String(bv)) * dir;
-    });
+  function sortByName<T extends { name: string }>(rows: T[]): T[] {
+    return [...rows].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   }
 
   function paginateRows<T>(rows: T[], page: number, pageSize: number) {
@@ -272,63 +237,44 @@ export const MyProfile = () => {
     return rows.slice(start, start + pageSize);
   }
 
-  const sortedRoleRows = useMemo(
-    () => sortRows(roleRows, roleSort),
-    [roleRows, roleSort]
-  );
-
-  const sortedGroupRows = useMemo(
-    () => sortRows(groupRows, groupSort),
-    [groupRows, groupSort]
-  );
-
+  const sortedGroupRows = useMemo(() => sortByName(groupRows), [groupRows]);
+  const sortedRoleRows = useMemo(() => sortByName(roleRows), [roleRows]);
   const sortedPermissionRows = useMemo(
-    () => sortRows(permissionRows, permissionSort),
-    [permissionRows, permissionSort]
-  );
-
-  const paginatedRoleRows = useMemo(
-    () => paginateRows(sortedRoleRows, rolePage, rolePageSize),
-    [sortedRoleRows, rolePage, rolePageSize]
-  );
-
-  const paginatedGroupRows = useMemo(
-    () => paginateRows(sortedGroupRows, groupPage, groupPageSize),
-    [sortedGroupRows, groupPage, groupPageSize]
+    () => sortByName(permissionRows),
+    [permissionRows],
   );
 
   const paginatedPermissionRows = useMemo(
     () => paginateRows(sortedPermissionRows, permissionPage, permissionPageSize),
-    [sortedPermissionRows, permissionPage, permissionPageSize]
+    [sortedPermissionRows, permissionPage, permissionPageSize],
   );
 
-  /* =========================================
-     TABLE COLUMNS
-  ========================================= */
+  const groupCardItems = useMemo(
+    () =>
+      sortedGroupRows.map((row) => ({
+        id: row.name,
+        label: row.name,
+      })),
+    [sortedGroupRows],
+  );
 
-  const roleColumns: DataTableColumn<RoleRow>[] = [
-    {
-      key: "name",
-      header: "Papel",
-      sortable: true,
-    },
-  ];
+  const roleCardItems = useMemo(
+    () =>
+      sortedRoleRows.map((row) => ({
+        id: row.name,
+        label: row.name,
+      })),
+    [sortedRoleRows],
+  );
 
-  const groupColumns: DataTableColumn<GroupRow>[] = [
-    {
-      key: "name",
-      header: "Grupo",
-      sortable: true,
-    },
-  ];
-
-  const permissionColumns: DataTableColumn<PermissionRow>[] = [
-    {
-      key: "name",
-      header: "Permissão",
-      sortable: true,
-    },
-  ];
+  const permissionCardItems = useMemo(
+    () =>
+      paginatedPermissionRows.map((row) => ({
+        id: row.name,
+        label: row.name,
+      })),
+    [paginatedPermissionRows],
+  );
 
   /* =========================================
      SUMMARY
@@ -350,29 +296,32 @@ export const MyProfile = () => {
       .trim();
   }
 
-  const rolePagination = {
-    page: rolePage,
-    pageSize: rolePageSize,
-    total: sortedRoleRows.length,
-    totalPages: Math.max(1, Math.ceil(sortedRoleRows.length / rolePageSize)),
+  const handleContinueTour = () => {
+    resumePortalTour();
+    navigate("/");
   };
 
-  const groupPagination = {
-    page: groupPage,
-    pageSize: groupPageSize,
-    total: sortedGroupRows.length,
-    totalPages: Math.max(1, Math.ceil(sortedGroupRows.length / groupPageSize)),
+  const handleResetTour = async () => {
+    if (!user?.id) return;
+
+    const confirmed = await confirm({
+      title: "Zerar progresso do tour?",
+      message:
+        "Isso apaga conquistas, XP e ranking desta versão do tour. A ação não pode ser desfeita.",
+      confirmText: "Zerar e recomeçar",
+      cancelText: "Cancelar",
+      danger: true,
+    });
+
+    if (!confirmed) return;
+
+    await restartPortalTourRemote(coreApi, user.id);
+    startPortalTour();
+    navigate("/");
   };
 
-  const permissionPagination = {
-    page: permissionPage,
-    pageSize: permissionPageSize,
-    total: sortedPermissionRows.length,
-    totalPages: Math.max(
-      1,
-      Math.ceil(sortedPermissionRows.length / permissionPageSize)
-    ),
-  };
+
+  const permissionPaginationTotal = sortedPermissionRows.length;
 
 
   /* =========================================
@@ -499,23 +448,26 @@ export const MyProfile = () => {
               label="Superadmin"
               value={user?.is_superadmin ? "Sim" : "Não"}
             />
-            <button
-              type="button"
-              className="home-panel-action profile-tour-link"
-              data-tour="profile-tour-restart"
-              onClick={() => {
-                void (async () => {
-                  if (user?.id) {
-                    await restartPortalTourRemote(coreApi, user.id);
-                  }
-                  startPortalTour();
-                  navigate("/");
-                })();
-              }}
-            >
-              <Compass size={14} aria-hidden="true" />
-              Ver tour do portal novamente
-            </button>
+            <div className="profile-tour-actions">
+              <button
+                type="button"
+                className="home-panel-action profile-tour-resume"
+                data-tour="profile-tour-resume"
+                onClick={handleContinueTour}
+              >
+                <Compass size={14} aria-hidden="true" />
+                Continuar explorando
+              </button>
+              <button
+                type="button"
+                className="profile-tour-reset"
+                data-tour="profile-tour-reset"
+                onClick={() => void handleResetTour()}
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                Zerar progresso e recomeçar
+              </button>
+            </div>
           </div>
         </motion.section>
 
@@ -528,96 +480,102 @@ export const MyProfile = () => {
           <PortalTourAchievementsPanel />
         </motion.div>
 
-        {/* GROUPS */}
+        {(groupRows.length > 0 ||
+          roleRows.length > 0 ||
+          permissionRows.length > 0) && (
+          <div className="profile-rbac-grid">
+            {groupRows.length > 0 && (
+              <motion.section
+                id="profile-groups"
+                className="home-panel profile-rbac-panel"
+                data-tour="profile-groups"
+                initial="hidden"
+                animate="show"
+                variants={fadeUp}
+                custom={3}
+              >
+                <HomePanelHeader
+                  title="Grupos"
+                  hint="Grupos aos quais você pertence"
+                  badge={
+                    <span className="profile-rbac-badge">{groupRows.length}</span>
+                  }
+                />
 
-        {groupRows.length > 0 && (
-          <motion.section
-            id="profile-groups"
-            className="home-panel"
-            data-tour="profile-groups"
-            initial="hidden"
-            animate="show"
-            variants={fadeUp}
-            custom={3}
-          >
-            <HomePanelHeader
-              title="Grupos"
-              hint="Grupos aos quais você pertence"
-            />
+                <ProfileRbacCardGrid
+                  items={groupCardItems}
+                  icon={<Users size={18} />}
+                  emptyText="Nenhum grupo atribuído."
+                  ariaLabel="Grupos do usuário"
+                />
+              </motion.section>
+            )}
 
-            <DataTable<GroupRow>
-              columns={groupColumns}
-              data={paginatedGroupRows}
-              pagination={groupPagination}
-              onPageChange={setGroupPage}
-              onPageSizeChange={setGroupPageSize}
-              sort={groupSort}
-              onSortChange={setGroupSort}
-              emptyText="Nenhum grupo atribuído."
-            />
-          </motion.section>
+            {roleRows.length > 0 && (
+              <motion.section
+                id="profile-roles"
+                className="home-panel profile-rbac-panel"
+                data-tour="profile-roles"
+                initial="hidden"
+                animate="show"
+                variants={fadeUp}
+                custom={4}
+              >
+                <HomePanelHeader
+                  title="Papéis"
+                  hint="Papéis atribuídos ao usuário"
+                  badge={
+                    <span className="profile-rbac-badge">{roleRows.length}</span>
+                  }
+                />
+
+                <ProfileRbacCardGrid
+                  items={roleCardItems}
+                  icon={<Shield size={18} />}
+                  emptyText="Nenhum papel atribuído."
+                  ariaLabel="Papéis do usuário"
+                />
+              </motion.section>
+            )}
+
+            {permissionRows.length > 0 && (
+              <motion.section
+                id="profile-permissions"
+                className="home-panel profile-rbac-panel profile-rbac-panel--full"
+                data-tour="profile-permissions"
+                initial="hidden"
+                animate="show"
+                variants={fadeUp}
+                custom={5}
+              >
+                <HomePanelHeader
+                  title="Permissões"
+                  hint="Permissões efetivas do usuário"
+                  badge={
+                    <span className="profile-rbac-badge">{permissionRows.length}</span>
+                  }
+                />
+
+                <ProfileRbacCardGrid
+                  items={permissionCardItems}
+                  icon={<KeyRound size={18} />}
+                  variant="permission"
+                  emptyText="Nenhuma permissão atribuída."
+                  ariaLabel="Permissões do usuário"
+                  page={permissionPage}
+                  pageSize={permissionPageSize}
+                  total={permissionPaginationTotal}
+                  pageSizeOptions={[12, 24, 48]}
+                  onPageChange={setPermissionPage}
+                  onPageSizeChange={(size) => {
+                    setPermissionPageSize(size);
+                    setPermissionPage(1);
+                  }}
+                />
+              </motion.section>
+            )}
+          </div>
         )}
-
-        {/* ROLES */}
-
-        {roleRows.length > 0 && (
-          <motion.section
-            id="profile-roles"
-            className="home-panel"
-            data-tour="profile-roles"
-            initial="hidden"
-            animate="show"
-            variants={fadeUp}
-            custom={4}
-          >
-            <HomePanelHeader
-              title="Papéis"
-              hint="Papéis atribuídos ao usuário"
-            />
-
-            <DataTable<RoleRow>
-              columns={roleColumns}
-              data={paginatedRoleRows}
-              pagination={rolePagination}
-              onPageChange={setRolePage}
-              onPageSizeChange={setRolePageSize}
-              sort={roleSort}
-              onSortChange={setRoleSort}
-              emptyText="Nenhum papel atribuído."
-            />
-          </motion.section>
-        )}
-
-        {/* PERMISSIONS */}
-
-        {permissionRows.length > 0 && (
-          <motion.section
-            id="profile-permissions"
-            className="home-panel"
-            data-tour="profile-permissions"
-            initial="hidden"
-            animate="show"
-            variants={fadeUp}
-            custom={5}
-          >
-            <HomePanelHeader
-              title="Permissões"
-              hint="Permissões efetivas do usuário"
-            />
-
-            <DataTable<PermissionRow>
-              columns={permissionColumns}
-              data={paginatedPermissionRows}
-              pagination={permissionPagination}
-              onPageChange={setPermissionPage}
-              onPageSizeChange={setPermissionPageSize}
-              sort={permissionSort}
-              onSortChange={setPermissionSort}
-              emptyText="Nenhuma permissão atribuída."
-            />
-          </motion.section>
-        )}
-
 
         {/* APPS */}
 

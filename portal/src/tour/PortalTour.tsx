@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Lightbulb,
   Star,
+  Sparkles,
   Trophy,
   X,
 } from "lucide-react";
@@ -19,15 +20,16 @@ import {
   watchTourQuests,
 } from "./portalTourInteraction";
 import {
-  hydrateCompletedQuestIds,
+  hydratePortalTourSessionFromRemote,
   loadPortalTourProgress,
   markPortalTourCompletedEverywhere,
   resolveShouldShowPortalTour,
+  shouldSkipPortalTourSyncOnOpen,
   syncPortalTourCompleted,
   syncPortalTourQuestCompleted,
   syncPortalTourStarted,
   shouldAutoOpenPortalTourPanel,
-  isResumablePortalTourProgress,
+  canReopenPortalTourPanel,
 } from "./portalTourPersistence";
 import {
   getPortalTourQuests,
@@ -54,7 +56,10 @@ import { closeAppLauncher } from "../utils/appLauncher";
 import { usePortalTourHighlights } from "./usePortalTourHighlights";
 import { PortalTourCompletionModal } from "./PortalTourCompletionModal";
 import { subscribePortalTourSyncStatus } from "./portalTourSyncStatus";
-import { runPortalTourConfetti } from "./portalTourCelebration";
+import {
+  runPortalTourConfetti,
+  runPortalTourLevelUpCelebration,
+} from "./portalTourCelebration";
 import {
   formatExplorationDuration,
   resolveExplorationDurationSeconds,
@@ -62,10 +67,10 @@ import {
 import { shouldPlayPortalTourAnimations } from "./portalTourPreferences";
 import {
   computeEarnedXp,
-  milestoneMessage,
+  levelUpMessage,
   resolveCategoryJustCompleted,
   resolveExplorerLevel,
-  resolveNewMilestone,
+  resolveExplorerLevelUp,
   resolveQuestXp,
   type QuestCelebrationToast,
 } from "./portalTourGamification";
@@ -86,6 +91,8 @@ export function startPortalTour() {
 type QuestBanner = {
   id: string;
   message: string;
+  kind?: "default" | "level-up";
+  levelLabel?: string;
 };
 
 export function PortalTour() {
@@ -105,6 +112,7 @@ export function PortalTour() {
     null,
   );
   const [xpBarBump, setXpBarBump] = useState(false);
+  const [levelCelebrating, setLevelCelebrating] = useState(false);
   const [banner, setBanner] = useState<QuestBanner | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [explorationDurationLabel, setExplorationDurationLabel] = useState<
@@ -236,6 +244,7 @@ export function PortalTour() {
     setSuccessFlashQuestId(null);
     setJustCompletedQuestId(null);
     setXpBarBump(false);
+    setLevelCelebrating(false);
     setBanner(null);
     setShowCompletionModal(false);
     confettiCleanupRef.current?.();
@@ -371,16 +380,27 @@ export function PortalTour() {
         }, 3400);
       }
 
-      const milestone = resolveNewMilestone(previousPercent, nextPercent);
-      if (milestone) {
-        const bannerId = `milestone-${milestone}`;
+      const levelUp = resolveExplorerLevelUp(previousPercent, nextPercent);
+      const reachingFullCompletion = nextRequiredDone >= requiredTotal;
+
+      if (levelUp && !reachingFullCompletion) {
+        if (shouldPlayPortalTourAnimations()) {
+          confettiCleanupRef.current?.();
+          confettiCleanupRef.current = runPortalTourLevelUpCelebration();
+          setLevelCelebrating(true);
+          schedulePortalTourTimer(() => setLevelCelebrating(false), 1400);
+        }
+
+        const bannerId = `level-up-${levelUp.minPercent}`;
         setBanner({
           id: bannerId,
-          message: milestoneMessage(milestone),
+          message: levelUpMessage(levelUp),
+          kind: "level-up",
+          levelLabel: levelUp.label,
         });
         schedulePortalTourTimer(() => {
           setBanner((current) => (current?.id === bannerId ? null : current));
-        }, 3400);
+        }, 4200);
       }
 
       if (nextRequiredDone >= requiredTotal) {
@@ -426,8 +446,8 @@ export function PortalTour() {
     autoStartCheckedRef.current = true;
 
     const remote = remoteProgressRef.current;
-    if (isResumablePortalTourProgress(remote)) {
-      setCompletedIds(hydrateCompletedQuestIds(remote));
+    if (canReopenPortalTourPanel(remote)) {
+      setCompletedIds(hydratePortalTourSessionFromRemote(remote));
     }
 
     if (!resolveShouldShowPortalTour(user.id, remote)) return;
@@ -441,6 +461,7 @@ export function PortalTour() {
 
   useEffect(() => {
     if (!active) return;
+    if (shouldSkipPortalTourSyncOnOpen(remoteProgressRef.current)) return;
     syncPortalTourStarted(coreApi, Array.from(completedRef.current));
   }, [active, coreApi]);
 
@@ -462,6 +483,7 @@ export function PortalTour() {
     const onStart = () => {
       clearPortalTourTimers();
       autoStartCheckedRef.current = true;
+      remoteProgressRef.current = null;
       resetPortalTourSessionSnapshot();
       setCompletedIds(new Set());
       setToast(null);
@@ -477,9 +499,7 @@ export function PortalTour() {
     const onOpenPanel = () => {
       if (!active) {
         const remote = remoteProgressRef.current;
-        if (isResumablePortalTourProgress(remote)) {
-          setCompletedIds(hydrateCompletedQuestIds(remote));
-        }
+        setCompletedIds(hydratePortalTourSessionFromRemote(remote));
         setActive(true);
       }
       showPanel();
@@ -487,9 +507,7 @@ export function PortalTour() {
     const onResume = () => {
       autoStartCheckedRef.current = true;
       const remote = remoteProgressRef.current;
-      if (isResumablePortalTourProgress(remote)) {
-        setCompletedIds(hydrateCompletedQuestIds(remote));
-      }
+      setCompletedIds(hydratePortalTourSessionFromRemote(remote));
       setActive(true);
       showPanel();
     };
@@ -572,9 +590,20 @@ export function PortalTour() {
       ) : null}
 
       {banner ? (
-        <div className="portal-tour-banner" role="status" aria-live="polite">
-          <Star size={15} aria-hidden />
+        <div
+          className={`portal-tour-banner${banner.kind === "level-up" ? " is-level-up" : ""}`}
+          role="status"
+          aria-live="polite"
+        >
+          {banner.kind === "level-up" ? (
+            <Sparkles size={16} aria-hidden />
+          ) : (
+            <Star size={15} aria-hidden />
+          )}
           <span>{banner.message}</span>
+          {banner.kind === "level-up" && banner.levelLabel ? (
+            <span className="portal-tour-level-up-chip">{banner.levelLabel}</span>
+          ) : null}
         </div>
       ) : null}
 
@@ -599,7 +628,7 @@ export function PortalTour() {
 
       {panelOpen ? (
       <div
-        className={`portal-tour-quest-panel${expanded ? " is-expanded" : " is-collapsed"}`}
+        className={`portal-tour-quest-panel${expanded ? " is-expanded" : " is-collapsed"}${levelCelebrating ? " is-level-up" : ""}`}
       >
         <div className="portal-tour-quest-toggle-row">
           <button
@@ -616,7 +645,11 @@ export function PortalTour() {
               <span className="portal-tour-quest-badge" aria-hidden>
                 {requiredDone}/{requiredTotal}
               </span>
-              <span className="portal-tour-level-badge">{explorerLevel.label}</span>
+              <span
+                className={`portal-tour-level-badge${levelCelebrating ? " is-celebrating" : ""}`}
+              >
+                {explorerLevel.label}
+              </span>
             </span>
             {expanded ? (
               <ChevronDown size={18} aria-hidden />

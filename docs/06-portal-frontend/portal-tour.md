@@ -13,7 +13,7 @@ Tour **gamificado** e **não linear** para explorar a Minha DELPI: favoritos, ca
 | Disparo automático | Após login, consentimento aceito e `coreLoaded`, se a versão do tour ainda não foi concluída |
 | Persistência | `localStorage` (cache) + **core-api** (`user_portal_tour_progress`, `portal_tour_quest_events`) |
 | Versão | `PORTAL_TOUR_VERSION` (`2026-06-portal-v6-explore`) em `portalTourStorage.ts` — incrementar para reexibir após novas features |
-| Reinício manual | Botão em **Meu Perfil** → dispara `DELPI_PORTAL_TOUR_START_EVENT` |
+| Reinício manual | **Continuar explorando** no perfil reabre o painel **sem** apagar progresso; **Zerar progresso e recomeçar** exige confirmação e chama `DELETE /me/portal-tour` |
 | Atalho | `Esc` ou botão ✕ **fecham o painel** sem encerrar a exploração; retome pela home |
 | Conclusão | Automática ao completar todos os desafios obrigatórios (modal de celebração) |
 | Ordem | **Livre** — o usuário explora no próprio ritmo |
@@ -34,7 +34,7 @@ O tour observa cliques e mudanças em filtros (`watchTourQuests`). Cada desafio 
 | PATCH | `/me/portal-tour` | Usuário | Sincroniza progresso (`tourVersion`, `status`, `completedQuestIds` / `completedQuestId`) |
 | GET | `/me/portal-tour/catalog` | Usuário | Catálogo de desafios **disponíveis para o usuário** (permissões, progresso, novidades) |
 | GET | `/me/portal-tour/achievements` | Usuário | Conquistas desbloqueadas (derivadas do catálogo visível + eventos) |
-| DELETE | `/me/portal-tour` | Usuário | Reinicia progresso (perfil → «Ver tour novamente») |
+| DELETE | `/me/portal-tour` | Usuário | Zera progresso (perfil → «Zerar progresso e recomeçar», com confirmação) |
 | GET | `/admin/portal-tour/explorers` | `rbac.manage` | Lista quem está explorando (`tourVersion`, `status`, paginação) |
 
 | GET | `/admin/portal-tour/top-explorers` | `rbac.manage` | Ranking semanal por desafios concluídos |
@@ -107,7 +107,7 @@ Lista agrupada no painel por categoria (`PORTAL_TOUR_CATEGORY_ORDER`).
 | `page-profile-info` | Dados pessoais | Rota `/profile` |
 | `page-profile-rbac` | Grupos, papéis e permissões | Seção RBAC no perfil |
 | `page-profile-apps` | Apps vinculados | Seção de apps no perfil |
-| `page-profile-tour-restart` | Reiniciar tour | Botão no perfil |
+| `page-profile-tour-restart` | Repetir o tour | Botão «Continuar explorando» no perfil |
 
 ### Privacidade
 
@@ -182,7 +182,8 @@ Requer `rbac.manage` ou superadmin.
 | `[data-tour="profile-info"]` | Dados pessoais |
 | `[data-tour="profile-rbac-summary"]` | Resumo RBAC |
 | `[data-tour="profile-groups"]`, `profile-roles`, `profile-permissions`, `profile-apps` | Seções RBAC |
-| `[data-tour="profile-tour-restart"]` | Reiniciar tour |
+| `[data-tour="profile-tour-resume"]` | Continuar explorando (sem zerar) |
+| `[data-tour="profile-tour-reset"]` | Zerar progresso (com confirmação) |
 | `[data-tour="profile-tour-achievements"]` | Grid de conquistas |
 | `[data-tour="privacy-page"]`, `privacy-consent`, `privacy-export` | `PrivacyPage.tsx` |
 | `[data-tour="admin-page"]`, `admin-nav-{key}`, `admin-mobile-nav` | `AdminPage.tsx` |

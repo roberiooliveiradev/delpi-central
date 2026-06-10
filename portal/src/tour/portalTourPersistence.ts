@@ -135,10 +135,40 @@ export function hydrateCompletedQuestIds(
   if (remote.tourVersion !== PORTAL_TOUR_VERSION) {
     return new Set();
   }
-  if (remote.status === "completed") {
-    return new Set(remote.completedQuestIds);
-  }
   return new Set(remote.completedQuestIds);
+}
+
+/** Reabrir painel sem apagar progresso (explorando ou já concluído). */
+export function canReopenPortalTourPanel(
+  remote: PortalTourProgressResponse | null,
+): boolean {
+  if (!remote?.tourVersion || remote.tourVersion !== PORTAL_TOUR_VERSION) {
+    return false;
+  }
+  return (
+    remote.status === "exploring" ||
+    remote.status === "dismissed" ||
+    remote.status === "completed" ||
+    remote.completedQuestIds.length > 0 ||
+    Boolean(remote.startedAt)
+  );
+}
+
+export function shouldSkipPortalTourSyncOnOpen(
+  remote: PortalTourProgressResponse | null,
+): boolean {
+  return (
+    remote?.tourVersion === PORTAL_TOUR_VERSION && remote.status === "completed"
+  );
+}
+
+export function hydratePortalTourSessionFromRemote(
+  remote: PortalTourProgressResponse | null,
+): Set<string> {
+  if (!canReopenPortalTourPanel(remote)) {
+    return new Set();
+  }
+  return hydrateCompletedQuestIds(remote);
 }
 
 export function repairLocalCompletedWhenRemoteIncomplete(
