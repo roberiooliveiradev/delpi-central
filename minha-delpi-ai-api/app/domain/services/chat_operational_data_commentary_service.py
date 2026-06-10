@@ -283,7 +283,7 @@ class ChatOperationalDataCommentaryService:
         shipping_summary = cls._section_block(root, "shipping").get("summary")
 
         if isinstance(shipping_summary, dict):
-            shipped = float(shipping_summary.get("total_shipped_quantity") or 0)
+            shipped = _OpsTable.parse_quantity(shipping_summary.get("total_shipped_quantity") or 0)
 
             if shipped > 0:
                 highlights.append(
@@ -438,8 +438,8 @@ class ChatOperationalDataCommentaryService:
         elif pi_started and not pa_started:
             highlights.append(cls._text(profile, "piWithoutPa"))
 
-        reported_pa = float(summary.get("total_pa_reported_quantity") or 0)
-        reported_pi = float(summary.get("total_pi_reported_quantity") or 0)
+        reported_pa = _OpsTable.parse_quantity(summary.get("total_pa_reported_quantity") or 0)
+        reported_pi = _OpsTable.parse_quantity(summary.get("total_pi_reported_quantity") or 0)
 
         if total_orders > 0 and reported_pa + reported_pi <= 0:
             attention.append(cls._text(profile, "attentionLowReport"))
@@ -472,8 +472,8 @@ class ChatOperationalDataCommentaryService:
         if period:
             highlights.append(cls._text(profile, "scopeHeadline", period=period))
 
-        shipped = float(summary.get("total_shipped_quantity") or 0)
-        loss = float(summary.get("total_inspection_loss_quantity") or 0)
+        shipped = _OpsTable.parse_quantity(summary.get("total_shipped_quantity") or 0)
+        loss = _OpsTable.parse_quantity(summary.get("total_inspection_loss_quantity") or 0)
 
         if shipped > 0:
             highlights.append(
@@ -522,9 +522,11 @@ class ChatOperationalDataCommentaryService:
             available_raw = item.get("available_quantity")
             current_raw = item.get("current_quantity")
             committed_raw = item.get("committed_quantity")
-            available = float(available_raw or 0) if available_raw is not None else None
-            current = float(current_raw or 0) if current_raw is not None else None
-            committed = float(committed_raw or 0) if committed_raw is not None else 0.0
+            available = (
+                _OpsTable.parse_quantity(available_raw) if available_raw is not None else None
+            )
+            current = _OpsTable.parse_quantity(current_raw) if current_raw is not None else None
+            committed = _OpsTable.parse_quantity(committed_raw or 0)
             branch = str(item.get("branch") or "").strip()
 
             if available is not None:

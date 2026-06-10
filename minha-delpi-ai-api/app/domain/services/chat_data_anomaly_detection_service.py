@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService,
+)
+
 
 class ChatDataAnomalyDetectionService:
     _NEGATIVE_HINTS = frozenset(
@@ -49,7 +53,7 @@ class ChatDataAnomalyDetectionService:
                 if not cls._is_numeric(raw):
                     continue
 
-                value = float(raw)
+                value = cls._parse_numeric(raw)
 
                 if value < 0 and cls._is_quantity_field(field):
                     anomalies.append(
@@ -151,6 +155,10 @@ class ChatDataAnomalyDetectionService:
         return any(hint in lowered for hint in cls._NEGATIVE_HINTS)
 
     @classmethod
+    def _parse_numeric(cls, value: object) -> float:
+        return ChatPresentationOperationalTableService.parse_quantity(value)
+
+    @classmethod
     def _is_numeric(cls, value: object) -> bool:
         if isinstance(value, bool):
             return False
@@ -158,8 +166,13 @@ class ChatDataAnomalyDetectionService:
         if isinstance(value, (int, float)):
             return True
 
+        text = str(value).strip()
+
+        if not text:
+            return False
+
         try:
-            float(str(value).replace(",", "."))
+            float(text.replace(",", "."))
         except (TypeError, ValueError):
             return False
 
