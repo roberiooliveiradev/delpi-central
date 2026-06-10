@@ -365,6 +365,11 @@
         "tree"
       ],
       "textBuilder": "build_tree_hierarchy_text",
+      "tableAssembly": {
+        "builder": "build_tree_hierarchy_table_presentations",
+        "layout": "profile_only",
+        "requiresItems": true
+      },
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       }

@@ -232,6 +232,49 @@ class ChatPresentationProfileVisualBundleService:
         return presentation if isinstance(presentation, dict) else None
 
     @classmethod
+    def build_profile_table_view(
+        cls,
+        presenter: ExternalActionResultPresenter,
+        *,
+        path: str,
+        data: Any,
+        entity: str | None = None,
+    ) -> dict[str, Any] | None:
+        from app.domain.services.chat_presentation_table_assembly_service import (
+            ChatPresentationTableAssemblyService,
+        )
+
+        root = presenter._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        entity = entity or cls._resolve_entity(data, path=path)
+        assembly = ChatPresentationTableAssemblyService.assemble(
+            presenter,
+            root,
+            path,
+            entity=entity,
+            session_format="table",
+        )
+
+        if isinstance(assembly.table_presentation, dict) and assembly.table_presentation.get(
+            "type"
+        ) == "table":
+            return assembly.table_presentation
+
+        for candidate in assembly.table_presentations:
+            if isinstance(candidate, dict) and candidate.get("type") == "table":
+                return candidate
+
+        built = presenter.build_presentation(data, path=path)
+
+        if isinstance(built, dict) and built.get("type") == "table":
+            return built
+
+        return None
+
+    @classmethod
     def _resolve_entity(cls, data: Any, *, path: str) -> str | None:
         from app.domain.services.chat_api_delpi_response_profile_service import (
             ChatApiDelpiResponseProfileService,

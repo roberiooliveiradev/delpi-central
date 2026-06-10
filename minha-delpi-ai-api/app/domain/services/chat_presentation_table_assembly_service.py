@@ -51,7 +51,23 @@ class ChatPresentationTableAssemblyService:
             "build_last_purchase_table_presentations": lambda p, root, path: p.build_last_purchase_table_presentations(root, path),
             "build_purchase_history_table_presentations": lambda p, root, path: p.build_purchase_history_table_presentations(root, path),
             "build_purchases_table_presentations": lambda p, root, path: p.build_purchases_table_presentations(root, path),
+            "build_tree_hierarchy_table_presentations": cls._build_tree_hierarchy_tables,
         }
+
+    @staticmethod
+    def _build_tree_hierarchy_tables(
+        presenter: ExternalActionResultPresenter,
+        root: dict[str, Any],
+        path: str,
+    ) -> list[dict[str, Any]]:
+        del path
+
+        table = presenter._build_analyser_structure_components_table(root)
+
+        if isinstance(table, dict) and table.get("type") == "table":
+            return [table]
+
+        return []
 
     @staticmethod
     def _build_analyser_tables(

@@ -153,6 +153,20 @@ class ChatPresentationPrimaryViewService:
             return
 
         if presenter and data is not None:
+            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
+                ChatPresentationProfileVisualBundleService,
+            )
+
+            profile_table = ChatPresentationProfileVisualBundleService.build_profile_table_view(
+                presenter,
+                path=path,
+                data=data,
+            )
+
+            if profile_table and cls._presentation_type(profile_table) == "table":
+                cls._set_primary(metadata, profile_table)
+                return
+
             forced = presenter.build_presentation(data, path=path)
 
             if forced and cls._presentation_type(forced) == "table":

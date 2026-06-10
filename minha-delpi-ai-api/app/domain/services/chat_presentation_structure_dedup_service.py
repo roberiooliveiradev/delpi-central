@@ -171,7 +171,12 @@ class ChatPresentationStructureDedupService:
     def _prefers_table_over_tree(cls, metadata: dict[str, Any]) -> bool:
         preferred = str(metadata.get("preferredFormat") or "").strip().lower()
 
-        return preferred == "table"
+        if preferred == "table":
+            return True
+
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        return explicit == "table"
 
     @classmethod
     def _should_preserve_tree_for_rich_stack(cls, metadata: dict[str, Any]) -> bool:
@@ -254,7 +259,9 @@ class ChatPresentationStructureDedupService:
         ):
             primary = metadata.get("presentation")
 
-            if cls.is_hierarchy_duplicate_table(primary):
+            if cls.is_hierarchy_duplicate_table(primary) and not cls._prefers_table_over_tree(
+                metadata
+            ):
                 metadata["presentation"] = metadata.get("treePresentation") or None
 
             cls._clear_table_slot(metadata, "tablePresentation")

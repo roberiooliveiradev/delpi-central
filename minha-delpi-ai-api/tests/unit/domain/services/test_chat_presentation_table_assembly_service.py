@@ -81,3 +81,52 @@ def test_stock_assembly_respects_requires_items() -> None:
 
     assert len(tables) >= 2
     assert meta.get("profileTablePresentation", {}).get("role") == "profile"
+
+
+def test_tree_hierarchy_assembly_builds_structure_table() -> None:
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    path = "/products/90269001/structure"
+    payload = {
+        "root": {
+            "code": "90269001",
+            "description": "ITEM",
+            "type": "PA",
+            "unit": "UN",
+            "quantity": 1,
+        },
+        "items": [
+            {
+                "code": "C1",
+                "description": "COMP",
+                "type": "PI",
+                "unit": "UN",
+                "quantity": 1.0,
+                "components": [
+                    {
+                        "code": "C2",
+                        "description": "SUB",
+                        "type": "MP",
+                        "unit": "UN",
+                        "quantity": 2.0,
+                    }
+                ],
+            }
+        ],
+        "total": 1,
+    }
+
+    result = ChatPresentationTableAssemblyService.assemble(
+        presenter,
+        payload,
+        path,
+        session_format="table",
+    )
+
+    assert len(result.table_presentations) == 1
+    assert result.table_presentation is not None
+    assert result.table_presentation.get("type") == "table"
+    assert result.table_presentation.get("rows")

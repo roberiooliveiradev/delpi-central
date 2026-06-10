@@ -116,6 +116,52 @@ class ChatToolContextFormatService:
 
         return None
 
+    def _force_table_presentation(
+        self,
+        meta: dict,
+        last_data,
+        *,
+        path: str,
+    ) -> dict | None:
+        table_pres = meta.get("tablePresentation")
+
+        if isinstance(table_pres, dict) and table_pres.get("type") == "table":
+            return table_pres
+
+        presentation = meta.get("presentation")
+
+        if isinstance(presentation, dict) and presentation.get("type") == "table":
+            return presentation
+
+        cached = self._find_table_presentation(meta)
+
+        if isinstance(cached, dict) and cached.get("type") == "table":
+            return cached
+
+        if last_data is None:
+            return None
+
+        from app.domain.services.chat_presentation_profile_visual_bundle_service import (
+            ChatPresentationProfileVisualBundleService,
+        )
+
+        path_token = str(path or "")
+        profile_table = ChatPresentationProfileVisualBundleService.build_profile_table_view(
+            self._presenter,
+            path=path_token,
+            data=last_data,
+        )
+
+        if isinstance(profile_table, dict) and profile_table.get("type") == "table":
+            return profile_table
+
+        forced_table = self._presenter.build_presentation(last_data, path=path_token)
+
+        if isinstance(forced_table, dict) and forced_table.get("type") == "table":
+            return forced_table
+
+        return None
+
     def apply_format_override(
         self,
         safe_tool_calls: list[dict],
@@ -191,22 +237,15 @@ class ChatToolContextFormatService:
 
             elif requested_format == "table":
                 meta["preferredFormat"] = "table"
-                table_pres = meta.get("tablePresentation") or meta.get("presentation")
+                forced_table = self._force_table_presentation(
+                    meta,
+                    last_data,
+                    path=str(meta.get("path") or ""),
+                )
 
-                if not (isinstance(table_pres, dict) and table_pres.get("type") == "table"):
-                    table_pres = self._find_table_presentation(meta)
-
-                if isinstance(table_pres, dict) and table_pres.get("type") == "table":
-                    meta["presentation"] = table_pres
+                if forced_table:
+                    meta["presentation"] = forced_table
                     meta["tablePresentation"] = None
-                elif last_data:
-                    path = meta.get("path") or ""
-                    forced_table = self._presenter.build_presentation(
-                        last_data, path=path
-                    )
-                    if forced_table:
-                        meta["presentation"] = forced_table
-                        meta["tablePresentation"] = None
 
                 self._align_decision_for_format(meta, "table")
 
