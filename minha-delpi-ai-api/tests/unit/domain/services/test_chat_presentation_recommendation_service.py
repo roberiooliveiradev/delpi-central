@@ -35,6 +35,35 @@ def test_recommends_line_chart_when_table_has_dates():
     assert "line_chart" in views
 
 
+def test_prune_for_selected_removes_matching_view():
+    decision = {
+        "selected": "table",
+        "recommendations": [
+            {
+                "view": "table",
+                "label": "Ver como tabela",
+                "query": "mostre em tabela",
+                "reason": "detalhes tabulares",
+            },
+            {
+                "view": "chart",
+                "label": "Ver como gráfico",
+                "query": "mostre em gráfico",
+            },
+        ],
+    }
+
+    ChatPresentationRecommendationService.prune_for_selected(decision)
+
+    assert decision["recommendations"] == [
+        {
+            "view": "chart",
+            "label": "Ver como gráfico",
+            "query": "mostre em gráfico",
+        }
+    ]
+
+
 def test_recommends_horizontal_bar_for_efficiency_on_table():
     decision = {
         "selected": "table",

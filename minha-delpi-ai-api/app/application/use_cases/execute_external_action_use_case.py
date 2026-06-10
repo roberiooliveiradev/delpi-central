@@ -507,13 +507,30 @@ class ExecuteExternalActionUseCase:
             entity=entity,
         )
 
-        ChatPresentationTextFirstPolicyService.apply_text_primary_metadata(
-            metadata,
-            path=resolved_path,
-            entity=entity,
-            explicit_format=explicit_preference,
-            user_message=user_message,
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
         )
+
+        if session_format in {"text", "table", "tree", "chart", "canvas"}:
+            ChatPresentationPrimaryViewService.apply_session_preference(
+                metadata,
+                session_format,
+                data=sanitized_data,
+                path=resolved_path,
+                presenter=self.presenter,
+            )
+            explicit_preference = ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+                session_format,
+            )
+
+        if not str(metadata.get("explicitSessionFormat") or "").strip():
+            ChatPresentationTextFirstPolicyService.apply_text_primary_metadata(
+                metadata,
+                path=resolved_path,
+                entity=entity,
+                explicit_format=explicit_preference,
+                user_message=user_message,
+            )
 
         schema_labels = self.presenter._column_labels.merge_meta_field_labels(
             self.presenter._column_labels.resolve_schema_labels(action.get("responseSchema")),
@@ -560,17 +577,14 @@ class ExecuteExternalActionUseCase:
 
         ChatPresentationStructureDedupService.dedupe_metadata(metadata)
 
-        from app.domain.services.chat_presentation_primary_view_service import (
-            ChatPresentationPrimaryViewService,
-        )
-
-        ChatPresentationPrimaryViewService.apply_session_preference(
-            metadata,
-            session_format,
-            data=sanitized_data,
-            path=resolved_path,
-            presenter=self.presenter,
-        )
+        if not str(metadata.get("explicitSessionFormat") or "").strip():
+            ChatPresentationPrimaryViewService.apply_session_preference(
+                metadata,
+                session_format,
+                data=sanitized_data,
+                path=resolved_path,
+                presenter=self.presenter,
+            )
 
         if not explicit_preference:
             explicit_preference = (

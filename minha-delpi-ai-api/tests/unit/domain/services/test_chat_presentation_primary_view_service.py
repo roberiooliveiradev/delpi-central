@@ -39,3 +39,27 @@ def test_apply_session_table_promotes_list_from_table_presentations():
 
     assert metadata["presentation"] == table
     assert metadata["preferredFormat"] == "table"
+
+
+def test_finalize_decision_alignment_recovers_stale_text_explicit_for_table():
+    table = {
+        "type": "table",
+        "title": "Posições",
+        "rows": [{"branch": "01", "current_quantity": 10}],
+    }
+    metadata = {
+        "explicitSessionFormat": "text",
+        "preferredFormat": "table",
+        "presentation": table,
+        "presentationDecision": {
+            "selected": "table",
+            "layoutMode": "single",
+            "visualOrder": ["table"],
+        },
+    }
+
+    ChatPresentationPrimaryViewService.finalize_decision_alignment(metadata)
+
+    assert metadata["explicitSessionFormat"] == "table"
+    assert metadata["presentation"] == table
+    assert metadata["presentationDecision"]["visualOrder"] == ["table"]

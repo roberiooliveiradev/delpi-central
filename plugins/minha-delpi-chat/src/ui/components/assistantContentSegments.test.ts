@@ -142,4 +142,45 @@ describe("assistantContentSegments", () => {
       expect(segments[0].markdown).toBe(greeting);
     }
   });
+
+  it("prioriza tabela nativa em layout single com selected=table", () => {
+    const longMarkdown =
+      "### Estoque\n\n<!-- section:scope -->\n\nDetalhamento longo em prosa.";
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "single",
+            visualOrder: ["table"],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: longMarkdown,
+          },
+          presentation: {
+            type: "table",
+            title: "Posições por filial e armazém",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01", current_quantity: 455000 }],
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments(
+      "Posições por filial e armazém",
+      toolCalls,
+    );
+
+    expect(segments.some((item) => item.kind === "table")).toBe(true);
+    expect(
+      segments.some(
+        (item) =>
+          item.kind === "markdown" &&
+          item.markdown.includes("Detalhamento longo em prosa"),
+      ),
+    ).toBe(false);
+  });
 });

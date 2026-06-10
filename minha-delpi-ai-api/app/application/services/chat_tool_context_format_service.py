@@ -203,3 +203,25 @@ class ChatToolContextFormatService:
         decision["selected"] = requested_format
         decision["layoutMode"] = "single"
         decision["visualOrder"] = [requested_format]
+
+        from app.domain.services.chat_presentation_recommendation_service import (
+            ChatPresentationRecommendationService,
+        )
+
+        ChatPresentationRecommendationService.prune_for_selected(decision)
+
+        meta["explicitSessionFormat"] = requested_format
+        meta["preferredFormat"] = requested_format
+
+        from app.application.use_cases.execute_external_action_use_case import (
+            ExecuteExternalActionUseCase,
+        )
+
+        ExecuteExternalActionUseCase._align_presentation_with_decision(
+            meta,
+            kpi_presentation=(
+                meta.get("kpiPresentation")
+                if isinstance(meta.get("kpiPresentation"), dict)
+                else None
+            ),
+        )

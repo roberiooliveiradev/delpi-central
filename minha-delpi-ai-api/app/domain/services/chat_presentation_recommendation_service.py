@@ -167,6 +167,45 @@ class ChatPresentationRecommendationService:
         return output[:3]
 
     @classmethod
+    def prune_for_selected(cls, decision: dict[str, Any]) -> None:
+        if not isinstance(decision, dict):
+            return
+
+        selected = str(decision.get("selected") or "").strip().lower()
+        recommendations = decision.get("recommendations")
+
+        if not selected or not isinstance(recommendations, list):
+            return
+
+        def _matches_selected(item: dict[str, Any]) -> bool:
+            view = str(item.get("view") or "").strip().lower()
+
+            if not view:
+                return False
+
+            if view == selected:
+                return True
+
+            if selected in _CHART_SELECTED and view in _CHART_SELECTED:
+                return True
+
+            if selected == "chart" and view in _CHART_SELECTED:
+                return True
+
+            return False
+
+        pruned = [
+            item
+            for item in recommendations
+            if isinstance(item, dict) and not _matches_selected(item)
+        ]
+
+        if pruned:
+            decision["recommendations"] = pruned
+        else:
+            decision.pop("recommendations", None)
+
+    @classmethod
     def _apply_entity_family_rules(
         cls,
         *,

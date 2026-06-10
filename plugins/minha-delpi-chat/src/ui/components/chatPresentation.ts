@@ -7,7 +7,7 @@ import type {
   ChatToolCall,
 } from "../../data/api/chatTypes";
 
-import { resolveAssistantContentLayout } from "./assistantContentLayout";
+import { isNativeSingleViewSelection, resolveAssistantContentLayout } from "./assistantContentLayout";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 
@@ -415,9 +415,16 @@ export function getPresentationInsightFromToolCalls(
 ): string {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const insight = String(decision?.insight ?? "").trim();
-  const reason = String(decision?.reason ?? "").trim();
 
-  return insight || reason;
+  if (insight) {
+    return insight;
+  }
+
+  if (isNativeSingleViewSelection(toolCalls).active) {
+    return "";
+  }
+
+  return String(decision?.reason ?? "").trim();
 }
 
 export function getPresentationRecommendationsFromToolCalls(
@@ -429,13 +436,38 @@ export function getPresentationRecommendationsFromToolCalls(
     return [];
   }
 
+  const selected = String(decision.selected ?? "").trim().toLowerCase();
+
   return decision.recommendations
     .map((item) => ({
       label: String(item.label ?? "").trim(),
       reason: item.reason ? String(item.reason).trim() : undefined,
       query: String(item.query ?? "").trim(),
+      view: String(item.view ?? "").trim().toLowerCase(),
     }))
-    .filter((item) => item.label && item.query);
+    .filter((item) => {
+      if (!item.label || !item.query) {
+        return false;
+      }
+
+      if (!selected) {
+        return true;
+      }
+
+      if (item.view === selected) {
+        return false;
+      }
+
+      if (
+        selected === "chart" &&
+        (item.view.includes("chart") || item.view === "line_chart" || item.view === "bar_chart")
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .map(({ label, reason, query }) => ({ label, reason, query }));
 }
 
 export function mapPresentationDecisionToViewFormat(

@@ -8,9 +8,11 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 export type { AssistantContentSegment } from "./assistantContentTypes";
 
 import {
+  isNativeSingleViewSelection,
   orderVisualSegments,
   resolveAssistantContentLayout,
   resolveStackLayoutOrderFromToolCalls,
+  segmentVisualKind,
 } from "./assistantContentLayout";
 import {
   getPresentationDecisionFromToolCalls,
@@ -528,6 +530,27 @@ export function buildAssistantContentSegments(
 
   if (layoutMode !== "stack" && selected === "text") {
     return parseMarkdownAndCodeSegments(rawMarkdown);
+  }
+
+  const nativeSingle = isNativeSingleViewSelection(toolCalls);
+
+  if (nativeSingle.active && nativeSingle.kind && visuals.length) {
+    const caption = rawMarkdown.trim();
+    const segments: AssistantContentSegment[] = [];
+
+    if (caption) {
+      segments.push(...parseMarkdownAndCodeSegments(caption));
+    }
+
+    const orderedVisuals = orderVisualSegments(visuals, [nativeSingle.kind]);
+
+    for (const visual of orderedVisuals) {
+      if (segmentVisualKind(visual) === nativeSingle.kind) {
+        segments.push(visual);
+      }
+    }
+
+    return segments.length ? segments : orderedVisuals;
   }
 
   if (layoutMode === "stack") {

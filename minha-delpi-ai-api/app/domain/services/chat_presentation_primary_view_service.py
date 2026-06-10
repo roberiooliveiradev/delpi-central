@@ -85,18 +85,24 @@ class ChatPresentationPrimaryViewService:
 
             return
 
-        if selected == "text" or explicit == "text":
+        native_selected = selected in _VIEW_SLOT_BY_TYPE or selected in _CHART_SELECTED_TYPES
+
+        if selected == "text" or (explicit == "text" and not native_selected):
             presentation = metadata.get("presentation")
 
             if isinstance(presentation, dict) and presentation.get("type") == "kpi":
                 metadata["kpiPresentation"] = presentation
                 metadata["presentation"] = None
 
-            if explicit == "text":
+            if explicit == "text" and not native_selected:
                 decision["layoutMode"] = "single"
                 decision["visualOrder"] = ["text"]
 
             return
+
+        if native_selected and explicit == "text":
+            metadata["explicitSessionFormat"] = selected
+            metadata["preferredFormat"] = selected
 
         if explicit == "canvas":
             decision["selected"] = "canvas"

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
+  isNativeSingleViewSelection,
   orderVisualSegments,
   resolveAssistantContentLayout,
   resolveStackLayoutOrderFromToolCalls,
@@ -99,5 +100,25 @@ describe("assistantContentLayout", () => {
     const ordered = orderVisualSegments(visuals, ["table", "tree", "chart"]);
 
     expect(ordered.map((item) => item.kind)).toEqual(["table", "tree", "chart"]);
+  });
+
+  it("detecta visão nativa single quando selected=table", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "single",
+            visualOrder: ["table"],
+          },
+        },
+      },
+    ] as const;
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: true,
+      kind: "table",
+    });
   });
 });

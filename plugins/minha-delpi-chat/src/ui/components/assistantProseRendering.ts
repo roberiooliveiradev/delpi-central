@@ -1,9 +1,11 @@
 import type { ChatMessageMetadata, ChatToolCall } from "../../data/api/chatTypes";
 
 import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "./chatMarkdown";
+import { isNativeSingleViewSelection } from "./assistantContentLayout";
 import {
   getPresentationTitle,
   getTextMarkdownFromToolCalls,
+  isShortPresentationCaption,
   stripLeadingMarkdownTitle,
 } from "./chatPresentation";
 
@@ -80,6 +82,14 @@ export function resolveAssistantDisplayContent(
 
   const raw = String(content || "").trim();
 
+  if (isNativeSingleViewSelection(toolCalls).active) {
+    if (raw) {
+      return stripPresentationSectionMarkers(raw);
+    }
+
+    return "";
+  }
+
   return stripPresentationSectionMarkers(
     raw || getTextMarkdownFromToolCalls(toolCalls),
   );
@@ -136,6 +146,29 @@ export function resolveAssistantRenderableMarkdown(
   content: string,
   toolCalls: ChatToolCall[] = [],
 ): string {
+  const nativeSingle = isNativeSingleViewSelection(toolCalls);
+
+  if (nativeSingle.active) {
+    const raw = String(content || "").trim();
+    const presentationTitle = resolveAssistantPresentationTitle(content, toolCalls);
+
+    if (raw && isShortPresentationCaption(raw, toolCalls)) {
+      return stripPresentationSectionMarkers(
+        stripLeadingMarkdownTitleSafely(raw, presentationTitle),
+      );
+    }
+
+    if (presentationTitle) {
+      const titled = presentationTitle.startsWith("#")
+        ? presentationTitle
+        : `### ${presentationTitle}`;
+
+      return titled;
+    }
+
+    return stripPresentationSectionMarkers(raw);
+  }
+
   const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
   const presentationTitle = resolveAssistantPresentationTitle(content, toolCalls);
   const raw = String(content || "").trim();

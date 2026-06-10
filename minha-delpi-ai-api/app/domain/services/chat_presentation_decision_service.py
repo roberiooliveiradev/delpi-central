@@ -629,6 +629,8 @@ class ChatPresentationDecisionService:
         if recommendations:
             decision["recommendations"] = recommendations
 
+        ChatPresentationRecommendationService.prune_for_selected(decision)
+
         cls._apply_chart_category_aggregation(metadata)
 
         cls._apply_route_visual_policy(metadata, decision)
@@ -679,6 +681,8 @@ class ChatPresentationDecisionService:
                 decision["layoutMode"] = "stack"
                 decision["visualOrder"] = cls._visual_order_for_stack(merged_views)
                 decision["reason"] = cls._reason("integratedStack")
+
+        ChatPresentationRecommendationService.prune_for_selected(decision)
 
         from app.domain.services.chat_presentation_structure_dedup_service import (
             ChatPresentationStructureDedupService,

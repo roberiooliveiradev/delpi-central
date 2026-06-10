@@ -105,6 +105,74 @@ function mapDecisionViewToStackSlot(view: string): StackLayoutSlot | null {
   return mapDecisionViewToVisualKind(view);
 }
 
+const CHART_SELECTED_TOKENS = new Set([
+  "chart",
+  "line_chart",
+  "bar_chart",
+  "horizontal_bar",
+  "donut",
+  "area_chart",
+  "grouped_bar",
+  "stacked_bar",
+  "combo_chart",
+  "histogram",
+  "heatmap",
+  "gauge",
+  "scatter",
+]);
+
+const NATIVE_SINGLE_VIEW_KINDS = new Set<ContentFormatKind>([
+  "table",
+  "tree",
+  "chart",
+  "kpi",
+  "dashboard",
+]);
+
+export function mapSelectedViewToContentFormatKind(
+  selected: string | null | undefined,
+): ContentFormatKind | null {
+  const token = String(selected ?? "").trim().toLowerCase();
+
+  if (!token || token === "text") {
+    return null;
+  }
+
+  if (token === "canvas") {
+    return null;
+  }
+
+  if (CHART_SELECTED_TOKENS.has(token) || token.includes("chart")) {
+    return "chart";
+  }
+
+  if (NATIVE_SINGLE_VIEW_KINDS.has(token as ContentFormatKind)) {
+    return token as ContentFormatKind;
+  }
+
+  return null;
+}
+
+/** Visão nativa explícita em layout single (ex.: preferência Tabela na UI). */
+export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
+  active: boolean;
+  kind: ContentFormatKind | null;
+} {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+
+  if (decision?.layoutMode === "stack") {
+    return { active: false, kind: null };
+  }
+
+  const kind = mapSelectedViewToContentFormatKind(decision?.selected);
+
+  if (!kind) {
+    return { active: false, kind: null };
+  }
+
+  return { active: true, kind };
+}
+
 export function resolveStackLayoutOrderFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): StackLayoutSlot[] {
