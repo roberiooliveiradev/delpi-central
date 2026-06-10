@@ -103,6 +103,7 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
               key={item.id}
               type="button"
               className={`admin-stats-subnav__item ${isActive ? "active" : ""}`}
+              data-tour={item.id === "tour" ? "admin-stats-subnav-tour" : undefined}
               onClick={() => setPage(item.id)}
               aria-current={isActive ? "page" : undefined}
             >

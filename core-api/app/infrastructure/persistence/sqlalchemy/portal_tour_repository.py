@@ -171,6 +171,7 @@ class SqlAlchemyPortalTourRepository(PortalTourRepository):
                 started_at=progress.started_at,
                 last_activity_at=progress.last_activity_at,
                 completed_at=progress.completed_at,
+                is_superadmin=bool(user.is_superadmin),
             )
             for progress, user in rows
         ]

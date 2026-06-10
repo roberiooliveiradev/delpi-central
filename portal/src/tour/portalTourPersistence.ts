@@ -5,6 +5,7 @@ import {
   resetPortalTour,
   shouldShowPortalTour,
 } from "./portalTourStorage";
+import { publishPortalTourSyncStatus } from "./portalTourSyncStatus";
 
 type PortalTourSyncPayload = {
   tourVersion: string;
@@ -29,8 +30,14 @@ function enqueueSync(api: CoreApi, payload: PortalTourSyncPayload) {
     if (!next) return;
     syncChain = syncChain
       .then(() => api.syncPortalTourProgress(next))
-      .then(() => undefined)
-      .catch(() => undefined);
+      .then(() => {
+        publishPortalTourSyncStatus(false);
+        return undefined;
+      })
+      .catch(() => {
+        publishPortalTourSyncStatus(true);
+        return undefined;
+      });
   }, 650);
 }
 
@@ -201,8 +208,14 @@ export function syncPortalTourCompleted(
         completedQuestIds,
       }),
     )
-    .then(() => undefined)
-    .catch(() => undefined);
+    .then(() => {
+      publishPortalTourSyncStatus(false);
+      return undefined;
+    })
+    .catch(() => {
+      publishPortalTourSyncStatus(true);
+      return undefined;
+    });
 }
 
 /** @deprecated Use syncPortalTourCompleted — «pular» não existe mais. */

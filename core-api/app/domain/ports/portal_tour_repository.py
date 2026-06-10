@@ -28,6 +28,7 @@ class PortalTourExplorerDTO:
     started_at: datetime
     last_activity_at: datetime
     completed_at: datetime | None
+    is_superadmin: bool = False
 
 
 @dataclass

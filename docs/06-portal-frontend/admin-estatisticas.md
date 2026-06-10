@@ -20,7 +20,7 @@ Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via t
 
 Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, acompanhamento do tour em `StatsTourPage.tsx` + `usePortalTourAdminMonitoring.ts`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
 
-**Acompanhamento — tour:** KPIs (explorando, concluíram, total), ranking top exploradores (7/30 dias), lista paginada com filtro por status. Ver [portal-tour.md](./portal-tour.md).
+**Acompanhamento — tour:** KPIs (explorando, concluíram, total), ranking top exploradores (7/30 dias), lista paginada com filtro por status e **progresso % / nível por usuário** (escopado ao RBAC de cada explorador). Ver [portal-tour.md](./portal-tour.md).
 
 **Usuários:** atalho «Abrir acompanhamento» leva à subpágina dedicada do tour.
 

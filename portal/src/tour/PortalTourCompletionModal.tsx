@@ -1,4 +1,5 @@
 import { Sparkles, Trophy, X } from "lucide-react";
+import type { PortalTourAchievementItem } from "../data/coreApi";
 import type { ExplorerLevel } from "./portalTourGamification";
 
 type PortalTourCompletionModalProps = {
@@ -7,6 +8,7 @@ type PortalTourCompletionModalProps = {
   requiredDone: number;
   requiredTotal: number;
   explorationDurationLabel?: string | null;
+  achievements?: PortalTourAchievementItem[];
   onClose: () => void;
 };
 
@@ -16,8 +18,12 @@ export function PortalTourCompletionModal({
   requiredDone,
   requiredTotal,
   explorationDurationLabel,
+  achievements = [],
   onClose,
 }: PortalTourCompletionModalProps) {
+  const featuredAchievements = achievements.slice(0, 4);
+  const extraAchievements = Math.max(0, achievements.length - featuredAchievements.length);
+
   return (
     <div className="portal-tour-completion-backdrop" role="presentation">
       <div
@@ -68,6 +74,24 @@ export function PortalTourCompletionModal({
             </div>
           ) : null}
         </dl>
+
+        {featuredAchievements.length > 0 ? (
+          <div className="portal-tour-completion-achievements">
+            <p className="portal-tour-completion-achievements__title">
+              Conquistas desbloqueadas
+            </p>
+            <ul>
+              {featuredAchievements.map((item) => (
+                <li key={item.id}>{item.title}</li>
+              ))}
+            </ul>
+            {extraAchievements > 0 ? (
+              <p className="portal-tour-completion-achievements__more">
+                +{extraAchievements} outra{extraAchievements > 1 ? "s" : ""} no perfil
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <button
           type="button"

@@ -2,8 +2,14 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
+from app.domain.portal_tour.portal_tour_availability_service import PortalTourUserContext
+from app.domain.portal_tour.portal_tour_explorer_progress_service import (
+    resolve_explorer_progress_snapshot,
+)
+from app.domain.services.permission_resolver import PermissionResolver
 
 
 @dataclass
@@ -18,6 +24,10 @@ class PortalTourExplorerItem:
     started_at: datetime
     last_activity_at: datetime
     completed_at: datetime | None
+    progress_percent: int
+    explorer_level: str
+    required_quest_done: int
+    required_quest_total: int
 
 
 @dataclass
@@ -52,8 +62,25 @@ class ListPortalTourExplorersUseCase:
             offset=offset,
         )
 
-        return ListPortalTourExplorersResult(
-            items=[
+        resolver = PermissionResolver(
+            self.uow.permission_queries,
+            self.uow.cache,
+        )
+
+        enriched: list[PortalTourExplorerItem] = []
+        for item in items:
+            permissions = resolver.resolve(
+                UUID(item.user_id),
+                bool(item.is_superadmin),
+            )
+            snapshot = resolve_explorer_progress_snapshot(
+                list(item.completed_quest_ids),
+                PortalTourUserContext(
+                    permissions=frozenset(permissions),
+                    is_superadmin=bool(item.is_superadmin),
+                ),
+            )
+            enriched.append(
                 PortalTourExplorerItem(
                     user_id=item.user_id,
                     name=item.name,
@@ -65,9 +92,15 @@ class ListPortalTourExplorersUseCase:
                     started_at=item.started_at,
                     last_activity_at=item.last_activity_at,
                     completed_at=item.completed_at,
+                    progress_percent=snapshot.progress_percent,
+                    explorer_level=snapshot.explorer_level,
+                    required_quest_done=snapshot.required_quest_done,
+                    required_quest_total=snapshot.required_quest_total,
                 )
-                for item in items
-            ],
+            )
+
+        return ListPortalTourExplorersResult(
+            items=enriched,
             total=total,
             tour_version=(tour_version or "").strip() or None,
             status=normalized_status,

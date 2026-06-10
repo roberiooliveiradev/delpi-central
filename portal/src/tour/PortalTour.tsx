@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AuthContext } from "../state/AuthContext";
 import { ApiClient } from "../data/apiClient";
-import { CoreApi, type PortalTourCatalogResponse } from "../data/coreApi";
+import { CoreApi, type PortalTourAchievementItem, type PortalTourCatalogResponse } from "../data/coreApi";
 import "./PortalTour.css";
 import {
   clearTourPulseTargets,
@@ -53,6 +53,7 @@ import { clearPortalTourTimers, schedulePortalTourTimer } from "./portalTourTime
 import { closeAppLauncher } from "../utils/appLauncher";
 import { usePortalTourHighlights } from "./usePortalTourHighlights";
 import { PortalTourCompletionModal } from "./PortalTourCompletionModal";
+import { subscribePortalTourSyncStatus } from "./portalTourSyncStatus";
 import { runPortalTourConfetti } from "./portalTourCelebration";
 import {
   formatExplorationDuration,
@@ -109,6 +110,10 @@ export function PortalTour() {
   const [explorationDurationLabel, setExplorationDurationLabel] = useState<
     string | null
   >(null);
+  const [completionAchievements, setCompletionAchievements] = useState<
+    PortalTourAchievementItem[]
+  >([]);
+  const [syncFailed, setSyncFailed] = useState(false);
   const [catalog, setCatalog] = useState<PortalTourCatalogResponse | null>(null);
   const confettiCleanupRef = useRef<(() => void) | null>(null);
   const completedRef = useRef(completedIds);
@@ -186,6 +191,12 @@ export function PortalTour() {
   useEffect(() => {
     completedRef.current = completedIds;
   }, [completedIds]);
+
+  useEffect(() => {
+    return subscribePortalTourSyncStatus(({ failed }) => {
+      setSyncFailed(failed);
+    });
+  }, []);
 
   useEffect(() => {
     publishPortalTourSession({
@@ -266,7 +277,17 @@ export function PortalTour() {
     setShowCompletionModal(true);
     confettiCleanupRef.current?.();
     confettiCleanupRef.current = runPortalTourConfetti();
-  }, []);
+    void coreApi
+      .getPortalTourAchievements()
+      .then((response) => {
+        setCompletionAchievements(
+          response.items.filter((item) => item.unlocked),
+        );
+      })
+      .catch(() => {
+        setCompletionAchievements([]);
+      });
+  }, [coreApi]);
 
   const closeCompletionCelebration = useCallback(() => {
     confettiCleanupRef.current?.();
@@ -557,6 +578,13 @@ export function PortalTour() {
         </div>
       ) : null}
 
+      {syncFailed && active ? (
+        <div className="portal-tour-sync-warning" role="status" aria-live="polite">
+          Não foi possível salvar o progresso no servidor. Suas conquistas locais
+          serão reenviadas na próxima ação.
+        </div>
+      ) : null}
+
       {showCompletionModal ? (
         <PortalTourCompletionModal
           explorerLevel={explorerLevel}
@@ -564,6 +592,7 @@ export function PortalTour() {
           requiredDone={requiredDone}
           requiredTotal={requiredTotal}
           explorationDurationLabel={explorationDurationLabel}
+          achievements={completionAchievements}
           onClose={() => closeCompletionCelebration()}
         />
       ) : null}

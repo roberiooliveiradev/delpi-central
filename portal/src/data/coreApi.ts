@@ -343,6 +343,10 @@ export type PortalTourExplorerItem = {
   status: PortalTourStatus;
   completedQuestIds: string[];
   completedQuestCount: number;
+  progressPercent: number;
+  explorerLevel: string;
+  requiredQuestDone: number;
+  requiredQuestTotal: number;
   startedAt: string;
   lastActivityAt: string;
   completedAt: string | null;

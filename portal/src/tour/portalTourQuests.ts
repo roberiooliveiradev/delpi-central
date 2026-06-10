@@ -190,6 +190,26 @@ export function getPortalTourQuests({
         !isLauncherOpen() &&
         hasVisibleTarget("#home-notifications"),
     },
+    {
+      id: "home-portal-tour-resume",
+      title: "Retomar o tour na home",
+      hint: "Use o card Descubra o portal para continuar.",
+      steps: [
+        "Na home, localize o card Descubra o portal.",
+        "Clique nele para reabrir o painel de desafios.",
+        "Continue explorando no seu ritmo.",
+      ],
+      unlockHint: "Feche o painel do tour (✕) — o card aparece na home.",
+      scope: "home",
+      category: "home",
+      optional: true,
+      actionSelector: '[data-tour="home-portal-tour-resume"]',
+      highlightSelector: '[data-tour="home-portal-tour-resume"]',
+      isAvailable: () =>
+        isHomeRoute() &&
+        !isLauncherOpen() &&
+        hasVisibleTarget('[data-tour="home-portal-tour-resume"]'),
+    },
 
     // —— Notificações ——
     {
@@ -520,6 +540,28 @@ export function getPortalTourQuests({
         optional: true,
         isAvailable: () =>
           isAdminRoute() && hasVisibleTarget('[data-tour="admin-nav-apps"]'),
+      },
+      {
+        id: "page-admin-stats-tour",
+        title: "Acompanhamento do tour",
+        hint: "Monitore exploradores nas estatísticas.",
+        steps: [
+          "No Admin, abra a aba Estatísticas.",
+          "Clique em Acompanhamento no menu interno.",
+          "Veja ranking e progresso dos exploradores.",
+        ],
+        unlockHint: "Admin → Estatísticas → Acompanhamento.",
+        scope: "admin",
+        category: "admin",
+        actionSelector:
+          '[data-tour="admin-stats-subnav-tour"], [data-tour="admin-stats-tour-page"]',
+        highlightSelector: '[data-tour="admin-stats-subnav-tour"]',
+        optional: true,
+        isAvailable: () =>
+          isAdminRoute() &&
+          hasVisibleTarget(
+            '[data-tour="admin-stats-subnav-tour"], [data-tour="admin-stats-tour-page"]',
+          ),
       },
     );
   }

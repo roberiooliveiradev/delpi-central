@@ -72,7 +72,16 @@ Roadmap de evolução da experiência gamificada do tour. Implementação **cent
 | Abrir modal após último desafio ou botão Concluir | `PortalTour.tsx` | ✅ |
 | Resumo: desafios, XP, nível | `portalTourGamification.ts` | ✅ |
 
-**Pendente Fase B+:** tempo de exploração (`startedAt` da API) no modal.
+**Pendente Fase B+:** ~~tempo de exploração (`startedAt` da API) no modal~~ ✅
+
+### Fase F — Polimento pós-lançamento ✅
+
+| Item | Entrega |
+|---|---|
+| Desafios «Retomar na home» e «Acompanhamento admin» | Catálogo + `portalTourQuests.ts` |
+| `% progresso por explorador` no admin | `progressPercent` / `explorerLevel` em `/admin/portal-tour/explorers` |
+| Aviso de falha de sync | `portalTourSyncStatus.ts` + banner no tour |
+| Conquistas no modal de 100% | `PortalTourCompletionModal` |
 
 ---
 

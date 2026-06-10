@@ -53,7 +53,7 @@ export function StatsTourPage() {
   const completionPct = statPercent(completed, total);
 
   return (
-    <div className="admin-stats-page admin-stats-page--tour">
+    <div className="admin-stats-page admin-stats-page--tour" data-tour="admin-stats-tour-page">
       <div className="admin-stats-page__head-row">
         <StatsPageIntro
           title="Acompanhamento do tour"
@@ -268,7 +268,12 @@ export function StatsTourPage() {
                         >
                           {PORTAL_TOUR_STATUS_LABELS[item.status] ?? item.status}
                         </span>
-                        <span>{item.completedQuestCount} desafios</span>
+                        <span>
+                          {item.progressPercent}% · {item.explorerLevel}
+                        </span>
+                        <span>
+                          {item.requiredQuestDone}/{item.requiredQuestTotal} obrigatórios
+                        </span>
                       </div>
                     </div>
                     <div className="admin-stats-least-engaged-item__meta">

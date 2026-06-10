@@ -88,6 +88,7 @@ Lista agrupada no painel por categoria (`PORTAL_TOUR_CATEGORY_ORDER`).
 | `home-favorites` | Favoritos na home | Seção `#home-favorites` |
 | `home-recent` | Apps recentes | Seção `#home-recent` |
 | `home-notifications` | Notificações na home | Bloco `#home-notifications` |
+| `home-portal-tour-resume` | Retomar o tour na home | Card `home-portal-tour-resume` (opcional) |
 
 ### Notificações
 
@@ -132,6 +133,7 @@ Requer `rbac.manage` ou superadmin.
 | `page-admin-roles` | Papéis | Aba Papéis |
 | `page-admin-permissions` | Permissões | Aba Permissões |
 | `page-admin-apps` | Apps | Aba Apps |
+| `page-admin-stats-tour` | Acompanhamento do tour | Estatísticas → Acompanhamento (opcional) |
 
 **Conclusão:** ao atingir 100% dos desafios obrigatórios, o modal de celebração marca a versão como concluída no servidor e no `localStorage`. Não há «Pular» nem «Concluir» manual — a exploração é contínua e gamificada.
 
@@ -184,6 +186,8 @@ Requer `rbac.manage` ou superadmin.
 | `[data-tour="profile-tour-achievements"]` | Grid de conquistas |
 | `[data-tour="privacy-page"]`, `privacy-consent`, `privacy-export` | `PrivacyPage.tsx` |
 | `[data-tour="admin-page"]`, `admin-nav-{key}`, `admin-mobile-nav` | `AdminPage.tsx` |
+| `[data-tour="admin-stats-subnav-tour"]`, `[data-tour="admin-stats-tour-page"]` | `StatsTab.tsx` / `StatsTourPage.tsx` |
+| `[data-tour="home-portal-tour-resume"]` | `PortalTourHomeEntry.tsx` |
 
 ---
 
