@@ -94,5 +94,55 @@ SCHEMA_DRIVEN_SAMPLE_PAYLOADS: tuple[dict[str, object], ...] = (
             ]
         },
         "expected_table_rows": 2,
+        "expected_chart": True,
+    },
+    {
+        "id": "hr_snapshot_scalar",
+        "path": "/hr/snapshot",
+        "entity": "hr_snapshot",
+        "data": {
+            "active_employees": 420,
+            "turnover_pct": 3.2,
+            "unit": "%",
+        },
+        "expected_primary_type": "kpi",
+    },
+    {
+        "id": "financial_rol_series",
+        "path": "/financial/rol",
+        "entity": "financial_rol",
+        "data": {
+            "series": [
+                {"period": "jan/2026", "value": 12.1},
+                {"period": "fev/2026", "value": 12.8},
+            ]
+        },
+        "expected_table_rows": 2,
+        "expected_chart": True,
+    },
+    {
+        "id": "quality_audit_summary_path_only",
+        "path": "/quality/audit-5s/summary",
+        "entity": None,
+        "data": {
+            "completed_audits": 18,
+            "open_nonconformities": 4,
+            "average_score": 87.5,
+        },
+        "expected_primary_type": "kpi",
+    },
+    {
+        "id": "generic_hierarchy_tree",
+        "path": "/engineering/transforma-mais/processes",
+        "entity": "transforma_mais_process",
+        "data": {
+            "code": "TM-01",
+            "description": "Processo piloto",
+            "children": [
+                {"code": "STEP-1", "description": "Mapeamento"},
+                {"code": "STEP-2", "description": "Execução"},
+            ],
+        },
+        "expected_tree": True,
     },
 )

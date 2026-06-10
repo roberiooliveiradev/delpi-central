@@ -567,6 +567,7 @@ class ExternalActionResultPresenter:
                 data,
                 path=path,
                 entity=profile.entity,
+                response_schema=response_schema,
             )
         finally:
             self._active_schema_labels = None
@@ -1358,6 +1359,50 @@ class ExternalActionResultPresenter:
 
     def build_dashboard_presentation(self, data, *, path: str = "") -> dict | None:
         return self._kpi_chart().build_dashboard_presentation(data, path=path)
+
+    def apply_schema_driven_auxiliaries(
+        self,
+        data,
+        *,
+        path: str = "",
+        text_presentation: dict | None = None,
+        tree_presentation: dict | None = None,
+        table_presentation: dict | None = None,
+        chart_presentation: dict | None = None,
+        kpi_presentation: dict | None = None,
+    ) -> dict[str, dict | None]:
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+
+        if not ChatSchemaDrivenPresentationService.should_apply(
+            path=path,
+            entity=profile.entity,
+        ):
+            return {
+                "text_presentation": text_presentation,
+                "tree_presentation": tree_presentation,
+                "table_presentation": table_presentation,
+                "chart_presentation": chart_presentation,
+                "kpi_presentation": kpi_presentation,
+            }
+
+        bundle = ChatSchemaDrivenPresentationService.build_bundle(
+            self,
+            data,
+            path=path,
+            entity=profile.entity,
+        )
+
+        return {
+            "text_presentation": text_presentation or bundle.text,
+            "tree_presentation": tree_presentation or bundle.tree,
+            "table_presentation": table_presentation or bundle.table,
+            "chart_presentation": chart_presentation or bundle.chart,
+            "kpi_presentation": kpi_presentation or bundle.kpi,
+        }
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
         return self._kpi_chart().build_chart_presentation(data, path=path, force=force)

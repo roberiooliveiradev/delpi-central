@@ -244,8 +244,29 @@ class ExecuteExternalActionUseCase:
             table_presentation = presentation
         elif isinstance(presentation, dict) and presentation.get("type") == "kpi":
             kpi_presentation = presentation
+        elif isinstance(presentation, dict) and presentation.get("type") == "chart":
+            chart_presentation = chart_presentation or presentation
+        elif isinstance(presentation, dict) and presentation.get("type") == "tree":
+            tree_presentation = tree_presentation or presentation
+        elif isinstance(presentation, dict) and presentation.get("type") == "table":
+            table_presentation = presentation
         elif presentation:
             table_presentation = presentation
+
+        auxiliaries = self.presenter.apply_schema_driven_auxiliaries(
+            presentation_data,
+            path=resolved_path,
+            text_presentation=text_presentation,
+            tree_presentation=tree_presentation,
+            table_presentation=table_presentation,
+            chart_presentation=chart_presentation,
+            kpi_presentation=kpi_presentation,
+        )
+        text_presentation = auxiliaries["text_presentation"]
+        tree_presentation = auxiliaries["tree_presentation"]
+        table_presentation = auxiliaries["table_presentation"]
+        chart_presentation = auxiliaries["chart_presentation"]
+        kpi_presentation = auxiliaries["kpi_presentation"]
 
         available_formats: list[str] = []
 

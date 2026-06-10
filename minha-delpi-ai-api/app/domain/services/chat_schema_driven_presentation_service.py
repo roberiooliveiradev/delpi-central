@@ -21,17 +21,38 @@ _RICH_PROFILE_KEYS = frozenset(
         "analyser",
         "stock",
         "tree_hierarchy",
-        "table_list",
         "factory_status",
         "production_status",
         "shipping_status",
         "structure_exclusivity",
         "raw_material_price_intelligence",
         "cost_impact_simulation",
+        "sale_pricing",
+        "purchase_list",
+        "last_purchase",
+    }
+)
+
+_KPI_PROFILE_KEYS = frozenset(
+    {
+        "kpi_series",
+        "kpi_snapshot",
+        "kpi_dashboard",
+    }
+)
+
+_CHART_VIEW_TOKENS = frozenset(
+    {
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
     }
 )
 
 _TABULAR_LIST_KEYS = ("items", "series", "periods", "history", "rows", "entries", "points")
+_TREE_CHILD_KEYS = ("children", "components", "items", "nodes")
 
 
 class SchemaDrivenPresenterHost(Protocol):
@@ -60,6 +81,7 @@ class SchemaPresentationBundle:
     text: dict[str, Any] | None = None
     chart: dict[str, Any] | None = None
     kpi: dict[str, Any] | None = None
+    tree: dict[str, Any] | None = None
 
 
 class ChatSchemaDrivenPresentationService:
@@ -70,10 +92,38 @@ class ChatSchemaDrivenPresentationService:
         if profile_key in _RICH_PROFILE_KEYS:
             return False
 
-        if ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+        if entity and ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
             return True
 
-        return profile_key in {"generic", "sql", "system"}
+        if profile_key in _KPI_PROFILE_KEYS:
+            return True
+
+        if profile_key in {"generic", "sql", "system"}:
+            return True
+
+        if profile_key == "table_list":
+            token = str(entity or "").strip()
+
+            if token.startswith("product_"):
+                return False
+
+            return True
+
+        return False
+
+    @classmethod
+    def build_from_openapi_schema(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        data: Any,
+        *,
+        path: str = "",
+        entity: str | None = None,
+        response_schema: dict[str, Any] | None = None,
+    ) -> SchemaPresentationBundle:
+        del response_schema  # labels aplicados no host antes da chamada
+
+        return cls.build_bundle(host, data, path=path, entity=entity)
 
     @classmethod
     def build_bundle(
@@ -92,10 +142,19 @@ class ChatSchemaDrivenPresentationService:
         if root is None:
             return SchemaPresentationBundle()
 
-        kpi = cls.build_kpi(host, root, path=path, entity=entity)
         rows = cls.extract_tabular_rows(root)
+        kpi = cls.build_kpi(host, root, path=path, entity=entity)
         table = cls.build_table(host, rows, path=path) if rows else None
-        chart = cls.build_chart(host, root, rows=rows, path=path, entity=entity)
+        force_chart = cls._profile_allows_chart(path=path, entity=entity)
+        chart = cls.build_chart(
+            host,
+            root,
+            rows=rows,
+            path=path,
+            entity=entity,
+            force=force_chart,
+        )
+        tree = cls.build_tree(host, root, path=path)
         text = cls.build_text(host, root, rows=rows, path=path, entity=entity)
 
         return SchemaPresentationBundle(
@@ -103,6 +162,7 @@ class ChatSchemaDrivenPresentationService:
             text=text,
             chart=chart,
             kpi=kpi,
+            tree=tree,
         )
 
     @classmethod
@@ -113,13 +173,59 @@ class ChatSchemaDrivenPresentationService:
         *,
         path: str = "",
         entity: str | None = None,
+        response_schema: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
-        bundle = cls.build_bundle(host, data, path=path, entity=entity)
+        bundle = cls.build_from_openapi_schema(
+            host,
+            data,
+            path=path,
+            entity=entity,
+            response_schema=response_schema,
+        )
+
+        return cls.resolve_primary_from_bundle(bundle, path=path, entity=entity)
+
+    @classmethod
+    def resolve_primary_from_bundle(
+        cls,
+        bundle: SchemaPresentationBundle,
+        *,
+        path: str,
+        entity: str | None,
+    ) -> dict[str, Any] | None:
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        view_order = [
+            str(view).strip().lower()
+            for view in (profile.get("viewOrder") or [])
+            if str(view).strip()
+        ]
+
+        for view in view_order:
+            if view == "kpi" and isinstance(bundle.kpi, dict):
+                return bundle.kpi
+
+            if view in _CHART_VIEW_TOKENS and isinstance(bundle.chart, dict):
+                return bundle.chart
+
+            if view == "table" and isinstance(bundle.table, dict):
+                return bundle.table
+
+            if view == "tree" and isinstance(bundle.tree, dict):
+                return bundle.tree
 
         if isinstance(bundle.kpi, dict):
             return bundle.kpi
 
-        return bundle.table
+        if isinstance(bundle.chart, dict):
+            return bundle.chart
+
+        if isinstance(bundle.table, dict):
+            return bundle.table
+
+        if isinstance(bundle.tree, dict):
+            return bundle.tree
+
+        return None
 
     @classmethod
     def build_table(
@@ -169,12 +275,13 @@ class ChatSchemaDrivenPresentationService:
         rows: list[dict[str, Any]] | None,
         path: str,
         entity: str | None,
+        force: bool = False,
     ) -> dict[str, Any] | None:
         kpi_chart = host._kpi_chart()
         safe_rows = rows or cls.extract_tabular_rows(root)
 
         if safe_rows:
-            chart = kpi_chart.try_chart_from_rows(safe_rows, force=False, path=path)
+            chart = kpi_chart.try_chart_from_rows(safe_rows, force=force, path=path)
 
             if isinstance(chart, dict):
                 return chart
@@ -184,6 +291,50 @@ class ChatSchemaDrivenPresentationService:
 
             if isinstance(chart, dict) and chart.get("type") == "chart":
                 return chart
+
+        return None
+
+    @classmethod
+    def build_tree(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        root: Any,
+        *,
+        path: str,
+    ) -> dict[str, Any] | None:
+        from app.domain.services.chat_product_structure_presentation_service import (
+            ChatProductStructurePresentationService,
+        )
+
+        if not isinstance(root, dict):
+            return None
+
+        structure_tree = ChatProductStructurePresentationService.build_tree_presentation(
+            root,
+            path=path,
+        )
+
+        if isinstance(structure_tree, dict) and structure_tree.get("type") == "tree":
+            return structure_tree
+
+        if isinstance(root.get("root"), dict):
+            generic = cls._build_tree_from_node(
+                root["root"],
+                title=str(host._fallback_title(path) or cls._text("tableTitleFallback")),
+                child_key=cls._detect_child_key(root["root"]),
+            )
+
+            if generic:
+                return generic
+
+        child_key = cls._detect_child_key(root)
+
+        if child_key:
+            return cls._build_tree_from_node(
+                root,
+                title=str(host._fallback_title(path) or cls._text("tableTitleFallback")),
+                child_key=child_key,
+            )
 
         return None
 
@@ -277,6 +428,99 @@ class ChatSchemaDrivenPresentationService:
             for key, value in root.items()
             if key not in ignored and isinstance(value, (int, float)) and not isinstance(value, bool)
         )
+
+    @classmethod
+    def _profile_allows_chart(cls, *, path: str, entity: str | None) -> bool:
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        flags = {str(flag).strip().lower() for flag in (profile.get("flags") or []) if str(flag).strip()}
+        view_order = {
+            str(view).strip().lower()
+            for view in (profile.get("viewOrder") or [])
+            if str(view).strip()
+        }
+
+        return bool(flags & {"chart", "kpi"}) or bool(view_order & _CHART_VIEW_TOKENS)
+
+    @classmethod
+    def _detect_child_key(cls, node: dict[str, Any]) -> str | None:
+        for key in _TREE_CHILD_KEYS:
+            candidate = node.get(key)
+
+            if isinstance(candidate, list) and candidate:
+                return key
+
+        return None
+
+    @classmethod
+    def _build_tree_from_node(
+        cls,
+        node: dict[str, Any],
+        *,
+        title: str,
+        child_key: str | None,
+    ) -> dict[str, Any] | None:
+        if not isinstance(node, dict):
+            return None
+
+        key = child_key or cls._detect_child_key(node)
+
+        if not key:
+            return None
+
+        children_raw = node.get(key)
+
+        if not isinstance(children_raw, list) or not children_raw:
+            return None
+
+        children = [
+            cls._serialize_tree_child(item, child_key=cls._detect_child_key(item) if isinstance(item, dict) else None)
+            for item in children_raw
+            if isinstance(item, dict)
+        ]
+
+        if not children:
+            return None
+
+        return {
+            "type": "tree",
+            "title": title,
+            "root": cls._serialize_tree_child(node, child_key=key, children=children),
+        }
+
+    @classmethod
+    def _serialize_tree_child(
+        cls,
+        node: dict[str, Any],
+        *,
+        child_key: str | None,
+        children: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        label = (
+            str(node.get("description") or node.get("label") or node.get("name") or "").strip()
+            or str(node.get("code") or node.get("id") or node.get("key") or "—")
+        )
+        serialized: dict[str, Any] = {
+            "id": str(node.get("id") or node.get("code") or node.get("key") or label),
+            "label": label,
+        }
+
+        if children:
+            serialized["children"] = children
+            return serialized
+
+        nested_key = child_key or cls._detect_child_key(node)
+
+        if nested_key:
+            nested = node.get(nested_key)
+
+            if isinstance(nested, list) and nested:
+                serialized["children"] = [
+                    cls._serialize_tree_child(item, child_key=cls._detect_child_key(item))
+                    for item in nested
+                    if isinstance(item, dict)
+                ]
+
+        return serialized
 
     @classmethod
     def _text(cls, key: str, **values: str) -> str:

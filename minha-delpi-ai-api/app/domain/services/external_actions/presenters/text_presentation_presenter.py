@@ -287,12 +287,36 @@ class ExternalActionTextPresentationPresenter:
         )
 
     def build_tree_presentation(self, data, *, path: str = "") -> dict | None:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
         from app.domain.services.chat_product_structure_presentation_service import (
             ChatProductStructurePresentationService,
         )
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
 
-        return ChatProductStructurePresentationService.build_tree_presentation(
+        structure_tree = ChatProductStructurePresentationService.build_tree_presentation(
             data,
             source_path=path,
             path=path,
         )
+
+        if isinstance(structure_tree, dict) and structure_tree.get("type") == "tree":
+            return structure_tree
+
+        root = self._host._unwrap_data(data)
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+
+        if ChatSchemaDrivenPresentationService.should_apply(
+            path=path,
+            entity=profile.entity,
+        ):
+            return ChatSchemaDrivenPresentationService.build_tree(
+                self._host,
+                root,
+                path=path,
+            )
+
+        return None
