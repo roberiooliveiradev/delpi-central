@@ -19,6 +19,7 @@ import {
   portalPathMatchesAppBase,
 } from "../utils/embeddedAppNotification";
 import { buildThemeMessage } from "../utils/theme";
+import { useAppHostRouteTransition } from "./appHostRouteTransition";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -53,6 +54,7 @@ export const AppHost = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const routeTransitionClass = useAppHostRouteTransition(location.pathname);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const federatedHostRef = useRef<HTMLDivElement>(null);
@@ -532,7 +534,11 @@ export const AppHost = () => {
     if (!resolvedEntry || !iframeSrc) return <div>entryUrl não definido.</div>;
 
     return (
-      <div className="app-host app-host-embedded">
+      <div
+        className={["app-host app-host-embedded", routeTransitionClass]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {isGoogleApp && googleLogin.barVisible ? (
           <div className="app-host-google-bar">
             <div className="app-host-google-info">
@@ -627,7 +633,11 @@ export const AppHost = () => {
 
   if (app.renderMode === "federated") {
     return (
-      <div className="app-host app-host-federated">
+      <div
+        className={["app-host app-host-federated", routeTransitionClass]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {federatedError ? (
           <div className="app-host-federated-error">
             <b>Falha ao carregar microfrontend</b>

@@ -46,7 +46,11 @@ const HOLDING_BODY_CLASS = "app-launcher-reorder-holding";
 
 function shouldStartReorderDrag(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
-  if (target.closest(".sidebar-inline-routes, .sidebar-inline-route")) {
+  if (
+    target.closest(
+      ".sidebar-inline-routes, .sidebar-inline-route, .launcher-inline-routes, .launcher-inline-route, .launcher-chevron-toggle",
+    )
+  ) {
     return false;
   }
   if (target.closest("button")) return false;

@@ -5,7 +5,10 @@ import { useLocation } from "react-router-dom";
 import { useAppLauncherReorder } from "./AppLauncherReorderList";
 import {
   launcherMotionIndexStyle,
+  markAppRouteNavigationIntent,
+  normalizeLauncherPath,
   useAppLauncherAppearance,
+  useAppLauncherRouteNavigation,
   type AppLauncherAppearanceScope,
 } from "./appLauncherAppearance";
 
@@ -26,6 +29,24 @@ type AppItem = {
 };
 
 type Variant = "launcher" | "home" | "sidebar";
+
+function resolveAppLauncherNameTier(name: string): "short" | "medium" | "long" {
+  const trimmed = name.trim();
+  const length = trimmed.length;
+  const longestWord = trimmed
+    .split(/\s+/)
+    .reduce((max, word) => Math.max(max, word.length), 0);
+
+  if (length > 18 || longestWord > 13) {
+    return "long";
+  }
+
+  if (length > 12 || longestWord > 10) {
+    return "medium";
+  }
+
+  return "short";
+}
 
 interface Props {
   app: AppItem;
@@ -88,6 +109,38 @@ export const AppLauncherCard = ({
   const visibleRoutes = routes.filter((route) => route.showInMenu !== false);
   const hasMultipleRoutes = visibleRoutes.length > 1 || searchKind === "route";
 
+  const normalizePath = (value: string) => normalizeLauncherPath(value);
+  const currentPath = normalizePath(location.pathname);
+
+  const resolveAppBasePath = () => app.base_path ?? app.basePath ?? null;
+
+  const defaultPath =
+    visibleRoutes[0]?.path ||
+    routes[0]?.path ||
+    resolveAppBasePath();
+
+  const isMainRouteActive =
+    !!defaultPath && currentPath === normalizePath(defaultPath);
+  const isAnyChildRouteActive = visibleRoutes.some(
+    (route) => normalizePath(route.path) === currentPath,
+  );
+
+  const isAppActive =
+    app.type !== "backend-only" &&
+    (isMainRouteActive || isAnyChildRouteActive);
+
+  const sidebarRouteContext =
+    isSidebar && hasMultipleRoutes && isAppActive;
+  const showSidebarExpanded = isOpen || sidebarRouteContext;
+
+  const routeNavigation = useAppLauncherRouteNavigation(app.id, {
+    routes: visibleRoutes,
+    currentPath,
+    isRoutesOpen:
+      isOpen || sidebarRouteContext || searchKind === "route",
+    enabled: Boolean(app.id),
+  });
+
   const prettifyLabel = (route: RouteItem) => {
     if (route.label) return route.label;
     return (
@@ -99,13 +152,6 @@ export const AppLauncherCard = ({
         .replace(/\b\w/g, (c: string) => c.toUpperCase()) ?? route.path
     );
   };
-
-  const resolveAppBasePath = () => app.base_path ?? app.basePath ?? null;
-
-  const defaultPath =
-    visibleRoutes[0]?.path ||
-    routes[0]?.path ||
-    resolveAppBasePath();
 
   const isModifiedEvent = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -119,20 +165,6 @@ export const AppLauncherCard = ({
     );
   };
 
-  const normalizePath = (value: string) => value.replace(/\/+$/, "") || "/";
-
-  const currentPath = normalizePath(location.pathname);
-
-  const isMainRouteActive =
-    !!defaultPath && currentPath === normalizePath(defaultPath);
-  const isAnyChildRouteActive = visibleRoutes.some(
-    (route) => normalizePath(route.path) === currentPath,
-  );
-
-  const isAppActive =
-    app.type !== "backend-only" &&
-    (isMainRouteActive || isAnyChildRouteActive);
-
   const isDragging = isReorderable && reorder!.draggingId === app.id;
   const isHolding = isReorderable && reorder!.holdingId === app.id;
   const isDropTarget =
@@ -141,13 +173,33 @@ export const AppLauncherCard = ({
     reorder!.draggingId !== app.id;
 
   const activateMain = () => {
+    if (isSidebar && hasMultipleRoutes) {
+      const path =
+        defaultPath ??
+        visibleRoutes[0]?.path ??
+        routes[0]?.path ??
+        null;
+
+      if (path) {
+        if (!isOpen) {
+          onToggleOpen?.(app.id);
+        }
+        markAppRouteNavigationIntent(app.id, path);
+        onGoToRoute(path);
+      }
+
+      return;
+    }
+
     if (!hasMultipleRoutes) {
       if (visibleRoutes[0]) {
+        markAppRouteNavigationIntent(app.id, visibleRoutes[0].path);
         onGoToRoute(visibleRoutes[0].path);
         return;
       }
 
       if (routes[0]) {
+        markAppRouteNavigationIntent(app.id, routes[0].path);
         onGoToRoute(routes[0].path);
         return;
       }
@@ -172,12 +224,34 @@ export const AppLauncherCard = ({
     event: React.MouseEvent<HTMLAnchorElement>,
     path: string,
   ) => {
+    event.stopPropagation();
+
     if (isModifiedEvent(event)) {
       return;
     }
 
     event.preventDefault();
+    markAppRouteNavigationIntent(app.id, path);
     onGoToRoute(path);
+  };
+
+  const handleRoutePointerDown = (
+    event: React.PointerEvent<HTMLAnchorElement>,
+  ) => {
+    event.stopPropagation();
+  };
+
+  const handleToggleRoutes = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (sidebarRouteContext && isOpen) {
+      return;
+    }
+
+    onToggleOpen?.(app.id);
   };
 
   const reorderPointerProps = isReorderable
@@ -204,6 +278,8 @@ export const AppLauncherCard = ({
       }
     : {};
 
+  const nameTier = resolveAppLauncherNameTier(app.name);
+
   const mainClassName = `launcher-app-main ${isAppActive ? "active" : ""}`;
   const mainContent = (
     <>
@@ -216,16 +292,27 @@ export const AppLauncherCard = ({
           className={["launcher-app-name", appearance.nameClass]
             .filter(Boolean)
             .join(" ")}
+          data-name-tier={nameTier}
+          lang="pt-BR"
+          title={app.name}
         >
           {app.name}
         </span>
 
         {hasMultipleRoutes &&
           (isSidebar ? (
-            <ChevronUp
-              size={16}
-              className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
-            />
+            <button
+              type="button"
+              className="launcher-chevron-toggle"
+              onClick={handleToggleRoutes}
+              aria-expanded={showSidebarExpanded}
+              aria-label={isOpen ? "Recolher rotas" : "Expandir rotas"}
+            >
+              <ChevronUp
+                size={16}
+                className={`launcher-chevron ${showSidebarExpanded ? "rotated" : ""}`}
+              />
+            </button>
           ) : (
             <ChevronDown
               size={16}
@@ -241,7 +328,8 @@ export const AppLauncherCard = ({
       data-app-id={isReorderable ? app.id : undefined}
       className={[
         "launcher-app-tile",
-        isOpen ? "expanded" : "",
+        isOpen || sidebarRouteContext ? "expanded" : "",
+        sidebarRouteContext ? "route-active" : "",
         isAppActive ? "active" : "",
         isHome ? "home-variant" : "",
         isSidebar ? "sidebar-variant" : "",
@@ -250,6 +338,7 @@ export const AppLauncherCard = ({
         isDragging ? "is-reorder-dragging" : "",
         isDropTarget ? "is-reorder-drop-target" : "",
         appearance.tileClass,
+        routeNavigation.tileRouteClass,
       ]
         .filter(Boolean)
         .join(" ")}
@@ -280,7 +369,7 @@ export const AppLauncherCard = ({
         className={mainClassName}
         draggable={isReorderable ? false : undefined}
         onClick={handleMainClick}
-        aria-expanded={hasMultipleRoutes ? isOpen : undefined}
+        aria-expanded={isSidebar && hasMultipleRoutes ? showSidebarExpanded : isOpen}
         aria-current={isAppActive ? "page" : undefined}
         {...reorderPointerProps}
       >
@@ -294,29 +383,36 @@ export const AppLauncherCard = ({
         {mainContent}
       </a>
 
-      {(isOpen || searchKind === "route") && visibleRoutes.length > 0 && (
+      {(showSidebarExpanded || (!isSidebar && isOpen) || searchKind === "route") &&
+        visibleRoutes.length > 0 && (
         <div
           className={[
             isSidebar ? "sidebar-inline-routes" : "launcher-inline-routes",
             !isSidebar ? appearance.routesClass : "",
+            !isSidebar ? routeNavigation.routesPanelClass : "",
           ]
             .filter(Boolean)
             .join(" ")}
         >
           {visibleRoutes.map((route) => {
             const Icon = resolveIcon(route.icon) || Package;
-            const isActive = normalizePath(route.path) === currentPath;
+            const routePath = normalizePath(route.path);
+            const isActive = routePath === currentPath;
+            const isNavigated = routeNavigation.activatedRoutePath === routePath;
 
             return (
               <a
                 key={route.path}
                 href={route.path}
-                className={
-                  isSidebar
-                    ? `sidebar-inline-route ${isActive ? "active" : ""}`
-                    : `launcher-inline-route ${isActive ? "active" : ""}`
-                }
+                className={[
+                  isSidebar ? "sidebar-inline-route" : "launcher-inline-route",
+                  isActive ? "active" : "",
+                  isNavigated ? "launcher-inline-route--navigated" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 onClick={(event) => handleRouteClick(event, route.path)}
+                onPointerDown={handleRoutePointerDown}
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon size={16} />

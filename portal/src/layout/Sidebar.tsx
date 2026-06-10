@@ -329,6 +329,39 @@ export const Sidebar = () => {
       .filter(([, group]) => !!group);
   }, [favorites, grouped, apps]);
 
+  useEffect(() => {
+    const normalize = (path: string) => path.replace(/\/+$/, "") || "/";
+    const currentPath = normalize(location.pathname);
+
+    setOpenApps((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [appId, group] of pinnedGroupedEntries) {
+        const visibleRoutes = group.routes.filter(
+          (route: { showInMenu?: boolean }) => route.showInMenu !== false,
+        );
+
+        if (visibleRoutes.length <= 1) {
+          continue;
+        }
+
+        const isActiveApp = visibleRoutes.some(
+          (route: { path: string }) => normalize(route.path) === currentPath,
+        );
+
+        if (isActiveApp) {
+          if (!next[appId]) {
+            changed = true;
+          }
+          next[appId] = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [location.pathname, pinnedGroupedEntries]);
+
   /* ===============================
      DADOS GERAIS
   =============================== */

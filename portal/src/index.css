@@ -435,6 +435,27 @@ body:has(.app-shell) {
   min-width: 0;
 }
 
+@keyframes appHostRouteEnter {
+  from {
+    opacity: 0.88;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-host--route-enter {
+  animation: appHostRouteEnter 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-host--route-enter {
+    animation: none !important;
+  }
+}
+
 .app-host-federated,
 .app-host-federated > div {
   height: 100%;
