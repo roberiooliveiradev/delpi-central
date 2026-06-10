@@ -41,6 +41,7 @@ import {
   type PortalTourSidebarPanel,
 } from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
+import { isLauncherAppContextActive } from "../components/appLauncherAppearance";
 
 function sidebarFooterItemClass(options?: { active?: boolean; open?: boolean }) {
   return [
@@ -341,26 +342,34 @@ export const Sidebar = () => {
         const visibleRoutes = group.routes.filter(
           (route: { showInMenu?: boolean }) => route.showInMenu !== false,
         );
+        const catalogApp = apps.find((app) => app.id === appId);
+        const isActiveApp = isLauncherAppContextActive(currentPath, {
+          routes: visibleRoutes,
+          basePath: catalogApp?.basePath ?? null,
+        });
 
         if (visibleRoutes.length <= 1) {
+          if (next[appId]) {
+            delete next[appId];
+            changed = true;
+          }
           continue;
         }
-
-        const isActiveApp = visibleRoutes.some(
-          (route: { path: string }) => normalize(route.path) === currentPath,
-        );
 
         if (isActiveApp) {
           if (!next[appId]) {
             changed = true;
           }
           next[appId] = true;
+        } else if (next[appId]) {
+          delete next[appId];
+          changed = true;
         }
       }
 
       return changed ? next : prev;
     });
-  }, [location.pathname, pinnedGroupedEntries]);
+  }, [location.pathname, pinnedGroupedEntries, apps]);
 
   /* ===============================
      DADOS GERAIS

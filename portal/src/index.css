@@ -437,8 +437,8 @@ body:has(.app-shell) {
 
 @keyframes appHostRouteEnter {
   from {
-    opacity: 0.88;
-    transform: translateY(6px);
+    opacity: 0.96;
+    transform: translateY(2px);
   }
   to {
     opacity: 1;
@@ -447,7 +447,7 @@ body:has(.app-shell) {
 }
 
 .app-host--route-enter {
-  animation: appHostRouteEnter 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: appHostRouteEnter 0.48s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -457,9 +457,15 @@ body:has(.app-shell) {
 }
 
 .app-host-federated,
-.app-host-federated > div {
+.app-host-federated__mount,
+.app-host-federated > div:not(.app-host-loading-screen):not(.app-host-federated-error) {
   height: 100%;
   min-height: 100%;
+}
+
+.app-host-federated__mount {
+  width: 100%;
+  min-width: 0;
 }
 
 /*

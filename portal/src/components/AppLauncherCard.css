@@ -29,13 +29,13 @@
   gap: 10px;
   min-height: 120px;
   height: auto;
-  transition: 0.2s ease;
+  transition: background 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
   overflow: visible;
 }
 
 .launcher-app-tile:hover {
-  background: color-mix(in srgb, var(--surface-2) 85%, transparent);
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--surface-2) 68%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--bg) 10%, transparent);
 }
 
 .launcher-app-tile.expanded {
@@ -247,7 +247,10 @@
 /* CHEVRON */
 
 .launcher-chevron {
-  transition: 0.2s ease;
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease,
+    color 0.28s ease;
   opacity: 0.6;
 }
 
@@ -259,7 +262,7 @@
 
 .launcher-inline-routes {
   position: relative;
-  margin-top: 8px;
+  margin-top: 0;
   padding: 8px;
   background: color-mix(in srgb, var(--surface) 95%, transparent);
   border: 1px solid var(--border);
@@ -269,7 +272,6 @@
   flex-direction: column;
   gap: 6px;
   z-index: 20;
-  animation: dropdownFade 0.18s ease;
 }
 
 .launcher-inline-routes:hover{
@@ -291,8 +293,8 @@
 }
 
 .launcher-inline-route:hover {
-  background: rgba(0, 153, 220, 0.08);
-  color: var(--primary);
+  background: rgba(0, 153, 220, 0.06);
+  color: color-mix(in srgb, var(--primary) 82%, var(--text-muted));
 }
 
 
@@ -304,22 +306,63 @@
 /* CARD ANIMATION */
 
 @keyframes dropdownFade {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Expand / collapse suave das rotas (sidebar + launcher) */
+.launcher-inline-routes-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.launcher-inline-routes-panel.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+.launcher-inline-routes-panel__inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.launcher-inline-routes-panel:not(.is-expanded) .sidebar-inline-route,
+.launcher-inline-routes-panel:not(.is-expanded) .launcher-inline-route {
+  pointer-events: none;
+}
+
+.launcher-inline-routes-panel--launcher {
+  margin-top: 8px;
+}
+
+.launcher-inline-routes-panel--launcher.is-expanded .launcher-inline-routes {
+  animation: dropdownFade 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.launcher-inline-routes-panel--sidebar.is-expanded .sidebar-inline-routes {
+  animation: sidebarRoutesReveal 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes sidebarRoutesReveal {
+  from {
+    opacity: 0.72;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 
 /* SIDEBAR VARIANT */
-.sidebar-variant{
-    transition: all 0.3s ease;
-}
-
 .launcher-app-tile.sidebar-variant {
   border: none;
   background: transparent;
   padding: 8px 10px;
   min-height: auto;
   align-items: stretch;
+  transition: background 0.32s ease;
 }
 
 .launcher-app-tile.sidebar-variant.reorderable {
@@ -327,7 +370,7 @@
   border-radius: 10px;
   padding: 0;
   gap: 0;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.32s ease, box-shadow 0.32s ease;
 }
 
 .launcher-app-tile.sidebar-variant.reorderable .launcher-app-main {
@@ -396,14 +439,26 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   background: rgba(0, 153, 220, 0.1);
 }
 
-.launcher-app-tile.sidebar-variant.reorderable .sidebar-inline-routes {
+.launcher-app-tile.sidebar-variant.reorderable
+  .launcher-inline-routes-panel--sidebar
+  .sidebar-inline-routes {
   padding: 0 8px 8px;
   position: relative;
   z-index: 2;
 }
 
-.launcher-app-tile.sidebar-variant.expanded .sidebar-inline-routes,
-.launcher-app-tile.sidebar-variant.route-active .sidebar-inline-routes {
+.launcher-app-tile.sidebar-variant.reorderable
+  .launcher-inline-routes-panel--sidebar:not(.is-expanded)
+  .sidebar-inline-routes {
+  padding-bottom: 0;
+}
+
+.launcher-app-tile.sidebar-variant.expanded
+  .launcher-inline-routes-panel.is-expanded
+  .sidebar-inline-routes,
+.launcher-app-tile.sidebar-variant.route-active
+  .launcher-inline-routes-panel.is-expanded
+  .sidebar-inline-routes {
   margin-top: 2px;
   padding-top: 6px;
 }
@@ -449,40 +504,54 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 .launcher-app-tile.sidebar-variant:hover:not(.expanded):not(.route-active) {
   transform: none;
   box-shadow: none;
-  background: rgba(0, 153, 220, 0.08);
+  background: rgba(0, 153, 220, 0.05);
 }
 
-.launcher-app-tile.sidebar-variant.expanded,
+/* Container agrupado: fundo suave enquanto o app está no contexto da rota */
 .launcher-app-tile.sidebar-variant.route-active {
-  background: color-mix(in srgb, var(--primary) 7%, var(--surface-2));
+  background: rgba(0, 153, 220, 0.08);
   border: none;
   border-radius: 10px;
   box-shadow: none;
 }
 
-.launcher-app-tile.sidebar-variant.reorderable.expanded,
+/* Animação de rota no launcher sobrescrevia o fundo com transparent no fill-mode both */
+.launcher-app-tile.sidebar-variant.route-active.launcher-app-tile--routed {
+  animation: none;
+}
+
 .launcher-app-tile.sidebar-variant.reorderable.route-active {
-  background: color-mix(in srgb, var(--primary) 7%, var(--surface-2));
+  background: rgba(0, 153, 220, 0.08);
   border: none;
   box-shadow: none;
 }
 
-.launcher-app-tile.sidebar-variant.expanded:hover,
 .launcher-app-tile.sidebar-variant.route-active:hover {
-  background: color-mix(in srgb, var(--primary) 9%, var(--surface-2));
+  background: rgba(0, 153, 220, 0.09);
+}
+
+/* Expandido manualmente, sem rota ativa no app */
+.launcher-app-tile.sidebar-variant.expanded:not(.route-active) {
+  background: rgba(0, 153, 220, 0.06);
+  border: none;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.launcher-app-tile.sidebar-variant.reorderable.expanded:not(.route-active) {
+  background: rgba(0, 153, 220, 0.06);
+  border: none;
+  box-shadow: none;
+}
+
+.launcher-app-tile.sidebar-variant.expanded:not(.route-active):hover {
+  background: rgba(0, 153, 220, 0.07);
 }
 
 .launcher-app-tile.sidebar-variant.active:not(.expanded):not(.route-active) {
-  background: rgba(0, 153, 220, 0.12);
+  background: rgba(0, 153, 220, 0.1);
   box-shadow: none;
   border-color: transparent;
-}
-
-.launcher-app-tile.sidebar-variant.expanded.active,
-.launcher-app-tile.sidebar-variant.route-active.active {
-  background: color-mix(in srgb, var(--primary) 11%, var(--surface-2));
-  border: none;
-  box-shadow: none;
 }
 
 .launcher-app-tile.sidebar-variant .launcher-app-main.active .launcher-app-icon {
@@ -538,7 +607,8 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .sidebar-inline-route {
@@ -551,25 +621,22 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   border-radius: 8px;
   cursor: pointer;
   color: var(--text-muted);
-  transition: 0.2s;
+  transition: background 0.28s ease, color 0.28s ease;
 }
 
 .sidebar-inline-route:hover {
-  background: rgba(0, 153, 220, 0.08);
-  color: var(--primary);
+  background: rgba(0, 153, 220, 0.06);
+  color: color-mix(in srgb, var(--primary) 82%, var(--text-muted));
 }
 
-
-.siderbar-inline-route.active {
-  background: rgba(0, 153, 220, 0.15);
-  color: var(--primary);
-  font-weight: 600;
+/* Rota ativa: destaque maior que o container agrupado */
+.launcher-app-tile.sidebar-variant.route-active .sidebar-inline-route:not(.active) {
+  color: var(--text-muted);
 }
 
-.sidebar-inline-route.active {
-  color: var(--primary);
-  background: rgba(0, 153, 220, 0.12);
-  padding-left: 5px;
+.launcher-app-tile.sidebar-variant.route-active .sidebar-inline-route:not(.active):hover {
+  background: rgba(0, 153, 220, 0.09);
+  color: color-mix(in srgb, var(--primary) 82%, var(--text-muted));
 }
 
 .launcher-badge {
@@ -624,13 +691,20 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 .launcher-inline-route:visited,
 .launcher-inline-route:hover,
 .launcher-inline-route:active,
-.sidebar-inline-route,
-.sidebar-inline-route:link,
-.sidebar-inline-route:visited,
 .sidebar-inline-route:hover,
 .sidebar-inline-route:active {
   text-decoration: none;
   color: inherit;
+}
+
+.sidebar-inline-route.active,
+.sidebar-inline-route.active:link,
+.sidebar-inline-route.active:visited,
+.sidebar-inline-route.active:hover,
+.sidebar-inline-route.active:focus-visible {
+  color: var(--primary);
+  background: rgba(0, 153, 220, 0.16);
+  font-weight: 500;
 }
 
 /* MAIN LINK */
@@ -825,8 +899,8 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 
 @keyframes launcherRoutesExpand {
   from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    opacity: 0.72;
+    transform: translateY(-4px) scale(0.99);
   }
   to {
     opacity: 1;
@@ -848,16 +922,14 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 }
 
 .launcher-inline-routes--expand {
-  animation: launcherRoutesExpand 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: launcherRoutesExpand 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .launcher-inline-route.active,
 .sidebar-inline-route.active {
   transition:
     background 0.22s ease,
-    color 0.22s ease,
-    transform 0.22s ease,
-    padding 0.22s ease;
+    color 0.22s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -870,7 +942,11 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   .launcher-pin--unfavorited,
   .launcher-app-tile--routed,
   .launcher-inline-route--navigated,
-  .launcher-inline-routes--expand {
+  .launcher-inline-routes--expand,
+  .launcher-inline-routes-panel,
+  .launcher-inline-routes-panel--launcher.is-expanded .launcher-inline-routes,
+  .launcher-inline-routes-panel--sidebar.is-expanded .sidebar-inline-routes {
     animation: none !important;
+    transition: none !important;
   }
 }

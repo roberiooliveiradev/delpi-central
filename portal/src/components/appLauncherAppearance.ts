@@ -38,19 +38,79 @@ export function normalizeLauncherPath(value: string): string {
   return value.replace(/\/+$/, "") || "/";
 }
 
+export function isLauncherPathActive(
+  currentPath: string,
+  routePath: string,
+): boolean {
+  const current = normalizeLauncherPath(currentPath);
+  const route = normalizeLauncherPath(routePath);
+
+  if (current === route) {
+    return true;
+  }
+
+  return route !== "/" && current.startsWith(`${route}/`);
+}
+
+export function isLauncherAppContextActive(
+  currentPath: string,
+  options: {
+    routes: ReadonlyArray<AppLauncherRouteLike>;
+    basePath?: string | null;
+  },
+): boolean {
+  if (
+    options.routes.some((route) => isLauncherPathActive(currentPath, route.path))
+  ) {
+    return true;
+  }
+
+  const base = options.basePath ? normalizeLauncherPath(options.basePath) : null;
+
+  if (!base || base === "/") {
+    return false;
+  }
+
+  const current = normalizeLauncherPath(currentPath);
+
+  return current === base || current.startsWith(`${base}/`);
+}
+
 export function resolveActiveRouteForApp(
   routes: ReadonlyArray<AppLauncherRouteLike>,
   currentPath: string,
 ): string | null {
   const normalized = normalizeLauncherPath(currentPath);
+  let bestMatch: string | null = null;
 
   for (const route of routes) {
-    if (normalizeLauncherPath(route.path) === normalized) {
-      return normalized;
+    const routePath = normalizeLauncherPath(route.path);
+
+    if (!isLauncherPathActive(normalized, routePath)) {
+      continue;
+    }
+
+    if (!bestMatch || routePath.length > bestMatch.length) {
+      bestMatch = routePath;
     }
   }
 
-  return null;
+  return bestMatch;
+}
+
+/** Destaque visual de rota no menu — apenas a correspondência mais específica. */
+export function isLauncherRouteSelected(
+  currentPath: string,
+  routePath: string,
+  routes: ReadonlyArray<AppLauncherRouteLike>,
+): boolean {
+  const selected = resolveActiveRouteForApp(routes, currentPath);
+
+  if (!selected) {
+    return false;
+  }
+
+  return selected === normalizeLauncherPath(routePath);
 }
 
 export function markAppRouteNavigationIntent(appId: string, path: string): void {

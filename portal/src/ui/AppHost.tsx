@@ -19,7 +19,10 @@ import {
   portalPathMatchesAppBase,
 } from "../utils/embeddedAppNotification";
 import { buildThemeMessage } from "../utils/theme";
+import { resolveIcon } from "../utils/iconResolver";
 import { useAppHostRouteTransition } from "./appHostRouteTransition";
+import { AppHostLoadingScreen } from "./AppHostLoadingScreen";
+import { useAppHostLoadingOverlay } from "./useAppHostLoadingOverlay";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -64,6 +67,7 @@ export const AppHost = () => {
 
   const [federatedError, setFederatedError] = useState<string | null>(null);
   const [iframeReloadKey, setIframeReloadKey] = useState(0);
+  const [hostContentReady, setHostContentReady] = useState(false);
 
   const app = useMemo(() => {
     return (
@@ -90,6 +94,23 @@ export const AppHost = () => {
     return undefined;
   }, [app, route]);
 
+  const hostLoadResetKey = useMemo(() => {
+    if (!app) return "none";
+    return `${app.id}:${resolvedEntry ?? ""}:${iframeReloadKey}`;
+  }, [app, resolvedEntry, iframeReloadKey]);
+
+  const hostLoading = useAppHostLoadingOverlay({
+    resetKey: hostLoadResetKey,
+    ready: hostContentReady,
+  });
+
+  const AppIcon = resolveIcon(app?.icon) || resolveIcon(route?.icon);
+  const loadingIcon = AppIcon ? <AppIcon size={30} /> : undefined;
+
+  useEffect(() => {
+    setHostContentReady(false);
+  }, [hostLoadResetKey]);
+
   const iframeSrc = useMemo(() => {
     if (!resolvedEntry) return undefined;
 
@@ -100,6 +121,11 @@ export const AppHost = () => {
   const isGoogleApp = useMemo(() => {
     return app?.renderMode === "embedded" && isGoogleHostedApp(resolvedEntry);
   }, [app?.renderMode, resolvedEntry]);
+
+  function handleIframeLoad() {
+    sendAuthToIframe();
+    setHostContentReady(true);
+  }
 
   function reloadIframe() {
     setIframeReloadKey((current) => current + 1);
@@ -422,7 +448,14 @@ export const AppHost = () => {
 
         mod.mount(federatedHostRef.current, props);
         mountedModuleRef.current = mod;
+
+        if (isActive) {
+          setHostContentReady(true);
+        }
       } catch (e: any) {
+        if (isActive) {
+          setHostContentReady(true);
+        }
         setFederatedError(e?.message ?? String(e));
       }
     }
@@ -527,7 +560,13 @@ export const AppHost = () => {
   if (!app) return <div>App não encontrado.</div>;
 
   if (app.renderMode === "external") {
-    return <div>Abrindo aplicação...</div>;
+    return (
+      <AppHostLoadingScreen
+        appName={app.name}
+        routeLabel="Abrindo em nova aba…"
+        icon={loadingIcon}
+      />
+    );
   }
 
   if (app.renderMode === "embedded") {
@@ -535,10 +574,21 @@ export const AppHost = () => {
 
     return (
       <div
-        className={["app-host app-host-embedded", routeTransitionClass]
+        className={[
+          "app-host app-host-embedded app-host--loading-shell",
+          routeTransitionClass,
+        ]
           .filter(Boolean)
           .join(" ")}
       >
+        {hostLoading.visible ? (
+          <AppHostLoadingScreen
+            appName={app.name}
+            routeLabel={route?.label}
+            icon={loadingIcon}
+            exiting={hostLoading.exiting}
+          />
+        ) : null}
         {isGoogleApp && googleLogin.barVisible ? (
           <div className="app-host-google-bar">
             <div className="app-host-google-info">
@@ -622,10 +672,15 @@ export const AppHost = () => {
           ref={iframeRef}
           title={route?.label || app.name}
           src={iframeSrc}
-          className="app-host-iframe"
+          className={[
+            "app-host-iframe",
+            hostContentReady ? "is-ready" : "is-loading",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           referrerPolicy="strict-origin-when-cross-origin"
           allow="clipboard-read; clipboard-write; fullscreen"
-          onLoad={sendAuthToIframe}
+          onLoad={handleIframeLoad}
         />
       </div>
     );
@@ -634,10 +689,22 @@ export const AppHost = () => {
   if (app.renderMode === "federated") {
     return (
       <div
-        className={["app-host app-host-federated", routeTransitionClass]
+        className={[
+          "app-host app-host-federated app-host--loading-shell",
+          routeTransitionClass,
+        ]
           .filter(Boolean)
           .join(" ")}
       >
+        {hostLoading.visible ? (
+          <AppHostLoadingScreen
+            appName={app.name}
+            routeLabel={route?.label}
+            icon={loadingIcon}
+            exiting={hostLoading.exiting}
+          />
+        ) : null}
+
         {federatedError ? (
           <div className="app-host-federated-error">
             <b>Falha ao carregar microfrontend</b>
@@ -645,7 +712,15 @@ export const AppHost = () => {
           </div>
         ) : null}
 
-        <div ref={federatedHostRef} />
+        <div
+          ref={federatedHostRef}
+          className={[
+            "app-host-federated__mount",
+            hostContentReady ? "is-ready" : "is-loading",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        />
       </div>
     );
   }

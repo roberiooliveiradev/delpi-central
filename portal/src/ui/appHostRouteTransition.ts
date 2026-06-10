@@ -19,7 +19,7 @@ export function useAppHostRouteTransition(pathname: string): string {
 
     const timer = window.setTimeout(() => {
       setClassName("");
-    }, 420);
+    }, 500);
 
     return () => window.clearTimeout(timer);
   }, [pathname]);
