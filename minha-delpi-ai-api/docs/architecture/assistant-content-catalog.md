@@ -109,6 +109,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Intent de análise de desenho (gatilhos, vocabulário com anexo, PDF obrigatório, direct answers) → `drawing_query_intent.json`
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`
+- Detalhe de linha da última tabela (drill-down MFE) → `data_interpretation.rowDetail` + `analysis_intent_vocabulary.rowDetailRequestTerms` → `ChatPresentationRowDetailAnswerService`
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
 - KPI por fragmento de path → `presenter_content.kpiPathMatchers` + `kpiTitles`
 - Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`

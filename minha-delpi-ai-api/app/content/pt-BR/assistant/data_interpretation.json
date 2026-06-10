@@ -15,5 +15,12 @@
   ],
   "resumeIntro": "Resumo do que já consultamos sobre **{title}**:",
   "explainIntro": "Interpretação dos dados de **{title}**:",
-  "unclear": "Não entendi qual aspecto dos dados anteriores você quer que eu explique. Pode dizer «resuma», «explique as diferenças» ou citar a coluna/tabela?"
+  "unclear": "Não entendi qual aspecto dos dados anteriores você quer que eu explique. Pode dizer «resuma», «explique as diferenças» ou citar a coluna/tabela?",
+  "rowDetail": {
+    "heading": "**Detalhe do registro — {title}**",
+    "fieldLine": "- **{label}:** {value}",
+    "positionFooter": "_Registro {index} de {total} na consulta «{title}»._",
+    "notFound": "Não encontrei esse registro na última tabela desta conversa. Confira se a linha ainda corresponde ao resultado exibido.",
+    "missingFields": "Para detalhar um registro, selecione a linha na tabela ou informe os campos principais (código, descrição, quantidade)."
+  }
 }

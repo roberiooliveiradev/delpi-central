@@ -18,6 +18,7 @@ from app.application.services.chat_meta_direct_answer_service import (
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 from app.infrastructure.config.settings import Settings
 
@@ -264,17 +265,27 @@ class ChatTurnPreparationPostToolResolutionService:
                 from app.application.services.chat_text_task_composer_service import (
                     ChatTextTaskComposerService,
                 )
-
-                draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
-                    message=message,
-                    previous_messages=history_source,
+                from app.domain.services.chat_presentation_row_detail_answer_service import (
+                    ChatPresentationRowDetailAnswerService,
                 )
 
-                if draft_meta:
-                    tool_context["operationalEmailDraft"] = draft_meta
+                if (
+                    not ChatPresentationRowDetailAnswerService.looks_like_request(message)
+                    and ChatAnalysisIntentService.is_email_from_operational_data_request(
+                        message,
+                        history_source,
+                    )
+                ):
+                    draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
+                        message=message,
+                        previous_messages=history_source,
+                    )
 
-                    if "email_operational" not in pipeline_stages:
-                        pipeline_stages.append("email_operational")
+                    if draft_meta:
+                        tool_context["operationalEmailDraft"] = draft_meta
+
+                        if "email_operational" not in pipeline_stages:
+                            pipeline_stages.append("email_operational")
 
         from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 

@@ -147,5 +147,15 @@
     "email com dados",
     "redija um email",
     "redija um e-mail"
+  ],
+  "rowDetailRequestTerms": [
+    "detalhe este registro do ultimo resultado",
+    "detalhe este registro do último resultado",
+    "detalhe esse registro do ultimo resultado",
+    "detalhe esse registro do último resultado",
+    "detalhe o registro do ultimo resultado",
+    "detalhe o registro do último resultado",
+    "detalhe deste registro do ultimo resultado",
+    "detalhe deste registro do último resultado"
   ]
 }

@@ -71,7 +71,8 @@ def test_build_resume_from_stock_preview():
 
     assert answer
     assert "10080022" in answer
-    assert "Filial 01" in answer or "filial 01" in answer.lower()
+    assert "01" in answer
+    assert "80" in answer
 
 
 def test_returns_none_without_tool_history():

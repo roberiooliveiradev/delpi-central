@@ -41,26 +41,40 @@ class ChatDataInterpretationAnswerService:
         ):
             return None
 
-        from app.application.services.chat_text_task_composer_service import (
-            ChatTextTaskComposerService,
+        from app.domain.services.chat_presentation_row_detail_answer_service import (
+            ChatPresentationRowDetailAnswerService,
         )
 
-        draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
-            message=message,
-            previous_messages=previous_messages,
-        )
-
-        if draft_meta:
-            from app.application.services.chat_email_answer_guard_service import (
-                ChatEmailAnswerGuardService,
+        if ChatPresentationRowDetailAnswerService.looks_like_request(message):
+            return ChatPresentationRowDetailAnswerService.build_answer(
+                message,
+                previous_messages,
             )
 
-            text, _guard = ChatEmailAnswerGuardService.apply(
-                str(draft_meta.get("text") or ""),
+        if ChatAnalysisIntentService.is_email_from_operational_data_request(
+            message,
+            previous_messages,
+        ):
+            from app.application.services.chat_text_task_composer_service import (
+                ChatTextTaskComposerService,
+            )
+
+            draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
                 message=message,
-                workspace_context={"emailWritingMode": True, "operationalEmailDraft": draft_meta},
+                previous_messages=previous_messages,
             )
-            return text or None
+
+            if draft_meta:
+                from app.application.services.chat_email_answer_guard_service import (
+                    ChatEmailAnswerGuardService,
+                )
+
+                text, _guard = ChatEmailAnswerGuardService.apply(
+                    str(draft_meta.get("text") or ""),
+                    message=message,
+                    workspace_context={"emailWritingMode": True, "operationalEmailDraft": draft_meta},
+                )
+                return text or None
 
         summaries = cls._collect_summaries(previous_messages)
 
