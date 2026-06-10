@@ -36,3 +36,51 @@ def test_metric_card_infers_quantity_for_suffix_units():
     )
 
     assert card["dataType"] == "quantity"
+
+
+def test_normalize_metadata_adds_data_type_to_dashboard_kpi_panels():
+    metadata = {
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "panels": [
+                {
+                    "id": "summary",
+                    "presentation": {
+                        "type": "kpi",
+                        "title": "Resumo",
+                        "cards": [
+                            {
+                                "label": "Componentes na estrutura",
+                                "value": 1,
+                                "key": "total_components",
+                                "color": "#6366f1",
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    }
+
+    ChatPresentationKpiAssemblyService.normalize_metadata(metadata)
+
+    card = metadata["dashboardPresentation"]["panels"][0]["presentation"]["cards"][0]
+
+    assert card["dataType"] == "quantity"
+
+
+def test_build_normalizes_cards_without_data_type():
+    presentation = ChatPresentationKpiAssemblyService.build(
+        title="Indicadores",
+        cards=[
+            {
+                "label": "Total de componentes",
+                "value": 3,
+                "key": "total_components",
+            }
+        ],
+        min_cards=1,
+    )
+
+    assert presentation is not None
+    assert presentation["cards"][0]["dataType"] == "quantity"

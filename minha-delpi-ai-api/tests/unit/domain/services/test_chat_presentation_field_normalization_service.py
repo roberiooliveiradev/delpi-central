@@ -4,8 +4,6 @@ from app.application.use_cases.execute_external_action_use_case import (
 from app.domain.services.chat_presentation_field_normalization_service import (
     ChatPresentationFieldNormalizationService,
 )
-
-
 def test_normalize_chart_adds_field_labels_and_formats():
     presentation = {
         "type": "chart",
@@ -100,3 +98,69 @@ def test_presentation_metadata_includes_normalized_chart_labels():
     assert chart is not None
     assert chart["type"] == "chart"
     assert chart["config"]["fieldLabels"]["ordered_quantity"] == "Qtd. pedida"
+
+
+def test_normalize_kpi_presentation_adds_data_type_to_cards():
+    presentation = {
+        "type": "kpi",
+        "title": "Status fabril",
+        "cards": [
+            {
+                "label": "Componentes na estrutura",
+                "value": 1,
+                "key": "total_components",
+                "color": "#6366f1",
+            }
+        ],
+    }
+
+    normalized = ChatPresentationFieldNormalizationService.normalize_presentation(
+        presentation,
+        path="/products/90263749/factory-status",
+    )
+
+    assert normalized["cards"][0]["dataType"] == "quantity"
+
+
+def test_normalize_metadata_normalizes_kpi_and_dashboard_panels():
+    metadata = {
+        "kpiPresentation": {
+            "type": "kpi",
+            "title": "KPI",
+            "cards": [
+                {
+                    "label": "Ordens de produção",
+                    "value": 32,
+                    "key": "production_orders",
+                    "unit": "OP",
+                }
+            ],
+        },
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "panels": [
+                {
+                    "id": "kpi",
+                    "presentation": {
+                        "type": "kpi",
+                        "cards": [
+                            {
+                                "label": "Menor preço de venda",
+                                "value": 992.54,
+                                "unit": "R$",
+                                "key": "primary_sale_price",
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    }
+
+    ChatPresentationFieldNormalizationService.normalize_metadata(metadata)
+
+    assert metadata["kpiPresentation"]["cards"][0]["dataType"] == "quantity"
+    assert (
+        metadata["dashboardPresentation"]["panels"][0]["presentation"]["cards"][0]["dataType"]
+        == "currency"
+    )

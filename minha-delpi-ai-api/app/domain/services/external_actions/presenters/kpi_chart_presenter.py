@@ -171,13 +171,18 @@ class ExternalActionKpiChartPresenter:
             if not field or not label:
                 continue
 
+            from app.domain.services.chat_presentation_kpi_assembly_service import (
+                ChatPresentationKpiAssemblyService,
+            )
+
             cards.append(
-                {
-                    "label": label,
-                    "value": data.get(field),
-                    "unit": str(item.get("unit") or ""),
-                    "color": str(item.get("color") or "#0ea5e9"),
-                }
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=label,
+                    value=data.get(field),
+                    unit=str(item.get("unit") or ""),
+                    color=str(item.get("color") or "#0ea5e9"),
+                    key=field,
+                )
             )
 
         return cards
@@ -185,6 +190,9 @@ class ExternalActionKpiChartPresenter:
     def build_dashboard_presentation(self, data: Any, *, path: str = "") -> dict | None:
         from app.domain.services.chat_dashboard_presentation_service import (
             ChatDashboardPresentationService,
+        )
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
         )
 
         root = self._host._unwrap_data(data)
@@ -197,12 +205,12 @@ class ExternalActionKpiChartPresenter:
             path=path,
             build_kpi=lambda summary, route: (
                 (
-                    {
-                        "type": "kpi",
-                        "title": self.kpi_title(route)
+                    ChatPresentationKpiAssemblyService.build(
+                        title=self.kpi_title(route)
                         or self._host._presenter_text("charts", "dashboardKpiFallbackTitle"),
-                        "cards": cards,
-                    }
+                        cards=cards,
+                        min_cards=1,
+                    )
                     if (cards := self.build_generic_kpi_cards(summary, route))
                     else None
                 )
@@ -404,43 +412,50 @@ class ExternalActionKpiChartPresenter:
                 except (ValueError, TypeError):
                     pass
 
+            from app.domain.services.chat_presentation_kpi_assembly_service import (
+                ChatPresentationKpiAssemblyService,
+            )
+
             cards.append(
-                {
-                    "label": self._host._presenter_text("kpiCards", "current"),
-                    "value": value,
-                    "unit": unit,
-                    "trend": trend,
-                    "delta": delta,
-                    "color": "#0ea5e9",
-                }
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._host._presenter_text("kpiCards", "current"),
+                    value=value,
+                    unit=str(unit or ""),
+                    trend=trend,
+                    delta=delta,
+                    color="#0ea5e9",
+                    key="current",
+                )
             )
 
             if target is not None:
                 cards.append(
-                    {
-                        "label": self._host._presenter_text("kpiCards", "target"),
-                        "value": target,
-                        "unit": unit,
-                        "color": "#10b981",
-                    }
+                    ChatPresentationKpiAssemblyService.metric_card(
+                        label=self._host._presenter_text("kpiCards", "target"),
+                        value=target,
+                        unit=str(unit or ""),
+                        color="#10b981",
+                        key="target",
+                    )
                 )
 
             if previous is not None:
                 cards.append(
-                    {
-                        "label": self._host._presenter_text("kpiCards", "previous"),
-                        "value": previous,
-                        "unit": unit,
-                        "color": "#94a3b8",
-                    }
+                    ChatPresentationKpiAssemblyService.metric_card(
+                        label=self._host._presenter_text("kpiCards", "previous"),
+                        value=previous,
+                        unit=str(unit or ""),
+                        color="#94a3b8",
+                        key="previous",
+                    )
                 )
 
             if cards:
-                return {
-                    "type": "kpi",
-                    "title": self.kpi_title(path),
-                    "cards": cards,
-                }
+                return ChatPresentationKpiAssemblyService.build(
+                    title=self.kpi_title(path),
+                    cards=cards,
+                    min_cards=1,
+                )
 
         cards = self.build_generic_kpi_cards(root, path)
 
@@ -451,11 +466,11 @@ class ExternalActionKpiChartPresenter:
                 cards = self.build_generic_kpi_cards(summary, path)
 
         if cards:
-            return {
-                "type": "kpi",
-                "title": self.kpi_title(path),
-                "cards": cards,
-            }
+            return ChatPresentationKpiAssemblyService.build(
+                title=self.kpi_title(path),
+                cards=cards,
+                min_cards=1,
+            )
 
         return None
 
@@ -491,21 +506,26 @@ class ExternalActionKpiChartPresenter:
                 str(key),
                 schema_formats=self._host._active_schema_formats,
             )
+            from app.domain.services.chat_presentation_kpi_assembly_service import (
+                ChatPresentationKpiAssemblyService,
+            )
+
             lowered_key = str(key).lower()
+            unit = (
+                "%"
+                if field_format == "percent"
+                or any(token in lowered_key for token in percent_keys)
+                else ""
+            )
             cards.append(
-                {
-                    "key": str(key),
-                    "label": self._host._humanize_key(key),
-                    "value": val,
-                    "dataType": field_format,
-                    "unit": (
-                        "%"
-                        if field_format == "percent"
-                        or any(token in lowered_key for token in percent_keys)
-                        else ""
-                    ),
-                    "color": str(palette[idx % len(palette)]),
-                }
+                ChatPresentationKpiAssemblyService.metric_card(
+                    key=str(key),
+                    label=self._host._humanize_key(key),
+                    value=val,
+                    data_type=str(field_format or "") or None,
+                    unit=unit,
+                    color=str(palette[idx % len(palette)]),
+                )
             )
             idx += 1
 

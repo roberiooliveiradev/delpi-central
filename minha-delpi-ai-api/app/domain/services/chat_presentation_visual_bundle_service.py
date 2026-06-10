@@ -239,6 +239,15 @@ class ChatPresentationVisualBundleService:
                 profile="purchase_list",
             )
 
+        cls._ensure_generic_kpi_bundle(
+            metadata,
+            root=root,
+            path=path,
+            presenter=presenter,
+            primary_type=primary_type,
+            view_order=view_order,
+        )
+
         cls._sync_available_formats(metadata, view_order)
 
     @classmethod
@@ -712,6 +721,36 @@ class ChatPresentationVisualBundleService:
             return str(presentation.get("type") or "").strip().lower()
 
         return ""
+
+    @classmethod
+    def _ensure_generic_kpi_bundle(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        primary_type: str,
+        view_order: list[str],
+    ) -> None:
+        if cls._slot_value(metadata, "kpi"):
+            return
+
+        if "kpi" not in view_order:
+            return
+
+        kpi = presenter._build_kpi_chart(root, path)
+
+        if isinstance(kpi, dict) and str(kpi.get("type") or "").strip().lower() == "kpi":
+            cls._attach_auxiliary(metadata, "kpi", kpi, primary_type=primary_type)
+
+        if cls._slot_value(metadata, "dashboard") or "dashboard" not in view_order:
+            return
+
+        dashboard = presenter.build_dashboard_presentation(root, path=path)
+
+        if isinstance(dashboard, dict) and dashboard.get("type") == "dashboard":
+            cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
 
     @classmethod
     def _sync_available_formats(cls, metadata: dict[str, Any], view_order: list[str]) -> None:

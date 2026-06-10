@@ -60,6 +60,12 @@ class ChatPresentationFieldNormalizationService:
                 if isinstance(presentation, dict)
             ]
 
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
+        ChatPresentationKpiAssemblyService.normalize_metadata(metadata)
+
     @classmethod
     def normalize_presentation(
         cls,
@@ -96,6 +102,13 @@ class ChatPresentationFieldNormalizationService:
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
             )
+
+        if presentation_type == "kpi":
+            from app.domain.services.chat_presentation_kpi_assembly_service import (
+                ChatPresentationKpiAssemblyService,
+            )
+
+            return ChatPresentationKpiAssemblyService.normalize_presentation(presentation) or presentation
 
         return presentation
 
