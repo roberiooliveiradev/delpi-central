@@ -165,6 +165,11 @@
   color: var(--pva-danger);
 }
 
+.pva-alert--warning {
+  border-color: color-mix(in srgb, var(--pva-warning) 35%, var(--pva-border));
+  color: var(--pva-warning);
+}
+
 .pva-kpi-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -596,42 +601,39 @@
 .pva-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
   font-size: var(--pva-table-badge-font-size, 12px);
   font-weight: 600;
   white-space: nowrap;
+  background: transparent;
 }
 
 .pva-badge-group--status .pva-badge {
   white-space: normal;
-  text-align: center;
+  text-align: left;
   line-height: 1.35;
   max-width: min(100%, 240px);
 }
 
 .pva-badge--neutral {
-  background: color-mix(in srgb, var(--pva-muted) 14%, transparent);
   color: var(--pva-muted);
 }
 
 .pva-badge--info {
-  background: color-mix(in srgb, var(--pva-accent) 14%, transparent);
-  color: var(--pva-accent);
+  color: color-mix(in srgb, var(--pva-accent) 88%, var(--pva-text));
 }
 
 .pva-badge--success {
-  background: color-mix(in srgb, var(--pva-success) 14%, transparent);
   color: var(--pva-success);
 }
 
 .pva-badge--warning {
-  background: color-mix(in srgb, var(--pva-warning) 14%, transparent);
   color: var(--pva-warning);
 }
 
 .pva-badge--danger {
-  background: color-mix(in srgb, var(--pva-danger) 14%, transparent);
   color: var(--pva-danger);
 }
 
@@ -756,9 +758,155 @@
   }
 }
 
+.pva-link-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--pva-accent);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.pva-link-btn:hover {
+  color: color-mix(in srgb, var(--pva-accent) 82%, var(--pva-text));
+}
+
+.pva-link-btn:focus-visible {
+  outline: 2px solid var(--pva-accent);
+  outline-offset: 2px;
+}
+
+.pva-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.pva-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  padding: 0;
+}
+
+.pva-modal__panel {
+  position: relative;
+  width: min(920px, calc(100vw - 32px));
+  max-height: min(92vh, 880px);
+  background: var(--pva-surface);
+  border-radius: var(--pva-radius);
+  border: 1px solid var(--pva-border);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pva-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--pva-border);
+}
+
+.pva-modal__header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pva-modal__header p {
+  margin: 4px 0 0;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+}
+
+.pva-modal__close {
+  min-height: 36px;
+}
+
+.pva-modal__body {
+  padding: 16px 20px 20px;
+  overflow: auto;
+}
+
+.pva-op-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pva-op-modal__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.pva-op-modal__metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pva-op-modal__metrics dt {
+  margin: 0;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+}
+
+.pva-op-modal__metrics dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pva-op-modal__note {
+  margin: 0;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+  line-height: 1.45;
+}
+
+.pva-op-modal__table-wrap {
+  max-height: 360px;
+}
+
+.pva-op-modal__observacao {
+  min-width: 160px;
+  max-width: 280px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
 :root[data-theme="dark"] .dashboard-pedidos-venda-abertos {
   --pva-text: var(--text, #f3f4f6);
   --pva-muted: var(--text-muted, rgba(243, 244, 246, 0.72));
   --pva-surface: var(--surface, #111827);
   --pva-border: var(--border, #374151);
+}
+
+:root[data-theme="dark"] .dashboard-pedidos-venda-abertos .pva-badge--success {
+  color: #86efac;
+}
+
+:root[data-theme="dark"] .dashboard-pedidos-venda-abertos .pva-badge--warning {
+  color: #fdba74;
+}
+
+:root[data-theme="dark"] .dashboard-pedidos-venda-abertos .pva-badge--danger {
+  color: #fca5a5;
+}
+
+:root[data-theme="dark"] .dashboard-pedidos-venda-abertos .pva-badge--info {
+  color: #93c5fd;
 }

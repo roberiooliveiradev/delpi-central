@@ -1,5 +1,6 @@
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { compareDeliveryDates } from "./dates";
+import { getLineOpPrevisao } from "./opAllocation";
 
 export type SortKey =
   | "nome_cliente"
@@ -10,7 +11,8 @@ export type SortKey =
   | "data_entrega"
   | "data_despacho"
   | "saldo"
-  | "valor_aberto";
+  | "valor_aberto"
+  | "previsao_entrega_op";
 
 export type SortDirection = "asc" | "desc";
 
@@ -65,6 +67,12 @@ export function sortPedidosItems(
       case "valor_aberto":
         result = a.valor_aberto - b.valor_aberto;
         break;
+      case "previsao_entrega_op": {
+        const leftDate = getLineOpPrevisao(a).previsaoData;
+        const rightDate = getLineOpPrevisao(b).previsaoData;
+        result = compareNullableDate(leftDate, rightDate);
+        break;
+      }
       default:
         result = 0;
     }
