@@ -635,6 +635,15 @@ def admin_presentation_metrics_summary():
     return jsonify(use_case.execute(hours=hours)), 200
 
 
+@admin_bp.get("/metrics/presentation/coverage")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_presentation_metrics_coverage():
+    from app.composition.admin_composer import make_get_admin_presentation_coverage_use_case
+
+    use_case = make_get_admin_presentation_coverage_use_case()
+    return jsonify(use_case.execute()), 200
+
+
 @admin_bp.get("/metrics/error-handling/summary")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_error_handling_metrics_summary():

@@ -101,6 +101,69 @@ def test_aggregate_alerts_high_view_switch_rate():
     assert any("tabela" in alert.lower() for alert in summary["alerts"])
 
 
+def test_snapshot_format_respected_chart_family():
+    snapshot = ChatPresentationAdminMetricsService.snapshot_from_assistant_metadata(
+        {
+            "toolCalls": [
+                {
+                    "metadata": {
+                        "ok": True,
+                        "preferredFormat": "chart",
+                        "presentation": {"type": "chart", "chartType": "horizontal_bar"},
+                        "presentationDecision": {
+                            "selected": "horizontal_bar",
+                            "availableViews": ["horizontal_bar", "table"],
+                        },
+                    }
+                }
+            ]
+        }
+    )
+
+    assert snapshot is not None
+    assert snapshot["preferredFormat"] == "chart"
+    assert snapshot["formatRespected"] is True
+
+
+def test_aggregate_session_format_respected_ratio():
+    impressions = [
+        {
+            "loggedAt": "2026-06-01T12:00:00Z",
+            "snapshot": {
+                "selected": "table",
+                "preferredFormat": "table",
+                "formatRespected": True,
+            },
+        },
+        {
+            "loggedAt": "2026-06-01T12:01:00Z",
+            "snapshot": {
+                "selected": "chart",
+                "preferredFormat": "table",
+                "formatRespected": False,
+            },
+        },
+        {
+            "loggedAt": "2026-06-01T12:02:00Z",
+            "snapshot": {
+                "selected": "horizontal_bar",
+                "presentationType": "chart",
+            },
+        },
+    ]
+
+    summary = ChatPresentationAdminMetricsService.aggregate(
+        impression_entries=impressions,
+        event_entries=[],
+        hours=24,
+        since_iso="2026-05-31T12:00:00Z",
+    )
+
+    assert summary["explicitPreferenceTurns"] == 2
+    assert summary["formatRespectedTurns"] == 1
+    assert summary["sessionFormatRespectedRatio"] == 0.5
+
+
 def test_aggregate_alerts_no_impressions():
     summary = ChatPresentationAdminMetricsService.aggregate(
         impression_entries=[],

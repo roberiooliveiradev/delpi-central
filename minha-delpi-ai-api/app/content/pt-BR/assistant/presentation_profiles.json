@@ -44,6 +44,52 @@
     "product_internal_movements": "table_list",
     "product_inbound_invoice_items": "table_list",
     "product_outbound_invoice_items": "table_list",
+    "supplies_cpv": "kpi_series",
+    "supplies_otd": "kpi_series",
+    "supplies_stock_value": "kpi_series",
+    "supplies_inventory_turnover": "kpi_series",
+    "supplies_negotiation_savings": "kpi_snapshot",
+    "financial_rol": "kpi_series",
+    "financial_ebitda_pct": "kpi_series",
+    "financial_fixed_cost_pct": "kpi_series",
+    "financial_pmr": "kpi_series",
+    "commercial_rol_target": "kpi_series",
+    "commercial_rol_series": "kpi_series",
+    "sales_conversion_rate": "kpi_series",
+    "new_clients_average": "kpi_series",
+    "sales_order_otd": "kpi_series",
+    "new_business_rol_pct": "kpi_series",
+    "new_clients_rol_pct": "kpi_series",
+    "commercial_proposal": "table_list",
+    "direct_labor_cost_pct": "kpi_series",
+    "production_cost_pct": "kpi_series",
+    "depreciation_pct": "kpi_series",
+    "production_oee_series": "kpi_series",
+    "production_otd_series": "kpi_series",
+    "overall_equipment_effectiveness": "kpi_series",
+    "production_otd": "kpi_series",
+    "eficiencia_fabril_dashboard": "kpi_dashboard",
+    "eficiencia_fabril_appointment": "table_list",
+    "hr_branch": "table_list",
+    "hr_snapshot": "kpi_snapshot",
+    "hr_active_pdi_count": "kpi_snapshot",
+    "hr_performance_reviews_completion": "kpi_snapshot",
+    "quality_branch": "table_list",
+    "nonconformity_series": "kpi_series",
+    "kaizen_summary": "kpi_snapshot",
+    "audit_5s_summary": "kpi_snapshot",
+    "ppm_internal_summary": "kpi_snapshot",
+    "ppm_external_summary": "kpi_snapshot",
+    "ppm_internal_series": "kpi_series",
+    "ppm_external_series": "kpi_series",
+    "lmp": "table_list",
+    "lmp_dashboard": "kpi_dashboard",
+    "lmp_dashboard_summary": "kpi_snapshot",
+    "lmp_dashboard_items": "table_list",
+    "lmp_dashboard_charts": "kpi_dashboard",
+    "transforma_mais_process": "table_list",
+    "transforma_mais_summary": "kpi_snapshot",
+    "sale_order": "table_list",
     "sql_result": "sql",
     "protheus_table": "system",
     "protheus_column": "system",
@@ -78,7 +124,20 @@
     { "contains": "/products/search", "profile": "table_list" },
     { "contains": "/summary", "profile": "table_list" },
     { "contains": "/data/sql", "profile": "sql" },
-    { "contains": "/system/", "profile": "system" }
+    { "contains": "/system/", "profile": "system" },
+    { "contains": "/supplies/", "profile": "kpi_series" },
+    { "contains": "/financial/", "profile": "kpi_series" },
+    { "contains": "/commercial/", "profile": "kpi_series" },
+    { "contains": "/production/oee", "profile": "kpi_series" },
+    { "contains": "/production/otd", "profile": "kpi_series" },
+    { "contains": "/production/eficiencia-fabril", "profile": "kpi_dashboard" },
+    { "contains": "/production/", "profile": "kpi_series" },
+    { "contains": "/hr/", "profile": "kpi_snapshot" },
+    { "contains": "/quality/ppm", "profile": "kpi_series" },
+    { "contains": "/quality/", "profile": "kpi_snapshot" },
+    { "contains": "/engineering/lmps/dashboard", "profile": "kpi_dashboard" },
+    { "contains": "/engineering/", "profile": "table_list" },
+    { "contains": "/sales/", "profile": "table_list" }
   ],
   "profiles": {
     "analyser": {
@@ -189,6 +248,24 @@
       "stackPlan": "default",
       "flags": ["system"]
     },
+    "kpi_series": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "kpi", "line_chart", "chart", "table", "dashboard"],
+      "stackPlan": "kpi_series",
+      "flags": ["kpi", "chart"]
+    },
+    "kpi_snapshot": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "kpi", "table", "chart", "dashboard"],
+      "stackPlan": "default",
+      "flags": ["kpi"]
+    },
+    "kpi_dashboard": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "dashboard", "kpi", "chart", "table"],
+      "stackPlan": "default",
+      "flags": ["kpi", "dashboard"]
+    },
     "generic": {
       "defaultViewPolicy": "generic",
       "viewOrder": [
@@ -279,6 +356,11 @@
       "highlightsAfterProfile": true
     },
     "purchase_list": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "kpi_series": {
       "tableRoleOrder": ["profile", "list", "other"],
       "profileFirst": true,
       "highlightsAfterProfile": true

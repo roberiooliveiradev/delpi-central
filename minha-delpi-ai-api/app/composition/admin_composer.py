@@ -32,6 +32,9 @@ from app.application.use_cases.get_admin_web_search_summary_use_case import (
 from app.application.use_cases.get_admin_interactivity_summary_use_case import (
     GetAdminInteractivitySummaryUseCase,
 )
+from app.application.use_cases.get_admin_presentation_coverage_use_case import (
+    GetAdminPresentationCoverageUseCase,
+)
 from app.application.use_cases.get_admin_presentation_summary_use_case import (
     GetAdminPresentationSummaryUseCase,
 )
@@ -220,6 +223,10 @@ def make_get_admin_interactivity_summary_use_case() -> GetAdminInteractivitySumm
 
 def make_get_admin_presentation_summary_use_case() -> GetAdminPresentationSummaryUseCase:
     return GetAdminPresentationSummaryUseCase(PostgresAuditRepository())
+
+
+def make_get_admin_presentation_coverage_use_case() -> GetAdminPresentationCoverageUseCase:
+    return GetAdminPresentationCoverageUseCase()
 
 
 def make_get_admin_error_handling_summary_use_case() -> GetAdminErrorHandlingSummaryUseCase:

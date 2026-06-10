@@ -15,6 +15,16 @@ _PRESENTATION_EVENTS = frozenset(
     }
 )
 
+_CHART_VIEW_FAMILY = frozenset(
+    {
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+    }
+)
+
 
 class ChatPresentationAdminMetricsService:
     @classmethod
@@ -53,6 +63,8 @@ class ChatPresentationAdminMetricsService:
             available_views: list[str] = []
             chart_type = None
 
+            preferred_format = None
+
             if isinstance(decision, dict):
                 selected = str(decision.get("selected") or "").strip() or None
                 raw_views = decision.get("availableViews") or []
@@ -64,17 +76,67 @@ class ChatPresentationAdminMetricsService:
                         if str(view or "").strip()
                     ]
 
+            for call in reversed(tool_calls):
+                if not isinstance(call, dict):
+                    continue
+
+                call_metadata = call.get("metadata")
+
+                if not isinstance(call_metadata, dict):
+                    continue
+
+                token = str(call_metadata.get("preferredFormat") or "").strip().lower()
+
+                if token:
+                    preferred_format = token
+                    break
+
             if isinstance(presentation, dict) and presentation.get("type") == "chart":
                 chart_type = str(presentation.get("chartType") or "").strip() or None
 
             return {
                 "selected": selected,
+                "preferredFormat": preferred_format,
                 "presentationType": presentation_type,
                 "chartType": chart_type,
                 "availableViews": available_views,
+                "formatRespected": cls._format_respected(
+                    preferred=preferred_format,
+                    selected=selected,
+                    presentation_type=presentation_type,
+                ),
             }
 
         return None
+
+    @classmethod
+    def _format_respected(
+        cls,
+        *,
+        preferred: str | None,
+        selected: str | None,
+        presentation_type: str | None,
+    ) -> bool | None:
+        token = str(preferred or "").strip().lower()
+
+        if not token or token == "auto":
+            return None
+
+        effective = str(selected or presentation_type or "").strip().lower()
+
+        if not effective:
+            return None
+
+        if token == effective:
+            return True
+
+        if token in _CHART_VIEW_FAMILY and effective in _CHART_VIEW_FAMILY:
+            return True
+
+        if token == "chart" and effective in _CHART_VIEW_FAMILY:
+            return True
+
+        return False
 
     @classmethod
     def enrich_audit_metadata(
@@ -125,6 +187,8 @@ class ChatPresentationAdminMetricsService:
         since_iso: str,
     ) -> dict[str, Any]:
         responses_with_rich = 0
+        explicit_preference_turns = 0
+        format_respected_turns = 0
         by_selected: Counter[str] = Counter()
         by_presentation_type: Counter[str] = Counter()
         by_chart_type: Counter[str] = Counter()
@@ -144,6 +208,14 @@ class ChatPresentationAdminMetricsService:
             responses_with_rich += 1
             selected = str(snapshot.get("selected") or "unknown")
             by_selected[selected] += 1
+
+            preferred = str(snapshot.get("preferredFormat") or "").strip().lower()
+
+            if preferred and preferred not in {"auto", ""}:
+                explicit_preference_turns += 1
+
+                if snapshot.get("formatRespected") is True:
+                    format_respected_turns += 1
 
             presentation_type = str(snapshot.get("presentationType") or "unknown")
             by_presentation_type[presentation_type] += 1
@@ -231,6 +303,11 @@ class ChatPresentationAdminMetricsService:
             if view_switch_count
             else 0.0
         )
+        session_format_respected_ratio = (
+            round(format_respected_turns / explicit_preference_turns, 4)
+            if explicit_preference_turns
+            else None
+        )
 
         def _top(counter: Counter[str], limit: int = 8) -> list[dict[str, Any]]:
             return [
@@ -268,6 +345,9 @@ class ChatPresentationAdminMetricsService:
             "viewSwitchRate": view_switch_rate,
             "axisChangeRate": axis_change_rate,
             "switchToTableRate": switch_to_table_rate,
+            "explicitPreferenceTurns": explicit_preference_turns,
+            "formatRespectedTurns": format_respected_turns,
+            "sessionFormatRespectedRatio": session_format_respected_ratio,
             "bySelected": dict(by_selected),
             "byPresentationType": dict(by_presentation_type),
             "byChartType": dict(by_chart_type),

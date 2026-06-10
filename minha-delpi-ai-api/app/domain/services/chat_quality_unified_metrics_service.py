@@ -14,6 +14,10 @@ class ChatQualityUnifiedMetricsService:
         metrics: dict[str, Any] | None,
         security: dict[str, Any] | None,
         adoption: dict[str, Any] | None,
+        presentation: dict[str, Any] | None = None,
+        presentation_coverage: dict[str, Any] | None = None,
+        session_memory: dict[str, Any] | None = None,
+        rag_settings: dict[str, Any] | None = None,
         hours: int,
         since_iso: str,
     ) -> dict[str, Any]:
@@ -21,7 +25,23 @@ class ChatQualityUnifiedMetricsService:
         metrics = metrics if isinstance(metrics, dict) else {}
         security = security if isinstance(security, dict) else {}
         adoption = adoption if isinstance(adoption, dict) else {}
+        presentation = presentation if isinstance(presentation, dict) else {}
+        presentation_coverage = (
+            presentation_coverage if isinstance(presentation_coverage, dict) else {}
+        )
+        session_memory = session_memory if isinstance(session_memory, dict) else {}
+        rag_settings = rag_settings if isinstance(rag_settings, dict) else {}
         advanced = metrics.get("advanced") if isinstance(metrics.get("advanced"), dict) else {}
+        coverage_summary = (
+            presentation_coverage.get("summary")
+            if isinstance(presentation_coverage.get("summary"), dict)
+            else {}
+        )
+        coverage_metrics = (
+            coverage_summary.get("metrics")
+            if isinstance(coverage_summary.get("metrics"), dict)
+            else {}
+        )
 
         return {
             "windowHours": hours,
@@ -64,6 +84,33 @@ class ChatQualityUnifiedMetricsService:
                 "messagesTotal": metrics.get("messages"),
                 "recentToolCalls": metrics.get("recentToolCalls24h"),
                 "recentErrors": metrics.get("recentErrors24h"),
+            },
+            "presentation": {
+                "sessionFormatRespectedRatio": presentation.get("sessionFormatRespectedRatio"),
+                "explicitPreferenceTurns": presentation.get("explicitPreferenceTurns"),
+                "formatRespectedTurns": presentation.get("formatRespectedTurns"),
+                "responsesWithRichPresentation": presentation.get("responsesWithRichPresentation"),
+                "viewSwitchRate": presentation.get("viewSwitchRate"),
+                "tierBPlusRatio": coverage_metrics.get("tierBPlusRatio"),
+                "profileCoverageRatio": coverage_summary.get("profileCoverageRatio"),
+                "operationCount": coverage_summary.get("operationCount"),
+            },
+            "sessionMemory": {
+                "memoryTurnsCount": session_memory.get("memoryTurnsCount"),
+                "lowAssertivenessTurns": session_memory.get("lowAssertivenessTurns"),
+                "contextLossRiskTurns": session_memory.get("contextLossRiskTurns"),
+                "followUpResolutionRate": session_memory.get("followUpResolutionRate"),
+                "lostContextFeedbackCount": (
+                    (session_memory.get("feedback") or {}).get("lostContextFeedbackCount")
+                    if isinstance(session_memory.get("feedback"), dict)
+                    else None
+                ),
+            },
+            "rag": {
+                "ragContextMinScore": rag_settings.get("ragContextMinScore"),
+                "ragHybridEnabled": rag_settings.get("ragHybridEnabled"),
+                "ragFtsEnabled": rag_settings.get("ragFtsEnabled"),
+                "defaults": rag_settings.get("defaults") or {},
             },
         }
 
