@@ -186,3 +186,115 @@ def test_fetch_format_refinement_reuses_cached_stock_payload():
     assert arguments["actionId"] == "stock-action"
     assert merged_metadata["actionId"] == "stock-action"
     assert continue_prompt is None
+
+
+_PRODUCTION_SQL_ROWS = [
+    {
+        "COD_PRODUTO": "90264130",
+        "DESCRICAO_PRODUTO": "PARAFUSO M8",
+        "QTD_PLANEJADA": 1200,
+        "UNIDADE": "UN",
+    },
+    {
+        "COD_PRODUTO": "10080047",
+        "DESCRICAO_PRODUTO": "TERMINAL PINO",
+        "QTD_PLANEJADA": 500,
+        "UNIDADE": "UN",
+    },
+]
+
+
+class _SqlFormatRefinementExternalUseCase:
+    def build_metadata_for_data(self, *, action_id, data, parameters=None):
+        from app.application.use_cases.execute_external_action_use_case import (
+            ExecuteExternalActionUseCase,
+        )
+
+        use_case = ExecuteExternalActionUseCase(
+            repository=None,
+            gateway=None,
+            policy=None,
+            audit_repository=None,
+        )
+
+        return use_case._build_presentation_metadata(
+            action={
+                "path": "/data/sql",
+                "actionId": action_id,
+                "sensitivity": "sql",
+                "operationId": "execute_readonly_sql",
+            },
+            sanitized_data=data,
+            resolved_path="/data/sql",
+            request_parameters=dict(parameters or {}),
+        )
+
+
+class _SqlFormatRefinementExecuteToolUseCase:
+    def __init__(self):
+        self.calls: list[int] = []
+        self.tools = {
+            "execute_external_action": type(
+                "Tool",
+                (),
+                {"use_case": _SqlFormatRefinementExternalUseCase()},
+            )()
+        }
+
+    def execute(self, request):
+        raise AssertionError("não deve reexecutar SQL no refinamento com cache")
+
+
+def test_fetch_format_refinement_reuses_cached_sql_payload():
+    execute_tool = _SqlFormatRefinementExecuteToolUseCase()
+    service = ChatPaginatedExternalActionService(execute_tool)
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "api_delpi.data.execute_readonly_sql",
+                            "parameters": {"body": {"sql": "SELECT 1"}},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "actionId": "api_delpi.data.execute_readonly_sql",
+                            "path": "/data/sql",
+                            "sensitivity": "sql",
+                            "operationId": "execute_readonly_sql",
+                            "preferredFormat": "text",
+                            "tablePresentation": {
+                                "type": "table",
+                                "title": "Produtos programados para produção",
+                                "columns": [
+                                    {"key": "COD_PRODUTO", "label": "Código"},
+                                    {"key": "DESCRICAO_PRODUTO", "label": "Descrição"},
+                                ],
+                                "rows": _PRODUCTION_SQL_ROWS,
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    result = service.fetch_format_refinement_from_history(
+        user_id="user-1",
+        access_token="token",
+        message="mostre o último resultado em tabela",
+        previous_messages=previous_messages,
+    )
+
+    assert result is not None
+    merged_data, merged_metadata, arguments, continue_prompt = result
+    assert execute_tool.calls == []
+    root = ChatPaginationConsolidationService._unwrap(merged_data)
+    assert root["rows"] == _PRODUCTION_SQL_ROWS
+    assert arguments["actionId"] == "api_delpi.data.execute_readonly_sql"
+    assert merged_metadata.get("preferredFormat") == "table"
+    assert merged_metadata.get("presentation", {}).get("type") == "table"
+    assert merged_metadata.get("presentation", {}).get("rows") == _PRODUCTION_SQL_ROWS
+    assert continue_prompt is None

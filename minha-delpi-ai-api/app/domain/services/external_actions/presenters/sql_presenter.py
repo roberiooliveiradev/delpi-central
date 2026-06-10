@@ -22,6 +22,12 @@ class ExternalActionSqlPresenter:
         self._host = host
 
     def _present_sql_rows(self, rows: list) -> dict | None:
+            if isinstance(rows, dict):
+                rows = ExternalActionSqlPresenter._coerce_sql_row_list(rows)
+
+            if not isinstance(rows, list):
+                return None
+
             default_title = ExternalActionResponseContentService.get("sql", "defaultTitle")
 
             if not rows:
@@ -503,3 +509,17 @@ class ExternalActionSqlPresenter:
                 "columns": columns,
                 "rows": [],
             }
+
+    @staticmethod
+    def _coerce_sql_row_list(root: dict) -> list | None:
+        rows = root.get("rows")
+
+        if isinstance(rows, list):
+            return rows
+
+        items = root.get("items")
+
+        if isinstance(items, list):
+            return items
+
+        return None

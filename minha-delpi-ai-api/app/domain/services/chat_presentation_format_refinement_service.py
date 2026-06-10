@@ -10,6 +10,9 @@ from app.domain.services.chat_pagination_consolidation_service import (
 from app.domain.services.chat_presentation_format_vocabulary_service import (
     ChatPresentationFormatVocabularyService,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 
 
 class ChatPresentationFormatRefinementService:
@@ -160,6 +163,24 @@ class ChatPresentationFormatRefinementService:
     def wrap_payload_for_operation(cls, operation: dict[str, Any], root: dict[str, Any]) -> dict[str, Any]:
         path = str(operation.get("path") or "").lower()
         items = root.get("items")
+        rows = root.get("rows")
+
+        if cls._is_sql_operation(operation):
+            if ExternalActionSqlCapabilityService.is_sql_result_payload(root):
+                return {"data": root}
+
+            if isinstance(rows, list):
+                return {"data": root}
+
+            if isinstance(items, list):
+                return {
+                    "data": {
+                        "rows": items,
+                        "total": root.get("total", len(items)),
+                    }
+                }
+
+            return {"data": root}
 
         if not isinstance(items, list):
             return {"data": root}
@@ -170,6 +191,17 @@ class ChatPresentationFormatRefinementService:
             return {"data": {"stock": payload_root}}
 
         return {"data": payload_root}
+
+    @classmethod
+    def _is_sql_operation(cls, operation: dict[str, Any]) -> bool:
+        meta = operation.get("metadata") or {}
+
+        return ExternalActionSqlCapabilityService.is_sql_execution_context(
+            path=str(operation.get("path") or ""),
+            operation_id=str(meta.get("operationId") or ""),
+            action_id=str(operation.get("actionId") or ""),
+            sensitivity=str(meta.get("sensitivity") or ""),
+        )
 
     @classmethod
     def rebuild_metadata_for_refinement(

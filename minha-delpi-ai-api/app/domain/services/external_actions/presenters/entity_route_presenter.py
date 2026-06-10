@@ -269,10 +269,13 @@ class ExternalActionEntityRoutePresenter:
                 if sql_resultsets:
                     return sql_resultsets
 
-                sql_rows = self._host._present_sql_rows(root)
+                sql_row_list = self._resolve_sql_row_list(root)
 
-                if sql_rows:
-                    return sql_rows
+                if sql_row_list is not None:
+                    sql_rows = self._host._present_sql_rows(sql_row_list)
+
+                    if sql_rows:
+                        return sql_rows
 
             if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES and isinstance(
                 root, dict
@@ -305,3 +308,23 @@ class ExternalActionEntityRoutePresenter:
                     return self._host._present_items(items, title=title)
 
             return None
+
+    @staticmethod
+    def _resolve_sql_row_list(root: object) -> list | None:
+        if isinstance(root, list):
+            return root
+
+        if not isinstance(root, dict):
+            return None
+
+        rows = root.get("rows")
+
+        if isinstance(rows, list):
+            return rows
+
+        items = root.get("items")
+
+        if isinstance(items, list):
+            return items
+
+        return None

@@ -245,3 +245,123 @@ def test_wrap_payload_for_non_stock_keeps_flat_items():
     )
 
     assert payload == {"data": root}
+
+
+_PRODUCTION_SQL_ROWS = [
+    {
+        "COD_PRODUTO": "90264130",
+        "DESCRICAO_PRODUTO": "PARAFUSO M8",
+        "QTD_PLANEJADA": 1200,
+        "UNIDADE": "UN",
+        "DATA_INICIO_OPERACAO": "20260610",
+    },
+    {
+        "COD_PRODUTO": "10080047",
+        "DESCRICAO_PRODUTO": "TERMINAL PINO",
+        "QTD_PLANEJADA": 500,
+        "UNIDADE": "UN",
+        "DATA_INICIO_OPERACAO": "20260610",
+    },
+]
+
+
+def test_wrap_payload_for_sql_maps_table_items_to_rows():
+    operation = {
+        "actionId": "api_delpi.data.execute_readonly_sql",
+        "path": "/data/sql",
+        "metadata": {
+            "sensitivity": "sql",
+            "operationId": "execute_readonly_sql",
+        },
+    }
+    root = {
+        "items": _PRODUCTION_SQL_ROWS,
+        "total": len(_PRODUCTION_SQL_ROWS),
+        "page": 1,
+        "page_size": len(_PRODUCTION_SQL_ROWS),
+        "total_pages": 1,
+    }
+
+    payload = ChatPresentationFormatRefinementService.wrap_payload_for_operation(
+        operation,
+        root,
+    )
+
+    assert payload == {
+        "data": {
+            "rows": _PRODUCTION_SQL_ROWS,
+            "total": len(_PRODUCTION_SQL_ROWS),
+        }
+    }
+
+
+def test_rebuild_metadata_sql_format_refinement_does_not_crash():
+    from app.application.use_cases.execute_external_action_use_case import (
+        ExecuteExternalActionUseCase,
+    )
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    operation = {
+        "actionId": "api_delpi.data.execute_readonly_sql",
+        "path": "/data/sql",
+        "parameters": {},
+        "metadata": {
+            "ok": True,
+            "path": "/data/sql",
+            "sensitivity": "sql",
+            "operationId": "execute_readonly_sql",
+            "actionId": "api_delpi.data.execute_readonly_sql",
+        },
+    }
+    payload = ChatPresentationFormatRefinementService.wrap_payload_for_operation(
+        operation,
+        {
+            "items": _PRODUCTION_SQL_ROWS,
+            "total": len(_PRODUCTION_SQL_ROWS),
+            "page": 1,
+            "page_size": len(_PRODUCTION_SQL_ROWS),
+            "total_pages": 1,
+        },
+    )
+
+    presenter = ExternalActionResultPresenter()
+    humanized = presenter.present(payload, path="/data/sql")
+
+    assert humanized["linhas"]
+    assert humanized.get("sqlRows") == _PRODUCTION_SQL_ROWS
+
+    use_case = ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
+
+    class _SqlRefinementUseCase:
+        def build_metadata_for_data(self, *, action_id, data, parameters=None):
+            return use_case._build_presentation_metadata(
+                action={
+                    "path": "/data/sql",
+                    "actionId": action_id,
+                    "sensitivity": "sql",
+                    "operationId": "execute_readonly_sql",
+                },
+                sanitized_data=data,
+                resolved_path="/data/sql",
+                request_parameters=dict(parameters or {}),
+            )
+
+    rebuilt = ChatPresentationFormatRefinementService.rebuild_metadata_for_refinement(
+        external_use_case=_SqlRefinementUseCase(),
+        operation=operation,
+        payload=payload,
+        requested_format="table",
+        user_message="mostre o último resultado em tabela",
+    )
+
+    assert rebuilt is not None
+    assert rebuilt.get("preferredFormat") == "table"
+    assert rebuilt.get("presentation", {}).get("type") == "table"
+    assert rebuilt.get("presentation", {}).get("rows") == _PRODUCTION_SQL_ROWS
