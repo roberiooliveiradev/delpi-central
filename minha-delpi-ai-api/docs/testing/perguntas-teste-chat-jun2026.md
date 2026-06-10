@@ -163,6 +163,10 @@ Roteiro manual pós-refatoração declarativa. Marque OK/Falha após cada item.
 | H10 | Rotas tier C (ex. HR snapshot) — schema-driven + KPI | R6 |
 | H11 | Chip «Ver em gráfico» pós-resposta | onda 1 |
 | H12 | Regressão pytest entity contract + audit coverage | R9 CI |
+| H13 | `estrutura {code}` modo **Texto** — outline ASCII `Composição` | R14, `00befb65` |
+| H14 | `estrutura {code}` modo **Tabela** / chip «em tabela» | R3, `d3d8ba15` |
+| H15 | `estrutura {code}` modo **Árvore** nativa | R2 |
+| H16 | Smoke estrutura text/table/tree | `scripts/smoke_structure_preference.py` |
 
 **Gates CI (R9–R12):**
 

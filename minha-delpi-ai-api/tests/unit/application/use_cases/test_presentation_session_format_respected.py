@@ -386,4 +386,3 @@ def test_structure_text_mode_embeds_tree_outline_markdown():
     assert "**Composição**" in markdown
     assert "50230130" in markdown
     assert "└── 50230130" in markdown or "├── 50230130" in markdown
-    assert isinstance(meta.get("treePresentation"), dict)

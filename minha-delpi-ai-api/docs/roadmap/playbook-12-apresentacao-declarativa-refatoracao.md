@@ -34,6 +34,7 @@ Relacionado:
 | **R11** | Chips pós-resposta API↔MFE | ✅ Concluído |
 | **R12** | Regressão entity contract + CI consolidado | ✅ Concluído |
 | **R13** | Correções pós-E2E (roteamento, chips POST, narrativa) | ✅ Concluído |
+| **R14** | Texto-first, visuais sob demanda e outline ASCII em estrutura | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -467,6 +468,10 @@ Antes de merge de qualquer fase R1–R8:
 | R10 | Rotas tier C (ex. HR snapshot) — schema-driven + KPI | onda 1, R6 |
 | R11 | Chip «Ver em gráfico» pós-resposta | onda 1 Fase 5 |
 | R12 | Regressão pytest entity contract + audit coverage | R9 |
+| R13 | `estrutura {code}` modo Texto — outline ASCII | R14, `00befb65` |
+| R14 | `estrutura {code}` modo Tabela — preferência UI | R3, `d3d8ba15` |
+| R15 | `estrutura {code}` modo Árvore nativa | R2 |
+| R16 | Smoke estrutura text/table/tree | `smoke_structure_preference.py` |
 
 Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-teste-chat-jun2026.md).
 
@@ -561,7 +566,17 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | Visão integrada / completo | `textFirstPolicy.integratedStackHints` → `layoutMode: stack` + bundle `eager` |
 | Analyser inalterado | perfil `analyser`: `visualBundlePolicy: eager`, `stackLayoutPolicy: always` |
 | MFE «Texto» = prosa pura | `assistantContentSegments`, `assistantContentVisualFormats`, `assistantContentLayout` |
+| Estrutura em Texto = outline ASCII | `textEmbedTreeOutline` no perfil `tree_hierarchy` + `ChatPresentationTreeMarkdownService` + bloco ` ```text ` |
 | Chips latentes | `availableViews` do perfil mesmo sem slot montado (ex.: «Ver em gráfico») |
+
+**Homologação R14 (estrutura/BOM):**
+
+| ID | Ação | Critério |
+|----|------|----------|
+| H13 | `estrutura {code}` modo **Texto** | `textPresentation.markdown` contém `**Composição**` + outline `├──`/`└──` em bloco `text` |
+| H14 | Modo **Tabela** / chip «em tabela» | `presentation.type=table`, sem dedup forçando árvore |
+| H15 | Modo **Árvore** | componente nativo `ChatRichTree` |
+| H16 | Smoke | `scripts/smoke_structure_preference.py` (text/table/tree + refinamento) |
 
 **R11 entregue (jun/2026):**
 
