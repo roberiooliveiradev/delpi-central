@@ -11,6 +11,7 @@ import keycloak, { initKeycloak } from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import { useSocket } from "../hooks/useSocket";
+import { resetAppLauncherAppearanceRegistry } from "../components/appLauncherAppearance";
 
 import type {
   MeResponse,
@@ -159,6 +160,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setDashboard(undefined);
     setNotifications([]);
     setFavorites([]);
+
+    resetAppLauncherAppearanceRegistry();
 
     identityLoadInFlightRef.current = false;
     dashboardLoadInFlightRef.current = false;

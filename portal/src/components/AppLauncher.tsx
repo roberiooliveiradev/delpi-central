@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import "./AppLauncher.css";
 import { AppLauncherCard } from "./AppLauncherCard";
+import { LauncherPinnedGrid } from "./LauncherPinnedGrid";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
 import { pushRecentApp } from "../utils/recentApps";
 import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
@@ -288,29 +289,37 @@ export const AppLauncher = ({
                   </p>
                 </div>
               ) : (
-                <div className="launcher-pinned-grid" data-tour="launcher-grid">
-                  {availableApps.map((app) => {
-                    const isPinned = favorites.some(f => f.id === app.id);
+                <LauncherPinnedGrid
+                  className="launcher-pinned-grid"
+                  data-tour="launcher-grid"
+                  itemIds={availableApps.map((app) => app.id)}
+                >
+                  {(appId, index) => {
+                    const app = availableApps.find((item) => item.id === appId);
+                    if (!app) return null;
+
+                    const isPinned = favorites.some((f) => f.id === app.id);
                     const isOpen = openAppId === app.id;
                     const appRoutes = routesByApp[app.id] ?? [];
 
                     return (
                       <AppLauncherCard
-                        key={app.id}
                         app={app}
                         routes={appRoutes}
+                        motionIndex={index}
+                        appearanceScope="content"
                         isOpen={isOpen}
                         isPinned={isPinned}
                         onToggleOpen={(id) => {
-                          setOpenAppId(prev => (prev === id ? null : id));
+                          setOpenAppId((prev) => (prev === id ? null : id));
                         }}
                         onOpenSingle={openAppOrDefault}
                         onGoToRoute={goTo}
                         onTogglePin={togglePin}
                       />
                     );
-                  })}
-                </div>
+                  }}
+                </LauncherPinnedGrid>
               )}
             </div>
           ) : (

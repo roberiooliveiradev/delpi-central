@@ -11,6 +11,7 @@ import { useAppsById } from "../hooks/useAppsById";
 import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { LauncherPinnedGrid } from "../components/LauncherPinnedGrid";
 import { PortalTourAchievementsPanel } from "../tour/PortalTourAchievementsPanel";
 import { ProfileRbacCardGrid } from "./profile/ProfileRbacCardGrid";
 
@@ -452,18 +453,24 @@ export const MyProfile = () => {
             />
           </div>
 
-          <div className="launcher-pinned-grid">
+          {!isSearching ? (
+            <LauncherPinnedGrid
+              className="launcher-pinned-grid"
+              itemIds={sortedApps.map((app) => app.id)}
+            >
+              {(appId, index) => {
+                const app = sortedApps.find((item) => item.id === appId);
+                if (!app) return null;
 
-            {!isSearching &&
-              sortedApps.map((app) => {
                 const appRoutes = routesByApp[app.id] ?? [];
 
                 return (
                   <AppLauncherCard
-                    key={app.id}
                     variant="launcher"
                     app={app}
                     routes={appRoutes}
+                    motionIndex={index}
+                    appearanceScope="content"
                     isPinned={favorites.some((f) => f.id === app.id)}
                     onOpenSingle={(id) => {
                       const route = routesByApp[id]?.[0];
@@ -478,10 +485,10 @@ export const MyProfile = () => {
                     onTogglePin={togglePin}
                   />
                 );
-              })}
-
-            {isSearching && (
-              <>
+              }}
+            </LauncherPinnedGrid>
+          ) : (
+            <div className="launcher-pinned-grid">
                 {searchResults.length === 0 && (
                   <div className="apps-empty">
                     Nenhum resultado encontrado.
@@ -536,10 +543,8 @@ export const MyProfile = () => {
                     />
                   );
                 })}
-              </>
-            )}
-
-          </div>
+            </div>
+          )}
         </motion.section>
       </div>
     </div>

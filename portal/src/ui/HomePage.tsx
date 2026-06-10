@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { getRecentAppIds } from "../utils/recentApps";
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { LauncherPinnedGrid } from "../components/LauncherPinnedGrid";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
 import {
@@ -175,17 +176,23 @@ export const HomePage = () => {
           {launchableFavorites.length === 0 ? (
             <EmptyState text="Você ainda não fixou aplicações. Use o botão Apps na sidebar." />
           ) : (
-          <div className="launcher-pinned-grid">
-            {launchableFavorites.map((favorite) => {
+          <LauncherPinnedGrid
+            className="launcher-pinned-grid"
+            itemIds={launchableFavorites.map((favorite) => favorite.id)}
+          >
+            {(favoriteId, index) => {
+              const favorite =
+                launchableFavorites.find((item) => item.id === favoriteId) ??
+                launchableFavorites[index];
               const app = appsById[favorite.id] ?? favorite;
               const appRoutes = routesByApp[favorite.id] ?? [];
 
               return (
                 <AppLauncherCard
                   variant="home"
-                  key={favorite.id}
                   app={app}
                   routes={appRoutes}
+                  motionIndex={index}
                   isOpen={openFavoriteAppId === favorite.id}
                   isPinned={true}
                   onToggleOpen={(id) => {
@@ -205,8 +212,8 @@ export const HomePage = () => {
                   onTogglePin={togglePin}
                 />
               );
-            })}
-          </div>
+            }}
+          </LauncherPinnedGrid>
           )}
         </motion.section>
 
@@ -224,8 +231,12 @@ export const HomePage = () => {
           {recentApps.length === 0 ? (
             <EmptyState text="Nada por aqui ainda. Abra um app e ele aparecerá aqui." />
           ) : (
-          <div className="launcher-pinned-grid">
-            {recentApps.map((app) => {
+          <LauncherPinnedGrid
+            className="launcher-pinned-grid"
+            itemIds={recentApps.filter(Boolean).map((app) => app!.id)}
+          >
+            {(appId, index) => {
+              const app = recentApps.find((item) => item?.id === appId);
               if (!app) return null;
 
               const appRoutes = routesByApp[app.id] ?? [];
@@ -233,9 +244,10 @@ export const HomePage = () => {
               return (
                 <AppLauncherCard
                   variant="home"
-                  key={app.id}
                   app={app}
                   routes={appRoutes}
+                  motionIndex={index}
+                  appearanceScope="content"
                   isOpen={openRecentAppId === app.id}
                   isPinned={favorites.some((f) => f.id === app.id)}
                   onToggleOpen={(id) => {
@@ -255,8 +267,8 @@ export const HomePage = () => {
                   onTogglePin={togglePin}
                 />
               );
-            })}
-          </div>
+            }}
+          </LauncherPinnedGrid>
           )}
         </motion.section>
 

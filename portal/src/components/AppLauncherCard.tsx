@@ -3,6 +3,11 @@ import { Package, ChevronDown, ChevronUp, Pin } from "lucide-react";
 import { resolveIcon } from "../utils/iconResolver";
 import { useLocation } from "react-router-dom";
 import { useAppLauncherReorder } from "./AppLauncherReorderList";
+import {
+  launcherMotionIndexStyle,
+  useAppLauncherAppearance,
+  type AppLauncherAppearanceScope,
+} from "./appLauncherAppearance";
 
 type RouteItem = {
   path: string;
@@ -35,6 +40,11 @@ interface Props {
   /** Habilita arrastar para reordenar (requer `AppLauncherReorderList` ancestral). */
   reorderable?: boolean;
 
+  /** Animações de aparecimento e mudanças (nome, rotas, favorito). */
+  appearanceEnabled?: boolean;
+  appearanceScope?: AppLauncherAppearanceScope;
+  motionIndex?: number;
+
   onToggleOpen?: (appId: string) => void;
   onOpenSingle: (appId: string) => void;
   onGoToRoute: (path: string) => void;
@@ -49,6 +59,9 @@ export const AppLauncherCard = ({
   isPinned = false,
   searchKind,
   reorderable = false,
+  appearanceEnabled = true,
+  appearanceScope = "full",
+  motionIndex,
   onToggleOpen,
   onOpenSingle,
   onGoToRoute,
@@ -61,6 +74,14 @@ export const AppLauncherCard = ({
 
   const isHome = variant === "home";
   const isSidebar = variant === "sidebar";
+
+  const appearance = useAppLauncherAppearance(app.id, {
+    name: app.name,
+    routes,
+    isPinned,
+    enabled: appearanceEnabled && !isSidebar,
+    scope: appearanceScope,
+  });
 
   const location = useLocation();
 
@@ -191,7 +212,13 @@ export const AppLauncherCard = ({
       </span>
 
       <div className="launcher-app-container-name">
-        <span className="launcher-app-name">{app.name}</span>
+        <span
+          className={["launcher-app-name", appearance.nameClass]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {app.name}
+        </span>
 
         {hasMultipleRoutes &&
           (isSidebar ? (
@@ -222,14 +249,22 @@ export const AppLauncherCard = ({
         isHolding ? "is-reorder-holding" : "",
         isDragging ? "is-reorder-dragging" : "",
         isDropTarget ? "is-reorder-drop-target" : "",
+        appearance.tileClass,
       ]
         .filter(Boolean)
         .join(" ")}
+      style={launcherMotionIndexStyle(motionIndex)}
     >
       {onTogglePin && !isSidebar && (
         <button
           type="button"
-          className={`launcher-pin ${isPinned ? "pinned" : ""}`}
+          className={[
+            "launcher-pin",
+            isPinned ? "pinned" : "",
+            appearance.pinClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           onClick={(e) => {
             e.stopPropagation();
             onTogglePin(app.id);
@@ -261,11 +296,12 @@ export const AppLauncherCard = ({
 
       {(isOpen || searchKind === "route") && visibleRoutes.length > 0 && (
         <div
-          className={
-            isSidebar
-              ? "sidebar-inline-routes"
-              : "launcher-inline-routes"
-          }
+          className={[
+            isSidebar ? "sidebar-inline-routes" : "launcher-inline-routes",
+            !isSidebar ? appearance.routesClass : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
           {visibleRoutes.map((route) => {
             const Icon = resolveIcon(route.icon) || Package;

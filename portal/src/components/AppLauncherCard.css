@@ -545,3 +545,139 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   opacity: 1;
   color: var(--primary);
 }
+
+/* =========================================
+   APPEARANCE MOTION (apps)
+========================================= */
+
+.launcher-pinned-grid-item {
+  width: 100%;
+  max-width: 120px;
+  justify-self: center;
+}
+
+@keyframes launcherAppAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes launcherFavoritePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+  40% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 28%, transparent);
+  }
+}
+
+@keyframes launcherUnfavoritePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(0.97);
+    opacity: 0.88;
+  }
+}
+
+@keyframes launcherNameChanged {
+  0%,
+  100% {
+    color: inherit;
+    transform: none;
+  }
+  45% {
+    color: var(--primary);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes launcherRoutesChanged {
+  0%,
+  100% {
+    box-shadow: var(--shadow);
+    border-color: var(--border);
+  }
+  50% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 32%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  }
+}
+
+@keyframes launcherPinFavorited {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.18) rotate(-8deg);
+  }
+  65% {
+    transform: scale(1.08) rotate(4deg);
+  }
+}
+
+@keyframes launcherPinUnfavorited {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.88);
+    opacity: 0.55;
+  }
+}
+
+.launcher-app-tile--appear {
+  animation: launcherAppAppear 0.54s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--launcher-motion-index, 0) * 42ms);
+}
+
+.launcher-app-tile--favorited {
+  animation: launcherFavoritePulse 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.launcher-app-tile--unfavorited {
+  animation: launcherUnfavoritePulse 0.48s ease both;
+}
+
+.launcher-app-name--changed {
+  display: inline-block;
+  animation: launcherNameChanged 0.64s ease both;
+}
+
+.launcher-inline-routes--changed {
+  animation: launcherRoutesChanged 0.58s ease both;
+}
+
+.launcher-pin--favorited {
+  animation: launcherPinFavorited 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.launcher-pin--unfavorited {
+  animation: launcherPinUnfavorited 0.46s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launcher-app-tile--appear,
+  .launcher-app-tile--favorited,
+  .launcher-app-tile--unfavorited,
+  .launcher-app-name--changed,
+  .launcher-inline-routes--changed,
+  .launcher-pin--favorited,
+  .launcher-pin--unfavorited {
+    animation: none !important;
+  }
+}
