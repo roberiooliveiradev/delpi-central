@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Trophy } from "lucide-react";
 import { AuthContext } from "../state/AuthContext";
@@ -11,6 +11,47 @@ import {
   usePortalTourSession,
 } from "./portalTourSession";
 import { resolvePortalTourHomeEntryState } from "./portalTourHomeEntry";
+import { shouldShowPortalTour } from "./portalTourStorage";
+
+const HOME_ENTRY_CACHE_KEY = "delpi.portal.tourHomeEntry.v1";
+
+type HomeEntryDisplayCache = {
+  requiredDone: number;
+  requiredTotal: number;
+  progressPercent: number;
+  explorerLevel: string;
+};
+
+function readHomeEntryDisplayCache(
+  userId: string | undefined,
+): HomeEntryDisplayCache | null {
+  if (!userId) return null;
+
+  try {
+    const raw = sessionStorage.getItem(HOME_ENTRY_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, HomeEntryDisplayCache>;
+    const cached = parsed[userId];
+    if (!cached || typeof cached !== "object") return null;
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+function writeHomeEntryDisplayCache(
+  userId: string,
+  display: HomeEntryDisplayCache,
+): void {
+  try {
+    const raw = sessionStorage.getItem(HOME_ENTRY_CACHE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, HomeEntryDisplayCache>) : {};
+    parsed[userId] = display;
+    sessionStorage.setItem(HOME_ENTRY_CACHE_KEY, JSON.stringify(parsed));
+  } catch {
+    // cache opcional — não bloqueia UI
+  }
+}
 
 export function PortalTourHomeEntry() {
   const { user, coreLoaded, getAccessToken, refreshToken } = useContext(AuthContext);
@@ -31,15 +72,24 @@ export function PortalTourHomeEntry() {
       ),
     [getAccessToken, refreshToken],
   );
+  const coreApiRef = useRef(coreApi);
+  coreApiRef.current = coreApi;
+
+  useEffect(() => {
+    setDataReady(false);
+    setProgress(null);
+    setCatalog(null);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!coreLoaded || !user?.id) return;
 
     let cancelled = false;
+    const api = coreApiRef.current;
 
     void Promise.all([
-      loadPortalTourProgress(coreApi, user.id),
-      coreApi.getPortalTourCatalog().catch(() => null),
+      loadPortalTourProgress(api, user.id),
+      api.getPortalTourCatalog().catch(() => null),
     ]).then(([remoteProgress, remoteCatalog]) => {
       if (cancelled) return;
       setProgress(remoteProgress);
@@ -50,38 +100,70 @@ export function PortalTourHomeEntry() {
     return () => {
       cancelled = true;
     };
-  }, [coreLoaded, user?.id, coreApi]);
+  }, [coreLoaded, user?.id]);
 
   const entry = useMemo(
-    () =>
-      resolvePortalTourHomeEntryState(
-        user?.id,
-        progress,
-        catalog,
-        session.panelOpen,
-      ),
-    [user?.id, progress, catalog, session.panelOpen],
+    () => resolvePortalTourHomeEntryState(user?.id, progress, catalog),
+    [user?.id, progress, catalog],
   );
 
-  const display = session.sessionActive
+  const cachedDisplay = useMemo(
+    () => readHomeEntryDisplayCache(user?.id),
+    [user?.id],
+  );
+
+  useEffect(() => {
+    if (!user?.id || !dataReady || !entry.visible) return;
+
+    writeHomeEntryDisplayCache(user.id, {
+      requiredDone: entry.requiredDone,
+      requiredTotal: entry.requiredTotal,
+      progressPercent: entry.progressPercent,
+      explorerLevel: entry.explorerLevel,
+    });
+  }, [user?.id, dataReady, entry]);
+
+  const display = dataReady
     ? {
-        requiredDone: session.requiredDone,
-        requiredTotal: session.requiredTotal,
-        progressPercent: session.progressPercent,
-        explorerLevel: session.explorerLevel,
-      }
-    : {
         requiredDone: entry.requiredDone,
         requiredTotal: entry.requiredTotal,
         progressPercent: entry.progressPercent,
         explorerLevel: entry.explorerLevel,
+      }
+    : cachedDisplay ?? {
+        requiredDone: 0,
+        requiredTotal: 0,
+        progressPercent: 0,
+        explorerLevel: "Explorador",
       };
 
-  const showEntry = dataReady && entry.visible;
+  const tourLikelyVisible = Boolean(
+    user?.id && coreLoaded && shouldShowPortalTour(user.id),
+  );
 
-  if (!showEntry) return null;
+  if (!user?.id || !coreLoaded) return null;
+
+  const shouldRender =
+    (!dataReady && tourLikelyVisible) || (dataReady && entry.visible);
+
+  if (!shouldRender) return null;
+
+  const isLoading = !dataReady;
+  const valueLabel =
+    display.requiredTotal > 0
+      ? `${display.requiredDone}/${display.requiredTotal}`
+      : isLoading
+        ? "···"
+        : "Explorar";
+  const subLabel = isLoading
+    ? cachedDisplay
+      ? `${display.progressPercent}% · ${display.explorerLevel}`
+      : "Carregando…"
+    : `${display.progressPercent}% · ${display.explorerLevel}`;
 
   const handleOpen = () => {
+    if (isLoading) return;
+
     if (session.sessionActive) {
       openPortalTourPanel();
       return;
@@ -92,13 +174,20 @@ export function PortalTourHomeEntry() {
   return (
     <motion.button
       type="button"
-      className="home-summary-card portal-tour-home-entry"
+      className={[
+        "home-summary-card",
+        "portal-tour-home-entry",
+        isLoading ? "portal-tour-home-entry--loading" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-tour="home-portal-tour-resume"
+      aria-busy={isLoading}
+      disabled={isLoading}
       onClick={handleOpen}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      initial={false}
+      whileHover={isLoading ? undefined : { y: -2 }}
+      whileTap={isLoading ? undefined : { scale: 0.98 }}
     >
       <span className="home-summary-icon">
         <Trophy size={18} aria-hidden />
@@ -106,14 +195,8 @@ export function PortalTourHomeEntry() {
 
       <span className="home-summary-main">
         <span className="home-summary-title">Descubra o portal</span>
-        <span className="home-summary-value">
-          {display.requiredTotal > 0
-            ? `${display.requiredDone}/${display.requiredTotal}`
-            : "Explorar"}
-        </span>
-        <span className="home-summary-sub">
-          {display.progressPercent}% · {display.explorerLevel}
-        </span>
+        <span className="home-summary-value">{valueLabel}</span>
+        <span className="home-summary-sub">{subLabel}</span>
       </span>
 
       <span className="home-summary-arrow">

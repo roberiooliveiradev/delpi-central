@@ -16,7 +16,6 @@ export function resolvePortalTourHomeEntryState(
   userId: string | undefined,
   progress: PortalTourProgressResponse | null,
   catalog: PortalTourCatalogResponse | null,
-  panelOpen: boolean,
 ): PortalTourHomeEntryState {
   const empty: PortalTourHomeEntryState = {
     ready: Boolean(catalog),
@@ -33,7 +32,7 @@ export function resolvePortalTourHomeEntryState(
 
   const tourCompleted = isPortalTourFullyCompleted(userId, progress);
 
-  if (tourCompleted || panelOpen) {
+  if (tourCompleted) {
     return { ...empty, ready: true };
   }
 
@@ -67,7 +66,7 @@ export function resolvePortalTourHomeEntryState(
     requiredTotal > 0 ? Math.round((requiredDone / requiredTotal) * 100) : 0;
 
   const visible =
-    !tourCompleted && progressPercent < 100 && !panelOpen && requiredTotal > 0;
+    !tourCompleted && progressPercent < 100 && requiredTotal > 0;
 
   return {
     ready: true,

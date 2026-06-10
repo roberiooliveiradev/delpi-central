@@ -84,6 +84,7 @@ Lista agrupada no painel por categoria (`PORTAL_TOUR_CATEGORY_ORDER`).
 
 | ID | Título | Disponibilidade |
 |---|---|---|
+| `sidebar-logo-home` | Voltar à home pelo logo | Sidebar expandida, fora da home |
 | `home-summary-notifications` | Resumo de notificações | Card na home |
 | `home-favorites` | Favoritos na home | Seção `#home-favorites` |
 | `home-recent` | Apps recentes | Seção `#home-recent` |
@@ -161,6 +162,7 @@ Requer `rbac.manage` ou superadmin.
 | Seletor | Componente |
 |---|---|
 | `[data-tour="sidebar-favorites"]` | `.sidebar-content` em `Sidebar.tsx` |
+| `[data-tour="sidebar-logo"]` | Logo Minha DELPI no topo da sidebar |
 | `[data-tour="sidebar-apps"]` | Item **Apps** no footer |
 | `[data-tour="sidebar-notifications"]` | Item **Notificações** no footer |
 | `[data-tour="sidebar-notifications-panel"]` | Dropdown de notificações |

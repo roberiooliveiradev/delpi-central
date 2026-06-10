@@ -602,6 +602,15 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   cursor: pointer;
 }
 
+.portal-tour-home-entry--loading {
+  cursor: default;
+  pointer-events: none;
+}
+
+.portal-tour-home-entry--loading .home-summary-sub {
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+}
+
 .portal-tour-quest-toggle {
   width: 100%;
   display: flex;

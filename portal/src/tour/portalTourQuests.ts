@@ -117,6 +117,27 @@ export function getPortalTourQuests({
 
     // —— Home ——
     {
+      id: "sidebar-logo-home",
+      title: "Voltar à home pelo logo",
+      hint: "Use o ícone Minha DELPI para ir à página inicial.",
+      steps: [
+        "Com a sidebar visível, localize o logo no topo.",
+        "Clique no ícone Minha DELPI.",
+        "Você será levado à página inicial.",
+      ],
+      unlockHint:
+        "Saia da home — abra um app ou outra página — e clique no logo na sidebar.",
+      scope: "sidebar",
+      category: "home",
+      actionSelector: '[data-tour="sidebar-logo"]',
+      highlightSelector: '[data-tour="sidebar-logo"]',
+      isAvailable: () =>
+        !isLauncherOpen() &&
+        sidebarVisible() &&
+        !isHomeRoute() &&
+        hasVisibleTarget('[data-tour="sidebar-logo"]'),
+    },
+    {
       id: "home-summary-notifications",
       title: "Resumo de notificações",
       hint: "Veja quantas mensagens não lidas você tem.",

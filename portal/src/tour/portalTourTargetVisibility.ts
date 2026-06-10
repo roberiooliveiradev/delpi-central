@@ -24,6 +24,7 @@ const HIGHLIGHT_PRIORITY: Record<string, number> = {
   "pin-app": 100,
   "launcher-search": 98,
   "open-apps": 95,
+  "sidebar-logo-home": 88,
   "sidebar-favorites": 85,
   "page-notifications-inbox": 84,
   "page-notifications-filter": 83,

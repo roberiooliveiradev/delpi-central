@@ -439,16 +439,19 @@ export const Sidebar = () => {
         {!collapsed && (
           <>
             <div className="sidebar-header">
-              <div
+              <button
+                type="button"
                 className="sidebar-logo"
+                data-tour="sidebar-logo"
                 onClick={() => navigate("/")}
-                style={{ cursor: "pointer" }}
+                aria-label="Ir para a página inicial"
               >
                 <img
                   src="/logoMinhaDelpi.svg"
-                  alt="Transforma mais DELPI"
+                  alt=""
+                  aria-hidden
                 />
-              </div>
+              </button>
 
               <button
                 className="collapse-btn"

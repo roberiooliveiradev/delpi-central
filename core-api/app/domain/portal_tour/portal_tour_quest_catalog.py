@@ -104,6 +104,13 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             scope="launcher",
         ),
         _quest(
+            id="sidebar-logo-home",
+            title="Voltar à home pelo logo",
+            hint="Clique no ícone Minha DELPI na sidebar.",
+            category="home",
+            scope="sidebar",
+        ),
+        _quest(
             id="home-summary-notifications",
             title="Resumo de notificações",
             hint="Veja quantas mensagens não lidas você tem.",

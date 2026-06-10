@@ -45,20 +45,42 @@ Um único componente (`AppLauncherCard`) atende todos os contextos; variações 
 
 ## 4. Grid de cards (`.launcher-pinned-grid`)
 
-Definido em **`AppLauncherCard.css`** para carregar em qualquer página que importe o card (home, perfil, modal).
+Definido em **`AppLauncherCard.css`** para carregar em qualquer página que importe o card (home, perfil).
 
 ```css
-grid-template-columns: repeat(auto-fill, minmax(110px, 120px));
+grid-template-columns: repeat(auto-fill, minmax(112px, 128px));
 justify-content: center;
 ```
 
-Comportamento:
+Comportamento (home / perfil):
 
-- Cada card ocupa **no máximo ~120px** de largura.
+- Cada card ocupa **no máximo ~128px** de largura.
 - Com poucos apps, os cards **não esticam** e ficam **centralizados** na área disponível.
 - Painéis da home usam `align-items: start` e `height: fit-content` para não criar área vazia entre colunas.
 
-**Modal Apps:** altura `auto` com `max-height: min(85vh, 640px)`; scroll interno quando há muitos apps.
+**Modal Apps** (`AppLauncher.css` — sobrescreve o grid):
+
+- Largura: `clamp(360px, 94vw, 1120px)`; altura: `min(90vh, 860px)` com scroll interno (`.launcher-body`).
+- Grid flexível: `repeat(auto-fill, minmax(120px, 1fr))` — cards **preenchem** a largura do modal.
+- Overlay com padding **16px** (mais área útil que o default anterior).
+
+### 4.1 Tipografia dos nomes
+
+| Contexto | Tamanho base | Tiers (medium / long) |
+|---|---|---|
+| Grid home / modal / perfil | **15px** | 14px / 13px |
+| Sidebar — app | **15px** | ellipsis em 1 linha |
+| Sub-rotas inline (modal expandido) | **15px** | — |
+| Sub-rotas sidebar | **13px** | — |
+
+Regra canônica: `.launcher-app-tile:not(.sidebar-variant) .launcher-app-name { font-size: 15px; }`.
+
+### 4.2 Hover (grid / modal / home / perfil)
+
+Em `@media (hover: hover)`, tiles fora da sidebar recebem destaque suave ao hover:
+
+- Fundo ~10% primary, borda ~30% primary, sombra leve, `translateY(-1px)`.
+- Transições alinhadas à sidebar: **320ms** no tile, **280ms** no nome.
 
 ---
 
