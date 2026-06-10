@@ -390,8 +390,8 @@ Atualizar **Status** ao concluir cada fase.
 | Fase | Tema | Entregas principais | Testes / CI | Status |
 |------|------|---------------------|-------------|--------|
 | **P1** | Interpretação universal | `ChatDataInsightService`; `dataAnswer`; detectores genéricos; narrativa consome insight; migração `dataCommentary` | `test_chat_data_insight_service.py`; casos H-01–H-10 | ✅ |
-| **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-profiles`; tier A | 🟡 |
-| **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ⬜ |
+| **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-commentary-profiles`; tier A | ✅ |
+| **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | 🟡 |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ⬜ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ⬜ |
 
@@ -424,17 +424,25 @@ Atualizar **Status** ao concluir cada fase.
 - `ChatPresentationProfileService.commentary_profile_key()`
 - `ChatOperationalDataCommentaryService.resolve_profile_key()` lê perfil declarativo (sem `if` por path)
 
-**Próximo em P2:**
+**Entregue (P2 — jun/2026):**
 
-1. Migrar regras residuais por path restantes para perfil + shape.
-2. Documentar registry no catálogo e estender `audit_presentation_coverage`.
+- `commentaryProfileKey` / `narrativePolicy` nos perfis operacionais, `table_list`, `generic`, `kpi_series`
+- `ChatPresentationProfileService.commentary_profile_key()`
+- `resolve_profile_key` sem mapa hardcoded por path
+- Audit `--check-commentary-profiles` + colunas CSV `commentary_profile_key`, `narrative_policy`
 
 ### 8.3 P3 — Preferência e automático
 
-1. Reordenar `ExecuteExternalActionUseCase._build_presentation_metadata` conforme §5.
-2. Implementar `ChatPresentationDecisionService.compute_scores()`.
-3. Persistir `scores` + `purpose` no metadata.
-4. Garantir paridade send/stream e MFE (`chatPresentation.ts`).
+**Em curso (jun/2026):**
+
+- Pipeline reordenado: insight → decision → narrative → stack (ponto único de enrichment)
+- `ChatPresentationDecisionService.compute_scores()` + `readingLayers` + `purpose`/`message` de `dataAnswer`
+
+**Próximo em P3:**
+
+1. Seleção automática por maior `scores` quando sem preferência explícita.
+2. Garantir paridade send/stream e MFE (`chatPresentation.ts`).
+3. `purpose` obrigatório em todo `presentationDecision` com visual.
 
 ### 8.4 P4 — UX premium
 

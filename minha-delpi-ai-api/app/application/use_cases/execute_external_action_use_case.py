@@ -507,19 +507,6 @@ class ExecuteExternalActionUseCase:
             entity=entity,
         )
 
-        from app.domain.services.chat_operational_commentary_enrichment_service import (
-            ChatOperationalCommentaryEnrichmentService,
-        )
-
-        ChatOperationalCommentaryEnrichmentService.enrich_metadata(
-            metadata,
-            data=sanitized_data,
-            format_quantity=lambda value, field_key=None: self.presenter._format_field_value(
-                str(field_key or "available_quantity"),
-                value,
-            ),
-        )
-
         from app.domain.services.chat_presentation_primary_view_service import (
             ChatPresentationPrimaryViewService,
         )
@@ -606,6 +593,9 @@ class ExecuteExternalActionUseCase:
                 )
             )
 
+        from app.domain.services.chat_operational_commentary_enrichment_service import (
+            ChatDataInsightEnrichmentService,
+        )
         from app.domain.services.chat_presentation_humanized_narrative_service import (
             ChatPresentationHumanizedNarrativeService,
         )
@@ -613,8 +603,17 @@ class ExecuteExternalActionUseCase:
             ChatPresentationStackOrderService,
         )
 
-        ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
-        ChatPresentationStackOrderService.enrich_metadata(metadata)
+        operational_root = self.presenter._unwrap_data(sanitized_data)
+
+        if isinstance(operational_root, dict):
+            ChatDataInsightEnrichmentService.enrich_metadata(
+                metadata,
+                data=operational_root,
+                format_quantity=lambda value, field_key=None: self.presenter._format_field_value(
+                    str(field_key or "available_quantity"),
+                    value,
+                ),
+            )
 
         ChatPresentationDecisionService.enrich_metadata(
             metadata,
@@ -623,6 +622,8 @@ class ExecuteExternalActionUseCase:
             user_preference=explicit_preference,
             axis_user_message=user_message,
         )
+        ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+        ChatPresentationStackOrderService.enrich_metadata(metadata)
 
         from app.domain.services.chat_rich_presentation_text_service import (
             ChatRichPresentationTextService,
@@ -647,22 +648,6 @@ class ExecuteExternalActionUseCase:
         )
 
         ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
-
-        from app.domain.services.chat_operational_commentary_enrichment_service import (
-            ChatOperationalCommentaryEnrichmentService,
-        )
-
-        operational_root = self.presenter._unwrap_data(sanitized_data)
-
-        if isinstance(operational_root, dict):
-            ChatOperationalCommentaryEnrichmentService.enrich_metadata(
-                metadata,
-                data=operational_root,
-                format_quantity=lambda value, field_key=None: self.presenter._format_field_value(
-                    str(field_key or "available_quantity"),
-                    value,
-                ),
-            )
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)

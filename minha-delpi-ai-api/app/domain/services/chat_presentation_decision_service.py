@@ -132,6 +132,145 @@ class ChatPresentationDecisionService:
         return False
 
     @classmethod
+    def compute_scores(
+        cls,
+        *,
+        data_shape: dict[str, Any] | None,
+        available_views: list[str] | None = None,
+        user_message: str | None = None,
+    ) -> dict[str, int]:
+        shape = data_shape if isinstance(data_shape, dict) else {}
+        message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
+        recommended = str(shape.get("recommended") or "").strip()
+        row_count = int(shape.get("rows") or 0)
+
+        scores: dict[str, int] = {
+            "text": 25,
+            "table": 20,
+            "chart": 10,
+            "tree": 5,
+            "kpi": 10,
+            "dashboard": 10,
+            "canvas": 5,
+        }
+
+        if shape.get("hasDate") or recommended == "line_chart":
+            scores["chart"] += 40
+            scores["table"] += 10
+
+        if shape.get("hasCategory") or recommended in {"horizontal_bar", "donut", "bar_chart"}:
+            scores["chart"] += 45
+            scores["table"] += 15
+
+        if shape.get("hasHierarchy") or recommended == "tree":
+            scores["tree"] += 50
+            scores["text"] += 10
+
+        if recommended == "kpi" or (row_count <= 1 and shape.get("hasNumeric")):
+            scores["kpi"] += 40
+
+        if row_count >= 8:
+            scores["table"] += 35
+
+        if row_count >= 20:
+            scores["chart"] += 10
+
+        if any(token in message for token in ("resumo", "status", "situação", "situacao", "como está")):
+            scores["text"] += 30
+
+        if any(token in message for token in ("ranking", "maiores", "top ", "concentração", "concentracao")):
+            scores["chart"] += 25
+
+        if any(token in message for token in ("relatório", "relatorio", "lousa", "canvas")):
+            scores["canvas"] += 35
+            scores["text"] += 10
+
+        views = {
+            str(view).strip().lower()
+            for view in (available_views or [])
+            if str(view or "").strip()
+        }
+
+        if views:
+            for key in list(scores.keys()):
+                if key not in views and scores[key] < 30:
+                    scores[key] = 0
+
+        return {key: min(value, 100) for key, value in scores.items() if value > 0}
+
+    @classmethod
+    def _attach_scores_and_reading_layers(
+        cls,
+        decision: dict[str, Any],
+        *,
+        metadata: dict[str, Any],
+        table_rows: list[dict[str, Any]] | None,
+        user_message: str | None,
+    ) -> None:
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        shape_meta = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
+        analyzed = ChatPresentationDataShapeAnalyzer.analyze(rows=table_rows)
+        merged_shape = {**analyzed, **shape_meta}
+
+        decision["scores"] = cls.compute_scores(
+            data_shape=merged_shape,
+            available_views=decision.get("availableViews")
+            if isinstance(decision.get("availableViews"), list)
+            else None,
+            user_message=user_message,
+        )
+
+        reading_layers = ChatHumanizedDataResponseContentService.get_node("readingLayers")
+
+        if isinstance(reading_layers, dict) and reading_layers:
+            decision["readingLayers"] = reading_layers
+
+        purpose = cls._purpose_from_metadata(metadata)
+
+        if purpose and not str(decision.get("purpose") or "").strip():
+            decision["purpose"] = purpose
+
+        message = cls._message_from_metadata(metadata)
+
+        if message and not str(decision.get("message") or "").strip():
+            decision["message"] = message
+
+    @classmethod
+    def _purpose_from_metadata(cls, metadata: dict[str, Any]) -> str:
+        data_answer = metadata.get("dataAnswer")
+
+        if not isinstance(data_answer, dict):
+            return ""
+
+        summary = data_answer.get("summary")
+
+        if not isinstance(summary, dict):
+            return ""
+
+        next_action = str(summary.get("nextAction") or "").strip()
+
+        if next_action:
+            return next_action
+
+        return str(summary.get("answer") or "").strip()[:240]
+
+    @classmethod
+    def _message_from_metadata(cls, metadata: dict[str, Any]) -> str:
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(metadata)
+
+        if not isinstance(commentary, dict):
+            return ""
+
+        return str(commentary.get("summary") or "").strip()[:320]
+
+    @classmethod
     def _stack_commentary_insight(cls, metadata: dict[str, Any]) -> str:
         from app.domain.services.chat_humanized_data_response_service import (
             ChatHumanizedDataResponseService,
@@ -569,6 +708,12 @@ class ChatPresentationDecisionService:
 
         table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
             metadata.get("presentation")
+        )
+        cls._attach_scores_and_reading_layers(
+            decision,
+            metadata=metadata,
+            table_rows=table_rows,
+            user_message=user_message,
         )
         shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
         narrative_markdown = ""

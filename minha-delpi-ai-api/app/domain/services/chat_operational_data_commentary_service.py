@@ -22,10 +22,6 @@ _Narrative = ExternalActionOperationalRouteNarrativeService
 _CONTENT_SECTION = "compositeAnalysisInsights"
 _MP_LOW_COVERAGE_PA_THRESHOLD = 3.0
 
-_ENTITY_PROFILE_MAP = {
-    "product_factory_status": "factory_status",
-}
-
 _PROFILE_CONTENT_MAP = {
     "factory_status": "factoryStatus",
     "production_status": "productionStatus",
@@ -57,9 +53,6 @@ class ChatOperationalDataCommentaryService:
 
             if isinstance(api_meta, dict):
                 entity_token = str(api_meta.get("entity") or "").strip()
-
-        if entity_token in _ENTITY_PROFILE_MAP:
-            presentation_key = presentation_key or _ENTITY_PROFILE_MAP[entity_token]
 
         if not presentation_key:
             presentation_key = ChatPresentationProfileService.resolve_profile_key(

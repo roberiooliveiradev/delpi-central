@@ -80,6 +80,11 @@ def main() -> int:
         action="store_true",
         help="Falha se qualquer gate R12 (perfis, roles, chips, path baseline) divergir",
     )
+    parser.add_argument(
+        "--check-commentary-profiles",
+        action="store_true",
+        help="Falha se rotas tier A não tiverem commentaryProfileKey declarativo no perfil",
+    )
     args = parser.parse_args()
 
     report = ChatPresentationCoverageService.build_report(baseline_path=args.baseline)
@@ -216,6 +221,28 @@ def main() -> int:
                 print(f"  - {gap}", file=sys.stderr)
         else:
             print("\nOK: tierAPipelineCases — chips pós-resposta declarados")
+
+    if args.check_commentary_profiles:
+        commentary_validation = ChatPresentationCoverageService.validate_commentary_profiles_for_ci(
+            openapi_baseline_path=args.baseline,
+        )
+        commentary_gaps = commentary_validation.get("commentaryProfileGaps") or []
+
+        if commentary_gaps:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(commentary_gaps)} gap(s) de commentaryProfileKey tier A",
+                file=sys.stderr,
+            )
+
+            for gap in commentary_gaps[:12]:
+                print(
+                    f"  - [{gap['kind']}] {gap['operation_id']} "
+                    f"{gap['path']} ({gap['detail']})",
+                    file=sys.stderr,
+                )
+        else:
+            print("\nOK: tier A com commentaryProfileKey declarativo ou resolvido")
 
     if args.check_playbook12:
         from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402

@@ -58,6 +58,8 @@ class PresentationCoverageRow:
     tier: str
     routed_by: str
     profile_key: str
+    commentary_profile_key: str | None = None
+    narrative_policy: str | None = None
 
 
 @dataclass(frozen=True)
@@ -246,6 +248,13 @@ class ChatPresentationCoverageService:
         tier = cls.classify_tier(entity=entity, path=path)
         entity_routed = ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity)
         profile_key = cls.resolve_profile_key(path=path, entity=entity)
+        profile = ChatPresentationProfileService.profile(profile_key)
+        commentary_profile_key = ChatPresentationProfileService.commentary_profile_key(
+            profile_key,
+            path=path,
+            entity=entity,
+        )
+        narrative_policy = str(profile.get("narrativePolicy") or "").strip() or None
 
         return PresentationCoverageRow(
             method=method,
@@ -257,6 +266,8 @@ class ChatPresentationCoverageService:
             tier=tier,
             routed_by=routed_by,
             profile_key=profile_key,
+            commentary_profile_key=commentary_profile_key,
+            narrative_policy=narrative_policy,
         )
 
     @classmethod
@@ -388,6 +399,58 @@ class ChatPresentationCoverageService:
                 )
 
         return gaps
+
+    @classmethod
+    def find_commentary_profile_gaps(
+        cls,
+        rows: list[PresentationCoverageRow],
+    ) -> list[PresentationCoverageGap]:
+        gaps: list[PresentationCoverageGap] = []
+
+        for row in rows:
+            if row.tier != "A" or not row.entity:
+                continue
+
+            profile = ChatPresentationProfileService.profile(row.profile_key)
+            explicit = str(profile.get("commentaryProfileKey") or "").strip()
+
+            if explicit:
+                continue
+
+            if row.commentary_profile_key:
+                continue
+
+            gaps.append(
+                PresentationCoverageGap(
+                    kind="missing_commentary_profile",
+                    operation_id=row.operation_id,
+                    path=row.path,
+                    entity=row.entity,
+                    tier=row.tier,
+                    profile_key=row.profile_key,
+                    detail=(
+                        f"perfil «{row.profile_key}» tier A sem commentaryProfileKey "
+                        "declarativo em presentation_profiles.json"
+                    ),
+                )
+            )
+
+        return gaps
+
+    @classmethod
+    def validate_commentary_profiles_for_ci(
+        cls,
+        *,
+        openapi_baseline_path: Path | None = None,
+    ) -> dict[str, Any]:
+        rows = cls.build_matrix(baseline_path=openapi_baseline_path)
+        gaps = cls.find_commentary_profile_gaps(rows)
+
+        return {
+            "commentaryProfileGaps": [asdict(gap) for gap in gaps],
+            "gapCount": len(gaps),
+            "ok": not gaps,
+        }
 
     @classmethod
     def find_new_operations(
@@ -553,7 +616,8 @@ class ChatPresentationCoverageService:
     @classmethod
     def rows_to_csv(cls, rows: list[PresentationCoverageRow]) -> str:
         header = (
-            "method,path,operation_id,tags,entity,entity_routed,tier,routed_by,profile_key"
+            "method,path,operation_id,tags,entity,entity_routed,tier,routed_by,profile_key,"
+            "commentary_profile_key,narrative_policy"
         )
         lines = [header]
 
@@ -572,6 +636,8 @@ class ChatPresentationCoverageService:
                         row.tier,
                         row.routed_by,
                         row.profile_key,
+                        cls._csv_cell(row.commentary_profile_key or ""),
+                        cls._csv_cell(row.narrative_policy or ""),
                     ]
                 )
             )

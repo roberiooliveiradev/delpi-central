@@ -304,7 +304,10 @@
       },
       "presentationDecision": {
         "defaultTextStack": true
-      }
+      },
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
     },
     "stock": {
       "defaultViewPolicy": "text_when_available",
@@ -380,7 +383,9 @@
       "textEmbedTreeOutline": true,
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
-      }
+      },
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "table_list": {
       "defaultViewPolicy": "table_when_available",
@@ -603,7 +608,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "structure_exclusivity"
+      "compositeVisualSpec": "structure_exclusivity",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",
@@ -711,7 +718,9 @@
         "narrativeFirstMaxRows": 12
       },
       "humanizedNarrative": "skip",
-      "compositeVisualSpec": "sale_pricing"
+      "compositeVisualSpec": "sale_pricing",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "last_purchase": {
       "defaultViewPolicy": "generic",
@@ -855,7 +864,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "purchase_list"
+      "compositeVisualSpec": "purchase_list",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
@@ -908,7 +919,10 @@
       "flags": [
         "kpi",
         "chart"
-      ]
+      ],
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
     },
     "kpi_snapshot": {
       "defaultViewPolicy": "generic",
