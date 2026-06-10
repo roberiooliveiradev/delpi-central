@@ -57,6 +57,7 @@ def test_factory_status_rich_text_stack_with_visuals():
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
     assert "kpi" in (plan.get("tailVisualOrder") or [])
+    assert "tailVisuals" in (plan.get("narrativeOrder") or [])
 
 
 def test_structure_exclusivity_nested_tree_dedup_and_shared_mp_narrative():

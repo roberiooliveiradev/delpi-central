@@ -90,6 +90,42 @@ def test_stock_route_has_dedicated_humanized_sections():
     assert plan["sectionVisibility"].get("structure") is not True
 
 
+def test_factory_route_includes_tail_visuals_when_kpi_present():
+    metadata = {
+        "path": "/products/90269002/factory-status",
+        "textPresentation": {
+            "markdown": (
+                "### Status fabril — 90269002\n\n"
+                "**Destaques**\n\n"
+                "- OP aberta.\n"
+            ),
+        },
+        "kpiPresentation": {
+            "type": "kpi",
+            "title": "Indicadores fabris",
+            "cards": [{"label": "MPs", "value": 1}],
+        },
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estrutura",
+            "root": {"id": "90269002", "label": "90269002", "children": []},
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Estoque de matérias-primas",
+                "rows": [{"raw_material_code": "10019001"}],
+            },
+        ],
+    }
+
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan["presentationProfile"] == "product_factory_status"
+    assert "tailVisuals" in plan["narrativeOrder"]
+    assert "kpi" in plan["tailVisualOrder"]
+
+
 def test_filter_analyser_highlights_drops_absence_bullets():
     insights = [
         "Estrutura com 6 itens.",

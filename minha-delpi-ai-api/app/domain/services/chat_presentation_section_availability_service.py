@@ -52,7 +52,7 @@ class ChatPresentationSectionAvailabilityService:
             plan["humanizedSections"] = True
             plan["sectionVisibility"] = visibility
             plan["sectionFraming"] = cls._build_factory_framing(metadata, visibility)
-            plan["narrativeOrder"] = cls._narrative_order_for_factory(visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_factory(visibility, metadata)
             return plan
 
         if ChatPresentationRoutePolicyService.is_production_status_route(lowered):
@@ -61,7 +61,7 @@ class ChatPresentationSectionAvailabilityService:
             plan["humanizedSections"] = True
             plan["sectionVisibility"] = visibility
             plan["sectionFraming"] = cls._build_production_framing(metadata, visibility)
-            plan["narrativeOrder"] = cls._narrative_order_for_production(visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_production(visibility, metadata)
             return plan
 
         if ChatPresentationRoutePolicyService.is_shipping_status_route(lowered):
@@ -70,7 +70,7 @@ class ChatPresentationSectionAvailabilityService:
             plan["humanizedSections"] = True
             plan["sectionVisibility"] = visibility
             plan["sectionFraming"] = cls._build_shipping_framing(metadata, visibility)
-            plan["narrativeOrder"] = cls._narrative_order_for_shipping(visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_shipping(visibility, metadata)
             return plan
 
         if ChatPresentationRoutePolicyService.is_structure_exclusivity_route(lowered):
@@ -253,7 +253,25 @@ class ChatPresentationSectionAvailabilityService:
         return framing
 
     @classmethod
-    def _narrative_order_for_factory(cls, visibility: dict[str, bool]) -> list[str]:
+    def _should_include_tail_visuals(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> bool:
+        if visibility.get(cls._STRUCTURE):
+            return True
+
+        return any(
+            cls._slot_has_type(metadata, presentation_type)
+            for presentation_type in ("kpi", "tree", "chart", "dashboard")
+        )
+
+    @classmethod
+    def _narrative_order_for_factory(
+        cls,
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+    ) -> list[str]:
         order = ["lead"]
 
         if visibility.get(cls._HIGHLIGHTS):
@@ -266,13 +284,20 @@ class ChatPresentationSectionAvailabilityService:
         ):
             order.append("operationalTables")
 
+        if cls._should_include_tail_visuals(metadata, visibility):
+            order.append("tailVisuals")
+
         if visibility.get(cls._ATTENTION):
             order.append("attention")
 
         return order
 
     @classmethod
-    def _narrative_order_for_production(cls, visibility: dict[str, bool]) -> list[str]:
+    def _narrative_order_for_production(
+        cls,
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+    ) -> list[str]:
         order = ["lead"]
 
         if visibility.get(cls._HIGHLIGHTS):
@@ -280,6 +305,9 @@ class ChatPresentationSectionAvailabilityService:
 
         if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
             order.append("operationalTables")
+
+        if cls._should_include_tail_visuals(metadata, visibility):
+            order.append("tailVisuals")
 
         if visibility.get(cls._ATTENTION):
             order.append("attention")
@@ -436,7 +464,11 @@ class ChatPresentationSectionAvailabilityService:
         return order
 
     @classmethod
-    def _narrative_order_for_shipping(cls, visibility: dict[str, bool]) -> list[str]:
+    def _narrative_order_for_shipping(
+        cls,
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+    ) -> list[str]:
         order = ["lead"]
 
         if visibility.get(cls._HIGHLIGHTS):
@@ -444,6 +476,9 @@ class ChatPresentationSectionAvailabilityService:
 
         if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
             order.append("operationalTables")
+
+        if cls._should_include_tail_visuals(metadata, visibility):
+            order.append("tailVisuals")
 
         if visibility.get(cls._ATTENTION):
             order.append("attention")
