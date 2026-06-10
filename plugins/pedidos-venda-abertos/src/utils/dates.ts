@@ -71,3 +71,21 @@ export function isWithinDateRange(
   if (end && value > end) return false;
   return true;
 }
+
+export type OpVsPedidoPrazoStatus = "no_prazo" | "atrasado" | "indeterminado";
+
+/** Compara fim previsto da OP com a data de entrega solicitada no pedido. */
+export function resolveOpVsPedidoPrazo(
+  dataFimPrevistaOp: string | null | undefined,
+  dataEntregaPedido: string | null | undefined,
+): { status: OpVsPedidoPrazoStatus; label: string } {
+  if (!dataFimPrevistaOp || !dataEntregaPedido) {
+    return { status: "indeterminado", label: "—" };
+  }
+
+  if (compareDeliveryDates(dataFimPrevistaOp, dataEntregaPedido) <= 0) {
+    return { status: "no_prazo", label: "No prazo" };
+  }
+
+  return { status: "atrasado", label: "Atrasado" };
+}

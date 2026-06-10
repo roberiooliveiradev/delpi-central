@@ -7,11 +7,13 @@ import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
 import { useTableFontSize } from "../hooks/useTableFontSize";
 import { formatDisplayDate } from "../utils/dates";
 import { formatCurrency, formatQuantity } from "../utils/format";
+import { canOpenOpPrevisaoModal, getLineOpPrevisao } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { getLineStatus } from "../utils/statusBadges";
 import type { SortDirection, SortKey } from "../utils/sortItems";
 import { isSortableTableColumnKey, type TableColumnKey } from "../utils/tableColumns";
 import { exportPedidosExcel } from "../utils/exportPedidosExcel";
+import { OpPrevisaoModal } from "./OpPrevisaoModal";
 import { StatusBadge } from "./StatusBadge";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
@@ -35,7 +37,37 @@ function rowKey(row: PedidosVendaAbertosItem): string {
   return `${row.filial}-${row.pedido}-${row.linha}-${row.produto}`;
 }
 
-function renderCell(row: PedidosVendaAbertosItem, key: TableColumnKey) {
+function renderPrevisaoCell(
+  row: PedidosVendaAbertosItem,
+  onOpenModal: (row: PedidosVendaAbertosItem) => void,
+) {
+  const previsao = getLineOpPrevisao(row);
+
+  if (previsao.previsaoLabel === "—") {
+    return "—";
+  }
+
+  if (canOpenOpPrevisaoModal(row)) {
+    return (
+      <button
+        type="button"
+        className="pva-link-btn"
+        onClick={() => onOpenModal(row)}
+        title="Ver OPs utilizadas na previsão"
+      >
+        {previsao.previsaoLabel}
+      </button>
+    );
+  }
+
+  return previsao.previsaoLabel;
+}
+
+function renderCell(
+  row: PedidosVendaAbertosItem,
+  key: TableColumnKey,
+  onOpenModal: (row: PedidosVendaAbertosItem) => void,
+) {
   switch (key) {
     case "nome_cliente":
       return (
@@ -69,6 +101,8 @@ function renderCell(row: PedidosVendaAbertosItem, key: TableColumnKey) {
       return formatQuantity(getAllocatedStock(row));
     case "data_entrega":
       return formatDisplayDate(row.data_entrega);
+    case "previsao_entrega_op":
+      return renderPrevisaoCell(row, onOpenModal);
     case "data_despacho":
       return row.data_despacho ? formatDisplayDate(row.data_despacho) : "Não informado";
     case "valor_aberto":
@@ -94,6 +128,7 @@ export function PedidosTable({
   emptyMessage = "Nenhum registro encontrado.",
 }: PedidosTableProps) {
   const [exporting, setExporting] = useState(false);
+  const [modalItem, setModalItem] = useState<PedidosVendaAbertosItem | null>(null);
   const { preferences, visibleColumns, visibleColumnCount, setColumnVisible, resetPreferences } =
     useTableColumnPreferences();
   const {
@@ -124,98 +159,107 @@ export function PedidosTable({
   };
 
   return (
-    <section className="pva-card pva-table-card" aria-label="Pedidos em aberto" style={tableStyle}>
-      <div className="pva-table-card__toolbar">
-        <p className="pva-table-card__hint">
-          {visibleColumnCount} coluna(s) visível(is)
-          {exportRows.length > 0 ? ` · ${exportRows.length.toLocaleString("pt-BR")} linha(s) para exportar` : ""}.
-        </p>
-        <div className="pva-table-card__actions">
-          <button
-            type="button"
-            className="pva-btn pva-btn--ghost pva-btn--sm"
-            disabled={exportRows.length === 0 || exporting}
-            onClick={() => void handleExportExcel()}
-          >
-            <FileSpreadsheet size={16} aria-hidden="true" />
-            {exporting ? "Exportando…" : "Excel"}
-          </button>
-          <TableFontSizeControls
-            fontSize={fontSize}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            isDefault={isDefault}
-            onIncrease={increase}
-            onDecrease={decrease}
-            onReset={reset}
-          />
-          <TableColumnSettings
-            visibility={preferences.visibility}
-            onToggleColumn={setColumnVisible}
-            onReset={resetPreferences}
-          />
+    <>
+      <section className="pva-card pva-table-card" aria-label="Pedidos em aberto" style={tableStyle}>
+        <div className="pva-table-card__toolbar">
+          <p className="pva-table-card__hint">
+            {visibleColumnCount} coluna(s) visível(is)
+            {exportRows.length > 0 ? ` · ${exportRows.length.toLocaleString("pt-BR")} linha(s) para exportar` : ""}.
+            Previsão (OP) = data em que o saldo faltante da linha seria coberto pelas OPs abertas (FIFO).
+          </p>
+          <div className="pva-table-card__actions">
+            <button
+              type="button"
+              className="pva-btn pva-btn--ghost pva-btn--sm"
+              disabled={exportRows.length === 0 || exporting}
+              onClick={() => void handleExportExcel()}
+            >
+              <FileSpreadsheet size={16} aria-hidden="true" />
+              {exporting ? "Exportando…" : "Excel"}
+            </button>
+            <TableFontSizeControls
+              fontSize={fontSize}
+              canIncrease={canIncrease}
+              canDecrease={canDecrease}
+              isDefault={isDefault}
+              onIncrease={increase}
+              onDecrease={decrease}
+              onReset={reset}
+            />
+            <TableColumnSettings
+              visibility={preferences.visibility}
+              onToggleColumn={setColumnVisible}
+              onReset={resetPreferences}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="pva-table-wrap">
-        <table className="pva-table">
-          <thead>
-            <tr>
-              {visibleColumns.map((column) => (
-                <th key={column.key} className={column.className}>
-                  {column.sortable ? (
-                    <button
-                      type="button"
-                      className="pva-table__sort-btn"
-                      onClick={() => {
-                        if (isSortableTableColumnKey(column.key)) {
-                          onSort(column.key);
-                        }
-                      }}
-                    >
-                      <span>{column.label}</span>
-                      <span aria-hidden="true">
-                        {sortIndicator(sortKey === column.key, sortDirection)}
-                      </span>
-                    </button>
-                  ) : (
-                    column.label
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        <div className="pva-table-wrap">
+          <table className="pva-table">
+            <thead>
               <tr>
-                <td colSpan={visibleColumnCount} className="pva-table__empty">
-                  Carregando…
-                </td>
+                {visibleColumns.map((column) => (
+                  <th key={column.key} className={column.className}>
+                    {column.sortable ? (
+                      <button
+                        type="button"
+                        className="pva-table__sort-btn"
+                        onClick={() => {
+                          if (isSortableTableColumnKey(column.key)) {
+                            onSort(column.key);
+                          }
+                        }}
+                      >
+                        <span>{column.label}</span>
+                        <span aria-hidden="true">
+                          {sortIndicator(sortKey === column.key, sortDirection)}
+                        </span>
+                      </button>
+                    ) : (
+                      column.label
+                    )}
+                  </th>
+                ))}
               </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={visibleColumnCount} className="pva-table__empty">
-                  {emptyMessage}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={rowKey(row)}>
-                  {visibleColumns.map((column) => (
-                    <td
-                      key={column.key}
-                      className={column.className}
-                      data-label={column.label}
-                    >
-                      {renderCell(row, column.key)}
-                    </td>
-                  ))}
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={visibleColumnCount} className="pva-table__empty">
+                    Carregando…
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={visibleColumnCount} className="pva-table__empty">
+                    {emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr key={rowKey(row)}>
+                    {visibleColumns.map((column) => (
+                      <td
+                        key={column.key}
+                        className={column.className}
+                        data-label={column.label}
+                      >
+                        {renderCell(row, column.key, setModalItem)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <OpPrevisaoModal
+        item={modalItem}
+        open={modalItem != null}
+        onClose={() => setModalItem(null)}
+      />
+    </>
   );
 }

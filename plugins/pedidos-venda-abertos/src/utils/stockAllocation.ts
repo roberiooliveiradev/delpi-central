@@ -1,5 +1,6 @@
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { compareDeliveryDates } from "./dates";
+import { roundQuantity } from "./quantityMath";
 
 export function buildStockGroupKey(item: PedidosVendaAbertosItem): string {
   return `${item.filial}::${item.produto}`;
@@ -27,7 +28,7 @@ function compareLinesForStockAllocation(
 }
 
 function resolvePhysicalStock(items: PedidosVendaAbertosItem[]): number {
-  return Math.max(0, ...items.map((item) => item.no_estoque ?? 0));
+  return roundQuantity(Math.max(0, ...items.map((item) => item.no_estoque ?? 0)));
 }
 
 /**
@@ -54,10 +55,10 @@ export function allocateStockToOrders(
     const sorted = [...groupItems].sort(compareLinesForStockAllocation);
 
     for (const item of sorted) {
-      const saldo = Math.max(0, item.saldo ?? 0);
-      const allocated = Math.min(remaining, saldo);
+      const saldo = roundQuantity(Math.max(0, item.saldo ?? 0));
+      const allocated = roundQuantity(Math.min(remaining, saldo));
       allocatedByLine.set(buildLineKey(item), allocated);
-      remaining -= allocated;
+      remaining = roundQuantity(remaining - allocated);
     }
   }
 

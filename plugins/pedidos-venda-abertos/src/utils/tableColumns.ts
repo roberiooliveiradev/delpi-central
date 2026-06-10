@@ -14,7 +14,8 @@ export type TableColumnKey =
   | "data_entrega"
   | "data_despacho"
   | "valor_aberto"
-  | "status";
+  | "status"
+  | "previsao_entrega_op";
 
 export type TableColumnDef = {
   key: TableColumnKey;
@@ -34,10 +35,11 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "entregue", label: "Entregue", className: "pva-table__col--numeric" },
   { key: "saldo", label: "Saldo", sortable: true, className: "pva-table__col--numeric" },
   { key: "no_estoque", label: "Est. alocado", className: "pva-table__col--numeric" },
-  { key: "data_entrega", label: "Entrega", sortable: true },
+  { key: "data_entrega", label: "Entrega pedido", sortable: true },
+  { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
   { key: "data_despacho", label: "Despacho", sortable: true },
   { key: "valor_aberto", label: "Valor aberto", sortable: true, className: "pva-table__col--numeric" },
-  { key: "status", label: "Status" },
+  { key: "status", label: "Status estoque" },
 ];
 
 export const TABLE_COLUMN_KEYS = TABLE_COLUMNS.map((column) => column.key);

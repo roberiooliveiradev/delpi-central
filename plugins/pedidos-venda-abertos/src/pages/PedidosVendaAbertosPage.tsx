@@ -18,6 +18,7 @@ export function PedidosVendaAbertosPage() {
   const {
     loading,
     error,
+    opsWarning,
     reload,
     allItemsCount,
     paginatedItems,
@@ -112,6 +113,15 @@ export function PedidosVendaAbertosPage() {
               onChange={updateFilters}
               onReset={resetFilters}
             />
+
+            {opsWarning ? (
+              <div className="pva-alert pva-alert--warning" role="status">
+                <p>
+                  Pedidos carregados, mas a previsão produtiva (OPs abertas) não está disponível:{" "}
+                  {opsWarning}
+                </p>
+              </div>
+            ) : null}
 
             <PedidosTable
               rows={paginatedItems}

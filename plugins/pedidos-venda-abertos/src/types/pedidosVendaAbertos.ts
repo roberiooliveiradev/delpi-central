@@ -1,3 +1,5 @@
+import type { LineOpPrevisao } from "../types/opPrevisao";
+
 export type PedidosVendaAbertosSummary = {
   total_linhas: number;
   valor_total_aberto: number;
@@ -24,6 +26,7 @@ export type PedidosVendaAbertosItem = {
   no_estoque: number;
   /** Estoque efetivamente reservado para a linha após alocação FIFO por produto/filial. */
   estoque_alocado?: number;
+  previsao_op?: LineOpPrevisao;
   preco_venda: number;
   valor_aberto: number;
 };

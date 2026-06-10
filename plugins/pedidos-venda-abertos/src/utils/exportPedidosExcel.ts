@@ -1,5 +1,6 @@
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatDisplayDate } from "./dates";
+import { getLineOpPrevisao } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
 import { getLineStatus } from "./statusBadges";
 import type { TableColumnDef, TableColumnKey } from "./tableColumns";
@@ -7,6 +8,8 @@ import type { TableColumnDef, TableColumnKey } from "./tableColumns";
 type ExportCellValue = string | number | null;
 
 function itemExportValue(item: PedidosVendaAbertosItem, key: TableColumnKey): ExportCellValue {
+  const previsao = getLineOpPrevisao(item);
+
   switch (key) {
     case "nome_cliente":
       return item.nome_cliente || "";
@@ -30,6 +33,8 @@ function itemExportValue(item: PedidosVendaAbertosItem, key: TableColumnKey): Ex
       return getAllocatedStock(item);
     case "data_entrega":
       return item.data_entrega ? formatDisplayDate(item.data_entrega) : "";
+    case "previsao_entrega_op":
+      return previsao.previsaoLabel === "—" ? "" : previsao.previsaoLabel;
     case "data_despacho":
       return item.data_despacho ? formatDisplayDate(item.data_despacho) : "";
     case "valor_aberto":

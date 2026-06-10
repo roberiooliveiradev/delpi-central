@@ -10,6 +10,7 @@ import {
   type PedidosVendaAbertosFilters,
 } from "../utils/filterItems";
 import { allocateStockToOrders } from "../utils/stockAllocation";
+import { allocateOpsToOrders, buildOpsProductIndex } from "../utils/opAllocation";
 import { usePedidosVendaAbertos } from "./usePedidosVendaAbertos";
 import {
   DEFAULT_SORT,
@@ -21,7 +22,7 @@ import {
 export const PAGE_SIZE = 50;
 
 export function usePedidosVendaAbertosDashboard() {
-  const { data, loading, error, reload } = usePedidosVendaAbertos();
+  const { data, opsData, opsWarning, loading, error, reload } = usePedidosVendaAbertos();
   const [filters, setFilters] = useState<PedidosVendaAbertosFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
@@ -29,17 +30,24 @@ export function usePedidosVendaAbertosDashboard() {
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
+  const opsIndex = useMemo(() => buildOpsProductIndex(opsData), [opsData]);
+
   const allocatedItems = useMemo(
     () => allocateStockToOrders(allItems),
     [allItems],
   );
 
-  const filiais = useMemo(() => collectDistinctFiliais(allocatedItems), [allocatedItems]);
-  const clients = useMemo(() => collectDistinctClients(allocatedItems), [allocatedItems]);
+  const itemsWithOpPrevisao = useMemo(
+    () => allocateOpsToOrders(allocatedItems, opsIndex),
+    [allocatedItems, opsIndex],
+  );
+
+  const filiais = useMemo(() => collectDistinctFiliais(itemsWithOpPrevisao), [itemsWithOpPrevisao]);
+  const clients = useMemo(() => collectDistinctClients(itemsWithOpPrevisao), [itemsWithOpPrevisao]);
 
   const filteredItems = useMemo(
-    () => filterPedidosItems(allocatedItems, filters),
-    [allocatedItems, filters],
+    () => filterPedidosItems(itemsWithOpPrevisao, filters),
+    [itemsWithOpPrevisao, filters],
   );
 
   const sortedItems = useMemo(
@@ -92,6 +100,7 @@ export function usePedidosVendaAbertosDashboard() {
   return {
     loading,
     error,
+    opsWarning,
     reload,
     allItemsCount: allItems.length,
     filteredItems,

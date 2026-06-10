@@ -1,7 +1,7 @@
 import type { StatusBadgeDescriptor } from "../utils/statusBadges";
 
 type StatusBadgeProps = {
-  badge: StatusBadgeDescriptor;
+  badge: Pick<StatusBadgeDescriptor, "label" | "tone">;
 };
 
 export function StatusBadge({ badge }: StatusBadgeProps) {

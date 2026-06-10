@@ -323,3 +323,28 @@ def test_pedidos_venda_abertos_returns_meta(mock_build) -> None:
         shape="composite_analysis",
     )
 
+
+@patch(
+    "app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router.build_list_ops_abertas_use_case"
+)
+def test_ops_abertas_pedidos_venda_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.pedidos_venda_abertos.pedidos_venda_abertos_router import (
+        list_ops_abertas_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "resumo": [],
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_ops_abertas_route()
+    _assert_meta(
+        _body(response),
+        operation_id="list_ops_abertas_pedidos_venda",
+        shape="composite_analysis",
+    )
+
