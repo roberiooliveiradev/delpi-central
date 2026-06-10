@@ -33,6 +33,18 @@ jobs:
       - name: Gate perfis OpenAPI × presentation_profiles
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-profiles
 
+      - name: Gate role em tabelas tier A (tierAPipelineCases)
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-table-roles
+
+      - name: Alerta visualBuilders vs viewOrder
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-visual-builders
+
+      - name: Gate chips pós-resposta tier A
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-interactivity-chips
+
+      - name: Gate Playbook 12 consolidado (R12)
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-playbook12
+
       - name: Testes cobertura e contrato por entidade
         run: |
           PYTHONPATH=. pytest \
@@ -43,7 +55,10 @@ jobs:
             tests/unit/domain/services/test_chat_presentation_format_vocabulary_service.py \
             tests/unit/domain/services/test_chat_pagination_consolidation_service.py \
             tests/unit/application/use_cases/test_presentation_session_format_respected.py \
+            tests/unit/application/use_cases/test_playbook_presentation_pipeline_regression.py \
+            tests/unit/domain/services/test_chat_presentation_table_role_service.py \
+            tests/unit/domain/services/test_tier_a_presentation_interactivity.py \
+            tests/unit/domain/services/test_chat_presentation_profile_auto_chart.py \
+            tests/unit/domain/services/test_playbook12_regression_suite.py \
+            tests/unit/domain/services/test_presentation_refactor_baseline.py \
             -q
-
-      - name: Alerta operações novas vs baseline congelado
-        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-new-operations

@@ -52,6 +52,8 @@ export type ChatPresentation =
   | {
       type: "table";
       title: string;
+      /** Papel no stack humanizado — emitido pela API (Playbook 12 R1). */
+      role?: string;
       columns: {
         key: string;
         label: string;
@@ -241,6 +243,8 @@ export type ChatPresentationDecision = {
   }> | null;
   policyNotice?: string | null;
   availableViews?: string[] | null;
+  presentationProfileKey?: string | null;
+  stackPresentationPlan?: Record<string, unknown> | null;
   dataShape?: {
     rows?: number;
     columns?: number;

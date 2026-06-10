@@ -110,3 +110,18 @@ def test_build_report_writes_serializable_rows() -> None:
     assert isinstance(report["summary"], dict)
     assert isinstance(report["rows"], list)
     assert report["rows"]
+
+
+def test_validate_table_roles_for_ci_passes_on_tier_a_fixtures() -> None:
+    from tests.fixtures.presentation_table_role_gate import validate_table_roles_for_ci
+
+    validation = validate_table_roles_for_ci()
+
+    assert validation["ok"] is True
+    assert not validation["tableRoleGaps"]
+
+
+def test_find_visual_builder_warnings_has_no_tier_a_gaps() -> None:
+    warnings = ChatPresentationCoverageService.find_visual_builder_warnings()
+
+    assert warnings == []

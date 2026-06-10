@@ -54,3 +54,19 @@ def test_enrich_metadata_skips_pricing_route():
     ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
 
     assert "**Panorama**" not in metadata["textPresentation"]["markdown"]
+
+
+def test_enrich_metadata_skips_stock_profile():
+    metadata = {
+        "path": "/products/10080001/stock",
+        "apiDelpiResponseMeta": {"entity": "product_stock"},
+        "textPresentation": {
+            "markdown": "### Estoque\n\nTexto curto.",
+        },
+        "tablePresentations": [{"type": "table", "role": "profile", "rows": [{"campo": "x", "valor": "y"}]}],
+        "kpiPresentation": {"type": "kpi", "cards": [{"label": "Saldo", "value": 1, "unit": ""}]},
+    }
+
+    ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+
+    assert "**Panorama**" not in metadata["textPresentation"]["markdown"]

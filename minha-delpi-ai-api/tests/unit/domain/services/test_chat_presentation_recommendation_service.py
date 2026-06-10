@@ -203,5 +203,5 @@ def test_profile_view_chips_respect_available_views_and_profile_order():
     labels = [item["label"] for item in suggestions]
 
     assert "Ver como tabela" in labels
-    assert "Gerar gráfico" in labels
+    assert "Ver em gráfico" in labels
     assert "Só com saldo" in labels

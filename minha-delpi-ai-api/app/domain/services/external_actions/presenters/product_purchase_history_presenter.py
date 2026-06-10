@@ -316,292 +316,48 @@ class ExternalActionProductPurchaseHistoryPresenter:
         }
 
     def build_purchase_history_kpi_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_kpi_assembly_service import (
-            ChatPresentationKpiAssemblyService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        code, _description = self._product_context(root, path)
-        summary = self._summary(root)
-        items = self._items(root)
-
-        if not summary and not items:
-            return None
-
-        title = (
-            self._route(path, "kpiTitle", code=code)
-            if code
-            else self._route(path, "kpiTitleGeneric")
+        return ChatPresentationProfileCompositeVisualService.build_kpi(
+            self._host,
+            root,
+            path
         )
-        cards: list[dict[str, Any]] = []
-        namespace = self._route_namespace(path)
-
-        if namespace == "purchasePriceHistory":
-            if summary.get("total_purchases") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiTotalPurchases"),
-                        value=int(summary.get("total_purchases") or 0),
-                        unit="NF",
-                        color="#6366f1",
-                        key="total_purchases",
-                    )
-                )
-
-            if summary.get("avg_unit_price") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiAvgPrice"),
-                        value=float(summary.get("avg_unit_price") or 0),
-                        unit="R$",
-                        color="#10b981",
-                        key="avg_unit_price",
-                    )
-                )
-
-            if summary.get("last_variation_percent") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiLastVariation"),
-                        value=float(summary.get("last_variation_percent") or 0),
-                        unit="%",
-                        color="#f59e0b",
-                        key="last_variation_percent",
-                    )
-                )
-        else:
-            if summary.get("total_items") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiTotalItems"),
-                        value=int(summary.get("total_items") or 0),
-                        unit="",
-                        color="#6366f1",
-                        key="total_items",
-                    )
-                )
-
-            if summary.get("total_requisitions") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiRequisitions"),
-                        value=int(summary.get("total_requisitions") or 0),
-                        unit="SC",
-                        color="#0ea5e9",
-                        key="total_requisitions",
-                    )
-                )
-
-            if summary.get("total_purchase_orders") is not None:
-                cards.append(
-                    ChatPresentationKpiAssemblyService.metric_card(
-                        label=self._route(path, "kpiPurchaseOrders"),
-                        value=int(summary.get("total_purchase_orders") or 0),
-                        unit="PC",
-                        color="#8b5cf6",
-                        key="total_purchase_orders",
-                    )
-                )
-
-        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
 
     def build_purchase_history_chart_presentation(self, root: dict, path: str) -> dict | None:
-        items = self._enriched_items(root, path)
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
+        )
 
-        if len(items) < 2:
-            return None
-
-        code, _description = self._product_context(root, path)
-        namespace = self._route_namespace(path)
-
-        if namespace == "purchasePriceHistory":
-            unit_label = self._route(path, "chartUnitPriceLabel")
-            chart_data: list[dict[str, Any]] = []
-
-            for index, item in enumerate(items[:20], start=1):
-                supplier = str(item.get("supplier_group") or item.get("supplier_name") or item.get("supplier_code") or "").strip()
-                label = supplier or f"#{index}"
-                chart_data.append(
-                    {
-                        "name": label,
-                        unit_label: float(item.get("unit_price") or 0),
-                    }
-                )
-
-            return {
-                "type": "chart",
-                "title": (
-                    self._route(path, "chartTitle", code=code)
-                    if code
-                    else self._route(path, "chartTitleGeneric")
-                ),
-                "chartType": "line_chart",
-                "data": chart_data,
-                "config": {
-                    "xAxis": "name",
-                    "yAxis": [unit_label],
-                    "colors": ["#0ea5e9"],
-                    "legend": False,
-                },
-            }
-
-        quantity_label = self._host._humanize_key("unit_price")
-        chart_data = []
-
-        for item in items[:20]:
-            source = str(item.get("source") or "—")
-            chart_data.append(
-                {
-                    "name": source,
-                    quantity_label: float(item.get("unit_price") or 0),
-                }
-            )
-
-        if len(chart_data) < 2:
-            return None
-
-        return {
-            "type": "chart",
-            "title": (
-                self._route(path, "chartTitle", code=code)
-                if code
-                else self._route(path, "chartTitleGeneric")
-            ),
-            "chartType": "horizontal_bar",
-            "data": chart_data,
-            "config": {
-                "xAxis": "name",
-                "yAxis": [quantity_label],
-                "colors": ["#8b5cf6"],
-                "legend": False,
-            },
-        }
+        return ChatPresentationProfileCompositeVisualService.build_chart(
+            self._host,
+            root,
+            path
+        )
 
     def build_purchase_history_tree_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_hierarchy_tree_service import (
-            ChatPresentationHierarchyTreeService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        items = self._enriched_items(root, path)
-
-        if not items:
-            return None
-
-        code, _description = self._product_context(root, path)
-        namespace = self._route_namespace(path)
-        title = (
-            self._route(path, "treeTitle", code=code)
-            if code
-            else self._route(path, "treeTitleGeneric")
-        )
-        group_keys = ["supplier_group"]
-
-        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
-            from app.domain.services.chat_presentation_detail_action_service import (
-                ChatPresentationDetailActionService,
-            )
-            from app.domain.services.chat_presentation_supplier_display_service import (
-                ChatPresentationSupplierDisplayService,
-            )
-
-            supplier = ChatPresentationSupplierDisplayService.format_supplier_label(
-                supplier_code=ChatPresentationSupplierDisplayService.supplier_code(item),
-                supplier_name=ChatPresentationSupplierDisplayService.supplier_name(item),
-                supplier_store=ChatPresentationSupplierDisplayService.supplier_store(item),
-            )
-
-            if namespace == "purchasePriceHistory":
-                price = str(item.get("unit_price") or "—")
-
-                return ChatPresentationHierarchyTreeService._serialize_node(
-                    node_id=f"nf:{supplier}:{price}",
-                    label=self._host._route_presentation(
-                        "purchaseHistoryShared",
-                        "treePriceLeafLabel",
-                        supplier=supplier,
-                        price=price,
-                    ),
-                    subtitle=str(item.get("variation_percent") or "").strip(),
-                    meta=item.get("_detailMeta") if isinstance(item.get("_detailMeta"), dict) else None,
-                )
-
-            source = str(item.get("source") or "—")
-            document = str(item.get("document_number") or item.get("purchase_order") or "—")
-
-            return ChatPresentationHierarchyTreeService._serialize_node(
-                node_id=f"budget:{source}:{document}",
-                label=self._host._route_presentation(
-                    "purchaseHistoryShared",
-                    "treeBudgetLeafLabel",
-                    source=source,
-                    document=document,
-                    supplier=supplier,
-                ),
-                subtitle=ChatPresentationSupplierDisplayService.format_store_label(
-                    ChatPresentationSupplierDisplayService.supplier_store(item)
-                ),
-                meta=item.get("_detailMeta") if isinstance(item.get("_detailMeta"), dict) else None,
-            )
-
-        return ChatPresentationHierarchyTreeService.build_multi_level(
-            title=title,
-            root_id=code or "purchase-history",
-            root_label=(
-                self._route(path, "treeRootLabel", code=code)
-                if code
-                else title
-            ),
-            items=items,
-            group_keys=group_keys,
-            leaf_builder=_leaf,
+        return ChatPresentationProfileCompositeVisualService.build_tree(
+            self._host,
+            root,
+            path
         )
 
-    def build_purchase_history_dashboard_presentation(
-        self,
-        root: dict,
-        path: str,
-        *,
-        kpi: dict | None = None,
-        chart: dict | None = None,
-        table: dict | None = None,
-    ) -> dict | None:
-        from app.domain.services.chat_presentation_dashboard_assembly_service import (
-            ChatPresentationDashboardAssemblyService,
+    def build_purchase_history_dashboard_presentation(self, root: dict, path: str, *, kpi: dict | None = None, chart: dict | None = None, table: dict | None = None) -> dict | None:
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        code, _description = self._product_context(root, path)
-        title = (
-            self._route(path, "dashboardTitle", code=code)
-            if code
-            else self._route(path, "dashboardTitleGeneric")
+        return ChatPresentationProfileCompositeVisualService.build_dashboard(
+            self._host,
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table
         )
-        panels: list[dict] = []
-
-        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="summary",
-                    title=str(kpi.get("title") or self._route(path, "overviewTableTitle")),
-                    presentation=kpi,
-                )
-            )
-
-        if isinstance(chart, dict) and chart.get("type") == "chart":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="chart",
-                    title=str(chart.get("title") or self._route(path, "chartTitleGeneric")),
-                    presentation=chart,
-                    chart_presentation=chart,
-                )
-            )
-
-        if isinstance(table, dict) and table.get("type") == "table":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="detail",
-                    title=str(table.get("title") or self._route(path, "itemsTableTitle")),
-                    presentation=table,
-                )
-            )
-
-        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

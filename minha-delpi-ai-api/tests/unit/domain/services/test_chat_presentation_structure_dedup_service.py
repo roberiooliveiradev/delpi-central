@@ -42,6 +42,7 @@ def test_dedupe_removes_structure_table_when_tree_present():
     assert len(metadata["tablePresentations"]) == 1
     assert metadata["tablePresentations"][0]["title"].startswith("Produto ")
     assert "table" in metadata["availableFormats"]
+    assert metadata["structureDedupApplied"] is True
 
 
 def test_dedupe_removes_tree_when_table_preferred_for_structure():
@@ -109,6 +110,30 @@ EXCLUSIVITY_TABLE = {
         }
     ],
 }
+
+
+def test_dedupe_preserves_profile_slot_when_table_also_in_bundle():
+    profile_with_role = {**PROFILE_TABLE, "role": "profile"}
+    list_table = {
+        "type": "table",
+        "title": "Ordens e apontamentos",
+        "columns": [{"key": "order", "label": "Ordem"}],
+        "rows": [{"order": "001"}],
+        "role": "list",
+    }
+    metadata = {
+        "presentation": list_table,
+        "tablePresentations": [profile_with_role, list_table],
+        "profileTablePresentation": profile_with_role,
+        "tablePresentation": None,
+        "availableFormats": ["text", "table"],
+        "preferredFormat": "table",
+    }
+
+    ChatPresentationStructureDedupService.dedupe_metadata(metadata)
+
+    assert metadata["profileTablePresentation"] == profile_with_role
+    assert len(metadata["tablePresentations"]) == 2
 
 
 def test_dedupe_removes_exclusivity_table_when_tree_present():

@@ -26,34 +26,118 @@
     "efficiency": "Eficiência fabril"
   },
   "kpiPathMatchers": [
-    { "fragment": "inventory-turnover", "titleKey": "idd" },
-    { "fragment": "stock-value", "titleKey": "stock_value" },
-    { "fragment": "closing-rate", "titleKey": "conversion" },
-    { "fragment": "new-clients", "titleKey": "new_customers" },
-    { "fragment": "new-business", "titleKey": "new_business" },
-    { "fragment": "production_cost", "titleKey": "production_cost" },
-    { "fragment": "fixed_cost", "titleKey": "fixed_cost" },
-    { "fragment": "labor_cost", "titleKey": "labor" },
-    { "fragment": "direct_labor", "titleKey": "labor" },
-    { "fragment": "effectiveness", "titleKey": "oee" },
-    { "fragment": "depreciation", "titleKey": "depreciation" },
-    { "fragment": "snapshot", "titleKey": "hr" },
-    { "fragment": "completion", "titleKey": "performance" },
-    { "fragment": "dashboard", "titleKey": "dashboard" },
-    { "fragment": "cpv", "titleKey": "cpv" },
-    { "fragment": "pmr", "titleKey": "pmr" },
-    { "fragment": "ebitda", "titleKey": "ebitda" },
-    { "fragment": "delivery", "titleKey": "otd_equipment" },
-    { "fragment": "lmp", "titleKey": "lmp_dashboard" },
-    { "fragment": "pdi", "titleKey": "pdi" },
-    { "fragment": "oee", "titleKey": "oee" },
-    { "fragment": "otd", "titleKey": "otd" },
-    { "fragment": "/commercial/", "titleKey": "commercial" },
-    { "fragment": "/finacial/", "titleKey": "financial" },
-    { "fragment": "/financial/", "titleKey": "financial" },
-    { "fragment": "/production/", "titleKey": "production" },
-    { "fragment": "/quality/", "titleKey": "quality" },
-    { "fragment": "/hr/", "titleKey": "rh" }
+    {
+      "fragment": "inventory-turnover",
+      "titleKey": "idd"
+    },
+    {
+      "fragment": "stock-value",
+      "titleKey": "stock_value"
+    },
+    {
+      "fragment": "closing-rate",
+      "titleKey": "conversion"
+    },
+    {
+      "fragment": "new-clients",
+      "titleKey": "new_customers"
+    },
+    {
+      "fragment": "new-business",
+      "titleKey": "new_business"
+    },
+    {
+      "fragment": "production_cost",
+      "titleKey": "production_cost"
+    },
+    {
+      "fragment": "fixed_cost",
+      "titleKey": "fixed_cost"
+    },
+    {
+      "fragment": "labor_cost",
+      "titleKey": "labor"
+    },
+    {
+      "fragment": "direct_labor",
+      "titleKey": "labor"
+    },
+    {
+      "fragment": "effectiveness",
+      "titleKey": "oee"
+    },
+    {
+      "fragment": "depreciation",
+      "titleKey": "depreciation"
+    },
+    {
+      "fragment": "snapshot",
+      "titleKey": "hr"
+    },
+    {
+      "fragment": "completion",
+      "titleKey": "performance"
+    },
+    {
+      "fragment": "dashboard",
+      "titleKey": "dashboard"
+    },
+    {
+      "fragment": "cpv",
+      "titleKey": "cpv"
+    },
+    {
+      "fragment": "pmr",
+      "titleKey": "pmr"
+    },
+    {
+      "fragment": "ebitda",
+      "titleKey": "ebitda"
+    },
+    {
+      "fragment": "delivery",
+      "titleKey": "otd_equipment"
+    },
+    {
+      "fragment": "lmp",
+      "titleKey": "lmp_dashboard"
+    },
+    {
+      "fragment": "pdi",
+      "titleKey": "pdi"
+    },
+    {
+      "fragment": "oee",
+      "titleKey": "oee"
+    },
+    {
+      "fragment": "otd",
+      "titleKey": "otd"
+    },
+    {
+      "fragment": "/commercial/",
+      "titleKey": "commercial"
+    },
+    {
+      "fragment": "/finacial/",
+      "titleKey": "financial"
+    },
+    {
+      "fragment": "/financial/",
+      "titleKey": "financial"
+    },
+    {
+      "fragment": "/production/",
+      "titleKey": "production"
+    },
+    {
+      "fragment": "/quality/",
+      "titleKey": "quality"
+    },
+    {
+      "fragment": "/hr/",
+      "titleKey": "rh"
+    }
   ],
   "kpiTitles": {
     "cpv": "CPV — Custo de Produção Vendido",
@@ -117,7 +201,9 @@
   "humanizedNarrative": {
     "panoramaHeader": "**Panorama**",
     "quickReadingHeader": "**Leitura rápida**",
+    "highlightsHeader": "**Destaques**",
     "attentionHeader": "**Pontos de atenção**",
+    "attentionHeaderPrefix": "**Pontos de atenção",
     "conclusionHeader": "**Conclusão**",
     "attentionLargeList": "A consulta retornou **{count}** linhas — use filtros ou a tabela para auditar casos específicos.",
     "conclusionPanelsHint": "Use as tabelas e painéis abaixo para conferir cada registro ou alternar entre KPI, gráfico e lista."
@@ -771,10 +857,26 @@
     "firstIssue": "**Primeira emissão:** {date}",
     "lastIssue": "**Última emissão:** {date}",
     "tableRows": [
-      {"campo": "Valor faturado", "rootKey": "value", "valorType": "currency"},
-      {"campo": "Documentos", "rootKey": "documents", "valorType": "quantity"},
-      {"campo": "Primeira emissão", "rootKey": "first_billing_date", "valorType": "date"},
-      {"campo": "Última emissão", "rootKey": "last_billing_date", "valorType": "date"}
+      {
+        "campo": "Valor faturado",
+        "rootKey": "value",
+        "valorType": "currency"
+      },
+      {
+        "campo": "Documentos",
+        "rootKey": "documents",
+        "valorType": "quantity"
+      },
+      {
+        "campo": "Primeira emissão",
+        "rootKey": "first_billing_date",
+        "valorType": "date"
+      },
+      {
+        "campo": "Última emissão",
+        "rootKey": "last_billing_date",
+        "valorType": "date"
+      }
     ]
   },
   "financialPmr": {
@@ -793,10 +895,30 @@
       "branchItem": "Filial {branch}: R$ {value} ({qty} un.)"
     },
     "kpiCards": [
-      {"label": "Valor total", "field": "total_stock_value", "unit": "R$", "color": "#0ea5e9"},
-      {"label": "Quantidade total", "field": "total_stock_quantity", "unit": "", "color": "#10b981"},
-      {"label": "Produtos", "field": "total_products", "unit": "", "color": "#f59e0b"},
-      {"label": "Localizações", "field": "total_locations", "unit": "", "color": "#ef4444"}
+      {
+        "label": "Valor total",
+        "field": "total_stock_value",
+        "unit": "R$",
+        "color": "#0ea5e9"
+      },
+      {
+        "label": "Quantidade total",
+        "field": "total_stock_quantity",
+        "unit": "",
+        "color": "#10b981"
+      },
+      {
+        "label": "Produtos",
+        "field": "total_products",
+        "unit": "",
+        "color": "#f59e0b"
+      },
+      {
+        "label": "Localizações",
+        "field": "total_locations",
+        "unit": "",
+        "color": "#ef4444"
+      }
     ]
   },
   "kpiCards": {
@@ -833,8 +955,19 @@
   "genericKpi": {
     "maxCards": 6,
     "minCards": 2,
-    "percentUnitKeys": ["pct", "percent", "rate"],
-    "palette": ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+    "percentUnitKeys": [
+      "pct",
+      "percent",
+      "rate"
+    ],
+    "palette": [
+      "#0ea5e9",
+      "#10b981",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#ec4899"
+    ]
   },
   "charts": {
     "defaultVisualizationTitle": "Visualização dos dados",
@@ -963,7 +1096,10 @@
         ]
       },
       "table_list": {
-        "profileKeys": ["table_list", "playbook_report"],
+        "profileKeys": [
+          "table_list",
+          "playbook_report"
+        ],
         "suggestions": [
           {
             "whenSelected": "text",
@@ -979,7 +1115,10 @@
         ]
       },
       "tree_hierarchy": {
-        "profileKeys": ["tree_hierarchy", "analyser"],
+        "profileKeys": [
+          "tree_hierarchy",
+          "analyser"
+        ],
         "suggestions": [
           {
             "whenSelected": "tree",
@@ -994,7 +1133,11 @@
         ]
       },
       "kpi_indicators": {
-        "profileKeys": ["kpi_series", "kpi_snapshot", "kpi_dashboard"],
+        "profileKeys": [
+          "kpi_series",
+          "kpi_snapshot",
+          "kpi_dashboard"
+        ],
         "suggestions": [
           {
             "whenSelected": "text",
@@ -1243,5 +1386,1318 @@
     "defaultTableTitle": "Relatório",
     "itemsReturnedLine": "Itens retornados: {count}",
     "titleWithCode": "{title} — {code}"
+  },
+  "compositeVisualSpecs": {
+    "production_status": {
+      "routeNamespace": "productionStatus",
+      "kpi": {
+        "source": "summary",
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "minCards": 2,
+        "cards": [
+          {
+            "field": "total_pa_orders",
+            "labelKey": "kpiPaOrders",
+            "unit": "OP",
+            "color": "#0ea5e9",
+            "cast": "int"
+          },
+          {
+            "field": "total_pi_orders",
+            "labelKey": "kpiPiOrders",
+            "unit": "OP",
+            "color": "#6366f1",
+            "cast": "int"
+          },
+          {
+            "field": "total_pa_reported_quantity",
+            "labelKey": "kpiPaReported",
+            "unit": "un.",
+            "color": "#10b981",
+            "cast": "float"
+          },
+          {
+            "field": "total_pi_reported_quantity",
+            "labelKey": "kpiPiReported",
+            "unit": "un.",
+            "color": "#8b5cf6",
+            "cast": "float"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "limit": 20,
+        "titleWithCodeKey": "chartOrdersTitle",
+        "titleGenericKey": "chartOrdersTitleGeneric",
+        "chartType": "horizontal_bar",
+        "namePrefix": "OP ",
+        "nameField": "production_order",
+        "series": [
+          {
+            "field": "order_quantity",
+            "humanizeField": "order_quantity"
+          },
+          {
+            "field": "reported_quantity",
+            "humanizeField": "reported_quantity"
+          }
+        ],
+        "colors": [
+          "#0ea5e9",
+          "#10b981"
+        ],
+        "legend": true
+      },
+      "tree": {
+        "kind": "multi_level",
+        "source": "items",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "production-status",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "product_type"
+        ],
+        "leaf": {
+          "idPrefix": "op:",
+          "idFields": [
+            "production_order",
+            "product_type"
+          ],
+          "labelKey": "treeOrderLeafLabel",
+          "labelFields": {
+            "order": "production_order",
+            "productType": "product_type"
+          },
+          "subtitleField": "production_started"
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartOrdersTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "ordersTableTitle"
+          }
+        ]
+      }
+    },
+    "shipping_status": {
+      "routeNamespace": "shippingStatus",
+      "kpi": {
+        "source": "summary",
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "minCards": 2,
+        "cards": [
+          {
+            "field": "total_shipped_quantity",
+            "labelKey": "kpiShipped",
+            "unit": "un.",
+            "color": "#10b981",
+            "cast": "float"
+          },
+          {
+            "field": "total_inspection_loss_quantity",
+            "labelKey": "kpiInspectionLoss",
+            "unit": "un.",
+            "color": "#ef4444",
+            "cast": "float"
+          },
+          {
+            "field": "total_reports",
+            "labelKey": "kpiReports",
+            "unit": "",
+            "color": "#6366f1",
+            "cast": "int"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "limit": 20,
+        "titleWithCodeKey": "chartMovementsTitle",
+        "titleGenericKey": "chartMovementsTitleGeneric",
+        "chartType": "horizontal_bar",
+        "namePrefix": "OP ",
+        "nameField": "production_order",
+        "series": [
+          {
+            "field": "shipped_quantity",
+            "humanizeField": "shipped_quantity"
+          },
+          {
+            "field": "inspection_loss_quantity",
+            "humanizeField": "inspection_loss_quantity"
+          }
+        ],
+        "colors": [
+          "#10b981",
+          "#ef4444"
+        ],
+        "legend": true
+      },
+      "tree": {
+        "kind": "multi_level",
+        "source": "items",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "shipping-status",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "work_center"
+        ],
+        "leaf": {
+          "idPrefix": "ship:",
+          "idFields": [
+            "production_order"
+          ],
+          "labelKey": "treeMovementLeafLabel",
+          "labelFields": {
+            "order": "production_order"
+          },
+          "subtitleField": "work_center",
+          "subtitleFallbackField": "resource_code"
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartMovementsTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "movementsTableTitle"
+          }
+        ]
+      }
+    },
+    "structure_exclusivity": {
+      "routeNamespace": "structureExclusivity",
+      "kpi": {
+        "source": "summary",
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "minCards": 2,
+        "cards": [
+          {
+            "field": "total_components",
+            "labelKey": "kpiComponents",
+            "unit": "",
+            "color": "#6366f1",
+            "cast": "int"
+          },
+          {
+            "field": "total_intermediates",
+            "labelKey": "kpiIntermediates",
+            "unit": "PI",
+            "color": "#0ea5e9",
+            "cast": "int"
+          },
+          {
+            "field": "total_raw_materials",
+            "labelKey": "kpiRawMaterials",
+            "unit": "MP",
+            "color": "#10b981",
+            "cast": "int"
+          },
+          {
+            "field": "total_exclusive_raw_materials",
+            "labelKey": "kpiExclusive",
+            "unit": "MP",
+            "color": "#8b5cf6",
+            "cast": "int"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "limit": 20,
+        "titleWithCodeKey": "chartExclusiveTitle",
+        "titleGenericKey": "chartExclusiveTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameField": "product_code",
+        "itemFilter": {
+          "field": "exclusive_raw_material",
+          "truthy": true
+        },
+        "series": [
+          {
+            "field": "accumulated_quantity",
+            "humanizeField": "accumulated_quantity"
+          }
+        ],
+        "colors": [
+          "#8b5cf6"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "kind": "flat_bom",
+        "source": "items",
+        "preprocess": "enrich_structure_rows",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "structure-exclusivity",
+        "rootLabelKey": "treeRootLabel"
+      },
+      "dashboard": {
+        "kind": "rich_panels",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "viewOrder": [
+          "kpi",
+          "tree",
+          "chart"
+        ],
+        "viewOrderWithoutTree": [
+          "kpi",
+          "chart",
+          "table"
+        ],
+        "panelTitles": {
+          "kpi": "overviewTableTitle",
+          "tree": "treeTitleGeneric",
+          "chart": "chartExclusiveTitleGeneric",
+          "table": "componentsTableTitle"
+        }
+      }
+    },
+    "factory_status": {
+      "routeNamespace": "factoryStatus",
+      "kpi": {
+        "source": "summary",
+        "requireAnySectionSummary": [
+          "structure",
+          "raw_material_stock",
+          "production",
+          "shipping"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "sectionCards": [
+          {
+            "section": "structure",
+            "field": "total_components",
+            "labelKey": "kpiComponents",
+            "unit": "",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "total_components"
+          },
+          {
+            "section": "structure",
+            "field": "total_exclusive_raw_materials",
+            "labelKey": "kpiExclusiveRawMaterials",
+            "unit": "",
+            "color": "#8b5cf6",
+            "cast": "int",
+            "key": "exclusive_raw_materials"
+          },
+          {
+            "section": "raw_material_stock",
+            "field": "total_without_stock_for_one_pa",
+            "labelKey": "kpiWithoutStock",
+            "unit": "MP",
+            "color": "#ef4444",
+            "cast": "int",
+            "key": "without_stock"
+          },
+          {
+            "section": "shipping",
+            "field": "total_shipped_quantity",
+            "labelKey": "kpiShipped",
+            "unit": "un.",
+            "color": "#10b981",
+            "cast": "float",
+            "key": "shipped_quantity"
+          }
+        ],
+        "computedCards": [
+          {
+            "type": "sum",
+            "section": "production",
+            "fields": [
+              "total_pa_orders",
+              "total_pi_orders"
+            ],
+            "labelKey": "kpiProductionOrders",
+            "unit": "OP",
+            "color": "#0ea5e9",
+            "cast": "int",
+            "key": "production_orders"
+          }
+        ]
+      },
+      "chart": {
+        "source": "section.raw_material_stock.items",
+        "preprocess": "aggregate_mp_stock",
+        "minItems": 1,
+        "limit": 20,
+        "titleWithCodeKey": "chartStockTitle",
+        "titleGenericKey": "chartStockTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameField": "raw_material_code",
+        "series": [
+          {
+            "field": "available_quantity_total",
+            "humanizeField": "available_quantity_total"
+          }
+        ],
+        "colors": [
+          "#10b981"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "primary": {
+          "source": "section.structure.items",
+          "preprocess": "enrich_structure_rows",
+          "promoteToFlatBomWhenNested": true,
+          "titleWithCodeKey": "treeTitle",
+          "titleGenericKey": "treeTitleGeneric",
+          "rootIdFallback": "factory-structure",
+          "rootLabelKey": "treeRootLabel",
+          "groupKeys": [
+            "component_type"
+          ],
+          "leaf": {
+            "idPrefix": "cmp:",
+            "idFields": [
+              "component_code",
+              "component_type"
+            ],
+            "labelKey": "treeStructureLeafLabel",
+            "labelFields": {
+              "code": {
+                "field": "component_code",
+                "alternateFields": [
+                  "raw_material_code",
+                  "component_type"
+                ]
+              },
+              "componentType": "component_type"
+            },
+            "subtitleField": "exclusive_raw_material"
+          }
+        },
+        "fallback": {
+          "source": "section.raw_material_stock.items",
+          "titleWithCodeKey": "treeStockTitle",
+          "titleGenericKey": "treeStockTitleGeneric",
+          "rootIdFallback": "factory-stock",
+          "rootLabelKey": "treeRootLabel",
+          "groupKeys": [
+            "has_stock_for_one_pa"
+          ],
+          "leaf": {
+            "idPrefix": "mp:",
+            "idFields": [
+              "raw_material_code"
+            ],
+            "labelKey": "treeStockLeafLabel",
+            "labelFields": {
+              "code": "raw_material_code"
+            },
+            "subtitleField": "has_stock_for_one_pa",
+            "metaFields": [
+              "available_quantity"
+            ]
+          }
+        }
+      },
+      "dashboard": {
+        "kind": "rich_panels",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "viewOrder": [
+          "kpi",
+          "tree",
+          "chart",
+          "table"
+        ],
+        "panelTitles": {
+          "kpi": "overviewTableTitle",
+          "tree": "treeTitleGeneric",
+          "chart": "chartStockTitleGeneric",
+          "table": "sectionStockTitle"
+        }
+      }
+    },
+    "last_purchase": {
+      "routeNamespace": "lastPurchase",
+      "kpi": {
+        "source": "last_purchase",
+        "requireAny": [
+          "last_purchase"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "field": "unit_price",
+            "labelKey": "kpiUnitPrice",
+            "unit": "R$",
+            "color": "#10b981",
+            "cast": "float",
+            "key": "unit_price"
+          },
+          {
+            "field": "icms_rate",
+            "labelKey": "kpiIcmsRate",
+            "unit": "%",
+            "color": "#6366f1",
+            "cast": "float",
+            "key": "icms_rate"
+          }
+        ]
+      },
+      "chart": {
+        "kind": "composition",
+        "source": "last_purchase",
+        "baseField": "unit_price",
+        "rateField": "icms_rate",
+        "titleWithCodeKey": "chartTitle",
+        "titleGenericKey": "chartTitleGeneric",
+        "compositionLabelKey": "chartCompositionLabel",
+        "netLabelKey": "chartNetPriceLabel",
+        "icmsLabelKey": "chartIcmsLabel",
+        "colors": [
+          "#10b981",
+          "#6366f1"
+        ],
+        "legend": true
+      },
+      "tree": {
+        "wrapSingleRecord": true,
+        "wrapSingleRecordSource": "last_purchase",
+        "wrapGroupField": "supplier_group",
+        "wrapGroupFromField": "supplier_code",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "last-purchase",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "supplier_group"
+        ],
+        "leaf": {
+          "fixedId": "last-purchase:nf",
+          "labelKey": "treeInvoiceLeafLabel",
+          "labelFields": {
+            "price": "unit_price"
+          },
+          "subtitleField": "invoice_date"
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "tableTitle"
+          }
+        ]
+      }
+    },
+    "purchase_list": {
+      "routeNamespace": "purchaseList",
+      "kpi": {
+        "source": "root",
+        "requireAny": [
+          "items"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "field": "total",
+            "labelKey": "kpiTotalOrders",
+            "unit": "PC",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "total_orders"
+          }
+        ],
+        "computedCards": [
+          {
+            "type": "items_count",
+            "source": "items",
+            "labelKey": "kpiPageOrders",
+            "unit": "nesta página",
+            "color": "#0ea5e9",
+            "key": "page_orders"
+          },
+          {
+            "type": "items_average",
+            "source": "items",
+            "field": "unit_price",
+            "labelKey": "kpiAvgPrice",
+            "unit": "R$",
+            "color": "#10b981",
+            "key": "avg_unit_price"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "minItems": 1,
+        "limit": 20,
+        "titleWithCodeKey": "chartTitle",
+        "titleGenericKey": "chartTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameField": "supplier_code",
+        "nameFallbackField": "order_number",
+        "series": [
+          {
+            "field": "ordered_quantity",
+            "humanizeField": "ordered_quantity"
+          }
+        ],
+        "colors": [
+          "#10b981"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "source": "items",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "purchases",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "supplier_code"
+        ],
+        "leaf": {
+          "idPrefix": "pc:",
+          "idFields": [
+            "order_number"
+          ],
+          "labelKey": "treeOrderLeafLabel",
+          "labelFields": {
+            "order": "order_number"
+          },
+          "subtitleField": "supplier_name",
+          "subtitleFallbackField": "supplier_code"
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "overviewTableTitle"
+          }
+        ]
+      }
+    },
+    "sale_pricing": {
+      "routeNamespace": "salePricing",
+      "kpi": {
+        "source": "prices",
+        "requireAny": [
+          "prices"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "computedCards": [
+          {
+            "type": "array_min",
+            "source": "prices",
+            "field": "sale_price",
+            "labelKey": "kpiPrimarySalePrice",
+            "unit": "R$",
+            "color": "#10b981",
+            "key": "primary_sale_price"
+          },
+          {
+            "type": "array_count",
+            "source": "prices",
+            "labelKey": "kpiPriceTables",
+            "unit": "",
+            "color": "#6366f1",
+            "key": "price_tables"
+          },
+          {
+            "type": "array_max_positive",
+            "source": "prices",
+            "field": "max_price",
+            "fallbackField": "sale_price",
+            "fallbackMinCount": 2,
+            "labelKey": "kpiMaxSalePrice",
+            "unit": "R$",
+            "color": "#0ea5e9",
+            "key": "max_sale_price",
+            "fallbackLabelKey": "kpiHighestSalePrice"
+          },
+          {
+            "type": "array_max_skip_empty",
+            "source": "prices",
+            "field": "discount_percent",
+            "labelKey": "kpiMaxDiscount",
+            "unit": "%",
+            "color": "#f59e0b",
+            "key": "max_discount_percent"
+          }
+        ]
+      },
+      "chart": {
+        "source": "prices",
+        "minItems": 2,
+        "limit": 20,
+        "titleWithCodeKey": "chartSalePriceTitle",
+        "titleGenericKey": "chartSalePriceTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameFields": [
+          "table_description",
+          "table_code"
+        ],
+        "series": [
+          {
+            "field": "sale_price",
+            "labelKey": "chartSalePriceLabel"
+          }
+        ],
+        "colors": [
+          "#10b981"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "source": "prices",
+        "injectFields": {
+          "pricing_group": "tabelas"
+        },
+        "titleWithCodeKey": "treePricingTitle",
+        "titleGenericKey": "treePricingTitleGeneric",
+        "rootIdFallback": "product-pricing",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "pricing_group"
+        ],
+        "leaf": {
+          "idPrefix": "price:",
+          "idFields": [
+            "table_code",
+            "state"
+          ],
+          "labelKey": "treeTableLeafLabel",
+          "labelFields": {
+            "table": {
+              "field": "table_description",
+              "alternateFields": [
+                "table_code"
+              ]
+            },
+            "price": {
+              "field": "sale_price",
+              "format": true
+            }
+          },
+          "subtitleField": "state",
+          "metaFields": [
+            "max_price",
+            "discount_percent"
+          ]
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartSalePriceTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "overviewTableTitle"
+          }
+        ]
+      }
+    },
+    "purchase_price_history": {
+      "routeNamespace": "purchasePriceHistory",
+      "kpi": {
+        "source": "summary",
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "field": "total_purchases",
+            "labelKey": "kpiTotalPurchases",
+            "unit": "NF",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "total_purchases"
+          },
+          {
+            "field": "avg_unit_price",
+            "labelKey": "kpiAvgPrice",
+            "unit": "R$",
+            "color": "#10b981",
+            "cast": "float",
+            "key": "avg_unit_price"
+          },
+          {
+            "field": "last_variation_percent",
+            "labelKey": "kpiLastVariation",
+            "unit": "%",
+            "color": "#f59e0b",
+            "cast": "float",
+            "key": "last_variation_percent"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "minItems": 2,
+        "limit": 20,
+        "titleWithCodeKey": "chartTitle",
+        "titleGenericKey": "chartTitleGeneric",
+        "chartType": "line_chart",
+        "nameFields": [
+          "supplier_group",
+          "supplier_name",
+          "supplier_code"
+        ],
+        "nameIndexFallback": true,
+        "series": [
+          {
+            "field": "unit_price",
+            "labelKey": "chartUnitPriceLabel"
+          }
+        ],
+        "colors": [
+          "#0ea5e9"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "source": "items",
+        "preprocess": "enrich_history_items",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "purchase-history",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "supplier_code"
+        ],
+        "leaf": {
+          "idPrefix": "nf:",
+          "idFields": [
+            "supplier_code",
+            "unit_price"
+          ],
+          "labelNamespace": "purchaseHistoryShared",
+          "labelKey": "treePriceLeafLabel",
+          "labelFields": {
+            "supplier": {
+              "formatSupplier": true
+            },
+            "price": "unit_price"
+          },
+          "subtitleField": "variation_percent",
+          "metaFields": [
+            "_detailMeta"
+          ]
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "overviewTableTitle"
+          }
+        ]
+      }
+    },
+    "purchase_budget_history": {
+      "routeNamespace": "purchaseBudgetHistory",
+      "kpi": {
+        "source": "summary",
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "field": "total_items",
+            "labelKey": "kpiTotalItems",
+            "unit": "",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "total_items"
+          },
+          {
+            "field": "total_requisitions",
+            "labelKey": "kpiRequisitions",
+            "unit": "SC",
+            "color": "#0ea5e9",
+            "cast": "int",
+            "key": "total_requisitions"
+          },
+          {
+            "field": "total_purchase_orders",
+            "labelKey": "kpiPurchaseOrders",
+            "unit": "PC",
+            "color": "#8b5cf6",
+            "cast": "int",
+            "key": "total_purchase_orders"
+          }
+        ]
+      },
+      "chart": {
+        "source": "items",
+        "minItems": 2,
+        "limit": 20,
+        "titleWithCodeKey": "chartTitle",
+        "titleGenericKey": "chartTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameField": "source",
+        "series": [
+          {
+            "field": "unit_price",
+            "humanizeField": "unit_price"
+          }
+        ],
+        "colors": [
+          "#8b5cf6"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "source": "items",
+        "preprocess": "enrich_history_items",
+        "titleWithCodeKey": "treeTitle",
+        "titleGenericKey": "treeTitleGeneric",
+        "rootIdFallback": "purchase-history",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "supplier_code"
+        ],
+        "leaf": {
+          "idPrefix": "budget:",
+          "idFields": [
+            "source",
+            "document_number"
+          ],
+          "labelNamespace": "purchaseHistoryShared",
+          "labelKey": "treeBudgetLeafLabel",
+          "labelFields": {
+            "source": "source",
+            "document": {
+              "field": "document_number",
+              "alternateFields": [
+                "purchase_order"
+              ]
+            },
+            "supplier": {
+              "formatSupplier": true
+            }
+          },
+          "subtitleFormat": "supplier_store",
+          "metaFields": [
+            "_detailMeta"
+          ]
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartTitleGeneric"
+          },
+          {
+            "id": "detail",
+            "source": "table",
+            "titleFallbackKey": "overviewTableTitle"
+          }
+        ]
+      }
+    },
+    "raw_material_price_intelligence": {
+      "routeNamespace": "rawMaterialPriceIntelligence",
+      "kpi": {
+        "source": "last_purchase",
+        "requireAny": [
+          "last_purchase",
+          "section.price_history.summary",
+          "section.budget_history.summary",
+          "indicators"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "source": "last_purchase",
+            "field": "unit_price",
+            "labelKey": "kpiLastPrice",
+            "unit": "R$",
+            "color": "#10b981",
+            "cast": "float",
+            "key": "last_unit_price"
+          },
+          {
+            "source": "section.price_history.summary",
+            "field": "avg_unit_price",
+            "alternateFields": [
+              "average_unit_price"
+            ],
+            "labelKey": "kpiAveragePrice",
+            "unit": "R$",
+            "color": "#0ea5e9",
+            "cast": "float",
+            "key": "average_unit_price"
+          },
+          {
+            "source": "section.price_history.summary",
+            "field": "total_purchases",
+            "alternateFields": [
+              "total_records"
+            ],
+            "labelKey": "kpiPriceRecords",
+            "unit": "",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "price_records"
+          },
+          {
+            "source": "section.budget_history.summary",
+            "field": "total_items",
+            "alternateFields": [
+              "total_records"
+            ],
+            "labelKey": "kpiBudgetRecords",
+            "unit": "",
+            "color": "#8b5cf6",
+            "cast": "int",
+            "key": "budget_records"
+          },
+          {
+            "source": "indicators",
+            "field": "dominant_supplier_share_percent",
+            "labelKey": "kpiDominantShare",
+            "unit": "%",
+            "color": "#f59e0b",
+            "cast": "float",
+            "key": "dominant_supplier_share"
+          }
+        ]
+      },
+      "chart": {
+        "source": "section.price_history.items",
+        "minItems": 2,
+        "limit": 20,
+        "titleWithCodeKey": "chartPriceHistoryTitle",
+        "titleGenericKey": "chartPriceHistoryTitleGeneric",
+        "chartType": "line_chart",
+        "nameFields": [
+          "supplier_code"
+        ],
+        "nameIndexFallback": true,
+        "series": [
+          {
+            "field": "unit_price",
+            "labelKey": "chartUnitPriceLabel"
+          }
+        ],
+        "colors": [
+          "#0ea5e9"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "combineSections": [
+          {
+            "section": "price_history",
+            "recordKind": "nf",
+            "preprocess": "enrich_history_items"
+          },
+          {
+            "section": "budget_history",
+            "recordKind": "orcamento",
+            "preprocess": "enrich_history_items"
+          }
+        ],
+        "titleWithCodeKey": "treeSuppliersTitle",
+        "titleGenericKey": "treeSuppliersTitleGeneric",
+        "rootIdFallback": "raw-material-price",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "supplier_group"
+        ],
+        "leaf": {
+          "idPrefix": "mp:",
+          "idFields": [
+            "supplier_code",
+            "record_kind",
+            "unit_price"
+          ],
+          "labelNamespace": "purchaseHistoryShared",
+          "labelKey": "treePriceLeafLabel",
+          "labelFields": {
+            "supplier": {
+              "formatSupplier": true
+            },
+            "price": {
+              "field": "unit_price",
+              "format": true
+            }
+          },
+          "subtitleField": "record_kind",
+          "metaFields": [
+            "record_kind",
+            "unit_price"
+          ]
+        }
+      },
+      "dashboard": {
+        "kind": "rich_panels",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "viewOrder": [
+          "kpi",
+          "chart",
+          "table"
+        ],
+        "panelTitles": {
+          "kpi": "overviewTableTitle",
+          "chart": "chartPriceHistoryTitleGeneric",
+          "table": "overviewTableTitle"
+        }
+      }
+    },
+    "cost_impact_simulation": {
+      "routeNamespace": "costImpactSimulation",
+      "kpi": {
+        "source": "summary",
+        "requireAny": [
+          "section.materials.items"
+        ],
+        "minCards": 2,
+        "titleWithCodeKey": "kpiTitle",
+        "titleGenericKey": "kpiTitleGeneric",
+        "cards": [
+          {
+            "field": "total_material_cost",
+            "labelKey": "kpiTotalMaterialCost",
+            "unit": "R$",
+            "color": "#10b981",
+            "cast": "float",
+            "key": "total_material_cost"
+          },
+          {
+            "field": "total_materials",
+            "labelKey": "kpiTotalMaterials",
+            "unit": "MP",
+            "color": "#6366f1",
+            "cast": "int",
+            "key": "total_materials"
+          },
+          {
+            "source": "simulation",
+            "field": "adjustment_percent",
+            "labelKey": "kpiAdjustmentPercent",
+            "unit": "%",
+            "color": "#0ea5e9",
+            "cast": "float",
+            "key": "adjustment_percent",
+            "skipZero": true
+          },
+          {
+            "source": "simulation",
+            "field": "projected_cost_delta",
+            "labelKey": "kpiProjectedDelta",
+            "unit": "R$",
+            "color": "#8b5cf6",
+            "cast": "float",
+            "key": "projected_cost_delta"
+          }
+        ],
+        "computedCards": [
+          {
+            "type": "first_item_field",
+            "source": "section.materials.items",
+            "field": "impact_on_material_cost_percent",
+            "labelKey": "kpiTopImpact",
+            "unit": "%",
+            "color": "#f59e0b",
+            "key": "top_impact_percent",
+            "cast": "float"
+          }
+        ]
+      },
+      "chart": {
+        "source": "section.materials.items",
+        "minItems": 2,
+        "limit": 20,
+        "titleWithCodeKey": "chartImpactTitle",
+        "titleGenericKey": "chartImpactTitleGeneric",
+        "chartType": "horizontal_bar",
+        "nameField": "raw_material_code",
+        "series": [
+          {
+            "field": "impact_on_material_cost_percent",
+            "labelKey": "chartImpactLabel"
+          }
+        ],
+        "colors": [
+          "#f59e0b"
+        ],
+        "legend": false
+      },
+      "tree": {
+        "source": "section.materials.items",
+        "injectFields": {
+          "bom_group": "materiais"
+        },
+        "titleWithCodeKey": "treeMaterialsTitle",
+        "titleGenericKey": "treeMaterialsTitleGeneric",
+        "rootIdFallback": "cost-impact",
+        "rootLabelKey": "treeRootLabel",
+        "groupKeys": [
+          "bom_group"
+        ],
+        "leaf": {
+          "idPrefix": "bom:",
+          "idFields": [
+            "raw_material_code",
+            "rank"
+          ],
+          "labelKey": "treeMaterialLeafLabel",
+          "labelFields": {
+            "code": "raw_material_code",
+            "impact": "impact_on_material_cost_percent"
+          },
+          "subtitleField": "raw_material_description",
+          "metaFields": [
+            "rank",
+            "extended_cost",
+            "impact_on_pa_cost_percent"
+          ]
+        }
+      },
+      "dashboard": {
+        "kind": "stacked",
+        "titleWithCodeKey": "dashboardTitle",
+        "titleGenericKey": "dashboardTitleGeneric",
+        "minPanels": 2,
+        "panels": [
+          {
+            "id": "summary",
+            "source": "kpi",
+            "titleFallbackKey": "overviewTableTitle"
+          },
+          {
+            "id": "chart",
+            "source": "chart",
+            "titleFallbackKey": "chartImpactTitleGeneric"
+          },
+          {
+            "id": "overview",
+            "source": "table",
+            "titleFallbackKey": "overviewTableTitle"
+          }
+        ]
+      }
+    }
   }
 }

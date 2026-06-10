@@ -21,8 +21,14 @@ import {
   type ViewFormat,
 } from "./chatPresentation";
 import {
+  getPresentationDecisionFromToolCall,
+  mapViewTokenToContentKind,
+  mapViewTokenToVisualKind,
+  resolveInitialContentKindFromDecision,
+  resolveVisualKindsFromDecision,
+} from "./presentationMetadataPolicy";
+import {
   isMultiRouteProductPresentation,
-  isStockFocusedPresentation,
   ROUTE_VISUAL_ORDER,
   type ProductRouteKey,
 } from "./presentationMultiRoute";
@@ -41,48 +47,16 @@ const FORMAT_LABELS: Record<ContentFormatKind, string> = {
   dashboard: "Painel",
 };
 
-const CHART_VIEW_TOKENS = new Set([
-  "chart",
-  "line_chart",
-  "bar_chart",
-  "horizontal_bar",
-  "donut",
-]);
-
-function mapViewTokenToVisualKind(view: string): AssistantVisualKind | null {
-  const token = view.trim().toLowerCase();
-
-  if (token === "table") {
-    return "table";
+function mapViewFormatToContentKind(format: ViewFormat | null): ContentFormatKind | null {
+  if (!format) {
+    return null;
   }
 
-  if (token === "tree") {
-    return "tree";
-  }
-
-  if (CHART_VIEW_TOKENS.has(token) || token.includes("chart")) {
-    return "chart";
-  }
-
-  if (token === "kpi") {
-    return "kpi";
-  }
-
-  if (token === "dashboard") {
-    return "dashboard";
-  }
-
-  return null;
-}
-
-function mapViewTokenToContentKind(view: string): ContentFormatKind | null {
-  const token = view.trim().toLowerCase();
-
-  if (token === "text") {
+  if (format === "text") {
     return "text";
   }
 
-  return mapViewTokenToVisualKind(view);
+  return format;
 }
 
 function hasTextFormatContent(segments: AssistantContentSegment[]): boolean {
@@ -125,9 +99,24 @@ export function collectPresentVisualKinds(
   return kinds;
 }
 
+function resolveRouteVisualOrder(
+  routeKey: ProductRouteKey,
+  toolCall?: ChatToolCall,
+): AssistantVisualKind[] {
+  const decision = getPresentationDecisionFromToolCall(toolCall);
+  const fromDecision = resolveVisualKindsFromDecision(decision);
+
+  if (fromDecision?.length) {
+    return fromDecision;
+  }
+
+  return ROUTE_VISUAL_ORDER[routeKey];
+}
+
 export function resolveRouteSectionFormatOptions(
   sectionSegments: AssistantContentSegment[],
   routeKey: ProductRouteKey,
+  toolCall?: ChatToolCall,
 ): VisualFormatOption[] {
   const orderedKinds: ContentFormatKind[] = [];
 
@@ -135,7 +124,7 @@ export function resolveRouteSectionFormatOptions(
     orderedKinds.push("text");
   }
 
-  for (const visualKind of ROUTE_VISUAL_ORDER[routeKey]) {
+  for (const visualKind of resolveRouteVisualOrder(routeKey, toolCall)) {
     if (hasFormatContent(sectionSegments, visualKind) && !orderedKinds.includes(visualKind)) {
       orderedKinds.push(visualKind);
     }
@@ -154,42 +143,18 @@ export function resolveRouteSectionFormatOptions(
 }
 
 export function resolveInitialToolbarKindForRoute(
-  routeKey: ProductRouteKey,
+  _routeKey: ProductRouteKey,
   options: VisualFormatOption[],
+  toolCall?: ChatToolCall,
 ): ContentFormatKind | null {
   if (options.length < 2) {
     return options[0]?.kind ?? null;
   }
 
   const available = options.map((item) => item.kind);
+  const decision = getPresentationDecisionFromToolCall(toolCall);
 
-  if (routeKey === "stock") {
-    if (available.includes("table")) {
-      return "table";
-    }
-
-    if (available.includes("chart")) {
-      return "chart";
-    }
-  }
-
-  if (routeKey === "structure" || routeKey === "parents") {
-    if (available.includes("tree")) {
-      return "tree";
-    }
-
-    if (available.includes("table")) {
-      return "table";
-    }
-  }
-
-  if (routeKey === "guide" || routeKey === "inspection" || routeKey === "profile") {
-    if (available.includes("table")) {
-      return "table";
-    }
-  }
-
-  return null;
+  return resolveInitialContentKindFromDecision(decision, available);
 }
 
 export function shouldUsePerSectionFormatToolbar(toolCalls: ChatToolCall[]): boolean {
@@ -244,64 +209,6 @@ export function resolveAvailableVisualFormatOptions(
   }));
 }
 
-function mapViewFormatToContentKind(format: ViewFormat | null): ContentFormatKind | null {
-  if (!format) {
-    return null;
-  }
-
-  if (format === "text") {
-    return "text";
-  }
-
-  return format;
-}
-
-function isTableFirstRouteToolCalls(toolCalls: ChatToolCall[]): boolean {
-  for (const toolCall of toolCalls) {
-    if (toolCall.name && toolCall.name !== "execute_external_action") {
-      continue;
-    }
-
-    const path = String((toolCall.metadata as Record<string, unknown> | undefined)?.path ?? "")
-      .trim()
-      .toLowerCase();
-
-    if (
-      path.includes("/guide") ||
-      path.includes("/inspection") ||
-      path.includes("/suppliers") ||
-      path.includes("/customers") ||
-      path.includes("/stock")
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function isStructureHeavyToolCalls(toolCalls: ChatToolCall[]): boolean {
-  for (const toolCall of toolCalls) {
-    if (toolCall.name && toolCall.name !== "execute_external_action") {
-      continue;
-    }
-
-    const path = String((toolCall.metadata as Record<string, unknown> | undefined)?.path ?? "")
-      .trim()
-      .toLowerCase();
-
-    if (
-      path.includes("/structure") ||
-      path.includes("/parents") ||
-      path.includes("/analyser")
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 export function resolveDefaultVisualKind(
   toolCalls: ChatToolCall[],
   options: VisualFormatOption[],
@@ -332,25 +239,7 @@ export function resolveDefaultVisualKind(
     }
   }
 
-  if (
-    available.includes("tree") &&
-    available.includes("table") &&
-    isStructureHeavyToolCalls(toolCalls)
-  ) {
-    return "tree";
-  }
-
-  if (available.includes("table") && isTableFirstRouteToolCalls(toolCalls)) {
-    const preferred = getPreferredFormatFromToolCalls(toolCalls);
-
-    if (preferred === "chart" && available.includes("chart")) {
-      return "chart";
-    }
-
-    return "table";
-  }
-
-  return available[0] ?? null;
+  return resolveInitialContentKindFromDecision(decision, available);
 }
 
 function isTextModeInterleavedSegment(segment: AssistantContentSegment): boolean {
@@ -419,49 +308,18 @@ export function resolveInitialToolbarKind(
     return null;
   }
 
-  if (isStockFocusedPresentation(toolCalls)) {
-    const decision = getPresentationDecisionFromToolCalls(toolCalls);
-    const selected = mapPresentationDecisionToViewFormat(decision?.selected);
-    const available = options.map((item) => item.kind);
-
-    if (selected === "chart" && available.includes("chart")) {
-      return "chart";
-    }
-
-    if (available.includes("table")) {
-      return "table";
-    }
-  }
-
   if (shouldShowCompleteStackView(toolCalls)) {
     if (!hasExplicitPresentationFormatChoice(toolCalls)) {
       return null;
     }
 
     const decision = getPresentationDecisionFromToolCalls(toolCalls);
-    const fromDecision = mapPresentationDecisionToViewFormat(decision?.selected);
     const available = options.map((item) => item.kind);
 
-    if (fromDecision) {
-      const mapped = mapViewFormatToContentKind(fromDecision);
-
-      if (mapped && available.includes(mapped)) {
-        return mapped;
-      }
-    }
-
-    const preferred = getPreferredFormatFromToolCalls(toolCalls);
-
-    if (preferred) {
-      const mapped = mapViewFormatToContentKind(preferred);
-
-      if (mapped && available.includes(mapped)) {
-        return mapped;
-      }
-    }
-
-    return null;
+    return resolveInitialContentKindFromDecision(decision, available);
   }
 
   return resolveDefaultVisualKind(toolCalls, options);
 }
+
+export { mapViewTokenToVisualKind, mapViewTokenToContentKind };

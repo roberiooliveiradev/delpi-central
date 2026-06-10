@@ -17,6 +17,10 @@ from app.composition.content_composer import configure_domain_infrastructure_por
 from app.domain.services.chat_presentation_coverage_service import (  # noqa: E402
     ChatPresentationCoverageService,
 )
+from tests.fixtures.presentation_interactivity_gate import (  # noqa: E402
+    validate_tier_a_interactivity_cases,
+)
+from tests.fixtures.presentation_table_role_gate import validate_table_roles_for_ci  # noqa: E402
 
 configure_domain_infrastructure_ports()
 
@@ -55,6 +59,26 @@ def main() -> int:
         "--check-new-operations",
         action="store_true",
         help="Falha se houver operações novas vs baseline sem entidade/perfil",
+    )
+    parser.add_argument(
+        "--check-table-roles",
+        action="store_true",
+        help="Falha se fixtures tier A (tierAPipelineCases) produzirem tabela sem role",
+    )
+    parser.add_argument(
+        "--check-visual-builders",
+        action="store_true",
+        help="Alerta se perfil declarar viewOrder kpi/tree/chart/dashboard sem visualBuilders",
+    )
+    parser.add_argument(
+        "--check-interactivity-chips",
+        action="store_true",
+        help="Falha se fixtures tier A com expected_interactivity_labels não produzirem chips",
+    )
+    parser.add_argument(
+        "--check-playbook12",
+        action="store_true",
+        help="Falha se qualquer gate R12 (perfis, roles, chips, path baseline) divergir",
     )
     args = parser.parse_args()
 
@@ -142,6 +166,93 @@ def main() -> int:
                         f"{gap['path']} ({gap['detail']})",
                         file=sys.stderr,
                     )
+
+    if args.check_table_roles:
+        table_role_validation = validate_table_roles_for_ci()
+        table_role_gaps = table_role_validation.get("tableRoleGaps") or []
+
+        if table_role_gaps:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(table_role_gaps)} gap(s) de role em tier A",
+                file=sys.stderr,
+            )
+
+            for gap in table_role_gaps[:12]:
+                print(
+                    f"  - [{gap['case_id']}] {gap['profile_key']} {gap['path']} "
+                    f"({gap['detail']})",
+                    file=sys.stderr,
+                )
+        else:
+            print("\nOK: tierAPipelineCases — todas as tabelas com role")
+
+    if args.check_visual_builders:
+        builder_validation = ChatPresentationCoverageService.validate_visual_builders_for_ci()
+        warnings = builder_validation.get("visualBuilderWarnings") or []
+
+        if warnings:
+            print(f"\nAVISO: {len(warnings)} perfil(is) com viewOrder sem visualBuilders")
+
+            for warning in warnings[:12]:
+                print(
+                    f"  - {warning['profile_key']} view={warning['view']} "
+                    f"({warning['detail']})"
+                )
+        else:
+            print("\nOK: viewOrder alinhado a visualBuilders")
+
+    if args.check_interactivity_chips:
+        chip_gaps = validate_tier_a_interactivity_cases()
+
+        if chip_gaps:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(chip_gaps)} gap(s) de chips pós-resposta tier A",
+                file=sys.stderr,
+            )
+
+            for gap in chip_gaps[:12]:
+                print(f"  - {gap}", file=sys.stderr)
+        else:
+            print("\nOK: tierAPipelineCases — chips pós-resposta declarados")
+
+    if args.check_playbook12:
+        from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402
+            validate_playbook12_ci_gates,
+        )
+
+        playbook12 = validate_playbook12_ci_gates(
+            openapi_baseline_path=args.baseline,
+            stored_baseline_path=args.stored_baseline,
+        )
+        blocking = playbook12.get("blockingIssues") or []
+        warnings = playbook12.get("visualBuilderWarnings") or []
+
+        if blocking:
+            exit_code = 1
+            print(
+                f"\nERRO: Playbook 12 — {len(blocking)} gate(s) bloqueante(s)",
+                file=sys.stderr,
+            )
+
+            for issue in blocking[:20]:
+                print(f"  - {issue}", file=sys.stderr)
+        else:
+            print(
+                "\nOK: Playbook 12 — entity contract + gates CI "
+                f"({playbook12.get('entityContractCaseCount')} entidades, "
+                f"{playbook12.get('tierAPipelineCaseCount')} fixtures tier A)"
+            )
+
+        if warnings:
+            print(f"\nAVISO: {len(warnings)} perfil(is) com viewOrder sem visualBuilders")
+
+            for warning in warnings[:12]:
+                print(
+                    f"  - {warning['profile_key']} view={warning['view']} "
+                    f"({warning['detail']})"
+                )
 
     return exit_code
 

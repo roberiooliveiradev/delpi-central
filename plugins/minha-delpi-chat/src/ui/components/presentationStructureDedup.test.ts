@@ -29,6 +29,21 @@ describe("presentationStructureDedup", () => {
     expect(isHierarchyDuplicateTable(structureTable)).toBe(true);
   });
 
+  it("confia no metadata quando structureDedupApplied está true", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          structureDedupApplied: true,
+          presentation: tree,
+          tablePresentation: structureTable,
+        },
+      },
+    ]);
+
+    expect(shouldSkipTableSegment(structureTable, toolCalls)).toBe(false);
+  });
+
   it("não monta tabela de estrutura quando a árvore já está no turno", () => {
     const toolCalls = fixtureToolCalls([
       {

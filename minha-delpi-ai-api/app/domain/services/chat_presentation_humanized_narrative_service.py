@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
-from app.domain.services.chat_presentation_route_policy_service import (
-    ChatPresentationRoutePolicyService,
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
 )
 from app.domain.services.chat_rich_presentation_text_service import (
     ChatRichPresentationTextService,
 )
 
-_ATTENTION_HEADER_RE = re.compile(r"\*\*Pontos de atenção")
-_PANORAMA_HEADER_RE = re.compile(r"\*\*Panorama\*\*")
 _SCOPE_MARKER = "<!-- section:scope -->"
 
 
@@ -60,12 +57,7 @@ class ChatPresentationHumanizedNarrativeService:
 
     @classmethod
     def _should_enrich(cls, metadata: dict[str, Any], markdown: str) -> bool:
-        path = str(metadata.get("path") or "").lower()
-
-        if ChatPresentationRoutePolicyService.is_stock_route(
-            path,
-            entity=cls._metadata_entity(metadata),
-        ):
+        if cls._resolve_narrative_mode(metadata) == "skip":
             return False
 
         visuals = ChatRichPresentationTextService.count_complementary_visuals(metadata)
@@ -73,7 +65,9 @@ class ChatPresentationHumanizedNarrativeService:
         if visuals.get("table", 0) + visuals.get("kpi", 0) + visuals.get("chart", 0) < 1:
             return False
 
-        if _PANORAMA_HEADER_RE.search(markdown) and _ATTENTION_HEADER_RE.search(markdown):
+        if cls._markdown_has_header(markdown, "panoramaHeader") and cls._markdown_has_attention(
+            markdown
+        ):
             return False
 
         body_lines = [
@@ -91,7 +85,7 @@ class ChatPresentationHumanizedNarrativeService:
         if not existing:
             return enriched_body
 
-        if _PANORAMA_HEADER_RE.search(existing):
+        if cls._markdown_has_header(existing, "panoramaHeader"):
             return existing
 
         scope_block = existing
@@ -100,16 +94,14 @@ class ChatPresentationHumanizedNarrativeService:
             parts = existing.split(_SCOPE_MARKER, 1)
             scope_block = parts[1].strip() if len(parts) > 1 else ""
 
-        if scope_block and not _PANORAMA_HEADER_RE.search(enriched_body):
+        if scope_block and not cls._markdown_has_header(enriched_body, "panoramaHeader"):
             return f"{_SCOPE_MARKER}\n\n{scope_block}\n\n{enriched_body}".strip()
 
         return enriched_body
 
     @classmethod
     def _build_enriched_body(cls, metadata: dict[str, Any], markdown: str) -> str | None:
-        path = str(metadata.get("path") or "").lower()
-
-        if "/pricing" in path:
+        if cls._resolve_narrative_mode(metadata) == "skip":
             return None
 
         parts: list[str | None] = []
@@ -144,14 +136,17 @@ class ChatPresentationHumanizedNarrativeService:
 
     @classmethod
     def _extract_scope_intro(cls, markdown: str) -> str:
+        panorama_header = cls._header_text("panoramaHeader")
+        attention_prefix = cls._attention_prefix()
+
         lines = [
             line.strip()
             for line in markdown.splitlines()
             if line.strip()
             and not line.strip().startswith("###")
             and _SCOPE_MARKER not in line
-            and not line.startswith("**Panorama**")
-            and not _ATTENTION_HEADER_RE.search(line)
+            and not (panorama_header and line.startswith(panorama_header))
+            and not (attention_prefix and attention_prefix in line)
         ]
 
         return "\n\n".join(lines[:4]).strip()
@@ -314,6 +309,38 @@ class ChatPresentationHumanizedNarrativeService:
             return f"R$ {formatted}"
 
         return str(value)
+
+    @classmethod
+    def _resolve_narrative_mode(cls, metadata: dict[str, Any]) -> str:
+        path = str(metadata.get("path") or "")
+        entity = cls._metadata_entity(metadata)
+
+        return ChatPresentationProfileService.humanized_narrative_mode(path, entity)
+
+    @classmethod
+    def _header_text(cls, key: str) -> str:
+        return cls._text(key).strip()
+
+    @classmethod
+    def _attention_prefix(cls) -> str:
+        prefix = cls._text("attentionHeaderPrefix").strip()
+
+        if prefix:
+            return prefix
+
+        return cls._header_text("attentionHeader")
+
+    @classmethod
+    def _markdown_has_header(cls, markdown: str, key: str) -> bool:
+        header = cls._header_text(key)
+
+        return bool(header and header in markdown)
+
+    @classmethod
+    def _markdown_has_attention(cls, markdown: str) -> bool:
+        prefix = cls._attention_prefix()
+
+        return bool(prefix and prefix in markdown)
 
     @classmethod
     def _text(cls, key: str, **values: str) -> str:

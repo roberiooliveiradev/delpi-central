@@ -302,27 +302,26 @@ class ExecuteExternalActionUseCase:
 
         if chart_presentation:
             available_formats.append("chart")
-        elif (
-            table_presentation
-            and not tree_presentation
-            and not chart_presentation
-            and not any(
-                token in str(resolved_path or "").lower()
-                for token in ("/structure", "/parents", "/analyser")
-            )
-        ):
-            forced_chart = self.presenter.build_chart_presentation(
-                presentation_data,
-                path=resolved_path or action_path,
-                force=True,
+        elif table_presentation:
+            from app.domain.services.chat_presentation_profile_service import (
+                ChatPresentationProfileService,
             )
 
-            if forced_chart:
-                chart_presentation = forced_chart
-                available_formats.append("chart")
+            if ChatPresentationProfileService.should_auto_force_chart(
+                resolved_path,
+                entity=None,
+                has_tree=bool(tree_presentation),
+                has_chart=bool(chart_presentation),
+            ):
+                forced_chart = self.presenter.build_chart_presentation(
+                    presentation_data,
+                    path=resolved_path or action_path,
+                    force=True,
+                )
 
-        path_lower = str(resolved_path or "").lower()
-        stock_like = "/stock" in path_lower
+                if forced_chart:
+                    chart_presentation = forced_chart
+                    available_formats.append("chart")
 
         if dashboard_presentation:
             primary_presentation = dashboard_presentation
@@ -337,209 +336,39 @@ class ExecuteExternalActionUseCase:
         else:
             primary_presentation = None
 
-        price_like = "/prices" in path_lower or "/pricing" in path_lower
-
         session_format = str(request_parameters.get("sessionResponseFormat") or "").strip().lower()
 
-        from app.domain.services.chat_presentation_route_policy_service import (
-            ChatPresentationRoutePolicyService,
-        )
-
-        table_presentations_list: list[dict] = []
-        profile_table_presentation = None
-        inspection_table_presentation = None
         root_payload = self.presenter._unwrap_data(presentation_data)
 
-        if isinstance(root_payload, dict):
-            if "/analyser" in path_lower and isinstance(root_payload.get("product"), dict):
-                table_presentations_list = (
-                    self.presenter.build_analyser_auxiliary_table_presentations(root_payload)
-                )
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+        from app.domain.services.chat_presentation_table_assembly_service import (
+            ChatPresentationTableAssemblyService,
+        )
 
-                if table_presentations_list:
-                    for candidate in table_presentations_list:
-                        title = str(candidate.get("title") or "")
+        resolved_entity = ChatApiDelpiResponseProfileService.resolve(
+            sanitized_data,
+            path=resolved_path,
+        )
+        entity = str(resolved_entity.entity or "").strip() or None
 
-                        if title.startswith("Produto "):
-                            profile_table_presentation = candidate
-                        elif "inspeção" in title.lower() or "inspecao" in title.lower():
-                            inspection_table_presentation = candidate
-                        elif "roteiro" in title.lower() and table_presentation is None:
-                            table_presentation = candidate
+        assembly = ChatPresentationTableAssemblyService.assemble(
+            self.presenter,
+            root_payload if isinstance(root_payload, dict) else None,
+            resolved_path,
+            entity=entity,
+            table_presentation=table_presentation,
+            tree_presentation=tree_presentation,
+            session_format=session_format,
+        )
 
-                    if table_presentation is None and table_presentations_list:
-                        table_presentation = table_presentations_list[0]
-            elif "/stock" in path_lower and isinstance(root_payload, dict):
-                stock_items = root_payload.get("items")
+        table_presentations_list = assembly.table_presentations
+        profile_table_presentation = assembly.profile_table_presentation
+        inspection_table_presentation = assembly.inspection_table_presentation
 
-                if isinstance(stock_items, list) and stock_items:
-                    table_presentations_list = self.presenter.build_stock_table_presentations(
-                        root_payload,
-                        resolved_path,
-                    )
-
-                    if table_presentations_list:
-                        profile_table_presentation = table_presentations_list[0]
-
-                        if len(table_presentations_list) > 1:
-                            table_presentation = table_presentations_list[1]
-                        else:
-                            table_presentation = table_presentations_list[0]
-            elif "/factory-status" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_factory_status_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/production-status" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = (
-                    self.presenter.build_production_status_table_presentations(
-                        root_payload,
-                        resolved_path,
-                    )
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/shipping-status" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_shipping_status_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/structure/exclusivity" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = (
-                    self.presenter.build_structure_exclusivity_table_presentations(
-                        root_payload,
-                        resolved_path,
-                    )
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/raw-material-price-intelligence" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = (
-                    self.presenter.build_raw_material_price_intelligence_table_presentations(
-                        root_payload,
-                        resolved_path,
-                    )
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-                    table_presentation = table_presentations_list[0]
-            elif "/cost-impact-simulation" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = (
-                    self.presenter.build_cost_impact_simulation_table_presentations(
-                        root_payload,
-                        resolved_path,
-                    )
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-                    table_presentation = table_presentations_list[0]
-            elif "/pricing" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_product_pricing_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/last-purchase" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_last_purchase_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/purchase-price-history" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_purchase_history_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/purchase-budget-history" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_purchase_history_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif "/purchases" in path_lower and isinstance(root_payload, dict):
-                table_presentations_list = self.presenter.build_purchases_table_presentations(
-                    root_payload,
-                    resolved_path,
-                )
-
-                if table_presentations_list:
-                    profile_table_presentation = table_presentations_list[0]
-
-                    if len(table_presentations_list) > 1:
-                        table_presentation = table_presentations_list[1]
-                    else:
-                        table_presentation = table_presentations_list[0]
-            elif (
-                ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
-                and tree_presentation
-                and not table_presentation
-                and session_format == "table"
-            ):
-                structure_table = self.presenter._build_analyser_structure_components_table(
-                    root_payload,
-                )
-
-                if structure_table:
-                    table_presentation = structure_table
+        if assembly.table_presentation is not None:
+            table_presentation = assembly.table_presentation
 
         preferred_format = None
 
@@ -551,14 +380,17 @@ class ExecuteExternalActionUseCase:
             preferred_format = session_format
         elif dashboard_presentation:
             preferred_format = "dashboard"
-        elif price_like and text_presentation and not session_format:
-            preferred_format = "text"
         elif kpi_presentation and not session_format:
             preferred_format = "kpi"
         else:
+            from app.domain.services.chat_presentation_route_policy_service import (
+                ChatPresentationRoutePolicyService,
+            )
+
             preferred_format = ChatPresentationRoutePolicyService.resolve_default_preferred_format(
                 path=resolved_path,
                 session_format=session_format or None,
+                entity=entity,
                 has_tree=bool(tree_presentation),
                 has_table=bool(table_presentation or table_presentations_list),
                 has_chart=bool(chart_presentation),

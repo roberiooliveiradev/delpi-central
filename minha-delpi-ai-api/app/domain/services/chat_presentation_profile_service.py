@@ -113,6 +113,17 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return dict(default_plan) if isinstance(default_plan, dict) else {}
 
     @classmethod
+    def presentation_decision_config(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+    ) -> dict[str, Any]:
+        profile = cls.resolve_profile(path, entity)
+        raw = profile.get("presentationDecision")
+
+        return dict(raw) if isinstance(raw, dict) else {}
+
+    @classmethod
     def resolve_default_preferred_format(
         cls,
         *,
@@ -152,6 +163,10 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if policy == "tree_when_available":
             if has_tree and ("tree" in flags or "analyser" in flags):
                 return "tree"
+
+        if policy == "text_when_available":
+            if has_text:
+                return "text"
 
         if policy == "table_when_available":
             if has_table and ("table" in flags or "analyser" in flags):
@@ -201,6 +216,41 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
 
         decision["visualOrder"] = ordered
         decision["presentationProfileKey"] = profile.get("profileKey")
+
+    @classmethod
+    def humanized_narrative_mode(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+    ) -> str:
+        profile = cls.resolve_profile(path, entity)
+        mode = str(profile.get("humanizedNarrative") or "enrich").strip().lower()
+
+        if mode in {"skip", "enrich"}:
+            return mode
+
+        return "enrich"
+
+    @classmethod
+    def should_auto_force_chart(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+        *,
+        has_tree: bool = False,
+        has_chart: bool = False,
+    ) -> bool:
+        if has_tree or has_chart:
+            return False
+
+        profile = cls.resolve_profile(path, entity)
+
+        if str(profile.get("chartPolicy") or "auto").strip().lower() == "skip":
+            return False
+
+        flags = cls.flags(path, entity)
+
+        return not (flags & {"tree", "analyser"})
 
     @classmethod
     def _generic_default_preferred_format(

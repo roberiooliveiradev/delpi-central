@@ -31,6 +31,14 @@ def test_should_apply_for_kpi_entity_and_generic_path():
         path="/products/90260144/stock",
         entity="product_stock",
     )
+    assert not ChatSchemaDrivenPresentationService.should_apply(
+        path="/products/10080001/purchase-price-history",
+        entity="product_purchase_price_history",
+    )
+    assert not ChatSchemaDrivenPresentationService.should_apply(
+        path="/products/10080001/purchase-budget-history",
+        entity="product_purchase_budget_history",
+    )
 
 
 def test_extract_tabular_rows_from_series_and_items():
@@ -104,9 +112,14 @@ def test_schema_driven_metadata_for_commercial_kpi():
         request_parameters={},
     )
 
-    assert meta["presentation"]["type"] == "kpi"
+    kpi = meta.get("kpiPresentation") or meta.get("presentation")
+    decision = meta.get("presentationDecision") or {}
+
+    assert isinstance(kpi, dict)
+    assert kpi["type"] == "kpi"
     assert "text" in meta["availableFormats"]
     assert meta["textPresentation"]["type"] == "markdown"
+    assert decision.get("selected") in {"text", "kpi"}
 
 
 def test_schema_driven_metadata_builds_table_for_generic_items():

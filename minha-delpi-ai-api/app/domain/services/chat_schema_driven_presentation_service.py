@@ -30,6 +30,8 @@ _RICH_PROFILE_KEYS = frozenset(
         "sale_pricing",
         "purchase_list",
         "last_purchase",
+        "purchase_price_history",
+        "purchase_budget_history",
     }
 )
 

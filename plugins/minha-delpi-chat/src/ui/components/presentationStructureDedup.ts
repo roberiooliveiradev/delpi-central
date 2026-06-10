@@ -1,9 +1,17 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
 
+import {
+  parentsTableTitleMarkers,
+  structureTableTitleMarkers,
+} from "../../content/presentationVocabulary";
+
 import type { AssistantContentSegment } from "./assistantContentTypes";
 
-const STRUCTURE_TABLE_TITLE_MARKERS = ["componentes da estrutura"];
-const PARENTS_TABLE_TITLE_MARKERS = ["produtos pai", "onde é usado"];
+function metadataStructureDedupApplied(
+  toolCalls: { metadata?: Record<string, unknown> }[],
+): boolean {
+  return toolCalls.some((toolCall) => toolCall.metadata?.structureDedupApplied === true);
+}
 
 export function isStructureComponentsTable(
   presentation: ChatPresentation | null | undefined,
@@ -14,7 +22,7 @@ export function isStructureComponentsTable(
 
   const title = String(presentation.title || "").trim().toLowerCase();
 
-  if (STRUCTURE_TABLE_TITLE_MARKERS.some((marker) => title.includes(marker))) {
+  if (structureTableTitleMarkers().some((marker) => title.includes(marker))) {
     return true;
   }
 
@@ -22,7 +30,25 @@ export function isStructureComponentsTable(
     (presentation.columns || []).map((column) => String(column.key || "").trim().toLowerCase()),
   );
 
-  return keys.has("parent_code") && keys.has("component_code");
+  if (keys.has("parent_code") && keys.has("component_code")) {
+    return true;
+  }
+
+  if (keys.has("level") && keys.has("component_code")) {
+    return true;
+  }
+
+  if (
+    keys.has("level") &&
+    keys.has("product_code") &&
+    (keys.has("exclusive_raw_material_label") ||
+      keys.has("exclusive_raw_material") ||
+      keys.has("component_type"))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isParentsUsageTable(
@@ -34,7 +60,7 @@ export function isParentsUsageTable(
 
   const title = String(presentation.title || "").trim().toLowerCase();
 
-  return PARENTS_TABLE_TITLE_MARKERS.some((marker) => title.includes(marker));
+  return parentsTableTitleMarkers().some((marker) => title.includes(marker));
 }
 
 export function isHierarchyDuplicateTable(
@@ -71,6 +97,10 @@ export function shouldSkipTableSegment(
   presentation: Extract<ChatPresentation, { type: "table" }>,
   toolCalls: { metadata?: Record<string, unknown> }[],
 ): boolean {
+  if (metadataStructureDedupApplied(toolCalls)) {
+    return false;
+  }
+
   return toolCallsHaveTree(toolCalls) && isHierarchyDuplicateTable(presentation);
 }
 
@@ -78,7 +108,7 @@ export function filterSegmentsWithoutHierarchyTableDuplicates(
   segments: AssistantContentSegment[],
   toolCalls: { metadata?: Record<string, unknown> }[],
 ): AssistantContentSegment[] {
-  if (!toolCallsHaveTree(toolCalls)) {
+  if (metadataStructureDedupApplied(toolCalls) || !toolCallsHaveTree(toolCalls)) {
     return segments;
   }
 

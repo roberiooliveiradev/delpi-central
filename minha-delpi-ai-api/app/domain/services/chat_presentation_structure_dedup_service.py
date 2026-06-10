@@ -215,7 +215,9 @@ class ChatPresentationStructureDedupService:
             if isinstance(item, dict) and item.get("type") == "table"
         }
 
-        for key in ("profileTablePresentation", "inspectionTablePresentation", "tablePresentation"):
+        # Só `tablePresentation` — slots nomeados (profile/inspection) referenciam
+        # tabelas do bundle de propósito (Playbook 12 R3 / stack por role).
+        for key in ("tablePresentation",):
             presentation = metadata.get(key)
 
             if not isinstance(presentation, dict) or presentation.get("type") != "table":
@@ -280,6 +282,7 @@ class ChatPresentationStructureDedupService:
                 if isinstance(views, list):
                     decision["availableViews"] = cls.prune_available_views(views, metadata)
 
+            metadata["structureDedupApplied"] = True
             return
 
         if cls._prefers_table_over_tree(metadata) and cls._any_hierarchy_duplicate_table(metadata):
@@ -298,6 +301,8 @@ class ChatPresentationStructureDedupService:
                     for token in available
                     if str(token).strip().lower() != "tree"
                 ]
+
+        metadata["structureDedupApplied"] = True
 
     @classmethod
     def prune_available_views(cls, views: list[str], metadata: dict[str, Any]) -> list[str]:

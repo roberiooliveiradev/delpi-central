@@ -1,6 +1,6 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 
-import { orderVisualSegments, type AssistantVisualKind } from "./assistantContentLayout";
+import { orderVisualSegments, resolveVisualOrderFromToolCalls, type AssistantVisualKind } from "./assistantContentLayout";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
@@ -33,6 +33,7 @@ const ROUTE_SHOW_IN: Record<ProductRouteKey, StackSectionChrome["showIn"]> = {
   other: ["complete", "text", "table", "tree", "chart"],
 };
 
+/** @deprecated Fallback de layout — preferir `presentationDecision.visualOrder` por tool call. */
 export const ROUTE_VISUAL_ORDER: Record<ProductRouteKey, AssistantVisualKind[]> = {
   profile: ["table"],
   guide: ["table"],
@@ -500,7 +501,10 @@ export function buildMultiRouteStackSegments(
     }
 
     const routeVisuals = collectVisualsForToolCall(block.toolCall);
-    const visualOrder = ROUTE_VISUAL_ORDER[block.routeKey];
+    const fromApi = resolveVisualOrderFromToolCalls([block.toolCall]);
+    const visualOrder = fromApi.length
+      ? fromApi
+      : ROUTE_VISUAL_ORDER[block.routeKey];
     const ordered = orderVisualSegments(routeVisuals, visualOrder);
 
     for (const segment of ordered) {

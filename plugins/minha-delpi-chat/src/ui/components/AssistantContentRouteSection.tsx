@@ -47,16 +47,16 @@ export function AssistantContentRouteSection({
       return [];
     }
 
-    return resolveRouteSectionFormatOptions(sectionSegments, routeKey);
-  }, [routeKey, sectionSegments]);
+    return resolveRouteSectionFormatOptions(sectionSegments, routeKey, toolCall);
+  }, [routeKey, sectionSegments, toolCall]);
 
   const initialVisualKind = useMemo((): ContentFormatKind | null => {
     if (!routeKey) {
       return null;
     }
 
-    return resolveInitialToolbarKindForRoute(routeKey, visualFormatOptions);
-  }, [routeKey, visualFormatOptions]);
+    return resolveInitialToolbarKindForRoute(routeKey, visualFormatOptions, toolCall);
+  }, [routeKey, toolCall, visualFormatOptions]);
 
   const [activeVisualKind, setActiveVisualKind] = useState<ContentFormatKind | null>(
     initialVisualKind,

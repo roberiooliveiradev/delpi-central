@@ -373,6 +373,10 @@ class ExternalActionKpiChartPresenter:
         return False
 
     def build_kpi_chart(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
         periods = root.get("periods") or root.get("series") or root.get("history")
 
         if isinstance(periods, list) and len(periods) >= 2:
@@ -411,10 +415,6 @@ class ExternalActionKpiChartPresenter:
                         trend = "stable"
                 except (ValueError, TypeError):
                     pass
-
-            from app.domain.services.chat_presentation_kpi_assembly_service import (
-                ChatPresentationKpiAssemblyService,
-            )
 
             cards.append(
                 ChatPresentationKpiAssemblyService.metric_card(

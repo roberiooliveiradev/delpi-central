@@ -135,10 +135,52 @@ PYTHONPATH=. .venv/bin/python scripts/smoke_playbook_product_routes.py
 
 # Gate apresentação (CI local)
 PYTHONPATH=. .venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
+PYTHONPATH=. .venv/bin/python scripts/audit_presentation_coverage.py --check-table-roles
+PYTHONPATH=. .venv/bin/python scripts/audit_presentation_coverage.py --check-visual-builders
 
 # Contrato por entidade (pytest)
 PYTHONPATH=. .venv/bin/pytest tests/unit/domain/services/test_chat_presentation_entity_contract.py -q
+PYTHONPATH=. .venv/bin/pytest tests/unit/application/use_cases/test_playbook_presentation_pipeline_regression.py -q
 ```
+
+---
+
+## §8 — Homologação Playbook 12 (R1–R12)
+
+Roteiro manual pós-refatoração declarativa. Marque OK/Falha após cada item.
+
+| ID | Pergunta / ação | Valida |
+|----|-----------------|--------|
+| H1 | `analise de preço 90260145` — stack narrativo + abas KPI/tabela | R4, R8 |
+| H2 | `status fabril 90263749` — KPI em cards, ordem painel | R1, R2 |
+| H3 | `estrutura 10080001` — árvore + tabela sem duplicata | R3, R8 |
+| H4 | `estoque 10080001` — tabela stock, sem narrativa humanizada forçada | R4, R8 |
+| H5 | `status produção` (produto playbook) — dashboard + KPI | R2, R6 |
+| H6 | `última compra MP 10080001` — bundle compra | R2 |
+| H7 | Modo **Tabela** na toolbar — respeita preferência | R5, R7 |
+| H8 | Modo **Gráfico** em rota com série — chart disponível | R2, R6 |
+| H9 | Multi-rota analyser — seções numeradas, toolbar por bloco | R1, R3, R7 |
+| H10 | Rotas tier C (ex. HR snapshot) — schema-driven + KPI | R6 |
+| H11 | Chip «Ver em gráfico» pós-resposta | onda 1 |
+| H12 | Regressão pytest entity contract + audit coverage | R9 CI |
+
+**Gates CI (R9–R12):**
+
+```bash
+cd minha-delpi-ai-api
+PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-playbook12
+PYTHONPATH=. pytest tests/unit/domain/services/test_playbook12_regression_suite.py \
+  tests/unit/domain/services/test_chat_presentation_entity_contract.py -q
+```
+
+| Gate | Comportamento |
+|------|---------------|
+| `--check-profiles` | fail — tier A/B sem perfil dedicado |
+| `--check-table-roles` | fail — fixture tier A com tabela sem `role` |
+| `--check-visual-builders` | warn — `viewOrder` com kpi/tree/chart/dashboard sem builder |
+| `--check-interactivity-chips` | fail — fixture tier A sem chip pós-resposta declarado |
+| `--check-playbook12` | fail — qualquer gate R12 (inclui path baseline + new ops) |
+| `--check-new-operations` | fail — operação nova OpenAPI sem contrato |
 
 Homologação amostral completa: [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md).
 

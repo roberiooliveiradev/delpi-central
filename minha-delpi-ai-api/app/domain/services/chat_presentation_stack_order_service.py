@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_section_availability_service import (
     ChatPresentationSectionAvailabilityService,
 )
@@ -173,14 +174,30 @@ class ChatPresentationStackOrderService:
     @classmethod
     def _markdown_has_highlights(cls, metadata: dict[str, Any]) -> bool:
         markdown = cls._text_markdown(metadata)
+        header = cls._humanized_narrative_text("highlightsHeader")
 
-        return bool(markdown and "**Destaques**" in markdown)
+        return bool(markdown and header and header in markdown)
 
     @classmethod
     def _markdown_has_attention(cls, metadata: dict[str, Any]) -> bool:
         markdown = cls._text_markdown(metadata)
+        prefix = cls._humanized_narrative_text("attentionHeaderPrefix") or cls._humanized_narrative_text(
+            "attentionHeader"
+        )
 
-        return bool(markdown and "**Pontos de atenção" in markdown)
+        return bool(markdown and prefix and prefix in markdown)
+
+    @classmethod
+    def _humanized_narrative_text(cls, key: str) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                "presenter_content",
+                "humanizedNarrative",
+                key,
+                default="",
+            )
+            or ""
+        ).strip()
 
     @classmethod
     def _text_markdown(cls, metadata: dict[str, Any]) -> str:

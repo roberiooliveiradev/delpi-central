@@ -139,74 +139,21 @@ class ExternalActionTextPresentationPresenter:
             "markdown": markdown,
         }
 
-    def build_text_presentation(self, data, *, path: str = "") -> dict | None:
-        """Markdown legível para a aba Texto do chat (complementa tabela/gráfico)."""
-        root = self._host._unwrap_data(data)
-        lowered = str(path or "").lower()
+    def build_tree_hierarchy_text(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
 
-        if isinstance(root, dict) and "/analyser" in lowered:
-            root = self._host._normalize_analyser_root(root)
+        entity = str(
+            ChatApiDelpiResponseProfileService.resolve({}, path=path).entity or ""
+        ).strip()
 
-        if isinstance(root, dict) and "/stock" in lowered:
-            items = root.get("items")
-
-            if isinstance(items, list) and items:
-                return self._host._build_stock_text_presentation(root, path)
-
-        if isinstance(root, dict) and isinstance(root.get("product"), dict):
-            if "/analyser" in lowered:
-                product = self._host._normalize_api_section(root["product"])
-
-                return self._host._build_product_analyser_text_presentation(
-                    root,
-                    product,
-                    path,
-                )
-
-            if "/factory-status" in lowered:
-                return self._host._build_factory_status_text_presentation(root, path)
-
-            if "/production-status" in lowered:
-                return self._host._build_production_status_text_presentation(root, path)
-
-            if "/shipping-status" in lowered:
-                return self._host._build_shipping_status_text_presentation(root, path)
-
-            if "/structure/exclusivity" in lowered:
-                return self._host._build_structure_exclusivity_text_presentation(root, path)
-
-            if "/raw-material-price-intelligence" in lowered:
-                return self._host._build_raw_material_price_intelligence_text_presentation(
-                    root,
-                    path,
-                )
-
-            if "/cost-impact-simulation" in lowered:
-                return self._host._build_cost_impact_simulation_text_presentation(root, path)
-
-            if "/pricing" in lowered:
-                return self._host._build_product_pricing_text_presentation(root, path)
-
-            if "/last-purchase" in lowered:
-                return self._host._build_last_purchase_text_presentation(root, path)
-
-            if "/purchase-price-history" in lowered:
-                return self._host._build_purchase_history_text_presentation(root, path)
-
-            if "/purchase-budget-history" in lowered:
-                return self._host._build_purchase_history_text_presentation(root, path)
-
-            if "/purchases" in lowered:
-                return self._host._build_purchases_text_presentation(root, path)
-
-        if isinstance(root, dict) and "/parents" in lowered:
+        if entity == "product_parents":
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,
             )
 
-            normalized = ChatProductStructurePresentationService._normalize_parents_payload(
-                root
-            )
+            normalized = ChatProductStructurePresentationService._normalize_parents_payload(root)
 
             if normalized is not None:
                 root = normalized
@@ -216,11 +163,38 @@ class ExternalActionTextPresentationPresenter:
             and isinstance(root.get("root"), dict)
             and isinstance(root.get("items"), list)
         ):
-            if "/parents" in lowered:
+            if entity == "product_parents":
                 return self._build_parents_text_presentation(root, path)
 
-            if "/structure" in lowered:
+            if entity == "product_structure":
                 return self._build_structure_text_presentation(root, path)
+
+        return None
+
+    def build_text_presentation(self, data, *, path: str = "") -> dict | None:
+        """Markdown legível para a aba Texto do chat (complementa tabela/gráfico)."""
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+        from app.domain.services.chat_presentation_profile_text_builder_service import (
+            ChatPresentationProfileTextBuilderService,
+        )
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        built = ChatPresentationProfileTextBuilderService.build(
+            self._host,
+            data,
+            path=path,
+            entity=profile.entity,
+        )
+
+        if built is not None:
+            return built
+
+        root = self._host._unwrap_data(data)
 
         humanized = self._host.present(data, path=path)
 
@@ -240,7 +214,9 @@ class ExternalActionTextPresentationPresenter:
         if title:
             markdown_parts.append(f"### {title}")
 
-        if "/stock" in lowered and detail_lines:
+        profile_key = ChatPresentationProfileService.resolve_profile_key(path, profile.entity)
+
+        if profile_key == "stock" and detail_lines:
             markdown_parts.extend(summary_parts)
             detail_header = self._host._presenter_text("generic", "stockTextDetailHeader")
             markdown_parts.append(f"**{detail_header}**")

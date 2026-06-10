@@ -15,6 +15,9 @@ from app.domain.services.chat_api_delpi_response_profile_service import (
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 
 _RICH_PRODUCT_PATH_TOKENS: tuple[str, ...] = (
     "/analyser",
@@ -66,6 +69,27 @@ class PresentationCoverageGap:
     tier: str
     profile_key: str
     detail: str
+
+
+@dataclass(frozen=True)
+class VisualBuilderWarning:
+    profile_key: str
+    view: str
+    detail: str
+
+
+_CHART_VIEW_TOKENS = frozenset(
+    {
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+        "grouped_bar",
+        "stacked_bar",
+    }
+)
+_VISUAL_BUILDER_VIEWS = frozenset({"kpi", "tree", "chart", "dashboard"})
 
 
 class ChatPresentationCoverageService:
@@ -439,6 +463,77 @@ class ChatPresentationCoverageService:
             "newOperations": [asdict(row) for row in new_rows],
             "newOperationGaps": [asdict(gap) for gap in new_gaps],
             "ok": not profile_gaps and not new_gaps,
+        }
+
+    @classmethod
+    def _builder_key_for_view(cls, view: str) -> str | None:
+        token = str(view or "").strip().lower()
+
+        if token in {"kpi", "tree", "dashboard"}:
+            return token
+
+        if token in _CHART_VIEW_TOKENS:
+            return "chart"
+
+        return None
+
+    @classmethod
+    def find_visual_builder_warnings(cls) -> list[VisualBuilderWarning]:
+        profiles = ChatPresentationProfileService.node("profiles") or {}
+        tier_a_keys = frozenset(ChatPresentationVocabularyService.playbook12_tier_a_profile_keys())
+        warnings: list[VisualBuilderWarning] = []
+
+        if not isinstance(profiles, dict):
+            return warnings
+
+        for profile_key in sorted(profiles):
+            if profile_key not in tier_a_keys:
+                continue
+
+            profile = profiles.get(profile_key)
+
+            if not isinstance(profile, dict):
+                continue
+
+            view_order = profile.get("viewOrder") or []
+            builders = profile.get("visualBuilders") or {}
+            builder_map = builders if isinstance(builders, dict) else {}
+            seen_builder_keys: set[str] = set()
+
+            for view in view_order:
+                builder_key = cls._builder_key_for_view(str(view))
+
+                if not builder_key or builder_key in seen_builder_keys:
+                    continue
+
+                seen_builder_keys.add(builder_key)
+
+                if builder_key not in _VISUAL_BUILDER_VIEWS:
+                    continue
+
+                if str(builder_map.get(builder_key) or "").strip():
+                    continue
+
+                warnings.append(
+                    VisualBuilderWarning(
+                        profile_key=str(profile_key),
+                        view=str(view),
+                        detail=(
+                            f"viewOrder inclui «{view}» mas visualBuilders.{builder_key} "
+                            "não está declarado"
+                        ),
+                    )
+                )
+
+        return warnings
+
+    @classmethod
+    def validate_visual_builders_for_ci(cls) -> dict[str, Any]:
+        warnings = cls.find_visual_builder_warnings()
+
+        return {
+            "visualBuilderWarnings": [asdict(item) for item in warnings],
+            "warningCount": len(warnings),
         }
 
     @classmethod

@@ -410,183 +410,49 @@ class ExternalActionProductStructureExclusivityPresenter:
         }
 
     def build_structure_exclusivity_kpi_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_kpi_assembly_service import (
-            ChatPresentationKpiAssemblyService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        code, _description = self._product_context(root, path)
-        summary = self._summary(root)
-
-        if not summary:
-            return None
-
-        title = (
-            self._route("kpiTitle", code=code)
-            if code
-            else self._route("kpiTitleGeneric")
+        return ChatPresentationProfileCompositeVisualService.build_kpi(
+            self._host,
+            root,
+            path,
+            profile_key="structure_exclusivity"
         )
-        cards: list[dict[str, Any]] = []
-
-        if summary.get("total_components") is not None:
-            cards.append(
-                ChatPresentationKpiAssemblyService.metric_card(
-                    label=self._route("kpiComponents"),
-                    value=int(summary.get("total_components") or 0),
-                    unit="",
-                    color="#6366f1",
-                    key="total_components",
-                )
-            )
-
-        if summary.get("total_intermediates") is not None:
-            cards.append(
-                ChatPresentationKpiAssemblyService.metric_card(
-                    label=self._route("kpiIntermediates"),
-                    value=int(summary.get("total_intermediates") or 0),
-                    unit="PI",
-                    color="#0ea5e9",
-                    key="total_intermediates",
-                )
-            )
-
-        if summary.get("total_raw_materials") is not None:
-            cards.append(
-                ChatPresentationKpiAssemblyService.metric_card(
-                    label=self._route("kpiRawMaterials"),
-                    value=int(summary.get("total_raw_materials") or 0),
-                    unit="MP",
-                    color="#10b981",
-                    key="total_raw_materials",
-                )
-            )
-
-        if summary.get("total_exclusive_raw_materials") is not None:
-            cards.append(
-                ChatPresentationKpiAssemblyService.metric_card(
-                    label=self._route("kpiExclusive"),
-                    value=int(summary.get("total_exclusive_raw_materials") or 0),
-                    unit="MP",
-                    color="#8b5cf6",
-                    key="total_exclusive_raw_materials",
-                )
-            )
-
-        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
 
     def build_structure_exclusivity_chart_presentation(self, root: dict, path: str) -> dict | None:
-        items = self._items(root)
-        exclusive_items = [
-            item
-            for item in items
-            if isinstance(item, dict)
-            and str(item.get("exclusive_raw_material") or "").strip().upper() in {"SIM", "TRUE", "1"}
-        ]
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
+        )
 
-        if not exclusive_items:
-            return None
-
-        quantity_label = self._host._humanize_key("accumulated_quantity")
-        chart_data: list[dict[str, Any]] = []
-
-        for item in exclusive_items[:20]:
-            code_item = str(item.get("product_code") or "—")
-            chart_data.append(
-                {
-                    "name": code_item,
-                    quantity_label: float(item.get("accumulated_quantity") or 0),
-                }
-            )
-
-        if not chart_data:
-            return None
-
-        code, _description = self._product_context(root, path)
-
-        return {
-            "type": "chart",
-            "title": (
-                self._route("chartExclusiveTitle", code=code)
-                if code
-                else self._route("chartExclusiveTitleGeneric")
-            ),
-            "chartType": "horizontal_bar",
-            "data": chart_data,
-            "config": {
-                "xAxis": "name",
-                "yAxis": [quantity_label],
-                "colors": ["#8b5cf6"],
-                "legend": False,
-            },
-        }
+        return ChatPresentationProfileCompositeVisualService.build_chart(
+            self._host,
+            root,
+            path,
+            profile_key="structure_exclusivity"
+        )
 
     def build_structure_exclusivity_tree_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_hierarchy_tree_service import (
-            ChatPresentationHierarchyTreeService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        items = _OpsTable.enrich_structure_rows(
-            [item for item in self._items(root) if isinstance(item, dict)]
+        return ChatPresentationProfileCompositeVisualService.build_tree(
+            self._host,
+            root,
+            path,
+            profile_key="structure_exclusivity"
         )
 
-        if not items:
-            return None
-
-        code, description = self._product_context(root, path)
-        title = (
-            self._route("treeTitle", code=code)
-            if code
-            else self._route("treeTitleGeneric")
+    def build_structure_exclusivity_dashboard_presentation(self, root: dict, path: str, *, kpi: dict | None = None, tree: dict | None = None, chart: dict | None = None, table: dict | None = None) -> dict | None:
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        return ChatPresentationHierarchyTreeService.build_flat_bom_tree(
-            title=title,
-            root_id=code or "structure-exclusivity",
-            root_label=(
-                self._route("treeRootLabel", code=code)
-                if code
-                else title
-            ),
-            root_subtitle=description,
-            items=items,
+        return ChatPresentationProfileCompositeVisualService.build_dashboard(
+            self._host,
+            root,
+            path,
+            profile_key="structure_exclusivity", kpi=kpi, tree=tree, chart=chart, table=table
         )
-
-    def build_structure_exclusivity_dashboard_presentation(
-        self,
-        root: dict,
-        path: str,
-        *,
-        kpi: dict | None = None,
-        tree: dict | None = None,
-        chart: dict | None = None,
-        table: dict | None = None,
-    ) -> dict | None:
-        from app.domain.services.chat_presentation_dashboard_assembly_service import (
-            ChatPresentationDashboardAssemblyService,
-        )
-
-        code, _description = self._product_context(root, path)
-        title = (
-            self._route("dashboardTitle", code=code)
-            if code
-            else self._route("dashboardTitleGeneric")
-        )
-        view_order: tuple[str, ...] = ("kpi", "tree", "chart")
-
-        if not isinstance(tree, dict):
-            view_order = ("kpi", "chart", "table")
-
-        panels = ChatPresentationDashboardAssemblyService.build_rich_panels(
-            view_order=view_order,
-            kpi=kpi,
-            tree=tree,
-            chart=chart,
-            table=table,
-            panel_titles={
-                "kpi": str((kpi or {}).get("title") or self._route("overviewTableTitle")),
-                "tree": str((tree or {}).get("title") or self._route("treeTitleGeneric")),
-                "chart": str((chart or {}).get("title") or self._route("chartExclusiveTitleGeneric")),
-                "table": str((table or {}).get("title") or self._route("componentsTableTitle")),
-            },
-        )
-
-        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

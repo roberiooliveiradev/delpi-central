@@ -68,14 +68,16 @@ Wrappers especializados (mantêm API estável):
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
-| `presentation_vocabulary.json` | Dedup estrutura/BOM, tokens de seção humanizada, rótulos booleanos, **motivos de decisão de formato**, insights de visualização, explicação de gráfico/dashboard, marcadores checklist/lousa | `ChatPresentationVocabularyService` → `ChatPresentationDecisionService`, `ChatPresentationInsightService`, `ChatPresentationChartExplainService`, `ChatPresentationDashboardExplainService` |
+| `presentation_vocabulary.json` | Dedup estrutura/BOM, tokens de seção humanizada, rótulos booleanos, **motivos de decisão de formato**, insights de visualização, explicação de gráfico/dashboard, marcadores checklist/lousa, **Playbook 12** (`playbook12Refactor`, `tableRoles`, **`tierAPipelineCases`**) | `ChatPresentationVocabularyService` → decisão, dedup, **gate CI role** (`presentation_table_role_gate`) |
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
-| `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |
+| `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags, **visualBuilders**, **chartPolicy**, **visualBundle** por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService`, `ChatPresentationProfileVisualBundleService` |
 | `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
-| `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService` |
+| `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, destaques, prefixos de atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService`, `ChatPresentationStackOrderService` |
+| `presentation_profiles.json` → `humanizedNarrative` | `skip` ou `enrich` por perfil (ex.: stock, sale_pricing) | `ChatPresentationProfileService`, `ChatPresentationHumanizedNarrativeService` |
 | `presenter_content.json` → `stackSectionFraming` | Frases de framing por seção (`default`, `byProfile.sale_pricing`, …) | `ChatPresentationStackMarkdownService`, `ChatPresentationSectionAvailabilityService` |
 | `presenter_content.json` → `routes.salePricing` | Narrativa de precificação: panorama, leitura, atenção, conclusão, KPI | `ExternalActionProductPricingPresenter` |
+| `presenter_content.json` → `compositeVisualSpecs` | Spec declarativa do quartet KPI/árvore/gráfico/dashboard por perfil (Playbook 12 R6) | `ChatPresentationCompositeVisualBuilder`, `ChatPresentationProfileCompositeVisualService` |
 
 ## Vocabulário compartilhado (dicionários PT)
 

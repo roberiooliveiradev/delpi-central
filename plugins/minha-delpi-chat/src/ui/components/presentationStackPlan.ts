@@ -231,20 +231,25 @@ export function getStackPresentationPlanFromToolCalls(
     if (raw && typeof raw === "object") {
       return parsePlan(raw as Record<string, unknown>);
     }
-
-    const path = String(metadata.path ?? "").toLowerCase();
-
-    if (path.includes("/stock")) {
-      return {
-        ...DEFAULT_PLAN,
-        tableRoleOrder: ["profile", "stock", "other"],
-      };
-    }
   }
 
   return DEFAULT_PLAN;
 }
 
+const STACK_TABLE_ROLES = new Set<StackTableRole>([
+  "profile",
+  "guide",
+  "inspection",
+  "stock",
+  "pricing",
+  "structure",
+  "list",
+  "other",
+]);
+
+/**
+ * @deprecated Prefer `presentation.role` from API metadata. Fallback legacy por título.
+ */
 export function inferTableRoleFromTitle(title: string): StackTableRole {
   const normalized = title.trim().toLowerCase();
 
@@ -328,4 +333,17 @@ export function inferTableRoleFromTitle(title: string): StackTableRole {
   }
 
   return "other";
+}
+
+export function resolveTableRole(
+  title: string,
+  presentation?: { role?: string | null },
+): StackTableRole {
+  const role = String(presentation?.role || "").trim() as StackTableRole;
+
+  if (role && STACK_TABLE_ROLES.has(role)) {
+    return role;
+  }
+
+  return inferTableRoleFromTitle(title);
 }

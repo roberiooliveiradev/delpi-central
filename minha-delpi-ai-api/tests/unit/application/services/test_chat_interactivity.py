@@ -130,7 +130,7 @@ def test_presentation_decision_adds_view_switch_chips():
 
     labels = [item["label"] for item in suggestions]
 
-    assert "Gerar gráfico" in labels
+    assert "Ver em gráfico" in labels
 
 
 def test_presentation_chart_includes_explain_chip():

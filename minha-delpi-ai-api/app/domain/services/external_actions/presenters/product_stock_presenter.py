@@ -775,3 +775,6 @@ class ExternalActionProductStockPresenter:
             )
 
         return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels)
+
+    def build_stock_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._host.build_chart_presentation(root, path=path, force=True)

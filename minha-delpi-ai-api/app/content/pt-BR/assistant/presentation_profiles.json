@@ -14,7 +14,9 @@
       "dashboard"
     ],
     "stackPlan": "default",
-    "flags": []
+    "flags": [],
+    "chartPolicy": "auto",
+    "humanizedNarrative": "enrich"
   },
   "entityProfiles": {
     "product": "table_list",
@@ -98,173 +100,762 @@
     "protheus_table_schema": "system"
   },
   "pathRules": [
-    { "contains": "/structure/exclusivity", "profile": "structure_exclusivity" },
-    { "contains": "/analyser", "profile": "analyser" },
-    { "contains": "/factory-status", "profile": "factory_status" },
-    { "contains": "/production-status", "profile": "production_status" },
-    { "contains": "/shipping-status", "profile": "shipping_status" },
-    { "contains": "/raw-material-price-intelligence", "profile": "raw_material_price_intelligence" },
-    { "contains": "/cost-impact-simulation", "profile": "cost_impact_simulation" },
-    { "contains": "/last-purchase", "profile": "last_purchase" },
-    { "contains": "/purchase-price-history", "profile": "purchase_price_history" },
-    { "contains": "/purchase-budget-history", "profile": "purchase_budget_history" },
-    { "contains": "/supplies/", "profile": "kpi_series" },
-    { "contains": "/financial/", "profile": "kpi_series" },
-    { "contains": "/commercial/", "profile": "kpi_series" },
-    { "contains": "/stock", "profile": "stock" },
-    { "contains": "/structure", "profile": "tree_hierarchy" },
-    { "contains": "/parents", "profile": "tree_hierarchy" },
-    { "contains": "/guide", "profile": "table_list" },
-    { "contains": "/inspection", "profile": "table_list" },
-    { "contains": "/suppliers", "profile": "table_list" },
-    { "contains": "/customers", "profile": "table_list" },
-    { "contains": "/purchases", "profile": "purchase_list" },
-    { "contains": "/sales", "profile": "table_list" },
-    { "contains": "/pricing", "profile": "sale_pricing" },
-    { "contains": "/prices", "profile": "table_list" },
-    { "contains": "/movements", "profile": "table_list" },
-    { "contains": "/invoices", "profile": "table_list" },
-    { "contains": "/products/search", "profile": "table_list" },
-    { "contains": "/summary", "profile": "table_list" },
-    { "contains": "/data/sql", "profile": "sql" },
-    { "contains": "/system/", "profile": "system" },
-    { "contains": "/production/oee", "profile": "kpi_series" },
-    { "contains": "/production/otd", "profile": "kpi_series" },
-    { "contains": "/production/eficiencia-fabril", "profile": "kpi_dashboard" },
-    { "contains": "/production/", "profile": "kpi_series" },
-    { "contains": "/hr/", "profile": "kpi_snapshot" },
-    { "contains": "/quality/ppm", "profile": "kpi_series" },
-    { "contains": "/quality/", "profile": "kpi_snapshot" },
-    { "contains": "/engineering/lmps/dashboard", "profile": "kpi_dashboard" },
-    { "contains": "/engineering/", "profile": "table_list" },
-    { "contains": "/sales/", "profile": "table_list" }
+    {
+      "contains": "/structure/exclusivity",
+      "profile": "structure_exclusivity"
+    },
+    {
+      "contains": "/analyser",
+      "profile": "analyser"
+    },
+    {
+      "contains": "/factory-status",
+      "profile": "factory_status"
+    },
+    {
+      "contains": "/production-status",
+      "profile": "production_status"
+    },
+    {
+      "contains": "/shipping-status",
+      "profile": "shipping_status"
+    },
+    {
+      "contains": "/raw-material-price-intelligence",
+      "profile": "raw_material_price_intelligence"
+    },
+    {
+      "contains": "/cost-impact-simulation",
+      "profile": "cost_impact_simulation"
+    },
+    {
+      "contains": "/last-purchase",
+      "profile": "last_purchase"
+    },
+    {
+      "contains": "/purchase-price-history",
+      "profile": "purchase_price_history"
+    },
+    {
+      "contains": "/purchase-budget-history",
+      "profile": "purchase_budget_history"
+    },
+    {
+      "contains": "/supplies/",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/financial/",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/commercial/",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/stock",
+      "profile": "stock"
+    },
+    {
+      "contains": "/structure",
+      "profile": "tree_hierarchy"
+    },
+    {
+      "contains": "/parents",
+      "profile": "tree_hierarchy"
+    },
+    {
+      "contains": "/guide",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/inspection",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/suppliers",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/customers",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/purchases",
+      "profile": "purchase_list"
+    },
+    {
+      "contains": "/sales",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/pricing",
+      "profile": "sale_pricing"
+    },
+    {
+      "contains": "/prices",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/movements",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/invoices",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/products/search",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/summary",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/data/sql",
+      "profile": "sql"
+    },
+    {
+      "contains": "/system/",
+      "profile": "system"
+    },
+    {
+      "contains": "/production/oee",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/production/otd",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/production/eficiencia-fabril",
+      "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/production/",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/hr/",
+      "profile": "kpi_snapshot"
+    },
+    {
+      "contains": "/quality/ppm",
+      "profile": "kpi_series"
+    },
+    {
+      "contains": "/quality/",
+      "profile": "kpi_snapshot"
+    },
+    {
+      "contains": "/engineering/lmps/dashboard",
+      "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/engineering/",
+      "profile": "table_list"
+    },
+    {
+      "contains": "/sales/",
+      "profile": "table_list"
+    }
   ],
   "profiles": {
     "analyser": {
       "defaultViewPolicy": "tree_when_available",
-      "viewOrder": ["text", "table", "tree", "chart", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "tree",
+        "chart",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "analyser",
-      "flags": ["analyser", "table"]
+      "flags": [
+        "analyser",
+        "table"
+      ],
+      "chartPolicy": "auto",
+      "visualBundle": {
+        "dashboardListRole": "guide"
+      },
+      "visualBuilders": {
+        "tree": "build_analyser_tree",
+        "chart": "build_analyser_chart",
+        "kpi": "build_analyser_kpi",
+        "dashboard": "build_analyser_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_analyser_auxiliary_table_presentations",
+        "layout": "analyser_slots",
+        "requiresProduct": true
+      },
+      "textBuilder": "build_analyser_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "presentationDecision": {
+        "defaultTextStack": true
+      }
     },
     "stock": {
       "defaultViewPolicy": "stock",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "stock",
-      "flags": ["stock"]
+      "flags": [
+        "stock"
+      ],
+      "chartPolicy": "auto",
+      "visualBundle": {
+        "requiresItems": true,
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_stock_kpi",
+        "tree": "build_stock_tree",
+        "chart": "build_stock_chart",
+        "dashboard": "build_stock_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_stock_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1,
+        "requiresItems": true
+      },
+      "textBuilder": "build_stock_text",
+      "textBuildOptions": {
+        "requiresItems": true
+      },
+      "presentationDecision": {
+        "narrativeFirstMaxRows": 6,
+        "tablePreferredMaxRows": 3
+      },
+      "humanizedNarrative": "skip"
     },
     "tree_hierarchy": {
       "defaultViewPolicy": "tree_when_available",
-      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "tree",
+        "table",
+        "chart",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "tree_hierarchy",
-      "flags": ["tree"]
+      "flags": [
+        "tree"
+      ],
+      "textBuilder": "build_tree_hierarchy_text",
+      "presentationDecision": {
+        "preferTreeOnStructureIntent": true
+      }
     },
     "table_list": {
       "defaultViewPolicy": "table_when_available",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "table_list",
-      "flags": ["table"]
+      "flags": [
+        "table"
+      ]
     },
     "factory_status": {
       "defaultViewPolicy": "tree_when_available",
-      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "tree",
+        "table",
+        "chart",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "factory_status",
-      "flags": ["factory_status", "tree"]
+      "flags": [
+        "factory_status",
+        "tree"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "stock"
+      },
+      "visualBuilders": {
+        "kpi": "build_factory_kpi",
+        "tree": "build_factory_tree",
+        "chart": "build_factory_chart",
+        "dashboard": "build_factory_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_factory_status_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_factory_status_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "factory_status"
     },
     "production_status": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "production_status",
-      "flags": ["production_status"]
+      "flags": [
+        "production_status"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_production_status_kpi",
+        "tree": "build_production_status_tree",
+        "chart": "build_production_status_chart",
+        "dashboard": "build_production_status_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_production_status_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_production_status_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "production_status"
     },
     "shipping_status": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "shipping_status",
-      "flags": ["shipping_status"]
+      "flags": [
+        "shipping_status"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_shipping_status_kpi",
+        "tree": "build_shipping_status_tree",
+        "chart": "build_shipping_status_chart",
+        "dashboard": "build_shipping_status_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_shipping_status_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_shipping_status_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "shipping_status"
     },
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
-      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "tree",
+        "table",
+        "chart",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "tree_hierarchy",
-      "flags": ["structure_exclusivity", "tree"]
+      "flags": [
+        "structure_exclusivity",
+        "tree"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "structure",
+        "dashboardIncludeTree": true
+      },
+      "visualBuilders": {
+        "kpi": "build_structure_exclusivity_kpi",
+        "tree": "build_structure_exclusivity_tree",
+        "chart": "build_structure_exclusivity_chart",
+        "dashboard": "build_structure_exclusivity_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_structure_exclusivity_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_structure_exclusivity_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "structure_exclusivity"
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "raw_material_price_intelligence",
-      "flags": ["raw_material_price_intelligence"]
+      "flags": [
+        "raw_material_price_intelligence"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "profile"
+      },
+      "visualBuilders": {
+        "kpi": "build_raw_material_price_kpi",
+        "tree": "build_raw_material_price_tree",
+        "chart": "build_raw_material_price_chart",
+        "dashboard": "build_raw_material_price_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_raw_material_price_intelligence_table_presentations",
+        "layout": "profile_only"
+      },
+      "textBuilder": "build_raw_material_price_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "raw_material_price_intelligence"
     },
     "cost_impact_simulation": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "cost_impact_simulation",
-      "flags": ["cost_impact_simulation"]
+      "flags": [
+        "cost_impact_simulation"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "profile"
+      },
+      "visualBuilders": {
+        "kpi": "build_cost_impact_kpi",
+        "tree": "build_cost_impact_tree",
+        "chart": "build_cost_impact_chart",
+        "dashboard": "build_cost_impact_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_cost_impact_simulation_table_presentations",
+        "layout": "profile_only"
+      },
+      "textBuilder": "build_cost_impact_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "cost_impact_simulation"
     },
     "sale_pricing": {
-      "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "defaultViewPolicy": "text_when_available",
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "sale_pricing",
-      "flags": ["sale_pricing"]
+      "flags": [
+        "sale_pricing"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "profile"
+      },
+      "visualBuilders": {
+        "kpi": "build_product_pricing_kpi",
+        "tree": "build_product_pricing_tree",
+        "chart": "build_product_pricing_chart",
+        "dashboard": "build_product_pricing_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_product_pricing_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_product_pricing_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "presentationDecision": {
+        "narrativeFirstMaxRows": 12
+      },
+      "humanizedNarrative": "skip",
+      "compositeVisualSpec": "sale_pricing"
     },
     "last_purchase": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "last_purchase",
-      "flags": ["last_purchase"]
+      "flags": [
+        "last_purchase"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_last_purchase_kpi",
+        "tree": "build_last_purchase_tree",
+        "chart": "build_last_purchase_chart",
+        "dashboard": "build_last_purchase_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_last_purchase_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_last_purchase_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "last_purchase"
     },
     "purchase_price_history": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "purchase_price_history",
-      "flags": ["purchase_price_history"]
+      "flags": [
+        "purchase_price_history"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_purchase_history_kpi",
+        "tree": "build_purchase_history_tree",
+        "chart": "build_purchase_history_chart",
+        "dashboard": "build_purchase_history_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_purchase_history_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_purchase_history_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "purchase_price_history"
     },
     "purchase_budget_history": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "purchase_budget_history",
-      "flags": ["purchase_budget_history"]
+      "flags": [
+        "purchase_budget_history"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_purchase_history_kpi",
+        "tree": "build_purchase_history_tree",
+        "chart": "build_purchase_history_chart",
+        "dashboard": "build_purchase_history_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_purchase_history_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_purchase_history_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "purchase_budget_history"
     },
     "purchase_list": {
       "defaultViewPolicy": "table_when_available",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "purchase_list",
-      "flags": ["purchase_list"]
+      "flags": [
+        "purchase_list"
+      ],
+      "chartPolicy": "skip",
+      "visualBundle": {
+        "dashboardListRole": "list"
+      },
+      "visualBuilders": {
+        "kpi": "build_purchases_kpi",
+        "tree": "build_purchases_tree",
+        "chart": "build_purchases_chart",
+        "dashboard": "build_purchases_dashboard"
+      },
+      "tableAssembly": {
+        "builder": "build_purchases_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "textBuilder": "build_purchases_text",
+      "textBuildOptions": {
+        "requiresProduct": true
+      },
+      "compositeVisualSpec": "purchase_list"
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "viewOrder": [
+        "text",
+        "table",
+        "chart",
+        "tree",
+        "kpi",
+        "dashboard"
+      ],
       "stackPlan": "table_list",
-      "flags": ["table"]
+      "flags": [
+        "table"
+      ]
     },
     "sql": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table"],
+      "viewOrder": [
+        "text",
+        "table"
+      ],
       "stackPlan": "default",
-      "flags": ["sql"]
+      "flags": [
+        "sql"
+      ]
     },
     "system": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table"],
+      "viewOrder": [
+        "text",
+        "table"
+      ],
       "stackPlan": "default",
-      "flags": ["system"]
+      "flags": [
+        "system"
+      ]
     },
     "kpi_series": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "kpi", "line_chart", "chart", "table", "dashboard"],
+      "viewOrder": [
+        "text",
+        "kpi",
+        "line_chart",
+        "chart",
+        "table",
+        "dashboard"
+      ],
       "stackPlan": "kpi_series",
-      "flags": ["kpi", "chart"]
+      "flags": [
+        "kpi",
+        "chart"
+      ]
     },
     "kpi_snapshot": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "kpi", "table", "chart", "dashboard"],
+      "viewOrder": [
+        "text",
+        "kpi",
+        "table",
+        "chart",
+        "dashboard"
+      ],
       "stackPlan": "default",
-      "flags": ["kpi"]
+      "flags": [
+        "kpi"
+      ]
     },
     "kpi_dashboard": {
       "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "dashboard", "kpi", "chart", "table"],
+      "viewOrder": [
+        "text",
+        "dashboard",
+        "kpi",
+        "chart",
+        "table"
+      ],
       "stackPlan": "default",
-      "flags": ["kpi", "dashboard"]
+      "flags": [
+        "kpi",
+        "dashboard"
+      ]
     },
     "generic": {
       "defaultViewPolicy": "generic",
@@ -286,82 +877,500 @@
   },
   "stackPlans": {
     "analyser": {
-      "tableRoleOrder": ["profile", "guide", "inspection", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "guide",
+        "inspection",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_analyser",
+        "narrativeOrder": "analyser",
+        "visibility": {
+          "scope": "markdown",
+          "profile": "profile_table",
+          "highlights": "highlights_strict",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "analyserGuide"
+          },
+          "inspection": {
+            "kind": "tableTitleTokens",
+            "group": "analyserInspection"
+          },
+          "structure": "tree",
+          "attention": "attention_strict"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "sections": {
+            "scope": {
+              "withCode": "scopeWithCode",
+              "generic": "scopeGeneric"
+            },
+            "profile": "profile",
+            "highlights": "highlights",
+            "guide": "guide",
+            "inspection": "inspection",
+            "structure": "structure",
+            "attention": "attention"
+          }
+        }
+      }
     },
     "stock": {
-      "tableRoleOrder": ["profile", "stock", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "stock",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_stock",
+        "narrativeOrder": "operational_stock",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "stockProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "stockGuide"
+          },
+          "structure": "tree",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/stock",
+          "sections": {
+            "scope": {
+              "withCode": "stockScopeWithCode",
+              "generic": "stockScopeGeneric"
+            },
+            "highlights": "stockHighlights",
+            "profile": "stockSummary",
+            "guide": "stockPositions",
+            "structure": "stockTree",
+            "attention": "stockAttention"
+          }
+        }
+      }
     },
     "tree_hierarchy": {
-      "tableRoleOrder": ["profile", "structure", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "structure",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_structure",
+        "narrativeOrder": "tree_hierarchy",
+        "visibility": {
+          "scope": "markdown",
+          "profile": "profile_table",
+          "highlights": "highlights",
+          "structure": "tree",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathVariants": {
+            "/parents": {
+              "pathFragment": "/parents",
+              "sections": {
+                "scope": {
+                  "withCode": "parentsScopeWithCode",
+                  "generic": "parentsScopeGeneric"
+                },
+                "highlights": "structureHighlights",
+                "profile": "structureProfile",
+                "structure": "structureTree",
+                "attention": "structureAttention"
+              }
+            },
+            "default": {
+              "pathFragment": "/structure",
+              "sections": {
+                "scope": {
+                  "withCode": "structureScopeWithCode",
+                  "generic": "structureScopeGeneric"
+                },
+                "highlights": "structureHighlights",
+                "profile": "structureProfile",
+                "structure": "structureTree",
+                "attention": "structureAttention"
+              }
+            }
+          }
+        }
+      }
     },
     "table_list": {
-      "tableRoleOrder": ["profile", "guide", "inspection", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "guide",
+        "inspection",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
     "factory_status": {
-      "tableRoleOrder": ["profile", "structure", "stock", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "structure",
+        "stock",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_factory_status",
+        "narrativeOrder": "operational_with_tail",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "factoryProfile"
+          },
+          "highlights": "highlights",
+          "structure": {
+            "kind": "treeOrTableTitleTokens",
+            "group": "factoryStructure"
+          },
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "factoryGuide"
+          },
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/factory-status",
+          "sections": {
+            "scope": {
+              "withCode": "factoryScopeWithCode",
+              "generic": "factoryScopeGeneric"
+            },
+            "highlights": "factoryHighlights",
+            "profile": "factoryStock",
+            "guide": "factoryProduction",
+            "structure": "factoryStructure",
+            "attention": "factoryAttention"
+          }
+        }
+      }
     },
     "production_status": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_production_status",
+        "narrativeOrder": "operational_with_tail",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "productionProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "productionGuide"
+          },
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/production-status",
+          "sections": {
+            "scope": {
+              "withCode": "productionScopeWithCode",
+              "generic": "productionScopeGeneric"
+            },
+            "highlights": "productionHighlights",
+            "profile": "productionHighlights",
+            "guide": "productionOrders",
+            "attention": "productionAttention"
+          }
+        }
+      }
     },
     "shipping_status": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_shipping_status",
+        "narrativeOrder": "operational_with_tail",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "shippingProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "shippingGuide"
+          },
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/shipping-status",
+          "sections": {
+            "scope": {
+              "withCode": "shippingScopeWithCode",
+              "generic": "shippingScopeGeneric"
+            },
+            "highlights": "shippingHighlights",
+            "profile": "shippingSummary",
+            "guide": "shippingMovements",
+            "attention": "shippingAttention"
+          }
+        }
+      }
     },
     "structure_exclusivity": {
-      "tableRoleOrder": ["profile", "structure", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "structure",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_structure_exclusivity",
+        "narrativeOrder": "profile_then_structure",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "structureExclusivityProfile"
+          },
+          "highlights": "highlights",
+          "structure": {
+            "kind": "treeOrTableTitleTokens",
+            "group": "structureExclusivityStructure"
+          },
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/structure/exclusivity",
+          "sections": {
+            "scope": {
+              "withCode": "structureExclusivityScopeWithCode",
+              "generic": "structureExclusivityScopeGeneric"
+            },
+            "highlights": "structureExclusivityHighlights",
+            "profile": "structureExclusivitySummary",
+            "structure": "structureExclusivityComponents",
+            "attention": "structureExclusivityAttention"
+          }
+        }
+      }
     },
     "raw_material_price_intelligence": {
-      "tableRoleOrder": ["profile", "pricing", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "pricing",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_raw_material_price_intelligence",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "mpPriceProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "mpPriceGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/raw-material-price-intelligence",
+          "sections": {
+            "scope": {
+              "withCode": "mpPriceScopeWithCode",
+              "generic": "mpPriceScopeGeneric"
+            },
+            "highlights": "mpPriceHighlights",
+            "profile": "mpPriceSummary",
+            "guide": "mpPriceHistory",
+            "structure": "mpPricePanels",
+            "attention": "mpPriceAttention"
+          }
+        }
+      }
     },
     "cost_impact_simulation": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_cost_impact_simulation",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "costImpactProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "costImpactGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/cost-impact-simulation",
+          "sections": {
+            "scope": {
+              "withCode": "costImpactScopeWithCode",
+              "generic": "costImpactScopeGeneric"
+            },
+            "highlights": "costImpactHighlights",
+            "profile": "costImpactSummary",
+            "guide": "costImpactMaterials",
+            "structure": "costImpactPanels",
+            "attention": "costImpactAttention"
+          }
+        }
+      }
     },
     "sale_pricing": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_pricing",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "salePricingProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "salePricingGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/pricing",
+          "sections": {
+            "scope": {
+              "withCode": "salePricingScopeWithCode",
+              "generic": "salePricingScopeGeneric"
+            },
+            "highlights": "salePricingHighlights",
+            "profile": "salePricingSummary",
+            "guide": "salePricingDetail",
+            "structure": "salePricingPanels",
+            "attention": "salePricingAttention"
+          }
+        }
+      }
     },
     "last_purchase": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
     "purchase_price_history": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
     "purchase_budget_history": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
     "purchase_list": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
     "kpi_series": {
-      "tableRoleOrder": ["profile", "list", "other"],
+      "tableRoleOrder": [
+        "profile",
+        "list",
+        "other"
+      ],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },

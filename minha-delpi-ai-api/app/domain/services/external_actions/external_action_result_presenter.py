@@ -1005,6 +1005,9 @@ class ExternalActionResultPresenter:
     def build_stock_tree_presentation(self, root: dict, path: str) -> dict | None:
         return self._stock().build_stock_tree_presentation(root, path)
 
+    def build_stock_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._stock().build_stock_chart_presentation(root, path)
+
     def build_stock_dashboard_presentation(
         self,
         root: dict,
@@ -1298,6 +1301,18 @@ class ExternalActionResultPresenter:
 
     def build_analyser_auxiliary_table_presentations(self, root: dict) -> list[dict]:
         return self._analyser().build_analyser_auxiliary_table_presentations(root)
+
+    def build_analyser_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._analyser().build_analyser_tree_presentation(root, path)
+
+    def build_analyser_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._analyser().build_analyser_chart_presentation(root, path)
+
+    def build_analyser_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._analyser().build_analyser_kpi_presentation(root, path)
+
+    def build_analyser_dashboard_presentation(self, root: dict, path: str, **kwargs: object) -> dict | None:
+        return self._analyser().build_analyser_dashboard_presentation(root, path, **kwargs)
 
     def _build_product_analyser_inspection_markdown(self, inspection_items: list) -> list[str]:
         return self._analyser()._build_product_analyser_inspection_markdown(inspection_items)

@@ -66,6 +66,16 @@ class ChatPresentationFieldNormalizationService:
 
         ChatPresentationKpiAssemblyService.normalize_metadata(metadata)
 
+        from app.domain.services.chat_presentation_table_role_service import (
+            ChatPresentationTableRoleService,
+        )
+
+        ChatPresentationTableRoleService.enrich_metadata(
+            metadata,
+            path=path,
+            entity=str(metadata.get("entity") or "").strip() or None,
+        )
+
     @classmethod
     def normalize_presentation(
         cls,

@@ -9,7 +9,7 @@ import { stripPresentationSectionMarkers } from "./chatMarkdown";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   getStackPresentationPlanFromToolCalls,
-  inferTableRoleFromTitle,
+  resolveTableRole,
   planUsesHumanizedSections,
   type StackPresentationPlan,
   type StackTableRole,
@@ -134,7 +134,7 @@ function appendTablesForRoles(
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   options?: { sectionPerRole?: boolean },
 ): void {
-  const buckets = bucketTableSegmentsByRole(tables, inferTableRoleFromTitle);
+  const buckets = bucketTableSegmentsByRole(tables, resolveTableRole);
   const sectionPerRole = options?.sectionPerRole === true;
   const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
     guide: "guide",
@@ -244,7 +244,7 @@ function profileTablesForPlan(
   tables: AssistantContentSegment[],
   profileRoles: StackTableRole[],
 ): AssistantContentSegment[] {
-  const buckets = bucketTableSegmentsByRole(tables, inferTableRoleFromTitle);
+  const buckets = bucketTableSegmentsByRole(tables, resolveTableRole);
 
   return profileRoles.flatMap((role) => buckets[role]);
 }

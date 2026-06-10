@@ -1223,3 +1223,20 @@ class ExternalActionProductAnalyserPresenter:
             )
 
         return self._host._presenter_text("analyserTableTitles", f"{kind}Generic")
+
+    def build_analyser_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._host.build_tree_presentation(root, path=path)
+
+    def build_analyser_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._host.build_chart_presentation(root, path=path, force=True)
+
+    def build_analyser_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return None
+
+    def build_analyser_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        **_: object,
+    ) -> dict | None:
+        return self._host.build_dashboard_presentation(root, path=path)

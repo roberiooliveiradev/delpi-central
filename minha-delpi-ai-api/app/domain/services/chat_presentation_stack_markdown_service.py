@@ -264,11 +264,11 @@ class ChatPresentationStackMarkdownService:
 
     @classmethod
     def _has_profile_table(cls, metadata: dict[str, Any]) -> bool:
-        from app.domain.services.chat_presentation_section_availability_service import (
-            ChatPresentationSectionAvailabilityService,
+        from app.domain.services.chat_presentation_section_rules_service import (
+            ChatPresentationSectionRulesService,
         )
 
-        return ChatPresentationSectionAvailabilityService._has_profile_table(metadata)
+        return ChatPresentationSectionRulesService._has_profile_table(metadata)
 
     @classmethod
     def _has_operational_tables(cls, metadata: dict[str, Any]) -> bool:

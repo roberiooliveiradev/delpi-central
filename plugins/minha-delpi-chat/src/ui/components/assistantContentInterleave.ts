@@ -4,6 +4,8 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import { buildCanonicalStackSegments } from "./presentationStackBlueprint";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 
+type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
+
 const PRESENTATION_MARKER_RE =
   /\[\[(tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::(\d+))?]]/gi;
 
@@ -54,7 +56,7 @@ export function partitionCommentarySections(markdown: string): CommentarySection
 }
 
 import {
-  inferTableRoleFromTitle,
+  resolveTableRole,
   type StackTableRole,
 } from "./presentationStackPlan";
 
@@ -73,7 +75,10 @@ function emptyRoleBuckets(): Record<StackTableRole, AssistantContentSegment[]> {
 
 export function bucketTableSegmentsByRole(
   tables: AssistantContentSegment[],
-  resolveRole: (title: string) => StackTableRole = inferTableRoleFromTitle,
+  resolveRole: (
+    title: string,
+    presentation?: TablePresentation,
+  ) => StackTableRole = (title, presentation) => resolveTableRole(title, presentation),
 ): Record<StackTableRole, AssistantContentSegment[]> {
   const buckets = emptyRoleBuckets();
 
@@ -86,7 +91,10 @@ export function bucketTableSegmentsByRole(
       continue;
     }
 
-    const role = resolveRole(String(segment.presentation.title || ""));
+    const role = resolveRole(
+      String(segment.presentation.title || ""),
+      segment.presentation,
+    );
 
     buckets[role].push(segment);
   }

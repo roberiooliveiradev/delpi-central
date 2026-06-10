@@ -20,16 +20,19 @@ Relacionado:
 
 | Fase | Tema | Status |
 |------|------|--------|
-| **R0** | Baseline e inventário de débito | ⬜ Pendente |
-| **R1** | `role` nas tabelas (API → MFE) | ⬜ Pendente |
-| **R2** | Registry de bundles visuais por perfil | ⬜ Pendente |
-| **R3** | Montagem declarativa de `tablePresentations` | ⬜ Pendente |
-| **R4** | Section availability declarativa | ⬜ Pendente |
-| **R5** | Texto e decisão por perfil (não por path) | ⬜ Pendente |
-| **R6** | Presenters produto — quartet unificado | ⬜ Pendente |
-| **R7** | MFE confia no metadata da API | ⬜ Pendente |
-| **R8** | Narrativa, dedup e gaps residuais | ⬜ Pendente |
-| **R9** | CI, homologação e encerramento | ⬜ Pendente |
+| **R0** | Baseline e inventário de débito | ✅ Concluído |
+| **R1** | `role` nas tabelas (API → MFE) | ✅ Concluído |
+| **R2** | Registry de bundles visuais por perfil | ✅ Concluído |
+| **R3** | Montagem declarativa de `tablePresentations` | ✅ Concluído |
+| **R4** | Section availability declarativa | ✅ Concluído |
+| **R5** | Texto e decisão por perfil (não por path) | ✅ Concluído |
+| **R6** | Presenters produto — quartet unificado | ✅ Concluído |
+| **R7** | MFE confia no metadata da API | ✅ Concluído |
+| **R8** | Narrativa, dedup e gaps residuais | ✅ Concluído |
+| **R9** | CI, homologação e encerramento | ✅ Concluído |
+| **R10** | Fechamento tier A (visualBuilders + cobertura) | ✅ Concluído |
+| **R11** | Chips pós-resposta API↔MFE | ✅ Concluído |
+| **R12** | Regressão entity contract + CI consolidado | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -488,13 +491,153 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 
 ## 10. Próximo passo imediato
 
-Abrir **R0** com PR pequeno:
+**Manutenção contínua:** novos perfis tier A → fixtures + gates; CI via `--check-playbook12`.
 
-1. `scripts/audit_presentation_path_ifs.py` + baseline JSON.
-2. Estender `chat_presentation_regression_cases.py` (casos tier A).
-3. Marcar **R0 ✅** neste playbook.
+**R12 entregue (jun/2026):**
 
-Em seguida, PR **R1** (`ChatPresentationTableRoleService`) — entrega visível rápida no chat fabril e analyser.
+| Artefato | Detalhe |
+|----------|---------|
+| Texto | `text_presentation_presenter.py` — zero path literals (entity + profileKey) |
+| Gate | `--check-playbook12` — perfis, roles, chips, path baseline, new ops |
+| Fixture | `presentation_playbook12_regression_gate.py` |
+| Testes | `test_playbook12_regression_suite.py` + entity contract (≥40 entidades) |
+| Baseline | `totalPathConditionals` → **0** |
+
+**Playbook 12 encerrado (R0–R12).**
+
+**R11 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| API | `ChatPresentationProfileService.should_auto_force_chart`, `text_when_available`; use case sem `stock_like`/`price_like` |
+| Interactivity | `viewChipLabels.chart` → «Ver em gráfico»; gate `--check-interactivity-chips` |
+| Vocabulário | `postResponseChips` em `presentation_vocabulary.json` |
+| MFE | `presentationInteractivityPolicy.ts` — menu de formato via `presentationDecision` |
+| Baseline | condicionais use case: 2 → 0 |
+
+**R10 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| analyser | `visualBuilders` tree/chart/kpi/dashboard + registry `build_analyser_*` |
+| stock | `build_stock_chart` no perfil e registry |
+| Vocabulário | `tierAProfileKeys` expandido (13 perfis); `tierAPipelineCases` +7 fixtures |
+| Baseline | `tierAMissingVisualBuildersCount` → 0; gate `--check-visual-builders` sem avisos tier A |
+
+**Playbook 12 concluído (R0–R10).**
+
+**R9 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Gates CI | `--check-table-roles` (fail), `--check-visual-builders` (warn) |
+| Workflow | `.github/workflows/minha-delpi-ai-api-presentation.yml` — gates + regressões pipeline/role |
+| Homologação | §8 em `perguntas-teste-chat-jun2026.md` (H1–H12) |
+| Validação | `tests/fixtures/presentation_table_role_gate.py` + `find_visual_builder_warnings` |
+
+**R8 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Perfis | `humanizedNarrative: skip\|enrich` em `presentation_profiles.json` (default enrich; stock e sale_pricing skip) |
+| Narrativa | `ChatPresentationHumanizedNarrativeService` — skips e headers via perfil + `presenter_content.humanizedNarrative` |
+| Stack order | `_markdown_has_attention` / `_markdown_has_highlights` leem prefixos do JSON |
+| Dedup API | `structureDedupApplied` em metadata pós-`dedupe_metadata` |
+| Dedup MFE | `presentation_vocabulary.json` sincronizado; markers + flag metadata em `presentationStructureDedup.ts` |
+| Schema driven | `_RICH_PROFILE_KEYS` inclui `purchase_price_history` e `purchase_budget_history` |
+
+**R7 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Política MFE | `presentationMetadataPolicy.ts` — `selected`, `visualOrder`, `dataShape.hasHierarchy` |
+| Toolbar | `resolveInitialToolbarKind*` e `resolveDefaultVisualKind` sem heurística por path |
+| Multi-rota | ordem visual via `resolveVisualOrderFromToolCalls` por tool call |
+| Stack plan | removido fallback `path.includes("/stock")` em `getStackPresentationPlanFromToolCalls` |
+| Tipos | `ChatPresentationDecision.presentationProfileKey`, `stackPresentationPlan` |
+| Testes | `presentationMetadataPolicy.test.ts`, regressões visualFormats/stackPlan/multiRoute |
+
+**R6 lote 2 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Builder | extensões: KPI multi-seção/computed, chart composition/aggregate, tree primary/fallback/combineSections |
+| Specs | `factory_status`, `last_purchase`, `purchase_list`, `sale_pricing`, `purchase_price_history`, `purchase_budget_history`, `raw_material_price_intelligence`, `cost_impact_simulation` |
+| Presenters | 5 módulos delegando ao `ChatPresentationProfileCompositeVisualService` |
+| Limpeza | bloco duplicado `build_cost_impact_*` removido de `product_raw_material_price_presenter.py` |
+
+**R6 lote 1 entregue (jun/2026) — família playbook status:**
+
+| Artefato | Caminho |
+|----------|---------|
+| Builder | `app/domain/services/chat_presentation_composite_visual_builder.py` |
+| Orquestração | `app/domain/services/chat_presentation_profile_composite_visual_service.py` |
+| Specs | `presenter_content.json` → `compositeVisualSpecs` (production, shipping, exclusivity) |
+| Perfis | `presentation_profiles.json` → `compositeVisualSpec` (3 perfis) |
+| Presenters | `product_production_status`, `product_shipping_status`, `product_structure_exclusivity` |
+| Testes | `test_chat_presentation_composite_visual_builder.py` |
+
+**R5 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Texto | `app/domain/services/chat_presentation_profile_text_builder_service.py` |
+| Decisão | `app/domain/services/chat_presentation_operational_decision_service.py` |
+| Perfis | `presentation_profiles.json` → `textBuilder`, `presentationDecision` (14 perfis) |
+| Vocabulário | `presentation_vocabulary.json` → `operationalDecision` |
+| Presenter | `text_presentation_presenter.py` — registry declarativo, sem `elif` por path |
+| Testes | `test_chat_presentation_profile_text_and_decision.py` |
+
+**R4 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/chat_presentation_section_rules_service.py` |
+| Orquestração | `chat_presentation_section_availability_service.py` (78 linhas; 0 handlers por rota) |
+| Perfis | `presentation_profiles.json` → `stackPlans.*.sectionRules` (10 rotas ricas) |
+| Testes | `test_chat_presentation_section_rules_service.py` + regressões existentes |
+| Baseline | `sectionAvailabilityLineCount`: 1125 → 78; `sectionAvailabilityRouteHandlerCount`: 10 → 0 |
+
+**R3 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/chat_presentation_table_assembly_service.py` |
+| Perfis | `presentation_profiles.json` → `tableAssembly` (11 perfis) |
+| Use case | `execute_external_action_use_case.py` — `elif` por path → `assemble()` |
+| Dedup | `chat_presentation_structure_dedup_service.py` — preserva slots `profile`/`inspection` no bundle |
+| Testes | `test_chat_presentation_table_assembly_service.py` + regressões tier A |
+| Baseline | `useCaseTableAssemblyPathConditionalCount`: 15 → 2 |
+
+**R2 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Registry | `app/domain/services/chat_presentation_profile_visual_bundle_service.py` |
+| Orquestração | `chat_presentation_visual_bundle_service.py` (< 280 linhas; 7 `_enrich_*` removidos) |
+| Perfis | `presentation_profiles.json` → `visualBuilders`, `chartPolicy`, `visualBundle` |
+| Testes | `test_chat_presentation_profile_visual_bundle_service.py` + regressões existentes |
+
+**R1 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Vocabulário | `presentation_vocabulary.json` → `tableRoles` |
+| Serviço | `app/domain/services/chat_presentation_table_role_service.py` |
+| Wiring | `ChatPresentationFieldNormalizationService.normalize_metadata` |
+| MFE | `resolveTableRole`, `bucketTableSegmentsByRole` preferindo `presentation.role` |
+| Testes API | `test_chat_presentation_table_role_service.py` |
+| Testes MFE | `presentationStackPlan.test.ts` |
+
+**R0 entregue (jun/2026):**
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/chat_presentation_refactor_baseline_service.py` |
+| Script | `scripts/audit_presentation_path_ifs.py` |
+| Baseline | `docs/architecture/presentation-refactor-baseline-jun2026.json` |
+| Fixtures | `presentation_vocabulary.json` → `playbook12Refactor.tierAPipelineCases` |
+| Testes | `tests/unit/domain/services/test_presentation_refactor_baseline.py` |
 
 ---
 

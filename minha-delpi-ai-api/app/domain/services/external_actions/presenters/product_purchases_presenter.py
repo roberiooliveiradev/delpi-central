@@ -186,184 +186,52 @@ class ExternalActionProductPurchasesPresenter:
         }
 
     def build_purchases_kpi_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_kpi_assembly_service import (
-            ChatPresentationKpiAssemblyService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        code = self._product_code(root, path)
-        items = self._items(root)
-
-        if not items:
-            return None
-
-        title = (
-            self._route("kpiTitle", code=code)
-            if code
-            else self._route("kpiTitleGeneric")
+        return ChatPresentationProfileCompositeVisualService.build_kpi(
+            self._host,
+            root,
+            path,
+            profile_key="purchase_list"
         )
-        cards: list[dict[str, Any]] = [
-            ChatPresentationKpiAssemblyService.metric_card(
-                label=self._route("kpiTotalOrders"),
-                value=int(root.get("total") or len(items)),
-                unit="PC",
-                color="#6366f1",
-                key="total_orders",
-            ),
-            ChatPresentationKpiAssemblyService.metric_card(
-                label=self._route("kpiPageOrders"),
-                value=len(items),
-                unit="nesta página",
-                color="#0ea5e9",
-                key="page_orders",
-            ),
-        ]
-
-        prices = [
-            float(item.get("unit_price") or 0)
-            for item in items
-            if isinstance(item, dict) and item.get("unit_price") is not None
-        ]
-
-        if prices:
-            cards.append(
-                ChatPresentationKpiAssemblyService.metric_card(
-                    label=self._route("kpiAvgPrice"),
-                    value=sum(prices) / len(prices),
-                    unit="R$",
-                    color="#10b981",
-                    key="avg_unit_price",
-                )
-            )
-
-        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
 
     def build_purchases_chart_presentation(self, root: dict, path: str) -> dict | None:
-        items = [item for item in self._items(root) if isinstance(item, dict)]
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
+        )
 
-        if not items:
-            return None
-
-        quantity_label = self._host._humanize_key("ordered_quantity")
-        chart_data: list[dict[str, Any]] = []
-
-        for item in items[:20]:
-            supplier = str(item.get("supplier_code") or item.get("order_number") or "—")
-            chart_data.append(
-                {
-                    "name": supplier,
-                    quantity_label: float(item.get("ordered_quantity") or 0),
-                }
-            )
-
-        if not chart_data:
-            return None
-
-        code = self._product_code(root, path)
-
-        return {
-            "type": "chart",
-            "title": (
-                self._route("chartTitle", code=code)
-                if code
-                else self._route("chartTitleGeneric")
-            ),
-            "chartType": "horizontal_bar",
-            "data": chart_data,
-            "config": {
-                "xAxis": "name",
-                "yAxis": [quantity_label],
-                "colors": ["#10b981"],
-                "legend": False,
-            },
-        }
+        return ChatPresentationProfileCompositeVisualService.build_chart(
+            self._host,
+            root,
+            path,
+            profile_key="purchase_list"
+        )
 
     def build_purchases_tree_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_presentation_hierarchy_tree_service import (
-            ChatPresentationHierarchyTreeService,
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-        items = [item for item in self._items(root) if isinstance(item, dict)]
-
-        if not items:
-            return None
-
-        code = self._product_code(root, path)
-        title = (
-            self._route("treeTitle", code=code)
-            if code
-            else self._route("treeTitleGeneric")
+        return ChatPresentationProfileCompositeVisualService.build_tree(
+            self._host,
+            root,
+            path,
+            profile_key="purchase_list"
         )
 
-        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
-            order = str(item.get("order_number") or "—")
-            supplier = str(item.get("supplier_name") or item.get("supplier_code") or "").strip()
-
-            return ChatPresentationHierarchyTreeService._serialize_node(
-                node_id=f"pc:{order}",
-                label=self._route("treeOrderLeafLabel", order=order),
-                subtitle=supplier,
-            )
-
-        return ChatPresentationHierarchyTreeService.build_multi_level(
-            title=title,
-            root_id=code or "purchases",
-            root_label=(
-                self._route("treeRootLabel", code=code)
-                if code
-                else title
-            ),
-            items=items,
-            group_keys=["supplier_code"],
-            leaf_builder=_leaf,
+    def build_purchases_dashboard_presentation(self, root: dict, path: str, *, kpi: dict | None = None, chart: dict | None = None, table: dict | None = None) -> dict | None:
+        from app.domain.services.chat_presentation_profile_composite_visual_service import (
+            ChatPresentationProfileCompositeVisualService,
         )
 
-    def build_purchases_dashboard_presentation(
-        self,
-        root: dict,
-        path: str,
-        *,
-        kpi: dict | None = None,
-        chart: dict | None = None,
-        table: dict | None = None,
-    ) -> dict | None:
-        from app.domain.services.chat_presentation_dashboard_assembly_service import (
-            ChatPresentationDashboardAssemblyService,
+        return ChatPresentationProfileCompositeVisualService.build_dashboard(
+            self._host,
+            root,
+            path,
+            profile_key="purchase_list",
+            kpi=kpi,
+            chart=chart,
+            table=table
         )
-
-        code = self._product_code(root, path)
-        title = (
-            self._route("dashboardTitle", code=code)
-            if code
-            else self._route("dashboardTitleGeneric")
-        )
-        panels: list[dict] = []
-
-        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="summary",
-                    title=str(kpi.get("title") or self._route("overviewTableTitle")),
-                    presentation=kpi,
-                )
-            )
-
-        if isinstance(chart, dict) and chart.get("type") == "chart":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="chart",
-                    title=str(chart.get("title") or self._route("chartTitleGeneric")),
-                    presentation=chart,
-                    chart_presentation=chart,
-                )
-            )
-
-        if isinstance(table, dict) and table.get("type") == "table":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="detail",
-                    title=str(table.get("title") or self._route("ordersTableTitle")),
-                    presentation=table,
-                )
-            )
-
-        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

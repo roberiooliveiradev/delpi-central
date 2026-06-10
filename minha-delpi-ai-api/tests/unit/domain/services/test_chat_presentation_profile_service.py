@@ -37,6 +37,30 @@ def test_entity_profile_precedes_path_rules() -> None:
     assert key == "stock"
 
 
+def test_humanized_narrative_mode_from_profile() -> None:
+    assert (
+        ChatPresentationProfileService.humanized_narrative_mode(
+            "/products/90260144/stock",
+            "product_stock",
+        )
+        == "skip"
+    )
+    assert (
+        ChatPresentationProfileService.humanized_narrative_mode(
+            "/products/90260144/pricing",
+            "product_pricing",
+        )
+        == "skip"
+    )
+    assert (
+        ChatPresentationProfileService.humanized_narrative_mode(
+            "/products/90260144/factory-status",
+            "product_factory_status",
+        )
+        == "enrich"
+    )
+
+
 def test_resolve_default_preferred_format_stock_table() -> None:
     preferred = ChatPresentationProfileService.resolve_default_preferred_format(
         path="/products/90260144/stock",

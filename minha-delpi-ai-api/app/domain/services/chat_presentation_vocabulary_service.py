@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from typing import Any
 
 from app.domain.services.chat_assistant_vocabulary_service import ChatAssistantVocabularyService
 
@@ -76,6 +77,10 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.text("routePolicyReasons", key, default=default)
 
     @classmethod
+    def operational_decision_markers(cls, group_key: str) -> tuple[str, ...]:
+        return cls.terms("operationalDecision", group_key)
+
+    @classmethod
     def insight_text(cls, key: str, *, default: str = "", **values: str) -> str:
         return cls.text("insights", key, default=default, **values)
 
@@ -112,3 +117,100 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         }
 
         return cls.text("dashboardExplain", key, default=default, **normalized)
+
+    @classmethod
+    def playbook12_audit_files(cls) -> tuple[str, ...]:
+        return cls.terms("playbook12Refactor", "auditFiles")
+
+    @classmethod
+    def playbook12_tier_a_profile_keys(cls) -> tuple[str, ...]:
+        return cls.terms("playbook12Refactor", "tierAProfileKeys")
+
+    @classmethod
+    def playbook12_table_assembly_path_fragments(cls) -> frozenset[str]:
+        return frozenset(cls.terms("playbook12Refactor", "tableAssemblyPathFragments"))
+
+    @classmethod
+    def playbook12_targets(cls) -> dict[str, int]:
+        raw = cls.node("playbook12Refactor", "targets")
+
+        if not isinstance(raw, dict):
+            return {}
+
+        return {
+            str(key): int(value)
+            for key, value in raw.items()
+            if isinstance(value, (int, float))
+        }
+
+    @classmethod
+    @lru_cache(maxsize=16)
+    def playbook12_scan_pattern(cls, key: str) -> re.Pattern[str]:
+        pattern = cls.text("playbook12Refactor", "scanPatterns", key, default="")
+
+        if not pattern:
+            return re.compile(r"$^")
+
+        return re.compile(pattern)
+
+    @classmethod
+    def playbook12_tier_a_pipeline_cases(cls) -> tuple[dict[str, Any], ...]:
+        raw = cls.node("playbook12Refactor", "tierAPipelineCases")
+
+        if not isinstance(raw, list):
+            return ()
+
+        cases: list[dict[str, Any]] = []
+
+        for item in raw:
+            if isinstance(item, dict) and item.get("id"):
+                cases.append(dict(item))
+
+        return tuple(cases)
+
+    @classmethod
+    def table_role_default(cls) -> str:
+        return cls.text("tableRoles", "defaultRole", default="other")
+
+    @classmethod
+    def table_role_allowed_roles(cls) -> tuple[str, ...]:
+        return cls.terms("tableRoles", "allowedRoles")
+
+    @classmethod
+    def table_role_metadata_presentation_roles(cls) -> dict[str, str]:
+        raw = cls.node("tableRoles", "metadataPresentationRoles")
+
+        if not isinstance(raw, dict):
+            return {}
+
+        return {
+            str(key): str(value)
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def table_role_title_token_group_priority(cls) -> tuple[str, ...]:
+        return cls.terms("tableRoles", "titleTokenGroupPriority")
+
+    @classmethod
+    def table_role_for_title_token_group(cls, group_key: str) -> str:
+        mapping = cls.mapping("tableRoles", "titleTokenGroupRoles")
+
+        return str(mapping.get(str(group_key or "").strip()) or "").strip()
+
+    @classmethod
+    def table_role_global_match_order(cls) -> tuple[str, ...]:
+        return cls.terms("tableRoles", "globalTitleMatchOrder")
+
+    @classmethod
+    def table_role_global_tokens(cls, role_key: str) -> tuple[str, ...]:
+        return cls.terms("tableRoles", "globalTitleTokens", str(role_key or "").strip())
+
+    @classmethod
+    def table_role_profile_title_token_groups(cls, profile_key: str) -> tuple[str, ...]:
+        return cls.terms(
+            "tableRoles",
+            "profileTitleTokenGroups",
+            str(profile_key or "").strip(),
+        )

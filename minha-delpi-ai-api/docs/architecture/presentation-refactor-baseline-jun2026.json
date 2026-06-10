@@ -1,0 +1,106 @@
+{
+  "generatedAt": "2026-06-10T12:41:33.423558+00:00",
+  "playbook": "12-R0",
+  "summary": {
+    "auditFileCount": 4,
+    "totalPathConditionals": 0,
+    "dedicatedEnrichMethodCount": 0,
+    "profileFlagVariableCount": 0,
+    "useCaseTableAssemblyPathConditionalCount": 0,
+    "sectionAvailabilityRouteHandlerCount": 0,
+    "sectionAvailabilityLineCount": 78,
+    "visualBundleDedicatedEnrichCount": 0,
+    "tierAProfileCount": 13,
+    "tierAMissingVisualBuildersCount": 0,
+    "tierAMissingTableAssemblyCount": 0
+  },
+  "targets": {
+    "sectionAvailabilityMaxLines": 400,
+    "visualBundleDedicatedEnrichMax": 0,
+    "useCasePathTableAssemblyElifMax": 0,
+    "sectionAvailabilityRouteHandlerMax": 0,
+    "totalPathConditionalsMax": 0
+  },
+  "profileGaps": {
+    "missingVisualBuilders": [
+      "generic",
+      "kpi_dashboard",
+      "kpi_series",
+      "kpi_snapshot",
+      "playbook_report",
+      "sql",
+      "system",
+      "table_list",
+      "tree_hierarchy"
+    ],
+    "missingTableAssembly": [
+      "generic",
+      "kpi_dashboard",
+      "kpi_series",
+      "kpi_snapshot",
+      "playbook_report",
+      "sql",
+      "system",
+      "table_list",
+      "tree_hierarchy"
+    ],
+    "missingSectionRules": [
+      "generic",
+      "kpi_dashboard",
+      "kpi_series",
+      "kpi_snapshot",
+      "last_purchase",
+      "playbook_report",
+      "purchase_budget_history",
+      "purchase_list",
+      "purchase_price_history",
+      "sql",
+      "system",
+      "table_list"
+    ],
+    "tierAMissingVisualBuilders": [],
+    "tierAMissingTableAssembly": [],
+    "tierAMissingSectionRules": [
+      "last_purchase",
+      "purchase_price_history",
+      "purchase_budget_history",
+      "purchase_list"
+    ]
+  },
+  "dedicatedEnrichMethods": [],
+  "profileFlagVariables": [],
+  "files": [
+    {
+      "relativePath": "app/application/use_cases/execute_external_action_use_case.py",
+      "lineCount": 715,
+      "pathConditionalCount": 0,
+      "pathConditionalHits": [],
+      "dedicatedEnrichMethods": [],
+      "profileFlagVariables": []
+    },
+    {
+      "relativePath": "app/domain/services/chat_presentation_visual_bundle_service.py",
+      "lineCount": 273,
+      "pathConditionalCount": 0,
+      "pathConditionalHits": [],
+      "dedicatedEnrichMethods": [],
+      "profileFlagVariables": []
+    },
+    {
+      "relativePath": "app/domain/services/chat_presentation_section_availability_service.py",
+      "lineCount": 78,
+      "pathConditionalCount": 0,
+      "pathConditionalHits": [],
+      "dedicatedEnrichMethods": [],
+      "profileFlagVariables": []
+    },
+    {
+      "relativePath": "app/domain/services/external_actions/presenters/text_presentation_presenter.py",
+      "lineCount": 298,
+      "pathConditionalCount": 0,
+      "pathConditionalHits": [],
+      "dedicatedEnrichMethods": [],
+      "profileFlagVariables": []
+    }
+  ]
+}

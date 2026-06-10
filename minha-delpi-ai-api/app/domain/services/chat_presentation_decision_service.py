@@ -786,11 +786,11 @@ class ChatPresentationDecisionService:
         if user_preference:
             return False
 
-        from app.domain.services.chat_presentation_route_policy_service import (
-            ChatPresentationRoutePolicyService,
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
         )
 
-        if not ChatPresentationRoutePolicyService.is_analyser_route(path):
+        if not ChatPresentationProfileService.has_flag(path, "analyser"):
             return False
 
         if not isinstance(text_presentation, dict):
@@ -817,6 +817,10 @@ class ChatPresentationDecisionService:
     ) -> dict[str, Any] | None:
         from app.domain.services.chat_presentation_rich_stack_policy_service import (
             ChatPresentationRichStackPolicyService,
+        )
+
+        from app.domain.services.chat_presentation_operational_decision_service import (
+            ChatPresentationOperationalDecisionService,
         )
 
         rich_metadata = metadata if isinstance(metadata, dict) else {
@@ -907,14 +911,12 @@ class ChatPresentationDecisionService:
             )
         )
 
-        if has_tree and (
-            "structure" in intent_token
-            or "structure_lookup" in intent_token
-            or "parent" in intent_token
-            or "/structure" in intent_token
-            or "/parents" in intent_token
-            or "/analyser" in intent_token
-            or any(term in message for term in ("estrutura", "bom", "componente", "parents", "onde é usado"))
+        if has_tree and ChatPresentationOperationalDecisionService.should_prefer_tree_primary(
+            path=path,
+            entity=entity,
+            intent_token=intent_token,
+            message=message,
+            has_tree=True,
         ):
             return cls._build(
                 selected="tree",
@@ -939,15 +941,13 @@ class ChatPresentationDecisionService:
         )
         row_count = len(table_rows or [])
 
-        if (
-            text_presentation
-            and row_count <= 12
-            and (
-                "price" in intent_token
-                or "pricing" in intent_token
-                or "preco" in message
-                or "preço" in message
-            )
+        if ChatPresentationOperationalDecisionService.should_prefer_pricing_narrative(
+            path=path,
+            entity=entity,
+            intent_token=intent_token,
+            message=message,
+            row_count=row_count,
+            has_text=bool(text_presentation),
         ):
             return cls._build(
                 selected="text",
@@ -961,15 +961,14 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if (
-            text_presentation
-            and row_count <= 6
-            and (
-                "stock" in intent_token
-                or "estoque" in message
-                or "saldo" in message
-            )
-            and not chart_presentation
+        if ChatPresentationOperationalDecisionService.should_prefer_stock_narrative(
+            path=path,
+            entity=entity,
+            intent_token=intent_token,
+            message=message,
+            row_count=row_count,
+            has_text=bool(text_presentation),
+            has_chart=bool(chart_presentation),
         ):
             return cls._build(
                 selected="text",
@@ -983,7 +982,13 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if chart_presentation and row_count <= 3 and "stock" in intent_token:
+        if ChatPresentationOperationalDecisionService.should_prefer_stock_table_over_chart(
+            path=path,
+            entity=entity,
+            intent_token=intent_token,
+            row_count=row_count,
+            has_chart=bool(chart_presentation),
+        ):
             return cls._build(
                 selected="table",
                 fallback="text",
@@ -1016,7 +1021,11 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if text_presentation and "/analyser" in intent_token:
+        if ChatPresentationOperationalDecisionService.should_prefer_analyser_text_stack(
+            path=path,
+            entity=entity,
+            has_text=bool(text_presentation),
+        ):
             return cls._build(
                 selected="text",
                 fallback="table",
