@@ -146,8 +146,10 @@ def main() -> int:
             f"qual o estoque do produto {_PRODUCT}?",
             lambda m, t: (
                 "/stock" in str(m.get("path") or "")
-                and (m.get("stackPresentationPlan") or {}).get("humanizedSections") is False
-                and "Escopo da consulta" not in t
+                and (m.get("stackPresentationPlan") or {}).get("humanizedSections") is True
+                and (m.get("stackPresentationPlan") or {}).get("presentationProfile")
+                == "product_stock"
+                and "**Destaques**" in t
                 and "[[table:" not in t
             ),
         ),

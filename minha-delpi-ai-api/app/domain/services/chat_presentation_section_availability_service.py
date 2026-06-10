@@ -82,6 +82,15 @@ class ChatPresentationSectionAvailabilityService:
             plan["narrativeOrder"] = cls._narrative_order_for_structure_exclusivity(visibility)
             return plan
 
+        if ChatPresentationRoutePolicyService.is_stock_route(lowered):
+            visibility = cls._resolve_stock_visibility(metadata)
+            plan["presentationProfile"] = "product_stock"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_stock_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_stock(visibility)
+            return plan
+
         plan["presentationProfile"] = "generic_stack"
         plan["humanizedSections"] = False
         plan["sectionVisibility"] = {}
@@ -288,6 +297,74 @@ class ChatPresentationSectionAvailabilityService:
             ),
             cls._ATTENTION: cls._has_attention_generic(markdown),
         }
+
+    @classmethod
+    def _resolve_stock_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo do estoque",)),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ("posições", "posicoes", "filial", "armazém", "armazem"),
+            ),
+            cls._STRUCTURE: cls._has_tree(metadata),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _build_stock_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/stock")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "stockScopeWithCode" if code else "stockScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = (
+                template.format(code=code) if code and template else framing.get("stockScopeGeneric", "")
+            )
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("stockHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("stockSummary", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("stockPositions", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("stockTree", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("stockAttention", "")
+
+        return result
+
+    @classmethod
+    def _narrative_order_for_stock(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
+            order.append("operationalTables")
+
+        if visibility.get(cls._STRUCTURE):
+            order.append("tailVisuals")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
 
     @classmethod
     def _narrative_order_for_shipping(cls, visibility: dict[str, bool]) -> list[str]:

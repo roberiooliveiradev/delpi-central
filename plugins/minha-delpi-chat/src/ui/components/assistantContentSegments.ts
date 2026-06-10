@@ -390,6 +390,32 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
         presentation: treePresentation as Extract<ChatPresentation, { type: "tree" }>,
       });
     }
+
+    const kpiPresentation = metadata.kpiPresentation;
+
+    if (
+      kpiPresentation &&
+      typeof kpiPresentation === "object" &&
+      (kpiPresentation as ChatPresentation).type === "kpi"
+    ) {
+      appendVisualSegment(segments, {
+        kind: "kpi",
+        presentation: kpiPresentation as Extract<ChatPresentation, { type: "kpi" }>,
+      });
+    }
+
+    const dashboardPresentation = metadata.dashboardPresentation;
+
+    if (
+      dashboardPresentation &&
+      typeof dashboardPresentation === "object" &&
+      (dashboardPresentation as ChatPresentation).type === "dashboard"
+    ) {
+      appendVisualSegment(segments, {
+        kind: "dashboard",
+        presentation: dashboardPresentation as Extract<ChatPresentation, { type: "dashboard" }>,
+      });
+    }
   }
 
   for (const table of dedupeTablePresentations(tableCandidates)) {

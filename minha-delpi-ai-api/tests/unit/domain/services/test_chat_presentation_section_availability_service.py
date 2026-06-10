@@ -53,24 +53,41 @@ def test_analyser_humanized_sections_only_when_data_exists():
     assert "estrutura com" not in " ".join(framing.values()).lower()
 
 
-def test_stock_route_has_humanized_sections_when_highlights_exist():
+def test_stock_route_has_dedicated_humanized_sections():
     metadata = {
         "path": "/products/90260149/stock",
         "textPresentation": {
-            "markdown": "### Estoque\n\n**Destaques**\n\n- Saldo positivo.",
+            "markdown": (
+                "### Estoque do produto — 90260149\n\n"
+                "**Destaques**\n\n"
+                "- Saldo disponível total: **150** un.\n\n"
+                "**Pontos de atenção**\n\n"
+                "1. Conferir paginação."
+            ),
         },
-        "tablePresentation": {
-            "type": "table",
-            "title": "Estoque por filial",
-            "rows": [{"branch": "01", "available_quantity": 1}],
-        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Resumo do estoque",
+                "rows": [{"campo": "Produto", "valor": "90260149"}],
+            },
+            {
+                "type": "table",
+                "title": "Posições por filial e armazém",
+                "rows": [{"branch": "01", "available_quantity": 1}],
+            },
+        ],
     }
 
     plan = ChatPresentationStackOrderService.resolve_plan(metadata)
 
     assert plan["humanizedSections"] is True
-    assert plan["presentationProfile"] == "generic_stack"
+    assert plan["presentationProfile"] == "product_stock"
     assert plan["sectionVisibility"]["highlights"] is True
+    assert plan["sectionVisibility"]["profile"] is True
+    assert plan["sectionVisibility"]["guide"] is True
+    assert plan["sectionVisibility"].get("inspection") is not True
+    assert plan["sectionVisibility"].get("structure") is not True
 
 
 def test_filter_analyser_highlights_drops_absence_bullets():

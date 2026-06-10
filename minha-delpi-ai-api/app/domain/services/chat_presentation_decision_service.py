@@ -114,6 +114,20 @@ class ChatPresentationDecisionService:
         return None
 
     @classmethod
+    def _resolve_dashboard_presentation(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:
+        dashboard = metadata.get("dashboardPresentation")
+
+        if isinstance(dashboard, dict) and dashboard.get("type") == "dashboard":
+            return dashboard
+
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict) and presentation.get("type") == "dashboard":
+            return presentation
+
+        return None
+
+    @classmethod
     def decide(
         cls,
         *,
@@ -449,12 +463,7 @@ class ChatPresentationDecisionService:
             table_presentation=metadata.get("tablePresentation"),
             chart_presentation=metadata.get("chartPresentation"),
             tree_presentation=tree_presentation,
-            dashboard_presentation=(
-                metadata.get("presentation")
-                if isinstance(metadata.get("presentation"), dict)
-                and metadata["presentation"].get("type") == "dashboard"
-                else None
-            ),
+            dashboard_presentation=cls._resolve_dashboard_presentation(metadata),
             text_presentation=metadata.get("textPresentation"),
             available_formats=metadata.get("availableFormats"),
             path=path or None,

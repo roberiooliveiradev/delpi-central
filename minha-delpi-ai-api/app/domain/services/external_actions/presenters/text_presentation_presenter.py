@@ -147,6 +147,12 @@ class ExternalActionTextPresentationPresenter:
         if isinstance(root, dict) and "/analyser" in lowered:
             root = self._host._normalize_analyser_root(root)
 
+        if isinstance(root, dict) and "/stock" in lowered:
+            items = root.get("items")
+
+            if isinstance(items, list) and items:
+                return self._host._build_stock_text_presentation(root, path)
+
         if isinstance(root, dict) and isinstance(root.get("product"), dict):
             if "/analyser" in lowered:
                 product = self._host._normalize_api_section(root["product"])

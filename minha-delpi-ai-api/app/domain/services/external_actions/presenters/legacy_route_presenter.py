@@ -120,7 +120,12 @@ class ExternalActionLegacyRoutePresenter:
                 first_item = items[0] if items and isinstance(items[0], dict) else {}
 
                 if "/stock" in lowered_path or self._host._is_stock_data(first_item):
-                    return self._host._present_product_stock(items, path=path, title=title)
+                    return self._host._present_product_stock(
+                        items,
+                        path=path,
+                        title=title,
+                        root=root if isinstance(root, dict) else None,
+                    )
 
                 if "/inspection" in lowered_path or self._host._looks_like_inspection_item(first_item):
                     return self._host._present_product_inspection(items, path=path, title=title)

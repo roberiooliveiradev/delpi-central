@@ -334,6 +334,22 @@ class ExecuteExternalActionUseCase:
 
                     if table_presentation is None and table_presentations_list:
                         table_presentation = table_presentations_list[0]
+            elif "/stock" in path_lower and isinstance(root_payload, dict):
+                stock_items = root_payload.get("items")
+
+                if isinstance(stock_items, list) and stock_items:
+                    table_presentations_list = self.presenter.build_stock_table_presentations(
+                        root_payload,
+                        resolved_path,
+                    )
+
+                    if table_presentations_list:
+                        profile_table_presentation = table_presentations_list[0]
+
+                        if len(table_presentations_list) > 1:
+                            table_presentation = table_presentations_list[1]
+                        else:
+                            table_presentation = table_presentations_list[0]
             elif "/factory-status" in path_lower and isinstance(root_payload, dict):
                 table_presentations_list = self.presenter.build_factory_status_table_presentations(
                     root_payload,
@@ -481,11 +497,34 @@ class ExecuteExternalActionUseCase:
                 and chart_presentation is not primary_presentation
                 else None
             ),
+            "kpiPresentation": (
+                kpi_presentation
+                if kpi_presentation is not None
+                and kpi_presentation is not primary_presentation
+                else None
+            ),
+            "dashboardPresentation": (
+                dashboard_presentation
+                if dashboard_presentation is not None
+                and dashboard_presentation is not primary_presentation
+                else None
+            ),
             "textPresentation": text_presentation,
             "availableFormats": available_formats,
             "preferredFormat": preferred_format,
             "dataCoverageNotice": data_coverage_notice,
         }
+
+        from app.domain.services.chat_presentation_visual_bundle_service import (
+            ChatPresentationVisualBundleService,
+        )
+
+        ChatPresentationVisualBundleService.enrich_metadata(
+            metadata,
+            path=resolved_path,
+            data=sanitized_data,
+            presenter=self.presenter,
+        )
 
         schema_labels = self.presenter._column_labels.merge_meta_field_labels(
             self.presenter._column_labels.resolve_schema_labels(action.get("responseSchema")),

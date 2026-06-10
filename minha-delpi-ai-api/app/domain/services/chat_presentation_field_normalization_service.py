@@ -30,6 +30,9 @@ class ChatPresentationFieldNormalizationService:
             "presentation",
             "tablePresentation",
             "chartPresentation",
+            "treePresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
             "profileTablePresentation",
             "inspectionTablePresentation",
         ):

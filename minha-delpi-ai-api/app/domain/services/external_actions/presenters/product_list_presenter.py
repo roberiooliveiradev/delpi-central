@@ -74,7 +74,7 @@ class ExternalActionProductListPresenter:
             return self._present_product_inspection(items, path=path, title=title)
 
         if "/stock" in lowered_path or self._host._is_stock_data(first_item):
-            return self._present_product_stock(items, path=path, title=title)
+            return self._present_product_stock(items, path=path, title=title, root=root)
 
         return None
 
@@ -609,175 +609,14 @@ class ExternalActionProductListPresenter:
         *,
         path: str = "",
         title: str | None = None,
+        root: dict | None = None,
     ) -> dict:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
+        return self._host._present_product_stock(
+            items,
+            path=path,
+            title=title,
+            root=root,
         )
-
-        titulo = (
-            title
-            or self._infer_items_title(items, path)
-            or ChatAssistantContentService.get(
-                "presenter_content",
-                "titlesByPathFragment",
-                "/stock",
-            )
-        )
-        product_code = self._host._extract_product_code_from_path(path)
-        branches: set[str] = set()
-        warehouses: set[str] = set()
-        total_available = 0.0
-        total_current = 0.0
-        has_available = False
-        has_current = False
-        detail_lines: list[str] = []
-
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-
-            branch = str(item.get("branch") or "").strip()
-            warehouse = str(item.get("warehouse") or "").strip()
-
-            if branch:
-                branches.add(branch)
-
-            if warehouse:
-                warehouses.add(warehouse)
-
-            available = item.get("available_quantity")
-            current = item.get("current_quantity")
-
-            if available is not None:
-                has_available = True
-                total_available += float(available or 0)
-
-            if current is not None:
-                has_current = True
-                total_current += float(current or 0)
-
-            from app.domain.services.chat_product_operational_content_service import (
-                ChatProductOperationalContentService,
-            )
-
-            detail_lines.append(
-                ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "detailLine",
-                    branch=item.get("branch") or "—",
-                    warehouse=item.get("warehouse") or "—",
-                    current=self._host._format_num(item.get("current_quantity")),
-                    available=self._host._format_num(item.get("available_quantity")),
-                    committed=self._host._format_num(item.get("committed_quantity")),
-                    location=item.get("physical_location")
-                    or ChatProductOperationalContentService.get(
-                        "presenter",
-                        "stock",
-                        "locationFallback",
-                    ),
-                )
-            )
-
-        linhas: list[str] = []
-        branch_count = len(branches)
-        warehouse_count = len(warehouses)
-
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
-        )
-
-        if product_code:
-            summary = ChatProductOperationalContentService.format(
-                "presenter",
-                "stock",
-                "summaryWithCode",
-                code=product_code,
-                positions=len(items),
-            )
-
-            if branch_count:
-                summary += ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "summaryBranches",
-                    count=branch_count,
-                    branches=", ".join(sorted(branches)),
-                )
-
-            if warehouse_count:
-                summary += ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "summaryWarehouses",
-                    count=warehouse_count,
-                    warehouses=", ".join(sorted(warehouses)),
-                )
-
-            summary += "."
-
-            if has_available:
-                summary += ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "summaryAvailableTotal",
-                    total=self._host._format_num(total_available),
-                )
-            elif has_current:
-                summary += ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "summaryCurrentTotal",
-                    total=self._host._format_num(total_current),
-                )
-            else:
-                summary += ChatProductOperationalContentService.get(
-                    "presenter",
-                    "stock",
-                    "summaryNoAvailable",
-                )
-
-            linhas.append(summary)
-        else:
-            summary = ChatProductOperationalContentService.format(
-                "presenter",
-                "stock",
-                "summaryWithoutCode",
-                positions=len(items),
-            )
-
-            if branch_count:
-                summary += ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "summaryWithoutCodeBranches",
-                    count=branch_count,
-                )
-            else:
-                summary += "."
-
-            linhas.append(summary)
-
-        if len(detail_lines) > 8:
-            linhas.append(
-                ChatProductOperationalContentService.format(
-                    "presenter",
-                    "stock",
-                    "textModeDetailHint",
-                    lines=len(detail_lines),
-                )
-            )
-
-        return {
-            "titulo": titulo,
-            "linhas": linhas,
-            "linhas_detalhe": detail_lines,
-            "dados": {
-                "items": items,
-                "product_code": product_code,
-                "total": len(items),
-            },
-        }
 
     def _present_items(self, items: list, *, title: str | None = None) -> dict:
         from app.domain.services.chat_product_operational_content_service import (

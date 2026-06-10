@@ -16,9 +16,45 @@ def test_present_stock_fixture_routes_by_meta_without_stock_path() -> None:
 
     assert humanized.get("titulo")
     body = "\n".join(
-        [*(humanized.get("linhas") or []), *(humanized.get("linhas_detalhe") or [])]
+        [
+            *(humanized.get("linhas") or []),
+            *(humanized.get("linhas_detalhe") or []),
+            humanized.get("humanizedMarkdown") or "",
+        ]
     )
     assert "105" in body or "150" in body or "filial" in body.lower()
+    assert "**Destaques**" in (humanized.get("humanizedMarkdown") or "")
+    assert "90269001" in humanized.get("titulo", "") or "90269001" in body
+
+
+def test_build_presentation_stock_tables_from_meta_entity() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
+
+    tables = presenter.build_stock_table_presentations(
+        envelope["data"],
+        "/products/90269001/stock",
+    )
+
+    assert len(tables) == 2
+    assert tables[0]["title"] == "Resumo do estoque"
+    assert tables[1]["title"] == "Posições por filial e armazém"
+
+
+def test_build_stock_text_presentation_includes_scope_and_highlights() -> None:
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
+
+    text = presenter._build_stock_text_presentation(
+        envelope["data"],
+        "/products/90269001/stock",
+    )
+
+    assert text is not None
+    markdown = text.get("markdown") or ""
+    assert "**Destaques**" in markdown
+    assert "90269001" in markdown
+    assert "150" in markdown or "105" in markdown
 
 
 def test_present_structure_fixture_routes_by_meta_entity() -> None:

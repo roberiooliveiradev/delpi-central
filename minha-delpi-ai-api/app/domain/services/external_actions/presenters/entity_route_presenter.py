@@ -135,7 +135,12 @@ class ExternalActionEntityRoutePresenter:
                     first_item = items[0] if isinstance(items[0], dict) else {}
 
                     if entity == "product_stock" or self._host._is_stock_data(first_item):
-                        return self._host._present_product_stock(items, path=path, title=title)
+                        return self._host._present_product_stock(
+                            items,
+                            path=path,
+                            title=title,
+                            root=root,
+                        )
 
                     if entity == "product_guide" or (
                         isinstance(first_item, dict)

@@ -421,6 +421,32 @@ function collectVisualsForToolCall(toolCall: ChatToolCall): AssistantContentSegm
     });
   }
 
+  const kpiPresentation = metadata.kpiPresentation;
+
+  if (
+    kpiPresentation &&
+    typeof kpiPresentation === "object" &&
+    (kpiPresentation as ChatPresentation).type === "kpi"
+  ) {
+    segments.push({
+      kind: "kpi",
+      presentation: kpiPresentation as Extract<ChatPresentation, { type: "kpi" }>,
+    });
+  }
+
+  const dashboardPresentation = metadata.dashboardPresentation;
+
+  if (
+    dashboardPresentation &&
+    typeof dashboardPresentation === "object" &&
+    (dashboardPresentation as ChatPresentation).type === "dashboard"
+  ) {
+    segments.push({
+      kind: "dashboard",
+      presentation: dashboardPresentation as Extract<ChatPresentation, { type: "dashboard" }>,
+    });
+  }
+
   return segments;
 }
 

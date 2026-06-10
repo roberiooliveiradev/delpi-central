@@ -36,6 +36,9 @@ from app.domain.services.external_actions.presenters.product_raw_material_price_
 from app.domain.services.external_actions.presenters.product_list_presenter import (
     ExternalActionProductListPresenter,
 )
+from app.domain.services.external_actions.presenters.product_stock_presenter import (
+    ExternalActionProductStockPresenter,
+)
 
 from app.domain.services.external_actions.presenters.sql_presenter import (
     ExternalActionSqlPresenter,
@@ -98,6 +101,7 @@ class ExternalActionResultPresenter:
         self._product_structure_exclusivity_presenter: ExternalActionProductStructureExclusivityPresenter | None = None
         self._product_raw_material_price_presenter: ExternalActionProductRawMaterialPricePresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
+        self._product_stock_presenter: ExternalActionProductStockPresenter | None = None
         self._sql_presenter: ExternalActionSqlPresenter | None = None
         self._billing_presenter: ExternalActionBillingPresenter | None = None
         self._system_tables_presenter: ExternalActionSystemTablesPresenter | None = None
@@ -168,6 +172,11 @@ class ExternalActionResultPresenter:
 
         return self._product_list_presenter
 
+    def _stock(self) -> ExternalActionProductStockPresenter:
+        if self._product_stock_presenter is None:
+            self._product_stock_presenter = ExternalActionProductStockPresenter(self)
+
+        return self._product_stock_presenter
 
     def _sql(self) -> ExternalActionSqlPresenter:
         if self._sql_presenter is None:
@@ -664,6 +673,35 @@ class ExternalActionResultPresenter:
     def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
         return self._raw_material_price().build_last_purchase_table_presentation(root, path)
 
+    def build_stock_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._stock().build_stock_table_presentations(root, path)
+
+    def build_stock_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._stock().build_stock_kpi_presentation(root, path)
+
+    def build_stock_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._stock().build_stock_tree_presentation(root, path)
+
+    def build_stock_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._stock().build_stock_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
+    def _build_stock_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._stock()._build_stock_text_presentation(root, path)
+
     def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._composite_analysis()._build_factory_status_text_presentation(root, path)
 
@@ -847,8 +885,14 @@ class ExternalActionResultPresenter:
         *,
         path: str = "",
         title: str | None = None,
+        root: dict | None = None,
     ) -> dict:
-        return self._product_list()._present_product_stock(items, path=path, title=title)
+        return self._stock()._present_product_stock(
+            items,
+            path=path,
+            title=title,
+            root=root,
+        )
 
     def _present_items(self, items: list, *, title: str | None = None) -> dict:
         return self._product_list()._present_items(items, title=title)
