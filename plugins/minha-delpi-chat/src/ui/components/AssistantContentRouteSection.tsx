@@ -15,10 +15,10 @@ import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import type { ChatToolCall } from "../../data/api/chatTypes";
 import { AssistantContentRouteCoverage } from "./AssistantContentRouteCoverage";
 import {
-  getDataCoverageNoticeFromToolCall,
   getDepthStateFromToolCall,
   getPaginationStateFromToolCall,
 } from "./chatPresentation";
+import { resolveHumanizedCoverageNoticeFromToolCall } from "./humanizedCoverageNotice";
 import {
   resolveRouteTextDetailMarkdown,
   routeKeyFromSectionId,
@@ -94,7 +94,7 @@ export function AssistantContentRouteSection({
     visualFormatOptions.length,
   ]);
   const dataCoverageNotice = useMemo(
-    () => getDataCoverageNoticeFromToolCall(toolCall),
+    () => resolveHumanizedCoverageNoticeFromToolCall(toolCall),
     [toolCall],
   );
   const paginationState = useMemo(

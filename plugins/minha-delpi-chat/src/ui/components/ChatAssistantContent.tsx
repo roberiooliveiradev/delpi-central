@@ -3,43 +3,25 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTypes";
 
 import { AssistantContentChrome } from "./AssistantContentChrome";
-import { buildAssistantContentSegments, parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import {
   resolveAssistantPresentationTitle,
-  resolveAssistantRenderableMarkdown,
   shouldRenderPresentationHeading,
   stripLeadingMarkdownTitleSafely,
 } from "./assistantProseRendering";
 import { renderAssistantContentSegment } from "./assistantContentRegistry";
 import {
-  filterSegmentsByVisualKind,
-  resolveAvailableVisualFormatOptions,
-  resolveInitialToolbarKind,
   shouldShowCompleteStackView,
-  shouldUsePerSectionFormatToolbar,
 } from "./assistantContentVisualFormats";
-import { renumberStackSectionTitles } from "./presentationStackSections";
 import { AssistantContentRouteSection } from "./AssistantContentRouteSection";
 import {
-  collectProductRouteBlocks,
-  groupSegmentsByRouteSections,
-} from "./presentationMultiRoute";
-import {
   getTextMarkdownFromToolCalls,
-  isExplicitTextSessionMode,
 } from "./chatPresentation";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
 } from "./presentationStackPlan";
-import { getChartExplanationFromToolCalls } from "./chartExplain";
-import {
-  getDataCoverageNoticeFromToolCalls,
-  getDepthStateFromToolCalls,
-  getPaginationStateFromToolCalls,
-  getPresentationInsightFromToolCalls,
-  getPresentationRecommendationsFromToolCalls,
-} from "./chatPresentation";
+import { useAssistantContentChrome } from "./useAssistantContentChrome";
+import { useAssistantContentSegments } from "./useAssistantContentSegments";
 
 import "./ChatAssistantContent.css";
 import "./rich-presentation-shared.css";
@@ -61,105 +43,23 @@ export function ChatAssistantContent({
   requestChartExplanation = false,
   onChartExplanationHandled,
 }: ChatAssistantContentProps) {
-  const segments = useMemo(
-    () => buildAssistantContentSegments(content, toolCalls),
-    [content, toolCalls],
-  );
-  const visualFormatOptions = useMemo(
-    () => resolveAvailableVisualFormatOptions(segments, toolCalls),
-    [segments, toolCalls],
-  );
-  const resolvedVisualKind = useMemo(
-    () => resolveInitialToolbarKind(toolCalls, visualFormatOptions),
-    [toolCalls, visualFormatOptions],
-  );
-
-  const perSectionToolbar = useMemo(
-    () => shouldUsePerSectionFormatToolbar(toolCalls),
-    [toolCalls],
-  );
-  const routePresentation = useMemo(
-    () => (perSectionToolbar ? groupSegmentsByRouteSections(segments) : null),
-    [perSectionToolbar, segments],
-  );
-  const routeToolCallBySectionId = useMemo(() => {
-    const map = new Map<string, (typeof toolCalls)[number]>();
-
-    for (const block of collectProductRouteBlocks(toolCalls)) {
-      const code = block.path.match(/\/products\/([^/]+)/i)?.[1]?.trim();
-      const sectionId = code
-        ? `route-${block.routeKey}-${code}`
-        : `route-${block.routeKey}`;
-
-      map.set(sectionId, block.toolCall);
-    }
-
-    return map;
-  }, [toolCalls]);
-
-  const visibleSegments = useMemo(() => {
-    if (perSectionToolbar) {
-      return renumberStackSectionTitles(segments, null);
-    }
-
-    const explicitTextSession = isExplicitTextSessionMode(toolCalls);
-    const resolvedTextOnly = resolvedVisualKind === "text";
-
-    if (explicitTextSession || resolvedTextOnly) {
-      const markdown = resolveAssistantRenderableMarkdown(content, toolCalls);
-
-      if (markdown.trim()) {
-        return parseMarkdownAndCodeSegments(markdown);
-      }
-
-      if (explicitTextSession) {
-        return [];
-      }
-    }
-
-    if (visualFormatOptions.length < 2) {
-      return renumberStackSectionTitles(segments, null);
-    }
-
-    return filterSegmentsByVisualKind(segments, resolvedVisualKind);
-  }, [
-    resolvedVisualKind,
-    content,
-    perSectionToolbar,
+  const {
     segments,
-    toolCalls,
-    visualFormatOptions.length,
-  ]);
-
-  const title = useMemo(
-    () => resolveAssistantPresentationTitle(content, toolCalls),
-    [content, toolCalls],
-  );
-  const dataCoverageNotice = useMemo(
-    () =>
-      perSectionToolbar ? null : getDataCoverageNoticeFromToolCalls(toolCalls),
-    [perSectionToolbar, toolCalls],
-  );
-  const presentationInsight = useMemo(
-    () => getPresentationInsightFromToolCalls(toolCalls),
-    [toolCalls],
-  );
-  const presentationRecommendations = useMemo(
-    () => getPresentationRecommendationsFromToolCalls(toolCalls),
-    [toolCalls],
-  );
-  const paginationState = useMemo(
-    () => (perSectionToolbar ? null : getPaginationStateFromToolCalls(toolCalls)),
-    [perSectionToolbar, toolCalls],
-  );
-  const depthState = useMemo(
-    () => (perSectionToolbar ? null : getDepthStateFromToolCalls(toolCalls)),
-    [perSectionToolbar, toolCalls],
-  );
-  const chartExplanation = useMemo(
-    () => getChartExplanationFromToolCalls(toolCalls),
-    [toolCalls],
-  );
+    visualFormatOptions,
+    resolvedVisualKind,
+    perSectionToolbar,
+    routePresentation,
+    routeToolCallBySectionId,
+    visibleSegments,
+  } = useAssistantContentSegments({ content, toolCalls });
+  const {
+    dataCoverageNotice,
+    presentationInsight,
+    presentationRecommendations,
+    paginationState,
+    depthState,
+    chartExplanation,
+  } = useAssistantContentChrome({ toolCalls, perSectionToolbar });
   const [chartExplanationOpen, setChartExplanationOpen] = useState(false);
 
   useEffect(() => {
@@ -181,6 +81,11 @@ export function ChatAssistantContent({
     resolvedVisualKind,
     visualFormatOptions,
   ]);
+
+  const title = useMemo(
+    () => resolveAssistantPresentationTitle(content, toolCalls),
+    [content, toolCalls],
+  );
 
   if (!segments.length && !title) {
     return null;
