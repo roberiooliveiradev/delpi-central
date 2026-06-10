@@ -79,12 +79,27 @@ class ChatPresentationVisualBundleService:
             profile_key == "sale_pricing"
             or ChatPresentationProfileService.has_flag(path, "sale_pricing", entity=entity)
         )
+        is_production_status_profile = (
+            profile_key == "production_status"
+            or ChatPresentationProfileService.has_flag(path, "production_status", entity=entity)
+        )
+        is_shipping_status_profile = (
+            profile_key == "shipping_status"
+            or ChatPresentationProfileService.has_flag(path, "shipping_status", entity=entity)
+        )
+        is_structure_exclusivity_profile = (
+            profile_key == "structure_exclusivity"
+            or ChatPresentationProfileService.has_flag(path, "structure_exclusivity", entity=entity)
+        )
 
         if (
             not is_factory_profile
             and not is_mp_intelligence_profile
             and not is_cost_impact_profile
             and not is_sale_pricing_profile
+            and not is_production_status_profile
+            and not is_shipping_status_profile
+            and not is_structure_exclusivity_profile
         ):
             cls._ensure_chart(metadata, root=root, path=path, presenter=presenter, primary_type=primary_type)
 
@@ -136,6 +151,39 @@ class ChatPresentationVisualBundleService:
                 presenter=presenter,
                 primary_type=primary_type,
                 view_order=view_order,
+            )
+
+        if is_production_status_profile:
+            cls._enrich_playbook_status_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="production",
+            )
+
+        if is_shipping_status_profile:
+            cls._enrich_playbook_status_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="shipping",
+            )
+
+        if is_structure_exclusivity_profile:
+            cls._enrich_playbook_status_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="structure_exclusivity",
             )
 
         cls._sync_available_formats(metadata, view_order)
@@ -350,6 +398,91 @@ class ChatPresentationVisualBundleService:
                     table_slot = tables[0]
 
             dashboard = presenter.build_cost_impact_dashboard_presentation(
+                root,
+                path,
+                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
+                chart=chart_slot if isinstance(chart_slot, dict) else None,
+                table=table_slot if isinstance(table_slot, dict) else None,
+            )
+
+            if dashboard:
+                cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
+
+    @classmethod
+    def _enrich_playbook_status_bundle(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        primary_type: str,
+        view_order: list[str],
+        profile: str,
+    ) -> None:
+        builders = {
+            "production": (
+                presenter.build_production_status_kpi_presentation,
+                presenter.build_production_status_tree_presentation,
+                presenter.build_production_status_chart_presentation,
+                presenter.build_production_status_dashboard_presentation,
+            ),
+            "shipping": (
+                presenter.build_shipping_status_kpi_presentation,
+                presenter.build_shipping_status_tree_presentation,
+                presenter.build_shipping_status_chart_presentation,
+                presenter.build_shipping_status_dashboard_presentation,
+            ),
+            "structure_exclusivity": (
+                presenter.build_structure_exclusivity_kpi_presentation,
+                presenter.build_structure_exclusivity_tree_presentation,
+                presenter.build_structure_exclusivity_chart_presentation,
+                presenter.build_structure_exclusivity_dashboard_presentation,
+            ),
+        }
+        profile_builders = builders.get(profile)
+
+        if not profile_builders:
+            return
+
+        build_kpi, build_tree, build_chart, build_dashboard = profile_builders
+        list_role = "structure" if profile == "structure_exclusivity" else "list"
+
+        if "kpi" in view_order:
+            kpi = build_kpi(root, path)
+
+            if kpi:
+                cls._attach_auxiliary(metadata, "kpi", kpi, primary_type=primary_type)
+
+        if "tree" in view_order:
+            tree = build_tree(root, path)
+
+            if tree:
+                cls._attach_auxiliary(metadata, "tree", tree, primary_type=primary_type)
+
+        if "chart" in view_order:
+            chart = build_chart(root, path)
+
+            if chart:
+                cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
+
+        if "dashboard" in view_order:
+            kpi_slot = metadata.get("kpiPresentation")
+            chart_slot = metadata.get("chartPresentation")
+            table_slot = metadata.get("tablePresentation")
+
+            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
+                tables = metadata["tablePresentations"]
+
+                for candidate in tables:
+                    if isinstance(candidate, dict) and candidate.get("role") == list_role:
+                        table_slot = candidate
+                        break
+
+                if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
+                    table_slot = tables[-1]
+
+            dashboard = build_dashboard(
                 root,
                 path,
                 kpi=kpi_slot if isinstance(kpi_slot, dict) else None,

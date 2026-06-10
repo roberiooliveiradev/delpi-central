@@ -693,6 +693,84 @@ class ExternalActionResultPresenter:
             path,
         )
 
+    def build_production_status_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._production_status().build_production_status_kpi_presentation(root, path)
+
+    def build_production_status_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._production_status().build_production_status_chart_presentation(root, path)
+
+    def build_production_status_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._production_status().build_production_status_tree_presentation(root, path)
+
+    def build_production_status_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._production_status().build_production_status_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
+    def build_shipping_status_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._shipping_status().build_shipping_status_kpi_presentation(root, path)
+
+    def build_shipping_status_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._shipping_status().build_shipping_status_chart_presentation(root, path)
+
+    def build_shipping_status_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._shipping_status().build_shipping_status_tree_presentation(root, path)
+
+    def build_shipping_status_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._shipping_status().build_shipping_status_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
+    def build_structure_exclusivity_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._structure_exclusivity().build_structure_exclusivity_kpi_presentation(root, path)
+
+    def build_structure_exclusivity_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._structure_exclusivity().build_structure_exclusivity_chart_presentation(root, path)
+
+    def build_structure_exclusivity_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._structure_exclusivity().build_structure_exclusivity_tree_presentation(root, path)
+
+    def build_structure_exclusivity_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._structure_exclusivity().build_structure_exclusivity_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
     def build_raw_material_price_intelligence_table_presentations(
         self,
         root: dict,

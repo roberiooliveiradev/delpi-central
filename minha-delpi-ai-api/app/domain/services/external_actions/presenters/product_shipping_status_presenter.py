@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
@@ -333,6 +333,7 @@ class ExternalActionProductShippingStatusPresenter:
         overview = self._build_overview_table(root)
 
         if overview:
+            overview["role"] = "profile"
             tables.append(overview)
 
         items = self._items(root)
@@ -345,9 +346,10 @@ class ExternalActionProductShippingStatusPresenter:
             )
 
             if table:
+                table["role"] = "list"
                 tables.append(table)
 
-        return tables
+        return [table for table in tables if isinstance(table, dict)]
 
     def _build_overview_table(self, root: dict) -> dict | None:
         summary = self._summary(root)
@@ -374,4 +376,193 @@ class ExternalActionProductShippingStatusPresenter:
             "title": self._route("overviewTableTitle"),
             "columns": columns,
             "rows": rows,
+            "role": "profile",
         }
+
+    def build_shipping_status_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        summary = self._summary(root)
+
+        if not summary:
+            return None
+
+        title = (
+            self._route("kpiTitle", code=code)
+            if code
+            else self._route("kpiTitleGeneric")
+        )
+        cards: list[dict[str, Any]] = []
+
+        if summary.get("total_shipped_quantity") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("kpiShipped"),
+                    value=float(summary.get("total_shipped_quantity") or 0),
+                    unit="un.",
+                    color="#10b981",
+                    key="total_shipped_quantity",
+                )
+            )
+
+        if summary.get("total_inspection_loss_quantity") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("kpiInspectionLoss"),
+                    value=float(summary.get("total_inspection_loss_quantity") or 0),
+                    unit="un.",
+                    color="#ef4444",
+                    key="total_inspection_loss_quantity",
+                )
+            )
+
+        if summary.get("total_reports") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("kpiReports"),
+                    value=int(summary.get("total_reports") or 0),
+                    unit="",
+                    color="#6366f1",
+                    key="total_reports",
+                )
+            )
+
+        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
+
+    def build_shipping_status_chart_presentation(self, root: dict, path: str) -> dict | None:
+        items = self._items(root)
+
+        if not items:
+            return None
+
+        shipped_label = self._host._humanize_key("shipped_quantity")
+        loss_label = self._host._humanize_key("inspection_loss_quantity")
+        chart_data: list[dict[str, Any]] = []
+
+        for item in items[:20]:
+            if not isinstance(item, dict):
+                continue
+
+            order = str(item.get("production_order") or "—")
+            chart_data.append(
+                {
+                    "name": f"OP {order}",
+                    shipped_label: float(item.get("shipped_quantity") or 0),
+                    loss_label: float(item.get("inspection_loss_quantity") or 0),
+                }
+            )
+
+        if not chart_data:
+            return None
+
+        code, _description = self._product_context(root, path)
+
+        return {
+            "type": "chart",
+            "title": (
+                self._route("chartMovementsTitle", code=code)
+                if code
+                else self._route("chartMovementsTitleGeneric")
+            ),
+            "chartType": "horizontal_bar",
+            "data": chart_data,
+            "config": {
+                "xAxis": "name",
+                "yAxis": [shipped_label, loss_label],
+                "colors": ["#10b981", "#ef4444"],
+                "legend": True,
+            },
+        }
+
+    def build_shipping_status_tree_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_hierarchy_tree_service import (
+            ChatPresentationHierarchyTreeService,
+        )
+
+        items = [item for item in self._items(root) if isinstance(item, dict)]
+
+        if not items:
+            return None
+
+        code, _description = self._product_context(root, path)
+        title = (
+            self._route("treeTitle", code=code)
+            if code
+            else self._route("treeTitleGeneric")
+        )
+
+        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
+            order = str(item.get("production_order") or "—")
+
+            return ChatPresentationHierarchyTreeService._serialize_node(
+                node_id=f"ship:{order}",
+                label=self._route("treeMovementLeafLabel", order=order),
+                subtitle=str(item.get("work_center") or item.get("resource_code") or "").strip(),
+            )
+
+        return ChatPresentationHierarchyTreeService.build_multi_level(
+            title=title,
+            root_id=code or "shipping-status",
+            root_label=(
+                self._route("treeRootLabel", code=code)
+                if code
+                else title
+            ),
+            items=items,
+            group_keys=["work_center"],
+            leaf_builder=_leaf,
+        )
+
+    def build_shipping_status_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_presentation_dashboard_assembly_service import (
+            ChatPresentationDashboardAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        title = (
+            self._route("dashboardTitle", code=code)
+            if code
+            else self._route("dashboardTitleGeneric")
+        )
+        panels: list[dict] = []
+
+        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="summary",
+                    title=str(kpi.get("title") or self._route("overviewTableTitle")),
+                    presentation=kpi,
+                )
+            )
+
+        if isinstance(chart, dict) and chart.get("type") == "chart":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="chart",
+                    title=str(chart.get("title") or self._route("chartMovementsTitleGeneric")),
+                    presentation=chart,
+                    chart_presentation=chart,
+                )
+            )
+
+        if isinstance(table, dict) and table.get("type") == "table":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="detail",
+                    title=str(table.get("title") or self._route("movementsTableTitle")),
+                    presentation=table,
+                )
+            )
+
+        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)
