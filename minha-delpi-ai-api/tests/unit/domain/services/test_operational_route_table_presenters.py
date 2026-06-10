@@ -38,8 +38,41 @@ def test_structure_exclusivity_table_uses_operational_columns():
     tables = presenter.build_structure_exclusivity_table_presentations(envelope["data"], path)
     detail = next(table for table in tables if table.get("role") == "structure")
 
-    assert "product_code" in _column_keys(detail)
+    assert "component_code" in _column_keys(detail)
     assert "exclusive_raw_material_label" in _column_keys(detail)
+
+
+def test_structure_exclusivity_tree_nests_flat_bom_items():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90261805.json")
+    path = "/products/90261805/structure/exclusivity"
+    tree = presenter.build_structure_exclusivity_tree_presentation(envelope["data"], path)
+
+    assert tree is not None
+    assert tree["type"] == "tree"
+
+    root = tree["root"]
+    assert len(root.get("children") or []) == 1
+
+    pi = root["children"][0]
+    assert "50222613" in pi["label"]
+    assert len(pi.get("children") or []) == 2
+
+
+def test_structure_exclusivity_text_includes_shared_mp_conclusion():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90261805.json")
+    path = "/products/90261805/structure/exclusivity"
+    text = presenter._build_structure_exclusivity_text_presentation(envelope["data"], path)
+
+    assert text is not None
+    markdown = text["markdown"]
+
+    assert "10020053" in markdown
+    assert "10" in markdown
+    assert "10080185" in markdown
+    assert "24" in markdown
+    assert "exclusiva" in markdown.lower()
 
 
 def test_stock_table_uses_product_position_columns():

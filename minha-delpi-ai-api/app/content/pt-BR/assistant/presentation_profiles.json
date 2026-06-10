@@ -106,10 +106,10 @@
       "flags": ["table"]
     },
     "factory_status": {
-      "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "defaultViewPolicy": "tree_when_available",
+      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
       "stackPlan": "factory_status",
-      "flags": ["factory_status"]
+      "flags": ["factory_status", "tree"]
     },
     "production_status": {
       "defaultViewPolicy": "generic",
@@ -124,10 +124,10 @@
       "flags": ["shipping_status"]
     },
     "structure_exclusivity": {
-      "defaultViewPolicy": "generic",
-      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
-      "stackPlan": "structure_exclusivity",
-      "flags": ["structure_exclusivity"]
+      "defaultViewPolicy": "tree_when_available",
+      "viewOrder": ["text", "tree", "table", "chart", "kpi", "dashboard"],
+      "stackPlan": "tree_hierarchy",
+      "flags": ["structure_exclusivity", "tree"]
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",

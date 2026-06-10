@@ -701,6 +701,7 @@ class ExternalActionResultPresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -708,6 +709,7 @@ class ExternalActionResultPresenter:
             root,
             path,
             kpi=kpi,
+            tree=tree,
             chart=chart,
             table=table,
         )
@@ -791,6 +793,7 @@ class ExternalActionResultPresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -798,6 +801,7 @@ class ExternalActionResultPresenter:
             root,
             path,
             kpi=kpi,
+            tree=tree,
             chart=chart,
             table=table,
         )
@@ -827,6 +831,7 @@ class ExternalActionResultPresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -834,6 +839,7 @@ class ExternalActionResultPresenter:
             root,
             path,
             kpi=kpi,
+            tree=tree,
             chart=chart,
             table=table,
         )

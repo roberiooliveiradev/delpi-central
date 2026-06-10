@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_presentation_chart_explain_service import (
     ChatPresentationChartExplainService,
 )
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 
 
 class ChatPresentationDashboardExplainService:
@@ -18,13 +21,15 @@ class ChatPresentationDashboardExplainService:
         decision: dict[str, Any] | None = None,
         insight: str | None = None,
     ) -> str:
+        vocab = ChatPresentationVocabularyService
+
         if not isinstance(presentation, dict) or presentation.get("type") != "dashboard":
             return ""
 
         panels = presentation.get("panels") or []
 
         if not isinstance(panels, list) or not panels:
-            return "Este painel reúne indicadores e gráficos da consulta."
+            return vocab.dashboard_explain_text("emptyPanels")
 
         parts: list[str] = []
         insight_text = str(insight or (decision or {}).get("insight") or "").strip()
@@ -32,17 +37,26 @@ class ChatPresentationDashboardExplainService:
         if insight_text:
             parts.append(insight_text)
 
-        title = str(presentation.get("title") or "Dashboard").strip()
+        title = str(
+            presentation.get("title") or vocab.dashboard_explain_text("defaultTitle")
+        ).strip()
         parts.append(
-            f"O «{title}» organiza {len(panels)} bloco(s): "
-            "resumo numérico, gráficos de apoio e tabela detalhada quando disponível."
+            vocab.dashboard_explain_text(
+                "overview",
+                title=title,
+                panelCount=len(panels),
+            )
         )
 
         for panel in panels:
             if not isinstance(panel, dict):
                 continue
 
-            panel_title = str(panel.get("title") or panel.get("id") or "Seção").strip()
+            panel_title = str(
+                panel.get("title")
+                or panel.get("id")
+                or vocab.dashboard_explain_text("panelFallbackTitle")
+            ).strip()
             block = panel.get("presentation")
 
             if not isinstance(block, dict):
@@ -60,7 +74,10 @@ class ChatPresentationDashboardExplainService:
                         if not isinstance(card, dict):
                             continue
 
-                        label = str(card.get("label") or "Indicador").strip()
+                        label = str(
+                            card.get("label")
+                            or vocab.dashboard_explain_text("kpiCardFallbackLabel")
+                        ).strip()
                         value = card.get("value")
                         unit = str(card.get("unit") or "").strip()
                         suffix = f" {unit}" if unit else ""
@@ -68,9 +85,20 @@ class ChatPresentationDashboardExplainService:
                         snippets.append(f"«{label}» = {value}{suffix}")
 
                     if snippets:
-                        parts.append(f"**{panel_title}:** " + "; ".join(snippets) + ".")
+                        parts.append(
+                            vocab.dashboard_explain_text(
+                                "kpiPanelSummary",
+                                panelTitle=panel_title,
+                                snippets="; ".join(snippets),
+                            )
+                        )
                 else:
-                    parts.append(f"**{panel_title}:** indicadores de resumo do painel.")
+                    parts.append(
+                        vocab.dashboard_explain_text(
+                            "kpiPanelEmpty",
+                            panelTitle=panel_title,
+                        )
+                    )
 
             elif token == "chart":
                 chart_explain = ChatPresentationChartExplainService.build(
@@ -80,21 +108,27 @@ class ChatPresentationDashboardExplainService:
                 )
 
                 if chart_explain:
-                    parts.append(f"**{panel_title}:** {chart_explain}")
+                    parts.append(
+                        vocab.dashboard_explain_text(
+                            "chartPanelPrefix",
+                            panelTitle=panel_title,
+                            chartExplain=chart_explain,
+                        )
+                    )
 
             elif token == "table":
                 rows = block.get("rows") or []
                 count = len(rows) if isinstance(rows, list) else 0
 
                 parts.append(
-                    f"**{panel_title}:** tabela com {count} linha(s) — "
-                    "use a alternância Tabela/Gráfico/Texto no bloco de itens."
+                    vocab.dashboard_explain_text(
+                        "tablePanel",
+                        panelTitle=panel_title,
+                        rowCount=count,
+                    )
                 )
 
-        parts.append(
-            "Exporte o painel em CSV ou abra «Explicar» em cada gráfico para detalhes dos eixos, "
-            "sem enviar nova pergunta ao assistente."
-        )
+        parts.append(vocab.dashboard_explain_text("exportHint"))
 
         return "\n\n".join(part for part in parts if part)
 

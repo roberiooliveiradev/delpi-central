@@ -5,26 +5,12 @@ from __future__ import annotations
 import statistics
 from typing import Any
 
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
-
-_CHART_TYPE_LABELS = {
-    "bar": "gráfico de barras",
-    "horizontal_bar": "gráfico de barras horizontais",
-    "line": "gráfico de linhas",
-    "multi_line": "gráfico de linhas",
-    "area": "gráfico de área",
-    "donut": "gráfico de rosca",
-    "pie": "gráfico de pizza",
-    "grouped_bar": "gráfico de barras agrupadas",
-    "stacked_bar": "gráfico de barras empilhadas",
-    "combo": "gráfico combinado (barras e linha)",
-    "scatter": "gráfico de dispersão",
-    "histogram": "histograma",
-    "gauge": "indicador tipo velocímetro",
-    "heatmap": "mapa de calor",
-}
 
 _EFFICIENCY_TOKENS = ("eficiencia", "eficiência", "efficiency", "percentual", "oee", "yield")
 
@@ -40,18 +26,20 @@ class ChatPresentationChartExplainService:
         decision: dict[str, Any] | None = None,
         insight: str | None = None,
     ) -> str:
+        vocab = ChatPresentationVocabularyService
+
         if not isinstance(presentation, dict) or presentation.get("type") != "chart":
             return ""
 
         data = presentation.get("data") or []
 
         if not isinstance(data, list) or not data:
-            return "Não há pontos suficientes para explicar este gráfico."
+            return vocab.chart_explain_text("insufficientData")
 
         rows = [row for row in data if isinstance(row, dict)]
 
         if not rows:
-            return "Não há pontos suficientes para explicar este gráfico."
+            return vocab.chart_explain_text("insufficientData")
 
         config = presentation.get("config") if isinstance(presentation.get("config"), dict) else {}
         chart_type = str(presentation.get("chartType") or config.get("recommendedChartType") or "bar").strip().lower()
@@ -81,10 +69,7 @@ class ChatPresentationChartExplainService:
         if highlight:
             parts.append(highlight)
 
-        parts.append(
-            "Use os seletores acima para trocar eixo, filtrar por categoria ou alternar o tipo de gráfico — "
-            "sem precisar enviar nova pergunta."
-        )
+        parts.append(vocab.chart_explain_text("selectorHint"))
 
         return "\n\n".join(part for part in parts if part)
 
@@ -94,17 +79,30 @@ class ChatPresentationChartExplainService:
 
     @classmethod
     def _intro(cls, chart_type: str, selected: str, reason: str, row_count: int) -> str:
-        chart_label = _CHART_TYPE_LABELS.get(chart_type, "gráfico")
+        vocab = ChatPresentationVocabularyService
+        chart_label = vocab.chart_type_label(chart_type)
 
         if reason:
-            return (
-                f"Este {chart_label} reúne {row_count} ponto(s) e foi escolhido porque {reason}."
+            return vocab.chart_explain_text(
+                "introWithReason",
+                chartLabel=chart_label,
+                rowCount=row_count,
+                reason=reason,
             )
 
         if selected:
-            return f"Este {chart_label} reúne {row_count} ponto(s) (formato «{selected}»)."
+            return vocab.chart_explain_text(
+                "introWithSelected",
+                chartLabel=chart_label,
+                rowCount=row_count,
+                selected=selected,
+            )
 
-        return f"Este {chart_label} reúne {row_count} ponto(s) dos dados consultados."
+        return vocab.chart_explain_text(
+            "introDefault",
+            chartLabel=chart_label,
+            rowCount=row_count,
+        )
 
     @classmethod
     def _how_to_read(
@@ -114,43 +112,54 @@ class ChatPresentationChartExplainService:
         y_axis: str,
         rows: list[dict[str, Any]],
     ) -> str:
+        vocab = ChatPresentationVocabularyService
+
         if chart_type == "scatter" and x_axis and y_axis:
-            return (
-                f"No eixo horizontal (X) está «{cls._label(x_axis)}»; no vertical (Y), «{cls._label(y_axis)}». "
-                "Cada ponto é um registro — procure agrupamentos e valores fora do padrão."
+            return vocab.chart_explain_text(
+                "howToReadScatter",
+                xLabel=cls._label(x_axis),
+                yLabel=cls._label(y_axis),
             )
 
         if chart_type in {"line", "multi_line", "area"} and x_axis and y_axis:
-            return (
-                f"O eixo horizontal mostra «{cls._label(x_axis)}» (período ou sequência); "
-                f"o vertical, «{cls._label(y_axis)}». Siga a linha da esquerda para a direita para ver a evolução."
+            return vocab.chart_explain_text(
+                "howToReadTemporal",
+                xLabel=cls._label(x_axis),
+                yLabel=cls._label(y_axis),
             )
 
         if chart_type in {"donut", "pie"} and y_axis:
             category_key = x_axis or cls._guess_category_key(rows, {y_axis})
 
-            return (
-                f"Cada fatia é «{cls._label(category_key)}»; o tamanho reflete «{cls._label(y_axis)}» "
-                "em relação ao total."
+            return vocab.chart_explain_text(
+                "howToReadDonut",
+                categoryLabel=cls._label(category_key),
+                yLabel=cls._label(y_axis),
             )
 
         if chart_type in {"horizontal_bar", "bar", "histogram"} and y_axis:
             category_key = x_axis or cls._guess_category_key(rows, {y_axis})
 
-            return (
-                f"As categorias em «{cls._label(category_key)}» são comparadas pelo valor de "
-                f"«{cls._label(y_axis)}» — barras maiores indicam valores mais altos."
+            return vocab.chart_explain_text(
+                "howToReadBar",
+                categoryLabel=cls._label(category_key),
+                yLabel=cls._label(y_axis),
             )
 
         if chart_type == "gauge" and y_axis:
-            return f"O medidor destaca «{cls._label(y_axis)}» em relação à meta ou ao intervalo esperado."
-
-        if x_axis and y_axis:
-            return (
-                f"Compare «{cls._label(x_axis)}» (categorias ou eixo X) com «{cls._label(y_axis)}» (valores)."
+            return vocab.chart_explain_text(
+                "howToReadGauge",
+                yLabel=cls._label(y_axis),
             )
 
-        return "Posicione o cursor sobre barras, pontos ou fatias para ver o valor exato de cada item."
+        if x_axis and y_axis:
+            return vocab.chart_explain_text(
+                "howToReadGenericAxes",
+                xLabel=cls._label(x_axis),
+                yLabel=cls._label(y_axis),
+            )
+
+        return vocab.chart_explain_text("howToReadHover")
 
     @classmethod
     def _highlights(
@@ -160,6 +169,8 @@ class ChatPresentationChartExplainService:
         x_axis: str,
         y_axis: str,
     ) -> str:
+        vocab = ChatPresentationVocabularyService
+
         if not y_axis:
             y_axis = cls._pick_numeric_key(rows[0])
 
@@ -188,8 +199,8 @@ class ChatPresentationChartExplainService:
             if isinstance(row.get(y_axis), (int, float))
             else 0,
         )
-        leader_label = str(leader_row.get(category_key) or "o maior valor").strip()
-        laggard_label = str(laggard_row.get(category_key) or "o menor valor").strip()
+        leader_label = str(leader_row.get(category_key) or vocab.chart_explain_text("leaderFallback")).strip()
+        laggard_label = str(laggard_row.get(category_key) or vocab.chart_explain_text("laggardFallback")).strip()
         leader_value = leader_row.get(y_axis)
         laggard_value = laggard_row.get(y_axis)
 
@@ -197,36 +208,54 @@ class ChatPresentationChartExplainService:
         is_efficiency = any(token in y_axis.lower() for token in _EFFICIENCY_TOKENS)
 
         if is_efficiency:
-            return (
-                f"Em «{y_label}», o destaque é {leader_label} ({cls._format_value(leader_value)}%) "
-                f"e o menor registro é {laggard_label} ({cls._format_value(laggard_value)}%). "
-                "Valores acima de 100% indicam produção acima do tempo previsto."
+            return vocab.chart_explain_text(
+                "highlightEfficiency",
+                yLabel=y_label,
+                leaderLabel=leader_label,
+                leaderValue=cls._format_value(leader_value),
+                laggardLabel=laggard_label,
+                laggardValue=cls._format_value(laggard_value),
             )
 
         if chart_type == "scatter":
             avg_x = cls._average_for_key(rows, x_axis) if x_axis else None
             avg_y = statistics.fmean(values)
-
-            extra = ""
+            avg_x_snippet = ""
 
             if avg_x is not None and x_axis:
-                extra = f" A média de «{cls._label(x_axis)}» é {cls._format_value(avg_x)};"
+                avg_x_snippet = vocab.chart_explain_text(
+                    "highlightScatterAvgX",
+                    xLabel=cls._label(x_axis),
+                    avgX=cls._format_value(avg_x),
+                )
 
-            return (
-                f"Em «{y_label}», o ponto mais alto é {leader_label} ({cls._format_value(leader_value)}) "
-                f"e o mais baixo é {laggard_label} ({cls._format_value(laggard_value)}).{extra} "
-                f"A média de «{y_label}» é {cls._format_value(avg_y)}."
+            return vocab.chart_explain_text(
+                "highlightScatter",
+                yLabel=y_label,
+                leaderLabel=leader_label,
+                leaderValue=cls._format_value(leader_value),
+                laggardLabel=laggard_label,
+                laggardValue=cls._format_value(laggard_value),
+                avgXSnippet=avg_x_snippet,
+                avgY=cls._format_value(avg_y),
             )
 
         if len(values) >= 2:
-            return (
-                f"O maior valor de «{y_label}» é {leader_label} ({cls._format_value(leader_value)}); "
-                f"o menor, {laggard_label} ({cls._format_value(laggard_value)}). "
-                f"Média: {cls._format_value(statistics.fmean(values))}."
+            return vocab.chart_explain_text(
+                "highlightRange",
+                yLabel=y_label,
+                leaderLabel=leader_label,
+                leaderValue=cls._format_value(leader_value),
+                laggardLabel=laggard_label,
+                laggardValue=cls._format_value(laggard_value),
+                avgY=cls._format_value(statistics.fmean(values)),
             )
 
-        return (
-            f"O valor de «{y_label}» em {leader_label} é {cls._format_value(leader_value)}."
+        return vocab.chart_explain_text(
+            "highlightSingle",
+            yLabel=y_label,
+            leaderLabel=leader_label,
+            leaderValue=cls._format_value(leader_value),
         )
 
     @classmethod

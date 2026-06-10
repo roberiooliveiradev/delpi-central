@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -165,19 +169,54 @@ class ChatPresentationOperationalTableService:
             row = dict(item)
             raw = row.get("exclusive_raw_material")
 
+            truthy = ChatPresentationVocabularyService.exclusive_raw_material_truthy()
+
             if isinstance(raw, bool):
-                label = "Sim" if raw else "Não"
+                label = ChatPresentationVocabularyService.boolean_label(yes=raw)
             else:
-                label = (
-                    "Sim"
-                    if str(raw or "").strip().upper() in {"SIM", "S", "TRUE", "1"}
-                    else "Não"
+                label = ChatPresentationVocabularyService.boolean_label(
+                    yes=str(raw or "").strip().upper() in truthy,
                 )
 
             row["exclusive_raw_material_label"] = label
+
+            if not row.get("component_code") and row.get("product_code"):
+                row["component_code"] = row.get("product_code")
+
+            if not row.get("product_code") and row.get("component_code"):
+                row["product_code"] = row.get("component_code")
+
+            if not row.get("component_description") and row.get("description"):
+                row["component_description"] = row.get("description")
+
+            if not row.get("description") and row.get("component_description"):
+                row["description"] = row.get("component_description")
+
+            if not row.get("component_unit") and row.get("unit"):
+                row["component_unit"] = row.get("unit")
+
             enriched.append(row)
 
         return enriched
+
+    @classmethod
+    def has_nested_bom_items(cls, items: list[dict[str, Any]]) -> bool:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            if str(item.get("parent_code") or "").strip():
+                return True
+
+            try:
+                level = int(item.get("level") or 0)
+            except (TypeError, ValueError):
+                level = 0
+
+            if level > 1:
+                return True
+
+        return len(items) > 1
 
     @classmethod
     def enrich_stock_position_rows(

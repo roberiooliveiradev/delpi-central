@@ -272,22 +272,14 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "tree", tree, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                if tables and isinstance(tables[-1], dict):
-                    table_slot = tables[-1]
+            slots = cls._dashboard_input_slots(metadata, list_role="list")
 
             dashboard = stock.build_stock_dashboard_presentation(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -323,27 +315,15 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == "stock":
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
-                    table_slot = tables[-1]
+            slots = cls._dashboard_input_slots(metadata, list_role="stock")
 
             dashboard = presenter.build_factory_dashboard_presentation(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                tree=slots.get("tree"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -379,27 +359,15 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == "profile":
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[0], dict):
-                    table_slot = tables[0]
+            slots = cls._dashboard_input_slots(metadata, list_role="profile")
 
             dashboard = presenter.build_raw_material_price_dashboard_presentation(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                tree=slots.get("tree"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -435,27 +403,14 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == "profile":
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[0], dict):
-                    table_slot = tables[0]
+            slots = cls._dashboard_input_slots(metadata, list_role="profile")
 
             dashboard = presenter.build_cost_impact_dashboard_presentation(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -519,27 +474,14 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == "list":
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
-                    table_slot = tables[-1]
+            slots = cls._dashboard_input_slots(metadata, list_role="list")
 
             dashboard = build_dashboard(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -604,28 +546,17 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
+            slots = cls._dashboard_input_slots(metadata, list_role=list_role)
+            dashboard_kwargs: dict[str, Any] = {
+                "kpi": slots.get("kpi"),
+                "chart": slots.get("chart"),
+                "table": slots.get("table"),
+            }
 
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
+            if profile == "structure_exclusivity":
+                dashboard_kwargs["tree"] = slots.get("tree")
 
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == list_role:
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
-                    table_slot = tables[-1]
-
-            dashboard = build_dashboard(
-                root,
-                path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
-            )
+            dashboard = build_dashboard(root, path, **dashboard_kwargs)
 
             if dashboard:
                 cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
@@ -660,27 +591,14 @@ class ChatPresentationVisualBundleService:
                 cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
         if "dashboard" in view_order:
-            kpi_slot = metadata.get("kpiPresentation")
-            chart_slot = metadata.get("chartPresentation")
-            table_slot = metadata.get("tablePresentation")
-
-            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
-                tables = metadata["tablePresentations"]
-
-                for candidate in tables:
-                    if isinstance(candidate, dict) and candidate.get("role") == "profile":
-                        table_slot = candidate
-                        break
-
-                if not isinstance(table_slot, dict) and tables and isinstance(tables[0], dict):
-                    table_slot = tables[0]
+            slots = cls._dashboard_input_slots(metadata, list_role="profile")
 
             dashboard = presenter.build_product_pricing_dashboard_presentation(
                 root,
                 path,
-                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
-                chart=chart_slot if isinstance(chart_slot, dict) else None,
-                table=table_slot if isinstance(table_slot, dict) else None,
+                kpi=slots.get("kpi"),
+                chart=slots.get("chart"),
+                table=slots.get("table"),
             )
 
             if dashboard:
@@ -709,6 +627,42 @@ class ChatPresentationVisualBundleService:
             cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
 
     @classmethod
+    def _dashboard_input_slots(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        list_role: str = "list",
+    ) -> dict[str, dict[str, Any] | None]:
+        kpi_slot = metadata.get("kpiPresentation")
+        tree_slot = metadata.get("treePresentation")
+        chart_slot = metadata.get("chartPresentation")
+        table_slot = metadata.get("tablePresentation")
+
+        if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
+            tables = metadata["tablePresentations"]
+
+            for candidate in tables:
+                if isinstance(candidate, dict) and candidate.get("role") == list_role:
+                    table_slot = candidate
+                    break
+
+            if not isinstance(table_slot, dict):
+                for candidate in tables:
+                    if isinstance(candidate, dict) and candidate.get("type") == "table":
+                        table_slot = candidate
+                        break
+
+            if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
+                table_slot = tables[-1]
+
+        return {
+            "kpi": kpi_slot if isinstance(kpi_slot, dict) else None,
+            "tree": tree_slot if isinstance(tree_slot, dict) else None,
+            "chart": chart_slot if isinstance(chart_slot, dict) else None,
+            "table": table_slot if isinstance(table_slot, dict) else None,
+        }
+
+    @classmethod
     def _attach_auxiliary(
         cls,
         metadata: dict[str, Any],
@@ -723,7 +677,11 @@ class ChatPresentationVisualBundleService:
             return
 
         if primary_type == view:
-            if not metadata.get("presentation"):
+            existing = metadata.get("presentation")
+
+            if view == "dashboard" or not isinstance(existing, dict):
+                metadata["presentation"] = presentation
+            elif not existing:
                 metadata["presentation"] = presentation
 
             return

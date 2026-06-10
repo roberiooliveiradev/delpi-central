@@ -1,0 +1,67 @@
+{
+  "success": true,
+  "message": "Estrutura com exclusividade de MPs carregada com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "90261805",
+      "description": "CHICOTE DE LIGACAO",
+      "product_type": "PA",
+      "unit": "MI",
+      "group_code": "9026"
+    },
+    "items": [
+      {
+        "level": 1,
+        "parent_code": "90261805",
+        "parent_description": "CHICOTE DE LIGACAO",
+        "component_code": "50222613",
+        "component_description": "CA2,50VDAR-00300/06/06-8500-8500",
+        "component_type": "PI",
+        "component_unit": "MI",
+        "component_group": "5022",
+        "quantity_per": "1",
+        "accumulated_quantity": "1",
+        "exclusive_raw_material": "",
+        "total_valid_finished_products_using_mp": "",
+        "path": "90261805        > 50222613"
+      },
+      {
+        "level": 2,
+        "parent_code": "50222613",
+        "parent_description": "CA2,50VDAR-00300/06/06-8500-8500",
+        "component_code": "10020053",
+        "component_description": "CABO PVC 105°C 2,50MM2 VD/AR 750V BWF NBR 9117",
+        "component_type": "MP",
+        "component_unit": "MT",
+        "component_group": "1002",
+        "quantity_per": "300",
+        "accumulated_quantity": "300",
+        "exclusive_raw_material": false,
+        "total_valid_finished_products_using_mp": 10,
+        "path": "90261805        > 50222613        > 10020053"
+      },
+      {
+        "level": 2,
+        "parent_code": "50222613",
+        "parent_description": "CA2,50VDAR-00300/06/06-8500-8500",
+        "component_code": "10080185",
+        "component_description": "TERM. OLHAL M5 5,30MM 1,30-2,60MM2 7,90MM COMP 20,20MM ESTANHADO C/ISOLACAO GRANEL ROHS",
+        "component_type": "MP",
+        "component_unit": "PC",
+        "component_group": "1008",
+        "quantity_per": "2000",
+        "accumulated_quantity": "2000",
+        "exclusive_raw_material": false,
+        "total_valid_finished_products_using_mp": 24,
+        "path": "90261805        > 50222613        > 10080185"
+      }
+    ],
+    "summary": {
+      "total_components": 3,
+      "total_intermediates": 1,
+      "total_raw_materials": 2,
+      "total_exclusive_raw_materials": 0
+    }
+  },
+  "error": null
+}

@@ -47,6 +47,18 @@ class ChatPresentationRoutePolicyService:
         return ChatPresentationProfileService.has_flag(path, "structure_exclusivity")
 
     @classmethod
+    def is_raw_material_price_route(cls, path: str | None) -> bool:
+        return ChatPresentationProfileService.has_flag(path, "raw_material_price_intelligence")
+
+    @classmethod
+    def is_cost_impact_route(cls, path: str | None) -> bool:
+        return ChatPresentationProfileService.has_flag(path, "cost_impact_simulation")
+
+    @classmethod
+    def is_sale_pricing_route(cls, path: str | None) -> bool:
+        return ChatPresentationProfileService.has_flag(path, "sale_pricing")
+
+    @classmethod
     def resolve_default_preferred_format(
         cls,
         *,

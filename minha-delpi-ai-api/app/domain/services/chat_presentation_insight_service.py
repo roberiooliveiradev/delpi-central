@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
+
 
 class ChatPresentationInsightService:
     @classmethod
@@ -15,6 +19,7 @@ class ChatPresentationInsightService:
         data_shape: dict[str, Any] | None = None,
         reason: str | None = None,
     ) -> str:
+        vocab = ChatPresentationVocabularyService
         token = str(selected or "").strip().lower()
         safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
         shape = data_shape or {}
@@ -25,15 +30,13 @@ class ChatPresentationInsightService:
             if tree_nodes is False or tree_nodes == 0:
                 return ""
 
-            return (
-                "A árvore mostra a hierarquia de composição ou relacionamento entre itens."
-            )
+            return vocab.insight_text("tree")
 
         if not safe_rows:
             if shape.get("hasNarrative"):
                 return ""
 
-            return "Não há dados suficientes para gerar esta visualização."
+            return vocab.insight_text("insufficientData")
 
         if token in {"line_chart", "area_chart"}:
             return cls._temporal_insight(safe_rows, shape)
@@ -45,25 +48,26 @@ class ChatPresentationInsightService:
             return cls._participation_insight(safe_rows, shape)
 
         if token == "kpi":
-            return "O indicador resume o valor principal encontrado para o filtro informado."
+            return vocab.insight_text("kpi")
 
         if token == "table":
             count = int(shape.get("rows") or len(safe_rows))
 
-            return (
-                f"A tabela lista os principais registros encontrados "
-                f"({count} linha{'s' if count != 1 else ''})."
+            return vocab.insight_text(
+                "table",
+                count=str(count),
+                lineUnit=vocab.insight_table_line_unit(count),
             )
 
         if token in {"grouped_bar", "combo_chart", "stacked_bar"}:
-            return "O gráfico compara séries lado a lado para facilitar a leitura de metas e valores."
+            return vocab.insight_text("groupedSeries")
 
         fallback = str(reason or "").strip()
 
         if fallback:
             return fallback[0].upper() + fallback[1:] + "."
 
-        return "Use os controles para alternar entre tabela, gráfico ou exportar os dados."
+        return vocab.insight_text("controlsFallback")
 
     @classmethod
     def _temporal_insight(
@@ -71,12 +75,13 @@ class ChatPresentationInsightService:
         rows: list[dict[str, Any]],
         shape: dict[str, Any],
     ) -> str:
+        vocab = ChatPresentationVocabularyService
         label_key = shape.get("labelKey")
         numeric_keys = shape.get("numericKeys") or []
         value_key = numeric_keys[0] if numeric_keys else None
 
         if not label_key or not value_key:
-            return "A série temporal destaca a evolução dos valores ao longo do período."
+            return vocab.insight_text("temporalDefault")
 
         values = [
             float(row.get(value_key))
@@ -85,19 +90,26 @@ class ChatPresentationInsightService:
         ]
 
         if len(values) < 2:
-            return "A série temporal destaca a evolução dos valores ao longo do período."
+            return vocab.insight_text("temporalDefault")
 
         peak_index = max(range(len(values)), key=lambda index: values[index])
         low_index = min(range(len(values)), key=lambda index: values[index])
-        peak_label = str(rows[peak_index].get(label_key) or "").strip() or "um ponto"
-        low_label = str(rows[low_index].get(label_key) or "").strip() or "outro ponto"
+        peak_label = (
+            str(rows[peak_index].get(label_key) or "").strip()
+            or vocab.insight_text("temporalPeakFallback")
+        )
+        low_label = (
+            str(rows[low_index].get(label_key) or "").strip()
+            or vocab.insight_text("temporalLowFallback")
+        )
 
         if peak_index == low_index:
-            return f"O maior valor ocorreu em {peak_label}."
+            return vocab.insight_text("temporalPeakOnly", peakLabel=peak_label)
 
-        return (
-            f"O maior valor ocorreu em {peak_label}; "
-            f"o menor, em {low_label}."
+        return vocab.insight_text(
+            "temporalPeakAndLow",
+            peakLabel=peak_label,
+            lowLabel=low_label,
         )
 
     @classmethod
@@ -106,12 +118,13 @@ class ChatPresentationInsightService:
         rows: list[dict[str, Any]],
         shape: dict[str, Any],
     ) -> str:
+        vocab = ChatPresentationVocabularyService
         label_key = shape.get("labelKey")
         numeric_keys = shape.get("numericKeys") or []
         value_key = numeric_keys[0] if numeric_keys else None
 
         if not label_key or not value_key or not rows:
-            return "O ranking ordena os itens pelo valor para destacar os maiores."
+            return vocab.insight_text("rankingDefault")
 
         leader = max(
             rows,
@@ -119,15 +132,15 @@ class ChatPresentationInsightService:
             if isinstance(row.get(value_key), (int, float))
             else 0,
         )
-        leader_label = str(leader.get(label_key) or "").strip() or "o primeiro item"
+        leader_label = (
+            str(leader.get(label_key) or "").strip()
+            or vocab.insight_text("rankingLeaderFallback")
+        )
 
         if len(rows) >= 3:
-            return (
-                f"Os destaques concentram-se em {leader_label} "
-                f"e nos demais itens do topo do ranking."
-            )
+            return vocab.insight_text("rankingTopItems", leaderLabel=leader_label)
 
-        return f"{leader_label} lidera o ranking pelos valores apresentados."
+        return vocab.insight_text("rankingLeader", leaderLabel=leader_label)
 
     @classmethod
     def _participation_insight(
@@ -135,12 +148,13 @@ class ChatPresentationInsightService:
         rows: list[dict[str, Any]],
         shape: dict[str, Any],
     ) -> str:
+        vocab = ChatPresentationVocabularyService
         label_key = shape.get("labelKey")
         numeric_keys = shape.get("numericKeys") or []
         value_key = numeric_keys[0] if numeric_keys else None
 
         if not label_key or not value_key:
-            return "A distribuição mostra a participação relativa de cada categoria."
+            return vocab.insight_text("participationDefault")
 
         leader = max(
             rows,
@@ -148,6 +162,9 @@ class ChatPresentationInsightService:
             if isinstance(row.get(value_key), (int, float))
             else 0,
         )
-        leader_label = str(leader.get(label_key) or "").strip() or "uma categoria"
+        leader_label = (
+            str(leader.get(label_key) or "").strip()
+            or vocab.insight_text("participationLeaderFallback")
+        )
 
-        return f"A maior fatia da distribuição está em {leader_label}."
+        return vocab.insight_text("participationLeader", leaderLabel=leader_label)

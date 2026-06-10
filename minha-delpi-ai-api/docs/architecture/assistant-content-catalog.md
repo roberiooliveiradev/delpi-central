@@ -68,6 +68,7 @@ Wrappers especializados (mantêm API estável):
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
+| `presentation_vocabulary.json` | Dedup estrutura/BOM, tokens de seção humanizada, rótulos booleanos, **motivos de decisão de formato**, insights de visualização, explicação de gráfico/dashboard, marcadores checklist/lousa | `ChatPresentationVocabularyService` → `ChatPresentationDecisionService`, `ChatPresentationInsightService`, `ChatPresentationChartExplainService`, `ChatPresentationDashboardExplainService` |
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
 | `presentation_profiles.json` | Perfis declarativos de apresentação (defaultView, viewOrder, stackPlan, flags por rota/entidade) | `ChatPresentationProfileService` → `ChatPresentationRoutePolicyService`, `ChatPresentationStackOrderService` |

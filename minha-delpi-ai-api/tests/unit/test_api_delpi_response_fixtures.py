@@ -22,6 +22,7 @@ BASELINE_FIXTURES = [
     "product_production_status_90269002.json",
     "product_shipping_status_90269002.json",
     "product_structure_exclusivity_90269002.json",
+    "product_structure_exclusivity_90261805.json",
     "product_raw_material_price_intelligence_10080001.json",
     "product_cost_impact_simulation_90261255.json",
     "product_last_purchase_10080001.json",

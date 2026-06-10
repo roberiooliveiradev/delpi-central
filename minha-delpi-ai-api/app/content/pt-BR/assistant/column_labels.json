@@ -724,11 +724,13 @@
       ],
       "structureExclusivityDetail": [
         {"key": "level", "label": "Nível"},
+        {"key": "component_code", "label": "Código"},
         {"key": "component_type", "label": "Tipo"},
-        {"key": "product_code", "label": "Código"},
-        {"key": "description", "label": "Descrição"},
+        {"key": "component_description", "label": "Descrição"},
+        {"key": "component_unit", "label": "Unidade"},
         {"key": "accumulated_quantity", "label": "Qtd. acumulada", "dataType": "quantity"},
-        {"key": "exclusive_raw_material_label", "label": "MP exclusiva"}
+        {"key": "exclusive_raw_material_label", "label": "MP exclusiva"},
+        {"key": "total_valid_finished_products_using_mp", "label": "Usado em PAs válidos"}
       ],
       "stockProductPositions": [
         {"key": "product_code", "label": "Produto"},

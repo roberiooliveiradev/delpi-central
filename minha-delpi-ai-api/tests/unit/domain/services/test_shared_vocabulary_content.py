@@ -7,6 +7,9 @@ from app.domain.services.chat_operational_pipeline_vocabulary_service import (
 from app.domain.services.chat_session_vocabulary_service import (
     ChatSessionVocabularyService,
 )
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 from app.domain.services.chat_term_extraction_vocabulary_service import (
     ChatTermExtractionVocabularyService,
 )
@@ -23,6 +26,25 @@ def test_session_topic_change_markers_loaded():
 def test_operational_pipeline_terms_loaded():
     assert "estoque" in ChatOperationalPipelineVocabularyService.terms("operationalTerms")
     assert "explique" in ChatOperationalPipelineVocabularyService.terms("documentalTerms")
+
+
+def test_presentation_vocabulary_structure_dedup_markers_loaded():
+    markers = ChatPresentationVocabularyService.structure_table_title_markers()
+
+    assert "componentes da estrutura" in markers
+    assert "componentes com exclusividade" in markers
+    assert ChatPresentationVocabularyService.boolean_label(yes=True) == "Sim"
+    assert ChatPresentationVocabularyService.boolean_label(yes=False) == "Não"
+    assert "panorama fabril" in ChatPresentationVocabularyService.table_title_tokens("factoryProfile")
+
+
+def test_presentation_vocabulary_decision_and_insight_phrases_loaded():
+    assert ChatPresentationVocabularyService.decision_reason("treePrimaryView")
+    assert ChatPresentationVocabularyService.route_policy_reason("stockTable")
+    assert "árvore" in ChatPresentationVocabularyService.insight_text("tree").lower()
+    assert ChatPresentationVocabularyService.chart_type_label("bar") == "gráfico de barras"
+    assert ChatPresentationVocabularyService.intent_markers("checklist")
+    assert ChatPresentationVocabularyService.dashboard_explain_text("exportHint")
 
 
 def test_date_range_vocabulary_has_months_and_phrases():

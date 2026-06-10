@@ -17,6 +17,9 @@ from app.domain.services.chat_presentation_data_shape_analyzer import (
 from app.domain.services.chat_presentation_insight_service import (
     ChatPresentationInsightService,
 )
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 
 _SELECTED_TO_CHART_TYPE = {
     "line_chart": "line",
@@ -99,6 +102,14 @@ _USER_FORMAT_ALIASES = {
 
 class ChatPresentationDecisionService:
     @classmethod
+    def _reason(cls, key: str) -> str:
+        return ChatPresentationVocabularyService.decision_reason(key)
+
+    @classmethod
+    def _route_reason(cls, key: str) -> str:
+        return ChatPresentationVocabularyService.route_policy_reason(key)
+
+    @classmethod
     def _tree_node_count(cls, tree_presentation: dict[str, Any] | None) -> int | bool:
         if not isinstance(tree_presentation, dict):
             return False
@@ -165,6 +176,7 @@ class ChatPresentationDecisionService:
         text_presentation: dict[str, Any] | None = None,
         available_formats: list[str] | None = None,
         path: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
         preferred = cls._normalize_user_preference(user_preference, message)
@@ -193,6 +205,7 @@ class ChatPresentationDecisionService:
             table_presentation=table_presentation,
             chart_presentation=chart_presentation,
             path=path,
+            metadata=metadata,
         )
 
         if intent_decision:
@@ -202,7 +215,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="checklist",
                 fallback="text",
-                reason="plano de ação ou pendências",
+                reason=cls._reason("checklist"),
                 available_views=["checklist", "text", "canvas"],
                 rows=rows,
                 intent=intent,
@@ -212,7 +225,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="canvas",
                 fallback="text",
-                reason="documento ou relatório longo",
+                reason=cls._reason("canvas"),
                 available_views=["canvas", "text"],
                 rows=rows,
                 intent=intent,
@@ -229,7 +242,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="tree",
                 fallback="table",
-                reason="hierarquia ou estrutura de produto",
+                reason=cls._reason("treeHierarchy"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["tree", "table", "text"],
@@ -244,7 +257,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="dashboard",
                 fallback="table",
-                reason="visão consolidada com múltiplos indicadores",
+                reason=cls._reason("dashboard"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["dashboard", "table", "chart", "kpi"],
@@ -257,7 +270,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="kpi",
                 fallback="table",
-                reason="indicador único",
+                reason=cls._reason("kpiSingle"),
                 available_views=["kpi", "table", "chart", "text"],
                 rows=rows,
                 intent=intent,
@@ -277,7 +290,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="text",
-                reason="sem dados tabulares para visualização",
+                reason=cls._reason("noTabularData"),
                 available_views=["text"],
                 rows=table_rows,
                 intent=intent,
@@ -314,7 +327,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="kpi",
                 fallback="table",
-                reason="um único valor numérico principal",
+                reason=cls._reason("singleNumericKpi"),
                 available_views=["kpi", "table", "chart"],
                 rows=table_rows,
                 intent=intent,
@@ -325,7 +338,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="tree",
                 fallback="table",
-                reason="estrutura hierárquica detectada",
+                reason=cls._reason("hierarchyDetected"),
                 available_views=["tree", "table"],
                 rows=table_rows,
                 intent=intent,
@@ -360,7 +373,7 @@ class ChatPresentationDecisionService:
                 return cls._build(
                     selected=selected,
                     fallback="table",
-                    reason="comparação entre meta e realizado",
+                    reason=cls._reason("targetVsActual"),
                     available_views=cls._merge_views(
                         available_formats,
                         [selected, "kpi", "table", "chart"],
@@ -383,7 +396,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected=selected,
                 fallback="table",
-                reason="dados temporais com valor numérico",
+                reason=cls._reason("temporalNumeric"),
                 available_views=cls._merge_views(
                     available_formats,
                     [selected, "table", "chart"],
@@ -401,7 +414,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="horizontal_bar",
                 fallback="table",
-                reason="muitas categorias — ranking em barra horizontal",
+                reason=cls._reason("manyCategoriesRanking"),
                 available_views=["horizontal_bar", "table", "chart"],
                 rows=table_rows,
                 intent=intent,
@@ -426,7 +439,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected=selected,
                 fallback="table",
-                reason="participação ou distribuição por categoria",
+                reason=cls._reason("categoryParticipation"),
                 available_views=[selected, "table", "chart"],
                 rows=table_rows,
                 intent=intent,
@@ -437,7 +450,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="text",
-                reason="resposta explicativa sem dados tabulares",
+                reason=cls._reason("explanatoryNoTable"),
                 available_views=["text"],
                 rows=table_rows,
                 intent=intent,
@@ -447,7 +460,7 @@ class ChatPresentationDecisionService:
         return cls._build(
             selected="table",
             fallback="text",
-            reason="lista detalhada ou comparação auditável",
+            reason=cls._reason("auditableList"),
             available_views=cls._merge_views(
                 available_formats,
                 ["table", "chart", "text"],
@@ -489,6 +502,7 @@ class ChatPresentationDecisionService:
             text_presentation=metadata.get("textPresentation"),
             available_formats=metadata.get("availableFormats"),
             path=path or None,
+            metadata=metadata,
         )
 
         table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
@@ -762,7 +776,6 @@ class ChatPresentationDecisionService:
         return notices[0] if notices else None
 
     @classmethod
-    @classmethod
     def _should_default_analyser_stack_to_text(
         cls,
         *,
@@ -800,7 +813,66 @@ class ChatPresentationDecisionService:
         table_presentation: dict[str, Any] | None,
         chart_presentation: dict[str, Any] | None,
         path: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
+        from app.domain.services.chat_presentation_rich_stack_policy_service import (
+            ChatPresentationRichStackPolicyService,
+        )
+
+        rich_metadata = metadata if isinstance(metadata, dict) else {
+            "path": path,
+            "textPresentation": text_presentation,
+            "treePresentation": tree_presentation,
+            "chartPresentation": chart_presentation,
+            "tablePresentation": table_presentation,
+            "presentation": primary_presentation,
+        }
+        entity = None
+        api_meta = rich_metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        if ChatPresentationRichStackPolicyService.should_default_to_text_stack(
+            path=path,
+            metadata=rich_metadata,
+            entity=entity,
+            user_preference=None,
+        ):
+            table_rows = rows or cls._rows_from_presentation(
+                table_presentation
+                or (
+                    primary_presentation
+                    if isinstance(primary_presentation, dict)
+                    and primary_presentation.get("type") == "table"
+                    else None
+                )
+            )
+            views = ChatPresentationRichStackPolicyService.resolve_available_views(
+                rich_metadata,
+                path=path,
+                entity=entity,
+                available_formats=available_formats,
+            )
+
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason=ChatPresentationRichStackPolicyService.stack_reason_for_route(
+                    path,
+                    entity=entity,
+                ),
+                available_views=views or cls._merge_views(
+                    available_formats,
+                    ["text", "table", "tree", "chart", "kpi", "dashboard"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
         if cls._should_default_analyser_stack_to_text(
             path=path,
             text_presentation=text_presentation,
@@ -819,7 +891,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="table",
-                reason="consulta completa do produto — visão integrada (stack)",
+                reason=cls._reason("analyserIntegratedStack"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["text", "table", "tree", "chart"],
@@ -847,7 +919,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="tree",
                 fallback="table",
-                reason="estrutura hierárquica — árvore como visão principal",
+                reason=cls._reason("treePrimaryView"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["tree", "table", "text"],
@@ -880,7 +952,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="table",
-                reason="preços — narrativa com insights antes da tabela detalhada",
+                reason=cls._reason("pricingNarrativeFirst"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["text", "table"],
@@ -902,7 +974,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="table",
-                reason="poucas posições de estoque — resumo em texto com destaques",
+                reason=cls._reason("stockFewPositionsText"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["text", "table", "chart"],
@@ -915,7 +987,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="table",
                 fallback="text",
-                reason="estoque com poucos registros — tabela auditável em vez de gráfico",
+                reason=cls._reason("stockFewRowsTable"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["table", "text", "chart"],
@@ -935,7 +1007,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="table",
-                reason="visão do produto — narrativa com insights antes da ficha tabular",
+                reason=cls._reason("productOverviewNarrative"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["text", "table", "tree", "chart"],
@@ -948,7 +1020,7 @@ class ChatPresentationDecisionService:
             return cls._build(
                 selected="text",
                 fallback="table",
-                reason="consulta completa do produto — texto, tabela, árvore e gráfico",
+                reason=cls._reason("analyserFullStack"),
                 available_views=cls._merge_views(
                     available_formats,
                     ["text", "table", "tree", "chart"],
@@ -1017,9 +1089,9 @@ class ChatPresentationDecisionService:
         fallback = "table" if rows else "text"
         views = cls._merge_views(available_formats, [resolved, fallback, "text"])
         reason = (
-            "formato solicitado indisponível — texto narrativo com apoio visual"
+            cls._reason("formatUnavailableFallback")
             if resolved != preferred
-            else "formato solicitado pelo usuário"
+            else cls._reason("formatUserRequested")
         )
 
         return cls._build(
@@ -1045,36 +1117,43 @@ class ChatPresentationDecisionService:
         if not message:
             return None
 
+        chart_hints = ChatPresentationVocabularyService.format_preference_markers("chartHints")
+        table_hints = ChatPresentationVocabularyService.format_preference_markers("tableHints")
+        line_tokens = ChatPresentationVocabularyService.format_preference_markers("lineTokens")
+        area_tokens = ChatPresentationVocabularyService.format_preference_markers("areaTokens")
+        donut_tokens = ChatPresentationVocabularyService.format_preference_markers("donutTokens")
+        horizontal_token = ChatPresentationVocabularyService.text(
+            "formatPreferenceMarkers",
+            "horizontalToken",
+            default="horizontal",
+        )
+        chart_subtype_tokens = ChatPresentationVocabularyService.format_preference_markers(
+            "chartSubtypeTokens",
+        )
+
         for alias, mapped in _USER_FORMAT_ALIASES.items():
             if alias in ("text", "table") and f"em {alias}" in message:
                 return mapped
 
             if alias in ("grafico", "gráfico", "chart") and any(
-                hint in message
-                for hint in ("em gráfico", "em grafico", "como gráfico", "como grafico")
+                hint in message for hint in chart_hints
             ):
-                if any(
-                    token in message
-                    for token in ("linha", "line", "área", "area", "barra", "rosca", "donut")
-                ):
-                    if "linha" in message or "line" in message:
+                if any(token in message for token in chart_subtype_tokens):
+                    if any(token in message for token in line_tokens):
                         return "line_chart"
 
-                    if "área" in message or "area" in message:
+                    if any(token in message for token in area_tokens):
                         return "area_chart"
 
-                    if "rosca" in message or "donut" in message:
+                    if any(token in message for token in donut_tokens):
                         return "donut"
 
-                    if "horizontal" in message:
+                    if horizontal_token in message:
                         return "horizontal_bar"
 
                 return "chart"
 
-            if alias in ("tabela", "table") and any(
-                hint in message
-                for hint in ("em tabela", "como tabela", "formato tabela")
-            ):
+            if alias in ("tabela", "table") and any(hint in message for hint in table_hints):
                 return "table"
 
         return None
@@ -1151,18 +1230,20 @@ class ChatPresentationDecisionService:
             and decision.get("selected") in {None, "text", "table"}
         ):
             decision["selected"] = "tree"
-            decision["reason"] = "estrutura hierárquica — árvore como visão principal"
+            decision["reason"] = cls._reason("treePrimaryView")
 
         if (
             ChatPresentationRoutePolicyService.is_stock_route(path)
             and preferred in {"chart", "table"}
             and preferred in set(views)
+            and str(decision.get("selected") or "").strip().lower() != "text"
+            and str(decision.get("layoutMode") or "").strip().lower() != "stack"
         ):
             decision["selected"] = preferred
             decision["reason"] = (
-                "estoque — gráfico para visão agregada"
+                cls._route_reason("stockChart")
                 if preferred == "chart"
-                else "estoque — tabela para conferência por filial/armazém"
+                else cls._route_reason("stockTable")
             )
 
         if (
@@ -1173,7 +1254,7 @@ class ChatPresentationDecisionService:
             and "table" in views
         ):
             decision["selected"] = "table"
-            decision["reason"] = "dados operacionais em tabela nativa"
+            decision["reason"] = cls._reason("operationalTableNative")
 
     @classmethod
     def _merge_views(
@@ -1258,18 +1339,18 @@ class ChatPresentationDecisionService:
     @classmethod
     def _chart_reason(cls, chart_type: str, shape: dict[str, Any]) -> str:
         if chart_type in {"line", "multi_line", "area"}:
-            return "dados temporais com valor numérico"
+            return cls._reason("temporalNumeric")
 
         if chart_type in {"donut", "pie"}:
-            return "participação ou distribuição por categoria"
+            return cls._reason("categoryParticipation")
 
         if chart_type == "horizontal_bar":
-            return "ranking ou nomes longos"
+            return cls._reason("chartRankingLongNames")
 
         if shape.get("rows", 0) > 6:
-            return "volume de categorias melhor em gráfico"
+            return cls._reason("chartCategoryVolume")
 
-        return "dados numéricos comparáveis"
+        return cls._reason("chartComparableNumeric")
 
     @classmethod
     def _looks_like_checklist(cls, message: str) -> bool:
@@ -1278,16 +1359,7 @@ class ChatPresentationDecisionService:
 
         return any(
             token in message
-            for token in (
-                "checklist",
-                "plano de ação",
-                "plano de acao",
-                "pendências",
-                "pendencias",
-                "próximos passos",
-                "proximos passos",
-                "tarefas",
-            )
+            for token in ChatPresentationVocabularyService.intent_markers("checklist")
         )
 
     @classmethod
@@ -1297,14 +1369,5 @@ class ChatPresentationDecisionService:
 
         return any(
             token in message
-            for token in (
-                "na lousa",
-                "coloque na lousa",
-                "colocar na lousa",
-                "gerar relatório",
-                "gerar relatorio",
-                "ata de reunião",
-                "ata de reuniao",
-                "comunicado",
-            )
+            for token in ChatPresentationVocabularyService.intent_markers("canvas")
         )

@@ -789,6 +789,20 @@ class ExternalActionProductCompositeAnalysisPresenter:
             else self._route("factoryStatus", "treeTitleGeneric")
         )
 
+        enriched = _OpsTable.enrich_structure_rows(items)
+
+        if _OpsTable.has_nested_bom_items(enriched):
+            return ChatPresentationHierarchyTreeService.build_flat_bom_tree(
+                title=title,
+                root_id=code or "factory-structure",
+                root_label=(
+                    self._route("factoryStatus", "treeRootLabel", code=code)
+                    if code
+                    else title
+                ),
+                items=enriched,
+            )
+
         def _structure_leaf(item: dict[str, Any]) -> dict[str, Any]:
             component_type = str(item.get("component_type") or "—")
             component_code = str(
@@ -815,7 +829,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 if code
                 else title
             ),
-            items=items,
+            items=enriched,
             group_keys=["component_type"],
             leaf_builder=_structure_leaf,
         )
@@ -867,6 +881,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -880,34 +895,18 @@ class ExternalActionProductCompositeAnalysisPresenter:
             if code
             else self._route("factoryStatus", "dashboardTitleGeneric")
         )
-        panels: list[dict] = []
+        panels = ChatPresentationDashboardAssemblyService.build_rich_panels(
+            view_order=("kpi", "tree", "chart", "table"),
+            kpi=kpi,
+            tree=tree,
+            chart=chart,
+            table=table,
+            panel_titles={
+                "kpi": str((kpi or {}).get("title") or self._route("factoryStatus", "overviewTableTitle")),
+                "tree": str((tree or {}).get("title") or self._route("factoryStatus", "treeTitleGeneric")),
+                "chart": str((chart or {}).get("title") or self._route("factoryStatus", "chartStockTitleGeneric")),
+                "table": str((table or {}).get("title") or self._route("factoryStatus", "sectionStockTitle")),
+            },
+        )
 
-        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="summary",
-                    title=str(kpi.get("title") or self._route("factoryStatus", "overviewTableTitle")),
-                    presentation=kpi,
-                )
-            )
-
-        if isinstance(chart, dict) and chart.get("type") == "chart":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="chart",
-                    title=str(chart.get("title") or self._route("factoryStatus", "chartStockTitleGeneric")),
-                    presentation=chart,
-                    chart_presentation=chart,
-                )
-            )
-
-        if isinstance(table, dict) and table.get("type") == "table":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="detail",
-                    title=str(table.get("title") or self._route("factoryStatus", "sectionStockTitle")),
-                    presentation=table,
-                )
-            )
-
-        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels)
+        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

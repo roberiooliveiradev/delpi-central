@@ -77,6 +77,12 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_structure_exclusivity",
         "shape": "playbook_report",
     },
+    "product_structure_exclusivity_90261805.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_structure_exclusivity",
+        "entity": "product_structure_exclusivity",
+        "shape": "playbook_report",
+    },
     "product_raw_material_price_intelligence_10080001.json": {
         "dataVersion": "2026-06",
         "operationId": "get_product_raw_material_price_intelligence",

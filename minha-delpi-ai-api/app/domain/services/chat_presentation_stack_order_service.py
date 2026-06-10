@@ -116,13 +116,36 @@ class ChatPresentationStackOrderService:
 
     @classmethod
     def _resolve_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
+        from app.domain.services.chat_presentation_rich_stack_policy_service import (
+            ChatPresentationRichStackPolicyService,
+        )
+
+        path = str(metadata.get("path") or "")
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        profile_order = ChatPresentationRichStackPolicyService.resolve_tail_visual_order(
+            metadata,
+            path=path,
+            entity=entity,
+        )
+
+        if profile_order:
+            return profile_order
+
         decision = metadata.get("presentationDecision")
         raw = []
 
         if isinstance(decision, dict):
             raw = list(decision.get("visualOrder") or [])
 
-        preferred = ["tree", "chart", "kpi", "dashboard"]
+        preferred = ["kpi", "tree", "chart", "dashboard"]
         normalized = {str(item).strip().lower() for item in raw}
         ordered = [kind for kind in preferred if kind in normalized]
 
@@ -145,7 +168,7 @@ class ChatPresentationStackOrderService:
                 ordered.insert(1 if "tree" in ordered else 0, "chart")
                 break
 
-        return ordered or ["tree", "chart"]
+        return ordered or ["kpi", "tree", "chart"]
 
     @classmethod
     def _markdown_has_highlights(cls, metadata: dict[str, Any]) -> bool:

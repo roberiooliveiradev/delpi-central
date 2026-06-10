@@ -146,7 +146,7 @@ class ExternalActionProductStructureExclusivityPresenter:
             )
 
             if compact_for_rich_ui:
-                linhas.append(self._route("tableVisualizationHint"))
+                linhas.append(self._route("treeVisualizationHint"))
             else:
                 for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
                     linhas.append(self._format_exclusive_preview_line(item))
@@ -163,9 +163,18 @@ class ExternalActionProductStructureExclusivityPresenter:
                     )
 
                 if len(exclusive_items) > _Narrative._PREVIEW_MAX:
-                    linhas.append(self._route("tableVisualizationHint"))
+                    linhas.append(
+                        self._route(
+                            "treeVisualizationHint"
+                            if compact_for_rich_ui
+                            else "tableVisualizationHint"
+                        )
+                    )
         elif self._items(root):
             linhas.append(self._route("noExclusiveLine"))
+
+            if compact_for_rich_ui:
+                linhas.append(self._route("treeVisualizationHint"))
         else:
             linhas.append(self._route("itemsEmptyLine"))
 
@@ -247,7 +256,50 @@ class ExternalActionProductStructureExclusivityPresenter:
             parts.extend(["", self._insight("attentionHeader"), ""])
             parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
+        conclusion = self._build_conclusion_lines(root)
+
+        if conclusion:
+            parts.extend(["", *conclusion])
+
+        if compact_for_rich_ui:
+            parts.append(self._route("treeVisualizationHint"))
+
         return _OpsTable.join_markdown_blocks(parts)
+
+    def _build_conclusion_lines(self, root: dict) -> list[str]:
+        summary = self._summary(root)
+        exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
+        lines: list[str] = []
+
+        if exclusive_count == 0 and self._items(root):
+            lines.append(f"**{self._route('sharedMpConclusionLine')}**")
+
+            for item in self._items(root):
+                if not isinstance(item, dict):
+                    continue
+
+                if str(item.get("component_type") or "").upper() != "MP":
+                    continue
+
+                usage = item.get("total_valid_finished_products_using_mp")
+
+                if usage in (None, "", 0):
+                    continue
+
+                code = str(
+                    item.get("component_code")
+                    or item.get("product_code")
+                    or "—"
+                )
+                lines.append(
+                    self._route(
+                        "sharedMpUsageLine",
+                        code=code,
+                        count=str(usage),
+                    )
+                )
+
+        return lines
 
     def _build_structure_exclusivity_text_presentation(self, root: dict, path: str) -> dict | None:
         from app.domain.services.chat_product_operational_content_service import (
@@ -271,8 +323,10 @@ class ExternalActionProductStructureExclusivityPresenter:
             )
         )
         auxiliary_tables = self.build_structure_exclusivity_table_presentations(root, path)
+        tree_presentation = self.build_structure_exclusivity_tree_presentation(root, path)
         compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
             table_presentations=auxiliary_tables,
+            tree_presentation=tree_presentation,
         )
         body = self._build_markdown_body(
             root,
@@ -470,33 +524,21 @@ class ExternalActionProductStructureExclusivityPresenter:
             ChatPresentationHierarchyTreeService,
         )
 
-        items = [item for item in self._items(root) if isinstance(item, dict)]
+        items = _OpsTable.enrich_structure_rows(
+            [item for item in self._items(root) if isinstance(item, dict)]
+        )
 
         if not items:
             return None
 
-        code, _description = self._product_context(root, path)
+        code, description = self._product_context(root, path)
         title = (
             self._route("treeTitle", code=code)
             if code
             else self._route("treeTitleGeneric")
         )
 
-        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
-            component_type = str(item.get("component_type") or "—")
-            component_code = str(item.get("product_code") or component_type)
-
-            return ChatPresentationHierarchyTreeService._serialize_node(
-                node_id=f"cmp:{component_code}:{component_type}",
-                label=self._route(
-                    "treeComponentLeafLabel",
-                    code=component_code,
-                    componentType=component_type,
-                ),
-                subtitle=str(item.get("exclusive_raw_material") or "").strip(),
-            )
-
-        return ChatPresentationHierarchyTreeService.build_multi_level(
+        return ChatPresentationHierarchyTreeService.build_flat_bom_tree(
             title=title,
             root_id=code or "structure-exclusivity",
             root_label=(
@@ -504,9 +546,8 @@ class ExternalActionProductStructureExclusivityPresenter:
                 if code
                 else title
             ),
+            root_subtitle=description,
             items=items,
-            group_keys=["component_type"],
-            leaf_builder=_leaf,
         )
 
     def build_structure_exclusivity_dashboard_presentation(
@@ -515,6 +556,7 @@ class ExternalActionProductStructureExclusivityPresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -528,34 +570,23 @@ class ExternalActionProductStructureExclusivityPresenter:
             if code
             else self._route("dashboardTitleGeneric")
         )
-        panels: list[dict] = []
+        view_order: tuple[str, ...] = ("kpi", "tree", "chart")
 
-        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="summary",
-                    title=str(kpi.get("title") or self._route("overviewTableTitle")),
-                    presentation=kpi,
-                )
-            )
+        if not isinstance(tree, dict):
+            view_order = ("kpi", "chart", "table")
 
-        if isinstance(chart, dict) and chart.get("type") == "chart":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="chart",
-                    title=str(chart.get("title") or self._route("chartExclusiveTitleGeneric")),
-                    presentation=chart,
-                    chart_presentation=chart,
-                )
-            )
-
-        if isinstance(table, dict) and table.get("type") == "table":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="detail",
-                    title=str(table.get("title") or self._route("componentsTableTitle")),
-                    presentation=table,
-                )
-            )
+        panels = ChatPresentationDashboardAssemblyService.build_rich_panels(
+            view_order=view_order,
+            kpi=kpi,
+            tree=tree,
+            chart=chart,
+            table=table,
+            panel_titles={
+                "kpi": str((kpi or {}).get("title") or self._route("overviewTableTitle")),
+                "tree": str((tree or {}).get("title") or self._route("treeTitleGeneric")),
+                "chart": str((chart or {}).get("title") or self._route("chartExclusiveTitleGeneric")),
+                "table": str((table or {}).get("title") or self._route("componentsTableTitle")),
+            },
+        )
 
         return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

@@ -4,15 +4,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
+
 
 class ChatPresentationStructureDedupService:
-    _STRUCTURE_TABLE_TITLE_MARKERS = (
-        "componentes da estrutura",
-    )
-    _PARENTS_TABLE_TITLE_MARKERS = (
-        "produtos pai",
-        "onde é usado",
-    )
+    @classmethod
+    def _structure_table_title_markers(cls) -> tuple[str, ...]:
+        return ChatPresentationVocabularyService.structure_table_title_markers()
+
+    @classmethod
+    def _parents_table_title_markers(cls) -> tuple[str, ...]:
+        return ChatPresentationVocabularyService.parents_table_title_markers()
 
     @classmethod
     def is_structure_components_table(cls, presentation: dict[str, Any] | None) -> bool:
@@ -21,7 +25,7 @@ class ChatPresentationStructureDedupService:
 
         title = str(presentation.get("title") or "").strip().lower()
 
-        if any(marker in title for marker in cls._STRUCTURE_TABLE_TITLE_MARKERS):
+        if any(marker in title for marker in cls._structure_table_title_markers()):
             return True
 
         columns = presentation.get("columns") or []
@@ -31,7 +35,20 @@ class ChatPresentationStructureDedupService:
             if isinstance(column, dict)
         }
 
-        return {"parent_code", "component_code"}.issubset(keys)
+        if {"parent_code", "component_code"}.issubset(keys):
+            return True
+
+        if {"level", "component_code"}.issubset(keys):
+            return True
+
+        if {"level", "product_code"}.issubset(keys) and (
+            "exclusive_raw_material_label" in keys
+            or "exclusive_raw_material" in keys
+            or "component_type" in keys
+        ):
+            return True
+
+        return False
 
     @classmethod
     def is_parents_usage_table(cls, presentation: dict[str, Any] | None) -> bool:
@@ -40,7 +57,7 @@ class ChatPresentationStructureDedupService:
 
         title = str(presentation.get("title") or "").strip().lower()
 
-        return any(marker in title for marker in cls._PARENTS_TABLE_TITLE_MARKERS)
+        return any(marker in title for marker in cls._parents_table_title_markers())
 
     @classmethod
     def is_hierarchy_duplicate_table(cls, presentation: dict[str, Any] | None) -> bool:
@@ -157,6 +174,35 @@ class ChatPresentationStructureDedupService:
         return preferred == "table"
 
     @classmethod
+    def _should_preserve_tree_for_rich_stack(cls, metadata: dict[str, Any]) -> bool:
+        if not cls.metadata_has_tree(metadata):
+            return False
+
+        from app.domain.services.chat_presentation_rich_stack_policy_service import (
+            ChatPresentationRichStackPolicyService,
+        )
+
+        path = str(metadata.get("path") or "").strip() or None
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower() or None
+
+        if not ChatPresentationRichStackPolicyService.has_rich_text_narrative(metadata):
+            return False
+
+        return ChatPresentationRichStackPolicyService.count_auxiliary_visuals(metadata) >= 1 or bool(
+            path
+            and ChatPresentationRichStackPolicyService.is_rich_playbook_route(path, entity=entity)
+        )
+
+    @classmethod
     def _normalize_auxiliary_table_slots(cls, metadata: dict[str, Any]) -> None:
         bundled = metadata.get("tablePresentations")
 
@@ -200,6 +246,42 @@ class ChatPresentationStructureDedupService:
 
         cls._normalize_auxiliary_table_slots(metadata)
 
+        if cls.metadata_has_tree(metadata) and (
+            cls._should_preserve_tree_for_rich_stack(metadata)
+            or not cls._prefers_table_over_tree(metadata)
+        ):
+            primary = metadata.get("presentation")
+
+            if cls.is_hierarchy_duplicate_table(primary):
+                metadata["presentation"] = metadata.get("treePresentation") or None
+
+            cls._clear_table_slot(metadata, "tablePresentation")
+
+            bundled = metadata.get("tablePresentations")
+
+            if isinstance(bundled, list):
+                filtered = cls._filter_table_list(bundled)
+                metadata["tablePresentations"] = filtered or None
+
+            available = metadata.get("availableFormats")
+
+            if isinstance(available, list) and cls.count_non_duplicate_tables(metadata) == 0:
+                metadata["availableFormats"] = [
+                    token
+                    for token in available
+                    if str(token).strip().lower() != "table"
+                ]
+
+            decision = metadata.get("presentationDecision")
+
+            if isinstance(decision, dict):
+                views = decision.get("availableViews")
+
+                if isinstance(views, list):
+                    decision["availableViews"] = cls.prune_available_views(views, metadata)
+
+            return
+
         if cls._prefers_table_over_tree(metadata) and cls._any_hierarchy_duplicate_table(metadata):
             structure_table = cls._first_hierarchy_duplicate_table(metadata)
             cls._suppress_tree_presentations(metadata)
@@ -216,41 +298,6 @@ class ChatPresentationStructureDedupService:
                     for token in available
                     if str(token).strip().lower() != "tree"
                 ]
-
-            return
-
-        if not cls.metadata_has_tree(metadata):
-            return
-
-        primary = metadata.get("presentation")
-
-        if cls.is_hierarchy_duplicate_table(primary):
-            metadata["presentation"] = metadata.get("treePresentation") or None
-
-        cls._clear_table_slot(metadata, "tablePresentation")
-
-        bundled = metadata.get("tablePresentations")
-
-        if isinstance(bundled, list):
-            filtered = cls._filter_table_list(bundled)
-            metadata["tablePresentations"] = filtered or None
-
-        available = metadata.get("availableFormats")
-
-        if isinstance(available, list) and cls.count_non_duplicate_tables(metadata) == 0:
-            metadata["availableFormats"] = [
-                token
-                for token in available
-                if str(token).strip().lower() != "table"
-            ]
-
-        decision = metadata.get("presentationDecision")
-
-        if isinstance(decision, dict):
-            views = decision.get("availableViews")
-
-            if isinstance(views, list):
-                decision["availableViews"] = cls.prune_available_views(views, metadata)
 
     @classmethod
     def prune_available_views(cls, views: list[str], metadata: dict[str, Any]) -> list[str]:

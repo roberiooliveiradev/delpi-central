@@ -8,11 +8,8 @@ from typing import Any
 from app.domain.services.chat_presentation_route_policy_service import (
     ChatPresentationRoutePolicyService,
 )
-
-_ABSENCE_INSIGHT_RE = re.compile(
-    r"(ainda não cadastrad|não (?:há|ha|foi) retornad|sem operações|sem historico|sem histórico|"
-    r"não retornou|não há histórico|sem histórico recente|sem compras recentes)",
-    re.IGNORECASE,
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
 )
 
 
@@ -91,6 +88,42 @@ class ChatPresentationSectionAvailabilityService:
             plan["narrativeOrder"] = cls._narrative_order_for_stock(visibility)
             return plan
 
+        if ChatPresentationRoutePolicyService.is_raw_material_price_route(lowered):
+            visibility = cls._resolve_mp_price_visibility(metadata)
+            plan["presentationProfile"] = "product_raw_material_price_intelligence"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_mp_price_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_mp_price(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_cost_impact_route(lowered):
+            visibility = cls._resolve_cost_impact_visibility(metadata)
+            plan["presentationProfile"] = "product_cost_impact_simulation"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_cost_impact_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_cost_impact(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_sale_pricing_route(lowered):
+            visibility = cls._resolve_sale_pricing_visibility(metadata)
+            plan["presentationProfile"] = "product_pricing"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_sale_pricing_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_sale_pricing(visibility)
+            return plan
+
+        if ChatPresentationRoutePolicyService.is_tree_route(lowered) and "/structure/exclusivity" not in lowered:
+            visibility = cls._resolve_tree_hierarchy_visibility(metadata)
+            plan["presentationProfile"] = "product_structure"
+            plan["humanizedSections"] = True
+            plan["sectionVisibility"] = visibility
+            plan["sectionFraming"] = cls._build_tree_hierarchy_framing(metadata, visibility)
+            plan["narrativeOrder"] = cls._narrative_order_for_tree_hierarchy(visibility)
+            return plan
+
         plan["presentationProfile"] = "generic_stack"
         plan["humanizedSections"] = False
         plan["sectionVisibility"] = {}
@@ -105,7 +138,7 @@ class ChatPresentationSectionAvailabilityService:
         for line in insights:
             token = str(line or "").strip()
 
-            if not token or _ABSENCE_INSIGHT_RE.search(token):
+            if not token or ChatPresentationVocabularyService.absence_insight_pattern().search(token):
                 continue
 
             filtered.append(token)
@@ -148,8 +181,14 @@ class ChatPresentationSectionAvailabilityService:
             cls._SCOPE: cls._has_scope(markdown),
             cls._PROFILE: cls._has_profile_table(metadata),
             cls._HIGHLIGHTS: cls._has_highlights(markdown),
-            cls._GUIDE: cls._has_table_role(metadata, ("roteiro", "guide")),
-            cls._INSPECTION: cls._has_table_role(metadata, ("inspeção", "inspecao", "inspection")),
+            cls._GUIDE: cls._has_table_role(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("analyserGuide"),
+            ),
+            cls._INSPECTION: cls._has_table_role(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("analyserInspection"),
+            ),
             cls._STRUCTURE: cls._has_tree(metadata),
             cls._ATTENTION: cls._has_attention(markdown),
         }
@@ -240,16 +279,19 @@ class ChatPresentationSectionAvailabilityService:
 
         return {
             cls._SCOPE: cls._has_scope(markdown),
-            cls._PROFILE: cls._has_table_with_tokens(metadata, ("panorama fabril",)),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("factoryProfile"),
+            ),
             cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
             cls._STRUCTURE: cls._has_tree(metadata)
             or cls._has_table_with_tokens(
                 metadata,
-                ("estrutura", "bom", "exclusividade"),
+                ChatPresentationVocabularyService.table_title_tokens("factoryStructure"),
             ),
             cls._GUIDE: cls._has_table_with_tokens(
                 metadata,
-                ("estoque", "matéria", "materia", "produção", "producao", "expedição", "expedicao"),
+                ChatPresentationVocabularyService.table_title_tokens("factoryGuide"),
             ),
             cls._ATTENTION: cls._has_attention_generic(markdown),
         }
@@ -260,11 +302,14 @@ class ChatPresentationSectionAvailabilityService:
 
         return {
             cls._SCOPE: cls._has_scope(markdown),
-            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo produtivo",)),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("productionProfile"),
+            ),
             cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
             cls._GUIDE: cls._has_table_with_tokens(
                 metadata,
-                ("ordens", "apontamento", "produção", "producao"),
+                ChatPresentationVocabularyService.table_title_tokens("productionGuide"),
             ),
             cls._ATTENTION: cls._has_attention_generic(markdown),
         }
@@ -275,11 +320,14 @@ class ChatPresentationSectionAvailabilityService:
 
         return {
             cls._SCOPE: cls._has_scope(markdown),
-            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo de expedição", "resumo de expedicao")),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("shippingProfile"),
+            ),
             cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
             cls._GUIDE: cls._has_table_with_tokens(
                 metadata,
-                ("expedição", "expedicao", "movimentos", "inspeção final", "inspecao final"),
+                ChatPresentationVocabularyService.table_title_tokens("shippingGuide"),
             ),
             cls._ATTENTION: cls._has_attention_generic(markdown),
         }
@@ -290,11 +338,15 @@ class ChatPresentationSectionAvailabilityService:
 
         return {
             cls._SCOPE: cls._has_scope(markdown),
-            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo da estrutura",)),
-            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
-            cls._STRUCTURE: cls._has_table_with_tokens(
+            cls._PROFILE: cls._has_table_with_tokens(
                 metadata,
-                ("exclusividade", "componentes", "estrutura"),
+                ChatPresentationVocabularyService.table_title_tokens("structureExclusivityProfile"),
+            ),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._STRUCTURE: cls._has_tree(metadata)
+            or cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("structureExclusivityStructure"),
             ),
             cls._ATTENTION: cls._has_attention_generic(markdown),
         }
@@ -305,11 +357,14 @@ class ChatPresentationSectionAvailabilityService:
 
         return {
             cls._SCOPE: cls._has_scope(markdown),
-            cls._PROFILE: cls._has_table_with_tokens(metadata, ("resumo do estoque",)),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("stockProfile"),
+            ),
             cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
             cls._GUIDE: cls._has_table_with_tokens(
                 metadata,
-                ("posições", "posicoes", "filial", "armazém", "armazem"),
+                ChatPresentationVocabularyService.table_title_tokens("stockGuide"),
             ),
             cls._STRUCTURE: cls._has_tree(metadata),
             cls._ATTENTION: cls._has_attention_generic(markdown),
@@ -520,6 +575,268 @@ class ChatPresentationSectionAvailabilityService:
         return result
 
     @classmethod
+    def _resolve_mp_price_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("mpPriceProfile"),
+            ),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("mpPriceGuide"),
+            ),
+            cls._STRUCTURE: cls._slot_has_type(metadata, "kpi")
+            or cls._slot_has_type(metadata, "chart"),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_cost_impact_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("costImpactProfile"),
+            ),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("costImpactGuide"),
+            ),
+            cls._STRUCTURE: cls._slot_has_type(metadata, "chart") or cls._slot_has_type(metadata, "kpi"),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_sale_pricing_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("salePricingProfile"),
+            ),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._GUIDE: cls._has_table_with_tokens(
+                metadata,
+                ChatPresentationVocabularyService.table_title_tokens("salePricingGuide"),
+            ),
+            cls._STRUCTURE: cls._slot_has_type(metadata, "chart") or cls._slot_has_type(metadata, "kpi"),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _resolve_tree_hierarchy_visibility(cls, metadata: dict[str, Any]) -> dict[str, bool]:
+        markdown = cls._text_markdown(metadata)
+
+        return {
+            cls._SCOPE: cls._has_scope(markdown),
+            cls._PROFILE: cls._has_profile_table(metadata),
+            cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
+            cls._STRUCTURE: cls._has_tree(metadata),
+            cls._ATTENTION: cls._has_attention_generic(markdown),
+        }
+
+    @classmethod
+    def _build_mp_price_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/raw-material-price-intelligence")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "mpPriceScopeWithCode" if code else "mpPriceScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("mpPriceScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("mpPriceHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("mpPriceSummary", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("mpPriceHistory", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("mpPricePanels", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("mpPriceAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_cost_impact_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/cost-impact-simulation")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "costImpactScopeWithCode" if code else "costImpactScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("costImpactScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("costImpactHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("costImpactSummary", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("costImpactMaterials", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("costImpactPanels", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("costImpactAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_sale_pricing_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        code = cls._product_code_from_path_generic(metadata, "/pricing")
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            key = "salePricingScopeWithCode" if code else "salePricingScopeGeneric"
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get("salePricingScopeGeneric", "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("salePricingHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("salePricingSummary", "")
+
+        if visibility.get(cls._GUIDE):
+            result[cls._GUIDE] = framing.get("salePricingDetail", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("salePricingPanels", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("salePricingAttention", "")
+
+        return result
+
+    @classmethod
+    def _build_tree_hierarchy_framing(
+        cls,
+        metadata: dict[str, Any],
+        visibility: dict[str, bool],
+    ) -> dict[str, str]:
+        path = str(metadata.get("path") or "").lower()
+        token = "/parents" if "/parents" in path else "/structure"
+        code = cls._product_code_from_path_generic(metadata, token)
+        framing = cls._load_section_framing()
+        result: dict[str, str] = {}
+
+        if visibility.get(cls._SCOPE):
+            if "/parents" in path:
+                key = "parentsScopeWithCode" if code else "parentsScopeGeneric"
+            else:
+                key = "structureScopeWithCode" if code else "structureScopeGeneric"
+
+            template = framing.get(key, "")
+            result[cls._SCOPE] = template.format(code=code) if code and template else framing.get(key, "")
+
+        if visibility.get(cls._HIGHLIGHTS):
+            result[cls._HIGHLIGHTS] = framing.get("structureHighlights", "")
+
+        if visibility.get(cls._PROFILE):
+            result[cls._PROFILE] = framing.get("structureProfile", "")
+
+        if visibility.get(cls._STRUCTURE):
+            result[cls._STRUCTURE] = framing.get("structureTree", "")
+
+        if visibility.get(cls._ATTENTION):
+            result[cls._ATTENTION] = framing.get("structureAttention", "")
+
+        return result
+
+    @classmethod
+    def _narrative_order_for_mp_price(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
+            order.append("operationalTables")
+
+        if visibility.get(cls._STRUCTURE):
+            order.append("tailVisuals")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _narrative_order_for_cost_impact(cls, visibility: dict[str, bool]) -> list[str]:
+        return cls._narrative_order_for_mp_price(visibility)
+
+    @classmethod
+    def _narrative_order_for_sale_pricing(cls, visibility: dict[str, bool]) -> list[str]:
+        return cls._narrative_order_for_mp_price(visibility)
+
+    @classmethod
+    def _narrative_order_for_tree_hierarchy(cls, visibility: dict[str, bool]) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._HIGHLIGHTS):
+            order.append("highlights")
+
+        if visibility.get(cls._PROFILE):
+            order.append("profileTables")
+
+        if visibility.get(cls._STRUCTURE):
+            order.append("tailVisuals")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _slot_has_type(cls, metadata: dict[str, Any], presentation_type: str) -> bool:
+        token = str(presentation_type or "").strip().lower()
+
+        for key in ("kpiPresentation", "chartPresentation", "dashboardPresentation", "treePresentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and str(presentation.get("type") or "").strip().lower() == token:
+                return True
+
+        primary = metadata.get("presentation")
+
+        return (
+            isinstance(primary, dict)
+            and str(primary.get("type") or "").strip().lower() == token
+        )
+
+    @classmethod
     def _load_section_framing(cls) -> dict[str, str]:
         from app.domain.services.chat_product_operational_content_service import (
             ChatProductOperationalContentService,
@@ -628,7 +945,8 @@ class ChatPresentationSectionAvailabilityService:
         substantive = [
             line
             for line in bullets
-            if len(line) > 2 and not _ABSENCE_INSIGHT_RE.search(line)
+            if len(line) > 2
+            and not ChatPresentationVocabularyService.absence_insight_pattern().search(line)
         ]
 
         return bool(substantive)
@@ -646,11 +964,20 @@ class ChatPresentationSectionAvailabilityService:
         return bool(numbered)
 
     @classmethod
+    def _title_matches_profile_table(cls, title: str) -> bool:
+        lowered = str(title or "").strip().lower()
+
+        if any(lowered.startswith(prefix) for prefix in ChatPresentationVocabularyService.profile_table_title_prefixes()):
+            return True
+
+        return any(token in lowered for token in ChatPresentationVocabularyService.profile_table_title_tokens())
+
+    @classmethod
     def _has_profile_table(cls, metadata: dict[str, Any]) -> bool:
         for presentation in cls._table_presentations(metadata):
             title = str(presentation.get("title") or "").strip().lower()
 
-            if title.startswith("produto ") or "ficha" in title or "cadastro" in title:
+            if cls._title_matches_profile_table(title):
                 return cls._table_has_rows(presentation)
 
         profile = metadata.get("profileTablePresentation")

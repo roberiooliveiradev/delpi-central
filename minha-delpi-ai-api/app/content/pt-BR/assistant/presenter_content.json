@@ -429,6 +429,9 @@
       "componentsTableTitle": "Componentes com exclusividade",
       "componentsTableTitleTruncated": "Componentes com exclusividade — {shown} de {total}",
       "tableVisualizationHint": "Componentes e exclusividade na **tabela** abaixo.",
+      "treeVisualizationHint": "Estrutura aninhada na **árvore** abaixo.",
+      "sharedMpConclusionLine": "Não há matéria-prima exclusiva nesta estrutura.",
+      "sharedMpUsageLine": "A MP **{code}** aparece em **{count}** PA(s) válido(s).",
       "kpiTitle": "Indicadores da estrutura — {code}",
       "kpiTitleGeneric": "Indicadores da estrutura",
       "kpiComponents": "Componentes na BOM",
@@ -791,6 +794,19 @@
     "stockByLocationTitle": "Estoque por filial/armazém",
     "stockLocationLabel": "Fil.{branch}/{warehouse}",
     "componentTypeFallback": "Outros"
+  },
+  "richStackReasons": {
+    "default": "consulta operacional — narrativa com painéis complementares (stack)",
+    "analyser": "análise integrada — texto, tabelas, árvore e gráficos no mesmo stack",
+    "factory_status": "status fabril — narrativa com KPI, árvore BOM e painéis operacionais",
+    "structure_exclusivity": "exclusividade de MPs — texto, KPI, árvore BOM e conclusão compartilhada",
+    "raw_material_price_intelligence": "inteligência de preço MP — narrativa rica com KPI, histórico e gráfico",
+    "cost_impact_simulation": "simulação de custo — narrativa com impacto e painéis de materiais",
+    "sale_pricing": "precificação — narrativa com KPI e tabelas de preço",
+    "production_status": "status produtivo — narrativa com OPs e painéis de apontamento",
+    "shipping_status": "expedição — narrativa com totais e movimentos detalhados",
+    "stock": "estoque — narrativa com posições, gráfico e hierarquia filial/armazém",
+    "tree_hierarchy": "estrutura hierárquica — texto com árvore BOM como visual principal"
   },
   "dashboardPresentation": {
     "defaultTitle": "Dashboard",

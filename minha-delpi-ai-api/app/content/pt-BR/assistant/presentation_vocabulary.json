@@ -1,0 +1,187 @@
+{
+  "structureDedup": {
+    "structureTableTitleMarkers": [
+      "componentes da estrutura",
+      "componentes com exclusividade",
+      "estrutura (bom",
+      "bom + exclusividade"
+    ],
+    "parentsTableTitleMarkers": [
+      "produtos pai",
+      "onde é usado"
+    ]
+  },
+  "sectionAvailability": {
+    "absenceInsightPattern": "(ainda não cadastrad|não (?:há|ha|foi) retornad|sem operações|sem historico|sem histórico|não retornou|não há histórico|sem histórico recente|sem compras recentes)",
+    "tableTitleTokens": {
+      "analyserGuide": ["roteiro", "guide"],
+      "analyserInspection": ["inspeção", "inspecao", "inspection"],
+      "factoryProfile": ["panorama fabril"],
+      "factoryStructure": ["estrutura", "bom", "exclusividade"],
+      "factoryGuide": ["estoque", "matéria", "materia", "produção", "producao", "expedição", "expedicao"],
+      "productionProfile": ["resumo produtivo"],
+      "productionGuide": ["ordens", "apontamento", "produção", "producao"],
+      "shippingProfile": ["resumo de expedição", "resumo de expedicao"],
+      "shippingGuide": ["expedição", "expedicao", "movimentos", "inspeção final", "inspecao final"],
+      "structureExclusivityProfile": ["resumo da estrutura"],
+      "structureExclusivityStructure": ["exclusividade", "componentes", "estrutura"],
+      "stockProfile": ["resumo do estoque"],
+      "stockGuide": ["posições", "posicoes", "filial", "armazém", "armazem"],
+      "mpPriceProfile": ["resumo", "inteligência", "inteligencia"],
+      "mpPriceGuide": ["compra", "histórico", "historico", "orçamento", "orcamento"],
+      "costImpactProfile": ["simulação", "simulacao", "impacto"],
+      "costImpactGuide": ["materiais", "material", "componente"],
+      "salePricingProfile": ["preço", "preco", "precificação", "precificacao"],
+      "salePricingGuide": ["tabela", "lista", "preços", "precos"]
+    },
+    "profileTableTitlePrefixes": ["produto "],
+    "profileTableTitleTokens": ["ficha", "cadastro"]
+  },
+  "booleanLabels": {
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "exclusiveRawMaterialTruthy": ["SIM", "S", "TRUE", "1"],
+  "hierarchyTree": {
+    "defaultHierarchyTitle": "Hierarquia",
+    "defaultStructureTitle": "Estrutura",
+    "defaultRootLabel": "Raiz",
+    "emptyLabel": "—"
+  },
+  "formatPreferenceMarkers": {
+    "chartHints": ["em gráfico", "em grafico", "como gráfico", "como grafico"],
+    "tableHints": ["em tabela", "como tabela", "formato tabela"],
+    "lineTokens": ["linha", "line"],
+    "areaTokens": ["área", "area"],
+    "donutTokens": ["rosca", "donut"],
+    "horizontalToken": "horizontal",
+    "chartSubtypeTokens": ["linha", "line", "área", "area", "barra", "rosca", "donut"]
+  },
+  "intentMarkers": {
+    "checklist": [
+      "checklist",
+      "plano de ação",
+      "plano de acao",
+      "pendências",
+      "pendencias",
+      "próximos passos",
+      "proximos passos",
+      "tarefas"
+    ],
+    "canvas": [
+      "na lousa",
+      "coloque na lousa",
+      "colocar na lousa",
+      "gerar relatório",
+      "gerar relatorio",
+      "ata de reunião",
+      "ata de reuniao",
+      "comunicado"
+    ]
+  },
+  "decisionReasons": {
+    "checklist": "plano de ação ou pendências",
+    "canvas": "documento ou relatório longo",
+    "treeHierarchy": "hierarquia ou estrutura de produto",
+    "dashboard": "visão consolidada com múltiplos indicadores",
+    "kpiSingle": "indicador único",
+    "noTabularData": "sem dados tabulares para visualização",
+    "singleNumericKpi": "um único valor numérico principal",
+    "hierarchyDetected": "estrutura hierárquica detectada",
+    "targetVsActual": "comparação entre meta e realizado",
+    "temporalNumeric": "dados temporais com valor numérico",
+    "manyCategoriesRanking": "muitas categorias — ranking em barra horizontal",
+    "categoryParticipation": "participação ou distribuição por categoria",
+    "explanatoryNoTable": "resposta explicativa sem dados tabulares",
+    "auditableList": "lista detalhada ou comparação auditável",
+    "analyserIntegratedStack": "consulta completa do produto — visão integrada (stack)",
+    "treePrimaryView": "estrutura hierárquica — árvore como visão principal",
+    "pricingNarrativeFirst": "preços — narrativa com insights antes da tabela detalhada",
+    "stockFewPositionsText": "poucas posições de estoque — resumo em texto com destaques",
+    "stockFewRowsTable": "estoque com poucos registros — tabela auditável em vez de gráfico",
+    "productOverviewNarrative": "visão do produto — narrativa com insights antes da ficha tabular",
+    "analyserFullStack": "consulta completa do produto — texto, tabela, árvore e gráfico",
+    "formatUnavailableFallback": "formato solicitado indisponível — texto narrativo com apoio visual",
+    "formatUserRequested": "formato solicitado pelo usuário",
+    "operationalTableNative": "dados operacionais em tabela nativa",
+    "chartRankingLongNames": "ranking ou nomes longos",
+    "chartCategoryVolume": "volume de categorias melhor em gráfico",
+    "chartComparableNumeric": "dados numéricos comparáveis"
+  },
+  "routePolicyReasons": {
+    "stockChart": "estoque — gráfico para visão agregada",
+    "stockTable": "estoque — tabela para conferência por filial/armazém"
+  },
+  "insights": {
+    "tree": "A árvore mostra a hierarquia de composição ou relacionamento entre itens.",
+    "insufficientData": "Não há dados suficientes para gerar esta visualização.",
+    "kpi": "O indicador resume o valor principal encontrado para o filtro informado.",
+    "table": "A tabela lista os principais registros encontrados ({count} {lineUnit}).",
+    "tableLineUnitOne": "linha",
+    "tableLineUnitMany": "linhas",
+    "groupedSeries": "O gráfico compara séries lado a lado para facilitar a leitura de metas e valores.",
+    "controlsFallback": "Use os controles para alternar entre tabela, gráfico ou exportar os dados.",
+    "temporalDefault": "A série temporal destaca a evolução dos valores ao longo do período.",
+    "temporalPeakOnly": "O maior valor ocorreu em {peakLabel}.",
+    "temporalPeakAndLow": "O maior valor ocorreu em {peakLabel}; o menor, em {lowLabel}.",
+    "temporalPeakFallback": "um ponto",
+    "temporalLowFallback": "outro ponto",
+    "rankingDefault": "O ranking ordena os itens pelo valor para destacar os maiores.",
+    "rankingTopItems": "Os destaques concentram-se em {leaderLabel} e nos demais itens do topo do ranking.",
+    "rankingLeader": "{leaderLabel} lidera o ranking pelos valores apresentados.",
+    "rankingLeaderFallback": "o primeiro item",
+    "participationDefault": "A distribuição mostra a participação relativa de cada categoria.",
+    "participationLeader": "A maior fatia da distribuição está em {leaderLabel}.",
+    "participationLeaderFallback": "uma categoria"
+  },
+  "chartExplain": {
+    "typeLabels": {
+      "bar": "gráfico de barras",
+      "horizontal_bar": "gráfico de barras horizontais",
+      "line": "gráfico de linhas",
+      "multi_line": "gráfico de linhas",
+      "area": "gráfico de área",
+      "donut": "gráfico de rosca",
+      "pie": "gráfico de pizza",
+      "grouped_bar": "gráfico de barras agrupadas",
+      "stacked_bar": "gráfico de barras empilhadas",
+      "combo": "gráfico combinado (barras e linha)",
+      "scatter": "gráfico de dispersão",
+      "histogram": "histograma",
+      "gauge": "indicador tipo velocímetro",
+      "heatmap": "mapa de calor"
+    },
+    "defaultChartLabel": "gráfico",
+    "insufficientData": "Não há pontos suficientes para explicar este gráfico.",
+    "selectorHint": "Use os seletores acima para trocar eixo, filtrar por categoria ou alternar o tipo de gráfico — sem precisar enviar nova pergunta.",
+    "introWithReason": "Este {chartLabel} reúne {rowCount} ponto(s) e foi escolhido porque {reason}.",
+    "introWithSelected": "Este {chartLabel} reúne {rowCount} ponto(s) (formato «{selected}»).",
+    "introDefault": "Este {chartLabel} reúne {rowCount} ponto(s) dos dados consultados.",
+    "howToReadScatter": "No eixo horizontal (X) está «{xLabel}»; no vertical (Y), «{yLabel}». Cada ponto é um registro — procure agrupamentos e valores fora do padrão.",
+    "howToReadTemporal": "O eixo horizontal mostra «{xLabel}» (período ou sequência); o vertical, «{yLabel}». Siga a linha da esquerda para a direita para ver a evolução.",
+    "howToReadDonut": "Cada fatia é «{categoryLabel}»; o tamanho reflete «{yLabel}» em relação ao total.",
+    "howToReadBar": "As categorias em «{categoryLabel}» são comparadas pelo valor de «{yLabel}» — barras maiores indicam valores mais altos.",
+    "howToReadGauge": "O medidor destaca «{yLabel}» em relação à meta ou ao intervalo esperado.",
+    "howToReadGenericAxes": "Compare «{xLabel}» (categorias ou eixo X) com «{yLabel}» (valores).",
+    "howToReadHover": "Posicione o cursor sobre barras, pontos ou fatias para ver o valor exato de cada item.",
+    "highlightEfficiency": "Em «{yLabel}», o destaque é {leaderLabel} ({leaderValue}%) e o menor registro é {laggardLabel} ({laggardValue}%). Valores acima de 100% indicam produção acima do tempo previsto.",
+    "highlightScatter": "Em «{yLabel}», o ponto mais alto é {leaderLabel} ({leaderValue}) e o mais baixo é {laggardLabel} ({laggardValue}).{avgXSnippet} A média de «{yLabel}» é {avgY}.",
+    "highlightScatterAvgX": " A média de «{xLabel}» é {avgX};",
+    "highlightRange": "O maior valor de «{yLabel}» é {leaderLabel} ({leaderValue}); o menor, {laggardLabel} ({laggardValue}). Média: {avgY}.",
+    "highlightSingle": "O valor de «{yLabel}» em {leaderLabel} é {leaderValue}.",
+    "leaderFallback": "o maior valor",
+    "laggardFallback": "o menor valor"
+  },
+  "dashboardExplain": {
+    "emptyPanels": "Este painel reúne indicadores e gráficos da consulta.",
+    "defaultTitle": "Dashboard",
+    "overview": "O «{title}» organiza {panelCount} bloco(s): resumo numérico, gráficos de apoio e tabela detalhada quando disponível.",
+    "panelFallbackTitle": "Seção",
+    "kpiCardFallbackLabel": "Indicador",
+    "kpiPanelSummary": "**{panelTitle}:** {snippets}.",
+    "kpiPanelEmpty": "**{panelTitle}:** indicadores de resumo do painel.",
+    "chartPanelPrefix": "**{panelTitle}:** {chartExplain}",
+    "tablePanel": "**{panelTitle}:** tabela com {rowCount} linha(s) — use a alternância Tabela/Gráfico/Texto no bloco de itens.",
+    "exportHint": "Exporte o painel em CSV ou abra «Explicar» em cada gráfico para detalhes dos eixos, sem enviar nova pergunta ao assistente."
+  }
+}

@@ -1547,6 +1547,7 @@ class ExternalActionProductRawMaterialPricePresenter:
         path: str,
         *,
         kpi: dict | None = None,
+        tree: dict | None = None,
         chart: dict | None = None,
         table: dict | None = None,
     ) -> dict | None:
@@ -1560,35 +1561,18 @@ class ExternalActionProductRawMaterialPricePresenter:
             if code
             else self._route("rawMaterialPriceIntelligence", "dashboardTitleGeneric")
         )
-        panels: list[dict] = []
-
-        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="summary",
-                    title=str(kpi.get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
-                    presentation=kpi,
-                )
-            )
-
-        if isinstance(chart, dict) and chart.get("type") == "chart":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="chart",
-                    title=str(chart.get("title") or self._route("rawMaterialPriceIntelligence", "chartPriceHistoryTitleGeneric")),
-                    presentation=chart,
-                    chart_presentation=chart,
-                )
-            )
-
-        if isinstance(table, dict) and table.get("type") == "table":
-            panels.append(
-                ChatPresentationDashboardAssemblyService.panel(
-                    panel_id="overview",
-                    title=str(table.get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
-                    presentation=table,
-                )
-            )
+        panels = ChatPresentationDashboardAssemblyService.build_rich_panels(
+            view_order=("kpi", "chart", "table"),
+            kpi=kpi,
+            tree=tree,
+            chart=chart,
+            table=table,
+            panel_titles={
+                "kpi": str((kpi or {}).get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
+                "chart": str((chart or {}).get("title") or self._route("rawMaterialPriceIntelligence", "chartPriceHistoryTitleGeneric")),
+                "table": str((table or {}).get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
+            },
+        )
 
         return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)
 

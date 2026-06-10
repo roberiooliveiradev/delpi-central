@@ -57,6 +57,58 @@ class ChatPresentationDashboardAssemblyService:
         return payload
 
     @classmethod
+    def build_rich_panels(
+        cls,
+        *,
+        view_order: tuple[str, ...] = ("kpi", "tree", "chart", "table"),
+        kpi: dict[str, Any] | None = None,
+        tree: dict[str, Any] | None = None,
+        chart: dict[str, Any] | None = None,
+        table: dict[str, Any] | None = None,
+        panel_titles: dict[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
+        titles = panel_titles or {}
+        slots: dict[str, dict[str, Any] | None] = {
+            "kpi": kpi,
+            "tree": tree,
+            "chart": chart,
+            "table": table,
+        }
+        panels: list[dict[str, Any]] = []
+
+        for kind in view_order:
+            presentation = slots.get(kind)
+
+            if not isinstance(presentation, dict):
+                continue
+
+            presentation_type = str(presentation.get("type") or "").strip().lower()
+
+            if not presentation_type:
+                continue
+
+            panel_id = {
+                "kpi": "summary",
+                "tree": "structure",
+                "chart": "chart",
+                "table": "detail",
+            }.get(kind, kind)
+
+            title = titles.get(kind) or str(presentation.get("title") or "").strip()
+            chart_presentation = presentation if presentation_type == "chart" else None
+
+            panels.append(
+                cls.panel(
+                    panel_id=panel_id,
+                    title=title or cls._dashboard_text("panelItemsTitle", default="Itens do painel"),
+                    presentation=presentation,
+                    chart_presentation=chart_presentation,
+                )
+            )
+
+        return panels
+
+    @classmethod
     def build(
         cls,
         *,
