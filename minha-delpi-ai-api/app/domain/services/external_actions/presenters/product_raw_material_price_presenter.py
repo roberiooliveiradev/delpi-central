@@ -269,34 +269,40 @@ class ExternalActionProductRawMaterialPricePresenter:
         overview = self._build_intelligence_overview_table(root, path)
 
         if overview:
+            overview["role"] = "profile"
             tables.append(overview)
 
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if last_purchase:
-            tables.append(self._build_kv_table(last_purchase, self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle")))
+            purchase_table = self._build_kv_table(
+                last_purchase,
+                self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle"),
+            )
+            purchase_table["role"] = "pricing"
+            tables.append(purchase_table)
 
         price_items = self._section_block(root, "price_history").get("items")
 
         if isinstance(price_items, list) and price_items:
-            tables.append(
-                self._host._build_items_table(
-                    price_items,
-                    title=self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle"),
-                    path=path,
-                )
+            history_table = self._host._build_items_table(
+                price_items,
+                title=self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle"),
+                path=path,
             )
+            history_table["role"] = "list"
+            tables.append(history_table)
 
         budget_items = self._section_block(root, "budget_history").get("items")
 
         if isinstance(budget_items, list) and budget_items:
-            tables.append(
-                self._host._build_items_table(
-                    budget_items,
-                    title=self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle"),
-                    path=path,
-                )
+            budget_table = self._host._build_items_table(
+                budget_items,
+                title=self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle"),
+                path=path,
             )
+            budget_table["role"] = "other"
+            tables.append(budget_table)
 
         return [table for table in tables if isinstance(table, dict)]
 
@@ -525,3 +531,243 @@ class ExternalActionProductRawMaterialPricePresenter:
             )
 
         return "\n".join(lines)
+
+    def build_raw_material_price_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        price_summary = self._section_block(root, "price_history").get("summary")
+        budget_summary = self._section_block(root, "budget_history").get("summary")
+        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+
+        if not any(
+            (
+                last_purchase.get("unit_price") is not None,
+                isinstance(price_summary, dict) and price_summary.get("total_records"),
+                isinstance(budget_summary, dict) and budget_summary.get("total_records"),
+            )
+        ):
+            return None
+
+        title = (
+            self._route("rawMaterialPriceIntelligence", "kpiTitle", code=code)
+            if code
+            else self._route("rawMaterialPriceIntelligence", "kpiTitleGeneric")
+        )
+        cards: list[dict[str, Any]] = []
+
+        if last_purchase.get("unit_price") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("rawMaterialPriceIntelligence", "kpiLastPrice"),
+                    value=float(last_purchase.get("unit_price") or 0),
+                    unit="R$",
+                    color="#10b981",
+                    key="last_unit_price",
+                )
+            )
+
+        if isinstance(price_summary, dict) and price_summary.get("average_unit_price") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("rawMaterialPriceIntelligence", "kpiAveragePrice"),
+                    value=float(price_summary.get("average_unit_price") or 0),
+                    unit="R$",
+                    color="#0ea5e9",
+                    key="average_unit_price",
+                )
+            )
+
+        if isinstance(price_summary, dict) and price_summary.get("total_records"):
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("rawMaterialPriceIntelligence", "kpiPriceRecords"),
+                    value=int(price_summary.get("total_records") or 0),
+                    unit="",
+                    color="#6366f1",
+                    key="price_records",
+                )
+            )
+
+        if isinstance(budget_summary, dict) and budget_summary.get("total_records"):
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("rawMaterialPriceIntelligence", "kpiBudgetRecords"),
+                    value=int(budget_summary.get("total_records") or 0),
+                    unit="",
+                    color="#8b5cf6",
+                    key="budget_records",
+                )
+            )
+
+        if indicators.get("dominant_supplier_share_percent") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("rawMaterialPriceIntelligence", "kpiDominantShare"),
+                    value=float(indicators.get("dominant_supplier_share_percent") or 0),
+                    unit="%",
+                    color="#f59e0b",
+                    key="dominant_supplier_share",
+                )
+            )
+
+        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
+
+    def build_raw_material_price_chart_presentation(self, root: dict, path: str) -> dict | None:
+        price_items = self._section_block(root, "price_history").get("items")
+
+        if not isinstance(price_items, list) or len(price_items) < 2:
+            return None
+
+        unit_label = self._route("rawMaterialPriceIntelligence", "chartUnitPriceLabel")
+        chart_data: list[dict[str, Any]] = []
+
+        for index, item in enumerate(price_items[:20], start=1):
+            if not isinstance(item, dict):
+                continue
+
+            supplier = str(item.get("supplier_code") or "").strip()
+            label = supplier or f"#{index}"
+            chart_data.append(
+                {
+                    "name": label,
+                    unit_label: float(item.get("unit_price") or 0),
+                }
+            )
+
+        if len(chart_data) < 2:
+            return None
+
+        code, _description = self._product_context(root, path)
+
+        return {
+            "type": "chart",
+            "title": (
+                self._route("rawMaterialPriceIntelligence", "chartPriceHistoryTitle", code=code)
+                if code
+                else self._route("rawMaterialPriceIntelligence", "chartPriceHistoryTitleGeneric")
+            ),
+            "chartType": "line_chart",
+            "data": chart_data,
+            "config": {
+                "xAxis": "name",
+                "yAxis": [unit_label],
+                "colors": ["#0ea5e9"],
+                "legend": False,
+            },
+        }
+
+    def build_raw_material_price_tree_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_hierarchy_tree_service import (
+            ChatPresentationHierarchyTreeService,
+        )
+
+        combined: list[dict[str, Any]] = []
+        price_items = self._section_block(root, "price_history").get("items")
+
+        if isinstance(price_items, list):
+            for item in price_items:
+                if isinstance(item, dict):
+                    combined.append({**item, "record_kind": "nf"})
+
+        budget_items = self._section_block(root, "budget_history").get("items")
+
+        if isinstance(budget_items, list):
+            for item in budget_items:
+                if isinstance(item, dict):
+                    combined.append({**item, "record_kind": "orcamento"})
+
+        if not combined:
+            return None
+
+        code, _description = self._product_context(root, path)
+        title = (
+            self._route("rawMaterialPriceIntelligence", "treeSuppliersTitle", code=code)
+            if code
+            else self._route("rawMaterialPriceIntelligence", "treeSuppliersTitleGeneric")
+        )
+
+        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
+            supplier = str(item.get("supplier_code") or "—")
+            price = self._host._format_field_value("unit_price", item.get("unit_price"))
+
+            return ChatPresentationHierarchyTreeService._serialize_node(
+                node_id=f"mp:{supplier}:{item.get('record_kind')}:{price}",
+                label=self._route(
+                    "rawMaterialPriceIntelligence",
+                    "treeSupplierLeafLabel",
+                    price=price,
+                ),
+                subtitle=supplier,
+                meta={
+                    "record_kind": str(item.get("record_kind") or ""),
+                    "unit_price": item.get("unit_price"),
+                },
+            )
+
+        return ChatPresentationHierarchyTreeService.build_multi_level(
+            title=title,
+            root_id=code or "raw-material-price",
+            root_label=(
+                self._route("rawMaterialPriceIntelligence", "treeRootLabel", code=code)
+                if code
+                else title
+            ),
+            items=combined,
+            group_keys=["supplier_code"],
+            leaf_builder=_leaf,
+        )
+
+    def build_raw_material_price_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_presentation_dashboard_assembly_service import (
+            ChatPresentationDashboardAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        title = (
+            self._route("rawMaterialPriceIntelligence", "dashboardTitle", code=code)
+            if code
+            else self._route("rawMaterialPriceIntelligence", "dashboardTitleGeneric")
+        )
+        panels: list[dict] = []
+
+        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="summary",
+                    title=str(kpi.get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
+                    presentation=kpi,
+                )
+            )
+
+        if isinstance(chart, dict) and chart.get("type") == "chart":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="chart",
+                    title=str(chart.get("title") or self._route("rawMaterialPriceIntelligence", "chartPriceHistoryTitleGeneric")),
+                    presentation=chart,
+                    chart_presentation=chart,
+                )
+            )
+
+        if isinstance(table, dict) and table.get("type") == "table":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="overview",
+                    title=str(table.get("title") or self._route("rawMaterialPriceIntelligence", "overviewTableTitle")),
+                    presentation=table,
+                )
+            )
+
+        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)

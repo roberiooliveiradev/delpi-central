@@ -132,7 +132,7 @@
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",
       "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
-      "stackPlan": "factory_status",
+      "stackPlan": "raw_material_price_intelligence",
       "flags": ["raw_material_price_intelligence"]
     },
     "cost_impact_simulation": {
@@ -215,6 +215,11 @@
     },
     "structure_exclusivity": {
       "tableRoleOrder": ["profile", "structure", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "raw_material_price_intelligence": {
+      "tableRoleOrder": ["profile", "pricing", "list", "other"],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },

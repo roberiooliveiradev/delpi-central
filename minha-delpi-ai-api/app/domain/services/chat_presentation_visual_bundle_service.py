@@ -59,8 +59,16 @@ class ChatPresentationVisualBundleService:
             "factory_status",
             entity=entity,
         )
+        is_mp_intelligence_profile = (
+            profile_key == "raw_material_price_intelligence"
+            or ChatPresentationProfileService.has_flag(
+                path,
+                "raw_material_price_intelligence",
+                entity=entity,
+            )
+        )
 
-        if not is_factory_profile:
+        if not is_factory_profile and not is_mp_intelligence_profile:
             cls._ensure_chart(metadata, root=root, path=path, presenter=presenter, primary_type=primary_type)
 
         if profile_key == "stock" or ChatPresentationProfileService.has_flag(path, "stock", entity=entity):
@@ -75,6 +83,16 @@ class ChatPresentationVisualBundleService:
 
         if is_factory_profile:
             cls._enrich_factory_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+            )
+
+        if is_mp_intelligence_profile:
+            cls._enrich_raw_material_price_bundle(
                 metadata,
                 root=root,
                 path=path,
@@ -183,6 +201,62 @@ class ChatPresentationVisualBundleService:
                     table_slot = tables[-1]
 
             dashboard = presenter.build_factory_dashboard_presentation(
+                root,
+                path,
+                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
+                chart=chart_slot if isinstance(chart_slot, dict) else None,
+                table=table_slot if isinstance(table_slot, dict) else None,
+            )
+
+            if dashboard:
+                cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
+
+    @classmethod
+    def _enrich_raw_material_price_bundle(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        primary_type: str,
+        view_order: list[str],
+    ) -> None:
+        if "kpi" in view_order:
+            kpi = presenter.build_raw_material_price_kpi_presentation(root, path)
+
+            if kpi:
+                cls._attach_auxiliary(metadata, "kpi", kpi, primary_type=primary_type)
+
+        if "tree" in view_order:
+            tree = presenter.build_raw_material_price_tree_presentation(root, path)
+
+            if tree:
+                cls._attach_auxiliary(metadata, "tree", tree, primary_type=primary_type)
+
+        if "chart" in view_order:
+            chart = presenter.build_raw_material_price_chart_presentation(root, path)
+
+            if chart:
+                cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
+
+        if "dashboard" in view_order:
+            kpi_slot = metadata.get("kpiPresentation")
+            chart_slot = metadata.get("chartPresentation")
+            table_slot = metadata.get("tablePresentation")
+
+            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
+                tables = metadata["tablePresentations"]
+
+                for candidate in tables:
+                    if isinstance(candidate, dict) and candidate.get("role") == "profile":
+                        table_slot = candidate
+                        break
+
+                if not isinstance(table_slot, dict) and tables and isinstance(tables[0], dict):
+                    table_slot = tables[0]
+
+            dashboard = presenter.build_raw_material_price_dashboard_presentation(
                 root,
                 path,
                 kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
