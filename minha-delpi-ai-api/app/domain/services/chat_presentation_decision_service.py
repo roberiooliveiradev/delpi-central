@@ -239,6 +239,205 @@ class ChatPresentationDecisionService:
             decision["message"] = message
 
     @classmethod
+    def _score_bucket_for_view(cls, view: str) -> str:
+        token = str(view or "").strip().lower()
+
+        if token in _NATIVE_PRIMARY_VIEWS and token not in {
+            "table",
+            "tree",
+            "chart",
+            "kpi",
+            "dashboard",
+            "text",
+            "canvas",
+            "checklist",
+        }:
+            return "chart"
+
+        if token == "chart":
+            return "chart"
+
+        return token
+
+    @classmethod
+    def _score_for_view(cls, view: str, scores: dict[str, int]) -> int:
+        bucket = cls._score_bucket_for_view(view)
+
+        return int(scores.get(bucket) or 0)
+
+    @classmethod
+    def _resolve_chart_selected_token(
+        cls,
+        decision: dict[str, Any],
+        available_views: list[str],
+    ) -> str:
+        views = [
+            str(view).strip().lower()
+            for view in available_views
+            if str(view or "").strip()
+        ]
+        shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
+        recommended = str(shape.get("recommended") or "").strip()
+        mapped = _CHART_TYPE_TO_SELECTED.get(recommended, recommended)
+
+        if mapped and mapped in views:
+            return mapped
+
+        for view in views:
+            if cls._score_bucket_for_view(view) == "chart":
+                return view
+
+        return "chart"
+
+    @classmethod
+    def _should_skip_automatic_score_selection(
+        cls,
+        *,
+        metadata: dict[str, Any],
+        effective_preference: str | None,
+        user_message: str | None,
+        path: str | None,
+        entity: str | None,
+    ) -> bool:
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        if effective_preference:
+            return True
+
+        if str(metadata.get("explicitSessionFormat") or "").strip():
+            return True
+
+        if ChatPresentationTextFirstPolicyService.should_default_to_text_only(
+            path=path,
+            entity=entity,
+            explicit_format=None,
+            user_message=user_message,
+        ):
+            return True
+
+        if ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+            user_message,
+        ):
+            return True
+
+        return False
+
+    @classmethod
+    def _apply_automatic_score_selection(
+        cls,
+        decision: dict[str, Any],
+        *,
+        metadata: dict[str, Any],
+        effective_preference: str | None,
+        user_message: str | None,
+        path: str | None,
+        entity: str | None,
+    ) -> None:
+        if cls._should_skip_automatic_score_selection(
+            metadata=metadata,
+            effective_preference=effective_preference,
+            user_message=user_message,
+            path=path,
+            entity=entity,
+        ):
+            return
+
+        if str(decision.get("layoutMode") or "").strip().lower() == "stack":
+            return
+
+        scores = decision.get("scores")
+
+        if not isinstance(scores, dict) or not scores:
+            return
+
+        views = [
+            str(view).strip().lower()
+            for view in (decision.get("availableViews") or [])
+            if str(view or "").strip()
+        ]
+
+        if not views:
+            return
+
+        ranked = sorted(views, key=lambda view: cls._score_for_view(view, scores), reverse=True)
+        best_view = ranked[0]
+        best_score = cls._score_for_view(best_view, scores)
+
+        if best_score < 30:
+            return
+
+        bucket = cls._score_bucket_for_view(best_view)
+        selected = (
+            cls._resolve_chart_selected_token(decision, views)
+            if bucket == "chart"
+            else best_view
+        )
+        fallback_candidates = [view for view in ranked if view != best_view]
+        fallback = fallback_candidates[0] if fallback_candidates else str(decision.get("fallback") or "text")
+
+        if cls._score_bucket_for_view(fallback) == "chart" and bucket != "chart":
+            fallback = "table" if "table" in views else fallback
+
+        decision["selected"] = selected
+        decision["fallback"] = fallback
+        decision["reason"] = cls._reason("scoreAutomatic")
+        decision["layoutMode"] = "single"
+        decision["visualOrder"] = [selected]
+
+    @classmethod
+    def _metadata_has_visual(cls, metadata: dict[str, Any]) -> bool:
+        for key in (
+            "tablePresentation",
+            "chartPresentation",
+            "treePresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
+        ):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type"):
+                return True
+
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict):
+            presentation_type = str(presentation.get("type") or "").strip().lower()
+
+            if presentation_type in {"table", "chart", "tree", "kpi", "dashboard"}:
+                return True
+
+        return False
+
+    @classmethod
+    def _ensure_purpose(
+        cls,
+        decision: dict[str, Any],
+        *,
+        metadata: dict[str, Any],
+        user_message: str | None,
+    ) -> None:
+        if str(decision.get("purpose") or "").strip():
+            return
+
+        if not cls._metadata_has_visual(metadata):
+            return
+
+        message = str(user_message or "").strip()
+
+        if message:
+            decision["purpose"] = message[:240]
+            return
+
+        selected = str(decision.get("selected") or "table").strip().lower()
+        bucket = cls._score_bucket_for_view(selected)
+        purpose = ChatPresentationVocabularyService.purpose_default(bucket)
+
+        if purpose:
+            decision["purpose"] = purpose
+
+    @classmethod
     def _purpose_from_metadata(cls, metadata: dict[str, Any]) -> str:
         data_answer = metadata.get("dataAnswer")
 
@@ -709,10 +908,32 @@ class ChatPresentationDecisionService:
         table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
             metadata.get("presentation")
         )
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
         cls._attach_scores_and_reading_layers(
             decision,
             metadata=metadata,
             table_rows=table_rows,
+            user_message=user_message,
+        )
+        cls._apply_automatic_score_selection(
+            decision,
+            metadata=metadata,
+            effective_preference=effective_preference,
+            user_message=user_message,
+            path=path or None,
+            entity=entity,
+        )
+        cls._ensure_purpose(
+            decision,
+            metadata=metadata,
             user_message=user_message,
         )
         shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
@@ -815,15 +1036,6 @@ class ChatPresentationDecisionService:
         from app.domain.services.chat_presentation_text_first_policy_service import (
             ChatPresentationTextFirstPolicyService,
         )
-
-        entity = None
-        api_meta = metadata.get("apiDelpiResponseMeta")
-
-        if isinstance(api_meta, dict):
-            raw_entity = api_meta.get("entity")
-
-            if isinstance(raw_entity, str) and raw_entity.strip():
-                entity = raw_entity.strip()
 
         if ChatPresentationTextFirstPolicyService.should_default_to_text_only(
             path=path or None,

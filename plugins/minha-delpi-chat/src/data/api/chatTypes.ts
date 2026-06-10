@@ -228,10 +228,18 @@ export type ChatWebSearchResearch = {
   sites?: ChatWebSearchResearchSite[];
 };
 
+export type ChatPresentationReadingLayers = {
+  quick?: string[];
+  diagnostic?: string[];
+  evidence?: string[];
+};
+
 export type ChatPresentationDecision = {
   selected?: string | null;
   fallback?: string | null;
   reason?: string | null;
+  purpose?: string | null;
+  message?: string | null;
   layoutMode?: "stack" | "single" | null;
   visualOrder?: string[] | null;
   insight?: string | null;
@@ -245,6 +253,8 @@ export type ChatPresentationDecision = {
   }> | null;
   policyNotice?: string | null;
   availableViews?: string[] | null;
+  scores?: Record<string, number> | null;
+  readingLayers?: ChatPresentationReadingLayers | null;
   presentationProfileKey?: string | null;
   stackPresentationPlan?: Record<string, unknown> | null;
   dataShape?: {
@@ -254,6 +264,7 @@ export type ChatPresentationDecision = {
     hasNumeric?: boolean;
     hasCategory?: boolean;
     hasHierarchy?: boolean;
+    recommended?: string | null;
   } | null;
   intent?: string | null;
 };

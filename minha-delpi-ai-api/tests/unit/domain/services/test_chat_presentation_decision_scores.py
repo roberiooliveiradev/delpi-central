@@ -65,3 +65,78 @@ def test_attach_scores_and_reading_layers_from_data_answer():
     assert decision.get("readingLayers")
     assert decision.get("purpose") == "Conferir posição com disponível negativo."
     assert "Saldo confortável" in str(decision.get("message") or "")
+
+
+def test_apply_automatic_score_selection_picks_chart_for_categorical_rows():
+    decision = {
+        "selected": "table",
+        "fallback": "text",
+        "layoutMode": "single",
+        "availableViews": ["text", "table", "horizontal_bar", "chart"],
+        "scores": {
+            "text": 25,
+            "table": 35,
+            "chart": 85,
+        },
+        "dataShape": {
+            "rows": 6,
+            "hasCategory": True,
+            "hasNumeric": True,
+            "recommended": "horizontal_bar",
+        },
+    }
+    metadata = {
+        "tablePresentation": {"type": "table", "rows": [{"filial": "01", "saldo": 1}]},
+        "chartPresentation": {"type": "chart", "chartType": "horizontal_bar", "data": []},
+    }
+
+    ChatPresentationDecisionService._apply_automatic_score_selection(
+        decision,
+        metadata=metadata,
+        effective_preference=None,
+        user_message="ranking de saldo por filial",
+        path="/products/10070014/guide",
+        entity="product_guide",
+    )
+
+    assert decision["selected"] == "horizontal_bar"
+    assert decision["reason"]
+
+
+def test_apply_automatic_score_selection_skips_with_explicit_preference():
+    decision = {
+        "selected": "table",
+        "fallback": "text",
+        "layoutMode": "single",
+        "availableViews": ["text", "table", "chart"],
+        "scores": {"text": 10, "table": 20, "chart": 95},
+    }
+
+    ChatPresentationDecisionService._apply_automatic_score_selection(
+        decision,
+        metadata={},
+        effective_preference="table",
+        user_message="",
+        path="/products/90269001/stock",
+        entity="product_stock",
+    )
+
+    assert decision["selected"] == "table"
+
+
+def test_ensure_purpose_uses_user_message_when_data_answer_missing():
+    decision = {"selected": "table"}
+    metadata = {
+        "tablePresentation": {
+            "type": "table",
+            "rows": [{"filial": "01", "saldo": 1}],
+        }
+    }
+
+    ChatPresentationDecisionService._ensure_purpose(
+        decision,
+        metadata=metadata,
+        user_message="estoque do produto 90269001",
+    )
+
+    assert decision["purpose"] == "estoque do produto 90269001"

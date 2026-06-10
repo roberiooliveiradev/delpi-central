@@ -94,6 +94,12 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.text("decisionReasons", key, default=default)
 
     @classmethod
+    def purpose_default(cls, view: str, *, default: str = "") -> str:
+        token = str(view or "").strip().lower()
+
+        return cls.text("purposeDefaults", token, default=default)
+
+    @classmethod
     def route_policy_reason(cls, key: str, *, default: str = "") -> str:
         return cls.text("routePolicyReasons", key, default=default)
 

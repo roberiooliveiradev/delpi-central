@@ -6,6 +6,10 @@ import {
   getAvailableFormatsFromToolCalls,
   getPresentationDecisionFromToolCalls,
   getPresentationInsightFromToolCalls,
+  getPresentationMessageFromToolCalls,
+  getPresentationPurposeFromToolCalls,
+  getPresentationReadingLayersFromToolCalls,
+  getPresentationScoresFromToolCalls,
   mapPresentationDecisionToViewFormat,
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
@@ -269,6 +273,44 @@ describe("resolveRichFormatToggles", () => {
         isCommentaryVisual: false,
       }).showChart,
     ).toBe(true);
+  });
+});
+
+describe("presentationDecision (Playbook 13 P3)", () => {
+  it("expõe purpose, message, scores e readingLayers do metadata", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          presentationDecision: {
+            selected: "table",
+            purpose: "Conferir valores linha a linha",
+            message: "Lista com 12 registros.",
+            scores: { text: 30, table: 72, chart: 40 },
+            readingLayers: {
+              quick: ["summary", "nextAction"],
+              diagnostic: ["facts"],
+              evidence: ["tables"],
+            },
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationPurposeFromToolCalls(toolCalls)).toBe(
+      "Conferir valores linha a linha",
+    );
+    expect(getPresentationMessageFromToolCalls(toolCalls)).toBe(
+      "Lista com 12 registros.",
+    );
+    expect(getPresentationScoresFromToolCalls(toolCalls)).toEqual({
+      text: 30,
+      table: 72,
+      chart: 40,
+    });
+    expect(getPresentationReadingLayersFromToolCalls(toolCalls)?.quick).toEqual([
+      "summary",
+      "nextAction",
+    ]);
   });
 });
 

@@ -427,6 +427,56 @@ export function getPresentationInsightFromToolCalls(
   return String(decision?.reason ?? "").trim();
 }
 
+export function getPresentationPurposeFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+
+  return String(decision?.purpose ?? "").trim();
+}
+
+export function getPresentationMessageFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+
+  return String(decision?.message ?? "").trim();
+}
+
+export function getPresentationScoresFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): Record<string, number> | null {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const scores = decision?.scores;
+
+  if (!scores || typeof scores !== "object") {
+    return null;
+  }
+
+  const normalized: Record<string, number> = {};
+
+  for (const [key, value] of Object.entries(scores)) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      normalized[key] = value;
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : null;
+}
+
+export function getPresentationReadingLayersFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatPresentationDecision["readingLayers"] {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const layers = decision?.readingLayers;
+
+  if (!layers || typeof layers !== "object") {
+    return null;
+  }
+
+  return layers;
+}
+
 export function getPresentationRecommendationsFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): Array<{ label: string; reason?: string; query: string }> {
