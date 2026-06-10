@@ -459,6 +459,18 @@ Atualizar **Status** ao concluir cada fase.
 - `resolveHumanizedCoverageNotice` — mescla `dataCoverageNotice` + `dataAnswer.limitations`
 - Modo Texto preserva segmento `decision` (fix visibilidade do card)
 
+**Entregue (`summary_then_evidence` — jun/2026):**
+
+Perfil `summary_then_evidence` (ex.: `factory_status`, `stock`, status operacionais): interpretação na **prosa do chat**, sem `storyPresentation` / `ChatDecisionCard` duplicando o markdown. Changelog: [`2026-06-summary-then-evidence-modos-apresentacao.md`](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md).
+
+| Modo de sessão | Comportamento |
+|----------------|---------------|
+| **Automático** | Prosa compacta + componentes ricos (tabela, árvore, gráfico, dashboard); markdown **não** embute tabelas/composição/gráfico |
+| **Texto** | Markdown completo com embeds GFM (`should_embed_in_markdown` só com `explicitSessionFormat: "text"`) |
+| **Painel** | Lead curto + dashboard; plano sem `operationalTables` repetindo o painel |
+
+Módulos: `ChatPresentationEvidenceFirstLayoutService`, `ChatRichPresentationTextService`, serviços `*MarkdownService` (table/tree/chart), MFE `chatPresentation.ts` + `presentationStackBlueprint.ts`.
+
 **Entregue (split §15 — jun/2026):**
 
 - `sqlMarkdownNormalizer.ts`, `visualSegmentCollector.ts`, `stackSegmentBuilder.ts`

@@ -312,11 +312,77 @@ class ChatRichPresentationTextService:
         body = cls.strip_highlights_block(body)
 
         if layout_mode == "stack" and explicit_format != "text":
-            body = cls._strip_markdown_tables(body)
-            body = cls._strip_titled_section(body, "Panorama fabril")
-            body = cls._strip_titled_section(body, "Composição")
+            body = cls._strip_embedded_visual_sections_for_stack(body)
+
+        if explicit_format == "dashboard":
+            body = cls._compact_native_view_lead(body)
 
         text_presentation["markdown"] = re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _strip_embedded_visual_sections_for_stack(cls, markdown: str) -> str:
+        body = cls._strip_markdown_tables(markdown)
+        body = cls._strip_titled_section(body, "Panorama fabril")
+        body = cls._strip_titled_section(body, "Composição")
+        body = cls._strip_code_fence_blocks(body)
+        body = cls._strip_chart_fallback_sections(body)
+
+        for title in (
+            "Saldo consolidado por matéria-prima",
+            "Estoque de matérias-primas",
+            "Produção (PA / PI / OP / apontamentos)",
+            "Saldo de MP",
+        ):
+            body = cls._strip_titled_section(body, title)
+
+        return body.strip()
+
+    @classmethod
+    def _strip_code_fence_blocks(cls, markdown: str) -> str:
+        return re.sub(r"(?:^|\n)\s*```[\w-]*\s*\n[\s\S]*?\n```", "", markdown).strip()
+
+    @classmethod
+    def _strip_chart_fallback_sections(cls, markdown: str) -> str:
+        pattern = (
+            r"(?:^|\n)\s*\*\*[^*]+\*\*\s*\n+"
+            r"_Dados do gráfico[\s\S]*?(?=\n\*\*[^*]+\*\*|\n#{1,3} |\Z)"
+        )
+
+        return re.sub(pattern, "", markdown, flags=re.IGNORECASE).strip()
+
+    @classmethod
+    def _compact_native_view_lead(cls, markdown: str) -> str:
+        body = cls._strip_embedded_visual_sections_for_stack(markdown)
+        lines = body.splitlines()
+        title_line = ""
+
+        if lines and lines[0].startswith("###"):
+            title_line = lines[0]
+            body = "\n".join(lines[1:]).strip()
+
+        paragraphs = [part.strip() for part in re.split(r"\n{2,}", body) if part.strip()]
+        kept: list[str] = []
+
+        for paragraph in paragraphs[:3]:
+            if paragraph.startswith("<!-- section:"):
+                continue
+
+            if paragraph.startswith("**") and paragraph.endswith("**") and len(paragraph) < 120:
+                kept.append(paragraph)
+                continue
+
+            if len(paragraph) <= 320:
+                kept.append(paragraph)
+
+            if len(kept) >= 2:
+                break
+
+        rebuilt = [title_line, ""] if title_line else []
+
+        if kept:
+            rebuilt.append("\n\n".join(kept))
+
+        return "\n".join(part for part in rebuilt if part).strip()
 
     @classmethod
     def _strip_titled_section(cls, markdown: str, title: str) -> str:

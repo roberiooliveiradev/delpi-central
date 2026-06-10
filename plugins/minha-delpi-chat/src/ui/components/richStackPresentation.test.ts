@@ -57,4 +57,29 @@ describe("richStackPresentation", () => {
     expect(compact).not.toContain("| A |");
     expect(compact).toContain("**Destaques**");
   });
+
+  it("remove composição em bloco de código quando árvore nativa existe", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          presentationDecision: { layoutMode: "stack" },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura fabril",
+            root: { id: "90262404", label: "Produto 90262404", children: [] },
+          },
+        },
+      },
+    ]);
+    const markdown =
+      "### Status\n\nVisão integrada na fábrica.\n\n**Composição**\n\n```text\nProduto 90262404\n└── 10160001 (MP)\n```";
+
+    const compact = stripRichUiRedundantProseFromMarkdown(markdown, toolCalls);
+
+    expect(compact).not.toContain("```text");
+    expect(compact).not.toContain("**Composição**");
+    expect(compact).toContain("Visão integrada");
+  });
 });

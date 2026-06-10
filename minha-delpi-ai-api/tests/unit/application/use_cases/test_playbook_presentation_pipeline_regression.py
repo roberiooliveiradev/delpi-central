@@ -64,7 +64,7 @@ def test_factory_status_integrated_stack_with_visuals():
 
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
-    assert (plan.get("tailVisualOrder") or []) == ["chart"]
+    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
     assert "tailVisuals" in (plan.get("narrativeOrder") or [])
 
 

@@ -98,32 +98,42 @@ class ChatPresentationEvidenceFirstLayoutService:
 
         plan["presentationMode"] = PRESENTATION_MODE
         plan["tailVisualOrder"] = cls._resolve_tail_visual_order(metadata)
+        cls._apply_native_view_stack_plan(metadata, plan)
 
         nested = decision.get("stackPresentationPlan")
 
         if isinstance(nested, dict):
             nested["presentationMode"] = PRESENTATION_MODE
             nested["tailVisualOrder"] = plan["tailVisualOrder"]
+            cls._apply_native_view_stack_plan(metadata, nested)
 
     @classmethod
     def _resolve_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
-        order: list[str] = []
+        from app.domain.services.chat_presentation_stack_order_service import (
+            ChatPresentationStackOrderService,
+        )
 
-        if cls._has_presentation(metadata, "chartPresentation", "chart"):
-            order.append("chart")
-
-        return order
+        return ChatPresentationStackOrderService._resolve_tail_visual_order(metadata)
 
     @classmethod
-    def _has_presentation(cls, metadata: dict[str, Any], key: str, presentation_type: str) -> bool:
-        presentation = metadata.get(key)
+    def _apply_native_view_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> None:
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
 
-        if isinstance(presentation, dict) and str(presentation.get("type") or "") == presentation_type:
-            return True
+        if explicit != "dashboard":
+            return
 
-        bundled = metadata.get("chartPresentation")
+        plan["tableRoleOrder"] = []
+        plan["profileFirst"] = False
+        plan["narrativeOrder"] = [
+            slot
+            for slot in (plan.get("narrativeOrder") or ["lead", "operationalTables", "tailVisuals"])
+            if slot not in {"profileTables", "operationalTables", "highlights"}
+        ]
 
-        if key == "chartPresentation" and isinstance(bundled, dict):
-            return str(bundled.get("type") or "") == "chart"
+        visibility = plan.get("sectionVisibility")
 
-        return False
+        if isinstance(visibility, dict):
+            visibility["profile"] = False
+            visibility["guide"] = False
+            visibility["structure"] = False
+            visibility["highlights"] = False

@@ -527,15 +527,7 @@ class ChatPresentationChartMarkdownService:
             ChatPresentationTextModeService,
         )
 
-        explicit_text_embed = ChatPresentationTextModeService.should_embed_in_markdown(metadata)
-
-        if (
-            ChatRichPresentationTextService.is_stack_layout(metadata)
-            and not explicit_text_embed
-        ):
-            return False
-
-        if not cls._is_text_selected(metadata):
+        if not ChatPresentationTextModeService.should_embed_in_markdown(metadata):
             return False
 
         path = str(metadata.get("path") or "").strip()
@@ -548,31 +540,9 @@ class ChatPresentationChartMarkdownService:
         chart_policy = str(profile.get("chartPolicy") or "auto").strip().lower()
 
         if chart_policy == "skip":
-            return explicit_text_embed
-
-        return True
-
-    @classmethod
-    def _is_text_selected(cls, metadata: dict[str, Any]) -> bool:
-        decision = metadata.get("presentationDecision")
-
-        if isinstance(decision, dict):
-            selected = str(decision.get("selected") or "").strip().lower()
-
-            if selected in {"text", "topics"}:
-                return True
-
-            if selected and selected not in {"", "auto"}:
-                return False
-
-        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
-
-        if explicit in {"text", "topics"}:
             return True
 
-        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
-
-        return preferred in {"text", "topics"}
+        return True
 
     @classmethod
     def _resolve_entity(cls, path: str) -> str | None:

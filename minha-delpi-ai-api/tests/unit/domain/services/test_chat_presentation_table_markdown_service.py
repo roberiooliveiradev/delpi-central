@@ -30,6 +30,7 @@ def test_build_table_section_renders_markdown_pipe_table():
 def test_embed_tables_in_text_presentation_when_text_selected():
     metadata = {
         "path": "/products/90269002/factory-status",
+        "explicitSessionFormat": "text",
         "textPresentation": {
             "type": "markdown",
             "markdown": "### Status fabril\n\nResumo operacional.",

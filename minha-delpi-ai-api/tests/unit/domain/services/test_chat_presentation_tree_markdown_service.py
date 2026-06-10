@@ -58,6 +58,7 @@ def test_build_outline_section_wraps_in_code_fence():
 def test_embed_outline_in_text_presentation_when_text_selected():
     metadata = {
         "path": "/products/90269001/structure",
+        "explicitSessionFormat": "text",
         "textPresentation": {
             "type": "markdown",
             "markdown": "### Estrutura\n\nProduto **90269001**.",
@@ -80,6 +81,7 @@ def test_embed_outline_in_text_presentation_when_text_selected():
 def test_embed_outline_runs_with_humanized_sections_when_profile_allows():
     metadata = {
         "path": "/products/90269001/structure",
+        "explicitSessionFormat": "text",
         "textPresentation": {
             "type": "markdown",
             "markdown": "### Estrutura\n\nResumo.",

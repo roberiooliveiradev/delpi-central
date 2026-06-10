@@ -21,10 +21,7 @@ import {
 } from "./presentationStackSections";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
-import {
-  getChartExplanationFromToolCalls,
-  getDashboardExplanationFromToolCalls,
-} from "./chartExplain";
+import { getChartExplanationFromToolCalls } from "./chartExplain";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -227,8 +224,10 @@ function appendTailVisuals(
   for (const token of plan.tailVisualOrder) {
     if (token === "chart") {
       const chartExplanation = getChartExplanationFromToolCalls(toolCalls);
+      const dashboardOnly =
+        plan.tailVisualOrder.includes("dashboard") && plan.tailVisualOrder.length === 1;
 
-      if (chartExplanation) {
+      if (chartExplanation && !dashboardOnly) {
         pushMarkdownSegments(segments, chartExplanation, parseMarkdown, appendUnique);
       }
 
@@ -263,12 +262,6 @@ function appendTailVisuals(
     }
 
     if (token === "dashboard") {
-      const dashboardExplanation = getDashboardExplanationFromToolCalls(toolCalls);
-
-      if (dashboardExplanation) {
-        pushMarkdownSegments(segments, dashboardExplanation, parseMarkdown, appendUnique);
-      }
-
       for (const segment of byKind.get("dashboard") ?? []) {
         appendUnique(segments, segment);
       }
@@ -295,6 +288,10 @@ function appendTailVisuals(
 }
 
 function operationalTableRoles(plan: StackPresentationPlan): StackTableRole[] {
+  if (!plan.tableRoleOrder.length) {
+    return [];
+  }
+
   return plan.tableRoleOrder.filter((role) => role !== "profile");
 }
 

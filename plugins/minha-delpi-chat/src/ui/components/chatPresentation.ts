@@ -1426,6 +1426,58 @@ export function hasRichStackPresentation(toolCalls?: ChatToolCall[]): boolean {
   return false;
 }
 
+function hasTreePresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  return toolCalls.some((toolCall) => {
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const tree = metadata.treePresentation;
+    const presentation = metadata.presentation;
+
+    return (
+      (tree && typeof tree === "object" && (tree as { type?: string }).type === "tree") ||
+      (presentation &&
+        typeof presentation === "object" &&
+        (presentation as { type?: string }).type === "tree")
+    );
+  });
+}
+
+function hasChartPresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  return toolCalls.some((toolCall) => {
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const chart = normalizeChartPresentation(metadata.chartPresentation);
+    const presentation = normalizeChartPresentation(metadata.presentation);
+
+    return Boolean(chart || presentation);
+  });
+}
+
+export function stripCompositionCodeFenceFromMarkdown(markdown: string): string {
+  const withSection = markdown.replace(
+    /(?:^|\n)\s*\*\*Composição\*\*\s*\n+```[\w-]*\s*\n[\s\S]*?\n```/gi,
+    "",
+  );
+
+  return withSection.replace(/(?:^|\n)\s*```text\s*\n[\s\S]*?\n```/gi, "").trim();
+}
+
+export function stripChartMarkdownFallbackFromMarkdown(markdown: string): string {
+  return markdown
+    .replace(
+      /(?:^|\n)\s*\*\*[^*]+\*\*\s*\n+_Dados do gráfico[\s\S]*?(?=\n\*\*[^*]+\*\*|\n#{1,3} |\n<!-- section:|\Z)/gi,
+      "",
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Remove narrativa duplicada quando componentes nativos já exibem os dados. */
 export function stripRichUiRedundantProseFromMarkdown(
   markdown: string,
@@ -1457,9 +1509,14 @@ export function stripRichUiRedundantProseFromMarkdown(
     body = stripRedundantGuideTableFromMarkdown(body);
   }
 
-  if (getTreePresentationFromPair(pair)) {
+  if (getTreePresentationFromPair(pair) || hasTreePresentation(toolCalls)) {
     body = stripRedundantStructureFromMarkdown(body);
     body = stripRedundantHierarchyListFromMarkdown(body);
+    body = stripCompositionCodeFenceFromMarkdown(body);
+  }
+
+  if (hasChartPresentation(toolCalls)) {
+    body = stripChartMarkdownFallbackFromMarkdown(body);
   }
 
   if (hasInspectionTablePresentation(toolCalls)) {

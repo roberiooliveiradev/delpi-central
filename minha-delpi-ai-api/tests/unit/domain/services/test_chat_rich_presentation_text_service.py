@@ -317,6 +317,46 @@ def test_strip_data_answer_quick_layers_removes_resumo_and_status():
     assert "Produção no período." in stripped
 
 
+def test_prepare_evidence_first_chat_narrative_strips_embedded_visuals_in_stack_auto():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Status fabril\n\n"
+                "Situação consolidada: **PA PRODUZIDO**\n\n"
+                "**Composição**\n\n"
+                "```text\n"
+                "Produto 90262404\n"
+                "└── 10160001 (MP)\n"
+                "```\n\n"
+                "**Panorama fabril**\n\n"
+                "| Campo | Valor |\n"
+                "| --- | --- |\n"
+                "| Situação | OK |\n\n"
+                "**Saldo de MP — 90262404**\n\n"
+                "_Dados do gráfico (horizontal_bar) em tabela — visualização Mermaid não disponível._\n\n"
+                "| name | Saldo |\n"
+                "| --- | --- |\n"
+                "| 10160001 | 6082 |"
+            ),
+        },
+    }
+
+    ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "PA PRODUZIDO" in markdown
+    assert "Composição" not in markdown
+    assert "```text" not in markdown
+    assert "Panorama fabril" not in markdown
+    assert "Dados do gráfico" not in markdown
+    assert "| name |" not in markdown
+
+
 def test_prepare_evidence_first_chat_narrative_keeps_prose_strips_duplicates():
     metadata = {
         "presentationDecision": {

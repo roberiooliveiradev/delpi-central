@@ -94,59 +94,8 @@ class ChatPresentationTreeMarkdownService:
         path = str(metadata.get("path") or "").strip()
         entity = cls._resolve_entity(path)
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
-        embed_enabled = profile.get("textEmbedTreeOutline") is True
 
-        if (
-            ChatRichPresentationTextService._uses_humanized_stack_sections(metadata)
-            and not embed_enabled
-        ):
-            return False
-
-        if not cls._is_text_selected(metadata):
-            return False
-
-        return embed_enabled
-
-    @classmethod
-    def _is_text_selected(cls, metadata: dict[str, Any]) -> bool:
-        decision = metadata.get("presentationDecision")
-
-        if isinstance(decision, dict):
-            selected = str(decision.get("selected") or "").strip().lower()
-
-            if selected in {"text", "topics"}:
-                return True
-
-            if selected and selected not in {"", "auto"}:
-                return False
-
-        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
-
-        if explicit in {"text", "topics"}:
-            return True
-
-        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
-
-        if preferred in {"text", "topics"}:
-            return True
-
-        primary = metadata.get("presentation")
-
-        if isinstance(primary, dict):
-            primary_type = str(primary.get("type") or "").strip().lower()
-
-            if primary_type in {"markdown", "text"}:
-                return True
-
-        text_presentation = metadata.get("textPresentation")
-
-        if isinstance(text_presentation, dict):
-            text_type = str(text_presentation.get("type") or "").strip().lower()
-
-            if text_type in {"markdown", "text"} and primary is None:
-                return True
-
-        return False
+        return profile.get("textEmbedTreeOutline") is True
 
     @classmethod
     def _resolve_entity(cls, path: str) -> str | None:

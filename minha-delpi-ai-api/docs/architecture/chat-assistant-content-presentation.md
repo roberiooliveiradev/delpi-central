@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md).
 
 ---
 
@@ -80,6 +80,18 @@ Gerado por `ChatPresentationStackOrderService` a partir do `path` e do markdown 
 O MFE injeta `stackSection` (só título) e, em seguida, `sectionFraming[id]` da API como **markdown normal** — frase interpretiva que não repete tabela nem bullets. Em **Completo**, insight/recomendação genérico fica oculto quando há seções humanizadas.
 
 Demais rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, `sale_pricing`, …). O MFE infere o papel de cada tabela pelo título ou `role` quando o plano não veio no metadata.
+
+### Perfil `summary_then_evidence` e modos de sessão (jun/2026)
+
+Rotas com `stackPlan: "summary_then_evidence"` (`factory_status`, `stock`, status operacionais): a interpretação (`dataAnswer`) vai para a **prosa do chat**; **não** há `storyPresentation` nem `ChatDecisionCard` duplicando o markdown.
+
+| Modo (`explicitSessionFormat`) | API (`textPresentation`) | MFE |
+|--------------------------------|--------------------------|-----|
+| Automático | Prosa sem embed de tabela/árvore/gráfico/composição | Componentes ricos na ordem do `stackPresentationPlan` |
+| Texto | Markdown completo (`should_embed_in_markdown`) | Visão texto-first |
+| Painel (`dashboard`) | Lead compacto | Só dashboard; `operationalTables` vazio no plano |
+
+Detalhes e módulos canônicos: [changelog `summary_then_evidence`](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md).
 
 ### Mockup de referência — `GET /products/{code}/analyser` (Completo)
 
