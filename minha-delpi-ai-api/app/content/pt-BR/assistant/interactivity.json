@@ -203,14 +203,17 @@
     "donut": "Ver participação",
     "bar_chart": "Ver em barras",
     "dashboard": "Explique esse painel",
-    "kpi": "Ver em tabela"
+    "kpi": "Ver como KPI"
   },
   "profileExtraChips": {
     "stock": ["Só com saldo", "Ver em gráfico"],
     "playbook_report": ["Exportar CSV"],
     "table_list": ["Exportar CSV"],
     "raw_material_price_intelligence": ["Exportar CSV"],
-    "cost_impact_simulation": ["Exportar CSV"]
+    "cost_impact_simulation": ["Exportar CSV"],
+    "kpi_series": ["Ver em linha", "Exportar CSV"],
+    "kpi_snapshot": ["Gerar gráfico", "Colocar na lousa"],
+    "kpi_dashboard": ["Explique esse painel", "Colocar na lousa"]
   },
   "presentationQueries": {
     "Exportar CSV": "exporte a última tabela em CSV",

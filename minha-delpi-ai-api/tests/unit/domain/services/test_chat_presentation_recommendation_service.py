@@ -90,6 +90,58 @@ def test_entity_family_recommends_chart_for_playbook_report_with_numeric_shape()
     assert any(item["view"] == "chart" for item in recommendations)
 
 
+def test_kpi_entity_family_recommends_chart_for_series_with_dates():
+    decision = {
+        "selected": "kpi",
+        "availableViews": ["text", "kpi", "line_chart", "chart", "table"],
+        "presentationProfileKey": "kpi_series",
+        "dataShape": {"rows": 4, "hasDate": True, "hasNumeric": True},
+    }
+
+    recommendations = ChatPresentationRecommendationService.build(decision=decision)
+
+    views = {item["view"] for item in recommendations}
+
+    assert "line_chart" in views or "chart" in views
+    assert "table" in views
+
+
+def test_kpi_entity_family_recommends_kpi_when_text_selected():
+    decision = {
+        "selected": "text",
+        "availableViews": ["text", "kpi", "table", "chart"],
+        "presentationProfileKey": "kpi_snapshot",
+    }
+
+    recommendations = ChatPresentationRecommendationService.build(decision=decision)
+
+    assert any(item["view"] == "kpi" for item in recommendations)
+
+
+def test_kpi_profile_extra_chips_from_interactivity():
+    metadata = {
+        "ok": True,
+        "path": "/commercial/closing-rate",
+        "entity": "sales_conversion_rate",
+        "presentation": {"type": "kpi", "title": "Taxa de Conversão", "cards": []},
+        "presentationDecision": {
+            "selected": "kpi",
+            "availableViews": ["text", "kpi", "line_chart", "chart", "table"],
+            "presentationProfileKey": "kpi_series",
+            "dataShape": {"rows": 3, "hasDate": True, "hasNumeric": True},
+        },
+    }
+
+    suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
+        [{"name": "execute_external_action", "metadata": metadata}]
+    )
+
+    labels = [item["label"] for item in suggestions]
+
+    assert "Ver em linha" in labels
+    assert "Exportar CSV" in labels
+
+
 def test_recommendations_become_interactivity_chips():
     metadata = {
         "ok": True,

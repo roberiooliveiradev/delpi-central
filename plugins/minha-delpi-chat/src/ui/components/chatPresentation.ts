@@ -17,7 +17,7 @@ export type PresentationPair = {
   tree: ChatPresentation | null;
 };
 
-export type ViewFormat = "text" | "chart" | "table" | "tree";
+export type ViewFormat = "text" | "chart" | "table" | "tree" | "kpi" | "dashboard";
 
 function isTablePresentation(
   value: unknown,
@@ -461,6 +461,14 @@ export function mapPresentationDecisionToViewFormat(
 
   if (CHART_DECISION_TOKENS.has(token) || token.includes("chart") || token.includes("bar")) {
     return "chart";
+  }
+
+  if (token === "kpi") {
+    return "kpi";
+  }
+
+  if (token === "dashboard") {
+    return "dashboard";
   }
 
   return null;

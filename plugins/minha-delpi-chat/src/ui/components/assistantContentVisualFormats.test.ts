@@ -369,4 +369,35 @@ describe("assistantContentVisualFormats", () => {
     expect(kinds).toContain("tree");
     expect(kinds).toContain("stackSection");
   });
+
+  it("inicia em KPI quando a decisão da API seleciona kpi", () => {
+    const kpiCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "kpi",
+            availableViews: ["text", "kpi", "chart", "table"],
+            visualOrder: ["text", "kpi", "chart", "table"],
+            layoutMode: "single",
+          },
+          presentation: {
+            type: "kpi",
+            title: "Taxa de Conversão de Vendas",
+            cards: [{ label: "Atual", value: "82,5%" }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown:
+              "### Taxa de Conversão de Vendas\n\n<!-- section:scope -->\n\nIndicador com 3 métricas.",
+          },
+        },
+      },
+    ]);
+    const segments = buildAssistantContentSegments("", kpiCalls);
+    const options = resolveAvailableVisualFormatOptions(segments, kpiCalls);
+
+    expect(resolveInitialToolbarKind(kpiCalls, options)).toBe("kpi");
+    expect(resolveDefaultVisualKind(kpiCalls, options)).toBe("kpi");
+  });
 });

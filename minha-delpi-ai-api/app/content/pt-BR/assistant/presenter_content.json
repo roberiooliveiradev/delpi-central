@@ -889,7 +889,9 @@
       "dataShapeHorizontalBar": "muitas categorias — ranking em barra horizontal",
       "dataShapeDonut": "poucas categorias com participação relativa",
       "dataShapeTableFallback": "alternativa em tabela para conferência detalhada",
-      "genericAlternateView": "formato alternativo sugerido pelos dados"
+      "genericAlternateView": "formato alternativo sugerido pelos dados",
+      "kpiCardsVisual": "cartões destacam o valor principal do indicador",
+      "kpiSeriesChart": "série temporal fica mais clara em gráfico de linha"
     },
     "entityFamilies": {
       "product_operational": {
@@ -949,6 +951,43 @@
             "whenSelected": "text",
             "view": "tree",
             "reasonKey": "treeVisualHierarchy"
+          }
+        ]
+      },
+      "kpi_indicators": {
+        "profileKeys": ["kpi_series", "kpi_snapshot", "kpi_dashboard"],
+        "suggestions": [
+          {
+            "whenSelected": "text",
+            "view": "kpi",
+            "reasonKey": "kpiCardsVisual"
+          },
+          {
+            "whenSelected": "kpi",
+            "view": "text",
+            "reasonKey": "operationalTextSummary"
+          },
+          {
+            "whenSelected": "kpi",
+            "view": "table",
+            "reasonKey": "tabularListDetail"
+          },
+          {
+            "whenSelected": "kpi",
+            "view": "chart",
+            "reasonKey": "kpiSeriesChart",
+            "requiresShape": "hasDate"
+          },
+          {
+            "whenSelected": "table",
+            "view": "kpi",
+            "reasonKey": "kpiCardsVisual"
+          },
+          {
+            "whenSelected": "kpi",
+            "view": "line_chart",
+            "reasonKey": "kpiSeriesChart",
+            "requiresShape": "hasDate"
           }
         ]
       }

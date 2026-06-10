@@ -277,6 +277,8 @@ describe("presentationDecision (Playbook 09)", () => {
     expect(mapPresentationDecisionToViewFormat("line_chart")).toBe("chart");
     expect(mapPresentationDecisionToViewFormat("horizontal_bar")).toBe("chart");
     expect(mapPresentationDecisionToViewFormat("table")).toBe("table");
+    expect(mapPresentationDecisionToViewFormat("kpi")).toBe("kpi");
+    expect(mapPresentationDecisionToViewFormat("dashboard")).toBe("dashboard");
   });
 
   it("usa availableViews do metadata", () => {

@@ -154,8 +154,35 @@ function normalizeSectionVisibility(
   return Object.keys(visibility).length ? visibility : undefined;
 }
 
+const LEGACY_PRESENTATION_PROFILES = new Set([
+  "product_analyser",
+  "product_factory_status",
+  "product_production_status",
+  "product_shipping_status",
+  "product_structure_exclusivity",
+  "generic_stack",
+]);
+
+function resolvePresentationProfile(
+  profile: string,
+  humanizedSections: boolean,
+): string | undefined {
+  const trimmed = profile.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (humanizedSections || LEGACY_PRESENTATION_PROFILES.has(trimmed)) {
+    return trimmed;
+  }
+
+  return undefined;
+}
+
 function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
   const profile = String(raw.presentationProfile || "").trim();
+  const humanizedSections = raw.humanizedSections === true;
 
   return {
     profileFirst: raw.profileFirst !== false,
@@ -166,16 +193,8 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
       ? raw.tailVisualOrder.map((item) => String(item))
       : DEFAULT_PLAN.tailVisualOrder,
     narrativeOrder: normalizeNarrativeOrder(raw.narrativeOrder),
-    presentationProfile:
-      profile === "product_analyser" ||
-      profile === "product_factory_status" ||
-      profile === "product_production_status" ||
-      profile === "product_shipping_status" ||
-      profile === "product_structure_exclusivity" ||
-      profile === "generic_stack"
-        ? profile
-        : undefined,
-    humanizedSections: raw.humanizedSections === true,
+    presentationProfile: resolvePresentationProfile(profile, humanizedSections),
+    humanizedSections,
     sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
     sectionFraming: normalizeSectionFraming(
       raw.sectionFraming ?? raw.sectionIntros,
@@ -184,14 +203,7 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
 }
 
 export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {
-  return (
-    plan.humanizedSections === true &&
-    (plan.presentationProfile === "product_analyser" ||
-      plan.presentationProfile === "product_factory_status" ||
-      plan.presentationProfile === "product_production_status" ||
-      plan.presentationProfile === "product_shipping_status" ||
-      plan.presentationProfile === "product_structure_exclusivity")
-  );
+  return plan.humanizedSections === true;
 }
 
 export function getStackPresentationPlanFromToolCalls(
