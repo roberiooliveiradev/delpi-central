@@ -29,13 +29,39 @@
   gap: 10px;
   min-height: 120px;
   height: auto;
-  transition: background 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  transition:
+    background 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease,
+    transform 0.28s ease;
   overflow: visible;
 }
 
-.launcher-app-tile:hover {
-  background: color-mix(in srgb, var(--surface-2) 68%, transparent);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--bg) 10%, transparent);
+/* Hover suave — home, perfil e modal Apps (não sidebar) */
+@media (hover: hover) {
+  .launcher-app-tile:not(.sidebar-variant):hover,
+  .launcher-app-tile:not(.sidebar-variant):has(.launcher-app-main:hover) {
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface-2) 86%);
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 12%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .launcher-app-tile:not(.sidebar-variant):hover .launcher-app-name,
+  .launcher-app-tile:not(.sidebar-variant):has(.launcher-app-main:hover)
+    .launcher-app-name {
+    color: color-mix(in srgb, var(--primary) 82%, var(--text));
+  }
+
+  .launcher-app-tile:not(.sidebar-variant).expanded:hover,
+  .launcher-app-tile:not(.sidebar-variant).expanded:has(.launcher-app-main:hover) {
+    transform: none;
+  }
+}
+
+.launcher-app-tile:not(.sidebar-variant):focus-within {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .launcher-app-tile.expanded {
@@ -501,10 +527,14 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   border-radius: 10px;
 }
 
-.launcher-app-tile.sidebar-variant:hover:not(.expanded):not(.route-active) {
+.launcher-app-tile.sidebar-variant:hover:not(.expanded):not(.route-active):not(.active) {
   transform: none;
   box-shadow: none;
-  background: rgba(0, 153, 220, 0.05);
+  background: rgba(0, 153, 220, 0.07);
+}
+
+.launcher-app-tile.sidebar-variant:hover:not(.route-active) .launcher-app-name {
+  color: color-mix(in srgb, var(--primary) 78%, var(--text));
 }
 
 /* Container agrupado: fundo suave enquanto o app está no contexto da rota */
@@ -573,6 +603,8 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  border-radius: 8px;
+  transition: color 0.28s ease;
 }
 
 .launcher-app-tile.sidebar-variant .launcher-app-icon {
