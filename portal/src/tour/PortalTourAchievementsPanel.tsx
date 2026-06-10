@@ -67,8 +67,9 @@ export function PortalTourAchievementsPanel() {
   const lockedItems = data?.items.filter((item) => !item.unlocked) ?? [];
 
   return (
-    <section
+    <div
       className="home-panel portal-tour-achievements-panel"
+      role="region"
       data-tour="profile-tour-achievements"
       aria-labelledby="profile-tour-achievements-title"
     >
@@ -82,12 +83,29 @@ export function PortalTourAchievementsPanel() {
           </p>
         </div>
         {data ? (
-          <div className="portal-tour-achievements-summary" aria-hidden>
-            <span className="portal-tour-achievements-level">
-              {data.explorerLevel}
-            </span>
+          <div className="portal-tour-achievements-summary">
+            <span className="portal-tour-achievements-level">{data.explorerLevel}</span>
+            <div
+              className="portal-tour-achievements-progress"
+              role="progressbar"
+              aria-valuenow={data.unlockedCount}
+              aria-valuemin={0}
+              aria-valuemax={Math.max(data.totalCount, 1)}
+              aria-label="Progresso das conquistas"
+            >
+              <div
+                className="portal-tour-achievements-progress__fill"
+                style={{
+                  width: `${
+                    data.totalCount > 0
+                      ? Math.min(100, Math.round((data.unlockedCount / data.totalCount) * 100))
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
             <span className="portal-tour-achievements-count">
-              {data.unlockedCount}/{data.totalCount}
+              {data.unlockedCount}/{data.totalCount} desbloqueadas
             </span>
           </div>
         ) : null}
@@ -98,7 +116,9 @@ export function PortalTourAchievementsPanel() {
       {loading ? (
         <p className="portal-tour-achievements-empty">Carregando conquistas…</p>
       ) : error ? (
-        <p className="portal-tour-achievements-empty">{error}</p>
+        <p className="portal-tour-achievements-empty portal-tour-achievements-empty--error">
+          {error}
+        </p>
       ) : !data?.items.length ? (
         <p className="portal-tour-achievements-empty">
           Nenhuma conquista disponível ainda. Inicie o tour na home ou use o link
@@ -108,7 +128,7 @@ export function PortalTourAchievementsPanel() {
         <>
           {unlockedItems.length > 0 ? (
             <div className="portal-tour-achievements-group">
-              <h3 className="portal-tour-achievements-group-title">Desbloqueadas</h3>
+              <h4 className="portal-tour-achievements-group-title">Desbloqueadas</h4>
               <ul className="portal-tour-achievements-grid">
                 {unlockedItems.map((item) => {
                   const Icon = resolvePortalTourAchievementIcon(item.id, true);
@@ -139,7 +159,7 @@ export function PortalTourAchievementsPanel() {
 
           {lockedItems.length > 0 ? (
             <div className="portal-tour-achievements-group">
-              <h3 className="portal-tour-achievements-group-title">A descobrir</h3>
+              <h4 className="portal-tour-achievements-group-title">A descobrir</h4>
               <ul className="portal-tour-achievements-grid">
                 {lockedItems.map((item) => {
                   const Icon = resolvePortalTourAchievementIcon(item.id, false);
@@ -166,6 +186,6 @@ export function PortalTourAchievementsPanel() {
           ) : null}
         </>
       )}
-    </section>
+    </div>
   );
 }

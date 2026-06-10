@@ -92,8 +92,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   z-index: 2;
 }
 
@@ -103,12 +102,16 @@
   margin: 0.5rem;
 }
 
-/* quando NÃO está pinado */
-.launcher-app-tile:hover .launcher-pin:not(.pinned) {
-  opacity: 0.5;
+/* quando NÃO está pinado — oculto até hover */
+.launcher-pin:not(.pinned) {
+  opacity: 0;
 }
 
-/* quando está pinado */
+.launcher-app-tile:hover .launcher-pin:not(.pinned) {
+  opacity: 0.45;
+}
+
+/* quando está pinado — sempre visível */
 .launcher-pin.pinned {
   opacity: 1;
 }

@@ -1095,7 +1095,7 @@ body.portal-has-embedded-app .content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 153, 220, 0.12);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
   color: var(--primary);
   flex: 0 0 auto;
 }
@@ -1142,8 +1142,18 @@ body.portal-has-embedded-app .content {
   background: var(--surface);
   border-radius: 18px;
   padding: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 4%, transparent);
   height: fit-content;
+}
+
+:root[data-theme="dark"] .home-panel {
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .home-panel {
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+  }
 }
 
 .home-panel-wide {
@@ -1945,60 +1955,4 @@ body.portal-has-embedded-app .content {
   }
 }
 
-/* =====================================
-   MY PROFILE
-===================================== */
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.profile-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
-
-.profile-label {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.profile-value {
-  font-weight: 600;
-}
-
-#profile-apps.home-panel {
-  height: fit-content;
-}
-
-.apps-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  background: var(--surface);
-}
-
-.apps-search input {
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 100%;
-  font-size: 14px;
-}
-
-.apps-empty {
-  grid-column: 1 / -1;
-  padding: 24px;
-  text-align: center;
-  opacity: 0.6;
-}
+/* Perfil — ver MyProfile.css */

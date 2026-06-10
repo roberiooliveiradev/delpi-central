@@ -32,13 +32,18 @@ html[data-portal-tour-active="true"] .launcher-overlay {
   z-index: 10040;
 }
 
-html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin {
-  opacity: 0.72;
+html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin.pinned {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-pin:not(.pinned) {
+  opacity: 0.45;
   pointer-events: auto;
 }
 
 html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-app-tile:hover .launcher-pin:not(.pinned) {
-  opacity: 0.82;
+  opacity: 0.58;
 }
 
 html[data-portal-tour-companion="true"] .notif-dropdown,
@@ -441,27 +446,6 @@ html[data-portal-tour-companion="true"] .dropdown.sidebar-user {
   }
 }
 
-.profile-tour-link {
-  margin-top: 14px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-}
-
-.profile-tour-link:hover {
-  text-decoration: underline;
-}
-
-.profile-tour-link:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: 6px;
-}
 
 /* =========================================
    TOUR GAMIFICADO — painel livre, sem bloqueio

@@ -27,8 +27,16 @@ import {
   Star,
   Users,
   Shield,
-  ArrowRight,
+  Compass,
 } from "lucide-react";
+
+import {
+  homeFadeUp,
+  HomePanelHeader,
+  HomeSummaryCard,
+} from "./home/HomePagePrimitives";
+
+import "./MyProfile.css";
 
 /* =========================================
    TYPES
@@ -61,14 +69,7 @@ type SearchResult =
    ANIMATION
 ========================================= */
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 10 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.22, delay: 0.04 * i },
-  }),
-};
+const fadeUp = homeFadeUp;
 
 /* =========================================
    COMPONENT
@@ -379,7 +380,7 @@ export const MyProfile = () => {
   ========================================= */
 
   return (
-    <div className="home-wrap" data-tour="profile-page">
+    <div className="home-wrap profile-page" data-tour="profile-page">
 
       {/* HEADER */}
 
@@ -419,7 +420,7 @@ export const MyProfile = () => {
       >
 
         {summary.apps > 0 && (
-          <SummaryCard
+          <HomeSummaryCard
             icon={<Grid size={18} />}
             title="Aplicações"
             value={summary.apps}
@@ -429,7 +430,7 @@ export const MyProfile = () => {
         )}
 
         {summary.favorites > 0 && (
-          <SummaryCard
+          <HomeSummaryCard
             icon={<Star size={18} />}
             title="Favoritos"
             value={summary.favorites}
@@ -439,7 +440,7 @@ export const MyProfile = () => {
         )}
 
         {summary.groups > 0 && (
-          <SummaryCard
+          <HomeSummaryCard
             icon={<Users size={18} />}
             title="Grupos"
             value={summary.groups}
@@ -449,7 +450,7 @@ export const MyProfile = () => {
         )}
 
         {summary.roles > 0 && (
-          <SummaryCard
+          <HomeSummaryCard
             icon={<Shield size={18} />}
             title="Papéis"
             value={summary.roles}
@@ -459,7 +460,7 @@ export const MyProfile = () => {
         )}
 
         {summary.permissions > 0 && (
-          <SummaryCard
+          <HomeSummaryCard
             icon={<Shield size={18} />}
             title="Permissões"
             value={summary.permissions}
@@ -485,7 +486,7 @@ export const MyProfile = () => {
           variants={fadeUp}
           custom={2}
         >
-          <PanelHeader
+          <HomePanelHeader
             title="Informações da conta"
             hint="Dados básicos do usuário"
           />
@@ -500,7 +501,7 @@ export const MyProfile = () => {
             />
             <button
               type="button"
-              className="profile-tour-link"
+              className="home-panel-action profile-tour-link"
               data-tour="profile-tour-restart"
               onClick={() => {
                 void (async () => {
@@ -512,6 +513,7 @@ export const MyProfile = () => {
                 })();
               }}
             >
+              <Compass size={14} aria-hidden="true" />
               Ver tour do portal novamente
             </button>
           </div>
@@ -538,7 +540,7 @@ export const MyProfile = () => {
             variants={fadeUp}
             custom={3}
           >
-            <PanelHeader
+            <HomePanelHeader
               title="Grupos"
               hint="Grupos aos quais você pertence"
             />
@@ -568,7 +570,7 @@ export const MyProfile = () => {
             variants={fadeUp}
             custom={4}
           >
-            <PanelHeader
+            <HomePanelHeader
               title="Papéis"
               hint="Papéis atribuídos ao usuário"
             />
@@ -598,7 +600,7 @@ export const MyProfile = () => {
             variants={fadeUp}
             custom={5}
           >
-            <PanelHeader
+            <HomePanelHeader
               title="Permissões"
               hint="Permissões efetivas do usuário"
             />
@@ -628,7 +630,7 @@ export const MyProfile = () => {
           variants={fadeUp}
           custom={6}
         >
-          <PanelHeader
+          <HomePanelHeader
             title="Aplicações disponíveis"
             hint="Aplicações às quais você tem acesso"
           />
@@ -736,27 +738,6 @@ export const MyProfile = () => {
   );
 };
 
-/* =========================================
-   HELPERS
-========================================= */
-
-function PanelHeader({
-  title,
-  hint,
-}: {
-  title: string;
-  hint?: string;
-}) {
-  return (
-    <div className="home-panel-header">
-      <div>
-        <h3 className="home-panel-title">{title}</h3>
-        {hint && <p className="home-panel-hint">{hint}</p>}
-      </div>
-    </div>
-  );
-}
-
 function ProfileItem({
   label,
   value,
@@ -769,43 +750,5 @@ function ProfileItem({
       <span className="profile-label">{label}</span>
       <span className="profile-value">{value ?? "-"}</span>
     </div>
-  );
-}
-
-function SummaryCard({
-  icon,
-  title,
-  value,
-  subtitle,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: number | string;
-  subtitle: string;
-  onClick?: () => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      className="home-summary-card"
-      onClick={onClick}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <span className="home-summary-icon">{icon}</span>
-
-      <span className="home-summary-main">
-        <span className="home-summary-title">{title}</span>
-        <span className="home-summary-value">{value}</span>
-        <span className="home-summary-sub">{subtitle}</span>
-      </span>
-
-      <span className="home-summary-arrow">
-        <ArrowRight size={16} />
-      </span>
-    </motion.button>
   );
 }

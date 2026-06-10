@@ -1,0 +1,105 @@
+/* Perfil — extensões do shell home (home-* em index.css) */
+
+.profile-page {
+  animation: profile-page-in 0.25s ease;
+}
+
+@keyframes profile-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.profile-label {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.profile-value {
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.profile-tour-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  align-self: flex-start;
+}
+
+.profile-tour-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 8px;
+}
+
+#profile-apps.home-panel {
+  height: fit-content;
+}
+
+.apps-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.apps-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.apps-search input::placeholder {
+  color: var(--control-placeholder);
+}
+
+.apps-empty {
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .profile-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-value {
+    text-align: left;
+  }
+}

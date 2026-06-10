@@ -16,16 +16,21 @@ export function PortalTourPreferencesToggle() {
 
   return (
     <label className="portal-tour-preferences-toggle">
-      <input
-        type="checkbox"
-        checked={enabled}
-        onChange={(event) => {
-          const next = event.target.checked;
-          setEnabled(next);
-          setPortalTourAnimationsEnabled(next);
-        }}
-      />
-      <span>Animações do tour (confete, destaques e barra de XP)</span>
+      <span className="portal-tour-preferences-toggle__control">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(event) => {
+            const next = event.target.checked;
+            setEnabled(next);
+            setPortalTourAnimationsEnabled(next);
+          }}
+        />
+      </span>
+      <span className="portal-tour-preferences-toggle__text">
+        <strong>Animações do tour</strong>
+        <span>Confete, destaques e barra de XP durante a exploração.</span>
+      </span>
     </label>
   );
 }
