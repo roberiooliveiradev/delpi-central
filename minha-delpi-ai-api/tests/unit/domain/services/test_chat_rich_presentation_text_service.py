@@ -103,6 +103,66 @@ def test_should_not_prefer_authorized_markdown_for_single_table_layout():
     )
 
 
+def test_should_not_persist_authorized_markdown_for_single_table_layout():
+    from app.domain.services.chat_tool_context_presentation_service import (
+        ChatToolContextPresentationService,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080001/stock",
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": "### Estoque\n\n**Stock:** page: 1, items: [{'branch': '01'}]",
+                },
+                "presentation": {
+                    "type": "table",
+                    "title": "Estoque do produto 10080001",
+                    "columns": [{"key": "branch", "label": "Filial"}],
+                    "rows": [{"branch": "01"}],
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                    "visualOrder": ["table"],
+                },
+            },
+        }
+    ]
+
+    assert not ChatToolContextPresentationService.should_persist_authorized_tool_answer(
+        tool_calls,
+    )
+
+    persisted = ChatToolContextPresentationService.resolve_authorized_persisted_answer(
+        "Estoque do produto 10080001",
+        tool_calls,
+    )
+
+    assert persisted == "Estoque do produto 10080001"
+    assert "items:" not in persisted.lower()
+
+
+def test_is_stack_layout_false_for_single_table_with_latent_views():
+    metadata = {
+        "presentation": {"type": "table", "title": "Estoque", "rows": []},
+        "textPresentation": {"type": "markdown", "markdown": "### Estoque\n\nResumo."},
+        "presentationDecision": {
+            "selected": "table",
+            "layoutMode": "single",
+            "availableViews": ["text", "table", "chart"],
+        },
+    }
+
+    assert not ChatRichPresentationTextService.is_stack_layout(metadata)
+    assert not ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+        [{"name": "execute_external_action", "metadata": {**metadata, "ok": True}}],
+    )
+
+
 def test_embed_visual_markers_for_analyser_sections():
     markdown = (
         "### Informações completas do produto 90260149\n\n"

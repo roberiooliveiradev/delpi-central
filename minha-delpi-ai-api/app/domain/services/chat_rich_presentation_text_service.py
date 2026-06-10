@@ -143,8 +143,14 @@ class ChatRichPresentationTextService:
     def is_stack_layout(cls, metadata: dict[str, Any]) -> bool:
         decision = metadata.get("presentationDecision")
 
-        if isinstance(decision, dict) and str(decision.get("layoutMode") or "") == "stack":
-            return True
+        if isinstance(decision, dict):
+            layout = str(decision.get("layoutMode") or "").strip().lower()
+
+            if layout == "single":
+                return False
+
+            if layout == "stack":
+                return True
 
         views = decision.get("availableViews") if isinstance(decision, dict) else None
 

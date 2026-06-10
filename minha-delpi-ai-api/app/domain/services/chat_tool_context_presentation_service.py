@@ -98,6 +98,19 @@ class ChatToolContextPresentationService:
             if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
                 return direct_answer
 
+            from app.domain.services.chat_presentation_format_refinement_service import (
+                ChatPresentationFormatRefinementService,
+            )
+
+            if (
+                ChatPresentationFormatRefinementService.looks_like_format_refinement(message)
+                and cls.should_answer_with_presentation_only(safe_tool_calls)
+            ):
+                presentation = cls.resolve_presentation_only_answer(safe_tool_calls)
+
+                if presentation:
+                    return presentation
+
             if not cls.should_answer_with_presentation_only(safe_tool_calls):
                 return direct_answer
 
@@ -272,7 +285,7 @@ class ChatToolContextPresentationService:
                 ):
                     return True
 
-            return cls._has_rich_presentation(safe_tool_calls)
+            return False
 
         @classmethod
         def resolve_authorized_persisted_answer(

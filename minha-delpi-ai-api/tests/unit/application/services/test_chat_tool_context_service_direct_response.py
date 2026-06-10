@@ -455,6 +455,37 @@ def test_prefer_presentation_direct_answer_replaces_long_markdown():
     assert compact == "Faturamento comercial"
 
 
+def test_prefer_presentation_direct_answer_for_format_refinement_without_prior_text():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080001/stock",
+                "presentation": {
+                    "type": "table",
+                    "title": "Estoque do produto 10080001",
+                    "columns": [{"key": "branch", "label": "Filial"}],
+                    "rows": [{"branch": "01"}],
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                    "visualOrder": ["table"],
+                },
+            },
+        }
+    ]
+
+    compact = ChatToolContextService.prefer_presentation_direct_answer(
+        None,
+        tool_calls,
+        message="mostre o último resultado em tabela",
+    )
+
+    assert compact == "Estoque do produto 10080001"
+
+
 def test_build_authorized_answer_prefers_text_presentation_markdown():
     markdown = "### Informações completas do produto 90260149\n\nCHICOTE EPR SINGELO 235MM."
     tool_calls = [
