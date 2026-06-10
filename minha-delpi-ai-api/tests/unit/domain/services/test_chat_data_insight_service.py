@@ -71,6 +71,40 @@ def test_build_generic_empty_list_detects_empty_anomaly():
     )
 
 
+def test_build_factory_status_marks_limitations_when_production_table_truncated():
+    metadata = {
+        "path": "/products/90262404/factory-status",
+        "stackPresentationPlan": {"presentationProfileKey": "factory_status"},
+        "tablePresentations": [
+            {
+                "role": "list",
+                "title": "Produção (PA / PI / OP / apontamentos) — 30 de 305 OP(s)",
+                "rows": [{"production_order": f"{index:03d}"} for index in range(1, 31)],
+            }
+        ],
+    }
+    data = {
+        "factory_status": "PA PRODUZIDO / AGUARDANDO INSPEÇÃO FINAL",
+        "production": {
+            "items": [{"production_order": f"{index:03d}"} for index in range(1, 306)],
+            "summary": {
+                "pa_production_started": True,
+                "pi_production_started": False,
+                "total_pa_orders": 305,
+                "total_pi_orders": 0,
+            },
+        },
+        "structure": {"summary": {"total_raw_materials": 1}},
+        "shipping": {"summary": {"total_shipped_quantity": 0}},
+        "raw_material_stock": {"items": [], "summary": {"total_without_stock_for_one_pa": 0}},
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("limitations")
+
+
 def test_build_generic_categorical_shape_adds_visual_hint():
     metadata = {
         "path": "/reports/sales-by-branch",

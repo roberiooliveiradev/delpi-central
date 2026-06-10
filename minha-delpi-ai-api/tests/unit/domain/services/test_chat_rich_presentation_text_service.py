@@ -296,3 +296,94 @@ def test_should_compact_narrative_disabled_for_humanized_stack():
             "root": {"id": "1", "label": "1", "children": []},
         },
     )
+
+
+def test_strip_data_answer_quick_layers_removes_resumo_and_status():
+    markdown = (
+        "### Status fabril\n\n"
+        "<!-- section:scope -->\n\n"
+        "Situação consolidada.\n\n"
+        "**Resumo**\n\n"
+        "Leitura repetida.\n\n"
+        "Status geral: **OK** — sem bloqueio.\n\n"
+        "<!-- section:guide -->\n\n"
+        "Produção no período."
+    )
+
+    stripped = ChatRichPresentationTextService.strip_data_answer_quick_layers(markdown)
+
+    assert "**Resumo**" not in stripped
+    assert "Status geral:" not in stripped
+    assert "Produção no período." in stripped
+
+
+def test_prepare_evidence_first_chat_narrative_keeps_prose_strips_duplicates():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Status fabril\n\n"
+                "Situação consolidada: **PA PRODUZIDO**\n\n"
+                "**Resumo**\n\n"
+                "Repetido.\n\n"
+                "**Destaques**\n\n"
+                "- Produção em andamento."
+            ),
+        },
+    }
+
+    ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "PA PRODUZIDO" in markdown
+    assert "**Resumo**" not in markdown
+    assert "**Destaques**" not in markdown
+
+
+def test_build_scope_only_narrative_keeps_framing_and_guide():
+    markdown = (
+        "### Status fabril\n\n"
+        "<!-- section:scope -->\n\n"
+        "Situação consolidada: **PA PRODUZIDO**\n\n"
+        "Referência da consulta: **20260610**\n\n"
+        "**Resumo**\n\n"
+        "Leitura repetida.\n\n"
+        "<!-- section:profile -->\n\n"
+        "**Panorama fabril**\n\n"
+        "- Campo: valor\n\n"
+        "<!-- section:guide -->\n\n"
+        "Saldo de MPs frente à necessidade."
+    )
+    framing = "Status integrado na fábrica — estrutura, estoque, produção e expedição."
+
+    compact = ChatRichPresentationTextService.build_scope_only_narrative(
+        markdown,
+        framing=framing,
+    )
+
+    assert framing in compact
+    assert "Referência da consulta" not in compact
+    assert "**Resumo**" not in compact
+    assert "**Panorama fabril**" not in compact
+    assert "<!-- section:guide -->" in compact
+    assert "Saldo de MPs frente à necessidade." in compact
+
+
+def test_strip_highlights_block_removes_destaques_section():
+    markdown = (
+        "### Status fabril\n\n"
+        "Produção: PA **Sim**.\n\n"
+        "**Destaques**\n\n"
+        "- Situação fabril consolidada.\n"
+        "- Produção em andamento."
+    )
+
+    stripped = ChatRichPresentationTextService.strip_highlights_block(markdown)
+
+    assert "**Destaques**" not in stripped
+    assert "Produção em andamento." not in stripped
+    assert "Produção: PA **Sim**." in stripped

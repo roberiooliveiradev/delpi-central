@@ -64,7 +64,7 @@ def test_factory_status_integrated_stack_with_visuals():
 
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
-    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
+    assert (plan.get("tailVisualOrder") or []) == ["chart"]
     assert "tailVisuals" in (plan.get("narrativeOrder") or [])
 
 
@@ -173,18 +173,16 @@ def test_cost_impact_simulation_text_first_without_visuals():
     assert meta.get("chartPresentation") is None
 
 
-def test_stock_playbook_includes_story_presentation_from_data_answer():
+def test_stock_playbook_keeps_data_answer_without_decision_card():
     meta = _build(
         "product_stock_90269001.json",
         "/products/90269001/stock",
         user_message="estoque do produto 90269001",
     )
-    story = meta.get("storyPresentation")
 
-    assert isinstance(story, dict)
-    assert story.get("type") == "story"
-    assert isinstance(story.get("blocks"), list) and story["blocks"]
+    assert meta.get("storyPresentation") is None
     assert meta.get("dataAnswer", {}).get("summary", {}).get("answer")
+    assert meta.get("textPresentation", {}).get("markdown")
 
 
 def test_stock_playbook_text_first_without_integrated_stack():

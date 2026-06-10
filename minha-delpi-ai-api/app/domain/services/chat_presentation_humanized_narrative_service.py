@@ -57,6 +57,13 @@ class ChatPresentationHumanizedNarrativeService:
 
     @classmethod
     def _should_enrich(cls, metadata: dict[str, Any], markdown: str) -> bool:
+        from app.domain.services.chat_presentation_evidence_first_layout_service import (
+            ChatPresentationEvidenceFirstLayoutService,
+        )
+
+        if ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+            return False
+
         if cls._resolve_narrative_mode(metadata) == "skip":
             return False
 
@@ -113,10 +120,15 @@ class ChatPresentationHumanizedNarrativeService:
         if intro:
             parts.append(f"{_SCOPE_MARKER}\n\n{intro}")
 
-        data_answer_opening = cls._build_opening_from_data_answer(metadata)
+        from app.domain.services.chat_presentation_evidence_first_layout_service import (
+            ChatPresentationEvidenceFirstLayoutService,
+        )
 
-        if data_answer_opening:
-            parts.append(data_answer_opening)
+        if not ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+            data_answer_opening = cls._build_opening_from_data_answer(metadata)
+
+            if data_answer_opening:
+                parts.append(data_answer_opening)
 
         panorama = cls._build_panorama_from_profile_table(metadata)
 

@@ -22,6 +22,16 @@ class ChatRichPresentationTextService:
         re.IGNORECASE,
     )
 
+    _SECTION_MARKER_RE = re.compile(r"<!--\s*section:(\w+)\s*-->")
+
+    _DATA_ANSWER_DROP_SECTIONS = frozenset({"highlights", "profile", "summary"})
+
+    _QUICK_LAYER_HEADER_RE = re.compile(
+        r"(?:^|\n)\s*"
+        r"\*\*(?:Resumo|Próxima ação(?: recomendada)?|Interpretação)\*\*\s*",
+        re.IGNORECASE,
+    )
+
     @classmethod
     def _is_tree_presentation(cls, presentation: dict[str, Any] | None) -> bool:
         return isinstance(presentation, dict) and str(presentation.get("type") or "") == "tree"
@@ -237,7 +247,168 @@ class ChatRichPresentationTextService:
         body = cls._strip_opening_structure_inventory(body)
         body = cls._strip_embedded_visual_markers(body)
 
+        if isinstance(metadata.get("dataAnswer"), dict):
+            body = cls.strip_highlights_block(body)
+
         return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def strip_data_answer_quick_layers(cls, markdown: str) -> str:
+        body = str(markdown or "").strip()
+
+        if not body:
+            return ""
+
+        while True:
+            match = cls._QUICK_LAYER_HEADER_RE.search(body)
+
+            if not match:
+                break
+
+            head = body[: match.start()].rstrip()
+            tail = body[match.end() :]
+            next_section = re.search(
+                r"\n(?:\*\*[^*]+\*\*|<!-- section:[^>]+ -->|#{1,3} )",
+                tail,
+            )
+            remainder = tail[next_section.start() + 1 :].strip() if next_section else ""
+            body = "\n\n".join(part for part in [head, remainder] if part).strip()
+
+        body = re.sub(
+            r"(?:^|\n)Status geral:\s*\*\*[^*]+\*\*[^\n]*",
+            "",
+            body,
+            flags=re.IGNORECASE,
+        )
+        body = re.sub(
+            r"(?:^|\n)Referência da consulta:\s*\*\*[^*]+\*\*[^\n]*",
+            "",
+            body,
+            flags=re.IGNORECASE,
+        )
+
+        return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def prepare_evidence_first_chat_narrative(cls, metadata: dict[str, Any]) -> None:
+        text_presentation = metadata.get("textPresentation")
+
+        if not isinstance(text_presentation, dict):
+            return
+
+        markdown = str(text_presentation.get("markdown") or "").strip()
+
+        if not markdown:
+            return
+
+        decision = metadata.get("presentationDecision")
+        layout_mode = ""
+        explicit_format = str(metadata.get("explicitSessionFormat") or "").strip().casefold()
+
+        if isinstance(decision, dict):
+            layout_mode = str(decision.get("layoutMode") or "").strip().casefold()
+
+        body = cls.strip_data_answer_quick_layers(markdown)
+        body = cls.strip_highlights_block(body)
+
+        if layout_mode == "stack" and explicit_format != "text":
+            body = cls._strip_markdown_tables(body)
+            body = cls._strip_titled_section(body, "Panorama fabril")
+            body = cls._strip_titled_section(body, "Composição")
+
+        text_presentation["markdown"] = re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _strip_titled_section(cls, markdown: str, title: str) -> str:
+        escaped = re.escape(str(title or "").strip())
+        pattern = rf"(?:^|\n)\s*\*\*{escaped}\*\*\s*\n[\s\S]*?(?=\n\*\*[^*]+\*\*|\n#{1,3} |\Z)"
+
+        return re.sub(pattern, "", markdown, flags=re.IGNORECASE).strip()
+
+    @classmethod
+    def build_scope_only_narrative(cls, markdown: str, *, framing: str = "") -> str:
+        body = str(markdown or "").strip()
+
+        if not body:
+            return ""
+
+        lines = body.splitlines()
+        title_line = ""
+
+        if lines and lines[0].startswith("###"):
+            title_line = lines[0]
+            body = "\n".join(lines[1:]).strip()
+
+        rebuilt: list[str] = []
+
+        if title_line:
+            rebuilt.extend([title_line, ""])
+
+        if cls._SECTION_MARKER_RE.search(body):
+            parts = cls._SECTION_MARKER_RE.split(body)
+            preamble = str(parts[0] or "").strip()
+            index = 1
+
+            rebuilt.extend(["<!-- section:scope -->", ""])
+            scope_body = framing.strip() or cls.strip_data_answer_quick_layers(preamble).strip()
+
+            if scope_body:
+                rebuilt.append(scope_body)
+
+            while index < len(parts):
+                section_id = str(parts[index] or "").strip()
+                content = str(parts[index + 1] if index + 1 < len(parts) else "").strip()
+                index += 2
+
+                if section_id in cls._DATA_ANSWER_DROP_SECTIONS:
+                    continue
+
+                if section_id == "scope":
+                    continue
+
+                rebuilt.extend([f"<!-- section:{section_id} -->", ""])
+
+                cleaned = cls.strip_data_answer_quick_layers(content).strip()
+
+                if cleaned:
+                    rebuilt.append(cleaned)
+
+            return "\n".join(rebuilt).strip()
+
+        rebuilt.extend(["<!-- section:scope -->", ""])
+        scope_body = framing.strip() or cls.strip_data_answer_quick_layers(body).strip()
+
+        if scope_body:
+            rebuilt.append(scope_body)
+
+        return "\n".join(rebuilt).strip()
+
+    @classmethod
+    def strip_highlights_block(cls, markdown: str) -> str:
+        header_match = re.search(
+            r"(?:^|\n)\s*\*\*(?:Destaques|Indicadores principais)\*\*\s*$",
+            markdown,
+            re.IGNORECASE | re.MULTILINE,
+        )
+
+        if not header_match:
+            return markdown
+
+        head = markdown[: header_match.start()].rstrip()
+        tail_lines = markdown[header_match.end() :].splitlines()
+        remainder: list[str] = []
+        skipping_bullets = True
+
+        for line in tail_lines:
+            trimmed = line.strip()
+
+            if skipping_bullets and (not trimmed or trimmed.startswith("- ")):
+                continue
+
+            skipping_bullets = False
+            remainder.append(line)
+
+        return "\n\n".join(part for part in [head, "\n".join(remainder).strip()] if part).strip()
 
     @classmethod
     def _strip_stock_position_detail_section(cls, markdown: str) -> str:

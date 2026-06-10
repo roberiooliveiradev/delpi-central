@@ -91,7 +91,10 @@ export function ChatAssistantContent({
     return null;
   }
 
+  const hasDecisionCard = visibleSegments.some((segment) => segment.kind === "decision");
+
   const showTitle =
+    !hasDecisionCard &&
     !perSectionToolbar &&
     shouldRenderPresentationHeading(title) &&
     !visibleSegments.some((segment) => {
@@ -134,15 +137,16 @@ export function ChatAssistantContent({
     [toolCalls],
   );
   const suppressPresentationChrome =
-    showCompleteStackView &&
-    Boolean(narrativeMarkdown.trim()) &&
-    (planUsesHumanizedSections(stackPlan) ||
-      segments.some(
-        (segment) =>
-          segment.kind === "table" ||
-          segment.kind === "tree" ||
-          segment.kind === "stackSection",
-      ));
+    hasDecisionCard ||
+    (showCompleteStackView &&
+      Boolean(narrativeMarkdown.trim()) &&
+      (planUsesHumanizedSections(stackPlan) ||
+        segments.some(
+          (segment) =>
+            segment.kind === "table" ||
+            segment.kind === "tree" ||
+            segment.kind === "stackSection",
+        )));
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">

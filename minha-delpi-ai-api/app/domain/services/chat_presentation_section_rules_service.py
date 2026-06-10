@@ -72,6 +72,14 @@ class ChatPresentationSectionRulesService:
         markdown = cls._text_markdown(metadata)
 
         for section, spec in rules.items():
+            if spec is False:
+                resolved[str(section)] = False
+                continue
+
+            if spec is True:
+                resolved[str(section)] = True
+                continue
+
             if not isinstance(spec, (str, dict)):
                 continue
 
@@ -138,6 +146,9 @@ class ChatPresentationSectionRulesService:
         if token == "tree_hierarchy":
             return cls._narrative_order_tree_hierarchy(visibility)
 
+        if token == "summary_then_evidence":
+            return cls._narrative_order_summary_then_evidence(visibility, metadata)
+
         return cls._narrative_order_operational_with_tail(visibility, metadata)
 
     @classmethod
@@ -167,6 +178,9 @@ class ChatPresentationSectionRulesService:
 
             if kind == "profile_table":
                 return cls._has_profile_table(metadata)
+
+            if kind == "operational_tables":
+                return cls._has_operational_tables(metadata)
 
             if kind == "tree":
                 return cls._has_tree(metadata)
@@ -366,6 +380,52 @@ class ChatPresentationSectionRulesService:
             order.append("attention")
 
         return order
+
+    @classmethod
+    def _narrative_order_summary_then_evidence(
+        cls,
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+    ) -> list[str]:
+        order = ["lead"]
+
+        if visibility.get(cls._GUIDE) or visibility.get(cls._INSPECTION):
+            order.append("operationalTables")
+
+        if cls._slot_has_type(metadata, "chart"):
+            order.append("tailVisuals")
+
+        if visibility.get(cls._ATTENTION):
+            order.append("attention")
+
+        return order
+
+    @classmethod
+    def _has_operational_tables(cls, metadata: dict[str, Any]) -> bool:
+        count = 0
+
+        for key in ("tablePresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type") == "table":
+                rows = presentation.get("rows") or []
+
+                if rows:
+                    count += 1
+
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            for presentation in bulk:
+                if not isinstance(presentation, dict) or presentation.get("type") != "table":
+                    continue
+
+                rows = presentation.get("rows") or []
+
+                if rows:
+                    count += 1
+
+        return count >= 1
 
     @classmethod
     def _narrative_order_tree_hierarchy(cls, visibility: dict[str, bool]) -> list[str]:

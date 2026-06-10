@@ -28,8 +28,30 @@ class ChatPresentationStoryService:
             return False
 
         metadata["storyPresentation"] = story
+        cls._strip_duplicate_narrative(metadata)
 
         return True
+
+    @classmethod
+    def _strip_duplicate_narrative(cls, metadata: dict[str, Any]) -> None:
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
+        text_presentation = metadata.get("textPresentation")
+
+        if not isinstance(text_presentation, dict):
+            return
+
+        markdown = str(text_presentation.get("markdown") or "").strip()
+
+        if not markdown:
+            return
+
+        stripped = ChatRichPresentationTextService.strip_highlights_block(markdown)
+
+        if stripped != markdown:
+            text_presentation["markdown"] = stripped
 
     @classmethod
     def build_from_metadata(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:
@@ -172,16 +194,27 @@ class ChatPresentationStoryService:
                 }
             )
 
+        seen_texts = cls._collect_seen_texts(
+            verdict_text=verdict_text,
+            meaning=meaning,
+            attention=cls._clean_lines(summary.get("attention")),
+        )
+
         for item in data_answer.get("facts") or []:
             if not isinstance(item, dict):
                 continue
 
-            text = str(item.get("text") or "").strip()
+            text = cls._item_text(item)
 
-            if text:
+            if text and not cls._is_duplicate_text(text, seen_texts):
+                seen_texts.add(cls._normalize_for_dedup(text))
                 blocks.append({"kind": "fact", "text": text})
 
-        for line in cls._clean_lines(data_answer.get("analysis")):
+        for line in cls._analysis_lines(data_answer.get("analysis")):
+            if cls._is_duplicate_text(line, seen_texts):
+                continue
+
+            seen_texts.add(cls._normalize_for_dedup(line))
             blocks.append(
                 {
                     "kind": "analysis",
@@ -211,6 +244,7 @@ class ChatPresentationStoryService:
             )
 
         next_action = str(summary.get("nextAction") or "").strip()
+        next_action_key = cls._normalize_for_dedup(next_action)
 
         if next_action:
             blocks.append(
@@ -234,23 +268,14 @@ class ChatPresentationStoryService:
             if not label:
                 continue
 
+            if next_action_key and cls._normalize_for_dedup(label) == next_action_key:
+                continue
+
             blocks.append(
                 {
                     "kind": "recommendation",
                     "text": label,
                     "query": query,
-                }
-            )
-
-        for line in cls._clean_lines(data_answer.get("limitations")):
-            blocks.append(
-                {
-                    "kind": "limitation",
-                    "title": ChatHumanizedDataResponseContentService.get(
-                        "storyBlocks",
-                        "limitationTitle",
-                    ),
-                    "text": line,
                 }
             )
 
@@ -261,4 +286,76 @@ class ChatPresentationStoryService:
         if not isinstance(value, list):
             return []
 
-        return [str(line).strip() for line in value if str(line or "").strip()]
+        lines: list[str] = []
+
+        for line in value:
+            text = cls._item_text(line)
+
+            if text:
+                lines.append(text)
+
+        return lines
+
+    @classmethod
+    def _analysis_lines(cls, value: object) -> list[str]:
+        if not isinstance(value, list):
+            return []
+
+        lines: list[str] = []
+
+        for item in value:
+            text = cls._item_text(item)
+
+            if text:
+                lines.append(text)
+
+        return lines
+
+    @classmethod
+    def _item_text(cls, value: object) -> str:
+        if isinstance(value, dict):
+            return str(value.get("text") or "").strip()
+
+        return str(value or "").strip()
+
+    @classmethod
+    def _collect_seen_texts(
+        cls,
+        *,
+        verdict_text: str,
+        meaning: str,
+        attention: list[str],
+    ) -> set[str]:
+        seen: set[str] = set()
+
+        for text in [verdict_text, meaning, *attention]:
+            normalized = cls._normalize_for_dedup(text)
+
+            if normalized:
+                seen.add(normalized)
+
+        return seen
+
+    @classmethod
+    def _normalize_for_dedup(cls, text: str) -> str:
+        import re
+
+        cleaned = re.sub(r"\*+", "", str(text or "")).strip().casefold()
+
+        return " ".join(cleaned.split())
+
+    @classmethod
+    def _is_duplicate_text(cls, text: str, seen: set[str]) -> bool:
+        normalized = cls._normalize_for_dedup(text)
+
+        if not normalized:
+            return True
+
+        if normalized in seen:
+            return True
+
+        for existing in seen:
+            if normalized in existing or existing in normalized:
+                return True
+
+        return False

@@ -33,6 +33,42 @@ def test_generic_stock_stack_gets_humanized_sections_and_framing():
     assert "<!-- section:highlights -->" in metadata["textPresentation"]["markdown"]
 
 
+def test_data_answer_suppresses_highlights_visibility_in_stack_plan():
+    from app.domain.services.chat_presentation_evidence_first_layout_service import (
+        ChatPresentationEvidenceFirstLayoutService,
+    )
+
+    metadata = {
+        "path": "/products/90262404/factory-status",
+        "dataAnswer": {
+            "summary": {"answer": "Produção em andamento.", "riskLevel": "attention"},
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Status fabril\n\n"
+                "<!-- section:scope -->\n\n"
+                "**Destaques**\n\n"
+                "- Produção em andamento."
+            ),
+        },
+        "tablePresentation": {
+            "type": "table",
+            "title": "Produção",
+            "rows": [{"production_order": "001"}],
+        },
+        "chartPresentation": {"type": "chart", "title": "Saldo MP", "series": []},
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.activate(metadata)
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan.get("presentationMode") == "summary_then_evidence"
+    assert plan["sectionVisibility"]["highlights"] is False
+    assert plan["sectionVisibility"]["profile"] is False
+    assert "highlights" not in plan["narrativeOrder"]
+    assert "profileTables" not in plan["narrativeOrder"]
+
+
 def test_apply_section_markers_is_idempotent():
     metadata = {
         "textPresentation": {

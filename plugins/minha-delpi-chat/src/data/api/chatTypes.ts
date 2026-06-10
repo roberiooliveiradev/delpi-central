@@ -285,6 +285,7 @@ export type ChatPresentationDecision = {
   reason?: string | null;
   purpose?: string | null;
   message?: string | null;
+  presentationMode?: "summary_then_evidence" | null;
   layoutMode?: "stack" | "single" | null;
   visualOrder?: string[] | null;
   insight?: string | null;

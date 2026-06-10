@@ -228,11 +228,6 @@ class ChatPresentationDecisionService:
         if isinstance(reading_layers, dict) and reading_layers:
             decision["readingLayers"] = reading_layers
 
-        purpose = cls._purpose_from_metadata(metadata)
-
-        if purpose and not str(decision.get("purpose") or "").strip():
-            decision["purpose"] = purpose
-
         message = cls._message_from_metadata(metadata)
 
         if message and not str(decision.get("message") or "").strip():
@@ -436,25 +431,6 @@ class ChatPresentationDecisionService:
 
         if purpose:
             decision["purpose"] = purpose
-
-    @classmethod
-    def _purpose_from_metadata(cls, metadata: dict[str, Any]) -> str:
-        data_answer = metadata.get("dataAnswer")
-
-        if not isinstance(data_answer, dict):
-            return ""
-
-        summary = data_answer.get("summary")
-
-        if not isinstance(summary, dict):
-            return ""
-
-        next_action = str(summary.get("nextAction") or "").strip()
-
-        if next_action:
-            return next_action
-
-        return str(summary.get("answer") or "").strip()[:240]
 
     @classmethod
     def _message_from_metadata(cls, metadata: dict[str, Any]) -> str:

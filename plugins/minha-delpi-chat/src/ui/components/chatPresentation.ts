@@ -438,6 +438,43 @@ function isStoryPresentation(value: unknown): value is ChatStoryPresentation {
   );
 }
 
+export function getPresentationModeFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const decision = metadata?.presentationDecision;
+
+    if (decision && typeof decision === "object") {
+      const mode = String((decision as ChatPresentationDecision).presentationMode || "").trim();
+
+      if (mode) {
+        return mode;
+      }
+    }
+
+    const plan = metadata?.stackPresentationPlan;
+
+    if (plan && typeof plan === "object") {
+      const mode = String((plan as Record<string, unknown>).presentationMode || "").trim();
+
+      if (mode) {
+        return mode;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function isSummaryThenEvidenceMode(toolCalls?: ChatToolCall[]): boolean {
+  return getPresentationModeFromToolCalls(toolCalls) === "summary_then_evidence";
+}
+
 export function getStoryPresentationFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatStoryPresentation | null {

@@ -623,13 +623,16 @@ class ExecuteExternalActionUseCase:
             axis_user_message=user_message,
         )
 
-        from app.domain.services.chat_presentation_story_service import (
-            ChatPresentationStoryService,
+        from app.domain.services.chat_presentation_evidence_first_layout_service import (
+            ChatPresentationEvidenceFirstLayoutService,
         )
 
-        ChatPresentationStoryService.enrich_metadata(metadata)
-        ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+        ChatPresentationEvidenceFirstLayoutService.activate(metadata)
         ChatPresentationStackOrderService.enrich_metadata(metadata)
+        ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+        if not ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+            ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
 
         from app.domain.services.chat_rich_presentation_text_service import (
             ChatRichPresentationTextService,

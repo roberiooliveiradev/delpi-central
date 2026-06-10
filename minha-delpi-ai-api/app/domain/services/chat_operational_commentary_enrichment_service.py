@@ -101,6 +101,9 @@ class ChatDataInsightEnrichmentService:
         if not isinstance(commentary, dict):
             return
 
+        if isinstance(metadata.get("dataAnswer"), dict):
+            return
+
         text_presentation = metadata.get("textPresentation")
 
         if not isinstance(text_presentation, dict):
@@ -139,6 +142,9 @@ class ChatDataInsightEnrichmentService:
         commentary: dict[str, Any] | None,
     ) -> None:
         if not isinstance(commentary, dict):
+            return
+
+        if isinstance(metadata.get("dataAnswer"), dict):
             return
 
         insight = str(commentary.get("narrativeInsight") or "").strip()

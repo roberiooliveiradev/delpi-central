@@ -1,7 +1,87 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { getStoryPresentationFromToolCalls } from "./chatPresentation";
+import {
+  getStoryPresentationFromToolCalls,
+  isSummaryThenEvidenceMode,
+} from "./chatPresentation";
+
+function stripHighlightsTail(tail: string): string {
+  const nextMarkerMatch = tail.match(/\n<!-- section:[^>]+ -->/);
+
+  if (nextMarkerMatch?.index != null) {
+    return tail.slice(nextMarkerMatch.index + 1).trim();
+  }
+
+  const attentionIndex = tail.search(/\n\*\*Pontos de atenção\*\*/);
+
+  if (attentionIndex >= 0) {
+    return tail.slice(attentionIndex + 1).trim();
+  }
+
+  return "";
+}
+
+export function stripHighlightsSectionFromMarkdown(markdown: string): string {
+  const marker = "<!-- section:highlights -->";
+  const markerIndex = markdown.indexOf(marker);
+
+  if (markerIndex >= 0) {
+    const head = markdown.slice(0, markerIndex).trim();
+    const remainder = stripHighlightsTail(markdown.slice(markerIndex + marker.length));
+
+    return [head, remainder].filter(Boolean).join("\n\n").trim();
+  }
+
+  const headerMatch = markdown.match(/(?:^|\n)(\*\*Destaques\*\*|\*\*Indicadores principais\*\*)/);
+
+  if (!headerMatch || headerMatch.index == null) {
+    return markdown;
+  }
+
+  const headerIndex = headerMatch.index;
+  const head = markdown.slice(0, headerIndex).trim();
+  const remainder = stripHighlightsTail(markdown.slice(headerIndex));
+
+  return [head, remainder].filter(Boolean).join("\n\n").trim();
+}
+
+export function stripQuickLayerFromMarkdown(markdown: string): string {
+  const headers = [
+    /\*\*Resumo\*\*/,
+    /\*\*Próxima ação recomendada\*\*/,
+    /\*\*Próxima ação\*\*/,
+    /\*\*Interpretação\*\*/,
+  ];
+  let updated = markdown;
+
+  for (const header of headers) {
+    const match = updated.match(new RegExp(`(?:^|\\n)\\s*${header.source}\\s*`, "i"));
+
+    if (!match || match.index == null) {
+      continue;
+    }
+
+    const head = updated.slice(0, match.index).trim();
+    const tail = updated.slice(match.index + match[0].length);
+    const nextSection = tail.search(
+      /\n(?:\*\*[^*]+\*\*|<!-- section:[^>]+ -->|#{1,3} )/,
+    );
+    const remainder = nextSection >= 0 ? tail.slice(nextSection + 1).trim() : "";
+
+    updated = [head, remainder].filter(Boolean).join("\n\n").trim();
+  }
+
+  updated = updated
+    .replace(
+      /(?:^|\n)Status geral:\s*\*\*[^*]+\*\*[^\n]*/gi,
+      "",
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return updated;
+}
 
 export function stripSummarySectionFromMarkdown(markdown: string): string {
   const marker = "<!-- section:summary -->";
@@ -37,6 +117,10 @@ export function withDecisionLayer(
   segments: AssistantContentSegment[],
   toolCalls: ChatToolCall[],
 ): AssistantContentSegment[] {
+  if (isSummaryThenEvidenceMode(toolCalls)) {
+    return segments;
+  }
+
   const story = getStoryPresentationFromToolCalls(toolCalls);
 
   if (!story?.blocks?.length) {
@@ -47,18 +131,21 @@ export function withDecisionLayer(
     kind: "decision",
     presentation: story,
   };
+  const evidenceFirst = isSummaryThenEvidenceMode(toolCalls);
   const normalized = segments.map((segment) => {
     if (segment.kind !== "markdown") {
       return segment;
     }
 
-    const stripped = stripSummarySectionFromMarkdown(segment.markdown).trim();
+    let markdown = stripSummarySectionFromMarkdown(segment.markdown);
 
-    if (!stripped) {
-      return segment;
+    if (!evidenceFirst) {
+      markdown = stripQuickLayerFromMarkdown(stripHighlightsSectionFromMarkdown(markdown));
+    } else {
+      markdown = stripHighlightsSectionFromMarkdown(markdown);
     }
 
-    return { ...segment, markdown: stripped };
+    return { ...segment, markdown: markdown.trim() };
   });
 
   return [decisionSegment, ...normalized];

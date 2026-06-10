@@ -975,6 +975,30 @@
     }
   },
   "stackPlans": {
+    "summary_then_evidence": {
+      "profileFirst": false,
+      "highlightsAfterProfile": false,
+      "tableRoleOrder": [
+        "guide",
+        "inspection",
+        "list",
+        "structure",
+        "stock",
+        "other"
+      ],
+      "sectionRules": {
+        "enabled": true,
+        "narrativeOrder": "summary_then_evidence",
+        "visibility": {
+          "scope": "markdown",
+          "profile": false,
+          "highlights": false,
+          "guide": "operational_tables",
+          "structure": false,
+          "attention": "attention"
+        }
+      }
+    },
     "analyser": {
       "tableRoleOrder": [
         "profile",

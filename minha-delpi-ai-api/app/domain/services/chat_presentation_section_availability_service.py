@@ -20,33 +20,51 @@ class ChatPresentationSectionAvailabilityService:
 
     @classmethod
     def enrich_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
+        from app.domain.services.chat_presentation_evidence_first_layout_service import (
+            ChatPresentationEvidenceFirstLayoutService,
+        )
+
         path = str(metadata.get("path") or "")
         entity = cls._metadata_entity(metadata)
-        stack_config = ChatPresentationProfileService.stack_plan_config(path, entity)
+        presentation_mode = None
+
+        if ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+            presentation_mode = ChatPresentationEvidenceFirstLayoutService.presentation_mode()
+
+        stack_config = ChatPresentationProfileService.stack_plan_config(
+            path,
+            entity,
+            presentation_mode=presentation_mode,
+        )
         section_rules = stack_config.get("sectionRules")
 
         if isinstance(section_rules, dict) and section_rules.get("enabled"):
-            return ChatPresentationSectionRulesService.apply(
+            plan = ChatPresentationSectionRulesService.apply(
                 metadata,
                 plan,
                 stack_config,
                 path=path,
                 entity=entity,
             )
+        else:
+            profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+            plan["presentationProfile"] = profile_key
+            plan["presentationProfileKey"] = profile_key
 
-        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
-        plan["presentationProfile"] = profile_key
-        plan["presentationProfileKey"] = profile_key
+            from app.domain.services.chat_presentation_stack_markdown_service import (
+                ChatPresentationStackMarkdownService,
+            )
 
-        from app.domain.services.chat_presentation_stack_markdown_service import (
-            ChatPresentationStackMarkdownService,
-        )
+            plan = ChatPresentationStackMarkdownService.apply_generic_humanized_stack_plan(
+                metadata,
+                plan,
+                profile_key=profile_key,
+            )
 
-        return ChatPresentationStackMarkdownService.apply_generic_humanized_stack_plan(
-            metadata,
-            plan,
-            profile_key=profile_key,
-        )
+        if ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+            plan["presentationMode"] = ChatPresentationEvidenceFirstLayoutService.presentation_mode()
+
+        return plan
 
     @classmethod
     def filter_analyser_highlights(cls, insights: list[str]) -> list[str]:

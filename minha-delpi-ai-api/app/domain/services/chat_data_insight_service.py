@@ -79,6 +79,8 @@ class ChatDataInsightService:
         if not commentary.get("derivedMetrics"):
             commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
 
+        cls._apply_truncation_flags(commentary, metadata=metadata, data=data)
+
         data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
 
         if not data_answer:
@@ -183,6 +185,147 @@ class ChatDataInsightService:
             commentary,
             profile_key="generic_list",
         )
+
+    @classmethod
+    def _apply_truncation_flags(
+        cls,
+        commentary: dict[str, Any],
+        *,
+        metadata: dict[str, Any],
+        data: dict[str, Any],
+    ) -> None:
+        if commentary.get("paginated"):
+            cls._ensure_truncation_limitations(commentary)
+            return
+
+        if cls._metadata_has_truncated_sections(metadata):
+            commentary["paginated"] = True
+        else:
+            rows = cls._resolve_rows(metadata, data)
+
+            if rows is not None and ChatDataAnomalyDetectionService._is_paginated(
+                metadata, len(rows)
+            ):
+                commentary["paginated"] = True
+            elif cls._composite_sections_truncated(metadata, data):
+                commentary["paginated"] = True
+
+        cls._ensure_truncation_limitations(commentary)
+
+    @classmethod
+    def _ensure_truncation_limitations(cls, commentary: dict[str, Any]) -> None:
+        if not commentary.get("paginated"):
+            return
+
+        existing = [
+            str(line).strip()
+            for line in (commentary.get("limitations") or [])
+            if str(line or "").strip()
+        ]
+
+        if existing:
+            commentary["limitations"] = existing
+            return
+
+        commentary["limitations"] = ChatHumanizedDataResponseService._default_limitations(
+            commentary
+        )
+
+    @classmethod
+    def _metadata_has_truncated_sections(cls, metadata: dict[str, Any]) -> bool:
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if not isinstance(api_meta, dict):
+            return False
+
+        sections = api_meta.get("sections")
+
+        if not isinstance(sections, list):
+            return False
+
+        return any(
+            isinstance(section, dict) and section.get("truncated")
+            for section in sections
+        )
+
+    @classmethod
+    def _composite_sections_truncated(
+        cls,
+        metadata: dict[str, Any],
+        data: dict[str, Any],
+    ) -> bool:
+        table_presentations: list[dict[str, Any]] = []
+
+        tables = metadata.get("tablePresentations")
+
+        if isinstance(tables, list):
+            table_presentations.extend(
+                table for table in tables if isinstance(table, dict)
+            )
+
+        single = metadata.get("tablePresentation")
+
+        if isinstance(single, dict):
+            table_presentations.append(single)
+
+        import re
+
+        for table in table_presentations:
+            table_rows = table.get("rows")
+
+            if not isinstance(table_rows, list) or not table_rows:
+                continue
+
+            shown = len(table_rows)
+            table_id = str(table.get("tableId") or table.get("id") or "").strip().casefold()
+            title = str(table.get("title") or "")
+            role = str(table.get("role") or "").strip().casefold()
+            title_match = re.search(r"(\d+)\s+de\s+(\d+)", title, re.IGNORECASE)
+
+            if title_match:
+                shown_in_title = int(title_match.group(1))
+                total_in_title = int(title_match.group(2))
+
+                if total_in_title > shown_in_title:
+                    return True
+
+            for section_key, hints in (
+                ("production", ("production", "factoryproduction", "op")),
+                ("shipping", ("shipping", "factoryshipping", "expedi")),
+                ("raw_material_stock", ("stock", "rawmaterial", "mpstock", "matéria-prima", "materia-prima")),
+            ):
+                block = data.get(section_key)
+
+                if not isinstance(block, dict):
+                    continue
+
+                title_token = title.casefold()
+                matches_table = any(hint in table_id for hint in hints) or any(
+                    hint in title_token for hint in hints
+                )
+
+                if section_key == "production" and role == "list":
+                    matches_table = True
+
+                if not matches_table:
+                    continue
+
+                items = block.get("items")
+
+                if isinstance(items, list) and len(items) > shown:
+                    return True
+
+                summary = block.get("summary")
+
+                if section_key == "production" and isinstance(summary, dict):
+                    total_orders = int(summary.get("total_pa_orders") or 0) + int(
+                        summary.get("total_pi_orders") or 0
+                    )
+
+                    if total_orders > shown:
+                        return True
+
+        return False
 
     @classmethod
     def _resolve_rows(

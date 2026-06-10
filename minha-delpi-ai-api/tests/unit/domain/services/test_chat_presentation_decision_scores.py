@@ -61,9 +61,16 @@ def test_attach_scores_and_reading_layers_from_data_answer():
         user_message="estoque do produto",
     )
 
+    ChatPresentationDecisionService._ensure_purpose(
+        decision,
+        metadata=metadata,
+        user_message="estoque do produto",
+    )
+
     assert decision.get("scores")
     assert decision.get("readingLayers")
-    assert decision.get("purpose") == "Conferir posição com disponível negativo."
+    assert decision.get("purpose") == "estoque do produto"
+    assert "Conferir posição" not in str(decision.get("purpose") or "")
     assert "Saldo confortável" in str(decision.get("message") or "")
 
 
