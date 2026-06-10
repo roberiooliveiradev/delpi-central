@@ -28,14 +28,14 @@
     "product_structure_exclusivity": "structure_exclusivity",
     "product_raw_material_price_intelligence": "raw_material_price_intelligence",
     "product_cost_impact_simulation": "cost_impact_simulation",
-    "product_last_purchase": "playbook_report",
-    "product_purchase_price_history": "playbook_report",
-    "product_purchase_budget_history": "playbook_report",
+    "product_last_purchase": "last_purchase",
+    "product_purchase_price_history": "purchase_price_history",
+    "product_purchase_budget_history": "purchase_budget_history",
     "product_guide": "table_list",
     "product_inspection": "table_list",
     "product_search": "table_list",
     "product_pricing": "sale_pricing",
-    "product_purchases": "table_list",
+    "product_purchases": "purchase_list",
     "product_suppliers": "table_list",
     "product_customers": "table_list",
     "product_sales": "table_list",
@@ -59,9 +59,9 @@
     { "contains": "/shipping-status", "profile": "shipping_status" },
     { "contains": "/raw-material-price-intelligence", "profile": "raw_material_price_intelligence" },
     { "contains": "/cost-impact-simulation", "profile": "cost_impact_simulation" },
-    { "contains": "/last-purchase", "profile": "playbook_report" },
-    { "contains": "/purchase-price-history", "profile": "playbook_report" },
-    { "contains": "/purchase-budget-history", "profile": "playbook_report" },
+    { "contains": "/last-purchase", "profile": "last_purchase" },
+    { "contains": "/purchase-price-history", "profile": "purchase_price_history" },
+    { "contains": "/purchase-budget-history", "profile": "purchase_budget_history" },
     { "contains": "/stock", "profile": "stock" },
     { "contains": "/structure", "profile": "tree_hierarchy" },
     { "contains": "/parents", "profile": "tree_hierarchy" },
@@ -69,7 +69,7 @@
     { "contains": "/inspection", "profile": "table_list" },
     { "contains": "/suppliers", "profile": "table_list" },
     { "contains": "/customers", "profile": "table_list" },
-    { "contains": "/purchases", "profile": "table_list" },
+    { "contains": "/purchases", "profile": "purchase_list" },
     { "contains": "/sales", "profile": "table_list" },
     { "contains": "/pricing", "profile": "sale_pricing" },
     { "contains": "/prices", "profile": "table_list" },
@@ -146,6 +146,30 @@
       "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
       "stackPlan": "sale_pricing",
       "flags": ["sale_pricing"]
+    },
+    "last_purchase": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "last_purchase",
+      "flags": ["last_purchase"]
+    },
+    "purchase_price_history": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "purchase_price_history",
+      "flags": ["purchase_price_history"]
+    },
+    "purchase_budget_history": {
+      "defaultViewPolicy": "generic",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "purchase_budget_history",
+      "flags": ["purchase_budget_history"]
+    },
+    "purchase_list": {
+      "defaultViewPolicy": "table_when_available",
+      "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+      "stackPlan": "purchase_list",
+      "flags": ["purchase_list"]
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
@@ -235,6 +259,26 @@
       "highlightsAfterProfile": true
     },
     "sale_pricing": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "last_purchase": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "purchase_price_history": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "purchase_budget_history": {
+      "tableRoleOrder": ["profile", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "purchase_list": {
       "tableRoleOrder": ["profile", "list", "other"],
       "profileFirst": true,
       "highlightsAfterProfile": true

@@ -93,13 +93,25 @@ class ExternalActionPresentationBuilderPresenter:
                     return tables[0]
 
             if entity == "product_last_purchase":
-                return self._host.build_last_purchase_table_presentation(root, path)
+                tables = self._host.build_last_purchase_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
 
             if entity in {
                 "product_purchase_price_history",
                 "product_purchase_budget_history",
             }:
-                return self._host._build_playbook_report_table(root, path, entity=entity)
+                tables = self._host.build_purchase_history_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
+            if entity == "product_purchases":
+                tables = self._host.build_purchases_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
 
             product = root.get("product")
 

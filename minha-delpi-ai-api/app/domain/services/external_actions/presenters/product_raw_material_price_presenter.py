@@ -79,26 +79,35 @@ class ExternalActionProductRawMaterialPricePresenter:
 
     def _present_last_purchase(self, root: dict, path: str) -> dict:
         code, description = self._product_context(root, path)
-        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        markdown = self._build_last_purchase_text_presentation(root, path)
         linhas: list[str] = []
 
-        compact = _Narrative.compact_product_line(
-            self._host,
-            code=code,
-            description=description,
-        )
-
-        if compact:
-            linhas.append(compact)
-
-        if last_purchase:
-            for key, value in list(last_purchase.items())[:10]:
-                linhas.append(
-                    f"{self._host._humanize_key(str(key))}: "
-                    f"{self._host._format_field_value(str(key), value)}"
-                )
+        if isinstance(markdown, dict) and markdown.get("markdown"):
+            linhas = [
+                line
+                for line in str(markdown["markdown"]).splitlines()
+                if line.strip() and not line.startswith("###")
+            ]
         else:
-            linhas.append(self._route("lastPurchase", "emptyLine"))
+            compact = _Narrative.compact_product_line(
+                self._host,
+                code=code,
+                description=description,
+            )
+
+            if compact:
+                linhas.append(compact)
+
+            last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+
+            if last_purchase:
+                for key, value in list(last_purchase.items())[:10]:
+                    linhas.append(
+                        f"{self._host._humanize_key(str(key))}: "
+                        f"{self._host._format_field_value(str(key), value)}"
+                    )
+            else:
+                linhas.append(self._route("lastPurchase", "emptyLine"))
 
         title = (
             self._route("lastPurchase", "titleWithCode", code=code)
@@ -111,6 +120,7 @@ class ExternalActionProductRawMaterialPricePresenter:
             "linhas": linhas,
             "dados": root,
             "sourcePath": path,
+            "humanizedMarkdown": markdown.get("markdown") if isinstance(markdown, dict) else None,
         }
 
     def _build_intelligence_lines(
@@ -332,12 +342,288 @@ class ExternalActionProductRawMaterialPricePresenter:
         return [table for table in tables if isinstance(table, dict)]
 
     def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
+        tables = self.build_last_purchase_table_presentations(root, path)
+
+        if not tables:
+            return None
+
+        for table in tables:
+            if isinstance(table, dict) and table.get("role") == "list":
+                return table
+
+        return tables[-1] if tables else None
+
+    def build_last_purchase_table_presentations(self, root: dict, path: str) -> list[dict]:
+        tables: list[dict] = []
+        overview = self._build_last_purchase_overview_table(root, path)
+
+        if overview:
+            tables.append(overview)
+
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+
+        if last_purchase:
+            detail = self._build_kv_table(last_purchase, self._route("lastPurchase", "tableTitle"))
+            detail["role"] = "list"
+            tables.append(detail)
+
+        return [table for table in tables if isinstance(table, dict)]
+
+    def _build_last_purchase_overview_table(self, root: dict, path: str) -> dict | None:
+        code, description = self._product_context(root, path)
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if not last_purchase:
             return None
 
-        return self._build_kv_table(last_purchase, self._route("lastPurchase", "tableTitle"))
+        columns = self._host._column_labels.kv_table_column_defs()
+        rows = [
+            {
+                "campo": self._route("lastPurchase", "overviewProductField"),
+                "valor": f"{code} — {description}".strip(" —") or code or "—",
+            },
+        ]
+
+        for key in ("unit_price", "supplier_code", "supplier_name", "icms_rate", "invoice_date"):
+            if key in last_purchase:
+                rows.append(
+                    {
+                        "campo": self._host._humanize_key(key),
+                        "valor": self._host._format_field_value(key, last_purchase.get(key)),
+                    }
+                )
+
+        return {
+            "type": "table",
+            "title": self._route("lastPurchase", "overviewTableTitle"),
+            "columns": columns,
+            "rows": rows,
+            "role": "profile",
+        }
+
+    def _build_last_purchase_text_presentation(self, root: dict, path: str) -> dict | None:
+        code, description = self._product_context(root, path)
+        title = (
+            self._route("lastPurchase", "titleWithCode", code=code)
+            if code
+            else self._route("lastPurchase", "titleGeneric")
+        )
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        parts: list[str] = []
+
+        if description:
+            parts.append(
+                self._route(
+                    "lastPurchase",
+                    "introWithDescription",
+                    code=code,
+                    description=description,
+                )
+            )
+        elif code:
+            parts.append(self._route("lastPurchase", "introCodeOnly", code=code))
+
+        if last_purchase.get("unit_price") is not None:
+            parts.append(
+                self._route(
+                    "lastPurchase",
+                    "priceLine",
+                    price=str(last_purchase.get("unit_price")),
+                    supplier=str(last_purchase.get("supplier_code") or "—"),
+                )
+            )
+
+        if last_purchase.get("icms_rate") is not None:
+            parts.append(
+                self._route(
+                    "lastPurchase",
+                    "icmsLine",
+                    rate=str(last_purchase.get("icms_rate")),
+                )
+            )
+
+        if not parts:
+            parts.append(self._route("lastPurchase", "emptyLine"))
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": f"### {title}\n\n" + "\n\n".join(parts),
+        }
+
+    def build_last_purchase_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+
+        if not last_purchase:
+            return None
+
+        title = (
+            self._route("lastPurchase", "kpiTitle", code=code)
+            if code
+            else self._route("lastPurchase", "kpiTitleGeneric")
+        )
+        cards: list[dict[str, Any]] = []
+
+        if last_purchase.get("unit_price") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("lastPurchase", "kpiUnitPrice"),
+                    value=float(last_purchase.get("unit_price") or 0),
+                    unit="R$",
+                    color="#10b981",
+                    key="unit_price",
+                )
+            )
+
+        if last_purchase.get("icms_rate") is not None:
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=self._route("lastPurchase", "kpiIcmsRate"),
+                    value=float(last_purchase.get("icms_rate") or 0),
+                    unit="%",
+                    color="#6366f1",
+                    key="icms_rate",
+                )
+            )
+
+        return ChatPresentationKpiAssemblyService.build(title=title, cards=cards, min_cards=2)
+
+    def build_last_purchase_chart_presentation(self, root: dict, path: str) -> dict | None:
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        unit_price = last_purchase.get("unit_price")
+        icms_rate = last_purchase.get("icms_rate")
+
+        if unit_price is None:
+            return None
+
+        price_value = float(unit_price or 0)
+        icms_value = price_value * float(icms_rate or 0) / 100 if icms_rate is not None else 0
+        net_label = self._route("lastPurchase", "chartNetPriceLabel")
+        icms_label = self._route("lastPurchase", "chartIcmsLabel")
+        code, _description = self._product_context(root, path)
+
+        return {
+            "type": "chart",
+            "title": (
+                self._route("lastPurchase", "chartTitle", code=code)
+                if code
+                else self._route("lastPurchase", "chartTitleGeneric")
+            ),
+            "chartType": "horizontal_bar",
+            "data": [
+                {
+                    "name": self._route("lastPurchase", "chartCompositionLabel"),
+                    net_label: price_value,
+                    icms_label: icms_value,
+                }
+            ],
+            "config": {
+                "xAxis": "name",
+                "yAxis": [net_label, icms_label],
+                "colors": ["#10b981", "#6366f1"],
+                "legend": True,
+            },
+        }
+
+    def build_last_purchase_tree_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_hierarchy_tree_service import (
+            ChatPresentationHierarchyTreeService,
+        )
+
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+
+        if not last_purchase:
+            return None
+
+        code, _description = self._product_context(root, path)
+        supplier = str(last_purchase.get("supplier_code") or "—")
+        title = (
+            self._route("lastPurchase", "treeTitle", code=code)
+            if code
+            else self._route("lastPurchase", "treeTitleGeneric")
+        )
+
+        def _leaf(item: dict[str, Any]) -> dict[str, Any]:
+            return ChatPresentationHierarchyTreeService._serialize_node(
+                node_id="last-purchase:nf",
+                label=self._route(
+                    "lastPurchase",
+                    "treeInvoiceLeafLabel",
+                    price=str(item.get("unit_price") or "—"),
+                ),
+                subtitle=str(item.get("invoice_date") or "").strip(),
+            )
+
+        enriched = [{**last_purchase, "supplier_group": supplier}]
+
+        return ChatPresentationHierarchyTreeService.build_multi_level(
+            title=title,
+            root_id=code or "last-purchase",
+            root_label=(
+                self._route("lastPurchase", "treeRootLabel", code=code)
+                if code
+                else title
+            ),
+            items=enriched,
+            group_keys=["supplier_group"],
+            leaf_builder=_leaf,
+        )
+
+    def build_last_purchase_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_presentation_dashboard_assembly_service import (
+            ChatPresentationDashboardAssemblyService,
+        )
+
+        code, _description = self._product_context(root, path)
+        title = (
+            self._route("lastPurchase", "dashboardTitle", code=code)
+            if code
+            else self._route("lastPurchase", "dashboardTitleGeneric")
+        )
+        panels: list[dict] = []
+
+        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="summary",
+                    title=str(kpi.get("title") or self._route("lastPurchase", "overviewTableTitle")),
+                    presentation=kpi,
+                )
+            )
+
+        if isinstance(chart, dict) and chart.get("type") == "chart":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="chart",
+                    title=str(chart.get("title") or self._route("lastPurchase", "chartTitleGeneric")),
+                    presentation=chart,
+                    chart_presentation=chart,
+                )
+            )
+
+        if isinstance(table, dict) and table.get("type") == "table":
+            panels.append(
+                ChatPresentationDashboardAssemblyService.panel(
+                    panel_id="detail",
+                    title=str(table.get("title") or self._route("lastPurchase", "tableTitle")),
+                    presentation=table,
+                )
+            )
+
+        return ChatPresentationDashboardAssemblyService.build(title=title, panels=panels, min_panels=2)
 
     def _build_intelligence_overview_table(self, root: dict, path: str) -> dict | None:
         code, description = self._product_context(root, path)

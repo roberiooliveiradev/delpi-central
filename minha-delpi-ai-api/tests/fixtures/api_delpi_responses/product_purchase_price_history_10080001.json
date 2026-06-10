@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "message": "Histórico de preço de compra carregado com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10080001",
+      "description": "MP TE CONNECTIVITY",
+      "product_type": "MP"
+    },
+    "date_start": "20250101",
+    "date_end_exclusive": "20260701",
+    "items": [
+      {
+        "supplier_code": "000002",
+        "unit_price": 0.089,
+        "variation_percent": 1.14,
+        "issue_date": "20260407"
+      },
+      {
+        "supplier_code": "000002",
+        "unit_price": 0.088,
+        "variation_percent": null,
+        "issue_date": "20260301"
+      }
+    ],
+    "summary": {
+      "total_purchases": 2,
+      "min_unit_price": 0.088,
+      "max_unit_price": 0.089,
+      "avg_unit_price": 0.0885,
+      "last_variation_percent": 1.14
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "message": "Histórico de orçamento de compra carregado com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10080001",
+      "description": "MP TE CONNECTIVITY",
+      "product_type": "MP"
+    },
+    "date_start": "20250101",
+    "date_end_exclusive": "20260701",
+    "items": [
+      {
+        "source": "SC1010",
+        "document_number": "164708",
+        "issue_date": "20260430",
+        "supplier_code": "000002",
+        "quantity": 300000.0,
+        "unit_price": 0.0,
+        "purchase_order": "041446"
+      },
+      {
+        "source": "SC7010",
+        "document_number": "041446",
+        "issue_date": "20260430",
+        "supplier_code": "000002",
+        "quantity": 294000.0,
+        "unit_price": 0.0892799,
+        "total_value": 26248.29
+      }
+    ],
+    "summary": {
+      "total_items": 2,
+      "total_requisitions": 1,
+      "total_purchase_orders": 1
+    }
+  }
+}

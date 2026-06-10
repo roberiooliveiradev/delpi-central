@@ -91,6 +91,22 @@ class ChatPresentationVisualBundleService:
             profile_key == "structure_exclusivity"
             or ChatPresentationProfileService.has_flag(path, "structure_exclusivity", entity=entity)
         )
+        is_last_purchase_profile = (
+            profile_key == "last_purchase"
+            or ChatPresentationProfileService.has_flag(path, "last_purchase", entity=entity)
+        )
+        is_purchase_price_history_profile = (
+            profile_key == "purchase_price_history"
+            or ChatPresentationProfileService.has_flag(path, "purchase_price_history", entity=entity)
+        )
+        is_purchase_budget_history_profile = (
+            profile_key == "purchase_budget_history"
+            or ChatPresentationProfileService.has_flag(path, "purchase_budget_history", entity=entity)
+        )
+        is_purchase_list_profile = (
+            profile_key == "purchase_list"
+            or ChatPresentationProfileService.has_flag(path, "purchase_list", entity=entity)
+        )
 
         if (
             not is_factory_profile
@@ -100,6 +116,10 @@ class ChatPresentationVisualBundleService:
             and not is_production_status_profile
             and not is_shipping_status_profile
             and not is_structure_exclusivity_profile
+            and not is_last_purchase_profile
+            and not is_purchase_price_history_profile
+            and not is_purchase_budget_history_profile
+            and not is_purchase_list_profile
         ):
             cls._ensure_chart(metadata, root=root, path=path, presenter=presenter, primary_type=primary_type)
 
@@ -184,6 +204,39 @@ class ChatPresentationVisualBundleService:
                 primary_type=primary_type,
                 view_order=view_order,
                 profile="structure_exclusivity",
+            )
+
+        if is_last_purchase_profile:
+            cls._enrich_mp_purchase_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="last_purchase",
+            )
+
+        if is_purchase_price_history_profile or is_purchase_budget_history_profile:
+            cls._enrich_mp_purchase_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="purchase_history",
+            )
+
+        if is_purchase_list_profile:
+            cls._enrich_mp_purchase_bundle(
+                metadata,
+                root=root,
+                path=path,
+                presenter=presenter,
+                primary_type=primary_type,
+                view_order=view_order,
+                profile="purchase_list",
             )
 
         cls._sync_available_formats(metadata, view_order)
@@ -398,6 +451,90 @@ class ChatPresentationVisualBundleService:
                     table_slot = tables[0]
 
             dashboard = presenter.build_cost_impact_dashboard_presentation(
+                root,
+                path,
+                kpi=kpi_slot if isinstance(kpi_slot, dict) else None,
+                chart=chart_slot if isinstance(chart_slot, dict) else None,
+                table=table_slot if isinstance(table_slot, dict) else None,
+            )
+
+            if dashboard:
+                cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
+
+    @classmethod
+    def _enrich_mp_purchase_bundle(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        primary_type: str,
+        view_order: list[str],
+        profile: str,
+    ) -> None:
+        builders = {
+            "last_purchase": (
+                presenter.build_last_purchase_kpi_presentation,
+                presenter.build_last_purchase_tree_presentation,
+                presenter.build_last_purchase_chart_presentation,
+                presenter.build_last_purchase_dashboard_presentation,
+            ),
+            "purchase_history": (
+                presenter.build_purchase_history_kpi_presentation,
+                presenter.build_purchase_history_tree_presentation,
+                presenter.build_purchase_history_chart_presentation,
+                presenter.build_purchase_history_dashboard_presentation,
+            ),
+            "purchase_list": (
+                presenter.build_purchases_kpi_presentation,
+                presenter.build_purchases_tree_presentation,
+                presenter.build_purchases_chart_presentation,
+                presenter.build_purchases_dashboard_presentation,
+            ),
+        }
+        profile_builders = builders.get(profile)
+
+        if not profile_builders:
+            return
+
+        build_kpi, build_tree, build_chart, build_dashboard = profile_builders
+
+        if "kpi" in view_order:
+            kpi = build_kpi(root, path)
+
+            if kpi:
+                cls._attach_auxiliary(metadata, "kpi", kpi, primary_type=primary_type)
+
+        if "tree" in view_order:
+            tree = build_tree(root, path)
+
+            if tree:
+                cls._attach_auxiliary(metadata, "tree", tree, primary_type=primary_type)
+
+        if "chart" in view_order:
+            chart = build_chart(root, path)
+
+            if chart:
+                cls._attach_auxiliary(metadata, "chart", chart, primary_type=primary_type)
+
+        if "dashboard" in view_order:
+            kpi_slot = metadata.get("kpiPresentation")
+            chart_slot = metadata.get("chartPresentation")
+            table_slot = metadata.get("tablePresentation")
+
+            if not isinstance(table_slot, dict) and isinstance(metadata.get("tablePresentations"), list):
+                tables = metadata["tablePresentations"]
+
+                for candidate in tables:
+                    if isinstance(candidate, dict) and candidate.get("role") == "list":
+                        table_slot = candidate
+                        break
+
+                if not isinstance(table_slot, dict) and tables and isinstance(tables[-1], dict):
+                    table_slot = tables[-1]
+
+            dashboard = build_dashboard(
                 root,
                 path,
                 kpi=kpi_slot if isinstance(kpi_slot, dict) else None,

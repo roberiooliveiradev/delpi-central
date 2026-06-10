@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "items": [
+      {
+        "order_number": "041446",
+        "branch": "02",
+        "issue_date": "20260430",
+        "supplier_code": "000002",
+        "supplier_name": "TE CONNECTIVITY",
+        "product_code": "10080001",
+        "ordered_quantity": 294000.0,
+        "unit_price": 0.0892799
+      },
+      {
+        "order_number": "041200",
+        "branch": "02",
+        "issue_date": "20260315",
+        "supplier_code": "000002",
+        "supplier_name": "TE CONNECTIVITY",
+        "product_code": "10080001",
+        "ordered_quantity": 182000.0,
+        "unit_price": 0.088
+      }
+    ],
+    "page": 1,
+    "page_size": 50,
+    "total": 2,
+    "total_pages": 1
+  }
+}

@@ -101,6 +101,24 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_pricing",
         "shape": "scalar",
     },
+    "product_purchase_price_history_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_purchase_price_history",
+        "entity": "product_purchase_price_history",
+        "shape": "playbook_report",
+    },
+    "product_purchase_budget_history_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_purchase_budget_history",
+        "entity": "product_purchase_budget_history",
+        "shape": "playbook_report",
+    },
+    "product_purchases_10080001.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_purchases",
+        "entity": "product_purchases",
+        "shape": "paged_list",
+    },
     "product_detail_90269001.json": {
         "dataVersion": "2026-06",
         "operationId": "get_product_detail",

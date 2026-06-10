@@ -442,13 +442,57 @@ class ExecuteExternalActionUseCase:
                     else:
                         table_presentation = table_presentations_list[0]
             elif "/last-purchase" in path_lower and isinstance(root_payload, dict):
-                last_purchase_table = self.presenter.build_last_purchase_table_presentation(
+                table_presentations_list = self.presenter.build_last_purchase_table_presentations(
                     root_payload,
                     resolved_path,
                 )
 
-                if last_purchase_table:
-                    table_presentation = last_purchase_table
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
+            elif "/purchase-price-history" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = self.presenter.build_purchase_history_table_presentations(
+                    root_payload,
+                    resolved_path,
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
+            elif "/purchase-budget-history" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = self.presenter.build_purchase_history_table_presentations(
+                    root_payload,
+                    resolved_path,
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
+            elif "/purchases" in path_lower and isinstance(root_payload, dict):
+                table_presentations_list = self.presenter.build_purchases_table_presentations(
+                    root_payload,
+                    resolved_path,
+                )
+
+                if table_presentations_list:
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
             elif (
                 ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
                 and tree_presentation

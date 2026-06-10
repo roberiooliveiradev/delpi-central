@@ -33,6 +33,12 @@ from app.domain.services.external_actions.presenters.product_structure_exclusivi
 from app.domain.services.external_actions.presenters.product_pricing_presenter import (
     ExternalActionProductPricingPresenter,
 )
+from app.domain.services.external_actions.presenters.product_purchase_history_presenter import (
+    ExternalActionProductPurchaseHistoryPresenter,
+)
+from app.domain.services.external_actions.presenters.product_purchases_presenter import (
+    ExternalActionProductPurchasesPresenter,
+)
 from app.domain.services.external_actions.presenters.product_raw_material_price_presenter import (
     ExternalActionProductRawMaterialPricePresenter,
 )
@@ -103,6 +109,8 @@ class ExternalActionResultPresenter:
         self._product_shipping_status_presenter: ExternalActionProductShippingStatusPresenter | None = None
         self._product_structure_exclusivity_presenter: ExternalActionProductStructureExclusivityPresenter | None = None
         self._product_pricing_presenter: ExternalActionProductPricingPresenter | None = None
+        self._product_purchase_history_presenter: ExternalActionProductPurchaseHistoryPresenter | None = None
+        self._product_purchases_presenter: ExternalActionProductPurchasesPresenter | None = None
         self._product_raw_material_price_presenter: ExternalActionProductRawMaterialPricePresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
         self._product_stock_presenter: ExternalActionProductStockPresenter | None = None
@@ -167,6 +175,20 @@ class ExternalActionResultPresenter:
             self._product_pricing_presenter = ExternalActionProductPricingPresenter(self)
 
         return self._product_pricing_presenter
+
+    def _purchase_history(self) -> ExternalActionProductPurchaseHistoryPresenter:
+        if self._product_purchase_history_presenter is None:
+            self._product_purchase_history_presenter = ExternalActionProductPurchaseHistoryPresenter(
+                self,
+            )
+
+        return self._product_purchase_history_presenter
+
+    def _purchases(self) -> ExternalActionProductPurchasesPresenter:
+        if self._product_purchases_presenter is None:
+            self._product_purchases_presenter = ExternalActionProductPurchasesPresenter(self)
+
+        return self._product_purchases_presenter
 
     def _raw_material_price(self) -> ExternalActionProductRawMaterialPricePresenter:
         if self._product_raw_material_price_presenter is None:
@@ -449,6 +471,15 @@ class ExternalActionResultPresenter:
 
     def _present_product_last_purchase(self, root: dict, path: str) -> dict:
         return self._raw_material_price()._present_last_purchase(root, path)
+
+    def _present_product_purchase_price_history(self, root: dict, path: str) -> dict:
+        return self._purchase_history()._present_purchase_history(root, path)
+
+    def _present_product_purchase_budget_history(self, root: dict, path: str) -> dict:
+        return self._purchase_history()._present_purchase_history(root, path)
+
+    def _present_product_purchases(self, root: dict, path: str) -> dict:
+        return self._purchases()._present_product_purchases(root, path)
 
     def _present_playbook_report(self, root: dict, path: str, *, entity: str) -> dict | None:
         return self._playbook_report()._present_playbook_report(root, path, entity=entity)
@@ -871,6 +902,93 @@ class ExternalActionResultPresenter:
     def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
         return self._raw_material_price().build_last_purchase_table_presentation(root, path)
 
+    def build_last_purchase_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._raw_material_price().build_last_purchase_table_presentations(root, path)
+
+    def build_last_purchase_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_last_purchase_kpi_presentation(root, path)
+
+    def build_last_purchase_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_last_purchase_chart_presentation(root, path)
+
+    def build_last_purchase_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_last_purchase_tree_presentation(root, path)
+
+    def build_last_purchase_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._raw_material_price().build_last_purchase_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
+    def build_purchase_history_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._purchase_history().build_purchase_history_table_presentations(root, path)
+
+    def build_purchase_history_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchase_history().build_purchase_history_kpi_presentation(root, path)
+
+    def build_purchase_history_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchase_history().build_purchase_history_chart_presentation(root, path)
+
+    def build_purchase_history_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchase_history().build_purchase_history_tree_presentation(root, path)
+
+    def build_purchase_history_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._purchase_history().build_purchase_history_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
+    def build_purchases_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._purchases().build_purchases_table_presentations(root, path)
+
+    def build_purchases_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchases().build_purchases_kpi_presentation(root, path)
+
+    def build_purchases_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchases().build_purchases_chart_presentation(root, path)
+
+    def build_purchases_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchases().build_purchases_tree_presentation(root, path)
+
+    def build_purchases_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._purchases().build_purchases_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
     def build_stock_table_presentations(self, root: dict, path: str) -> list[dict]:
         return self._stock().build_stock_table_presentations(root, path)
 
@@ -927,6 +1045,15 @@ class ExternalActionResultPresenter:
 
     def _build_product_pricing_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._product_pricing()._build_pricing_text_presentation(root, path)
+
+    def _build_last_purchase_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price()._build_last_purchase_text_presentation(root, path)
+
+    def _build_purchase_history_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchase_history()._build_purchase_history_text_presentation(root, path)
+
+    def _build_purchases_text_presentation(self, root: dict, path: str) -> dict | None:
+        return self._purchases()._build_purchases_text_presentation(root, path)
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
         return self._presentation_builder()._build_presentation(data, path=path)

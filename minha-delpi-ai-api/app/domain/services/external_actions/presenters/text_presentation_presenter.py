@@ -187,6 +187,18 @@ class ExternalActionTextPresentationPresenter:
             if "/pricing" in lowered:
                 return self._host._build_product_pricing_text_presentation(root, path)
 
+            if "/last-purchase" in lowered:
+                return self._host._build_last_purchase_text_presentation(root, path)
+
+            if "/purchase-price-history" in lowered:
+                return self._host._build_purchase_history_text_presentation(root, path)
+
+            if "/purchase-budget-history" in lowered:
+                return self._host._build_purchase_history_text_presentation(root, path)
+
+            if "/purchases" in lowered:
+                return self._host._build_purchases_text_presentation(root, path)
+
         if isinstance(root, dict) and "/parents" in lowered:
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,
