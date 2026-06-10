@@ -697,6 +697,13 @@ class ChatPresentationDecisionService:
                 metadata,
             )
 
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        if str(metadata.get("explicitSessionFormat") or "").strip():
+            ChatPresentationTextModeService.align_explicit_session_decision(metadata)
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))

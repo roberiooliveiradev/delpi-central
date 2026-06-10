@@ -98,12 +98,14 @@ def test_factory_status_text_mode_embeds_tables_in_markdown():
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "single"
+    assert decision["layoutMode"] == "stack"
     assert "|" in markdown
     assert "**Panorama fabril**" in markdown or "Panorama fabril" in markdown
-    assert meta.get("treePresentation") is None
-    assert meta.get("tablePresentations") is None
-    assert meta.get("dashboardPresentation") is None
+    assert meta.get("tablePresentations") is not None
+    assert (
+        meta.get("dashboardPresentation") is not None
+        or (meta.get("presentation") or {}).get("type") == "dashboard"
+    )
     assert "Composição" in markdown or "└──" in markdown or "├──" in markdown
 
 

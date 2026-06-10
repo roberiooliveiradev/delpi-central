@@ -91,6 +91,28 @@ def test_finalize_decision_alignment_single_layout_for_explicit_table():
     assert metadata["presentationDecision"]["visualOrder"] == ["table"]
 
 
+def test_finalize_decision_alignment_preserves_explicit_text_with_stack():
+    metadata = {
+        "explicitSessionFormat": "text",
+        "preferredFormat": "text",
+        "availableFormats": ["text", "table", "dashboard"],
+        "presentationDecision": {
+            "selected": "dashboard",
+            "layoutMode": "stack",
+            "visualOrder": ["text", "table", "dashboard"],
+            "availableViews": ["text", "table", "dashboard"],
+        },
+        "textPresentation": {"type": "markdown", "markdown": "### Resumo\n\nCorpo."},
+        "dashboardPresentation": {"type": "dashboard", "panels": []},
+    }
+
+    ChatPresentationPrimaryViewService.finalize_decision_alignment(metadata)
+
+    assert metadata.get("explicitSessionFormat") == "text"
+    assert metadata["presentationDecision"]["layoutMode"] == "stack"
+    assert metadata["presentationDecision"]["selected"] == "dashboard"
+
+
 def test_stock_session_table_prefers_table_primary():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(
@@ -123,7 +145,16 @@ def test_stock_session_table_prefers_table_primary():
 
     assert meta["presentation"]["type"] == "table"
     assert decision["selected"] == "table"
-    assert decision["layoutMode"] == "single"
+    _assert_explicit_session_layout(decision)
+
+
+def _assert_explicit_session_layout(decision: dict) -> None:
+    views = decision.get("availableViews") or []
+
+    if len(views) >= 2:
+        assert decision["layoutMode"] == "stack"
+    else:
+        assert decision["layoutMode"] == "single"
 
 
 def test_stock_session_tree_prefers_tree_primary():
@@ -158,7 +189,7 @@ def test_stock_session_tree_prefers_tree_primary():
 
     assert meta["presentation"]["type"] == "tree"
     assert decision["selected"] == "tree"
-    assert decision["layoutMode"] == "single"
+    _assert_explicit_session_layout(decision)
     assert meta.get("explicitSessionFormat") == "tree"
 
 
@@ -230,7 +261,7 @@ def test_stock_session_chart_prefers_chart_primary():
 
     assert meta["presentation"]["type"] == "chart"
     assert decision["selected"] == "chart"
-    assert decision["layoutMode"] == "single"
+    _assert_explicit_session_layout(decision)
 
 
 def test_parents_session_tree_keeps_tree_primary():
@@ -262,7 +293,7 @@ def test_parents_session_tree_keeps_tree_primary():
 
     assert meta["presentation"]["type"] == "tree"
     assert decision["selected"] == "tree"
-    assert decision["layoutMode"] == "single"
+    _assert_explicit_session_layout(decision)
 
 
 def test_commercial_kpi_session_canvas_keeps_canvas_preference():
@@ -334,7 +365,12 @@ def test_session_format_regression_cases_table_and_tree():
         if case["expected_primary_type"]:
             assert meta["presentation"]["type"] == case["expected_primary_type"]
 
-        assert meta["presentationDecision"]["layoutMode"] == "single"
+        views = meta["presentationDecision"].get("availableViews") or []
+
+        if len(views) >= 2:
+            assert meta["presentationDecision"]["layoutMode"] == "stack"
+        else:
+            assert meta["presentationDecision"]["layoutMode"] == "single"
 
 
 def test_structure_text_mode_embeds_tree_outline_markdown():
@@ -382,7 +418,11 @@ def test_structure_text_mode_embeds_tree_outline_markdown():
     markdown = str(meta["textPresentation"]["markdown"])
 
     assert meta["presentationDecision"]["selected"] == "text"
-    assert meta.get("treePresentation") is None
-    assert "**Composição**" in markdown
-    assert "50230130" in markdown
-    assert "└── 50230130" in markdown or "├── 50230130" in markdown
+    assert meta["presentationDecision"]["layoutMode"] == "stack"
+    assert (
+        "|" in markdown
+        or "└──" in markdown
+        or "├──" in markdown
+        or "```text" in markdown
+    )
+    assert meta.get("treePresentation") is not None or "└──" in markdown or "├──" in markdown

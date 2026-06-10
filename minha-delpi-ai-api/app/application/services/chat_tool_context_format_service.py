@@ -221,11 +221,11 @@ class ChatToolContextFormatService:
                     if rebuilt:
                         meta["textPresentation"] = rebuilt
 
-                from app.domain.services.chat_presentation_tree_markdown_service import (
-                    ChatPresentationTreeMarkdownService,
+                from app.domain.services.chat_presentation_text_mode_service import (
+                    ChatPresentationTextModeService,
                 )
 
-                ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(meta)
+                ChatPresentationTextModeService.embed_and_finalize_explicit_text(meta)
 
             elif requested_format == "tree":
                 meta["preferredFormat"] = "tree"

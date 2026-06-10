@@ -92,8 +92,11 @@ class ChatToolContextExecutionService:
                 )
             )
 
+        workspace_context = getattr(host, "_build_workspace_context", None)
+        workspace_context = workspace_context if isinstance(workspace_context, dict) else None
+
         session_response_format = ChatToolContextFormatService.session_response_format(
-            getattr(host, "_build_workspace_context", None),
+            workspace_context,
         )
 
         for selected_tool in selected_tools:

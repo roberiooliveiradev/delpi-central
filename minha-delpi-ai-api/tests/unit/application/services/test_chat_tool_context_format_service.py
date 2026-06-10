@@ -81,3 +81,42 @@ def test_apply_format_override_builds_structure_table_from_tree_primary():
     assert meta["presentation"]["type"] == "table"
     assert meta["presentationDecision"]["selected"] == "table"
     assert meta.get("explicitSessionFormat") == "table"
+
+
+def test_apply_format_override_text_preserves_factory_stack_payload():
+    service = ChatToolContextFormatService()
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+    envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")
+    metadata = {
+        "ok": True,
+        "path": "/products/90269002/factory-status",
+        "apiDelpiResponseMeta": envelope.get("meta") or {"entity": "product_factory_status"},
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+            "availableViews": ["text", "table", "tree", "chart", "kpi", "dashboard"],
+            "visualOrder": ["text", "table", "tree", "chart", "kpi", "dashboard"],
+        },
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Status fabril\n\nResumo.",
+        },
+        "tablePresentations": [{"type": "table", "title": "Panorama fabril", "rows": []}],
+        "treePresentation": {"type": "tree", "root": {"id": "root"}},
+        "kpiPresentation": {"type": "kpi", "cards": []},
+        "dashboardPresentation": {"type": "dashboard", "panels": []},
+        "preferredFormat": "text",
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
+
+    service.apply_format_override(tool_calls, "text", envelope.get("data"))
+
+    meta = tool_calls[0]["metadata"]
+
+    assert meta.get("explicitSessionFormat") == "text"
+    assert meta["presentationDecision"]["layoutMode"] == "stack"
+    assert meta.get("tablePresentations") is not None
+    assert meta.get("treePresentation") is not None
+    assert meta.get("kpiPresentation") is not None
+    assert meta.get("dashboardPresentation") is not None

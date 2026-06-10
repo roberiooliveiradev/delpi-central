@@ -132,7 +132,7 @@ class ChatWorkingMemoryService:
     def apply_turn_response_format(cls, snapshot: dict, response_format: str | None) -> dict:
         token = str(response_format or "").strip().lower()
 
-        if token not in {"table", "text", "tree", "chart", "canvas", "topics"}:
+        if token not in {"table", "text", "tree", "chart", "canvas", "topics", "dashboard"}:
             return snapshot
 
         result = dict(snapshot)

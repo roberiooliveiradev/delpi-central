@@ -6,38 +6,25 @@ from app.domain.services.chat_presentation_text_mode_service import (
 def test_enforce_single_text_decision_for_explicit_session():
     metadata = {
         "explicitSessionFormat": "text",
+        "availableFormats": ["text", "table", "tree", "dashboard"],
         "presentationDecision": {
             "selected": "text",
             "layoutMode": "stack",
-            "visualOrder": ["text", "table", "tree"],
-            "availableViews": ["text", "table", "tree"],
+            "visualOrder": ["text", "table", "tree", "dashboard"],
+            "availableViews": ["text", "table", "tree", "dashboard"],
         },
+        "tablePresentations": [{"type": "table", "rows": []}],
+        "treePresentation": {"type": "tree", "root": {}},
     }
 
     ChatPresentationTextModeService.enforce_single_text_decision(metadata)
 
     decision = metadata["presentationDecision"]
 
-    assert decision["layoutMode"] == "single"
-    assert decision["visualOrder"] == ["text"]
-
-
-def test_strip_native_visual_slots_on_explicit_text():
-    metadata = {
-        "explicitSessionFormat": "text",
-        "textPresentation": {"type": "markdown", "markdown": "### Resumo\n\n| A | B |"},
-        "tablePresentations": [{"type": "table", "rows": []}],
-        "treePresentation": {"type": "tree", "root": {}},
-        "kpiPresentation": {"type": "kpi", "cards": []},
-        "presentationDecision": {"selected": "text", "layoutMode": "stack"},
-    }
-
-    ChatPresentationTextModeService.strip_native_visual_slots(metadata)
-
-    assert metadata.get("tablePresentations") is None
-    assert metadata.get("treePresentation") is None
-    assert metadata.get("kpiPresentation") is None
-    assert metadata["presentationDecision"]["layoutMode"] == "single"
+    assert decision["layoutMode"] == "stack"
+    assert "table" in decision["visualOrder"]
+    assert metadata.get("tablePresentations") is not None
+    assert metadata.get("treePresentation") is not None
 
 
 def test_should_embed_in_markdown_for_stack_with_text_selected():
@@ -49,9 +36,10 @@ def test_should_embed_in_markdown_for_stack_with_text_selected():
     assert ChatPresentationTextModeService.should_embed_in_markdown(metadata) is False
 
 
-def test_finalize_explicit_text_mode_strips_natives_after_embed():
+def test_finalize_explicit_text_mode_preserves_payload_after_embed():
     metadata = {
         "explicitSessionFormat": "text",
+        "availableFormats": ["text", "table", "tree"],
         "textPresentation": {
             "type": "markdown",
             "markdown": "### Resumo\n\n| A | B |\n| --- | --- |\n| 1 | 2 |",
@@ -69,11 +57,11 @@ def test_finalize_explicit_text_mode_strips_natives_after_embed():
 
     ChatPresentationTextModeService.finalize_explicit_text_mode(metadata)
 
-    assert metadata.get("tablePresentations") is None
-    assert metadata.get("treePresentation") is None
-    assert metadata.get("kpiPresentation") is None
-    assert metadata["presentationDecision"]["layoutMode"] == "single"
-    assert metadata["presentationDecision"]["visualOrder"] == ["text"]
+    assert metadata.get("tablePresentations") is not None
+    assert metadata.get("treePresentation") is not None
+    assert metadata.get("kpiPresentation") is not None
+    assert metadata["presentationDecision"]["layoutMode"] == "stack"
+    assert metadata["presentationDecision"]["selected"] == "text"
 
 
 def test_should_embed_in_markdown_for_explicit_text():

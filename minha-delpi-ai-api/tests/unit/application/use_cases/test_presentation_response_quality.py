@@ -162,22 +162,18 @@ def _assert_no_near_duplicate_prose(markdown: str) -> None:
                 )
 
 
-def _assert_text_mode_payload_is_markdown_only(meta: dict[str, Any]) -> None:
+def _assert_text_mode_payload_keeps_full_bundle(meta: dict[str, Any]) -> None:
     assert meta.get("explicitSessionFormat") == "text"
     decision = meta.get("presentationDecision") or {}
 
     assert decision.get("selected") == "text"
-    assert decision.get("layoutMode") == "single"
+    assert decision.get("layoutMode") == "stack"
 
-    for slot in (
-        "tablePresentations",
-        "tablePresentation",
-        "treePresentation",
-        "chartPresentation",
-        "kpiPresentation",
-        "dashboardPresentation",
-    ):
-        assert meta.get(slot) is None, f"slot nativo {slot} deveria estar ausente no modo Texto"
+    assert meta.get("tablePresentations"), "modo Texto deve manter tabelas no payload"
+
+    dashboard = meta.get("dashboardPresentation") or meta.get("presentation") or {}
+
+    assert dashboard.get("type") == "dashboard" or meta.get("kpiPresentation")
 
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
@@ -212,7 +208,7 @@ def test_factory_status_auto_quality_matches_fixture_analyst_narrative():
     )
 
 
-def test_factory_status_explicit_text_quality_matches_fixture_without_native_slots():
+def test_factory_status_explicit_text_quality_matches_fixture_with_full_bundle():
     envelope = load_api_delpi_fixture_with_meta(_FACTORY_FIXTURE)
     facts = _factory_canonical_facts(envelope)
     meta = _build(
@@ -223,12 +219,12 @@ def test_factory_status_explicit_text_quality_matches_fixture_without_native_slo
     )
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
-    _assert_text_mode_payload_is_markdown_only(meta)
+    _assert_text_mode_payload_keeps_full_bundle(meta)
     _assert_markdown_covers_factory_facts(markdown, facts, require_mp_codes=True)
     _assert_no_near_duplicate_prose(markdown)
 
 
-def test_factory_status_explicit_dashboard_single_view_without_orphan_visuals():
+def test_factory_status_explicit_dashboard_keeps_full_bundle_for_toolbar():
     envelope = load_api_delpi_fixture_with_meta(_FACTORY_FIXTURE)
     facts = _factory_canonical_facts(envelope)
     meta = _build(
@@ -241,13 +237,13 @@ def test_factory_status_explicit_dashboard_single_view_without_orphan_visuals():
 
     assert meta.get("explicitSessionFormat") == "dashboard"
     assert decision.get("selected") == "dashboard"
-    assert decision.get("layoutMode") == "single"
+    assert decision.get("layoutMode") == "stack"
 
     dashboard = meta.get("presentation") or meta.get("dashboardPresentation") or {}
 
     assert dashboard.get("type") == "dashboard"
-    assert meta.get("treePresentation") is None
-    assert meta.get("kpiPresentation") is None
+    assert meta.get("tablePresentations"), "payload deve manter tabelas para aba Tabela"
+    assert meta.get("textPresentation"), "payload deve manter narrativa para aba Texto"
 
     panels = dashboard.get("panels") or []
     kpi_panels = [

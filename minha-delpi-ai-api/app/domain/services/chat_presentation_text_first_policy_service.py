@@ -96,15 +96,14 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.looks_like_integrated_stack_request(user_message):
             return True
 
-        if not cls.normalize_explicit_format(explicit_format):
-            profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 
-            if profile_key in {
-                "factory_status",
-                "production_status",
-                "shipping_status",
-            }:
-                return True
+        if profile_key in {
+            "factory_status",
+            "production_status",
+            "shipping_status",
+        }:
+            return True
 
         return False
 

@@ -99,15 +99,16 @@ class ChatPresentationPrimaryViewService:
                 metadata["kpiPresentation"] = presentation
                 metadata["presentation"] = None
 
-            if explicit == "text" and not native_selected:
-                decision["layoutMode"] = "single"
-                decision["visualOrder"] = ["text"]
-
             return
 
         if native_selected and explicit == "text":
-            metadata["explicitSessionFormat"] = selected
-            metadata["preferredFormat"] = selected
+            preferred = str(metadata.get("preferredFormat") or "").strip().lower()
+
+            if preferred == selected and preferred not in {"", "text", "topics"}:
+                metadata["explicitSessionFormat"] = selected
+                metadata["preferredFormat"] = selected
+
+            return
 
         if explicit == "canvas":
             decision["selected"] = "canvas"
@@ -129,7 +130,7 @@ class ChatPresentationPrimaryViewService:
 
     @classmethod
     def finalize_explicit_native_single_view(cls, metadata: dict[str, Any]) -> None:
-        """Pós-pipeline: modo nativo explícito (Painel/Tabela/…) — só a visão escolhida no payload."""
+        """Pós-pipeline: promove visão explícita (Painel/Tabela/…) sem remover demais formatos."""
         explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
 
         if explicit not in _EXPLICIT_NATIVE_SINGLE:
@@ -137,41 +138,11 @@ class ChatPresentationPrimaryViewService:
 
         cls._promote_view(metadata, explicit)
 
-        preserved = metadata.get("presentation")
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
 
-        for slot in (
-            "tablePresentation",
-            "tablePresentations",
-            "treePresentation",
-            "chartPresentation",
-            "kpiPresentation",
-            "dashboardPresentation",
-            "inspectionTablePresentation",
-            "profileTablePresentation",
-        ):
-            metadata.pop(slot, None)
-
-        if isinstance(preserved, dict):
-            metadata["presentation"] = preserved
-
-        decision = metadata.get("presentationDecision")
-
-        if isinstance(decision, dict):
-            decision["selected"] = explicit
-            decision["layoutMode"] = "single"
-            decision["visualOrder"] = [explicit]
-
-        metadata["preferredFormat"] = explicit
-
-        text_presentation = metadata.get("textPresentation")
-
-        if isinstance(text_presentation, dict):
-            title = str(
-                text_presentation.get("title")
-                or (preserved.get("title") if isinstance(preserved, dict) else "")
-                or "",
-            ).strip()
-            text_presentation["markdown"] = f"### {title}".strip() if title else ""
+        ChatPresentationTextModeService.align_explicit_session_decision(metadata)
 
     @classmethod
     def relocate_primary_to_text_auxiliary_slots(cls, metadata: dict[str, Any]) -> None:

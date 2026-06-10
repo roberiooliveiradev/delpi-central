@@ -65,7 +65,7 @@ def test_finalize_decision_alignment_recovers_stale_text_explicit_for_table():
     assert metadata["presentationDecision"]["visualOrder"] == ["table"]
 
 
-def test_finalize_explicit_dashboard_strips_orphan_visuals():
+def test_finalize_explicit_dashboard_preserves_full_bundle_for_toolbar():
     dashboard = {
         "type": "dashboard",
         "title": "Painel fabril — 90269002",
@@ -94,14 +94,16 @@ def test_finalize_explicit_dashboard_strips_orphan_visuals():
         },
         "presentationDecision": {
             "selected": "dashboard",
-            "layoutMode": "single",
-            "visualOrder": ["dashboard"],
+            "layoutMode": "stack",
+            "availableViews": ["text", "tree", "chart", "dashboard"],
+            "visualOrder": ["text", "tree", "chart", "dashboard"],
         },
     }
 
     ChatPresentationPrimaryViewService.finalize_explicit_native_single_view(metadata)
 
     assert metadata.get("presentation", {}).get("type") == "dashboard"
-    assert metadata.get("treePresentation") is None
-    assert metadata.get("chartPresentation") is None
-    assert metadata["textPresentation"]["markdown"] == "### Status fabril"
+    assert metadata.get("treePresentation") is not None
+    assert metadata.get("chartPresentation") is not None
+    assert "Narrativa longa" in metadata["textPresentation"]["markdown"]
+    assert metadata["presentationDecision"]["layoutMode"] == "stack"
