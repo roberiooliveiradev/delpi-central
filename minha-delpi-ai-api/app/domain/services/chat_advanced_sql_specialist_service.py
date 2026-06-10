@@ -371,6 +371,34 @@ class ChatAdvancedSqlSpecialistService:
             cleaned.pop("suppressAdvancedSqlEnrichment", None)
             return cleaned
 
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        if (
+            ChatPresentationFormatRefinementService.looks_like_format_refinement(message)
+            and cls._has_successful_operational_tool_result(result)
+        ):
+            from app.domain.services.chat_tool_context_presentation_service import (
+                ChatToolContextPresentationService,
+            )
+
+            tool_calls = result.get("toolCalls")
+            presentation_answer = ChatToolContextPresentationService.prefer_presentation_direct_answer(
+                result.get("directAnswer"),
+                tool_calls if isinstance(tool_calls, list) else [],
+                message=message,
+            )
+            updated = dict(result)
+
+            if presentation_answer:
+                updated["directAnswer"] = presentation_answer
+
+            updated["skipRag"] = True
+            updated.pop("sqlRequiresLlm", None)
+
+            return updated
+
         if not snapshot:
             return result
 

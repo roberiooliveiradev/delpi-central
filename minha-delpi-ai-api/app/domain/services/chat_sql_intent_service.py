@@ -59,7 +59,13 @@ class ChatSqlIntentService:
     @classmethod
     def is_sql_conversation_turn(cls, message: str | None) -> bool:
         """Turno de especialista SQL — não deve cair em text_task puro."""
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
         from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return False
 
         if ChatSqlSafetyService.looks_like_sql_payload(message):
             return True
@@ -77,7 +83,13 @@ class ChatSqlIntentService:
     @classmethod
     def router_sub_intent(cls, message: str | None) -> str | None:
         """Sub-intent SQL para o roteador (evita falso positivo em «sem executar»)."""
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
         from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 

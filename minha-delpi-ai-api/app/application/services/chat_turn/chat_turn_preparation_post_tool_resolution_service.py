@@ -112,6 +112,9 @@ class ChatTurnPreparationPostToolResolutionService:
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
         )
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
 
         if canvas_action:
             direct_answer = canvas_action.answer
@@ -134,6 +137,9 @@ class ChatTurnPreparationPostToolResolutionService:
                     previous_messages=history_source,
                 )
                 or ChatSqlIntentService.is_sql_conversation_turn(message)
+                or ChatPresentationFormatRefinementService.looks_like_format_refinement(
+                    message,
+                )
             )
         ):
             direct_answer = str(tool_context.get("directAnswer") or "").strip()
@@ -308,7 +314,34 @@ class ChatTurnPreparationPostToolResolutionService:
                 ChatToolContextService,
             )
 
-            if not (
+            from app.domain.services.chat_presentation_format_refinement_service import (
+                ChatPresentationFormatRefinementService,
+            )
+
+            format_refinement_turn = (
+                ChatPresentationFormatRefinementService.looks_like_format_refinement(message)
+            )
+
+            if format_refinement_turn:
+                presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(
+                    direct_answer,
+                    tool_calls,
+                    message=message,
+                )
+
+                if presentation_answer:
+                    direct_answer = presentation_answer
+                    skip_rag = True
+
+                    if isinstance(tool_context, dict):
+                        tool_context = {
+                            **tool_context,
+                            "directAnswer": presentation_answer,
+                            "skipRag": True,
+                        }
+                        tool_context.pop("sqlRequiresLlm", None)
+
+            elif not (
                 isinstance(tool_context, dict) and tool_context.get("sqlRequiresLlm")
             ) and not (drawing_mode and has_drawing_report):
                 presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(

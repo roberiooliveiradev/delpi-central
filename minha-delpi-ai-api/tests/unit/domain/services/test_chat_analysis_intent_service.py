@@ -125,6 +125,27 @@ def test_does_not_flag_data_interpretation_without_tool_history():
     )
 
 
+def test_does_not_flag_format_refinement_as_data_interpretation():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080001/stock"},
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert not ChatAnalysisIntentService.is_data_interpretation_request(
+        "mostre o último resultado em tabela",
+        history,
+    )
+
+
 def test_detects_data_reference_without_tool_history():
     assert ChatAnalysisIntentService.is_data_reference_without_tool_data(
         "explique os dados acima",
