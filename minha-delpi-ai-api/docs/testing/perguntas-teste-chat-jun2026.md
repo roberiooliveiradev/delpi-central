@@ -170,7 +170,7 @@ Sessão de correção e validação E2E (API gateway, usuário `rober`, agente M
 
 ### Resultado dos testes (09/jun/2026)
 
-**Smoke E2E** (`smoke_perguntas_teste_chat_jun2026.py`) — **16/16 cenários single-turn OK**:
+**Smoke E2E** (`smoke_perguntas_teste_chat_jun2026.py`) — **16/16 cenários single-turn OK** *(execução 09/jun)*:
 
 | Cenário | Rota obtida | Formato |
 |---------|-------------|---------|
@@ -187,32 +187,103 @@ Sessão de correção e validação E2E (API gateway, usuário `rober`, agente M
 
 ---
 
-## Registro do teste — ___/___/2026
+## Homologação apresentação + roteiro completo (jun/2026)
+
+Revalidação após **stack rico** (narrativa + KPI/árvore/gráfico/dashboard), árvore BOM, dedup estrutura e vocabulário centralizado (`presentation_vocabulary.json`).
+
+**Commit:** `6015a38c` · **Ambiente:** gateway `localhost`, usuário `rober`, agente Minha DELPI Chat.
+
+### Smoke E2E — roteamento e turnos
+
+Comando (no **host**, não dentro do container — `localhost` não resolve de dentro da API):
+
+```bash
+cd minha-delpi-ai-api
+SMOKE_BASE_URL=http://localhost PYTHONPATH=. python3 scripts/smoke_perguntas_teste_chat_jun2026.py
+```
+
+**Resultado: 21/21 OK** (single-turn + multi-turn F5/F6, MP10, R6, MP7).
+
+| Cenário | Pergunta (resumo) | Rota / efeito | Latência |
+|---------|-------------------|---------------|----------|
+| R1 | estoque `10080022` | `/stock` | ~1,5 s |
+| R2 | status fabril `90269002` hoje | `/factory-status` | ~1,5 s |
+| R3 | análise MP `10080001` | `/raw-material-price-intelligence` | ~1,6 s |
+| R4 | impacto custo PA `90261255` | `/cost-impact-simulation` | ~1,5 s |
+| R5 | preço venda `10080001` | `/pricing` | ~1,5 s |
+| F2 | produção `90269002` hoje | `/production-status` | ~1,4 s |
+| F3 | expedição `90269002` hoje | `/shipping-status` | ~1,3 s |
+| F4 | MPs exclusivas estrutura `90269002` | `/structure/exclusivity` | ~1,4 s |
+| MP1 | Análise preço MP `10080001` | `/raw-material-price-intelligence` | ~1,4 s |
+| MP2 | Última compra + ICMS | `/last-purchase` | ~1,1 s |
+| MP3 | Orçamento compra | `/purchase-budget-history` | ~1,5 s |
+| MP4 | Histórico preço compra | `/purchase-price-history` | ~1,6 s |
+| MP6 | Simule +10% PA | `/cost-impact-simulation` | ~1,5 s |
+| MP8 | Preço venda | `/pricing` | ~1,7 s |
+| MP9 | Últimas compras | `/purchases` | ~1,3 s |
+| D1 | Preço venda *(não intelligence)* | `/pricing` — **não** `/raw-material-price-intelligence` | OK |
+| F5 | status fabril sem data | `pending=missing_date` | OK |
+| F6 | continuação «hoje» | `/factory-status` | ~1,8 s |
+| MP10 | «análise MP» → `10080001` | `/raw-material-price-intelligence` | ~1,8 s |
+| R6 | refinamento «em tabela» | sem `/system/tables`; reapresenta último resultado | ~68 s |
+| MP7 | MP no simulador PA | erro amigável / não OK silencioso | ~1,3 s |
+
+### Apresentação — regressão de pipeline (fixtures API-DELPI)
+
+`pytest tests/unit/application/use_cases/test_playbook_presentation_pipeline_regression.py` — **5/5 OK**:
+
+| Caso | Rota / fixture | O que valida |
+|------|----------------|--------------|
+| R2 fabril | `90269002` `/factory-status` | `selected=text`, `layoutMode=stack`, KPI + árvore + dashboard |
+| F4 exclusividade | `90261805` `/structure/exclusivity` | árvore PA→PI→MP, dedup tabela estrutura, MPs `10020053`/`10080185` na narrativa, painel `structure` |
+| R3 MP | `10080022` `/raw-material-price-intelligence` | narrativa rica + stack + KPI + gráfico |
+| R4 simulador | `90261255` `/cost-impact-simulation` | stack + KPI + gráfico |
+| R1 estoque | `90269001` `/stock` | stack texto + árvore + tabela de posições |
+
+Lote ampliado (intent + apresentação): **219 passed** — `test_chat_intelligence_regression`, `test_chat_product_query_intent_service`, `test_playbook_presentation_pipeline_regression`.
+
+### Não coberto por smoke automatizado
+
+| # | Tipo | Notas |
+|---|------|-------|
+| R7 | Chip «Gerar gráfico» pós-estoque | Manual / MFE |
+| F1 | Igual R2 | Coberto indiretamente por R2 |
+| MP5 | Igual R4 | Coberto indiretamente por R4 |
+| AP1–AP15 | Toolbar, chips, paginação | Manual — ver [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) |
+| D2–D4 | Desambiguação negativa | Parcialmente coberto por pytest de intent |
+
+---
+
+## Registro do teste — jun/2026
 
 | # | OK | Observação |
 |---|:--:|------------|
-| R1 | ☐ | |
-| R2 | ☐ | |
-| R3 | ☐ | |
-| R4 | ☐ | |
-| R5 | ☐ | |
-| R6 | ☐ | |
-| R7 | ☐ | |
-| F1 | ☐ | |
-| F2 | ☐ | |
-| F3 | ☐ | |
-| F4 | ☐ | |
-| MP1 | ☐ | |
-| MP2 | ☐ | |
-| MP3 | ☐ | |
-| MP4 | ☐ | |
-| MP5 | ☐ | |
-| MP6 | ☐ | |
-| MP7 | ☐ | |
-| MP8 | ☐ | |
-| AP1 | ☐ | |
-| AP5 | ☐ | |
-| AP9 | ☐ | |
-| D1 | ☐ | |
+| R1 | ☑ | smoke E2E `/stock` |
+| R2 | ☑ | smoke + pipeline stack fabril |
+| R3 | ☑ | smoke `/raw-material-price-intelligence` |
+| R4 | ☑ | smoke + pipeline cost-impact |
+| R5 | ☑ | smoke `/pricing` |
+| R6 | ☑ | smoke refinamento tabela (~68 s) |
+| R7 | ☐ | manual — chip gráfico |
+| F1 | ☑ | equivalente R2 |
+| F2 | ☑ | smoke `/production-status` |
+| F3 | ☑ | smoke `/shipping-status` |
+| F4 | ☑ | smoke + pipeline exclusividade `90261805` |
+| F5 | ☑ | smoke `missing_date` |
+| F6 | ☑ | smoke continuação «hoje» |
+| MP1 | ☑ | smoke intelligence |
+| MP2 | ☑ | smoke `/last-purchase` |
+| MP3 | ☑ | smoke orçamento |
+| MP4 | ☑ | smoke histórico preço |
+| MP5 | ☑ | equivalente R4 |
+| MP6 | ☑ | smoke simulação +10% |
+| MP7 | ☑ | smoke erro MP no simulador |
+| MP8 | ☑ | smoke pricing |
+| MP9 | ☑ | smoke purchases |
+| MP10 | ☑ | smoke sessão ativa |
+| AP1 | ☐ | manual toolbar |
+| AP5 | ☐ | manual refinamento |
+| AP9 | ☐ | manual chips |
+| D1 | ☑ | smoke não intelligence |
 
-**Tester:** _______________ · **Ambiente:** local / homolog · **Commit/deploy:** _______________
+**Tester:** automação + revisão assistente · **Ambiente:** local (WSL2, docker compose) · **Commit:** `6015a38c`
