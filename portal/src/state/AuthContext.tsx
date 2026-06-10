@@ -38,6 +38,7 @@ interface AuthContextType {
 
   addFavorite: (appId: string) => Promise<void>;
   removeFavorite: (appId: string) => Promise<void>;
+  reorderFavorites: (appIds: string[]) => Promise<void>;
 
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
@@ -94,6 +95,7 @@ export const AuthContext = createContext<AuthContextType>({
 
   addFavorite: async () => {},
   removeFavorite: async () => {},
+  reorderFavorites: async () => {},
   markNotificationRead: async () => {},
   markAllNotificationsRead: async () => {},
   deleteNotification: async () => {},
@@ -406,6 +408,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [buildCoreApi, loadFavoritesData]
   );
 
+  const reorderFavorites = useCallback(
+    async (appIds: string[]) => {
+      const coreApi = buildCoreApi();
+      const previous = favorites;
+
+      setFavorites((prev) => {
+        const byId = new Map(prev.map((fav) => [fav.id, fav]));
+        return appIds
+          .map((id, index) => {
+            const fav = byId.get(id);
+            return fav ? { ...fav, order_index: index } : null;
+          })
+          .filter(Boolean) as FavoriteAppItem[];
+      });
+
+      try {
+        await coreApi.reorderFavoriteApps(appIds);
+      } catch {
+        setFavorites(previous);
+        await loadFavoritesData();
+      }
+    },
+    [buildCoreApi, favorites, loadFavoritesData]
+  );
+
   const markNotificationRead = useCallback(
     async (id: string) => {
       const coreApi = buildCoreApi();
@@ -575,6 +602,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       addFavorite,
       removeFavorite,
+      reorderFavorites,
       markNotificationRead,
       markAllNotificationsRead,
       deleteNotification,
@@ -600,6 +628,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       notifications,
       addFavorite,
       removeFavorite,
+      reorderFavorites,
       markNotificationRead,
       markAllNotificationsRead,
       deleteNotification,

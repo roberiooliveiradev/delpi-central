@@ -41,6 +41,8 @@ export const HomePage = () => {
     user,
     favorites,
     notifications,
+    addFavorite,
+    removeFavorite,
     markAllNotificationsRead,
   } = useContext(AuthContext);
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
@@ -64,6 +66,18 @@ export const HomePage = () => {
       .map((id) => appsById[id])
       .filter(isLaunchableApp);
   }, [appsById]);
+
+  const togglePin = async (appId: string) => {
+    const app = appsById[appId];
+    if (!isLaunchableApp(app)) return;
+
+    const isPinned = favorites.some((f) => f.id === appId);
+    if (isPinned) {
+      await removeFavorite(appId);
+    } else {
+      await addFavorite(appId);
+    }
+  };
 
   const topNotifications = notifications.slice(0, 4);
 
@@ -186,7 +200,7 @@ export const HomePage = () => {
                     if (catalogApp?.basePath) navigate(catalogApp.basePath);
                   }}
                   onGoToRoute={(path) => navigate(path)}
-                  onTogglePin={() => {}}
+                  onTogglePin={togglePin}
                 />
               );
             })}
@@ -236,7 +250,7 @@ export const HomePage = () => {
                     if (catalogApp?.basePath) navigate(catalogApp.basePath);
                   }}
                   onGoToRoute={(path) => navigate(path)}
-                  onTogglePin={() => {}}
+                  onTogglePin={togglePin}
                 />
               );
             })}

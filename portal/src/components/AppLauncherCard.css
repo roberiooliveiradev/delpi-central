@@ -176,6 +176,104 @@
   align-items: stretch;
 }
 
+.launcher-app-tile.sidebar-variant.reorderable {
+  width: 100%;
+  border-radius: 10px;
+  padding: 0;
+  gap: 0;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.launcher-app-tile.sidebar-variant.reorderable .launcher-app-main {
+  width: 100%;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  position: relative;
+  -webkit-user-drag: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.launcher-app-tile.sidebar-variant.reorderable.is-reorder-holding .launcher-app-main {
+  cursor: grab;
+}
+
+.launcher-app-tile.sidebar-variant.reorderable.is-reorder-dragging .launcher-app-main {
+  cursor: grabbing;
+}
+
+body.app-launcher-reorder-holding {
+  cursor: grab;
+  user-select: none;
+}
+
+body.app-launcher-reorder-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-main {
+  user-select: none;
+}
+
+.launcher-reorder-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  animation: reorderHintFadeIn 0.15s ease;
+}
+
+@keyframes reorderHintFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.launcher-app-tile.sidebar-variant.reorderable.is-reorder-holding,
+.launcher-app-tile.sidebar-variant.reorderable.is-reorder-dragging {
+  background: rgba(0, 153, 220, 0.1);
+}
+
+.launcher-app-tile.sidebar-variant.reorderable .sidebar-inline-routes {
+  padding: 0 10px 8px;
+}
+
+.app-launcher-reorder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-launcher-reorder-item {
+  touch-action: pan-y;
+}
+
+.app-launcher-reorder-item.is-reorder-dragging {
+  opacity: 0.55;
+}
+
+.app-launcher-reorder-item.is-reorder-drop-target {
+  background: rgba(0, 153, 220, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 153, 220, 0.35);
+  border-radius: 10px;
+}
+
 .launcher-app-tile.sidebar-variant:hover {
   transform: none;
   box-shadow: none;

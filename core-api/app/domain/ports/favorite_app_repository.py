@@ -19,3 +19,6 @@ class FavoriteAppRepository(Protocol):
 
     def delete_by_user_id(self, user_id: str) -> None:
         ...
+
+    def reorder(self, user_id: str, app_ids: List[str]) -> None:
+        ...

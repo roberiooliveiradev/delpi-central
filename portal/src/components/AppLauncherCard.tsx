@@ -2,6 +2,7 @@ import "./AppLauncherCard.css";
 import { Package, ChevronDown, ChevronUp, Pin } from "lucide-react";
 import { resolveIcon } from "../utils/iconResolver";
 import { useLocation } from "react-router-dom";
+import { useAppLauncherReorder } from "./AppLauncherReorderList";
 
 type RouteItem = {
   path: string;
@@ -31,6 +32,9 @@ interface Props {
 
   searchKind?: "app" | "route";
 
+  /** Habilita arrastar para reordenar (requer `AppLauncherReorderList` ancestral). */
+  reorderable?: boolean;
+
   onToggleOpen?: (appId: string) => void;
   onOpenSingle: (appId: string) => void;
   onGoToRoute: (path: string) => void;
@@ -44,16 +48,19 @@ export const AppLauncherCard = ({
   isOpen = false,
   isPinned = false,
   searchKind,
+  reorderable = false,
   onToggleOpen,
   onOpenSingle,
   onGoToRoute,
   onTogglePin,
 }: Props) => {
+  const reorder = useAppLauncherReorder();
+  const isReorderable = reorderable && !!reorder;
+
   const AppIcon = resolveIcon(app.icon) || Package;
 
   const isHome = variant === "home";
   const isSidebar = variant === "sidebar";
-  const isLauncher = variant === "launcher";
 
   const location = useLocation();
 
@@ -105,14 +112,15 @@ export const AppLauncherCard = ({
     app.type !== "backend-only" &&
     (isMainRouteActive || isAnyChildRouteActive);
 
-  const handleMainClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (isModifiedEvent(event)) {
-      return;
-    }
+  const isDragging = isReorderable && reorder!.draggingId === app.id;
+  const isHolding = isReorderable && reorder!.holdingId === app.id;
+  const isDropTarget =
+    isReorderable &&
+    reorder!.dropTargetId === app.id &&
+    reorder!.draggingId !== app.id;
 
+  const activateMain = () => {
     if (!hasMultipleRoutes) {
-      event.preventDefault();
-
       if (visibleRoutes[0]) {
         onGoToRoute(visibleRoutes[0].path);
         return;
@@ -127,8 +135,16 @@ export const AppLauncherCard = ({
       return;
     }
 
-    event.preventDefault();
     onToggleOpen?.(app.id);
+  };
+
+  const handleMainClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isModifiedEvent(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    activateMain();
   };
 
   const handleRouteClick = (
@@ -143,19 +159,74 @@ export const AppLauncherCard = ({
     onGoToRoute(path);
   };
 
+  const reorderPointerProps = isReorderable
+    ? {
+        onPointerDown: reorder!.onPointerDown(app.id),
+        onPointerMove: reorder!.onPointerMove,
+        onPointerUp: (event: React.PointerEvent<HTMLAnchorElement>) =>
+          void reorder!.onPointerFinish(event),
+        onPointerCancel: (event: React.PointerEvent<HTMLAnchorElement>) =>
+          void reorder!.onPointerFinish(event),
+        onClickCapture: reorder!.onClickCapture,
+        onDragStart: (event: React.DragEvent<HTMLAnchorElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
+        },
+        onMouseDown: (event: React.MouseEvent<HTMLAnchorElement>) => {
+          if (event.button !== 0) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+          }
+          // Evita arraste nativo do link (prévia do Firefox) sem bloquear clique rápido.
+          event.preventDefault();
+        },
+      }
+    : {};
+
+  const mainClassName = `launcher-app-main ${isAppActive ? "active" : ""}`;
+  const mainContent = (
+    <>
+      <span className="launcher-app-icon">
+        <AppIcon size={isSidebar ? 18 : isHome ? 22 : 26} />
+      </span>
+
+      <div className="launcher-app-container-name">
+        <span className="launcher-app-name">{app.name}</span>
+
+        {hasMultipleRoutes &&
+          (isSidebar ? (
+            <ChevronUp
+              size={16}
+              className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
+            />
+          ) : (
+            <ChevronDown
+              size={16}
+              className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
+            />
+          ))}
+      </div>
+    </>
+  );
+
   return (
     <div
+      data-app-id={isReorderable ? app.id : undefined}
       className={[
         "launcher-app-tile",
         isOpen ? "expanded" : "",
         isAppActive ? "active" : "",
         isHome ? "home-variant" : "",
         isSidebar ? "sidebar-variant" : "",
+        isReorderable ? "reorderable app-launcher-reorder-item" : "",
+        isHolding ? "is-reorder-holding" : "",
+        isDragging ? "is-reorder-dragging" : "",
+        isDropTarget ? "is-reorder-drop-target" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {isLauncher && onTogglePin && (
+      {onTogglePin && !isSidebar && (
         <button
           type="button"
           className={`launcher-pin ${isPinned ? "pinned" : ""}`}
@@ -171,31 +242,21 @@ export const AppLauncherCard = ({
 
       <a
         href={defaultPath ?? "#"}
-        className={`launcher-app-main ${isAppActive ? "active" : ""}`}
+        className={mainClassName}
+        draggable={isReorderable ? false : undefined}
         onClick={handleMainClick}
         aria-expanded={hasMultipleRoutes ? isOpen : undefined}
         aria-current={isAppActive ? "page" : undefined}
+        {...reorderPointerProps}
       >
-        <span className="launcher-app-icon">
-          <AppIcon size={isSidebar ? 18 : isHome ? 22 : 26} />
-        </span>
-
-        <div className="launcher-app-container-name">
-          <span className="launcher-app-name">{app.name}</span>
-
-          {hasMultipleRoutes &&
-            (isSidebar ? (
-              <ChevronUp
-                size={16}
-                className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
-              />
-            ) : (
-              <ChevronDown
-                size={16}
-                className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
-              />
-            ))}
-        </div>
+        {(isHolding || isDragging) && (
+          <span className="launcher-reorder-hint" aria-live="polite">
+            {isDragging
+              ? "Solte para reordenar"
+              : "Arraste para reordenar os favoritos"}
+          </span>
+        )}
+        {mainContent}
       </a>
 
       {(isOpen || searchKind === "route") && visibleRoutes.length > 0 && (

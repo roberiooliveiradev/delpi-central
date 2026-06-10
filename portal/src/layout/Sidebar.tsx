@@ -11,6 +11,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
+import { SidebarFavoritesList } from "./SidebarFavoritesList";
 
 import {
   Bell,
@@ -28,7 +29,6 @@ import {
   FileText,
 } from "lucide-react";
 
-import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
 import { DELPI_OPEN_APP_LAUNCHER_EVENT } from "../utils/appLauncher";
@@ -52,6 +52,7 @@ export const Sidebar = () => {
     logout,
     notifications,
     favorites,
+    reorderFavorites,
     markAllNotificationsRead,
     reloadNotifications,
   } = useContext(AuthContext);
@@ -339,41 +340,20 @@ export const Sidebar = () => {
             </div>
 
             <div className="sidebar-content">
-              {pinnedGroupedEntries.map(([appId, group]) => {
-                const isOpen = openApps[appId] ?? false;
-                const catalogApp = apps.find((app) => app.id === appId);
-
-                return (
-                  <AppLauncherCard
-                    key={appId}
-                    variant="sidebar"
-                    app={
-                      catalogApp ?? {
-                        id: appId,
-                        name: group.appName,
-                        icon: group.appIcon,
-                      }
-                    }
-                    routes={group.routes}
-                    isOpen={isOpen}
-                    onToggleOpen={(id) =>
-                      setOpenApps((prev) => ({
-                        ...prev,
-                        [id]: !prev[id],
-                      }))
-                    }
-                    onOpenSingle={() => {
-                      const route = group.routes[0];
-                      if (route) {
-                        navigate(route.path);
-                        return;
-                      }
-                      if (catalogApp?.basePath) navigate(catalogApp.basePath);
-                    }}
-                    onGoToRoute={(path) => navigate(path)}
-                  />
-                );
-              })}
+              <SidebarFavoritesList
+                entries={pinnedGroupedEntries}
+                favorites={favorites}
+                apps={apps}
+                openApps={openApps}
+                onToggleOpen={(id) =>
+                  setOpenApps((prev) => ({
+                    ...prev,
+                    [id]: !prev[id],
+                  }))
+                }
+                onNavigate={(path) => navigate(path)}
+                onReorder={reorderFavorites}
+              />
             </div>
 
             <div className="sidebar-footer">

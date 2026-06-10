@@ -33,6 +33,9 @@ from app.application.use_cases.add_favorite_app_use_case import (
 from app.application.use_cases.remove_favorite_app_use_case import (
     RemoveFavoriteAppUseCase,
 )
+from app.application.use_cases.reorder_favorite_apps_use_case import (
+    ReorderFavoriteAppsUseCase,
+)
 
 from app.application.use_cases.list_unread_notifications_use_case import (
     ListUnreadNotificationsUseCase,
@@ -202,6 +205,28 @@ def remove_favorite(app_id: str):
             user_id=str(user.id),
             app_id=app_id,
         )
+
+    return jsonify({"ok": True}), 200
+
+
+@me_bp.route("/me/apps/favorites/order", methods=["PUT"])
+@require_auth()
+def reorder_favorites():
+    user = g.current_user
+    payload = request.get_json(silent=True) or {}
+    app_ids = payload.get("app_ids")
+
+    if not isinstance(app_ids, list) or not all(
+        isinstance(app_id, str) for app_id in app_ids
+    ):
+        return jsonify({"error": "app_ids deve ser uma lista de strings"}), 400
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ReorderFavoriteAppsUseCase(uow)
+            uc.execute(user_id=str(user.id), app_ids=app_ids)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
     return jsonify({"ok": True}), 200
 

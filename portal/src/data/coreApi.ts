@@ -361,6 +361,13 @@ export class CoreApi {
     );
   }
 
+  reorderFavoriteApps(appIds: string[]) {
+    return this.client.put<{ ok: boolean }>(
+      "/core-api/me/apps/favorites/order",
+      { app_ids: appIds }
+    );
+  }
+
   // -------------------------------------------------------
   // DASHBOARD
   // -------------------------------------------------------

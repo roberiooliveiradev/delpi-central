@@ -69,3 +69,11 @@ class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
             .filter(UserFavoriteApp.user_id == user_id)
             .delete(synchronize_session=False)
         )
+
+    def reorder(self, user_id: str, app_ids: List[str]) -> None:
+        for index, app_id in enumerate(app_ids):
+            (
+                self.session.query(UserFavoriteApp)
+                .filter_by(user_id=user_id, app_id=app_id)
+                .update({"order_index": index}, synchronize_session=False)
+            )
