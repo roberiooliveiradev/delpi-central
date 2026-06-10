@@ -38,6 +38,17 @@ def test_resolve_esta_semana_calendar_range():
     assert resolved.end_date == "07-06-2026"
 
 
+def test_resolve_essa_semana_calendar_range():
+    resolved = ChatDateRangeIntentService.resolve(
+        "status fabril do produto 90261892 essa semana",
+        today=date(2026, 6, 9),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "08-06-2026"
+    assert resolved.end_date == "14-06-2026"
+
+
 def test_resolve_trimestre_passado():
     resolved = ChatDateRangeIntentService.resolve(
         "ebitda do trimestre passado",

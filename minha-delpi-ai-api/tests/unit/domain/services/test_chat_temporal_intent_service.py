@@ -4,6 +4,18 @@ from app.domain.services.chat_date_range_intent_service import ChatDateRangeInte
 from app.domain.services.chat_temporal_intent_service import ChatTemporalIntentService
 
 
+def test_resolve_agora_as_today():
+    resolved = ChatTemporalIntentService.resolve_point(
+        "status fabril do produto 90269002 agora",
+        today=date(2026, 6, 9),
+        default_today=False,
+    )
+
+    assert resolved is not None
+    assert resolved.target_date == date(2026, 6, 9)
+    assert resolved.label == "hoje"
+
+
 def test_resolve_yesterday():
     resolved = ChatTemporalIntentService.resolve_point(
         "o que foi produzido ontem?",

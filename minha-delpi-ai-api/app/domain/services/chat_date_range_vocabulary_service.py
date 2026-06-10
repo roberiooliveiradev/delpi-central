@@ -73,5 +73,23 @@ class ChatDateRangeVocabularyService(ChatAssistantVocabularyService):
         }
 
     @classmethod
+    @lru_cache(maxsize=1)
+    def fixed_semester_phrases(cls) -> dict[int, tuple[str, ...]]:
+        raw = cls.node("fixedSemesterPhrases")
+
+        if not isinstance(raw, dict):
+            return {}
+
+        resolved: dict[int, tuple[str, ...]] = {}
+
+        for key, value in raw.items():
+            if not isinstance(value, list):
+                continue
+
+            resolved[int(key)] = tuple(str(item) for item in value if str(item).strip())
+
+        return resolved
+
+    @classmethod
     def temporal_range_markers(cls) -> tuple[str, ...]:
         return cls.terms("temporalRangeMarkers")

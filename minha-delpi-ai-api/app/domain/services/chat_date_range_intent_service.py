@@ -120,6 +120,10 @@ class ChatDateRangeIntentService:
         if quarter_range:
             return quarter_range
 
+        semester_range = cls._resolve_semester_phrases(normalized, reference)
+        if semester_range:
+            return semester_range
+
         point = ChatTemporalIntentService.resolve_point(
             message,
             today=reference,
@@ -194,6 +198,15 @@ class ChatDateRangeIntentService:
                 date(reference.year, 1, 1),
                 date(reference.year, 12, 31),
                 reason=cls._reason("currentYear"),
+            )
+
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("nextYearPhrases")):
+            year = reference.year + 1
+
+            return cls._from_dates(
+                date(year, 1, 1),
+                date(year, 12, 31),
+                reason=cls._reason("nextYear"),
             )
 
         month_match = cls._parse_named_month(normalized, reference)
@@ -498,9 +511,11 @@ class ChatDateRangeIntentService:
         )
 
         reason_by_offset = {
+            -2: "twoWeeksAgoCalendar",
             -1: "lastWeekCalendar",
             0: "currentWeekCalendar",
             1: "nextWeekCalendar",
+            2: "twoWeeksAheadCalendar",
         }
 
         for offset, phrases in ChatDateRangeVocabularyService.week_offset_phrases().items():
@@ -550,7 +565,126 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("currentQuarter"),
             )
 
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("nextQuarterPhrases")):
+            return cls._quarter_range(
+                reference,
+                offset=1,
+                reason=cls._reason("nextQuarter"),
+            )
+
         return None
+
+    @classmethod
+    def _resolve_semester_phrases(
+        cls,
+        normalized: str,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        fixed = cls._resolve_fixed_semester_phrases(normalized, reference)
+
+        if fixed:
+            return fixed
+
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("previousSemesterPhrases")):
+            return cls._semester_range(
+                reference,
+                offset=-1,
+                reason=cls._reason("previousSemester"),
+            )
+
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("currentSemesterPhrases")):
+            return cls._semester_range(
+                reference,
+                offset=0,
+                reason=cls._reason("currentSemester"),
+            )
+
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("nextSemesterPhrases")):
+            return cls._semester_range(
+                reference,
+                offset=1,
+                reason=cls._reason("nextSemester"),
+            )
+
+        return None
+
+    @classmethod
+    def _extract_explicit_calendar_year(cls, normalized: str) -> int | None:
+        match = re.search(r"\bde\s+(\d{4})\b", normalized)
+
+        if match:
+            return int(match.group(1))
+
+        match = re.search(r"\b(?:ano|em)\s+(\d{4})\b", normalized)
+
+        if match:
+            return int(match.group(1))
+
+        return None
+
+    @classmethod
+    def _resolve_fixed_semester_phrases(
+        cls,
+        normalized: str,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        for semester, phrases in ChatDateRangeVocabularyService.fixed_semester_phrases().items():
+            if not _contains_any(normalized, phrases):
+                continue
+
+            year = (
+                cls._extract_explicit_calendar_year(normalized)
+                or cls._parse_year_hint(normalized, reference=reference)
+                or reference.year
+            )
+
+            if semester == 1:
+                return cls._from_dates(
+                    date(year, 1, 1),
+                    date(year, 6, 30),
+                    reason=cls._reason("firstSemester", year=year),
+                )
+
+            return cls._from_dates(
+                date(year, 7, 1),
+                date(year, 12, 31),
+                reason=cls._reason("secondSemester", year=year),
+            )
+
+        return None
+
+    @classmethod
+    def _semester_range(
+        cls,
+        reference: date,
+        *,
+        offset: int,
+        reason: str,
+    ) -> ResolvedDateRange:
+        semester = 1 if reference.month <= 6 else 2
+        year = reference.year
+        semester += offset
+
+        while semester < 1:
+            semester += 2
+            year -= 1
+
+        while semester > 2:
+            semester -= 2
+            year += 1
+
+        if semester == 1:
+            return cls._from_dates(
+                date(year, 1, 1),
+                date(year, 6, 30),
+                reason=reason,
+            )
+
+        return cls._from_dates(
+            date(year, 7, 1),
+            date(year, 12, 31),
+            reason=reason,
+        )
 
     @classmethod
     def _quarter_range(

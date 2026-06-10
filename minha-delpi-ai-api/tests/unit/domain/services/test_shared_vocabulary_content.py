@@ -33,6 +33,33 @@ def test_date_range_vocabulary_has_months_and_phrases():
     assert ChatDateRangeVocabularyService.temporal_range_markers()
 
 
+def test_date_range_vocabulary_includes_brazilian_temporal_variants():
+    current_week = ChatDateRangeVocabularyService.week_offset_phrases().get(0, ())
+    assert "essa semana" in current_week
+    assert "nessa semana" in current_week
+
+    two_weeks_ago = ChatDateRangeVocabularyService.week_offset_phrases().get(-2, ())
+    assert "semana antepassada" in two_weeks_ago
+
+    current_month = ChatDateRangeVocabularyService.terms("currentMonthPhrases")
+    assert "esse mes" in current_month
+    assert "nesse mes" in current_month
+
+    current_year = ChatDateRangeVocabularyService.terms("currentYearPhrases")
+    assert "esse ano" in current_year
+    assert "desse ano" in current_year
+
+    assert ChatDateRangeVocabularyService.terms("nextYearPhrases")
+    assert ChatDateRangeVocabularyService.terms("nextQuarterPhrases")
+    assert ChatDateRangeVocabularyService.terms("currentSemesterPhrases")
+    assert ChatDateRangeVocabularyService.fixed_semester_phrases().get(1)
+
+    markers = ChatDateRangeVocabularyService.temporal_range_markers()
+    assert "agora" in markers
+    assert "semana retrasada" in markers
+    assert "proximo semestre" in markers
+
+
 def test_canvas_transform_vocabulary_loaded():
     from app.domain.services.chat_canvas_transform_vocabulary_service import (
         ChatCanvasTransformVocabularyService,

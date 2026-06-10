@@ -34,17 +34,25 @@ _ISO_YMD_RE = re.compile(r"\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b")
 _TODAY_PATTERNS = (
     r"\bhoje\b",
     r"\bhj\b",
+    r"\bhoje mesmo\b",
+    r"\bagora\b",
+    r"\bno momento\b",
+    r"\bneste instante\b",
     r"\bdia atual\b",
     r"\bdata atual\b",
     r"\bneste dia\b",
+    r"\bnesse dia\b",
     r"\bno dia de hoje\b",
     r"\bdata de hoje\b",
     r"\bdia de hoje\b",
     r"\bnesta data\b",
+    r"\bnessa data\b",
 )
 
 _YESTERDAY_PATTERNS = (
     r"\bontem\b",
+    r"\bontem mesmo\b",
+    r"\bdia de ontem\b",
     r"\bdia anterior\b",
     r"\bdia previo\b",
     r"\bno dia anterior\b",
@@ -52,6 +60,8 @@ _YESTERDAY_PATTERNS = (
 
 _TOMORROW_PATTERNS = (
     r"\bamanha\b",
+    r"\bamanha mesmo\b",
+    r"\bdia de amanha\b",
     r"\bproximo dia\b",
     r"\bdia seguinte\b",
 )

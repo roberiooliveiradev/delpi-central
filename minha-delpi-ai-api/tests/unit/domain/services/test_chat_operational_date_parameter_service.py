@@ -65,6 +65,14 @@ def test_missing_date_not_requested_when_hoje_in_same_message():
     assert answer is None
 
 
+def test_missing_date_not_requested_when_essa_semana_in_same_message():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "status fabril do produto 90261892 essa semana"
+    )
+
+    assert answer is None
+
+
 def test_merge_into_parameters_sets_reference_date_for_playbook_route():
     action = {
         "path": "/products/{code}/factory-status",
@@ -205,3 +213,41 @@ def test_product_selection_includes_reference_date_for_factory_status_today():
     params = selected["arguments"]["parameters"]
     assert params["reference_date"] == "09-06-2026"
     assert params["date_start"] == "09-06-2026"
+
+
+def test_product_selection_includes_reference_date_for_factory_status_essa_semana():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "factory-status",
+                    "method": "GET",
+                    "path": "/products/{code}/factory-status",
+                    "operationId": "get_product_factory_status",
+                    "summary": "Status fabril",
+                    "parametersSchema": [
+                        {"name": "code"},
+                        {"name": "reference_date"},
+                        {"name": "date_start"},
+                        {"name": "date_end"},
+                    ],
+                }
+            ]
+        )
+    )
+
+    with patch("app.domain.services.chat_date_range_intent_service.date") as mock_date:
+        mock_date.today.return_value = date(2026, 6, 9)
+
+        selected = service.select_action_for_product(
+            "status fabril do produto 90261892 essa semana",
+            product_code="90261892",
+            allowed_action_ids=["factory-status"],
+            previous_messages=None,
+        )
+
+    assert selected is not None
+    params = selected["arguments"]["parameters"]
+    assert params["reference_date"] == "08-06-2026"
+    assert params["date_start"] == "08-06-2026"
+    assert params["date_end"] == "14-06-2026"

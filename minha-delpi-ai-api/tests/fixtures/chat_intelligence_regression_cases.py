@@ -1496,6 +1496,31 @@ PAGINATION_REFINEMENT_SELECTION_CASES = [
 
 DATE_RANGE_SELECTION_CASES = [
     {
+        "message": "status fabril do produto 90269002 essa semana",
+        "actions": [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "reference_date"},
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                ],
+            },
+        ],
+        "expected_action_id": "factory-status",
+        "expected_parameters": {
+            "code": "90269002",
+            "reference_date": "08-06-2026",
+            "date_start": "08-06-2026",
+            "date_end": "14-06-2026",
+        },
+    },
+    {
         "message": "status fabril do produto 90269002 hoje",
         "actions": [
             {
