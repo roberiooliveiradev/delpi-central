@@ -243,15 +243,7 @@ export function resolveDefaultVisualKind(
 }
 
 function isTextModeInterleavedSegment(segment: AssistantContentSegment): boolean {
-  if (segment.kind === "markdown" || segment.kind === "code") {
-    return true;
-  }
-
-  if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
-    return false;
-  }
-
-  return segmentVisualKind(segment) !== null;
+  return segment.kind === "markdown" || segment.kind === "code";
 }
 
 export function filterSegmentsByVisualKind(

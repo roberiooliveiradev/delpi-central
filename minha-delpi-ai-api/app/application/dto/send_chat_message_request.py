@@ -20,5 +20,7 @@ class SendChatMessageRequest:
     chat_mode: str | None = None
     # Modo de resposta: fast | normal | thinker (ver ChatResponseModeService).
     response_mode: str | None = None
+    # Preferência de apresentação do turno (table | text | tree | chart | canvas).
+    response_format: str | None = None
     # Expor adminDebug na resposta/SSE (rotas definem via permissão). Persistência é sempre.
     admin_debug: bool = False

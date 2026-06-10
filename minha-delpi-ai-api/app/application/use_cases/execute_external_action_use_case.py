@@ -306,12 +306,37 @@ class ExecuteExternalActionUseCase:
             from app.domain.services.chat_presentation_profile_service import (
                 ChatPresentationProfileService,
             )
+            from app.domain.services.chat_presentation_text_first_policy_service import (
+                ChatPresentationTextFirstPolicyService,
+            )
 
-            if ChatPresentationProfileService.should_auto_force_chart(
-                resolved_path,
-                entity=None,
-                has_tree=bool(tree_presentation),
-                has_chart=bool(chart_presentation),
+            user_message = str(request_parameters.get("userMessage") or "").strip() or None
+            session_format = str(request_parameters.get("sessionResponseFormat") or "").strip().lower()
+            explicit_preference = ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+                session_format,
+            )
+
+            if not explicit_preference and user_message:
+                from app.application.services.chat_tool_context_format_service import (
+                    ChatToolContextFormatService,
+                )
+
+                explicit_preference = ChatToolContextFormatService.detect_requested_format(
+                    user_message,
+                )
+
+            if (
+                ChatPresentationProfileService.should_auto_force_chart(
+                    resolved_path,
+                    entity=None,
+                    has_tree=bool(tree_presentation),
+                    has_chart=bool(chart_presentation),
+                )
+                and ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+                    path=resolved_path,
+                    explicit_format=explicit_preference,
+                    user_message=user_message,
+                )
             ):
                 forced_chart = self.presenter.build_chart_presentation(
                     presentation_data,
@@ -446,7 +471,27 @@ class ExecuteExternalActionUseCase:
             "availableFormats": available_formats,
             "preferredFormat": preferred_format,
             "dataCoverageNotice": data_coverage_notice,
+            "path": resolved_path,
+            "apiDelpiResponseMeta": self._extract_api_delpi_response_meta(sanitized_data),
         }
+
+        user_message = str(request_parameters.get("userMessage") or "").strip() or None
+
+        from app.application.services.chat_tool_context_format_service import (
+            ChatToolContextFormatService,
+        )
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        explicit_preference = ChatPresentationTextFirstPolicyService.normalize_explicit_format(
+            session_format,
+        )
+
+        if not explicit_preference and user_message:
+            explicit_preference = ChatToolContextFormatService.detect_requested_format(
+                user_message,
+            )
 
         from app.domain.services.chat_presentation_visual_bundle_service import (
             ChatPresentationVisualBundleService,
@@ -457,6 +502,17 @@ class ExecuteExternalActionUseCase:
             path=resolved_path,
             data=sanitized_data,
             presenter=self.presenter,
+            explicit_format=explicit_preference,
+            user_message=user_message,
+            entity=entity,
+        )
+
+        ChatPresentationTextFirstPolicyService.apply_text_primary_metadata(
+            metadata,
+            path=resolved_path,
+            entity=entity,
+            explicit_format=explicit_preference,
+            user_message=user_message,
         )
 
         schema_labels = self.presenter._column_labels.merge_meta_field_labels(
@@ -490,8 +546,6 @@ class ExecuteExternalActionUseCase:
         from app.application.services.chat_tool_context_format_service import (
             ChatToolContextFormatService,
         )
-
-        explicit_preference = behavior_format
 
         if not explicit_preference and user_message:
             explicit_preference = ChatToolContextFormatService.detect_requested_format(
@@ -553,6 +607,26 @@ class ExecuteExternalActionUseCase:
 
         if isinstance(stack_plan, dict):
             ChatPresentationStackMarkdownService.apply_section_markers(metadata, stack_plan)
+
+        from app.domain.services.chat_pagination_consolidation_service import (
+            ChatPaginationConsolidationService,
+        )
+
+        refinement_cache = ChatPaginationConsolidationService.extract_cached_payload(sanitized_data)
+
+        if isinstance(refinement_cache, dict) and refinement_cache.get("items"):
+            consolidation = metadata.get("paginationConsolidation")
+
+            if not isinstance(consolidation, dict):
+                metadata["paginationConsolidation"] = {
+                    "completed": True,
+                    "mergedCount": len(refinement_cache["items"]),
+                    "consolidatedPayload": refinement_cache,
+                }
+            elif not consolidation.get("consolidatedPayload"):
+                consolidation["consolidatedPayload"] = refinement_cache
+                consolidation.setdefault("completed", True)
+                consolidation.setdefault("mergedCount", len(refinement_cache["items"]))
 
         return metadata
 

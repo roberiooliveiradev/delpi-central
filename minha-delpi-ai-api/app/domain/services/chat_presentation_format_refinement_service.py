@@ -130,36 +130,130 @@ class ChatPresentationFormatRefinementService:
         *,
         operation: dict[str, Any],
     ) -> object | None:
+        meta = operation.get("metadata") or {}
+
+        consolidation = meta.get("paginationConsolidation")
+
+        if isinstance(consolidation, dict):
+            consolidated = consolidation.get("consolidatedPayload")
+
+            if isinstance(consolidated, dict) and consolidated.get("items"):
+                return cls.wrap_payload_for_operation(operation, consolidated)
+
         cached = ChatPaginationConsolidationService.load_cached_payload(previous_messages)
 
         if isinstance(cached, dict) and cached.get("items"):
-            return {"data": cached}
+            return cls.wrap_payload_for_operation(operation, cached)
 
-        meta = operation.get("metadata") or {}
-
-        for candidate in (
-            meta.get("tablePresentation"),
-            meta.get("presentation"),
-            meta.get("chartPresentation"),
-        ):
-            if not isinstance(candidate, dict):
+        for candidate in cls._iter_table_candidates(meta):
+            if candidate.get("type") != "table":
                 continue
 
-            if candidate.get("type") == "table":
-                rows = candidate.get("rows")
+            root = cls._rows_payload_from_table(candidate)
 
-                if isinstance(rows, list) and rows:
-                    return {
-                        "data": {
-                            "items": rows,
-                            "total": len(rows),
-                            "page": 1,
-                            "page_size": len(rows),
-                            "total_pages": 1,
-                        }
-                    }
+            if root:
+                return cls.wrap_payload_for_operation(operation, root)
 
         return None
+
+    @classmethod
+    def wrap_payload_for_operation(cls, operation: dict[str, Any], root: dict[str, Any]) -> dict[str, Any]:
+        path = str(operation.get("path") or "").lower()
+        items = root.get("items")
+
+        if not isinstance(items, list):
+            return {"data": root}
+
+        payload_root = dict(root)
+
+        if "/stock" in path:
+            return {"data": {"stock": payload_root}}
+
+        return {"data": payload_root}
+
+    @classmethod
+    def rebuild_metadata_for_refinement(
+        cls,
+        *,
+        external_use_case,
+        operation: dict[str, Any],
+        payload: object,
+        requested_format: str | None,
+        user_message: str | None,
+    ) -> dict[str, Any] | None:
+        action_id = str(operation.get("actionId") or "").strip()
+
+        if not action_id or payload is None or external_use_case is None:
+            return None
+
+        parameters = dict(operation.get("parameters") or {})
+
+        if requested_format:
+            parameters["sessionResponseFormat"] = requested_format
+
+        if user_message:
+            parameters["userMessage"] = user_message
+
+        try:
+            rebuilt = external_use_case.build_metadata_for_data(
+                action_id=action_id,
+                data=payload,
+                parameters=parameters,
+            )
+        except ValueError:
+            return None
+
+        prior = operation.get("metadata") or {}
+
+        for key in (
+            "ok",
+            "statusCode",
+            "actionId",
+            "path",
+            "provider",
+            "method",
+            "operationId",
+            "apiDelpiResponseMeta",
+        ):
+            if key in prior:
+                rebuilt[key] = prior[key]
+
+        consolidation = prior.get("paginationConsolidation")
+
+        if isinstance(consolidation, dict):
+            rebuilt["paginationConsolidation"] = dict(consolidation)
+
+        return rebuilt
+
+    @classmethod
+    def _iter_table_candidates(cls, meta: dict[str, Any]):
+        for key in ("tablePresentation", "presentation", "chartPresentation"):
+            candidate = meta.get(key)
+
+            if isinstance(candidate, dict):
+                yield candidate
+
+        bulk = meta.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            for candidate in reversed(bulk):
+                if isinstance(candidate, dict):
+                    yield candidate
+
+    @classmethod
+    def _rows_payload_from_table(cls, table: dict[str, Any]) -> dict[str, Any] | None:
+        rows = table.get("rows")
+
+        if not isinstance(rows, list) or not rows:
+            return None
+
+        return {
+            "items": rows,
+            "total": len(rows),
+            "page": 1,
+            "page_size": len(rows),
+            "total_pages": 1,
+        }
 
     @staticmethod
     def _message_metadata(item: Any) -> dict[str, Any]:

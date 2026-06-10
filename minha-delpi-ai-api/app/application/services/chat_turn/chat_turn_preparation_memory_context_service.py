@@ -37,6 +37,7 @@ class ChatTurnPreparationMemoryContextService:
         session,
         user_id,
         session_memory_service,
+        turn_response_format: str | None = None,
     ) -> ChatTurnPreparationMemoryContextResult:
         previous_agent_id = str(workspace_context.get("agentId") or "") or None
 
@@ -128,6 +129,12 @@ class ChatTurnPreparationMemoryContextService:
                 attachment_compare_hint,
             )
             pipeline_stage_additions.append("attachment_compare")
+
+        working_memory_snapshot = ChatWorkingMemoryService.apply_turn_response_format(
+            working_memory_snapshot,
+            turn_response_format,
+        )
+        updated_workspace["workingMemory"] = working_memory_snapshot
 
         return ChatTurnPreparationMemoryContextResult(
             workspace_context=updated_workspace,

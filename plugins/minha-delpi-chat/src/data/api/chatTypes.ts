@@ -711,6 +711,8 @@ export type SendChatMessagePayload = {
   /** Modo explícito: common limpa agente legado na sessão; agent persiste agentId. */
   chatMode?: "common" | "agent";
   responseMode?: ChatResponseModeId;
+  /** Preferência de apresentação do turno (table, text, tree, chart, canvas). */
+  responseFormat?: ChatPresentationFormatId;
 };
 
 export type SendChatMessageResponse = {

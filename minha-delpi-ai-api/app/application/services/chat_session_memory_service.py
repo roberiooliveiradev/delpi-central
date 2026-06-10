@@ -132,9 +132,25 @@ class ChatSessionMemoryService:
     def _merge_overlay(cls, snapshot: dict, overlay: dict) -> dict:
         result = dict(snapshot)
         behavior = dict(result.get("behaviorInstructions") or {})
+        overlay_behavior = overlay.get("behaviorInstructions") or {}
+        response_format = str(overlay_behavior.get("responseFormat") or "").strip().lower()
 
-        for key, value in (overlay.get("behaviorInstructions") or {}).items():
-            if value and not behavior.get(key):
+        if response_format:
+            behavior["responseFormat"] = response_format
+
+        overlay_scope = str(overlay_behavior.get("scope") or "").strip().lower()
+
+        if overlay_scope:
+            behavior["scope"] = overlay_scope
+
+        for key, value in overlay_behavior.items():
+            if not value:
+                continue
+
+            if key in {"responseFormat", "scope"}:
+                continue
+
+            if not behavior.get(key):
                 behavior[key] = value
 
         result["behaviorInstructions"] = behavior

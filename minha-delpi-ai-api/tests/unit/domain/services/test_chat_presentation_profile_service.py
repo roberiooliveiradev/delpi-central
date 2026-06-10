@@ -61,7 +61,7 @@ def test_humanized_narrative_mode_from_profile() -> None:
     )
 
 
-def test_resolve_default_preferred_format_stock_table() -> None:
+def test_resolve_default_preferred_format_stock_text() -> None:
     preferred = ChatPresentationProfileService.resolve_default_preferred_format(
         path="/products/90260144/stock",
         has_table=True,
@@ -69,7 +69,7 @@ def test_resolve_default_preferred_format_stock_table() -> None:
         has_text=True,
     )
 
-    assert preferred == "table"
+    assert preferred == "text"
 
 
 def test_resolve_default_preferred_format_structure_tree() -> None:

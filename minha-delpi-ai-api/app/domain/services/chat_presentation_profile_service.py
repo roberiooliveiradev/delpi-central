@@ -148,7 +148,11 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
         flags = cls.flags(path, entity)
 
-        if policy == "stock" or "stock" in flags:
+        if policy == "text_when_available":
+            if has_text:
+                return "text"
+
+        if policy == "stock" or ("stock" in flags and policy != "text_when_available"):
             if has_chart and not has_table:
                 return "chart"
 
@@ -212,7 +216,13 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
                 ordered.append(view)
 
         if len(ordered) >= 2 and str(decision.get("layoutMode") or "") != "single":
-            decision["layoutMode"] = "stack"
+            selected = str(decision.get("selected") or "").strip().lower()
+            stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
+
+            if stack_policy == "always":
+                decision["layoutMode"] = "stack"
+            elif selected != "text":
+                decision["layoutMode"] = "stack"
 
         decision["visualOrder"] = ordered
         decision["presentationProfileKey"] = profile.get("profileKey")

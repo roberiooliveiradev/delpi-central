@@ -144,10 +144,16 @@ class ChatToolContextFormatService:
                         meta["presentation"] = forced_tree
                         meta["treePresentation"] = None
 
+                self._align_decision_for_format(meta, "tree")
+
             elif requested_format == "table":
                 meta["preferredFormat"] = "table"
                 table_pres = meta.get("tablePresentation") or meta.get("presentation")
-                if table_pres and table_pres.get("type") == "table":
+
+                if not (isinstance(table_pres, dict) and table_pres.get("type") == "table"):
+                    table_pres = self._find_table_presentation(meta)
+
+                if isinstance(table_pres, dict) and table_pres.get("type") == "table":
                     meta["presentation"] = table_pres
                     meta["tablePresentation"] = None
                 elif last_data:
@@ -158,6 +164,8 @@ class ChatToolContextFormatService:
                     if forced_table:
                         meta["presentation"] = forced_table
                         meta["tablePresentation"] = None
+
+                self._align_decision_for_format(meta, "table")
 
             elif requested_format == "chart":
                 meta["preferredFormat"] = "chart"
@@ -172,3 +180,26 @@ class ChatToolContextFormatService:
                     if forced_chart:
                         meta["presentation"] = forced_chart
                         meta["tablePresentation"] = None
+
+                self._align_decision_for_format(meta, "chart")
+
+    @staticmethod
+    def _find_table_presentation(meta: dict) -> dict | None:
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
+        )
+
+        table, _source = ChatPresentationPrimaryViewService._find_view(meta, "table")
+
+        return table if isinstance(table, dict) else None
+
+    @staticmethod
+    def _align_decision_for_format(meta: dict, requested_format: str) -> None:
+        decision = meta.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        decision["selected"] = requested_format
+        decision["layoutMode"] = "single"
+        decision["visualOrder"] = [requested_format]

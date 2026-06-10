@@ -192,3 +192,56 @@ def test_collect_last_operation_after_analyser_skips_system_tables():
     assert op is not None
     assert op["actionId"] == "analyser-action"
     assert "/analyser" in op["path"]
+
+
+def test_resolve_payload_from_table_presentations_list_role():
+    rows = [
+        {"branch": "01", "warehouse": "01", "current_quantity": 10},
+        {"branch": "02", "warehouse": "01", "current_quantity": 5},
+    ]
+    operation = {
+        "actionId": "stock-action",
+        "path": "/products/10080001/stock",
+        "metadata": {
+            "preferredFormat": "text",
+            "presentation": None,
+            "tablePresentations": [
+                {
+                    "type": "table",
+                    "role": "list",
+                    "title": "Estoque",
+                    "columns": [{"key": "branch", "label": "Filial"}],
+                    "rows": rows,
+                }
+            ],
+        },
+    }
+
+    payload = ChatPresentationFormatRefinementService.resolve_payload(
+        [],
+        operation=operation,
+    )
+
+    assert payload == {
+        "data": {
+            "stock": {
+                "items": rows,
+                "total": 2,
+                "page": 1,
+                "page_size": 2,
+                "total_pages": 1,
+            }
+        }
+    }
+
+
+def test_wrap_payload_for_non_stock_keeps_flat_items():
+    operation = {"path": "/products/90260149/analyser"}
+    root = {"items": [{"op": "01"}], "total": 1, "page": 1, "page_size": 1, "total_pages": 1}
+
+    payload = ChatPresentationFormatRefinementService.wrap_payload_for_operation(
+        operation,
+        root,
+    )
+
+    assert payload == {"data": root}

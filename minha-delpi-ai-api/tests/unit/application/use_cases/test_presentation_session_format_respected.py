@@ -126,7 +126,7 @@ def test_stock_session_table_prefers_table_primary():
     assert decision["layoutMode"] == "single"
 
 
-def test_stock_default_table_uses_single_layout_without_explicit_session_format():
+def test_stock_default_text_uses_single_layout_without_explicit_session_format():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(
         action={"path": "/products/{code}/stock"},
@@ -151,14 +151,15 @@ def test_stock_default_table_uses_single_layout_without_explicit_session_format(
             }
         },
         resolved_path="/products/10080022/stock",
-        request_parameters={},
+        request_parameters={"userMessage": "estoque do produto 10080022"},
     )
 
     decision = meta["presentationDecision"]
 
-    assert decision["selected"] == "table"
+    assert decision["selected"] == "text"
     assert decision["layoutMode"] == "single"
-    assert meta["presentation"]["type"] == "table"
+    assert meta.get("chartPresentation") is None
+    assert meta.get("textPresentation", {}).get("markdown")
 
 
 def test_stock_session_chart_prefers_chart_primary():

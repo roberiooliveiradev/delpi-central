@@ -4,6 +4,7 @@ import { resendChatMessage, streamChatMessage } from "../../data/api/chatApi";
 import type {
   ChatCanvasOpenPayload,
   ChatPlaybackEvent,
+  ChatPresentationFormatId,
   ChatResponseModeId,
   ChatSource,
   ChatStreamActivityEntry,
@@ -26,6 +27,7 @@ type StreamMessageParams = {
   projectIds?: string[];
   chatMode?: "common" | "agent";
   responseMode?: ChatResponseModeId;
+  responseFormat?: ChatPresentationFormatId;
   onStatus?: (message: string) => void;
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -151,6 +153,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       projectIds,
       chatMode,
       responseMode,
+      responseFormat,
       onStatus,
       onActivity,
       onSources,
@@ -179,6 +182,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               projectIds: projectIds && projectIds.length > 0 ? projectIds : undefined,
               chatMode,
               responseMode,
+              responseFormat:
+                responseFormat && responseFormat !== "auto" ? responseFormat : undefined,
             },
             streamCallbacks,
             {

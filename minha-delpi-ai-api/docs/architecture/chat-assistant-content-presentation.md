@@ -117,10 +117,10 @@ Pergunta: «me fale do produto 90260149». Ordem: **ficha no início**, **alerta
 
 | Campo | Regra |
 |-------|--------|
-| `layoutMode` | `"stack"` quando há **≥ 2** views em `availableViews`; senão `"single"` |
+| `layoutMode` | `"single"` por default (R14 texto-first); `"stack"` só com visão integrada explícita, perfil `stackLayoutPolicy: always` (ex.: analyser) ou formato explícito ≠ texto |
 | `visualOrder` | Ordem de empilhamento: texto → tabela → árvore → gráfico → kpi → dashboard |
 | `selected` | Formato sugerido (texto, tabela, árvore, tipos de chart) |
-| `availableViews` | Todos os formatos que o MFE pode oferecer na barra de troca |
+| `availableViews` | Formatos oferecidos na toolbar/chips — inclui views **latentes** do perfil mesmo sem slot montado (`visualBundlePolicy: on_demand`) |
 
 **Deduplicação estrutura × tabela:** quando há árvore da mesma hierarquia (BOM, parents, analyser), tabelas planas equivalentes (`Componentes da estrutura`, lista de pais) são removidas do metadata (`ChatPresentationStructureDedupService`). O formato **Tabela** no analyser mantém roteiro, inspeção e ficha — não a lista plana de componentes. Com `preferredFormat: table` na rota de estrutura, a árvore é suprimida e permanece só a tabela plana.
 
@@ -132,9 +132,9 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 | Modo | Quando | Comportamento |
 |------|--------|----------------|
-| **stack** | `layoutMode === "stack"` (default em rotas ricas com painéis; ver `ChatPresentationRichStackPolicyService`) | Narrativa intercalada com `stackPresentationPlan` + `humanizedSections`; analyser mantém mockup 1–7; demais rotas usam seções Panorama/Leitura/Atenção/Conclusão. Em stack humanizado, `textPresentation` **não** é compactado e **sem** marcadores `[[table]]`/`[[arvore]]` |
+| **stack** | `layoutMode === "stack"` (visão integrada / analyser / pedido explícito) | Narrativa intercalada com `stackPresentationPlan` + `humanizedSections`; analyser mantém mockup 1–7; demais rotas usam seções Panorama/Leitura/Atenção/Conclusão. Em stack humanizado, `textPresentation` **não** é compactado e **sem** marcadores `[[table]]`/`[[arvore]]` |
 | **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
-| **text-only** | Sem visual rico | Só markdown/código |
+| **text-only** | `layoutMode === "single"` e `selected === "text"` (default R14) | Só markdown/código — sem tabelas/gráficos embutidos até pedido de formato |
 
 Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`.
 
@@ -146,7 +146,7 @@ Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções (e **nã
 
 - Em **stack** (analyser e combinações): exibe narrativa + cada componente nativo com dados (várias tabelas, árvore, gráfico).
 - Toolbar de troca (**Completo** / **Texto** / **Tabela** / **Árvore** / **Gráfico**) no topo de `ChatAssistantContent` — filtro global sobre todos os segmentos.
-- Leitura vertical intercalada: destaques → roteiro/ficha (tabelas) → pontos de atenção → árvore (ver `ChatRichPresentationTextService.embed_visual_markers_in_markdown` e `assistantContentInterleave.ts`).
+- **Texto** (R14): só prosa/lista — não intercala visuais; **Completo** exige `layoutMode: stack` (visão integrada).
 
 Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.
 

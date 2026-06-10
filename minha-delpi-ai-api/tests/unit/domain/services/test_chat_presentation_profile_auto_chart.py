@@ -24,8 +24,8 @@ def test_should_not_auto_force_chart_on_tree_routes():
     )
 
 
-def test_should_auto_force_chart_on_stock_when_table_only():
-    assert ChatPresentationProfileService.should_auto_force_chart(
+def test_should_not_auto_force_chart_on_stock_when_chart_policy_skip():
+    assert not ChatPresentationProfileService.should_auto_force_chart(
         "/products/10070014/stock",
         entity="product_stock",
         has_tree=False,

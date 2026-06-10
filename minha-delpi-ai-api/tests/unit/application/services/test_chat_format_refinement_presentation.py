@@ -107,6 +107,85 @@ def _history(primary_type: str, preferred: str) -> list[dict]:
     ]
 
 
+def test_refinement_to_table_from_text_first_table_presentations():
+    execute_tool = NoReexecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=BlockSystemTablesSelection(),
+    )
+    rows = [{"branch": "01", "warehouse": "01", "current_quantity": 160242}]
+    history = [
+        {"role": "user", "content": "estoque do produto 10080077"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"productCode": "10080077"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080077/stock",
+                            "actionId": "stock-action",
+                            "preferredFormat": "text",
+                            "presentationDecision": {
+                                "selected": "text",
+                                "layoutMode": "single",
+                            },
+                            "textPresentation": {
+                                "type": "markdown",
+                                "markdown": "Consultei o estoque...",
+                            },
+                            "tablePresentations": [
+                                {
+                                    "type": "table",
+                                    "role": "list",
+                                    "title": "Estoque",
+                                    "columns": [
+                                        {"key": "branch", "label": "Filial"},
+                                        {"key": "current_quantity", "label": "Qtd. atual"},
+                                    ],
+                                    "rows": rows,
+                                }
+                            ],
+                            "paginationConsolidation": {
+                                "completed": True,
+                                "consolidatedPayload": {
+                                    "items": rows,
+                                    "total": 1,
+                                    "page": 1,
+                                    "page_size": 1,
+                                    "total_pages": 1,
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    result = service.build_context(
+        user_id="u",
+        access_token="t",
+        message="mostre o último resultado em tabela",
+        previous_messages=history,
+        allowed_action_ids=["stock-action", "system-tables"],
+    )
+    meta = result["toolCalls"][0]["metadata"]
+
+    assert execute_tool.calls == 0
+    assert meta["preferredFormat"] == "table"
+    assert meta.get("presentation", {}).get("type") == "table"
+    assert meta.get("presentationDecision", {}).get("selected") == "table"
+    assert "/system/tables" not in str(meta.get("path") or "")
+
+
 def test_refinement_to_table_from_chart():
     execute_tool = NoReexecuteToolUseCase()
     service = ChatToolContextService(

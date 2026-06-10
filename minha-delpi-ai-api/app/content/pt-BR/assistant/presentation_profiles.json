@@ -1,6 +1,6 @@
 {
   "defaults": {
-    "defaultViewPolicy": "generic",
+    "defaultViewPolicy": "text_when_available",
     "viewOrder": [
       "text",
       "table",
@@ -16,6 +16,8 @@
     "stackPlan": "default",
     "flags": [],
     "chartPolicy": "auto",
+    "visualBundlePolicy": "on_demand",
+    "stackLayoutPolicy": "on_demand",
     "humanizedNarrative": "enrich"
   },
   "entityProfiles": {
@@ -264,6 +266,8 @@
   "profiles": {
     "analyser": {
       "defaultViewPolicy": "tree_when_available",
+      "visualBundlePolicy": "eager",
+      "stackLayoutPolicy": "always",
       "viewOrder": [
         "text",
         "table",
@@ -301,7 +305,7 @@
       }
     },
     "stock": {
-      "defaultViewPolicy": "stock",
+      "defaultViewPolicy": "text_when_available",
       "viewOrder": [
         "text",
         "table",
@@ -314,7 +318,7 @@
       "flags": [
         "stock"
       ],
-      "chartPolicy": "auto",
+      "chartPolicy": "skip",
       "visualBundle": {
         "requiresItems": true,
         "dashboardListRole": "list"

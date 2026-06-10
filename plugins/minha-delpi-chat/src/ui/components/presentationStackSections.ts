@@ -28,13 +28,13 @@ const SECTION_BASE_TITLES: Record<StackSectionId, string> = {
 };
 
 const SECTION_SHOW_IN: Record<StackSectionId, StackSectionChrome["showIn"]> = {
-  scope: ["complete", "text"],
-  profile: ["complete", "table", "text"],
-  highlights: ["complete", "text"],
-  guide: ["complete", "table", "text"],
-  inspection: ["complete", "table", "text"],
-  structure: ["complete", "tree", "text"],
-  attention: ["complete", "text"],
+  scope: ["complete"],
+  profile: ["complete", "table"],
+  highlights: ["complete"],
+  guide: ["complete", "table"],
+  inspection: ["complete", "table"],
+  structure: ["complete", "tree"],
+  attention: ["complete"],
 };
 
 export function stripStackSectionNumber(title: string): string {

@@ -152,6 +152,7 @@ import type {
   AssistantContextualHighlight,
   ChatCanvasOpenPayload,
   ChatMessage,
+  ChatPresentationFormatId,
 } from "../../data/api/chatTypes";
 import { useChatPresentationFormat } from "../../state/hooks/useChatPresentationFormat";
 import { useChatResponseMode } from "../../state/hooks/useChatResponseMode";
@@ -317,6 +318,11 @@ export function ChatPage({
   } = useChatResponseMode({ getAccessToken });
 
   const getResponseMode = useCallback(() => responseMode, [responseMode]);
+  const presentationFormatForSendRef = useRef<ChatPresentationFormatId>("auto");
+  const getPresentationFormat = useCallback(
+    () => presentationFormatForSendRef.current,
+    [],
+  );
 
   const {
     sessions,
@@ -367,6 +373,7 @@ export function ChatPage({
     projectIds: overlayProjectIds,
     agentIds: overlayAgentIds,
     getResponseMode,
+    getPresentationFormat,
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
@@ -405,6 +412,10 @@ export function ChatPage({
     sessionId: activeSession?.id ?? null,
     getAccessToken,
   });
+
+  useEffect(() => {
+    presentationFormatForSendRef.current = presentationFormat;
+  }, [presentationFormat]);
 
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
   const [dismissedContextChipKeys, setDismissedContextChipKeys] = useState<string[]>([]);

@@ -23,6 +23,7 @@ import type {
   ChatAttachment,
   ChatCanvasOpenPayload,
   ChatMessage,
+  ChatPresentationFormatId,
   ChatResponseModeId,
   ChatSession,
   ChatSource,
@@ -87,6 +88,8 @@ type UseChatSessionOptions = {
   isShortcutPromptOpen?: () => boolean;
   /** Modo de resposta LLM (rápida / normal / pensador) escolhido no composer. */
   getResponseMode?: () => ChatResponseModeId;
+  /** Formato de apresentação (automático / tabela / texto / …) escolhido no composer. */
+  getPresentationFormat?: () => ChatPresentationFormatId;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -124,6 +127,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   onShortcutPromptRequiredRef.current = options.onShortcutPromptRequired;
   const getResponseModeRef = useRef(options.getResponseMode);
   getResponseModeRef.current = options.getResponseMode;
+  const getPresentationFormatRef = useRef(options.getPresentationFormat);
+  getPresentationFormatRef.current = options.getPresentationFormat;
   const isShortcutPromptOpenRef = useRef(options.isShortcutPromptOpen);
   isShortcutPromptOpenRef.current = options.isShortcutPromptOpen;
 
@@ -1723,6 +1728,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         projectIds: resolvedProjectIds,
         chatMode: effectiveChatMode,
         responseMode: getResponseModeRef.current?.() ?? "normal",
+        responseFormat: getPresentationFormatRef.current?.() ?? "auto",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
     } catch (err) {

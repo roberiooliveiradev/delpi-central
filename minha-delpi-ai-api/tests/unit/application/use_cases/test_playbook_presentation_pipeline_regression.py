@@ -37,11 +37,11 @@ def _structure_table_titles(meta: dict) -> list[str]:
     return titles
 
 
-def test_factory_status_rich_text_stack_with_visuals():
+def test_factory_status_integrated_stack_with_visuals():
     meta = _build(
         "product_factory_status_90269002.json",
         "/products/90269002/factory-status",
-        user_message="status fabril do produto 90269002 hoje",
+        user_message="visão integrada do status fabril do produto 90269002 hoje",
     )
     decision = meta["presentationDecision"]
 
@@ -60,7 +60,7 @@ def test_factory_status_rich_text_stack_with_visuals():
     assert "tailVisuals" in (plan.get("narrativeOrder") or [])
 
 
-def test_structure_exclusivity_nested_tree_dedup_and_shared_mp_narrative():
+def test_structure_exclusivity_text_first_without_tree():
     meta = _build(
         "product_structure_exclusivity_90261805.json",
         "/products/90261805/structure/exclusivity",
@@ -70,32 +70,29 @@ def test_structure_exclusivity_nested_tree_dedup_and_shared_mp_narrative():
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     assert decision["selected"] == "text"
+    assert decision["layoutMode"] == "single"
+    assert meta.get("treePresentation") is None
+    assert "10020053" in markdown
+    assert "10080185" in markdown
+    assert "exclusiva" in markdown.lower()
+    assert "table" in (decision.get("availableViews") or [])
+
+
+def test_structure_exclusivity_integrated_stack_keeps_tree():
+    meta = _build(
+        "product_structure_exclusivity_90261805.json",
+        "/products/90261805/structure/exclusivity",
+        user_message="visão integrada das matérias-primas exclusivas na estrutura do produto 90261805",
+    )
+    decision = meta["presentationDecision"]
+
+    assert decision["selected"] == "text"
     assert decision["layoutMode"] == "stack"
     assert meta.get("treePresentation", {}).get("type") == "tree"
     assert not _structure_table_titles(meta)
 
-    root = (meta.get("treePresentation") or {}).get("root") or {}
-    assert len(root.get("children") or []) >= 1
 
-    pi = root["children"][0]
-    assert "50222613" in str(pi.get("label") or "")
-    assert len(pi.get("children") or []) >= 2
-
-    assert "10020053" in markdown
-    assert "10080185" in markdown
-    assert "exclusiva" in markdown.lower()
-
-    dashboard = meta.get("dashboardPresentation") or meta.get("presentation") or {}
-
-    if dashboard.get("type") != "dashboard":
-        dashboard = {}
-
-    panel_ids = [panel.get("id") for panel in dashboard.get("panels") or []]
-
-    assert "structure" in panel_ids
-
-
-def test_mp_price_intelligence_rich_narrative_stack():
+def test_mp_price_intelligence_text_first_without_visuals():
     meta = _build(
         "product_raw_material_price_intelligence_10080022.json",
         "/products/10080022/raw-material-price-intelligence",
@@ -105,18 +102,14 @@ def test_mp_price_intelligence_rich_narrative_stack():
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "stack"
+    assert decision["layoutMode"] == "single"
     assert "ALTA DE PRECO" in markdown or "cadastrado" in markdown.lower()
-    assert meta.get("kpiPresentation", {}).get("type") == "kpi"
-    assert meta.get("chartPresentation", {}).get("type") == "chart"
-
-    plan = meta.get("stackPresentationPlan") or {}
-
-    assert plan.get("humanizedSections") is True
-    assert plan.get("presentationProfile") == "product_raw_material_price_intelligence"
+    assert meta.get("kpiPresentation") is None
+    assert meta.get("chartPresentation") is None
+    assert "chart" in (decision.get("availableViews") or [])
 
 
-def test_cost_impact_simulation_stack_with_kpi_and_chart():
+def test_cost_impact_simulation_text_first_without_visuals():
     meta = _build(
         "product_cost_impact_simulation_90261255.json",
         "/products/90261255/cost-impact-simulation",
@@ -125,17 +118,13 @@ def test_cost_impact_simulation_stack_with_kpi_and_chart():
     decision = meta["presentationDecision"]
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "stack"
+    assert decision["layoutMode"] == "single"
     assert meta.get("textPresentation", {}).get("markdown")
-    assert meta.get("kpiPresentation", {}).get("type") == "kpi"
-    assert meta.get("chartPresentation", {}).get("type") == "chart"
-
-    plan = meta.get("stackPresentationPlan") or {}
-
-    assert plan.get("humanizedSections") is True
+    assert meta.get("kpiPresentation") is None
+    assert meta.get("chartPresentation") is None
 
 
-def test_stock_playbook_stack_keeps_positions_table():
+def test_stock_playbook_text_first_without_integrated_stack():
     meta = _build(
         "product_stock_90269001.json",
         "/products/90269001/stock",
@@ -144,9 +133,24 @@ def test_stock_playbook_stack_keeps_positions_table():
     decision = meta["presentationDecision"]
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "stack"
-    assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert decision["layoutMode"] == "single"
+    assert meta.get("treePresentation") is None
+    assert meta.get("chartPresentation") is None
+    assert meta.get("textPresentation", {}).get("markdown")
     assert any(
         isinstance(table, dict) and table.get("role") == "list"
         for table in (meta.get("tablePresentations") or [])
     )
+
+
+def test_stock_playbook_integrated_stack_builds_visuals():
+    meta = _build(
+        "product_stock_90269001.json",
+        "/products/90269001/stock",
+        user_message="estoque completo do produto 90269001",
+    )
+    decision = meta["presentationDecision"]
+
+    assert decision["selected"] == "text"
+    assert decision["layoutMode"] == "stack"
+    assert meta.get("treePresentation", {}).get("type") == "tree"

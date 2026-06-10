@@ -601,6 +601,53 @@ class ChatPresentationDecisionService:
 
         cls._apply_route_visual_policy(metadata, decision)
 
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        if ChatPresentationTextFirstPolicyService.should_default_to_text_only(
+            path=path or None,
+            entity=entity,
+            explicit_format=user_preference,
+            user_message=user_message,
+        ):
+            latent = ChatPresentationTextFirstPolicyService.latent_available_views(
+                path=path or None,
+                entity=entity,
+                has_text=bool(metadata.get("textPresentation")),
+            )
+            merged_views = cls._merge_views(metadata.get("availableFormats"), latent)
+            decision["selected"] = "text"
+            decision["layoutMode"] = "single"
+            decision["visualOrder"] = ["text"] if "text" in merged_views else merged_views[:1]
+            decision["availableViews"] = merged_views
+            if not str(decision.get("reason") or "").strip():
+                decision["reason"] = cls._reason("textFirstDefault")
+
+        if ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+            user_message,
+        ):
+            merged_views = cls._merge_views(
+                metadata.get("availableFormats"),
+                decision.get("availableViews"),
+            )
+
+            if len(merged_views) >= 2:
+                decision["selected"] = "text"
+                decision["availableViews"] = merged_views
+                decision["layoutMode"] = "stack"
+                decision["visualOrder"] = cls._visual_order_for_stack(merged_views)
+                decision["reason"] = cls._reason("integratedStack")
+
         from app.domain.services.chat_presentation_structure_dedup_service import (
             ChatPresentationStructureDedupService,
         )
@@ -643,7 +690,10 @@ class ChatPresentationDecisionService:
         unique_views = list(dict.fromkeys(str(view).strip() for view in available_views if str(view).strip()))
         selected_token = str(selected or "").strip().lower()
 
-        if selected_token in _NATIVE_PRIMARY_VIEWS:
+        if selected_token == "text":
+            layout_mode = "single"
+            visual_order = ["text"] if "text" in unique_views else unique_views[:1] or ["text"]
+        elif selected_token in _NATIVE_PRIMARY_VIEWS:
             layout_mode = "single"
             visual_order = [selected_token]
         else:

@@ -173,7 +173,7 @@ describe("presentationStackSections", () => {
     const profileSection = buildStackSectionChrome("profile");
 
     expect(isStackSectionVisible(profileSection, "table")).toBe(true);
-    expect(isStackSectionVisible(profileSection, "text")).toBe(true);
+    expect(isStackSectionVisible(profileSection, "text")).toBe(false);
 
     const segments: AssistantContentSegment[] = [
       { kind: "stackSection", section: buildStackSectionChrome("scope") },
@@ -183,9 +183,7 @@ describe("presentationStackSections", () => {
 
     const textOnly = filterSegmentsByVisualKind(segments, "text");
 
-    expect(textOnly.some((segment) => segment.kind === "stackSection")).toBe(true);
-    expect(
-      textOnly.filter((segment) => segment.kind === "stackSection").length,
-    ).toBe(2);
+    expect(textOnly.some((segment) => segment.kind === "stackSection")).toBe(false);
+    expect(textOnly).toEqual([{ kind: "markdown", markdown: "texto" }]);
   });
 });

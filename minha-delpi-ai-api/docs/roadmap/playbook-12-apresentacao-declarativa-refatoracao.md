@@ -551,6 +551,18 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 
 **Playbook 12 encerrado (R0–R12).**
 
+**R14 — texto-first e visuais sob demanda (jun/2026):**
+
+| Princípio | Implementação |
+|-----------|---------------|
+| Pergunta simples → só texto | `defaultViewPolicy: text_when_available` nos defaults; perfil `stock` alinhado |
+| Gráfico/tabela/árvore/painel só se pedir | `visualBundlePolicy: on_demand` — `ChatPresentationVisualBundleService` + `ChatPresentationTextFirstPolicyService` |
+| Preferência UI ou chip | `sessionResponseFormat` / mensagem com hint de formato → monta bundle |
+| Visão integrada / completo | `textFirstPolicy.integratedStackHints` → `layoutMode: stack` + bundle `eager` |
+| Analyser inalterado | perfil `analyser`: `visualBundlePolicy: eager`, `stackLayoutPolicy: always` |
+| MFE «Texto» = prosa pura | `assistantContentSegments`, `assistantContentVisualFormats`, `assistantContentLayout` |
+| Chips latentes | `availableViews` do perfil mesmo sem slot montado (ex.: «Ver em gráfico») |
+
 **R11 entregue (jun/2026):**
 
 | Artefato | Detalhe |

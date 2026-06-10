@@ -17,7 +17,7 @@ export const PRESENTATION_FORMAT_OPTIONS: ChatPresentationFormatOption[] = [
   {
     id: "auto",
     label: "Automático",
-    description: "O chat escolhe texto, tabela, árvore ou gráfico conforme os dados.",
+    description: "Responde em texto; gráfico, tabela ou árvore só quando você pedir ou escolher o formato.",
   },
   {
     id: "text",

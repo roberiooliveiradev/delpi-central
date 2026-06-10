@@ -39,6 +39,9 @@ class ChatPresentationVisualBundleService:
         path: str,
         data: Any,
         presenter: ExternalActionResultPresenter,
+        explicit_format: str | None = None,
+        user_message: str | None = None,
+        entity: str | None = None,
     ) -> None:
         if not isinstance(metadata, dict):
             return
@@ -48,13 +51,27 @@ class ChatPresentationVisualBundleService:
         if not isinstance(root, dict):
             return
 
-        entity = cls._resolve_entity(data, path=path)
+        entity = entity or cls._resolve_entity(data, path=path)
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
         view_order = [
             str(view).strip().lower()
             for view in (profile.get("viewOrder") or [])
             if str(view).strip()
         ]
+
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        if not ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+            path=path,
+            entity=entity,
+            explicit_format=explicit_format,
+            user_message=user_message,
+        ):
+            cls._sync_latent_available_formats(metadata, view_order)
+            return
+
         primary_type = cls._primary_type(metadata)
         chart_policy = ChatPresentationProfileVisualBundleService.chart_policy(profile)
 
@@ -262,6 +279,46 @@ class ChatPresentationVisualBundleService:
 
             if canvas not in seen:
                 formats.append(canvas)
+
+        metadata["availableFormats"] = formats
+
+    @classmethod
+    def _sync_latent_available_formats(
+        cls,
+        metadata: dict[str, Any],
+        view_order: list[str],
+    ) -> None:
+        formats = list(metadata.get("availableFormats") or [])
+        seen = {str(token).strip().lower() for token in formats}
+
+        for view in view_order:
+            mapped = "chart" if view in {
+                "line_chart",
+                "bar_chart",
+                "horizontal_bar",
+                "donut",
+                "area_chart",
+            } else view
+
+            if mapped == "text":
+                if metadata.get("textPresentation") and "text" not in seen:
+                    formats.append("text")
+                    seen.add("text")
+
+                continue
+
+            if mapped in seen:
+                continue
+
+            if mapped in {"table", "tree", "chart", "kpi", "dashboard"}:
+                formats.append(mapped)
+                seen.add(mapped)
+
+        if metadata.get("textPresentation") and "text" not in seen:
+            formats.insert(0, "text")
+
+        if metadata.get("textPresentation") and "canvas" not in seen:
+            formats.append("canvas")
 
         metadata["availableFormats"] = formats
 

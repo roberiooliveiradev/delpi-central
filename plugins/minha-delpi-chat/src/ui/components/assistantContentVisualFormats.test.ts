@@ -147,10 +147,7 @@ describe("assistantContentVisualFormats", () => {
     const filteredText = filterSegmentsByVisualKind(segments, "text");
     const textKinds = filteredText.map((segment) => segment.kind);
 
-    expect(textKinds).toContain("markdown");
-    expect(textKinds).toContain("table");
-    expect(textKinds).toContain("tree");
-    expect(textKinds).toContain("chart");
+    expect(textKinds).toEqual(["markdown"]);
   });
 
   it("usa formato selecionado pela API como padrão", () => {
@@ -279,7 +276,7 @@ describe("assistantContentVisualFormats", () => {
     expect(resolveInitialToolbarKind(analyserCalls, options)).toBeNull();
   });
 
-  it("no stack com KPI, inicia em texto quando o formato solicitado é texto", () => {
+  it("no stack com KPI, modo texto exibe só narrativa", () => {
     const kpiCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -312,11 +309,15 @@ describe("assistantContentVisualFormats", () => {
 
     const visible = filterSegmentsByVisualKind(segments, "text");
 
-    expect(visible.some((segment) => segment.kind === "kpi")).toBe(true);
+    expect(visible.some((segment) => segment.kind === "kpi")).toBe(false);
     expect(visible.some((segment) => segment.kind === "markdown")).toBe(true);
+
+    const complete = filterSegmentsByVisualKind(segments, null);
+
+    expect(complete.some((segment) => segment.kind === "kpi")).toBe(true);
   });
 
-  it("no modo texto do analyser mantém narrativa intercalada com visuais", () => {
+  it("no modo completo do analyser mantém narrativa intercalada com visuais", () => {
     const analyserLike = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -361,13 +362,19 @@ describe("assistantContentVisualFormats", () => {
       },
     ]);
     const segments = buildAssistantContentSegments("", analyserLike);
-    const visible = filterSegmentsByVisualKind(segments, "text");
+    const visible = filterSegmentsByVisualKind(segments, null);
     const kinds = visible.map((segment) => segment.kind);
 
     expect(kinds).toContain("markdown");
     expect(kinds).toContain("table");
     expect(kinds).toContain("tree");
     expect(kinds).toContain("stackSection");
+
+    const textOnly = filterSegmentsByVisualKind(segments, "text");
+
+    expect(textOnly.every((segment) => segment.kind === "markdown" || segment.kind === "code")).toBe(
+      true,
+    );
   });
 
   it("inicia em KPI quando a decisão da API seleciona kpi", () => {

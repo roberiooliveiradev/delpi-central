@@ -261,7 +261,33 @@ class ChatPresentationPrimaryViewService:
         if isinstance(secondary, dict) and cls._presentation_type(secondary) == view_type:
             return secondary, slot_key
 
+        if view_type == "table":
+            from_table_presentations = cls._find_table_in_presentations(metadata)
+
+            if from_table_presentations is not None:
+                return from_table_presentations, "tablePresentations"
+
         return None, None
+
+    @classmethod
+    def _find_table_in_presentations(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:
+        bulk = metadata.get("tablePresentations")
+
+        if not isinstance(bulk, list):
+            return None
+
+        for candidate in bulk:
+            if not isinstance(candidate, dict) or candidate.get("type") != "table":
+                continue
+
+            if candidate.get("role") == "list" and candidate.get("rows"):
+                return candidate
+
+        for candidate in bulk:
+            if isinstance(candidate, dict) and candidate.get("type") == "table" and candidate.get("rows"):
+                return candidate
+
+        return None
 
     @staticmethod
     def _presentation_type(presentation: dict[str, Any] | None) -> str:

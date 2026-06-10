@@ -37,6 +37,22 @@ class FakeMemoryRepository:
         return 0
 
 
+def test_apply_to_pre_turn_session_response_format_overrides_snapshot():
+    repo = FakeMemoryRepository()
+    service = ChatSessionMemoryService(repo)
+
+    snapshot = service.apply_to_pre_turn(
+        session_id=uuid4(),
+        snapshot={
+            "operationalFocus": {},
+            "behaviorInstructions": {"responseFormat": "text", "scope": "session"},
+        },
+        message="estoque do produto 10080001",
+    )
+
+    assert snapshot["behaviorInstructions"]["responseFormat"] == "table"
+
+
 def test_apply_to_pre_turn_merges_persisted_entities():
     repo = FakeMemoryRepository()
     service = ChatSessionMemoryService(repo)

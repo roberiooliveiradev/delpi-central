@@ -156,6 +156,26 @@ def _parse_response_mode(payload: dict) -> str | None:
     return str(raw).strip() or None
 
 
+def _parse_response_format(payload: dict) -> str | None:
+    raw = payload.get("responseFormat")
+
+    if raw is None:
+        raw = payload.get("response_format")
+
+    if raw is None:
+        return None
+
+    token = str(raw).strip().lower()
+
+    if token in {"", "auto"}:
+        return None
+
+    if token in {"table", "text", "tree", "chart", "canvas", "topics"}:
+        return token
+
+    return None
+
+
 def _can_use_admin_debug() -> bool:
     authorization_header = request.headers.get("Authorization")
     core_user = CoreMeGateway().get_me(authorization_header)
@@ -279,6 +299,7 @@ def _build_send_chat_message_request(
         chat_mode=payload.get("chatMode") or payload.get("chat_mode") or None,
         resend_from_message_id=resend_from_message_id,
         response_mode=_parse_response_mode(payload),
+        response_format=_parse_response_format(payload),
         admin_debug=_can_use_admin_debug(),
     )
 

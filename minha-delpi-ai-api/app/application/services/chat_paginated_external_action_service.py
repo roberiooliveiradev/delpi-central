@@ -183,6 +183,23 @@ class ChatPaginatedExternalActionService:
         if payload is None:
             return None
 
+        requested_format = ChatPresentationFormatRefinementService.detect_requested_format(
+            message,
+        )
+        external_use_case = self._external_action_use_case()
+
+        if external_use_case is not None and action_id:
+            rebuilt = ChatPresentationFormatRefinementService.rebuild_metadata_for_refinement(
+                external_use_case=external_use_case,
+                operation=operation,
+                payload=payload,
+                requested_format=requested_format,
+                user_message=message,
+            )
+
+            if rebuilt:
+                base_metadata = rebuilt
+
         arguments = {
             "actionId": action_id,
             "parameters": parameters,

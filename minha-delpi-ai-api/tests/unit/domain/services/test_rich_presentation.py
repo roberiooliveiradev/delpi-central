@@ -90,22 +90,36 @@ def test_enrich_metadata_adds_insight_and_syncs_chart_type():
 
 def test_decision_stack_layout_when_multiple_views():
     decision = ChatPresentationDecisionService._build(
-        selected="text",
-        fallback="table",
+        selected="checklist",
+        fallback="text",
         reason="visão combinada",
-        available_views=["text", "table", "tree", "chart"],
+        available_views=["checklist", "text", "table", "tree", "chart"],
         rows=[{"campo": "Código", "valor": "1"}],
         intent="product",
     )
 
     assert decision["layoutMode"] == "stack"
-    assert decision["visualOrder"][0] == "text"
     assert "table" in decision["visualOrder"]
     assert "tree" in decision["visualOrder"]
 
 
+def test_decision_text_selected_uses_single_layout():
+    decision = ChatPresentationDecisionService._build(
+        selected="text",
+        fallback="table",
+        reason="texto-first",
+        available_views=["text", "table", "tree", "chart"],
+        rows=[{"campo": "Código", "valor": "1"}],
+        intent="product",
+    )
+
+    assert decision["layoutMode"] == "single"
+    assert decision["visualOrder"] == ["text"]
+
+
 def test_enrich_metadata_attaches_presentation_decision():
     metadata = {
+        "path": "/products/10080001/guide",
         "presentation": {
             "type": "table",
             "title": "Produtos",
@@ -114,9 +128,13 @@ def test_enrich_metadata_attaches_presentation_decision():
         },
         "availableFormats": ["table"],
         "preferredFormat": "table",
+        "userMessage": "mostre em tabela",
     }
 
-    ChatPresentationDecisionService.enrich_metadata(metadata)
+    ChatPresentationDecisionService.enrich_metadata(
+        metadata,
+        user_preference="table",
+    )
 
     assert metadata.get("presentationDecision")
     assert metadata["presentationDecision"]["selected"] == "table"

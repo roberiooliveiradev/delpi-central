@@ -94,6 +94,20 @@ class ChatWorkingMemoryService:
         )
 
     @classmethod
+    def apply_turn_response_format(cls, snapshot: dict, response_format: str | None) -> dict:
+        token = str(response_format or "").strip().lower()
+
+        if token not in {"table", "text", "tree", "chart", "canvas", "topics"}:
+            return snapshot
+
+        result = dict(snapshot)
+        behavior = dict(result.get("behaviorInstructions") or {})
+        behavior["responseFormat"] = token
+        behavior["scope"] = "session"
+        result["behaviorInstructions"] = behavior
+        return result
+
+    @classmethod
     def build_post_turn_snapshot(
         cls,
         *,

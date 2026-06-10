@@ -41,6 +41,25 @@
     "yes": "Sim",
     "no": "Não"
   },
+  "textFirstPolicy": {
+    "integratedStackHints": [
+      "visão integrada",
+      "visao integrada",
+      "visão completa",
+      "visao completa",
+      "modo completo",
+      "apresentação completa",
+      "apresentacao completa",
+      "estoque completo",
+      "mostre completo",
+      "mostra completo",
+      "mostrar completo",
+      "analise integrada",
+      "análise integrada",
+      "informações completas",
+      "informacoes completas"
+    ]
+  },
   "exclusiveRawMaterialTruthy": ["SIM", "S", "TRUE", "1"],
   "hierarchyTree": {
     "defaultHierarchyTitle": "Hierarquia",
@@ -106,6 +125,8 @@
     "treePrimaryView": "estrutura hierárquica — árvore como visão principal",
     "pricingNarrativeFirst": "preços — narrativa com insights antes da tabela detalhada",
     "stockFewPositionsText": "poucas posições de estoque — resumo em texto com destaques",
+    "textFirstDefault": "pergunta operacional simples — resposta em texto; visuais sob demanda",
+    "integratedStack": "visão integrada solicitada — stack narrativo com visuais",
     "stockFewRowsTable": "estoque com poucos registros — tabela auditável em vez de gráfico",
     "productOverviewNarrative": "visão do produto — narrativa com insights antes da ficha tabular",
     "analyserFullStack": "consulta completa do produto — texto, tabela, árvore e gráfico",

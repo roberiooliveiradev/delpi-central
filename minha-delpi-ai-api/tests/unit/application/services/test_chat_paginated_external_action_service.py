@@ -181,7 +181,8 @@ def test_fetch_format_refinement_reuses_cached_stock_payload():
     merged_data, merged_metadata, arguments, continue_prompt = result
     assert execute_tool.calls == []
     root = ChatPaginationConsolidationService._unwrap(merged_data)
-    assert root["items"] == stock_rows
+    items_root = root.get("stock") if isinstance(root.get("stock"), dict) else root
+    assert items_root["items"] == stock_rows
     assert arguments["actionId"] == "stock-action"
     assert merged_metadata["actionId"] == "stock-action"
     assert continue_prompt is None

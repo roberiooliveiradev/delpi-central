@@ -13,6 +13,7 @@ import {
   resolveStackLayoutOrderFromToolCalls,
 } from "./assistantContentLayout";
 import {
+  getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
   resolveStackCommentaryBody,
 } from "./chatPresentation";
@@ -520,8 +521,14 @@ export function buildAssistantContentSegments(
 ): AssistantContentSegment[] {
   const pair = getPresentationPairFromToolCalls(toolCalls);
   const layoutMode = resolveAssistantContentLayout(content, toolCalls, pair);
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const selected = String(decision?.selected ?? "").trim().toLowerCase();
   const visuals = collectVisualSegments(toolCalls);
   const rawMarkdown = resolveAssistantRenderableMarkdown(content, toolCalls);
+
+  if (layoutMode !== "stack" && selected === "text") {
+    return parseMarkdownAndCodeSegments(rawMarkdown);
+  }
 
   if (layoutMode === "stack") {
     return buildStackedSegments(content, toolCalls, visuals);

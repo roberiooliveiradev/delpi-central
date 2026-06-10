@@ -48,7 +48,10 @@ def test_decision_service_uses_rich_stack_for_factory_status():
         "availableFormats": ["text", "table", "tree", "kpi", "dashboard"],
     }
 
-    ChatPresentationDecisionService.enrich_metadata(metadata)
+    ChatPresentationDecisionService.enrich_metadata(
+        metadata,
+        user_message="visão integrada do status fabril do produto 90269002",
+    )
 
     decision = metadata["presentationDecision"]
 

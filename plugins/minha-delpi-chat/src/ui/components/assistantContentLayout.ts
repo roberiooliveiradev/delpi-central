@@ -2,8 +2,6 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 
 import {
   getPresentationDecisionFromToolCalls,
-  getPresentationPairFromToolCalls,
-  resolveCommentaryTextBody,
   type PresentationPair,
 } from "./chatPresentation";
 import type { AssistantContentSegment } from "./assistantContentTypes";
@@ -187,11 +185,9 @@ export function shouldShowAllVisualSegments(toolCalls: ChatToolCall[] = []): boo
 export function resolveAssistantContentLayout(
   content: string,
   toolCalls: ChatToolCall[] = [],
-  pair?: PresentationPair,
+  _pair?: PresentationPair,
 ): AssistantContentLayoutMode {
-  const resolvedPair = pair ?? getPresentationPairFromToolCalls(toolCalls);
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
-  const commentary = resolveCommentaryTextBody(content, toolCalls, resolvedPair).trim();
   const hasMarkers = /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(
     content,
   );
@@ -204,9 +200,5 @@ export function resolveAssistantContentLayout(
     return "markers";
   }
 
-  if (decision?.availableViews && decision.availableViews.length >= 2) {
-    return "stack";
-  }
-
-  return commentary ? "text-only" : "text-only";
+  return "text-only";
 }
