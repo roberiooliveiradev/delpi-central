@@ -32,6 +32,7 @@ from app.application.services.chat_turn.chat_turn_llm_assembly_service import (
 from app.application.services.chat_web_search_synthesis_service import (
     ChatWebSearchSynthesisService,
 )
+from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -292,18 +293,9 @@ class SendChatMessageUseCase:
             persistence=ChatTurnPersistenceOptions(mode="send"),
         )
 
-        client_metadata = {
-            key: completion.assistant_metadata[key]
-            for key in (
-                "drawingAnalysisMode",
-                "drawingAnalysis",
-                "drawingAnalysisExport",
-                "drawingAnalysisMetrics",
-                "directResponse",
-                "intelligence",
-            )
-            if completion.assistant_metadata.get(key) is not None
-        }
+        client_metadata = ChatMessageDeliveryService.client_metadata_for_response(
+            completion.assistant_metadata,
+        )
 
         return SendChatMessageResponse(
             messageId=str(completion.assistant_message.id),

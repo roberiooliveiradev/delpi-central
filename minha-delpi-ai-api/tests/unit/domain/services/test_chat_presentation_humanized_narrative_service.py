@@ -70,3 +70,33 @@ def test_enrich_metadata_skips_stock_profile():
     ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
 
     assert "**Panorama**" not in metadata["textPresentation"]["markdown"]
+
+
+def test_enrich_metadata_skips_conclusion_for_pagination_only_kpi():
+    metadata = {
+        "path": "/products/10080001/structure",
+        "textPresentation": {
+            "title": "Estrutura",
+            "markdown": "### Estrutura\n\n<!-- section:scope -->\n\nNenhum componente.",
+        },
+        "kpiPresentation": {
+            "type": "kpi",
+            "cards": [
+                {"label": "Total Pages", "value": 0, "unit": ""},
+                {"label": "Page Size", "value": 50, "unit": ""},
+            ],
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "list",
+                "rows": [],
+            }
+        ],
+    }
+
+    ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "Total Pages" not in markdown
+    assert "painéis abaixo" not in markdown.lower()

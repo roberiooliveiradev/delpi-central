@@ -219,6 +219,9 @@ class ExternalActionProductRouteSelectionService:
         wants_sale_pricing = ChatProductQueryIntentService._looks_like_sale_pricing_question(
             normalized
         )
+        wants_price_analysis = (
+            ChatProductQueryIntentService._looks_like_price_analysis_question(normalized)
+        )
         wants_purchases = any(
             term in normalized
             for term in ExternalActionResponseContentService.list(
@@ -405,6 +408,7 @@ class ExternalActionProductRouteSelectionService:
             or wants_product_summary
             or wants_product_overview
             or wants_full_analyser
+            or wants_price_analysis
         )
         suppress_api_externa_provider_bias = (
             wants_factory_status
@@ -417,6 +421,7 @@ class ExternalActionProductRouteSelectionService:
             or wants_purchase_price_history
             or wants_purchase_budget_history
             or wants_sale_pricing
+            or wants_price_analysis
         )
 
         def score(action: dict) -> int:
@@ -463,6 +468,21 @@ class ExternalActionProductRouteSelectionService:
 
             if wants_sale_pricing and "/pricing" in path:
                 value += 130
+
+            if wants_price_analysis and "analyser" in path:
+                value += 135
+
+            if wants_price_analysis and "raw-material-price-intelligence" in path:
+                value += 140
+
+            if wants_price_analysis and "/pricing" in path:
+                value += 125
+
+            if wants_price_analysis and "production-status" in path:
+                value -= 110
+
+            if wants_price_analysis and "/structure" in path and not wants_structure:
+                value -= 90
 
             if wants_sale_pricing and "/sales" in path and "/pricing" not in path:
                 value -= 110

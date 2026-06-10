@@ -91,6 +91,21 @@ class ChatProductQueryIntentService:
         if cls._looks_like_purchase_budget_history_question(normalized):
             return ChatProductQueryIntent.FULL
 
+        if cls._looks_like_factory_status_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_production_status_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_shipping_status_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_structure_exclusivity_question(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_price_analysis_question(normalized):
+            return ChatProductQueryIntent.FULL
+
         from app.domain.services.chat_product_multi_scope_planning_service import (
             ChatProductMultiScopePlanningService,
         )
@@ -468,6 +483,7 @@ class ChatProductQueryIntentService:
             or cls._looks_like_purchase_price_history_question(normalized)
             or cls._looks_like_purchase_budget_history_question(normalized)
             or cls._looks_like_sale_pricing_question(normalized)
+            or cls._looks_like_price_analysis_question(normalized)
         )
 
     @classmethod
@@ -509,12 +525,21 @@ class ChatProductQueryIntentService:
 
         intent = cls.detect(message)
 
-        if intent != ChatProductQueryIntent.FULL:
-            return intent
-
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        if intent != ChatProductQueryIntent.FULL:
+            if (
+                cls._looks_like_explicit_playbook_product_scope(normalized)
+                or cls._looks_like_price_analysis_question(normalized)
+            ):
+                return ChatProductQueryIntent.FULL
+
+            return intent
+
         if cls._looks_like_explicit_playbook_product_scope(normalized):
+            return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_price_analysis_question(normalized):
             return ChatProductQueryIntent.FULL
 
         if cls._looks_like_product_sub_intent(normalized):
@@ -526,6 +551,12 @@ class ChatProductQueryIntentService:
             return intent
 
         if cls.extract_product_code(message) or cls.references_previous_product(message):
+            if cls._looks_like_explicit_playbook_product_scope(normalized):
+                return ChatProductQueryIntent.FULL
+
+            if cls._looks_like_price_analysis_question(normalized):
+                return ChatProductQueryIntent.FULL
+
             return inherited
 
         return inherited
@@ -884,15 +915,16 @@ class ChatProductQueryIntentService:
 
             return True
 
+        if any(term in normalized for term in cls._terms("factoryStatus", "colloquialTerms")):
+            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+                normalized
+            ) is not None
+
         lowered = normalized.lower()
 
-        return (
-            cls._has_product_scope_reference(normalized)
-            and "status" in lowered
-            and any(
-                marker in lowered
-                for marker in ("fabril", "fabrica", "fábrica")
-            )
+        return cls._has_product_scope_reference(normalized) and any(
+            marker in lowered
+            for marker in ("fabril", "fabrica", "fábrica")
         )
 
     @classmethod
@@ -984,6 +1016,30 @@ class ChatProductQueryIntentService:
     @classmethod
     def _looks_like_sale_pricing_question(cls, normalized: str) -> bool:
         return any(term in normalized for term in cls._terms("salePricing", "terms"))
+
+    @classmethod
+    def _looks_like_price_analysis_question(cls, normalized: str) -> bool:
+        if not re.search(r"\banalis", normalized):
+            return False
+
+        if not any(term in normalized for term in cls._terms("priceAnalysis", "terms")):
+            return False
+
+        if any(
+            term in normalized
+            for term in cls._terms("analyser", "genericAnalysisExclude")
+        ):
+            return False
+
+        if cls._looks_like_production_status_question(normalized):
+            return False
+
+        if cls._looks_like_raw_material_price_intelligence_question(normalized):
+            return False
+
+        return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
+            normalized
+        ) is not None
 
     @classmethod
     def _looks_like_raw_material_price_intelligence_question(cls, normalized: str) -> bool:

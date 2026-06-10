@@ -149,17 +149,28 @@ class ExternalActionProductStockPresenter:
             page_size=int(page_size) if page_size is not None else None,
         )
 
-    def _summary_line(self, agg: _StockAggregation) -> str:
+    def _product_description(self, root: dict | None) -> str:
+        product = root.get("product") if isinstance(root, dict) and isinstance(root.get("product"), dict) else {}
+
+        return str(product.get("description") or product.get("name") or "").strip()
+
+    def _summary_line(self, agg: _StockAggregation, *, description: str = "") -> str:
         from app.domain.services.chat_product_operational_content_service import (
             ChatProductOperationalContentService,
         )
 
         if agg.product_code:
+            summary_key = (
+                "summaryWithCodeAndDescription"
+                if description
+                else "summaryWithCode"
+            )
             summary = ChatProductOperationalContentService.format(
                 "presenter",
                 "stock",
-                "summaryWithCode",
+                summary_key,
                 code=agg.product_code,
+                description=description,
                 positions=agg.positions,
             )
 
@@ -190,6 +201,14 @@ class ExternalActionProductStockPresenter:
                     "summaryAvailableTotal",
                     total=self._host._format_num(agg.total_available),
                 )
+
+                if agg.total_available < 0:
+                    summary += ChatProductOperationalContentService.format(
+                        "presenter",
+                        "stock",
+                        "summaryNegativeAvailableNote",
+                        total=self._host._format_num(agg.total_available),
+                    )
             elif agg.has_current:
                 summary += ChatProductOperationalContentService.format(
                     "presenter",
@@ -346,7 +365,8 @@ class ExternalActionProductStockPresenter:
         compact_for_rich_ui: bool = False,
     ) -> str:
         agg = self._aggregate(items, path=path, root=root)
-        parts: list[str] = [self._summary_line(agg)]
+        description = self._product_description(root)
+        parts: list[str] = [self._summary_line(agg, description=description)]
         detail_lines = self._detail_lines(items)
 
         if compact_for_rich_ui:
@@ -577,18 +597,26 @@ class ExternalActionProductStockPresenter:
             return None
 
         agg = self._aggregate(items, path=path, root=root)
-        title = (
-            self._host._presenter_text(
+        description = self._product_description(root)
+
+        if agg.product_code and description:
+            title = self._host._presenter_text(
+                "productPresentationTitles",
+                "stockWithCodeAndDescription",
+                code=agg.product_code,
+                description=description,
+            )
+        elif agg.product_code:
+            title = self._host._presenter_text(
                 "productPresentationTitles",
                 "stockWithCode",
                 code=agg.product_code,
             )
-            if agg.product_code
-            else self._host._presenter_text(
+        else:
+            title = self._host._presenter_text(
                 "productPresentationTitles",
                 "stockGeneric",
             )
-        )
         auxiliary_tables = self.build_stock_table_presentations(root, path)
         compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
             table_presentations=auxiliary_tables,

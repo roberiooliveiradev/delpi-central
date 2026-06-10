@@ -236,6 +236,17 @@
       "ordem de produção",
       " op ",
       " ops "
+    ],
+    "colloquialTerms": [
+      "como esta a fabrica",
+      "como está a fábrica",
+      "como esta a fabrica do",
+      "como esta a fabrica na",
+      "como esta a fabrica para",
+      "como esta a fabrica desse",
+      "como esta a fabrica deste",
+      "como esta a fabrica do produto",
+      "como esta a fabrica do item"
     ]
   },
   "productionStatus": {
@@ -342,6 +353,20 @@
       "quanto vende",
       "precificacao de venda",
       "precificação de venda"
+    ]
+  },
+  "priceAnalysis": {
+    "terms": [
+      "analise de preco",
+      "análise de preço",
+      "analise de precos",
+      "análise de preços",
+      "analise precificacao",
+      "análise precificação",
+      "analise de precificacao",
+      "análise de precificação",
+      "analise comercial do produto",
+      "análise comercial do produto"
     ]
   },
   "rawMaterialPriceIntelligence": {

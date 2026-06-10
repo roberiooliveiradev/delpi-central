@@ -38,6 +38,7 @@ from app.application.services.chat_web_search_synthesis_service import (
     ChatWebSearchSynthesisService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -415,18 +416,9 @@ class StreamChatMessageUseCase:
         tool_calls = completion.tool_calls
         canvas_open_payload = completion.canvas_open_payload
         client_admin_debug = completion.client_admin_debug
-        client_metadata = {
-            key: completion.assistant_metadata[key]
-            for key in (
-                "drawingAnalysisMode",
-                "drawingAnalysis",
-                "drawingAnalysisExport",
-                "drawingAnalysisMetrics",
-                "directResponse",
-                "intelligence",
-            )
-            if completion.assistant_metadata.get(key) is not None
-        }
+        client_metadata = ChatMessageDeliveryService.client_metadata_for_response(
+            completion.assistant_metadata,
+        )
 
         if canvas_open_payload:
             yield {

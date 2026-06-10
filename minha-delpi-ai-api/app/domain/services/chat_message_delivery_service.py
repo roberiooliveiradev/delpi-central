@@ -82,3 +82,29 @@ class ChatMessageDeliveryService:
             return True
 
         return False
+
+    @classmethod
+    def client_response_metadata_keys(cls) -> tuple[str, ...]:
+        return (
+            "drawingAnalysisMode",
+            "drawingAnalysis",
+            "drawingAnalysisExport",
+            "drawingAnalysisMetrics",
+            "directResponse",
+            "intelligence",
+            "interactivity",
+            "presentationFollowUpSuggestions",
+        )
+
+    @classmethod
+    def client_metadata_for_response(cls, assistant_metadata: dict | None) -> dict | None:
+        if not isinstance(assistant_metadata, dict):
+            return None
+
+        filtered = {
+            key: assistant_metadata[key]
+            for key in cls.client_response_metadata_keys()
+            if assistant_metadata.get(key) is not None
+        }
+
+        return filtered or None

@@ -18,3 +18,19 @@ def test_session_has_pending_assistant_when_last_is_user():
     assert ChatMessageDeliveryService.session_has_pending_assistant(
         [{"role": "user", "content": "oi"}]
     )
+
+
+def test_client_metadata_for_response_includes_interactivity():
+    metadata = {
+        "intelligence": {"intent": "operational_query"},
+        "interactivity": {"suggestions": [{"id": "view_chart", "label": "Ver em gráfico"}]},
+        "presentationFollowUpSuggestions": [{"id": "view_chart", "label": "Ver em gráfico"}],
+        "internalOnly": True,
+    }
+
+    filtered = ChatMessageDeliveryService.client_metadata_for_response(metadata)
+
+    assert filtered is not None
+    assert "interactivity" in filtered
+    assert "presentationFollowUpSuggestions" in filtered
+    assert "internalOnly" not in filtered

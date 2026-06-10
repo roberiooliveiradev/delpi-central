@@ -140,6 +140,8 @@
       "titleDefault": "Estoque do produto",
       "scopeIntro": "Posições de estoque por filial e armazém — saldo atual, disponível e empenhado.",
       "summaryWithCode": "Consultei o estoque do produto **{code}**: **{positions}** posição(ões)",
+      "summaryWithCodeAndDescription": "Consultei o estoque de **{description}** (**{code}**): **{positions}** posição(ões)",
+      "summaryNegativeAvailableNote": " O saldo disponível consolidado é **negativo** ({total} un.) — revise empenhos e reservas antes de confiar no número.",
       "summaryBranches": " em **{count}** filial(is) ({branches})",
       "summaryWarehouses": " e **{count}** armazém(ns) ({warehouses})",
       "summaryAvailableTotal": " No total, há **{total}** unidade(s) disponível(is) nesta consulta.",

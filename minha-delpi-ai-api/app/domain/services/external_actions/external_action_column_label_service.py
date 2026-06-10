@@ -685,8 +685,13 @@ class ExternalActionColumnLabelService:
             num = float(value)
 
             if num == int(num):
-                return str(int(num))
+                abs_formatted = f"{abs(int(num)):,}".replace(",", ".")
 
-            return f"{num:.2f}"
+                if num < 0:
+                    return f"-{abs_formatted}"
+
+                return abs_formatted
+
+            return ExternalActionColumnLabelService._format_br_number(num)
         except (ValueError, TypeError):
             return str(value)

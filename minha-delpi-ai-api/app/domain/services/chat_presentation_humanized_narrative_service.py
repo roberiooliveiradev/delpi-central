@@ -193,7 +193,7 @@ class ChatPresentationHumanizedNarrativeService:
             value = card.get("value")
             unit = str(card.get("unit") or "").strip()
 
-            if not label or value is None:
+            if not label or value is None or cls._is_technical_kpi_label(label):
                 continue
 
             if unit == "R$":
@@ -240,6 +240,9 @@ class ChatPresentationHumanizedNarrativeService:
 
     @classmethod
     def _build_conclusion(cls, metadata: dict[str, Any]) -> str | None:
+        if not cls._has_meaningful_complementary_visuals(metadata):
+            return None
+
         humanized = metadata.get("humanizedSummary")
 
         if isinstance(humanized, dict):
@@ -251,12 +254,56 @@ class ChatPresentationHumanizedNarrativeService:
                 if "abaixo" in token or "lista" in token or "painel" in token:
                     return cls._text("conclusionPanelsHint")
 
+        return cls._text("conclusionPanelsHint")
+
+    @classmethod
+    def _has_meaningful_complementary_visuals(cls, metadata: dict[str, Any]) -> bool:
+        list_table = cls._find_list_table(metadata)
+
+        if isinstance(list_table, dict):
+            rows = list_table.get("rows") or []
+
+            if isinstance(rows, list) and rows:
+                return True
+
+        profile = cls._find_profile_table(metadata)
+
+        if isinstance(profile, dict):
+            rows = profile.get("rows") or []
+
+            if isinstance(rows, list) and rows:
+                return True
+
+        kpi = metadata.get("kpiPresentation")
+
+        if isinstance(kpi, dict) and kpi.get("type") == "kpi":
+            cards = kpi.get("cards") or []
+
+            for card in cards:
+                if not isinstance(card, dict):
+                    continue
+
+                label = str(card.get("label") or "").strip()
+                value = card.get("value")
+
+                if label and value is not None and not cls._is_technical_kpi_label(label):
+                    return True
+
         visuals = ChatRichPresentationTextService.count_complementary_visuals(metadata)
 
-        if visuals.get("table", 0) or visuals.get("chart", 0) or visuals.get("kpi", 0):
-            return cls._text("conclusionPanelsHint")
+        return bool(visuals.get("chart", 0))
 
-        return None
+    @classmethod
+    def _is_technical_kpi_label(cls, label: str) -> bool:
+        token = str(label or "").strip().lower().replace("_", " ")
+
+        exclude = ChatAssistantContentService.list(
+            "presenter_content",
+            "humanizedNarrative",
+            "kpiHighlightExcludeLabels",
+        )
+
+        return any(str(term).strip().lower() in token for term in exclude)
 
     @classmethod
     def _find_profile_table(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:

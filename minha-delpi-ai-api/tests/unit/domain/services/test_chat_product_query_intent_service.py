@@ -77,6 +77,70 @@ def test_resolve_product_intent_status_fabril_nao_herda_estoque():
     )
 
 
+def test_looks_like_factory_status_colloquial_fabrica():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Como está a fábrica do produto 90263749?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
+
+
+def test_resolve_product_intent_producao_nao_herda_estructure():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/90269002/structure"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            "situação de produção do produto 90269002",
+            previous_messages=history,
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
+def test_looks_like_price_analysis_question_with_product_code():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "analise de preço 90260145"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_price_analysis_question(normalized)
+
+
+def test_resolve_product_intent_price_analysis_nao_herda_producao():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/90260145/production-status"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            "analise de preço 90260145",
+            previous_messages=history,
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
 def test_refine_operational_intent_status_fabril_mantem_full():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "status fabril do produto 90269002 hoje"

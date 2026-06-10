@@ -492,11 +492,35 @@ class ChatWebSearchIntentService:
         if cls._is_assistant_identity_question(message):
             return True
 
-        exclude_terms = tuple(
-            str(item) for item in (_augmentation_content().get("excludeTerms") or ())
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
         )
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if ChatProductQueryIntentService.extract_product_code(message):
+            if ChatProductQueryIntentService._looks_like_explicit_playbook_product_scope(
+                normalized
+            ):
+                return True
+
+            scope_terms = tuple(
+                str(item)
+                for item in ChatAssistantContentService.list(
+                    "product_query_intent",
+                    "operationalAmbiguityScopeTerms",
+                )
+            )
+
+            if scope_terms and ChatMessageNormalizationService.contains_any(
+                normalized,
+                scope_terms,
+            ):
+                return True
+
+        exclude_terms = tuple(
+            str(item) for item in (_augmentation_content().get("excludeTerms") or ())
+        )
 
         return bool(
             exclude_terms

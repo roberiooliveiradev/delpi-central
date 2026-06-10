@@ -33,6 +33,7 @@ Relacionado:
 | **R10** | Fechamento tier A (visualBuilders + cobertura) | ✅ Concluído |
 | **R11** | Chips pós-resposta API↔MFE | ✅ Concluído |
 | **R12** | Regressão entity contract + CI consolidado | ✅ Concluído |
+| **R13** | Correções pós-E2E (roteamento, chips POST, narrativa) | 🔄 Em andamento (lote 2: E8 ✅, E9 doc) |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -490,6 +491,39 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 ---
 
 ## 10. Próximo passo imediato
+
+**R13 (jun/2026) — backlog E2E pós-homologação manual (`rober` / `1234`, `smoke_perguntas_teste_chat_jun2026.py`):**
+
+| ID | Problema observado | Módulo canônico | Critério de aceite |
+|----|-------------------|-----------------|-------------------|
+| **E1** | «como está a fábrica do {code}?» → web search | `ChatProductQueryIntentService._looks_like_factory_status_question`, `ChatWebSearchIntentService._is_excluded_from_auto_augment` | Rota `/factory-status`; web augment bloqueado com código + escopo fabril |
+| **E2** | «situação de produção {code}» → `/structure` | `resolve_product_intent` + `external_action_product_route_selection_service` | Rota `/production-status` mesmo após turno de estrutura na sessão |
+| **E3** | «analise de preço {code}» → `/production-status` ou rota errada | `_looks_like_price_analysis_question` + ranking de rotas | `/analyser`, `/pricing` ou `raw-material-price-intelligence` conforme tipo de item |
+| **E4** | «status fabril» após estoque na mesma sessão → `/stock` | `resolve_product_intent` — playbook explícito antes de herdar tool | Playbook fabril/produção/expedição não herda segmento de estoque |
+| **E5** | BOM vazia: KPI «Total Pages» (EN) + `conclusionPanelsHint` genérico | `ChatPresentationHumanizedNarrativeService` + `presenter_content.json` | Labels técnicos de paginação omitidos; sem rodapé de painéis quando não há dados |
+| **E6** | `SendChatMessageResponse.metadata` sem `interactivity` | `ChatMessageDeliveryService.client_metadata_for_response` + use cases send/stream | POST espelha chips/metadata de apresentação do stream |
+| **E7** | Chip «Ver em gráfico» ausente no estoque (POST) | Mesmo que E6 + `ChatInteractivitySuggestionService` | `interactivity.suggestions` inclui chip de gráfico quando perfil permite |
+| **E8** | Estoque: saldo negativo sem explicação / formatação | `product_stock_presenter.py` (já tem insights — validar path humanizado) | Lead menciona saldo negativo e formata milhar quando narrativa enriquecida |
+| **E9** | Rate limit 429 em batch E2E | Gateway / smoke script | Pausa ≥2s entre cenários no smoke (documentado §8) |
+
+**R13 lote 1 entregue (jun/2026):**
+
+| ID | Entrega |
+|----|---------|
+| E1 | `factoryStatus.colloquialTerms` + fallback sem exigir «status»; web augment excluído com código + escopo operacional |
+| E2/E3/E4 | Playbook cedo em `detect()`; `resolve_product_intent` não herda quando playbook/preço explícito; `priceAnalysis` + ranking de rotas |
+| E5 | `kpiHighlightExcludeLabels`; conclusão só com painéis significativos |
+| E6/E7 | `ChatMessageDeliveryService.client_metadata_for_response` — send/stream incluem `interactivity` |
+
+**Pendente R13:** homologação H1–H11 pós-fix (credenciais Keycloak locais); E9 já coberto por `SMOKE_PAUSE_SECONDS=2` no smoke.
+
+**R13 lote 2 (jun/2026):**
+
+| ID | Entrega |
+|----|---------|
+| E8 | `product_stock_presenter` — descrição no título/lead, nota de saldo negativo, `format_num` com milhar PT |
+| E9 | Pausa default 2s em `smoke_perguntas_teste_chat_jun2026.py` (`SMOKE_PAUSE_SECONDS`) |
+| Gateway | `nginx.conf` — upstream GLPI lazy resolve (stack sobe sem container GLPI) |
 
 **Manutenção contínua:** novos perfis tier A → fixtures + gates; CI via `--check-playbook12`.
 

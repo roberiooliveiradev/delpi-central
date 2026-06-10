@@ -206,7 +206,15 @@
     "attentionHeaderPrefix": "**Pontos de atenção",
     "conclusionHeader": "**Conclusão**",
     "attentionLargeList": "A consulta retornou **{count}** linhas — use filtros ou a tabela para auditar casos específicos.",
-    "conclusionPanelsHint": "Use as tabelas e painéis abaixo para conferir cada registro ou alternar entre KPI, gráfico e lista."
+    "conclusionPanelsHint": "Use as tabelas e painéis abaixo para conferir cada registro ou alternar entre KPI, gráfico e lista.",
+    "kpiHighlightExcludeLabels": [
+      "total pages",
+      "page size",
+      "total_pages",
+      "page_size",
+      "page number",
+      "page_number"
+    ]
   },
   "schemaDriven": {
     "tableTitleFallback": "Resultado da consulta",
@@ -1247,6 +1255,7 @@
     "factoryStatusWithCode": "Status completo na fábrica — {code}",
     "factoryStatusGeneric": "Status completo na fábrica",
     "stockWithCode": "Estoque do produto — {code}",
+    "stockWithCodeAndDescription": "Estoque — {description} ({code})",
     "stockGeneric": "Estoque do produto",
     "productionStatusWithCode": "Análise produtiva — {code}",
     "productionStatusGeneric": "Análise produtiva do produto",

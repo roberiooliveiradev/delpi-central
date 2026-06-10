@@ -38,6 +38,34 @@ def test_stock_highlights_negative_total_and_attention() -> None:
     assert "zerado" in markdown.lower() or "zero" in markdown.lower()
 
 
+def test_stock_summary_includes_description_and_pt_number_format() -> None:
+    presenter = ExternalActionResultPresenter()
+    items = [
+        {
+            "product_code": "10080001",
+            "branch": "01",
+            "warehouse": "01",
+            "current_quantity": 100.0,
+            "available_quantity": -23790.0,
+            "committed_quantity": 23890.0,
+        },
+    ]
+    root = {
+        "items": items,
+        "product": {
+            "product_code": "10080001",
+            "description": "PARAFUSO TESTE",
+        },
+    }
+
+    text = presenter._build_stock_text_presentation(root, "/products/10080001/stock")
+    markdown = str((text or {}).get("markdown") or "")
+
+    assert "PARAFUSO TESTE" in markdown
+    assert "negativo" in markdown.lower()
+    assert "-23.790" in markdown
+
+
 def test_stock_table_presentations_use_fixed_position_columns() -> None:
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
