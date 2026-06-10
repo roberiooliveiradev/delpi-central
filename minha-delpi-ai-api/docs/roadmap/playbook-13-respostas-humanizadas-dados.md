@@ -135,7 +135,7 @@ Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook 
 | A12 | Limitações humanizadas | `ChatDataCoverageNoticeService` + insight | `limitations[]`, `coverageNotice` | 🟡 |
 | A13 | Card de decisão (MFE) | **`ChatDecisionCard`** + segment registry | Segmento `decision` / `story.verdict` | ⬜ |
 | A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
-| A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ⬜ |
+| A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ✅ |
 | A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
 | A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ✅ |
 | A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | ✅ |
@@ -459,7 +459,12 @@ Atualizar **Status** ao concluir cada fase.
 - `resolveHumanizedCoverageNotice` — mescla `dataCoverageNotice` + `dataAnswer.limitations`
 - Modo Texto preserva segmento `decision` (fix visibilidade do card)
 
-**Próximo (P5):** governança, fixtures por shape, qualidade automatizada.
+**Entregue (split §15 — jun/2026):**
+
+- `sqlMarkdownNormalizer.ts`, `visualSegmentCollector.ts`, `stackSegmentBuilder.ts`
+- `markerSegmentBuilder.ts`, `nativeSingleViewBuilder.ts`, `segmentDedupe.ts`
+- `assistantContentSegments.ts` reduzido a orquestrador fino
+
 
 ### 8.5 P5 — Governança
 
