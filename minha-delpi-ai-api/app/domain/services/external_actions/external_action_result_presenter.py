@@ -642,6 +642,32 @@ class ExternalActionResultPresenter:
     def build_factory_status_table_presentations(self, root: dict, path: str) -> list[dict]:
         return self._composite_analysis().build_factory_status_table_presentations(root, path)
 
+    def build_factory_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._composite_analysis().build_factory_kpi_presentation(root, path)
+
+    def build_factory_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._composite_analysis().build_factory_tree_presentation(root, path)
+
+    def build_factory_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._composite_analysis().build_factory_chart_presentation(root, path)
+
+    def build_factory_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._composite_analysis().build_factory_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
     def build_production_status_table_presentations(self, root: dict, path: str) -> list[dict]:
         return self._production_status().build_production_status_table_presentations(root, path)
 

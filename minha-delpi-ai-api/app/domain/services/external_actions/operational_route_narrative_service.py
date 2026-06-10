@@ -36,6 +36,16 @@ class ExternalActionOperationalRouteNarrativeService:
         return text
 
     @classmethod
+    def is_production_started(cls, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+
+        if value is None or value == "":
+            return False
+
+        return str(value).strip().upper() in cls._STARTED_YES
+
+    @classmethod
     def format_quantity(
         cls,
         host: ExternalActionResultPresenter,

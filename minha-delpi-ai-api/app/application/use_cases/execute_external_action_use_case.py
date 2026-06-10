@@ -357,7 +357,12 @@ class ExecuteExternalActionUseCase:
                 )
 
                 if table_presentations_list:
-                    table_presentation = table_presentations_list[0]
+                    profile_table_presentation = table_presentations_list[0]
+
+                    if len(table_presentations_list) > 1:
+                        table_presentation = table_presentations_list[1]
+                    else:
+                        table_presentation = table_presentations_list[0]
             elif "/production-status" in path_lower and isinstance(root_payload, dict):
                 table_presentations_list = (
                     self.presenter.build_production_status_table_presentations(

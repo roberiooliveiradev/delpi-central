@@ -9,6 +9,23 @@ from app.application.services.external_actions.external_action_selection_service
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 
 
+def test_action_planning_factory_explicit_code_ignores_context_items():
+    codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
+        "status fabril do produto 90262401 hoje",
+        memory_snapshot={
+            "userContextItems": [
+                {
+                    "id": "1",
+                    "content": "90269002",
+                    "extractedEntities": {"productCode": "90269002"},
+                },
+            ],
+        },
+    )
+
+    assert codes == ["90262401"]
+
+
 def test_action_planning_codes_only_from_message_when_present():
     codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
         "estoque do produto 10080099",

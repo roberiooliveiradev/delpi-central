@@ -242,7 +242,8 @@ class ChatPresentationSectionAvailabilityService:
             cls._SCOPE: cls._has_scope(markdown),
             cls._PROFILE: cls._has_table_with_tokens(metadata, ("panorama fabril",)),
             cls._HIGHLIGHTS: cls._has_highlights_generic(markdown),
-            cls._STRUCTURE: cls._has_table_with_tokens(
+            cls._STRUCTURE: cls._has_tree(metadata)
+            or cls._has_table_with_tokens(
                 metadata,
                 ("estrutura", "bom", "exclusividade"),
             ),
