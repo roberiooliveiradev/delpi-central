@@ -472,7 +472,7 @@ Se sucesso, ordem atualizada na UI
 Se erro, restaurar ordem anterior
 ```
 
-### 17.4 Favoritar a partir da home / perfil
+### 17.4 Favoritar a partir da home / perfil / modal Apps
 
 ```text
 Usuário passa o mouse no card (Continuar trabalhando, Favoritos ou Perfil)
@@ -483,6 +483,8 @@ POST ou DELETE /me/apps/favorites/<app_id>
   ↓
 App aparece ou some da sidebar conforme favorito
 ```
+
+> **Sidebar:** não exibe pin — apenas lista favoritos já fixados. Desfixar pela home, perfil ou modal **Apps**.
 
 ---
 

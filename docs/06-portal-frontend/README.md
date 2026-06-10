@@ -14,7 +14,7 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [autenticacao-frontend.md](./autenticacao-frontend.md) | Keycloak, PKCE, token, `apiClient` |
 | [menu-dinamico.md](./menu-dinamico.md) | `/me/apps`, Sidebar |
 | [app-authorization.md](./app-authorization.md) | Guards, permissões na UI |
-| [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, Module Federation, iframe |
+| [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, loading overlay, Module Federation, iframe |
 | [favoritos.md](./favoritos.md) | `/me/apps/favorites`, reorder, pin |
 | [app-launcher-cards.md](./app-launcher-cards.md) | `AppLauncherCard`, grid, drag na sidebar |
 | [portal-tour.md](./portal-tour.md) | Tour gamificado v6, persistência core-api, botão Dica, admin exploradores |

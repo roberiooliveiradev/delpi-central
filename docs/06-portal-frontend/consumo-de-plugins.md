@@ -62,6 +62,26 @@ app.routes?.find((r) => r.path === location.pathname);
 
 **Entry resolvido:** `route.entry` (prioridade) → `app.entryUrl`.
 
+### 3.1 Tela de carregamento (`AppHostLoadingScreen`)
+
+Enquanto iframe ou microfrontend não fica pronto, o host exibe overlay com ícone do app, nome, rota e animação suave.
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `ui/AppHostLoadingScreen.tsx` / `.css` | UI do loading (gradiente, shimmer, orbes) |
+| `ui/useAppHostLoadingOverlay.ts` | Delay ~180ms antes de mostrar; mínimo ~450ms visível; fade ~340ms |
+| `ui/AppHost.tsx` | `hostContentReady` — `true` após `iframe.onload` ou `mod.mount()` |
+
+Comportamento:
+
+- Carregamentos rápidos **não** piscam overlay (delay inicial).
+- Conteúdo (`iframe` / mount federado) fica `opacity: 0` até pronto; entra com fade ~420ms.
+- Troca de app/entry/reload reinicia ciclo via `hostLoadResetKey`.
+- Transição entre rotas do mesmo app federado **não** remonta overlay (só `updateRoute`).
+- `prefers-reduced-motion`: animações desligadas.
+
+Transição de rota no shell: `appHostRouteTransition.ts` → classe `app-host--route-enter` (fade leve ~480ms).
+
 ---
 
 ## 4. Modos de renderização

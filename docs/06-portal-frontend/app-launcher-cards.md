@@ -33,6 +33,7 @@ Um único componente (`AppLauncherCard`) atende todos os contextos; variações 
 |---|---|
 | `components/AppLauncherCard.tsx` | Card, link principal, rotas inline, pin, integração com reorder |
 | `components/AppLauncherCard.css` | Estilos do card, grid `.launcher-pinned-grid`, reorder na sidebar |
+| `components/appLauncherAppearance.ts` | Rotas ativas, animações de aparecimento/navegação, helpers de path |
 | `components/AppLauncherReorderList.tsx` | Contexto de drag, hold-to-reorder, persistência via callback |
 | `layout/SidebarFavoritesList.tsx` | Monta favoritos da sidebar (`AppLauncherReorderList` + cards) |
 | `utils/favoriteOrder.ts` | `reorderList`, `mergeFavoriteOrder` (mescla apps ocultos na ordem persistida) |
@@ -67,13 +68,49 @@ Comportamento:
 - Disponível quando `onTogglePin` é passado e `variant !== sidebar`.
 - Fluxo: otimista em `AuthContext` → `POST` / `DELETE` `/me/apps/favorites/<app_id>` → recarga da lista.
 
-Na **home** e no **perfil**, o mesmo handler alterna favorito; na sidebar o app já está na lista de favoritos (sem pin — remoção pode ser feita pelo launcher ou perfil).
+Na **home**, no **modal Apps** e no **perfil**, o pin alterna favorito. Na **sidebar** o pin **não** é exibido — a lista já representa favoritos; fixar/desfixar permanece nas outras superfícies.
 
 ---
 
-## 6. Reordenar favoritos na sidebar
+## 6. Sidebar — contexto de rota e estados visuais (jun/2026)
 
-### 6.1 Ativação (hold-to-drag)
+Módulo canônico: `appLauncherAppearance.ts` + `AppLauncherCard` (`variant="sidebar"`).
+
+### 6.1 Hierarquia ativo (app vs rota)
+
+| Camada | Classe / estado | Visual |
+|---|---|---|
+| App no contexto da rota | `.route-active` no tile | Fundo suave (~8% primary) agrupando header + sub-rotas |
+| Rota selecionada | `.sidebar-inline-route.active` | Fundo um pouco mais forte (~16% primary), texto primary |
+| App de rota única ativo | `.active` no tile (sem sub-rotas) | Destaque no link principal apenas |
+
+Regras:
+
+- Prefix match de path **não** marca várias rotas: `isLauncherRouteSelected` escolhe só a rota **mais específica** (`resolveActiveRouteForApp` — path mais longo).
+- Apps com **uma rota visível** não expandem lista duplicada; `openApps` na sidebar não abre tile de rota única.
+
+### 6.2 Expand / collapse de sub-rotas
+
+Painel `launcher-inline-routes-panel` com `grid-template-rows: 0fr → 1fr` (~380ms). Rotas permanecem no DOM; `aria-hidden` e `tabIndex={-1}` quando recolhido.
+
+- Chevron só expande/recolhe; clique no header navega para rota default.
+- Ao sair do app (`isLauncherAppContextActive` falso), `Sidebar` remove `openApps[appId]` e o painel recolhe com animação.
+
+### 6.3 Hover e animações
+
+- Hover do tile e das sub-rotas com opacidades baixas e transições ~280–320ms.
+- Animações de rota do launcher modal (`launcher-app-tile--routed`) **desligadas** na sidebar para não sobrescrever fundo de `.route-active`.
+- Reset de links (`:visited`, `:hover`) não compete com `.sidebar-inline-route.active` — regras de ativo vêm **depois** do reset.
+
+### 6.4 Nomes longos
+
+`data-name-tier` (`short` | `medium` | `long`) ajusta `font-size` e truncamento no tile da sidebar (ellipsis em uma linha).
+
+---
+
+## 7. Reordenar favoritos na sidebar
+
+### 7.1 Ativação (hold-to-drag)
 
 A reorder **não** fica sempre visível (sem cursor `grab` permanente):
 
@@ -83,21 +120,21 @@ A reorder **não** fica sempre visível (sem cursor `grab` permanente):
 4. **Soltar** → `PUT /me/apps/favorites/order` com ordem mesclada.
 5. **Segurar e soltar sem mover** → cancela (não navega, não reordena).
 
-### 6.2 Área interativa
+### 7.2 Área interativa
 
 Toda a região principal do card (ícone + nome + chevron) participa do hold/drag. Sub-rotas expandidas permanecem links independentes.
 
-### 6.3 Firefox — prévia de link
+### 7.3 Firefox — prévia de link
 
 O arraste nativo de `<a href>` é bloqueado durante hold/drag (`dragstart`, `selectstart`, `mousedown` controlado) para evitar o popup *"O Firefox não pode exibir prévia deste link"*.
 
-### 6.4 Ordem persistida com apps ocultos
+### 7.4 Ordem persistida com apps ocultos
 
 Favoritos não lançáveis (sem rotas / não autorizados) não aparecem na sidebar, mas permanecem no backend. Ao reordenar só os visíveis, `mergeFavoriteOrder` preserva a posição relativa dos ocultos na lista completa.
 
 ---
 
-## 7. Variants do card
+## 8. Variants do card
 
 | Variant | Layout | Link |
 |---|---|---|
@@ -113,14 +150,14 @@ Props relevantes:
 
 ---
 
-## 8. Testes e build
+## 9. Testes e build
 
 - Build Portal: `cd portal && npm run build`
 - Core API (reorder): `core-api/app/tests/use_cases/test_reorder_favorite_apps_use_case.py`
 
 ---
 
-## 9. Evoluções possíveis
+## 10. Evoluções possíveis
 
 - Reordenar favoritos na seção **Favoritos** da home (hoje só sidebar).
 - Toasts de erro ao falhar reorder/favoritar.

@@ -367,7 +367,7 @@ export const AppLauncherCard = ({
         .join(" ")}
       style={launcherMotionIndexStyle(motionIndex)}
     >
-      {onTogglePin && !isSidebar && (
+      {onTogglePin && !isSidebar ? (
         <button
           type="button"
           className={[
@@ -385,7 +385,7 @@ export const AppLauncherCard = ({
         >
           <Pin size={13} strokeWidth={1.85} aria-hidden />
         </button>
-      )}
+      ) : null}
 
       <a
         href={defaultPath ?? "#"}
