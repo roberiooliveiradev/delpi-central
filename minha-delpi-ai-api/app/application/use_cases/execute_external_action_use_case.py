@@ -617,6 +617,12 @@ class ExecuteExternalActionUseCase:
 
         ChatRichPresentationTextService.compact_metadata_text(metadata)
 
+        from app.domain.services.chat_presentation_tree_markdown_service import (
+            ChatPresentationTreeMarkdownService,
+        )
+
+        ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
+
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
 

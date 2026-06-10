@@ -143,6 +143,35 @@ describe("assistantContentSegments", () => {
     }
   });
 
+  it("modo texto mantém quebras do outline de árvore em bloco text", () => {
+    const markdown =
+      "### Estrutura do produto 90260149\n\n**Composição**\n\n```text\n90260149 PA 1 MI — RAIZ\n└── 50230130 PI 1 MI — COMP\n    └── 10080109 MP 1 PC — SUB\n```";
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "single",
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown,
+          },
+        },
+      },
+    ] as const;
+
+    const segments = buildAssistantContentSegments("", [...toolCalls]);
+    const prose = segments
+      .filter((item) => item.kind === "markdown" || item.kind === "code")
+      .map((item) => (item.kind === "markdown" ? item.markdown : item.code))
+      .join("\n");
+
+    expect(prose).toMatch(/90260149 PA 1 MI — RAIZ\n└── 50230130 PI 1 MI — COMP/);
+    expect(prose).toContain("    └── 10080109 MP 1 PC — SUB");
+  });
+
   it("prioriza tabela nativa em layout single com selected=table", () => {
     const longMarkdown =
       "### Estoque\n\n<!-- section:scope -->\n\nDetalhamento longo em prosa.";

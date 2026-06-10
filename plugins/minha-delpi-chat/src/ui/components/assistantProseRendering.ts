@@ -83,6 +83,14 @@ export function resolveAssistantDisplayContent(
   const raw = String(content || "").trim();
 
   if (isNativeSingleViewSelection(toolCalls).active) {
+    const { kind } = isNativeSingleViewSelection(toolCalls);
+
+    if (kind === "text") {
+      return stripPresentationSectionMarkers(
+        raw || getTextMarkdownFromToolCalls(toolCalls),
+      );
+    }
+
     if (raw) {
       return stripPresentationSectionMarkers(raw);
     }
@@ -147,6 +155,27 @@ export function resolveAssistantRenderableMarkdown(
   toolCalls: ChatToolCall[] = [],
 ): string {
   const nativeSingle = isNativeSingleViewSelection(toolCalls);
+
+  if (nativeSingle.active && nativeSingle.kind === "text") {
+    const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
+    const presentationTitle = resolveAssistantPresentationTitle(content, toolCalls);
+    const raw = String(content || "").trim();
+
+    if (fromMetadata) {
+      return stripLeadingMarkdownTitleSafely(
+        stripPresentationSectionMarkers(fromMetadata),
+        presentationTitle,
+      );
+    }
+
+    if (raw && isShortPresentationCaption(raw, toolCalls)) {
+      return stripPresentationSectionMarkers(
+        stripLeadingMarkdownTitleSafely(raw, presentationTitle),
+      );
+    }
+
+    return stripPresentationSectionMarkers(raw);
+  }
 
   if (nativeSingle.active) {
     const raw = String(content || "").trim();

@@ -44,6 +44,31 @@ describe("assistantProseRendering", () => {
     expect(stripLeadingMarkdownTitleSafely(body, body)).toBe(body);
   });
 
+  it("modo texto usa markdown completo do metadata, incluindo bloco de árvore", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "single",
+          },
+          textPresentation: {
+            type: "markdown",
+            title: "Estrutura do produto 90260149",
+            markdown:
+              "### Estrutura do produto 90260149\n\nProduto **90260149**.\n\n**Composição**\n\n```\n90260149 PA 1 MI — RAIZ\n└── C1 PI 1 UN — COMP\n```",
+          },
+        },
+      },
+    ] as const;
+
+    const rendered = resolveAssistantRenderableMarkdown("", [...toolCalls]);
+
+    expect(rendered).toContain("**Composição**");
+    expect(rendered).toContain("└── C1 PI 1 UN — COMP");
+  });
+
   it("remove apenas cabeçalho real distinto do corpo", () => {
     const body = "### Estoque\n\n| Filial | Qtd |\n| --- | --- |";
 

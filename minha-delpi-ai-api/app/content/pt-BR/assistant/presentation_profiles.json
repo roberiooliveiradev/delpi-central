@@ -371,6 +371,7 @@
         "requiresItems": true
       },
       "humanizedNarrative": "skip",
+      "textEmbedTreeOutline": true,
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       }

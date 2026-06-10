@@ -15,11 +15,17 @@ class ExternalActionTextPresentationPresenter:
         self._host = host
 
     def _build_parents_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
         root_node = root.get("root") if isinstance(root.get("root"), dict) else {}
         code = str(root_node.get("code") or "").strip()
         total = root.get("total")
         items = root.get("items") if isinstance(root.get("items"), list) else []
         shown = len(items)
+        profile = ChatPresentationProfileService.resolve_profile(path, "product_parents")
+        embed_tree_outline = profile.get("textEmbedTreeOutline") is True
 
         from app.domain.services.chat_product_operational_content_service import (
             ChatProductOperationalContentService,
@@ -79,7 +85,7 @@ class ExternalActionTextPresentationPresenter:
                 )
             )
 
-        if items:
+        if items and not embed_tree_outline:
             summary_parts.append(self._host._route_narrative("parents", "treeAndTable"))
         else:
             summary_parts.append(self._host._analyser_markdown("parentsEmpty"))
@@ -93,10 +99,16 @@ class ExternalActionTextPresentationPresenter:
         }
 
     def _build_structure_text_presentation(self, root: dict, path: str) -> dict | None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
         root_node = root.get("root") if isinstance(root.get("root"), dict) else {}
         code = str(root_node.get("code") or "").strip()
         total = root.get("total")
         items = root.get("items") if isinstance(root.get("items"), list) else []
+        profile = ChatPresentationProfileService.resolve_profile(path, "product_structure")
+        embed_tree_outline = profile.get("textEmbedTreeOutline") is True
 
         title = (
             self._host._route_narrative("structure", "titleWithCode", code=code)
@@ -128,7 +140,7 @@ class ExternalActionTextPresentationPresenter:
                 )
             )
 
-        if items or total:
+        if (items or total) and not embed_tree_outline:
             summary_parts.append(self._host._route_narrative("structure", "treeAndTable"))
 
         markdown = "\n\n".join([f"### {title}", "", *summary_parts])

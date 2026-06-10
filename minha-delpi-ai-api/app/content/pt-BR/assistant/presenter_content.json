@@ -196,6 +196,8 @@
     "collectionPreviewPair": "{label}={value}",
     "textPresentationFallback": "Resultado",
     "stockTextDetailHeader": "Detalhamento por filial e armazém",
+    "treeOutlineHeader": "**Composição**",
+    "treeOutlineTruncated": "… e mais {remaining} componente(s).",
     "itemsTableDefaultTitle": "Dados retornados"
   },
   "humanizedNarrative": {

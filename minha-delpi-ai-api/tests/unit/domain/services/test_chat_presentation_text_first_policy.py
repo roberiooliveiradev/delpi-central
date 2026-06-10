@@ -35,6 +35,30 @@ def test_integrated_stack_request_builds_visual_bundle():
     )
 
 
+def test_apply_text_primary_keeps_tree_for_structure_text_outline():
+    from app.domain.services.chat_presentation_primary_view_service import (
+        ChatPresentationPrimaryViewService,
+    )
+
+    metadata = {
+        "path": "/products/90260149/structure",
+        "textPresentation": {"type": "markdown", "markdown": "### Estrutura\n\nResumo."},
+        "presentation": {
+            "type": "tree",
+            "title": "Estrutura",
+            "root": {"id": "90260149", "label": "90260149", "children": []},
+        },
+        "chartPresentation": {"type": "chart", "data": []},
+        "availableFormats": ["text", "tree", "chart"],
+    }
+
+    applied = ChatPresentationPrimaryViewService.apply_session_preference(metadata, "text")
+
+    assert applied is True
+    assert metadata.get("presentation") is None
+    assert metadata.get("treePresentation", {}).get("type") == "tree"
+
+
 def test_apply_text_primary_strips_auxiliary_presentations_for_stock():
     metadata = {
         "textPresentation": {"type": "markdown", "markdown": "### Estoque\n\n- Filial 01"},

@@ -335,3 +335,55 @@ def test_session_format_regression_cases_table_and_tree():
             assert meta["presentation"]["type"] == case["expected_primary_type"]
 
         assert meta["presentationDecision"]["layoutMode"] == "single"
+
+
+def test_structure_text_mode_embeds_tree_outline_markdown():
+    use_case = _use_case()
+    structure_payload = {
+        "root": {
+            "code": "90260149",
+            "description": "CHICOTE EPR SINGELO 235MM",
+            "type": "PA",
+            "unit": "MI",
+            "quantity": 1,
+        },
+        "items": [
+            {
+                "code": "50230130",
+                "description": "CB16AZUL",
+                "type": "PI",
+                "unit": "MI",
+                "quantity": 1.0,
+                "components": [
+                    {
+                        "code": "10080109",
+                        "description": "TERM. FASTON",
+                        "type": "MP",
+                        "unit": "PC",
+                        "quantity": 1.0,
+                    }
+                ],
+            }
+        ],
+        "total": 1,
+    }
+
+    meta = use_case._build_presentation_metadata(
+        action={"path": "/products/{code}/structure"},
+        sanitized_data=structure_payload,
+        resolved_path="/products/90260149/structure",
+        request_parameters={"sessionResponseFormat": "text"},
+    )
+
+    from app.domain.services.chat_presentation_tree_markdown_service import (
+        ChatPresentationTreeMarkdownService,
+    )
+
+    markdown = str(meta["textPresentation"]["markdown"])
+
+    assert meta["presentationDecision"]["selected"] == "text"
+    assert isinstance(meta.get("treePresentation"), dict)
+    assert "**Composição**" in markdown
+    assert "50230130" in markdown
+    assert "└── 50230130" in markdown or "├── 50230130" in markdown
+    assert isinstance(meta.get("treePresentation"), dict)

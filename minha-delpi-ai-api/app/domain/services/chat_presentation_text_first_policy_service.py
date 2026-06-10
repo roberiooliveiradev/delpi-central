@@ -215,13 +215,28 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             explicit_format=explicit_format,
             user_message=user_message,
         ):
-            cls._strip_auxiliary_presentations(metadata)
+            cls._strip_auxiliary_presentations(metadata, path=path, entity=entity)
 
         return True
 
     @classmethod
-    def _strip_auxiliary_presentations(cls, metadata: dict[str, Any]) -> None:
+    def _strip_auxiliary_presentations(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        path: str | None = None,
+        entity: str | None = None,
+    ) -> None:
+        profile = ChatPresentationProfileService.resolve_profile(
+            path or str(metadata.get("path") or ""),
+            entity,
+        )
+        keep_tree = profile.get("textEmbedTreeOutline") is True
+
         for slot in _AUXILIARY_SLOTS:
+            if slot == "treePresentation" and keep_tree:
+                continue
+
             metadata.pop(slot, None)
 
         formats = [

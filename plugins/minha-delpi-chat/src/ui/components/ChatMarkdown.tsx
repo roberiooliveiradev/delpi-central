@@ -100,8 +100,8 @@ const markdownComponents: Components = {
     const match = /language-([\w-]+)/i.exec(className ?? "");
     const code = String(children).replace(/\n$/, "");
 
-    if (match) {
-      return <ChatCodeBlock language={match[1]} code={code} />;
+    if (match || code.includes("\n")) {
+      return <ChatCodeBlock language={match?.[1] || "text"} code={code} />;
     }
 
     return (
