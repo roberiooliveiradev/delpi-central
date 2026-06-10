@@ -378,13 +378,62 @@ class ChatInteractivitySuggestionService:
                 usage,
             )
 
+            presentation_boost = cls._presentation_view_chip_boost(item, tool_calls)
+
             return (
                 disabled_rank,
-                priority + intent_boost + kind_rank + preference_boost,
+                priority + intent_boost + kind_rank + preference_boost + presentation_boost,
                 str(item.get("label")),
             )
 
         return sorted(items, key=sort_key)
+
+    @classmethod
+    def _presentation_view_chip_boost(
+        cls,
+        item: dict[str, Any],
+        tool_calls: list | None,
+    ) -> int:
+        source_key = str(item.get("sourceKey") or "").strip()
+
+        if source_key not in {
+            "presentationFollowUpSuggestions",
+            "operationalRefinementFollowUpSuggestions",
+        }:
+            return 0
+
+        label = str(item.get("label") or "").strip()
+        view_labels = {
+            str(value).strip()
+            for value in (_content().get("viewChipLabels") or {}).values()
+            if str(value).strip()
+        }
+
+        if label not in view_labels:
+            return 0
+
+        decision = ChatPresentationInteractivityService._latest_presentation_decision(
+            tool_calls,
+        )
+
+        if not isinstance(decision, dict):
+            return 0
+
+        available = [
+            str(view or "").strip().lower()
+            for view in (decision.get("availableViews") or [])
+            if str(view or "").strip()
+        ]
+
+        if len(set(available)) < 2:
+            return 0
+
+        boost = _content().get("presentationViewChipBoost")
+
+        if isinstance(boost, int):
+            return boost
+
+        return -28
 
     @classmethod
     def _partition(

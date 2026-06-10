@@ -244,6 +244,7 @@
     "Aumentar profundidade": "aumente a profundidade da consulta anterior",
     "Ampliar período": "amplie o período da última consulta"
   },
+  "presentationViewChipBoost": -28,
   "metadataSources": [
     { "key": "followUpSuggestions", "group": "consultar", "priority": 10 },
     { "key": "errorRecoveryFollowUpSuggestions", "group": "recuperar", "priority": 5 },

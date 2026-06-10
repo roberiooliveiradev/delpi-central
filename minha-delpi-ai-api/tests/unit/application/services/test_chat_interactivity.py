@@ -133,6 +133,66 @@ def test_presentation_decision_adds_view_switch_chips():
     assert "Ver em gráfico" in labels
 
 
+def test_consolidated_interactivity_prioritizes_view_chart_chip_over_follow_up():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080001/stock",
+                "presentation": {"type": "chart"},
+                "presentationDecision": {
+                    "selected": "text",
+                    "availableViews": ["text", "table", "chart", "tree", "kpi", "dashboard"],
+                    "presentationProfileKey": "stock",
+                },
+            },
+        }
+    ]
+    presentation = ChatPresentationInteractivityService.build_from_tool_calls(tool_calls)
+    metadata = {
+        "followUpSuggestions": [
+            {"label": "Comparar período", "query": "compare com o mês anterior"},
+            {"label": "Detalhar por filial", "query": "detalhe por filial"},
+            {"label": "Verificar código", "query": "verifique o código do produto"},
+        ],
+        "presentationFollowUpSuggestions": presentation,
+        "operationalRefinementFollowUpSuggestions": [
+            {"label": "Só com saldo", "query": "mostre só posições com saldo disponível"},
+        ],
+    }
+
+    ChatInteractivitySuggestionService.attach_to_assistant_metadata(
+        metadata,
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
+        tool_calls=tool_calls,
+        intent_route={"intent": "operational_query", "subIntent": "stock_lookup"},
+    )
+
+    primary_labels = [
+        item["label"] for item in metadata["interactivity"]["suggestions"]
+    ]
+
+    assert "Ver em gráfico" in primary_labels
+
+
+def test_detect_presentation_type_respects_selected_text_over_embedded_chart():
+    token = ChatPresentationInteractivityService._detect_presentation_type(
+        [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "presentation": {"type": "chart"},
+                    "presentationDecision": {"selected": "text", "availableViews": ["text", "chart"]},
+                },
+            }
+        ]
+    )
+
+    assert token is None
+
+
 def test_presentation_chart_includes_explain_chip():
     suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
         [

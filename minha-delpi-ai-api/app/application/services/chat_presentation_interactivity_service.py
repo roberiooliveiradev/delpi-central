@@ -314,6 +314,17 @@ class ChatPresentationInteractivityService:
 
     @classmethod
     def _detect_presentation_type(cls, tool_calls: list | None) -> str | None:
+        decision = cls._latest_presentation_decision(tool_calls)
+
+        if isinstance(decision, dict):
+            selected = str(decision.get("selected") or "").strip().lower()
+
+            if selected in {"table", "chart", "tree", "kpi", "dashboard"}:
+                return selected
+
+            if selected in {"text", "canvas", ""}:
+                return None
+
         for call in reversed(tool_calls or []):
             if not isinstance(call, dict):
                 continue
