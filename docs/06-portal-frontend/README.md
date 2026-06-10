@@ -17,7 +17,8 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, loading overlay, Module Federation, iframe |
 | [favoritos.md](./favoritos.md) | `/me/apps/favorites`, reorder, pin |
 | [app-launcher-cards.md](./app-launcher-cards.md) | `AppLauncherCard`, grid, drag na sidebar |
-| [portal-tour.md](./portal-tour.md) | Tour gamificado v6, persistência core-api, botão Dica, admin exploradores |
+| [descubra-o-portal.md](./descubra-o-portal.md) | **Descubra o portal** — card na home, painel, gamificação, retomada |
+| [portal-tour.md](./portal-tour.md) | Referência técnica do tour (API, desafios, âncoras, eventos) |
 | [playbook-portal-tour-gamificacao.md](./playbook-portal-tour-gamificacao.md) | Roadmap XP, celebrações, conquistas (Fases A–D) |
 | [notificacoes.md](./notificacoes.md) | Sino, `/notifications`, preferências |
 | [admin-estatisticas.md](./admin-estatisticas.md) | Aba Estatísticas no `/admin` |

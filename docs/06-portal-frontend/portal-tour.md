@@ -1,6 +1,7 @@
-# Tour do portal
+# Descubra o portal (tour gamificado)
 
-> **Código:** `portal/src/tour/` · **Integração:** `App.tsx` (`PortalTour`)
+> **Nome na UI:** **Descubra o portal** · **Doc de produto:** [descubra-o-portal.md](./descubra-o-portal.md)  
+> **Código:** `portal/src/tour/` · **Integração:** `App.tsx` (`PortalTour`), `HomePage.tsx` (`PortalTourHomeEntry`)
 
 Tour **gamificado** e **não linear** para explorar a Minha DELPI: favoritos, catálogo, notificações, perfil, RBAC, privacidade, tema e admin (quando aplicável). Exibido uma vez por usuário por versão; pode ser reiniciado em **Meu Perfil**.
 
@@ -138,7 +139,7 @@ Requer `rbac.manage` ou superadmin.
 
 **Conclusão:** ao atingir 100% dos desafios obrigatórios, o modal de celebração marca a versão como concluída no servidor e no `localStorage`. Não há «Pular» nem «Concluir» manual — a exploração é contínua e gamificada.
 
-**Retomar:** com o painel fechado, a home exibe o card **Descubra o portal** (progresso e nível).
+**Retomar:** com o painel fechado, a home exibe o card **Descubra o portal** (progresso, nível e `N/M` de desafios). O card **permanece visível** com o painel aberto e **some** apenas ao concluir 100% ou ao resetar a versão. Ver [descubra-o-portal.md § Card na home](./descubra-o-portal.md#5-card-descubra-o-portal-na-home).
 
 ---
 
@@ -162,7 +163,7 @@ Requer `rbac.manage` ou superadmin.
 | Seletor | Componente |
 |---|---|
 | `[data-tour="sidebar-favorites"]` | `.sidebar-content` em `Sidebar.tsx` |
-| `[data-tour="sidebar-logo"]` | Logo Minha DELPI no topo da sidebar |
+| `[data-tour="sidebar-logo"]` / `#sidebar-logo` | Logo Minha DELPI no topo da sidebar (`div` acessível → home) |
 | `[data-tour="sidebar-apps"]` | Item **Apps** no footer |
 | `[data-tour="sidebar-notifications"]` | Item **Notificações** no footer |
 | `[data-tour="sidebar-notifications-panel"]` | Dropdown de notificações |

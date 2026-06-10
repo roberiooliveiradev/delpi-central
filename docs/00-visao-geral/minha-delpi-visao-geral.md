@@ -140,7 +140,8 @@ Responsabilidades:
 - listar apps autorizados;
 - listar e gerenciar favoritos;
 - receber notificações/eventos em tempo real;
-- carregar plugins e microfrontends.
+- carregar plugins e microfrontends;
+- conduzir onboarding com **Descubra o portal** (tour gamificado na home e painel flutuante).
 
 O Portal não é a fonte de verdade de autorização.
 
@@ -599,7 +600,8 @@ A Minha DELPI deve evoluir seguindo estes princípios:
 1. [Mapa da plataforma](./mapa-da-plataforma.md)
 2. [README da documentação](../README.md)
 3. [Portal — visão geral](../06-portal-frontend/visao-geral-portal.md)
-4. [Core API — visão geral](../04-core-api/visao-geral-core-api.md)
-5. [API DELPI — documentação de rotas](../../api-delpi/docs/api/README.md)
-6. [Plugin system — manifesto](../05-plugin-system/manifesto-plugin.md)
+4. [Descubra o portal](../06-portal-frontend/descubra-o-portal.md) — onboarding gamificado
+5. [Core API — visão geral](../04-core-api/visao-geral-core-api.md)
+6. [API DELPI — documentação de rotas](../../api-delpi/docs/api/README.md)
+7. [Plugin system — manifesto](../05-plugin-system/manifesto-plugin.md)
 

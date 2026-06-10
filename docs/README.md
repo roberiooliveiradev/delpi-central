@@ -2,7 +2,7 @@
 
 Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 
-Última revisão alinhada ao código: **maio/2026**.
+Última revisão alinhada ao código: **jun/2026**.
 
 ---
 

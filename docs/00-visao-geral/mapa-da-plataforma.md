@@ -99,6 +99,7 @@ Admin Portal (/admin)
 - [../06-portal-frontend/app-authorization.md](../06-portal-frontend/app-authorization.md)
 - [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
 - [../06-portal-frontend/favoritos.md](../06-portal-frontend/favoritos.md)
+- [../06-portal-frontend/descubra-o-portal.md](../06-portal-frontend/descubra-o-portal.md)
 
 ### Core API
 

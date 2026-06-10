@@ -183,7 +183,8 @@ Responsabilidades:
 - carregar microfrontends;
 - renderizar iframes;
 - exibir favoritos;
-- tratar autorização de UI.
+- tratar autorização de UI;
+- **Descubra o portal** — tour gamificado (card na home, painel, sync Core API). Ver [descubra-o-portal.md](../06-portal-frontend/descubra-o-portal.md).
 
 ---
 

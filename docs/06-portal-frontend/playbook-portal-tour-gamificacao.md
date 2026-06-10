@@ -178,6 +178,7 @@ portal/src/tour/
 
 ## Referências
 
+- [descubra-o-portal.md](./descubra-o-portal.md) — produto e UX (card, painel, retomada)
 - [portal-tour.md](./portal-tour.md) — comportamento e API
 - [admin-estatisticas.md](./admin-estatisticas.md) — painel exploradores
 - Regra workspace: `centralized-rules-first.mdc` — um módulo canônico por regra

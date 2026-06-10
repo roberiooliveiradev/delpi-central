@@ -35,7 +35,10 @@ portal/src/
 │   ├── coreApi.ts           /me, apps, favoritos, notificações
 │   └── adminApi.ts          /admin/rbac/* e /admin/apps/*
 ├── layout/
-│   └── Sidebar.tsx          Menu dinâmico, favoritos, notificações
+│   └── Sidebar.tsx          Menu dinâmico, favoritos, notificações, logo → home
+├── tour/                    Descubra o portal (painel, card home, gamificação)
+│   ├── PortalTour.tsx
+│   └── PortalTourHomeEntry.tsx
 ├── routes/
 │   └── ProtectedRoute.tsx   Guard de rota por permissão (UX)
 ├── hooks/
