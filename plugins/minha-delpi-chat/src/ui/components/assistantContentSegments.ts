@@ -527,14 +527,22 @@ export function buildAssistantContentSegments(
   const selected = String(decision?.selected ?? "").trim().toLowerCase();
   const visuals = collectVisualSegments(toolCalls);
   const rawMarkdown = resolveAssistantRenderableMarkdown(content, toolCalls);
+  const nativeSingle = isNativeSingleViewSelection(toolCalls);
 
-  if (layoutMode !== "stack" && selected === "text") {
+  if (
+    layoutMode !== "stack" &&
+    selected === "text" &&
+    !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
+  ) {
     return parseMarkdownAndCodeSegments(rawMarkdown);
   }
 
-  const nativeSingle = isNativeSingleViewSelection(toolCalls);
-
-  if (nativeSingle.active && nativeSingle.kind && visuals.length) {
+  if (
+    nativeSingle.active &&
+    nativeSingle.kind &&
+    nativeSingle.kind !== "text" &&
+    visuals.length
+  ) {
     const caption = rawMarkdown.trim();
     const segments: AssistantContentSegment[] = [];
 

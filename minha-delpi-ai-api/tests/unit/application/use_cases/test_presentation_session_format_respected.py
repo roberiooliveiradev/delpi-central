@@ -126,6 +126,48 @@ def test_stock_session_table_prefers_table_primary():
     assert decision["layoutMode"] == "single"
 
 
+def test_stock_session_tree_prefers_tree_primary():
+    use_case = _use_case()
+    meta = use_case._build_presentation_metadata(
+        action={"path": "/products/{code}/stock"},
+        sanitized_data={
+            "stock": {
+                "items": [
+                    {
+                        "branch": "01",
+                        "warehouse": "01",
+                        "current_quantity": 10,
+                        "available_quantity": 8,
+                        "committed_quantity": 2,
+                    },
+                    {
+                        "branch": "02",
+                        "warehouse": "01",
+                        "current_quantity": 5,
+                        "available_quantity": 5,
+                        "committed_quantity": 0,
+                    },
+                ]
+            }
+        },
+        resolved_path="/products/10080022/stock",
+        request_parameters={"sessionResponseFormat": "tree"},
+    )
+
+    decision = meta["presentationDecision"]
+    pres_type = (meta.get("presentation") or {}).get("type")
+    assert pres_type == "tree", (
+        f"pres={pres_type!r} selected={decision.get('selected')!r} "
+        f"explicit={meta.get('explicitSessionFormat')!r} "
+        f"treeSlot={(meta.get('treePresentation') or {}).get('type')!r} "
+        f"avail={meta.get('availableFormats')!r}"
+    )
+
+    assert decision["selected"] == "tree"
+    assert decision["layoutMode"] == "single"
+    assert meta.get("explicitSessionFormat") == "tree"
+
+
 def test_stock_default_text_uses_single_layout_without_explicit_session_format():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(
