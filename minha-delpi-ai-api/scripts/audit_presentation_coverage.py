@@ -85,6 +85,11 @@ def main() -> int:
         action="store_true",
         help="Falha se rotas tier A não tiverem commentaryProfileKey declarativo no perfil",
     )
+    parser.add_argument(
+        "--check-humanized-answer",
+        action="store_true",
+        help="Falha se fixtures por shape ou cobertura humanizada tier A divergirem (Playbook 13 P5)",
+    )
     args = parser.parse_args()
 
     report = ChatPresentationCoverageService.build_report(baseline_path=args.baseline)
@@ -243,6 +248,28 @@ def main() -> int:
                 )
         else:
             print("\nOK: tier A com commentaryProfileKey declarativo ou resolvido")
+
+    if args.check_humanized_answer:
+        from tests.fixtures.humanized_data_response_gate import (  # noqa: E402
+            validate_humanized_answer_for_ci,
+        )
+
+        humanized_validation = validate_humanized_answer_for_ci(
+            openapi_baseline_path=args.baseline,
+        )
+        humanized_gaps = humanized_validation.get("humanizedGaps") or []
+
+        if humanized_gaps:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(humanized_gaps)} gap(s) de resposta humanizada (Playbook 13)",
+                file=sys.stderr,
+            )
+
+            for gap in humanized_gaps[:20]:
+                print(f"  - {gap}", file=sys.stderr)
+        else:
+            print("\nOK: Playbook 13 — shapes humanizados e cobertura tier A")
 
     if args.check_playbook12:
         from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402

@@ -45,6 +45,9 @@ jobs:
       - name: Gate Playbook 12 consolidado (R12)
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-playbook12
 
+      - name: Gate Playbook 13 respostas humanizadas (P5)
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-humanized-answer
+
       - name: Testes cobertura e contrato por entidade
         run: |
           PYTHONPATH=. pytest \
@@ -61,4 +64,6 @@ jobs:
             tests/unit/domain/services/test_chat_presentation_profile_auto_chart.py \
             tests/unit/domain/services/test_playbook12_regression_suite.py \
             tests/unit/domain/services/test_presentation_refactor_baseline.py \
+            tests/unit/domain/services/test_chat_humanized_response_quality_service.py \
+            tests/unit/fixtures/test_humanized_data_response_gate.py \
             -q

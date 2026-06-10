@@ -137,8 +137,8 @@ Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook 
 | A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
 | A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ⬜ |
 | A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
-| A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ⬜ |
-| A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | 🟡 |
+| A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ✅ |
+| A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | ✅ |
 
 Legenda: ✅ entregue · 🟡 parcial · ⬜ planejado
 
@@ -393,7 +393,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P2** | Perfis declarativos | Perfis `generic_*`; `commentaryProfileKey` no perfil; redução de `if` por path; registry documentado | `audit_presentation_coverage --check-commentary-profiles`; tier A | ✅ |
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
-| **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ⬜ |
+| **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -463,15 +463,12 @@ Atualizar **Status** ao concluir cada fase.
 
 ### 8.5 P5 — Governança
 
-1. Estender `audit_presentation_coverage.py`:
+**Entregue (jun/2026):**
 
-```text
-rota | entidade | shape | tier | formatos | default | narrativa? | limitações? | recomendações? | teste? | gaps
-```
-
-2. `ChatHumanizedResponseQualityService` — checklist automatizado.
-3. Fixture `tests/fixtures/humanized_data_response_cases.py` por **shape**, não só rota.
-4. Gate CI opcional `--check-humanized-answer`.
+1. `audit_presentation_coverage.py` — colunas CSV `data_shape`, `supported_formats`, `default_view`, `has_narrative`, `has_limitations`, `has_recommendations`, `has_shape_test`, `humanized_gaps`
+2. `ChatHumanizedResponseQualityService.evaluate(metadata)` — checklist §13 automatizado
+3. `tests/fixtures/humanized_data_response_cases.py` — 10 shapes §17 + gate `humanized_data_response_gate.py`
+4. CI `--check-humanized-answer` no workflow `minha-delpi-ai-api-presentation.yml`
 
 ---
 

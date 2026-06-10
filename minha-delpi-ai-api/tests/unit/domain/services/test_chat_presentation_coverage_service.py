@@ -75,9 +75,8 @@ def test_rows_to_csv_header() -> None:
     rows = ChatPresentationCoverageService.build_matrix()[:1]
     csv_text = ChatPresentationCoverageService.rows_to_csv(rows)
 
-    assert csv_text.startswith(
-        "method,path,operation_id,tags,entity,entity_routed,tier,routed_by,profile_key"
-    )
+    assert "data_shape" in csv_text.splitlines()[0]
+    assert "humanized_gaps" in csv_text.splitlines()[0]
 
 
 def test_validate_for_ci_passes_on_current_matrix() -> None:

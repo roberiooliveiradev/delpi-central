@@ -15,6 +15,9 @@ from app.domain.services.chat_api_delpi_response_profile_service import (
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.chat_humanized_data_response_content_service import (
+    ChatHumanizedDataResponseContentService,
+)
 from app.domain.services.chat_presentation_vocabulary_service import (
     ChatPresentationVocabularyService,
 )
@@ -35,6 +38,21 @@ _RICH_PRODUCT_PATH_TOKENS: tuple[str, ...] = (
 )
 
 _TIER_ORDER = ("A", "B", "C", "D")
+_HUMANIZED_SHAPE_IDS = frozenset(
+    {
+        "field_value_profile",
+        "generic_list",
+        "categorical_ranking",
+        "time_series",
+        "hierarchy",
+        "kpi_set",
+        "empty_list",
+        "large_list",
+        "truncated",
+        "logical_error",
+    }
+)
+
 _SKIP_PROFILE_CONTRACT_ENTITIES = frozenset(
     {
         "sql_result",
@@ -60,6 +78,14 @@ class PresentationCoverageRow:
     profile_key: str
     commentary_profile_key: str | None = None
     narrative_policy: str | None = None
+    data_shape: str | None = None
+    supported_formats: str | None = None
+    default_view: str | None = None
+    has_narrative: bool = False
+    has_limitations: bool = False
+    has_recommendations: bool = False
+    has_shape_test: bool = False
+    humanized_gaps: str | None = None
 
 
 @dataclass(frozen=True)
@@ -255,6 +281,12 @@ class ChatPresentationCoverageService:
             entity=entity,
         )
         narrative_policy = str(profile.get("narrativePolicy") or "").strip() or None
+        humanized = cls._resolve_humanized_coverage_fields(
+            profile=profile,
+            profile_key=profile_key,
+            commentary_profile_key=commentary_profile_key,
+            tier=tier,
+        )
 
         return PresentationCoverageRow(
             method=method,
@@ -268,6 +300,14 @@ class ChatPresentationCoverageService:
             profile_key=profile_key,
             commentary_profile_key=commentary_profile_key,
             narrative_policy=narrative_policy,
+            data_shape=humanized["data_shape"],
+            supported_formats=humanized["supported_formats"],
+            default_view=humanized["default_view"],
+            has_narrative=humanized["has_narrative"],
+            has_limitations=humanized["has_limitations"],
+            has_recommendations=humanized["has_recommendations"],
+            has_shape_test=humanized["has_shape_test"],
+            humanized_gaps=humanized["humanized_gaps"],
         )
 
     @classmethod
@@ -600,6 +640,116 @@ class ChatPresentationCoverageService:
         }
 
     @classmethod
+    def _shape_from_profile(
+        cls,
+        *,
+        profile: dict[str, Any],
+        commentary_profile_key: str | None,
+    ) -> str:
+        default_view = str(profile.get("defaultView") or "").strip().lower()
+        shape_by_view = {
+            "kpi": "kpi_set",
+            "table": "generic_list",
+            "line_chart": "time_series",
+            "horizontal_bar": "categorical_ranking",
+            "bar_chart": "categorical_ranking",
+            "donut": "categorical_ranking",
+            "tree": "hierarchy",
+            "text": "field_value_profile",
+            "dashboard": "kpi_set",
+        }
+
+        if default_view in shape_by_view:
+            return shape_by_view[default_view]
+
+        commentary = str(commentary_profile_key or "").strip()
+
+        if commentary in {"factory_status", "production_status", "shipping_status"}:
+            return "field_value_profile"
+
+        if commentary == "stock":
+            return "generic_list"
+
+        return commentary or "generic_list"
+
+    @classmethod
+    def _resolve_humanized_coverage_fields(
+        cls,
+        *,
+        profile: dict[str, Any],
+        profile_key: str,
+        commentary_profile_key: str | None,
+        tier: str,
+    ) -> dict[str, Any]:
+        default_view = str(profile.get("defaultView") or profile.get("defaultPrimary") or "").strip()
+        view_order = profile.get("viewOrder") or []
+        formats: list[str] = []
+
+        if default_view:
+            formats.append(default_view)
+
+        if isinstance(view_order, list):
+            for view in view_order:
+                token = str(view or "").strip()
+
+                if token and token not in formats:
+                    formats.append(token)
+
+        narrative_mode = str(profile.get("humanizedNarrative") or "enrich").strip().lower()
+        commentary = str(commentary_profile_key or "").strip()
+        has_narrative = narrative_mode != "skip" and bool(commentary)
+        has_limitations = bool(ChatHumanizedDataResponseContentService.get_node("limitations"))
+        has_recommendations = bool(
+            ChatHumanizedDataResponseContentService.recommendation_queries(commentary)
+        )
+        data_shape = cls._shape_from_profile(
+            profile=profile,
+            commentary_profile_key=commentary_profile_key,
+        )
+        has_shape_test = data_shape in _HUMANIZED_SHAPE_IDS
+        gap_tokens: list[str] = []
+
+        if tier == "A":
+            if narrative_mode == "enrich" and not commentary:
+                gap_tokens.append("missing_commentary_profile")
+
+            if narrative_mode == "enrich" and commentary and not has_recommendations:
+                gap_tokens.append("missing_recommendation_queries")
+
+            if narrative_mode == "enrich" and not has_shape_test:
+                gap_tokens.append("missing_shape_fixture")
+
+        return {
+            "data_shape": data_shape or None,
+            "supported_formats": "|".join(formats) if formats else None,
+            "default_view": default_view or None,
+            "has_narrative": has_narrative,
+            "has_limitations": has_limitations,
+            "has_recommendations": has_recommendations,
+            "has_shape_test": has_shape_test,
+            "humanized_gaps": "|".join(gap_tokens) if gap_tokens else None,
+        }
+
+    @classmethod
+    def find_humanized_coverage_gaps(
+        cls,
+        rows: list[PresentationCoverageRow],
+    ) -> list[str]:
+        gaps: list[str] = []
+
+        for row in rows:
+            if row.tier != "A":
+                continue
+
+            for gap_code in (row.humanized_gaps or "").split("|"):
+                token = gap_code.strip()
+
+                if token:
+                    gaps.append(f"{row.operation_id}: {token}")
+
+        return gaps
+
+    @classmethod
     def build_report(
         cls,
         *,
@@ -617,7 +767,8 @@ class ChatPresentationCoverageService:
     def rows_to_csv(cls, rows: list[PresentationCoverageRow]) -> str:
         header = (
             "method,path,operation_id,tags,entity,entity_routed,tier,routed_by,profile_key,"
-            "commentary_profile_key,narrative_policy"
+            "commentary_profile_key,narrative_policy,data_shape,supported_formats,default_view,"
+            "has_narrative,has_limitations,has_recommendations,has_shape_test,humanized_gaps"
         )
         lines = [header]
 
@@ -638,6 +789,14 @@ class ChatPresentationCoverageService:
                         row.profile_key,
                         cls._csv_cell(row.commentary_profile_key or ""),
                         cls._csv_cell(row.narrative_policy or ""),
+                        cls._csv_cell(row.data_shape or ""),
+                        cls._csv_cell(row.supported_formats or ""),
+                        cls._csv_cell(row.default_view or ""),
+                        "true" if row.has_narrative else "false",
+                        "true" if row.has_limitations else "false",
+                        "true" if row.has_recommendations else "false",
+                        "true" if row.has_shape_test else "false",
+                        cls._csv_cell(row.humanized_gaps or ""),
                     ]
                 )
             )
