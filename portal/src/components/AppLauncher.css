@@ -13,24 +13,35 @@
   align-items: center;
   justify-content: center;
   z-index: 300;
-  padding: 24px;
+  padding: 16px;
 }
 
 /* MODAL */
 
 .launcher-modal.startmenu {
-  width: clamp(320px, 90vw, 760px);
-  max-height: min(85vh, 640px);
+  --launcher-modal-max-height: min(90vh, 860px);
+  width: clamp(360px, 94vw, 1120px);
+  max-height: var(--launcher-modal-max-height);
   height: auto;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--border);
   border-radius: 22px;
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: launcherFadeIn 0.2s ease;
+}
+
+.launcher-modal.startmenu .launcher-pinned-grid {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  justify-content: stretch;
+}
+
+.launcher-modal.startmenu .launcher-pinned-grid .launcher-app-tile {
+  max-width: none;
 }
 
 /* HEADER */
@@ -281,12 +292,12 @@
 ========================================= */
 
 .launcher-body {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   overflow-anchor: none;
   scroll-behavior: auto;
-  max-height: calc(min(85vh, 640px) - 132px);
+  max-height: calc(var(--launcher-modal-max-height, min(90vh, 860px)) - 140px);
   min-height: 0;
   padding-right: 6px; /* evita cortar scrollbar */
 }
