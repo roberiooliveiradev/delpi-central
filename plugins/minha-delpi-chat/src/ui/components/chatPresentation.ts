@@ -565,6 +565,28 @@ export function getAvailableFormatsFromToolCalls(
   return [];
 }
 
+export function isExplicitTextSessionMode(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const explicit = String(metadata.explicitSessionFormat || "").trim().toLowerCase();
+
+    if (explicit === "text" || explicit === "topics") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function hasExplicitPresentationFormatChoice(
   toolCalls?: ChatToolCall[],
 ): boolean {

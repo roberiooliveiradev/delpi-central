@@ -170,7 +170,7 @@ def _parse_response_format(payload: dict) -> str | None:
     if token in {"", "auto"}:
         return None
 
-    if token in {"table", "text", "tree", "chart", "canvas", "topics"}:
+    if token in {"table", "text", "tree", "chart", "canvas", "topics", "dashboard"}:
         return token
 
     return None

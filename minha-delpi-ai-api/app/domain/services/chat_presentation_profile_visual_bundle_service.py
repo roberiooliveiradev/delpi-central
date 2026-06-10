@@ -177,6 +177,81 @@ class ChatPresentationProfileVisualBundleService:
         return True
 
     @classmethod
+    def ensure_text_embed_tree(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        profile: dict[str, Any],
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        attach_auxiliary: Callable[..., None],
+        primary_type: str,
+    ) -> None:
+        if profile.get("textEmbedTreeOutline") is not True:
+            return
+
+        if isinstance(metadata.get("treePresentation"), dict):
+            return
+
+        if cls.should_skip_bundle(root, profile):
+            return
+
+        builder_name = cls.visual_builders(profile).get("tree")
+
+        if not builder_name:
+            return
+
+        builder = cls.builder_registry(presenter).get(builder_name)
+
+        if not builder:
+            return
+
+        presentation = builder(root, path)
+
+        if isinstance(presentation, dict):
+            ChatPresentationTreeMetaCaptionService.enrich(presentation, path=path)
+
+        if presentation:
+            attach_auxiliary(metadata, "tree", presentation, primary_type=primary_type)
+
+    @classmethod
+    def ensure_text_embed_chart(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        profile: dict[str, Any],
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        attach_auxiliary: Callable[..., None],
+        primary_type: str,
+    ) -> None:
+        if profile.get("textEmbedChartsInMarkdown") is not True:
+            return
+
+        if isinstance(metadata.get("chartPresentation"), dict):
+            return
+
+        if cls.should_skip_bundle(root, profile):
+            return
+
+        builder_name = cls.visual_builders(profile).get("chart")
+
+        if not builder_name:
+            return
+
+        builder = cls.builder_registry(presenter).get(builder_name)
+
+        if not builder:
+            return
+
+        presentation = builder(root, path)
+
+        if presentation:
+            attach_auxiliary(metadata, "chart", presentation, primary_type=primary_type)
+
+    @classmethod
     def build_profile_view(
         cls,
         presenter: ExternalActionResultPresenter,

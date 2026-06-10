@@ -265,6 +265,7 @@ const SEND_FORMATS = new Set<ChatPresentationFormatId>([
   "tree",
   "chart",
   "canvas",
+  "dashboard",
 ]);
 
 /** Formato efetivo no POST/stream quando o dropdown está em Automático mas há chip de formato. */

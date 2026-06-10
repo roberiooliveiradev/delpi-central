@@ -111,6 +111,31 @@ class ChatPresentationRichStackPolicyService:
         return count
 
     @classmethod
+    def count_narrative_stack_visuals(cls, metadata: dict[str, Any]) -> int:
+        count = 0
+
+        for slot_key in (
+            "treePresentation",
+            "kpiPresentation",
+            "chartPresentation",
+            "dashboardPresentation",
+        ):
+            presentation = metadata.get(slot_key)
+
+            if isinstance(presentation, dict) and presentation.get("type"):
+                count += 1
+
+        primary = metadata.get("presentation")
+
+        if isinstance(primary, dict):
+            primary_type = str(primary.get("type") or "").strip().lower()
+
+            if primary_type in {"tree", "chart", "kpi", "dashboard"}:
+                count += 1
+
+        return count
+
+    @classmethod
     def should_default_to_text_stack(
         cls,
         *,
@@ -118,6 +143,7 @@ class ChatPresentationRichStackPolicyService:
         metadata: dict[str, Any],
         entity: str | None = None,
         user_preference: str | None = None,
+        user_message: str | None = None,
     ) -> bool:
         if user_preference:
             return False
@@ -125,13 +151,28 @@ class ChatPresentationRichStackPolicyService:
         from app.domain.services.chat_presentation_route_policy_service import (
             ChatPresentationRoutePolicyService,
         )
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
 
         # Estoque: tabela nativa por defaultViewPolicy; stack narrativo só com mensagem do usuário.
         if ChatPresentationRoutePolicyService.is_stock_route(path):
             return False
 
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
+
+        if stack_policy != "always":
+            if not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+                user_message,
+            ):
+                return False
+
         if not cls.has_rich_text_narrative(metadata):
             return False
+
+        if cls.count_narrative_stack_visuals(metadata) >= 1:
+            return True
 
         return cls.count_auxiliary_visuals(metadata) >= 1
 
@@ -228,7 +269,25 @@ class ChatPresentationRichStackPolicyService:
             if view in present and view not in ordered:
                 ordered.append(view)
 
+        if cls._should_use_dashboard_only_tail(metadata, profile):
+            return ["dashboard"]
+
         return ordered
+
+    @classmethod
+    def _should_use_dashboard_only_tail(
+        cls,
+        metadata: dict[str, Any],
+        profile: dict[str, Any],
+    ) -> bool:
+        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
+
+        if tail_policy != "dashboard_only":
+            return False
+
+        dashboard = metadata.get("dashboardPresentation")
+
+        return isinstance(dashboard, dict) and str(dashboard.get("type") or "").strip().lower() == "dashboard"
 
     @classmethod
     def stack_reason_for_route(cls, path: str | None, *, entity: str | None = None) -> str:

@@ -2,6 +2,7 @@ import {
   BarChart3,
   ChevronDown,
   GitBranch,
+  LayoutDashboard,
   LayoutGrid,
   Sparkles,
   Type,
@@ -35,6 +36,10 @@ function formatIcon(format: ChatPresentationFormatId) {
 
   if (format === "chart") {
     return <BarChart3 size={15} aria-hidden="true" />;
+  }
+
+  if (format === "dashboard") {
+    return <LayoutDashboard size={15} aria-hidden="true" />;
   }
 
   return <Sparkles size={15} aria-hidden="true" />;

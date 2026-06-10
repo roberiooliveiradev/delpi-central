@@ -90,7 +90,7 @@ def test_stock_route_has_dedicated_humanized_sections():
     assert plan["sectionVisibility"].get("structure") is not True
 
 
-def test_factory_route_includes_tail_visuals_when_kpi_present():
+def test_factory_route_uses_dashboard_only_tail_when_panel_present():
     metadata = {
         "path": "/products/90269002/factory-status",
         "textPresentation": {
@@ -110,6 +110,11 @@ def test_factory_route_includes_tail_visuals_when_kpi_present():
             "title": "Estrutura",
             "root": {"id": "90269002", "label": "90269002", "children": []},
         },
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel fabril",
+            "panels": [{"id": "summary", "presentation": {"type": "kpi", "cards": []}}],
+        },
         "tablePresentations": [
             {
                 "type": "table",
@@ -123,7 +128,7 @@ def test_factory_route_includes_tail_visuals_when_kpi_present():
 
     assert plan["presentationProfile"] == "product_factory_status"
     assert "tailVisuals" in plan["narrativeOrder"]
-    assert "kpi" in plan["tailVisualOrder"]
+    assert plan["tailVisualOrder"] == ["dashboard"]
 
 
 def test_supplies_stock_value_does_not_use_product_stock_stack():

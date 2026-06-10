@@ -145,7 +145,7 @@ class ChatSessionMemoryPinsUseCase:
 
         return self._build_response(session_id)
 
-    _RESPONSE_FORMAT_VALUES = frozenset({"table", "text", "tree", "chart", "topics", "canvas", "auto"})
+    _RESPONSE_FORMAT_VALUES = frozenset({"table", "text", "tree", "chart", "topics", "canvas", "dashboard", "auto"})
 
     def set_response_format(
         self,

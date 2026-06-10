@@ -5,7 +5,7 @@ import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTyp
 import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import { AssistantContentChrome } from "./AssistantContentChrome";
 import type { ContentFormatKind } from "./assistantContentLayout";
-import { buildAssistantContentSegments } from "./assistantContentSegments";
+import { buildAssistantContentSegments, parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import {
   resolveAssistantPresentationTitle,
   shouldRenderPresentationHeading,
@@ -24,7 +24,7 @@ import {
   collectProductRouteBlocks,
   groupSegmentsByRouteSections,
 } from "./presentationMultiRoute";
-import { getTextMarkdownFromToolCalls } from "./chatPresentation";
+import { getTextMarkdownFromToolCalls, isExplicitTextSessionMode } from "./chatPresentation";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
@@ -106,12 +106,28 @@ export function ChatAssistantContent({
       return renumberStackSectionTitles(segments, null);
     }
 
+    if (isExplicitTextSessionMode(toolCalls)) {
+      const markdown = getTextMarkdownFromToolCalls(toolCalls);
+
+      if (markdown.trim()) {
+        return parseMarkdownAndCodeSegments(markdown);
+      }
+    }
+
     if (visualFormatOptions.length < 2) {
       return renumberStackSectionTitles(segments, null);
     }
 
+    if (activeVisualKind === "text") {
+      const markdown = getTextMarkdownFromToolCalls(toolCalls);
+
+      if (markdown.trim()) {
+        return parseMarkdownAndCodeSegments(markdown);
+      }
+    }
+
     return filterSegmentsByVisualKind(segments, activeVisualKind);
-  }, [activeVisualKind, perSectionToolbar, segments, visualFormatOptions.length]);
+  }, [activeVisualKind, perSectionToolbar, segments, toolCalls, visualFormatOptions.length]);
 
   const title = useMemo(
     () => resolveAssistantPresentationTitle(content, toolCalls),
@@ -178,7 +194,10 @@ export function ChatAssistantContent({
     [toolCalls],
   );
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
-  const showFormatToolbar = !perSectionToolbar && visualFormatOptions.length >= 2;
+  const showFormatToolbar =
+    !perSectionToolbar &&
+    !isExplicitTextSessionMode(toolCalls) &&
+    visualFormatOptions.length >= 2;
   const segmentRenderContext = {
     onDrillDown,
     onOpenCanvas,

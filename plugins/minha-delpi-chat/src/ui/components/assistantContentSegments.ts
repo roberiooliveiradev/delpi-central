@@ -17,6 +17,8 @@ import {
 import {
   getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
+  getTextMarkdownFromToolCalls,
+  isExplicitTextSessionMode,
   resolveStackCommentaryBody,
 } from "./chatPresentation";
 import { buildInterleavedStackSegments } from "./assistantContentInterleave";
@@ -521,6 +523,14 @@ export function buildAssistantContentSegments(
   content: string,
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
+  if (isExplicitTextSessionMode(toolCalls)) {
+    const markdown =
+      getTextMarkdownFromToolCalls(toolCalls) ||
+      resolveAssistantRenderableMarkdown(content, toolCalls);
+
+    return parseMarkdownAndCodeSegments(markdown);
+  }
+
   const pair = getPresentationPairFromToolCalls(toolCalls);
   const layoutMode = resolveAssistantContentLayout(content, toolCalls, pair);
   const decision = getPresentationDecisionFromToolCalls(toolCalls);

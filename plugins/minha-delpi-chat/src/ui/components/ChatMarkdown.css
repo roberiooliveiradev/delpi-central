@@ -217,3 +217,39 @@
     font-size: 0.82rem;
   }
 }
+
+.mdc-chat-mermaid {
+  margin: 0.85rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--mdc-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mdc-surface, #111) 92%, transparent);
+  padding: 0.75rem;
+}
+
+.mdc-chat-mermaid svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.mdc-chat-mermaid--loading {
+  min-height: 120px;
+}
+
+.mdc-chat-mermaid--error {
+  border-color: color-mix(in srgb, var(--mdc-danger, #f87171) 45%, transparent);
+}
+
+.mdc-chat-mermaid__fallback {
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.82rem;
+}
+
+.mdc-chat-mermaid__error {
+  margin: 0.5rem 0 0;
+  color: var(--mdc-danger, #f87171);
+  font-size: 0.82rem;
+}

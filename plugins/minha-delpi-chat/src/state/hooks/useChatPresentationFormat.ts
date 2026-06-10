@@ -40,6 +40,11 @@ export const PRESENTATION_FORMAT_OPTIONS: ChatPresentationFormatOption[] = [
     description: "Prioriza gráficos quando os dados forem visuais.",
   },
   {
+    id: "dashboard",
+    label: "Painel",
+    description: "Prioriza painel integrado com KPI, gráfico e detalhes.",
+  },
+  {
     id: "canvas",
     label: "Documento",
     description: "Prioriza narrativa longa na lousa (markdown expandível).",
@@ -49,7 +54,7 @@ export const PRESENTATION_FORMAT_OPTIONS: ChatPresentationFormatOption[] = [
 function normalizeFormat(value: string | null | undefined): ChatPresentationFormatId {
   const raw = String(value ?? "").trim().toLowerCase();
 
-  if (raw === "text" || raw === "table" || raw === "tree" || raw === "chart" || raw === "canvas") {
+  if (raw === "text" || raw === "table" || raw === "tree" || raw === "chart" || raw === "canvas" || raw === "dashboard") {
     return raw;
   }
 

@@ -8,11 +8,13 @@ from app.domain.services.external_actions.external_action_result_presenter impor
     ExternalActionResultPresenter,
 )
 
-_EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart", "canvas"})
+_EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart", "canvas", "dashboard"})
 _VIEW_SLOT_BY_TYPE = {
     "table": "tablePresentation",
     "tree": "treePresentation",
     "chart": "chartPresentation",
+    "kpi": "kpiPresentation",
+    "dashboard": "dashboardPresentation",
 }
 _CHART_SELECTED_TYPES = frozenset(
     {"chart", "line_chart", "bar_chart", "horizontal_bar", "donut", "area_chart"}
@@ -46,6 +48,8 @@ class ChatPresentationPrimaryViewService:
             cls._apply_tree_primary(metadata, data=data, path=path, presenter=presenter)
         elif token == "chart":
             cls._apply_chart_primary(metadata, data=data, path=path, presenter=presenter)
+        elif token == "dashboard":
+            cls._apply_dashboard_primary(metadata)
         elif token == "canvas":
             pass
 
@@ -204,6 +208,16 @@ class ChatPresentationPrimaryViewService:
 
             if profile_tree and cls._presentation_type(profile_tree) == "tree":
                 cls._set_primary(metadata, profile_tree)
+
+    @classmethod
+    def _apply_dashboard_primary(cls, metadata: dict[str, Any]) -> None:
+        if cls._promote_view(metadata, "dashboard"):
+            return
+
+        dashboard = metadata.get("dashboardPresentation")
+
+        if isinstance(dashboard, dict) and cls._presentation_type(dashboard) == "dashboard":
+            cls._set_primary(metadata, dashboard)
 
     @classmethod
     def _apply_chart_primary(

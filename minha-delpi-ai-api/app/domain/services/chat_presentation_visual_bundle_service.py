@@ -70,6 +70,22 @@ class ChatPresentationVisualBundleService:
             user_message=user_message,
         ):
             cls._sync_latent_available_formats(metadata, view_order)
+            cls._ensure_text_embed_tree_for_markdown(
+                metadata,
+                profile=profile,
+                root=root,
+                path=path,
+                presenter=presenter,
+                explicit_format=explicit_format,
+            )
+            cls._ensure_text_embed_chart_for_markdown(
+                metadata,
+                profile=profile,
+                root=root,
+                path=path,
+                presenter=presenter,
+                explicit_format=explicit_format,
+            )
             return
 
         primary_type = cls._primary_type(metadata)
@@ -191,6 +207,62 @@ class ChatPresentationVisualBundleService:
 
         if not metadata.get(slot):
             metadata[slot] = presentation
+
+    @classmethod
+    def _ensure_text_embed_tree_for_markdown(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        profile: dict[str, Any],
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        explicit_format: str | None,
+    ) -> None:
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        if ChatPresentationTextFirstPolicyService.normalize_explicit_format(explicit_format) != "text":
+            return
+
+        ChatPresentationProfileVisualBundleService.ensure_text_embed_tree(
+            metadata,
+            profile=profile,
+            root=root,
+            path=path,
+            presenter=presenter,
+            attach_auxiliary=cls._attach_auxiliary,
+            primary_type=cls._primary_type(metadata),
+        )
+
+    @classmethod
+    def _ensure_text_embed_chart_for_markdown(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        profile: dict[str, Any],
+        root: dict[str, Any],
+        path: str,
+        presenter: ExternalActionResultPresenter,
+        explicit_format: str | None,
+    ) -> None:
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        if ChatPresentationTextFirstPolicyService.normalize_explicit_format(explicit_format) != "text":
+            return
+
+        ChatPresentationProfileVisualBundleService.ensure_text_embed_chart(
+            metadata,
+            profile=profile,
+            root=root,
+            path=path,
+            presenter=presenter,
+            attach_auxiliary=cls._attach_auxiliary,
+            primary_type=cls._primary_type(metadata),
+        )
 
     @classmethod
     def _slot_value(cls, metadata: dict[str, Any], view: str) -> dict[str, Any] | None:

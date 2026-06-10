@@ -282,6 +282,8 @@
         "table"
       ],
       "chartPolicy": "auto",
+      "textEmbedChartsInMarkdown": true,
+      "textEmbedChartFormat": "auto",
       "visualBundle": {
         "dashboardListRole": "guide"
       },
@@ -319,6 +321,8 @@
         "stock"
       ],
       "chartPolicy": "skip",
+      "textEmbedChartsInMarkdown": true,
+      "textEmbedChartFormat": "auto",
       "visualBundle": {
         "requiresItems": true,
         "dashboardListRole": "list"
@@ -401,12 +405,18 @@
         "kpi",
         "dashboard"
       ],
+      "stackTailPolicy": "dashboard_only",
       "stackPlan": "factory_status",
       "flags": [
         "factory_status",
         "tree"
       ],
       "chartPolicy": "skip",
+      "stackLayoutPolicy": "always",
+      "textEmbedTreeOutline": true,
+      "textEmbedTablesInMarkdown": true,
+      "textEmbedChartsInMarkdown": true,
+      "textEmbedChartFormat": "auto",
       "visualBundle": {
         "dashboardListRole": "stock"
       },
@@ -438,11 +448,17 @@
         "kpi",
         "dashboard"
       ],
+      "stackTailPolicy": "dashboard_only",
       "stackPlan": "production_status",
       "flags": [
         "production_status"
       ],
       "chartPolicy": "skip",
+      "stackLayoutPolicy": "always",
+      "textEmbedTreeOutline": true,
+      "textEmbedTablesInMarkdown": true,
+      "textEmbedChartsInMarkdown": true,
+      "textEmbedChartFormat": "auto",
       "visualBundle": {
         "dashboardListRole": "list"
       },
@@ -474,11 +490,17 @@
         "kpi",
         "dashboard"
       ],
+      "stackTailPolicy": "dashboard_only",
       "stackPlan": "shipping_status",
       "flags": [
         "shipping_status"
       ],
       "chartPolicy": "skip",
+      "stackLayoutPolicy": "always",
+      "textEmbedTreeOutline": true,
+      "textEmbedTablesInMarkdown": true,
+      "textEmbedChartsInMarkdown": true,
+      "textEmbedChartFormat": "auto",
       "visualBundle": {
         "dashboardListRole": "list"
       },

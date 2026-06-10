@@ -17,6 +17,20 @@ _AUXILIARY_SLOTS = (
 )
 
 
+_TEXT_FIRST_PROFILES = frozenset(
+    {
+        "structure_exclusivity",
+        "raw_material_price_intelligence",
+        "cost_impact_simulation",
+        "sale_pricing",
+        "last_purchase",
+        "purchase_price_history",
+        "purchase_budget_history",
+        "purchase_list",
+    }
+)
+
+
 class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
     BUNDLE = "presentation_vocabulary"
     _ROOT = ("textFirstPolicy",)
@@ -82,6 +96,16 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.looks_like_integrated_stack_request(user_message):
             return True
 
+        if not cls.normalize_explicit_format(explicit_format):
+            profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+
+            if profile_key in {
+                "factory_status",
+                "production_status",
+                "shipping_status",
+            }:
+                return True
+
         return False
 
     @classmethod
@@ -102,6 +126,11 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             return False
 
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+
+        if not normalized and profile_key in _TEXT_FIRST_PROFILES:
+            return True
+
         policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
 
         if policy == "text_when_available":
@@ -232,9 +261,13 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             entity,
         )
         keep_tree = profile.get("textEmbedTreeOutline") is True
+        keep_chart = profile.get("textEmbedChartsInMarkdown") is True
 
         for slot in _AUXILIARY_SLOTS:
             if slot == "treePresentation" and keep_tree:
+                continue
+
+            if slot == "chartPresentation" and keep_chart:
                 continue
 
             metadata.pop(slot, None)
@@ -244,7 +277,20 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             for token in (metadata.get("availableFormats") or [])
             if str(token).strip()
         ]
-        kept = [token for token in formats if token in {"text", "canvas", "table"}]
+        latent = cls.latent_available_views(
+            path=path or str(metadata.get("path") or ""),
+            entity=entity,
+            has_text=bool(metadata.get("textPresentation")),
+        )
+        kept = [
+            token
+            for token in latent
+            if token in {"text", "canvas", "table", "chart", "tree", "kpi", "dashboard"}
+        ]
+
+        for token in formats:
+            if token in {"text", "canvas", "table", "chart", "tree", "kpi", "dashboard"} and token not in kept:
+                kept.append(token)
 
         if metadata.get("textPresentation") and "text" not in kept:
             kept.insert(0, "text")

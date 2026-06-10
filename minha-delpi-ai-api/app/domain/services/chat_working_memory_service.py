@@ -565,6 +565,8 @@ class ChatWorkingMemoryService:
             chips.append({"label": "Árvore", "kind": "format", "value": "tree"})
         elif response_format == "chart":
             chips.append({"label": "Gráfico", "kind": "format", "value": "chart"})
+        elif response_format == "dashboard":
+            chips.append({"label": "Painel", "kind": "format", "value": "dashboard"})
         elif response_format == "topics":
             chips.append({"label": "Tópicos", "kind": "format", "value": "topics"})
 

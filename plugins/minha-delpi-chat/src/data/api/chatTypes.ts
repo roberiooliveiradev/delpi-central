@@ -681,7 +681,8 @@ export type ChatPresentationFormatId =
   | "table"
   | "tree"
   | "chart"
-  | "canvas";
+  | "canvas"
+  | "dashboard";
 
 export type ChatResponseModeId = "fast" | "normal" | "thinker";
 

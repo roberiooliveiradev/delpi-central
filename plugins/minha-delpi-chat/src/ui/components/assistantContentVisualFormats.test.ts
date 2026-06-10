@@ -276,7 +276,7 @@ describe("assistantContentVisualFormats", () => {
     expect(resolveInitialToolbarKind(analyserCalls, options)).toBeNull();
   });
 
-  it("no stack com KPI, modo texto exibe só narrativa", () => {
+  it("no stack com KPI, modo texto explícito exibe só markdown embutido", () => {
     const kpiCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -284,17 +284,12 @@ describe("assistantContentVisualFormats", () => {
           presentationDecision: {
             selected: "text",
             availableViews: ["text", "kpi", "table", "chart"],
-            visualOrder: ["text", "kpi", "table", "chart"],
-            layoutMode: "stack",
+            visualOrder: ["text"],
+            layoutMode: "single",
             reason: "formato solicitado pelo usuário",
           },
           preferredFormat: "text",
           explicitSessionFormat: "text",
-          presentation: {
-            type: "kpi",
-            title: "Indicadores de RH",
-            cards: [{ label: "PDIs ativos", value: 29 }],
-          },
           textPresentation: {
             type: "markdown",
             markdown: "### Indicadores de RH\n\n**PDIs ativos:** 29",
@@ -305,16 +300,14 @@ describe("assistantContentVisualFormats", () => {
     const segments = buildAssistantContentSegments("", kpiCalls);
     const options = resolveAvailableVisualFormatOptions(segments, kpiCalls);
 
-    expect(resolveInitialToolbarKind(kpiCalls, options)).toBe("text");
+    expect(options.some((item) => item.kind === "text")).toBe(true);
+    expect(segments.some((segment) => segment.kind === "kpi")).toBe(false);
+    expect(segments.some((segment) => segment.kind === "markdown")).toBe(true);
 
     const visible = filterSegmentsByVisualKind(segments, "text");
 
     expect(visible.some((segment) => segment.kind === "kpi")).toBe(false);
     expect(visible.some((segment) => segment.kind === "markdown")).toBe(true);
-
-    const complete = filterSegmentsByVisualKind(segments, null);
-
-    expect(complete.some((segment) => segment.kind === "kpi")).toBe(true);
   });
 
   it("no modo completo do analyser mantém narrativa intercalada com visuais", () => {

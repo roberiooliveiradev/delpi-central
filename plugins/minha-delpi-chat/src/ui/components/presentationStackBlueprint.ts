@@ -21,6 +21,10 @@ import {
 } from "./presentationStackSections";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
+import {
+  getChartExplanationFromToolCalls,
+  getDashboardExplanationFromToolCalls,
+} from "./chartExplain";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -135,10 +139,16 @@ function appendTablesForRoles(
   options?: { sectionPerRole?: boolean },
 ): void {
   const buckets = bucketTableSegmentsByRole(tables, resolveTableRole);
-  const sectionPerRole = options?.sectionPerRole === true;
+  const sectionPerRole = options?.sectionPerRole === true || planUsesHumanizedSections(plan);
   const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
+    profile: "profile",
     guide: "guide",
     inspection: "inspection",
+    stock: "profile",
+    structure: "structure",
+    list: "guide",
+    pricing: "profile",
+    other: "guide",
   };
 
   for (const role of roles) {
@@ -170,6 +180,7 @@ function appendTailVisuals(
   plan: StackPresentationPlan,
   parseMarkdown: (prose: string) => AssistantContentSegment[],
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+  toolCalls: ChatToolCall[] = [],
 ): void {
   const byKind = new Map<string, AssistantContentSegment[]>();
 
@@ -188,6 +199,12 @@ function appendTailVisuals(
 
   for (const token of plan.tailVisualOrder) {
     if (token === "chart") {
+      const chartExplanation = getChartExplanationFromToolCalls(toolCalls);
+
+      if (chartExplanation) {
+        pushMarkdownSegments(segments, chartExplanation, parseMarkdown, appendUnique);
+      }
+
       for (const segment of chartLike) {
         appendUnique(segments, segment);
       }
@@ -219,6 +236,12 @@ function appendTailVisuals(
     }
 
     if (token === "dashboard") {
+      const dashboardExplanation = getDashboardExplanationFromToolCalls(toolCalls);
+
+      if (dashboardExplanation) {
+        pushMarkdownSegments(segments, dashboardExplanation, parseMarkdown, appendUnique);
+      }
+
       for (const segment of byKind.get("dashboard") ?? []) {
         appendUnique(segments, segment);
       }
@@ -227,6 +250,14 @@ function appendTailVisuals(
 
   for (const [kind, list] of byKind.entries()) {
     if (plan.tailVisualOrder.includes(kind) || kind === "chart") {
+      continue;
+    }
+
+    if (
+      plan.tailVisualOrder.includes("dashboard") &&
+      plan.tailVisualOrder.length === 1 &&
+      (kind === "kpi" || kind === "tree" || kind === "chart")
+    ) {
       continue;
     }
 
@@ -255,6 +286,7 @@ export function buildPlanOrderedStackSegments(
   parseMarkdown: (prose: string) => AssistantContentSegment[],
   appendUnique: (segments: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   plan: StackPresentationPlan,
+  toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   const sections = partitionCommentarySections(
     stripPresentationMarkersFromMarkdown(commentary),
@@ -328,7 +360,7 @@ export function buildPlanOrderedStackSegments(
         break;
 
       case "tailVisuals":
-        appendTailVisuals(segments, orderedVisuals, plan, parseMarkdown, appendUnique);
+        appendTailVisuals(segments, orderedVisuals, plan, parseMarkdown, appendUnique, toolCalls);
         break;
 
       case "attention":
@@ -401,5 +433,6 @@ export function buildCanonicalStackSegments(
     parseMarkdown,
     appendUnique,
     plan,
+    toolCalls,
   );
 }

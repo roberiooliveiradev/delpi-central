@@ -5,6 +5,7 @@ import { Check, Code2, Copy } from "lucide-react";
 import remarkGfm from "remark-gfm";
 
 import { applySoftLineBreaks, prepareMarkdownContent } from "./chatMarkdown";
+import { ChatMermaidBlock } from "./ChatMermaidBlock";
 
 import "./ChatMarkdown.css";
 
@@ -101,7 +102,13 @@ const markdownComponents: Components = {
     const code = String(children).replace(/\n$/, "");
 
     if (match || code.includes("\n")) {
-      return <ChatCodeBlock language={match?.[1] || "text"} code={code} />;
+      const language = (match?.[1] || "text").toLowerCase();
+
+      if (language === "mermaid") {
+        return <ChatMermaidBlock code={code} />;
+      }
+
+      return <ChatCodeBlock language={language} code={code} />;
     }
 
     return (

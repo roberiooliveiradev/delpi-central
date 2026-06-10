@@ -494,9 +494,7 @@ class ChatPresentationDecisionService:
         if explicit:
             return explicit
 
-        return ChatPresentationTextFirstPolicyService.normalize_explicit_format(
-            metadata.get("preferredFormat"),
-        )
+        return None
 
     @classmethod
     def enrich_metadata(
@@ -757,6 +755,20 @@ class ChatPresentationDecisionService:
         }
 
     @classmethod
+    def _apply_rich_text_stack_layout(cls, decision: dict[str, Any]) -> dict[str, Any]:
+        views = [
+            str(view).strip().lower()
+            for view in (decision.get("availableViews") or [])
+            if str(view).strip()
+        ]
+
+        if len(views) >= 2:
+            decision["layoutMode"] = "stack"
+            decision["visualOrder"] = cls._visual_order_for_stack(views)
+
+        return decision
+
+    @classmethod
     def _apply_chart_category_aggregation(cls, metadata: dict[str, Any]) -> None:
         from app.domain.services.chat_chart_data_aggregation_service import (
             ChatChartDataAggregationService,
@@ -931,6 +943,7 @@ class ChatPresentationDecisionService:
             metadata=rich_metadata,
             entity=entity,
             user_preference=None,
+            user_message=message,
         ):
             table_rows = rows or cls._rows_from_presentation(
                 table_presentation
@@ -948,7 +961,7 @@ class ChatPresentationDecisionService:
                 available_formats=available_formats,
             )
 
-            return cls._build(
+            decision = cls._build(
                 selected="text",
                 fallback="table",
                 reason=ChatPresentationRichStackPolicyService.stack_reason_for_route(
@@ -962,6 +975,8 @@ class ChatPresentationDecisionService:
                 rows=table_rows,
                 intent=intent,
             )
+
+            return cls._apply_rich_text_stack_layout(decision)
 
         if cls._should_default_analyser_stack_to_text(
             path=path,

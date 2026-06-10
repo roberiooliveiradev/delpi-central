@@ -191,6 +191,7 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         *,
         path: str | None,
         entity: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         views = list(decision.get("availableViews") or [])
 
@@ -216,7 +217,20 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
                 ordered.append(view)
 
         if len(ordered) >= 2 and str(decision.get("layoutMode") or "") != "single":
+            from app.domain.services.chat_presentation_text_mode_service import (
+                ChatPresentationTextModeService,
+            )
+
             selected = str(decision.get("selected") or "").strip().lower()
+
+            if isinstance(metadata, dict) and ChatPresentationTextModeService.is_user_explicit_text_mode(
+                metadata
+            ):
+                return
+
+            if selected == "text" and str(decision.get("layoutMode") or "") == "single":
+                return
+
             stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
 
             if stack_policy == "always":

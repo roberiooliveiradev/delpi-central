@@ -17,13 +17,21 @@ def _use_case() -> ExecuteExternalActionUseCase:
     )
 
 
-def _build(fixture: str, path: str, *, user_message: str = "") -> dict:
+def _build(fixture: str, path: str, *, user_message: str = "", session_format: str = "") -> dict:
     envelope = load_api_delpi_fixture_with_meta(fixture)
+    params: dict = {}
+
+    if user_message:
+        params["userMessage"] = user_message
+
+    if session_format:
+        params["sessionResponseFormat"] = session_format
+
     return _use_case()._build_presentation_metadata(
         action={"path": path},
         sanitized_data=envelope,
         resolved_path=path,
-        request_parameters={"userMessage": user_message} if user_message else {},
+        request_parameters=params,
     )
 
 
@@ -56,8 +64,45 @@ def test_factory_status_integrated_stack_with_visuals():
 
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
-    assert "kpi" in (plan.get("tailVisualOrder") or [])
+    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
     assert "tailVisuals" in (plan.get("narrativeOrder") or [])
+
+
+def test_factory_status_auto_stack_with_dialogue():
+    meta = _build(
+        "product_factory_status_90269002.json",
+        "/products/90269002/factory-status",
+        user_message="status fabril do produto 90269002 hoje",
+    )
+    decision = meta["presentationDecision"]
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+
+    assert decision["selected"] == "text"
+    assert decision["layoutMode"] == "stack"
+    assert len(markdown) >= 120
+    assert (meta.get("stackPresentationPlan") or {}).get("humanizedSections") is True
+    assert meta.get("tablePresentations")
+    assert meta.get("kpiPresentation", {}).get("type") == "kpi"
+    assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert "|" not in markdown.split("<!-- section:")[0][:400]
+
+
+def test_factory_status_text_mode_embeds_tables_in_markdown():
+    meta = _build(
+        "product_factory_status_90269002.json",
+        "/products/90269002/factory-status",
+        user_message="status fabril do produto 90269002 hoje",
+        session_format="text",
+    )
+    decision = meta["presentationDecision"]
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+
+    assert decision["selected"] == "text"
+    assert decision["layoutMode"] == "single"
+    assert "|" in markdown
+    assert "**Panorama fabril**" in markdown or "Panorama fabril" in markdown
+    assert isinstance(meta.get("treePresentation"), dict)
+    assert "Composição" in markdown or "└──" in markdown or "├──" in markdown
 
 
 def test_structure_exclusivity_text_first_without_tree():
@@ -154,3 +199,18 @@ def test_stock_playbook_integrated_stack_builds_visuals():
     assert decision["selected"] == "text"
     assert decision["layoutMode"] == "stack"
     assert meta.get("treePresentation", {}).get("type") == "tree"
+
+
+def test_stock_text_mode_embeds_chart_mermaid():
+    meta = _build(
+        "product_stock_90269001.json",
+        "/products/90269001/stock",
+        user_message="estoque do produto 90269001",
+        session_format="text",
+    )
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+
+    assert meta["presentationDecision"]["selected"] == "text"
+    assert "```mermaid" in markdown
+    assert "xychart-beta" in markdown or "pie showData" in markdown
+    assert meta.get("chartPresentation") is None

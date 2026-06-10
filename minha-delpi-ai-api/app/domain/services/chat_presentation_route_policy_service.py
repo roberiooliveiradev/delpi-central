@@ -88,8 +88,15 @@ class ChatPresentationRoutePolicyService:
         )
 
     @classmethod
-    def apply_visual_order(cls, decision: dict, *, path: str | None) -> None:
+    def apply_visual_order(
+        cls,
+        decision: dict,
+        *,
+        path: str | None,
+        metadata: dict | None = None,
+    ) -> None:
         ChatPresentationProfileService.apply_visual_order(
             decision,
             path=path,
+            metadata=metadata,
         )

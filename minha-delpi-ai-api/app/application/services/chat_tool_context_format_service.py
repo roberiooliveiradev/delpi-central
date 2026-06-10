@@ -20,7 +20,7 @@ class ChatToolContextFormatService:
         behavior = working.get("behaviorInstructions") or {}
         token = str(behavior.get("responseFormat") or "").strip().lower()
 
-        if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
+        if token in {"table", "text", "tree", "chart", "topics", "canvas", "dashboard"}:
             return token
 
         prefs = working.get("userPreferences") or {}
@@ -29,7 +29,7 @@ class ChatToolContextFormatService:
         if isinstance(pref_behavior, dict):
             token = str(pref_behavior.get("responseFormat") or "").strip().lower()
 
-            if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
+            if token in {"table", "text", "tree", "chart", "topics", "canvas", "dashboard"}:
                 return token
 
         return None
@@ -270,6 +270,15 @@ class ChatToolContextFormatService:
                         meta["tablePresentation"] = None
 
                 self._align_decision_for_format(meta, "chart")
+
+            elif requested_format == "dashboard":
+                meta["preferredFormat"] = "dashboard"
+                dashboard_pres = meta.get("dashboardPresentation")
+
+                if isinstance(dashboard_pres, dict) and dashboard_pres.get("type") == "dashboard":
+                    meta["presentation"] = dashboard_pres
+
+                self._align_decision_for_format(meta, "dashboard")
 
     @staticmethod
     def _find_table_presentation(meta: dict) -> dict | None:

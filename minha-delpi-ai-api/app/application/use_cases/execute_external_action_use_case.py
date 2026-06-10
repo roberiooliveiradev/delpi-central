@@ -623,6 +623,18 @@ class ExecuteExternalActionUseCase:
 
         ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
 
+        from app.domain.services.chat_presentation_table_markdown_service import (
+            ChatPresentationTableMarkdownService,
+        )
+
+        ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
+
+        from app.domain.services.chat_presentation_chart_markdown_service import (
+            ChatPresentationChartMarkdownService,
+        )
+
+        ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
+
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
         self._align_presentation_with_decision(metadata, kpi_presentation=kpi_presentation)
 

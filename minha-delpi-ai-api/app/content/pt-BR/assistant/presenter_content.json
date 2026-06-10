@@ -198,6 +198,11 @@
     "stockTextDetailHeader": "Detalhamento por filial e armazém",
     "treeOutlineHeader": "**Composição**",
     "treeOutlineTruncated": "… e mais {remaining} componente(s).",
+    "tableSectionHeader": "**{title}**",
+    "tableRowsTruncated": "… e mais {remaining} linha(s).",
+    "chartSectionHeader": "**Gráfico**",
+    "chartPointsTruncated": "… e mais {remaining} ponto(s).",
+    "chartTableFallbackNote": "_Dados do gráfico ({chartType}) em tabela — visualização Mermaid não disponível para este formato._",
     "itemsTableDefaultTitle": "Dados retornados"
   },
   "humanizedNarrative": {

@@ -84,7 +84,11 @@ class ChatPresentationTreeMarkdownService:
 
     @classmethod
     def _should_embed_outline(cls, metadata: dict[str, Any]) -> bool:
-        if ChatRichPresentationTextService.is_stack_layout(metadata):
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        if not ChatPresentationTextModeService.should_embed_in_markdown(metadata):
             return False
 
         path = str(metadata.get("path") or "").strip()
