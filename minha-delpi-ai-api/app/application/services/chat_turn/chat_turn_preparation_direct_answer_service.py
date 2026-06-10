@@ -54,6 +54,8 @@ class ChatTurnPreparationDirectAnswerBundle:
     routing_disambiguation: dict | None
     routing_disambiguation_answer: str | None
     routing_disambiguation_suggestions: list[dict[str, str]] | None
+    learning_term_confirmation_answer: str | None
+    learning_term_working_memory_patch: dict[str, Any] | None
     session_memory_direct: str | None
     email_writing_mode: bool
     email_subtype: str | None
@@ -179,6 +181,36 @@ class ChatTurnPreparationDirectAnswerService:
                         dict(item) for item in raw_suggestions if isinstance(item, dict)
                     ]
 
+        learning_term_confirmation_answer = None
+        learning_term_working_memory_patch = None
+
+        if (
+            not canvas_action
+            and not pre_capability_answer
+            and not analysis_mode
+            and not text_task_pure
+            and not small_talk_direct
+            and not utility_direct
+        ):
+            from app.application.services.chat_learning_term_confirmation_service import (
+                ChatLearningTermConfirmationService,
+            )
+
+            project_id = getattr(session, "project_id", None)
+            learning_term = ChatLearningTermConfirmationService().try_build(
+                message=message,
+                workspace_context=workspace_context,
+                project_id=str(project_id) if project_id else None,
+                created_by=str(user_id),
+            )
+
+            if learning_term:
+                learning_term_confirmation_answer = learning_term.get("directAnswer")
+                patch = learning_term.get("workingMemoryPatch")
+
+                if isinstance(patch, dict):
+                    learning_term_working_memory_patch = patch
+
         session_memory_direct = ChatSessionMemoryDirectAnswerService.build(
             message=message,
             workspace_context=workspace_context,
@@ -214,6 +246,9 @@ class ChatTurnPreparationDirectAnswerService:
             workspace_context_patches["emailSubtype"] = email_subtype
             pipeline_stage_additions.append("email_writing")
 
+        if learning_term_confirmation_answer and "learning_term" not in pipeline_stage_additions:
+            pipeline_stage_additions.append("learning_term")
+
         if session_memory_direct and "session_memory" not in pipeline_stage_additions:
             pipeline_stage_additions.append("session_memory")
 
@@ -235,6 +270,8 @@ class ChatTurnPreparationDirectAnswerService:
             routing_disambiguation=routing_disambiguation,
             routing_disambiguation_answer=routing_disambiguation_answer,
             routing_disambiguation_suggestions=routing_disambiguation_suggestions,
+            learning_term_confirmation_answer=learning_term_confirmation_answer,
+            learning_term_working_memory_patch=learning_term_working_memory_patch,
             session_memory_direct=session_memory_direct,
             email_writing_mode=email_writing_mode,
             email_subtype=email_subtype,

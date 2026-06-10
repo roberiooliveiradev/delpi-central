@@ -73,6 +73,9 @@ class _FakeRepo:
     def deactivate_deploys(self, **kwargs):
         pass
 
+    def get_active_deployed_ollama_model(self):
+        return None
+
 
 class _FakeFeedbackRepo:
     def get_user_question_for_assistant(self, message_id):

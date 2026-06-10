@@ -186,6 +186,7 @@ class ChatTurnPreparationService:
         routing_disambiguation = pre_tool.routing_disambiguation
         routing_disambiguation_answer = pre_tool.routing_disambiguation_answer
         routing_disambiguation_suggestions = pre_tool.routing_disambiguation_suggestions
+        learning_term_confirmation_answer = pre_tool.learning_term_confirmation_answer
         session_memory_direct = pre_tool.session_memory_direct
         email_writing_mode = pre_tool.email_writing_mode
         email_subtype = pre_tool.email_subtype
@@ -236,6 +237,7 @@ class ChatTurnPreparationService:
             pre_capability_answer=pre_capability_answer,
             operational_guards=operational_guards,
             routing_disambiguation_answer=routing_disambiguation_answer,
+            learning_term_confirmation_answer=learning_term_confirmation_answer,
             interpretation_without_data_answer=interpretation_without_data_answer,
             skip_flags=skip_tool_flags,
             small_talk_direct=small_talk_direct,
@@ -306,6 +308,7 @@ class ChatTurnPreparationService:
             missing_date_answer=missing_date_answer,
             common_chat_operational_answer=common_chat_operational_answer,
             routing_disambiguation_answer=routing_disambiguation_answer,
+            learning_term_confirmation_answer=learning_term_confirmation_answer,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             resolve_user_identity_answer=resolve_user_identity_answer,
             resolve_capabilities_answer=resolve_capabilities_answer,

@@ -437,6 +437,10 @@ class Settings:
     CHAT_LEARNING_GLOSSARY_CAPTURE = (
         os.getenv("CHAT_LEARNING_GLOSSARY_CAPTURE", "true").lower() == "true"
     )
+    # Pedir confirmação antes de registrar significado de baixa confiança (playbook §27).
+    CHAT_LEARNING_TERM_CONFIRMATION_ENABLED = (
+        os.getenv("CHAT_LEARNING_TERM_CONFIRMATION_ENABLED", "true").lower() == "true"
+    )
     # Pesquisar significado público na web para enriquecer candidatos (custo/latência).
     CHAT_LEARNING_GLOSSARY_WEB_MEANING = (
         os.getenv("CHAT_LEARNING_GLOSSARY_WEB_MEANING", "true").lower() == "true"
@@ -470,6 +474,16 @@ class Settings:
     # Webhook opcional para disparar treino offline (Ollama/MLX) após export validado.
     CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL = (
         os.getenv("CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL", "").strip()
+    )
+    # Modelo base Ollama para criar adaptadores via Modelfile (Fase 7).
+    CHAT_LEARNING_FINE_TUNING_BASE_MODEL = os.getenv(
+        "CHAT_LEARNING_FINE_TUNING_BASE_MODEL",
+        os.getenv("OLLAMA_MODEL", "qwen2.5:3b"),
+    ).strip()
+    # Cria modelo customizado no Ollama após export (CPU; não altera pesos do base).
+    CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED = (
+        os.getenv("CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED", "true").lower()
+        == "true"
     )
 
     @classmethod

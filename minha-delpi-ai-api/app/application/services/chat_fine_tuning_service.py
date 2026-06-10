@@ -13,6 +13,9 @@ from app.domain.ports.chat_message_feedback_repository_port import (
 )
 from app.domain.ports.fine_tuning_repository_port import FineTuningRepositoryPort
 from app.domain.services.chat_fine_tuning_export_service import ChatFineTuningExportService
+from app.domain.services.chat_fine_tuning_modelfile_builder_service import (
+    ChatFineTuningModelfileBuilderService,
+)
 from app.domain.services.chat_learning_safety_guard import ChatLearningSafetyGuard
 from app.infrastructure.config.settings import Settings
 
@@ -259,7 +262,7 @@ class ChatFineTuningService:
         return {"run": updated, **export}
 
     def execute_run_training(self, run_id: int) -> dict:
-        """Orquestração offline (placeholder): valida export e marca concluído."""
+        """Valida export e cria adaptador Ollama (Modelfile) quando habilitado."""
         run = self._repo().get_run(run_id)
 
         if not run:
@@ -281,11 +284,58 @@ class ChatFineTuningService:
             raise ValueError("insufficient approved samples for training")
 
         now = datetime.now(timezone.utc)
-        metrics = {
-            "mode": "offline_placeholder",
+        dataset = export["dataset"]
+        samples = self._repo().list_approved_for_dataset(int(run["datasetId"]))
+        metrics: dict = {
             "sampleCount": line_count,
-            "note": "Treino real ocorre fora da API (Ollama/MLX); job validado e exportado.",
+            "baseModel": Settings.CHAT_LEARNING_FINE_TUNING_BASE_MODEL,
         }
+
+        ollama_model_name = ChatFineTuningModelfileBuilderService.build_model_name(
+            dataset_id=int(run["datasetId"]),
+            run_id=run_id,
+        )
+
+        if (
+            Settings.LLM_PROVIDER == "ollama"
+            and Settings.CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED
+        ):
+            try:
+                modelfile = ChatFineTuningModelfileBuilderService.build_modelfile(
+                    base_model=Settings.CHAT_LEARNING_FINE_TUNING_BASE_MODEL,
+                    samples=samples,
+                    target_model=str(dataset.get("targetModel") or run.get("targetModel") or "chat"),
+                )
+                from app.infrastructure.llm.ollama_model_create_gateway import (
+                    OllamaModelCreateGateway,
+                )
+
+                create_result = OllamaModelCreateGateway().create_from_modelfile(
+                    name=ollama_model_name,
+                    modelfile=modelfile,
+                )
+                metrics.update(
+                    {
+                        "mode": "ollama_modelfile",
+                        "ollamaModelName": ollama_model_name,
+                        "ollamaCreateStatus": create_result.get("status"),
+                    }
+                )
+            except Exception as exc:
+                self._repo().update_run(
+                    run_id,
+                    status="failed",
+                    error_message=str(exc)[:500],
+                    completed_at=now,
+                )
+                raise ValueError(f"ollama model create failed: {exc}") from exc
+        else:
+            metrics.update(
+                {
+                    "mode": "export_only",
+                    "note": "Treino Ollama desligado; use webhook externo se necessário.",
+                }
+            )
 
         updated = self._repo().update_run(
             run_id,
@@ -302,8 +352,9 @@ class ChatFineTuningService:
         )
         if webhook_result:
             metrics["webhook"] = webhook_result
+            updated = self._repo().update_run(run_id, metrics=metrics) or updated
 
-        return {"run": updated, "metrics": metrics}
+        return {"run": updated, "metrics": metrics, "ollamaModelName": metrics.get("ollamaModelName")}
 
     @staticmethod
     def _notify_train_webhook(*, run: dict, export_stats: dict) -> dict | None:
@@ -342,8 +393,21 @@ class ChatFineTuningService:
             target_model=run["targetModel"],
             except_run_id=run_id,
         )
-        updated = self._repo().update_run(run_id, active_deploy=True)
-        return {"run": updated}
+        updated = self._repo().update_run(
+            run_id,
+            status="deployed",
+            active_deploy=True,
+        )
+        deployed_model = None
+
+        if isinstance(run.get("metrics"), dict):
+            deployed_model = run["metrics"].get("ollamaModelName")
+
+        return {
+            "run": updated,
+            "deployedOllamaModel": deployed_model,
+            "effectiveChatModel": deployed_model,
+        }
 
     def rollback_run(self, run_id: int) -> dict:
         run = self._repo().get_run(run_id)

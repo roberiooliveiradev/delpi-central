@@ -30,6 +30,7 @@ class ChatTurnPreparationPreToolContextResult:
     routing_disambiguation: Any
     routing_disambiguation_answer: str | None
     routing_disambiguation_suggestions: list | None
+    learning_term_confirmation_answer: str | None
     session_memory_direct: str | None
     email_writing_mode: bool
     email_subtype: str | None
@@ -93,7 +94,20 @@ class ChatTurnPreparationPreToolContextService:
         )
 
         workspace_context = memory_context.workspace_context
+        working_memory_snapshot = dict(memory_context.working_memory_snapshot)
         stage_additions.extend(memory_context.pipeline_stage_additions)
+
+        memory_patch = direct_answer_bundle.learning_term_working_memory_patch
+
+        if isinstance(memory_patch, dict):
+            for key, value in memory_patch.items():
+                if value is None:
+                    working_memory_snapshot.pop(key, None)
+                else:
+                    working_memory_snapshot[key] = value
+
+            workspace_context = dict(workspace_context)
+            workspace_context["workingMemory"] = working_memory_snapshot
 
         interpretation_without_data_answer = (
             ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
@@ -108,7 +122,7 @@ class ChatTurnPreparationPreToolContextService:
 
         return ChatTurnPreparationPreToolContextResult(
             workspace_context=workspace_context,
-            working_memory_snapshot=memory_context.working_memory_snapshot,
+            working_memory_snapshot=working_memory_snapshot,
             conversation_context=memory_context.conversation_context,
             canvas_action=canvas_action,
             fast_path=direct_answer_bundle.fast_path or ingress_fast_path,
@@ -123,6 +137,9 @@ class ChatTurnPreparationPreToolContextService:
             routing_disambiguation_answer=direct_answer_bundle.routing_disambiguation_answer,
             routing_disambiguation_suggestions=(
                 direct_answer_bundle.routing_disambiguation_suggestions
+            ),
+            learning_term_confirmation_answer=(
+                direct_answer_bundle.learning_term_confirmation_answer
             ),
             session_memory_direct=direct_answer_bundle.session_memory_direct,
             email_writing_mode=direct_answer_bundle.email_writing_mode,

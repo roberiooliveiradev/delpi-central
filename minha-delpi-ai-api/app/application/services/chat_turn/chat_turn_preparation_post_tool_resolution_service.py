@@ -60,6 +60,7 @@ class ChatTurnPreparationPostToolResolutionService:
         missing_date_answer: str | None,
         common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
+        learning_term_confirmation_answer: str | None,
         skip_tools_for_data_interpretation: bool,
         resolve_user_identity_answer: Callable[[str], str | None],
         resolve_capabilities_answer: Callable[[str], str | None],
@@ -219,6 +220,11 @@ class ChatTurnPreparationPostToolResolutionService:
         if not direct_answer and common_chat_operational_answer:
             direct_answer = common_chat_operational_answer
             skip_rag = True
+
+        if not direct_answer and learning_term_confirmation_answer:
+            direct_answer = learning_term_confirmation_answer
+            skip_rag = True
+            pipeline_stages.append("learning_term")
 
         if not direct_answer and routing_disambiguation_answer:
             direct_answer = routing_disambiguation_answer

@@ -57,7 +57,11 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return str(Settings.VLLM_MODEL)
 
     def ollama_model(self) -> str:
-        return str(Settings.OLLAMA_MODEL)
+        from app.domain.services.chat_fine_tuning_deploy_resolver_service import (
+            ChatFineTuningDeployResolverService,
+        )
+
+        return ChatFineTuningDeployResolverService.resolve(str(Settings.OLLAMA_MODEL))
 
     def llm_max_tokens(self) -> int:
         return int(Settings.LLM_MAX_TOKENS)

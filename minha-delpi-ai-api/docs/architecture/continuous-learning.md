@@ -7,7 +7,7 @@ aprender = observar + validar + armazenar + recuperar (playbook §2).
 Esta fase entrega a **fundação não paramétrica**: candidatos de conhecimento
 revisáveis, glossário/typos aprendidos por escopo, governança (safety + human-in-the-loop)
 e aplicação das regras aprovadas na normalização base. Tudo atrás de feature flags,
-**desligado por padrão**.
+**ligado por padrão** no Docker (promoção continua exigindo revisão admin).
 
 ## Componentes
 
@@ -78,6 +78,7 @@ Próximos turnos (send/stream)
 | `CHAT_USER_MEMORY_RAG_INDEX` | `true` | Indexa memórias ativas no RAG por embedding. |
 | `CHAT_LEARNING_GLOSSARY_RETRIEVAL` | `true` | Injeta definições do glossário citadas na pergunta. |
 | `CHAT_LEARNING_GLOSSARY_CAPTURE` | `true` | Captura termo desconhecido perguntado ("o que é X?") como candidato. |
+| `CHAT_LEARNING_TERM_CONFIRMATION_ENABLED` | `true` | Pede confirmação ao usuário antes de registrar significado de baixa confiança. |
 | `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `true` | Pesquisa significado público na web para enriquecer o candidato. |
 | `CHAT_LEARNING_GLOSSARY_MAX_TERMS` | `300` | Teto de definições carregadas/injetadas por turno. |
 | `CHAT_LEARNING_GLOSSARY_RAG_INDEX` | `true` | Indexa termos aprovados como conhecimento RAG recuperável por embedding (Fase 5). |
@@ -225,14 +226,18 @@ GET .../datasets/{id}/export → JSONL {messages, intent?, category?}
 
 Tabelas: `ai_fine_tuning_samples`, `ai_fine_tuning_datasets`, `ai_fine_tuning_runs`.
 `ChatFineTuningAnonymizationService` redige PII/segredos antes de persistir.
-`execute_run_training` valida o export e marca o job como `completed` (orquestração;
-treino real em Ollama/MLX fica externo). Opcional: `CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL`
+`execute_run_training` valida o export e, com `CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED`,
+cria um adaptador Ollama via Modelfile (`delpi-ft-d{dataset}-r{run}`) com exemplos aprovados.
+`deploy_run` marca `active_deploy` e o chat passa a resolver o modelo via
+`ChatFineTuningDeployResolverService`. Opcional: `CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL`
 dispara POST com `runId`, `datasetId`, `exportStats` após validação.
 
 | Flag | Default |
 |------|---------|
 | `CHAT_LEARNING_FINE_TUNING_ENABLED` | `true` |
 | `CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK` | `true` |
+| `CHAT_LEARNING_FINE_TUNING_BASE_MODEL` | `OLLAMA_MODEL` | Modelo base para Modelfile Ollama. |
+| `CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED` | `true` | Cria adaptador `delpi-ft-d{id}-r{run}` no Ollama após train. |
 
 Endpoints: `/admin/learning/fine-tuning/samples`, `/datasets`, `/datasets/{id}/export`,
 `/datasets/{id}/runs`, `/runs/{id}/{export|train|deploy|rollback}`.
@@ -244,6 +249,22 @@ Endpoints: `/admin/learning/fine-tuning/samples`, `/datasets`, `/datasets/{id}/e
 - `ChatLearningEventService` emite logs estruturados `learning_event` (promoção, memória
   criada/esquecida) para integração event-driven futura.
 
+## Confirmação de termos ambíguos (playbook §9, §27)
+
+Quando o usuário pergunta «o que é X?» e o significado vem da web com confiança baixa
+(< 0,5), o chat pede confirmação antes de registrar o candidato:
+
+```
+"o que é OP?" → pesquisa web (se autorizada)
+ → resposta direta pedindo confirmação
+ → workingMemory.learningTermConfirmation
+"sim" / "OP significa ordem de produção"
+ → candidato term_definition (pending) + ack
+```
+
+Serviços: `ChatLearningTermAmbiguityService` (domínio),
+`ChatLearningTermConfirmationService` (aplicação). Textos em `learning_content.json`.
+
 ## Fora do escopo da API
 
-- Runner Ollama/MLX embutido no cluster (treino GPU permanece externo; use webhook opcional).
+- Fine-tune paramétrico real (alteração de pesos/GPU); o adaptador Ollama injeta exemplos via SYSTEM.

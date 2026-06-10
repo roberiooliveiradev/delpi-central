@@ -1,0 +1,14 @@
+{
+  "termConfirmation": {
+    "knownDefinition": "**{term}**: {meaning}",
+    "proposedMeaning": "Encontrei uma possível definição para **{term}**:\n\n> {meaning}\n\nEstá correto? Responda **sim** para confirmar ou diga o significado certo (ex.: «{term} significa …»).",
+    "unknownTerm": "Não encontrei **{term}** no glossário interno. Você pode me dizer o que significa? Ex.: «quando eu falar {term} é …» ou «{term} significa …».",
+    "confirmed": "Entendido — registrei **{term}** como candidato para revisão. Obrigado pela confirmação.",
+    "corrected": "Entendido — registrei **{term}** com o significado que você informou. Um revisor validará antes de entrar no glossário.",
+    "rejected": "Certo, não vou usar essa definição. Se quiser, diga o significado correto de **{term}**."
+  },
+  "confirmationReplies": {
+    "affirmative": ["sim", "isso", "correto", "exato", "confirmo", "pode ser", "eh isso", "e isso", "ta certo", "está certo"],
+    "negative": ["nao", "não", "errado", "incorreto", "nao e isso", "não é isso", "negativo"]
+  }
+}

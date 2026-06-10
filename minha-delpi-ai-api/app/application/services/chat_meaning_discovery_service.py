@@ -115,6 +115,9 @@ class ChatMeaningDiscoveryService:
         ):
             return None
 
+        if Settings.CHAT_LEARNING_TERM_CONFIRMATION_ENABLED:
+            return None
+
         term = ChatTermExtractionService.detect_definition_question(message or "")
 
         if not term:

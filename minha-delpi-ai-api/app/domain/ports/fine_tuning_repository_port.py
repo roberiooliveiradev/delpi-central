@@ -131,3 +131,7 @@ class FineTuningRepositoryPort(ABC):
     @abstractmethod
     def summary(self) -> dict:
         raise NotImplementedError
+
+    @abstractmethod
+    def get_active_deployed_ollama_model(self) -> str | None:
+        raise NotImplementedError

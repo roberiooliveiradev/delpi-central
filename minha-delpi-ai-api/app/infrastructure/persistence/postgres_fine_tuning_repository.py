@@ -281,6 +281,22 @@ class PostgresFineTuningRepository(FineTuningRepositoryPort):
         )
         return [self._run_to_dict(row) for row in rows]
 
+    def get_active_deployed_ollama_model(self) -> str | None:
+        row = (
+            AiFineTuningRunModel.query.filter(
+                AiFineTuningRunModel.active_deploy.is_(True),
+                AiFineTuningRunModel.status.in_(("completed", "deployed")),
+            )
+            .order_by(AiFineTuningRunModel.updated_at.desc())
+            .first()
+        )
+
+        if not row or not isinstance(row.metrics, dict):
+            return None
+
+        model_name = str(row.metrics.get("ollamaModelName") or "").strip()
+        return model_name or None
+
     def summary(self) -> dict:
         sample_model = AiFineTuningSampleModel
         dataset_model = AiFineTuningDatasetModel

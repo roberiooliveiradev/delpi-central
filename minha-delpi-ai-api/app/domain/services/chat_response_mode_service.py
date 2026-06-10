@@ -97,7 +97,13 @@ class ChatResponseModeService:
         if ChatDomainConfigService.llm_provider() == "vllm":
             return ChatDomainConfigService.vllm_model()
 
-        return ChatDomainConfigService.ollama_model()
+        from app.domain.services.chat_fine_tuning_deploy_resolver_service import (
+            ChatFineTuningDeployResolverService,
+        )
+
+        return ChatFineTuningDeployResolverService.resolve(
+            ChatDomainConfigService.ollama_model()
+        )
 
     @classmethod
     def _env_model(cls, key: str, fallback: str | None = None) -> str:

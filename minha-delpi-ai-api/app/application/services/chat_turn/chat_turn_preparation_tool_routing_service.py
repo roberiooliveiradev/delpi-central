@@ -235,6 +235,7 @@ class ChatTurnPreparationToolRoutingService:
         missing_date_answer: str | None,
         common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
+        learning_term_confirmation_answer: str | None,
         interpretation_without_data_answer: str | None,
         skip_flags: ChatTurnPreparationSkipToolFlags,
         small_talk_direct: str | None,
@@ -253,6 +254,7 @@ class ChatTurnPreparationToolRoutingService:
                 or ambiguous_period_answer
                 or missing_date_answer
                 or common_chat_operational_answer
+                or learning_term_confirmation_answer
                 or routing_disambiguation_answer
                 or interpretation_without_data_answer
                 or skip_flags.skip_tools_for_user_identity
@@ -285,6 +287,7 @@ class ChatTurnPreparationToolRoutingService:
         missing_date_answer: str | None,
         common_chat_operational_answer: str | None,
         routing_disambiguation_answer: str | None,
+        learning_term_confirmation_answer: str | None,
         interpretation_without_data_answer: str | None,
         small_talk_direct: str | None,
         utility_direct: str | None,
@@ -319,6 +322,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("operational_parameter")
         elif common_chat_operational_answer:
             pipeline_stages.append("common_chat_operational_guidance")
+        elif learning_term_confirmation_answer:
+            pipeline_stages.append("learning_term")
         elif routing_disambiguation_answer:
             pipeline_stages.append("intent_disambiguation")
         elif interpretation_without_data_answer:
@@ -358,6 +363,7 @@ class ChatTurnPreparationToolRoutingService:
         pre_capability_answer: str | None,
         operational_guards: ChatTurnPreparationOperationalGuards,
         routing_disambiguation_answer: str | None,
+        learning_term_confirmation_answer: str | None,
         interpretation_without_data_answer: str | None,
         skip_flags: ChatTurnPreparationSkipToolFlags,
         small_talk_direct: str | None,
@@ -388,6 +394,7 @@ class ChatTurnPreparationToolRoutingService:
             missing_date_answer=operational_guards.missing_date_answer,
             common_chat_operational_answer=operational_guards.common_chat_operational_answer,
             routing_disambiguation_answer=routing_disambiguation_answer,
+            learning_term_confirmation_answer=learning_term_confirmation_answer,
             interpretation_without_data_answer=interpretation_without_data_answer,
             skip_flags=skip_flags,
             small_talk_direct=small_talk_direct,
@@ -409,6 +416,7 @@ class ChatTurnPreparationToolRoutingService:
                 missing_date_answer=operational_guards.missing_date_answer,
                 common_chat_operational_answer=operational_guards.common_chat_operational_answer,
                 routing_disambiguation_answer=routing_disambiguation_answer,
+                learning_term_confirmation_answer=learning_term_confirmation_answer,
                 interpretation_without_data_answer=interpretation_without_data_answer,
                 small_talk_direct=small_talk_direct,
                 utility_direct=utility_direct,
