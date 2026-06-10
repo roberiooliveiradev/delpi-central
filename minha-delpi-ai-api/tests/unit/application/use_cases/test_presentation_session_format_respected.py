@@ -104,6 +104,41 @@ def test_stock_session_table_prefers_table_primary():
     assert decision["layoutMode"] == "single"
 
 
+def test_stock_default_table_uses_single_layout_without_explicit_session_format():
+    use_case = _use_case()
+    meta = use_case._build_presentation_metadata(
+        action={"path": "/products/{code}/stock"},
+        sanitized_data={
+            "stock": {
+                "items": [
+                    {
+                        "branch": "01",
+                        "warehouse": "01",
+                        "current_quantity": 10,
+                        "available_quantity": 8,
+                        "committed_quantity": 2,
+                    },
+                    {
+                        "branch": "02",
+                        "warehouse": "01",
+                        "current_quantity": 5,
+                        "available_quantity": 5,
+                        "committed_quantity": 0,
+                    },
+                ]
+            }
+        },
+        resolved_path="/products/10080022/stock",
+        request_parameters={},
+    )
+
+    decision = meta["presentationDecision"]
+
+    assert decision["selected"] == "table"
+    assert decision["layoutMode"] == "single"
+    assert meta["presentation"]["type"] == "table"
+
+
 def test_stock_session_chart_prefers_chart_primary():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(

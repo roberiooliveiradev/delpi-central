@@ -34,6 +34,28 @@ _SELECTED_TO_CHART_TYPE = {
     "chart": "bar",
 }
 
+_NATIVE_PRIMARY_VIEWS = frozenset(
+    {
+        "table",
+        "tree",
+        "chart",
+        "kpi",
+        "dashboard",
+        "line_chart",
+        "area_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+        "grouped_bar",
+        "stacked_bar",
+        "combo_chart",
+        "histogram",
+        "heatmap",
+        "gauge",
+        "scatter",
+    }
+)
+
 _CHART_TYPE_TO_SELECTED = {
     "line": "line_chart",
     "multi_line": "line_chart",
@@ -605,7 +627,14 @@ class ChatPresentationDecisionService:
     ) -> dict[str, Any]:
         shape = data_shape or ChatPresentationDataShapeAnalyzer.analyze(rows=rows)
         unique_views = list(dict.fromkeys(str(view).strip() for view in available_views if str(view).strip()))
-        layout_mode = "stack" if len(unique_views) >= 2 else "single"
+        selected_token = str(selected or "").strip().lower()
+
+        if selected_token in _NATIVE_PRIMARY_VIEWS:
+            layout_mode = "single"
+            visual_order = [selected_token]
+        else:
+            layout_mode = "stack" if len(unique_views) >= 2 else "single"
+            visual_order = cls._visual_order_for_stack(unique_views)
 
         return {
             "selected": selected,
@@ -613,7 +642,7 @@ class ChatPresentationDecisionService:
             "reason": reason,
             "availableViews": available_views,
             "layoutMode": layout_mode,
-            "visualOrder": cls._visual_order_for_stack(unique_views),
+            "visualOrder": visual_order,
             "dataShape": {
                 "rows": shape.get("rows", 0),
                 "columns": shape.get("columns", 0),

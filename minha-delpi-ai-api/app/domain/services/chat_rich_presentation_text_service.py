@@ -184,6 +184,7 @@ class ChatRichPresentationTextService:
 
         if counts["table"] >= 1:
             body = cls._strip_markdown_tables(body)
+            body = cls._strip_stock_position_detail_section(body)
 
         if counts["tree"] >= 1:
             body = cls._strip_structure_sections(body)
@@ -194,6 +195,23 @@ class ChatRichPresentationTextService:
         body = cls._strip_embedded_visual_markers(body)
 
         return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _strip_stock_position_detail_section(cls, markdown: str) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        header = ChatAssistantContentService.get(
+            "presenter_content",
+            "generic",
+            "stockTextDetailHeader",
+            default="Detalhamento por filial e armazém",
+        )
+        escaped = re.escape(str(header or "").strip())
+        pattern = rf"\n\*\*{escaped}\*\*\s*\n(?:[ \t]*- .+(?:\n|$))+"
+
+        return re.sub(pattern, "", markdown, flags=re.IGNORECASE).strip()
 
     @classmethod
     def _strip_embedded_visual_markers(cls, markdown: str) -> str:

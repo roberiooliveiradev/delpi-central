@@ -99,7 +99,14 @@ class ChatPresentationPrimaryViewService:
             decision["visualOrder"] = ["canvas", "text"]
             return
 
-        if explicit in _EXPLICIT_SESSION_FORMATS and selected:
+        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
+        force_single = explicit in _EXPLICIT_SESSION_FORMATS or (
+            preferred in _EXPLICIT_SESSION_FORMATS
+            and preferred == selected
+            and selected not in {"", "text"}
+        )
+
+        if force_single and selected:
             cls._align_primary_to_selected(metadata, selected)
             decision["layoutMode"] = "single"
             decision["visualOrder"] = [selected]

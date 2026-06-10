@@ -32,6 +32,24 @@ def _metadata_with_stack(*, markdown: str) -> dict:
     }
 
 
+def test_compact_metadata_strips_stock_position_detail_when_table_exists():
+    markdown = (
+        "### Estoque\n\n"
+        "Resumo com 5 posições.\n\n"
+        "**Detalhamento por filial e armazém**\n\n"
+        "- Filial 01, armazém 01: atual 10, disponível 8, empenhada 0.\n"
+    )
+    metadata = _metadata_with_stack(markdown=markdown)
+
+    ChatRichPresentationTextService.compact_metadata_text(metadata)
+
+    compact = metadata["textPresentation"]["markdown"]
+
+    assert "Detalhamento por filial" not in compact
+    assert "Filial 01, armazém 01" not in compact
+    assert "Resumo com 5 posições" in compact
+
+
 def test_compact_metadata_removes_markdown_table_and_footer():
     markdown = (
         "### Estoque\n\n"
