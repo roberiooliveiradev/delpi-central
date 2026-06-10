@@ -97,7 +97,8 @@ class ChatPresentationEvidenceFirstLayoutService:
             return
 
         plan["presentationMode"] = PRESENTATION_MODE
-        plan["tailVisualOrder"] = cls._resolve_tail_visual_order(metadata)
+        plan["tailVisualOrder"] = cls._resolve_evidence_first_tail_visual_order(metadata)
+        cls._prune_empty_tail_visual_slot(plan)
         cls._apply_native_view_stack_plan(metadata, plan)
 
         nested = decision.get("stackPresentationPlan")
@@ -105,6 +106,7 @@ class ChatPresentationEvidenceFirstLayoutService:
         if isinstance(nested, dict):
             nested["presentationMode"] = PRESENTATION_MODE
             nested["tailVisualOrder"] = plan["tailVisualOrder"]
+            cls._prune_empty_tail_visual_slot(nested)
             cls._apply_native_view_stack_plan(metadata, nested)
 
     @classmethod
@@ -114,6 +116,32 @@ class ChatPresentationEvidenceFirstLayoutService:
         )
 
         return ChatPresentationStackOrderService._resolve_tail_visual_order(metadata)
+
+    @classmethod
+    def _resolve_evidence_first_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+        order = cls._resolve_tail_visual_order(metadata)
+
+        if explicit == "dashboard":
+            return order
+
+        return [token for token in order if str(token).strip().lower() != "dashboard"]
+
+    @classmethod
+    def _prune_empty_tail_visual_slot(cls, plan: dict[str, Any]) -> None:
+        if plan.get("tailVisualOrder"):
+            return
+
+        narrative_order = plan.get("narrativeOrder")
+
+        if not isinstance(narrative_order, list):
+            return
+
+        plan["narrativeOrder"] = [
+            slot
+            for slot in narrative_order
+            if str(slot).strip().lower() != "tailvisuals"
+        ]
 
     @classmethod
     def _apply_native_view_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> None:

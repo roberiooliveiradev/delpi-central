@@ -64,8 +64,14 @@ def test_factory_status_integrated_stack_with_visuals():
 
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
-    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
-    assert "tailVisuals" in (plan.get("narrativeOrder") or [])
+    presentation_mode = str(plan.get("presentationMode") or "").strip()
+
+    if presentation_mode == "summary_then_evidence":
+        assert (plan.get("tailVisualOrder") or []) == []
+        assert "tailVisuals" not in (plan.get("narrativeOrder") or [])
+    else:
+        assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
+        assert "tailVisuals" in (plan.get("narrativeOrder") or [])
 
 
 def test_factory_status_auto_stack_with_dialogue():

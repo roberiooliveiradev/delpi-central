@@ -22,6 +22,7 @@ import {
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
+import { isSummaryThenEvidenceMode } from "./chatPresentation";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -52,13 +53,21 @@ function resolveStackSection(sectionId: StackSectionId): StackSectionChrome {
   return buildStackSectionChrome(sectionId);
 }
 
+function usesStackSectionChrome(
+  plan: StackPresentationPlan,
+  toolCalls: ChatToolCall[],
+): boolean {
+  return planUsesHumanizedSections(plan) && !isSummaryThenEvidenceMode(toolCalls);
+}
+
 function maybePushStackSection(
   plan: StackPresentationPlan,
   segments: AssistantContentSegment[],
   sectionId: StackSectionId,
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+  toolCalls: ChatToolCall[] = [],
 ): void {
-  if (!planUsesHumanizedSections(plan)) {
+  if (!usesStackSectionChrome(plan, toolCalls)) {
     return;
   }
 
@@ -161,9 +170,12 @@ function appendTablesForRoles(
   parseMarkdown: (prose: string) => AssistantContentSegment[],
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   options?: { sectionPerRole?: boolean },
+  toolCalls: ChatToolCall[] = [],
 ): void {
   const buckets = bucketTableSegmentsByRole(tables, resolveTableRole);
-  const sectionPerRole = options?.sectionPerRole === true || planUsesHumanizedSections(plan);
+  const evidenceFirst = isSummaryThenEvidenceMode(toolCalls);
+  const sectionPerRole =
+    options?.sectionPerRole === true || usesStackSectionChrome(plan, toolCalls);
   const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
     profile: "profile",
     guide: "guide",
@@ -182,12 +194,15 @@ function appendTablesForRoles(
       continue;
     }
 
-    if (sectionPerRole && planUsesHumanizedSections(plan)) {
+    if (sectionPerRole || evidenceFirst) {
       const sectionId = roleToSection[role];
       const visibility = plan.sectionVisibility;
 
       if (sectionId && (!visibility || visibility[sectionId] === true)) {
-        maybePushStackSection(plan, segments, sectionId, appendUnique);
+        if (sectionPerRole) {
+          maybePushStackSection(plan, segments, sectionId, appendUnique, toolCalls);
+        }
+
         pushSectionFraming(plan, segments, sectionId, parseMarkdown, appendUnique);
       }
     }
@@ -242,7 +257,7 @@ function appendTailVisuals(
       const trees = byKind.get("tree") ?? [];
 
       if (trees.length) {
-        maybePushStackSection(plan, segments, "structure", appendUnique);
+        maybePushStackSection(plan, segments, "structure", appendUnique, toolCalls);
         pushSectionFraming(plan, segments, "structure", parseMarkdown, appendUnique);
 
         for (const segment of trees) {
@@ -336,7 +351,7 @@ export function buildPlanOrderedStackSegments(
           break;
         }
 
-        maybePushStackSection(plan, segments, "scope", appendUnique);
+        maybePushStackSection(plan, segments, "scope", appendUnique, toolCalls);
 
         const leadProse = sections.lead
           ? normalizeLeadProse(sections.lead)
@@ -361,15 +376,24 @@ export function buildPlanOrderedStackSegments(
           break;
         }
 
-        maybePushStackSection(plan, segments, "profile", appendUnique);
+        maybePushStackSection(plan, segments, "profile", appendUnique, toolCalls);
         pushSectionFraming(plan, segments, "profile", parseMarkdown, appendUnique);
-        appendTablesForRoles(segments, tables, profileRoles, plan, parseMarkdown, appendUnique);
+        appendTablesForRoles(
+          segments,
+          tables,
+          profileRoles,
+          plan,
+          parseMarkdown,
+          appendUnique,
+          undefined,
+          toolCalls,
+        );
         break;
       }
 
       case "highlights":
         if (sections.destaques?.trim()) {
-          maybePushStackSection(plan, segments, "highlights", appendUnique);
+          maybePushStackSection(plan, segments, "highlights", appendUnique, toolCalls);
           pushSectionFraming(plan, segments, "highlights", parseMarkdown, appendUnique);
           pushMarkdownSegments(
             segments,
@@ -382,9 +406,16 @@ export function buildPlanOrderedStackSegments(
         break;
 
       case "operationalTables":
-        appendTablesForRoles(segments, tables, operationalRoles, plan, parseMarkdown, appendUnique, {
-          sectionPerRole: true,
-        });
+        appendTablesForRoles(
+          segments,
+          tables,
+          operationalRoles,
+          plan,
+          parseMarkdown,
+          appendUnique,
+          { sectionPerRole: true },
+          toolCalls,
+        );
         break;
 
       case "tailVisuals":
@@ -393,7 +424,7 @@ export function buildPlanOrderedStackSegments(
 
       case "attention":
         if (sections.pontos?.trim()) {
-          maybePushStackSection(plan, segments, "attention", appendUnique);
+          maybePushStackSection(plan, segments, "attention", appendUnique, toolCalls);
           pushSectionFraming(plan, segments, "attention", parseMarkdown, appendUnique);
           pushMarkdownSegments(
             segments,
@@ -422,7 +453,7 @@ export function buildPlanOrderedStackSegments(
         segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
     )
   ) {
-    maybePushStackSection(plan, segments, "attention", appendUnique);
+    maybePushStackSection(plan, segments, "attention", appendUnique, toolCalls);
     pushSectionFraming(plan, segments, "attention", parseMarkdown, appendUnique);
     pushMarkdownSegments(
       segments,

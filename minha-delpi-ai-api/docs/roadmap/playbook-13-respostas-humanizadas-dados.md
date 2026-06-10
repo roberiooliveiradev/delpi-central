@@ -465,9 +465,9 @@ Perfil `summary_then_evidence` (ex.: `factory_status`, `stock`, status operacion
 
 | Modo de sessão | Comportamento |
 |----------------|---------------|
-| **Automático** | Prosa compacta + componentes ricos (tabela, árvore, gráfico, dashboard); markdown **não** embute tabelas/composição/gráfico |
+| **Automático** | Prosa compacta + tabelas/árvore com `sectionFraming` inline; **sem** divisões `stackSection` nem `dashboard` no tail |
 | **Texto** | Markdown completo com embeds GFM (`should_embed_in_markdown` só com `explicitSessionFormat: "text"`) |
-| **Painel** | Lead curto + dashboard; plano sem `operationalTables` repetindo o painel |
+| **Painel** | Lead curto + `dashboard`; plano sem `operationalTables` repetindo o painel |
 
 Módulos: `ChatPresentationEvidenceFirstLayoutService`, `ChatRichPresentationTextService`, serviços `*MarkdownService` (table/tree/chart), MFE `chatPresentation.ts` + `presentationStackBlueprint.ts`.
 

@@ -88,3 +88,50 @@ def test_compose_keeps_natural_chat_narrative_without_story_card():
     assert "PA PRODUZIDO" in markdown
     assert "**Resumo**" not in markdown
     assert "**Destaques**" not in markdown
+
+
+def test_compose_omits_dashboard_tail_in_automatic_mode():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "narrativeOrder": ["lead", "operationalTables", "tailVisuals"],
+            "tailVisualOrder": ["dashboard"],
+        },
+        "dashboardPresentation": {"type": "dashboard", "title": "Painel fabril", "panels": []},
+        "textPresentation": {"markdown": "### Status\n\nSituação consolidada."},
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+    plan = metadata["stackPresentationPlan"]
+
+    assert plan["tailVisualOrder"] == []
+    assert "tailVisuals" not in plan["narrativeOrder"]
+
+
+def test_compose_keeps_dashboard_tail_when_session_requests_panel():
+    metadata = {
+        "explicitSessionFormat": "dashboard",
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "narrativeOrder": ["lead", "tailVisuals"],
+            "tailVisualOrder": ["dashboard"],
+        },
+        "dashboardPresentation": {"type": "dashboard", "title": "Painel fabril", "panels": []},
+        "textPresentation": {"markdown": "### Status\n\nLead curto."},
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+    plan = metadata["stackPresentationPlan"]
+
+    assert plan["tailVisualOrder"] == ["dashboard"]
+    assert "tailVisuals" in plan["narrativeOrder"]

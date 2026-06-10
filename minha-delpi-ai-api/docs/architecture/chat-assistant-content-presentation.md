@@ -87,7 +87,7 @@ Rotas com `stackPlan: "summary_then_evidence"` (`factory_status`, `stock`, statu
 
 | Modo (`explicitSessionFormat`) | API (`textPresentation`) | MFE |
 |--------------------------------|--------------------------|-----|
-| Automático | Prosa sem embed de tabela/árvore/gráfico/composição | Componentes ricos na ordem do `stackPresentationPlan` |
+| Automático | Prosa sem embed de tabela/árvore/gráfico/composição | Tabelas/árvore com texto explicativo inline; **sem** `stackSection` numerado nem painel `dashboard` |
 | Texto | Markdown completo (`should_embed_in_markdown`) | Visão texto-first |
 | Painel (`dashboard`) | Lead compacto | Só dashboard; `operationalTables` vazio no plano |
 

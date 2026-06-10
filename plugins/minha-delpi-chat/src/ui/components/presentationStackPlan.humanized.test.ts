@@ -115,4 +115,61 @@ describe("presentationStackPlan humanized gating", () => {
       ),
     ).toBe(true);
   });
+
+  it("não injeta divisões numeradas em summary_then_evidence", () => {
+    const commentary =
+      "### Status fabril\n\nSituação consolidada: **PA PRODUZIDO**.";
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Produção (PA / PI / OP / apontamentos)",
+          role: "list",
+          columns: [{ key: "op", label: "OP" }],
+          rows: [{ op: "001" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90262404/factory-status",
+          presentationDecision: { presentationMode: "summary_then_evidence" },
+          stackPresentationPlan: {
+            presentationMode: "summary_then_evidence",
+            humanizedSections: true,
+            profileFirst: false,
+            narrativeOrder: ["lead", "operationalTables"],
+            tableRoleOrder: ["stock", "list"],
+            sectionVisibility: { guide: true, scope: true },
+            sectionFraming: {
+              guide: "As ordens e apontamentos de produção detalham o que já foi fabricado.",
+            },
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildCanonicalStackSegments(
+      commentary,
+      visuals,
+      (prose) => [{ kind: "markdown", markdown: prose }],
+      (target, segment) => {
+        target.push(segment);
+      },
+      toolCalls,
+    );
+
+    expect(segments.some((segment) => segment.kind === "stackSection")).toBe(false);
+    expect(
+      segments.some(
+        (segment) =>
+          segment.kind === "markdown" &&
+          segment.markdown.includes("ordens e apontamentos"),
+      ),
+    ).toBe(true);
+    expect(segments.some((segment) => segment.kind === "table")).toBe(true);
+  });
 });
