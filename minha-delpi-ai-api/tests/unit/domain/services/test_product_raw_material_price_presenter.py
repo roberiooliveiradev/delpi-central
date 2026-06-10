@@ -28,7 +28,37 @@ def test_raw_material_price_table_presentations_assign_stack_roles():
     history_keys = [column["key"] for column in history.get("columns") or []]
 
     assert "issue_date" in history_keys
+    assert "supplier_name" in history_keys
     assert "unit_price" in history_keys
+
+
+def test_intelligence_rich_narrative_for_stale_registered_price():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta(
+        "product_raw_material_price_intelligence_10080022.json"
+    )
+    path = "/products/10080022/raw-material-price-intelligence"
+    text = presenter._build_raw_material_price_intelligence_text_presentation(
+        envelope["data"],
+        path,
+    )
+    markdown = str((text or {}).get("markdown") or "")
+
+    assert "Resumo do produto" in markdown
+    assert "ALTA DE PRECO" in markdown
+    assert "113" in markdown or "cadastrado" in markdown.lower()
+    assert "Recomendação" in markdown
+    assert "TE CONNECTIVITY" in markdown
+
+    tables = presenter.build_raw_material_price_intelligence_table_presentations(
+        envelope["data"],
+        path,
+    )
+    purchase = next(table for table in tables if table.get("role") == "pricing")
+    purchase_keys = [column["key"] for column in purchase.get("columns") or []]
+
+    assert "invoice_number" in purchase_keys
+    assert "supplier_part_number" in purchase_keys
 
 
 def test_visual_bundle_enriches_raw_material_price_with_auxiliary_slots():

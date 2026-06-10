@@ -136,6 +136,9 @@
     "total_pa_reported_quantity": "Apontado no PA",
     "total_pi_reported_quantity": "Apontado nos PI",
     "registered_last_purchase_price": "Últ. preço cadastro",
+    "registered_last_purchase_date": "Data últ. preço cadastro",
+    "registered_icms_rate": "ICMS cadastrado",
+    "registered_vs_last_nf_diff_percent": "Diferença cadastro vs última NF (%)",
     "dominant_supplier_code": "Fornecedor dominante",
     "total_material_cost": "Custo total materiais",
     "total_materials": "Total MPs",
@@ -748,8 +751,9 @@
         {"key": "simulated_extended_cost", "label": "Custo simulado", "dataType": "currency"}
       ],
       "mpPriceHistoryDetail": [
-        {"key": "issue_date", "label": "Data", "dataType": "date"},
-        {"key": "supplier_code", "label": "Fornecedor"},
+        {"key": "issue_date", "label": "Data NF", "dataType": "date"},
+        {"key": "supplier_name", "label": "Fornecedor"},
+        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
         {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
         {"key": "variation_percent", "label": "Variação %", "dataType": "percent"}
       ],
@@ -778,11 +782,18 @@
         {"key": "status", "label": "Status"}
       ],
       "lastPurchaseDetail": [
-        {"key": "supplier_code", "label": "Fornecedor"},
-        {"key": "supplier_name", "label": "Nome fornecedor"},
+        {"key": "branch", "label": "Filial"},
+        {"key": "invoice_number", "label": "NF"},
+        {"key": "invoice_series", "label": "Série"},
+        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
+        {"key": "entry_date", "label": "Entrada", "dataType": "date"},
+        {"key": "supplier_name", "label": "Fornecedor"},
+        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
         {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "icms_rate", "label": "Alíquota ICMS", "dataType": "percent"},
-        {"key": "invoice_date", "label": "Data NF", "dataType": "date"}
+        {"key": "total_value", "label": "Valor total", "dataType": "currency"},
+        {"key": "icms_rate", "label": "ICMS %", "dataType": "percent"},
+        {"key": "purchase_order", "label": "Pedido compra"},
+        {"key": "supplier_part_number", "label": "Part number fornecedor"}
       ],
       "salePricingDetail": [
         {"key": "table_code", "label": "Tabela"},

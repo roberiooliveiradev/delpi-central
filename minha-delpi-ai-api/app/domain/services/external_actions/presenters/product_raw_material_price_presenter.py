@@ -46,6 +46,79 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         return {}
 
+    def _insight(self, key: str, **values: str) -> str:
+        return self._host._presenter_text(
+            "compositeAnalysisInsights",
+            "rawMaterialPrice",
+            key,
+            **values,
+        )
+
+    def _product_details(self, root: dict) -> dict[str, Any]:
+        product = root.get("product")
+
+        if isinstance(product, dict):
+            return product
+
+        return {}
+
+    def _indicators(self, root: dict) -> dict[str, Any]:
+        indicators = root.get("indicators")
+
+        if isinstance(indicators, dict):
+            return indicators
+
+        return {}
+
+    def _normalize_price_history_summary(self, root: dict) -> dict[str, Any]:
+        block = self._section_block(root, "price_history")
+        summary = block.get("summary") if isinstance(block.get("summary"), dict) else {}
+        variation = root.get("price_variation")
+
+        if not isinstance(variation, dict):
+            variation = {}
+
+        return {
+            "total_purchases": summary.get("total_purchases") or summary.get("total_records"),
+            "avg_unit_price": summary.get("avg_unit_price") or summary.get("average_unit_price"),
+            "min_unit_price": summary.get("min_unit_price"),
+            "max_unit_price": summary.get("max_unit_price"),
+            "last_variation_percent": (
+                summary.get("last_variation_percent")
+                or variation.get("last_variation_percent")
+            ),
+        }
+
+    def _normalize_budget_summary(self, root: dict) -> dict[str, Any]:
+        block = self._section_block(root, "budget_history")
+        summary = block.get("summary") if isinstance(block.get("summary"), dict) else {}
+
+        return {
+            "total_items": summary.get("total_items") or summary.get("total_records"),
+            "total_requisitions": summary.get("total_requisitions"),
+            "total_purchase_orders": summary.get("total_purchase_orders"),
+        }
+
+    def _format_price(self, value: object) -> str:
+        if value is None or value == "":
+            return "—"
+
+        return self._host._format_field_value("unit_price", value)
+
+    def _registered_price_is_stale(self, product: dict[str, Any], *, diff_percent: float) -> bool:
+        registered_date = str(product.get("registered_last_purchase_date") or "").strip()
+
+        if registered_date and len(registered_date) >= 4:
+            try:
+                year = int(registered_date[:4])
+
+                if year < 2020:
+                    return True
+            except ValueError:
+                pass
+
+        return diff_percent >= 50.0
+
     def _present_raw_material_price_intelligence(self, root: dict, path: str) -> dict:
         code, description = self._product_context(root, path)
         linhas = self._build_intelligence_lines(root, code=code, description=description)
@@ -172,30 +245,30 @@ class ExternalActionProductRawMaterialPricePresenter:
                 )
             )
 
-        price_summary = self._section_block(root, "price_history").get("summary")
+        price_summary = self._normalize_price_history_summary(root)
 
-        if isinstance(price_summary, dict) and price_summary.get("total_records"):
+        if price_summary.get("total_purchases"):
             linhas.append(
                 self._route(
                     "rawMaterialPriceIntelligence",
                     "priceHistorySummaryLine",
-                    count=str(price_summary.get("total_records")),
-                    avg=str(price_summary.get("average_unit_price") or "—"),
+                    count=str(price_summary.get("total_purchases")),
+                    avg=str(price_summary.get("avg_unit_price") or "—"),
                 )
             )
 
-        budget_summary = self._section_block(root, "budget_history").get("summary")
+        budget_summary = self._normalize_budget_summary(root)
 
-        if isinstance(budget_summary, dict) and budget_summary.get("total_records"):
+        if budget_summary.get("total_items"):
             linhas.append(
                 self._route(
                     "rawMaterialPriceIntelligence",
                     "budgetHistorySummaryLine",
-                    count=str(budget_summary.get("total_records")),
+                    count=str(budget_summary.get("total_items")),
                 )
             )
 
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+        indicators = self._indicators(root)
 
         if indicators.get("dominant_supplier_code"):
             linhas.append(
@@ -203,6 +276,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                     "rawMaterialPriceIntelligence",
                     "dominantSupplierLine",
                     supplier=str(indicators.get("dominant_supplier_code")),
+                    share=str(indicators.get("dominant_supplier_share_percent") or "—"),
                 )
             )
 
@@ -288,12 +362,16 @@ class ExternalActionProductRawMaterialPricePresenter:
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if last_purchase:
-            purchase_table = self._build_kv_table(
-                last_purchase,
-                self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle"),
+            purchase_table = _OpsTable.build_fixed_items_table(
+                self._host,
+                [last_purchase],
+                table_id="lastPurchaseDetail",
+                title=self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle"),
+                role="pricing",
             )
-            purchase_table["role"] = "pricing"
-            tables.append(purchase_table)
+
+            if purchase_table:
+                tables.append(purchase_table)
 
         price_items = self._section_block(root, "price_history").get("items")
 
@@ -339,7 +417,7 @@ class ExternalActionProductRawMaterialPricePresenter:
             budget_table = _OpsTable.build_fixed_items_table(
                 self._host,
                 shown,
-                table_id="mpBudgetHistoryDetail",
+                table_id="purchaseBudgetHistoryDetail",
                 title=budget_title,
                 role="other",
             )
@@ -690,6 +768,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
     def _build_intelligence_overview_table(self, root: dict, path: str) -> dict | None:
         code, description = self._product_context(root, path)
+        product = self._product_details(root)
         columns = self._host._column_labels.kv_table_column_defs()
         rows = [
             {
@@ -702,7 +781,39 @@ class ExternalActionProductRawMaterialPricePresenter:
             },
         ]
 
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+        product_fields = {
+            key: product.get(key)
+            for key in (
+                "product_type",
+                "unit",
+                "group_code",
+                "standard_cost",
+                "registered_last_purchase_price",
+                "registered_last_purchase_date",
+            )
+            if product.get(key) not in (None, "")
+        }
+        rows.extend(_OpsTable.summary_kv_rows(self._host, product_fields))
+
+        price_summary = self._normalize_price_history_summary(root)
+        rows.extend(
+            _OpsTable.summary_kv_rows(
+                self._host,
+                {
+                    key: price_summary[key]
+                    for key in (
+                        "total_purchases",
+                        "avg_unit_price",
+                        "min_unit_price",
+                        "max_unit_price",
+                        "last_variation_percent",
+                    )
+                    if price_summary.get(key) not in (None, "")
+                },
+            )
+        )
+
+        indicators = self._indicators(root)
 
         rows.extend(_OpsTable.summary_kv_rows(self._host, indicators)[:6])
 
@@ -757,20 +868,29 @@ class ExternalActionProductRawMaterialPricePresenter:
         }
 
     def _build_intelligence_text_presentation(self, root: dict, path: str) -> dict | None:
-        code, _ = self._product_context(root, path)
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
+        code, description = self._product_context(root, path)
         title = (
             self._route("rawMaterialPriceIntelligence", "titleWithCode", code=code)
             if code
             else self._route("rawMaterialPriceIntelligence", "titleGeneric")
         )
-        highlights = self._build_intelligence_highlights(root)
-        attention = self._build_intelligence_attention(root)
-        parts = [highlights]
-
-        if attention:
-            parts.extend(["", attention])
-
-        body = "\n\n".join(part for part in parts if part).strip()
+        auxiliary_tables = self.build_raw_material_price_intelligence_table_presentations(
+            root,
+            path,
+        )
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+        )
+        body = self._build_intelligence_markdown_body(
+            root,
+            code=code,
+            description=description,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         if not body:
             return None
@@ -780,6 +900,412 @@ class ExternalActionProductRawMaterialPricePresenter:
             "title": title,
             "markdown": f"### {title}\n\n{body}".strip(),
         }
+
+    def _build_intelligence_markdown_body(
+        self,
+        root: dict,
+        *,
+        code: str,
+        description: str,
+        compact_for_rich_ui: bool = False,
+    ) -> str:
+        parts: list[str | None] = []
+        parts.extend(
+            self._build_intelligence_narrative_sections(
+                root,
+                code=code,
+                description=description,
+                compact_for_rich_ui=compact_for_rich_ui,
+            )
+        )
+
+        highlights = self._build_intelligence_highlight_lines(root)
+
+        if highlights:
+            parts.append(self._insight("highlightsHeader"))
+            parts.extend(f"- {line}" for line in highlights)
+
+        attention = self._build_intelligence_attention_lines(root)
+
+        if attention:
+            parts.append(self._insight("attentionHeader"))
+            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
+
+        recommendation = self._build_intelligence_recommendation_lines(root)
+
+        if recommendation:
+            parts.extend(recommendation)
+
+        return _OpsTable.join_markdown_blocks(parts)
+
+    def _build_intelligence_narrative_sections(
+        self,
+        root: dict,
+        *,
+        code: str,
+        description: str,
+        compact_for_rich_ui: bool,
+    ) -> list[str]:
+        sections: list[str] = []
+        product = self._product_details(root)
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        price_summary = self._normalize_price_history_summary(root)
+        indicators = self._indicators(root)
+        route = "rawMaterialPriceIntelligence"
+
+        product_lines: list[str] = [
+            self._route(route, "sectionProductSummaryHeader"),
+            self._route(route, "productCodeLine", code=code or "—"),
+        ]
+
+        if description:
+            product_lines.append(
+                self._route(route, "productDescriptionLine", description=description)
+            )
+
+        product_type = str(product.get("product_type") or "").strip()
+        unit = str(product.get("unit") or "").strip()
+
+        if product_type or unit:
+            product_lines.append(
+                self._route(
+                    route,
+                    "productTypeLine",
+                    type=product_type or "—",
+                    unit=unit or "—",
+                )
+            )
+
+        group_code = str(product.get("group_code") or "").strip()
+
+        if group_code:
+            product_lines.append(self._route(route, "productGroupLine", group=group_code))
+
+        registered_price = product.get("registered_last_purchase_price")
+
+        if registered_price is not None:
+            product_lines.append(
+                self._route(
+                    route,
+                    "registeredPriceLine",
+                    price=self._format_price(registered_price),
+                )
+            )
+
+        registered_date = str(product.get("registered_last_purchase_date") or "").strip()
+
+        if registered_date:
+            product_lines.append(
+                self._route(
+                    route,
+                    "registeredDateLine",
+                    date=self._host._format_field_value(
+                        "registered_last_purchase_date",
+                        registered_date,
+                    ),
+                )
+            )
+
+        sections.append("\n".join(product_lines))
+
+        price_status = str(root.get("price_status") or "").strip()
+
+        if price_status:
+            sections.append(self._insight("headlinePriceStatus", status=price_status))
+
+        if last_purchase and not compact_for_rich_ui:
+            last_lines = [self._route(route, "sectionLastPurchaseHeader")]
+
+            if last_purchase.get("invoice_number") or last_purchase.get("issue_date"):
+                last_lines.append(
+                    self._route(
+                        route,
+                        "lastPurchaseNfLine",
+                        invoice=str(last_purchase.get("invoice_number") or "—"),
+                        series=str(last_purchase.get("invoice_series") or "—"),
+                        issueDate=self._host._format_field_value(
+                            "issue_date",
+                            last_purchase.get("issue_date"),
+                        ),
+                        entryDate=self._host._format_field_value(
+                            "entry_date",
+                            last_purchase.get("entry_date"),
+                        ),
+                    )
+                )
+
+            if last_purchase.get("supplier_name") or last_purchase.get("quantity") is not None:
+                last_lines.append(
+                    self._route(
+                        route,
+                        "lastPurchaseSupplierLine",
+                        supplier=str(
+                            last_purchase.get("supplier_name")
+                            or last_purchase.get("supplier_code")
+                            or "—"
+                        ),
+                        quantity=self._host._format_field_value(
+                            "quantity",
+                            last_purchase.get("quantity"),
+                        ),
+                    )
+                )
+
+            if last_purchase.get("unit_price") is not None:
+                last_lines.append(
+                    self._route(
+                        route,
+                        "lastPurchaseAmountLine",
+                        unitPrice=self._format_price(last_purchase.get("unit_price")),
+                        totalValue=self._host._format_field_value(
+                            "total_value",
+                            last_purchase.get("total_value"),
+                        ),
+                        icmsRate=str(last_purchase.get("icms_rate") or "—"),
+                    )
+                )
+
+            if last_purchase.get("purchase_order") or last_purchase.get("supplier_part_number"):
+                last_lines.append(
+                    self._route(
+                        route,
+                        "lastPurchasePoLine",
+                        purchaseOrder=str(last_purchase.get("purchase_order") or "—"),
+                        partNumber=str(last_purchase.get("supplier_part_number") or "—"),
+                    )
+                )
+
+            sections.append("\n".join(last_lines))
+        elif last_purchase and compact_for_rich_ui:
+            sections.append(
+                self._route(
+                    route,
+                    "lastPurchaseLine",
+                    price=str(last_purchase.get("unit_price") or "—"),
+                    supplier=str(
+                        last_purchase.get("supplier_name")
+                        or last_purchase.get("supplier_code")
+                        or "—"
+                    ),
+                )
+            )
+
+        diff_percent = indicators.get("registered_vs_last_nf_diff_percent")
+
+        if diff_percent is not None:
+            variation_lines = [self._route(route, "sectionPriceVariationHeader")]
+            variation_lines.append(
+                self._route(
+                    route,
+                    "registeredVsLastLine",
+                    diffPercent=self._host._format_field_value(
+                        "registered_vs_last_nf_diff_percent",
+                        diff_percent,
+                    ),
+                    registeredPrice=self._format_price(
+                        product.get("registered_last_purchase_price")
+                        or product.get("standard_cost"),
+                    ),
+                )
+            )
+
+            if self._registered_price_is_stale(
+                product,
+                diff_percent=float(diff_percent or 0),
+            ):
+                variation_lines.append(
+                    self._route(
+                        route,
+                        "registeredVsLastStaleLine",
+                        registeredDate=self._host._format_field_value(
+                            "registered_last_purchase_date",
+                            registered_date or "—",
+                        ),
+                    )
+                )
+
+            sections.append("\n".join(variation_lines))
+
+        if price_summary.get("total_purchases") and not compact_for_rich_ui:
+            history_lines = [self._route(route, "sectionPriceHistoryHeader")]
+            history_lines.append(
+                self._route(
+                    route,
+                    "priceHistoryStatsLine",
+                    minPrice=self._format_price(price_summary.get("min_unit_price")),
+                    maxPrice=self._format_price(price_summary.get("max_unit_price")),
+                    avgPrice=self._format_price(price_summary.get("avg_unit_price")),
+                    count=str(price_summary.get("total_purchases")),
+                )
+            )
+
+            if price_summary.get("last_variation_percent") is not None:
+                history_lines.append(
+                    self._route(
+                        route,
+                        "lastVariationLine",
+                        variation=self._host._format_field_value(
+                            "variation_percent",
+                            price_summary.get("last_variation_percent"),
+                        ),
+                    )
+                )
+
+            sections.append("\n".join(history_lines))
+        elif price_summary.get("total_purchases"):
+            sections.append(
+                self._route(
+                    route,
+                    "priceHistorySummaryLine",
+                    count=str(price_summary.get("total_purchases")),
+                    avg=str(price_summary.get("avg_unit_price") or "—"),
+                )
+            )
+
+        if indicators.get("dominant_supplier_code"):
+            supplier_label = str(
+                last_purchase.get("supplier_name")
+                or indicators.get("dominant_supplier_code")
+                or "—"
+            )
+            dominant_lines = [
+                self._route(route, "sectionDominantSupplierHeader"),
+                self._route(
+                    route,
+                    "dominantSupplierDetailLine",
+                    supplier=supplier_label,
+                    share=str(indicators.get("dominant_supplier_share_percent") or "—"),
+                ),
+            ]
+            sections.append("\n".join(dominant_lines))
+
+        if compact_for_rich_ui:
+            sections.append(self._route(route, "tableVisualizationHint"))
+
+        return sections
+
+    def _build_intelligence_highlight_lines(self, root: dict) -> list[str]:
+        highlights: list[str] = []
+        price_summary = self._normalize_price_history_summary(root)
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+
+        if last_purchase.get("unit_price") is not None:
+            highlights.append(
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "lastPurchaseLine",
+                    price=str(last_purchase.get("unit_price")),
+                    supplier=str(
+                        last_purchase.get("supplier_name")
+                        or last_purchase.get("supplier_code")
+                        or "—"
+                    ),
+                )
+            )
+
+        if price_summary.get("avg_unit_price") is not None:
+            highlights.append(
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "priceHistoryStatsLine",
+                    minPrice=self._format_price(price_summary.get("min_unit_price")),
+                    maxPrice=self._format_price(price_summary.get("max_unit_price")),
+                    avgPrice=self._format_price(price_summary.get("avg_unit_price")),
+                    count=str(price_summary.get("total_purchases") or "—"),
+                )
+            )
+
+        return highlights
+
+    def _build_intelligence_attention_lines(self, root: dict) -> list[str]:
+        attention: list[str] = []
+        product = self._product_details(root)
+        indicators = self._indicators(root)
+        price_summary = self._normalize_price_history_summary(root)
+        price_status = str(root.get("price_status") or "").strip().upper()
+        diff_percent = float(indicators.get("registered_vs_last_nf_diff_percent") or 0)
+        last_variation = price_summary.get("last_variation_percent")
+
+        if price_status == "ALTA DE PRECO" and last_variation is not None:
+            attention.append(
+                self._insight(
+                    "attentionPriceIncrease",
+                    variation=self._host._format_field_value(
+                        "variation_percent",
+                        last_variation,
+                    ),
+                )
+            )
+
+        registered_price = product.get("registered_last_purchase_price") or product.get(
+            "standard_cost"
+        )
+        registered_date = str(product.get("registered_last_purchase_date") or "").strip()
+
+        if self._registered_price_is_stale(product, diff_percent=diff_percent):
+            attention.append(
+                self._insight(
+                    "attentionStaleRegistered",
+                    registeredPrice=self._format_price(registered_price),
+                    registeredDate=self._host._format_field_value(
+                        "registered_last_purchase_date",
+                        registered_date or "—",
+                    ),
+                    minPrice=self._format_price(price_summary.get("min_unit_price")),
+                    maxPrice=self._format_price(price_summary.get("max_unit_price")),
+                )
+            )
+        elif diff_percent >= 20:
+            attention.append(
+                self._insight(
+                    "attentionRegisteredGap",
+                    diffPercent=self._host._format_field_value(
+                        "registered_vs_last_nf_diff_percent",
+                        diff_percent,
+                    ),
+                )
+            )
+
+        warnings = root.get("warnings")
+
+        if isinstance(warnings, list):
+            for item in warnings:
+                text = str(item).strip()
+
+                if text:
+                    attention.append(text)
+
+        return attention
+
+    def _build_intelligence_recommendation_lines(self, root: dict) -> list[str]:
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        price_summary = self._normalize_price_history_summary(root)
+        lines: list[str] = []
+
+        if last_purchase.get("unit_price") is None and price_summary.get("avg_unit_price") is None:
+            return lines
+
+        lines.append(self._route("rawMaterialPriceIntelligence", "recommendationHeader"))
+
+        if last_purchase.get("unit_price") is not None:
+            lines.append(
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "recommendationConservativeLine",
+                    lastPrice=self._format_price(last_purchase.get("unit_price")),
+                )
+            )
+
+        if price_summary.get("avg_unit_price") is not None:
+            lines.append(
+                self._route(
+                    "rawMaterialPriceIntelligence",
+                    "recommendationAverageLine",
+                    avgPrice=self._format_price(price_summary.get("avg_unit_price")),
+                )
+            )
+
+        return lines
 
     def _build_cost_impact_text_presentation(self, root: dict, path: str) -> dict | None:
         code, _ = self._product_context(root, path)
@@ -798,47 +1324,6 @@ class ExternalActionProductRawMaterialPricePresenter:
             "title": title,
             "markdown": f"### {title}\n\n{highlights}".strip(),
         }
-
-    def _build_intelligence_highlights(self, root: dict) -> str:
-        parts: list[str] = []
-        price_status = str(root.get("price_status") or "").strip()
-
-        if price_status:
-            parts.append(
-                self._route(
-                    "rawMaterialPriceIntelligence",
-                    "priceStatusLine",
-                    status=price_status,
-                )
-            )
-
-        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
-
-        if last_purchase.get("unit_price") is not None:
-            parts.append(
-                self._route(
-                    "rawMaterialPriceIntelligence",
-                    "lastPurchaseLine",
-                    price=str(last_purchase.get("unit_price")),
-                    supplier=str(last_purchase.get("supplier_code") or "—"),
-                )
-            )
-
-        return "\n\n".join(parts)
-
-    def _build_intelligence_attention(self, root: dict) -> str:
-        warnings = root.get("warnings")
-
-        if not isinstance(warnings, list) or not warnings:
-            return ""
-
-        lines = [f"- {str(item).strip()}" for item in warnings if str(item).strip()]
-
-        if not lines:
-            return ""
-
-        header = self._route("rawMaterialPriceIntelligence", "warningsHeader")
-        return f"**{header}**\n\n" + "\n".join(lines)
 
     def _build_cost_impact_highlights(self, root: dict) -> str:
         materials = self._section_block(root, "materials").get("items") or []
@@ -874,15 +1359,15 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         code, _description = self._product_context(root, path)
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
-        price_summary = self._section_block(root, "price_history").get("summary")
-        budget_summary = self._section_block(root, "budget_history").get("summary")
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+        price_summary = self._normalize_price_history_summary(root)
+        budget_summary = self._normalize_budget_summary(root)
+        indicators = self._indicators(root)
 
         if not any(
             (
                 last_purchase.get("unit_price") is not None,
-                isinstance(price_summary, dict) and price_summary.get("total_records"),
-                isinstance(budget_summary, dict) and budget_summary.get("total_records"),
+                price_summary.get("total_purchases"),
+                budget_summary.get("total_items"),
             )
         ):
             return None
@@ -905,33 +1390,33 @@ class ExternalActionProductRawMaterialPricePresenter:
                 )
             )
 
-        if isinstance(price_summary, dict) and price_summary.get("average_unit_price") is not None:
+        if price_summary.get("avg_unit_price") is not None:
             cards.append(
                 ChatPresentationKpiAssemblyService.metric_card(
                     label=self._route("rawMaterialPriceIntelligence", "kpiAveragePrice"),
-                    value=float(price_summary.get("average_unit_price") or 0),
+                    value=float(price_summary.get("avg_unit_price") or 0),
                     unit="R$",
                     color="#0ea5e9",
                     key="average_unit_price",
                 )
             )
 
-        if isinstance(price_summary, dict) and price_summary.get("total_records"):
+        if price_summary.get("total_purchases"):
             cards.append(
                 ChatPresentationKpiAssemblyService.metric_card(
                     label=self._route("rawMaterialPriceIntelligence", "kpiPriceRecords"),
-                    value=int(price_summary.get("total_records") or 0),
+                    value=int(price_summary.get("total_purchases") or 0),
                     unit="",
                     color="#6366f1",
                     key="price_records",
                 )
             )
 
-        if isinstance(budget_summary, dict) and budget_summary.get("total_records"):
+        if budget_summary.get("total_items"):
             cards.append(
                 ChatPresentationKpiAssemblyService.metric_card(
                     label=self._route("rawMaterialPriceIntelligence", "kpiBudgetRecords"),
-                    value=int(budget_summary.get("total_records") or 0),
+                    value=int(budget_summary.get("total_items") or 0),
                     unit="",
                     color="#8b5cf6",
                     key="budget_records",

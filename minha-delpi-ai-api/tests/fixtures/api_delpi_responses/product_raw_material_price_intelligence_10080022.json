@@ -1,0 +1,106 @@
+{
+  "success": true,
+  "message": "Análise de preço da matéria-prima carregada com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10080022",
+      "description": "TERM. OLHAL M5 5,30MM 1,00-2,50MM2 8,00MM COMP 19,80MM NU S/ISOLACAO FITADO UL ROHS",
+      "product_type": "MP",
+      "unit": "PC",
+      "group_code": "1008",
+      "registered_last_purchase_price": 0.045,
+      "registered_last_purchase_date": "20130520",
+      "registered_icms_rate": 0,
+      "standard_cost": 0.045
+    },
+    "date_start": "20250609",
+    "date_end_exclusive": "20260610",
+    "warnings": [],
+    "last_purchase": {
+      "branch": "01",
+      "product_code": "10080022",
+      "invoice_number": "000990935",
+      "invoice_series": "3",
+      "issue_date": "20260429",
+      "entry_date": "20260505",
+      "supplier_code": "000002",
+      "quantity": 10000,
+      "unit_price": 0.096193,
+      "total_value": 961.93,
+      "icms_rate": 12,
+      "purchase_order": "059902",
+      "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
+      "supplier_part_number": "880643-1"
+    },
+    "budget_history": {
+      "items": [
+        {
+          "source": "SC7010",
+          "document_number": "041511",
+          "issue_date": "20260505",
+          "supplier_code": "000002",
+          "quantity": 40000,
+          "unit_price": 0.030705,
+          "purchase_order": ""
+        }
+      ],
+      "summary": {
+        "total_items": 1,
+        "total_requisitions": 0,
+        "total_purchase_orders": 1
+      }
+    },
+    "price_history": {
+      "items": [
+        {
+          "issue_date": "20260429",
+          "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
+          "quantity": 10000,
+          "unit_price": 0.096193,
+          "variation_percent": 11.494506003987198
+        },
+        {
+          "issue_date": "20260218",
+          "supplier_name": "DELPI COMPONENTES LTDA",
+          "quantity": 2000,
+          "unit_price": 0.086276,
+          "variation_percent": 5.681177882848678
+        },
+        {
+          "issue_date": "20250901",
+          "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
+          "quantity": 100000,
+          "unit_price": 0.081638,
+          "variation_percent": -5.380157626332862
+        },
+        {
+          "issue_date": "20250816",
+          "supplier_name": "TE CONNECTIVITY BRASIL IND DE ELET LTDA",
+          "quantity": 10000,
+          "unit_price": 0.08628,
+          "variation_percent": null
+        }
+      ],
+      "summary": {
+        "total_purchases": 4,
+        "min_unit_price": 0.081638,
+        "max_unit_price": 0.096193,
+        "avg_unit_price": 0.08759675,
+        "last_variation_percent": 11.494506003987198
+      }
+    },
+    "price_variation": {
+      "total_purchases": 4,
+      "min_unit_price": 0.081638,
+      "max_unit_price": 0.096193,
+      "avg_unit_price": 0.08759675,
+      "last_variation_percent": 11.494506003987198
+    },
+    "price_status": "ALTA DE PRECO",
+    "indicators": {
+      "registered_vs_last_nf_diff_percent": 113.76222222222223,
+      "dominant_supplier_code": "000002",
+      "dominant_supplier_share_percent": 75
+    }
+  }
+}

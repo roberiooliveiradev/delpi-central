@@ -15,3 +15,4 @@ def test_last_purchase_table_uses_operational_columns():
     assert "unit_price" in keys
     assert "icms_rate" in keys
     assert "supplier_name" in keys
+    assert "invoice_number" in keys or "issue_date" in keys

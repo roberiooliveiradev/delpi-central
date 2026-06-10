@@ -83,6 +83,12 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_raw_material_price_intelligence",
         "shape": "composite_analysis",
     },
+    "product_raw_material_price_intelligence_10080022.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_raw_material_price_intelligence",
+        "entity": "product_raw_material_price_intelligence",
+        "shape": "composite_analysis",
+    },
     "product_cost_impact_simulation_90261255.json": {
         "dataVersion": "2026-06",
         "operationId": "get_product_cost_impact_simulation",
