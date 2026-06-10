@@ -129,13 +129,13 @@ export function getPortalTourQuests({
         "Saia da home — abra um app ou outra página — e clique no logo na sidebar.",
       scope: "sidebar",
       category: "home",
-      actionSelector: '[data-tour="sidebar-logo"]',
-      highlightSelector: '[data-tour="sidebar-logo"]',
+      actionSelector: '#sidebar-logo, [data-tour="sidebar-logo"]',
+      highlightSelector: '#sidebar-logo, [data-tour="sidebar-logo"]',
       isAvailable: () =>
         !isLauncherOpen() &&
         sidebarVisible() &&
         !isHomeRoute() &&
-        hasVisibleTarget('[data-tour="sidebar-logo"]'),
+        hasVisibleTarget('#sidebar-logo, [data-tour="sidebar-logo"]'),
     },
     {
       id: "home-summary-notifications",

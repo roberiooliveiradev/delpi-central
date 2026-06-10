@@ -439,19 +439,23 @@ export const Sidebar = () => {
         {!collapsed && (
           <>
             <div className="sidebar-header">
-              <button
-                type="button"
+              <div
+                id="sidebar-logo"
+                role="button"
+                tabIndex={0}
                 className="sidebar-logo"
                 data-tour="sidebar-logo"
                 onClick={() => navigate("/")}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate("/");
+                  }
+                }}
                 aria-label="Ir para a página inicial"
               >
-                <img
-                  src="/logoMinhaDelpi.svg"
-                  alt=""
-                  aria-hidden
-                />
-              </button>
+                <img src="/logoMinhaDelpi.svg" alt="" draggable={false} />
+              </div>
 
               <button
                 className="collapse-btn"
