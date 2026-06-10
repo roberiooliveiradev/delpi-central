@@ -98,7 +98,7 @@ export function runPortalTourConfetti(
     typeof options === "number" ? { durationMs: options } : options;
   const intensity = normalized.intensity ?? "normal";
   const durationMs =
-    normalized.durationMs ?? (intensity === "levelUp" ? 3200 : 2200);
+    normalized.durationMs ?? (intensity === "levelUp" ? 4200 : 2800);
 
   if (prefersReducedMotion() || !getPortalTourAnimationsEnabled()) {
     return () => undefined;
@@ -167,13 +167,13 @@ export function runPortalTourLevelUpCelebration(): () => void {
 
   const secondBurstId = window.setTimeout(() => {
     cleanups.push(
-      runPortalTourConfetti({ intensity: "levelUp", durationMs: 2400 }),
+      runPortalTourConfetti({ intensity: "levelUp", durationMs: 3200 }),
     );
-  }, 520);
+  }, 680);
 
   const flashRemoveId = window.setTimeout(() => {
     flash.remove();
-  }, 720);
+  }, 900);
 
   return () => {
     window.clearTimeout(secondBurstId);

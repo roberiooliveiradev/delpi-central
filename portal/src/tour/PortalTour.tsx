@@ -55,6 +55,10 @@ import { clearPortalTourTimers, schedulePortalTourTimer } from "./portalTourTime
 import { closeAppLauncher } from "../utils/appLauncher";
 import { usePortalTourHighlights } from "./usePortalTourHighlights";
 import { PortalTourCompletionModal } from "./PortalTourCompletionModal";
+import {
+  PortalTourLevelUpOverlay,
+  type PortalTourLevelUpOverlayState,
+} from "./PortalTourLevelUpOverlay";
 import { subscribePortalTourSyncStatus } from "./portalTourSyncStatus";
 import {
   runPortalTourConfetti,
@@ -113,6 +117,8 @@ export function PortalTour() {
   );
   const [xpBarBump, setXpBarBump] = useState(false);
   const [levelCelebrating, setLevelCelebrating] = useState(false);
+  const [levelUpOverlay, setLevelUpOverlay] =
+    useState<PortalTourLevelUpOverlayState | null>(null);
   const [banner, setBanner] = useState<QuestBanner | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [explorationDurationLabel, setExplorationDurationLabel] = useState<
@@ -245,6 +251,7 @@ export function PortalTour() {
     setJustCompletedQuestId(null);
     setXpBarBump(false);
     setLevelCelebrating(false);
+    setLevelUpOverlay(null);
     setBanner(null);
     setShowCompletionModal(false);
     confettiCleanupRef.current?.();
@@ -338,15 +345,64 @@ export function PortalTour() {
       setCompletedIds(nextIds);
       syncPortalTourQuestCompleted(coreApi, Array.from(nextIds), questId);
 
-      setToast({
-        id: questId,
-        title: quest.title,
-        xp: resolveQuestXp(quest),
-        categoryLabel: PORTAL_TOUR_CATEGORY_LABELS[quest.category],
-      });
-      schedulePortalTourTimer(() => {
-        setToast((current) => (current?.id === questId ? null : current));
-      }, 2800);
+      const categoryLabel = resolveCategoryJustCompleted(
+        quests,
+        beforeIds,
+        nextIds,
+        quest.category,
+      );
+
+      const levelUp = resolveExplorerLevelUp(previousPercent, nextPercent);
+      const reachingFullCompletion = nextRequiredDone >= requiredTotal;
+      const previousLevel = resolveExplorerLevel(previousPercent);
+
+      if (levelUp && !reachingFullCompletion) {
+        if (shouldPlayPortalTourAnimations()) {
+          confettiCleanupRef.current?.();
+          confettiCleanupRef.current = runPortalTourLevelUpCelebration();
+          setLevelCelebrating(true);
+          schedulePortalTourTimer(() => setLevelCelebrating(false), 1400);
+        }
+
+        const overlayId = `level-up-${levelUp.minPercent}-${questId}`;
+        setLevelUpOverlay({
+          id: overlayId,
+          questTitle: quest.title,
+          xp: resolveQuestXp(quest),
+          categoryLabel: PORTAL_TOUR_CATEGORY_LABELS[quest.category],
+          previousLevelLabel: previousLevel.label,
+          levelLabel: levelUp.label,
+          message: levelUpMessage(levelUp),
+          progressPercent: nextPercent,
+          categoryCompleteLabel: categoryLabel ?? undefined,
+        });
+        schedulePortalTourTimer(() => {
+          setLevelUpOverlay((current) =>
+            current?.id === overlayId ? null : current,
+          );
+        }, 6200);
+      } else {
+        setToast({
+          id: questId,
+          title: quest.title,
+          xp: resolveQuestXp(quest),
+          categoryLabel: PORTAL_TOUR_CATEGORY_LABELS[quest.category],
+        });
+        schedulePortalTourTimer(() => {
+          setToast((current) => (current?.id === questId ? null : current));
+        }, 2800);
+
+        if (categoryLabel) {
+          const bannerId = `category-${quest.category}`;
+          setBanner({
+            id: bannerId,
+            message: `Área «${categoryLabel}» concluída!`,
+          });
+          schedulePortalTourTimer(() => {
+            setBanner((current) => (current?.id === bannerId ? null : current));
+          }, 3400);
+        }
+      }
 
       setSuccessFlashQuestId(questId);
       schedulePortalTourTimer(() => {
@@ -361,46 +417,6 @@ export function PortalTour() {
       if (shouldPlayPortalTourAnimations()) {
         setXpBarBump(true);
         schedulePortalTourTimer(() => setXpBarBump(false), 420);
-      }
-
-      const categoryLabel = resolveCategoryJustCompleted(
-        quests,
-        beforeIds,
-        nextIds,
-        quest.category,
-      );
-      if (categoryLabel) {
-        const bannerId = `category-${quest.category}`;
-        setBanner({
-          id: bannerId,
-          message: `Área «${categoryLabel}» concluída!`,
-        });
-        schedulePortalTourTimer(() => {
-          setBanner((current) => (current?.id === bannerId ? null : current));
-        }, 3400);
-      }
-
-      const levelUp = resolveExplorerLevelUp(previousPercent, nextPercent);
-      const reachingFullCompletion = nextRequiredDone >= requiredTotal;
-
-      if (levelUp && !reachingFullCompletion) {
-        if (shouldPlayPortalTourAnimations()) {
-          confettiCleanupRef.current?.();
-          confettiCleanupRef.current = runPortalTourLevelUpCelebration();
-          setLevelCelebrating(true);
-          schedulePortalTourTimer(() => setLevelCelebrating(false), 1400);
-        }
-
-        const bannerId = `level-up-${levelUp.minPercent}`;
-        setBanner({
-          id: bannerId,
-          message: levelUpMessage(levelUp),
-          kind: "level-up",
-          levelLabel: levelUp.label,
-        });
-        schedulePortalTourTimer(() => {
-          setBanner((current) => (current?.id === bannerId ? null : current));
-        }, 4200);
       }
 
       if (nextRequiredDone >= requiredTotal) {
@@ -489,6 +505,7 @@ export function PortalTour() {
       setToast(null);
       setHintQuestId(null);
       setBanner(null);
+      setLevelUpOverlay(null);
       setShowCompletionModal(false);
       confettiCleanupRef.current?.();
       confettiCleanupRef.current = null;
@@ -554,12 +571,27 @@ export function PortalTour() {
 
   if (!active) return null;
 
-  const showOverlayUi = panelOpen || showCompletionModal;
-  if (!showOverlayUi) return null;
+  const hasTransientFeedback = Boolean(
+    toast ||
+      banner ||
+      levelUpOverlay ||
+      showCompletionModal ||
+      levelCelebrating,
+  );
+  const shouldRenderRoot = panelOpen || hasTransientFeedback;
+  if (!shouldRenderRoot) return null;
+
+  const dismissLevelUpOverlay = () => setLevelUpOverlay(null);
 
   return createPortal(
     <div
-      className="portal-tour-root portal-tour-root--gamified"
+      className={[
+        "portal-tour-root",
+        "portal-tour-root--gamified",
+        !panelOpen ? "portal-tour-root--feedback-only" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="region"
       aria-label="Tour de descobertas do portal"
     >
@@ -612,6 +644,13 @@ export function PortalTour() {
           Não foi possível salvar o progresso no servidor. Suas conquistas locais
           serão reenviadas na próxima ação.
         </div>
+      ) : null}
+
+      {levelUpOverlay ? (
+        <PortalTourLevelUpOverlay
+          celebration={levelUpOverlay}
+          onClose={dismissLevelUpOverlay}
+        />
       ) : null}
 
       {showCompletionModal ? (
