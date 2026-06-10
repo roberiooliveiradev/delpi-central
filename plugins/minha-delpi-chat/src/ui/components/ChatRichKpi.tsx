@@ -2,7 +2,9 @@ import type { ChatKpiCard, ChatPresentation } from "../../data/api/chatTypes";
 import {
   formatCellValue,
   inferColumnType,
+  type ColumnType,
 } from "./tableCellFormatting";
+import "./ChatRichKpi.css";
 
 type KpiPresentation = Extract<ChatPresentation, { type: "kpi" }>;
 
@@ -67,9 +69,9 @@ function shouldHideUnit(card: ChatKpiCard): boolean {
 }
 
 function formatKpiValue(card: ChatKpiCard): string {
-  const { value, key, label, dataType } = card;
+  const { value, key, label, dataType, unit } = card;
   const columnKey = key || label;
-  const resolvedType = dataType || inferColumnType(columnKey);
+  const resolvedType = dataType || inferKpiDataType(columnKey, unit);
 
   if (typeof value === "number") {
     return formatCellValue(value, columnKey, resolvedType);
@@ -84,4 +86,39 @@ function formatKpiValue(card: ChatKpiCard): string {
   }
 
   return String(value);
+}
+
+function inferKpiDataType(key: string, unit?: string): ColumnType {
+  const normalizedUnit = String(unit || "").trim();
+
+  if (normalizedUnit === "R$") {
+    return "currency";
+  }
+
+  if (normalizedUnit === "%") {
+    return "percent";
+  }
+
+  if (normalizedUnit && normalizedUnit !== "R$") {
+    return "quantity";
+  }
+
+  const normalizedKey = key
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (
+    /component|order|exclusive|without_stock|shipped|tables|price_table|quantity|count|mp|op/.test(
+      normalizedKey,
+    )
+  ) {
+    return "quantity";
+  }
+
+  if (/price|cost|valor|sale|discount|revenue|faturamento/.test(normalizedKey)) {
+    return inferColumnType(key);
+  }
+
+  return "number";
 }

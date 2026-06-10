@@ -38,6 +38,7 @@ class ChatPresentationKpiAssemblyService:
         key: str | None = None,
         trend: str | None = None,
         delta: str | None = None,
+        data_type: str | None = None,
     ) -> dict[str, Any]:
         card: dict[str, Any] = {
             "label": str(label or "").strip(),
@@ -55,4 +56,51 @@ class ChatPresentationKpiAssemblyService:
         if delta:
             card["delta"] = delta
 
+        resolved_type = data_type or cls._infer_data_type(key=key, unit=unit)
+
+        if resolved_type:
+            card["dataType"] = resolved_type
+
         return card
+
+    @classmethod
+    def _infer_data_type(cls, *, key: str | None, unit: str) -> str | None:
+        token = str(unit or "").strip()
+
+        if token == "R$":
+            return "currency"
+
+        if token == "%":
+            return "percent"
+
+        if token in {"MP", "OP", "un."}:
+            return "quantity"
+
+        normalized_key = str(key or "").strip().lower()
+
+        if not normalized_key:
+            return None
+
+        if any(
+            fragment in normalized_key
+            for fragment in (
+                "component",
+                "order",
+                "exclusive",
+                "without_stock",
+                "shipped",
+                "price_table",
+                "tables",
+                "quantity",
+                "count",
+            )
+        ):
+            return "quantity"
+
+        if any(
+            fragment in normalized_key
+            for fragment in ("price", "cost", "valor", "sale", "discount", "revenue")
+        ):
+            return "currency" if token == "R$" else "number"
+
+        return "number"
