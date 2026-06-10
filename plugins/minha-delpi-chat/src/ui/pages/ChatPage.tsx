@@ -64,6 +64,7 @@ import {
   isUserContextItemKind,
   mergeContextChips,
   normalizeContextChips,
+  resolvePresentationFormatForSend,
 } from "../chatActiveContext";
 import {
   buildContextPayloadFromMessage,
@@ -413,10 +414,6 @@ export function ChatPage({
     getAccessToken,
   });
 
-  useEffect(() => {
-    presentationFormatForSendRef.current = presentationFormat;
-  }, [presentationFormat]);
-
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
   const [dismissedContextChipKeys, setDismissedContextChipKeys] = useState<string[]>([]);
   const [pinnedContextChips, setPinnedContextChips] = useState<ChatContextChip[]>([]);
@@ -452,6 +449,13 @@ export function ChatPage({
     () => buildActiveContextSummary(activeContextChips),
     [activeContextChips],
   );
+
+  useEffect(() => {
+    presentationFormatForSendRef.current = resolvePresentationFormatForSend(
+      presentationFormat,
+      activeContextChips,
+    );
+  }, [presentationFormat, activeContextChips]);
 
   const activePreferenceHint = useMemo(
     () => extractActivePreferenceHint(activeContextChips),

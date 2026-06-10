@@ -4,6 +4,7 @@ import {
   collectActiveContextChips,
   contextChipKey,
   mergeContextChips,
+  resolvePresentationFormatForSend,
 } from "./chatActiveContext";
 
 describe("chatActiveContext", () => {
@@ -64,5 +65,23 @@ describe("context summary", () => {
     ]);
 
     expect(hint).toContain("Respostas curtas");
+  });
+});
+
+describe("resolvePresentationFormatForSend", () => {
+  it("usa chip format quando dropdown está em auto", () => {
+    expect(
+      resolvePresentationFormatForSend("auto", [
+        { label: "Tabela", kind: "format", value: "table" },
+      ]),
+    ).toBe("table");
+  });
+
+  it("prioriza dropdown explícito sobre chip", () => {
+    expect(
+      resolvePresentationFormatForSend("text", [
+        { label: "Tabela", kind: "format", value: "table" },
+      ]),
+    ).toBe("text");
   });
 });

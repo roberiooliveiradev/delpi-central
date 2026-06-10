@@ -23,6 +23,15 @@ class ChatToolContextFormatService:
         if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
             return token
 
+        prefs = working.get("userPreferences") or {}
+        pref_behavior = prefs.get("behavior") if isinstance(prefs, dict) else None
+
+        if isinstance(pref_behavior, dict):
+            token = str(pref_behavior.get("responseFormat") or "").strip().lower()
+
+            if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
+                return token
+
         return None
 
     @classmethod

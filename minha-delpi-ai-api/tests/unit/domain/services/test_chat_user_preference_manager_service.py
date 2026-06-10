@@ -133,6 +133,44 @@ def test_text_only_preference_detected_and_labeled():
     assert "Respostas em texto puro" in labels
 
 
+def test_table_preference_syncs_to_behavior_instructions_for_tools():
+    post = ChatConversationMemoryService.build_post_turn(
+        message="daqui pra frente responda em tabela",
+        previous_messages=[],
+        tool_calls=[],
+        pre_snapshot=ChatConversationMemoryService.build_pre_turn(
+            message="daqui pra frente responda em tabela",
+            previous_messages=[],
+        ),
+        answer="Combinado.",
+    )
+    previous = [
+        {
+            "role": "assistant",
+            "metadata": {"contextSnapshot": post},
+        }
+    ]
+    turn = ChatConversationMemoryService.build_pre_turn(
+        message="estoque do produto 10080001",
+        previous_messages=previous,
+    )
+
+    behavior = turn.get("behaviorInstructions") or {}
+
+    assert behavior.get("responseFormat") == "table"
+
+    from app.application.services.chat_tool_context_format_service import (
+        ChatToolContextFormatService,
+    )
+
+    assert (
+        ChatToolContextFormatService.session_response_format(
+            {"workingMemory": turn},
+        )
+        == "table"
+    )
+
+
 def test_tools_on_request_preference_is_persistent():
     detected = ChatBehaviorInstructionService.detect("não use ferramentas sem eu pedir")
 

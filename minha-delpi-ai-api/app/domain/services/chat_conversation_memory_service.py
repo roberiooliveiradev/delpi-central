@@ -96,6 +96,7 @@ class ChatConversationMemoryService:
             message=message,
             previous_messages=previous_messages,
         )
+        snapshot = ChatWorkingMemoryService.sync_user_preferences_to_behavior(snapshot)
 
         resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
             message,

@@ -94,6 +94,41 @@ class ChatWorkingMemoryService:
         )
 
     @classmethod
+    def sync_user_preferences_to_behavior(cls, snapshot: dict) -> dict:
+        """Promove ``userPreferences.behavior`` para ``behaviorInstructions`` (tools/UI)."""
+        result = dict(snapshot or {})
+        prefs = result.get("userPreferences")
+
+        if not isinstance(prefs, dict):
+            return result
+
+        pref_behavior = prefs.get("behavior")
+
+        if not isinstance(pref_behavior, dict) or not pref_behavior:
+            return result
+
+        behavior = dict(result.get("behaviorInstructions") or {})
+
+        for key, value in pref_behavior.items():
+            if key == "scope" or value in (None, "", {}):
+                continue
+
+            token = str(value).strip()
+
+            if not token:
+                continue
+
+            if key == "responseFormat" or not behavior.get(key):
+                behavior[key] = token.lower() if key == "responseFormat" else token
+
+        if pref_behavior.get("scope") and not behavior.get("scope"):
+            behavior["scope"] = str(pref_behavior["scope"]).strip().lower()
+
+        result["behaviorInstructions"] = behavior
+
+        return result
+
+    @classmethod
     def apply_turn_response_format(cls, snapshot: dict, response_format: str | None) -> dict:
         token = str(response_format or "").strip().lower()
 

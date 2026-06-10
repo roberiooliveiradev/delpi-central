@@ -121,4 +121,39 @@ describe("assistantContentLayout", () => {
       kind: "table",
     });
   });
+
+  it("usa explicitSessionFormat=table quando selected=text (text-first stale)", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          explicitSessionFormat: "table",
+          preferredFormat: "table",
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "single",
+            visualOrder: ["text", "table"],
+          },
+          presentation: {
+            type: "table",
+            title: "Estoque do produto",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01" }],
+          },
+        },
+      },
+    ] as const;
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: true,
+      kind: "table",
+    });
+
+    const segments = buildAssistantContentSegments("Estoque do produto", [...toolCalls]);
+
+    expect(segments.some((segment) => segment.kind === "table")).toBe(true);
+    expect(segments.some((segment) => segment.kind === "markdown" && segment.markdown.includes("Stock:"))).toBe(
+      false,
+    );
+  });
 });

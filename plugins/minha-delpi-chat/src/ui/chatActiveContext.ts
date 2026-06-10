@@ -1,3 +1,4 @@
+import type { ChatPresentationFormatId } from "../data/api/chatTypes";
 import type { ChatContextChip } from "./components/ChatContextBar";
 
 /** Kind genérico na barra — sem product/branch/warehouse na UI. */
@@ -256,5 +257,32 @@ export function extractActivePreferenceHint(chips: ChatContextChip[]): string | 
   );
 
   return preference ? `Preferência ativa: ${preference.label}` : null;
+}
+
+const SEND_FORMATS = new Set<ChatPresentationFormatId>([
+  "text",
+  "table",
+  "tree",
+  "chart",
+  "canvas",
+]);
+
+/** Formato efetivo no POST/stream quando o dropdown está em Automático mas há chip de formato. */
+export function resolvePresentationFormatForSend(
+  presentationFormat: ChatPresentationFormatId,
+  chips: ChatContextChip[],
+): ChatPresentationFormatId {
+  if (presentationFormat !== "auto") {
+    return presentationFormat;
+  }
+
+  const formatChip = chips.find((chip) => chip.kind === "format");
+  const token = String(formatChip?.value ?? "").trim().toLowerCase() as ChatPresentationFormatId;
+
+  if (SEND_FORMATS.has(token)) {
+    return token;
+  }
+
+  return "auto";
 }
 

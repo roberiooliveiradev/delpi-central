@@ -153,6 +153,32 @@ export function mapSelectedViewToContentFormatKind(
   return null;
 }
 
+function explicitNativeFormatFromToolCalls(
+  toolCalls: ChatToolCall[] = [],
+): ContentFormatKind | null {
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    for (const key of ["explicitSessionFormat", "preferredFormat"] as const) {
+      const kind = mapSelectedViewToContentFormatKind(String(metadata[key] ?? ""));
+
+      if (kind) {
+        return kind;
+      }
+    }
+  }
+
+  return null;
+}
+
 /** Visão nativa explícita em layout single (ex.: preferência Tabela na UI). */
 export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
   active: boolean;
@@ -164,13 +190,19 @@ export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
     return { active: false, kind: null };
   }
 
-  const kind = mapSelectedViewToContentFormatKind(decision?.selected);
+  const selectedKind = mapSelectedViewToContentFormatKind(decision?.selected);
 
-  if (!kind) {
-    return { active: false, kind: null };
+  if (selectedKind) {
+    return { active: true, kind: selectedKind };
   }
 
-  return { active: true, kind };
+  const explicitKind = explicitNativeFormatFromToolCalls(toolCalls);
+
+  if (explicitKind) {
+    return { active: true, kind: explicitKind };
+  }
+
+  return { active: false, kind: null };
 }
 
 export function resolveStackLayoutOrderFromToolCalls(
