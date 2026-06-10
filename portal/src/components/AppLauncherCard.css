@@ -30,11 +30,15 @@
   min-height: 120px;
   height: auto;
   transition:
-    background 0.28s ease,
-    box-shadow 0.28s ease,
-    border-color 0.28s ease,
-    transform 0.28s ease;
+    background 0.32s ease,
+    box-shadow 0.32s ease,
+    border-color 0.32s ease,
+    transform 0.32s ease;
   overflow: visible;
+}
+
+.launcher-app-tile:not(.sidebar-variant) .launcher-app-name {
+  transition: color 0.28s ease;
 }
 
 /* Hover suave — home, perfil e modal Apps (não sidebar) */
