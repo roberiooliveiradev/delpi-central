@@ -722,6 +722,32 @@ class ExternalActionResultPresenter:
             path,
         )
 
+    def build_cost_impact_kpi_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_cost_impact_kpi_presentation(root, path)
+
+    def build_cost_impact_chart_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_cost_impact_chart_presentation(root, path)
+
+    def build_cost_impact_tree_presentation(self, root: dict, path: str) -> dict | None:
+        return self._raw_material_price().build_cost_impact_tree_presentation(root, path)
+
+    def build_cost_impact_dashboard_presentation(
+        self,
+        root: dict,
+        path: str,
+        *,
+        kpi: dict | None = None,
+        chart: dict | None = None,
+        table: dict | None = None,
+    ) -> dict | None:
+        return self._raw_material_price().build_cost_impact_dashboard_presentation(
+            root,
+            path,
+            kpi=kpi,
+            chart=chart,
+            table=table,
+        )
+
     def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
         return self._raw_material_price().build_last_purchase_table_presentation(root, path)
 

@@ -138,7 +138,7 @@
     "cost_impact_simulation": {
       "defaultViewPolicy": "generic",
       "viewOrder": ["text", "table", "chart", "tree", "kpi", "dashboard"],
-      "stackPlan": "factory_status",
+      "stackPlan": "cost_impact_simulation",
       "flags": ["cost_impact_simulation"]
     },
     "playbook_report": {
@@ -220,6 +220,11 @@
     },
     "raw_material_price_intelligence": {
       "tableRoleOrder": ["profile", "pricing", "list", "other"],
+      "profileFirst": true,
+      "highlightsAfterProfile": true
+    },
+    "cost_impact_simulation": {
+      "tableRoleOrder": ["profile", "list", "other"],
       "profileFirst": true,
       "highlightsAfterProfile": true
     },
