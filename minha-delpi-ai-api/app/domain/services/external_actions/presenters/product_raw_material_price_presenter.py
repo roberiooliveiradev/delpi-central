@@ -118,11 +118,29 @@ class ExternalActionProductRawMaterialPricePresenter:
         if not isinstance(variation, dict):
             variation = {}
 
+        min_unit_price = summary.get("min_unit_price")
+        max_unit_price = summary.get("max_unit_price")
+        items = block.get("items") if isinstance(block.get("items"), list) else []
+
+        if items and (min_unit_price is None or max_unit_price is None):
+            prices = [
+                float(item.get("unit_price"))
+                for item in items
+                if isinstance(item, dict) and item.get("unit_price") is not None
+            ]
+
+            if prices:
+                if min_unit_price is None:
+                    min_unit_price = min(prices)
+
+                if max_unit_price is None:
+                    max_unit_price = max(prices)
+
         return {
             "total_purchases": summary.get("total_purchases") or summary.get("total_records"),
             "avg_unit_price": summary.get("avg_unit_price") or summary.get("average_unit_price"),
-            "min_unit_price": summary.get("min_unit_price"),
-            "max_unit_price": summary.get("max_unit_price"),
+            "min_unit_price": min_unit_price,
+            "max_unit_price": max_unit_price,
             "last_variation_percent": (
                 summary.get("last_variation_percent")
                 or variation.get("last_variation_percent")
@@ -1227,10 +1245,81 @@ class ExternalActionProductRawMaterialPricePresenter:
             ]
             sections.append("\n".join(dominant_lines))
 
+        history_reading = self._build_intelligence_history_reading_lines(
+            root,
+            code=code,
+            description=description,
+        )
+
+        if history_reading:
+            sections.append("\n".join(history_reading))
+
         if compact_for_rich_ui:
             sections.append(self._route(route, "tableVisualizationHint"))
 
         return sections
+
+    def _build_intelligence_history_reading_lines(
+        self,
+        root: dict,
+        *,
+        code: str,
+        description: str,
+    ) -> list[str]:
+        price_summary = self._normalize_price_history_summary(root)
+        indicators = self._indicators(root)
+        last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
+        min_price = price_summary.get("min_unit_price")
+        max_price = price_summary.get("max_unit_price")
+        route = "rawMaterialPriceIntelligence"
+
+        if min_price is None or max_price is None:
+            return []
+
+        try:
+            min_value = float(min_price)
+            max_value = float(max_price)
+        except (TypeError, ValueError):
+            return []
+
+        if min_value <= 0:
+            return []
+
+        spread_percent = self._host._format_field_value(
+            "variation_percent",
+            ((max_value - min_value) / min_value) * 100,
+        )
+        lines = [self._route(route, "sectionHistoryReadingHeader")]
+        lines.append(
+            self._route(
+                route,
+                "historyReadingRangeLine",
+                minPrice=self._format_price(min_value),
+                maxPrice=self._format_price(max_value),
+                spreadPercent=str(spread_percent),
+            )
+        )
+
+        dominant_code = str(indicators.get("dominant_supplier_code") or "").strip()
+        dominant_share = indicators.get("dominant_supplier_share_percent")
+
+        if dominant_code and dominant_share is not None:
+            supplier_label = str(
+                last_purchase.get("supplier_name") or dominant_code or "—"
+            )
+            lines.append(
+                self._route(
+                    route,
+                    "historyReadingDominantLine",
+                    supplier=supplier_label,
+                    share=self._host._format_field_value(
+                        "dominant_supplier_share_percent",
+                        dominant_share,
+                    ),
+                )
+            )
+
+        return lines
 
     def _build_intelligence_highlight_lines(self, root: dict) -> list[str]:
         highlights: list[str] = []

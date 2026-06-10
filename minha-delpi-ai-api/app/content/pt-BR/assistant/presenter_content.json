@@ -116,11 +116,12 @@
   },
   "schemaDriven": {
     "tableTitleFallback": "Resultado da consulta",
-    "listSummary": "{title}: {count} registro(s) retornado(s) pela API.",
-    "timeSeriesLead": "{title}: série temporal com {count} ponto(s) — use tabela ou gráfico para detalhar.",
-    "kpiLead": "{title}: indicador com {metricCount} métrica(s) disponível(is).",
+    "listSummary": "{title}: **{count}** registro(s) retornado(s). Resumo abaixo; tabelas e painéis trazem o detalhe linha a linha.",
+    "timeSeriesLead": "{title}: série temporal com **{count}** ponto(s). O texto resume a leitura; gráfico e tabela permitem auditar cada período.",
+    "kpiLead": "{title}: **{metricCount}** métrica(s) em destaque nos cartões abaixo. Use o texto para contexto e os painéis para conferência.",
     "emptyQuery": "A consulta não retornou dados tabulares para exibir.",
-    "singleRecordLead": "{title}: registro único com {columns} campo(s)."
+    "singleRecordLead": "{title}: registro único com **{columns}** campo(s). Detalhes no painel tabular abaixo.",
+    "panelsBelowHint": "Painéis e tabelas abaixo complementam este resumo."
   },
   "stackSectionFraming": {
     "default": {
@@ -488,6 +489,9 @@
       "sectionPriceHistoryHeader": "**Histórico recente de compras**",
       "priceHistoryStatsLine": "Menor preço **{minPrice}** · maior **{maxPrice}** · média **{avgPrice}** (**{count}** NF(s)).",
       "lastVariationLine": "Variação da NF mais recente: **{variation}%**",
+      "sectionHistoryReadingHeader": "**Leitura do histórico**",
+      "historyReadingRangeLine": "O preço de compra ficou concentrado entre **{minPrice}** e **{maxPrice}** nos últimos registros — faixa máxima aproximada de **{spreadPercent}%** entre o menor e o maior valor.",
+      "historyReadingDominantLine": "O fornecedor dominante é **{supplier}**, com **{share}%** de participação no histórico — indica dependência relevante dessa fonte para esta MP.",
       "sectionDominantSupplierHeader": "**Fornecedor dominante**",
       "dominantSupplierDetailLine": "**{supplier}** — participação de **{share}%** no histórico de compras.",
       "recommendationHeader": "**Recomendação**",

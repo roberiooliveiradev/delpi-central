@@ -32,7 +32,7 @@ def _metadata_with_stack(*, markdown: str) -> dict:
     }
 
 
-def test_compact_metadata_strips_stock_position_detail_when_table_exists():
+def test_compact_metadata_preserves_stock_narrative_when_visuals_exist():
     markdown = (
         "### Estoque\n\n"
         "Resumo com 5 posições.\n\n"
@@ -43,14 +43,10 @@ def test_compact_metadata_strips_stock_position_detail_when_table_exists():
 
     ChatRichPresentationTextService.compact_metadata_text(metadata)
 
-    compact = metadata["textPresentation"]["markdown"]
-
-    assert "Detalhamento por filial" not in compact
-    assert "Filial 01, armazém 01" not in compact
-    assert "Resumo com 5 posições" in compact
+    assert metadata["textPresentation"]["markdown"] == markdown
 
 
-def test_compact_metadata_removes_markdown_table_and_footer():
+def test_compact_metadata_preserves_markdown_with_tables_and_footer():
     markdown = (
         "### Estoque\n\n"
         "| Filial | Qtd |\n| --- | --- |\n| 01 | 10 |\n\n"
@@ -61,11 +57,7 @@ def test_compact_metadata_removes_markdown_table_and_footer():
 
     ChatRichPresentationTextService.compact_metadata_text(metadata)
 
-    compact = metadata["textPresentation"]["markdown"]
-
-    assert "| Filial |" not in compact
-    assert "Use a **tabela**" not in compact
-    assert "**Destaques**" in compact
+    assert metadata["textPresentation"]["markdown"] == markdown
 
 
 def test_should_prefer_authorized_answer_for_any_stack_tool_call():
@@ -127,7 +119,7 @@ def test_embed_visual_markers_for_analyser_sections():
     assert "[[arvore]]" not in embedded
 
 
-def test_compact_metadata_stack_skips_embedded_markers():
+def test_compact_metadata_stack_preserves_embedded_markers():
     markdown = (
         "### Estoque do produto\n\n"
         "Posição de estoque do produto **90260149**.\n\n"
@@ -137,10 +129,38 @@ def test_compact_metadata_stack_skips_embedded_markers():
 
     ChatRichPresentationTextService.compact_metadata_text(metadata)
 
+    assert metadata["textPresentation"]["markdown"] == markdown
+
+
+def test_compact_metadata_skips_humanized_mp_price_narrative():
+    markdown = (
+        "### Análise de preço da matéria-prima — 10080001\n\n"
+        "**Resumo do produto**\n"
+        "Produto: **10080001**\n\n"
+        "**Leitura do histórico**\n"
+        "Faixa entre **R$ 0,08** e **R$ 0,09**.\n\n"
+        "**Pontos de atenção**\n"
+        "1. Cadastro defasado.\n"
+    )
+    metadata = {
+        "path": "/products/10080001/raw-material-price-intelligence",
+        "textPresentation": {"type": "markdown", "markdown": markdown},
+        "tablePresentations": [{"type": "table", "title": "Panorama", "columns": [], "rows": []}],
+        "treePresentation": {"type": "tree", "title": "Fornecedores", "root": {"id": "1", "children": []}},
+        "kpiPresentation": {"type": "kpi", "title": "KPI", "cards": []},
+        "stackPresentationPlan": {
+            "humanizedSections": True,
+            "presentationProfile": "product_raw_material_price_intelligence",
+        },
+    }
+
+    ChatRichPresentationTextService.compact_metadata_text(metadata)
+
     compact = metadata["textPresentation"]["markdown"]
 
-    assert "[[table:" not in compact
-    assert "[[chart]]" not in compact
+    assert "Leitura do histórico" in compact
+    assert "Pontos de atenção" in compact
+    assert compact == markdown
 
 
 def test_compact_metadata_humanized_analyser_without_markers():
@@ -177,8 +197,8 @@ def test_compact_metadata_humanized_analyser_without_markers():
     assert "[[arvore]]" not in metadata["textPresentation"]["markdown"]
 
 
-def test_should_compact_narrative_for_table_plus_tree():
-    assert ChatRichPresentationTextService.should_compact_narrative(
+def test_should_compact_narrative_disabled_for_humanized_stack():
+    assert not ChatRichPresentationTextService.should_compact_narrative(
         table_presentations=[{"type": "table", "title": "Cadastro", "columns": [], "rows": []}],
         tree_presentation={
             "type": "tree",

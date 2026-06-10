@@ -47,11 +47,8 @@ def test_production_status_text_presentation_uses_scope_intro_and_compact_tables
     markdown = str(text.get("markdown") or "")
     assert "playbook" not in markdown.lower()
 
-    if compact:
-        assert "90269002" in markdown
-        assert "tabela" in markdown.lower()
-    else:
-        assert "Situação produtiva do PA" in markdown
+    assert not compact
+    assert "Situação produtiva do PA" in markdown
 
 
 def test_format_quantity_uses_presenter_number_formatting():

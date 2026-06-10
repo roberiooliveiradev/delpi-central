@@ -154,6 +154,8 @@ def test_supplies_stock_value_does_not_use_product_stock_stack():
 
     assert plan["presentationProfileKey"] == "kpi_series"
     assert plan["presentationProfile"] != "product_stock"
+    assert plan["humanizedSections"] is True
+    assert plan.get("sectionFraming", {}).get("scope")
     assert "tailVisuals" in plan["narrativeOrder"]
 
 

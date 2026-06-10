@@ -384,6 +384,22 @@ class ChatSchemaDrivenPresentationService:
         else:
             return None
 
+        has_panels = bool(safe_rows) or cls.build_kpi(host, root, path=path, entity=entity) is not None
+
+        if not has_panels:
+            chart = cls.build_chart(
+                host,
+                root,
+                rows=safe_rows,
+                path=path,
+                entity=entity,
+            )
+            has_panels = chart is not None
+
+        if has_panels:
+            hint = cls._text("panelsBelowHint")
+            lead = f"{lead}\n\n{hint}".strip()
+
         markdown = f"### {title}\n\n<!-- section:scope -->\n\n{lead}".strip()
 
         return {

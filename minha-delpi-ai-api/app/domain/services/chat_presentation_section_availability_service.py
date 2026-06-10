@@ -141,10 +141,17 @@ class ChatPresentationSectionAvailabilityService:
 
         profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
         plan["presentationProfile"] = profile_key
-        plan["humanizedSections"] = False
-        plan["sectionVisibility"] = {}
-        plan["sectionFraming"] = {}
-        return plan
+        plan["presentationProfileKey"] = profile_key
+
+        from app.domain.services.chat_presentation_stack_markdown_service import (
+            ChatPresentationStackMarkdownService,
+        )
+
+        return ChatPresentationStackMarkdownService.apply_generic_humanized_stack_plan(
+            metadata,
+            plan,
+            profile_key=profile_key,
+        )
 
     @classmethod
     def filter_analyser_highlights(cls, insights: list[str]) -> list[str]:

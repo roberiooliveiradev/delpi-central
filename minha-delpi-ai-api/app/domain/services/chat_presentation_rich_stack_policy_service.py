@@ -130,9 +130,6 @@ class ChatPresentationRichStackPolicyService:
         if ChatPresentationRoutePolicyService.is_stock_route(path):
             return False
 
-        if not cls.is_rich_playbook_route(path, entity=entity):
-            return False
-
         if not cls.has_rich_text_narrative(metadata):
             return False
 

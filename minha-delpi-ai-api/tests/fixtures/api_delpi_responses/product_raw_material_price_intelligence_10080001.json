@@ -6,7 +6,9 @@
       "product_code": "10080001",
       "description": "MP TE CONNECTIVITY",
       "product_type": "MP",
-      "registered_last_purchase_price": 0.0892799
+      "registered_last_purchase_price": 0.033,
+      "registered_last_purchase_date": "20130807",
+      "standard_cost": 0.02583
     },
     "last_purchase": {
       "supplier_code": "000002",
@@ -49,7 +51,8 @@
     "price_status": "ESTAVEL",
     "indicators": {
       "dominant_supplier_code": "000002",
-      "dominant_supplier_share_percent": 100.0
+      "dominant_supplier_share_percent": 100.0,
+      "registered_vs_last_nf_diff_percent": 170.55
     },
     "warnings": []
   }

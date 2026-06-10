@@ -96,6 +96,14 @@ class ChatRichPresentationTextService:
         return len(cls._iter_unique_table_presentations(metadata))
 
     @classmethod
+    def _is_kpi_presentation(cls, presentation: dict[str, Any] | None) -> bool:
+        return isinstance(presentation, dict) and str(presentation.get("type") or "") == "kpi"
+
+    @classmethod
+    def _is_dashboard_presentation(cls, presentation: dict[str, Any] | None) -> bool:
+        return isinstance(presentation, dict) and str(presentation.get("type") or "") == "dashboard"
+
+    @classmethod
     def count_complementary_visuals(cls, metadata: dict[str, Any]) -> dict[str, int]:
         primary = metadata.get("presentation") if isinstance(metadata.get("presentation"), dict) else {}
 
@@ -108,14 +116,28 @@ class ChatRichPresentationTextService:
             cls._is_chart_presentation(metadata.get("chartPresentation"))
             or cls._is_chart_presentation(primary)
         )
+        kpis = int(
+            cls._is_kpi_presentation(metadata.get("kpiPresentation"))
+            or cls._is_kpi_presentation(primary)
+        )
+        dashboards = int(
+            cls._is_dashboard_presentation(metadata.get("dashboardPresentation"))
+            or cls._is_dashboard_presentation(primary)
+        )
 
-        return {"table": tables, "tree": trees, "chart": charts}
+        return {
+            "table": tables,
+            "tree": trees,
+            "chart": charts,
+            "kpi": kpis,
+            "dashboard": dashboards,
+        }
 
     @classmethod
     def has_complementary_visuals(cls, metadata: dict[str, Any]) -> bool:
         counts = cls.count_complementary_visuals(metadata)
 
-        return (counts["table"] + counts["tree"] + counts["chart"]) >= 1
+        return sum(counts.values()) >= 1
 
     @classmethod
     def is_stack_layout(cls, metadata: dict[str, Any]) -> bool:
@@ -150,19 +172,31 @@ class ChatRichPresentationTextService:
         tree_presentation: dict[str, Any] | None = None,
         chart_presentation: dict[str, Any] | None = None,
         primary_presentation: dict[str, Any] | None = None,
+        kpi_presentation: dict[str, Any] | None = None,
+        dashboard_presentation: dict[str, Any] | None = None,
     ) -> bool:
-        metadata: dict[str, Any] = {
-            "tablePresentations": table_presentations,
-            "tablePresentation": table_presentation,
-            "treePresentation": tree_presentation,
-            "chartPresentation": chart_presentation,
-            "presentation": primary_presentation,
-        }
+        """Stack humanizado (qualquer action): narrativa completa no texto; visuais nos slots."""
 
-        return cls.has_complementary_visuals(metadata)
+        del (
+            table_presentations,
+            table_presentation,
+            tree_presentation,
+            chart_presentation,
+            primary_presentation,
+            kpi_presentation,
+            dashboard_presentation,
+        )
+
+        return False
 
     @classmethod
     def should_compact_metadata_text(cls, metadata: dict[str, Any]) -> bool:
+        if cls._uses_humanized_stack_sections(metadata):
+            return False
+
+        if cls.is_stack_layout(metadata):
+            return False
+
         text_presentation = metadata.get("textPresentation")
 
         if not isinstance(text_presentation, dict):
@@ -171,7 +205,10 @@ class ChatRichPresentationTextService:
         if not str(text_presentation.get("markdown") or "").strip():
             return False
 
-        return cls.has_complementary_visuals(metadata)
+        if cls.has_complementary_visuals(metadata):
+            return False
+
+        return False
 
     @classmethod
     def compact_text_markdown(cls, markdown: str, metadata: dict[str, Any]) -> str:

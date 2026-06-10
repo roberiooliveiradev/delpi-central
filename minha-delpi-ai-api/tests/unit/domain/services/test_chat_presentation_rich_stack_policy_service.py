@@ -57,6 +57,25 @@ def test_decision_service_uses_rich_stack_for_factory_status():
     assert "tree" in decision["availableViews"]
 
 
+def test_generic_table_list_defaults_to_text_stack_with_narrative_and_table():
+    metadata = {
+        "path": "/commercial/proposals",
+        "apiDelpiResponseMeta": {"entity": "commercial_proposal"},
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Propostas comerciais\n\n<!-- section:scope -->\n\nResumo.",
+        },
+        "presentation": {"type": "table", "title": "Propostas", "rows": [{"id": "1"}]},
+        "availableFormats": ["text", "table"],
+    }
+
+    assert ChatPresentationRichStackPolicyService.should_default_to_text_stack(
+        path=metadata["path"],
+        metadata=metadata,
+        entity="commercial_proposal",
+    )
+
+
 def test_stock_route_does_not_default_to_text_stack_without_user_preference():
     metadata = {
         "path": "/products/90269001/stock",

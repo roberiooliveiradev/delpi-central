@@ -85,11 +85,28 @@ def test_schema_driven_metadata_pipeline(case):
     )
 
     expected_primary = case.get("expected_primary_type")
+    slot_by_type = {
+        "kpi": "kpiPresentation",
+        "chart": "chartPresentation",
+        "table": "tablePresentation",
+        "tree": "treePresentation",
+        "dashboard": "dashboardPresentation",
+    }
 
     if expected_primary:
         presentation = meta.get("presentation") or {}
 
+        if presentation.get("type") != expected_primary:
+            slot_key = slot_by_type.get(str(expected_primary))
+            slot_presentation = meta.get(slot_key) if slot_key else None
+            presentation = slot_presentation if isinstance(slot_presentation, dict) else {}
+
         assert presentation.get("type") == expected_primary
+
+        if str(meta.get("textPresentation", {}).get("markdown") or "").strip():
+            decision = meta.get("presentationDecision") or {}
+            assert decision.get("selected") == "text"
+            assert decision.get("layoutMode") == "stack"
 
     expected_rows = case.get("expected_table_rows")
 

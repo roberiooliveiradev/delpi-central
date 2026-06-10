@@ -26,6 +26,22 @@ _ATTENTION_HEADER_RE = re.compile(r"(?m)^\*\*Pontos de atenção")
 
 class ChatPresentationStackMarkdownService:
     @classmethod
+    def apply_generic_humanized_stack_plan(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+        *,
+        profile_key: str,
+    ) -> dict[str, Any]:
+        """Ativa seções humanizadas para qualquer action com texto + painéis complementares."""
+
+        return cls._enrich_profile_stack_plan(
+            metadata,
+            plan,
+            profile_key=profile_key,
+        )
+
+    @classmethod
     def enrich_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
         profile_key = str(
             plan.get("presentationProfileKey")
