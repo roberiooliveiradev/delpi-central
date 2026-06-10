@@ -65,3 +65,11 @@ def test_mixed_operational_and_text():
     assert ChatTextTaskIntentService.classify(message) in {"write", "email"}
     assert ChatTextTaskIntentService.is_pure_text_task(message) is False
     assert ChatTextTaskIntentService.is_mixed_text_and_operational(message) is True
+
+
+def test_format_refinement_last_result_is_not_pure_text_task():
+    message = "mostre o último resultado em tabela"
+    history = [{"role": "user", "content": "estoque do produto 10080077"}]
+
+    assert ChatTextTaskIntentService.classify(message) == "to_table"
+    assert ChatTextTaskIntentService.is_pure_text_task(message, previous_messages=history) is False

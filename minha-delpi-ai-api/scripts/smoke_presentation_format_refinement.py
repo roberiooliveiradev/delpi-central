@@ -165,6 +165,27 @@ def main() -> int:
             ],
         ),
         (
+            "estoque text-first → último resultado em tabela",
+            [
+                (
+                    f"estoque do produto {_PRODUCT}",
+                    lambda m: (
+                        str(m.get("path") or "").endswith("/stock")
+                        and (m.get("presentationDecision") or {}).get("selected") == "text"
+                    ),
+                ),
+                (
+                    "mostre o último resultado em tabela",
+                    lambda m: (
+                        "/stock" in str(m.get("path") or "")
+                        and m.get("preferredFormat") == "table"
+                        and (m.get("presentation") or {}).get("type") == "table"
+                        and "/system/tables" not in str(m.get("path") or "")
+                    ),
+                ),
+            ],
+        ),
+        (
             "analyser → só texto",
             [
                 (

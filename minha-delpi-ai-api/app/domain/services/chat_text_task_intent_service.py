@@ -244,6 +244,14 @@ class ChatTextTaskIntentService:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         normalized = (message or "").strip().lower()
+
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return False
+
         category = cls.classify(message)
 
         if cls._is_session_preference_declaration(message):

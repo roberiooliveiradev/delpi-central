@@ -110,6 +110,25 @@ def _stock_meta(response: dict) -> dict | None:
     return None
 
 
+def _set_response_format(token: str, session_id: str, response_format: str) -> None:
+    _request(
+        "PUT",
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/memory/response-format",
+        token=token,
+        body={"responseFormat": response_format},
+    )
+
+
+def _tool_meta(response: dict) -> dict | None:
+    for call in response.get("toolCalls") or []:
+        meta = call.get("metadata") or {}
+
+        if meta.get("ok"):
+            return meta
+
+    return None
+
+
 def main() -> int:
     failed = 0
 
@@ -121,52 +140,121 @@ def main() -> int:
         return 1
 
     agent_id = _first_agent(token)
-    session_id = _create_session(token, agent_id)
-    print(f"OK sessão {session_id}")
-
     message = f"estoque do produto {_PRODUCT}"
+
+    # Cenário 1 — responseFormat=table no turno
+    session_id = _create_session(token, agent_id)
+    print(f"OK sessão turno explícito {session_id}")
 
     resp = _send(token, session_id, agent_id, message, response_format="table")
     meta = _stock_meta(resp)
 
     if not meta:
-        print("FAIL sem toolCall de estoque", file=sys.stderr)
-        return 1
-
-    preferred = str(meta.get("preferredFormat") or "")
-    decision = meta.get("presentationDecision") or {}
-    selected = str(decision.get("selected") or "")
-    presentation = meta.get("presentation") or {}
-    presentation_type = str(presentation.get("type") or "")
-
-    print(f"OK stock path={meta.get('path')}")
-    print(f"   preferredFormat={preferred!r} selected={selected!r} presentation={presentation_type!r}")
-
-    if preferred != "table" or selected != "table":
-        print("FAIL preferência tabela não refletida no metadata", file=sys.stderr)
+        print("FAIL [turno table] sem toolCall de estoque", file=sys.stderr)
         failed += 1
-
-    if presentation_type != "table":
-        print("FAIL componente primário não é tabela", file=sys.stderr)
-        failed += 1
-
-    rows = presentation.get("rows") or []
-
-    if not rows:
-        tables = meta.get("tablePresentations") or []
-        for table in tables:
-            if isinstance(table, dict) and table.get("rows"):
-                rows = table["rows"]
-                break
-
-    if not rows:
-        print("WARN sem linhas de estoque no metadata (pode ser produto sem saldo)", file=sys.stderr)
     else:
-        print(f"OK {len(rows)} linha(s) de estoque no metadata")
+        decision = meta.get("presentationDecision") or {}
+        presentation = meta.get("presentation") or {}
+        print(
+            f"OK [turno table] path={meta.get('path')} "
+            f"selected={decision.get('selected')!r} presentation={presentation.get('type')!r}"
+        )
 
-    if "/system/tables" in str(meta.get("path") or ""):
-        print("FAIL rota errada /system/tables", file=sys.stderr)
+        if meta.get("preferredFormat") != "table" or decision.get("selected") != "table":
+            print("FAIL [turno table] metadata não reflete tabela", file=sys.stderr)
+            failed += 1
+
+        if presentation.get("type") != "table":
+            print("FAIL [turno table] presentation primária não é tabela", file=sys.stderr)
+            failed += 1
+
+    # Cenário 2 — preferência persistida na sessão (sem responseFormat no POST)
+    session_id = _create_session(token, agent_id)
+    _set_response_format(token, session_id, "table")
+    print(f"OK sessão memória table {session_id}")
+
+    resp = _send(token, session_id, agent_id, message)
+    meta = _stock_meta(resp)
+
+    if not meta:
+        print("FAIL [sessão table] sem toolCall de estoque", file=sys.stderr)
         failed += 1
+    else:
+        decision = meta.get("presentationDecision") or {}
+        presentation = meta.get("presentation") or {}
+        print(
+            f"OK [sessão table] path={meta.get('path')} "
+            f"selected={decision.get('selected')!r} presentation={presentation.get('type')!r}"
+        )
+
+        if meta.get("preferredFormat") != "table" or decision.get("selected") != "table":
+            print("FAIL [sessão table] overlay de sessão não aplicou tabela", file=sys.stderr)
+            failed += 1
+
+        if presentation.get("type") != "table":
+            print("FAIL [sessão table] presentation primária não é tabela", file=sys.stderr)
+            failed += 1
+
+    # Cenário 3 — texto-first (auto) e refinamento «último resultado em tabela»
+    session_id = _create_session(token, agent_id)
+    print(f"OK sessão texto-first + refinamento {session_id}")
+
+    first = _send(token, session_id, agent_id, message)
+    first_meta = _stock_meta(first)
+
+    if not first_meta:
+        print("FAIL [refinamento] estoque inicial sem tool", file=sys.stderr)
+        failed += 1
+    else:
+        first_decision = first_meta.get("presentationDecision") or {}
+        print(
+            f"OK [refinamento] turno 1 path={first_meta.get('path')} "
+            f"selected={first_decision.get('selected')!r}"
+        )
+
+        if first_decision.get("selected") != "text":
+            print("WARN [refinamento] turno 1 não veio text-first", file=sys.stderr)
+
+    follow = _send(token, session_id, agent_id, "mostre o último resultado em tabela")
+    follow_meta = _tool_meta(follow)
+
+    if not follow_meta:
+        print("FAIL [refinamento] follow-up sem tool metadata", file=sys.stderr)
+        failed += 1
+    else:
+        path = str(follow_meta.get("path") or "")
+        decision = follow_meta.get("presentationDecision") or {}
+        presentation = follow_meta.get("presentation") or {}
+        print(
+            f"OK [refinamento] turno 2 path={path} "
+            f"preferred={follow_meta.get('preferredFormat')!r} "
+            f"selected={decision.get('selected')!r} presentation={presentation.get('type')!r}"
+        )
+
+        if "/system/tables" in path.lower():
+            print("FAIL [refinamento] rota errada /system/tables", file=sys.stderr)
+            failed += 1
+
+        if "/stock" not in path.lower():
+            print("FAIL [refinamento] não reutilizou rota de estoque", file=sys.stderr)
+            failed += 1
+
+        if follow_meta.get("preferredFormat") != "table" or decision.get("selected") != "table":
+            print("FAIL [refinamento] metadata não reflete tabela", file=sys.stderr)
+            failed += 1
+
+        if presentation.get("type") != "table":
+            print("FAIL [refinamento] presentation primária não é tabela", file=sys.stderr)
+            failed += 1
+
+        first_rows = len((first_meta or {}).get("paginationConsolidation", {}).get("consolidatedPayload", {}).get("items") or [])
+        follow_rows = len(presentation.get("rows") or [])
+
+        if first_rows and follow_rows and follow_rows < first_rows:
+            print(
+                f"WARN [refinamento] linhas {follow_rows} < cache {first_rows}",
+                file=sys.stderr,
+            )
 
     return 1 if failed else 0
 
