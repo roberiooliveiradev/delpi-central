@@ -340,12 +340,12 @@ export function getPortalTourQuests({
       scope: "profile",
       category: "profile",
       actionSelector:
-        '[data-tour="profile-rbac-summary"] .home-summary-card, [data-tour="profile-groups"], [data-tour="profile-roles"], [data-tour="profile-permissions"]',
+        '[data-tour="profile-rbac-summary"] .home-summary-card, [data-tour="profile-groups"], [data-tour="profile-roles"]',
       highlightSelector: '[data-tour="profile-rbac-summary"]',
       isAvailable: () =>
         isProfileRoute() &&
         hasVisibleTarget(
-          '[data-tour="profile-rbac-summary"] .home-summary-card, [data-tour="profile-groups"], [data-tour="profile-roles"], [data-tour="profile-permissions"]',
+          '[data-tour="profile-rbac-summary"] .home-summary-card, [data-tour="profile-groups"], [data-tour="profile-roles"]',
         ),
     },
     {

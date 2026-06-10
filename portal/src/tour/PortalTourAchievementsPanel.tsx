@@ -4,6 +4,7 @@ import { ApiClient } from "../data/apiClient";
 import { CoreApi, type PortalTourAchievementsResponse } from "../data/coreApi";
 import { resolvePortalTourAchievementIcon } from "./portalTourAchievementIcons";
 import { PortalTourPreferencesToggle } from "./PortalTourPreferencesToggle";
+import { PortalTourProfileControls } from "./PortalTourProfileControls";
 import "./portalTourAchievements.css";
 
 function formatUnlockedAt(value: string | null): string | null {
@@ -186,6 +187,8 @@ export function PortalTourAchievementsPanel() {
           ) : null}
         </>
       )}
+
+      <PortalTourProfileControls />
     </div>
   );
 }

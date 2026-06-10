@@ -281,6 +281,57 @@
   }
 }
 
+.portal-tour-achievements-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.portal-tour-achievements-resume {
+  flex-shrink: 0;
+}
+
+.portal-tour-achievements-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.portal-tour-achievements-reset:hover {
+  color: var(--danger);
+}
+
+.portal-tour-achievements-reset:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .portal-tour-achievements-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .portal-tour-achievements-reset {
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .portal-tour-achievements-progress__fill {
     transition: none;

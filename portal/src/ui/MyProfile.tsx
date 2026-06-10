@@ -6,17 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import { AuthContext } from "../state/AuthContext";
-import { ApiClient } from "../data/apiClient";
-import { CoreApi } from "../data/coreApi";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
 import { useAppsById } from "../hooks/useAppsById";
 import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
-import { useConfirmDialog } from "../components/ConfirmDialogProvider";
-import { startPortalTour } from "../tour/PortalTour";
-import { restartPortalTourRemote } from "../tour/portalTourPersistence";
-import { resumePortalTour } from "../tour/portalTourSession";
 import { PortalTourAchievementsPanel } from "../tour/PortalTourAchievementsPanel";
 import { ProfileRbacCardGrid } from "./profile/ProfileRbacCardGrid";
 
@@ -25,9 +19,6 @@ import {
   Star,
   Users,
   Shield,
-  Compass,
-  RotateCcw,
-  KeyRound,
 } from "lucide-react";
 
 import {
@@ -57,10 +48,6 @@ type RouteItem = {
   icon?: string | null;
 };
 
-type PermissionRow = {
-  name: string;
-};
-
 type SearchResult =
   | { kind: "app"; app: any; score: number }
   | { kind: "route"; app: any; route: RouteItem; score: number };
@@ -82,31 +69,13 @@ export const MyProfile = () => {
     favorites,
     addFavorite,
     removeFavorite,
-    getAccessToken,
-    refreshToken,
   } = useContext(AuthContext);
 
   const navigate = useNavigate();
-  const confirm = useConfirmDialog();
-  const coreApi = useMemo(
-    () =>
-      new CoreApi(
-        new ApiClient("", getAccessToken, {
-          refreshToken: async () => {
-            await refreshToken();
-            return Boolean(getAccessToken());
-          },
-        }),
-      ),
-    [getAccessToken, refreshToken],
-  );
   const routesByApp = useRoutesByApp();
   const appsById = useAppsById();
 
   const [query, setQuery] = useState("");
-
-  const [permissionPage, setPermissionPage] = useState(1);
-  const [permissionPageSize, setPermissionPageSize] = useState(12);
 
   /* =========================================
      FAVORITES
@@ -219,35 +188,12 @@ export const MyProfile = () => {
     [user]
   );
 
-  const permissionRows: PermissionRow[] = useMemo(
-    () => user?.permissions?.map((p) => ({ name: p })) ?? [],
-    [user]
-  );
-
-  /* =========================================
-     SORTING
-  ========================================= */
-
   function sortByName<T extends { name: string }>(rows: T[]): T[] {
     return [...rows].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   }
 
-  function paginateRows<T>(rows: T[], page: number, pageSize: number) {
-    const start = (page - 1) * pageSize;
-    return rows.slice(start, start + pageSize);
-  }
-
   const sortedGroupRows = useMemo(() => sortByName(groupRows), [groupRows]);
   const sortedRoleRows = useMemo(() => sortByName(roleRows), [roleRows]);
-  const sortedPermissionRows = useMemo(
-    () => sortByName(permissionRows),
-    [permissionRows],
-  );
-
-  const paginatedPermissionRows = useMemo(
-    () => paginateRows(sortedPermissionRows, permissionPage, permissionPageSize),
-    [sortedPermissionRows, permissionPage, permissionPageSize],
-  );
 
   const groupCardItems = useMemo(
     () =>
@@ -267,15 +213,6 @@ export const MyProfile = () => {
     [sortedRoleRows],
   );
 
-  const permissionCardItems = useMemo(
-    () =>
-      paginatedPermissionRows.map((row) => ({
-        id: row.name,
-        label: row.name,
-      })),
-    [paginatedPermissionRows],
-  );
-
   /* =========================================
      SUMMARY
   ========================================= */
@@ -285,7 +222,6 @@ export const MyProfile = () => {
     favorites: favorites.length,
     roles: user?.roles?.length ?? 0,
     groups: user?.groups?.length ?? 0,
-    permissions: user?.permissions?.length ?? 0,
   };
 
   function normalize(s: string) {
@@ -295,34 +231,6 @@ export const MyProfile = () => {
       .replace(/\p{Diacritic}/gu, "")
       .trim();
   }
-
-  const handleContinueTour = () => {
-    resumePortalTour();
-    navigate("/");
-  };
-
-  const handleResetTour = async () => {
-    if (!user?.id) return;
-
-    const confirmed = await confirm({
-      title: "Zerar progresso do tour?",
-      message:
-        "Isso apaga conquistas, XP e ranking desta versão do tour. A ação não pode ser desfeita.",
-      confirmText: "Zerar e recomeçar",
-      cancelText: "Cancelar",
-      danger: true,
-    });
-
-    if (!confirmed) return;
-
-    await restartPortalTourRemote(coreApi, user.id);
-    startPortalTour();
-    navigate("/");
-  };
-
-
-  const permissionPaginationTotal = sortedPermissionRows.length;
-
 
   /* =========================================
      RENDER
@@ -408,27 +316,17 @@ export const MyProfile = () => {
           />
         )}
 
-        {summary.permissions > 0 && (
-          <HomeSummaryCard
-            icon={<Shield size={18} />}
-            title="Permissões"
-            value={summary.permissions}
-            subtitle="ativas"
-            onClick={() => scrollTo("profile-permissions")}
-          />
-        )}
-
       </motion.div>
 
       {/* MAIN GRID */}
 
-      <div className="home-grid-main">
+      <div className="home-grid-main profile-grid-main">
 
         {/* USER INFO */}
 
         <motion.section
           id="profile-info"
-          className="home-panel"
+          className="home-panel profile-grid-info"
           data-tour="profile-info"
           initial="hidden"
           animate="show"
@@ -441,49 +339,27 @@ export const MyProfile = () => {
           />
 
           <div className="profile-info">
-            <ProfileItem label="Nome" value={user?.name} />
-            <ProfileItem label="Email" value={user?.email} />
-            <ProfileItem label="ID" value={user?.id} />
-            <ProfileItem
-              label="Superadmin"
-              value={user?.is_superadmin ? "Sim" : "Não"}
-            />
-            <div className="profile-tour-actions">
-              <button
-                type="button"
-                className="home-panel-action profile-tour-resume"
-                data-tour="profile-tour-resume"
-                onClick={handleContinueTour}
-              >
-                <Compass size={14} aria-hidden="true" />
-                Continuar explorando
-              </button>
-              <button
-                type="button"
-                className="profile-tour-reset"
-                data-tour="profile-tour-reset"
-                onClick={() => void handleResetTour()}
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                Zerar progresso e recomeçar
-              </button>
+            <div className="profile-info-strip">
+              <ProfileField label="Nome" value={user?.name} />
+              <ProfileField label="Email" value={user?.email} mono />
+              <ProfileField
+                label="ID"
+                value={user?.id}
+                mono
+                title={user?.id}
+              />
+              <ProfileField
+                label="Superadmin"
+                value={user?.is_superadmin ? "Sim" : "Não"}
+                badge={user?.is_superadmin ? "yes" : "no"}
+              />
             </div>
           </div>
         </motion.section>
 
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={2.5}
-        >
-          <PortalTourAchievementsPanel />
-        </motion.div>
-
-        {(groupRows.length > 0 ||
-          roleRows.length > 0 ||
-          permissionRows.length > 0) && (
-          <div className="profile-rbac-grid">
+        {(groupRows.length > 0 || roleRows.length > 0) && (
+          <div className="profile-rbac-stack">
+            <div className="profile-rbac-grid">
             {groupRows.length > 0 && (
               <motion.section
                 id="profile-groups"
@@ -537,45 +413,19 @@ export const MyProfile = () => {
                 />
               </motion.section>
             )}
-
-            {permissionRows.length > 0 && (
-              <motion.section
-                id="profile-permissions"
-                className="home-panel profile-rbac-panel profile-rbac-panel--full"
-                data-tour="profile-permissions"
-                initial="hidden"
-                animate="show"
-                variants={fadeUp}
-                custom={5}
-              >
-                <HomePanelHeader
-                  title="Permissões"
-                  hint="Permissões efetivas do usuário"
-                  badge={
-                    <span className="profile-rbac-badge">{permissionRows.length}</span>
-                  }
-                />
-
-                <ProfileRbacCardGrid
-                  items={permissionCardItems}
-                  icon={<KeyRound size={18} />}
-                  variant="permission"
-                  emptyText="Nenhuma permissão atribuída."
-                  ariaLabel="Permissões do usuário"
-                  page={permissionPage}
-                  pageSize={permissionPageSize}
-                  total={permissionPaginationTotal}
-                  pageSizeOptions={[12, 24, 48]}
-                  onPageChange={setPermissionPage}
-                  onPageSizeChange={(size) => {
-                    setPermissionPageSize(size);
-                    setPermissionPage(1);
-                  }}
-                />
-              </motion.section>
-            )}
+            </div>
           </div>
         )}
+
+        <motion.div
+          className="profile-grid-achievements"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          custom={6}
+        >
+          <PortalTourAchievementsPanel />
+        </motion.div>
 
         {/* APPS */}
 
@@ -586,7 +436,7 @@ export const MyProfile = () => {
           initial="hidden"
           animate="show"
           variants={fadeUp}
-          custom={6}
+          custom={7}
         >
           <HomePanelHeader
             title="Aplicações disponíveis"
@@ -696,17 +546,44 @@ export const MyProfile = () => {
   );
 };
 
-function ProfileItem({
+function ProfileField({
   label,
   value,
+  mono = false,
+  badge,
+  title,
 }: {
   label: string;
   value?: string;
+  mono?: boolean;
+  badge?: "yes" | "no";
+  title?: string;
 }) {
+  const displayValue = value ?? "—";
+
   return (
-    <div className="profile-item">
-      <span className="profile-label">{label}</span>
-      <span className="profile-value">{value ?? "-"}</span>
+    <div className="profile-field">
+      <span className="profile-field__label">{label}</span>
+      {badge ? (
+        <span
+          className={`profile-field__badge profile-field__badge--${badge}`}
+          title={displayValue}
+        >
+          {displayValue}
+        </span>
+      ) : (
+        <span
+          className={[
+            "profile-field__value",
+            mono ? "profile-field__value--mono" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          title={title ?? displayValue}
+        >
+          {displayValue}
+        </span>
+      )}
     </div>
   );
 }
