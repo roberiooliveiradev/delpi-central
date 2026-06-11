@@ -474,11 +474,6 @@ export function getPresentationModeFromToolCalls(
   return null;
 }
 
-/** @deprecated Prefer `planUsesSummaryThenEvidence(plan)` com stackPlan da API. */
-export function isSummaryThenEvidenceMode(toolCalls?: ChatToolCall[]): boolean {
-  return getPresentationModeFromToolCalls(toolCalls) === "summary_then_evidence";
-}
-
 export type PresentationRenderHints = {
   textRenderMode?: "compact" | "full";
   tailVisualPolicy?: "allowlist" | "legacy";
@@ -567,6 +562,44 @@ export function renderPlanHasOnlyProseSegments(
   return renderPlan.segments.every((segment) =>
     PROSE_RENDER_PLAN_KINDS.has(String(segment?.kind || "").trim().toLowerCase()),
   );
+}
+
+const RENDER_PLAN_VISUAL_KINDS = new Set(["table", "chart", "tree", "kpi", "dashboard"]);
+
+/** Kinds visuais permitidos pelo renderPlan v1; `null` = payload legado sem contrato. */
+export function getRenderPlanAllowedVisualKinds(
+  toolCalls?: ChatToolCall[],
+): Set<string> | null {
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+
+  if (!hasRenderPlanContract(toolCalls) || !Array.isArray(renderPlan?.segments)) {
+    return null;
+  }
+
+  const allowed = new Set<string>();
+
+  for (const segment of renderPlan.segments) {
+    const kind = String(segment?.kind || "").trim().toLowerCase();
+
+    if (RENDER_PLAN_VISUAL_KINDS.has(kind)) {
+      allowed.add(kind);
+    }
+  }
+
+  return allowed;
+}
+
+export function isRenderPlanVisualKindAllowed(
+  kind: string,
+  toolCalls?: ChatToolCall[],
+): boolean {
+  const allowed = getRenderPlanAllowedVisualKinds(toolCalls);
+
+  if (!allowed) {
+    return true;
+  }
+
+  return allowed.has(String(kind || "").trim().toLowerCase());
 }
 
 /** Playbook 13 P6 — contrato mínimo para executor render-only (sem fallback blueprint). */

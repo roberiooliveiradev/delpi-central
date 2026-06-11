@@ -33,11 +33,26 @@ import {
   parseMarkdownAndCodeSegments,
 } from "./sqlMarkdownNormalizer";
 import { collectVisualSegments } from "./visualSegmentCollector";
+import { filterSegmentsWithoutHierarchyTableDuplicates } from "./presentationStructureDedup";
 
 export {
   dedupeSqlFencesInMarkdown,
   parseMarkdownAndCodeSegments,
 } from "./sqlMarkdownNormalizer";
+
+function finalizePresentationSegments(
+  segments: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  return filterSegmentsWithoutHierarchyTableDuplicates(segments, toolCalls);
+}
+
+function withPresentationLayer(
+  segments: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  return withDecisionLayer(finalizePresentationSegments(segments, toolCalls), toolCalls);
+}
 
 export function buildAssistantContentSegments(
   content: string,
@@ -86,15 +101,15 @@ export function buildAssistantContentSegments(
   const nativeSingleSegments = buildNativeSingleViewSegments(rawMarkdown, toolCalls, visuals);
 
   if (nativeSingleSegments) {
-    return withDecisionLayer(nativeSingleSegments, toolCalls);
+    return withPresentationLayer(nativeSingleSegments, toolCalls);
   }
 
   if (layoutMode === "stack") {
-    return withDecisionLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
+    return withPresentationLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
   }
 
   if (hasPresentationMarkerSyntax(rawMarkdown)) {
-    return withDecisionLayer(
+    return withPresentationLayer(
       splitMarkdownWithPresentationMarkers(rawMarkdown, visuals),
       toolCalls,
     );
@@ -114,10 +129,10 @@ export function buildAssistantContentSegments(
   }
 
   if (textSegments.length && visuals.length) {
-    return withDecisionLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
+    return withPresentationLayer(buildStackedSegments(content, toolCalls, visuals), toolCalls);
   }
 
-  return withDecisionLayer([...textSegments, ...visuals], toolCalls);
+  return withPresentationLayer([...textSegments, ...visuals], toolCalls);
 }
 
 export function hasAssistantContentSegments(

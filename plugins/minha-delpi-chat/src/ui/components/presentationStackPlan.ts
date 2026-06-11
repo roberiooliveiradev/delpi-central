@@ -256,10 +256,6 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
   };
 }
 
-export function usesStrictTailVisualAllowlist(plan: StackPresentationPlan): boolean {
-  return plan.tailVisualPolicy === "allowlist";
-}
-
 export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {
   return plan.humanizedSections === true;
 }

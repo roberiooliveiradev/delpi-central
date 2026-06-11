@@ -66,4 +66,37 @@ describe("collectVisualSegments", () => {
 
     expect(kinds).toContain("dashboard");
   });
+
+  it("ignora visuais latentes quando renderPlan v1 não os inclui", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "tree", slot: "tailVisuals", source: "treePresentation" },
+            ],
+          },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura fabril",
+            root: { id: "90262404", label: "90262404", children: [] },
+          },
+          dashboardPresentation: {
+            type: "dashboard",
+            title: "Painel latente",
+            panels: [],
+          },
+        },
+      },
+    ]);
+
+    const kinds = collectVisualSegments(toolCalls).map((segment) => segment.kind);
+
+    expect(kinds).toEqual(["tree"]);
+  });
 });

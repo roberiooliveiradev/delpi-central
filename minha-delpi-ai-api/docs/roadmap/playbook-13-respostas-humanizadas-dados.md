@@ -645,7 +645,7 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 [x] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
 [x] textPresentation sem embeds no Automático (gate API + strip evidence-first single/stack)
 [x] Regressão 90262404: Automático sem painel — gate `factory_status_auto_reference` (90269002)
-[ ] Blueprint legado removido quando payloads sem renderPlan forem extintos
+[x] Blueprint legado removido; MFE sintetiza renderPlan para payloads antigos
 ```
 
 #### 8.6.6 PR checklist (P6)

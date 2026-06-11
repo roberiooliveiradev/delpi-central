@@ -1,5 +1,6 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import type { AssistantContentSegment } from "./assistantContentTypes";
+import { isRenderPlanVisualKindAllowed } from "./chatPresentation";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 import {
   dedupeTablePresentations,
@@ -22,11 +23,19 @@ function isSuppressedToolCall(toolCall: ChatToolCall): boolean {
   );
 }
 
+function shouldCollectVisualKind(kind: string, toolCalls: ChatToolCall[]): boolean {
+  return isRenderPlanVisualKindAllowed(kind, toolCalls);
+}
+
 export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegment[] {
   const segments: AssistantContentSegment[] = [];
   const tableCandidates: Extract<ChatPresentation, { type: "table" }>[] = [];
 
   const queueTable = (presentation: Extract<ChatPresentation, { type: "table" }>) => {
+    if (!shouldCollectVisualKind("table", toolCalls)) {
+      return;
+    }
+
     tableCandidates.push(presentation);
   };
 
@@ -47,13 +56,13 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
 
       if (typed.type === "table") {
         queueTable(typed);
-      } else if (typed.type === "chart") {
+      } else if (typed.type === "chart" && shouldCollectVisualKind("chart", toolCalls)) {
         appendVisualSegment(segments, { kind: "chart", presentation: typed });
-      } else if (typed.type === "tree") {
+      } else if (typed.type === "tree" && shouldCollectVisualKind("tree", toolCalls)) {
         appendVisualSegment(segments, { kind: "tree", presentation: typed });
-      } else if (typed.type === "kpi") {
+      } else if (typed.type === "kpi" && shouldCollectVisualKind("kpi", toolCalls)) {
         appendVisualSegment(segments, { kind: "kpi", presentation: typed });
-      } else if (typed.type === "dashboard") {
+      } else if (typed.type === "dashboard" && shouldCollectVisualKind("dashboard", toolCalls)) {
         appendVisualSegment(segments, { kind: "dashboard", presentation: typed });
       }
     }
@@ -90,7 +99,7 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
 
     const chartPresentation = normalizeChartPresentation(metadata.chartPresentation);
 
-    if (chartPresentation) {
+    if (chartPresentation && shouldCollectVisualKind("chart", toolCalls)) {
       appendVisualSegment(segments, {
         kind: "chart",
         presentation: chartPresentation,
@@ -102,7 +111,8 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
     if (
       treePresentation &&
       typeof treePresentation === "object" &&
-      (treePresentation as ChatPresentation).type === "tree"
+      (treePresentation as ChatPresentation).type === "tree" &&
+      shouldCollectVisualKind("tree", toolCalls)
     ) {
       appendVisualSegment(segments, {
         kind: "tree",
@@ -115,7 +125,8 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
     if (
       kpiPresentation &&
       typeof kpiPresentation === "object" &&
-      (kpiPresentation as ChatPresentation).type === "kpi"
+      (kpiPresentation as ChatPresentation).type === "kpi" &&
+      shouldCollectVisualKind("kpi", toolCalls)
     ) {
       appendVisualSegment(segments, {
         kind: "kpi",
@@ -128,11 +139,15 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
     if (
       dashboardPresentation &&
       typeof dashboardPresentation === "object" &&
-      (dashboardPresentation as ChatPresentation).type === "dashboard"
+      (dashboardPresentation as ChatPresentation).type === "dashboard" &&
+      shouldCollectVisualKind("dashboard", toolCalls)
     ) {
       appendVisualSegment(segments, {
         kind: "dashboard",
-        presentation: dashboardPresentation as Extract<ChatPresentation, { type: "dashboard" }>,
+        presentation: dashboardPresentation as Extract<
+          ChatPresentation,
+          { type: "dashboard" }
+        >,
       });
     }
   }

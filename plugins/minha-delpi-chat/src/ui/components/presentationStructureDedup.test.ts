@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
+  filterSegmentsWithoutHierarchyTableDuplicates,
   isHierarchyDuplicateTable,
-  shouldSkipTableSegment,
   toolCallsHaveTree,
 } from "./presentationStructureDedup";
 import { fixtureToolCalls } from "./testFixtures";
@@ -41,7 +41,15 @@ describe("presentationStructureDedup", () => {
       },
     ]);
 
-    expect(shouldSkipTableSegment(structureTable, toolCalls)).toBe(false);
+    const segments = filterSegmentsWithoutHierarchyTableDuplicates(
+      [
+        { kind: "tree", presentation: tree },
+        { kind: "table", presentation: structureTable },
+      ],
+      toolCalls,
+    );
+
+    expect(segments.some((segment) => segment.kind === "table")).toBe(true);
   });
 
   it("não monta tabela de estrutura quando a árvore já está no turno", () => {
@@ -65,7 +73,6 @@ describe("presentationStructureDedup", () => {
     ]);
 
     expect(toolCallsHaveTree(toolCalls)).toBe(true);
-    expect(shouldSkipTableSegment(structureTable, toolCalls)).toBe(true);
 
     const segments = buildAssistantContentSegments("", toolCalls);
     const tableTitles = segments

@@ -93,18 +93,6 @@ export function toolCallsHaveTree(toolCalls: { metadata?: Record<string, unknown
   return false;
 }
 
-/** @deprecated Playbook 13 P6 — dedup estrutural na API via `structureDedupApplied` + prune. */
-export function shouldSkipTableSegment(
-  presentation: Extract<ChatPresentation, { type: "table" }>,
-  toolCalls: { metadata?: Record<string, unknown> }[],
-): boolean {
-  if (metadataStructureDedupApplied(toolCalls)) {
-    return false;
-  }
-
-  return toolCallsHaveTree(toolCalls) && isHierarchyDuplicateTable(presentation);
-}
-
 export function filterSegmentsWithoutHierarchyTableDuplicates(
   segments: AssistantContentSegment[],
   toolCalls: { metadata?: Record<string, unknown> }[],

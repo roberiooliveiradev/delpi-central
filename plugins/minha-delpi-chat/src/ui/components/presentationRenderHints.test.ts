@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getPresentationRenderHintsFromToolCalls,
+  getRenderPlanAllowedVisualKinds,
   hasRenderPlanContract,
   isApiPreparedMarkdown,
   shouldApplyClientMarkdownCompaction,
@@ -53,5 +54,25 @@ describe("presentationRenderHints", () => {
     expect(hasRenderPlanContract(toolCalls)).toBe(true);
     expect(isApiPreparedMarkdown(toolCalls)).toBe(true);
     expect(shouldApplyClientMarkdownCompaction(toolCalls)).toBe(false);
+  });
+
+  it("limita kinds visuais ao renderPlan v1", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "tree", slot: "tailVisuals", source: "treePresentation" },
+            ],
+          },
+        },
+      },
+    ]);
+
+    expect(getRenderPlanAllowedVisualKinds(toolCalls)).toEqual(new Set(["tree"]));
   });
 });
