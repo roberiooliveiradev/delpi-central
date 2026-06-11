@@ -90,6 +90,11 @@ def main() -> int:
         action="store_true",
         help="Falha se fixtures por shape ou cobertura humanizada tier A divergirem (Playbook 13 P5)",
     )
+    parser.add_argument(
+        "--check-render-plan",
+        action="store_true",
+        help="Falha se fixtures tier A não produzirem renderPlan + renderHints (Playbook 13 P6)",
+    )
     args = parser.parse_args()
 
     report = ChatPresentationCoverageService.build_report(baseline_path=args.baseline)
@@ -270,6 +275,30 @@ def main() -> int:
                 print(f"  - {gap}", file=sys.stderr)
         else:
             print("\nOK: Playbook 13 — shapes humanizados e cobertura tier A")
+
+    if args.check_render_plan:
+        from tests.fixtures.presentation_render_plan_gate import (  # noqa: E402
+            validate_render_plan_for_ci,
+        )
+
+        render_plan_validation = validate_render_plan_for_ci()
+        render_plan_gaps = render_plan_validation.get("renderPlanGaps") or []
+
+        if render_plan_gaps:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(render_plan_gaps)} gap(s) de renderPlan tier A (Playbook 13 P6)",
+                file=sys.stderr,
+            )
+
+            for gap in render_plan_gaps[:20]:
+                print(
+                    f"  - [{gap.get('case_id')}] {gap.get('profile_key')} "
+                    f"{gap.get('path')} ({gap.get('detail')})",
+                    file=sys.stderr,
+                )
+        else:
+            print("\nOK: Playbook 13 P6 — renderPlan + renderHints em tierAPipelineCases")
 
     if args.check_playbook12:
         from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402

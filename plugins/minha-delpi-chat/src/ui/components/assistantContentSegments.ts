@@ -15,6 +15,7 @@ import { withDecisionLayer } from "./assistantContentDecisionLayer";
 import {
   getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
+  getRenderPlanFromToolCalls,
   isExplicitTextSessionMode,
 } from "./chatPresentation";
 import {
@@ -51,7 +52,10 @@ export function buildAssistantContentSegments(
   }
 
   const pair = getPresentationPairFromToolCalls(toolCalls);
-  const layoutMode = resolveAssistantContentLayout(content, toolCalls, pair);
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+  const layoutMode =
+    String(renderPlan?.layoutMode || "").trim() ||
+    resolveAssistantContentLayout(content, toolCalls, pair);
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const selected = String(decision?.selected ?? "").trim().toLowerCase();
   const visuals = collectVisualSegments(toolCalls);

@@ -4,7 +4,7 @@ import { collectVisualSegments } from "./visualSegmentCollector";
 import { fixtureToolCalls } from "./testFixtures";
 
 describe("collectVisualSegments", () => {
-  it("omite dashboard em summary_then_evidence automático", () => {
+  it("não monta dashboard quando a API omitiu dashboardPresentation", () => {
     const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -18,16 +18,14 @@ describe("collectVisualSegments", () => {
             presentationMode: "summary_then_evidence",
             tailVisualPolicy: "allowlist",
             tailVisualOrder: ["tree", "chart"],
+            renderHints: {
+              suppressedKinds: ["dashboard"],
+            },
           },
           treePresentation: {
             type: "tree",
             title: "Estrutura fabril",
             root: { id: "90262404", label: "90262404", children: [] },
-          },
-          dashboardPresentation: {
-            type: "dashboard",
-            title: "Painel fabril",
-            panels: [],
           },
         },
       },
@@ -39,7 +37,7 @@ describe("collectVisualSegments", () => {
     expect(kinds).not.toContain("dashboard");
   });
 
-  it("mantém dashboard quando explicitSessionFormat é dashboard", () => {
+  it("mantém dashboard quando a API envia dashboardPresentation", () => {
     const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",

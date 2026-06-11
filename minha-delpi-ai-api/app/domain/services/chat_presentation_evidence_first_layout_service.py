@@ -88,20 +88,30 @@ class ChatPresentationEvidenceFirstLayoutService:
         if not isinstance(decision, dict):
             return
 
-        if str(decision.get("layoutMode") or "").strip().casefold() != "stack":
-            return
-
         plan = metadata.get("stackPresentationPlan")
 
-        if not isinstance(plan, dict):
-            return
-
-        cls._apply_evidence_first_stack_plan(metadata, plan)
+        if isinstance(plan, dict):
+            cls._apply_evidence_first_tail_policy(metadata, plan)
 
         nested = decision.get("stackPresentationPlan")
 
         if isinstance(nested, dict):
-            cls._apply_evidence_first_stack_plan(metadata, nested, source_plan=plan)
+            cls._apply_evidence_first_tail_policy(
+                metadata,
+                nested,
+                source_plan=plan if isinstance(plan, dict) else None,
+            )
+
+        if str(decision.get("layoutMode") or "").strip().casefold() != "stack":
+            return
+
+        if not isinstance(plan, dict):
+            return
+
+        cls._apply_native_view_stack_plan(metadata, plan)
+
+        if isinstance(nested, dict):
+            cls._apply_native_view_stack_plan(metadata, nested)
 
     @classmethod
     def _resolve_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:
@@ -150,7 +160,7 @@ class ChatPresentationEvidenceFirstLayoutService:
         return order
 
     @classmethod
-    def _apply_evidence_first_stack_plan(
+    def _apply_evidence_first_tail_policy(
         cls,
         metadata: dict[str, Any],
         plan: dict[str, Any],
@@ -166,7 +176,6 @@ class ChatPresentationEvidenceFirstLayoutService:
         plan["tailVisualPolicy"] = "allowlist"
         plan["tailVisualOrder"] = tail_order
         cls._sync_tail_visuals_narrative_slot(plan)
-        cls._apply_native_view_stack_plan(metadata, plan)
 
     @classmethod
     def _sync_tail_visuals_narrative_slot(cls, plan: dict[str, Any]) -> None:

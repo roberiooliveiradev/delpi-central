@@ -48,9 +48,16 @@ jobs:
       - name: Gate Playbook 13 respostas humanizadas (P5)
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-humanized-answer
 
-      - name: Testes cobertura e contrato por entidade
+      - name: Gate Playbook 13 P6 renderPlan tier A
+        run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-render-plan
+
+      - name: Gate Playbook 13 P6 MFE render-only
+        run: PYTHONPATH=. python scripts/audit_mfe_presentation_logic.py
+
+      - name: Testes contrato render P6 e cobertura por entidade
         run: |
           PYTHONPATH=. pytest \
+            tests/unit/domain/services/test_presentation_render_contract.py \
             tests/unit/domain/services/test_chat_presentation_coverage_service.py \
             tests/unit/domain/services/test_chat_presentation_entity_contract.py \
             tests/unit/domain/services/test_chat_presentation_profile_service.py \
@@ -66,4 +73,5 @@ jobs:
             tests/unit/domain/services/test_presentation_refactor_baseline.py \
             tests/unit/domain/services/test_chat_humanized_response_quality_service.py \
             tests/unit/fixtures/test_humanized_data_response_gate.py \
+            tests/unit/fixtures/test_presentation_render_plan_gate.py \
             -q

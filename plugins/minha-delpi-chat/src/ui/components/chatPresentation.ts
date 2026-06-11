@@ -475,6 +475,77 @@ export function isSummaryThenEvidenceMode(toolCalls?: ChatToolCall[]): boolean {
   return getPresentationModeFromToolCalls(toolCalls) === "summary_then_evidence";
 }
 
+export type PresentationRenderHints = {
+  textRenderMode?: "compact" | "full";
+  tailVisualPolicy?: "allowlist" | "legacy";
+  suppressedKinds?: string[];
+};
+
+export type PresentationRenderPlan = {
+  version?: number;
+  layoutMode?: string;
+  segments?: Array<{
+    kind: string;
+    slot?: string;
+    source?: string;
+  }>;
+};
+
+export function getPresentationRenderHintsFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): PresentationRenderHints | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const plan = metadata?.stackPresentationPlan;
+
+    if (!plan || typeof plan !== "object") {
+      continue;
+    }
+
+    const hints = (plan as Record<string, unknown>).renderHints;
+
+    if (hints && typeof hints === "object") {
+      return hints as PresentationRenderHints;
+    }
+  }
+
+  return null;
+}
+
+export function getRenderPlanFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): PresentationRenderPlan | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const renderPlan = metadata?.renderPlan;
+
+    if (renderPlan && typeof renderPlan === "object") {
+      return renderPlan as PresentationRenderPlan;
+    }
+  }
+
+  return null;
+}
+
+/** Legacy: só compacta markdown no cliente quando a API não enviou `renderHints.textRenderMode`. */
+export function shouldApplyClientMarkdownCompaction(toolCalls?: ChatToolCall[]): boolean {
+  const hints = getPresentationRenderHintsFromToolCalls(toolCalls);
+
+  if (hints?.textRenderMode === "compact" || hints?.textRenderMode === "full") {
+    return false;
+  }
+
+  return hasRichStackPresentation(toolCalls) && !isExplicitTextSessionMode(toolCalls);
+}
+
 export function getStoryPresentationFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatStoryPresentation | null {
@@ -734,43 +805,6 @@ export function getAvailableFormatsFromToolCalls(
   }
 
   return [];
-}
-
-export function isExplicitDashboardSession(toolCalls?: ChatToolCall[]): boolean {
-  if (!Array.isArray(toolCalls)) {
-    return false;
-  }
-
-  for (const toolCall of toolCalls) {
-    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
-
-    if (!metadata) {
-      continue;
-    }
-
-    const explicit = String(metadata.explicitSessionFormat || "").trim().toLowerCase();
-
-    if (explicit === "dashboard") {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-export function shouldRenderDashboardSegment(
-  toolCalls?: ChatToolCall[],
-  tailVisualOrder: string[] = [],
-): boolean {
-  if (isExplicitDashboardSession(toolCalls)) {
-    return true;
-  }
-
-  if (isSummaryThenEvidenceMode(toolCalls)) {
-    return tailVisualOrder.includes("dashboard");
-  }
-
-  return true;
 }
 
 export function isExplicitTextSessionMode(toolCalls?: ChatToolCall[]): boolean {
@@ -1947,7 +1981,7 @@ export function resolveStackCommentaryBody(
 
   body = stripCoverageNoticeFromMarkdown(body);
 
-  if (hasRichStackPresentation(toolCalls) && !isExplicitTextSessionMode(toolCalls)) {
+  if (shouldApplyClientMarkdownCompaction(toolCalls)) {
     body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
   }
 
@@ -1991,7 +2025,7 @@ export function resolveCommentaryTextBody(
     body = stripRedundantInspectionFromMarkdown(body);
   }
 
-  if (hasRichStackPresentation(toolCalls) && !isExplicitTextSessionMode(toolCalls)) {
+  if (shouldApplyClientMarkdownCompaction(toolCalls)) {
     body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
   }
 

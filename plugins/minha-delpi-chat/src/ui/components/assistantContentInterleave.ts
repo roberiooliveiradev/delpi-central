@@ -79,6 +79,7 @@ export function bucketTableSegmentsByRole(
     title: string,
     presentation?: TablePresentation,
   ) => StackTableRole = (title, presentation) => resolveTableRole(title, presentation),
+  trustApiStructureDedup = false,
 ): Record<StackTableRole, AssistantContentSegment[]> {
   const buckets = emptyRoleBuckets();
 
@@ -87,7 +88,7 @@ export function bucketTableSegmentsByRole(
       continue;
     }
 
-    if (isHierarchyDuplicateTable(segment.presentation)) {
+    if (!trustApiStructureDedup && isHierarchyDuplicateTable(segment.presentation)) {
       continue;
     }
 

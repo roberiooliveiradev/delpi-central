@@ -141,6 +141,32 @@ def test_compose_keeps_dashboard_tail_when_session_requests_panel():
     assert "tailVisuals" in plan["narrativeOrder"]
 
 
+def test_compose_applies_tail_policy_when_layout_mode_is_single():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "single",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "narrativeOrder": ["lead", "operationalTables", "tailVisuals"],
+            "tailVisualOrder": ["dashboard"],
+        },
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "items": []},
+        "dashboardPresentation": {"type": "dashboard", "title": "Painel", "panels": []},
+        "textPresentation": {"markdown": "### Status\n\nSituação consolidada."},
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+    plan = metadata["stackPresentationPlan"]
+
+    assert plan["tailVisualPolicy"] == "allowlist"
+    assert plan["tailVisualOrder"] == ["kpi"]
+    assert "dashboard" not in plan["tailVisualOrder"]
+    assert "tailVisuals" in plan["narrativeOrder"]
+
+
 def test_finalize_narrative_after_embeds_strips_composition_fence():
     metadata = {
         "presentationDecision": {

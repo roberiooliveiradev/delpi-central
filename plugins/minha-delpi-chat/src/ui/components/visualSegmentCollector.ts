@@ -1,13 +1,10 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
-import { shouldSkipTableSegment } from "./presentationStructureDedup";
 import {
   dedupeTablePresentations,
   dedupeTableSegments,
 } from "./presentationTableDedup";
-import { shouldRenderDashboardSegment } from "./chatPresentation";
-import { getStackPresentationPlanFromToolCalls } from "./presentationStackPlan";
 import { appendVisualSegment } from "./segmentDedupe";
 
 function isSuppressedToolCall(toolCall: ChatToolCall): boolean {
@@ -28,14 +25,8 @@ function isSuppressedToolCall(toolCall: ChatToolCall): boolean {
 export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegment[] {
   const segments: AssistantContentSegment[] = [];
   const tableCandidates: Extract<ChatPresentation, { type: "table" }>[] = [];
-  const stackPlan = getStackPresentationPlanFromToolCalls(toolCalls);
-  const allowDashboard = shouldRenderDashboardSegment(toolCalls, stackPlan.tailVisualOrder);
 
   const queueTable = (presentation: Extract<ChatPresentation, { type: "table" }>) => {
-    if (shouldSkipTableSegment(presentation, toolCalls)) {
-      return;
-    }
-
     tableCandidates.push(presentation);
   };
 
@@ -62,7 +53,7 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
         appendVisualSegment(segments, { kind: "tree", presentation: typed });
       } else if (typed.type === "kpi") {
         appendVisualSegment(segments, { kind: "kpi", presentation: typed });
-      } else if (typed.type === "dashboard" && allowDashboard) {
+      } else if (typed.type === "dashboard") {
         appendVisualSegment(segments, { kind: "dashboard", presentation: typed });
       }
     }
@@ -135,7 +126,6 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
     const dashboardPresentation = metadata.dashboardPresentation;
 
     if (
-      allowDashboard &&
       dashboardPresentation &&
       typeof dashboardPresentation === "object" &&
       (dashboardPresentation as ChatPresentation).type === "dashboard"

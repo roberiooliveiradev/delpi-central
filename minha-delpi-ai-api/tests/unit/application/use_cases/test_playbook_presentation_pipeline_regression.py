@@ -58,9 +58,14 @@ def test_factory_status_integrated_stack_with_visuals():
     assert meta.get("textPresentation", {}).get("markdown")
     assert meta.get("kpiPresentation", {}).get("type") == "kpi"
     assert meta.get("treePresentation", {}).get("type") == "tree"
-    assert meta.get("dashboardPresentation", {}).get("type") == "dashboard"
 
     plan = meta.get("stackPresentationPlan") or {}
+    render_plan = meta.get("renderPlan") or {}
+
+    assert render_plan.get("version") == 1
+    assert isinstance(render_plan.get("segments"), list) and render_plan["segments"]
+    assert plan.get("renderHints", {}).get("textRenderMode") in {"compact", "full"}
+    assert str(plan.get("tailVisualPolicy") or "").strip()
 
     assert plan.get("humanizedSections") is True
     assert plan.get("presentationProfile") == "product_factory_status"
@@ -69,8 +74,14 @@ def test_factory_status_integrated_stack_with_visuals():
     if presentation_mode == "summary_then_evidence":
         tail_order = plan.get("tailVisualOrder") or []
         assert "dashboard" not in tail_order
+        assert meta.get("dashboardPresentation") is None
         assert "tree" in tail_order
         assert "tailVisuals" in (plan.get("narrativeOrder") or [])
+        assert all(
+            segment.get("kind") != "dashboard"
+            for segment in render_plan.get("segments") or []
+            if isinstance(segment, dict)
+        )
     else:
         assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
         assert "tailVisuals" in (plan.get("narrativeOrder") or [])
@@ -84,14 +95,18 @@ def test_factory_status_auto_stack_with_dialogue():
     )
     decision = meta["presentationDecision"]
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    plan = meta.get("stackPresentationPlan") or {}
 
     assert decision["selected"] == "text"
     assert decision["layoutMode"] == "stack"
     assert len(markdown) >= 120
-    assert (meta.get("stackPresentationPlan") or {}).get("humanizedSections") is True
+    assert plan.get("humanizedSections") is True
     assert meta.get("tablePresentations")
     assert meta.get("kpiPresentation", {}).get("type") == "kpi"
     assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert meta.get("renderPlan", {}).get("version") == 1
+    assert plan.get("renderHints", {}).get("textRenderMode") == "compact"
+    assert meta.get("dashboardPresentation") is None
     assert "|" not in markdown.split("<!-- section:")[0][:400]
 
 
@@ -110,10 +125,9 @@ def test_factory_status_text_mode_embeds_tables_in_markdown():
     assert "|" in markdown
     assert "**Panorama fabril**" in markdown or "Panorama fabril" in markdown
     assert meta.get("tablePresentations") is not None
-    assert (
-        meta.get("dashboardPresentation") is not None
-        or (meta.get("presentation") or {}).get("type") == "dashboard"
-    )
+    plan = meta.get("stackPresentationPlan") or {}
+    assert meta.get("dashboardPresentation") is None
+    assert "dashboard" not in (plan.get("tailVisualOrder") or [])
     assert "Composição" in markdown or "└──" in markdown or "├──" in markdown
 
 

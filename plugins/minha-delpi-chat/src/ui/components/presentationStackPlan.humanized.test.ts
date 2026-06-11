@@ -218,7 +218,7 @@ describe("presentationStackPlan humanized gating", () => {
     expect(segments.some((segment) => segment.kind === "stackSection")).toBe(false);
   });
 
-  it("não vaza dashboard no Automático quando tailVisualPolicy é allowlist", () => {
+  it("não monta dashboard quando o payload pruned não inclui o segmento", () => {
     const commentary = "### Status fabril\n\nSituação consolidada.";
     const visuals: AssistantContentSegment[] = [
       {
@@ -227,14 +227,6 @@ describe("presentationStackPlan humanized gating", () => {
           type: "tree",
           title: "Estrutura fabril",
           root: { id: "90262404", label: "Produto 90262404", children: [] },
-        },
-      },
-      {
-        kind: "dashboard",
-        presentation: {
-          type: "dashboard",
-          title: "Painel fabril",
-          panels: [],
         },
       },
     ];
@@ -252,11 +244,9 @@ describe("presentationStackPlan humanized gating", () => {
             tailVisualPolicy: "allowlist",
             narrativeOrder: ["lead", "operationalTables", "tailVisuals"],
             tailVisualOrder: ["tree", "chart"],
-          },
-          dashboardPresentation: {
-            type: "dashboard",
-            title: "Painel fabril",
-            panels: [],
+            renderHints: {
+              suppressedKinds: ["dashboard"],
+            },
           },
         },
       },

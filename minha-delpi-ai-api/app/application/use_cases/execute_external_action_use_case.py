@@ -680,6 +680,18 @@ class ExecuteExternalActionUseCase:
         if isinstance(stack_plan, dict):
             ChatPresentationStackMarkdownService.apply_section_markers(metadata, stack_plan)
 
+        from app.domain.services.chat_presentation_payload_pruning_service import (
+            ChatPresentationPayloadPruningService,
+        )
+
+        ChatPresentationPayloadPruningService.prune(metadata)
+
+        from app.domain.services.chat_presentation_render_plan_service import (
+            ChatPresentationRenderPlanService,
+        )
+
+        ChatPresentationRenderPlanService.build(metadata)
+
         from app.domain.services.chat_pagination_consolidation_service import (
             ChatPaginationConsolidationService,
         )

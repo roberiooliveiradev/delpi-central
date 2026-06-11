@@ -136,7 +136,7 @@ Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook 
 | A13 | Card de decisão (MFE) | **`ChatDecisionCard`** + segment registry | Segmento `decision` / `story.verdict` | ⬜ |
 | A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
 | A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ✅ |
-| A19 | MFE render-only (P6) | `ChatPresentationRenderPlanService` + prune payload | `renderPlan` / omissão de campos | ⬜ |
+| A19 | MFE render-only (P6) | `ChatPresentationRenderPlanService` + prune payload | `renderPlan` / omissão de campos | 🟡 |
 | A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
 | A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ✅ |
 | A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | ✅ |
@@ -395,7 +395,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
-| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | ⬜ |
+| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟡 P6-A/B/C parcial |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -502,6 +502,24 @@ API decide e filtra → metadata contém só o que deve aparecer → MFE monta s
 O MFE permanece responsável por **mecânica de UI** (registry de componentes, markdown/prosa, streaming reveal, toolbar de formato do composer, dedupe de keys React). Toda **regra de negócio de apresentação** fica na API.
 
 #### 8.6.1 Inventário de lógica duplicada no MFE (auditoria jun/2026)
+
+**P6-A entregue (jun/2026 — parcial):**
+
+- `ChatPresentationPayloadPruningService.prune()` — omite `*Presentation` fora de `tailVisualOrder` quando `tailVisualPolicy: allowlist`
+- Encaixe no pipeline: fim de `ExecuteExternalActionUseCase._build_presentation_metadata`
+- `renderHints.suppressedKinds` no `stackPresentationPlan` (telemetria)
+- Testes: `test_presentation_render_contract.py`
+- MFE: removido uso de `shouldRenderDashboardSegment` em `visualSegmentCollector` e `presentationStackBlueprint` (função mantida `@deprecated`)
+
+**P6-B/C entregue (jun/2026 — parcial):**
+
+- `renderHints.textRenderMode` (`compact`|`full`) + `tailVisualPolicy` sempre explícito (`legacy`|`allowlist`)
+- `ChatPresentationRenderPlanService.build()` → `metadata.renderPlan` (lead, highlights, attention, tabelas, tail)
+- MFE: `renderPlanSegmentBuilder.ts` + `buildSegmentsFromRenderPlan` — executor mecânico priorizado em `buildCanonicalStackSegments`
+- MFE: `nativeSingleViewBuilder` consome `renderPlan` em layout não-stack
+- MFE: `shouldApplyClientMarkdownCompaction` — não recompacta quando API enviou `textRenderMode`
+- MFE: removidas `shouldRenderDashboardSegment` / `isExplicitDashboardSession`
+- CI: `scripts/audit_mfe_presentation_logic.py`
 
 | Área | Arquivo(s) MFE | O que decide hoje | Canônico API (alvo) |
 |------|----------------|-------------------|---------------------|

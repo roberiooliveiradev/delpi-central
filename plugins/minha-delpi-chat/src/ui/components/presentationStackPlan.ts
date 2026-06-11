@@ -26,6 +26,12 @@ export type StackNarrativeSlot =
 
 export type TailVisualPolicy = "allowlist" | "legacy";
 
+export type PresentationRenderHints = {
+  textRenderMode?: "compact" | "full";
+  tailVisualPolicy?: TailVisualPolicy;
+  suppressedKinds?: string[];
+};
+
 export type StackPresentationPlan = {
   profileFirst: boolean;
   highlightsAfterProfile: boolean;
@@ -37,6 +43,8 @@ export type StackPresentationPlan = {
   presentationMode?: string;
   /** allowlist: só renderiza visuais listados em tailVisualOrder (sem fallback órfão). */
   tailVisualPolicy?: TailVisualPolicy;
+  /** Telemetria/contrato P6 — texto já preparado na API quando `compact`. */
+  renderHints?: PresentationRenderHints;
   /** Inteligência da API: mockup humanizado no analyser e rotas compostas de produto. */
   presentationProfile?: string;
   humanizedSections?: boolean;
@@ -196,13 +204,36 @@ function normalizeTailVisualPolicy(value: unknown): TailVisualPolicy | undefined
   return undefined;
 }
 
+function normalizeRenderHints(value: unknown): PresentationRenderHints | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const raw = value as Record<string, unknown>;
+  const textRenderMode = String(raw.textRenderMode || "").trim().toLowerCase();
+  const tailVisualPolicy = normalizeTailVisualPolicy(raw.tailVisualPolicy);
+  const hints: PresentationRenderHints = {};
+
+  if (textRenderMode === "compact" || textRenderMode === "full") {
+    hints.textRenderMode = textRenderMode;
+  }
+
+  if (tailVisualPolicy) {
+    hints.tailVisualPolicy = tailVisualPolicy;
+  }
+
+  if (Array.isArray(raw.suppressedKinds)) {
+    hints.suppressedKinds = raw.suppressedKinds.map((item) => String(item));
+  }
+
+  return Object.keys(hints).length ? hints : undefined;
+}
+
 function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
   const profile = String(raw.presentationProfile || "").trim();
   const humanizedSections = raw.humanizedSections === true;
   const presentationMode = String(raw.presentationMode || "").trim() || undefined;
-  const tailVisualPolicy =
-    normalizeTailVisualPolicy(raw.tailVisualPolicy) ??
-    (presentationMode === "summary_then_evidence" ? "allowlist" : undefined);
+  const tailVisualPolicy = normalizeTailVisualPolicy(raw.tailVisualPolicy);
 
   return {
     profileFirst: raw.profileFirst !== false,
@@ -215,6 +246,7 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
     narrativeOrder: normalizeNarrativeOrder(raw.narrativeOrder),
     presentationMode,
     tailVisualPolicy,
+    renderHints: normalizeRenderHints(raw.renderHints),
     presentationProfile: resolvePresentationProfile(profile, humanizedSections),
     humanizedSections,
     sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
