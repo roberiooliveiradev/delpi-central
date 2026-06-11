@@ -241,6 +241,13 @@ class ChatTextTaskIntentService:
         *,
         previous_messages: list | None = None,
     ) -> bool:
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return False
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         normalized = (message or "").strip().lower()

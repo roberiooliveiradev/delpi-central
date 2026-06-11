@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke E2E — Playbook 15 Fase 1 (consumo, compras, perdas, programação)."""
+"""Smoke E2E — Playbook 15 Fases 1 (P0) e 2 (P1) via api-delpi + chat."""
 
 from __future__ import annotations
 
@@ -116,21 +116,10 @@ def _api_get(token: str, path: str) -> tuple[dict, float]:
     return payload, time.monotonic() - started
 
 
-def main() -> int:
-    token = _token()
-    agent_id = _agent_id(token)
+def _run_api_checks(token: str, checks: list[tuple[str, str]]) -> int:
     failed = 0
 
-    api_checks: list[tuple[str, str]] = [
-        ("API R01 consumption", "/production/consumption/top-items?limit=3"),
-        ("API R04 purchases", "/purchases/top-products?limit=3"),
-        ("API R07 losses top", "/production/losses/top-materials?limit=3"),
-        ("API R06 losses records", "/production/losses/records?limit=3"),
-        ("API R08 schedule", "/production/schedule/today?limit=3"),
-    ]
-
-    print("=== api-delpi direct ===")
-    for title, path in api_checks:
+    for title, path in checks:
         try:
             payload, elapsed = _api_get(token, path)
             success = bool(payload.get("success"))
@@ -143,12 +132,93 @@ def main() -> int:
             )
             if not success:
                 failed += 1
-                print(f"    payload={json.dumps(payload, ensure_ascii=False)[:400]}", file=sys.stderr)
+                print(
+                    f"    payload={json.dumps(payload, ensure_ascii=False)[:400]}",
+                    file=sys.stderr,
+                )
         except Exception as exc:
             failed += 1
             print(f"FAIL {title} — {exc}", file=sys.stderr)
 
-    chat_scenarios: list[tuple[str, str, str, str | None]] = [
+    return failed
+
+
+def _run_chat_checks(
+    token: str,
+    agent_id: str,
+    scenarios: list[tuple[str, str, str, str | None]],
+) -> int:
+    failed = 0
+
+    for title, message, expected_fragment, expected_operation in scenarios:
+        time.sleep(_PAUSE_S)
+        session_id = _session(token, agent_id, title)
+        response, elapsed = _send(token, session_id, agent_id, message)
+        path, operation_id, ok, _arguments = _action_info(response)
+        answer = str(response.get("answer") or response.get("content") or "")[:240]
+
+        hit_path = expected_fragment in path
+        hit_op = expected_operation in operation_id or expected_fragment in path
+        no_sql = "/data/sql" not in path
+        api_ok = ok is not False
+        success = hit_path and hit_op and no_sql and api_ok and elapsed <= _MAX_LATENCY_S
+
+        if success:
+            print(
+                f"OK  {title} — path={path} op={operation_id} ok={ok} "
+                f"latency={elapsed:.1f}s"
+            )
+            print(f"    answer={answer!r}")
+            continue
+
+        failed += 1
+        print(f"FAIL {title}", file=sys.stderr)
+        print(
+            f"    path={path!r} op={operation_id!r} expected~={expected_fragment!r}",
+            file=sys.stderr,
+        )
+        print(
+            f"    ok={ok} no_sql={no_sql} latency={elapsed:.1f}s answer={answer!r}",
+            file=sys.stderr,
+        )
+        print(
+            f"    toolCalls={json.dumps(response.get('toolCalls') or [], ensure_ascii=False)[:800]}",
+            file=sys.stderr,
+        )
+
+    return failed
+
+
+def main() -> int:
+    token = _token()
+    agent_id = _agent_id(token)
+
+    p0_api: list[tuple[str, str]] = [
+        ("API R01 consumption", "/production/consumption/top-items?limit=3"),
+        ("API R04 purchases", "/purchases/top-products?limit=3"),
+        ("API R07 losses top", "/production/losses/top-materials?limit=3"),
+        ("API R06 losses records", "/production/losses/records?limit=3"),
+        ("API R08 schedule", "/production/schedule/today?limit=3"),
+    ]
+
+    p1_api: list[tuple[str, str]] = [
+        ("API R09 orders open", "/production/orders/open?limit=3"),
+        ("API R10 orders finished", "/production/orders/finished?limit=3"),
+        (
+            "API R11 work-center summary",
+            "/production/work-centers/order-summary?limit=5",
+        ),
+        (
+            "API R02 consumption by CT",
+            "/production/consumption/top-items-by-work-center?limit=3",
+        ),
+        (
+            "API R03 consumption validated",
+            "/production/consumption/top-items-validated?limit=3",
+        ),
+    ]
+
+    p0_chat: list[tuple[str, str, str, str | None]] = [
         (
             "S1 consumption",
             "Itens mais consumidos mês passado filial 01 top 10",
@@ -175,39 +245,54 @@ def main() -> int:
         ),
     ]
 
-    print("\n=== chat E2E ===")
-    for title, message, expected_fragment, expected_operation in chat_scenarios:
-        time.sleep(_PAUSE_S)
-        session_id = _session(token, agent_id, title)
-        response, elapsed = _send(token, session_id, agent_id, message)
-        path, operation_id, ok, _arguments = _action_info(response)
-        answer = str(response.get("answer") or response.get("content") or "")[:240]
+    p1_chat: list[tuple[str, str, str, str | None]] = [
+        (
+            "S5 orders open",
+            "Liste as OPs em aberto de hoje filial 01",
+            "/production/orders/open",
+            "get_production_orders_open",
+        ),
+        (
+            "S6 orders finished",
+            "Quais OPs finalizadas hoje?",
+            "/production/orders/finished",
+            "get_production_orders_finished",
+        ),
+        (
+            "S7 work-center summary",
+            "Resumo de OPs por centro de trabalho hoje",
+            "/production/work-centers/order-summary",
+            "get_production_work_center_order_summary",
+        ),
+        (
+            "S8 consumption by CT",
+            "Itens com maior consumo por centro de trabalho mês passado top 10",
+            "/production/consumption/top-items-by-work-center",
+            "get_production_consumption_top_items_by_work_center",
+        ),
+        (
+            "S9 consumption validated",
+            "Consumo validado por apontamento no mês top 10",
+            "/production/consumption/top-items-validated",
+            "get_production_consumption_top_items_validated",
+        ),
+    ]
 
-        hit_path = expected_fragment in path
-        hit_op = expected_operation in operation_id or expected_fragment in path
-        no_sql = "/data/sql" not in path
-        success = hit_path and hit_op and no_sql and elapsed <= _MAX_LATENCY_S
+    failed = 0
 
-        if success:
-            print(
-                f"OK  {title} — path={path} op={operation_id} ok={ok} "
-                f"latency={elapsed:.1f}s"
-            )
-            print(f"    answer={answer!r}")
-            continue
+    print("=== api-delpi P0 ===")
+    failed += _run_api_checks(token, p0_api)
 
-        failed += 1
-        print(f"FAIL {title}", file=sys.stderr)
-        print(
-            f"    path={path!r} op={operation_id!r} expected~={expected_fragment!r}",
-            file=sys.stderr,
-        )
-        print(f"    ok={ok} no_sql={no_sql} latency={elapsed:.1f}s answer={answer!r}", file=sys.stderr)
-        print(
-            f"    toolCalls={json.dumps(response.get('toolCalls') or [], ensure_ascii=False)[:800]}",
-            file=sys.stderr,
-        )
+    print("\n=== api-delpi P1 ===")
+    failed += _run_api_checks(token, p1_api)
 
+    print("\n=== chat E2E P0 ===")
+    failed += _run_chat_checks(token, agent_id, p0_chat)
+
+    print("\n=== chat E2E P1 ===")
+    failed += _run_chat_checks(token, agent_id, p1_chat)
+
+    print(f"\n{'FAIL' if failed else 'PASS'} — total failures: {failed}")
     return 1 if failed else 0
 
 

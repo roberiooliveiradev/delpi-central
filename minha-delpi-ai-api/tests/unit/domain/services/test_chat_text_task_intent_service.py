@@ -73,3 +73,12 @@ def test_format_refinement_last_result_is_not_pure_text_task():
 
     assert ChatTextTaskIntentService.classify(message) == "to_table"
     assert ChatTextTaskIntentService.is_pure_text_task(message, previous_messages=history) is False
+
+
+def test_production_operational_resumo_is_not_pure_text_task():
+    assert (
+        ChatTextTaskIntentService.is_pure_text_task(
+            "Resumo de OPs por centro de trabalho hoje"
+        )
+        is False
+    )

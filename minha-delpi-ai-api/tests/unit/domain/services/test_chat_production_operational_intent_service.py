@@ -37,3 +37,24 @@ def test_infer_loss_type_refugo() -> None:
         "refugo de materia prima em marco"
     )
     assert loss_type == "refugo"
+
+
+def test_resolve_work_center_summary_before_consumption_by_ct() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Resumo de OPs por centro de trabalho hoje"
+    )
+    assert kind == ProductionOperationalIntentKind.WORK_CENTER_SUMMARY
+
+
+def test_resolve_consumption_by_work_center_still_matches() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Itens com maior consumo por centro de trabalho mês passado top 10"
+    )
+    assert kind == ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER
+
+
+def test_resolve_consumption_validated_with_top_limit() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Consumo validado por apontamento no mês top 10"
+    )
+    assert kind == ProductionOperationalIntentKind.CONSUMPTION_VALIDATED

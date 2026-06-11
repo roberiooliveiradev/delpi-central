@@ -149,38 +149,43 @@ class ChatExternalActionOrchestrationService:
 
             return _return_planned([selected] if selected else [])
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
-            if on_stream_activity:
-                from app.application.services.chat_stream_activity_service import (
-                    ChatStreamActivityService,
-                )
-
-                on_stream_activity(
-                    ChatStreamActivityService.plan_step(
-                        step=1,
-                        total=1,
-                        target="estruturas para comparação",
-                        verb="Planejando",
-                        message="Reunindo as informações para comparar...",
-                        detail="Buscando fichas/estruturas dos produtos citados.",
+            if not ChatProductionOperationalIntentService.matches_rest_route(message):
+                if on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
                     )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.plan_step(
+                            step=1,
+                            total=1,
+                            target="estruturas para comparação",
+                            verb="Planejando",
+                            message="Reunindo as informações para comparar...",
+                            detail="Buscando fichas/estruturas dos produtos citados.",
+                        )
+                    )
+
+                from app.application.services.chat_structure_comparison_orchestration_service import (
+                    ChatStructureComparisonOrchestrationService,
                 )
 
-            from app.application.services.chat_structure_comparison_orchestration_service import (
-                ChatStructureComparisonOrchestrationService,
-            )
+                planned = ChatStructureComparisonOrchestrationService.plan_structure_fetches(
+                    selection_service,
+                    message=message,
+                    allowed_action_ids=allowed_action_ids,
+                    conversation_context=conversation_context,
+                    previous_messages=previous_messages,
+                    max_calls=max_calls,
+                )
 
-            planned = ChatStructureComparisonOrchestrationService.plan_structure_fetches(
-                selection_service,
-                message=message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                max_calls=max_calls,
-            )
-
-            if planned:
-                return _return_planned(planned)
+                if planned:
+                    return _return_planned(planned)
 
         if ChatCanvasIntentService.blocks_external_action_selection(message):
             return []

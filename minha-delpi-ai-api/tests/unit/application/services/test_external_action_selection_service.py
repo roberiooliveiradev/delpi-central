@@ -1466,3 +1466,27 @@ def test_build_product_parameters_sets_analyser_view_summary_by_default():
     )
 
     assert parameters["view"] == "summary"
+
+
+def test_consumption_validated_top_limit_not_blocked_by_comparison_heuristic():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "validated-action",
+                    "method": "GET",
+                    "path": "/production/consumption/top-items-validated",
+                    "operationId": "get_production_consumption_top_items_validated",
+                    "summary": "Consumo validado",
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Consumo validado por apontamento no mês top 10",
+        allowed_action_ids=["validated-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "validated-action"

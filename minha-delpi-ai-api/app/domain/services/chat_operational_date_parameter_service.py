@@ -307,6 +307,13 @@ class ChatOperationalDateParameterService:
         if not normalized:
             return None
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return None
+
         if cls.has_temporal_reference(message, previous_messages=previous_messages):
             return None
 

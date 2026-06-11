@@ -67,7 +67,15 @@ def test_missing_date_not_requested_when_hoje_in_same_message():
 
 def test_missing_date_not_requested_when_essa_semana_in_same_message():
     answer = ChatOperationalParameterService.resolve_missing_date_answer(
-        "status fabril do produto 90261892 essa semana"
+        "status fabril do produto 90261892 essa semmana"
+    )
+
+    assert answer is None
+
+
+def test_missing_date_not_requested_for_production_operational_rest_route():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "Consumo validado por apontamento no mês top 10"
     )
 
     assert answer is None

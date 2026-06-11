@@ -134,12 +134,16 @@
       "por ct",
       "agrupar por ct",
       "resumo por ct",
+      "resumo de ops",
+      "resumo de op",
       "ops por ct",
+      "ops por centro de trabalho",
       "ordens por ct",
+      "ordens por centro de trabalho",
       "finalizadas e nao finalizadas",
       "finalizadas e não finalizadas"
     ],
-    "excludeTerms": ["consumid", "comprad", "refugo"]
+    "excludeTerms": ["consumid", "consumo", "empenho", "comprad", "refugo"]
   },
   "consumptionByWorkCenter": {
     "terms": [
@@ -147,9 +151,19 @@
       "consumo por centro de trabalho",
       "consumidos por ct",
       "empenho por ct",
-      "centro de trabalho"
+      "maior consumo por ct",
+      "maior consumo por centro de trabalho"
     ],
-    "excludeTerms": ["validad", "apontamento", "comprad"]
+    "excludeTerms": [
+      "validad",
+      "apontamento",
+      "comprad",
+      "ops ",
+      "op em",
+      "ordens em",
+      "resumo de op",
+      "resumo por"
+    ]
   },
   "consumptionValidated": {
     "terms": [

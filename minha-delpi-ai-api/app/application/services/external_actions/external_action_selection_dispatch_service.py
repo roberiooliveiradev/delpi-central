@@ -69,8 +69,13 @@ class ExternalActionSelectionDispatchService:
         ) and ChatConversationContextService.has_recent_tool_data(previous_messages):
             return None
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
-            return None
+            if not ChatProductionOperationalIntentService.matches_rest_route(message):
+                return None
 
         if ChatCanvasIntentService.blocks_external_action_selection(message):
             return None
@@ -444,10 +449,6 @@ class ExternalActionSelectionDispatchService:
 
             if selected:
                 return selected
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
 
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             selected = self._route_selection.select_production_operational(
