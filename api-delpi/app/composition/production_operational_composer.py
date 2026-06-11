@@ -1,3 +1,9 @@
+from app.application.use_cases.production.get_production_allocation_gaps_use_case import (
+    GetProductionAllocationGapsUseCase,
+)
+from app.application.use_cases.production.get_production_consumption_by_item_use_case import (
+    GetProductionConsumptionByItemUseCase,
+)
 from app.application.use_cases.production.get_production_consumption_top_items_use_case import (
     GetProductionConsumptionTopItemsUseCase,
 )
@@ -7,11 +13,17 @@ from app.application.use_cases.production.get_production_consumption_top_items_b
 from app.application.use_cases.production.get_production_consumption_top_items_validated_use_case import (
     GetProductionConsumptionTopItemsValidatedUseCase,
 )
+from app.application.use_cases.production.get_production_orders_finished_without_consumption_use_case import (
+    GetProductionOrdersFinishedWithoutConsumptionUseCase,
+)
 from app.application.use_cases.production.get_production_orders_finished_use_case import (
     GetProductionOrdersFinishedUseCase,
 )
 from app.application.use_cases.production.get_production_orders_open_use_case import (
     GetProductionOrdersOpenUseCase,
+)
+from app.application.use_cases.production.get_production_work_center_average_planned_time_use_case import (
+    GetProductionWorkCenterAveragePlannedTimeUseCase,
 )
 from app.application.use_cases.production.get_production_work_center_order_summary_use_case import (
     GetProductionWorkCenterOrderSummaryUseCase,
@@ -92,3 +104,25 @@ def build_get_production_consumption_top_items_validated_use_case() -> (
     GetProductionConsumptionTopItemsValidatedUseCase
 ):
     return GetProductionConsumptionTopItemsValidatedUseCase(ProductionConsumptionRepository())
+
+
+def build_get_production_allocation_gaps_use_case() -> GetProductionAllocationGapsUseCase:
+    return GetProductionAllocationGapsUseCase(ProductionOrdersRepository())
+
+
+def build_get_production_orders_finished_without_consumption_use_case() -> (
+    GetProductionOrdersFinishedWithoutConsumptionUseCase
+):
+    return GetProductionOrdersFinishedWithoutConsumptionUseCase(ProductionOrdersRepository())
+
+
+def build_get_production_work_center_average_planned_time_use_case() -> (
+    GetProductionWorkCenterAveragePlannedTimeUseCase
+):
+    return GetProductionWorkCenterAveragePlannedTimeUseCase(ProductionWorkCentersRepository())
+
+
+def build_get_production_consumption_by_item_use_case() -> (
+    GetProductionConsumptionByItemUseCase
+):
+    return GetProductionConsumptionByItemUseCase(ProductionConsumptionRepository())

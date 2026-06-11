@@ -39,6 +39,13 @@ class ExternalActionProductSearchRouteSelectionService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
             return False
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(value):
+            return False
+
         audit5s_terms = ExternalActionResponseContentService.list(
             "actionSelection",
             "productSearch",

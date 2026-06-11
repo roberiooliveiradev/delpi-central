@@ -511,6 +511,42 @@ PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED = agent_route(
     operation_id="get_production_consumption_top_items_validated",
 )
 
+PRODUCTION_ALLOCATION_GAPS = agent_route(
+    summary="Componentes sem empenho (travamento)",
+    description=(
+        "Lista componentes de OPs ativas com D4_QUANT = 0 no CT e data informados. "
+        "Use para travamento de produção por ausência de empenho."
+    ),
+    operation_id="get_production_allocation_gaps",
+)
+
+PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION = agent_route(
+    summary="OPs finalizadas sem consumo de componentes",
+    description=(
+        "Identifica OPs finalizadas (C2_QUANT = C2_QUJE) sem baixa de material no CT/data. "
+        "Use para auditoria de apontamento e inconsistências produtivas."
+    ),
+    operation_id="get_production_orders_finished_without_consumption",
+)
+
+PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME = agent_route(
+    summary="Tempo médio planejado por centro de trabalho",
+    description=(
+        "Média de horas planejadas (H8_HRINI → H8_HRFIM) por CT em OPs finalizadas na data. "
+        "Use para análise de tempo planejado por centro de trabalho."
+    ),
+    operation_id="get_production_work_center_average_planned_time",
+)
+
+PRODUCTION_CONSUMPTION_BY_ITEM = agent_route(
+    summary="Consumo real de item por produto",
+    description=(
+        "Apura consumo real (D4_QTDEORI - D4_QUANT) de um item por produto pai, "
+        "opcionalmente filtrado por grupo. Path: /production/consumption/by-item/{code}."
+    ),
+    operation_id="get_production_consumption_by_item",
+)
+
 DATA_SQL = agent_route(
     summary="Executar consulta SQL somente leitura",
     description=(

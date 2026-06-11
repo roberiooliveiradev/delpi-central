@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke E2E — Playbook 15 Fases 1 (P0) e 2 (P1) via api-delpi + chat."""
+"""Smoke E2E — Playbook 15 Fases 1–3 (P0, P1, P2) via api-delpi + chat."""
 
 from __future__ import annotations
 
@@ -218,6 +218,22 @@ def main() -> int:
         ),
     ]
 
+    p2_api: list[tuple[str, str]] = [
+        ("API R12 allocation gaps", "/production/allocation-gaps?limit=3"),
+        (
+            "API R13 finished without consumption",
+            "/production/orders/finished-without-consumption?limit=3",
+        ),
+        (
+            "API R14 average planned time",
+            "/production/work-centers/average-planned-time?limit=5",
+        ),
+        (
+            "API R15 consumption by item",
+            "/production/consumption/by-item/01010001?limit=3",
+        ),
+    ]
+
     p0_chat: list[tuple[str, str, str, str | None]] = [
         (
             "S1 consumption",
@@ -278,6 +294,33 @@ def main() -> int:
         ),
     ]
 
+    p2_chat: list[tuple[str, str, str, str | None]] = [
+        (
+            "S10 allocation gaps",
+            "Liste componentes sem empenho hoje filial 01",
+            "/production/allocation-gaps",
+            "get_production_allocation_gaps",
+        ),
+        (
+            "S11 finished without consumption",
+            "Quais OPs finalizadas sem consumo hoje?",
+            "/production/orders/finished-without-consumption",
+            "get_production_orders_finished_without_consumption",
+        ),
+        (
+            "S12 average planned time",
+            "Tempo médio planejado por CT hoje",
+            "/production/work-centers/average-planned-time",
+            "get_production_work_center_average_planned_time",
+        ),
+        (
+            "S13 consumption by item",
+            "Consumo real do item 01010001",
+            "/production/consumption/by-item/",
+            "get_production_consumption_by_item",
+        ),
+    ]
+
     failed = 0
 
     print("=== api-delpi P0 ===")
@@ -286,11 +329,17 @@ def main() -> int:
     print("\n=== api-delpi P1 ===")
     failed += _run_api_checks(token, p1_api)
 
+    print("\n=== api-delpi P2 ===")
+    failed += _run_api_checks(token, p2_api)
+
     print("\n=== chat E2E P0 ===")
     failed += _run_chat_checks(token, agent_id, p0_chat)
 
     print("\n=== chat E2E P1 ===")
     failed += _run_chat_checks(token, agent_id, p1_chat)
+
+    print("\n=== chat E2E P2 ===")
+    failed += _run_chat_checks(token, agent_id, p2_chat)
 
     print(f"\n{'FAIL' if failed else 'PASS'} — total failures: {failed}")
     return 1 if failed else 0

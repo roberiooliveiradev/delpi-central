@@ -312,6 +312,23 @@ class ExternalActionSelectionDispatchService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            selected = self._route_selection.select_production_operational(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                candidates_loader=self._list_allowed_candidates,
+                build_date_branch_parameters=self._build_date_branch_parameters,
+                path_lookup_loader=self._lookup_production_operational_actions,
+            )
+
+            if selected:
+                return selected
+
         if (
             ExternalActionDomainRouteSelectionService.looks_like_system_metadata_question(
                 normalized
@@ -343,6 +360,7 @@ class ExternalActionSelectionDispatchService:
             and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
                 normalized
             )
+            and not ChatProductionOperationalIntentService.matches_rest_route(message)
         ):
             selected = self._route_selection.select_product_search(
                 message,
@@ -370,7 +388,9 @@ class ExternalActionSelectionDispatchService:
                 previous_messages=previous_messages,
             )
 
-            if not resolved_from_history:
+            if not resolved_from_history and not ChatProductionOperationalIntentService.matches_rest_route(
+                message
+            ):
                 selected = self._route_selection.select_product_search(
                     message,
                     normalized,
@@ -445,18 +465,6 @@ class ExternalActionSelectionDispatchService:
                 message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
-            )
-
-            if selected:
-                return selected
-
-        if ChatProductionOperationalIntentService.matches_rest_route(message):
-            selected = self._route_selection.select_production_operational(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                candidates_loader=self._list_allowed_candidates,
-                build_date_branch_parameters=self._build_date_branch_parameters,
             )
 
             if selected:
@@ -589,6 +597,7 @@ class ExternalActionSelectionDispatchService:
             and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
                 normalized
             )
+            and not ChatProductionOperationalIntentService.matches_rest_route(message)
         ):
             selected = self._route_selection.select_product_search(
                 message,
@@ -712,6 +721,18 @@ class ExternalActionSelectionDispatchService:
             message,
             parameters,
             previous_messages=previous_messages,
+        )
+
+    def _lookup_production_operational_actions(
+        self,
+        *,
+        path_token: str,
+        allowed_action_ids: list[str],
+    ) -> list[dict]:
+        return self._support.find_allowed_actions_by_path_token(
+            path_token=path_token,
+            operation_token="",
+            allowed_action_ids=allowed_action_ids,
         )
 
     def _list_allowed_candidates(

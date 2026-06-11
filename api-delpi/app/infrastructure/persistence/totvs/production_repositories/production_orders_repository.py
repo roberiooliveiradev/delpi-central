@@ -151,3 +151,107 @@ class ProductionOrdersRepository(
 
         with self as repo:
             return repo.execute_query(sql, tuple(params))
+
+    def fetch_allocation_gaps(
+        self,
+        *,
+        reference_date: str,
+        branch: str | None,
+        work_center: str | None,
+        limit: int,
+    ) -> list[dict]:
+        extra_filters, extra_params = self._reference_filters(
+            branch=branch,
+            work_center=work_center,
+        )
+        params = [reference_date, *extra_params]
+
+        sql = f"""
+        SELECT TOP {int(limit)}
+            RE.D4_FILIAL AS branch,
+            RE.D4_OP AS production_order,
+            RE.D4_PRODUTO AS component_code,
+            P.B1_DESC AS description,
+            RE.D4_OPERAC AS operation,
+            RE.D4_QUANT AS allocated_qty,
+            OA.H8_CTRAB AS work_center
+        FROM SD4010 RE WITH (NOLOCK)
+        INNER JOIN SC2010 OP WITH (NOLOCK)
+            ON OP.C2_OP = RE.D4_OP
+           AND OP.D_E_L_E_T_ = ''
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON RE.D4_PRODUTO = P.B1_COD
+           AND P.D_E_L_E_T_ = ''
+        INNER JOIN SH8010 OA WITH (NOLOCK)
+            ON RE.D4_OP = OA.H8_OP
+           AND RE.D4_OPERAC = OA.H8_OPER
+           AND OA.D_E_L_E_T_ = ''
+        WHERE RE.D_E_L_E_T_ = ''
+          AND OP.C2_PRIOR = '500'
+          AND RE.D4_QUANT = 0
+          AND OA.H8_DTINI = ?
+          {extra_filters}
+        ORDER BY RE.D4_OP ASC
+        """
+
+        with self as repo:
+            return repo.execute_query(sql, tuple(params))
+
+    def fetch_finished_without_consumption(
+        self,
+        *,
+        reference_date: str,
+        branch: str | None,
+        work_center: str | None,
+        limit: int,
+    ) -> list[dict]:
+        extra_filters, extra_params = self._reference_filters(
+            branch=branch,
+            work_center=work_center,
+        )
+        params = [reference_date, *extra_params]
+
+        sql = f"""
+        SELECT TOP {int(limit)}
+            OP.C2_FILIAL AS branch,
+            OP.C2_OP AS production_order,
+            OP.C2_PRODUTO AS product_code,
+            P.B1_DESC AS description,
+            OP.C2_QUANT AS planned_qty,
+            OP.C2_QUJE AS produced_qty,
+            RE.D4_COD AS component_code,
+            RE.D4_OPERAC AS operation,
+            SUM(RE.D4_QUANT) AS allocated_qty,
+            OA.H8_CTRAB AS work_center
+        FROM SC2010 OP WITH (NOLOCK)
+        INNER JOIN SD4010 RE WITH (NOLOCK)
+            ON OP.C2_OP = RE.D4_OP
+           AND RE.D_E_L_E_T_ = ''
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON OP.C2_PRODUTO = P.B1_COD
+           AND P.D_E_L_E_T_ = ''
+        INNER JOIN SH8010 OA WITH (NOLOCK)
+            ON RE.D4_OP = OA.H8_OP
+           AND RE.D4_OPERAC = OA.H8_OPER
+           AND OA.D_E_L_E_T_ = ''
+        WHERE OP.D_E_L_E_T_ = ''
+          AND OP.C2_PRIOR = '500'
+          AND OA.H8_DTINI = ?
+          AND OP.C2_QUANT = OP.C2_QUJE
+          {extra_filters}
+        GROUP BY
+            OP.C2_FILIAL,
+            OP.C2_OP,
+            OP.C2_PRODUTO,
+            P.B1_DESC,
+            OP.C2_QUANT,
+            OP.C2_QUJE,
+            RE.D4_COD,
+            RE.D4_OPERAC,
+            OA.H8_CTRAB
+        HAVING SUM(RE.D4_QUANT) = 0
+        ORDER BY OP.C2_OP ASC
+        """
+
+        with self as repo:
+            return repo.execute_query(sql, tuple(params))

@@ -192,6 +192,23 @@ class ChatExternalActionOrchestrationService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            selected = selection_service.select_action(
+                selection_message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                raw_message=raw_message,
+                memory_snapshot=memory_snapshot,
+            )
+
+            if selected:
+                return _return_planned([selected])
+
         from app.application.services.external_actions.external_action_domain_route_selection_service import (
             ExternalActionDomainRouteSelectionService,
         )

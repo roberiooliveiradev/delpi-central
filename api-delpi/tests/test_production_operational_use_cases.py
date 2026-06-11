@@ -117,3 +117,75 @@ def test_consumption_validated_use_case_calls_repository() -> None:
     use_case.execute(ProductionOperationalRequest(limit=5))
 
     repository.fetch_top_items_validated.assert_called_once()
+
+
+def test_allocation_gaps_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_allocation_gaps_use_case import (
+        GetProductionAllocationGapsUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_allocation_gaps.return_value = []
+
+    use_case = GetProductionAllocationGapsUseCase(repository)
+    use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    repository.fetch_allocation_gaps.assert_called_once()
+
+
+def test_finished_without_consumption_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_orders_finished_without_consumption_use_case import (
+        GetProductionOrdersFinishedWithoutConsumptionUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_finished_without_consumption.return_value = []
+
+    use_case = GetProductionOrdersFinishedWithoutConsumptionUseCase(repository)
+    use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    repository.fetch_finished_without_consumption.assert_called_once()
+
+
+def test_average_planned_time_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_work_center_average_planned_time_use_case import (
+        GetProductionWorkCenterAveragePlannedTimeUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_average_planned_time.return_value = []
+
+    use_case = GetProductionWorkCenterAveragePlannedTimeUseCase(repository)
+    use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    repository.fetch_average_planned_time.assert_called_once()
+
+
+def test_consumption_by_item_use_case_requires_code() -> None:
+    from app.application.use_cases.production.get_production_consumption_by_item_use_case import (
+        GetProductionConsumptionByItemUseCase,
+    )
+
+    use_case = GetProductionConsumptionByItemUseCase(MagicMock())
+
+    try:
+        use_case.execute(ProductionOperationalRequest())
+        assert False, "expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_consumption_by_item_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_consumption_by_item_use_case import (
+        GetProductionConsumptionByItemUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_consumption_by_item.return_value = []
+
+    use_case = GetProductionConsumptionByItemUseCase(repository)
+    use_case.execute(
+        ProductionOperationalRequest(item_code="10080063", date_start="2026-03-01")
+    )
+
+    repository.fetch_consumption_by_item.assert_called_once()

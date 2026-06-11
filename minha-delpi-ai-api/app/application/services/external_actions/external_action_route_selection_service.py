@@ -317,6 +317,7 @@ class ExternalActionRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
         build_date_branch_parameters: Callable[..., dict] | None = None,
+        path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
         return self._production_operational_route.try_select(
             message,
@@ -324,6 +325,7 @@ class ExternalActionRouteSelectionService:
             previous_messages=previous_messages,
             candidates_loader=candidates_loader,
             build_date_branch_parameters=build_date_branch_parameters,
+            path_lookup_loader=path_lookup_loader,
         )
 
     def select_exclusive_raw_material_catalog(

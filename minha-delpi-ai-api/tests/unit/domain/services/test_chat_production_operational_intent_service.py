@@ -58,3 +58,38 @@ def test_resolve_consumption_validated_with_top_limit() -> None:
         "Consumo validado por apontamento no mês top 10"
     )
     assert kind == ProductionOperationalIntentKind.CONSUMPTION_VALIDATED
+
+
+def test_resolve_allocation_gaps_intent() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Liste componentes sem empenho hoje filial 01"
+    )
+    assert kind == ProductionOperationalIntentKind.ALLOCATION_GAPS
+
+
+def test_resolve_finished_without_consumption_intent() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Quais OPs finalizadas sem consumo hoje?"
+    )
+    assert kind == ProductionOperationalIntentKind.FINISHED_WITHOUT_CONSUMPTION
+
+
+def test_resolve_average_planned_time_intent() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Tempo médio planejado por CT hoje"
+    )
+    assert kind == ProductionOperationalIntentKind.AVERAGE_PLANNED_TIME
+
+
+def test_resolve_consumption_by_item_requires_code() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Consumo real do item 01010001"
+    )
+    assert kind == ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM
+
+
+def test_consumption_by_item_without_code_does_not_match_by_item() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Consumo real do item no mês"
+    )
+    assert kind != ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM

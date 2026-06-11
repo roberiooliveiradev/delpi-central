@@ -70,7 +70,8 @@
         "/production/losses/",
         "/production/schedule/",
         "/production/orders/",
-        "/production/work-centers/"
+        "/production/work-centers/",
+        "/production/allocation-gaps"
       ],
       "parameterStrategy": "date_branch",
       "method": "GET"

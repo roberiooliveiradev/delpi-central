@@ -87,6 +87,10 @@
       "plano de produção hoje",
       "producao hoje",
       "produção hoje",
+      "programados para produzir",
+      "programado para produzir",
+      "programados para produção",
+      "programado para produção",
       "para produzir hoje"
     ],
     "excludeTerms": [
@@ -175,6 +179,56 @@
     ],
     "excludeTerms": ["centro de trabalho", " por ct", "comprad"]
   },
+  "allocationGaps": {
+    "terms": [
+      "sem empenho",
+      "sem empenhos",
+      "travamento de producao",
+      "travamento de produção",
+      "travamento no ct",
+      "componentes sem empenho",
+      "allocation gap",
+      "falta de empenho"
+    ],
+    "excludeTerms": ["consumid", "comprad", "refugo", "finalizad sem consumo"]
+  },
+  "finishedWithoutConsumption": {
+    "terms": [
+      "finalizadas sem consumo",
+      "finalizada sem consumo",
+      "sem consumo de componentes",
+      "sem baixa de material",
+      "op finalizada sem consumo",
+      "ordens finalizadas sem consumo"
+    ],
+    "excludeTerms": ["sem empenho", "travamento", "comprad"]
+  },
+  "averagePlannedTime": {
+    "terms": [
+      "tempo medio por ct",
+      "tempo médio por ct",
+      "media de tempo por ct",
+      "média de tempo por ct",
+      "tempo planejado por ct",
+      "tempo medio planejado",
+      "tempo médio planejado",
+      "media de tempo por centro de trabalho",
+      "média de tempo por centro de trabalho"
+    ],
+    "excludeTerms": ["consumid", "real de consumo", "comprad"]
+  },
+  "consumptionByItem": {
+    "terms": [
+      "consumo do item",
+      "consumo real do item",
+      "consumo por produto do grupo",
+      "consumido do item",
+      "quantidade consumida do item",
+      "consumo de materia-prima",
+      "consumo de matéria-prima"
+    ],
+    "excludeTerms": ["maior consumo", "top consumo", "ranking de consumo", "comprad"]
+  },
   "lossTypeRefugo": ["refugo"],
   "lossTypeScrap": ["scrap"],
   "pathTokens": {
@@ -187,6 +241,10 @@
     "scheduleToday": "/production/schedule/today",
     "ordersOpen": "/production/orders/open",
     "ordersFinished": "/production/orders/finished",
-    "workCenterSummary": "/production/work-centers/order-summary"
+    "workCenterSummary": "/production/work-centers/order-summary",
+    "allocationGaps": "/production/allocation-gaps",
+    "finishedWithoutConsumption": "/production/orders/finished-without-consumption",
+    "averagePlannedTime": "/production/work-centers/average-planned-time",
+    "consumptionByItem": "/production/consumption/by-item/"
   }
 }

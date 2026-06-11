@@ -154,3 +154,48 @@ class ProductionConsumptionRepository(
 
         with self as repo:
             return repo.execute_query(sql, tuple(params))
+
+    def fetch_consumption_by_item(
+        self,
+        *,
+        item_code: str,
+        date_start: str,
+        date_end_inclusive: str,
+        branch: str | None,
+        product_group: str | None,
+        limit: int,
+    ) -> list[dict]:
+        consumption_expr = ConsumptionRealQuantityService.SQL_EXPRESSION.replace(
+            "D4.", "SD4."
+        )
+        branch_filter = "AND SD4.D4_FILIAL = ?" if branch else ""
+        group_filter = "AND SB1.B1_GRUPO = ?" if product_group else ""
+        params: list = [item_code, date_start, date_end_inclusive]
+        if branch:
+            params.append(branch)
+        if product_group:
+            params.append(product_group)
+
+        sql = f"""
+        SELECT TOP {int(limit)}
+            SD4.D4_PRODUTO AS product_code,
+            SB1.B1_DESC AS description,
+            SB1.B1_GRUPO AS product_group,
+            SUM({consumption_expr}) AS real_consumption_qty
+        FROM SD4010 SD4 WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SD4.D4_PRODUTO
+           AND SB1.D_E_L_E_T_ = ''
+        WHERE SD4.D_E_L_E_T_ = ''
+          AND SD4.D4_COD = ?
+          AND SD4.D4_DATA >= ?
+          AND SD4.D4_DATA <= ?
+          {branch_filter}
+          {group_filter}
+        GROUP BY SD4.D4_PRODUTO, SB1.B1_DESC, SB1.B1_GRUPO
+        HAVING SUM({consumption_expr}) > 0
+        ORDER BY real_consumption_qty DESC, SD4.D4_PRODUTO ASC
+        """
+
+        with self as repo:
+            return repo.execute_query(sql, tuple(params))

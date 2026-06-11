@@ -7,6 +7,9 @@ from typing import Callable
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntentService,
+)
 from app.domain.services.chat_production_operational_intent_service import (
     ChatProductionOperationalIntentService,
     ProductionOperationalIntentKind,
@@ -28,6 +31,14 @@ class ExternalActionProductionOperationalRouteSelectionService:
         ProductionOperationalIntentKind.ORDERS_OPEN: "productionOrdersOpen",
         ProductionOperationalIntentKind.ORDERS_FINISHED: "productionOrdersFinished",
         ProductionOperationalIntentKind.WORK_CENTER_SUMMARY: "productionWorkCenterOrderSummary",
+        ProductionOperationalIntentKind.ALLOCATION_GAPS: "productionAllocationGaps",
+        ProductionOperationalIntentKind.FINISHED_WITHOUT_CONSUMPTION: (
+            "productionOrdersFinishedWithoutConsumption"
+        ),
+        ProductionOperationalIntentKind.AVERAGE_PLANNED_TIME: (
+            "productionWorkCenterAveragePlannedTime"
+        ),
+        ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM: "productionConsumptionByItem",
     }
 
     def try_select(
@@ -38,6 +49,7 @@ class ExternalActionProductionOperationalRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
         build_date_branch_parameters: Callable[..., dict] | None = None,
+        path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
         kind = ChatProductionOperationalIntentService.resolve(message)
 
@@ -49,12 +61,48 @@ class ExternalActionProductionOperationalRouteSelectionService:
         if not path_token:
             return None
 
-        candidates = self._load_candidates(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
+        candidate_sets: list[list[dict]] = [
+            self._load_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
+        ]
 
+        if path_lookup_loader:
+            path_candidates = path_lookup_loader(
+                path_token=path_token,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if path_candidates:
+                candidate_sets.append(path_candidates)
+
+        for candidates in candidate_sets:
+            selected = self._select_action(
+                candidates,
+                kind=kind,
+                path_token=path_token,
+                message=message,
+                previous_messages=previous_messages,
+                build_date_branch_parameters=build_date_branch_parameters,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
+    def _select_action(
+        self,
+        candidates: list[dict],
+        *,
+        kind: ProductionOperationalIntentKind,
+        path_token: str,
+        message: str,
+        previous_messages: list | None,
+        build_date_branch_parameters: Callable[..., dict] | None,
+    ) -> dict | None:
         for action in candidates:
             if str(action.get("method") or "").upper() != "GET":
                 continue
@@ -83,6 +131,12 @@ class ExternalActionProductionOperationalRouteSelectionService:
 
                 if loss_type:
                     parameters["loss_type"] = loss_type
+
+            if kind == ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM:
+                product_code = ChatProductQueryIntentService.extract_product_code(message)
+
+                if product_code:
+                    parameters["code"] = product_code
 
             if not parameters:
                 parameters = {"limit": 10}

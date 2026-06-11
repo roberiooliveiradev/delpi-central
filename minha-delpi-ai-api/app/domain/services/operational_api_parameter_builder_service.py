@@ -110,6 +110,16 @@ class OperationalApiParameterBuilderService:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
                 parameters[name] = 50
+            elif lowered in {"work_center", "workcenter"} and branch_match is None:
+                work_center_match = re.search(r"\bct\s+(\S+)", normalized)
+
+                if work_center_match:
+                    parameters[name] = work_center_match.group(1)
+            elif lowered == "product_group":
+                group_match = re.search(r"\bgrupo\s+(\d{4})\b", normalized)
+
+                if group_match:
+                    parameters[name] = group_match.group(1)
             elif lowered == "granularity":
                 inferred = self._infer_granularity(normalized, date_range)
 

@@ -9,3 +9,11 @@ class ProductionWorkCentersRepositoryPort(Protocol):
         branch: str | None,
         limit: int,
     ) -> list[dict]: ...
+
+    def fetch_average_planned_time(
+        self,
+        *,
+        reference_date: str,
+        branch: str | None,
+        limit: int,
+    ) -> list[dict]: ...

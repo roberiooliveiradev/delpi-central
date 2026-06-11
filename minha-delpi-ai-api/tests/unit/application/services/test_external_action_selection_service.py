@@ -319,6 +319,54 @@ def test_production_schedule_question_does_not_select_product_search():
     assert "search" not in selected["arguments"]["actionId"]
 
 
+def test_liste_programados_hoje_selects_schedule_not_product_search():
+    class _SemanticMissRepository(FakeRepository):
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return [
+                action
+                for action in self.actions
+                if action["actionId"] == "search-products"
+            ]
+
+    service = ExternalActionSelectionService(
+        _SemanticMissRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Buscar produtos",
+                    "parametersSchema": [
+                        {"name": "description"},
+                        {"name": "page"},
+                        {"name": "page_size"},
+                    ],
+                },
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "liste os produtos que estão programados para produzir hoje",
+        allowed_action_ids=["search-products", "production-schedule-today"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+
+
 def test_scheduled_production_tomorrow_selects_sql_not_parent_products():
     service = ExternalActionSelectionService(
         FakeRepository(
@@ -1490,3 +1538,44 @@ def test_consumption_validated_top_limit_not_blocked_by_comparison_heuristic():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "validated-action"
+
+
+def test_allocation_gaps_liste_componentes_not_product_search():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Buscar produtos",
+                    "parametersSchema": [
+                        {"name": "description"},
+                        {"name": "page"},
+                        {"name": "page_size"},
+                    ],
+                },
+                {
+                    "actionId": "allocation-gaps-action",
+                    "method": "GET",
+                    "path": "/production/allocation-gaps",
+                    "operationId": "get_production_allocation_gaps",
+                    "summary": "Componentes sem empenho",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "branch"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Liste componentes sem empenho hoje filial 01",
+        allowed_action_ids=["search-products", "allocation-gaps-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "allocation-gaps-action"

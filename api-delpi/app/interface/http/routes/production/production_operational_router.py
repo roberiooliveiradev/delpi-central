@@ -8,26 +8,34 @@ from app.application.dto.production.production_operational_request import (
 )
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.composition.production_operational_composer import (
+    build_get_production_allocation_gaps_use_case,
+    build_get_production_consumption_by_item_use_case,
     build_get_production_consumption_top_items_use_case,
     build_get_production_consumption_top_items_by_work_center_use_case,
     build_get_production_consumption_top_items_validated_use_case,
     build_get_production_losses_records_use_case,
     build_get_production_losses_top_materials_use_case,
     build_get_production_orders_finished_use_case,
+    build_get_production_orders_finished_without_consumption_use_case,
     build_get_production_orders_open_use_case,
     build_get_production_schedule_today_use_case,
+    build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata import (
+    PRODUCTION_ALLOCATION_GAPS,
+    PRODUCTION_CONSUMPTION_BY_ITEM,
     PRODUCTION_CONSUMPTION_TOP_ITEMS,
     PRODUCTION_CONSUMPTION_TOP_ITEMS_BY_WORK_CENTER,
     PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED,
     PRODUCTION_LOSSES_RECORDS,
     PRODUCTION_LOSSES_TOP_MATERIALS,
     PRODUCTION_ORDERS_FINISHED,
+    PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
     PRODUCTION_ORDERS_OPEN,
     PRODUCTION_SCHEDULE_TODAY,
+    PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME,
     PRODUCTION_WORK_CENTER_ORDER_SUMMARY,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -306,4 +314,132 @@ def get_consumption_top_items_validated(
         return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro em consumption/top-items-validated: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/allocation-gaps", **PRODUCTION_ALLOCATION_GAPS)
+@require_permission(API_DELPI_ACCESS)
+def get_allocation_gaps(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_allocation_gaps_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ALLOCATION_GAPS["operation_id"],
+            message="Componentes sem empenho consultados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em allocation-gaps: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em allocation-gaps: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/orders/finished-without-consumption",
+    **PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_orders_finished_without_consumption(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_orders_finished_without_consumption_use_case().execute(
+            dto
+        )
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION["operation_id"],
+            message="OPs finalizadas sem consumo consultadas com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/finished-without-consumption: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/finished-without-consumption: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/work-centers/average-planned-time",
+    **PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_work_center_average_planned_time(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            limit=limit,
+        )
+        result = build_get_production_work_center_average_planned_time_use_case().execute(
+            dto
+        )
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME["operation_id"],
+            message="Tempo médio planejado por CT consultado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em work-centers/average-planned-time: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em work-centers/average-planned-time: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/consumption/by-item/{code}", **PRODUCTION_CONSUMPTION_BY_ITEM)
+@require_permission(API_DELPI_ACCESS)
+def get_consumption_by_item(
+    code: str,
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    product_group: Optional[str] = Query(default=None, min_length=4, max_length=4),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            item_code=code,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            product_group=product_group,
+            limit=limit,
+        )
+        result = build_get_production_consumption_by_item_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_CONSUMPTION_BY_ITEM["operation_id"],
+            message="Consumo real do item por produto consultado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em consumption/by-item/{{code}}: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em consumption/by-item/{{code}}: {exc}")
         return error_response(str(exc), status_code=500)

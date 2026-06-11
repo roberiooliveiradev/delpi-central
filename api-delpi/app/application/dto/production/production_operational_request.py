@@ -11,4 +11,6 @@ class ProductionOperationalRequest:
     group_by: str = "general"
     loss_type: str = "both"
     work_center: str | None = None
+    item_code: str | None = None
+    product_group: str | None = None
     legacy: bool = False

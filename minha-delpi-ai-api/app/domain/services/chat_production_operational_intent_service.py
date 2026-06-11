@@ -24,6 +24,10 @@ class ProductionOperationalIntentKind(str, Enum):
     ORDERS_OPEN = "ordersOpen"
     ORDERS_FINISHED = "ordersFinished"
     WORK_CENTER_SUMMARY = "workCenterSummary"
+    ALLOCATION_GAPS = "allocationGaps"
+    FINISHED_WITHOUT_CONSUMPTION = "finishedWithoutConsumption"
+    AVERAGE_PLANNED_TIME = "averagePlannedTime"
+    CONSUMPTION_BY_ITEM = "consumptionByItem"
 
 
 _BUNDLE = "production_operational_intent"
@@ -55,6 +59,10 @@ class ChatProductionOperationalIntentService:
 
         for kind in (
             ProductionOperationalIntentKind.LOSSES_RECORDS,
+            ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM,
+            ProductionOperationalIntentKind.ALLOCATION_GAPS,
+            ProductionOperationalIntentKind.FINISHED_WITHOUT_CONSUMPTION,
+            ProductionOperationalIntentKind.AVERAGE_PLANNED_TIME,
             ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER,
             ProductionOperationalIntentKind.CONSUMPTION_VALIDATED,
             ProductionOperationalIntentKind.WORK_CENTER_SUMMARY,
@@ -93,6 +101,10 @@ class ChatProductionOperationalIntentService:
 
         if kind == ProductionOperationalIntentKind.CONSUMPTION:
             if "comprad" in normalized or " compra " in f" {normalized} ":
+                return False
+
+        if kind == ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM:
+            if not ChatProductQueryIntentService.extract_product_code(message):
                 return False
 
         return True

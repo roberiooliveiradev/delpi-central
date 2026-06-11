@@ -146,6 +146,18 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_consumption_top_items_validated": RouteContract(
         "production_consumption_top_items_validated", "playbook_report"
     ),
+    "get_production_allocation_gaps": RouteContract(
+        "production_allocation_gaps", "playbook_report"
+    ),
+    "get_production_orders_finished_without_consumption": RouteContract(
+        "production_orders_finished_without_consumption", "playbook_report"
+    ),
+    "get_production_work_center_average_planned_time": RouteContract(
+        "production_work_center_average_planned_time", "playbook_report"
+    ),
+    "get_production_consumption_by_item": RouteContract(
+        "production_consumption_by_item", "playbook_report"
+    ),
     "get_purchases_top_products": RouteContract(
         "purchases_top_products", "playbook_report"
     ),
