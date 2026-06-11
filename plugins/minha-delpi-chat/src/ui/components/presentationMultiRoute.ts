@@ -1,6 +1,6 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 
-import { orderVisualSegments, resolveVisualOrderFromToolCalls, type AssistantVisualKind } from "./assistantContentLayout";
+import { orderVisualSegments, resolveVisualOrderFromToolCalls } from "./assistantContentLayout";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
