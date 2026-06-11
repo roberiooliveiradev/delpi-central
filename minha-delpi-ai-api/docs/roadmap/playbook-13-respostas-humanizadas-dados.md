@@ -506,7 +506,7 @@ O MFE permanece responsável por **mecânica de UI** (registry de componentes, m
 **P6-A entregue (jun/2026 — parcial):**
 
 - `ChatPresentationPayloadPruningService.prune()` — omite `*Presentation` fora de `tailVisualOrder` quando `tailVisualPolicy: allowlist`
-- Encaixe no pipeline: fim de `ExecuteExternalActionUseCase._build_presentation_metadata`
+- Encaixe no pipeline: `ChatPresentationRenderPipelineService.finalize()` (fim de `_build_presentation_metadata`)
 - `renderHints.suppressedKinds` no `stackPresentationPlan` (telemetria)
 - Testes: `test_presentation_render_contract.py`
 - MFE: removido uso de `shouldRenderDashboardSegment` em `visualSegmentCollector` e `presentationStackBlueprint` (função mantida `@deprecated`)
@@ -515,13 +515,14 @@ O MFE permanece responsável por **mecânica de UI** (registry de componentes, m
 
 - `renderHints.textRenderMode` (`compact`|`full`) + `tailVisualPolicy` sempre explícito (`legacy`|`allowlist`)
 - `ChatPresentationRenderPlanService.build()` → `metadata.renderPlan` (lead, highlights, attention, tabelas, tail)
-- MFE: `renderPlanSegmentBuilder.ts` + `buildSegmentsFromRenderPlan` — executor mecânico priorizado em `buildCanonicalStackSegments`
+- MFE: `renderPlanSegmentBuilder.ts` + `buildSegmentsFromRenderPlan` — executor mecânico; `synthesizeRenderPlanFromToolCalls` para mensagens legadas sem `renderPlan` v1
+- MFE: `presentationStackBlueprint.ts` reduzido a wrapper (`buildCanonicalStackSegments` → renderPlan); removido `buildPlanOrderedStackSegments`
 - MFE: `nativeSingleViewBuilder` consome `renderPlan` em layout não-stack
 - MFE: `shouldApplyClientMarkdownCompaction` — não recompacta quando API enviou `textRenderMode`
 - MFE: removidas `shouldRenderDashboardSegment` / `isExplicitDashboardSession`
 - CI: `scripts/audit_mfe_presentation_logic.py`
 - Gate estendido: analyser, product_detail, factory/production status auto (`P6_EXTENDED_PIPELINE_CASES`)
-- MFE: `hasRenderPlanContract` / `isApiPreparedMarkdown` — blueprint legado só sem renderPlan v1
+- MFE: `hasRenderPlanContract` / `isApiPreparedMarkdown` — fallback mínimo só prosa quando plano não montável; marcadores `[[table]]` via `markerSegmentBuilder` (não blueprint)
 
 | Área | Arquivo(s) MFE | O que decide hoje | Canônico API (alvo) |
 |------|----------------|-------------------|---------------------|
@@ -600,14 +601,17 @@ MFE: `buildSegmentsFromRenderPlan(metadata)` — substitui `presentationStackBlu
 | `ChatPresentationStackOrderService` | Garantir `tailVisualPolicy` sempre explícito no plano |
 | `ExternalActionResultPresenter` / presenters | Dedup estrutural antes de gravar metadata (sem depender de heurística MFE) |
 | `ChatRichPresentationTextService` | Único responsável por markdown compacto vs completo |
-| **`ChatPresentationRenderPlanService`** (novo) | Monta `renderPlan` ou valida paridade com builder MFE legado |
+| **`ChatPresentationRenderPipelineService`** (novo) | `finalize(metadata)` — `prune` + `renderPlan.build` |
+| **`ChatPresentationRenderPlanService`** | Monta `renderPlan` v1 consumido pelo MFE |
+| `ChatPresentationPayloadPruningService` | Omite visuais/tabelas fora do contrato antes do `renderPlan` |
 
 Ponto de encaixe no pipeline (após §5 passo 7):
 
 ```text
 … ChatPresentationEvidenceFirstLayoutService.compose()
-  → ChatPresentationRenderPlanService.build(metadata)   [P6-C]
-  → ChatPresentationPayloadPruningService.prune(metadata) [P6-A]
+  → ChatPresentationRenderPipelineService.finalize(metadata)  [P6-A/B/C]
+      → ChatPresentationPayloadPruningService.prune()
+      → ChatPresentationRenderPlanService.build()
 ```
 
 #### 8.6.4 Plano de remoção no MFE (ordem)
@@ -617,7 +621,7 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 2. P6-A API omite tabelas duplicadas → remover shouldSkipTableSegment / isHierarchyDuplicateTable
 3. P6-A texto final na API → remover stripRichUi* do resolveAssistantRenderableMarkdown
 4. API tailVisualPolicy obrigatório → remover inferência em presentationStackPlan.parsePlan
-5. API renderPlan estável → reduzir presentationStackBlueprint a executor de renderPlan
+5. API renderPlan estável → `presentationStackBlueprint` reduzido a wrapper render-only (jun/2026)
 6. Remover fallback órfão legacy em appendTailVisuals (manter só allowlist)
 ```
 

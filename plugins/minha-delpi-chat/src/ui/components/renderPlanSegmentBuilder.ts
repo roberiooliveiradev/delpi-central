@@ -29,6 +29,291 @@ import {
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
 
+const VISUAL_TOKEN_TO_KEY: Record<string, string> = {
+  kpi: "kpiPresentation",
+  tree: "treePresentation",
+  chart: "chartPresentation",
+  dashboard: "dashboardPresentation",
+  table: "tablePresentation",
+};
+
+const TABLE_BUNDLE_SOURCES = [
+  "tablePresentations",
+  "tablePresentation",
+  "profileTablePresentation",
+  "inspectionTablePresentation",
+] as const;
+
+type SynthesizeRenderPlanHints = {
+  hasTableVisuals: boolean;
+  visualKinds: Set<string>;
+};
+
+function getExternalActionMetadata(toolCalls: ChatToolCall[]): Record<string, unknown> | null {
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    if (toolCall.metadata && typeof toolCall.metadata === "object") {
+      return toolCall.metadata as Record<string, unknown>;
+    }
+  }
+
+  return null;
+}
+
+function hasTextPresentation(metadata: Record<string, unknown>, commentary: string): boolean {
+  if (String(commentary || "").trim()) {
+    return true;
+  }
+
+  const textPresentation = metadata.textPresentation;
+
+  if (!textPresentation || typeof textPresentation !== "object") {
+    return false;
+  }
+
+  return Boolean(
+    String((textPresentation as Record<string, unknown>).markdown || "").trim(),
+  );
+}
+
+function hasTableBundle(metadata: Record<string, unknown>, hasTableVisuals: boolean): boolean {
+  for (const key of TABLE_BUNDLE_SOURCES) {
+    const presentation = metadata[key];
+
+    if (Array.isArray(presentation) && presentation.length) {
+      return true;
+    }
+
+    if (
+      presentation &&
+      typeof presentation === "object" &&
+      (presentation as Record<string, unknown>).type === "table"
+    ) {
+      return true;
+    }
+  }
+
+  return hasTableVisuals;
+}
+
+function hasVisualPresentation(
+  metadata: Record<string, unknown>,
+  token: string,
+  visualKinds: Set<string>,
+): boolean {
+  const normalized = String(token || "").trim().toLowerCase();
+  const source = VISUAL_TOKEN_TO_KEY[normalized];
+
+  if (source && metadata[source]) {
+    return true;
+  }
+
+  return visualKinds.has(normalized);
+}
+
+function shouldIncludeDecision(
+  metadata: Record<string, unknown>,
+  plan: StackPresentationPlan,
+): boolean {
+  if (planUsesSummaryThenEvidence(plan)) {
+    return false;
+  }
+
+  const dataAnswer = metadata.dataAnswer;
+
+  return Boolean(
+    dataAnswer &&
+      typeof dataAnswer === "object" &&
+      (dataAnswer as Record<string, unknown>).summary &&
+      typeof (dataAnswer as Record<string, unknown>).summary === "object",
+  );
+}
+
+function markdownHasHighlights(commentary: string): boolean {
+  const sections = partitionCommentarySections(
+    stripPresentationMarkersFromMarkdown(commentary),
+  );
+
+  return Boolean(sections.destaques?.trim());
+}
+
+function markdownHasAttention(commentary: string): boolean {
+  const sections = partitionCommentarySections(
+    stripPresentationMarkersFromMarkdown(commentary),
+  );
+
+  return Boolean(sections.pontos?.trim());
+}
+
+function buildTailVisualSegments(
+  metadata: Record<string, unknown>,
+  plan: StackPresentationPlan,
+  visualKinds: Set<string>,
+): NonNullable<PresentationRenderPlan["segments"]> {
+  const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
+
+  for (const token of plan.tailVisualOrder) {
+    const normalized = String(token).trim().toLowerCase();
+    const source = VISUAL_TOKEN_TO_KEY[normalized];
+
+    if (!source || !hasVisualPresentation(metadata, normalized, visualKinds)) {
+      continue;
+    }
+
+    segments.push({
+      kind: normalized,
+      slot: "tailVisuals",
+      source,
+    });
+  }
+
+  return segments;
+}
+
+function buildStackRenderPlanSegments(
+  metadata: Record<string, unknown>,
+  plan: StackPresentationPlan,
+  commentary: string,
+  hints: SynthesizeRenderPlanHints,
+): NonNullable<PresentationRenderPlan["segments"]> {
+  const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
+
+  if (shouldIncludeDecision(metadata, plan)) {
+    segments.push({ kind: "decision", slot: "lead", source: "dataAnswer" });
+  }
+
+  for (const slot of plan.narrativeOrder) {
+    const token = String(slot).trim();
+
+    if (token === "lead" && hasTextPresentation(metadata, commentary)) {
+      segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
+      continue;
+    }
+
+    if (token === "highlights" && markdownHasHighlights(commentary)) {
+      segments.push({ kind: "markdown", slot: "highlights", source: "textPresentation" });
+      continue;
+    }
+
+    if (token === "attention" && markdownHasAttention(commentary)) {
+      segments.push({ kind: "markdown", slot: "attention", source: "textPresentation" });
+      continue;
+    }
+
+    if (token === "profileTables" && hasTableBundle(metadata, hints.hasTableVisuals)) {
+      segments.push({
+        kind: "table",
+        slot: "profileTables",
+        source: "tablePresentations",
+      });
+      continue;
+    }
+
+    if (token === "operationalTables" && hasTableBundle(metadata, hints.hasTableVisuals)) {
+      segments.push({
+        kind: "table",
+        slot: "operationalTables",
+        source: "tablePresentations",
+      });
+      continue;
+    }
+
+    if (token === "tailVisuals") {
+      segments.push(...buildTailVisualSegments(metadata, plan, hints.visualKinds));
+    }
+  }
+
+  return segments;
+}
+
+function buildSingleViewRenderPlanSegments(
+  metadata: Record<string, unknown>,
+  plan: StackPresentationPlan,
+  commentary: string,
+  layoutMode: string,
+): NonNullable<PresentationRenderPlan["segments"]> {
+  const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
+  const decision = metadata.presentationDecision as Record<string, unknown> | undefined;
+
+  if (shouldIncludeDecision(metadata, plan)) {
+    segments.push({ kind: "decision", slot: "lead", source: "dataAnswer" });
+  }
+
+  if (hasTextPresentation(metadata, commentary)) {
+    segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
+  }
+
+  const selected = String(decision?.selected || "").trim().toLowerCase();
+  const source = VISUAL_TOKEN_TO_KEY[selected];
+
+  if (source && metadata[source]) {
+    segments.push({ kind: selected, slot: "primary", source });
+  }
+
+  if (!segments.length) {
+    return segments;
+  }
+
+  return segments;
+}
+
+/** P6 legacy — sintetiza renderPlan mecânico a partir do stackPlan quando a API não enviou v1. */
+export function synthesizeRenderPlanFromToolCalls(
+  toolCalls: ChatToolCall[],
+  commentary = "",
+  hints?: Partial<SynthesizeRenderPlanHints>,
+): PresentationRenderPlan | null {
+  const metadata = getExternalActionMetadata(toolCalls);
+
+  if (!metadata) {
+    return null;
+  }
+
+  const plan = getStackPresentationPlanFromToolCalls(toolCalls);
+  const decision = metadata.presentationDecision as Record<string, unknown> | undefined;
+  const layoutMode = String(decision?.layoutMode || "stack").trim() || "stack";
+  const resolvedHints: SynthesizeRenderPlanHints = {
+    hasTableVisuals: hints?.hasTableVisuals ?? false,
+    visualKinds: hints?.visualKinds ?? new Set<string>(),
+  };
+
+  const segments =
+    layoutMode === "stack"
+      ? buildStackRenderPlanSegments(metadata, plan, commentary, resolvedHints)
+      : buildSingleViewRenderPlanSegments(metadata, plan, commentary, layoutMode);
+
+  if (!segments.length && hasTextPresentation(metadata, commentary)) {
+    segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
+  }
+
+  if (!segments.length) {
+    return null;
+  }
+
+  return {
+    version: 1,
+    layoutMode,
+    segments,
+  };
+}
+
+export function resolveRenderPlanForExecution(
+  toolCalls: ChatToolCall[],
+  commentary = "",
+  hints?: Partial<SynthesizeRenderPlanHints>,
+): PresentationRenderPlan | null {
+  const existing = getRenderPlanFromToolCalls(toolCalls);
+
+  if (isRenderablePlan(existing)) {
+    return existing;
+  }
+
+  return synthesizeRenderPlanFromToolCalls(toolCalls, commentary, hints);
+}
+
 function stripPresentationMarkersFromMarkdown(markdown: string): string {
   return stripPresentationSectionMarkers(
     String(markdown || "").replace(PRESENTATION_MARKER_RE, ""),
@@ -123,10 +408,37 @@ function normalizeLeadProse(lead: string): string {
       continue;
     }
 
+    if (
+      unique.some(
+        (item) =>
+          (item.length >= 24 &&
+            key.length >= 24 &&
+            (item.includes(key) || key.includes(item))) ||
+          (item.includes("visão integrada") && key.includes("visão integrada")),
+      )
+    ) {
+      continue;
+    }
+
     unique.push(paragraph);
   }
 
   return unique.join("\n\n");
+}
+
+function shouldSkipScopeSectionFraming(leadProse: string, framing: string): boolean {
+  const lead = String(leadProse || "").trim().toLowerCase();
+  const scope = String(framing || "").trim().toLowerCase();
+
+  if (!lead || !scope) {
+    return false;
+  }
+
+  if (lead.includes(scope) || scope.includes(lead.slice(0, Math.min(lead.length, 96)))) {
+    return true;
+  }
+
+  return lead.includes("visão integrada") && scope.includes("visão integrada");
 }
 
 function operationalTableRoles(plan: StackPresentationPlan): StackTableRole[] {
@@ -249,6 +561,11 @@ function appendLeadMarkdown(
   const leadProse = sections.lead
     ? normalizeLeadProse(sections.lead)
     : normalizeLeadProse(commentary);
+  const scopeFraming = String(plan.sectionFraming?.scope || "").trim();
+
+  if (!shouldSkipScopeSectionFraming(leadProse, scopeFraming)) {
+    pushSectionFraming(plan, segments, "scope", parseMarkdown, appendUnique);
+  }
 
   if (leadProse) {
     pushMarkdownSegments(segments, leadProse, parseMarkdown, appendUnique);
@@ -262,7 +579,15 @@ export function buildSegmentsFromRenderPlan(
   appendUnique: (segments: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] | null {
-  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+  const visualKinds = new Set(
+    orderedVisuals
+      .map((segment) => String(segment.kind || "").trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const renderPlan = resolveRenderPlanForExecution(toolCalls, commentary, {
+    hasTableVisuals: orderedVisuals.some((segment) => segment.kind === "table"),
+    visualKinds,
+  });
 
   if (!isRenderablePlan(renderPlan)) {
     return null;

@@ -1,18 +1,12 @@
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { buildInterleavedStackSegments } from "./assistantContentInterleave";
-import { appendVisualSegment } from "./segmentDedupe";
+import { splitMarkdownWithPresentationMarkers as splitMarkerSegments } from "./assistantContentInterleave";
 import { parseMarkdownAndCodeSegments } from "./sqlMarkdownNormalizer";
 
 export function splitMarkdownWithPresentationMarkers(
   markdown: string,
   visuals: AssistantContentSegment[],
 ): AssistantContentSegment[] {
-  return buildInterleavedStackSegments(
-    markdown,
-    visuals,
-    parseMarkdownAndCodeSegments,
-    appendVisualSegment,
-  );
+  return splitMarkerSegments(markdown, visuals, parseMarkdownAndCodeSegments);
 }
 
 export function hasPresentationMarkerSyntax(markdown: string): boolean {

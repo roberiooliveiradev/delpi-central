@@ -294,3 +294,33 @@ def test_factory_auto_reference_metadata_has_compact_prose_without_embeds():
     assert metadata.get("dashboardPresentation") is None
     assert _markdown_embed_issues(markdown) == []
     assert metadata["stackPresentationPlan"]["renderHints"]["textRenderMode"] == "compact"
+
+
+def test_render_pipeline_finalize_prunes_and_builds_render_plan():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "tailVisualPolicy": "allowlist",
+            "tailVisualOrder": ["tree"],
+            "narrativeOrder": ["lead", "tailVisuals"],
+        },
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "dashboardPresentation": {"type": "dashboard", "title": "Painel", "panels": []},
+        "textPresentation": {"markdown": "### Status\n\nResumo."},
+    }
+
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    assert metadata.get("dashboardPresentation") is None
+    render_plan = metadata.get("renderPlan")
+    assert isinstance(render_plan, dict)
+    assert render_plan.get("version") == 1
+    assert any(segment.get("kind") == "tree" for segment in render_plan.get("segments") or [])

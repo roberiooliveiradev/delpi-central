@@ -188,4 +188,49 @@ describe("renderPlanSegmentBuilder", () => {
     expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
     expect(segments.some((segment) => segment.kind === "dashboard")).toBe(false);
   });
+
+  it("sintetiza renderPlan legado a partir do stackPresentationPlan", () => {
+    const commentary =
+      "### Taxa de Conversão\n\n<!-- section:scope -->\n\nIndicador com 3 métricas.";
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "kpi",
+        presentation: {
+          type: "kpi",
+          title: "Taxa de Conversão de Vendas",
+          cards: [{ label: "Atual", value: "82,5%" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          stackPresentationPlan: {
+            humanizedSections: true,
+            sectionVisibility: { scope: true, structure: true },
+            sectionFraming: {
+              scope: "Indicador retornado pela consulta.",
+              structure: "Cartões do indicador.",
+            },
+            narrativeOrder: ["lead", "tailVisuals"],
+            tailVisualOrder: ["kpi"],
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildSegmentsFromRenderPlan(
+      commentary,
+      visuals,
+      parseMarkdown,
+      (target, segment) => {
+        target.push(segment);
+      },
+      toolCalls,
+    );
+
+    expect(segments?.some((segment) => segment.kind === "stackSection")).toBe(true);
+    expect(segments?.some((segment) => segment.kind === "kpi")).toBe(true);
+  });
 });
