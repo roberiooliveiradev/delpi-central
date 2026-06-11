@@ -189,11 +189,11 @@ class ChatToolContextFormatService:
                     and meta["presentation"].get("type") == "kpi"
                 )
 
-                from app.application.use_cases.execute_external_action_use_case import (
-                    ExecuteExternalActionUseCase,
+                from app.domain.services.chat_presentation_primary_view_service import (
+                    ChatPresentationPrimaryViewService,
                 )
 
-                ExecuteExternalActionUseCase._align_presentation_with_decision(
+                ChatPresentationPrimaryViewService.finalize_decision_alignment(
                     meta,
                     kpi_presentation=(
                         meta.get("kpiPresentation")
@@ -371,11 +371,11 @@ class ChatToolContextFormatService:
         meta["explicitSessionFormat"] = requested_format
         meta["preferredFormat"] = requested_format
 
-        from app.application.use_cases.execute_external_action_use_case import (
-            ExecuteExternalActionUseCase,
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
         )
 
-        ExecuteExternalActionUseCase._align_presentation_with_decision(
+        ChatPresentationPrimaryViewService.finalize_decision_alignment(
             meta,
             kpi_presentation=(
                 meta.get("kpiPresentation")

@@ -1,5 +1,5 @@
-from app.application.use_cases.execute_external_action_use_case import (
-    ExecuteExternalActionUseCase,
+from app.domain.services.chat_presentation_primary_view_service import (
+    ChatPresentationPrimaryViewService,
 )
 
 
@@ -15,7 +15,7 @@ def test_align_presentation_prefers_kpi_cards_over_duplicate_text():
     }
     kpi = {"type": "kpi", "title": "Snapshot de RH", "cards": [{"label": "PDIs ativos", "value": 334}]}
 
-    ExecuteExternalActionUseCase._align_presentation_with_decision(
+    ChatPresentationPrimaryViewService.finalize_decision_alignment(
         metadata,
         kpi_presentation=kpi,
     )
@@ -36,7 +36,7 @@ def test_align_presentation_text_mode_hides_kpi_primary():
         },
     }
 
-    ExecuteExternalActionUseCase._align_presentation_with_decision(
+    ChatPresentationPrimaryViewService.finalize_decision_alignment(
         metadata,
         kpi_presentation=kpi,
     )

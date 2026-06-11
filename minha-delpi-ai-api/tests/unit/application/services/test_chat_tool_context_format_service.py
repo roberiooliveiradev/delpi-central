@@ -3,6 +3,57 @@ from app.application.services.chat_tool_context_format_service import (
 )
 
 
+def test_apply_format_override_table_aligns_without_stale_use_case_helper():
+    """Regressão: override Tabela não pode chamar método removido do use case."""
+    service = ChatToolContextFormatService()
+    metadata = {
+        "ok": True,
+        "path": "/production/schedule/today",
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "single",
+            "availableViews": ["text", "table"],
+        },
+        "presentation": {"type": "table", "title": "Produtos programados", "rows": [{"product_code": "90269001"}]},
+        "textPresentation": {"type": "markdown", "markdown": "### Programação"},
+        "kpiPresentation": {"type": "kpi", "title": "KPI", "cards": []},
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
+    payload = {"items": [{"product_code": "90269001", "description": "ITEM"}]}
+
+    service.apply_format_override(tool_calls, "table", payload)
+
+    meta = tool_calls[0]["metadata"]
+
+    assert meta["presentationDecision"]["selected"] == "table"
+    assert meta.get("explicitSessionFormat") == "table"
+    assert meta["presentation"]["type"] == "table"
+
+
+def test_apply_format_override_chart_aligns_decision():
+    service = ChatToolContextFormatService()
+    metadata = {
+        "ok": True,
+        "path": "/financial/rol",
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "single",
+            "availableViews": ["text", "chart", "table"],
+        },
+        "presentation": {"type": "chart", "title": "ROL", "data": [{"label": "Jan", "value": 1}]},
+        "textPresentation": {"type": "markdown", "markdown": "### ROL"},
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
+
+    service.apply_format_override(tool_calls, "chart", {"items": []})
+
+    meta = tool_calls[0]["metadata"]
+
+    assert meta["presentationDecision"]["selected"] == "chart"
+    assert meta.get("explicitSessionFormat") == "chart"
+    assert meta["presentation"]["type"] == "chart"
+
+
 def test_apply_format_override_builds_stock_tree_from_wrapped_payload():
     service = ChatToolContextFormatService()
     metadata = {
