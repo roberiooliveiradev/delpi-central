@@ -131,6 +131,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_schedule_today": RouteContract(
         "production_schedule_today", "playbook_report"
     ),
+    "get_production_orders_open": RouteContract(
+        "production_orders_open", "playbook_report"
+    ),
+    "get_production_orders_finished": RouteContract(
+        "production_orders_finished", "playbook_report"
+    ),
+    "get_production_work_center_order_summary": RouteContract(
+        "production_work_center_order_summary", "playbook_report"
+    ),
+    "get_production_consumption_top_items_by_work_center": RouteContract(
+        "production_consumption_top_items_by_work_center", "playbook_report"
+    ),
+    "get_production_consumption_top_items_validated": RouteContract(
+        "production_consumption_top_items_validated", "playbook_report"
+    ),
     "get_purchases_top_products": RouteContract(
         "purchases_top_products", "playbook_report"
     ),

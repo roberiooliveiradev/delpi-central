@@ -10,4 +10,5 @@ class ProductionOperationalRequest:
     limit: int | None = None
     group_by: str = "general"
     loss_type: str = "both"
+    work_center: str | None = None
     legacy: bool = False

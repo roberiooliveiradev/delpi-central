@@ -86,3 +86,34 @@ def test_schedule_today_use_case_uses_reference_date() -> None:
 
     assert result["reference_date"] == "20260611"
     assert result["items"][0]["product_code"] == "90261255"
+
+
+def test_orders_open_use_case_returns_items() -> None:
+    from app.application.use_cases.production.get_production_orders_open_use_case import (
+        GetProductionOrdersOpenUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_open_orders.return_value = [
+        {"production_order": "000001", "pending_qty": 5}
+    ]
+
+    use_case = GetProductionOrdersOpenUseCase(repository)
+    result = use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    assert result["items"][0]["production_order"] == "000001"
+    repository.fetch_open_orders.assert_called_once()
+
+
+def test_consumption_validated_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_consumption_top_items_validated_use_case import (
+        GetProductionConsumptionTopItemsValidatedUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_top_items_validated.return_value = []
+
+    use_case = GetProductionConsumptionTopItemsValidatedUseCase(repository)
+    use_case.execute(ProductionOperationalRequest(limit=5))
+
+    repository.fetch_top_items_validated.assert_called_once()

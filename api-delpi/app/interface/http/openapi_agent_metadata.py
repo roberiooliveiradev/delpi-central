@@ -466,6 +466,51 @@ PRODUCTION_SCHEDULE_TODAY = agent_route(
     operation_id="get_production_schedule_today",
 )
 
+PRODUCTION_ORDERS_OPEN = agent_route(
+    summary="OPs em aberto na data",
+    description=(
+        "Lista ordens de produção programadas para a data que ainda não foram finalizadas "
+        "(C2_QUANT > C2_QUJE). Use para backlog do dia, OPs pendentes ou em execução."
+    ),
+    operation_id="get_production_orders_open",
+)
+
+PRODUCTION_ORDERS_FINISHED = agent_route(
+    summary="OPs finalizadas na data",
+    description=(
+        "Lista ordens de produção finalizadas na data de referência (C2_QUANT = C2_QUJE). "
+        "Use para produção concluída no dia."
+    ),
+    operation_id="get_production_orders_finished",
+)
+
+PRODUCTION_WORK_CENTER_ORDER_SUMMARY = agent_route(
+    summary="Resumo de OPs por centro de trabalho",
+    description=(
+        "Conta OPs finalizadas e em aberto agrupadas por centro de trabalho (CT) na data. "
+        "Use para balanceamento de carga e status produtivo por CT."
+    ),
+    operation_id="get_production_work_center_order_summary",
+)
+
+PRODUCTION_CONSUMPTION_TOP_ITEMS_BY_WORK_CENTER = agent_route(
+    summary="Consumo por centro de trabalho",
+    description=(
+        "Ranking de itens consumidos/empenhados agrupados por CT planejado (SD4010 + SH8010). "
+        "Use para consumo por centro de trabalho ou CT específico."
+    ),
+    operation_id="get_production_consumption_top_items_by_work_center",
+)
+
+PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED = agent_route(
+    summary="Consumo validado por apontamento real",
+    description=(
+        "Ranking de consumo real com EXISTS em apontamentos SH6010 tipo produção. "
+        "Use quando o usuário pedir consumo validado ou confirmado por apontamento."
+    ),
+    operation_id="get_production_consumption_top_items_validated",
+)
+
 DATA_SQL = agent_route(
     summary="Executar consulta SQL somente leitura",
     description=(

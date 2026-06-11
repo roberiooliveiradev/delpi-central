@@ -90,6 +90,8 @@ class ChatOperationalApiDomainService:
             "production_consumption",
             "production_losses",
             "production_schedule",
+            "production_orders",
+            "production_work_centers",
             "purchases_ranking",
             "department_kpi",
             "supplies_kpi",

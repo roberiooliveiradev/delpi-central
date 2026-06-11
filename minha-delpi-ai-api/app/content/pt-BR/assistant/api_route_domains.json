@@ -38,6 +38,18 @@
       "parameterStrategy": "date_branch",
       "method": "GET"
     },
+    "production_orders": {
+      "label": "Ordens de produção",
+      "pathMarkers": ["/production/orders/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "production_work_centers": {
+      "label": "Centros de trabalho",
+      "pathMarkers": ["/production/work-centers/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
     "purchases_ranking": {
       "label": "Ranking de compras",
       "pathMarkers": ["/purchases/top-products"],
@@ -56,7 +68,9 @@
       "excludePathMarkers": [
         "/production/consumption/",
         "/production/losses/",
-        "/production/schedule/"
+        "/production/schedule/",
+        "/production/orders/",
+        "/production/work-centers/"
       ],
       "parameterStrategy": "date_branch",
       "method": "GET"

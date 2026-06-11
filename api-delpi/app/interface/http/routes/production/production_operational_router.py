@@ -9,16 +9,26 @@ from app.application.dto.production.production_operational_request import (
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.composition.production_operational_composer import (
     build_get_production_consumption_top_items_use_case,
+    build_get_production_consumption_top_items_by_work_center_use_case,
+    build_get_production_consumption_top_items_validated_use_case,
     build_get_production_losses_records_use_case,
     build_get_production_losses_top_materials_use_case,
+    build_get_production_orders_finished_use_case,
+    build_get_production_orders_open_use_case,
     build_get_production_schedule_today_use_case,
+    build_get_production_work_center_order_summary_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_CONSUMPTION_TOP_ITEMS,
+    PRODUCTION_CONSUMPTION_TOP_ITEMS_BY_WORK_CENTER,
+    PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED,
     PRODUCTION_LOSSES_RECORDS,
     PRODUCTION_LOSSES_TOP_MATERIALS,
+    PRODUCTION_ORDERS_FINISHED,
+    PRODUCTION_ORDERS_OPEN,
     PRODUCTION_SCHEDULE_TODAY,
+    PRODUCTION_WORK_CENTER_ORDER_SUMMARY,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -143,4 +153,157 @@ def get_schedule_today(
         return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro em schedule/today: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/orders/open", **PRODUCTION_ORDERS_OPEN)
+@require_permission(API_DELPI_ACCESS)
+def get_orders_open(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_orders_open_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ORDERS_OPEN["operation_id"],
+            message="OPs em aberto consultadas com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/open: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/open: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/orders/finished", **PRODUCTION_ORDERS_FINISHED)
+@require_permission(API_DELPI_ACCESS)
+def get_orders_finished(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_orders_finished_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ORDERS_FINISHED["operation_id"],
+            message="OPs finalizadas consultadas com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/finished: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/finished: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/work-centers/order-summary", **PRODUCTION_WORK_CENTER_ORDER_SUMMARY)
+@require_permission(API_DELPI_ACCESS)
+def get_work_center_order_summary(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            limit=limit,
+        )
+        result = build_get_production_work_center_order_summary_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_WORK_CENTER_ORDER_SUMMARY["operation_id"],
+            message="Resumo de OPs por centro de trabalho consultado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em work-centers/order-summary: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em work-centers/order-summary: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/consumption/top-items-by-work-center",
+    **PRODUCTION_CONSUMPTION_TOP_ITEMS_BY_WORK_CENTER,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_consumption_top_items_by_work_center(
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_consumption_top_items_by_work_center_use_case().execute(
+            dto
+        )
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_CONSUMPTION_TOP_ITEMS_BY_WORK_CENTER["operation_id"],
+            message="Consumo por centro de trabalho consultado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em consumption/top-items-by-work-center: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em consumption/top-items-by-work-center: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/consumption/top-items-validated",
+    **PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_consumption_top_items_validated(
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            limit=limit,
+        )
+        result = build_get_production_consumption_top_items_validated_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED["operation_id"],
+            message="Consumo validado por apontamento consultado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em consumption/top-items-validated: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em consumption/top-items-validated: {exc}")
         return error_response(str(exc), status_code=500)

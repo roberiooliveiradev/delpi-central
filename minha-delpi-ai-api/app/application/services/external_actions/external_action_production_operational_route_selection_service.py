@@ -19,10 +19,15 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class ExternalActionProductionOperationalRouteSelectionService:
     _REASON_KEYS = {
         ProductionOperationalIntentKind.CONSUMPTION: "productionConsumptionTopItems",
+        ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER: "productionConsumptionByWorkCenter",
+        ProductionOperationalIntentKind.CONSUMPTION_VALIDATED: "productionConsumptionValidated",
         ProductionOperationalIntentKind.PURCHASES_RANKING: "purchasesTopProducts",
         ProductionOperationalIntentKind.LOSSES_TOP: "productionLossesTopMaterials",
         ProductionOperationalIntentKind.LOSSES_RECORDS: "productionLossesRecords",
         ProductionOperationalIntentKind.SCHEDULE_TODAY: "productionScheduleToday",
+        ProductionOperationalIntentKind.ORDERS_OPEN: "productionOrdersOpen",
+        ProductionOperationalIntentKind.ORDERS_FINISHED: "productionOrdersFinished",
+        ProductionOperationalIntentKind.WORK_CENTER_SUMMARY: "productionWorkCenterOrderSummary",
     }
 
     def try_select(

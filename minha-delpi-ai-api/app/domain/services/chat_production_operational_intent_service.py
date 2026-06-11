@@ -15,10 +15,15 @@ from app.domain.services.chat_product_query_intent_service import (
 
 class ProductionOperationalIntentKind(str, Enum):
     CONSUMPTION = "consumption"
+    CONSUMPTION_BY_WORK_CENTER = "consumptionByWorkCenter"
+    CONSUMPTION_VALIDATED = "consumptionValidated"
     PURCHASES_RANKING = "purchasesRanking"
     LOSSES_TOP = "lossesTop"
     LOSSES_RECORDS = "lossesRecords"
     SCHEDULE_TODAY = "scheduleToday"
+    ORDERS_OPEN = "ordersOpen"
+    ORDERS_FINISHED = "ordersFinished"
+    WORK_CENTER_SUMMARY = "workCenterSummary"
 
 
 _BUNDLE = "production_operational_intent"
@@ -50,6 +55,11 @@ class ChatProductionOperationalIntentService:
 
         for kind in (
             ProductionOperationalIntentKind.LOSSES_RECORDS,
+            ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER,
+            ProductionOperationalIntentKind.CONSUMPTION_VALIDATED,
+            ProductionOperationalIntentKind.WORK_CENTER_SUMMARY,
+            ProductionOperationalIntentKind.ORDERS_FINISHED,
+            ProductionOperationalIntentKind.ORDERS_OPEN,
             ProductionOperationalIntentKind.SCHEDULE_TODAY,
             ProductionOperationalIntentKind.PURCHASES_RANKING,
             ProductionOperationalIntentKind.CONSUMPTION,
