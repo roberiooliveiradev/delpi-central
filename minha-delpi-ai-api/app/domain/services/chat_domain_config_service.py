@@ -154,3 +154,23 @@ class ChatDomainConfigService:
     @classmethod
     def rate_limit_admin_actions_per_window(cls) -> int:
         return cls._require_config().rate_limit_admin_actions_per_window()
+
+    @classmethod
+    def chat_presentation_column_label_discovery_enabled(cls) -> bool:
+        return cls._require_config().chat_presentation_column_label_discovery_enabled()
+
+    @classmethod
+    def chat_presentation_column_label_web_search_enabled(cls) -> bool:
+        return cls._require_config().chat_presentation_column_label_web_search_enabled()
+
+    @classmethod
+    def chat_presentation_column_label_max_keys(cls) -> int:
+        return cls._require_config().chat_presentation_column_label_max_keys()
+
+    @classmethod
+    def chat_presentation_column_label_web_max_queries(cls) -> int:
+        return cls._require_config().chat_presentation_column_label_web_max_queries()
+
+    @classmethod
+    def chat_presentation_column_label_cache_size(cls) -> int:
+        return cls._require_config().chat_presentation_column_label_cache_size()

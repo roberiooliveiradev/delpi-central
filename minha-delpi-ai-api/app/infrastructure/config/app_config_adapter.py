@@ -116,3 +116,18 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
 
     def rate_limit_admin_actions_per_window(self) -> int:
         return int(Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+
+    def chat_presentation_column_label_discovery_enabled(self) -> bool:
+        return bool(Settings.CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED)
+
+    def chat_presentation_column_label_web_search_enabled(self) -> bool:
+        return bool(Settings.CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED)
+
+    def chat_presentation_column_label_max_keys(self) -> int:
+        return int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS)
+
+    def chat_presentation_column_label_web_max_queries(self) -> int:
+        return int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES)
+
+    def chat_presentation_column_label_cache_size(self) -> int:
+        return int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE)

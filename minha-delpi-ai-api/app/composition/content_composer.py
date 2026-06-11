@@ -8,6 +8,13 @@ from app.domain.services.chat_external_action_direct_response_service import (
 from app.domain.services.presentation_column_label_discovery_service import (
     PresentationColumnLabelDiscoveryService,
 )
+from app.domain.services.presentation_column_label_llm_service import (
+    PresentationColumnLabelLlmService,
+)
+from app.domain.services.presentation_column_label_web_search_service import (
+    PresentationColumnLabelWebSearchService,
+)
+from app.composition.llm_composer import make_llm_gateway
 from app.domain.services.chat_runtime_intelligence_settings_service import (
     ChatRuntimeIntelligenceSettingsService,
 )
@@ -20,6 +27,9 @@ from app.infrastructure.content.assistant_content_adapter import (
 )
 from app.infrastructure.presentation.presentation_column_label_discovery_adapter import (
     InfrastructurePresentationColumnLabelDiscoveryAdapter,
+)
+from app.infrastructure.presentation.presentation_column_label_web_search_adapter import (
+    InfrastructurePresentationColumnLabelWebSearchAdapter,
 )
 
 _CONFIGURED = False
@@ -66,6 +76,10 @@ def configure_domain_infrastructure_ports() -> None:
     PresentationColumnLabelDiscoveryService.configure(
         InfrastructurePresentationColumnLabelDiscoveryAdapter()
     )
+    PresentationColumnLabelWebSearchService.configure(
+        InfrastructurePresentationColumnLabelWebSearchAdapter()
+    )
+    PresentationColumnLabelLlmService.configure(make_llm_gateway())
     _configure_typo_correction_rules()
     _CONFIGURED = True
 

@@ -262,6 +262,42 @@ class ExternalActionColumnLabelService:
 
         return label_map
 
+    @classmethod
+    def is_catalog_field_resolved(
+        cls,
+        key: str,
+        *,
+        schema_labels: dict[str, str] | None = None,
+        profile_name: str | None = None,
+        profile_label: str | None = None,
+        fields: dict[str, str] | None = None,
+        snake_key: str | None = None,
+    ) -> bool:
+        token = str(key or "").strip()
+
+        if not token:
+            return True
+
+        if str(profile_label or "").strip():
+            return True
+
+        if cls()._resolve_catalog_label(
+            token,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+        ):
+            return True
+
+        catalog = fields or {}
+
+        if str(catalog.get(token) or "").strip():
+            return True
+
+        if snake_key and snake_key != token and str(catalog.get(snake_key) or "").strip():
+            return True
+
+        return False
+
     def is_catalog_label_resolved(
         self,
         key: str,
@@ -269,14 +305,11 @@ class ExternalActionColumnLabelService:
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
     ) -> bool:
-        if not str(key or "").strip():
-            return True
-
-        return self._resolve_catalog_label(
+        return self.is_catalog_field_resolved(
             key,
             profile_name=profile_name,
             schema_labels=schema_labels,
-        ) is not None
+        )
 
     def resolve_field_format(
         self,

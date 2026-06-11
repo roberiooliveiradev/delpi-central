@@ -28,26 +28,17 @@ class ChatPresentationColumnLabelEnrichmentService:
         fields: dict[str, str] | None = None,
         snake_key: str | None = None,
     ) -> bool:
-        token = str(key or "").strip()
+        from app.domain.services.external_actions.external_action_column_label_service import (
+            ExternalActionColumnLabelService,
+        )
 
-        if not token:
-            return True
-
-        if schema_labels and str(schema_labels.get(token) or "").strip():
-            return True
-
-        catalog = fields or {}
-
-        if str(catalog.get(token) or "").strip():
-            return True
-
-        if snake_key and snake_key != token and str(catalog.get(snake_key) or "").strip():
-            return True
-
-        if str(profile_label or "").strip():
-            return True
-
-        return False
+        return ExternalActionColumnLabelService.is_catalog_field_resolved(
+            key,
+            schema_labels=schema_labels,
+            profile_label=profile_label,
+            fields=fields,
+            snake_key=snake_key,
+        )
 
     @classmethod
     def build_web_search_query(cls, field_key: str) -> str:

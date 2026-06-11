@@ -5,13 +5,19 @@ from __future__ import annotations
 import logging
 from threading import Lock
 
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 from app.domain.services.chat_presentation_column_label_enrichment_service import (
     ChatPresentationColumnLabelEnrichmentService,
 )
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.presentation_column_label_llm_service import (
+    PresentationColumnLabelLlmService,
+)
+from app.domain.services.presentation_column_label_web_search_service import (
+    PresentationColumnLabelWebSearchService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +33,7 @@ class ChatPresentationColumnLabelDiscoveryService:
 
     @classmethod
     def is_enabled(cls) -> bool:
-        return bool(Settings.CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED)
+        return ChatDomainConfigService.chat_presentation_column_label_discovery_enabled()
 
     @classmethod
     def resolve_labels(
@@ -61,12 +67,12 @@ class ChatPresentationColumnLabelDiscoveryService:
 
             profile_label = (profile_labels or {}).get(token)
 
-            if ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved(
+            if ExternalActionColumnLabelService.is_catalog_field_resolved(
                 token,
                 schema_labels=schema_labels,
                 profile_label=profile_label,
                 fields=catalog_fields,
-                snake_key=ExternalActionColumnLabelService._snake_case_key(token),
+                snake_key=label_service._snake_case_key(token),
             ):
                 continue
 
@@ -75,7 +81,7 @@ class ChatPresentationColumnLabelDiscoveryService:
         if not pending:
             return resolved
 
-        max_keys = max(1, int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS))
+        max_keys = max(1, ChatDomainConfigService.chat_presentation_column_label_max_keys())
         pending = pending[:max_keys]
 
         web_snippets = cls._gather_web_snippets(pending)
@@ -99,7 +105,7 @@ class ChatPresentationColumnLabelDiscoveryService:
 
     @classmethod
     def _cache_set(cls, key: str, label: str) -> None:
-        max_size = max(50, int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE))
+        max_size = max(50, ChatDomainConfigService.chat_presentation_column_label_cache_size())
 
         with cls._lock:
             if len(cls._cache) >= max_size:
@@ -111,40 +117,17 @@ class ChatPresentationColumnLabelDiscoveryService:
     @classmethod
     def _gather_web_snippets(cls, keys: list[str]) -> dict[str, str]:
         if not (
-            Settings.CHAT_WEB_SEARCH_ENABLED
-            and Settings.CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED
+            ChatDomainConfigService.chat_web_search_enabled()
+            and ChatDomainConfigService.chat_presentation_column_label_web_search_enabled()
         ):
             return {}
 
-        from app.domain.services.chat_web_search_intent_service import (
-            ChatWebSearchIntentService,
-        )
-
-        if not ChatWebSearchIntentService.is_feature_enabled():
-            return {}
-
-        try:
-            from app.infrastructure.gateways.web_search_http_gateway import (
-                WebSearchHttpGateway,
-            )
-        except ImportError:
-            return {}
-
-        gateway = WebSearchHttpGateway()
-        max_queries = max(0, int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES))
+        max_queries = max(0, ChatDomainConfigService.chat_presentation_column_label_web_max_queries())
         snippets: dict[str, str] = {}
 
         for key in keys[:max_queries]:
             query = ChatPresentationColumnLabelEnrichmentService.build_web_search_query(key)
-
-            try:
-                payload = gateway.search(
-                    query,
-                    max_results=2,
-                )
-            except Exception as exc:
-                logger.debug("column label web search failed for %s: %s", key, exc)
-                continue
+            payload = PresentationColumnLabelWebSearchService.search(query, max_results=2)
 
             if not isinstance(payload, dict):
                 continue
@@ -189,15 +172,9 @@ class ChatPresentationColumnLabelDiscoveryService:
         if not messages[0].get("content"):
             return {}
 
-        try:
-            from app.composition.llm_composer import make_llm_gateway
-
-            raw = make_llm_gateway().generate(messages)
-        except Exception as exc:
-            logger.warning("column label LLM discovery failed: %s", exc)
-            return {}
+        raw = PresentationColumnLabelLlmService.generate(messages)
 
         return ChatPresentationColumnLabelEnrichmentService.parse_llm_labels(
-            str(raw or ""),
+            raw,
             expected_keys=keys,
         )

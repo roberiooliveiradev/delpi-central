@@ -39,7 +39,7 @@ Relacionado:
 | **R15** | Colunas dinâmicas da API (sem whitelist fixa) | ✅ Concluído |
 | **R16** | Rótulos desconhecidos — web + LLM (fallback pós-vocabulário) | ✅ Concluído |
 | **R17** | Zero caminho legado `fixed_table_columns` em tabelas operacionais | ✅ Concluído |
-| **R18** | Discovery de rótulos — ports clean (LLM/web/settings) | ⬜ Pendente |
+| **R18** | Discovery de rótulos — ports clean (LLM/web/settings) | ✅ Concluído |
 | **R19** | `build_items_table` desacoplado do god presenter | ⬜ Pendente |
 | **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ⬜ Pendente |
 | **R21** | Humanização centralizada — rótulo + valor (tabular + KV) | ✅ Concluído |
@@ -377,6 +377,8 @@ Adicional: `presentation_builder_presenter` chama `_build_items_table` **sem** `
 4. Testes: mocks de port; domain continua sem import de application/infra.
 
 **Critério:** `rg 'from app.infrastructure' app/domain/services/external_actions/external_action_column_label_service.py` vazio; application discovery só usa ports injetados.
+
+**Status (jun/2026):** ✅ — `PresentationColumnLabelWebSearchPort` + `PresentationColumnLabelWebSearchService`; `PresentationColumnLabelLlmService` via `LlmGatewayPort`; flags via `AppConfigPort` / `ChatDomainConfigService`; wiring em `content_composer.py`; `is_catalog_field_resolved` canônico no column label service.
 
 **Esforço:** M (1 dia)
 
@@ -912,15 +914,25 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | Gate | `presentation_legacy_table_columns_gate.py` → `--check-playbook12` + `--check-no-legacy-table-columns` |
 | Testes | `test_presentation_legacy_table_columns_gate.py`, `test_chat_presentation_field_label_resolution_service.py`, analyser dinâmico |
 
-**Próximo passo imediato — R18 (ports clean na discovery):**
+**Próximo passo imediato — R19 (builder desacoplado do god presenter):**
 
 | # | Ação | Critério |
 |---|------|----------|
-| 1 | Ports LLM/web/settings na application discovery | Domain sem import direto de infra |
-| 2 | Unificar `is_catalog_resolved` / `is_catalog_label_resolved` | Um helper canônico |
+| 1 | Protocolo `ColumnLabelContext` | OpsTable sem import de `ExternalActionResultPresenter` |
+| 2 | Mover aliases/enrichers para presenters ou `tableProfiles` | Zero regra de rota hardcoded no builder |
 | 3 | Homologação H17–H19 | Campo novo + rótulo PT em rota tier A |
 
-**Commit de referência R15+R16:** `8a7fdb50`.
+**R18 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Ports | `PresentationColumnLabelWebSearchPort`; `PresentationColumnLabelLlmService` → `LlmGatewayPort` |
+| Config | `AppConfigPort.chat_presentation_column_label_*` + `ChatDomainConfigService` |
+| Application | `ChatPresentationColumnLabelDiscoveryService` — só domain services injetados |
+| Catálogo | `is_catalog_field_resolved` canônico; enrichment delega |
+| Wiring | `content_composer.py` — web search adapter + `make_llm_gateway()` |
+
+**Commit de referência R17:** `4ab84818`.
 
 **R15 entregue (jun/2026):**
 

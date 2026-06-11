@@ -149,3 +149,23 @@ class AppConfigPort(ABC):
     @abstractmethod
     def rate_limit_admin_actions_per_window(self) -> int:
         raise NotImplementedError
+
+    @abstractmethod
+    def chat_presentation_column_label_discovery_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_presentation_column_label_web_search_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_presentation_column_label_max_keys(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_presentation_column_label_web_max_queries(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_presentation_column_label_cache_size(self) -> int:
+        raise NotImplementedError
