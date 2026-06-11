@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   getPresentationRenderHintsFromToolCalls,
+  hasRenderPlanContract,
+  isApiPreparedMarkdown,
   shouldApplyClientMarkdownCompaction,
   stripRichUiRedundantProseFromMarkdown,
 } from "./chatPresentation";
@@ -31,5 +33,25 @@ describe("presentationRenderHints", () => {
     expect(shouldApplyClientMarkdownCompaction(toolCalls)).toBe(false);
     expect(stripRichUiRedundantProseFromMarkdown(markdown, toolCalls)).toContain("| A |");
     expect(getPresentationRenderHintsFromToolCalls(toolCalls)?.textRenderMode).toBe("compact");
+  });
+
+  it("trata renderPlan v1 como markdown preparado pela API", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "markdown", slot: "lead", source: "textPresentation" }],
+          },
+          textPresentation: { markdown: "### Status\n\nResumo." },
+        },
+      },
+    ]);
+
+    expect(hasRenderPlanContract(toolCalls)).toBe(true);
+    expect(isApiPreparedMarkdown(toolCalls)).toBe(true);
+    expect(shouldApplyClientMarkdownCompaction(toolCalls)).toBe(false);
   });
 });

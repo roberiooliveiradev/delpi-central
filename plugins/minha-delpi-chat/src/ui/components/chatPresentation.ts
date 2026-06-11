@@ -501,7 +501,18 @@ export function getPresentationRenderHintsFromToolCalls(
 
   for (const toolCall of toolCalls) {
     const metadata = toolCall.metadata as Record<string, unknown> | undefined;
-    const plan = metadata?.stackPresentationPlan;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const rootHints = metadata.renderHints;
+
+    if (rootHints && typeof rootHints === "object") {
+      return rootHints as PresentationRenderHints;
+    }
+
+    const plan = metadata.stackPresentationPlan;
 
     if (!plan || typeof plan !== "object") {
       continue;
@@ -567,11 +578,21 @@ export function hasRenderPlanContract(toolCalls?: ChatToolCall[]): boolean {
   );
 }
 
+/** Texto markdown já preparado na API (renderHints ou renderPlan P6). */
+export function isApiPreparedMarkdown(toolCalls?: ChatToolCall[]): boolean {
+  const hints = getPresentationRenderHintsFromToolCalls(toolCalls);
+  const mode = String(hints?.textRenderMode || "").trim().toLowerCase();
+
+  if (mode === "compact" || mode === "full") {
+    return true;
+  }
+
+  return hasRenderPlanContract(toolCalls);
+}
+
 /** Legacy: só compacta markdown no cliente quando a API não enviou `renderHints.textRenderMode`. */
 export function shouldApplyClientMarkdownCompaction(toolCalls?: ChatToolCall[]): boolean {
-  const hints = getPresentationRenderHintsFromToolCalls(toolCalls);
-
-  if (hints?.textRenderMode === "compact" || hints?.textRenderMode === "full") {
+  if (isApiPreparedMarkdown(toolCalls)) {
     return false;
   }
 
@@ -2042,19 +2063,21 @@ export function resolveCommentaryTextBody(
     body = stripLeadingMarkdownTitle(body, presentationTitle);
   }
 
-  if (getTreePresentationFromPair(resolvedPair) || getTablePresentationFromPair(resolvedPair)) {
-    body = stripRedundantProfileTableFromMarkdown(body);
-    body = stripRedundantStructureFromMarkdown(body);
-    body = stripRedundantHierarchyListFromMarkdown(body);
-    body = stripRedundantInspectionDumpFromMarkdown(body);
-  }
+  if (!isApiPreparedMarkdown(toolCalls)) {
+    if (getTreePresentationFromPair(resolvedPair) || getTablePresentationFromPair(resolvedPair)) {
+      body = stripRedundantProfileTableFromMarkdown(body);
+      body = stripRedundantStructureFromMarkdown(body);
+      body = stripRedundantHierarchyListFromMarkdown(body);
+      body = stripRedundantInspectionDumpFromMarkdown(body);
+    }
 
-  if (hasGuideTablePresentation(toolCalls)) {
-    body = stripRedundantGuideTableFromMarkdown(body);
-  }
+    if (hasGuideTablePresentation(toolCalls)) {
+      body = stripRedundantGuideTableFromMarkdown(body);
+    }
 
-  if (hasInspectionTablePresentation(toolCalls)) {
-    body = stripRedundantInspectionFromMarkdown(body);
+    if (hasInspectionTablePresentation(toolCalls)) {
+      body = stripRedundantInspectionFromMarkdown(body);
+    }
   }
 
   if (shouldApplyClientMarkdownCompaction(toolCalls)) {

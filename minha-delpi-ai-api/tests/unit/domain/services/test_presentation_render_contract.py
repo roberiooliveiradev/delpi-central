@@ -79,6 +79,22 @@ def test_prune_sets_legacy_policy_when_not_evidence_first():
     assert metadata["stackPresentationPlan"]["renderHints"]["tailVisualPolicy"] == "legacy"
 
 
+def test_prune_attaches_render_hints_without_preexisting_stack_plan():
+    metadata = {
+        "textPresentation": {"markdown": "### OK\n\nTexto."},
+        "presentationDecision": {"layoutMode": "single", "selected": "text"},
+    }
+
+    ChatPresentationPayloadPruningService.prune(metadata)
+
+    plan = metadata["stackPresentationPlan"]
+    hints = plan["renderHints"]
+
+    assert isinstance(plan, dict)
+    assert hints["textRenderMode"] == "full"
+    assert hints["tailVisualPolicy"] == "legacy"
+
+
 def test_prune_removes_null_presentation_keys():
     metadata = {
         "stackPresentationPlan": {"tailVisualPolicy": "legacy"},

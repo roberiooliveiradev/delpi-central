@@ -36,16 +36,26 @@ class ChatPresentationPayloadPruningService:
         if not isinstance(metadata, dict):
             return
 
-        plan = cls._resolve_stack_plan(metadata)
-
-        if not isinstance(plan, dict):
-            return
+        plan = cls._ensure_stack_plan(metadata)
 
         cls._ensure_tail_visual_policy(metadata, plan)
         cls._prune_null_presentations(metadata)
         cls._prune_structure_duplicate_tables(metadata)
         cls._prune_allowlisted_visuals(metadata, plan)
         cls._attach_render_hints(metadata, plan)
+
+    @classmethod
+    def _ensure_stack_plan(cls, metadata: dict[str, Any]) -> dict[str, Any]:
+        plan = cls._resolve_stack_plan(metadata)
+
+        if isinstance(plan, dict):
+            if metadata.get("stackPresentationPlan") is not plan:
+                metadata["stackPresentationPlan"] = plan
+            return plan
+
+        plan = {}
+        metadata["stackPresentationPlan"] = plan
+        return plan
 
     @classmethod
     def _ensure_tail_visual_policy(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> None:
