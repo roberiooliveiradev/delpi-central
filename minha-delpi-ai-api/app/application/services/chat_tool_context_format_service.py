@@ -274,12 +274,72 @@ class ChatToolContextFormatService:
 
             elif requested_format == "dashboard":
                 meta["preferredFormat"] = "dashboard"
-                dashboard_pres = meta.get("dashboardPresentation")
+                dashboard_pres = self._ensure_dashboard_presentation(meta, last_data)
 
                 if isinstance(dashboard_pres, dict) and dashboard_pres.get("type") == "dashboard":
                     meta["presentation"] = dashboard_pres
 
                 self._align_decision_for_format(meta, "dashboard")
+
+    def _ensure_dashboard_presentation(self, meta: dict, last_data) -> dict | None:
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
+        )
+
+        dashboard, _source = ChatPresentationPrimaryViewService._find_view(meta, "dashboard")
+
+        if isinstance(dashboard, dict) and dashboard.get("type") == "dashboard":
+            return dashboard
+
+        if last_data is None:
+            return None
+
+        path = str(meta.get("path") or "")
+        rebuilt: dict | None = None
+
+        root = self._presenter._unwrap_data(last_data)
+
+        if isinstance(root, dict) and "factory-status" in path.lower():
+            rebuilt = self._presenter.build_factory_dashboard_presentation(
+                root,
+                path,
+                kpi=meta.get("kpiPresentation")
+                if isinstance(meta.get("kpiPresentation"), dict)
+                else None,
+                tree=meta.get("treePresentation")
+                if isinstance(meta.get("treePresentation"), dict)
+                else None,
+                chart=meta.get("chartPresentation")
+                if isinstance(meta.get("chartPresentation"), dict)
+                else None,
+                table=self._find_table_presentation(meta),
+            )
+
+        if not (isinstance(rebuilt, dict) and rebuilt.get("type") == "dashboard"):
+            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
+                ChatPresentationProfileVisualBundleService,
+            )
+
+            profile_dashboard = ChatPresentationProfileVisualBundleService.build_profile_view(
+                self._presenter,
+                path=path,
+                view="dashboard",
+                data=last_data,
+            )
+
+            if isinstance(profile_dashboard, dict) and profile_dashboard.get("type") == "dashboard":
+                rebuilt = profile_dashboard
+            else:
+                generic = self._presenter.build_dashboard_presentation(last_data, path=path)
+
+                if isinstance(generic, dict) and generic.get("type") == "dashboard":
+                    rebuilt = generic
+
+        if rebuilt is not None:
+            meta["dashboardPresentation"] = rebuilt
+            return rebuilt
+
+        return None
 
     @staticmethod
     def _find_table_presentation(meta: dict) -> dict | None:
@@ -323,3 +383,10 @@ class ChatToolContextFormatService:
                 else None
             ),
         )
+
+        if requested_format in {"table", "tree", "chart", "dashboard", "kpi"}:
+            from app.domain.services.chat_presentation_render_pipeline_service import (
+                ChatPresentationRenderPipelineService,
+            )
+
+            ChatPresentationRenderPipelineService.finalize(meta)

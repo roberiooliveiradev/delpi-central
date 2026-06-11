@@ -135,7 +135,13 @@ class ChatPresentationEvidenceFirstLayoutService:
         order = cls._resolve_tail_visual_order(metadata)
 
         if explicit == "dashboard":
-            return order
+            normalized = [str(token).strip().lower() for token in order if str(token).strip()]
+            has_dashboard = cls._metadata_has_dashboard(metadata)
+
+            if has_dashboard and "dashboard" not in normalized:
+                normalized.insert(0, "dashboard")
+
+            return normalized
 
         filtered = [
             token
@@ -147,6 +153,19 @@ class ChatPresentationEvidenceFirstLayoutService:
             return filtered
 
         return cls._available_evidence_tail_visuals(metadata)
+
+    @classmethod
+    def _metadata_has_dashboard(cls, metadata: dict[str, Any]) -> bool:
+        for key in ("dashboardPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if (
+                isinstance(presentation, dict)
+                and str(presentation.get("type") or "").strip().lower() == "dashboard"
+            ):
+                return True
+
+        return False
 
     @classmethod
     def _available_evidence_tail_visuals(cls, metadata: dict[str, Any]) -> list[str]:

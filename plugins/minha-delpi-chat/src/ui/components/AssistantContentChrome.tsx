@@ -1,5 +1,7 @@
 import type { ChatDepthState, ChatPaginationState } from "../../data/api/chatTypes";
 
+import { ChatMarkdown } from "./ChatMarkdown";
+
 type AssistantContentChromeProps = {
   insight?: string | null;
   recommendations?: Array<{ label: string; reason?: string; query: string }>;
@@ -82,9 +84,13 @@ export function AssistantContentChrome({
   return (
     <>
       {insight ? (
-        <p className="mdc-rich-presentation__insight" role="note" title="Por que este formato">
-          {insight}
-        </p>
+        <div
+          className="mdc-rich-presentation__insight"
+          role="note"
+          title="Por que este formato"
+        >
+          <ChatMarkdown content={insight} />
+        </div>
       ) : null}
 
       {recommendations.length > 0 ? (

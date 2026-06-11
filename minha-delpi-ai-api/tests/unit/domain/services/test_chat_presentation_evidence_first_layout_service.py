@@ -141,6 +141,31 @@ def test_compose_keeps_dashboard_tail_when_session_requests_panel():
     assert "tailVisuals" in plan["narrativeOrder"]
 
 
+def test_compose_prepends_dashboard_tail_when_session_panel_and_dashboard_exists():
+    metadata = {
+        "path": "/products/90262404/factory-status",
+        "explicitSessionFormat": "dashboard",
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "narrativeOrder": ["lead", "tailVisuals"],
+            "tailVisualOrder": ["kpi", "tree", "chart"],
+        },
+        "dashboardPresentation": {"type": "dashboard", "title": "Painel fabril", "panels": []},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "cards": []},
+        "textPresentation": {"markdown": "### Status\n\nLead curto."},
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+    plan = metadata["stackPresentationPlan"]
+
+    assert plan["tailVisualOrder"][0] == "dashboard"
+
+
 def test_compose_applies_tail_policy_when_layout_mode_is_single():
     metadata = {
         "presentationDecision": {

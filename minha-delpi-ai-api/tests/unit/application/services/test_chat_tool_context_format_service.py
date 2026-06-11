@@ -120,3 +120,67 @@ def test_apply_format_override_text_preserves_factory_stack_payload():
     assert meta.get("treePresentation") is not None
     assert meta.get("kpiPresentation") is not None
     assert meta.get("dashboardPresentation") is not None
+
+
+def test_apply_format_override_dashboard_rebuilds_render_plan_after_stack_prune():
+    service = ChatToolContextFormatService()
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+    envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")
+    metadata = {
+        "ok": True,
+        "path": "/products/90269002/factory-status",
+        "apiDelpiResponseMeta": envelope.get("meta") or {"entity": "product_factory_status"},
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+            "presentationMode": "summary_then_evidence",
+            "availableViews": ["text", "table", "tree", "chart", "kpi", "dashboard"],
+            "visualOrder": ["text", "kpi", "tree", "chart"],
+            "insight": "Situação fabril: **PA PRODUZIDO / AGUARDANDO INSPEÇÃO FINAL**",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "tailVisualPolicy": "allowlist",
+            "tailVisualOrder": ["kpi", "tree", "chart"],
+            "narrativeOrder": ["lead", "operationalTables", "tailVisuals"],
+            "renderHints": {"suppressedKinds": ["dashboard", "table"], "textRenderMode": "compact"},
+        },
+        "renderPlan": {
+            "version": 1,
+            "layoutMode": "stack",
+            "segments": [
+                {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
+                {"kind": "kpi", "slot": "tailVisuals", "source": "kpiPresentation"},
+            ],
+        },
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Status fabril\n\nLead compacto.",
+        },
+        "tablePresentations": [{"type": "table", "title": "Panorama fabril", "rows": [{"campo": "OPs", "valor": "305"}]}],
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "root", "children": []}},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "cards": [{"label": "OPs", "value": 305}]},
+        "chartPresentation": {"type": "chart", "title": "Saldo MP", "data": []},
+        "preferredFormat": "text",
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
+
+    service.apply_format_override(tool_calls, "dashboard", envelope.get("data"))
+
+    meta = tool_calls[0]["metadata"]
+    decision = meta.get("presentationDecision") or {}
+    render_plan = meta.get("renderPlan") or {}
+    dashboard = meta.get("presentation") or meta.get("dashboardPresentation") or {}
+
+    assert meta.get("explicitSessionFormat") == "dashboard"
+    assert decision.get("selected") == "dashboard"
+    assert decision.get("layoutMode") == "single"
+    assert render_plan.get("layoutMode") == "single"
+    assert dashboard.get("type") == "dashboard"
+    assert any(
+        segment.get("kind") == "dashboard"
+        for segment in render_plan.get("segments") or []
+        if isinstance(segment, dict)
+    ), "override Painel deve reconstruir renderPlan com segmento dashboard"
+    assert meta.get("tablePresentations"), "tabelas permanecem no payload para troca de formato"
