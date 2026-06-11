@@ -4,6 +4,34 @@ from abc import ABC, abstractmethod
 class ProductExclusiveRawMaterialRepositoryPort(ABC):
 
     @abstractmethod
+    def fetch_exclusive_catalog_material_page(
+        self,
+        *,
+        max_depth: int,
+        limit: int,
+        offset: int,
+        include_test_products: bool,
+        finished_product_code: str | None = None,
+        raw_material_code: str | None = None,
+        group_code: str | None = None,
+    ) -> tuple[dict, list[dict]]:
+        ...
+
+    @abstractmethod
+    def fetch_exclusive_catalog_finished_product_page(
+        self,
+        *,
+        max_depth: int,
+        limit: int,
+        offset: int,
+        include_test_products: bool,
+        finished_product_code: str | None = None,
+        raw_material_code: str | None = None,
+        group_code: str | None = None,
+    ) -> tuple[dict, list[dict]]:
+        ...
+
+    @abstractmethod
     def fetch_exclusive_catalog_by_material(
         self,
         *,

@@ -4,6 +4,7 @@ from app.application.dto.product.exclusive_raw_material_catalog_request import (
 from app.application.services.product.product_playbook_service import (
     build_exclusive_catalog_by_material_items,
     group_exclusive_catalog_by_finished_product,
+    group_exclusive_catalog_by_finished_product_from_material_rows,
     summarize_exclusive_catalog_by_finished_product,
     summarize_exclusive_catalog_by_material,
 )
@@ -37,20 +38,45 @@ class ListExclusiveRawMaterialsCatalogUseCase:
             "raw_material_code": request.raw_material_code,
             "group_code": request.group_code,
         }
-
-        totals = self._repository.fetch_exclusive_catalog_totals(**filters)
+        include_summary = self._should_include_summary(request)
 
         if request.view == "by_finished_product":
-            rows = self._repository.fetch_exclusive_catalog_by_finished_product(
-                limit=limit,
-                offset=offset,
-                **filters,
-            )
-            items = group_exclusive_catalog_by_finished_product(rows)
+            if include_summary:
+                totals, rows = self._repository.fetch_exclusive_catalog_finished_product_page(
+                    limit=limit,
+                    offset=offset,
+                    **filters,
+                )
+                items = group_exclusive_catalog_by_finished_product(rows)
+            else:
+                totals = {}
+                if offset <= 0:
+                    material_limit = min(max(limit * 5, 15), 50)
+                    material_rows = self._repository.fetch_exclusive_catalog_by_material(
+                        limit=material_limit,
+                        offset=0,
+                        **filters,
+                    )
+                    items = group_exclusive_catalog_by_finished_product_from_material_rows(
+                        material_rows,
+                        pa_limit=limit,
+                    )
+                    rows = material_rows
+                else:
+                    rows = self._repository.fetch_exclusive_catalog_by_finished_product(
+                        limit=limit,
+                        offset=offset,
+                        **filters,
+                    )
+                    items = group_exclusive_catalog_by_finished_product(rows)
             return {
                 "view": request.view,
                 "items": items,
-                "summary": summarize_exclusive_catalog_by_finished_product(totals),
+                "summary": summarize_exclusive_catalog_by_finished_product(
+                    totals,
+                    returned_links=len(rows),
+                    include_totals=include_summary,
+                ),
                 "pagination": {
                     "limit": limit,
                     "offset": offset,
@@ -58,18 +84,38 @@ class ListExclusiveRawMaterialsCatalogUseCase:
                 },
             }
 
-        rows = self._repository.fetch_exclusive_catalog_by_material(
-            limit=limit,
-            offset=offset,
-            **filters,
-        )
+        if include_summary:
+            totals, rows = self._repository.fetch_exclusive_catalog_material_page(
+                limit=limit,
+                offset=offset,
+                **filters,
+            )
+        else:
+            totals = {}
+            rows = self._repository.fetch_exclusive_catalog_by_material(
+                limit=limit,
+                offset=offset,
+                **filters,
+            )
         return {
             "view": request.view,
             "items": build_exclusive_catalog_by_material_items(rows),
-            "summary": summarize_exclusive_catalog_by_material(totals),
+            "summary": summarize_exclusive_catalog_by_material(
+                totals,
+                returned_links=len(rows),
+                include_totals=include_summary,
+            ),
             "pagination": {
                 "limit": limit,
                 "offset": offset,
                 "returned": len(rows),
             },
         }
+
+    @staticmethod
+    def _should_include_summary(request: ExclusiveRawMaterialCatalogRequest) -> bool:
+        return bool(
+            request.finished_product_code
+            or request.raw_material_code
+            or request.group_code
+        )

@@ -122,6 +122,148 @@ class ProductExclusiveRawMaterialRepository(
             WHERE 1 = 1
         """
 
+    def _parse_page_resultsets(self, resultsets: list[dict]) -> tuple[dict, list[dict]]:
+        totals = (resultsets[0].get("data") or [{}])[0] if resultsets else {}
+        rows = (resultsets[1].get("data") or []) if len(resultsets) > 1 else []
+        return totals, rows
+
+    def fetch_exclusive_catalog_material_page(
+        self,
+        *,
+        max_depth: int,
+        limit: int,
+        offset: int,
+        include_test_products: bool,
+        finished_product_code: str | None = None,
+        raw_material_code: str | None = None,
+        group_code: str | None = None,
+    ) -> tuple[dict, list[dict]]:
+        filter_sql, filter_params = self._optional_filters(
+            finished_product_code=finished_product_code,
+            raw_material_code=raw_material_code,
+            group_code=group_code,
+        )
+        sql = f"""
+        {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+            {filter_sql}
+        )
+        SELECT
+            raw_material_code,
+            raw_material_description,
+            raw_material_unit,
+            raw_material_group,
+            finished_product_code,
+            finished_product_description,
+            finished_product_unit
+        INTO #exclusive_catalog
+        FROM CATALOG
+        OPTION (MAXRECURSION 0);
+
+        SELECT
+            COUNT(*) AS total_exclusive_materials,
+            COUNT(DISTINCT finished_product_code) AS total_finished_products_with_exclusive,
+            COUNT(*) AS total_exclusive_links
+        FROM #exclusive_catalog;
+
+        SELECT
+            raw_material_code,
+            raw_material_description,
+            raw_material_unit,
+            raw_material_group,
+            finished_product_code,
+            finished_product_description,
+            finished_product_unit
+        FROM (
+            SELECT
+                C.*,
+                ROW_NUMBER() OVER (
+                    ORDER BY raw_material_code, finished_product_code
+                ) AS _rn
+            FROM #exclusive_catalog C
+        ) ranked
+        WHERE ranked._rn > ? AND ranked._rn <= ?
+        ORDER BY ranked._rn;
+
+        DROP TABLE IF EXISTS #exclusive_catalog;
+        """
+        params: list = [max_depth, *filter_params, offset, offset + limit]
+        with self as repo:
+            resultsets = repo.execute_query_multiple(sql, tuple(params))
+        return self._parse_page_resultsets(resultsets)
+
+    def fetch_exclusive_catalog_finished_product_page(
+        self,
+        *,
+        max_depth: int,
+        limit: int,
+        offset: int,
+        include_test_products: bool,
+        finished_product_code: str | None = None,
+        raw_material_code: str | None = None,
+        group_code: str | None = None,
+    ) -> tuple[dict, list[dict]]:
+        filter_sql, filter_params = self._optional_filters(
+            finished_product_code=finished_product_code,
+            raw_material_code=raw_material_code,
+            group_code=group_code,
+        )
+        sql = f"""
+        {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+            {filter_sql}
+        )
+        SELECT
+            raw_material_code,
+            raw_material_description,
+            raw_material_unit,
+            raw_material_group,
+            finished_product_code,
+            finished_product_description,
+            finished_product_unit
+        INTO #exclusive_catalog
+        FROM CATALOG
+        OPTION (MAXRECURSION 0);
+
+        SELECT
+            COUNT(*) AS total_exclusive_materials,
+            COUNT(DISTINCT finished_product_code) AS total_finished_products_with_exclusive,
+            COUNT(*) AS total_exclusive_links
+        FROM #exclusive_catalog;
+
+        WITH PA_PAGE AS (
+            SELECT
+                finished_product_code,
+                finished_product_description,
+                finished_product_unit,
+                COUNT(DISTINCT raw_material_code) AS exclusive_raw_material_count,
+                ROW_NUMBER() OVER (ORDER BY finished_product_code) AS _pa_rn
+            FROM #exclusive_catalog
+            GROUP BY
+                finished_product_code,
+                finished_product_description,
+                finished_product_unit
+        )
+        SELECT
+            C.finished_product_code,
+            C.finished_product_description,
+            C.finished_product_unit,
+            P.exclusive_raw_material_count,
+            C.raw_material_code,
+            C.raw_material_description,
+            C.raw_material_unit,
+            C.raw_material_group
+        FROM PA_PAGE P
+        INNER JOIN #exclusive_catalog C
+            ON C.finished_product_code = P.finished_product_code
+        WHERE P._pa_rn > ? AND P._pa_rn <= ?
+        ORDER BY P.finished_product_code, C.raw_material_code;
+
+        DROP TABLE IF EXISTS #exclusive_catalog;
+        """
+        params: list = [max_depth, *filter_params, offset, offset + limit]
+        with self as repo:
+            resultsets = repo.execute_query_multiple(sql, tuple(params))
+        return self._parse_page_resultsets(resultsets)
+
     def fetch_exclusive_catalog_totals(
         self,
         *,
@@ -168,32 +310,51 @@ class ProductExclusiveRawMaterialRepository(
             raw_material_code=raw_material_code,
             group_code=group_code,
         )
-        sql = f"""
-        {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
-            {filter_sql}
-        )
+        if offset <= 0:
+            sql = f"""
+            {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+                {filter_sql}
+            )
+            SELECT TOP ({int(limit)})
+                raw_material_code,
+                raw_material_description,
+                raw_material_unit,
+                raw_material_group,
+                finished_product_code,
+                finished_product_description,
+                finished_product_unit
+            FROM CATALOG
+            ORDER BY raw_material_code, finished_product_code
+            OPTION (MAXRECURSION 0);
+            """
+            params: list = [max_depth, *filter_params]
+        else:
+            sql = f"""
+            {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+                {filter_sql}
+            )
 
-        SELECT
-            raw_material_code,
-            raw_material_description,
-            raw_material_unit,
-            raw_material_group,
-            finished_product_code,
-            finished_product_description,
-            finished_product_unit
-        FROM (
             SELECT
-                C.*,
-                ROW_NUMBER() OVER (
-                    ORDER BY raw_material_code, finished_product_code
-                ) AS _rn
-            FROM CATALOG C
-        ) ranked
-        WHERE ranked._rn > ? AND ranked._rn <= ?
-        ORDER BY ranked._rn
-        OPTION (MAXRECURSION 0);
-        """
-        params: list = [max_depth, *filter_params, offset, offset + limit]
+                raw_material_code,
+                raw_material_description,
+                raw_material_unit,
+                raw_material_group,
+                finished_product_code,
+                finished_product_description,
+                finished_product_unit
+            FROM (
+                SELECT
+                    C.*,
+                    ROW_NUMBER() OVER (
+                        ORDER BY raw_material_code, finished_product_code
+                    ) AS _rn
+                FROM CATALOG C
+            ) ranked
+            WHERE ranked._rn > ? AND ranked._rn <= ?
+            ORDER BY ranked._rn
+            OPTION (MAXRECURSION 0);
+            """
+            params = [max_depth, *filter_params, offset, offset + limit]
         with self as repo:
             return repo.execute_batch_query(sql, tuple(params))
 
@@ -213,41 +374,76 @@ class ProductExclusiveRawMaterialRepository(
             raw_material_code=raw_material_code,
             group_code=group_code,
         )
-        sql = f"""
-        {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
-            {filter_sql}
-        ),
-
-        PA_PAGE AS (
+        if offset <= 0:
+            sql = f"""
+            {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+                {filter_sql}
+            ),
+            PA_PAGE AS (
+                SELECT TOP ({int(limit)})
+                    finished_product_code,
+                    finished_product_description,
+                    finished_product_unit,
+                    COUNT(DISTINCT raw_material_code) AS exclusive_raw_material_count
+                FROM CATALOG
+                GROUP BY
+                    finished_product_code,
+                    finished_product_description,
+                    finished_product_unit
+                ORDER BY finished_product_code
+            )
             SELECT
-                finished_product_code,
-                finished_product_description,
-                finished_product_unit,
-                COUNT(DISTINCT raw_material_code) AS exclusive_raw_material_count,
-                ROW_NUMBER() OVER (ORDER BY finished_product_code) AS _pa_rn
-            FROM CATALOG
-            GROUP BY
-                finished_product_code,
-                finished_product_description,
-                finished_product_unit
-        )
+                C.finished_product_code,
+                C.finished_product_description,
+                C.finished_product_unit,
+                P.exclusive_raw_material_count,
+                C.raw_material_code,
+                C.raw_material_description,
+                C.raw_material_unit,
+                C.raw_material_group
+            FROM PA_PAGE P
+            INNER JOIN CATALOG C
+                ON C.finished_product_code = P.finished_product_code
+            ORDER BY P.finished_product_code, C.raw_material_code
+            OPTION (MAXRECURSION 0);
+            """
+            params: list = [max_depth, *filter_params]
+        else:
+            sql = f"""
+            {self._base_ctes(max_depth=max_depth, include_test_products=include_test_products)}
+                {filter_sql}
+            ),
 
-        SELECT
-            C.finished_product_code,
-            C.finished_product_description,
-            C.finished_product_unit,
-            P.exclusive_raw_material_count,
-            C.raw_material_code,
-            C.raw_material_description,
-            C.raw_material_unit,
-            C.raw_material_group
-        FROM PA_PAGE P
-        INNER JOIN CATALOG C
-            ON C.finished_product_code = P.finished_product_code
-        WHERE P._pa_rn > ? AND P._pa_rn <= ?
-        ORDER BY P.finished_product_code, C.raw_material_code
-        OPTION (MAXRECURSION 0);
-        """
-        params: list = [max_depth, *filter_params, offset, offset + limit]
+            PA_PAGE AS (
+                SELECT
+                    finished_product_code,
+                    finished_product_description,
+                    finished_product_unit,
+                    COUNT(DISTINCT raw_material_code) AS exclusive_raw_material_count,
+                    ROW_NUMBER() OVER (ORDER BY finished_product_code) AS _pa_rn
+                FROM CATALOG
+                GROUP BY
+                    finished_product_code,
+                    finished_product_description,
+                    finished_product_unit
+            )
+
+            SELECT
+                C.finished_product_code,
+                C.finished_product_description,
+                C.finished_product_unit,
+                P.exclusive_raw_material_count,
+                C.raw_material_code,
+                C.raw_material_description,
+                C.raw_material_unit,
+                C.raw_material_group
+            FROM PA_PAGE P
+            INNER JOIN CATALOG C
+                ON C.finished_product_code = P.finished_product_code
+            WHERE P._pa_rn > ? AND P._pa_rn <= ?
+            ORDER BY P.finished_product_code, C.raw_material_code
+            OPTION (MAXRECURSION 0);
+            """
+            params = [max_depth, *filter_params, offset, offset + limit]
         with self as repo:
             return repo.execute_batch_query(sql, tuple(params))

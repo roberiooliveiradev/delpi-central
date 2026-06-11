@@ -170,25 +170,74 @@ def group_exclusive_catalog_by_finished_product(rows: list[dict]) -> list[dict]:
     return list(grouped.values())
 
 
-def summarize_exclusive_catalog_by_material(totals: dict) -> dict:
+def group_exclusive_catalog_by_finished_product_from_material_rows(
+    rows: list[dict],
+    *,
+    pa_limit: int,
+) -> list[dict]:
+    grouped = group_exclusive_catalog_by_finished_product(
+        [
+            {
+                **row,
+                "exclusive_raw_material_count": 0,
+            }
+            for row in rows
+        ]
+    )
+
+    for entry in grouped:
+        materials = entry.get("exclusive_raw_materials") or []
+        entry["exclusive_raw_material_count"] = len(materials)
+
+    grouped.sort(key=lambda item: str(item.get("finished_product_code") or ""))
+    return grouped[: max(pa_limit, 0)]
+
+
+def summarize_exclusive_catalog_by_material(
+    totals: dict,
+    *,
+    returned_links: int = 0,
+    include_totals: bool = True,
+) -> dict:
     from app.domain.constants.product_exclusivity import TEST_FINISHED_PRODUCT_PREFIXES
 
-    return {
-        "total_exclusive_materials": int(totals.get("total_exclusive_materials") or 0),
-        "total_finished_products_with_exclusive": int(
-            totals.get("total_finished_products_with_exclusive") or 0
-        ),
+    summary = {
         "excluded_test_product_prefixes": list(TEST_FINISHED_PRODUCT_PREFIXES),
+        "returned_exclusive_links": returned_links,
     }
 
+    if not include_totals:
+        summary["totals_available"] = False
+        return summary
 
-def summarize_exclusive_catalog_by_finished_product(totals: dict) -> dict:
-    return {
-        "total_finished_products": int(
-            totals.get("total_finished_products_with_exclusive") or 0
-        ),
-        "total_exclusive_links": int(totals.get("total_exclusive_links") or 0),
+    summary["totals_available"] = True
+    summary["total_exclusive_materials"] = int(totals.get("total_exclusive_materials") or 0)
+    summary["total_finished_products_with_exclusive"] = int(
+        totals.get("total_finished_products_with_exclusive") or 0
+    )
+    return summary
+
+
+def summarize_exclusive_catalog_by_finished_product(
+    totals: dict,
+    *,
+    returned_links: int = 0,
+    include_totals: bool = True,
+) -> dict:
+    summary = {
+        "returned_exclusive_links": returned_links,
     }
+
+    if not include_totals:
+        summary["totals_available"] = False
+        return summary
+
+    summary["totals_available"] = True
+    summary["total_finished_products"] = int(
+        totals.get("total_finished_products_with_exclusive") or 0
+    )
+    summary["total_exclusive_links"] = int(totals.get("total_exclusive_links") or 0)
+    return summary
 
 
 def classify_factory_status(
