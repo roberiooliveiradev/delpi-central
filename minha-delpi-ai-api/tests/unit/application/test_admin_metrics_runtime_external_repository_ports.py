@@ -30,6 +30,7 @@ from app.domain.ports.admin_runtime_settings_repository_port import (
 from app.domain.ports.admin_system_check_repository_port import AdminSystemCheckRepositoryPort
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
+from app.infrastructure.config.settings import Settings
 
 _ADMIN_METRICS_RUNTIME_EXTERNAL_MODULES = [
     "app/application/services/chat_capabilities_service.py",
@@ -130,14 +131,18 @@ def test_chat_capabilities_load_action_catalog_uses_configured_loader():
     assert catalog[0]["actionId"] == "stock_lookup"
 
 
-def test_chat_intelligence_settings_service_uses_runtime_settings_port():
+def test_chat_intelligence_settings_service_sync_writes_env_to_runtime_port(monkeypatch):
+    monkeypatch.setattr(Settings, "CHAT_WEB_SEARCH_ENABLED", False)
+
     repository = Mock(spec=AdminRuntimeSettingsRepositoryPort)
-    repository.get_chat_intelligence_settings.return_value = {"webSearchEnabled": True}
+    service = ChatIntelligenceSettingsService(repository)
 
-    resolved = ChatIntelligenceSettingsService(repository).resolve()
+    service.sync_from_environment()
 
-    repository.get_chat_intelligence_settings.assert_called_once()
-    assert resolved.web_search_enabled is True
+    repository.save_chat_intelligence_settings.assert_called_once()
+    payload = repository.save_chat_intelligence_settings.call_args.args[0]
+    assert payload["webSearchEnabled"] is False
+    assert service.resolve().web_search_enabled is False
 
 
 def test_get_admin_quality_unified_summary_delegates_to_injected_use_cases(monkeypatch):

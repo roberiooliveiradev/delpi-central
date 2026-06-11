@@ -126,6 +126,8 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 
 **Desligar só o necessário:** defina `false` no `infra/.env` (ex.: `CHAT_AGENTIC_LOOP_ENABLED=false` em CPU apertada). O código (`settings.py`) usa os mesmos defaults quando a API roda **fora** do Docker.
 
+**Prioridade:** o pipeline do chat lê **sempre** as variáveis de ambiente (`CHAT_*`, `RAG_*`, `EXTERNAL_ACTION_*`). No boot do container, `docker-entrypoint.sh` executa `flask sync-chat-intelligence-env` para espelhar o `.env` no painel admin (Postgres). Toggles salvos só no painel **não** alteram o runtime até mudar o `.env` e recriar o serviço. Para pular o sync: `SKIP_CHAT_INTELLIGENCE_SYNC=true`.
+
 Conferir no container:
 
 ```bash

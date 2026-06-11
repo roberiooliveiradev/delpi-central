@@ -11,7 +11,6 @@ from app.application.services.chat_native_tool_schema_service import (
 )
 from app.domain.ports.internal_tool_port import InternalToolPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
-from app.infrastructure.config.settings import Settings
 
 logger = logging.getLogger("minha-delpi-ai-api.chat.native_tools")
 
@@ -30,19 +29,7 @@ class ChatNativeToolCallingService:
         )
 
     def is_enabled(self, *, agent_context: dict | None = None) -> bool:
-        if not Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED:
-            return False
-
-        stored = (
-            self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings()
-            or {}
-        )
-        enabled = stored.get("nativeToolCallingEnabled")
-
-        if enabled is None:
-            return False
-
-        if not bool(enabled):
+        if not self.intelligence_settings_service.resolve().native_tool_calling_enabled:
             return False
 
         return ChatAgentIntelligencePolicyService.native_tool_calling_pilot_enabled(

@@ -36,19 +36,24 @@ class FakeSettingsRepository:
 
 
 class FakeIntelligenceSettingsService:
-    def __init__(self):
+    def __init__(self, *, native_tool_calling_enabled: bool = True):
         self.settings_repository = FakeSettingsRepository()
+        self._native_tool_calling_enabled = native_tool_calling_enabled
+
+    def resolve(self):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(
+            native_tool_calling_enabled=self._native_tool_calling_enabled,
+        )
 
 
-def test_select_tools_when_enabled(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_native_tool_calling_service.Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED",
-        True,
-    )
-
+def test_select_tools_when_enabled():
     service = ChatNativeToolCallingService(
         llm_gateway=FakeLlm(),
-        intelligence_settings_service=FakeIntelligenceSettingsService(),
+        intelligence_settings_service=FakeIntelligenceSettingsService(
+            native_tool_calling_enabled=True,
+        ),
     )
 
     pilot_agent = {"metadata": {"intelligence": {"nativeToolCallingEnabled": True}}}
@@ -65,15 +70,12 @@ def test_select_tools_when_enabled(monkeypatch):
     assert result["selections"][0]["name"] == "get_current_user"
 
 
-def test_select_tools_blocked_without_pilot_agent(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_native_tool_calling_service.Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED",
-        True,
-    )
-
+def test_select_tools_blocked_without_pilot_agent():
     service = ChatNativeToolCallingService(
         llm_gateway=FakeLlm(),
-        intelligence_settings_service=FakeIntelligenceSettingsService(),
+        intelligence_settings_service=FakeIntelligenceSettingsService(
+            native_tool_calling_enabled=True,
+        ),
     )
 
     result = service.select_tools(

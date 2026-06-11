@@ -18,5 +18,10 @@ else
   flask --app "$FLASK_APP" db upgrade
 fi
 
+if [ "${SKIP_CHAT_INTELLIGENCE_SYNC:-false}" != "true" ]; then
+  echo "🔄 Sincronizando inteligência do chat a partir do .env..."
+  flask --app "$FLASK_APP" sync-chat-intelligence-env
+fi
+
 echo "🔥 Iniciando aplicação..."
 exec "$@"

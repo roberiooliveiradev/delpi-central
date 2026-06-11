@@ -376,19 +376,10 @@ class ChatAgenticToolLoopService:
 
     def _resolve_settings(self) -> dict:
         runtime = self.intelligence_settings_service.resolve()
-        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
-
-        enabled = stored.get("agenticLoopEnabled")
-        if enabled is None:
-            enabled = Settings.CHAT_AGENTIC_LOOP_ENABLED
-
-        max_steps = stored.get("agenticLoopMaxSteps")
-        if max_steps is None:
-            max_steps = Settings.CHAT_AGENTIC_LOOP_MAX_STEPS
 
         return {
-            "enabled": bool(enabled),
-            "max_steps": max(1, min(int(max_steps), 3)),
+            "enabled": bool(runtime.agentic_loop_enabled),
+            "max_steps": max(1, min(int(runtime.agentic_loop_max_steps), 3)),
         }
 
     def _build_catalog(

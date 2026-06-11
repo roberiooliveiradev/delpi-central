@@ -59,7 +59,12 @@ def create_application() -> Flask:
     register_error_handlers(app)
 
     from app.infrastructure.cli.data_retention_cli import data_retention_cli
+    from app.infrastructure.cli.chat_intelligence_cli import (
+        sync_chat_intelligence_env_command,
+    )
+
     app.cli.add_command(data_retention_cli)
+    app.cli.add_command(sync_chat_intelligence_env_command)
 
     warmup_ollama()
 

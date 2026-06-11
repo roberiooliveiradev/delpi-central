@@ -89,7 +89,7 @@ O painel admin **persiste em runtime** (`chat_intelligence_settings`); variávei
 | `EXTERNAL_ACTION_SEMANTIC_MIN_SCORE` | `0.42` | `0.42` |
 | `CHAT_OPERATIONAL_FAST_PATH_ENABLED` | `true` | `true` |
 
-Após alterar `.env` / compose, reinicie a API. Se o admin já salvou valores, eles **prevalecem** sobre o env até serem resetados no painel.
+Após alterar `.env` / compose, recrie o container (`--force-recreate minha-delpi-ai-api`). O boot executa `sync-chat-intelligence-env`: o **runtime e o painel admin** passam a refletir o `.env` (env tem prioridade sobre toggles antigos no Postgres).
 
 ---
 

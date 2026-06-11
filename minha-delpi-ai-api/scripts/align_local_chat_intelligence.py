@@ -7,31 +7,12 @@ import argparse
 import json
 import sys
 
-from app.application.services.chat_intelligence_settings_service import (
-    ChatIntelligenceSettingsService,
+from app.composition.admin_composer import (
+    make_reindex_external_action_embeddings_use_case,
 )
-from app.application.use_cases.admin_chat_intelligence_use_cases import (
-    ReindexExternalActionEmbeddingsUseCase,
-    SaveAdminChatIntelligenceSettingsUseCase,
-)
+from app.composition.chat_composer import make_chat_intelligence_settings_service
 from app.composition.root_composer import create_application
 from app.extensions.db import db
-from app.infrastructure.config.settings import Settings
-
-# Perfil dev operacional (infra/.env + Onda 11): heurística primeiro, RAG keyword-first.
-LOCAL_DEV_INTELLIGENCE_PAYLOAD = {
-    "ragContextMinScore": float(Settings.RAG_CONTEXT_MIN_SCORE),
-    "externalActionSemanticMinScore": float(Settings.EXTERNAL_ACTION_SEMANTIC_MIN_SCORE),
-    "externalActionSemanticRankEnabled": bool(Settings.EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED),
-    "chatToolRouterEnabled": bool(Settings.CHAT_TOOL_ROUTER_ENABLED),
-    "chatHistorySummaryEnabled": bool(Settings.CHAT_HISTORY_SUMMARY_ENABLED),
-    "ragHybridEnabled": bool(Settings.CHAT_RAG_HYBRID_ENABLED),
-    "ragRerankEnabled": bool(Settings.CHAT_RAG_RERANK_ENABLED),
-    "ragFtsEnabled": bool(Settings.CHAT_RAG_FTS_ENABLED),
-    "nativeToolCallingEnabled": bool(Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED),
-    "agenticLoopEnabled": bool(Settings.CHAT_AGENTIC_LOOP_ENABLED),
-    "agenticLoopMaxSteps": int(Settings.CHAT_AGENTIC_LOOP_MAX_STEPS),
-}
 
 
 def main() -> int:
@@ -58,18 +39,17 @@ def main() -> int:
 
     with app.app_context():
         if not args.skip_save:
-            saved = SaveAdminChatIntelligenceSettingsUseCase().execute(
-                LOCAL_DEV_INTELLIGENCE_PAYLOAD
-            )
+            service = make_chat_intelligence_settings_service()
+            saved = service.sync_from_environment()
             db.session.commit()
             report["savedSettings"] = {
                 k: v
                 for k, v in saved.items()
-                if k != "defaults"
+                if k not in {"defaults", "source"}
             }
 
         if not args.skip_reindex:
-            report["reindex"] = ReindexExternalActionEmbeddingsUseCase().execute(
+            report["reindex"] = make_reindex_external_action_embeddings_use_case().execute(
                 provider_key=args.provider_key
             )
             db.session.commit()
