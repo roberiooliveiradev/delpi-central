@@ -71,7 +71,8 @@
         "/production/schedule/",
         "/production/orders/",
         "/production/work-centers/",
-        "/production/allocation-gaps"
+        "/production/allocation-gaps",
+        "/production/planned-vs-real-time"
       ],
       "parameterStrategy": "date_branch",
       "method": "GET"

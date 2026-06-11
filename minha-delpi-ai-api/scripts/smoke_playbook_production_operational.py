@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke E2E — Playbook 15 Fases 1–3 (P0, P1, P2) via api-delpi + chat."""
+"""Smoke E2E — Playbook 15 Fases 1–4 (P0–P3) via api-delpi + chat."""
 
 from __future__ import annotations
 
@@ -234,6 +234,13 @@ def main() -> int:
         ),
     ]
 
+    p3_api: list[tuple[str, str]] = [
+        (
+            "API R16 planned vs real",
+            "/production/planned-vs-real-time?limit=5",
+        ),
+    ]
+
     p0_chat: list[tuple[str, str, str, str | None]] = [
         (
             "S1 consumption",
@@ -321,6 +328,15 @@ def main() -> int:
         ),
     ]
 
+    p3_chat: list[tuple[str, str, str, str | None]] = [
+        (
+            "S14 planned vs real",
+            "Compare tempo planejado e tempo real das OPs hoje filial 01",
+            "/production/planned-vs-real-time",
+            "get_production_planned_vs_real_time",
+        ),
+    ]
+
     failed = 0
 
     print("=== api-delpi P0 ===")
@@ -332,6 +348,9 @@ def main() -> int:
     print("\n=== api-delpi P2 ===")
     failed += _run_api_checks(token, p2_api)
 
+    print("\n=== api-delpi P3 ===")
+    failed += _run_api_checks(token, p3_api)
+
     print("\n=== chat E2E P0 ===")
     failed += _run_chat_checks(token, agent_id, p0_chat)
 
@@ -340,6 +359,9 @@ def main() -> int:
 
     print("\n=== chat E2E P2 ===")
     failed += _run_chat_checks(token, agent_id, p2_chat)
+
+    print("\n=== chat E2E P3 ===")
+    failed += _run_chat_checks(token, agent_id, p3_chat)
 
     print(f"\n{'FAIL' if failed else 'PASS'} — total failures: {failed}")
     return 1 if failed else 0

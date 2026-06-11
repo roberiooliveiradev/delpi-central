@@ -762,23 +762,44 @@ class ExternalActionProductListPresenter:
         title: str | None = None,
         *,
         path: str = "",
+        profile_name: str | None = None,
+        entity: str | None = None,
+        role: str = "generic",
     ) -> dict | None:
         from app.domain.services.chat_presentation_operational_table_service import (
             ChatPresentationOperationalTableService as OpsTable,
+        )
+        from app.domain.services.chat_presentation_table_profile_inference_service import (
+            ChatPresentationTableProfileInferenceService,
         )
 
         if not items:
             return None
 
+        dict_items = [item for item in items if isinstance(item, dict)]
+
+        if not dict_items:
+            return None
+
+        effective_path = self._host._effective_presentation_path(path)
+
         if not title:
             title = self._host._presenter_text("generic", "itemsTableDefaultTitle")
 
+        resolved_profile = profile_name or ChatPresentationTableProfileInferenceService.infer_profile_name(
+            path=effective_path,
+            entity=entity,
+            sample_row=dict_items[0],
+            column_labels=self._host._column_labels,
+        )
+
         return OpsTable.build_items_table(
             self._host.column_label_context,
-            [item for item in items if isinstance(item, dict)],
+            dict_items,
             title=title,
-            role="generic",
-            path=path,
+            role=role,
+            path=effective_path,
+            profile_name=resolved_profile,
         )
 
     def _present_product_structure(self, root: dict, path: str) -> dict | None:

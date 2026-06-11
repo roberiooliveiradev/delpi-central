@@ -19,10 +19,20 @@
     "/otd": "OTD — entrega no prazo",
     "/sale-order": "Ordens de venda",
     "/orders": "Ordens de venda",
+    "/consumption/top-items-by-work-center": "Consumo por centro de trabalho",
+    "/consumption/top-items-validated": "Consumo validado",
     "/consumption/top-items": "Itens mais consumidos",
+    "/consumption/by-item/": "Consumo por item",
     "/losses/top-materials": "Refugos por matéria-prima",
     "/losses/records": "Registros de refugo",
     "/schedule/today": "Programação de produção",
+    "/orders/finished-without-consumption": "OPs encerradas sem consumo",
+    "/orders/finished": "OPs encerradas",
+    "/orders/open": "OPs em aberto",
+    "/work-centers/average-planned-time": "Tempo médio planejado por CT",
+    "/work-centers/order-summary": "Resumo de OPs por centro de trabalho",
+    "/allocation-gaps": "Componentes sem empenho",
+    "/planned-vs-real-time": "Planejado × real por OP",
     "/purchases/top-products": "Produtos mais comprados"
   },
   "titlesByItemShape": {
@@ -1430,6 +1440,46 @@
       "production_schedule_today": {
         "textTitle": "Programação de produção",
         "tableTitle": "Produtos programados"
+      },
+      "production_orders_open": {
+        "textTitle": "Ordens de produção em aberto",
+        "tableTitle": "OPs em aberto"
+      },
+      "production_orders_finished": {
+        "textTitle": "Ordens de produção encerradas",
+        "tableTitle": "OPs encerradas"
+      },
+      "production_work_center_order_summary": {
+        "textTitle": "Resumo de OPs por centro de trabalho",
+        "tableTitle": "OPs por CT"
+      },
+      "production_consumption_top_items_by_work_center": {
+        "textTitle": "Consumo por centro de trabalho",
+        "tableTitle": "Empenho por CT"
+      },
+      "production_consumption_top_items_validated": {
+        "textTitle": "Consumo validado",
+        "tableTitle": "Consumo validado"
+      },
+      "production_allocation_gaps": {
+        "textTitle": "Componentes sem empenho",
+        "tableTitle": "Travamento de empenho"
+      },
+      "production_orders_finished_without_consumption": {
+        "textTitle": "OPs encerradas sem consumo",
+        "tableTitle": "OPs sem baixa de MP"
+      },
+      "production_work_center_average_planned_time": {
+        "textTitle": "Tempo médio planejado por CT",
+        "tableTitle": "Tempo médio por CT"
+      },
+      "production_consumption_by_item": {
+        "textTitle": "Consumo por item",
+        "tableTitle": "Consumo por item"
+      },
+      "production_planned_vs_real_time": {
+        "textTitle": "Planejado × real por OP",
+        "tableTitle": "Desvio de tempo por OP"
       }
     },
     "defaultTextTitle": "Relatório do produto",

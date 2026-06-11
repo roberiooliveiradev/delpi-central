@@ -215,7 +215,33 @@
       "media de tempo por centro de trabalho",
       "média de tempo por centro de trabalho"
     ],
-    "excludeTerms": ["consumid", "real de consumo", "comprad"]
+    "excludeTerms": [
+      "consumid",
+      "real de consumo",
+      "comprad",
+      "versus",
+      " x real",
+      "desvio",
+      "compar"
+    ]
+  },
+  "plannedVsRealTime": {
+    "terms": [
+      "planejado x real",
+      "planejado versus real",
+      "planejado e real",
+      "tempo planejado e tempo real",
+      "comparacao de tempo planejado",
+      "comparação de tempo planejado",
+      "desvio de tempo produtivo",
+      "estouro de tempo",
+      "hora-mil",
+      "hora mil",
+      "setup e tempo real",
+      "eficiencia produtiva",
+      "eficiência produtiva"
+    ],
+    "excludeTerms": ["consumid", "comprad", "por ct", "centro de trabalho"]
   },
   "consumptionByItem": {
     "terms": [
@@ -245,6 +271,7 @@
     "allocationGaps": "/production/allocation-gaps",
     "finishedWithoutConsumption": "/production/orders/finished-without-consumption",
     "averagePlannedTime": "/production/work-centers/average-planned-time",
-    "consumptionByItem": "/production/consumption/by-item/"
+    "consumptionByItem": "/production/consumption/by-item/",
+    "plannedVsRealTime": "/production/planned-vs-real-time"
   }
 }

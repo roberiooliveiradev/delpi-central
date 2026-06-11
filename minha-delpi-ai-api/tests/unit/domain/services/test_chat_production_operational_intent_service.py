@@ -93,3 +93,10 @@ def test_consumption_by_item_without_code_does_not_match_by_item() -> None:
         "Consumo real do item no mês"
     )
     assert kind != ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM
+
+
+def test_resolve_planned_vs_real_time_intent() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Compare tempo planejado e tempo real das OPs hoje filial 01"
+    )
+    assert kind == ProductionOperationalIntentKind.PLANNED_VS_REAL_TIME

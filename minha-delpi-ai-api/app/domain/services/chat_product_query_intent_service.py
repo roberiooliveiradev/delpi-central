@@ -440,7 +440,7 @@ class ChatProductQueryIntentService:
                     str(tool_meta.get("path") or "")
                 )
 
-                if code:
+                if code and cls.is_plausible_product_code(code):
                     return code
 
             content = cls._message_content(item)
@@ -595,6 +595,13 @@ class ChatProductQueryIntentService:
 
             if resolved:
                 return resolved
+
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return cls.extract_product_code(message)
 
         if cls.looks_like_scope_reset_operational_query(message):
             return cls.extract_product_code(message)

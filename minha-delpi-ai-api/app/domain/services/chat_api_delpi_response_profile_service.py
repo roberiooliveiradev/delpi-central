@@ -24,6 +24,11 @@ CHAT_CRITICAL_ENTITIES: frozenset[str] = frozenset(
         "production_work_center_order_summary",
         "production_consumption_top_items_by_work_center",
         "production_consumption_top_items_validated",
+        "production_allocation_gaps",
+        "production_orders_finished_without_consumption",
+        "production_work_center_average_planned_time",
+        "production_consumption_by_item",
+        "production_planned_vs_real_time",
         "purchases_top_products",
         "product_analyser",
         "product_factory_status",
@@ -67,6 +72,11 @@ PROFILE_PRESENT_ENTITIES: frozenset[str] = frozenset(
         "production_work_center_order_summary",
         "production_consumption_top_items_by_work_center",
         "production_consumption_top_items_validated",
+        "production_allocation_gaps",
+        "production_orders_finished_without_consumption",
+        "production_work_center_average_planned_time",
+        "production_consumption_by_item",
+        "production_planned_vs_real_time",
         "purchases_top_products",
         "product_analyser",
         "product_factory_status",
@@ -239,6 +249,29 @@ ENTITY_PATH_HINTS: dict[str, str] = {
     "protheus_index": "/system/tables/SB1/indexes",
     "protheus_relation": "/system/tables/SB1/relations",
     "protheus_table_schema": "/system/tables/SB1/schema",
+    "production_consumption_top_items": "/production/consumption/top-items",
+    "production_consumption_top_items_by_work_center": (
+        "/production/consumption/top-items-by-work-center"
+    ),
+    "production_consumption_top_items_validated": (
+        "/production/consumption/top-items-validated"
+    ),
+    "production_consumption_by_item": "/production/consumption/by-item/0",
+    "production_losses_top_materials": "/production/losses/top-materials",
+    "production_losses_records": "/production/losses/records",
+    "production_schedule_today": "/production/schedule/today",
+    "production_orders_open": "/production/orders/open",
+    "production_orders_finished": "/production/orders/finished",
+    "production_orders_finished_without_consumption": (
+        "/production/orders/finished-without-consumption"
+    ),
+    "production_work_center_order_summary": "/production/work-centers/order-summary",
+    "production_work_center_average_planned_time": (
+        "/production/work-centers/average-planned-time"
+    ),
+    "production_allocation_gaps": "/production/allocation-gaps",
+    "production_planned_vs_real_time": "/production/planned-vs-real-time",
+    "purchases_top_products": "/purchases/top-products",
 }
 
 ENTITY_ROUTED_FOR_PRESENT: frozenset[str] = (
@@ -256,6 +289,11 @@ PATH_ENTITY_FALLBACKS: tuple[tuple[str, str], ...] = (
     ("/factory-status", "product_factory_status"),
     ("/structure/exclusivity", "product_structure_exclusivity"),
     ("/exclusive-raw-materials/catalog", "exclusive_raw_materials_catalog"),
+    ("/production/planned-vs-real-time", "production_planned_vs_real_time"),
+    ("/production/allocation-gaps", "production_allocation_gaps"),
+    ("/production/orders/finished-without-consumption", "production_orders_finished_without_consumption"),
+    ("/production/work-centers/average-planned-time", "production_work_center_average_planned_time"),
+    ("/production/consumption/by-item/", "production_consumption_by_item"),
     ("/production/consumption/top-items-by-work-center", "production_consumption_top_items_by_work_center"),
     ("/production/consumption/top-items-validated", "production_consumption_top_items_validated"),
     ("/production/consumption/top-items", "production_consumption_top_items"),

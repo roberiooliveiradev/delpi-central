@@ -8,6 +8,9 @@ from app.domain.services.chat_api_delpi_response_profile_service import (
     ApiDelpiResponseProfile,
     ChatApiDelpiResponseProfileService,
 )
+from app.domain.services.chat_presentation_operational_table_service import (
+    ChatPresentationOperationalTableService as _OpsTable,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -21,6 +24,25 @@ if TYPE_CHECKING:
 class ExternalActionPresentationBuilderPresenter:
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
+
+    def _build_items_table_for_path(
+        self,
+        items: list,
+        *,
+        title: str | None,
+        path: str,
+        entity: str | None = None,
+        profile_name: str | None = None,
+        role: str = "generic",
+    ) -> dict | None:
+        return self._host._build_items_table(
+            items,
+            title=title,
+            path=path,
+            entity=entity,
+            profile_name=profile_name,
+            role=role,
+        )
 
     def _build_presentation_by_entity(
             self,
@@ -148,7 +170,13 @@ class ExternalActionPresentationBuilderPresenter:
                 first_item = items[0]
 
                 if entity == "product_stock" or self._host._is_stock_data(first_item):
-                    return self._host._build_items_table(items, title=title, path=path)
+                    return self._build_items_table_for_path(
+                        items,
+                        title=title,
+                        path=path,
+                        entity=entity,
+                        role="stock",
+                    )
 
                 if entity == "product_inspection" or self._host._looks_like_inspection_item(first_item):
                     return self._host._build_inspection_items_table(items, path=path)
@@ -159,10 +187,21 @@ class ExternalActionPresentationBuilderPresenter:
                 if entity == "product_guide" or (
                     "operation_description" in first_item or "operation_code" in first_item
                 ):
-                    return self._host._build_items_table(items, title=title, path=path)
+                    return self._build_items_table_for_path(
+                        items,
+                        title=title,
+                        path=path,
+                        entity=entity or "product_guide",
+                        role="guide",
+                    )
 
                 if len(items) >= 2 or self._host._is_tabular_data(first_item):
-                    return self._host._build_items_table(items, title=title, path=path)
+                    return self._build_items_table_for_path(
+                        items,
+                        title=title,
+                        path=path,
+                        entity=entity,
+                    )
 
             if entity in {
                 "product_shipping_status",
@@ -206,7 +245,12 @@ class ExternalActionPresentationBuilderPresenter:
                     title = self._host._infer_items_title(items, effective_path)
 
                     if len(items) >= 2 or self._host._is_tabular_data(items[0]):
-                        return self._host._build_items_table(items, title=title, path=effective_path)
+                        return self._build_items_table_for_path(
+                            items,
+                            title=title,
+                            path=effective_path,
+                            entity=entity,
+                        )
 
             if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
                 items = root.get("items")
@@ -219,7 +263,13 @@ class ExternalActionPresentationBuilderPresenter:
                 title = self._host._sql_result_title(root, effective_path)
 
                 if rows:
-                    return self._host._build_items_table(rows, title=title, path=effective_path)
+                    return self._build_items_table_for_path(
+                        rows,
+                        title=title,
+                        path=effective_path,
+                        entity=entity,
+                        role="list",
+                    )
 
             if ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
                 stock_value_table = self._host._build_stock_value_branch_table(
@@ -267,13 +317,14 @@ class ExternalActionPresentationBuilderPresenter:
 
             indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
 
-            for key, value in list(indicators.items())[:8]:
-                rows.append(
-                    {
-                        "campo": self._host._humanize_key(str(key)),
-                        "valor": str(value),
-                    }
+            rows.extend(
+                _OpsTable.summary_kv_rows(
+                    self._host.column_label_context,
+                    dict(list(indicators.items())[:8]),
+                    path=path,
+                    profile_name="factoryStatusOverview",
                 )
+            )
 
             title = (
                 self._host._route_presentation("factoryStatus", "titleWithCode", code=code)
@@ -297,7 +348,12 @@ class ExternalActionPresentationBuilderPresenter:
 
             if isinstance(root, list) and root and isinstance(root[0], dict):
                 sql_title = ExternalActionResponseContentService.get("sql", "defaultTitle")
-                return self._host._build_items_table(root, title=sql_title)
+                return self._build_items_table_for_path(
+                    root,
+                    title=sql_title,
+                    path=path,
+                    role="list",
+                )
 
             if not isinstance(root, dict):
                 return None
@@ -355,7 +411,11 @@ class ExternalActionPresentationBuilderPresenter:
                     return self._build_product_search_table(items, root, title=title)
 
                 if len(items) >= 2 or self._host._is_tabular_data(items[0]):
-                    return self._host._build_items_table(items, title=title, path=path)
+                    return self._build_items_table_for_path(
+                        items,
+                        title=title,
+                        path=path,
+                    )
 
                 return None
 
@@ -366,9 +426,12 @@ class ExternalActionPresentationBuilderPresenter:
                     "stock",
                     "titleDefault",
                 )
-                return self._host._build_items_table(
+                return self._build_items_table_for_path(
                     stock.get("items") or [],
                     title=stock_title,
+                    path=path,
+                    entity="product_stock",
+                    role="stock",
                 )
 
             parents = root.get("parents")
@@ -381,14 +444,23 @@ class ExternalActionPresentationBuilderPresenter:
                         "titleGeneric",
                     )
                 )
-                return self._host._build_items_table(parents, title=parents_title)
+                return self._build_items_table_for_path(
+                    parents,
+                    title=parents_title,
+                    path=path,
+                    entity="product_parents",
+                    role="structure",
+                )
 
             structure = root.get("structure")
             if isinstance(structure, dict) and isinstance(structure.get("items"), list):
                 structure_title = self._host._path_fragment_title("/structure")
-                return self._host._build_items_table(
+                return self._build_items_table_for_path(
                     structure["items"],
                     title=structure_title or self._host._path_fragment_title("structure"),
+                    path=path,
+                    entity="product_structure",
+                    role="structure",
                 )
 
             stock_value_table = self._host._build_stock_value_branch_table(root, path)
@@ -411,10 +483,11 @@ class ExternalActionPresentationBuilderPresenter:
                 title = self._host._sql_result_title(root, path)
 
                 if rows:
-                    return self._host._build_items_table(
+                    return self._build_items_table_for_path(
                         rows,
                         title=title,
                         path=path,
+                        role="list",
                     )
 
                 if self._host._looks_like_inventory_below_minimum_sql_context(root, path):

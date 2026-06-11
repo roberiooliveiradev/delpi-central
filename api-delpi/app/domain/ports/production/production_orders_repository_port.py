@@ -37,3 +37,12 @@ class ProductionOrdersRepositoryPort(Protocol):
         work_center: str | None,
         limit: int,
     ) -> list[dict]: ...
+
+    def fetch_planned_vs_real_time(
+        self,
+        *,
+        reference_date: str,
+        branch: str | None,
+        work_center: str | None,
+        limit: int,
+    ) -> list[dict]: ...

@@ -477,6 +477,10 @@ class ChatUserContextItemService:
 
                 entity_key = ChatManualContextPinService.entity_key_for_kind(key) or key
 
+                if entity_key == "productCode":
+                    if not ChatProductQueryIntentService.is_plausible_product_code(token):
+                        continue
+
                 if entity_key in {"productCode", "branch", "warehouse", "period"}:
                     entities[entity_key] = token
 
@@ -776,7 +780,11 @@ class ChatUserContextItemService:
         code = str(data.get("productCode") or "").strip()
         source = str(data.get("productCodeSource") or "").strip()
 
-        if code and source in ("tool", "explicit"):
+        if (
+            code
+            and source in ("tool", "explicit")
+            and ChatProductQueryIntentService.is_plausible_product_code(code)
+        ):
             add(
                 _CONTEXT_CHIP_KIND,
                 "productCode",

@@ -367,6 +367,84 @@ def test_liste_programados_hoje_selects_schedule_not_product_search():
     assert selected["arguments"]["actionId"] == "production-schedule-today"
 
 
+def test_liste_programados_hoje_ignores_polluted_search_product_code_in_memory():
+    class _SemanticMissRepository(FakeRepository):
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return [
+                action
+                for action in self.actions
+                if action["actionId"] == "guide-products"
+            ]
+
+    service = ExternalActionSelectionService(
+        _SemanticMissRepository(
+            [
+                {
+                    "actionId": "guide-products",
+                    "method": "GET",
+                    "path": "/products/{code}/guide",
+                    "operationId": "get_product_guide",
+                    "summary": "Guia do produto",
+                    "parametersSchema": [{"name": "code"}],
+                },
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    polluted_memory = {
+        "operationalFocus": {
+            "productCode": "search",
+            "productCodeSource": "explicit",
+        },
+        "userContextItems": [
+            {
+                "id": "auto:productCode:search",
+                "kind": "context",
+                "label": "search",
+                "extractedEntities": {"productCode": "search"},
+                "source": "auto",
+            }
+        ],
+    }
+
+    selected = service.select_action(
+        "liste os produtos que estão programados para produzir hoje",
+        allowed_action_ids=["guide-products", "production-schedule-today"],
+        memory_snapshot=polluted_memory,
+        previous_messages=[
+            {
+                "role": "assistant",
+                "content": "Busca de produtos (224 resultado(s))",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "metadata": {
+                                "ok": True,
+                                "path": "/products/search",
+                            },
+                        }
+                    ]
+                },
+            }
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+
+
 def test_scheduled_production_tomorrow_selects_sql_not_parent_products():
     service = ExternalActionSelectionService(
         FakeRepository(

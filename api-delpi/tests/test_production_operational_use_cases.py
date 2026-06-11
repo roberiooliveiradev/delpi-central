@@ -189,3 +189,25 @@ def test_consumption_by_item_use_case_calls_repository() -> None:
     )
 
     repository.fetch_consumption_by_item.assert_called_once()
+
+
+def test_planned_vs_real_time_use_case_calls_repository() -> None:
+    from app.application.use_cases.production.get_production_planned_vs_real_time_use_case import (
+        GetProductionPlannedVsRealTimeUseCase,
+    )
+
+    repository = MagicMock()
+    repository.fetch_planned_vs_real_time.return_value = [
+        {
+            "production_order": "000001",
+            "planned_hours": 2.5,
+            "real_hours": 3.0,
+            "status": "ATENCAO",
+        }
+    ]
+
+    use_case = GetProductionPlannedVsRealTimeUseCase(repository)
+    result = use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    assert result["items"][0]["status"] == "ATENCAO"
+    repository.fetch_planned_vs_real_time.assert_called_once()

@@ -39,6 +39,7 @@ class ExternalActionProductionOperationalRouteSelectionService:
             "productionWorkCenterAveragePlannedTime"
         ),
         ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM: "productionConsumptionByItem",
+        ProductionOperationalIntentKind.PLANNED_VS_REAL_TIME: "productionPlannedVsRealTime",
     }
 
     def try_select(

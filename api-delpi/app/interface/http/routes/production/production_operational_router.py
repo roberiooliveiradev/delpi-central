@@ -18,6 +18,7 @@ from app.composition.production_operational_composer import (
     build_get_production_orders_finished_use_case,
     build_get_production_orders_finished_without_consumption_use_case,
     build_get_production_orders_open_use_case,
+    build_get_production_planned_vs_real_time_use_case,
     build_get_production_schedule_today_use_case,
     build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
@@ -34,6 +35,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_ORDERS_FINISHED,
     PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
     PRODUCTION_ORDERS_OPEN,
+    PRODUCTION_PLANNED_VS_REAL_TIME,
     PRODUCTION_SCHEDULE_TODAY,
     PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME,
     PRODUCTION_WORK_CENTER_ORDER_SUMMARY,
@@ -442,4 +444,33 @@ def get_consumption_by_item(
         return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro em consumption/by-item/{{code}}: {exc}")
+        return error_response(str(exc), status_code=500)
+
+
+@router.get("/planned-vs-real-time", **PRODUCTION_PLANNED_VS_REAL_TIME)
+@require_permission(API_DELPI_ACCESS)
+def get_planned_vs_real_time(
+    reference_date: Optional[str] = Query(default=None),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    work_center: Optional[str] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1, le=200),
+):
+    try:
+        dto = ProductionOperationalRequest(
+            reference_date=reference_date,
+            branch=branch,
+            work_center=work_center,
+            limit=limit,
+        )
+        result = build_get_production_planned_vs_real_time_use_case().execute(dto)
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_PLANNED_VS_REAL_TIME["operation_id"],
+            message="Comparação planejado × real consultada com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em planned-vs-real-time: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em planned-vs-real-time: {exc}")
         return error_response(str(exc), status_code=500)

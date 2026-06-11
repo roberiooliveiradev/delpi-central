@@ -28,6 +28,7 @@ class ProductionOperationalIntentKind(str, Enum):
     FINISHED_WITHOUT_CONSUMPTION = "finishedWithoutConsumption"
     AVERAGE_PLANNED_TIME = "averagePlannedTime"
     CONSUMPTION_BY_ITEM = "consumptionByItem"
+    PLANNED_VS_REAL_TIME = "plannedVsRealTime"
 
 
 _BUNDLE = "production_operational_intent"
@@ -62,6 +63,7 @@ class ChatProductionOperationalIntentService:
             ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM,
             ProductionOperationalIntentKind.ALLOCATION_GAPS,
             ProductionOperationalIntentKind.FINISHED_WITHOUT_CONSUMPTION,
+            ProductionOperationalIntentKind.PLANNED_VS_REAL_TIME,
             ProductionOperationalIntentKind.AVERAGE_PLANNED_TIME,
             ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER,
             ProductionOperationalIntentKind.CONSUMPTION_VALIDATED,

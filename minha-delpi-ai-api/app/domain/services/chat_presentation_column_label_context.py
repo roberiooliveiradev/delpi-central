@@ -56,7 +56,7 @@ class ExternalActionColumnLabelContext:
     ) -> list[dict[str, Any]]:
         return self.column_labels.resolve_columns_for_items(
             items,
-            path=path,
+            path=path or self.path,
             profile_name=profile_name,
             schema_labels=self.schema_labels,
         )

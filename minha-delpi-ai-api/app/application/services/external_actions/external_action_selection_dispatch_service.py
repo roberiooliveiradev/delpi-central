@@ -329,6 +329,8 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
+            return None
+
         if (
             ExternalActionDomainRouteSelectionService.looks_like_system_metadata_question(
                 normalized

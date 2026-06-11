@@ -203,6 +203,19 @@ def test_extract_product_code_from_stock_path():
     assert code == "10080047"
 
 
+def test_extract_product_code_from_tool_path_ignores_search_collection():
+    assert (
+        ChatAnalysisIntentService.extract_product_code_from_tool_path("/products/search")
+        is None
+    )
+    assert (
+        ChatAnalysisIntentService.extract_product_code_from_tool_path(
+            "/products/search/description"
+        )
+        is None
+    )
+
+
 def test_extract_product_code_ignores_unresolved_path_template():
     code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
         "/products/{code}/stock"

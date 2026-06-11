@@ -197,6 +197,30 @@
     "loss_date": "Data perda",
     "loss_qty": "Qtd. perda",
     "planned_qty": "Qtd. planejada",
+    "produced_qty": "Qtd. produzida",
+    "pending_qty": "Qtd. pendente",
+    "allocated_qty": "Qtd. empenhada",
+    "original_allocated_qty": "Empenho original",
+    "required_qty": "Qtd. necessária",
+    "allocated_balance_qty": "Saldo empenho",
+    "movement_count": "Movimentações",
+    "priority": "Prioridade",
+    "start_time": "Início",
+    "end_time": "Fim",
+    "operation_end_date": "Fim operação",
+    "finished_orders_count": "OPs encerradas",
+    "open_orders_count": "OPs em aberto",
+    "total_orders_count": "Total OPs",
+    "average_planned_hours": "Tempo médio planejado (h)",
+    "product_group": "Grupo produto",
+    "qty_thousand": "Qtd. (mil)",
+    "qty_units": "Qtd. (un)",
+    "standard_time_hours": "Tempo padrão (h)",
+    "variance_hours": "Desvio (h)",
+    "reason": "Motivo",
+    "resource": "Recurso",
+    "sd3_sequence": "Seq. SD3",
+    "appointment_id": "ID apontamento",
     "operation_start_date": "Início operação",
     "production_order": "OP",
     "revision": "Revisão",
@@ -712,6 +736,21 @@
     "factoryMpStockSummary",
     "factoryRawMaterialStockDetail",
     "factoryProductionDetail",
+    "playbookPlannedVsRealTime",
+    "playbookAllocationGaps",
+    "playbookOrdersFinishedWithoutConsumption",
+    "playbookWorkCenterAveragePlannedTime",
+    "playbookConsumptionByItem",
+    "playbookConsumptionByWorkCenter",
+    "playbookConsumptionValidated",
+    "playbookWorkCenterOrderSummary",
+    "playbookOrdersFinished",
+    "playbookOrdersOpen",
+    "playbookScheduleToday",
+    "playbookLossesRecords",
+    "playbookLossesTopMaterials",
+    "playbookPurchasesTopProducts",
+    "playbookConsumptionTopItems",
     "shippingStatusDetail",
     "structureExclusivityDetail",
     "stockProductPositions",
@@ -2827,6 +2866,235 @@
           "valid_from",
           "Válido desde"
         ]
+      ]
+    },
+    "playbookConsumptionTopItems": {
+      "detect": {
+        "anyKeys": ["real_consumption_qty", "item_code"],
+        "pathContains": ["/production/consumption/top-items"]
+      },
+      "preferredColumns": [
+        ["item_code", "Item"],
+        ["description", "Descrição"],
+        ["unit", "Unidade"],
+        ["real_consumption_qty", "Consumo real"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookPurchasesTopProducts": {
+      "detect": {
+        "anyKeys": ["invoice_count", "total_value"],
+        "pathContains": ["/purchases/top-products"]
+      },
+      "preferredColumns": [
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["branch", "Filial"],
+        ["invoice_count", "Qtd. NFs"],
+        ["total_quantity", "Qtd. total"],
+        ["total_value", "Valor total"],
+        ["last_purchase_date", "Última compra"]
+      ]
+    },
+    "playbookLossesTopMaterials": {
+      "detect": {
+        "anyKeys": ["total_loss_qty", "material_code"],
+        "pathContains": ["/production/losses/top-materials"]
+      },
+      "preferredColumns": [
+        ["material_code", "Matéria-prima"],
+        ["description", "Descrição"],
+        ["loss_type", "Tipo perda"],
+        ["total_loss_qty", "Qtd. perda total"],
+        ["occurrence_count", "Ocorrências"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookLossesRecords": {
+      "detect": {
+        "anyKeys": ["loss_qty", "appointment_id"],
+        "pathContains": ["/production/losses/records"]
+      },
+      "preferredColumns": [
+        ["loss_date", "Data perda"],
+        ["production_order", "OP"],
+        ["operation", "Operação"],
+        ["material_code", "Matéria-prima"],
+        ["description", "Descrição"],
+        ["loss_type", "Tipo perda"],
+        ["loss_qty", "Qtd. perda"],
+        ["reason", "Motivo"],
+        ["resource", "Recurso"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookScheduleToday": {
+      "detect": {
+        "anyKeys": ["planned_qty", "priority"],
+        "pathContains": ["/production/schedule/today"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["planned_qty", "Qtd. planejada"],
+        ["unit", "Unidade"],
+        ["priority", "Prioridade"],
+        ["operation_start_date", "Início operação"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookOrdersOpen": {
+      "detect": {
+        "anyKeys": ["pending_qty", "produced_qty"],
+        "pathContains": ["/production/orders/open"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["planned_qty", "Qtd. planejada"],
+        ["produced_qty", "Qtd. produzida"],
+        ["pending_qty", "Qtd. pendente"],
+        ["unit", "Unidade"],
+        ["work_center", "Centro de trabalho"],
+        ["start_time", "Início"],
+        ["operation_start_date", "Início operação"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookOrdersFinished": {
+      "detect": {
+        "anyKeys": ["end_time", "produced_qty"],
+        "pathContains": ["/production/orders/finished"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["planned_qty", "Qtd. planejada"],
+        ["produced_qty", "Qtd. produzida"],
+        ["unit", "Unidade"],
+        ["work_center", "Centro de trabalho"],
+        ["start_time", "Início"],
+        ["end_time", "Fim"],
+        ["operation_start_date", "Início operação"],
+        ["operation_end_date", "Fim operação"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookWorkCenterOrderSummary": {
+      "detect": {
+        "anyKeys": ["finished_orders_count", "open_orders_count"],
+        "pathContains": ["/production/work-centers/order-summary"]
+      },
+      "preferredColumns": [
+        ["work_center", "Centro de trabalho"],
+        ["open_orders_count", "OPs em aberto"],
+        ["finished_orders_count", "OPs encerradas"],
+        ["total_orders_count", "Total OPs"]
+      ]
+    },
+    "playbookConsumptionByWorkCenter": {
+      "detect": {
+        "anyKeys": ["original_allocated_qty", "allocated_balance_qty"],
+        "pathContains": ["/production/consumption/top-items-by-work-center"]
+      },
+      "preferredColumns": [
+        ["work_center", "Centro de trabalho"],
+        ["item_code", "Item"],
+        ["description", "Descrição"],
+        ["original_allocated_qty", "Empenho original"],
+        ["required_qty", "Qtd. necessária"],
+        ["allocated_balance_qty", "Saldo empenho"],
+        ["movement_count", "Movimentações"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookConsumptionValidated": {
+      "detect": {
+        "anyKeys": ["real_consumption_qty"],
+        "pathContains": ["/production/consumption/top-items-validated"]
+      },
+      "preferredColumns": [
+        ["item_code", "Item"],
+        ["description", "Descrição"],
+        ["real_consumption_qty", "Consumo real"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookAllocationGaps": {
+      "detect": {
+        "anyKeys": ["allocated_qty", "component_code"],
+        "pathContains": ["/production/allocation-gaps"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["component_code", "Componente"],
+        ["description", "Descrição"],
+        ["operation", "Operação"],
+        ["allocated_qty", "Qtd. empenhada"],
+        ["work_center", "Centro de trabalho"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookOrdersFinishedWithoutConsumption": {
+      "detect": {
+        "anyKeys": ["component_code", "allocated_qty"],
+        "pathContains": ["/production/orders/finished-without-consumption"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["planned_qty", "Qtd. planejada"],
+        ["produced_qty", "Qtd. produzida"],
+        ["component_code", "Componente"],
+        ["operation", "Operação"],
+        ["allocated_qty", "Qtd. empenhada"],
+        ["work_center", "Centro de trabalho"],
+        ["branch", "Filial"]
+      ]
+    },
+    "playbookWorkCenterAveragePlannedTime": {
+      "detect": {
+        "anyKeys": ["average_planned_hours"],
+        "pathContains": ["/production/work-centers/average-planned-time"]
+      },
+      "preferredColumns": [
+        ["work_center", "Centro de trabalho"],
+        ["average_planned_hours", "Tempo médio planejado (h)"]
+      ]
+    },
+    "playbookConsumptionByItem": {
+      "detect": {
+        "anyKeys": ["product_group", "real_consumption_qty"],
+        "pathContains": ["/production/consumption/by-item/"]
+      },
+      "preferredColumns": [
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["product_group", "Grupo produto"],
+        ["real_consumption_qty", "Consumo real"]
+      ]
+    },
+    "playbookPlannedVsRealTime": {
+      "detect": {
+        "anyKeys": ["variance_hours", "planned_hours"],
+        "pathContains": ["/production/planned-vs-real-time"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["branch", "Filial"],
+        ["qty_thousand", "Qtd. (mil)"],
+        ["qty_units", "Qtd. (un)"],
+        ["setup_hours", "Setup (h)"],
+        ["standard_time_hours", "Tempo padrão (h)"],
+        ["planned_hours", "Horas previstas"],
+        ["real_hours", "Horas reais"],
+        ["variance_hours", "Desvio (h)"],
+        ["status", "Status"]
       ]
     }
   },

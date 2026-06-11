@@ -547,6 +547,16 @@ PRODUCTION_CONSUMPTION_BY_ITEM = agent_route(
     operation_id="get_production_consumption_by_item",
 )
 
+PRODUCTION_PLANNED_VS_REAL_TIME = agent_route(
+    summary="Tempo planejado × tempo real por OP",
+    description=(
+        "Compara tempo planejado (setup + hora-mil × quantidade em milheiro) "
+        "com tempo real de apontamento para OPs finalizadas na data. "
+        "Classifica desempenho em OK, ATENCAO ou ESTOURO."
+    ),
+    operation_id="get_production_planned_vs_real_time",
+)
+
 DATA_SQL = agent_route(
     summary="Executar consulta SQL somente leitura",
     description=(

@@ -22,6 +22,9 @@ from app.application.use_cases.production.get_production_orders_finished_use_cas
 from app.application.use_cases.production.get_production_orders_open_use_case import (
     GetProductionOrdersOpenUseCase,
 )
+from app.application.use_cases.production.get_production_planned_vs_real_time_use_case import (
+    GetProductionPlannedVsRealTimeUseCase,
+)
 from app.application.use_cases.production.get_production_work_center_average_planned_time_use_case import (
     GetProductionWorkCenterAveragePlannedTimeUseCase,
 )
@@ -126,3 +129,9 @@ def build_get_production_consumption_by_item_use_case() -> (
     GetProductionConsumptionByItemUseCase
 ):
     return GetProductionConsumptionByItemUseCase(ProductionConsumptionRepository())
+
+
+def build_get_production_planned_vs_real_time_use_case() -> (
+    GetProductionPlannedVsRealTimeUseCase
+):
+    return GetProductionPlannedVsRealTimeUseCase(ProductionOrdersRepository())

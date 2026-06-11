@@ -105,6 +105,7 @@ class ExternalActionResultPresenter:
         self._column_labels = column_label_service or ExternalActionColumnLabelService()
         self._active_schema_labels: dict[str, str] | None = None
         self._active_schema_formats: dict[str, str] | None = None
+        self._active_presentation_path: str = ""
         self._kpi_chart_presenter: ExternalActionKpiChartPresenter | None = None
         self._product_analyser_presenter: ExternalActionProductAnalyserPresenter | None = None
         self._product_composite_presenter: ExternalActionProductCompositeAnalysisPresenter | None = None
@@ -137,7 +138,11 @@ class ExternalActionResultPresenter:
             column_labels=self._column_labels,
             schema_labels=self._active_schema_labels,
             schema_formats=self._active_schema_formats,
+            path=self._active_presentation_path,
         )
+
+    def _effective_presentation_path(self, path: str = "") -> str:
+        return path or self._active_presentation_path or ""
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -306,6 +311,8 @@ class ExternalActionResultPresenter:
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
         previous_formats = self._active_schema_formats
+        previous_path = self._active_presentation_path
+        self._active_presentation_path = str(path or "").strip()
         self._active_schema_labels = self._column_labels.merge_meta_field_labels(
             {},
             data,
@@ -326,6 +333,7 @@ class ExternalActionResultPresenter:
         finally:
             self._active_schema_labels = previous_labels
             self._active_schema_formats = previous_formats
+            self._active_presentation_path = previous_path
 
 
 
@@ -544,6 +552,8 @@ class ExternalActionResultPresenter:
         response_schema: dict | None = None,
     ) -> dict | None:
         schema_labels = self._column_labels.resolve_schema_labels(response_schema)
+        previous_path = self._active_presentation_path
+        self._active_presentation_path = str(path or "").strip()
         self._active_schema_labels = self._column_labels.merge_meta_field_labels(
             schema_labels,
             data,
@@ -583,6 +593,7 @@ class ExternalActionResultPresenter:
         finally:
             self._active_schema_labels = None
             self._active_schema_formats = None
+            self._active_presentation_path = previous_path
 
 
 
@@ -605,6 +616,7 @@ class ExternalActionResultPresenter:
         return self._column_labels.label_for(
             key,
             schema_labels=self._active_schema_labels,
+            path=self._effective_presentation_path(),
         )
 
     def _format_field_value(self, key: str, value: object) -> str:
@@ -1300,8 +1312,18 @@ class ExternalActionResultPresenter:
         title: str | None = None,
         *,
         path: str = "",
+        profile_name: str | None = None,
+        entity: str | None = None,
+        role: str = "generic",
     ) -> dict | None:
-        return self._product_list()._build_items_table(items, title=title, path=path)
+        return self._product_list()._build_items_table(
+            items,
+            title=title,
+            path=path,
+            profile_name=profile_name,
+            entity=entity,
+            role=role,
+        )
 
     # --- Product analyser (delegação Fase 3A lote 2) ---
 

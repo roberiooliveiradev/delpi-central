@@ -50,6 +50,7 @@ class ChatAnalysisIntentService:
         r"/products/(?P<code>[^/]+)(?:/(?P<segment>[^/?]+))?",
         re.IGNORECASE,
     )
+    _PRODUCT_COLLECTION_PATH_CODES = frozenset({"search"})
     _PATH_PLACEHOLDER_RE = re.compile(r"^\{[^}]+\}$")
 
     @classmethod
@@ -587,7 +588,15 @@ class ChatAnalysisIntentService:
         if cls.looks_like_path_placeholder(raw_code):
             return None
 
-        return ChatProductQueryIntentService.normalize_product_code(raw_code)
+        if raw_code.lower() in cls._PRODUCT_COLLECTION_PATH_CODES:
+            return None
+
+        normalized = ChatProductQueryIntentService.normalize_product_code(raw_code)
+
+        if not ChatProductQueryIntentService.is_plausible_product_code(normalized):
+            return None
+
+        return normalized
 
     @classmethod
     def extract_product_path_segment(cls, path: str | None) -> str | None:
