@@ -60,6 +60,7 @@ def test_visual_bundle_enriches_cost_impact_with_auxiliary_slots():
         path=path,
         data=envelope,
         presenter=presenter,
+        explicit_format="chart",
     )
 
     assert metadata.get("kpiPresentation", {}).get("type") == "kpi"
