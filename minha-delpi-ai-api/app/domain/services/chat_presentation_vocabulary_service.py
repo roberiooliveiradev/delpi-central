@@ -241,3 +241,13 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
             "profileTitleTokenGroups",
             str(profile_key or "").strip(),
         )
+
+    @classmethod
+    def legacy_fallbacks_inventory_baseline(cls) -> dict[str, Any]:
+        raw = cls.node("legacyFallbacks", "inventoryBaseline")
+
+        return dict(raw) if isinstance(raw, dict) else {}
+
+    @classmethod
+    def legacy_fallbacks_allowed_path_include_modules(cls) -> tuple[str, ...]:
+        return cls.terms("legacyFallbacks", "allowedPathIncludesModules")

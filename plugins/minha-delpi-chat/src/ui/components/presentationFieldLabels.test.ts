@@ -32,4 +32,18 @@ describe("presentationFieldLabels", () => {
     expect(fieldLabels.ordered_quantity).toBe("Qtd. pedida");
     expect(fieldFormats.issue_date).toBe("date");
   });
+
+  it("prefere label da API em vez de humanize legacy", () => {
+    const { fieldLabels } = buildFieldLabelsFromTableColumns([
+      { key: "simulated_unit_cost", label: "Custo unitário simulado" },
+    ]);
+
+    expect(resolveFieldLabel("simulated_unit_cost", fieldLabels)).toBe(
+      "Custo unitário simulado",
+    );
+  });
+
+  it("usa humanize legacy só sem vocabulário configurado", () => {
+    expect(resolveFieldLabel("raw_material_code")).toBe("Raw Material Code");
+  });
 });

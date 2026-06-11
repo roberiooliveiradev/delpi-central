@@ -41,12 +41,53 @@
     "yes": "Sim",
     "no": "Não"
   },
+  "textFirstPolicy": {
+    "integratedStackHints": [
+      "visão integrada",
+      "visao integrada",
+      "visão completa",
+      "visao completa",
+      "modo completo",
+      "apresentação completa",
+      "apresentacao completa",
+      "estoque completo",
+      "mostre completo",
+      "mostra completo",
+      "mostrar completo",
+      "analise integrada",
+      "análise integrada",
+      "informações completas",
+      "informacoes completas"
+    ]
+  },
   "exclusiveRawMaterialTruthy": ["SIM", "S", "TRUE", "1"],
   "hierarchyTree": {
     "defaultHierarchyTitle": "Hierarquia",
     "defaultStructureTitle": "Estrutura",
     "defaultRootLabel": "Raiz",
-    "emptyLabel": "—"
+    "emptyLabel": "—",
+    "groupBadgeLabels": {
+      "branch": "",
+      "warehouse": ""
+    },
+    "groupNodeLabels": {
+      "branch": "Filial {value}",
+      "warehouse": "Armazém {value}"
+    },
+    "operationalRootItemsKey": "items",
+    "operationalRootWrapperKeys": ["stock"],
+    "metaCaption": {
+      "quantityField": "quantity",
+      "unitField": "unit",
+      "availableQuantityField": "available_quantity",
+      "defaultUnit": "un.",
+      "skipFields": ["quantity", "unit"],
+      "fieldOrder": [
+        "available_quantity",
+        "current_quantity",
+        "committed_quantity"
+      ]
+    }
   },
   "operationalDecision": {
     "structureIntent": ["structure", "structure_lookup", "parent"],
@@ -106,6 +147,8 @@
     "treePrimaryView": "estrutura hierárquica — árvore como visão principal",
     "pricingNarrativeFirst": "preços — narrativa com insights antes da tabela detalhada",
     "stockFewPositionsText": "poucas posições de estoque — resumo em texto com destaques",
+    "textFirstDefault": "pergunta operacional simples — resposta em texto; visuais sob demanda",
+    "integratedStack": "visão integrada solicitada — stack narrativo com visuais",
     "stockFewRowsTable": "estoque com poucos registros — tabela auditável em vez de gráfico",
     "productOverviewNarrative": "visão do produto — narrativa com insights antes da ficha tabular",
     "analyserFullStack": "consulta completa do produto — texto, tabela, árvore e gráfico",
@@ -114,7 +157,17 @@
     "operationalTableNative": "dados operacionais em tabela nativa",
     "chartRankingLongNames": "ranking ou nomes longos",
     "chartCategoryVolume": "volume de categorias melhor em gráfico",
-    "chartComparableNumeric": "dados numéricos comparáveis"
+    "chartComparableNumeric": "dados numéricos comparáveis",
+    "scoreAutomatic": "formato com maior pontuação para a forma dos dados e a pergunta"
+  },
+  "purposeDefaults": {
+    "text": "Entender o resumo operacional dos dados retornados",
+    "table": "Conferir valores linha a linha com rastreabilidade",
+    "chart": "Comparar categorias ou evolução de forma visual",
+    "tree": "Navegar a hierarquia ou composição do item",
+    "kpi": "Ler o indicador principal do recorte consultado",
+    "dashboard": "Visão consolidada com múltiplos painéis",
+    "canvas": "Documento ou relatório estruturado para leitura longa"
   },
   "routePolicyReasons": {
     "stockChart": "estoque — gráfico para visão agregada",
@@ -353,6 +406,34 @@
       "dashboard": "mostre o último resultado como painel"
     }
   },
+  "legacyFallbacks": {
+    "description": "Fallbacks MFE permitidos quando a API não envia role/label (Playbook 12 R20). Baseline — não aumentar sem revisão.",
+    "inventoryBaseline": {
+      "inferTableRoleFromTitleConditionalReturns": 10,
+      "pathIncludesByModule": {
+        "chatPresentation.ts": 7,
+        "visualSegmentCollector.ts": 4,
+        "assistantProseRendering.ts": 1
+      }
+    },
+    "tableRoleFromTitle": {
+      "deprecated": true,
+      "module": "presentationStackPlan.ts",
+      "preferMetadataField": "presentation.role",
+      "resolver": "resolveTableRole"
+    },
+    "humanizeFieldKey": {
+      "deprecated": true,
+      "module": "presentationFieldLabels.ts",
+      "preferMetadataField": "columns[].label",
+      "resolver": "resolveFieldLabel"
+    },
+    "allowedPathIncludesModules": [
+      "chatPresentation.ts",
+      "visualSegmentCollector.ts",
+      "assistantProseRendering.ts"
+    ]
+  },
   "playbook12Refactor": {
     "auditFiles": [
       "app/application/use_cases/execute_external_action_use_case.py",
@@ -424,8 +505,8 @@
         "fixture": "product_stock_90269001.json",
         "user_message": "estoque do produto 90269001",
         "expected_presentation_profile": "product_stock",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "tree"],
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"],
         "expected_interactivity_labels": ["Ver em gráfico", "Ver como tabela"]
       },
       {
@@ -436,7 +517,7 @@
         "user_message": "status fabril do produto 90269002",
         "expected_presentation_profile": "product_factory_status",
         "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "tree", "dashboard"]
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_production_status",
@@ -445,8 +526,8 @@
         "fixture": "product_production_status_90269002.json",
         "user_message": "status de produção do produto 90269002",
         "expected_presentation_profile": "product_production_status",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_sale_pricing",
@@ -455,8 +536,8 @@
         "fixture": "product_pricing_10080001.json",
         "user_message": "precificação do produto 10080001",
         "expected_presentation_profile": "product_pricing",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_raw_material_price",
@@ -465,8 +546,8 @@
         "fixture": "product_raw_material_price_intelligence_10080022.json",
         "user_message": "análise de preço da matéria-prima 10080022",
         "expected_presentation_profile": "product_raw_material_price_intelligence",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "chart"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_shipping_status",
@@ -475,8 +556,8 @@
         "fixture": "product_shipping_status_90269002.json",
         "user_message": "status de expedição do produto 90269002",
         "expected_presentation_profile": "product_shipping_status",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_structure_exclusivity",
@@ -485,8 +566,8 @@
         "fixture": "product_structure_exclusivity_90261805.json",
         "user_message": "matérias-primas exclusivas na estrutura do produto 90261805",
         "expected_presentation_profile": "product_structure",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "tree"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_cost_impact_simulation",
@@ -495,8 +576,8 @@
         "fixture": "product_cost_impact_simulation_90261255.json",
         "user_message": "simulação de impacto de custo do produto 90261255",
         "expected_presentation_profile": "product_cost_impact_simulation",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "chart"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_last_purchase",
@@ -505,7 +586,7 @@
         "fixture": "product_last_purchase_10080001.json",
         "user_message": "última compra do produto 10080001",
         "expected_presentation_profile": "last_purchase",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -515,7 +596,7 @@
         "fixture": "product_purchase_price_history_10080001.json",
         "user_message": "histórico de preço de compra do produto 10080001",
         "expected_presentation_profile": "purchase_price_history",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -525,7 +606,7 @@
         "fixture": "product_purchase_budget_history_10080001.json",
         "user_message": "histórico de orçamento de compra do produto 10080001",
         "expected_presentation_profile": "purchase_budget_history",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -535,7 +616,7 @@
         "fixture": "product_purchases_10080001.json",
         "user_message": "compras do produto 10080001",
         "expected_presentation_profile": "purchase_list",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       }
     ]

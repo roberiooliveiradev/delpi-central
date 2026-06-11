@@ -1,6 +1,7 @@
 export type FieldLabels = Record<string, string>;
 export type FieldFormats = Record<string, string>;
 
+/** Fallback legacy — preferir `columns[].label` da API (ver `presentation_vocabulary.json` → legacyFallbacks). */
 function humanizeFieldKeyFallback(key: string): string {
   return key
     .replace(/_/g, " ")

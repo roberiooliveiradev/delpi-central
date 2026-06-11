@@ -406,6 +406,34 @@
       "dashboard": "mostre o último resultado como painel"
     }
   },
+  "legacyFallbacks": {
+    "description": "Fallbacks MFE permitidos quando a API não envia role/label (Playbook 12 R20). Baseline — não aumentar sem revisão.",
+    "inventoryBaseline": {
+      "inferTableRoleFromTitleConditionalReturns": 10,
+      "pathIncludesByModule": {
+        "chatPresentation.ts": 7,
+        "visualSegmentCollector.ts": 4,
+        "assistantProseRendering.ts": 1
+      }
+    },
+    "tableRoleFromTitle": {
+      "deprecated": true,
+      "module": "presentationStackPlan.ts",
+      "preferMetadataField": "presentation.role",
+      "resolver": "resolveTableRole"
+    },
+    "humanizeFieldKey": {
+      "deprecated": true,
+      "module": "presentationFieldLabels.ts",
+      "preferMetadataField": "columns[].label",
+      "resolver": "resolveFieldLabel"
+    },
+    "allowedPathIncludesModules": [
+      "chatPresentation.ts",
+      "visualSegmentCollector.ts",
+      "assistantProseRendering.ts"
+    ]
+  },
   "playbook12Refactor": {
     "auditFiles": [
       "app/application/use_cases/execute_external_action_use_case.py",
