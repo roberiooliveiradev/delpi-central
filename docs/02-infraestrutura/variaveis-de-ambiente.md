@@ -148,7 +148,14 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `LLM_TEMPERATURE` | Criatividade das respostas. **Recomendado:** `0.4` (natural); `0.2` (mais determinístico) |
 | `CHAT_SESSION_TITLE_LLM_ENABLED` | `true` recomendado — títulos automáticos melhoram UX |
 | `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`). Max chars: `30` |
-| `CHAT_TOOL_ROUTER_ENABLED` | `true` recomendado — LLM sugere ferramentas (melhora assertividade) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `true` (default) — LLM sugere ferramentas (melhora assertividade) |
+| `CHAT_AGENTIC_LOOP_ENABLED` | `true` (default) — loop agentic com catálogo de actions |
+| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` (default) — teto de actions no planner agentic |
+| `CHAT_MULTI_ACTION_ENABLED` | `true` (default) — múltiplas external actions por turno |
+| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` (default) — consolida páginas quando o usuário pede total/completo |
+| `CHAT_DEFAULT_SQL_AUTHORING_SKILL` | `true` (default) — skill `sql` herdada no chat sem agente |
+| `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | `true` (default) — skill `company-knowledge` (RAG documental global) |
+| `CHAT_WEB_SEARCH_ENABLED` | `true` (default no Docker) — pesquisa web; requer SearXNG ou API key |
 | `CHAT_RAG_HYBRID_ENABLED` | `true` recomendado — busca vetorial + keyword combinados |
 | `CHAT_RAG_RERANK_ENABLED` | `true` recomendado — boost por overlap de keywords |
 | `CHAT_RAG_PREFER_KEYWORD_SEARCH` | `true` — usa FTS como busca principal |

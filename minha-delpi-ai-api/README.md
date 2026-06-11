@@ -118,7 +118,7 @@ Variáveis de ambiente (dev/prod): `infra/.env.dev.example` e `infra/.env.prod.e
 | `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT` | Gera embedding ao importar OpenAPI |
 | `CHAT_RAG_HYBRID_*` | RAG híbrido vetor + keyword |
 | `EMBEDDING_CACHE_*` | Cache em memória de embeddings |
-| `CHAT_AGENTIC_LOOP_*` | Loop agentic de tools (default desligado) |
+| `CHAT_AGENTIC_LOOP_*` | Loop agentic de tools (default **ligado**) |
 | `KNOWLEDGE_SEMANTIC_DEDUP_*` | Deduplicação semântica na pré-visualização |
 | `RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED` | Sugestões LLM nas avaliações |
 | `CHAT_INPUT_SECURITY_*` | Sanitização e anti prompt-injection |

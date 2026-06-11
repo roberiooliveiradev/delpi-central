@@ -215,7 +215,7 @@ class Settings:
     )
 
     CHAT_TOOL_ROUTER_ENABLED = (
-        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
     )
     CHAT_FAST_PATH_ENABLED = (
         os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
@@ -227,7 +227,7 @@ class Settings:
     )
     # Homologação local: api-delpi costuma estar off; prioriza rotas api_externa.* na seleção.
     CHAT_PREFER_API_EXTERNA_PROVIDER = (
-        os.getenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "false").lower() == "true"
+        os.getenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true").lower() == "true"
     )
     CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS = int(
         os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "2")
@@ -322,7 +322,7 @@ class Settings:
     )
 
     CHAT_AGENTIC_LOOP_ENABLED = (
-        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "true").lower() == "true"
     )
     CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
     CHAT_AGENTIC_CATALOG_MAX_ACTIONS = int(
@@ -346,7 +346,7 @@ class Settings:
         os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "false").lower() == "true"
     )
     CHAT_WEB_SEARCH_ENABLED = (
-        os.getenv("CHAT_WEB_SEARCH_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_WEB_SEARCH_ENABLED", "true").lower() == "true"
     )
     CHAT_WEB_SEARCH_MAX_RESULTS = int(os.getenv("CHAT_WEB_SEARCH_MAX_RESULTS", "5"))
     CHAT_WEB_SEARCH_TIMEOUT_SECONDS = float(

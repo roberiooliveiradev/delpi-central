@@ -81,6 +81,36 @@ Backend `docling` exige imagem buildada com `docker-compose.vision.yml`. Sem iss
 
 ---
 
+## Ferramentas do chat (default ligadas)
+
+Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferramentas do pipeline. Valores abaixo são os defaults do Compose quando a variável **não** está no `.env`:
+
+| Variável | Dev | Prod | Função |
+|----------|-----|------|--------|
+| `CHAT_TOOL_ROUTER_ENABLED` | `true` | `true` | Router LLM para tools/actions |
+| `CHAT_AGENTIC_LOOP_ENABLED` | `true` | `true` | Loop agentic (planner + catálogo) |
+| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | `12` | Teto de actions no catálogo agentic |
+| `CHAT_MULTI_ACTION_ENABLED` | `true` | `true` | Várias external actions por turno |
+| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | `true` | Busca páginas extras quando pedido |
+| `CHAT_RAG_HYBRID_ENABLED` | `true` | `true` | RAG vetor + keyword |
+| `CHAT_RAG_RERANK_ENABLED` | `true` | `true` | Boost por overlap de keywords |
+| `CHAT_WEB_SEARCH_ENABLED` | `true` | `true` | Pesquisa web (SearXNG/Tavily/…) |
+| `CHAT_DEFAULT_SQL_AUTHORING_SKILL` | `true` | `true` | Skill `sql` no chat sem agente |
+| `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | `true` | `true` | Skill `company-knowledge` (RAG global) |
+| `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | `false` | Piloto tools nativas LLM (opt-in) |
+
+**Desligar só o necessário:** defina `false` no `infra/.env` (ex.: `CHAT_AGENTIC_LOOP_ENABLED=false` em CPU apertada). O código (`settings.py`) usa os mesmos defaults quando a API roda **fora** do Docker.
+
+Conferir no container:
+
+```bash
+docker exec delpi-minha-delpi-ai-api printenv | grep -E '^(CHAT_TOOL_ROUTER|CHAT_AGENTIC|CHAT_RAG_HYBRID|CHAT_DEFAULT_)'
+```
+
+Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
+
+---
+
 ## Checklist deploy produção
 
 - [ ] `cp infra/.env.prod.example infra/.env` e trocar todos os `CHANGE_ME`
