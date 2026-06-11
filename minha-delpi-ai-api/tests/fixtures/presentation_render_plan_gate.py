@@ -116,6 +116,54 @@ def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
     return issues
 
 
+P6_EXTENDED_PIPELINE_CASES: tuple[dict[str, str], ...] = (
+    {
+        "id": "analyser_integrated_stack",
+        "profile_key": "analyser",
+        "path": "/products/90269001/analyser",
+        "fixture": "product_analyser_90269001.json",
+        "user_message": "",
+    },
+    {
+        "id": "product_detail_single",
+        "profile_key": "product_detail",
+        "path": "/products/90269001",
+        "fixture": "product_detail_90269001.json",
+        "user_message": "",
+    },
+    {
+        "id": "factory_status_auto_reference",
+        "profile_key": "factory_status",
+        "path": "/products/90269002/factory-status",
+        "fixture": "product_factory_status_90269002.json",
+        "user_message": "",
+    },
+    {
+        "id": "production_status_auto",
+        "profile_key": "production_status",
+        "path": "/products/90269002/production-status",
+        "fixture": "product_production_status_90269002.json",
+        "user_message": "",
+    },
+)
+
+
+def _iter_render_plan_pipeline_cases() -> tuple[dict[str, Any], ...]:
+    tier_a = ChatPresentationVocabularyService.playbook12_tier_a_pipeline_cases()
+    merged: list[dict[str, Any]] = [dict(item) for item in tier_a if isinstance(item, dict)]
+
+    seen_ids = {str(item.get("id") or "").strip() for item in merged}
+
+    for case in P6_EXTENDED_PIPELINE_CASES:
+        case_id = str(case.get("id") or "").strip()
+
+        if case_id and case_id not in seen_ids:
+            merged.append(dict(case))
+            seen_ids.add(case_id)
+
+    return tuple(merged)
+
+
 def find_render_plan_gaps() -> list[RenderPlanCoverageGap]:
     from app.application.use_cases.execute_external_action_use_case import (
         ExecuteExternalActionUseCase,
@@ -130,7 +178,7 @@ def find_render_plan_gaps() -> list[RenderPlanCoverageGap]:
     )
     gaps: list[RenderPlanCoverageGap] = []
 
-    for case in ChatPresentationVocabularyService.playbook12_tier_a_pipeline_cases():
+    for case in _iter_render_plan_pipeline_cases():
         if not isinstance(case, dict):
             continue
 

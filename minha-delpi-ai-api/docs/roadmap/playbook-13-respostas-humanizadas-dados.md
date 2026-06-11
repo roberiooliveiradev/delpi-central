@@ -395,7 +395,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
-| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟡 P6-A/B/C parcial |
+| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟡 P6-A/B/C entregues · encerramento parcial |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -520,6 +520,8 @@ O MFE permanece responsável por **mecânica de UI** (registry de componentes, m
 - MFE: `shouldApplyClientMarkdownCompaction` — não recompacta quando API enviou `textRenderMode`
 - MFE: removidas `shouldRenderDashboardSegment` / `isExplicitDashboardSession`
 - CI: `scripts/audit_mfe_presentation_logic.py`
+- Gate estendido: analyser, product_detail, factory/production status auto (`P6_EXTENDED_PIPELINE_CASES`)
+- MFE: `hasRenderPlanContract` / `isApiPreparedMarkdown` — blueprint legado só sem renderPlan v1
 
 | Área | Arquivo(s) MFE | O que decide hoje | Canônico API (alvo) |
 |------|----------------|-------------------|---------------------|
@@ -633,12 +635,13 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 **Critérios de aceite P6:**
 
 ```text
-[ ] Nenhum `if` de modo de sessão em chatPresentation.ts para suprimir visuais
-[ ] dashboardPresentation ausente no JSON quando Automático + summary_then_evidence
+[x] Nenhum `if` de modo de sessão em chatPresentation.ts para suprimir visuais (dashboard removido)
+[x] dashboardPresentation ausente no JSON quando Automático + summary_then_evidence
+[x] tailVisualPolicy sempre presente no stackPresentationPlan
+[x] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
 [ ] textPresentation sem embeds no Automático (assert API, não strip MFE)
-[ ] tailVisualPolicy sempre presente no stackPresentationPlan
-[ ] Regressão 90262404: Automático sem painel — validada só com payload API
-[ ] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
+[ ] Regressão 90262404: Automático sem painel — validada só com payload API (gate usa 90269002 auto)
+[ ] Blueprint legado removido quando 100% rotas tiverem renderPlan
 ```
 
 #### 8.6.6 PR checklist (P6)

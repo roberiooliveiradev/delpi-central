@@ -287,7 +287,7 @@ def main() -> int:
         if render_plan_gaps:
             exit_code = 1
             print(
-                f"\nERRO: {len(render_plan_gaps)} gap(s) de renderPlan tier A (Playbook 13 P6)",
+                f"\nERRO: {len(render_plan_gaps)} gap(s) de renderPlan P6 (tier A + casos estendidos)",
                 file=sys.stderr,
             )
 
@@ -298,7 +298,7 @@ def main() -> int:
                     file=sys.stderr,
                 )
         else:
-            print("\nOK: Playbook 13 P6 — renderPlan + renderHints em tierAPipelineCases")
+            print("\nOK: Playbook 13 P6 — renderPlan + renderHints (tier A + casos estendidos)")
 
     if args.check_playbook12:
         from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402

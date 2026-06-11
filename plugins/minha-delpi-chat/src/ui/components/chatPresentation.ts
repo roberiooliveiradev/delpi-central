@@ -422,11 +422,14 @@ export function getPresentationInsightFromToolCalls(
     return insight;
   }
 
-  if (isNativeSingleViewSelection(toolCalls).active) {
+  const reason = String(decision?.reason ?? "").trim();
+  const nativeSingle = isNativeSingleViewSelection(toolCalls);
+
+  if (nativeSingle.active && nativeSingle.kind === "text") {
     return "";
   }
 
-  return String(decision?.reason ?? "").trim();
+  return reason;
 }
 
 function isStoryPresentation(value: unknown): value is ChatStoryPresentation {
