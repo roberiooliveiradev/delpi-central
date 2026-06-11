@@ -200,3 +200,37 @@ def record_assistant_help_event():
         db.session.rollback()
 
     return jsonify(result), 200
+
+
+@chat_bp.post("/typing-suggestions")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def typing_suggestions():
+    from app.application.services.chat_learned_normalization_service import (
+        ChatLearnedNormalizationService,
+    )
+    from app.domain.services.chat_typing_correction_service import (
+        ChatTypingCorrectionService,
+    )
+    from app.infrastructure.config.settings import Settings
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    text = str(payload.get("text") or "")
+
+    if not Settings.CHAT_TYPING_CORRECTION_ENABLED:
+        return jsonify(
+            {
+                "hasSuggestions": False,
+                "corrected": text,
+                "original": text,
+                "changes": [],
+                "protectedSpans": [],
+            }
+        ), 200
+
+    ChatLearnedNormalizationService().ensure_loaded()
+
+    return jsonify(ChatTypingCorrectionService.suggest(text)), 200

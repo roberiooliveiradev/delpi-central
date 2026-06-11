@@ -132,6 +132,7 @@ class ChatStreamUserMessageService:
                     "variantIndex": len(siblings) + 1,
                 },
                 **ChatLlmMetadataService.user_message_response_mode(request),
+                **ChatLlmMetadataService.user_message_typing_correction(request),
                 "delivery": {"status": "submitted"},
             },
         )
@@ -179,6 +180,7 @@ class ChatStreamUserMessageService:
                 "attachments": attachments,
                 "stream": True,
                 **ChatLlmMetadataService.user_message_response_mode(request),
+                **ChatLlmMetadataService.user_message_typing_correction(request),
                 "delivery": {"status": "submitted"},
             },
         )

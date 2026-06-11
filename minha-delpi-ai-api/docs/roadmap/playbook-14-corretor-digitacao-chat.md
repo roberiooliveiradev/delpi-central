@@ -2,7 +2,7 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Escopo:** reduzir erros de digitação em **perguntas operacionais** antes e no envio — sem confundir com a habilidade «corrija este texto».  
-**Status:** **Planejado** (jun/2026) — baseline parcial já existe na API  
+**Status:** **Implementado (jun/2026)** — P14-1 a P14-3  
 **Relacionado:** [playbook-inteligencia.md](./playbook-inteligencia.md), [playbook-aprendizagem-continua.md](./playbook-aprendizagem-continua.md), [playbook_correcao_texto (melhorias)](./melhorias/playbook_correcao_texto_minha_delpi_chat.md), [chat-intelligence-base.md](../architecture/chat-intelligence-base.md)
 
 ---
@@ -213,10 +213,10 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 
 | Fase | Escopo | Entregáveis | Status |
 |------|--------|-------------|--------|
-| **P14-0 — Inventário** | Extrair regras estáticas para JSON/catálogo; documentar gaps | `typing_correction_rules.json` ou export do serviço; diff estático vs learned | Planejado |
-| **P14-1 — Serviço + diff** | `ChatTypingCorrectionService.suggest()`; testes espelhando `test_chat_message_normalization_service.py` | API pura; sem UI | Planejado |
-| **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | Planejado |
-| **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | Opcional |
+| **P14-0 — Inventário** | Extrair regras estáticas para JSON/catálogo; documentar gaps | `typing_correction_rules.json` ou export do serviço; diff estático vs learned | Parcial (`iter_typo_patterns`) |
+| **P14-1 — Serviço + diff** | `ChatTypingCorrectionService.suggest()`; testes espelhando `test_chat_message_normalization_service.py` | API pura; sem UI | **Concluído** |
+| **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | **Concluído** |
+| **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | **Concluído** |
 | **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | Backlog |
 | **P14-5 — Fuzzy léxico** | SymSpell só vocabulário operacional (rotas, KPIs) | Gate falsos positivos | Backlog |
 

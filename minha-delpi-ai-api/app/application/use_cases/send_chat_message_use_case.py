@@ -183,6 +183,7 @@ class SendChatMessageUseCase:
                 "project": workspace_context.get("project"),
                 "attachments": attachment_snapshots,
                 **ChatLlmMetadataService.user_message_response_mode(request),
+                **ChatLlmMetadataService.user_message_typing_correction(request),
                 "delivery": {"status": "submitted"},
             },
         )

@@ -24,3 +24,5 @@ class SendChatMessageRequest:
     response_format: str | None = None
     # Expor adminDebug na resposta/SSE (rotas definem via permissão). Persistência é sempre.
     admin_debug: bool = False
+    # Metadata opcional quando o usuário aceita sugestão de digitação no composer (P14).
+    typing_correction: dict | None = None

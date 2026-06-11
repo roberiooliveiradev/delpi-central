@@ -38,6 +38,7 @@ import type {
   ChatResponseModesResponse,
   SendChatMessagePayload,
   SendChatMessageResponse,
+  ChatTypingSuggestionResponse,
   ShareChatAgentPayload,
   ShareChatProjectPayload,
   UpdateChatAgentPayload,
@@ -346,6 +347,19 @@ export async function getChatFeedbackReasons(
   });
 
   return parseJsonResponse<ChatFeedbackReasonsPayload>(response);
+}
+
+export async function getTypingSuggestions(
+  text: string,
+  options: ChatApiOptions = {},
+): Promise<ChatTypingSuggestionResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/typing-suggestions`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ text, locale: "pt-BR" }),
+  });
+
+  return parseJsonResponse(response);
 }
 
 export async function sendChatMessage(

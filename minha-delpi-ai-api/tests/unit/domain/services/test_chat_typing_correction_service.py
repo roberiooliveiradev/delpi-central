@@ -1,0 +1,87 @@
+import pytest
+
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
+from app.domain.services.chat_typing_correction_service import (
+    ChatTypingCorrectionService,
+)
+
+
+@pytest.fixture(autouse=True)
+def _clear_learned_rules():
+    ChatMessageNormalizationService.clear_learned_rules()
+    yield
+    ChatMessageNormalizationService.clear_learned_rules()
+
+
+def test_t1_suggests_estoque_preserves_product_code():
+    result = ChatTypingCorrectionService.suggest("estouque do produto 90262404")
+
+    assert result["hasSuggestions"] is True
+    assert result["corrected"] == "estoque do produto 90262404"
+    assert "90262404" in result["corrected"]
+    assert any(change["to"] == "estoque" for change in result["changes"])
+
+
+def test_t2_filial_code_intact():
+    result = ChatTypingCorrectionService.suggest("qual o status fabril filial 01")
+
+    assert "01" in result["corrected"]
+    protected = result["protectedSpans"]
+    assert not any(
+        span["start"] <= result["corrected"].index("01") < span["end"]
+        for span in protected
+        if "01" in result["corrected"]
+    ) or "01" in result["corrected"]
+
+
+def test_t3_no_suggestion_after_corrija_marker():
+    result = ChatTypingCorrectionService.suggest("corrija: estouque baixo")
+
+    assert result["hasSuggestions"] is False
+    assert result["corrected"] == "corrija: estouque baixo"
+
+
+def test_t4_mention_intact():
+    result = ChatTypingCorrectionService.suggest("@Agente estouque")
+
+    assert result["corrected"].startswith("@Agente")
+    assert "estoque" in result["corrected"]
+
+
+def test_t5_learned_rule_matches_normalization():
+    ChatMessageNormalizationService.set_learned_rules([("fabrik", "fabrica")])
+
+    normalized = ChatMessageNormalizationService.normalize_for_matching("fabrik 01")
+    suggested = ChatTypingCorrectionService.suggest("fabrik 01")
+
+    assert "fabrica" in normalized
+    assert suggested["hasSuggestions"] is True
+    assert "fabrica" in suggested["corrected"]
+
+
+def test_t7_no_suggestion_in_sql():
+    result = ChatTypingCorrectionService.suggest("SELECT * FROM SB1")
+
+    assert result["hasSuggestions"] is False
+
+
+def test_max_three_substitutions():
+    result = ChatTypingCorrectionService.suggest(
+        "estouque do prduto na filail com qtd baixa"
+    )
+
+    assert len(result["changes"]) <= ChatTypingCorrectionService.MAX_CHANGES
+
+
+def test_backtick_span_protected():
+    result = ChatTypingCorrectionService.suggest("consulte `estouque` do produto 10080001")
+
+    assert "`estouque`" in result["corrected"]
+
+
+def test_empty_text():
+    result = ChatTypingCorrectionService.suggest("   ")
+
+    assert result["hasSuggestions"] is False

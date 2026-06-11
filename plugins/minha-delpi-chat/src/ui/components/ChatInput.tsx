@@ -37,6 +37,10 @@ import {
 } from "../chatAttachmentStatus";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../state/chatAgentActivation";
+import type {
+  ChatTypingSuggestion,
+} from "../../data/api/chatTypes";
+import type { MessageComposerTypingCorrectionContent } from "../../content/messageComposerContent";
 
 import "./ChatInput.css";
 
@@ -85,6 +89,11 @@ type ChatInputProps = {
   showPresentationFormatSelector?: boolean;
   /** Chips de contexto no composer — regra em resolveComposerContextBar (chatAgentActivation). */
   contextBarItems?: ComposerContextBarItem[];
+  typingSuggestion?: ChatTypingSuggestion | null;
+  typingSuggestionLoading?: boolean;
+  typingSuggestionLabels?: MessageComposerTypingCorrectionContent;
+  onAcceptTypingSuggestion?: () => void;
+  onDismissTypingSuggestion?: () => void;
 };
 
 function formatFileSize(size: number): string {
@@ -132,6 +141,11 @@ export function ChatInput({
   onPresentationFormatChange,
   showPresentationFormatSelector = true,
   contextBarItems = [],
+  typingSuggestion = null,
+  typingSuggestionLoading = false,
+  typingSuggestionLabels,
+  onAcceptTypingSuggestion,
+  onDismissTypingSuggestion,
 }: ChatInputProps) {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
@@ -525,6 +539,39 @@ export function ChatInput({
           </div>
         ) : null}
 
+        {typingSuggestion && typingSuggestionLabels ? (
+          <div
+            className="mdc-chat-input__typing-suggestion"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="mdc-chat-input__typing-suggestion-hint">
+              {typingSuggestionLabels.hint}
+            </span>
+            <span className="mdc-chat-input__typing-suggestion-preview">
+              {typingSuggestionLabels.previewPrefix} {typingSuggestion.corrected}
+            </span>
+            <div className="mdc-chat-input__typing-suggestion-actions">
+              <button
+                type="button"
+                className="mdc-chat-input__typing-suggestion-accept"
+                onClick={onAcceptTypingSuggestion}
+              >
+                {typingSuggestionLabels.acceptLabel}
+              </button>
+              <button
+                type="button"
+                className="mdc-chat-input__typing-suggestion-dismiss"
+                onClick={onDismissTypingSuggestion}
+              >
+                {typingSuggestionLabels.dismissLabel}
+              </button>
+            </div>
+          </div>
+        ) : typingSuggestionLoading ? (
+          <div className="mdc-chat-input__typing-suggestion mdc-chat-input__typing-suggestion--loading" aria-hidden="true" />
+        ) : null}
+
         <div className="mdc-chat-input__composer-stack">
           <div className="mdc-chat-input__composer-field">
             {isMentionMenuOpen ? (
@@ -556,6 +603,18 @@ export function ChatInput({
               onKeyUp={syncMentionCursor}
               onSelect={syncMentionCursor}
               onKeyDown={(event) => {
+                if (typingSuggestion && event.key === "Tab") {
+                  event.preventDefault();
+                  onAcceptTypingSuggestion?.();
+                  return;
+                }
+
+                if (typingSuggestion && event.key === "Escape") {
+                  event.preventDefault();
+                  onDismissTypingSuggestion?.();
+                  return;
+                }
+
                 if (isMentionMenuOpen && mentionItems.length > 0) {
                   if (event.key === "ArrowDown") {
                     event.preventDefault();

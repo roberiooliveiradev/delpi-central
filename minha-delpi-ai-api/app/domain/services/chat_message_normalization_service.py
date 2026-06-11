@@ -236,6 +236,11 @@ class ChatMessageNormalizationService:
         cls._LEARNED_PATTERNS = []
 
     @classmethod
+    def iter_typo_patterns(cls) -> list[tuple["re.Pattern[str]", str]]:
+        """Padrões estáticos + aprendidos — fonte única para matching e sugestões (P14)."""
+        return list(_TYPO_PATTERNS) + list(cls._LEARNED_PATTERNS)
+
+    @classmethod
     def normalize_for_matching(cls, message: str) -> str:
         text = cls.strip_accents(message)
         text = re.sub(r"\s+", " ", text).strip()

@@ -9,6 +9,7 @@ import type {
   ChatSource,
   ChatStreamActivityEntry,
   ChatToolCall,
+  ChatTypingCorrectionMetadata,
   SendChatMessageResponse,
 } from "../../data/api/chatTypes";
 
@@ -28,6 +29,7 @@ type StreamMessageParams = {
   chatMode?: "common" | "agent";
   responseMode?: ChatResponseModeId;
   responseFormat?: ChatPresentationFormatId;
+  typingCorrection?: ChatTypingCorrectionMetadata;
   onStatus?: (message: string) => void;
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -154,6 +156,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       chatMode,
       responseMode,
       responseFormat,
+      typingCorrection,
       onStatus,
       onActivity,
       onSources,
@@ -184,6 +187,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               responseMode,
               responseFormat:
                 responseFormat && responseFormat !== "auto" ? responseFormat : undefined,
+              typingCorrection,
             },
             streamCallbacks,
             {

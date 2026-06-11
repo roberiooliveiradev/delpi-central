@@ -775,6 +775,38 @@ export type SendChatMessagePayload = {
   responseMode?: ChatResponseModeId;
   /** Preferência de apresentação do turno (table, text, tree, chart, canvas). */
   responseFormat?: ChatPresentationFormatId;
+  typingCorrection?: ChatTypingCorrectionMetadata;
+};
+
+export type ChatTypingSuggestionChange = {
+  offset: number;
+  length: number;
+  replacement: string;
+  from: string;
+  to: string;
+  kind: string;
+};
+
+export type ChatTypingSuggestionResponse = {
+  hasSuggestions: boolean;
+  corrected: string;
+  original: string;
+  changes: ChatTypingSuggestionChange[];
+  protectedSpans: Array<{ start: number; end: number; reason: string }>;
+};
+
+export type ChatTypingSuggestion = {
+  original: string;
+  corrected: string;
+  changes: ChatTypingSuggestionChange[];
+};
+
+export type ChatTypingCorrectionMetadata = {
+  original: string;
+  corrected: string;
+  accepted: boolean;
+  source: string;
+  changes: Array<{ from: string; to: string; kind: string }>;
 };
 
 export type SendChatMessageResponse = {
@@ -1167,4 +1199,5 @@ export type ChatCapabilities = {
   canManageOfficialAgents: boolean;
   canManageTools: boolean;
   canUseTools: boolean;
+  typingCorrectionEnabled?: boolean;
 };

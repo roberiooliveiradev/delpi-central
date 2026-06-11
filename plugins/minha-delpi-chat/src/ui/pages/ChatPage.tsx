@@ -117,6 +117,12 @@ import {
 } from "../../data/chatAttachmentIndexPolling";
 import { mapApiAttachmentToComposerStatus } from "../chatAttachmentStatus";
 import {
+  buildTypingCorrectionMetadata,
+} from "../../state/chatTypingCorrection";
+import { useChatTypingCorrection } from "../../state/hooks/useChatTypingCorrection";
+import { getTypingCorrectionContent } from "../../content/messageComposerContent";
+import type { ChatTypingCorrectionMetadata } from "../../data/api/chatTypes";
+import {
   buildChatAdminAgentHref,
   buildChatAgentActionsHref,
   buildChatAgentConfigHref,
@@ -208,6 +214,7 @@ export function ChatPage({
   const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
   const [canOpenAdmin, setCanOpenAdmin] = useState(false);
+  const [typingCorrectionEnabled, setTypingCorrectionEnabled] = useState(true);
 
   const [contextAgentIds, setContextAgentIds] = useState<string[]>([]);
   const [contextProjectIds, setContextProjectIds] = useState<string[]>([]);
@@ -289,6 +296,7 @@ export function ChatPage({
       parsed?: boolean;
       readingStatus?: string;
     }[];
+    typingCorrection?: ChatTypingCorrectionMetadata;
   };
 
   const promptAndSendMessageRef = useRef<
@@ -411,6 +419,19 @@ export function ChatPage({
     syncFromSessionChips,
   } = useChatPresentationFormat({
     sessionId: activeSession?.id ?? null,
+    getAccessToken,
+  });
+
+  const typingCorrectionLabels = useMemo(() => getTypingCorrectionContent(), []);
+  const {
+    suggestion: typingSuggestion,
+    isLoading: typingSuggestionLoading,
+    dismissSuggestion: dismissTypingSuggestionState,
+    clearSuggestion: clearTypingSuggestion,
+  } = useChatTypingCorrection({
+    draft,
+    sessionId: activeSession?.id ?? null,
+    enabled: typingCorrectionEnabled,
     getAccessToken,
   });
 
@@ -953,6 +974,30 @@ export function ChatPage({
   useEffect(() => {
     sendMessageWithOperationalAgentRef.current = sendMessageWithOperationalAgent;
   }, [sendMessageWithOperationalAgent]);
+
+  const handleDismissTypingSuggestion = useCallback(() => {
+    dismissTypingSuggestionState();
+  }, [dismissTypingSuggestionState]);
+
+  const handleAcceptTypingSuggestion = useCallback(async () => {
+    if (!typingSuggestion) {
+      return;
+    }
+
+    const metadata = buildTypingCorrectionMetadata(typingSuggestion, true);
+    clearTypingSuggestion();
+    setDraft("");
+
+    await sendMessageWithOperationalAgent({
+      content: typingSuggestion.corrected,
+      typingCorrection: metadata,
+    });
+  }, [
+    clearTypingSuggestion,
+    sendMessageWithOperationalAgent,
+    setDraft,
+    typingSuggestion,
+  ]);
 
   useEffect(() => {
     if (!helpPanelOpen) {
@@ -1512,12 +1557,14 @@ export function ChatPage({
           setCanOpenAdmin(
             capabilities.canOpenAdmin === true || capabilities.isSuperadmin === true,
           );
+          setTypingCorrectionEnabled(capabilities.typingCorrectionEnabled !== false);
         }
       } catch {
         if (isMounted) {
           setCanManageAgents(false);
           setCanManageOfficialAgents(false);
           setCanOpenAdmin(false);
+          setTypingCorrectionEnabled(true);
         }
       } finally {
         if (isMounted) {
@@ -2079,6 +2126,14 @@ export function ChatPage({
     onPresentationFormatChange: setPresentationFormat,
   };
 
+  const composerTypingCorrectionProps = {
+    typingSuggestion,
+    typingSuggestionLoading,
+    typingSuggestionLabels: typingCorrectionLabels,
+    onAcceptTypingSuggestion: handleAcceptTypingSuggestion,
+    onDismissTypingSuggestion: handleDismissTypingSuggestion,
+  };
+
   const shellClassName = [
     "mdc-chat-shell",
     isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
@@ -2506,8 +2561,9 @@ export function ChatPage({
                       {...composerPresentationFormatProps}
                       {...composerPresentationFormatProps}
                     {...composerPresentationFormatProps}
-                  {...composerResponseModeProps}
+                      {...composerResponseModeProps}
                       {...composerContextProps}
+                      {...composerTypingCorrectionProps}
                       onChange={setDraft}
                       onSubmit={handleSubmitMessage}
                       onCancel={cancelStreaming}
@@ -2577,6 +2633,7 @@ export function ChatPage({
                     {...composerPresentationFormatProps}
                   {...composerResponseModeProps}
                     {...composerContextProps}
+                    {...composerTypingCorrectionProps}
                     plusMenuOpen={tourPlusMenuOpen ?? undefined}
                     onPlusMenuOpenChange={setTourPlusMenuOpen}
                     onChange={setDraft}
@@ -2666,6 +2723,7 @@ export function ChatPage({
                   {...composerPresentationFormatProps}
                   {...composerResponseModeProps}
                   {...composerContextProps}
+                  {...composerTypingCorrectionProps}
                   onChange={setDraft}
                   onSubmit={handleSubmitMessage}
                   onCancel={cancelStreaming}

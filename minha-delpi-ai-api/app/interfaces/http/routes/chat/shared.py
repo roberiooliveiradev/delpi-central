@@ -107,6 +107,7 @@ def _get_chat_capabilities_from_request() -> dict:
             can_manage_tools
             or CHAT_TOOLS_MANAGE_PERMISSION in permissions
         ),
+        "typingCorrectionEnabled": Settings.CHAT_TYPING_CORRECTION_ENABLED,
         "knowledgeDocumentMaxChars": Settings.KNOWLEDGE_DOCUMENT_MAX_CHARS,
     }
 
@@ -301,7 +302,33 @@ def _build_send_chat_message_request(
         response_mode=_parse_response_mode(payload),
         response_format=_parse_response_format(payload),
         admin_debug=_can_use_admin_debug(),
+        typing_correction=_parse_typing_correction(payload),
     )
+
+
+def _parse_typing_correction(payload: dict) -> dict | None:
+    raw = payload.get("typingCorrection") or payload.get("typing_correction")
+
+    if not isinstance(raw, dict):
+        return None
+
+    original = str(raw.get("original") or "").strip()
+    corrected = str(raw.get("corrected") or raw.get("suggested") or "").strip()
+    accepted = raw.get("accepted")
+
+    if not original or not corrected or original == corrected:
+        return None
+
+    changes = raw.get("changes")
+    safe_changes = changes if isinstance(changes, list) else []
+
+    return {
+        "original": original,
+        "corrected": corrected,
+        "accepted": bool(accepted),
+        "source": str(raw.get("source") or "domain_dictionary"),
+        "changes": safe_changes,
+    }
 
 
 def _find_linked_agent_provider(agent_id: str, provider_key: str):

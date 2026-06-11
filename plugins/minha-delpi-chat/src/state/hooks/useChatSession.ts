@@ -29,6 +29,7 @@ import type {
   ChatSource,
   ChatStreamActivityEntry,
   ChatToolCall,
+  ChatTypingCorrectionMetadata,
 } from "../../data/api/chatTypes";
 import {
   isAssistantGenerating,
@@ -1474,6 +1475,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       agents?: Array<{ id: string; name: string }>;
       projects?: Array<{ id: string; name: string }>;
     };
+    typingCorrection?: ChatTypingCorrectionMetadata;
   } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
@@ -1729,6 +1731,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         chatMode: effectiveChatMode,
         responseMode: getResponseModeRef.current?.() ?? "normal",
         responseFormat: getPresentationFormatRef.current?.() ?? "auto",
+        typingCorrection: params.typingCorrection,
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
     } catch (err) {

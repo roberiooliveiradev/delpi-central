@@ -69,6 +69,9 @@ class Settings:
     CHAT_INPUT_SECURITY_ENABLED = (
         os.getenv("CHAT_INPUT_SECURITY_ENABLED", "true").lower() == "true"
     )
+    CHAT_TYPING_CORRECTION_ENABLED = (
+        os.getenv("CHAT_TYPING_CORRECTION_ENABLED", "true").lower() == "true"
+    )
     CHAT_INPUT_SECURITY_MODE = os.getenv("CHAT_INPUT_SECURITY_MODE", "enforce").lower().strip()
     CHAT_INPUT_SECURITY_BLOCK_THRESHOLD = float(
         os.getenv("CHAT_INPUT_SECURITY_BLOCK_THRESHOLD", "0.7")

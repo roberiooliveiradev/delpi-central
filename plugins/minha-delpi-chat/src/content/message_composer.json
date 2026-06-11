@@ -1,0 +1,8 @@
+{
+  "typingCorrection": {
+    "hint": "Você quis dizer:",
+    "acceptLabel": "Enviar corrigido",
+    "dismissLabel": "Manter original",
+    "previewPrefix": "Enviar:"
+  }
+}

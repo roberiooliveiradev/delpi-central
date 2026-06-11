@@ -29,3 +29,10 @@ class ChatLlmMetadataService:
         mode = ChatResponseModeService.normalize(request.response_mode)
 
         return {"responseMode": mode}
+
+    @staticmethod
+    def user_message_typing_correction(request: SendChatMessageRequest) -> dict[str, object]:
+        if not request.typing_correction:
+            return {}
+
+        return {"typingCorrection": request.typing_correction}
