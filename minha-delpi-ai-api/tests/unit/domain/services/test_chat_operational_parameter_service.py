@@ -204,6 +204,24 @@ def test_operational_pipeline_should_optimize_for_production_schedule_today():
     )
 
 
+def test_should_skip_agentic_when_operational_route_already_planned():
+    tool_context = {
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": "production-schedule-today",
+                },
+            }
+        ],
+    }
+
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "listar produtos programados para produzir hoje",
+        tool_context=tool_context,
+    )
+
+
 def test_should_skip_agentic_after_successful_kpi_presentation():
     tool_context = {
         "directAnswer": "Valor Total de Estoque",

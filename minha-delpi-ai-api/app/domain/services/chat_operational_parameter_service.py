@@ -153,6 +153,22 @@ class ChatOperationalParameterService:
 
         tool_calls = tool_context.get("toolCalls") or []
 
+        from app.domain.services.chat_operational_pipeline_service import (
+            ChatOperationalPipelineService,
+        )
+
+        if ChatOperationalPipelineService.should_optimize(message, None):
+            for tool_call in tool_calls:
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                metadata = tool_call.get("metadata") or {}
+
+                if metadata.get("agenticStep"):
+                    continue
+
+                return True
+
         if isinstance(tool_context.get("directAnswer"), str) and str(
             tool_context.get("directAnswer") or ""
         ).strip():

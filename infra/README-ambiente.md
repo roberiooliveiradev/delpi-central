@@ -112,8 +112,8 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 
 | Variável | Dev | Prod | Função |
 |----------|-----|------|--------|
-| `CHAT_TOOL_ROUTER_ENABLED` | `true` | `true` | Router LLM para tools/actions |
-| `CHAT_AGENTIC_LOOP_ENABLED` | `true` | `true` | Loop agentic (planner + catálogo) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `true` | `false` | Router LLM para tools/actions |
+| `CHAT_AGENTIC_LOOP_ENABLED` | `true` | `false` | Loop agentic (planner + catálogo) |
 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | `12` | Teto de actions no catálogo agentic |
 | `CHAT_MULTI_ACTION_ENABLED` | `true` | `true` | Várias external actions por turno |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | `true` | Busca páginas extras quando pedido |
