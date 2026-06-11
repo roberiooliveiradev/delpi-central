@@ -2,8 +2,11 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
+  getStackPresentationPlanFromToolCalls,
+  planUsesSummaryThenEvidence,
+} from "./presentationStackPlan";
+import {
   getStoryPresentationFromToolCalls,
-  isSummaryThenEvidenceMode,
 } from "./chatPresentation";
 
 function stripHighlightsTail(tail: string): string {
@@ -117,7 +120,9 @@ export function withDecisionLayer(
   segments: AssistantContentSegment[],
   toolCalls: ChatToolCall[],
 ): AssistantContentSegment[] {
-  if (isSummaryThenEvidenceMode(toolCalls)) {
+  const plan = getStackPresentationPlanFromToolCalls(toolCalls);
+
+  if (planUsesSummaryThenEvidence(plan)) {
     return segments;
   }
 
@@ -131,7 +136,7 @@ export function withDecisionLayer(
     kind: "decision",
     presentation: story,
   };
-  const evidenceFirst = isSummaryThenEvidenceMode(toolCalls);
+  const evidenceFirst = planUsesSummaryThenEvidence(plan);
   const normalized = segments.map((segment) => {
     if (segment.kind !== "markdown") {
       return segment;

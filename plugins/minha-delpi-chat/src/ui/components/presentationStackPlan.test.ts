@@ -4,6 +4,7 @@ import { bucketTableSegmentsByRole } from "./assistantContentInterleave";
 import {
   getStackPresentationPlanFromToolCalls,
   inferTableRoleFromTitle,
+  planUsesSummaryThenEvidence,
   resolveTableRole,
 } from "./presentationStackPlan";
 import { fixtureToolCalls } from "./testFixtures";
@@ -37,6 +38,21 @@ describe("presentationStackPlan", () => {
 
     expect(buckets.list).toHaveLength(1);
     expect(buckets.stock).toHaveLength(0);
+  });
+
+  it("lê presentationMode do presentationDecision quando o stackPlan não traz o campo", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: { presentationMode: "summary_then_evidence" },
+        },
+      },
+    ]);
+
+    expect(planUsesSummaryThenEvidence(getStackPresentationPlanFromToolCalls(toolCalls))).toBe(
+      true,
+    );
   });
 
   it("lê plano de estoque só do stackPresentationPlan (sem fallback por path)", () => {

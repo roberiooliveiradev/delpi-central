@@ -264,6 +264,34 @@ export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean 
   return plan.humanizedSections === true;
 }
 
+/** Playbook 13 P6 — lê `presentationMode` já decidido pela API no stackPlan. */
+export function planUsesSummaryThenEvidence(plan: StackPresentationPlan): boolean {
+  return String(plan.presentationMode || "").trim() === "summary_then_evidence";
+}
+
+function enrichPlanFromDecision(
+  plan: StackPresentationPlan,
+  metadata: Record<string, unknown>,
+): StackPresentationPlan {
+  if (plan.presentationMode) {
+    return plan;
+  }
+
+  const decision = metadata.presentationDecision;
+
+  if (!decision || typeof decision !== "object") {
+    return plan;
+  }
+
+  const mode = String((decision as Record<string, unknown>).presentationMode || "").trim();
+
+  if (!mode) {
+    return plan;
+  }
+
+  return { ...plan, presentationMode: mode };
+}
+
 export function getStackPresentationPlanFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): StackPresentationPlan {
@@ -287,7 +315,13 @@ export function getStackPresentationPlanFromToolCalls(
         ?.stackPresentationPlan;
 
     if (raw && typeof raw === "object") {
-      return parsePlan(raw as Record<string, unknown>);
+      return enrichPlanFromDecision(parsePlan(raw as Record<string, unknown>), metadata);
+    }
+
+    const enrichedDefault = enrichPlanFromDecision(DEFAULT_PLAN, metadata);
+
+    if (enrichedDefault.presentationMode) {
+      return enrichedDefault;
     }
   }
 

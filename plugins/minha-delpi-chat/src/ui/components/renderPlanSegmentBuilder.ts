@@ -8,7 +8,6 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import {
   getRenderPlanFromToolCalls,
-  isSummaryThenEvidenceMode,
   type PresentationRenderPlan,
 } from "./chatPresentation";
 import { stripPresentationSectionMarkers } from "./chatMarkdown";
@@ -16,6 +15,7 @@ import { dedupeTableSegments } from "./presentationTableDedup";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
+  planUsesSummaryThenEvidence,
   resolveTableRole,
   type StackPresentationPlan,
   type StackTableRole,
@@ -41,11 +41,8 @@ function metadataStructureDedupApplied(toolCalls: ChatToolCall[]): boolean {
   );
 }
 
-function usesStackSectionChrome(
-  plan: StackPresentationPlan,
-  toolCalls: ChatToolCall[],
-): boolean {
-  return planUsesHumanizedSections(plan) && !isSummaryThenEvidenceMode(toolCalls);
+function usesStackSectionChrome(plan: StackPresentationPlan): boolean {
+  return planUsesHumanizedSections(plan) && !planUsesSummaryThenEvidence(plan);
 }
 
 function pushStackSection(
@@ -63,7 +60,7 @@ function maybePushStackSection(
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   toolCalls: ChatToolCall[],
 ): void {
-  if (!usesStackSectionChrome(plan, toolCalls)) {
+  if (!usesStackSectionChrome(plan)) {
     return;
   }
 
@@ -155,11 +152,11 @@ function appendTablesForRoles(
     resolveTableRole,
     metadataStructureDedupApplied(toolCalls),
   );
-  const evidenceFirst = isSummaryThenEvidenceMode(toolCalls);
+  const evidenceFirst = planUsesSummaryThenEvidence(plan);
   const explicitSectionPerRole = options?.sectionPerRole;
   const sectionPerRole =
     explicitSectionPerRole === true ||
-    (explicitSectionPerRole !== false && usesStackSectionChrome(plan, toolCalls));
+    (explicitSectionPerRole !== false && usesStackSectionChrome(plan));
   const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
     profile: "profile",
     guide: "guide",

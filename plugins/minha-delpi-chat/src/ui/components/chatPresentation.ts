@@ -471,6 +471,7 @@ export function getPresentationModeFromToolCalls(
   return null;
 }
 
+/** @deprecated Prefer `planUsesSummaryThenEvidence(plan)` com stackPlan da API. */
 export function isSummaryThenEvidenceMode(toolCalls?: ChatToolCall[]): boolean {
   return getPresentationModeFromToolCalls(toolCalls) === "summary_then_evidence";
 }

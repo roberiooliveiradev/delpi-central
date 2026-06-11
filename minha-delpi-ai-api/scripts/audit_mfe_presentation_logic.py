@@ -31,6 +31,10 @@ FORBIDDEN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "shouldSkipTableSegment (dedup estrutural vem da API pruned)",
         re.compile(r"\bshouldSkipTableSegment\s*\("),
     ),
+    (
+        "isSummaryThenEvidenceMode (usar planUsesSummaryThenEvidence do stackPlan)",
+        re.compile(r"\bisSummaryThenEvidenceMode\s*\("),
+    ),
 )
 
 ALLOWLIST_FILES = frozenset(

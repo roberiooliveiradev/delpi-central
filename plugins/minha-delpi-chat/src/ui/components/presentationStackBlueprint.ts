@@ -11,6 +11,7 @@ import {
   getStackPresentationPlanFromToolCalls,
   resolveTableRole,
   planUsesHumanizedSections,
+  planUsesSummaryThenEvidence,
   usesStrictTailVisualAllowlist,
   type StackPresentationPlan,
   type StackTableRole,
@@ -24,7 +25,6 @@ import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import { buildSegmentsFromRenderPlan } from "./renderPlanSegmentBuilder";
-import { isSummaryThenEvidenceMode } from "./chatPresentation";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -55,11 +55,8 @@ function resolveStackSection(sectionId: StackSectionId): StackSectionChrome {
   return buildStackSectionChrome(sectionId);
 }
 
-function usesStackSectionChrome(
-  plan: StackPresentationPlan,
-  toolCalls: ChatToolCall[],
-): boolean {
-  return planUsesHumanizedSections(plan) && !isSummaryThenEvidenceMode(toolCalls);
+function usesStackSectionChrome(plan: StackPresentationPlan): boolean {
+  return planUsesHumanizedSections(plan) && !planUsesSummaryThenEvidence(plan);
 }
 
 function maybePushStackSection(
@@ -69,7 +66,7 @@ function maybePushStackSection(
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   toolCalls: ChatToolCall[] = [],
 ): void {
-  if (!usesStackSectionChrome(plan, toolCalls)) {
+  if (!usesStackSectionChrome(plan)) {
     return;
   }
 
@@ -175,11 +172,11 @@ function appendTablesForRoles(
   toolCalls: ChatToolCall[] = [],
 ): void {
   const buckets = bucketTableSegmentsByRole(tables, resolveTableRole);
-  const evidenceFirst = isSummaryThenEvidenceMode(toolCalls);
+  const evidenceFirst = planUsesSummaryThenEvidence(plan);
   const explicitSectionPerRole = options?.sectionPerRole;
   const sectionPerRole =
     explicitSectionPerRole === true ||
-    (explicitSectionPerRole !== false && usesStackSectionChrome(plan, toolCalls));
+    (explicitSectionPerRole !== false && usesStackSectionChrome(plan));
   const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
     profile: "profile",
     guide: "guide",
