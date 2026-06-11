@@ -12,6 +12,22 @@ from tm_app.infrastructure.persistence.repositories.dashboard_data_repository im
 
 logger = logging.getLogger(__name__)
 
+
+def _normalize_competencia_bound(value: str | None) -> str | None:
+    """Converte filtro YYYY-MM-DD (ou ISO) para competência YYYY-MM do cache."""
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    if len(raw) == 7 and raw[4] == "-":
+        return raw
+    parsed = DashboardCalculatorService()._parse_date(raw)
+    if parsed is None:
+        return raw[:7] if len(raw) >= 7 and raw[4] == "-" else raw
+    return parsed.strftime("%Y-%m")
+
+
 def _filter_rows(
     rows: list[dict[str, Any]],
     *,
@@ -50,6 +66,9 @@ class DashboardRecalcService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict:
+        competencia_inicio = _normalize_competencia_bound(competencia_inicio)
+        competencia_fim = _normalize_competencia_bound(competencia_fim)
+
         started = time.perf_counter()
         incremental = any(
             [revisao_id, processo_id, competencia_inicio, competencia_fim]

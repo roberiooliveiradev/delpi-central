@@ -2,7 +2,50 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
+from tm_app.application.services.dashboard_recalc_service import (
+    DashboardRecalcService,
+    _normalize_competencia_bound,
+)
+
+
+def test_normalize_competencia_bound_from_iso_date():
+    assert _normalize_competencia_bound("2026-04-11") == "2026-04"
+    assert _normalize_competencia_bound("2026-06-11") == "2026-06"
+    assert _normalize_competencia_bound("2026-04") == "2026-04"
+
+
+def test_recalculate_incremental_normalizes_competencia_bounds():
+    repo = MagicMock()
+    repo.delete_by_competencia_range.return_value = 1
+    repo.upsert_rows.return_value = 1
+    data_repo = MagicMock()
+    calc = MagicMock()
+    calc.build_dashboard_rows.return_value = [
+        {
+            "dashboard_calculo_id": "p1::2026-04",
+            "processo_id": "p1",
+            "revisao_id": "r1",
+            "competencia": "2026-04",
+        }
+    ]
+
+    with patch.object(DashboardRecalcService, "__init__", lambda self: None):
+        svc = DashboardRecalcService()
+        svc._dashboard_repo = repo
+        svc._data_repo = data_repo
+        svc._calculator = calc
+
+        result = svc.recalculate(
+            competencia_inicio="2026-04-11",
+            competencia_fim="2026-06-11",
+        )
+
+    assert result["competencia_inicio"] == "2026-04"
+    assert result["competencia_fim"] == "2026-06"
+    repo.delete_by_competencia_range.assert_called_once_with(
+        competencia_inicio="2026-04",
+        competencia_fim="2026-06",
+    )
 
 
 def test_recalculate_full_truncates():

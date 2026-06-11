@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Query
 from fastapi.responses import Response
 
@@ -10,10 +12,12 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
-from tm_app.core.responses import ok
+from tm_app.core.errors import format_api_error
+from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import rows_to_json
 
 router = APIRouter(prefix="/transformometro/dashboard", tags=["Transformômetro Dashboard"])
+logger = logging.getLogger(__name__)
 
 _live = DashboardLiveService()
 _snapshot = DashboardSnapshotReadService()
@@ -27,12 +31,17 @@ def recalcular_dashboard(
     competencia_fim: str | None = None,
 ):
     """Opcional: atualiza cache em `dashboard_calculos`. As rotas GET já calculam em tempo real."""
-    result = DashboardRecalcService().recalculate(
-        revisao_id=revisao_id,
-        processo_id=processo_id,
-        competencia_inicio=competencia_inicio,
-        competencia_fim=competencia_fim,
-    )
+    try:
+        result = DashboardRecalcService().recalculate(
+            revisao_id=revisao_id,
+            processo_id=processo_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
+    except Exception as exc:
+        logger.exception("dashboard_recalc_failed")
+        return fail(format_api_error(exc), 500)
+
     result["observacao"] = (
         "Cache materializado atualizado. Os endpoints GET do dashboard não dependem deste passo."
     )

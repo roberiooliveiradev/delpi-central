@@ -48,9 +48,7 @@ class DashboardDataRepository(PluginBaseRepository):
 
 
 class DashboardCalculoRepository(PluginBaseRepository):
-    def _insert_row(self, row: dict[str, Any]) -> None:
-        self.execute(
-            """
+    _UPSERT_SQL = """
             INSERT INTO transformometro.dashboard_calculos (
                 dashboard_calculo_id, revisao_id, processo_id, competencia,
                 filial_id, setor_id, cenario_tipo, revisao_ativa,
@@ -82,40 +80,62 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 custo_recursos_compartilhados_mes = EXCLUDED.custo_recursos_compartilhados_mes,
                 horas_economizadas_mes = EXCLUDED.horas_economizadas_mes,
                 calculated_at = NOW()
-            """,
-            (
-                row["dashboard_calculo_id"],
-                row["revisao_id"],
-                row["processo_id"],
-                row["competencia"],
-                row.get("filial_id"),
-                row.get("setor_id"),
-                row["cenario_tipo"],
-                row.get("revisao_ativa", False),
-                row.get("economia_tempo", 0),
-                row.get("economia_retrabalho", 0),
-                row.get("economia_erros", 0),
-                row.get("economia_outros", 0),
-                row.get("economia_recursos_compartilhados", 0),
-                row.get("economia_bruta", 0),
-                row.get("investimento_unico_mes", 0),
-                row.get("custo_recorrente_mes", 0),
-                row.get("economia_liquida_mes", 0),
-                row.get("custo_recursos_compartilhados_mes", 0),
-                row.get("horas_economizadas_mes", 0),
-            ),
+            """
+
+    def _row_params(self, row: dict[str, Any]) -> tuple[Any, ...]:
+        return (
+            row["dashboard_calculo_id"],
+            row["revisao_id"],
+            row["processo_id"],
+            row["competencia"],
+            row.get("filial_id"),
+            row.get("setor_id"),
+            row["cenario_tipo"],
+            row.get("revisao_ativa", False),
+            row.get("economia_tempo", 0),
+            row.get("economia_retrabalho", 0),
+            row.get("economia_erros", 0),
+            row.get("economia_outros", 0),
+            row.get("economia_recursos_compartilhados", 0),
+            row.get("economia_bruta", 0),
+            row.get("investimento_unico_mes", 0),
+            row.get("custo_recorrente_mes", 0),
+            row.get("economia_liquida_mes", 0),
+            row.get("custo_recursos_compartilhados_mes", 0),
+            row.get("horas_economizadas_mes", 0),
         )
 
-    def upsert_rows(self, rows: list[dict[str, Any]]) -> int:
+    def _upsert_many(self, rows: list[dict[str, Any]], *, auto_commit: bool = True) -> int:
         if not rows:
             return 0
-        for row in rows:
-            self._insert_row(row)
+        params = [self._row_params(row) for row in rows]
+        try:
+            with self._connection.cursor() as cursor:
+                cursor.executemany(self._UPSERT_SQL, params)
+            if auto_commit:
+                self._connection.commit()
+        except Exception as exc:
+            self._connection.rollback()
+            raise exc
         return len(rows)
 
+    def _insert_row(self, row: dict[str, Any]) -> None:
+        self._upsert_many([row])
+
+    def upsert_rows(self, rows: list[dict[str, Any]]) -> int:
+        return self._upsert_many(rows)
+
     def replace_all(self, rows: list[dict[str, Any]]) -> int:
-        self.execute("TRUNCATE transformometro.dashboard_calculos")
-        return self.upsert_rows(rows)
+        try:
+            with self._connection.cursor() as cursor:
+                cursor.execute("TRUNCATE transformometro.dashboard_calculos")
+                if rows:
+                    cursor.executemany(self._UPSERT_SQL, [self._row_params(row) for row in rows])
+            self._connection.commit()
+        except Exception as exc:
+            self._connection.rollback()
+            raise exc
+        return len(rows)
 
     def delete_by_revisao(self, revisao_id: str) -> int:
         row = self.fetch_one(

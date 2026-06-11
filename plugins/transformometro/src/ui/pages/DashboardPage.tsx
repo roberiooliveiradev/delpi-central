@@ -214,14 +214,18 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     setSavingsGranularity(suggestGranularity(filters.dataInicial, filters.dataFinal));
   }, [filters.dataInicial, filters.dataFinal]);
 
-  async function handleRecalculate() {
+  async function handleRefresh() {
+    await load();
+  }
+
+  async function handleRecalcCache() {
     setRefreshing(true);
     setError(null);
     try {
-      await recalcularDashboard(getAccessToken, params);
+      await recalcularDashboard(getAccessToken);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao recalcular dashboard");
+      setError(err instanceof Error ? err.message : "Erro ao recalcular cache do dashboard");
     } finally {
       setRefreshing(false);
     }
@@ -452,6 +456,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
+        onRefresh={() => void handleRefresh()}
+        refreshing={refreshing}
         actions={
           <>
             <button type="button" className="ds-ghost-btn" onClick={handleDownloadCsv} disabled={exporting !== null}>
@@ -462,7 +468,17 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               <FileDown size={16} />
               {exporting === "excel" ? "Gerando..." : "Excel"}
             </button>
-            <button type="button" className="ds-primary-btn" onClick={handleRecalculate} disabled={refreshing}>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => void handleRecalcCache()}
+              disabled={refreshing}
+              title="Atualiza o cache materializado (dashboard_calculos) para integrações"
+            >
+              <RefreshCw size={16} />
+              {refreshing ? "Recalculando..." : "Recalcular cache"}
+            </button>
+            <button type="button" className="ds-primary-btn" onClick={() => void handleRefresh()} disabled={refreshing}>
               <RefreshCw size={16} />
               {refreshing ? "Atualizando..." : "Atualizar"}
             </button>
