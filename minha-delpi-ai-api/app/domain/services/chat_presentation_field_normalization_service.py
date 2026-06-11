@@ -101,6 +101,7 @@ class ChatPresentationFieldNormalizationService:
         if presentation_type == "chart":
             return cls._normalize_chart(
                 presentation,
+                path=path,
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
             )
@@ -210,6 +211,7 @@ class ChatPresentationFieldNormalizationService:
         cls,
         presentation: dict[str, Any],
         *,
+        path: str = "",
         schema_labels: dict[str, str] | None,
         schema_formats: dict[str, str] | None,
     ) -> dict[str, Any]:
@@ -226,6 +228,7 @@ class ChatPresentationFieldNormalizationService:
                 field_labels[key] = cls._column_labels.label_for(
                     key,
                     schema_labels=schema_labels,
+                    path=path,
                 )
 
             field_format = cls._column_labels.resolve_field_format(

@@ -35,7 +35,7 @@ class ExternalActionPresentationBuilderPresenter:
         profile_name: str | None = None,
         role: str = "generic",
     ) -> dict | None:
-        return self._host._build_items_table(
+        return self._host._product_list()._build_items_table(
             items,
             title=title,
             path=path,

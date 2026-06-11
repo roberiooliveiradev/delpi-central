@@ -44,6 +44,7 @@ Relacionado:
 | **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ✅ Concluído |
 | **R21** | Humanização centralizada — rótulo + valor (tabular + KV) | ✅ Concluído |
 | **R22** | Cobertura KV — `path` + `profile_name` em todos os presenters | ✅ Concluído |
+| **R23** | Resíduos onda 2 — path ativo, builder com perfil, serviços transversais | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -177,11 +178,11 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 
 | Módulo | Uso | `path` | Nota |
 |--------|-----|--------|------|
-| `ExternalActionResultPresenter._humanize_key` | `label_for` + schema | ⚠ | path da action disponível no presenter — não repassado |
-| `ChatPresentationFieldNormalizationService` | gráficos `fieldLabels` | ⚠ | só `schema_labels` |
-| `ChatPresentationChartExplainService` | explain de eixo | 🔴 | fallback local `replace("_")` |
-| `ChatSqlDynamicColumnRefinementService` | colunas SQL | 🔴 | sem rota |
-| `ChatPresentationTreeMetaCaptionService` | legenda árvore | 🔴 | `label_for` seco |
+| `ExternalActionResultPresenter._humanize_key` | `label_for` + schema | ✅ | repassa `_active_presentation_path` |
+| `ChatPresentationFieldNormalizationService` | gráficos `fieldLabels` | ✅ | `path` em `_normalize_chart` |
+| `ChatPresentationChartExplainService` | explain de eixo | ✅ | `label_for` com `path` |
+| `ChatSqlDynamicColumnRefinementService` | colunas SQL | ⚠ | vocabulário JSON (sem display label) |
+| `ChatPresentationTreeMetaCaptionService` | legenda árvore | ✅ | `label_for` com `path` |
 
 ##### Comportamento quando `path` / `profile_name` faltam
 
@@ -192,6 +193,14 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 | `_humanize_field_key` | Fallback imediato (EN) | UX ruim |
 | Discovery R16 | LLM batch | Menos contexto (sem fragmento de rota) |
 | `tableProfiles` hints | — | **Ignorado** sem `profile_name` |
+
+##### Próxima fase (R23 — resíduos onda 2) ✅ jun/2026
+
+- [x] `_active_presentation_path` no presenter + `ColumnLabelContext.path` wired
+- [x] `_humanize_key` / gráficos / árvore / `FieldNormalization` repassam `path` à cascata de rótulos
+- [x] `ChatPresentationTableProfileInferenceService` + `_build_items_table_for_path` no builder genérico
+- [x] Gate CI: `presentation_builder_items_table_gate.py`
+- [ ] A9 grande (SectionAvailability / visual bundle / elif use case) — **fora do escopo R23**; onda 2 estrutural
 
 ##### Próxima fase (R22 — cobertura KV) ✅ jun/2026
 

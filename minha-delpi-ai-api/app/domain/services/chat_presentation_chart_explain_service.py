@@ -25,6 +25,7 @@ class ChatPresentationChartExplainService:
         presentation: dict[str, Any] | None,
         decision: dict[str, Any] | None = None,
         insight: str | None = None,
+        path: str = "",
     ) -> str:
         vocab = ChatPresentationVocabularyService
 
@@ -62,9 +63,9 @@ class ChatPresentationChartExplainService:
             parts.append(insight_text)
 
         parts.append(cls._intro(chart_type, selected, reason, len(rows)))
-        parts.append(cls._how_to_read(chart_type, x_axis, y_axis, rows))
+        parts.append(cls._how_to_read(chart_type, x_axis, y_axis, rows, path=path))
 
-        highlight = cls._highlights(chart_type, rows, x_axis, y_axis)
+        highlight = cls._highlights(chart_type, rows, x_axis, y_axis, path=path)
 
         if highlight:
             parts.append(highlight)
@@ -74,8 +75,8 @@ class ChatPresentationChartExplainService:
         return "\n\n".join(part for part in parts if part)
 
     @classmethod
-    def _label(cls, key: str) -> str:
-        return cls._label_service.label_for(key) or key.replace("_", " ").strip()
+    def _label(cls, key: str, *, path: str = "") -> str:
+        return cls._label_service.label_for(key, path=path) or key.replace("_", " ").strip()
 
     @classmethod
     def _intro(cls, chart_type: str, selected: str, reason: str, row_count: int) -> str:
@@ -111,21 +112,23 @@ class ChatPresentationChartExplainService:
         x_axis: str,
         y_axis: str,
         rows: list[dict[str, Any]],
+        *,
+        path: str = "",
     ) -> str:
         vocab = ChatPresentationVocabularyService
 
         if chart_type == "scatter" and x_axis and y_axis:
             return vocab.chart_explain_text(
                 "howToReadScatter",
-                xLabel=cls._label(x_axis),
-                yLabel=cls._label(y_axis),
+                xLabel=cls._label(x_axis, path=path),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         if chart_type in {"line", "multi_line", "area"} and x_axis and y_axis:
             return vocab.chart_explain_text(
                 "howToReadTemporal",
-                xLabel=cls._label(x_axis),
-                yLabel=cls._label(y_axis),
+                xLabel=cls._label(x_axis, path=path),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         if chart_type in {"donut", "pie"} and y_axis:
@@ -133,8 +136,8 @@ class ChatPresentationChartExplainService:
 
             return vocab.chart_explain_text(
                 "howToReadDonut",
-                categoryLabel=cls._label(category_key),
-                yLabel=cls._label(y_axis),
+                categoryLabel=cls._label(category_key, path=path),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         if chart_type in {"horizontal_bar", "bar", "histogram"} and y_axis:
@@ -142,21 +145,21 @@ class ChatPresentationChartExplainService:
 
             return vocab.chart_explain_text(
                 "howToReadBar",
-                categoryLabel=cls._label(category_key),
-                yLabel=cls._label(y_axis),
+                categoryLabel=cls._label(category_key, path=path),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         if chart_type == "gauge" and y_axis:
             return vocab.chart_explain_text(
                 "howToReadGauge",
-                yLabel=cls._label(y_axis),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         if x_axis and y_axis:
             return vocab.chart_explain_text(
                 "howToReadGenericAxes",
-                xLabel=cls._label(x_axis),
-                yLabel=cls._label(y_axis),
+                xLabel=cls._label(x_axis, path=path),
+                yLabel=cls._label(y_axis, path=path),
             )
 
         return vocab.chart_explain_text("howToReadHover")
@@ -168,6 +171,8 @@ class ChatPresentationChartExplainService:
         rows: list[dict[str, Any]],
         x_axis: str,
         y_axis: str,
+        *,
+        path: str = "",
     ) -> str:
         vocab = ChatPresentationVocabularyService
 
@@ -204,7 +209,7 @@ class ChatPresentationChartExplainService:
         leader_value = leader_row.get(y_axis)
         laggard_value = laggard_row.get(y_axis)
 
-        y_label = cls._label(y_axis)
+        y_label = cls._label(y_axis, path=path)
         is_efficiency = any(token in y_axis.lower() for token in _EFFICIENCY_TOKENS)
 
         if is_efficiency:
@@ -225,7 +230,7 @@ class ChatPresentationChartExplainService:
             if avg_x is not None and x_axis:
                 avg_x_snippet = vocab.chart_explain_text(
                     "highlightScatterAvgX",
-                    xLabel=cls._label(x_axis),
+                    xLabel=cls._label(x_axis, path=path),
                     avgX=cls._format_value(avg_x),
                 )
 

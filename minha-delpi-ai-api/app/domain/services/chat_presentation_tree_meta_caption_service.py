@@ -36,7 +36,7 @@ class ChatPresentationTreeMetaCaptionService:
             cls._ensure_unit(meta)
 
             if not str(node.get("metaCaption") or "").strip():
-                caption = cls._build_caption(meta)
+                caption = cls._build_caption(meta, path=path)
 
                 if caption:
                     node["metaCaption"] = caption
@@ -68,7 +68,7 @@ class ChatPresentationTreeMetaCaptionService:
             meta[unit_field] = cls._meta_caption_text("defaultUnit", default="un.")
 
     @classmethod
-    def _build_caption(cls, meta: dict[str, Any]) -> str:
+    def _build_caption(cls, meta: dict[str, Any], *, path: str = "") -> str:
         quantity_field = cls._meta_caption_text("quantityField", default="quantity")
         unit_field = cls._meta_caption_text("unitField", default="unit")
         field_order = cls._meta_caption_field_order()
@@ -89,7 +89,7 @@ class ChatPresentationTreeMetaCaptionService:
             if value is None or not cls._is_numeric(value):
                 continue
 
-            label = cls._LABELS.label_for(field)
+            label = cls._LABELS.label_for(field, path=path)
             parts.append(f"{label}: {cls._LABELS.format_num(value)}")
 
         if parts:

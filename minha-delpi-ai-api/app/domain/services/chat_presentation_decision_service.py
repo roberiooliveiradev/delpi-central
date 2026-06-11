@@ -961,6 +961,7 @@ class ChatPresentationDecisionService:
                 presentation=chart_presentation,
                 decision=decision,
                 insight=str(decision.get("insight") or ""),
+                path=str(path or metadata.get("sourcePath") or "").strip(),
             )
 
             if explanation:
