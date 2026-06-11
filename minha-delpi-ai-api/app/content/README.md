@@ -47,7 +47,7 @@ Arquivos em `labels/`:
 |---------|-----|
 | `api_paths.json` | ~84 rotas reais do **api-delpi** → rótulos PT em tool calls e capacidades |
 
-**Typos:** padrões em JSON são comparados após `ChatMessageNormalizationService.normalize_for_matching` (estoque, filial, hora, saudações, KPIs). Novos typos operacionais → serviço Python; typos de frases utilitárias/small talk → JSON e/ou normalização.
+**Typos:** regras estáticas em `assistant/typing_correction_rules.json` (159 regras, jun/2026 — P14-0); carregadas em `ChatMessageNormalizationService` no composition root. Typos de frases utilitárias/small talk → JSON dedicado e/ou normalização.
 
 Políticas longas para o LLM continuam em `app/domain/prompt_policies/*.md`.
 

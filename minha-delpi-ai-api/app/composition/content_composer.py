@@ -19,6 +19,19 @@ from app.infrastructure.content.assistant_content_adapter import (
 _CONFIGURED = False
 
 
+def _configure_typo_correction_rules() -> None:
+    from app.domain.services.chat_message_normalization_service import (
+        ChatMessageNormalizationService,
+    )
+    from app.infrastructure.content.content_service import ContentService
+
+    payload = ContentService.load_json("assistant/typing_correction_rules")
+    rules = payload.get("rules")
+
+    if isinstance(rules, list):
+        ChatMessageNormalizationService.configure_static_rules(rules)
+
+
 def configure_domain_infrastructure_ports() -> None:
     """Registra adapters de conteúdo/config no domain (composition root)."""
     global _CONFIGURED
@@ -34,6 +47,7 @@ def configure_domain_infrastructure_ports() -> None:
     ChatRuntimeIntelligenceSettingsService.configure(
         InfrastructureChatRuntimeIntelligenceSettingsAdapter()
     )
+    _configure_typo_correction_rules()
     _CONFIGURED = True
 
 

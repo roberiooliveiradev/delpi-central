@@ -1,0 +1,642 @@
+{
+  "version": 1,
+  "description": "Regras estáticas de correção de typo operacional (Playbook 14). Ordem importa — padrões mais específicos primeiro.",
+  "rules": [
+    {
+      "pattern": "\\bforncedor(es)?\\b",
+      "replacement": "fornecedor\\1"
+    },
+    {
+      "pattern": "\\bfornecedore(s)?\\b",
+      "replacement": "fornecedor\\1"
+    },
+    {
+      "pattern": "\\bfornecdor(es)?\\b",
+      "replacement": "fornecedor\\1"
+    },
+    {
+      "pattern": "\\bforneçedor(es)?\\b",
+      "replacement": "fornecedor\\1"
+    },
+    {
+      "pattern": "\\bfornecedr(es)?\\b",
+      "replacement": "fornecedor\\1"
+    },
+    {
+      "pattern": "\\bclinte(s)?\\b",
+      "replacement": "cliente\\1"
+    },
+    {
+      "pattern": "\\bcleinte(s)?\\b",
+      "replacement": "cliente\\1"
+    },
+    {
+      "pattern": "\\bcliente(s)?\\b",
+      "replacement": "cliente\\1"
+    },
+    {
+      "pattern": "\\bestoq(u|ue)?\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bestq\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bestoquee\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bestouque\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bestok\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bsaldo\\b",
+      "replacement": "saldo"
+    },
+    {
+      "pattern": "\\bebita\\b",
+      "replacement": "ebitda"
+    },
+    {
+      "pattern": "\\bkaisen\\b",
+      "replacement": "kaizen"
+    },
+    {
+      "pattern": "\\bnao conformidade\\b",
+      "replacement": "nao conformidade"
+    },
+    {
+      "pattern": "\\bnao-conformidade\\b",
+      "replacement": "nao conformidade"
+    },
+    {
+      "pattern": "\\bestqoue\\b",
+      "replacement": "estoque"
+    },
+    {
+      "pattern": "\\bcoonsegue\\b",
+      "replacement": "consegue"
+    },
+    {
+      "pattern": "\\bconsigue\\b",
+      "replacement": "consegue"
+    },
+    {
+      "pattern": "\\bconsege\\b",
+      "replacement": "consegue"
+    },
+    {
+      "pattern": "\\bprodt?\\b",
+      "replacement": "produto"
+    },
+    {
+      "pattern": "\\bprduto\\b",
+      "replacement": "produto"
+    },
+    {
+      "pattern": "\\bprouto\\b",
+      "replacement": "produto"
+    },
+    {
+      "pattern": "\\bproduot\\b",
+      "replacement": "produto"
+    },
+    {
+      "pattern": "\\bitem\\b",
+      "replacement": "item"
+    },
+    {
+      "pattern": "\\biten\\b",
+      "replacement": "item"
+    },
+    {
+      "pattern": "\\bdescriçao\\b",
+      "replacement": "descricao"
+    },
+    {
+      "pattern": "\\bdescricao\\b",
+      "replacement": "descricao"
+    },
+    {
+      "pattern": "\\bdescrção\\b",
+      "replacement": "descricao"
+    },
+    {
+      "pattern": "\\bdescrição\\b",
+      "replacement": "descricao"
+    },
+    {
+      "pattern": "\\bcadastro\\b",
+      "replacement": "cadastro"
+    },
+    {
+      "pattern": "\\bcadastr\\b",
+      "replacement": "cadastro"
+    },
+    {
+      "pattern": "\\bpreço\\b",
+      "replacement": "preco"
+    },
+    {
+      "pattern": "\\bpreco\\b",
+      "replacement": "preco"
+    },
+    {
+      "pattern": "\\bpreç\\b",
+      "replacement": "preco"
+    },
+    {
+      "pattern": "\\bprço\\b",
+      "replacement": "preco"
+    },
+    {
+      "pattern": "\\bquanto custa\\b",
+      "replacement": "quanto custa"
+    },
+    {
+      "pattern": "\\bquanto cust\\b",
+      "replacement": "quanto custa"
+    },
+    {
+      "pattern": "\\bcusto\\b",
+      "replacement": "custo"
+    },
+    {
+      "pattern": "\\bcust\\b",
+      "replacement": "custo"
+    },
+    {
+      "pattern": "\\btabela de preco\\b",
+      "replacement": "tabela de preco"
+    },
+    {
+      "pattern": "\\btabela de preço\\b",
+      "replacement": "tabela de preco"
+    },
+    {
+      "pattern": "\\bestrutur(a)?\\b",
+      "replacement": "estrutura"
+    },
+    {
+      "pattern": "\\bestrutur\\b",
+      "replacement": "estrutura"
+    },
+    {
+      "pattern": "\\bcomposiçao\\b",
+      "replacement": "composicao"
+    },
+    {
+      "pattern": "\\bcomposicao\\b",
+      "replacement": "composicao"
+    },
+    {
+      "pattern": "\\bcomponentes\\b",
+      "replacement": "componentes"
+    },
+    {
+      "pattern": "\\bcomponente\\b",
+      "replacement": "componente"
+    },
+    {
+      "pattern": "\\bbom\\b",
+      "replacement": "bom"
+    },
+    {
+      "pattern": "\\bpais\\b",
+      "replacement": "pais"
+    },
+    {
+      "pattern": "\\bpai\\b",
+      "replacement": "pai"
+    },
+    {
+      "pattern": "\\bwhere used\\b",
+      "replacement": "where used"
+    },
+    {
+      "pattern": "\\bonde e usado\\b",
+      "replacement": "onde e usado"
+    },
+    {
+      "pattern": "\\bonde é usado\\b",
+      "replacement": "onde e usado"
+    },
+    {
+      "pattern": "\\brotiero\\b",
+      "replacement": "roteiro"
+    },
+    {
+      "pattern": "\\broteir\\b",
+      "replacement": "roteiro"
+    },
+    {
+      "pattern": "\\broteiro\\b",
+      "replacement": "roteiro"
+    },
+    {
+      "pattern": "\\binspeçao\\b",
+      "replacement": "inspecao"
+    },
+    {
+      "pattern": "\\binspecao\\b",
+      "replacement": "inspecao"
+    },
+    {
+      "pattern": "\\binspeção\\b",
+      "replacement": "inspecao"
+    },
+    {
+      "pattern": "\\binspeç\\b",
+      "replacement": "inspecao"
+    },
+    {
+      "pattern": "\\bmovimentaçao\\b",
+      "replacement": "movimentacao"
+    },
+    {
+      "pattern": "\\bmovimentaçoes\\b",
+      "replacement": "movimentacoes"
+    },
+    {
+      "pattern": "\\bmovimentacao\\b",
+      "replacement": "movimentacao"
+    },
+    {
+      "pattern": "\\bmovimentacoes\\b",
+      "replacement": "movimentacoes"
+    },
+    {
+      "pattern": "\\bmovimenta\\b",
+      "replacement": "movimentacao"
+    },
+    {
+      "pattern": "\\bnota fiscal\\b",
+      "replacement": "nota fiscal"
+    },
+    {
+      "pattern": "\\bnfe\\b",
+      "replacement": "nfe"
+    },
+    {
+      "pattern": "\\bnota de entrada\\b",
+      "replacement": "nota de entrada"
+    },
+    {
+      "pattern": "\\bnota de saida\\b",
+      "replacement": "nota de saida"
+    },
+    {
+      "pattern": "\\bnota de saída\\b",
+      "replacement": "nota de saida"
+    },
+    {
+      "pattern": "\\bcompras\\b",
+      "replacement": "compras"
+    },
+    {
+      "pattern": "\\bcompra\\b",
+      "replacement": "compra"
+    },
+    {
+      "pattern": "\\bcomprare\\b",
+      "replacement": "compare"
+    },
+    {
+      "pattern": "\\bvendas\\b",
+      "replacement": "vendas"
+    },
+    {
+      "pattern": "\\bvenda\\b",
+      "replacement": "venda"
+    },
+    {
+      "pattern": "\\bfaturamento\\b",
+      "replacement": "faturamento"
+    },
+    {
+      "pattern": "\\bfaturam\\b",
+      "replacement": "faturamento"
+    },
+    {
+      "pattern": "\\blmps\\b",
+      "replacement": "lmps"
+    },
+    {
+      "pattern": "\\blmp\\b",
+      "replacement": "lmp"
+    },
+    {
+      "pattern": "\\bordem de venda\\b",
+      "replacement": "ordem de venda"
+    },
+    {
+      "pattern": "\\bov\\b",
+      "replacement": "ov"
+    },
+    {
+      "pattern": "\\bengenharia\\b",
+      "replacement": "engenharia"
+    },
+    {
+      "pattern": "\\bgiro de estoque\\b",
+      "replacement": "giro de estoque"
+    },
+    {
+      "pattern": "\\bgiro\\b",
+      "replacement": "giro"
+    },
+    {
+      "pattern": "\\bcpv\\b",
+      "replacement": "cpv"
+    },
+    {
+      "pattern": "\\botd\\b",
+      "replacement": "otd"
+    },
+    {
+      "pattern": "\\bvalor de estoque\\b",
+      "replacement": "valor de estoque"
+    },
+    {
+      "pattern": "\\bvalor total de estoque\\b",
+      "replacement": "valor total de estoque"
+    },
+    {
+      "pattern": "\\brelatório\\b",
+      "replacement": "relatorio"
+    },
+    {
+      "pattern": "\\brelatorio\\b",
+      "replacement": "relatorio"
+    },
+    {
+      "pattern": "\\brelator\\b",
+      "replacement": "relatorio"
+    },
+    {
+      "pattern": "\\bconsulta\\b",
+      "replacement": "consulta"
+    },
+    {
+      "pattern": "\\bconsultar\\b",
+      "replacement": "consultar"
+    },
+    {
+      "pattern": "\\bbuscar\\b",
+      "replacement": "buscar"
+    },
+    {
+      "pattern": "\\bbusque\\b",
+      "replacement": "busque"
+    },
+    {
+      "pattern": "\\bpesquisar\\b",
+      "replacement": "pesquisar"
+    },
+    {
+      "pattern": "\\bpesquise\\b",
+      "replacement": "pesquise"
+    },
+    {
+      "pattern": "\\blistar\\b",
+      "replacement": "listar"
+    },
+    {
+      "pattern": "\\bliste\\b",
+      "replacement": "liste"
+    },
+    {
+      "pattern": "\\bmostrar\\b",
+      "replacement": "mostrar"
+    },
+    {
+      "pattern": "\\bmostre\\b",
+      "replacement": "mostre"
+    },
+    {
+      "pattern": "\\bcapacidades\\b",
+      "replacement": "capacidades"
+    },
+    {
+      "pattern": "\\bfuncionalidades\\b",
+      "replacement": "funcionalidades"
+    },
+    {
+      "pattern": "\\bcomandos\\b",
+      "replacement": "comandos"
+    },
+    {
+      "pattern": "\\bajuda\\b",
+      "replacement": "ajuda"
+    },
+    {
+      "pattern": "\\bq horas\\b",
+      "replacement": "que horas"
+    },
+    {
+      "pattern": "\\bq hrs\\b",
+      "replacement": "que horas"
+    },
+    {
+      "pattern": "\\bq hora\\b",
+      "replacement": "que hora"
+    },
+    {
+      "pattern": "\\bhors\\b",
+      "replacement": "horas"
+    },
+    {
+      "pattern": "\\bhorass\\b",
+      "replacement": "horas"
+    },
+    {
+      "pattern": "\\boras\\b",
+      "replacement": "horas"
+    },
+    {
+      "pattern": "\\bhoras sao\\b",
+      "replacement": "horas sao"
+    },
+    {
+      "pattern": "\\brelojo\\b",
+      "replacement": "relogio"
+    },
+    {
+      "pattern": "\\brelgio\\b",
+      "replacement": "relogio"
+    },
+    {
+      "pattern": "\\bhorrio\\b",
+      "replacement": "horario"
+    },
+    {
+      "pattern": "\\bhoraro\\b",
+      "replacement": "horario"
+    },
+    {
+      "pattern": "\\bhj\\b",
+      "replacement": "hoje"
+    },
+    {
+      "pattern": "\\bhje\\b",
+      "replacement": "hoje"
+    },
+    {
+      "pattern": "\\bq dia\\b",
+      "replacement": "que dia e hoje"
+    },
+    {
+      "pattern": "\\bq data\\b",
+      "replacement": "qual a data"
+    },
+    {
+      "pattern": "\\bbo dia\\b",
+      "replacement": "bom dia"
+    },
+    {
+      "pattern": "\\bbao dia\\b",
+      "replacement": "bom dia"
+    },
+    {
+      "pattern": "\\bbmo dia\\b",
+      "replacement": "bom dia"
+    },
+    {
+      "pattern": "\\bboa tard\\b",
+      "replacement": "boa tarde"
+    },
+    {
+      "pattern": "\\bboa noit\\b",
+      "replacement": "boa noite"
+    },
+    {
+      "pattern": "\\bobg\\b",
+      "replacement": "obrigado"
+    },
+    {
+      "pattern": "\\bobgd\\b",
+      "replacement": "obrigado"
+    },
+    {
+      "pattern": "\\bvlw\\b",
+      "replacement": "valeu"
+    },
+    {
+      "pattern": "\\boq\\b",
+      "replacement": "o que"
+    },
+    {
+      "pattern": "\\bqm\\b",
+      "replacement": "quem"
+    },
+    {
+      "pattern": "\\bcmo\\b",
+      "replacement": "como"
+    },
+    {
+      "pattern": "\\bcm\\b",
+      "replacement": "como"
+    },
+    {
+      "pattern": "\\bqual eh\\b",
+      "replacement": "qual e"
+    },
+    {
+      "pattern": "\\bseu nom\\b",
+      "replacement": "seu nome"
+    },
+    {
+      "pattern": "\\bvc s chama\\b",
+      "replacement": "voce se chama"
+    },
+    {
+      "pattern": "\\bvoce s chama\\b",
+      "replacement": "voce se chama"
+    },
+    {
+      "pattern": "\\bnaum entendi\\b",
+      "replacement": "nao entendi"
+    },
+    {
+      "pattern": "\\bnum entendi\\b",
+      "replacement": "nao entendi"
+    },
+    {
+      "pattern": "\\bnaum\\b",
+      "replacement": "nao"
+    },
+    {
+      "pattern": "\\bvc\\b",
+      "replacement": "voce"
+    },
+    {
+      "pattern": "\\btb\\b",
+      "replacement": "tambem"
+    },
+    {
+      "pattern": "\\bqdo\\b",
+      "replacement": "quando"
+    },
+    {
+      "pattern": "\\bqd\\b",
+      "replacement": "quando"
+    },
+    {
+      "pattern": "\\bqnt\\b",
+      "replacement": "quantidade"
+    },
+    {
+      "pattern": "\\bqtd\\b",
+      "replacement": "quantidade"
+    },
+    {
+      "pattern": "\\bqt\\b",
+      "replacement": "quantidade"
+    },
+    {
+      "pattern": "\\bnum\\b",
+      "replacement": "numero"
+    },
+    {
+      "pattern": "\\bnº\\b",
+      "replacement": "numero"
+    },
+    {
+      "pattern": "\\bcod\\b",
+      "replacement": "codigo"
+    },
+    {
+      "pattern": "\\bcód\\b",
+      "replacement": "codigo"
+    },
+    {
+      "pattern": "\\bfilail\\b",
+      "replacement": "filial"
+    },
+    {
+      "pattern": "\\bfilal\\b",
+      "replacement": "filial"
+    },
+    {
+      "pattern": "\\bfilila\\b",
+      "replacement": "filial"
+    },
+    {
+      "pattern": "\\bfilia\\b",
+      "replacement": "filial"
+    },
+    {
+      "pattern": "\\barmazen\\b",
+      "replacement": "armazem"
+    },
+    {
+      "pattern": "\\bdeposito\\b",
+      "replacement": "deposito"
+    }
+  ]
+}

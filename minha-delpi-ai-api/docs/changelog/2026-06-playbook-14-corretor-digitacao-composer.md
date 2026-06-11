@@ -140,6 +140,15 @@ Homologação manual: **U2b** e smoke operacional #2 em [smoke-operacional-manua
 
 | Fase | Escopo |
 |------|--------|
-| P14-0 | Extrair regras estáticas para `typing_correction_rules.json` |
 | P14-4 | Dashboard admin de métricas (além de help-events) |
 | P14-5 | Fuzzy léxico operacional (SymSpell) |
+
+---
+
+## P14-0 — Catálogo JSON (jun/2026)
+
+Regras estáticas migradas de tupla Python para `app/content/pt-BR/assistant/typing_correction_rules.json` (159 entradas `{ pattern, replacement }`).
+
+- Carregamento: `content_composer._configure_typo_correction_rules()` → `ChatMessageNormalizationService.configure_static_rules()`
+- Validação CI/local: `python scripts/export_typing_correction_rules.py`
+- Novos typos operacionais: editar o JSON (ordem importa — específicos primeiro)

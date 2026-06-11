@@ -149,7 +149,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/
 
 **Regressão unitária:** `test_chat_utility_direct_answer_service.py`, `test_chat_message_normalization_service.py`, `test_chat_small_talk_pattern_service.py`.
 
-Conteúdo editável: `app/content/pt-BR/assistant/utility_answers.json`, `small_talk.json`. Typos operacionais (estoque, filial, KPI) ficam em `ChatMessageNormalizationService`.
+Conteúdo editável: `app/content/pt-BR/assistant/utility_answers.json`, `small_talk.json`. Typos operacionais (estoque, filial, KPI) ficam em `typing_correction_rules.json` → `ChatMessageNormalizationService`.
 
 ---
 

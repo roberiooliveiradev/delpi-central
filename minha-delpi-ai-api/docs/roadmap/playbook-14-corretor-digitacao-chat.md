@@ -214,7 +214,7 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 
 | Fase | Escopo | Entregáveis | Status |
 |------|--------|-------------|--------|
-| **P14-0 — Inventário** | Extrair regras estáticas para JSON/catálogo; documentar gaps | `typing_correction_rules.json` ou export do serviço; diff estático vs learned | Parcial (`iter_typo_patterns`) |
+| **P14-0 — Inventário** | Extrair regras estáticas para JSON/catálogo; documentar gaps | `typing_correction_rules.json` + `configure_static_rules` | **Concluído** |
 | **P14-1 — Serviço + diff** | `ChatTypingCorrectionService.suggest()`; testes espelhando `test_chat_message_normalization_service.py` | API pura; sem UI | **Concluído** |
 | **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | **Concluído** |
 | **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | **Concluído** |
@@ -284,7 +284,7 @@ Arquivos alvo:
 
 Hoje o chat **já tolera** typos operacionais na API, mas **esconde** a correção do usuário. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua — sem misturar com a habilidade de revisão textual por LLM e sem autocorrect agressivo em códigos ERP.
 
-Próximo passo de engenharia: **P14-0** (extrair regras estáticas para catálogo JSON) e **P14-4** (dashboard admin de métricas).
+Próximo passo de engenharia: **P14-4** (dashboard admin de métricas) e **P14-5** (fuzzy léxico).
 
 ---
 
@@ -297,7 +297,8 @@ Changelog detalhado: [2026-06-playbook-14-corretor-digitacao-composer.md](../cha
 | Camada | Arquivo |
 |--------|---------|
 | Domain | `app/domain/services/chat_typing_correction_service.py` |
-| Normalizador (fonte única) | `app/domain/services/chat_message_normalization_service.py` → `iter_typo_patterns()` |
+| Catálogo | `app/content/pt-BR/assistant/typing_correction_rules.json` (159 regras estáticas) |
+| Normalizador | `ChatMessageNormalizationService.configure_static_rules()` via composition root |
 | HTTP | `app/interfaces/http/routes/chat/meta_routes.py` → `POST /typing-suggestions` |
 | Config | `CHAT_TYPING_CORRECTION_ENABLED` em `settings.py` |
 | Conteúdo | `app/content/pt-BR/assistant/message_composer.json` |
