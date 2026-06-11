@@ -131,18 +131,23 @@ def test_chat_capabilities_load_action_catalog_uses_configured_loader():
     assert catalog[0]["actionId"] == "stock_lookup"
 
 
-def test_chat_intelligence_settings_service_sync_writes_env_to_runtime_port(monkeypatch):
+def test_chat_intelligence_settings_service_seed_writes_defaults_once(monkeypatch):
     monkeypatch.setattr(Settings, "CHAT_WEB_SEARCH_ENABLED", False)
 
     repository = Mock(spec=AdminRuntimeSettingsRepositoryPort)
+    repository.get_chat_intelligence_settings.return_value = None
     service = ChatIntelligenceSettingsService(repository)
 
-    service.sync_from_environment()
+    service.ensure_defaults_seeded()
 
     repository.save_chat_intelligence_settings.assert_called_once()
     payload = repository.save_chat_intelligence_settings.call_args.args[0]
     assert payload["webSearchEnabled"] is False
-    assert service.resolve().web_search_enabled is False
+
+    repository.get_chat_intelligence_settings.return_value = {
+        "webSearchEnabled": True,
+    }
+    assert service.resolve().web_search_enabled is True
 
 
 def test_get_admin_quality_unified_summary_delegates_to_injected_use_cases(monkeypatch):

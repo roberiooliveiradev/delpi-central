@@ -1,5 +1,5 @@
-import { ChevronRight, Search } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { ChevronRight, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import {
   buildAdminNavTree,
@@ -17,6 +17,8 @@ type AdminSidebarProps = {
   nav: AdminNavState;
   onNavigate: (next: AdminNavState) => void;
   className?: string;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 };
 
 type AdminSidebarNodeProps = {
@@ -108,7 +110,14 @@ function AdminSidebarNode({
   );
 }
 
-export function AdminSidebar({ nav, onNavigate, className }: AdminSidebarProps) {
+export function AdminSidebar({
+  nav,
+  onNavigate,
+  className,
+  mobileOpen = false,
+  onMobileClose,
+}: AdminSidebarProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const tree = useMemo(() => buildAdminNavTree(), []);
   const searchResult = useMemo(
@@ -123,6 +132,18 @@ export function AdminSidebar({ nav, onNavigate, className }: AdminSidebarProps) 
   useEffect(() => {
     setExpandedIds(getExpandedNodeIdsForNav(nav, filteredTree, searchQuery));
   }, [nav, filteredTree, searchQuery]);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileOpen]);
 
   function toggleNode(nodeId: string) {
     setExpandedIds((current) => {
@@ -145,6 +166,7 @@ export function AdminSidebar({ nav, onNavigate, className }: AdminSidebarProps) 
   function handleNavigate(next: AdminNavState) {
     onNavigate(next);
     setSearchQuery("");
+    onMobileClose?.();
   }
 
   const rootClass = ["mdc-admin-sidebar", className].filter(Boolean).join(" ");
@@ -152,13 +174,29 @@ export function AdminSidebar({ nav, onNavigate, className }: AdminSidebarProps) 
 
   return (
     <aside className={rootClass} aria-label="Navegação do admin">
+      {mobileOpen && onMobileClose ? (
+        <div className="mdc-admin-sidebar__mobile-header">
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn mdc-admin-sidebar__mobile-close"
+            onClick={onMobileClose}
+          >
+            <X size={16} aria-hidden="true" />
+            <span>Fechar menu</span>
+          </button>
+        </div>
+      ) : null}
+
       <div className="mdc-admin-sidebar__search">
         <Search size={16} aria-hidden="true" />
         <input
+          ref={searchInputRef}
           type="search"
           value={searchQuery}
           placeholder="Buscar seção, página ou conteúdo…"
           aria-label="Buscar na navegação e no conteúdo do admin"
+          autoComplete="off"
+          enterKeyHint="search"
           onChange={(event) => setSearchQuery(event.target.value)}
         />
       </div>

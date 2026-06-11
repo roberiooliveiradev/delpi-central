@@ -8,8 +8,18 @@ from app.extensions.db import db
 @click.command("sync-chat-intelligence-env")
 @with_appcontext
 def sync_chat_intelligence_env_command() -> None:
-    """Espelha CHAT_* / RAG_* / EXTERNAL_ACTION_* do .env no runtime admin."""
+    """Garante defaults iniciais de inteligência (não sobrescreve configuração admin)."""
     service = make_chat_intelligence_settings_service()
-    service.sync_from_environment()
+    service.ensure_defaults_seeded()
     db.session.commit()
-    click.echo("Inteligência do chat sincronizada a partir do .env.")
+    click.echo("Inteligência do chat: defaults aplicados apenas se ainda não configurado.")
+
+
+@click.command("seed-chat-intelligence-defaults")
+@with_appcontext
+def seed_chat_intelligence_defaults_command() -> None:
+    """Alias explícito para seed de defaults de inteligência."""
+    service = make_chat_intelligence_settings_service()
+    service.ensure_defaults_seeded()
+    db.session.commit()
+    click.echo("Defaults de inteligência do chat verificados.")

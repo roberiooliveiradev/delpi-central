@@ -7,12 +7,13 @@
 
 .mdc-admin-layout__nav-toggle-wrap {
   display: none;
-  padding: 0 clamp(0.9rem, 2vw, 1.4rem);
+  padding: 0.35rem 0 0;
 }
 
 .mdc-admin-layout__nav-toggle {
   width: 100%;
   justify-content: center;
+  min-height: 2.35rem;
 }
 
 .mdc-admin-layout__body {
@@ -30,24 +31,75 @@
   gap: var(--mdc-space-3);
 }
 
-.mdc-admin-shell.mdc-chat-ws-directory__main {
-  padding-top: var(--mdc-space-3);
+@media (min-width: 1024px) {
+  .mdc-admin-layout__body {
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .mdc-admin-layout__sidebar {
+    width: clamp(14rem, 16vw, 17rem);
+    flex-shrink: 0;
+    border-right: 0;
+  }
+
+  .mdc-admin-layout__content {
+    flex: 1;
+    min-width: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--mdc-space-3) var(--mdc-space-4) var(--mdc-space-4) var(--mdc-admin-content-gutter, var(--mdc-space-3));
+    border-left: 1px solid var(--mdc-card-border);
+  }
 }
 
 @media (max-width: 1023px) {
   .mdc-admin-layout__nav-toggle-wrap {
     display: block;
+    flex-shrink: 0;
+  }
+
+  .mdc-admin-layout--nav-open .mdc-admin-layout__nav-toggle-wrap {
+    display: none;
   }
 
   .mdc-admin-layout__body {
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
 
   .mdc-admin-layout__sidebar {
     display: none;
   }
 
+  .mdc-admin-layout__body--nav-open {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .mdc-admin-layout__body--nav-open .mdc-admin-layout__sidebar {
     display: flex;
+    flex: 1 1 auto;
+    align-self: stretch;
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--mdc-card-border);
+    border-radius: var(--mdc-radius-lg, 12px);
+    background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-bg));
+    box-shadow: var(--mdc-elevation-1, var(--mdc-card-shadow));
+    pointer-events: auto;
+    isolation: isolate;
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-layout__nav-toggle-wrap {
+    padding-top: 0.25rem;
   }
 }

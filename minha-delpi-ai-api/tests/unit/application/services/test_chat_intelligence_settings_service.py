@@ -15,7 +15,7 @@ class FakeSettingsRepository:
         self.payload = payload
 
 
-def test_resolve_uses_environment_over_runtime(monkeypatch):
+def test_resolve_uses_admin_over_environment_defaults(monkeypatch):
     monkeypatch.setattr(Settings, "RAG_CONTEXT_MIN_SCORE", 0.35)
     monkeypatch.setattr(Settings, "CHAT_AGENTIC_LOOP_ENABLED", False)
 
@@ -28,26 +28,33 @@ def test_resolve_uses_environment_over_runtime(monkeypatch):
     service = ChatIntelligenceSettingsService(settings_repository=repository)
     resolved = service.resolve()
 
-    assert resolved.rag_context_min_score == 0.35
-    assert resolved.agentic_loop_enabled is False
+    assert resolved.rag_context_min_score == 0.5
+    assert resolved.agentic_loop_enabled is True
 
 
-def test_sync_from_environment_persists_env_payload(monkeypatch):
+def test_ensure_defaults_seeded_persists_only_when_empty(monkeypatch):
     monkeypatch.setattr(Settings, "CHAT_AGENTIC_LOOP_ENABLED", False)
     monkeypatch.setattr(Settings, "CHAT_TOOL_ROUTER_ENABLED", False)
 
     repository = FakeSettingsRepository()
     service = ChatIntelligenceSettingsService(settings_repository=repository)
 
-    result = service.sync_from_environment()
+    result = service.ensure_defaults_seeded()
 
     assert repository.payload["agenticLoopEnabled"] is False
     assert repository.payload["chatToolRouterEnabled"] is False
-    assert result["source"] == "environment"
-    assert result["agenticLoopEnabled"] is False
+    assert result["source"] == "admin"
+
+    repository.payload["agenticLoopEnabled"] = True
+    monkeypatch.setattr(Settings, "CHAT_AGENTIC_LOOP_ENABLED", False)
+
+    second = service.ensure_defaults_seeded()
+
+    assert repository.payload["agenticLoopEnabled"] is True
+    assert second["agenticLoopEnabled"] is True
 
 
-def test_save_persists_merged_settings(monkeypatch):
+def test_save_persists_and_returns_admin_values(monkeypatch):
     monkeypatch.setattr(Settings, "RAG_CONTEXT_MIN_SCORE", 0.35)
 
     repository = FakeSettingsRepository()
@@ -56,4 +63,5 @@ def test_save_persists_merged_settings(monkeypatch):
     result = service.save({"ragContextMinScore": 0.4})
 
     assert repository.payload["ragContextMinScore"] == 0.4
-    assert result["ragContextMinScore"] == 0.35
+    assert result["ragContextMinScore"] == 0.4
+    assert result["source"] == "admin"

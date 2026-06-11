@@ -41,6 +41,12 @@ export const CHAT_INTELLIGENCE_SECTIONS: ChatIntelligenceSectionMeta[] = [
     title: "Contexto da conversa",
     description: "Como o histórico longo entra no prompt sem estourar o limite de tokens.",
   },
+  {
+    id: "tools",
+    title: "Ferramentas internas",
+    description:
+      "Ativa ou desativa tools do pipeline base (não confundir com actions OpenAPI do agente).",
+  },
 ];
 
 export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
@@ -51,7 +57,8 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
   | "ragRerankEnabled"
   | "ragFtsEnabled"
   | "nativeToolCallingEnabled"
-  | "agenticLoopEnabled",
+  | "agenticLoopEnabled"
+  | "webSearchEnabled",
   ChatIntelligenceSettingMeta
 > = {
   ragHybridEnabled: {
@@ -164,6 +171,22 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
     speedWhenEnabled: "slow",
     qualityWhenEnabled: "higher",
     tip: "Mantenha “Máx. passos” baixo (1–2) salvo casos muito controlados.",
+  },
+  webSearchEnabled: {
+    title: "Pesquisa web (tool interna)",
+    summary:
+      "Permite ao chat consultar a internet quando a pergunta pede dados externos ou atuais. Requer SearXNG/Tavily configurado no servidor.",
+    pros: [
+      "Responde perguntas sobre mercado, notícias ou referências fora da base DELPI.",
+      "Complementa RAG interno sem misturar fontes corporativas.",
+    ],
+    cons: [
+      "Depende de serviço de busca e rede — latência e disponibilidade variam.",
+      "Resultados externos exigem cautela em ambientes corporativos.",
+    ],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "higher",
+    tip: "Chaves de API e URL do provedor continuam no servidor (Docker); aqui você só liga ou desliga o uso no chat.",
   },
   chatHistorySummaryEnabled: {
     title: "Resumo de histórico longo",

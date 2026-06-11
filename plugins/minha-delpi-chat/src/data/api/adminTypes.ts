@@ -308,6 +308,8 @@ export type AdminChatIntelligenceSettings = {
   nativeToolCallingEnabled: boolean;
   agenticLoopEnabled: boolean;
   agenticLoopMaxSteps: number;
+  webSearchEnabled: boolean;
+  source?: "admin" | "defaults" | string;
   defaults: {
     ragContextMinScore: number;
     externalActionSemanticMinScore: number;
@@ -320,6 +322,7 @@ export type AdminChatIntelligenceSettings = {
     nativeToolCallingEnabled: boolean;
     agenticLoopEnabled: boolean;
     agenticLoopMaxSteps: number;
+    webSearchEnabled: boolean;
   };
 };
 

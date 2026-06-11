@@ -6,6 +6,13 @@
   max-width: 52rem;
 }
 
+.mdc-chat-intelligence-panel__source {
+  margin: 0.5rem 0 0;
+  color: var(--mdc-title);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .mdc-chat-intelligence-panel__sections {
   display: grid;
   gap: var(--mdc-space-5);

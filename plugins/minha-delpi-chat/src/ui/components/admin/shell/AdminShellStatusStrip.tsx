@@ -15,9 +15,9 @@ export function AdminShellStatusStrip({
   isLoading,
   onRefresh,
 }: AdminShellStatusStripProps) {
-  const hasContent = Boolean(error || successMessage || lastUpdatedAt || onRefresh);
+  const hasMessages = Boolean(error || successMessage || lastUpdatedAt);
 
-  if (!hasContent) {
+  if (!hasMessages) {
     return null;
   }
 

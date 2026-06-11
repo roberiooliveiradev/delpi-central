@@ -42,8 +42,7 @@
 
 .mdc-admin-root .mdc-admin-shell {
   width: 100%;
-  max-width: none;
-  margin: 0;
+  min-width: 0;
 }
 
 .mdc-admin-root .mdc-admin-shell__panel {

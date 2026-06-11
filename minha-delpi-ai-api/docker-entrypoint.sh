@@ -19,8 +19,8 @@ else
 fi
 
 if [ "${SKIP_CHAT_INTELLIGENCE_SYNC:-false}" != "true" ]; then
-  echo "🔄 Sincronizando inteligência do chat a partir do .env..."
-  flask --app "$FLASK_APP" sync-chat-intelligence-env
+  echo "🌱 Verificando defaults de inteligência do chat (admin prevalece)..."
+  flask --app "$FLASK_APP" seed-chat-intelligence-defaults
 fi
 
 echo "🔥 Iniciando aplicação..."

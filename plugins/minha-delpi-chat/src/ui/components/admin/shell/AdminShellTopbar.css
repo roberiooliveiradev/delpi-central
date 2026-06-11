@@ -4,22 +4,12 @@
   opacity: 0.75;
 }
 
-.mdc-admin-topbar.mdc-chat-ws-topbar {
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+.mdc-admin-topbar__refresh-icon--spinning {
+  animation: mdc-admin-topbar-spin 0.85s linear infinite;
 }
 
-@media (max-width: 767px) {
-  .mdc-admin-topbar.mdc-chat-ws-topbar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .mdc-admin-topbar .mdc-chat-ws-topbar__title {
-    grid-column: 1 / -1;
-    justify-self: start;
-    text-align: left;
+@keyframes mdc-admin-topbar-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

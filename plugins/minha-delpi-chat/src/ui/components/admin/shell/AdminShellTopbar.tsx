@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 
 import { getAdminNavBreadcrumb } from "../../../../navigation/adminNavTree";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
@@ -41,8 +41,14 @@ export function AdminShellTopbar({ nav, isLoading, onRefresh, onBack }: AdminShe
           className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
           onClick={onRefresh}
           disabled={isLoading}
+          aria-label={isLoading ? "Atualizando dados do admin" : "Atualizar dados do admin"}
         >
-          {isLoading ? "Atualizando..." : "Atualizar"}
+          <RefreshCw
+            size={16}
+            aria-hidden="true"
+            className={isLoading ? "mdc-admin-topbar__refresh-icon--spinning" : undefined}
+          />
+          <span>{isLoading ? "Atualizando..." : "Atualizar"}</span>
         </button>
       </div>
     </header>

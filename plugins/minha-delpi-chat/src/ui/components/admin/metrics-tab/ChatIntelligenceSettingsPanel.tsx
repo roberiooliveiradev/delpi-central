@@ -216,6 +216,7 @@ export function ChatIntelligenceSettingsPanel({
           nativeToolCallingEnabled: settings.nativeToolCallingEnabled,
           agenticLoopEnabled: settings.agenticLoopEnabled,
           agenticLoopMaxSteps: settings.agenticLoopMaxSteps,
+          webSearchEnabled: settings.webSearchEnabled,
         },
         { getAccessToken },
       );
@@ -322,21 +323,38 @@ export function ChatIntelligenceSettingsPanel({
     />
   );
 
+  const toolsSection = (
+    <ToggleSettingCard
+      meta={CHAT_INTELLIGENCE_TOGGLE_META.webSearchEnabled}
+      checked={settings.webSearchEnabled}
+      onChange={(checked) => updateToggle("webSearchEnabled", checked)}
+    />
+  );
+
   const sectionContent: Record<string, ReactNode> = {
     rag: ragSection,
     actions: actionsSection,
     orchestration: orchestrationSection,
     context: contextSection,
+    tools: toolsSection,
   };
+
+  const sourceLabel =
+    settings.source === "admin"
+      ? "Configuração salva na administração"
+      : "Usando padrões iniciais do servidor (Docker)";
 
   return (
     <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide mdc-chat-intelligence-panel">
       <h3>Inteligência do chat</h3>
       <p className="mdc-chat-intelligence-panel__intro">
         Cada opção abaixo altera o pipeline de RAG, seleção de actions ou orquestração
-        do LLM. Use os badges de velocidade e qualidade para decidir o que ativar em
-        produção — mudanças aqui afetam latência, custo e assertividade das respostas.
+        do LLM. As alterações salvas aqui <strong>prevalecem</strong> sobre o arquivo
+        <code> .env</code> do servidor — o Docker só define o padrão na primeira
+        subida. Use os badges de velocidade e qualidade para decidir o que ativar em
+        produção.
       </p>
+      <p className="mdc-chat-intelligence-panel__source">{sourceLabel}</p>
 
       <div className="mdc-chat-intelligence-panel__sections">
         {CHAT_INTELLIGENCE_SECTIONS.map((section) => (

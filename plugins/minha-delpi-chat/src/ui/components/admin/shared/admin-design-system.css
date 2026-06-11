@@ -258,20 +258,13 @@
 }
 
 @media (max-width: 1023px) {
-  .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions {
-    justify-self: end;
-  }
-
   .mdc-admin-root .mdc-admin-status-strip {
     grid-template-columns: 1fr;
   }
 
   .mdc-admin-root .mdc-admin-status-strip__meta {
     justify-content: flex-start;
+    width: 100%;
   }
 }
 

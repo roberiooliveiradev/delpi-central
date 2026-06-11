@@ -38,12 +38,12 @@
 
 /* ——— Topbar workspace (agentes, projetos, builder, actions) ——— */
 @media (max-width: 1024px) {
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
   .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span {
     display: none;
   }
 
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
   .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn {
     width: 2.35rem;
     min-width: 2.35rem;
@@ -56,7 +56,7 @@
 }
 
 @media (max-width: 767px) {
-  .mdc-chat-ws-topbar {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
@@ -65,12 +65,12 @@
     padding-inline: 0.65rem;
   }
 
-  .mdc-chat-ws-topbar__start {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__start {
     justify-self: start;
     min-width: 0;
   }
 
-  .mdc-chat-ws-topbar__title {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__title {
     justify-self: center;
     flex: unset;
     width: auto;
@@ -81,7 +81,7 @@
     max-width: min(100%, 10rem);
   }
 
-  .mdc-chat-ws-topbar__actions {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions {
     justify-self: end;
     flex-wrap: wrap;
   }
@@ -91,21 +91,21 @@
     flex-wrap: nowrap;
   }
 
-  .mdc-chat-ws-topbar__back {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__back {
     min-height: 2rem;
     padding: 0.4rem 0.55rem;
     font-size: 0.8rem;
   }
 
-  .mdc-chat-ws-topbar__back span {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__back span {
     display: none;
   }
 
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span {
     display: none;
   }
 
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn {
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn {
     width: 2.15rem;
     min-width: 2.15rem;
     max-width: 2.15rem;
@@ -119,7 +119,7 @@
     font-size: 0.84rem;
   }
 
-  .mdc-chat-ws-directory__main {
+  .mdc-chat-ws-directory__main:not(.mdc-admin-shell) {
     padding: 0.75rem 0.65rem 1.25rem;
     gap: 0.75rem;
   }
@@ -253,12 +253,12 @@
 }
 
 @media (hover: none), (pointer: coarse) {
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
   .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span {
     display: none;
   }
 
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-chat-ws-topbar:not(.mdc-admin-topbar) .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
   .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn {
     width: 2.35rem;
     min-width: 2.35rem;
@@ -315,11 +315,6 @@
 @media (max-width: 1023px) {
   .mdc-admin-shell {
     gap: var(--mdc-space-4);
-    padding: var(--mdc-space-3);
-  }
-
-  .mdc-admin-topbar {
-    padding: var(--mdc-space-3);
   }
 
   .mdc-admin-topbar h1 {
@@ -472,7 +467,7 @@
     font-size: 0.78rem;
   }
 
-  .mdc-chat-ws-directory__main {
+  .mdc-chat-ws-directory__main:not(.mdc-admin-shell) {
     padding-block: var(--mdc-space-3);
     gap: var(--mdc-space-3);
   }

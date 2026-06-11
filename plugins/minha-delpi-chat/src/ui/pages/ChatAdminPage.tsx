@@ -120,8 +120,9 @@ export function ChatAdminPage({
         onBack={onBack}
       />
 
-      <AdminShellLayout nav={nav} onNavigate={navigateTo}>
-        <section className="mdc-admin-shell mdc-chat-ws-directory__main">
+      <div className="mdc-admin-container">
+        <AdminShellLayout nav={nav} onNavigate={navigateTo}>
+          <section className="mdc-admin-shell mdc-chat-ws-directory__main">
           <AdminShellStatusStrip
             error={admin.error}
             successMessage={admin.successMessage}
@@ -269,6 +270,7 @@ export function ChatAdminPage({
           </ChatAnimatedPanel>
         </section>
       </AdminShellLayout>
+      </div>
 
       <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
     </main>

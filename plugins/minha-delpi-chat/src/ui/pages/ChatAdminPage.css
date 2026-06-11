@@ -4,6 +4,7 @@
 @import "../components/admin/overview/AdminOverviewTab.css";
 @import "../components/admin/shell/AdminSidebar.css";
 @import "../components/admin/shell/AdminShellLayout.css";
+@import "../components/admin/shell/AdminShellTopbar.css";
 @import "../components/admin/shell/AdminShellStatusStrip.css";
 @import "../components/admin/shared/admin-workspace-theme.css";
 @import "../components/admin/shared/admin-design-system.css";
@@ -17,10 +18,14 @@
 }
 
 .minha-delpi-chat.mdc-admin-root {
+  --mdc-admin-inset-x: clamp(0.75rem, 2vw, 1rem);
+  --mdc-admin-content-gutter: var(--mdc-space-3);
   width: 100%;
-  height: auto;
+  max-width: 100%;
+  height: 100%;
   min-height: 100vh;
-  overflow: visible;
+  min-height: 100dvh;
+  overflow-x: clip;
   background:
     radial-gradient(
       circle at top right,
@@ -30,24 +35,157 @@
     var(--mdc-bg);
 }
 
-.mdc-admin-shell.mdc-chat-ws-directory__main {
+.mdc-admin-root .mdc-admin-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin-inline: 0;
+  padding-inline: var(--mdc-admin-inset-x);
+  box-sizing: border-box;
+}
+
+.mdc-admin-root .mdc-admin-layout {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ——— Topbar admin ——— */
+.mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "start title actions";
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-inline: var(--mdc-admin-inset-x);
+  padding-block: 0.5rem 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+}
+
+.mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__start {
+  grid-area: start;
+}
+
+.mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title {
+  grid-area: title;
+  justify-self: start;
+  justify-items: start;
+  max-width: 100%;
+  text-align: left;
+}
+
+.mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions {
+  grid-area: actions;
+  justify-self: end;
+}
+
+.mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title small {
+  display: block;
+  margin-top: 0.12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ——— Conteúdo principal ——— */
+.mdc-admin-root .mdc-admin-shell.mdc-chat-ws-directory__main {
   display: grid;
   gap: var(--mdc-space-4);
   width: 100%;
-  max-width: min(100%, 1920px);
-  margin: 0 auto;
-  padding: 0 clamp(0.9rem, 2vw, 1.4rem) clamp(var(--mdc-space-4), 2vw, var(--mdc-space-5));
+  min-width: 0;
+  margin: 0;
+  padding: var(--mdc-space-2) 0 clamp(var(--mdc-space-4), 2vw, var(--mdc-space-5));
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .mdc-admin-root {
+    --mdc-admin-inset-x: 0;
+    --mdc-admin-content-gutter: var(--mdc-space-3);
+  }
+
+  .mdc-admin-root .mdc-admin-container {
+    flex: 1;
+    min-height: 0;
+    padding-inline: 0;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
+    padding-inline: var(--mdc-space-3);
+  }
+
+  .mdc-admin-root .mdc-admin-shell.mdc-chat-ws-directory__main {
+    padding-inline: 0;
+    padding-top: var(--mdc-space-3);
+  }
+
+  .mdc-admin-root .mdc-admin-overview-tab__cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .mdc-admin-root .mdc-admin-container {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
+    gap: 0.4rem 0.55rem;
+    min-height: unset;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__back span {
+    display: none;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title > small {
+    display: none;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span {
+    display: none;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn {
+    width: 2.35rem;
+    min-width: 2.35rem;
+    max-width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .mdc-admin-root .mdc-admin-shell.mdc-chat-ws-directory__main {
+    gap: var(--mdc-space-3);
+    padding-top: var(--mdc-space-2);
+  }
+
+  .mdc-admin-root .mdc-admin-overview-tab__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
-  .mdc-admin-shell {
-    padding: var(--mdc-space-3);
-    gap: var(--mdc-space-4);
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title > span {
+    font-size: clamp(1rem, 4.2vw, 1.2rem);
+  }
+
+  .mdc-admin-root .mdc-admin-shell.mdc-chat-ws-directory__main {
+    padding-block: var(--mdc-space-2) var(--mdc-space-4);
   }
 }
 
 @media (max-width: 480px) {
-  .mdc-admin-shell {
-    padding: var(--mdc-space-2);
+  .mdc-admin-root {
+    --mdc-admin-inset-x: max(0.75rem, 2.5vw);
+  }
+
+  .mdc-admin-root .mdc-admin-overview-tab__cards {
+    grid-template-columns: 1fr;
   }
 }

@@ -3,7 +3,14 @@ from dataclasses import dataclass
 from app.domain.ports.admin_runtime_settings_repository_port import (
     AdminRuntimeSettingsRepositoryPort,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_intelligence_settings_resolver import (
+    ChatIntelligenceSettingsSnapshot,
+    chat_intelligence_settings_to_payload,
+    resolve_chat_intelligence_settings,
+)
+from app.infrastructure.config.chat_intelligence_settings_defaults import (
+    build_chat_intelligence_defaults_from_settings,
+)
 
 
 @dataclass(frozen=True)
@@ -23,7 +30,7 @@ class ChatIntelligenceSettings:
 
 
 class ChatIntelligenceSettingsService:
-    """Runtime de inteligência do chat: valores efetivos vêm sempre do .env (Settings)."""
+    """Runtime de inteligência: admin prevalece; .env fornece apenas defaults iniciais."""
 
     def __init__(
         self,
@@ -32,61 +39,54 @@ class ChatIntelligenceSettingsService:
         self.settings_repository = settings_repository
 
     @classmethod
+    def build_defaults_from_settings(cls) -> ChatIntelligenceSettingsSnapshot:
+        return build_chat_intelligence_defaults_from_settings()
+
+    @classmethod
     def build_from_settings(cls) -> ChatIntelligenceSettings:
-        return ChatIntelligenceSettings(
-            rag_context_min_score=float(Settings.RAG_CONTEXT_MIN_SCORE),
-            external_action_semantic_min_score=float(
-                Settings.EXTERNAL_ACTION_SEMANTIC_MIN_SCORE
-            ),
-            external_action_semantic_rank_enabled=bool(
-                Settings.EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED
-            ),
-            chat_tool_router_enabled=bool(Settings.CHAT_TOOL_ROUTER_ENABLED),
-            chat_history_summary_enabled=bool(Settings.CHAT_HISTORY_SUMMARY_ENABLED),
-            rag_hybrid_enabled=bool(Settings.CHAT_RAG_HYBRID_ENABLED),
-            rag_rerank_enabled=bool(Settings.CHAT_RAG_RERANK_ENABLED),
-            rag_fts_enabled=bool(Settings.CHAT_RAG_FTS_ENABLED),
-            native_tool_calling_enabled=bool(Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED),
-            agentic_loop_enabled=bool(Settings.CHAT_AGENTIC_LOOP_ENABLED),
-            agentic_loop_max_steps=max(
-                1,
-                min(int(Settings.CHAT_AGENTIC_LOOP_MAX_STEPS), 3),
-            ),
-            web_search_enabled=bool(Settings.CHAT_WEB_SEARCH_ENABLED),
+        snapshot = cls.build_defaults_from_settings()
+        return cls._snapshot_to_dataclass(snapshot)
+
+    def _load_stored_payload(self) -> dict | None:
+        if self.settings_repository is None:
+            return None
+
+        return self.settings_repository.get_chat_intelligence_settings()
+
+    def _resolve_snapshot(self) -> ChatIntelligenceSettingsSnapshot:
+        return resolve_chat_intelligence_settings(
+            defaults=self.build_defaults_from_settings(),
+            stored=self._load_stored_payload(),
         )
 
     def resolve(self) -> ChatIntelligenceSettings:
-        return self.build_from_settings()
+        return self._snapshot_to_dataclass(self._resolve_snapshot())
 
-    def payload_from_settings(self) -> dict:
-        resolved = self.build_from_settings()
+    def payload_from_defaults(self) -> dict:
+        return chat_intelligence_settings_to_payload(self.build_defaults_from_settings())
 
-        return {
-            "ragContextMinScore": resolved.rag_context_min_score,
-            "externalActionSemanticMinScore": resolved.external_action_semantic_min_score,
-            "externalActionSemanticRankEnabled": resolved.external_action_semantic_rank_enabled,
-            "chatToolRouterEnabled": resolved.chat_tool_router_enabled,
-            "chatHistorySummaryEnabled": resolved.chat_history_summary_enabled,
-            "ragHybridEnabled": resolved.rag_hybrid_enabled,
-            "ragRerankEnabled": resolved.rag_rerank_enabled,
-            "ragFtsEnabled": resolved.rag_fts_enabled,
-            "nativeToolCallingEnabled": resolved.native_tool_calling_enabled,
-            "agenticLoopEnabled": resolved.agentic_loop_enabled,
-            "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
-            "webSearchEnabled": resolved.web_search_enabled,
-        }
+    def ensure_defaults_seeded(self) -> dict:
+        """Grava defaults do Docker apenas quando ainda não há configuração admin."""
+        stored = self._load_stored_payload()
 
-    def sync_from_environment(self) -> dict:
-        """Espelha o .env no runtime admin (painel) — chamado no boot do container."""
-        payload = self.payload_from_settings()
+        if stored:
+            return self.to_dict()
+
+        payload = self.payload_from_defaults()
 
         if self.settings_repository is not None:
             self.settings_repository.save_chat_intelligence_settings(payload)
 
         return self.to_dict()
 
+    def sync_from_environment(self) -> dict:
+        """Compatibilidade: delega para seed único — não sobrescreve admin."""
+        return self.ensure_defaults_seeded()
+
     def to_dict(self, settings: ChatIntelligenceSettings | None = None) -> dict:
         resolved = settings or self.resolve()
+        stored = self._load_stored_payload()
+        defaults = self.build_defaults_from_settings()
 
         return {
             "ragContextMinScore": resolved.rag_context_min_score,
@@ -101,25 +101,11 @@ class ChatIntelligenceSettingsService:
             "agenticLoopEnabled": resolved.agentic_loop_enabled,
             "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
             "webSearchEnabled": resolved.web_search_enabled,
-            "source": "environment",
-            "defaults": {
-                "ragContextMinScore": Settings.RAG_CONTEXT_MIN_SCORE,
-                "externalActionSemanticMinScore": Settings.EXTERNAL_ACTION_SEMANTIC_MIN_SCORE,
-                "externalActionSemanticRankEnabled": Settings.EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED,
-                "chatToolRouterEnabled": Settings.CHAT_TOOL_ROUTER_ENABLED,
-                "chatHistorySummaryEnabled": Settings.CHAT_HISTORY_SUMMARY_ENABLED,
-                "ragHybridEnabled": Settings.CHAT_RAG_HYBRID_ENABLED,
-                "ragRerankEnabled": Settings.CHAT_RAG_RERANK_ENABLED,
-                "ragFtsEnabled": Settings.CHAT_RAG_FTS_ENABLED,
-                "nativeToolCallingEnabled": Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED,
-                "agenticLoopEnabled": Settings.CHAT_AGENTIC_LOOP_ENABLED,
-                "agenticLoopMaxSteps": Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
-                "webSearchEnabled": Settings.CHAT_WEB_SEARCH_ENABLED,
-            },
+            "source": "admin" if stored else "defaults",
+            "defaults": chat_intelligence_settings_to_payload(defaults),
         }
 
     def save(self, payload: dict) -> dict:
-        """Persiste no admin runtime; o pipeline continua lendo só o .env via resolve()."""
         current = self.resolve()
         merged = {
             "ragContextMinScore": self._float(
@@ -175,7 +161,26 @@ class ChatIntelligenceSettingsService:
         if self.settings_repository is not None:
             self.settings_repository.save_chat_intelligence_settings(merged)
 
-        return self.to_dict()
+        return self.to_dict(self.resolve())
+
+    @staticmethod
+    def _snapshot_to_dataclass(
+        snapshot: ChatIntelligenceSettingsSnapshot,
+    ) -> ChatIntelligenceSettings:
+        return ChatIntelligenceSettings(
+            rag_context_min_score=snapshot.rag_context_min_score,
+            external_action_semantic_min_score=snapshot.external_action_semantic_min_score,
+            external_action_semantic_rank_enabled=snapshot.external_action_semantic_rank_enabled,
+            chat_tool_router_enabled=snapshot.chat_tool_router_enabled,
+            chat_history_summary_enabled=snapshot.chat_history_summary_enabled,
+            rag_hybrid_enabled=snapshot.rag_hybrid_enabled,
+            rag_rerank_enabled=snapshot.rag_rerank_enabled,
+            rag_fts_enabled=snapshot.rag_fts_enabled,
+            native_tool_calling_enabled=snapshot.native_tool_calling_enabled,
+            agentic_loop_enabled=snapshot.agentic_loop_enabled,
+            agentic_loop_max_steps=snapshot.agentic_loop_max_steps,
+            web_search_enabled=snapshot.web_search_enabled,
+        )
 
     def _float(self, value, default: float) -> float:
         if value is None:
