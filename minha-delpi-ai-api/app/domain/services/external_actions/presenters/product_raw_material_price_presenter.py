@@ -38,6 +38,12 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         return code, description
 
+    def _product_unit(self, root: dict) -> str:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        unit = str(product.get("unit") or "").strip()
+
+        return unit or "PA"
+
     def _section_block(self, root: dict, key: str) -> dict[str, Any]:
         block = root.get(key)
 
@@ -374,6 +380,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                 self._route(
                     "costImpactSimulation",
                     "totalMaterialCostLine",
+                    unit=self._product_unit(root),
                     value=str(summary.get("total_material_cost")),
                 )
             )
@@ -520,10 +527,11 @@ class ExternalActionProductRawMaterialPricePresenter:
                 if total > len(shown)
                 else self._route("costImpactSimulation", "materialsTableTitle")
             )
-            materials_table = _OpsTable.build_fixed_items_table(
+            materials_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="costImpactMaterials",
+                path=path,
+                profile_name="costImpactMaterials",
                 title=materials_title,
                 role="list",
             )
@@ -769,6 +777,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
     def _build_cost_impact_overview_table(self, root: dict, path: str) -> dict | None:
         code, description = self._product_context(root, path)
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
         summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}
         simulation = root.get("simulation") if isinstance(root.get("simulation"), dict) else {}
         columns = self._host._column_labels.kv_table_column_defs()
@@ -778,18 +787,21 @@ class ExternalActionProductRawMaterialPricePresenter:
                 "valor": f"{code} — {description}".strip(" —") or code or "—",
             },
         ]
-
         merged: dict[str, Any] = {}
+        skip_product = {"product_code", "code", "description"}
 
-        for key in (
-            "total_material_cost",
-            "total_materials",
-            "price_source",
-            "adjustment_percent",
-            "projected_cost_delta",
-        ):
-            if key in summary or key in simulation:
-                merged[key] = simulation.get(key, summary.get(key))
+        for key, value in product.items():
+            if str(key) in skip_product or value in (None, ""):
+                continue
+
+            merged[str(key)] = value
+
+        for block in (summary, simulation):
+            for key, value in block.items():
+                if value in (None, ""):
+                    continue
+
+                merged[str(key)] = value
 
         rows.extend(_OpsTable.summary_kv_rows(self._host, merged))
 

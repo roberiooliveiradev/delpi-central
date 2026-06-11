@@ -1,4 +1,7 @@
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -45,6 +48,13 @@ class ChatOperationalPipelineService:
 
         if attachment_ids:
             return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+            normalized
+        ):
+            return True
 
         if ChatSqlIntentService.is_sql_conversation_turn(message):
             if ChatSqlIntentService.is_authoring_request(message):

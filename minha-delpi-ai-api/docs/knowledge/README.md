@@ -26,6 +26,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | [domains/global/](./domains/global/) | **Conhecimento global** (`company-knowledge`) — Normas, GPT_instructions, O Arquiteto |
 | [domains/agents/minha-delpi-chat/](./domains/agents/minha-delpi-chat/) | **Bundle exportável** das fontes do agente (nomes normalizados + `manifest.json`) |
 | [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
+| [../roadmap/playbook-15-rotas-operacionais-sem-sql.md](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Roadmap: rotas REST produção/consumo/compras/perdas (substituir `/data/sql`) |
 
 ## Documentação técnica relacionada
 
@@ -41,6 +42,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Inteligência (ondas 1–11) | [`../roadmap/README.md`](../roadmap/README.md) |
 | Análise de desenhos PDF (backlog) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 | Arquitetura chat base | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
+| Playbook 15 — rotas sem SQL | [`../roadmap/playbook-15-rotas-operacionais-sem-sql.md`](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) |
 | Perfis inteligência do chat (dev/prod) | [`chat-intelligence-settings-profiles.md`](./chat-intelligence-settings-profiles.md) |
 | Changelog maio/2026 | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) |
 

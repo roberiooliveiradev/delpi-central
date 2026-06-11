@@ -1120,10 +1120,10 @@ class ExternalActionProductRouteSelectionService:
             if lowered == "view":
                 parameters[name] = default_view
             elif lowered == "limit":
-                parameters[name] = requested_page_size or 50
+                parameters[name] = requested_page_size or 10
             elif lowered == "offset":
                 page = requested_page or 1
-                page_size = requested_page_size or 50
+                page_size = requested_page_size or 10
                 parameters[name] = (page - 1) * page_size
             elif lowered in {"finished_product_code", "finishedproductcode"} and product_code:
                 parameters[name] = product_code

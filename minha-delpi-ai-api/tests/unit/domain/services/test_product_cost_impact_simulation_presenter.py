@@ -21,7 +21,22 @@ def test_cost_impact_table_presentations_assign_stack_roles():
     material_keys = [column["key"] for column in materials.get("columns") or []]
 
     assert "raw_material_code" in material_keys
-    assert "impact_on_pa_cost_percent" in material_keys
+    assert "unit" in material_keys
+    assert "impact_on_material_cost_percent" in material_keys
+
+
+def test_cost_impact_table_includes_fields_present_in_api_payload():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_cost_impact_simulation_90261255.json")
+    data = envelope["data"]
+    item = data["materials"]["items"][0]
+    item["simulated_unit_cost"] = 2.5
+    path = "/products/90261255/cost-impact-simulation"
+    tables = presenter.build_cost_impact_simulation_table_presentations(data, path)
+    materials = next(table for table in tables if table.get("role") == "list")
+    material_keys = [column["key"] for column in materials.get("columns") or []]
+
+    assert "simulated_unit_cost" in material_keys
 
 
 def test_visual_bundle_enriches_cost_impact_with_auxiliary_slots():

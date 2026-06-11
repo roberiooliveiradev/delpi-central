@@ -88,7 +88,7 @@
     "mandatory_operation": "Oper. obrigatória",
     "mandatory_sequence": "Seq. obrigatória",
     "mandatory_report": "Apont. obrigatório",
-    "component_code": "Cód. componente",
+    "component_code": "Componente",
     "component_description": "Descrição componente",
     "component_sequence": "Seq. componente",
     "bom_level": "Nível BOM",
@@ -257,13 +257,11 @@
     "customerReference": "Referência cliente",
     "customer_reference": "Referência cliente",
     "drawing_code": "Código desenho",
-    "ncm": "NCM",
     "ncm_ipi_position": "NCM",
     "parent_code": "PI pai",
     "parent_description": "Descrição PI",
-    "component_code": "Componente",
     "total_stock_value": "Valor total",
-    "total_stock_quantity": "Quantidade",
+    "total_stock_quantity": "Quantidade em estoque",
     "total_locations": "Localizações",
     "listing_kind": "Tipo",
     "sale_description": "Descrição",
@@ -389,7 +387,6 @@
     "value_decimals": "Casas decimais",
     "cpv_average_monthly": "CPV médio mensal",
     "average_unit_value": "Valor médio unitário",
-    "total_stock_quantity": "Quantidade em estoque",
     "calculation_mode": "Modo de cálculo",
     "idd_period_valid": "Período IDD válido",
     "strict_idd_period": "Período IDD estrito",
@@ -592,229 +589,33 @@
         "ncm_ipi_position"
       ]
     },
-    "fixedTableColumns": {
-      "analyserStructureComponents": [
-        {"key": "parent_code", "label": "PI pai"},
-        {"key": "parent_description", "label": "Descrição PI"},
-        {"key": "component_code", "label": "Componente"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "type", "label": "Tipo"},
-        {"key": "unit", "label": "Unid."},
-        {"key": "quantity", "label": "Qtde", "dataType": "quantity"}
-      ],
-      "analyserGuide": [
-        {"key": "product_code", "label": "Produto"},
-        {"key": "bom_level", "label": "BOM", "dataType": "number"},
-        {"key": "operation_code", "label": "Op."},
-        {"key": "operation_description", "label": "Operação"},
-        {"key": "work_center", "label": "Centro"}
-      ],
-      "analyserInspection": [
-        {"key": "product_code", "label": "Produto"},
-        {"key": "level", "label": "Nível"},
-        {"key": "section", "label": "Seção"},
-        {"key": "operation", "label": "Op."},
-        {"key": "test", "label": "Ensaio"},
-        {"key": "lab", "label": "Labor."},
-        {"key": "nominal", "label": "Nominal"},
-        {"key": "lower", "label": "Lim. inf."},
-        {"key": "upper", "label": "Lim. sup."},
-        {"key": "unit", "label": "Unid."},
-        {"key": "detail", "label": "Detalhe"}
-      ],
-      "analyserInspectionDimensionalMarkdown": [
-        {"key": "operation", "label": "Op."},
-        {"key": "test", "label": "Ensaio"},
-        {"key": "lab", "label": "Labor."},
-        {"key": "nominal", "label": "Nominal"},
-        {"key": "lower", "label": "Lim. inf."},
-        {"key": "upper", "label": "Lim. sup."},
-        {"key": "unit", "label": "Unid."}
-      ],
-      "analyserInspectionTextualMarkdown": [
-        {"key": "operation", "label": "Op."},
-        {"key": "test", "label": "Ensaio"},
-        {"key": "text", "label": "Texto / referência"}
-      ],
-      "analyserInspectionShallowMarkdown": [
-        {"key": "product_code", "label": "Componente"},
-        {"key": "parent_code", "label": "Produto pai"},
-        {"key": "level", "label": "Nível"},
-        {"key": "plan", "label": "Plano"}
-      ],
-      "stockValueByBranch": [
-        {"key": "branch", "label": "Filial"},
-        {"key": "total_stock_value", "label": "Valor total", "dataType": "currency"},
-        {"key": "total_stock_quantity", "label": "Quantidade", "dataType": "quantity"},
-        {"key": "total_products", "label": "Produtos"}
-      ],
-      "systemSx2Columns": [
-        {"key": "campo", "label": "Campo"},
-        {"key": "descricao", "label": "Descrição"},
-        {"key": "tipo", "label": "Tipo"},
-        {"key": "tamanho", "label": "Tamanho"}
-      ],
-      "lmpList": [
-        {"key": "sale_number", "label": "OV"},
-        {"key": "branch", "label": "Filial"},
-        {"key": "listing_kind", "label": "Tipo"},
-        {"key": "status", "label": "Status"},
-        {"key": "sale_description", "label": "Descrição"}
-      ],
-      "saleOrders": [
-        {"key": "order_number", "label": "OV"},
-        {"key": "branch", "label": "Filial"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "date", "label": "Data", "dataType": "date"},
-        {"key": "stage", "label": "Etapa"}
-      ],
-      "productSearchBasic": [
-        {"key": "code", "label": "Código"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "type", "label": "Tipo"},
-        {"key": "unit", "label": "Unidade"}
-      ],
-      "factoryMpStockSummary": [
-        {"key": "raw_material_code", "label": "Cód. MP"},
-        {"key": "raw_material_description", "label": "Descrição MP"},
-        {"key": "unit", "label": "Unidade"},
-        {"key": "quantity_required_for_one_pa", "label": "Necessário p/ 1 PA", "dataType": "quantity"},
-        {"key": "available_quantity_total", "label": "Saldo disponível (consolidado)", "dataType": "quantity"},
-        {"key": "has_stock_for_one_pa_label", "label": "Saldo p/ 1 PA"},
-        {"key": "pa_coverage_estimate", "label": "Cobertura estimada (PA)"}
-      ],
-      "factoryRawMaterialStockDetail": [
-        {"key": "raw_material_code", "label": "Cód. MP"},
-        {"key": "raw_material_description", "label": "Descrição MP"},
-        {"key": "unit", "label": "Unidade"},
-        {"key": "quantity_required_for_one_pa", "label": "Necessário p/ 1 PA", "dataType": "quantity"},
-        {"key": "branch", "label": "Filial"},
-        {"key": "warehouse", "label": "Armazém"},
-        {"key": "current_quantity", "label": "Qtd. atual", "dataType": "quantity"},
-        {"key": "available_quantity", "label": "Qtd. disponível", "dataType": "quantity"},
-        {"key": "committed_quantity", "label": "Qtd. empenhada", "dataType": "quantity"},
-        {"key": "reserved_quantity", "label": "Qtd. reservada", "dataType": "quantity"},
-        {"key": "has_stock_for_one_pa_label", "label": "Saldo p/ 1 PA"}
-      ],
-      "factoryProductionDetail": [
-        {"key": "production_order", "label": "Ordem produção"},
-        {"key": "product_code", "label": "Produto"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "product_type", "label": "Tipo"},
-        {"key": "order_quantity", "label": "Qtd. da OP", "dataType": "quantity"},
-        {"key": "produced_quantity_sc2", "label": "Qtd. produzida (SC2)", "dataType": "quantity"},
-        {"key": "reported_quantity", "label": "Qtd. apontada", "dataType": "quantity"},
-        {"key": "planned_start_date", "label": "Início planejado", "dataType": "date"},
-        {"key": "planned_end_date", "label": "Fim planejado", "dataType": "date"},
-        {"key": "actual_end_date", "label": "Fim real", "dataType": "date"},
-        {"key": "order_production_percent", "label": "% produção OP", "dataType": "percent"},
-        {"key": "production_started_label", "label": "Produção iniciada"},
-        {"key": "branch", "label": "Filial"}
-      ],
-      "shippingStatusDetail": [
-        {"key": "production_order", "label": "Ordem produção"},
-        {"key": "product_code", "label": "Produto"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "shipped_quantity", "label": "Qtd. expedida", "dataType": "quantity"},
-        {"key": "inspection_loss_quantity", "label": "Perda inspeção", "dataType": "quantity"},
-        {"key": "total_reports", "label": "Apontamentos"},
-        {"key": "work_center", "label": "Centro de trabalho"},
-        {"key": "resource_code", "label": "Recurso"},
-        {"key": "branch", "label": "Filial"}
-      ],
-      "structureExclusivityDetail": [
-        {"key": "level", "label": "Nível"},
-        {"key": "component_code", "label": "Código"},
-        {"key": "component_type", "label": "Tipo"},
-        {"key": "component_description", "label": "Descrição"},
-        {"key": "component_unit", "label": "Unidade"},
-        {"key": "accumulated_quantity", "label": "Qtd. acumulada", "dataType": "quantity"},
-        {"key": "exclusive_raw_material_label", "label": "MP exclusiva"},
-        {"key": "total_valid_finished_products_using_mp", "label": "Usado em PAs válidos"}
-      ],
-      "stockProductPositions": [
-        {"key": "product_code", "label": "Produto"},
-        {"key": "description", "label": "Descrição"},
-        {"key": "branch", "label": "Filial"},
-        {"key": "warehouse", "label": "Armazém"},
-        {"key": "current_quantity", "label": "Qtd. atual", "dataType": "quantity"},
-        {"key": "available_quantity", "label": "Qtd. disponível", "dataType": "quantity"},
-        {"key": "committed_quantity", "label": "Qtd. empenhada", "dataType": "quantity"},
-        {"key": "reserved_quantity", "label": "Qtd. reservada", "dataType": "quantity"},
-        {"key": "physical_location", "label": "Localização"}
-      ],
-      "costImpactMaterials": [
-        {"key": "rank", "label": "Posição"},
-        {"key": "raw_material_code", "label": "Cód. MP"},
-        {"key": "raw_material_description", "label": "Descrição MP"},
-        {"key": "quantity_per_pa", "label": "Qtd. p/ PA", "dataType": "quantity"},
-        {"key": "extended_cost", "label": "Custo estendido", "dataType": "currency"},
-        {"key": "impact_on_pa_cost_percent", "label": "% impacto no PA", "dataType": "percent"},
-        {"key": "simulated_extended_cost", "label": "Custo simulado", "dataType": "currency"}
-      ],
-      "mpPriceHistoryDetail": [
-        {"key": "issue_date", "label": "Data NF", "dataType": "date"},
-        {"key": "supplier_name", "label": "Fornecedor"},
-        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
-        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "variation_percent", "label": "Variação %", "dataType": "percent"}
-      ],
-      "mpBudgetHistoryDetail": [
-        {"key": "source", "label": "Origem"},
-        {"key": "document_number", "label": "Documento"},
-        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
-        {"key": "supplier_name", "label": "Fornecedor"},
-        {"key": "supplier_store", "label": "Loja"},
-        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"}
-      ],
-      "purchaseBudgetHistoryDetail": [
-        {"key": "source", "label": "Origem"},
-        {"key": "document_number", "label": "Documento"},
-        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
-        {"key": "supplier_name", "label": "Fornecedor"},
-        {"key": "supplier_store", "label": "Loja"},
-        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
-        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "purchase_order", "label": "Pedido compra"}
-      ],
-      "purchaseOrderList": [
-        {"key": "order_number", "label": "Pedido"},
-        {"key": "supplier_name", "label": "Fornecedor"},
-        {"key": "product_code", "label": "Produto"},
-        {"key": "ordered_quantity", "label": "Qtd. pedida", "dataType": "quantity"},
-        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
-        {"key": "delivery_date", "label": "Entrega", "dataType": "date"},
-        {"key": "status", "label": "Status"}
-      ],
-      "lastPurchaseDetail": [
-        {"key": "branch", "label": "Filial"},
-        {"key": "invoice_number", "label": "NF"},
-        {"key": "invoice_series", "label": "Série"},
-        {"key": "issue_date", "label": "Emissão", "dataType": "date"},
-        {"key": "entry_date", "label": "Entrada", "dataType": "date"},
-        {"key": "supplier_name", "label": "Fornecedor"},
-        {"key": "quantity", "label": "Quantidade", "dataType": "quantity"},
-        {"key": "unit_price", "label": "Preço unitário", "dataType": "currency"},
-        {"key": "total_value", "label": "Valor total", "dataType": "currency"},
-        {"key": "icms_rate", "label": "ICMS %", "dataType": "percent"},
-        {"key": "purchase_order", "label": "Pedido compra"},
-        {"key": "supplier_part_number", "label": "Part number fornecedor"}
-      ],
-      "salePricingDetail": [
-        {"key": "table_code", "label": "Tabela"},
-        {"key": "table_description", "label": "Descrição tabela"},
-        {"key": "sale_price", "label": "Preço venda", "dataType": "currency"},
-        {"key": "max_price", "label": "Preço máximo", "dataType": "currency"},
-        {"key": "discount_percent", "label": "Desconto %", "dataType": "percent"},
-        {"key": "lot_quantity", "label": "Lote", "dataType": "quantity"},
-        {"key": "state", "label": "UF"},
-        {"key": "valid_from", "label": "Válido desde", "dataType": "date"}
-      ]
-    }
+    "fixedTableColumnsDeprecated": "Migrado para tableProfiles (jun/2026). Use tableProfiles.preferredColumns como hints de ordem/rotulo; colunas vêm do payload da API."
   },
   "profilePriority": [
+    "analyserStructureComponents",
+    "analyserGuide",
+    "analyserInspection",
+    "analyserInspectionDimensionalMarkdown",
+    "analyserInspectionTextualMarkdown",
+    "analyserInspectionShallowMarkdown",
+    "stockValueByBranch",
+    "systemSx2Columns",
+    "lmpList",
+    "saleOrders",
+    "productSearchBasic",
+    "factoryMpStockSummary",
+    "factoryRawMaterialStockDetail",
+    "factoryProductionDetail",
+    "shippingStatusDetail",
+    "structureExclusivityDetail",
+    "stockProductPositions",
+    "mpPriceHistoryDetail",
+    "mpBudgetHistoryDetail",
+    "purchaseBudgetHistoryDetail",
+    "purchaseOrderList",
+    "lastPurchaseDetail",
+    "salePricingDetail",
+    "costImpactMaterials",
     "factoryRawMaterialStock",
     "factoryProductionOrder",
     "stock",
@@ -834,264 +635,1760 @@
   "tableProfiles": {
     "factoryRawMaterialStock": {
       "detect": {
-        "allKeys": ["raw_material_code", "available_quantity"]
+        "allKeys": [
+          "raw_material_code",
+          "available_quantity"
+        ]
       },
       "preferredColumns": [
-        ["raw_material_code", "Cód. MP"],
-        ["raw_material_description", "Descrição MP"],
-        ["unit", "Unidade"],
-        ["quantity_required_for_one_pa", "Necessário p/ 1 PA"],
-        ["branch", "Filial"],
-        ["warehouse", "Armazém"],
-        ["current_quantity", "Qtd. atual"],
-        ["available_quantity", "Qtd. disponível"],
-        ["committed_quantity", "Qtd. empenhada"],
-        ["reserved_quantity", "Qtd. reservada"],
-        ["has_stock_for_one_pa_label", "Saldo p/ 1 PA"]
+        [
+          "raw_material_code",
+          "Cód. MP"
+        ],
+        [
+          "raw_material_description",
+          "Descrição MP"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "quantity_required_for_one_pa",
+          "Necessário p/ 1 PA"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "warehouse",
+          "Armazém"
+        ],
+        [
+          "current_quantity",
+          "Qtd. atual"
+        ],
+        [
+          "available_quantity",
+          "Qtd. disponível"
+        ],
+        [
+          "committed_quantity",
+          "Qtd. empenhada"
+        ],
+        [
+          "reserved_quantity",
+          "Qtd. reservada"
+        ],
+        [
+          "has_stock_for_one_pa_label",
+          "Saldo p/ 1 PA"
+        ]
       ]
     },
     "factoryProductionOrder": {
       "detect": {
-        "allKeys": ["production_order", "order_quantity"]
+        "allKeys": [
+          "production_order",
+          "order_quantity"
+        ]
       },
       "preferredColumns": [
-        ["production_order", "Ordem produção"],
-        ["product_code", "Produto"],
-        ["description", "Descrição"],
-        ["product_type", "Tipo"],
-        ["order_quantity", "Qtd. da OP"],
-        ["produced_quantity_sc2", "Qtd. produzida (SC2)"],
-        ["reported_quantity", "Qtd. apontada"],
-        ["planned_start_date", "Início planejado"],
-        ["planned_end_date", "Fim planejado"],
-        ["actual_end_date", "Fim real"],
-        ["order_production_percent", "% produção OP"],
-        ["production_started_label", "Produção iniciada"],
-        ["branch", "Filial"]
+        [
+          "production_order",
+          "Ordem produção"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "product_type",
+          "Tipo"
+        ],
+        [
+          "order_quantity",
+          "Qtd. da OP"
+        ],
+        [
+          "produced_quantity_sc2",
+          "Qtd. produzida (SC2)"
+        ],
+        [
+          "reported_quantity",
+          "Qtd. apontada"
+        ],
+        [
+          "planned_start_date",
+          "Início planejado"
+        ],
+        [
+          "planned_end_date",
+          "Fim planejado"
+        ],
+        [
+          "actual_end_date",
+          "Fim real"
+        ],
+        [
+          "order_production_percent",
+          "% produção OP"
+        ],
+        [
+          "production_started_label",
+          "Produção iniciada"
+        ],
+        [
+          "branch",
+          "Filial"
+        ]
       ]
     },
     "stock": {
       "detect": {
-        "anyKeys": ["current_quantity", "available_quantity"]
+        "anyKeys": [
+          "current_quantity",
+          "available_quantity"
+        ]
       },
       "preferredColumns": [
-        ["branch", "Filial"],
-        ["warehouse", "Armazém"],
-        ["product_code", "Produto"],
-        ["product_description", "Descrição"],
-        ["current_quantity", "Qtd. atual"],
-        ["minimum_stock", "Estoque mínimo"],
-        ["available_quantity", "Qtd. disponível"],
-        ["committed_quantity", "Qtd. empenhada"],
-        ["reserved_quantity", "Qtd. reservada"],
-        ["physical_location", "Localização"],
-        ["cost_center", "Centro de custo"]
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "warehouse",
+          "Armazém"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "product_description",
+          "Descrição"
+        ],
+        [
+          "current_quantity",
+          "Qtd. atual"
+        ],
+        [
+          "minimum_stock",
+          "Estoque mínimo"
+        ],
+        [
+          "available_quantity",
+          "Qtd. disponível"
+        ],
+        [
+          "committed_quantity",
+          "Qtd. empenhada"
+        ],
+        [
+          "reserved_quantity",
+          "Qtd. reservada"
+        ],
+        [
+          "physical_location",
+          "Localização"
+        ],
+        [
+          "cost_center",
+          "Centro de custo"
+        ]
       ]
     },
     "invoice": {
       "detect": {
-        "anyKeys": ["invoice_number"]
+        "anyKeys": [
+          "invoice_number"
+        ]
       },
       "preferredColumns": [
-        ["invoice_number", "Nº nota"],
-        ["invoice_series", "Série"],
-        ["supplier_name", "Fornecedor"],
-        ["customer_name", "Cliente"],
-        ["issue_date", "Data emissão"],
-        ["quantity", "Quantidade"],
-        ["unit_price", "Preço unitário"],
-        ["total_value", "Valor total"]
+        [
+          "invoice_number",
+          "Nº nota"
+        ],
+        [
+          "invoice_series",
+          "Série"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "customer_name",
+          "Cliente"
+        ],
+        [
+          "issue_date",
+          "Data emissão"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "total_value",
+          "Valor total"
+        ]
       ]
     },
     "purchase": {
       "detect": {
-        "anyKeys": ["order_number", "ordered_quantity"],
-        "excludeIfAnyKeys": ["invoice_number", "sale_number"]
+        "anyKeys": [
+          "order_number",
+          "ordered_quantity"
+        ],
+        "excludeIfAnyKeys": [
+          "invoice_number",
+          "sale_number"
+        ]
       },
       "preferredColumns": [
-        ["order_number", "Nº pedido"],
-        ["branch", "Filial"],
-        ["issue_date", "Data emissão"],
-        ["delivery_date", "Data entrega"],
-        ["supplier_code", "Cód. fornecedor"],
-        ["supplier_name", "Fornecedor"],
-        ["supplier_store", "Loja"],
-        ["product_code", "Produto"],
-        ["ordered_quantity", "Qtd. pedida"],
-        ["delivered_quantity", "Qtd. entregue"],
-        ["unit_price", "Preço unitário"],
-        ["line_total", "Total linha"]
+        [
+          "order_number",
+          "Nº pedido"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "issue_date",
+          "Data emissão"
+        ],
+        [
+          "delivery_date",
+          "Data entrega"
+        ],
+        [
+          "supplier_code",
+          "Cód. fornecedor"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "supplier_store",
+          "Loja"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "ordered_quantity",
+          "Qtd. pedida"
+        ],
+        [
+          "delivered_quantity",
+          "Qtd. entregue"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "line_total",
+          "Total linha"
+        ]
       ]
     },
     "guide": {
       "detect": {
         "anyKeyGroups": [
-          ["operation_code", "operation_description"],
-          ["step", "sequence"]
+          [
+            "operation_code",
+            "operation_description"
+          ],
+          [
+            "step",
+            "sequence"
+          ]
         ]
       },
       "preferredColumns": [
-        ["branch", "Filial"],
-        ["route_code", "Cód. roteiro"],
-        ["product_code", "Produto"],
-        ["operation_code", "Cód. operação"],
-        ["operation_description", "Descrição operação"],
-        ["resource_code", "Cód. recurso"],
-        ["work_center", "Centro de trabalho"],
-        ["setup_hours", "Setup (h)"],
-        ["standard_time_hour_mil", "Tempo padrão (mil h)"],
-        ["standard_time_hours_piece", "Tempo padrão (h/peça)"],
-        ["standard_time_minutes_piece", "Tempo padrão (min/peça)"],
-        ["operation_type", "Tipo operação"],
-        ["mandatory_operation", "Oper. obrigatória"],
-        ["mandatory_sequence", "Seq. obrigatória"],
-        ["mandatory_report", "Apont. obrigatório"],
-        ["component_code", "Cód. componente"],
-        ["component_description", "Descrição componente"],
-        ["component_sequence", "Seq. componente"],
-        ["bom_level", "Nível BOM"],
-        ["sequence", "Sequência"],
-        ["step", "Etapa"],
-        ["step_description", "Descrição etapa"],
-        ["machine_code", "Cód. máquina"],
-        ["machine_name", "Máquina"],
-        ["setup_time", "Tempo setup"],
-        ["operation_time", "Tempo operação"]
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "route_code",
+          "Cód. roteiro"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "operation_code",
+          "Cód. operação"
+        ],
+        [
+          "operation_description",
+          "Descrição operação"
+        ],
+        [
+          "resource_code",
+          "Cód. recurso"
+        ],
+        [
+          "work_center",
+          "Centro de trabalho"
+        ],
+        [
+          "setup_hours",
+          "Setup (h)"
+        ],
+        [
+          "standard_time_hour_mil",
+          "Tempo padrão (mil h)"
+        ],
+        [
+          "standard_time_hours_piece",
+          "Tempo padrão (h/peça)"
+        ],
+        [
+          "standard_time_minutes_piece",
+          "Tempo padrão (min/peça)"
+        ],
+        [
+          "operation_type",
+          "Tipo operação"
+        ],
+        [
+          "mandatory_operation",
+          "Oper. obrigatória"
+        ],
+        [
+          "mandatory_sequence",
+          "Seq. obrigatória"
+        ],
+        [
+          "mandatory_report",
+          "Apont. obrigatório"
+        ],
+        [
+          "component_code",
+          "Cód. componente"
+        ],
+        [
+          "component_description",
+          "Descrição componente"
+        ],
+        [
+          "component_sequence",
+          "Seq. componente"
+        ],
+        [
+          "bom_level",
+          "Nível BOM"
+        ],
+        [
+          "sequence",
+          "Sequência"
+        ],
+        [
+          "step",
+          "Etapa"
+        ],
+        [
+          "step_description",
+          "Descrição etapa"
+        ],
+        [
+          "machine_code",
+          "Cód. máquina"
+        ],
+        [
+          "machine_name",
+          "Máquina"
+        ],
+        [
+          "setup_time",
+          "Tempo setup"
+        ],
+        [
+          "operation_time",
+          "Tempo operação"
+        ]
       ]
     },
     "inspection": {
       "detect": {
-        "anyKeys": ["inspection_type"],
-        "anyKeyGroups": [["characteristic", "specification"]]
+        "anyKeys": [
+          "inspection_type"
+        ],
+        "anyKeyGroups": [
+          [
+            "characteristic",
+            "specification"
+          ]
+        ]
       },
       "preferredColumns": [
-        ["inspection_type", "Tipo inspeção"],
-        ["sequence", "Sequência"],
-        ["characteristic", "Característica"],
-        ["specification", "Especificação"],
-        ["method", "Método"],
-        ["frequency", "Frequência"],
-        ["result", "Resultado"]
+        [
+          "inspection_type",
+          "Tipo inspeção"
+        ],
+        [
+          "sequence",
+          "Sequência"
+        ],
+        [
+          "characteristic",
+          "Característica"
+        ],
+        [
+          "specification",
+          "Especificação"
+        ],
+        [
+          "method",
+          "Método"
+        ],
+        [
+          "frequency",
+          "Frequência"
+        ],
+        [
+          "result",
+          "Resultado"
+        ]
       ]
     },
     "movement": {
       "detect": {
-        "anyKeys": ["origin_warehouse", "destination_warehouse"]
+        "anyKeys": [
+          "origin_warehouse",
+          "destination_warehouse"
+        ]
       },
       "preferredColumns": [
-        ["movement_date", "Data"],
-        ["operation", "Operação"],
-        ["origin_warehouse", "Armazém origem"],
-        ["destination_warehouse", "Armazém destino"],
-        ["quantity", "Quantidade"],
-        ["document", "Documento"],
-        ["lot", "Lote"]
+        [
+          "movement_date",
+          "Data"
+        ],
+        [
+          "operation",
+          "Operação"
+        ],
+        [
+          "origin_warehouse",
+          "Armazém origem"
+        ],
+        [
+          "destination_warehouse",
+          "Armazém destino"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ],
+        [
+          "document",
+          "Documento"
+        ],
+        [
+          "lot",
+          "Lote"
+        ]
       ]
     },
     "price": {
       "detect": {
-        "anyKeys": ["table_code", "sale_price"]
+        "anyKeys": [
+          "table_code",
+          "sale_price"
+        ]
       },
       "preferredColumns": [
-        ["table_code", "Cód. tabela"],
-        ["table_description", "Tabela"],
-        ["sale_price", "Preço venda"],
-        ["max_price", "Preço máx."],
-        ["discount_value", "Desconto"],
-        ["discount_percent", "% Desconto"]
+        [
+          "table_code",
+          "Cód. tabela"
+        ],
+        [
+          "table_description",
+          "Tabela"
+        ],
+        [
+          "sale_price",
+          "Preço venda"
+        ],
+        [
+          "max_price",
+          "Preço máx."
+        ],
+        [
+          "discount_value",
+          "Desconto"
+        ],
+        [
+          "discount_percent",
+          "% Desconto"
+        ]
       ]
     },
     "supplier": {
       "detect": {
-        "anyKeys": ["supplier_name", "supplier_code"],
-        "excludeIfAnyKeys": ["invoice_number"]
+        "anyKeys": [
+          "supplier_name",
+          "supplier_code"
+        ],
+        "excludeIfAnyKeys": [
+          "invoice_number"
+        ]
       },
       "preferredColumns": [
-        ["supplier_code", "Cód. fornecedor"],
-        ["supplier_name", "Fornecedor"],
-        ["supplier_part_number", "Part number"],
-        ["last_price", "Últ. preço"],
-        ["last_price_date", "Data últ. preço"],
-        ["real_avg_lead_time_days", "Lead time médio (dias)"],
-        ["registered_lead_time_days", "Lead time cadastrado"],
-        ["real_lead_time_sample_size", "Amostras"]
+        [
+          "supplier_code",
+          "Cód. fornecedor"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "supplier_part_number",
+          "Part number"
+        ],
+        [
+          "last_price",
+          "Últ. preço"
+        ],
+        [
+          "last_price_date",
+          "Data últ. preço"
+        ],
+        [
+          "real_avg_lead_time_days",
+          "Lead time médio (dias)"
+        ],
+        [
+          "registered_lead_time_days",
+          "Lead time cadastrado"
+        ],
+        [
+          "real_lead_time_sample_size",
+          "Amostras"
+        ]
       ]
     },
     "customer": {
       "detect": {
-        "anyKeys": ["customer_name", "customer_code"],
-        "excludeIfAnyKeys": ["invoice_number"]
+        "anyKeys": [
+          "customer_name",
+          "customer_code"
+        ],
+        "excludeIfAnyKeys": [
+          "invoice_number"
+        ]
       },
       "preferredColumns": [
-        ["customer_code", "Cód. cliente"],
-        ["customer_name", "Cliente"],
-        ["customer_store", "Loja"],
-        ["last_sale_date", "Data últ. venda"],
-        ["last_sale_price", "Últ. preço venda"],
-        ["total_quantity", "Qtd. total"],
-        ["total_value", "Valor total"]
+        [
+          "customer_code",
+          "Cód. cliente"
+        ],
+        [
+          "customer_name",
+          "Cliente"
+        ],
+        [
+          "customer_store",
+          "Loja"
+        ],
+        [
+          "last_sale_date",
+          "Data últ. venda"
+        ],
+        [
+          "last_sale_price",
+          "Últ. preço venda"
+        ],
+        [
+          "total_quantity",
+          "Qtd. total"
+        ],
+        [
+          "total_value",
+          "Valor total"
+        ]
       ]
     },
     "eficienciaFabril": {
       "detect": {
-        "pathContains": ["eficiencia-fabril"],
-        "anyKeys": ["eficiencia_percentual", "tempo_real_horas"]
+        "pathContains": [
+          "eficiencia-fabril"
+        ],
+        "anyKeys": [
+          "eficiencia_percentual",
+          "tempo_real_horas"
+        ]
       },
       "preferredColumns": [
-        ["filial", "Filial"],
-        ["op", "OP"],
-        ["produto", "Produto"],
-        ["centro_trabalho", "Centro de trabalho"],
-        ["operacao", "Operação"],
-        ["nome_operador", "Operador"],
-        ["data_producao", "Data de produção"],
-        ["tempo_real_horas", "Tempo real (h)"],
-        ["tempo_previsto_horas", "Tempo previsto (h)"],
-        ["eficiencia_percentual", "Eficiência (%)"],
-        ["resultado_mod", "Resultado MOD"],
-        ["status_registro", "Status do registro"]
+        [
+          "filial",
+          "Filial"
+        ],
+        [
+          "op",
+          "OP"
+        ],
+        [
+          "produto",
+          "Produto"
+        ],
+        [
+          "centro_trabalho",
+          "Centro de trabalho"
+        ],
+        [
+          "operacao",
+          "Operação"
+        ],
+        [
+          "nome_operador",
+          "Operador"
+        ],
+        [
+          "data_producao",
+          "Data de produção"
+        ],
+        [
+          "tempo_real_horas",
+          "Tempo real (h)"
+        ],
+        [
+          "tempo_previsto_horas",
+          "Tempo previsto (h)"
+        ],
+        [
+          "eficiencia_percentual",
+          "Eficiência (%)"
+        ],
+        [
+          "resultado_mod",
+          "Resultado MOD"
+        ],
+        [
+          "status_registro",
+          "Status do registro"
+        ]
       ]
     },
     "production": {
       "detect": {
-        "anyKeys": ["production_order", "scheduled_quantity", "produced_quantity"]
+        "anyKeys": [
+          "production_order",
+          "scheduled_quantity",
+          "produced_quantity"
+        ]
       },
       "preferredColumns": [
-        ["production_order", "Ordem produção"],
-        ["product_code", "Produto"],
-        ["scheduled_date", "Data programada"],
-        ["scheduled_quantity", "Qtd. programada"],
-        ["produced_quantity", "Qtd. produzida"],
-        ["scrap_quantity", "Qtd. refugo"],
-        ["branch", "Filial"],
-        ["status", "Status"]
+        [
+          "production_order",
+          "Ordem produção"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "scheduled_date",
+          "Data programada"
+        ],
+        [
+          "scheduled_quantity",
+          "Qtd. programada"
+        ],
+        [
+          "produced_quantity",
+          "Qtd. produzida"
+        ],
+        [
+          "scrap_quantity",
+          "Qtd. refugo"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "status",
+          "Status"
+        ]
       ]
     },
     "lmp": {
       "detect": {
-        "anyKeys": ["sale_number", "sale_order"]
+        "anyKeys": [
+          "sale_number",
+          "sale_order"
+        ]
       },
       "preferredColumns": [
-        ["sale_number", "Nº OV"],
-        ["product_code", "Produto"],
-        ["description", "Descrição"],
-        ["branch", "Filial"],
-        ["status", "Status"],
-        ["delivery_date", "Data entrega"],
-        ["quantity", "Quantidade"]
+        [
+          "sale_number",
+          "Nº OV"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "status",
+          "Status"
+        ],
+        [
+          "delivery_date",
+          "Data entrega"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ]
       ]
     },
     "kpi": {
       "detect": {
-        "anyKeys": ["kpi_label", "kpi_value"]
+        "anyKeys": [
+          "kpi_label",
+          "kpi_value"
+        ]
       },
       "preferredColumns": [
-        ["kpi_label", "Indicador"],
-        ["kpi_value", "Valor"],
-        ["kpi_target", "Meta"],
-        ["kpi_variance", "Variação"],
-        ["period_label", "Período"],
-        ["department", "Departamento"]
+        [
+          "kpi_label",
+          "Indicador"
+        ],
+        [
+          "kpi_value",
+          "Valor"
+        ],
+        [
+          "kpi_target",
+          "Meta"
+        ],
+        [
+          "kpi_variance",
+          "Variação"
+        ],
+        [
+          "period_label",
+          "Período"
+        ],
+        [
+          "department",
+          "Departamento"
+        ]
+      ]
+    },
+    "costImpactMaterials": {
+      "detect": {
+        "pathContains": [
+          "/cost-impact-simulation"
+        ],
+        "allKeys": [
+          "raw_material_code",
+          "impact_on_material_cost_percent"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "rank",
+          "Posição"
+        ],
+        [
+          "raw_material_code",
+          "Cód. MP"
+        ],
+        [
+          "raw_material_description",
+          "Descrição MP"
+        ],
+        [
+          "quantity_per_pa",
+          "Qtd. p/ PA"
+        ],
+        [
+          "unit",
+          "Unid."
+        ],
+        [
+          "extended_cost",
+          "Custo estendido"
+        ],
+        [
+          "impact_on_material_cost_percent",
+          "% impacto no custo MP"
+        ],
+        [
+          "simulated_extended_cost",
+          "Custo simulado"
+        ]
+      ]
+    },
+    "analyserStructureComponents": {
+      "detect": {
+        "allKeys": [
+          "parent_code",
+          "parent_description"
+        ],
+        "pathContains": [
+          "/analyser"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "parent_code",
+          "PI pai"
+        ],
+        [
+          "parent_description",
+          "Descrição PI"
+        ],
+        [
+          "component_code",
+          "Componente"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "type",
+          "Tipo"
+        ],
+        [
+          "unit",
+          "Unid."
+        ],
+        [
+          "quantity",
+          "Qtde"
+        ]
+      ]
+    },
+    "analyserGuide": {
+      "detect": {
+        "allKeys": [
+          "product_code",
+          "bom_level"
+        ],
+        "pathContains": [
+          "/analyser"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "bom_level",
+          "BOM"
+        ],
+        [
+          "operation_code",
+          "Op."
+        ],
+        [
+          "operation_description",
+          "Operação"
+        ],
+        [
+          "work_center",
+          "Centro"
+        ]
+      ]
+    },
+    "analyserInspection": {
+      "detect": {
+        "allKeys": [
+          "product_code",
+          "level"
+        ],
+        "pathContains": [
+          "/analyser"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "level",
+          "Nível"
+        ],
+        [
+          "section",
+          "Seção"
+        ],
+        [
+          "operation",
+          "Op."
+        ],
+        [
+          "test",
+          "Ensaio"
+        ],
+        [
+          "lab",
+          "Labor."
+        ],
+        [
+          "nominal",
+          "Nominal"
+        ],
+        [
+          "lower",
+          "Lim. inf."
+        ],
+        [
+          "upper",
+          "Lim. sup."
+        ],
+        [
+          "unit",
+          "Unid."
+        ],
+        [
+          "detail",
+          "Detalhe"
+        ]
+      ]
+    },
+    "analyserInspectionDimensionalMarkdown": {
+      "detect": {
+        "allKeys": [
+          "operation",
+          "test"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "operation",
+          "Op."
+        ],
+        [
+          "test",
+          "Ensaio"
+        ],
+        [
+          "lab",
+          "Labor."
+        ],
+        [
+          "nominal",
+          "Nominal"
+        ],
+        [
+          "lower",
+          "Lim. inf."
+        ],
+        [
+          "upper",
+          "Lim. sup."
+        ],
+        [
+          "unit",
+          "Unid."
+        ]
+      ]
+    },
+    "analyserInspectionTextualMarkdown": {
+      "detect": {
+        "allKeys": [
+          "operation",
+          "test"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "operation",
+          "Op."
+        ],
+        [
+          "test",
+          "Ensaio"
+        ],
+        [
+          "text",
+          "Texto / referência"
+        ]
+      ]
+    },
+    "analyserInspectionShallowMarkdown": {
+      "detect": {
+        "allKeys": [
+          "product_code",
+          "parent_code"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "product_code",
+          "Componente"
+        ],
+        [
+          "parent_code",
+          "Produto pai"
+        ],
+        [
+          "level",
+          "Nível"
+        ],
+        [
+          "plan",
+          "Plano"
+        ]
+      ]
+    },
+    "stockValueByBranch": {
+      "detect": {
+        "allKeys": [
+          "branch",
+          "total_stock_value"
+        ],
+        "pathContains": [
+          "/stock-value"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "total_stock_value",
+          "Valor total"
+        ],
+        [
+          "total_stock_quantity",
+          "Quantidade"
+        ],
+        [
+          "total_products",
+          "Produtos"
+        ]
+      ]
+    },
+    "systemSx2Columns": {
+      "detect": {
+        "allKeys": [
+          "campo",
+          "descricao"
+        ],
+        "pathContains": [
+          "/system/sx2"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "campo",
+          "Campo"
+        ],
+        [
+          "descricao",
+          "Descrição"
+        ],
+        [
+          "tipo",
+          "Tipo"
+        ],
+        [
+          "tamanho",
+          "Tamanho"
+        ]
+      ]
+    },
+    "lmpList": {
+      "detect": {
+        "allKeys": [
+          "sale_number",
+          "branch"
+        ],
+        "pathContains": [
+          "/lmp"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "sale_number",
+          "OV"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "listing_kind",
+          "Tipo"
+        ],
+        [
+          "status",
+          "Status"
+        ],
+        [
+          "sale_description",
+          "Descrição"
+        ]
+      ]
+    },
+    "saleOrders": {
+      "detect": {
+        "allKeys": [
+          "order_number",
+          "branch"
+        ],
+        "pathContains": [
+          "/sales"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "order_number",
+          "OV"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "date",
+          "Data"
+        ],
+        [
+          "stage",
+          "Etapa"
+        ]
+      ]
+    },
+    "productSearchBasic": {
+      "detect": {
+        "allKeys": [
+          "code",
+          "description"
+        ],
+        "pathContains": [
+          "/products/search"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "code",
+          "Código"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "type",
+          "Tipo"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ]
+      ]
+    },
+    "factoryMpStockSummary": {
+      "detect": {
+        "allKeys": [
+          "raw_material_code",
+          "raw_material_description"
+        ],
+        "pathContains": [
+          "/factory-status"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "raw_material_code",
+          "Cód. MP"
+        ],
+        [
+          "raw_material_description",
+          "Descrição MP"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "quantity_required_for_one_pa",
+          "Necessário p/ 1 PA"
+        ],
+        [
+          "available_quantity_total",
+          "Saldo disponível (consolidado)"
+        ],
+        [
+          "has_stock_for_one_pa_label",
+          "Saldo p/ 1 PA"
+        ],
+        [
+          "pa_coverage_estimate",
+          "Cobertura estimada (PA)"
+        ]
+      ]
+    },
+    "factoryRawMaterialStockDetail": {
+      "detect": {
+        "allKeys": [
+          "raw_material_code",
+          "raw_material_description"
+        ],
+        "pathContains": [
+          "/factory-status"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "raw_material_code",
+          "Cód. MP"
+        ],
+        [
+          "raw_material_description",
+          "Descrição MP"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "quantity_required_for_one_pa",
+          "Necessário p/ 1 PA"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "warehouse",
+          "Armazém"
+        ],
+        [
+          "current_quantity",
+          "Qtd. atual"
+        ],
+        [
+          "available_quantity",
+          "Qtd. disponível"
+        ],
+        [
+          "committed_quantity",
+          "Qtd. empenhada"
+        ],
+        [
+          "reserved_quantity",
+          "Qtd. reservada"
+        ],
+        [
+          "has_stock_for_one_pa_label",
+          "Saldo p/ 1 PA"
+        ]
+      ]
+    },
+    "factoryProductionDetail": {
+      "detect": {
+        "allKeys": [
+          "production_order",
+          "product_code"
+        ],
+        "pathContains": [
+          "/production-status",
+          "/factory-status"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "production_order",
+          "Ordem produção"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "product_type",
+          "Tipo"
+        ],
+        [
+          "order_quantity",
+          "Qtd. da OP"
+        ],
+        [
+          "produced_quantity_sc2",
+          "Qtd. produzida (SC2)"
+        ],
+        [
+          "reported_quantity",
+          "Qtd. apontada"
+        ],
+        [
+          "planned_start_date",
+          "Início planejado"
+        ],
+        [
+          "planned_end_date",
+          "Fim planejado"
+        ],
+        [
+          "actual_end_date",
+          "Fim real"
+        ],
+        [
+          "order_production_percent",
+          "% produção OP"
+        ],
+        [
+          "production_started_label",
+          "Produção iniciada"
+        ],
+        [
+          "branch",
+          "Filial"
+        ]
+      ]
+    },
+    "shippingStatusDetail": {
+      "detect": {
+        "allKeys": [
+          "production_order",
+          "product_code"
+        ],
+        "pathContains": [
+          "/shipping-status"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "production_order",
+          "Ordem produção"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "shipped_quantity",
+          "Qtd. expedida"
+        ],
+        [
+          "inspection_loss_quantity",
+          "Perda inspeção"
+        ],
+        [
+          "total_reports",
+          "Apontamentos"
+        ],
+        [
+          "work_center",
+          "Centro de trabalho"
+        ],
+        [
+          "resource_code",
+          "Recurso"
+        ],
+        [
+          "branch",
+          "Filial"
+        ]
+      ]
+    },
+    "structureExclusivityDetail": {
+      "detect": {
+        "allKeys": [
+          "level",
+          "component_code"
+        ],
+        "pathContains": [
+          "/structure/exclusivity"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "level",
+          "Nível"
+        ],
+        [
+          "component_code",
+          "Código"
+        ],
+        [
+          "component_type",
+          "Tipo"
+        ],
+        [
+          "component_description",
+          "Descrição"
+        ],
+        [
+          "component_unit",
+          "Unidade"
+        ],
+        [
+          "accumulated_quantity",
+          "Qtd. acumulada"
+        ],
+        [
+          "exclusive_raw_material_label",
+          "MP exclusiva"
+        ],
+        [
+          "total_valid_finished_products_using_mp",
+          "Usado em PAs válidos"
+        ]
+      ]
+    },
+    "stockProductPositions": {
+      "detect": {
+        "allKeys": [
+          "product_code",
+          "description"
+        ],
+        "pathContains": [
+          "/stock"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "warehouse",
+          "Armazém"
+        ],
+        [
+          "current_quantity",
+          "Qtd. atual"
+        ],
+        [
+          "available_quantity",
+          "Qtd. disponível"
+        ],
+        [
+          "committed_quantity",
+          "Qtd. empenhada"
+        ],
+        [
+          "reserved_quantity",
+          "Qtd. reservada"
+        ],
+        [
+          "physical_location",
+          "Localização"
+        ]
+      ]
+    },
+    "mpPriceHistoryDetail": {
+      "detect": {
+        "allKeys": [
+          "issue_date",
+          "supplier_name"
+        ],
+        "pathContains": [
+          "/price-history",
+          "/raw-material-price"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "issue_date",
+          "Data NF"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "variation_percent",
+          "Variação %"
+        ]
+      ]
+    },
+    "mpBudgetHistoryDetail": {
+      "detect": {
+        "allKeys": [
+          "source",
+          "document_number"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "source",
+          "Origem"
+        ],
+        [
+          "document_number",
+          "Documento"
+        ],
+        [
+          "issue_date",
+          "Emissão"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "supplier_store",
+          "Loja"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ]
+      ]
+    },
+    "purchaseBudgetHistoryDetail": {
+      "detect": {
+        "allKeys": [
+          "source",
+          "document_number"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "source",
+          "Origem"
+        ],
+        [
+          "document_number",
+          "Documento"
+        ],
+        [
+          "issue_date",
+          "Emissão"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "supplier_store",
+          "Loja"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "purchase_order",
+          "Pedido compra"
+        ]
+      ]
+    },
+    "purchaseOrderList": {
+      "detect": {
+        "allKeys": [
+          "order_number",
+          "supplier_name"
+        ],
+        "pathContains": [
+          "/purchases"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "order_number",
+          "Pedido"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "ordered_quantity",
+          "Qtd. pedida"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "issue_date",
+          "Emissão"
+        ],
+        [
+          "delivery_date",
+          "Entrega"
+        ],
+        [
+          "status",
+          "Status"
+        ]
+      ]
+    },
+    "lastPurchaseDetail": {
+      "detect": {
+        "allKeys": [
+          "branch",
+          "invoice_number"
+        ],
+        "pathContains": [
+          "/last-purchase"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "branch",
+          "Filial"
+        ],
+        [
+          "invoice_number",
+          "NF"
+        ],
+        [
+          "invoice_series",
+          "Série"
+        ],
+        [
+          "issue_date",
+          "Emissão"
+        ],
+        [
+          "entry_date",
+          "Entrada"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "quantity",
+          "Quantidade"
+        ],
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "total_value",
+          "Valor total"
+        ],
+        [
+          "icms_rate",
+          "ICMS %"
+        ],
+        [
+          "purchase_order",
+          "Pedido compra"
+        ],
+        [
+          "supplier_part_number",
+          "Part number fornecedor"
+        ]
+      ]
+    },
+    "salePricingDetail": {
+      "detect": {
+        "allKeys": [
+          "table_code",
+          "table_description"
+        ],
+        "pathContains": [
+          "/sale-pricing",
+          "/pricing"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "table_code",
+          "Tabela"
+        ],
+        [
+          "table_description",
+          "Descrição tabela"
+        ],
+        [
+          "sale_price",
+          "Preço venda"
+        ],
+        [
+          "max_price",
+          "Preço máximo"
+        ],
+        [
+          "discount_percent",
+          "Desconto %"
+        ],
+        [
+          "lot_quantity",
+          "Lote"
+        ],
+        [
+          "state",
+          "UF"
+        ],
+        [
+          "valid_from",
+          "Válido desde"
+        ]
       ]
     }
   }

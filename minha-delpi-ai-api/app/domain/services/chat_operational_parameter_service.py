@@ -203,6 +203,11 @@ class ChatOperationalParameterService:
         message = ChatMessageNormalizationService.normalize_for_matching(message) or message
         normalized = message
 
+        if ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+            normalized
+        ):
+            return None
+
         if ChatProductQueryIntentService.extract_product_code(message):
             return None
 

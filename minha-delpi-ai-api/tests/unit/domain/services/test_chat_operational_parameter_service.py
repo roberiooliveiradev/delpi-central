@@ -162,6 +162,27 @@ def test_missing_product_code_for_raw_material_price_mp_shorthand():
     assert ChatOperationalParameterService.should_skip_tools("análise de preço MP")
 
 
+def test_missing_product_code_skipped_for_exclusive_catalog_question():
+    message = "Quais produtos têm matéria-prima exclusiva?"
+
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(message)
+        is None
+    )
+    assert not ChatOperationalParameterService.should_skip_tools(message)
+
+
+def test_operational_pipeline_should_optimize_for_exclusive_catalog():
+    from app.domain.services.chat_operational_pipeline_service import (
+        ChatOperationalPipelineService,
+    )
+
+    assert ChatOperationalPipelineService.should_optimize(
+        "Quais matérias-primas são exclusivas?",
+        ["api_delpi.products.list_exclusive_raw_materials_catalog"],
+    )
+
+
 def test_should_skip_agentic_after_successful_kpi_presentation():
     tool_context = {
         "directAnswer": "Valor Total de Estoque",

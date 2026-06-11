@@ -6,6 +6,7 @@
       "product_code": "90261255",
       "description": "CHICOTE PA",
       "product_type": "PA",
+      "unit": "MI",
       "standard_cost": 1000.0
     },
     "materials": {
@@ -14,6 +15,7 @@
           "rank": 1,
           "raw_material_code": "10080002",
           "raw_material_description": "MP B",
+          "unit": "PC",
           "quantity_per_pa": "2",
           "extended_cost": 200.0,
           "impact_on_material_cost_percent": 80.0,
@@ -24,6 +26,7 @@
           "rank": 2,
           "raw_material_code": "10080001",
           "raw_material_description": "MP A",
+          "unit": "MT",
           "quantity_per_pa": "10",
           "extended_cost": 50.0,
           "impact_on_material_cost_percent": 20.0,

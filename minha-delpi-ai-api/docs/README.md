@@ -86,6 +86,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | [guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Estrutura `app/`, camadas, como estender o chat |
 | [../app/content/README.md](../app/content/README.md) | Bundles JSON de textos PT-BR |
 | [roadmap/playbook-11-clean-architecture-chat-api.md](./roadmap/playbook-11-clean-architecture-chat-api.md) | Clean architecture, checklist de PR |
+| [roadmap/playbook-15-rotas-operacionais-sem-sql.md](./roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Rotas produção/compras/perdas sem SQL (roadmap) |
 
 ---
 
