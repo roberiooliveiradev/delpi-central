@@ -18,6 +18,7 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
+import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
@@ -46,6 +47,7 @@ export function ProcessosPage({
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProcessoFormState>(emptyProcessoForm);
+  const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
   const [filialId, setFilialId] = useState("");
   const [setorId, setSetorId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -88,12 +90,14 @@ export function ProcessosPage({
     setEditingId(null);
     setForm(emptyProcessoForm());
     setShowForm(true);
+    scrollToForm();
   }
 
   function startEdit(row: Processo) {
     setEditingId(row.processo_id);
     setForm(processoFormFromEntity(row));
     setShowForm(true);
+    scrollToForm();
   }
 
   function cancelForm() {
@@ -246,7 +250,7 @@ export function ProcessosPage({
       />
 
       {showForm && options ? (
-        <section className="ds-card ds-cadastro-form">
+        <section ref={formSectionRef} className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">
             {editingId ? "Editar processo" : "Novo processo"}
           </h2>

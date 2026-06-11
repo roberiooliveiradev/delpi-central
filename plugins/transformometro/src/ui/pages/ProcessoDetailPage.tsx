@@ -9,6 +9,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -76,6 +77,10 @@ export function ProcessoDetailPage({
     data_fim_vigencia: "",
     revisao_ativa: true,
   });
+  const { ref: processoFormRef, scrollToRef: scrollToProcessoForm } =
+    useScrollToRef<HTMLElement>();
+  const { ref: revisaoFormRef, scrollToRef: scrollToRevisaoForm } =
+    useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -108,6 +113,15 @@ export function ProcessoDetailPage({
     setProcessoForm(processoFormFromEntity(processo));
     setEditingProcesso(true);
     setError(null);
+    scrollToProcessoForm();
+  }
+
+  function toggleRevisaoForm() {
+    setShowRevisaoForm((current) => {
+      const next = !current;
+      if (next) scrollToRevisaoForm();
+      return next;
+    });
   }
 
   function cancelEditProcesso() {
@@ -371,7 +385,7 @@ export function ProcessoDetailPage({
               <Trash2 size={16} />
               Excluir
             </button>
-            <button type="button" className="ds-primary-btn" onClick={() => setShowRevisaoForm((v) => !v)}>
+            <button type="button" className="ds-primary-btn" onClick={toggleRevisaoForm}>
               <Plus size={16} />
               {showRevisaoForm ? "Cancelar" : "Nova revisão"}
             </button>
@@ -382,7 +396,7 @@ export function ProcessoDetailPage({
       <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
       {editingProcesso && options && processoForm ? (
-        <section className="ds-card ds-cadastro-form">
+        <section ref={processoFormRef} className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">Editar processo</h2>
           <form onSubmit={handleSaveProcesso}>
             <ProcessoFormFields
@@ -450,7 +464,7 @@ export function ProcessoDetailPage({
       )}
 
       {showRevisaoForm && options ? (
-        <section className="ds-card ds-cadastro-form">
+        <section ref={revisaoFormRef} className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">Nova revisão</h2>
           <form onSubmit={handleCreateRevisao}>
             <div className="ds-filters-row">

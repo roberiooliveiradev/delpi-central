@@ -9,6 +9,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -48,6 +49,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyRecursoForm);
+  const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -75,12 +77,14 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     setEditingId(null);
     setForm(emptyRecursoForm());
     setShowForm(true);
+    scrollToForm();
   }
 
   function startEdit(r: RecursoCompartilhado) {
     setEditingId(r.recurso_compartilhado_id);
     setForm(recursoFormFromEntity(r));
     setShowForm(true);
+    scrollToForm();
   }
 
   function cancelForm() {
@@ -282,6 +286,35 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         . O custo mensal usado nos cálculos vem da tabela de vigências de custo, não do cadastro principal.
       </p>
 
+      {showForm && options ? (
+        <section ref={formSectionRef} className="ds-card ds-cadastro-form">
+          <h2 className="ds-section-title">
+            {editingId ? "Editar recurso" : "Novo recurso no catálogo"}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <RecursoCatalogFormFields
+              form={form}
+              options={options}
+              onChange={setForm}
+              submitLabel={editingId ? "Salvar alterações" : "Cadastrar recurso"}
+            />
+            <div className="ds-cadastro-form__actions">
+              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+          {editingId ? (
+            <RecursoCustosSection
+              recursoId={editingId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              onRecursoSynced={() => void load()}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
       <DataTableSection
         title="Catálogo de recursos"
         columns={columns}
@@ -303,38 +336,6 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         }
         emptyMessage="Nenhum recurso no catálogo. Cadastre licenças e ferramentas compartilhadas."
       />
-
-      {showForm && options ? (
-        <section className="ds-card ds-cadastro-subsection">
-          <h2 className="ds-section-title">
-            {editingId ? "Editar recurso" : "Novo recurso no catálogo"}
-          </h2>
-          <form onSubmit={handleSubmit}>
-            <RecursoCatalogFormFields
-              form={form}
-              options={options}
-              onChange={setForm}
-              submitLabel={editingId ? "Salvar alterações" : "Cadastrar recurso"}
-            />
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              style={{ marginTop: 8 }}
-              onClick={cancelForm}
-            >
-              Cancelar
-            </button>
-          </form>
-          {editingId ? (
-            <RecursoCustosSection
-              recursoId={editingId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              onRecursoSynced={() => void load()}
-            />
-          ) : null}
-        </section>
-      ) : null}
     </TransformometroShell>
   );
 }

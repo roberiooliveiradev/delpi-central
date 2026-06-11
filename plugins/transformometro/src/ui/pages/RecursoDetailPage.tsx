@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search } from "lucide-react";
 
 import type { AppProps } from "../../App";
-import type { DataTableColumn } from "../../components/DataTable";
-import { DataTableSection } from "../../components/DataTableSection";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
@@ -79,6 +77,7 @@ export function RecursoDetailPage({
   const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<VinculoEditForm | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -162,93 +161,25 @@ export function RecursoDetailPage({
     ? `${toDateInputValue(recurso.data_inicio_vigencia) || "…"} → ${toDateInputValue(recurso.data_fim_vigencia) || "…"}`
     : "—";
 
-  const columns = useMemo<DataTableColumn<VinculoRecurso>[]>(
-    () => [
-      {
-        key: "processo",
-        header: "Processo",
-        sortable: true,
-        className: "ds-table__col--wide",
-        sortValue: (row) => `${row.codigo_processo ?? ""} ${row.nome_processo ?? ""}`,
-        render: (row) => (
-          <button
-            type="button"
-            className="ds-link-btn"
-            onClick={(event) => {
-              event.stopPropagation();
-              if (row.processo_id) onNavigate(buildProcessoPath(row.processo_id, row.revisao_id));
-            }}
-          >
-            {row.codigo_processo ?? "—"} — {row.nome_processo ?? "—"}
-          </button>
-        ),
-      },
-      { key: "filial", header: "Filial", sortable: true, render: (row) => row.filial_id ?? "—" },
-      { key: "setor", header: "Setor", sortable: true, render: (row) => row.setor_id ?? "—" },
-      {
-        key: "revisao",
-        header: "Revisão",
-        sortable: true,
-        render: (row) => `${row.versao_revisao ?? "—"} · ${row.cenario_tipo ?? "—"}`,
-      },
-      {
-        key: "uso",
-        header: "Uso no processo",
-        sortable: true,
-        sortValue: (row) => row.data_inicio_uso ?? "",
-        render: (row) => (
-          <>
-            {toDateInputValue(row.data_inicio_uso) || "…"} → {toDateInputValue(row.data_fim_uso) || "…"}
-          </>
-        ),
-      },
-      {
-        key: "peso",
-        header: "Peso",
-        sortable: true,
-        className: "ds-table__col--numeric",
-        sortValue: (row) => row.peso_rateio ?? 0,
-        render: (row) => row.peso_rateio ?? "—",
-      },
-      {
-        key: "ativo",
-        header: "Ativo",
-        sortable: true,
-        sortValue: (row) => row.ativo,
-        render: (row) => (row.ativo ? "Sim" : "Não"),
-      },
-      {
-        key: "acoes",
-        header: "",
-        className: "ds-table__actions",
-        render: (row) => (
-          <>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                startEdit(row);
-              }}
-            >
-              Editar vínculo
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                void handleDelete(row);
-              }}
-            >
-              Desvincular
-            </button>
-          </>
-        ),
-      },
-    ],
-    [onNavigate]
-  );
+  const filteredVinculos = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return vinculos;
+    return vinculos.filter((row) =>
+      [
+        row.codigo_processo,
+        row.nome_processo,
+        row.filial_id,
+        row.setor_id,
+        row.familia_processo,
+        row.versao_revisao,
+        row.cenario_tipo,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [search, vinculos]);
 
   if (loading && !recurso) {
     return (
@@ -324,85 +255,173 @@ export function RecursoDetailPage({
         />
       </section>
 
-      {editingId && editForm ? (
-        <section className="ds-card ds-cadastro-subsection">
-          <h2 className="ds-section-title">Editar vínculo</h2>
-          <form onSubmit={saveEdit}>
-            <div className="ds-filters-row">
-              <label className="ds-filter-box">
-                Início do uso
-                <input
-                  type="date"
-                  value={editForm.data_inicio_uso}
-                  onChange={(event) => setEditForm({ ...editForm, data_inicio_uso: event.target.value })}
-                />
-              </label>
-              <label className="ds-filter-box">
-                Fim do uso
-                <input
-                  type="date"
-                  value={editForm.data_fim_uso}
-                  onChange={(event) => setEditForm({ ...editForm, data_fim_uso: event.target.value })}
-                />
-              </label>
-              <label className="ds-filter-box">
-                Peso do rateio
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  value={editForm.peso_rateio}
-                  onChange={(event) => setEditForm({ ...editForm, peso_rateio: event.target.value })}
-                />
-              </label>
-              <label className="ds-filter-box">
-                Vínculo ativo
-                <input
-                  type="checkbox"
-                  checked={editForm.ativo}
-                  onChange={(event) => setEditForm({ ...editForm, ativo: event.target.checked })}
-                />
-              </label>
-            </div>
-            <label className="ds-filter-box ds-filter-box--wide">
-              Observações
-              <input
-                value={editForm.observacoes}
-                onChange={(event) => setEditForm({ ...editForm, observacoes: event.target.value })}
-              />
-            </label>
-            <div className="ds-cadastro-form__actions">
-              <button type="submit" className="ds-primary-btn">Salvar vínculo</button>
-              <button type="button" className="ds-ghost-btn" onClick={cancelEdit}>Cancelar</button>
-            </div>
-          </form>
-        </section>
-      ) : null}
+      <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
+        <div className="ds-table-section__header">
+          <h2 className="ds-section-title">Processos vinculados</h2>
+          <div className="ds-table-section__meta-group">
+            <span className="ds-table-section__meta">
+              Edite os vínculos ou abra o processo para revisar medição e investimentos
+            </span>
+            <span className="ds-table-section__meta">{filteredVinculos.length} registro(s)</span>
+          </div>
+        </div>
 
-      <DataTableSection
-        title="Processos vinculados"
-        hint="Edite os vínculos ou abra o processo para revisar medição e investimentos"
-        columns={columns}
-        rows={vinculos}
-        rowKey={(row) => row.vinculo_id}
-        loading={loading}
-        refreshing={refreshing}
-        searchPlaceholder="Código, processo, filial, setor…"
-        getSearchText={(row) =>
-          [
-            row.codigo_processo,
-            row.nome_processo,
-            row.filial_id,
-            row.setor_id,
-            row.familia_processo,
-            row.versao_revisao,
-            row.cenario_tipo,
-          ]
-            .filter(Boolean)
-            .join(" ")
-        }
-        emptyMessage="Nenhum processo vinculado a este recurso."
-      />
+        <div className="ds-table-toolbar">
+          <div className="ds-table-search" role="search">
+            <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
+            <input
+              type="search"
+              className="ds-table-search__input"
+              value={search}
+              placeholder="Código, processo, filial, setor…"
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Filtrar processos vinculados"
+            />
+          </div>
+        </div>
+
+        {loading && vinculos.length === 0 ? (
+          <p className="ds-state-box">Carregando vínculos…</p>
+        ) : filteredVinculos.length === 0 ? (
+          <p className="ds-state-box">Nenhum processo vinculado a este recurso.</p>
+        ) : (
+          <div className="ds-table-wrap ds-cadastro-section__table">
+            <table className="ds-table ds-table--compact">
+              <thead>
+                <tr>
+                  <th>Processo</th>
+                  <th>Filial</th>
+                  <th>Setor</th>
+                  <th>Revisão</th>
+                  <th>Uso no processo</th>
+                  <th>Peso</th>
+                  <th>Ativo</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVinculos.map((row) =>
+                  editingId === row.vinculo_id && editForm ? (
+                    <tr key={row.vinculo_id} className="ds-table__row--editing">
+                      <td colSpan={8}>
+                        <form className="ds-cadastro-subsection" onSubmit={saveEdit}>
+                          <h4 className="ds-cadastro-subsection__title">
+                            Editar vínculo — {row.codigo_processo ?? "—"} · {row.nome_processo ?? "—"}
+                          </h4>
+                          <div className="ds-filters-row">
+                            <label className="ds-filter-box">
+                              Início do uso
+                              <input
+                                type="date"
+                                value={editForm.data_inicio_uso}
+                                onChange={(event) =>
+                                  setEditForm({ ...editForm, data_inicio_uso: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label className="ds-filter-box">
+                              Fim do uso
+                              <input
+                                type="date"
+                                value={editForm.data_fim_uso}
+                                onChange={(event) =>
+                                  setEditForm({ ...editForm, data_fim_uso: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label className="ds-filter-box">
+                              Peso do rateio
+                              <input
+                                type="number"
+                                min={0}
+                                step="any"
+                                value={editForm.peso_rateio}
+                                onChange={(event) =>
+                                  setEditForm({ ...editForm, peso_rateio: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label className="ds-filter-box ds-filter-box--checkbox">
+                              <span>Vínculo ativo</span>
+                              <input
+                                type="checkbox"
+                                checked={editForm.ativo}
+                                onChange={(event) =>
+                                  setEditForm({ ...editForm, ativo: event.target.checked })
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="ds-filter-box ds-filter-box--wide">
+                            Observações
+                            <input
+                              value={editForm.observacoes}
+                              onChange={(event) =>
+                                setEditForm({ ...editForm, observacoes: event.target.value })
+                              }
+                            />
+                          </label>
+                          <div className="ds-cadastro-form__actions">
+                            <button type="submit" className="ds-primary-btn">
+                              Salvar vínculo
+                            </button>
+                            <button type="button" className="ds-ghost-btn" onClick={cancelEdit}>
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={row.vinculo_id}>
+                      <td className="ds-table__col--wide">
+                        <button
+                          type="button"
+                          className="ds-link-btn"
+                          onClick={() => {
+                            if (row.processo_id) {
+                              onNavigate(buildProcessoPath(row.processo_id, row.revisao_id));
+                            }
+                          }}
+                        >
+                          {row.codigo_processo ?? "—"} — {row.nome_processo ?? "—"}
+                        </button>
+                      </td>
+                      <td>{row.filial_id ?? "—"}</td>
+                      <td>{row.setor_id ?? "—"}</td>
+                      <td>
+                        {row.versao_revisao ?? "—"} · {row.cenario_tipo ?? "—"}
+                      </td>
+                      <td>
+                        {toDateInputValue(row.data_inicio_uso) || "…"} →{" "}
+                        {toDateInputValue(row.data_fim_uso) || "…"}
+                      </td>
+                      <td className="ds-table__col--numeric">{row.peso_rateio ?? "—"}</td>
+                      <td>{row.ativo ? "Sim" : "Não"}</td>
+                      <td className="ds-table__actions">
+                        <button
+                          type="button"
+                          className="ds-ghost-btn"
+                          onClick={() => startEdit(row)}
+                        >
+                          Editar vínculo
+                        </button>
+                        <button
+                          type="button"
+                          className="ds-ghost-btn"
+                          onClick={() => void handleDelete(row)}
+                        >
+                          Desvincular
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </TransformometroShell>
   );
 }
