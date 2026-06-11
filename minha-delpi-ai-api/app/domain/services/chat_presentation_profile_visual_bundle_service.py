@@ -161,8 +161,6 @@ class ChatPresentationProfileVisualBundleService:
 
                 if dashboard_include_tree:
                     dashboard_kwargs["tree"] = slots.get("tree")
-                elif builder_name == "build_factory_dashboard":
-                    dashboard_kwargs["tree"] = slots.get("tree")
 
                 presentation = builder(root, path, **dashboard_kwargs)
             else:

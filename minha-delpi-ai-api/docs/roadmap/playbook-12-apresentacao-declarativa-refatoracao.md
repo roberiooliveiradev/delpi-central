@@ -200,7 +200,7 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 - [x] `_humanize_key` / gráficos / árvore / `FieldNormalization` repassam `path` à cascata de rótulos
 - [x] `ChatPresentationTableProfileInferenceService` + `_build_items_table_for_path` no builder genérico
 - [x] Gate CI: `presentation_builder_items_table_gate.py`
-- [ ] A9 grande (SectionAvailability / visual bundle / elif use case) — **fora do escopo R23**; onda 2 estrutural
+- [x] A9 grande (SectionAvailability / visual bundle / elif use case) — **R24 onda 2 estrutural** ✅ jun/2026
 
 ##### Próxima fase (R22 — cobertura KV) ✅ jun/2026
 
@@ -402,18 +402,17 @@ Não quebra colunas dinâmicas, mas concentra semântica de rota fora de `tableP
 
 **Regra:** API deve mandar `columns[].label` e `role`; MFE fallback só legacy (< 5 casos — meta §1.3).
 
-#### A9 — Débito onda 2 (fora do escopo R15/R16)
+#### A9 — Débito onda 2 (fora do escopo R15/R16) ✅ jun/2026 — **R24**
 
-Persiste o diagnóstico §1.2:
+Persistia o diagnóstico §1.2 (pré-R1–R4). **R24** fechou os resíduos estruturais:
 
-```
-ExecuteExternalActionUseCase              ~14 elif (tablePresentations)
-ChatPresentationVisualBundleService       ~12 flags + _enrich_* por rota
-ChatPresentationSectionAvailabilityService ~1126 linhas, handler por rota
-MFE presentationStackPlan                 inferTableRoleFromTitle, ROUTE_VISUAL_ORDER
-```
-
-Adicional: `presentation_builder_presenter` chama `_build_items_table` **sem** `profile_name` em vários ramos — perde hints/detect do perfil.
+| Item §1.2 | Entrega R24 |
+|-----------|-------------|
+| Use case ~14 elif path/tablePresentations | Já resolvido R3; pipeline extraído → `ChatPresentationMetadataPipelineService` |
+| Visual bundle `_enrich_*` / flags | Já resolvido R2; `_sync_*` unificado; `dashboardIncludeTree` declarativo |
+| SectionAvailability ~1126 linhas | Já resolvido R4; `sectionRules` tier A MP/compras (4 rotas) |
+| MFE `inferTableRoleFromTitle` | Fallback reduzido a `other`; API manda `role` |
+| Títulos eficiência fabril no use case | `ChatPresentationTitleNormalizationService` + JSON |
 
 **Não** misturar correção desses itens com patch em `fixed_table_columns`; cada item = fase ou extensão de R existente + teste.
 

@@ -409,7 +409,7 @@
   "legacyFallbacks": {
     "description": "Fallbacks MFE permitidos quando a API não envia role/label (Playbook 12 R20). Baseline — não aumentar sem revisão.",
     "inventoryBaseline": {
-      "inferTableRoleFromTitleConditionalReturns": 10,
+      "inferTableRoleFromTitleConditionalReturns": 0,
       "pathIncludesByModule": {
         "chatPresentation.ts": 7,
         "visualSegmentCollector.ts": 4,

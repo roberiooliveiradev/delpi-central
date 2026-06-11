@@ -10,10 +10,10 @@ import {
 import { fixtureToolCalls } from "./testFixtures";
 
 describe("presentationStackPlan", () => {
-  it("infere papéis de tabela por título", () => {
-    expect(inferTableRoleFromTitle("Produto 90260149")).toBe("profile");
-    expect(inferTableRoleFromTitle("Roteiro de produção — 1")).toBe("guide");
-    expect(inferTableRoleFromTitle("Estoque por filial")).toBe("stock");
+  it("fallback legacy retorna other quando role ausente na API", () => {
+    expect(inferTableRoleFromTitle("Produto 90260149")).toBe("other");
+    expect(inferTableRoleFromTitle("Roteiro de produção — 1")).toBe("other");
+    expect(inferTableRoleFromTitle("Estoque por filial")).toBe("other");
   });
 
   it("prefere role da API quando presente", () => {

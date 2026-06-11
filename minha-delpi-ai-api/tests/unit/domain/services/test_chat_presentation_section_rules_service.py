@@ -55,6 +55,79 @@ def test_sale_pricing_section_rules_use_visual_panels():
     assert plan["sectionVisibility"]["structure"] is True
 
 
+def test_last_purchase_section_rules_use_visual_panels():
+    metadata = {
+        "path": "/products/10080001/last-purchase",
+        "textPresentation": {
+            "markdown": "### Última compra\n\n**Destaques**\n\n- NF recente.\n",
+        },
+        "kpiPresentation": {"type": "kpi", "cards": [{"label": "Preço", "value": "10"}]},
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Resumo da última compra",
+                "rows": [{"campo": "Preço", "valor": "10"}],
+            },
+        ],
+    }
+
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan["presentationProfile"] == "product_last_purchase"
+    assert plan["humanizedSections"] is True
+    assert plan["sectionVisibility"]["structure"] is True
+
+
+def test_purchase_list_section_rules_enable_humanized_stack():
+    metadata = {
+        "path": "/products/10080001/purchases",
+        "textPresentation": {
+            "markdown": "### Compras\n\n**Destaques**\n\n- 3 pedidos.\n",
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Resumo da listagem",
+                "rows": [{"campo": "Total", "valor": "3"}],
+            },
+        ],
+    }
+
+    plan = ChatPresentationStackOrderService.resolve_plan(metadata)
+
+    assert plan["presentationProfile"] == "product_purchases"
+    assert plan["humanizedSections"] is True
+    assert "profileTables" in plan["narrativeOrder"]
+
+
+def test_resolve_explicit_narrative_order_from_json_slots():
+    visibility = {
+        "scope": True,
+        "profile": True,
+        "highlights": True,
+        "guide": True,
+        "structure": False,
+        "attention": False,
+    }
+    slots = [
+        "lead",
+        "profileTables",
+        "highlights",
+        "operationalTables",
+        "tailVisuals",
+        "attention",
+    ]
+
+    order = ChatPresentationSectionRulesService._resolve_explicit_narrative_order(
+        slots,
+        visibility,
+        {},
+        {},
+    )
+
+    assert order == ["lead", "profileTables", "highlights", "operationalTables"]
+
+
 def test_resolve_visibility_from_json_rules():
     metadata = {
         "path": "/products/90260149/analyser",

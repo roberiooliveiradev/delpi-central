@@ -462,7 +462,8 @@
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "auto",
       "visualBundle": {
-        "dashboardListRole": "stock"
+        "dashboardListRole": "stock",
+        "dashboardIncludeTree": true
       },
       "visualBuilders": {
         "kpi": "build_factory_kpi",
@@ -1459,7 +1460,41 @@
         "other"
       ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_last_purchase",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "lastPurchaseProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "lastPurchaseGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/last-purchase",
+          "sections": {
+            "scope": {
+              "withCode": "lastPurchaseScopeWithCode",
+              "generic": "lastPurchaseScopeGeneric"
+            },
+            "highlights": "lastPurchaseHighlights",
+            "profile": "lastPurchaseSummary",
+            "guide": "lastPurchaseDetail",
+            "structure": "lastPurchasePanels",
+            "attention": "lastPurchaseAttention"
+          }
+        }
+      }
     },
     "purchase_price_history": {
       "tableRoleOrder": [
@@ -1468,7 +1503,41 @@
         "other"
       ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_purchase_price_history",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "purchasePriceHistoryProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "purchasePriceHistoryGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/purchase-price-history",
+          "sections": {
+            "scope": {
+              "withCode": "purchasePriceHistoryScopeWithCode",
+              "generic": "purchasePriceHistoryScopeGeneric"
+            },
+            "highlights": "purchasePriceHistoryHighlights",
+            "profile": "purchasePriceHistorySummary",
+            "guide": "purchasePriceHistoryDetail",
+            "structure": "purchasePriceHistoryPanels",
+            "attention": "purchasePriceHistoryAttention"
+          }
+        }
+      }
     },
     "purchase_budget_history": {
       "tableRoleOrder": [
@@ -1477,7 +1546,41 @@
         "other"
       ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_purchase_budget_history",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "purchaseBudgetHistoryProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "purchaseBudgetHistoryGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/purchase-budget-history",
+          "sections": {
+            "scope": {
+              "withCode": "purchaseBudgetHistoryScopeWithCode",
+              "generic": "purchaseBudgetHistoryScopeGeneric"
+            },
+            "highlights": "purchaseBudgetHistoryHighlights",
+            "profile": "purchaseBudgetHistorySummary",
+            "guide": "purchaseBudgetHistoryDetail",
+            "structure": "purchaseBudgetHistoryPanels",
+            "attention": "purchaseBudgetHistoryAttention"
+          }
+        }
+      }
     },
     "purchase_list": {
       "tableRoleOrder": [
@@ -1486,7 +1589,41 @@
         "other"
       ],
       "profileFirst": true,
-      "highlightsAfterProfile": true
+      "highlightsAfterProfile": true,
+      "sectionRules": {
+        "enabled": true,
+        "presentationProfile": "product_purchases",
+        "narrativeOrder": "operational_with_panels",
+        "visibility": {
+          "scope": "markdown",
+          "profile": {
+            "kind": "tableTitleTokens",
+            "group": "purchaseListProfile"
+          },
+          "highlights": "highlights",
+          "guide": {
+            "kind": "tableTitleTokens",
+            "group": "purchaseListGuide"
+          },
+          "structure": "visual_panels",
+          "attention": "attention"
+        },
+        "framing": {
+          "source": "product_operational.sectionFraming",
+          "pathFragment": "/purchases",
+          "sections": {
+            "scope": {
+              "withCode": "purchaseListScopeWithCode",
+              "generic": "purchaseListScopeGeneric"
+            },
+            "highlights": "purchaseListHighlights",
+            "profile": "purchaseListSummary",
+            "guide": "purchaseListDetail",
+            "structure": "purchaseListPanels",
+            "attention": "purchaseListAttention"
+          }
+        }
+      }
     },
     "kpi_series": {
       "tableRoleOrder": [

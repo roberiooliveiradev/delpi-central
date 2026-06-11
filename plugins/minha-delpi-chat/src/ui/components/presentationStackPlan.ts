@@ -336,90 +336,9 @@ const STACK_TABLE_ROLES = new Set<StackTableRole>([
 ]);
 
 /**
- * @deprecated Prefer `presentation.role` from API metadata. Fallback legacy por título.
+ * @deprecated Prefer `presentation.role` from API metadata. Fallback legacy mínimo.
  */
-export function inferTableRoleFromTitle(title: string): StackTableRole {
-  const normalized = title.trim().toLowerCase();
-
-  if (
-    normalized.includes("panorama fabril") ||
-    normalized.includes("resumo produtivo") ||
-    normalized.includes("resumo de expedição") ||
-    normalized.includes("resumo de expedicao") ||
-    normalized.includes("resumo da estrutura") ||
-    normalized.startsWith("produto ") ||
-    normalized.includes("cadastro") ||
-    normalized.includes("ficha")
-  ) {
-    return "profile";
-  }
-
-  if (normalized.includes("roteiro") || normalized.includes("/guide")) {
-    return "guide";
-  }
-
-  if (normalized.includes("inspeção") || normalized.includes("inspecao")) {
-    return "inspection";
-  }
-
-  if (
-    normalized.includes("estoque") ||
-    normalized.includes("saldo") ||
-    normalized.includes("armazém") ||
-    normalized.includes("armazem") ||
-    normalized.includes("matéria") ||
-    normalized.includes("materia")
-  ) {
-    return "stock";
-  }
-
-  if (
-    normalized.includes("produção") ||
-    normalized.includes("producao") ||
-    normalized.includes("apontamento") ||
-    normalized.includes("ordens") ||
-    normalized.includes("movimentos de expedição") ||
-    normalized.includes("movimentos de expedicao")
-  ) {
-    return "list";
-  }
-
-  if (normalized.includes("expedição") || normalized.includes("expedicao")) {
-    return "list";
-  }
-
-  if (
-    normalized.includes("exclusividade") ||
-    normalized.includes("componentes com exclusividade")
-  ) {
-    return "structure";
-  }
-
-  if (
-    normalized.includes("preço") ||
-    normalized.includes("preco") ||
-    normalized.includes("pricing")
-  ) {
-    return "pricing";
-  }
-
-  if (
-    normalized.includes("estrutura") ||
-    normalized.includes("composição") ||
-    normalized.includes("composicao") ||
-    normalized.includes("componentes")
-  ) {
-    return "structure";
-  }
-
-  if (
-    normalized.includes("lista") ||
-    normalized.includes("resultado") ||
-    normalized.includes("consulta")
-  ) {
-    return "list";
-  }
-
+export function inferTableRoleFromTitle(_title: string): StackTableRole {
   return "other";
 }
 

@@ -53,12 +53,22 @@ class ChatPresentationSectionRulesService:
         )
 
         template = str(rules.get("narrativeOrder") or "operationalWithTail").strip()
-        plan["narrativeOrder"] = cls.resolve_narrative_order(
-            template,
-            visibility,
-            metadata,
-            plan,
-        )
+        explicit_slots = rules.get("narrativeOrderSlots")
+
+        if isinstance(explicit_slots, list) and explicit_slots:
+            plan["narrativeOrder"] = cls._resolve_explicit_narrative_order(
+                explicit_slots,
+                visibility,
+                metadata,
+                plan,
+            )
+        else:
+            plan["narrativeOrder"] = cls.resolve_narrative_order(
+                template,
+                visibility,
+                metadata,
+                plan,
+            )
 
         return plan
 
@@ -150,6 +160,42 @@ class ChatPresentationSectionRulesService:
             return cls._narrative_order_summary_then_evidence(visibility, metadata)
 
         return cls._narrative_order_operational_with_tail(visibility, metadata)
+
+    @classmethod
+    def _resolve_explicit_narrative_order(
+        cls,
+        slots: list[Any],
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> list[str]:
+        slot_visibility = {
+            "lead": True,
+            "profileTables": visibility.get(cls._PROFILE),
+            "highlights": visibility.get(cls._HIGHLIGHTS),
+            "operationalTables": (
+                visibility.get(cls._GUIDE)
+                or visibility.get(cls._INSPECTION)
+                or visibility.get(cls._STRUCTURE)
+            ),
+            "tailVisuals": cls._should_include_tail_visuals(metadata, visibility),
+            "attention": visibility.get(cls._ATTENTION),
+        }
+        order: list[str] = []
+
+        for slot in slots:
+            token = str(slot or "").strip()
+
+            if not token:
+                continue
+
+            if slot_visibility.get(token) is False:
+                continue
+
+            if token not in order:
+                order.append(token)
+
+        return order or ["lead"]
 
     @classmethod
     def _evaluate_visibility_rule(

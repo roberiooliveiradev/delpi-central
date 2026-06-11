@@ -32,7 +32,15 @@
       "costImpactProfile": ["simulação", "simulacao", "impacto"],
       "costImpactGuide": ["materiais", "material", "componente"],
       "salePricingProfile": ["preço", "preco", "precificação", "precificacao"],
-      "salePricingGuide": ["tabela", "lista", "preços", "precos"]
+      "salePricingGuide": ["tabela", "lista", "preços", "precos"],
+      "lastPurchaseProfile": ["resumo da última compra", "resumo da ultima compra"],
+      "lastPurchaseGuide": ["última nf", "ultima nf", "nf de compra"],
+      "purchasePriceHistoryProfile": ["resumo do histórico", "resumo do historico"],
+      "purchasePriceHistoryGuide": ["nfs de compra", "histórico de preço", "historico de preco"],
+      "purchaseBudgetHistoryProfile": ["resumo de orçamentos", "resumo de orcamentos"],
+      "purchaseBudgetHistoryGuide": ["sc e pedidos", "orçamentos", "orcamentos"],
+      "purchaseListProfile": ["resumo da listagem"],
+      "purchaseListGuide": ["pedidos de compra"]
     },
     "profileTableTitlePrefixes": ["produto "],
     "profileTableTitleTokens": ["ficha", "cadastro"]
@@ -409,7 +417,7 @@
   "legacyFallbacks": {
     "description": "Fallbacks MFE permitidos quando a API não envia role/label (Playbook 12 R20). Baseline — não aumentar sem revisão.",
     "inventoryBaseline": {
-      "inferTableRoleFromTitleConditionalReturns": 10,
+      "inferTableRoleFromTitleConditionalReturns": 0,
       "pathIncludesByModule": {
         "chatPresentation.ts": 7,
         "visualSegmentCollector.ts": 4,
@@ -483,8 +491,19 @@
       "visualBundleDedicatedEnrichMax": 0,
       "useCasePathTableAssemblyElifMax": 0,
       "sectionAvailabilityRouteHandlerMax": 0,
-      "totalPathConditionalsMax": 0
+      "totalPathConditionalsMax": 0,
+      "useCaseMetadataPipelineMaxLines": 200,
+      "profileVisualBundleBuilderElifMax": 0
     },
+    "presentationTitlePolicies": [
+      {
+        "pathFragments": ["eficiencia-fabril", "eficiencia_fabril"],
+        "wrongTitles": ["Lista de LMPs", "LMPs", "Visualização dos dados"],
+        "fallbackTitle": "Eficiência fabril",
+        "presentationKeys": ["tablePresentation", "chartPresentation", "textPresentation"],
+        "dashboardPanelTypes": ["table", "chart"]
+      }
+    ],
     "tierAPipelineCases": [
       {
         "id": "tier_a_analyser",

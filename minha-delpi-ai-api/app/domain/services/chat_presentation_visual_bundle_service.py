@@ -69,7 +69,7 @@ class ChatPresentationVisualBundleService:
             explicit_format=explicit_format,
             user_message=user_message,
         ):
-            cls._sync_latent_available_formats(metadata, view_order)
+            cls._sync_available_formats(metadata, view_order, latent=True)
             cls._ensure_text_embed_tree_for_markdown(
                 metadata,
                 profile=profile,
@@ -319,7 +319,13 @@ class ChatPresentationVisualBundleService:
             cls._attach_auxiliary(metadata, "dashboard", dashboard, primary_type=primary_type)
 
     @classmethod
-    def _sync_available_formats(cls, metadata: dict[str, Any], view_order: list[str]) -> None:
+    def _sync_available_formats(
+        cls,
+        metadata: dict[str, Any],
+        view_order: list[str],
+        *,
+        latent: bool = False,
+    ) -> None:
         formats = list(metadata.get("availableFormats") or [])
         seen = {str(token).strip().lower() for token in formats}
 
@@ -338,12 +344,26 @@ class ChatPresentationVisualBundleService:
 
                 continue
 
+            if latent:
+                if mapped in seen:
+                    continue
+
+                if mapped in {"table", "tree", "chart", "kpi", "dashboard"}:
+                    formats.append(mapped)
+                    seen.add(mapped)
+
+                continue
+
             if cls._slot_value(metadata, mapped) and mapped not in seen:
                 formats.append(mapped)
                 seen.add(mapped)
 
         if metadata.get("textPresentation") and "text" not in seen:
-            formats.append("text")
+            if latent:
+                formats.insert(0, "text")
+            else:
+                formats.append("text")
+
             seen.add("text")
 
         if metadata.get("textPresentation"):
@@ -351,46 +371,6 @@ class ChatPresentationVisualBundleService:
 
             if canvas not in seen:
                 formats.append(canvas)
-
-        metadata["availableFormats"] = formats
-
-    @classmethod
-    def _sync_latent_available_formats(
-        cls,
-        metadata: dict[str, Any],
-        view_order: list[str],
-    ) -> None:
-        formats = list(metadata.get("availableFormats") or [])
-        seen = {str(token).strip().lower() for token in formats}
-
-        for view in view_order:
-            mapped = "chart" if view in {
-                "line_chart",
-                "bar_chart",
-                "horizontal_bar",
-                "donut",
-                "area_chart",
-            } else view
-
-            if mapped == "text":
-                if metadata.get("textPresentation") and "text" not in seen:
-                    formats.append("text")
-                    seen.add("text")
-
-                continue
-
-            if mapped in seen:
-                continue
-
-            if mapped in {"table", "tree", "chart", "kpi", "dashboard"}:
-                formats.append(mapped)
-                seen.add(mapped)
-
-        if metadata.get("textPresentation") and "text" not in seen:
-            formats.insert(0, "text")
-
-        if metadata.get("textPresentation") and "canvas" not in seen:
-            formats.append("canvas")
 
         metadata["availableFormats"] = formats
 

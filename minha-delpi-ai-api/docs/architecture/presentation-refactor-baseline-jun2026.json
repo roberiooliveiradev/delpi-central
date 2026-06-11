@@ -54,30 +54,21 @@
       "kpi_dashboard",
       "kpi_series",
       "kpi_snapshot",
-      "last_purchase",
       "playbook_report",
-      "purchase_budget_history",
-      "purchase_list",
-      "purchase_price_history",
       "sql",
       "system",
       "table_list"
     ],
     "tierAMissingVisualBuilders": [],
     "tierAMissingTableAssembly": [],
-    "tierAMissingSectionRules": [
-      "last_purchase",
-      "purchase_price_history",
-      "purchase_budget_history",
-      "purchase_list"
-    ]
+    "tierAMissingSectionRules": []
   },
   "dedicatedEnrichMethods": [],
   "profileFlagVariables": [],
   "files": [
     {
       "relativePath": "app/application/use_cases/execute_external_action_use_case.py",
-      "lineCount": 867,
+      "lineCount": 329,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],
@@ -85,7 +76,7 @@
     },
     {
       "relativePath": "app/domain/services/chat_presentation_visual_bundle_service.py",
-      "lineCount": 427,
+      "lineCount": 407,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],

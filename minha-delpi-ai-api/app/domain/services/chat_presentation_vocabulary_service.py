@@ -196,6 +196,15 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return tuple(cases)
 
     @classmethod
+    def presentation_title_policies(cls) -> tuple[dict[str, Any], ...]:
+        raw = cls.node("playbook12Refactor", "presentationTitlePolicies")
+
+        if not isinstance(raw, list):
+            return ()
+
+        return tuple(item for item in raw if isinstance(item, dict))
+
+    @classmethod
     def table_role_default(cls) -> str:
         return cls.text("tableRoles", "defaultRole", default="other")
 

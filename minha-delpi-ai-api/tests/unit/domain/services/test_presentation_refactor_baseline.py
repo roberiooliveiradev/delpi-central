@@ -49,6 +49,7 @@ def test_refactor_baseline_summary_has_expected_debt() -> None:
     assert summary["visualBundleDedicatedEnrichCount"] == 0
     assert summary["tierAMissingVisualBuildersCount"] == 0
     assert summary["tierAMissingTableAssemblyCount"] == 0
+    assert report["profileGaps"]["tierAMissingSectionRules"] == []
 
 
 def test_tier_a_profiles_listed_in_vocabulary_cases() -> None:
