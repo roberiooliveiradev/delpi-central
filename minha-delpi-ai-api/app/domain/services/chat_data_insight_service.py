@@ -176,7 +176,6 @@ class ChatDataInsightService:
             attention.append(
                 ChatHumanizedDataResponseContentService.get("generic", "largeList")
             )
-            commentary["paginated"] = True
 
         numeric_keys = shape.get("numericKeys") or []
 

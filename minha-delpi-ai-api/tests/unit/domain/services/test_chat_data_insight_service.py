@@ -138,3 +138,47 @@ def test_build_generic_categorical_shape_adds_visual_hint():
 
     assert derived_metrics
     assert derived_metrics[0].get("label") == "Registros"
+
+
+def test_build_generic_complete_list_does_not_mark_pagination_limitation():
+    rows = [
+        {
+            "production_order": f"245559010{index:02d}",
+            "product_code": "70260010",
+            "description": "CHICOTE BUHLER",
+            "planned_qty": 0.001,
+        }
+        for index in range(50)
+    ]
+    metadata = {
+        "path": "/production/schedule/today",
+        "paginationConsolidation": {
+            "completed": True,
+            "mergedCount": 50,
+            "consolidatedPayload": {
+                "items": rows,
+                "page": 1,
+                "page_size": 50,
+                "total": 50,
+                "total_pages": 1,
+            },
+        },
+        "tablePresentation": {"type": "table", "rows": rows},
+    }
+    data = {
+        "items": rows,
+        "summary": {"total_records": 50, "reference_date": "20260611"},
+        "pagination": {"limit": 50, "offset": 0, "returned": 50},
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "generic_list"
+    assert not (data_answer.get("limitations") or [])
+    attention = " ".join(data_answer.get("summary", {}).get("attention") or [])
+    assert "extensa" in attention.lower() or any(
+        "extensa" in str(line).lower()
+        for line in (data_answer.get("analysis") or [])
+        if isinstance(line, dict)
+    )
