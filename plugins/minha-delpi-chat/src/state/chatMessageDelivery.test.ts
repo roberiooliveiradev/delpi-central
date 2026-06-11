@@ -148,18 +148,26 @@ describe("sessionAwaitingAssistantResponse", () => {
 });
 
 describe("resolveUnansweredTurnRecovery", () => {
-  it("oferece saída quando a última mensagem do usuário ficou sem resposta", () => {
+  it("não exibe recuperação após cancelamento explícito do usuário", () => {
     expect(
       resolveUnansweredTurnRecovery([
         userMessage("user-1", "me fale do produto 10080023", "cancelled"),
+      ]),
+    ).toBeNull();
+  });
+
+  it("oferece saída quando a última mensagem do usuário ficou órfã sem resposta", () => {
+    expect(
+      resolveUnansweredTurnRecovery([
+        userMessage("user-1", "me fale do produto 10080023", "ready"),
       ]),
     ).toEqual({
       messageId: "user-1",
       retryContent: "me fale do produto 10080023",
       title: "Não consegui concluir a resposta.",
       message:
-        "A resposta foi interrompida antes de terminar. Você pode tentar enviar de novo.",
-      reason: "cancelled",
+        "Não recebi resposta para esta pergunta. Tente de novo ou ative um agente com acesso aos dados.",
+      reason: "orphaned",
     });
   });
 

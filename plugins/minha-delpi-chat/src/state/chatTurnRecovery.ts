@@ -65,6 +65,13 @@ export function resolveUnansweredTurnRecovery(
     return null;
   }
 
+  const deliveryStatus = getDeliveryStatus(last.metadata);
+
+  // Cancelamento explícito (botão Parar) não é falha — o rascunho já volta ao composer.
+  if (deliveryStatus === "cancelled") {
+    return null;
+  }
+
   const retryContent = String(last.content || "").trim();
 
   if (!retryContent) {
