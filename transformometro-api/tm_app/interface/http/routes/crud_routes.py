@@ -13,13 +13,12 @@ from tm_app.core.catalogs import (
     CATEGORIAS,
     CRITERIO_RATEIO,
     RECORRENCIAS,
-    SETORES,
     STATUS_PROCESSO,
     STATUS_RECURSO,
+    STATUS_SETOR,
     TIPO_CUSTO_RECURSO,
     TIPO_INVESTIMENTO,
     assert_in,
-    options_payload,
 )
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import row_to_json, rows_to_json
@@ -49,6 +48,7 @@ from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
+from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoBody,
     InvestimentoUpdateBody,
@@ -60,6 +60,8 @@ from tm_app.interface.http.schemas.crud_schemas import (
     RecursoCustoBody,
     RecursoCustoReajusteBody,
     RevisaoBody,
+    SetorBody,
+    SetorUpdateBody,
     VinculoBody,
     VinculoUpdateBody,
 )
@@ -122,8 +124,23 @@ def _recalc_after_global_resource_change() -> None:
 
 def _validate_processo_body(body: ProcessoCreateBody):
     assert_in(body.filial_id, ("01", "02"), "filial_id")
-    assert_in(body.setor_id, SETORES, "setor_id")
+    if not SetorRepository().is_active_for_filial(body.setor_id, body.filial_id):
+        raise ValueError(
+            f"setor_id '{body.setor_id}' não está vinculado à filial {body.filial_id}"
+        )
     assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
+
+
+def _validate_setor_body(body: SetorBody | SetorUpdateBody, *, is_create: bool):
+    assert_in(body.status_setor, STATUS_SETOR, "status_setor")
+    for filial_id in body.filiais:
+        assert_in(filial_id, ("01", "02"), "filial_id")
+    if is_create and isinstance(body, SetorBody):
+        from tm_app.infrastructure.persistence.repositories.setor_repository import (
+            normalize_setor_id,
+        )
+
+        normalize_setor_id(body.setor_id or body.nome_setor)
 
 
 def _validate_recurso_body(body: RecursoBody):
@@ -413,6 +430,69 @@ def delete_investimento(investimento_id: str, request: Request):
     _audit(request, "investimento", investimento_id, "delete", {})
     _recalc_after_revisao(str(existing["revisao_id"]))
     return ok(message="Investimento excluído.")
+
+
+# --- Setores ---
+
+
+@router.get("/setores")
+def list_setores(filial_id: str | None = None):
+    rows = SetorRepository().list(filial_id=filial_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/setores/{setor_id}")
+def get_setor(setor_id: str):
+    row = SetorRepository().get(setor_id)
+    if not row:
+        return fail("Setor não encontrado.", 404)
+    return ok(row_to_json(row))
+
+
+@router.post("/setores")
+def create_setor(body: SetorBody, request: Request):
+    try:
+        _validate_setor_body(body, is_create=True)
+        row = SetorRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("create_setor_failed")
+        return fail(format_api_error(exc), 500)
+
+    sid = str(row["setor_id"])
+    _audit(request, "setor", sid, "create", body.model_dump())
+    return ok(row_to_json(row), "Setor criado.", 201)
+
+
+@router.put("/setores/{setor_id}")
+def update_setor(setor_id: str, body: SetorUpdateBody, request: Request):
+    try:
+        _validate_setor_body(body, is_create=False)
+        row = SetorRepository().update(setor_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("update_setor_failed")
+        return fail(format_api_error(exc), 500)
+
+    if not row:
+        return fail("Setor não encontrado.", 404)
+
+    _audit(request, "setor", setor_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Setor atualizado.")
+
+
+@router.delete("/setores/{setor_id}")
+def delete_setor(setor_id: str, request: Request):
+    try:
+        if not SetorRepository().soft_delete(setor_id):
+            return fail("Setor não encontrado.", 404)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    _audit(request, "setor", setor_id, "delete", {})
+    return ok(message="Setor excluído.")
 
 
 # --- Recursos ---

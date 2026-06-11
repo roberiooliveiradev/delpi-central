@@ -99,6 +99,19 @@ class RecursoCustoReajusteBody(BaseModel):
     observacoes: Optional[str] = None
 
 
+class SetorBody(BaseModel):
+    setor_id: str = Field(min_length=1, max_length=64)
+    nome_setor: str = Field(min_length=1, max_length=255)
+    filiais: list[str] = Field(min_length=1)
+    status_setor: str = Field(default="ativo", max_length=32)
+
+
+class SetorUpdateBody(BaseModel):
+    nome_setor: str = Field(min_length=1, max_length=255)
+    filiais: list[str] = Field(min_length=1)
+    status_setor: str = Field(default="ativo", max_length=32)
+
+
 class RecursoBody(BaseModel):
     nome_recurso: str
     tipo_custo: str

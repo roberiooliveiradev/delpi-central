@@ -1,4 +1,5 @@
 import type { OptionsData } from "../../data/api/transformometroApi";
+import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
 import type { ProcessoFormState } from "./processoForm";
 
 type Props = {
@@ -10,6 +11,15 @@ type Props = {
 
 export function ProcessoFormFields({ form, options, codigoProcesso, onChange }: Props) {
   const set = (patch: Partial<ProcessoFormState>) => onChange({ ...form, ...patch });
+  const setoresDisponiveis = filterSetoresByFilial(options.setores, form.filial_id);
+
+  function handleFilialChange(filialId: string) {
+    onChange({
+      ...form,
+      filial_id: filialId,
+      setor_id: resolveSetorIdForFilial(options.setores, filialId, form.setor_id),
+    });
+  }
 
   return (
     <div className="ds-filters-row ds-filters-row--extended">
@@ -33,7 +43,7 @@ export function ProcessoFormFields({ form, options, codigoProcesso, onChange }: 
         <select
           id="tm-proc-filial"
           value={form.filial_id}
-          onChange={(e) => set({ filial_id: e.target.value })}
+          onChange={(e) => handleFilialChange(e.target.value)}
         >
           {options.filiais.map((f) => (
             <option key={f.id} value={f.id}>
@@ -48,10 +58,11 @@ export function ProcessoFormFields({ form, options, codigoProcesso, onChange }: 
           id="tm-proc-setor"
           value={form.setor_id}
           onChange={(e) => set({ setor_id: e.target.value })}
+          disabled={setoresDisponiveis.length === 0}
         >
-          {options.setores.map((s) => (
-            <option key={s} value={s}>
-              {s}
+          {setoresDisponiveis.map((setor) => (
+            <option key={setor.id} value={setor.id}>
+              {setor.label}
             </option>
           ))}
         </select>

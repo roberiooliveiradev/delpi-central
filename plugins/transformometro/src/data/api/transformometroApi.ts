@@ -114,9 +114,23 @@ export type Revisao = {
   observacoes?: string | null;
 };
 
+export type SetorOption = {
+  id: string;
+  label: string;
+  filiais: string[];
+};
+
+export type Setor = {
+  setor_id: string;
+  nome_setor: string;
+  status_setor: string;
+  filiais: string[];
+};
+
 export type OptionsData = {
   filiais: { id: string; label: string }[];
-  setores: string[];
+  setores: SetorOption[];
+  status_setor: string[];
   status_processo: string[];
   cenario_tipo: string[];
   recorrencias: string[];
@@ -131,6 +145,48 @@ export type OptionsData = {
 
 export function fetchOptions(getAccessToken?: () => string | undefined) {
   return request<OptionsData>("/options", getAccessToken);
+}
+
+export function fetchSetores(
+  getAccessToken?: () => string | undefined,
+  filialId?: string
+) {
+  const qs = filialId ? `?${new URLSearchParams({ filial_id: filialId })}` : "";
+  return request<{ total: number; items: Setor[] }>(`/setores${qs}`, getAccessToken);
+}
+
+export function createSetor(
+  payload: {
+    setor_id: string;
+    nome_setor: string;
+    filiais: string[];
+    status_setor?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Setor>("/setores", getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateSetor(
+  setorId: string,
+  payload: {
+    nome_setor: string;
+    filiais: string[];
+    status_setor?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Setor>(`/setores/${setorId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteSetor(setorId: string, getAccessToken?: () => string | undefined) {
+  return request<null>(`/setores/${setorId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchProcessos(

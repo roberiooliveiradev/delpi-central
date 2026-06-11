@@ -1,9 +1,14 @@
 from fastapi import APIRouter
 
-from tm_app.core.catalogs import options_payload
+import logging
+
+from tm_app.core.catalogs import DEFAULT_SETORES, FILIAIS, options_payload
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import ok
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/transformometro", tags=["Transformometro"])
 
@@ -33,6 +38,17 @@ def module_health():
     }
 
 
+def _load_setores_for_options() -> list[dict]:
+    try:
+        return SetorRepository().list_for_options()
+    except Exception as exc:
+        logger.warning("setores_options_fallback err=%s", format_api_error(exc))
+        return [
+            {"id": setor_id, "label": setor_id, "filiais": list(FILIAIS.keys())}
+            for setor_id in DEFAULT_SETORES
+        ]
+
+
 @router.get("/options")
 def get_options():
-    return ok(options_payload())
+    return ok(options_payload(_load_setores_for_options()))

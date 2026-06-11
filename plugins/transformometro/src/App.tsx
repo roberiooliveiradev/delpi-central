@@ -2,6 +2,7 @@ import { DashboardPage } from "./ui/pages/DashboardPage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
+import { SetoresPage } from "./ui/pages/SetoresPage";
 import { RecursosPage } from "./ui/pages/RecursosPage";
 import { DataTransferPage } from "./ui/pages/DataTransferPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
@@ -58,6 +59,12 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   if (route.view === "recursos") {
     return (
       <RecursosPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    );
+  }
+
+  if (route.view === "setores") {
+    return (
+      <SetoresPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
   }
 

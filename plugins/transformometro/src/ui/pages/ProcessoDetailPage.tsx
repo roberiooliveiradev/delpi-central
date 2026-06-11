@@ -30,6 +30,7 @@ import {
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
+import { setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   payloadFromProcessoForm,
@@ -356,7 +357,7 @@ export function ProcessoDetailPage({
         title={`${processo.codigo_processo} — ${processo.nome_processo}`}
         subtitle={[
           `Filial ${processo.filial_id}`,
-          processo.setor_id,
+          setorLabel(options?.setores, processo.setor_id),
           processo.status_processo,
           processo.familia_processo ? `família ${processo.familia_processo}` : null,
           processo.agrupador_ferramenta ? processo.agrupador_ferramenta : null,
@@ -429,7 +430,9 @@ export function ProcessoDetailPage({
             </div>
             <div>
               <dt>Filial / setor</dt>
-              <dd>{processo.filial_id} · {processo.setor_id}</dd>
+              <dd>
+                {processo.filial_id} · {setorLabel(options?.setores, processo.setor_id)}
+              </dd>
             </div>
             {processo.familia_processo ? (
               <div>

@@ -1,6 +1,6 @@
 FILIAIS = {"01": "Matriz", "02": "Filial"}
 
-SETORES = (
+DEFAULT_SETORES = (
     "engenharia",
     "qualidade",
     "pcp",
@@ -10,6 +10,7 @@ SETORES = (
     "almoxarifado",
 )
 
+STATUS_SETOR = ("ativo", "inativo")
 STATUS_PROCESSO = ("ativo", "descontinuado", "em_implantacao")
 CENARIO_TIPO = ("baseline", "melhoria", "automacao", "correcao")
 TIPO_INVESTIMENTO = ("fixo", "variavel", "recorrente", "unico")
@@ -27,10 +28,16 @@ def assert_in(value: str, allowed: tuple[str, ...], field: str) -> None:
         raise ValueError(f"{field} inválido: {value}")
 
 
-def options_payload() -> dict:
+def options_payload(setores: list[dict] | None = None) -> dict:
+    if setores is None:
+        setores = [
+            {"id": setor_id, "label": setor_id, "filiais": list(FILIAIS.keys())}
+            for setor_id in DEFAULT_SETORES
+        ]
     return {
         "filiais": [{"id": k, "label": v} for k, v in FILIAIS.items()],
-        "setores": list(SETORES),
+        "setores": setores,
+        "status_setor": list(STATUS_SETOR),
         "status_processo": list(STATUS_PROCESSO),
         "cenario_tipo": list(CENARIO_TIPO),
         "tipo_investimento": list(TIPO_INVESTIMENTO),

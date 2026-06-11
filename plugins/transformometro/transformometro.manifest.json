@@ -78,6 +78,15 @@
       "showInMenu": true
     },
     {
+      "path": "/apps/transformometro/setores",
+      "label": "Setores",
+      "permission": "transformometro.processes.manage",
+      "icon": "building-2",
+      "entry": null,
+      "order": 22.5,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/transformometro/recursos",
       "label": "Recursos",
       "permission": "transformometro.shared-resources.manage",

@@ -19,6 +19,7 @@ import {
   type Processo,
 } from "../../data/api/transformometroApi";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
+import { filterSetoresByFilial, setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
@@ -160,6 +161,11 @@ export function ProcessosPage({
     }
   }
 
+  const setoresFiltrados = useMemo(
+    () => filterSetoresByFilial(options?.setores ?? [], filialId),
+    [filialId, options?.setores]
+  );
+
   const editingRow = editingId ? items.find((p) => p.processo_id === editingId) : null;
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
@@ -173,7 +179,12 @@ export function ProcessosPage({
         render: (row) => row.nome_processo,
       },
       { key: "filial", header: "Filial", render: (row) => row.filial_id, sortable: true },
-      { key: "setor", header: "Setor", render: (row) => row.setor_id, sortable: true },
+      {
+        key: "setor",
+        header: "Setor",
+        render: (row) => setorLabel(options?.setores, row.setor_id),
+        sortable: true,
+      },
       {
         key: "familia",
         header: "Família",
@@ -222,7 +233,7 @@ export function ProcessosPage({
         ),
       },
     ],
-    []
+    [options?.setores]
   );
 
   return (
@@ -293,7 +304,15 @@ export function ProcessosPage({
               <select
                 id="tm-proc-list-filial"
                 value={filialId}
-                onChange={(e) => setFilialId(e.target.value)}
+                onChange={(e) => {
+                  const nextFilial = e.target.value;
+                  setFilialId(nextFilial);
+                  setSetorId((current) => {
+                    if (!nextFilial || !current) return current;
+                    const available = filterSetoresByFilial(options?.setores ?? [], nextFilial);
+                    return available.some((setor) => setor.id === current) ? current : "";
+                  });
+                }}
               >
                 <option value="">Todas</option>
                 {(options?.filiais ?? []).map((f) => (
@@ -311,11 +330,13 @@ export function ProcessosPage({
                 onChange={(e) => setSetorId(e.target.value)}
               >
                 <option value="">Todos</option>
-                {(options?.setores ?? []).map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+                {(setoresFiltrados.length > 0 ? setoresFiltrados : (options?.setores ?? [])).map(
+                  (setor) => (
+                    <option key={setor.id} value={setor.id}>
+                      {setor.label}
+                    </option>
+                  )
+                )}
               </select>
             </div>
             <div className="ds-filter-box">

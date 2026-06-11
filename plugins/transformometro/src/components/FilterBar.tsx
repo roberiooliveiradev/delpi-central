@@ -1,4 +1,5 @@
 import type { OptionsData } from "../data/api/transformometroApi";
+import { filterSetoresByFilial } from "../utils/setores";
 import { PageHeader } from "./PageHeader";
 
 type FilterBarProps = {
@@ -38,6 +39,8 @@ export function FilterBar({
   refreshing = false,
   headerActions,
 }: FilterBarProps) {
+  const setoresFiltrados = filterSetoresByFilial(options?.setores ?? [], branch);
+
   return (
     <>
       <PageHeader
@@ -83,9 +86,9 @@ export function FilterBar({
           <label htmlFor="tm-setor">Setor</label>
           <select id="tm-setor" value={setorId} onChange={(e) => onSetorChange(e.target.value)}>
             <option value="">Todos</option>
-            {(options?.setores ?? []).map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {(setoresFiltrados.length > 0 ? setoresFiltrados : (options?.setores ?? [])).map((setor) => (
+              <option key={setor.id} value={setor.id}>
+                {setor.label}
               </option>
             ))}
           </select>
