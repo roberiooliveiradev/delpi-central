@@ -14,6 +14,7 @@ import {
   listAdminQualityIssues,
   updateAdminQualityIssueStatus,
   getAdminInteractivitySummary,
+  getAdminTypingCorrectionSummary,
   getAdminPresentationSummary,
   getAdminSessionMemorySummary,
   getAdminTextTaskSummary,
@@ -33,6 +34,7 @@ import type {
   AdminQualityReport,
   AdminQualityIssue,
   AdminInteractivitySummary,
+  AdminTypingCorrectionSummary,
   AdminPresentationSummary,
   AdminSessionMemorySummary,
   AdminTextTaskSummary,
@@ -52,6 +54,7 @@ import { AdminFeedbackMetrics } from "./AdminFeedbackMetrics";
 import { AdminQualityUnifiedMetrics } from "./AdminQualityUnifiedMetrics";
 import { AdminQualityOperations } from "./AdminQualityOperations";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
+import { AdminTypingCorrectionMetrics } from "./AdminTypingCorrectionMetrics";
 import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminSessionMemoryMetrics } from "./AdminSessionMemoryMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
@@ -321,6 +324,10 @@ export function AdminMetricsTab({
     useState<AdminInteractivitySummary | null>(null);
   const [isLoadingInteractivitySummary, setIsLoadingInteractivitySummary] =
     useState(false);
+  const [typingCorrectionSummary, setTypingCorrectionSummary] =
+    useState<AdminTypingCorrectionSummary | null>(null);
+  const [isLoadingTypingCorrectionSummary, setIsLoadingTypingCorrectionSummary] =
+    useState(false);
   const [presentationSummary, setPresentationSummary] =
     useState<AdminPresentationSummary | null>(null);
   const [isLoadingPresentationSummary, setIsLoadingPresentationSummary] =
@@ -466,6 +473,20 @@ export function AdminMetricsTab({
       .then(setInteractivitySummary)
       .catch(() => setInteractivitySummary(null))
       .finally(() => setIsLoadingInteractivitySummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setTypingCorrectionSummary(null);
+      return;
+    }
+
+    setIsLoadingTypingCorrectionSummary(true);
+
+    void getAdminTypingCorrectionSummary(metricsHours, { getAccessToken })
+      .then(setTypingCorrectionSummary)
+      .catch(() => setTypingCorrectionSummary(null))
+      .finally(() => setIsLoadingTypingCorrectionSummary(false));
   }, [getAccessToken, metricsHours]);
 
   useEffect(() => {
@@ -734,6 +755,12 @@ export function AdminMetricsTab({
       <AdminInteractivityMetrics
         summary={interactivitySummary}
         isLoading={isLoadingInteractivitySummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminTypingCorrectionMetrics
+        summary={typingCorrectionSummary}
+        isLoading={isLoadingTypingCorrectionSummary}
         windowHours={windowLabel}
       />
 

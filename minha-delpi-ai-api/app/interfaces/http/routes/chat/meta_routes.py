@@ -194,6 +194,23 @@ def record_assistant_help_event():
                 metadata=event_snapshot,
             )
 
+    if event.startswith("typing_correction_"):
+        from app.domain.services.chat_typing_correction_admin_metrics_service import (
+            ChatTypingCorrectionAdminMetricsService,
+        )
+
+        event_snapshot = ChatTypingCorrectionAdminMetricsService.snapshot_from_event(
+            event=event,
+            metadata=safe_meta,
+        )
+
+        if event_snapshot:
+            make_audit_repository().log(
+                user_id=UUID(str(g.current_user.sub)),
+                action="chat.typing_correction.event",
+                metadata=event_snapshot,
+            )
+
     try:
         db.session.commit()
     except Exception:

@@ -218,7 +218,7 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 | **P14-1 — Serviço + diff** | `ChatTypingCorrectionService.suggest()`; testes espelhando `test_chat_message_normalization_service.py` | API pura; sem UI | **Concluído** |
 | **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | **Concluído** |
 | **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | **Concluído** |
-| **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | Parcial (`help-events`: `typing_correction_*`) |
+| **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | **Concluído** (`chat.typing_correction.event`, `GET /admin/metrics/typing-correction/summary`, `AdminTypingCorrectionMetrics`) |
 | **P14-5 — Fuzzy léxico** | SymSpell só vocabulário operacional (rotas, KPIs) | Gate falsos positivos | Backlog |
 
 **Ordem sugerida:** P14-0 → P14-1 → P14-2 → métricas.
@@ -284,7 +284,7 @@ Arquivos alvo:
 
 Hoje o chat **já tolera** typos operacionais na API, mas **esconde** a correção do usuário. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua — sem misturar com a habilidade de revisão textual por LLM e sem autocorrect agressivo em códigos ERP.
 
-Próximo passo de engenharia: **P14-4** (dashboard admin de métricas) e **P14-5** (fuzzy léxico).
+Próximo passo de engenharia: **P14-5** (fuzzy léxico).
 
 ---
 

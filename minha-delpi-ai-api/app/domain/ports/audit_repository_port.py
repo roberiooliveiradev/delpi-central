@@ -89,6 +89,9 @@ class AuditRepositoryPort(ABC):
     def get_presentation_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 
+    def get_typing_correction_summary(self, *, hours: int = 168) -> dict:
+        raise NotImplementedError
+
     def get_error_handling_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 

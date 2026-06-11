@@ -635,6 +635,32 @@ def admin_presentation_metrics_summary():
     return jsonify(use_case.execute(hours=hours)), 200
 
 
+@admin_bp.get("/metrics/typing-correction/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_typing_correction_metrics_summary():
+    from app.composition.admin_composer import make_get_admin_typing_correction_summary_use_case
+
+    use_case = make_get_admin_typing_correction_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours must be an integer",
+                        "path": "hours",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
 @admin_bp.get("/metrics/presentation/coverage")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_presentation_metrics_coverage():

@@ -667,6 +667,23 @@ export type AdminInteractivitySummary = {
   recentClicks: Record<string, unknown>[];
 };
 
+export type AdminTypingCorrectionSummary = {
+  windowHours: number;
+  since: string;
+  offeredCount: number;
+  acceptedCount: number;
+  dismissedCount: number;
+  acceptedTurnsCount: number;
+  acceptanceRate: number;
+  dismissRate: number;
+  avgChangesPerAcceptance: number;
+  byEvent: Record<string, number>;
+  topCorrections: AdminInteractivityLabelCount[];
+  recentEvents: Record<string, unknown>[];
+  recentAcceptances: Record<string, unknown>[];
+  alerts: string[];
+};
+
 export type AdminDrawingAnalysisSummary = {
   windowHours: number;
   since: string;

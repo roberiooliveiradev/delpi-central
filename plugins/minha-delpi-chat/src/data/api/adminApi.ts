@@ -45,6 +45,7 @@ import type {
   AdminQualityReport,
   AdminQualityIssue,
   AdminInteractivitySummary,
+  AdminTypingCorrectionSummary,
   AdminPresentationSummary,
   AdminSessionMemorySummary,
   AdminTextTaskSummary,
@@ -895,6 +896,21 @@ export async function getAdminInteractivitySummary(
   );
 
   return parseJsonResponse<AdminInteractivitySummary>(response);
+}
+
+export async function getAdminTypingCorrectionSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminTypingCorrectionSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/typing-correction/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminTypingCorrectionSummary>(response);
 }
 
 export async function getAdminPresentationSummary(

@@ -860,6 +860,9 @@ class ChatTurnCompletionService:
         from app.domain.services.chat_error_handling_admin_metrics_service import (
             ChatErrorHandlingAdminMetricsService,
         )
+        from app.domain.services.chat_typing_correction_admin_metrics_service import (
+            ChatTypingCorrectionAdminMetricsService,
+        )
         from app.domain.services.chat_web_search_admin_metrics_service import (
             ChatWebSearchAdminMetricsService,
         )
@@ -926,6 +929,10 @@ class ChatTurnCompletionService:
         ChatWebSearchAdminMetricsService.enrich_audit_metadata(
             audit_metadata,
             assistant_metadata=assistant_metadata,
+        )
+        ChatTypingCorrectionAdminMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            typing_correction=turn.request.typing_correction,
         )
         ChatWebSearchAdminMetricsService.log_security_events_if_needed(
             self.audit_repository,

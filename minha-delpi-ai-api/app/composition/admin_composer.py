@@ -225,6 +225,14 @@ def make_get_admin_presentation_summary_use_case() -> GetAdminPresentationSummar
     return GetAdminPresentationSummaryUseCase(PostgresAuditRepository())
 
 
+def make_get_admin_typing_correction_summary_use_case():
+    from app.application.use_cases.get_admin_typing_correction_summary_use_case import (
+        GetAdminTypingCorrectionSummaryUseCase,
+    )
+
+    return GetAdminTypingCorrectionSummaryUseCase(PostgresAuditRepository())
+
+
 def make_get_admin_presentation_coverage_use_case() -> GetAdminPresentationCoverageUseCase:
     return GetAdminPresentationCoverageUseCase()
 

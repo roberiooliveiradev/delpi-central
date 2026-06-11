@@ -39,6 +39,7 @@ Princípios: **sugerir, não impor**; spans protegidos (códigos `\d{5+}`, `@men
 | Capabilities | `GET /chat/capabilities` → `typingCorrectionEnabled` |
 | Metadata turno | `typingCorrection` na mensagem user quando aceita (`SendChatMessageRequest`) |
 | Telemetria | `POST /chat/assistant/help-events`: `typing_correction_offered` \| `accepted` \| `dismissed` |
+| Métricas admin (P14-4) | Audit `chat.typing_correction.event`; `typingCorrectionMetrics` em turnos; `GET /admin/metrics/typing-correction/summary`; painel `AdminTypingCorrectionMetrics` |
 
 ### Contrato `POST /chat/typing-suggestions`
 
@@ -140,7 +141,7 @@ Homologação manual: **U2b** e smoke operacional #2 em [smoke-operacional-manua
 
 | Fase | Escopo |
 |------|--------|
-| P14-4 | Dashboard admin de métricas (além de help-events) |
+| P14-4 | ~~Dashboard admin de métricas~~ **Concluído** — `GET /admin/metrics/typing-correction/summary`, audit `chat.typing_correction.event`, `typingCorrectionMetrics` em turnos |
 | P14-5 | Fuzzy léxico operacional (SymSpell) |
 
 ---
