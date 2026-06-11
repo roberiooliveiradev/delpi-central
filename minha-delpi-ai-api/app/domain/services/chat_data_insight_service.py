@@ -17,6 +17,10 @@ from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
 
+from app.domain.services.chat_presentation_scalar_field_commentary_service import (
+    ChatPresentationScalarFieldCommentaryService,
+)
+
 
 class ChatDataInsightService:
     @classmethod
@@ -30,8 +34,8 @@ class ChatDataInsightService:
         if not isinstance(metadata, dict) or not isinstance(data, dict):
             return None
 
-        if cls._is_scalar_kpi_response(metadata, data):
-            commentary = cls._build_scalar_kpi_commentary(
+        if ChatPresentationScalarFieldCommentaryService.matches(metadata, data):
+            commentary = ChatPresentationScalarFieldCommentaryService.build(
                 metadata,
                 data,
                 format_quantity=format_quantity,
@@ -87,7 +91,16 @@ class ChatDataInsightService:
             if not commentary.get("derivedMetrics"):
                 commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
         elif not commentary.get("visualHints"):
-            commentary["visualHints"] = ["field_value_profile"]
+            from app.domain.services.chat_humanized_data_response_content_service import (
+                ChatHumanizedDataResponseContentService,
+            )
+
+            hint = ChatHumanizedDataResponseContentService.get(
+                "scalarFieldProfile",
+                "visualHint",
+                default="field_value_profile",
+            )
+            commentary["visualHints"] = [hint]
 
         cls._apply_truncation_flags(commentary, metadata=metadata, data=data)
 
@@ -371,13 +384,13 @@ class ChatDataInsightService:
         if isinstance(nested, dict) and isinstance(nested.get("items"), list):
             return [row for row in nested["items"] if isinstance(row, dict)]
 
-        if cls._is_scalar_kpi_response(metadata, data):
+        if ChatPresentationScalarFieldCommentaryService.matches(metadata, data):
             return None
 
         if data and not isinstance(data.get("items"), list):
             nested_payload = data.get("data")
 
-            if isinstance(nested_payload, dict) and cls._is_scalar_kpi_response(
+            if isinstance(nested_payload, dict) and ChatPresentationScalarFieldCommentaryService.matches(
                 metadata,
                 nested_payload,
             ):
@@ -386,197 +399,6 @@ class ChatDataInsightService:
             return []
 
         return None
-
-    @classmethod
-    def _api_response_meta(cls, metadata: dict[str, Any]) -> dict[str, Any]:
-        api_meta = metadata.get("apiDelpiResponseMeta")
-
-        return api_meta if isinstance(api_meta, dict) else {}
-
-    @classmethod
-    def _unwrap_scalar_payload(cls, data: dict[str, Any]) -> dict[str, Any]:
-        nested = data.get("data")
-
-        if isinstance(nested, dict):
-            return nested
-
-        return data
-
-    @classmethod
-    def _scalar_skip_keys(cls) -> frozenset[str]:
-        return frozenset(
-            {
-                "branch",
-                "branches",
-                "start_date",
-                "end_date",
-                "date_start",
-                "date_end",
-                "end_date_exclusive",
-                "month",
-                "granularity",
-                "enabled",
-                "truncated",
-                "sort_key",
-                "indicator_id",
-                "indicator_code",
-                "indicator_name",
-                "goal_mode",
-                "goal_periodicity",
-                "goal_scope_branch",
-                "goal_scope_label",
-                "goal_scope_hint",
-                "scope_type",
-                "performance_direction",
-                "value_decimals",
-                "value_prefix",
-                "value_suffix",
-                "value_unit",
-                "has_goal",
-                "comparable_goal",
-                "goal_label",
-                "goal_value",
-                "period_reference",
-                "periodo",
-                "location",
-                "unit",
-            }
-        )
-
-    @classmethod
-    def _scalar_metric_priority(cls) -> tuple[str, ...]:
-        return (
-            "rol",
-            "value",
-            "percentage",
-            "current",
-            "gross_revenue",
-            "financial_balance",
-            "target",
-            "previous",
-        )
-
-    @classmethod
-    def _is_scalar_kpi_response(
-        cls,
-        metadata: dict[str, Any],
-        data: dict[str, Any],
-    ) -> bool:
-        if not isinstance(data, dict):
-            return False
-
-        api_meta = cls._api_response_meta(metadata)
-        shape = str(api_meta.get("shape") or "").strip().lower()
-
-        if shape == "scalar":
-            return True
-
-        if isinstance(data.get("items"), list):
-            return False
-
-        payload = cls._unwrap_scalar_payload(data)
-        skip = cls._scalar_skip_keys()
-        numeric_fields = [
-            key
-            for key, value in payload.items()
-            if str(key) not in skip
-            and isinstance(value, (int, float))
-            and not isinstance(value, bool)
-        ]
-
-        if not numeric_fields:
-            return False
-
-        from app.domain.services.chat_presentation_profile_service import (
-            ChatPresentationProfileService,
-        )
-
-        entity = str(api_meta.get("entity") or "").strip() or None
-        profile_key = ChatPresentationProfileService.resolve_profile_key(
-            str(metadata.get("path") or ""),
-            entity,
-        )
-
-        return profile_key in {
-            "kpi_series",
-            "generic_kpi_series",
-            "kpi_snapshot",
-            "kpi_dashboard",
-        }
-
-    @classmethod
-    def _build_scalar_kpi_commentary(
-        cls,
-        metadata: dict[str, Any],
-        data: dict[str, Any],
-        *,
-        format_quantity: Callable[[Any, str | None], str] | None = None,
-    ) -> dict[str, Any] | None:
-        from app.domain.services.external_actions.external_action_column_label_service import (
-            ExternalActionColumnLabelService,
-        )
-
-        payload = cls._unwrap_scalar_payload(data)
-
-        if not isinstance(payload, dict):
-            return None
-
-        api_meta = cls._api_response_meta(metadata)
-        field_labels = api_meta.get("fields") if isinstance(api_meta.get("fields"), dict) else {}
-        field_formats = (
-            api_meta.get("fieldFormats") if isinstance(api_meta.get("fieldFormats"), dict) else {}
-        )
-        label_service = ExternalActionColumnLabelService()
-        skip = cls._scalar_skip_keys()
-        priority = cls._scalar_metric_priority()
-        ordered_keys: list[str] = []
-
-        for key in priority:
-            if key in payload and key not in skip and isinstance(payload.get(key), (int, float)):
-                ordered_keys.append(key)
-
-        for key, value in payload.items():
-            token = str(key)
-
-            if token in skip or token in ordered_keys:
-                continue
-
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                ordered_keys.append(token)
-
-        if not ordered_keys:
-            return None
-
-        def fmt(field_key: str, value: object) -> str:
-            if format_quantity:
-                return format_quantity(value, field_key)
-
-            return label_service.format_field_value(
-                field_key,
-                value,
-                schema_formats=field_formats,
-            )
-
-        highlights: list[str] = []
-
-        for key in ordered_keys[:8]:
-            label = str(field_labels.get(key) or key).strip()
-            highlights.append(f"**{label}:** {fmt(key, payload.get(key))}")
-
-        lead = highlights[0] if highlights else ""
-        profile_key = "generic_kpi_series"
-
-        return ChatHumanizedDataResponseService.normalize(
-            {
-                "profileKey": profile_key,
-                "highlights": highlights,
-                "attention": [],
-                "summaryLines": highlights[:4],
-                "alertLevel": "ok" if lead else "unknown",
-                "summary": lead,
-            },
-            profile_key=profile_key,
-        )
 
     @classmethod
     def _visual_hints_from_shape(cls, shape: dict[str, Any]) -> list[str]:

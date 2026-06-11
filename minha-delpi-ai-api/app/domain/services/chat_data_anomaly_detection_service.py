@@ -28,7 +28,10 @@ class ChatDataAnomalyDetectionService:
         rows: list[dict[str, Any]] | None,
         metadata: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
+        if rows is None:
+            return []
+
+        safe_rows = [row for row in rows if isinstance(row, dict)]
         meta = metadata if isinstance(metadata, dict) else {}
         anomalies: list[dict[str, Any]] = []
 

@@ -176,6 +176,64 @@
   "derivedMetrics": {
     "averageLabel": "Média"
   },
+  "scalarFieldProfile": {
+    "defaultCommentaryProfileKey": "generic_kpi_series",
+    "responseShapes": [
+      "scalar"
+    ],
+    "commentaryProfileKeys": [
+      "generic_kpi_series"
+    ],
+    "visualHint": "field_value_profile",
+    "maxHighlights": 8,
+    "highlightLineTemplate": "**{label}:** {value}",
+    "primaryFieldKeys": [
+      "value",
+      "percentage",
+      "current",
+      "target",
+      "previous"
+    ],
+    "skipFieldKeys": [
+      "branch",
+      "branches",
+      "start_date",
+      "end_date",
+      "date_start",
+      "date_end",
+      "end_date_exclusive",
+      "month",
+      "granularity",
+      "enabled",
+      "truncated",
+      "sort_key",
+      "indicator_id",
+      "indicator_code",
+      "indicator_name",
+      "goal_mode",
+      "goal_periodicity",
+      "goal_scope_branch",
+      "goal_scope_label",
+      "goal_scope_hint",
+      "scope_type",
+      "performance_direction",
+      "value_decimals",
+      "value_prefix",
+      "value_suffix",
+      "value_unit",
+      "has_goal",
+      "comparable_goal",
+      "goal_label",
+      "goal_value",
+      "period_reference",
+      "periodo",
+      "location",
+      "unit",
+      "points",
+      "registros",
+      "total_records"
+    ]
+  },
   "generic": {
     "emptyList": "A consulta não retornou registros.",
     "rowCount": "Foram retornados **{count}** registros.",
