@@ -233,7 +233,6 @@ function buildSingleViewRenderPlanSegments(
   metadata: Record<string, unknown>,
   plan: StackPresentationPlan,
   commentary: string,
-  layoutMode: string,
 ): NonNullable<PresentationRenderPlan["segments"]> {
   const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
   const decision = metadata.presentationDecision as Record<string, unknown> | undefined;
@@ -283,7 +282,7 @@ export function synthesizeRenderPlanFromToolCalls(
   const segments =
     layoutMode === "stack"
       ? buildStackRenderPlanSegments(metadata, plan, commentary, resolvedHints)
-      : buildSingleViewRenderPlanSegments(metadata, plan, commentary, layoutMode);
+      : buildSingleViewRenderPlanSegments(metadata, plan, commentary);
 
   if (!segments.length && hasTextPresentation(metadata, commentary)) {
     segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
@@ -343,7 +342,7 @@ function maybePushStackSection(
   segments: AssistantContentSegment[],
   sectionId: StackSectionId,
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
-  toolCalls: ChatToolCall[],
+  _toolCalls: ChatToolCall[],
 ): void {
   if (!usesStackSectionChrome(plan)) {
     return;
