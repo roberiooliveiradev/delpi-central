@@ -12,6 +12,7 @@
 |---|---|---|
 | GET | `/chat/status` | `chat.access` |
 | GET | `/chat/capabilities` | `chat.access` |
+| POST | `/chat/typing-suggestions` | `chat.access` |
 | GET | `/chat/assistant/catalog` | `chat.access` |
 
 Query opcional em `/chat/assistant/catalog`: `q` (busca), `agentId` (disponibilidade no agente), `limit` (1–50).
@@ -22,7 +23,9 @@ Resposta inclui `userContext` (`canUseTools`, `isSuperadmin`, `canOpenAdmin`) e 
 |---|---|---|
 | POST | `/chat/assistant/help-events` | `chat.access` |
 
-Body: `{ "event": "help_panel_open" | "help_panel_search" | "help_highlight_click" | "help_quick_prompt", "metadata": {} }`.
+Body: `{ "event": "help_panel_open" | … | "typing_correction_offered" | "typing_correction_accepted" | "typing_correction_dismissed", "metadata": {} }`.
+
+Body `POST /chat/typing-suggestions`: `{ "text": "estouque do produto 90262404", "locale": "pt-BR" }` → `{ "hasSuggestions", "corrected", "changes", "protectedSpans" }`.
 
 ## Chat — Sessões e mensagens
 

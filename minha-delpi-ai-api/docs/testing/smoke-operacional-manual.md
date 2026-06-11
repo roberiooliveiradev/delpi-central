@@ -92,6 +92,7 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 |---|----------|---------------|
 | U1 | que horas são? | Hora real (`America/Sao_Paulo` / `CHAT_UTILITY_TIMEZONE`); ~1 s; **sem** agentic/RAG/LLM |
 | U2 | que hors são? | Idem U1 (typo corrigido) |
+| U2b | *(composer)* digitar `estouque do produto 90262404` e pausar ~1 s | Chip «Você quis dizer…» com `estoque`; código intacto; **Enviar corrigido** ou **Manter original** |
 | U3 | q horas | Idem U1 (abreviação) |
 | U4 | que dia é hoje? | Data + dia da semana |
 | U5 | que dia é amanhã? | **Amanhã será** + data real (ex.: domingo, 31/05/2026); sem LLM |
@@ -179,7 +180,7 @@ Ver eventos SSE em [`../api/02-chat-sessoes-mensagens.md`](../api/02-chat-sessoe
 | # | Pergunta | O que esperar |
 |---|----------|---------------|
 | 1 | estoque do produto | Pede o código; não chama API de estoque/ROL |
-| 2 | estouque do produto | Mesmo comportamento (corrige typo) |
+| 2 | estouque do produto | Mesmo comportamento (corrige typo); opcional: chip no campo de mensagem antes do envio (Playbook 14) |
 | 3 | estoque do produto 10080022 | Consulta estoque; tabela/gráfico com dados |
 | 4 | quem te criou? | Resposta canônica sobre Minha DELPI; rápida, sem RAG |
 | 5 | olá | Saudação direta (`ChatSmallTalkService`); sem RAG/LLM |

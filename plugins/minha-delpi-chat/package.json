@@ -7,6 +7,7 @@
     "dev": "vite",
     "sync:product-operational-content": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/product_operational_content.json src/content/product_operational_content.json",
     "sync:presentation-vocabulary": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/presentation_vocabulary.json src/content/presentation_vocabulary.json",
+    "sync:message-composer-content": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/message_composer.json src/content/message_composer.json",
     "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",

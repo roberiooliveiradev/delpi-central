@@ -5,6 +5,7 @@ import {
   fetchTypingSuggestion,
   shouldClearTypingSuggestion,
 } from "../chatTypingCorrection";
+import { recordTypingCorrectionTelemetry } from "../../ui/typingCorrectionTelemetry";
 
 import type { ChatTypingSuggestion } from "../../data/api/chatTypes";
 
@@ -27,6 +28,7 @@ export function useChatTypingCorrection({
   const [isLoading, setIsLoading] = useState(false);
   const previousDraftRef = useRef(draft);
   const requestIdRef = useRef(0);
+  const lastOfferedOriginalRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -37,6 +39,7 @@ export function useChatTypingCorrection({
 
     if (shouldClearTypingSuggestion(previousDraftRef.current, draft)) {
       setSuggestion(null);
+      lastOfferedOriginalRef.current = null;
     }
 
     previousDraftRef.current = draft;
@@ -65,6 +68,18 @@ export function useChatTypingCorrection({
           }
 
           setSuggestion(nextSuggestion);
+
+          if (
+            nextSuggestion &&
+            lastOfferedOriginalRef.current !== nextSuggestion.original
+          ) {
+            lastOfferedOriginalRef.current = nextSuggestion.original;
+            recordTypingCorrectionTelemetry("typing_correction_offered", {
+              original: nextSuggestion.original,
+              corrected: nextSuggestion.corrected,
+              changeCount: nextSuggestion.changes.length,
+            });
+          }
         })
         .catch(() => {
           if (requestIdRef.current === requestId) {
@@ -88,8 +103,13 @@ export function useChatTypingCorrection({
       return;
     }
 
+    recordTypingCorrectionTelemetry("typing_correction_dismissed", {
+      original: suggestion.original,
+      corrected: suggestion.corrected,
+    });
     dismissTypingSuggestion(sessionId, suggestion.original);
     setSuggestion(null);
+    lastOfferedOriginalRef.current = null;
   };
 
   const clearSuggestion = () => {

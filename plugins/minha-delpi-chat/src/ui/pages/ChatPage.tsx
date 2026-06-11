@@ -122,6 +122,7 @@ import {
 import { useChatTypingCorrection } from "../../state/hooks/useChatTypingCorrection";
 import { getTypingCorrectionContent } from "../../content/messageComposerContent";
 import type { ChatTypingCorrectionMetadata } from "../../data/api/chatTypes";
+import { recordTypingCorrectionTelemetry } from "../typingCorrectionTelemetry";
 import {
   buildChatAdminAgentHref,
   buildChatAgentActionsHref,
@@ -985,6 +986,11 @@ export function ChatPage({
     }
 
     const metadata = buildTypingCorrectionMetadata(typingSuggestion, true);
+    recordTypingCorrectionTelemetry("typing_correction_accepted", {
+      original: typingSuggestion.original,
+      corrected: typingSuggestion.corrected,
+      changeCount: typingSuggestion.changes.length,
+    });
     clearTypingSuggestion();
     setDraft("");
 

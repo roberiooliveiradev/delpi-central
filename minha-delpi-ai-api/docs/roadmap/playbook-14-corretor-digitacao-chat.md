@@ -217,7 +217,7 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 | **P14-1 — Serviço + diff** | `ChatTypingCorrectionService.suggest()`; testes espelhando `test_chat_message_normalization_service.py` | API pura; sem UI | **Concluído** |
 | **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | **Concluído** |
 | **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | **Concluído** |
-| **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | Backlog |
+| **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | Parcial (`help-events`: `typing_correction_*`) |
 | **P14-5 — Fuzzy léxico** | SymSpell só vocabulário operacional (rotas, KPIs) | Gate falsos positivos | Backlog |
 
 **Ordem sugerida:** P14-0 → P14-1 → P14-2 → métricas.
@@ -258,13 +258,13 @@ Arquivos alvo:
 
 ## 13. Critérios de aceite (release)
 
-- [ ] Usuário vê sugestão antes do envio em typo conhecido (`estouque`).
-- [ ] Códigos de produto nunca alterados na sugestão.
-- [ ] Texto enviado = texto aceito; histórico coerente.
-- [ ] Matching interno idempotente com texto corrigido.
-- [ ] Regras aprendidas refletidas na UI sem redeploy do MFE (via API ou sync documentado).
-- [ ] Nenhum texto PT hardcoded fora de `assistant/*.json`.
-- [ ] Testes T1–T7 verdes.
+- [x] Usuário vê sugestão antes do envio em typo conhecido (`estouque`).
+- [x] Códigos de produto nunca alterados na sugestão.
+- [x] Texto enviado = texto aceito; histórico coerente.
+- [x] Matching interno idempotente com texto corrigido.
+- [x] Regras aprendidas refletidas na UI sem redeploy do MFE (via API ou sync documentado).
+- [x] Nenhum texto PT hardcoded fora de `assistant/*.json`.
+- [x] Testes T1–T7 verdes.
 
 ---
 
@@ -282,4 +282,4 @@ Arquivos alvo:
 
 Hoje o chat **já tolera** typos operacionais na API, mas **esconde** a correção do usuário. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua — sem misturar com a habilidade de revisão textual por LLM e sem autocorrect agressivo em códigos ERP.
 
-Próximo passo de engenharia: **P14-0 + P14-1** (`ChatTypingCorrectionService` + extração de regras para fonte única).
+Próximo passo de engenharia: **P14-0** (extrair regras estáticas para catálogo JSON) e **P14-4** (dashboard admin de métricas).

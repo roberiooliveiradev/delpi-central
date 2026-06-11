@@ -69,7 +69,20 @@ def test_adoption_presentation_events():
         assert result["event"] == event
 
 
-def test_adoption_self_help_events():
+def test_adoption_typing_correction_events():
+    for event in (
+        "typing_correction_offered",
+        "typing_correction_accepted",
+        "typing_correction_dismissed",
+    ):
+        result = ChatHelpAdoptionService.record(
+            user_id="user-1",
+            event=event,
+            metadata={"original": "estouque", "corrected": "estoque"},
+        )
+
+        assert result["ok"] is True
+        assert result["event"] == event
     for event in (
         "self_help_feedback",
         "self_help_suggestion_clicked",

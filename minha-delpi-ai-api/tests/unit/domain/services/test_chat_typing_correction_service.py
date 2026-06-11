@@ -6,6 +6,7 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_typing_correction_service import (
     ChatTypingCorrectionService,
 )
+from tests.fixtures.chat_typing_correction_cases import TYPING_CORRECTION_CASES
 
 
 @pytest.fixture(autouse=True)
@@ -13,6 +14,25 @@ def _clear_learned_rules():
     ChatMessageNormalizationService.clear_learned_rules()
     yield
     ChatMessageNormalizationService.clear_learned_rules()
+
+
+@pytest.mark.parametrize("case", TYPING_CORRECTION_CASES, ids=lambda case: case.id)
+def test_playbook_typing_correction_cases(case):
+    result = ChatTypingCorrectionService.suggest(case.text)
+
+    assert result["hasSuggestions"] is case.expect_suggestions
+
+    if case.expect_unchanged:
+        assert result["corrected"] == case.text
+
+    for token in case.expect_in_corrected:
+        assert token in result["corrected"]
+
+    for token in case.expect_not_in_corrected:
+        assert token not in result["corrected"]
+
+    if case.max_changes is not None:
+        assert len(result["changes"]) <= case.max_changes
 
 
 def test_t1_suggests_estoque_preserves_product_code():

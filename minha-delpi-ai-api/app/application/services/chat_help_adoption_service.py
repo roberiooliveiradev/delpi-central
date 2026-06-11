@@ -31,6 +31,9 @@ _ALLOWED_EVENTS = frozenset(
         "presentation_axis_change",
         "presentation_chart_export_png",
         "presentation_category_filter",
+        "typing_correction_offered",
+        "typing_correction_accepted",
+        "typing_correction_dismissed",
     }
 )
 
