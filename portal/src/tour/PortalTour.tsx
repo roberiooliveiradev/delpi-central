@@ -343,6 +343,14 @@ export function PortalTour() {
       );
 
       setCompletedIds(nextIds);
+      completedRef.current = nextIds;
+      if (remoteProgressRef.current) {
+        remoteProgressRef.current = {
+          ...remoteProgressRef.current,
+          status: "exploring",
+          completedQuestIds: Array.from(nextIds),
+        };
+      }
       syncPortalTourQuestCompleted(coreApi, Array.from(nextIds), questId);
 
       const categoryLabel = resolveCategoryJustCompleted(
@@ -513,18 +521,22 @@ export function PortalTour() {
       setActive(true);
       setPanelOpen(true);
     };
+    const reopenPortalTourFromRemote = () => {
+      if (completedRef.current.size > 0) return;
+      const hydrated = hydratePortalTourSessionFromRemote(remoteProgressRef.current);
+      completedRef.current = hydrated;
+      setCompletedIds(hydrated);
+    };
     const onOpenPanel = () => {
       if (!active) {
-        const remote = remoteProgressRef.current;
-        setCompletedIds(hydratePortalTourSessionFromRemote(remote));
+        reopenPortalTourFromRemote();
         setActive(true);
       }
       showPanel();
     };
     const onResume = () => {
       autoStartCheckedRef.current = true;
-      const remote = remoteProgressRef.current;
-      setCompletedIds(hydratePortalTourSessionFromRemote(remote));
+      reopenPortalTourFromRemote();
       setActive(true);
       showPanel();
     };

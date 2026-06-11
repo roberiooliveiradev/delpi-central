@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from app.application.unit_of_work import UnitOfWork
+from app.domain.portal_tour.portal_tour_quest_catalog import CURRENT_PORTAL_TOUR_VERSION
 
 
 @dataclass
@@ -53,10 +54,22 @@ class GetPortalTourProgressUseCase:
             )
             status = progress.status
 
+        completed_quest_ids = list(progress.completed_quest_ids)
+        quest_events = self.uow.portal_tour.list_quest_events(
+            user_id,
+            tour_version=progress.tour_version or CURRENT_PORTAL_TOUR_VERSION,
+        )
+        seen = set(completed_quest_ids)
+        for event in quest_events:
+            if event.quest_id in seen:
+                continue
+            completed_quest_ids.append(event.quest_id)
+            seen.add(event.quest_id)
+
         return PortalTourProgressResult(
             tour_version=progress.tour_version,
             status=status,
-            completed_quest_ids=list(progress.completed_quest_ids),
+            completed_quest_ids=completed_quest_ids,
             started_at=progress.started_at,
             last_activity_at=progress.last_activity_at,
             completed_at=progress.completed_at,

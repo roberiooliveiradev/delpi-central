@@ -200,11 +200,15 @@ export async function loadPortalTourProgress(
 }
 
 export function syncPortalTourStarted(api: CoreApi, completedQuestIds: string[]) {
-  enqueueSync(api, {
+  const payload: PortalTourSyncPayload = {
     tourVersion: PORTAL_TOUR_VERSION,
     status: "exploring",
-    completedQuestIds,
-  });
+  };
+  // Lista vazia no PATCH substitui o progresso remoto — omitir evita zerar ao retomar.
+  if (completedQuestIds.length > 0) {
+    payload.completedQuestIds = completedQuestIds;
+  }
+  enqueueSync(api, payload);
 }
 
 export function syncPortalTourQuestCompleted(

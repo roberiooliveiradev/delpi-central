@@ -56,7 +56,9 @@ class SyncPortalTourProgressUseCase:
             merged_quest_ids = []
 
         if completed_quest_ids is not None:
-            merged_quest_ids = list(completed_quest_ids)
+            incoming = list(completed_quest_ids)
+            if incoming or not merged_quest_ids:
+                merged_quest_ids = incoming
         elif completed_quest_id:
             quest_id = completed_quest_id.strip()
             if quest_id and quest_id not in merged_quest_ids:
