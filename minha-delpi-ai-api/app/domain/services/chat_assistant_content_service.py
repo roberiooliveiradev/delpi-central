@@ -169,11 +169,18 @@ class ChatAssistantContentService:
         path_key: str = "titlesByPathFragment",
         default: str | None = None,
     ) -> str | None:
-        """Primeiro fragmento de path que casar no mapa de títulos (ordem do JSON)."""
+        """Primeiro fragmento de path que casar no mapa de títulos (mais específico primeiro)."""
         lowered = str(path or "").lower()
         fragments = cls.get_mapping(bundle, path_key)
 
-        for fragment, label in fragments.items():
+        if not fragments:
+            return default
+
+        for fragment, label in sorted(
+            fragments.items(),
+            key=lambda item: len(str(item[0] or "")),
+            reverse=True,
+        ):
             if fragment in lowered:
                 return label
 

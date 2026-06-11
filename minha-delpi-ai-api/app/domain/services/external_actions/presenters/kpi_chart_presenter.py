@@ -552,16 +552,54 @@ class ExternalActionKpiChartPresenter:
         )
 
         lowered = str(path or "").lower()
+        playbook_title = ChatAssistantContentService.title_for_path(
+            "presenter_content",
+            path,
+            default=None,
+        )
+
+        if playbook_title and any(
+            token in lowered
+            for token in (
+                "/consumption/",
+                "/losses/",
+                "/schedule/today",
+                "/orders/open",
+                "/orders/finished",
+                "/orders/finished-without-consumption",
+                "/work-centers/",
+                "/allocation-gaps",
+                "/planned-vs-real-time",
+                "/purchases/top-products",
+            )
+        ):
+            return playbook_title
+
         matchers = ChatAssistantContentService.get_node(
             "presenter_content",
             "kpiPathMatchers",
         )
 
         if isinstance(matchers, list):
-            for entry in matchers:
-                if not isinstance(entry, dict):
-                    continue
+            generic_domain_fragments = frozenset(
+                {
+                    "/production/",
+                    "/financial/",
+                    "/finacial/",
+                    "/commercial/",
+                    "/quality/",
+                    "/hr/",
+                }
+            )
+            sorted_matchers = sorted(
+                (entry for entry in matchers if isinstance(entry, dict)),
+                key=lambda entry: (
+                    str(entry.get("fragment") or "") in generic_domain_fragments,
+                    -len(str(entry.get("fragment") or "")),
+                ),
+            )
 
+            for entry in sorted_matchers:
                 fragment = str(entry.get("fragment") or "").strip()
                 title_key = str(entry.get("titleKey") or "").strip()
 

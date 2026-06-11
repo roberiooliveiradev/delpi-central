@@ -49,13 +49,46 @@ class ExternalActionPlaybookReportPresenter:
                     )
 
             if items:
-                linhas.append(
-                    self._host._presenter_text(
-                        "playbookReports",
-                        "itemsReturnedLine",
-                        count=str(len(items)),
+                for item in items[:12]:
+                    if not isinstance(item, dict):
+                        continue
+
+                    label = str(item.get("description") or "").strip()
+
+                    if not label:
+                        for key in (
+                            "product_code",
+                            "item_code",
+                            "material_code",
+                            "component_code",
+                            "production_order",
+                            "work_center",
+                        ):
+                            token = str(item.get(key) or "").strip()
+
+                            if token:
+                                label = token
+                                break
+
+                    if label:
+                        linhas.append(f"- {label}")
+
+                if len(items) > 12:
+                    linhas.append(
+                        self._host._presenter_text(
+                            "playbookReports",
+                            "itemsReturnedLine",
+                            count=str(len(items)),
+                        )
                     )
-                )
+                elif not linhas:
+                    linhas.append(
+                        self._host._presenter_text(
+                            "playbookReports",
+                            "itemsReturnedLine",
+                            count=str(len(items)),
+                        )
+                    )
 
             if not linhas:
                 return None
@@ -88,7 +121,7 @@ class ExternalActionPlaybookReportPresenter:
             items = root.get("items") if isinstance(root.get("items"), list) else None
 
             if items and isinstance(items[0], dict):
-                title = self._host._infer_items_title(items, path)
+                title = self._playbook_entity_title(entity, table=True)
                 return self._host._build_items_table(items, title=title, path=path)
 
             if not summary:

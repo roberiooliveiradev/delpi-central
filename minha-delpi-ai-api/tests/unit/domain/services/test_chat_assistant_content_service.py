@@ -71,6 +71,50 @@ def test_presenter_kpi_title_from_path_matchers():
     assert "CPV" in presenter._kpi_title("/production/cpv")
 
 
+def test_title_for_path_prefers_longest_fragment():
+    title = ChatAssistantContentService.title_for_path(
+        "presenter_content",
+        "/production/orders/open?branch=01",
+    )
+
+    assert title == "OPs em aberto"
+
+
+def test_kpi_title_prefers_playbook_operational_path_over_generic_production():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+
+    title = presenter._kpi_title("/production/work-centers/order-summary")
+
+    assert title == "Resumo de OPs por centro de trabalho"
+    assert "Indicador de Produção" not in title
+
+
+def test_playbook_operational_entity_uses_playbook_report_title():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    payload = {
+        "meta": {"entity": "production_orders_open"},
+        "items": [
+            {"production_order": "OP-001", "description": "Produto A"},
+            {"production_order": "OP-002", "description": "Produto B"},
+        ],
+    }
+
+    result = presenter.present(payload, path="/production/orders/open")
+
+    assert result is not None
+    assert result.get("titulo") == "Ordens de produção em aberto"
+    assert "Produto A" in "\n".join(result.get("linhas") or [])
+    assert "Ordens de venda" not in str(result.get("titulo") or "")
+
+
 def test_sql_error_maps_to_error_handling_message():
     summary = ChatAssistantContentService.get_error_type(
         "sql_syntax_error",

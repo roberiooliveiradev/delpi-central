@@ -341,6 +341,13 @@ class ChatAnalysisIntentService:
         if cls._looks_like_single_product_fetch(normalized):
             return False
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return False
+
         if any(term in normalized for term in cls._comparison_terms()):
             return True
 

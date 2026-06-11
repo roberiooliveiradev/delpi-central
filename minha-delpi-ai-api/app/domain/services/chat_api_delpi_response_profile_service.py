@@ -55,6 +55,26 @@ CHAT_CRITICAL_ENTITIES: frozenset[str] = frozenset(
     }
 )
 
+PLAYBOOK_OPERATIONAL_ENTITIES: frozenset[str] = frozenset(
+    {
+        "production_consumption_top_items",
+        "production_losses_top_materials",
+        "production_losses_records",
+        "production_schedule_today",
+        "production_orders_open",
+        "production_orders_finished",
+        "production_work_center_order_summary",
+        "production_consumption_top_items_by_work_center",
+        "production_consumption_top_items_validated",
+        "production_allocation_gaps",
+        "production_orders_finished_without_consumption",
+        "production_work_center_average_planned_time",
+        "production_consumption_by_item",
+        "production_planned_vs_real_time",
+        "purchases_top_products",
+    }
+)
+
 PROFILE_PRESENT_ENTITIES: frozenset[str] = frozenset(
     {
         "product_search",
@@ -348,6 +368,7 @@ class ApiDelpiResponseProfile:
 
 class ChatApiDelpiResponseProfileService:
     CHAT_CRITICAL_ENTITIES = CHAT_CRITICAL_ENTITIES
+    PLAYBOOK_OPERATIONAL_ENTITIES = PLAYBOOK_OPERATIONAL_ENTITIES
     PROFILE_PRESENT_ENTITIES = PROFILE_PRESENT_ENTITIES
     PRODUCT_LIST_PRESENT_ENTITIES = PRODUCT_LIST_PRESENT_ENTITIES
     KPI_PRESENT_ENTITIES = KPI_PRESENT_ENTITIES

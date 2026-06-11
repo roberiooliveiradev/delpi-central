@@ -25,6 +25,18 @@ def test_does_not_flag_full_analyser_fetch_as_comparison():
     )
 
 
+def test_does_not_flag_playbook_operational_route_with_compare_wording():
+    assert not ChatAnalysisIntentService.is_comparison_or_insight_request(
+        "Compare tempo planejado e tempo real das OPs hoje filial 01"
+    )
+
+
+def test_does_not_flag_playbook_operational_route_with_apontamento_wording():
+    assert not ChatAnalysisIntentService.is_comparison_or_insight_request(
+        "Consumo validado por apontamento no mês top 10"
+    )
+
+
 def test_detects_data_interpretation_follow_up():
     history = [
         {

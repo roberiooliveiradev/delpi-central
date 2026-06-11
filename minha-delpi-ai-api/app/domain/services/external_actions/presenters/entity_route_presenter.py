@@ -307,6 +307,16 @@ class ExternalActionEntityRoutePresenter:
                     title = self._host._infer_items_title(items, effective_path)
                     return self._host._present_items(items, title=title)
 
+            if (
+                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                and isinstance(root, dict)
+            ):
+                return self._host._present_playbook_report(
+                    root,
+                    effective_path,
+                    entity=entity,
+                )
+
             return None
 
     @staticmethod
