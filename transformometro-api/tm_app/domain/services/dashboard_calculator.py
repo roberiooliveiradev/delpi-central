@@ -310,13 +310,16 @@ class DashboardCalculatorService:
         if timeline_start is None:
             return [], []
 
+        start_date = self._normalize_date_filter(start_date)
+        end_date = self._normalize_date_filter(end_date)
+
         start_month = (
-            self._month_start(self._parse_date(start_date))
+            self._resolve_filter_month_start(start_date, timeline_start)
             if start_date
             else self._month_start(timeline_start)
         )
         end_month = (
-            self._month_start(self._parse_date(end_date))
+            self._resolve_filter_month_start(end_date, date.today())
             if end_date
             else self._month_start(date.today())
         )
@@ -1405,8 +1408,10 @@ class DashboardCalculatorService:
                 "economia_liquida_acumulada": self._round_final(accumulated * proration_factor),
             }
 
-        start_month = self._month_start(self._parse_date(start_date)) if start_date else None
-        end_month = self._month_start(self._parse_date(end_date)) if end_date else None
+        start_input = self._normalize_date_filter(start_date)
+        end_input = self._normalize_date_filter(end_date)
+        start_month = self._parse_month_start_or_none(start_input) if start_input else None
+        end_month = self._parse_month_start_or_none(end_input) if end_input else None
 
         accumulated = 0.0
 
@@ -1564,6 +1569,26 @@ class DashboardCalculatorService:
             result[value] = row
         return result
 
+    def _normalize_date_filter(self, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        raw = str(value).strip()
+        if not raw or raw.lower() in {"null", "undefined", "invalid", "nan"}:
+            return None
+        return raw
+
+    def _resolve_filter_month_start(self, value: Optional[str], fallback: date) -> date:
+        parsed = self._parse_date(value)
+        if parsed is None:
+            return self._month_start(fallback)
+        return self._month_start(parsed)
+
+    def _parse_month_start_or_none(self, value: Optional[str]) -> Optional[date]:
+        parsed = self._parse_date(value)
+        if parsed is None:
+            return None
+        return self._month_start(parsed)
+
     def _parse_date(self, value) -> Optional[date]:
         if value is None:
             return None
@@ -1577,6 +1602,18 @@ class DashboardCalculatorService:
         raw = str(value).strip()
         if not raw:
             return None
+
+        if "T" in raw:
+            iso_raw = raw.replace("Z", "+00:00")
+            try:
+                return datetime.fromisoformat(iso_raw).date()
+            except ValueError:
+                pass
+
+        try:
+            return date.fromisoformat(raw[:10] if len(raw) >= 10 and raw[4] == "-" else raw)
+        except ValueError:
+            pass
 
         formats = [
             "%Y-%m-%d",

@@ -575,3 +575,40 @@ def test_hours_saved_period_filter_not_double_prorated_with_open_review():
     )
     assert prorated["horas_economizadas_mes"] == 14.56
     assert round(prorated["horas_economizadas_mes"] / 4, 2) == 3.64
+
+
+def test_parse_date_accepts_iso_datetime():
+    calc = DashboardCalculatorService()
+
+    assert calc._parse_date("2025-01-01T00:00:00.000Z") == date(2025, 1, 1)
+    assert calc._parse_date("2025-01-01T03:00:00+00:00") == date(2025, 1, 1)
+
+
+def test_build_summary_does_not_crash_when_period_filter_is_unparseable():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    calc = DashboardCalculatorService()
+
+    summary = calc.build_summary(
+        raw,
+        filial_id=None,
+        start_date="undefined",
+        end_date="2025-03-31",
+    )
+
+    assert summary["economia_liquida_total"] is not None
+    assert summary["evolucao_mensal"]
+
+
+def test_build_summary_accepts_wide_yyyy_mm_dd_range():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    calc = DashboardCalculatorService()
+
+    summary = calc.build_summary(
+        raw,
+        filial_id=None,
+        start_date="2025-01-01",
+        end_date="2026-06-11",
+    )
+
+    assert summary["evolucao_mensal"]
+    assert summary["economia_liquida_total"] is not None
