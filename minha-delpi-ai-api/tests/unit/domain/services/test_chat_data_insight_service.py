@@ -105,6 +105,51 @@ def test_build_factory_status_marks_limitations_when_production_table_truncated(
     assert data_answer.get("limitations")
 
 
+def test_build_financial_rol_scalar_does_not_emit_empty_list():
+    metadata = {
+        "path": "/financial/rol",
+        "apiDelpiResponseMeta": {
+            "entity": "financial_rol",
+            "shape": "scalar",
+            "fields": {
+                "rol": "ROL",
+                "gross_revenue": "Receita bruta",
+                "icms": "ICMS",
+            },
+            "fieldFormats": {
+                "rol": "currency",
+                "gross_revenue": "currency",
+                "icms": "currency",
+            },
+        },
+    }
+    data = {
+        "branch": "01",
+        "start_date": "20260611",
+        "end_date": "20260611",
+        "gross_revenue": 13027.76,
+        "icms": 911.75,
+        "rol": 10995.66,
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "generic_kpi_series"
+
+    summary = data_answer.get("summary") or {}
+    answer = str(summary.get("answer") or "").lower()
+
+    assert "retornou registros" not in answer
+    assert "rol" in answer
+
+    anomalies = data_answer.get("anomalies") or []
+
+    assert not any(
+        isinstance(item, dict) and item.get("type") == "empty_list" for item in anomalies
+    )
+
+
 def test_build_generic_categorical_shape_adds_visual_hint():
     metadata = {
         "path": "/reports/sales-by-branch",

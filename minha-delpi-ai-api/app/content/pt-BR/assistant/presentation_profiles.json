@@ -921,7 +921,7 @@
         "kpi",
         "chart"
       ],
-      "commentaryProfileKey": "generic_list",
+      "commentaryProfileKey": "generic_kpi_series",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich"
     },

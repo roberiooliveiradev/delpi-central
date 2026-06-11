@@ -62,6 +62,11 @@
       "Filtrar os registros por critério relevante",
       "Pedir a próxima página se a lista estiver truncada",
       "Detalhar um registro específico da lista"
+    ],
+    "generic_kpi_series": [
+      "Comparar com o período anterior",
+      "Ver detalhamento por filial",
+      "Exportar os indicadores"
     ]
   },
   "recommendationQueries": {
@@ -148,6 +153,23 @@
         "label": "Detalhar um registro específico da lista",
         "query": "Detalhar um registro específico desta lista",
         "reason": "Aprofundar em um item de interesse"
+      }
+    ],
+    "generic_kpi_series": [
+      {
+        "label": "Comparar com o período anterior",
+        "query": "Comparar este indicador com o período anterior",
+        "reason": "Avaliar tendência do KPI consultado"
+      },
+      {
+        "label": "Ver detalhamento por filial",
+        "query": "Detalhar este indicador por filial",
+        "reason": "Entender concentração ou variação entre filiais"
+      },
+      {
+        "label": "Exportar os indicadores",
+        "query": "Exportar os indicadores desta consulta",
+        "reason": "Compartilhar ou registrar os valores retornados"
       }
     ]
   },
