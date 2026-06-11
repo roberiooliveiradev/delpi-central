@@ -3,10 +3,23 @@ import pytest
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
+    ChatTypingCorrectionFuzzyLexiconService,
+)
 from app.domain.services.chat_typing_correction_service import (
     ChatTypingCorrectionService,
 )
+from app.infrastructure.content.content_service import ContentService
 from tests.fixtures.chat_typing_correction_cases import TYPING_CORRECTION_CASES
+
+
+@pytest.fixture(autouse=True)
+def _enable_fuzzy_lexicon():
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        ContentService.load_json("assistant/typing_correction_lexicon"),
+        enabled=True,
+    )
+    yield
 
 
 @pytest.fixture(autouse=True)
@@ -103,5 +116,31 @@ def test_backtick_span_protected():
 
 def test_empty_text():
     result = ChatTypingCorrectionService.suggest("   ")
+
+    assert result["hasSuggestions"] is False
+
+
+def test_t8_fuzzy_lexicon_suggests_fabril():
+    result = ChatTypingCorrectionService.suggest("status fabrril filial 01")
+
+    assert result["hasSuggestions"] is True
+    assert "fabril" in result["corrected"]
+    assert "01" in result["corrected"]
+    assert any(change["kind"] == "fuzzy_lexicon" for change in result["changes"])
+
+
+def test_t9_ambiguous_tokens_not_fuzzy_corrected():
+    result = ChatTypingCorrectionService.suggest("como para que sim")
+
+    assert result["hasSuggestions"] is False
+
+
+def test_fuzzy_disabled_without_flag():
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        ContentService.load_json("assistant/typing_correction_lexicon"),
+        enabled=False,
+    )
+
+    result = ChatTypingCorrectionService.suggest("status fabrril filial 01")
 
     assert result["hasSuggestions"] is False

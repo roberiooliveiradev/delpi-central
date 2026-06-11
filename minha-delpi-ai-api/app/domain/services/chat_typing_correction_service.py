@@ -8,6 +8,9 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
+    ChatTypingCorrectionFuzzyLexiconService,
+)
 
 _PROTECTED_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\b\d{5,}\b"), "product_code"),
@@ -66,6 +69,23 @@ class ChatTypingCorrectionService:
                 candidates.append((start, end, matched, preserved, "typo_rule"))
 
         selected = cls._select_non_overlapping(candidates, max_count=cls.MAX_CHANGES)
+
+        if (
+            len(selected) < cls.MAX_CHANGES
+            and ChatTypingCorrectionFuzzyLexiconService.is_enabled()
+        ):
+            fuzzy_candidates = ChatTypingCorrectionFuzzyLexiconService.collect_candidates(
+                raw,
+                protected=protected,
+                corrija_end=corrija_end,
+                occupied_spans=[(start, end) for start, end, *_rest in selected],
+            )
+            fuzzy_selected = cls._select_non_overlapping(
+                fuzzy_candidates,
+                max_count=cls.MAX_CHANGES - len(selected),
+                blocked_spans=[(start, end) for start, end, *_rest in selected],
+            )
+            selected = [*selected, *fuzzy_selected]
 
         if not selected:
             return {
@@ -170,10 +190,12 @@ class ChatTypingCorrectionService:
         candidates: list[tuple[int, int, str, str, str]],
         *,
         max_count: int,
+        blocked_spans: list[tuple[int, int]] | None = None,
     ) -> list[tuple[int, int, str, str, str]]:
         if not candidates:
             return []
 
+        blocked = list(blocked_spans or [])
         ordered = sorted(
             candidates,
             key=lambda item: (item[0], -(item[1] - item[0])),
@@ -183,10 +205,17 @@ class ChatTypingCorrectionService:
         for candidate in ordered:
             start, end, *_rest = candidate
 
-            if any(start < other_end and end > other_start for other_start, other_end, *_ in selected):
+            if any(start < other_end and end > other_start for other_start, other_end in blocked):
+                continue
+
+            if any(
+                start < other_end and end > other_start
+                for other_start, other_end, *_ in selected
+            ):
                 continue
 
             selected.append(candidate)
+            blocked.append((start, end))
 
             if len(selected) >= max_count:
                 break

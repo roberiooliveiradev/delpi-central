@@ -62,6 +62,7 @@ Wrappers especializados (mantêm API estável):
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
 | `message_composer.json` | Composer (corretor de digitação P14) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
 | `typing_correction_rules.json` | Typos operacionais estáticos (normalização + sugestões P14) | `ChatMessageNormalizationService.configure_static_rules` |
+| `typing_correction_lexicon.json` | Vocabulário operacional para fuzzy P14-5 | `ChatTypingCorrectionFuzzyLexiconService.configure` |
 | `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom e feedback | `ChatPersonalityContentService` |

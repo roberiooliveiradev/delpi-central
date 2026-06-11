@@ -23,6 +23,10 @@ def _configure_typo_correction_rules() -> None:
     from app.domain.services.chat_message_normalization_service import (
         ChatMessageNormalizationService,
     )
+    from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
+        ChatTypingCorrectionFuzzyLexiconService,
+    )
+    from app.infrastructure.config.settings import Settings
     from app.infrastructure.content.content_service import ContentService
 
     payload = ContentService.load_json("assistant/typing_correction_rules")
@@ -30,6 +34,12 @@ def _configure_typo_correction_rules() -> None:
 
     if isinstance(rules, list):
         ChatMessageNormalizationService.configure_static_rules(rules)
+
+    lexicon_payload = ContentService.load_json("assistant/typing_correction_lexicon")
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        lexicon_payload,
+        enabled=Settings.CHAT_TYPING_CORRECTION_FUZZY_ENABLED,
+    )
 
 
 def configure_domain_infrastructure_ports() -> None:

@@ -46,4 +46,21 @@ TYPING_CORRECTION_CASES: tuple[TypingCorrectionCase, ...] = (
         text="SELECT * FROM SB1",
         expect_suggestions=False,
     ),
+    TypingCorrectionCase(
+        id="T8",
+        text="status fabrril filial 01",
+        expect_suggestions=True,
+        expect_in_corrected=("fabril", "01"),
+    ),
+    TypingCorrectionCase(
+        id="T9",
+        text="como para que sim",
+        expect_suggestions=False,
+    ),
+    TypingCorrectionCase(
+        id="T10",
+        text="producai na filial 01",
+        expect_suggestions=True,
+        expect_in_corrected=("producao", "01"),
+    ),
 )

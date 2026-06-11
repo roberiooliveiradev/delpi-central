@@ -35,7 +35,7 @@ Princípios: **sugerir, não impor**; spans protegidos (códigos `\d{5+}`, `@men
 | Serviço | `app/domain/services/chat_typing_correction_service.py` — `suggest()` |
 | Fonte de regras | `ChatMessageNormalizationService.iter_typo_patterns()` (estáticas + aprendidas) |
 | Endpoint | `POST /chat/typing-suggestions` — `chat.access` |
-| Flag | `CHAT_TYPING_CORRECTION_ENABLED` (default `true`) |
+| Flag | `CHAT_TYPING_CORRECTION_ENABLED` (default `true`); fuzzy: `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` (default `false`) |
 | Capabilities | `GET /chat/capabilities` → `typingCorrectionEnabled` |
 | Metadata turno | `typingCorrection` na mensagem user quando aceita (`SendChatMessageRequest`) |
 | Telemetria | `POST /chat/assistant/help-events`: `typing_correction_offered` \| `accepted` \| `dismissed` |
@@ -142,9 +142,24 @@ Homologação manual: **U2b** e smoke operacional #2 em [smoke-operacional-manua
 | Fase | Escopo |
 |------|--------|
 | P14-4 | ~~Dashboard admin de métricas~~ **Concluído** — `GET /admin/metrics/typing-correction/summary`, audit `chat.typing_correction.event`, `typingCorrectionMetrics` em turnos |
-| P14-5 | Fuzzy léxico operacional (SymSpell) |
+| P14-5 | ~~Fuzzy léxico operacional~~ **Concluído** — Levenshtein + `typing_correction_lexicon.json`; flag `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` (default `false`) |
 
 ---
+
+## P14-5 — Fuzzy léxico (jun/2026)
+
+Segunda camada de sugestões após regex estático/aprendido:
+
+| Item | Detalhe |
+|------|---------|
+| Serviço | `ChatTypingCorrectionFuzzyLexiconService` |
+| Catálogo | `typing_correction_lexicon.json` — `terms` + `ambiguousTokens` |
+| Kind | `fuzzy_lexicon` em `changes[]` |
+| Gates | token ≥ 4 chars; mesma letra inicial; Δ comprimento ≤ 2; distância 1 (≤5 chars) ou 2 (≥6); tokens ambíguos ignorados |
+| Flag | `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` (default `false`) |
+| Testes | T8–T10 em `chat_typing_correction_cases.py` |
+
+Prioridade: regras `typo_rule` primeiro; fuzzy preenche slots restantes até `MAX_CHANGES=3`.
 
 ## P14-0 — Catálogo JSON (jun/2026)
 

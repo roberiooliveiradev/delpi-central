@@ -219,7 +219,7 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 | **P14-2 — UX composer** | Chip pré-envio no MFE; flag; textos JSON | Vitest `chatTypingCorrection.test.ts`; homologação manual U2 smoke | **Concluído** |
 | **P14-3 — Endpoint** | `POST typing-suggestions` se bundle duplicado for inviável | Contrato OpenAPI; paridade MFE | **Concluído** |
 | **P14-4 — Métricas** | `typingCorrectionMetrics`: offered / accepted / dismissed | Admin debug + dashboard aprendizagem | **Concluído** (`chat.typing_correction.event`, `GET /admin/metrics/typing-correction/summary`, `AdminTypingCorrectionMetrics`) |
-| **P14-5 — Fuzzy léxico** | SymSpell só vocabulário operacional (rotas, KPIs) | Gate falsos positivos | Backlog |
+| **P14-5 — Fuzzy léxico** | Levenshtein sobre vocabulário operacional (rotas, KPIs) | Gate falsos positivos; `kind: fuzzy_lexicon` | **Concluído** |
 
 **Ordem sugerida:** P14-0 → P14-1 → P14-2 → métricas.
 
@@ -236,6 +236,9 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 | T5 | Regra aprendida aprovada | Sugestão MFE = normalize API |
 | T6 | Usuário dispensa chip | Reenvio igual não reabre chip (sessão) |
 | T7 | `SELECT * FROM` | Sem sugestão no SQL |
+| T8 | `status fabrril filial 01` | Fuzzy `fabril`; `01` intacto |
+| T9 | `como para que sim` | Sem fuzzy em tokens ambíguos |
+| T10 | `producai na filial 01` | Fuzzy `producao`; `01` intacto |
 
 Arquivos alvo:
 
@@ -284,7 +287,7 @@ Arquivos alvo:
 
 Hoje o chat **já tolera** typos operacionais na API, mas **esconde** a correção do usuário. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua — sem misturar com a habilidade de revisão textual por LLM e sem autocorrect agressivo em códigos ERP.
 
-Próximo passo de engenharia: **P14-5** (fuzzy léxico).
+Próximo passo de engenharia: **P14-5 concluído** — rollout gradual via `CHAT_TYPING_CORRECTION_FUZZY_ENABLED`.
 
 ---
 
@@ -297,7 +300,9 @@ Changelog detalhado: [2026-06-playbook-14-corretor-digitacao-composer.md](../cha
 | Camada | Arquivo |
 |--------|---------|
 | Domain | `app/domain/services/chat_typing_correction_service.py` |
+| Domain (P14-5) | `app/domain/services/chat_typing_correction_fuzzy_lexicon_service.py` |
 | Catálogo | `app/content/pt-BR/assistant/typing_correction_rules.json` (159 regras estáticas) |
+| Catálogo (P14-5) | `app/content/pt-BR/assistant/typing_correction_lexicon.json` |
 | Normalizador | `ChatMessageNormalizationService.configure_static_rules()` via composition root |
 | HTTP | `app/interfaces/http/routes/chat/meta_routes.py` → `POST /typing-suggestions` |
 | Config | `CHAT_TYPING_CORRECTION_ENABLED` em `settings.py` |
@@ -311,6 +316,7 @@ Changelog detalhado: [2026-06-playbook-14-corretor-digitacao-composer.md](../cha
 | Variável | Default | Efeito |
 |----------|---------|--------|
 | `CHAT_TYPING_CORRECTION_ENABLED` | `true` | Desliga endpoint e flag `typingCorrectionEnabled` em capabilities |
+| `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` | `false` | Ativa sugestões `fuzzy_lexicon` (P14-5); rollout gradual em prod |
 
 Aprendizado de vocabulário (regras dinâmicas) continua gated por `CHAT_LEARNING_ENABLED` + `CHAT_LEARNING_APPLY_VOCABULARY` — mesmas regras do normalizador.
 
