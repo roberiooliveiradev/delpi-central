@@ -17,6 +17,7 @@ import {
   getPresentationPairFromToolCalls,
   getRenderPlanFromToolCalls,
   isExplicitTextSessionMode,
+  renderPlanHasOnlyProseSegments,
 } from "./chatPresentation";
 import {
   hasPresentationMarkerSyntax,
@@ -62,9 +63,21 @@ export function buildAssistantContentSegments(
   const rawMarkdown = resolveAssistantRenderableMarkdown(content, toolCalls);
   const nativeSingle = isNativeSingleViewSelection(toolCalls);
 
+  const proseOnlyRenderPlan =
+    renderPlan?.version === 1 && renderPlanHasOnlyProseSegments(renderPlan);
+
+  if (
+    selected === "text" &&
+    proseOnlyRenderPlan &&
+    !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
+  ) {
+    return withDecisionLayer(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls);
+  }
+
   if (
     layoutMode !== "stack" &&
     selected === "text" &&
+    !renderPlan &&
     !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
   ) {
     return withDecisionLayer(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls);

@@ -27,6 +27,10 @@ FORBIDDEN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
             r"presentationMode\s*===\s*['\"]summary_then_evidence['\"]\s*\?\s*['\"]allowlist['\"]",
         ),
     ),
+    (
+        "shouldSkipTableSegment (dedup estrutural vem da API pruned)",
+        re.compile(r"\bshouldSkipTableSegment\s*\("),
+    ),
 )
 
 ALLOWLIST_FILES = frozenset(

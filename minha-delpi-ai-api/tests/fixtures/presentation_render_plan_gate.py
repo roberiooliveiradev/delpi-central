@@ -21,6 +21,23 @@ class RenderPlanCoverageGap:
     detail: str
 
 
+_VISUAL_TOKEN_TO_KEY: dict[str, str] = {
+    "kpi": "kpiPresentation",
+    "tree": "treePresentation",
+    "chart": "chartPresentation",
+    "dashboard": "dashboardPresentation",
+    "table": "tablePresentation",
+}
+
+
+def _segment_kinds(segments: list[Any]) -> set[str]:
+    return {
+        str(item.get("kind") or "").strip().lower()
+        for item in segments
+        if isinstance(item, dict)
+    }
+
+
 def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     render_plan = metadata.get("renderPlan")
@@ -69,6 +86,32 @@ def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
 
         if "dashboard" in kinds:
             issues.append("renderPlan inclui dashboard no Automático evidence-first")
+
+    if layout_mode == "stack" and isinstance(plan, dict):
+        kinds = _segment_kinds(segments)
+        tail_order = plan.get("tailVisualOrder") or []
+
+        for token in tail_order:
+            normalized = str(token).strip().lower()
+            source = _VISUAL_TOKEN_TO_KEY.get(normalized)
+
+            if not source or not metadata.get(source):
+                continue
+
+            if normalized not in kinds:
+                issues.append(f"renderPlan omite tail visual {normalized} presente no payload")
+
+    if (
+        layout_mode == "single"
+        and str(decision.get("selected") or "").strip().lower() == "text"
+        and ChatPresentationEvidenceFirstLayoutService.is_active(metadata)
+    ):
+        non_prose = _segment_kinds(segments) - {"markdown", "decision"}
+
+        if non_prose:
+            issues.append(
+                "renderPlan inclui visuais em layout single text-first evidence-first",
+            )
 
     return issues
 

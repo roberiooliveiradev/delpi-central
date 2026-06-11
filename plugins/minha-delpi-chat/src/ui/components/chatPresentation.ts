@@ -535,6 +535,25 @@ export function getRenderPlanFromToolCalls(
   return null;
 }
 
+const PROSE_RENDER_PLAN_KINDS = new Set(["markdown", "decision"]);
+
+/** P6: API envia só prosa no renderPlan — MFE não deve montar visuais latentes do metadata. */
+export function renderPlanHasOnlyProseSegments(
+  renderPlan: PresentationRenderPlan | null | undefined,
+): boolean {
+  if (!renderPlan || renderPlan.version !== 1 || !Array.isArray(renderPlan.segments)) {
+    return false;
+  }
+
+  if (!renderPlan.segments.length) {
+    return false;
+  }
+
+  return renderPlan.segments.every((segment) =>
+    PROSE_RENDER_PLAN_KINDS.has(String(segment?.kind || "").trim().toLowerCase()),
+  );
+}
+
 /** Legacy: só compacta markdown no cliente quando a API não enviou `renderHints.textRenderMode`. */
 export function shouldApplyClientMarkdownCompaction(toolCalls?: ChatToolCall[]): boolean {
   const hints = getPresentationRenderHintsFromToolCalls(toolCalls);

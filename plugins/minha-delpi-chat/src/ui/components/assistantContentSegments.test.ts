@@ -213,6 +213,45 @@ describe("assistantContentSegments", () => {
     ).toBe(false);
   });
 
+  it("renderPlan só com prosa não monta visuais latentes do metadata", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            layoutMode: "single",
+            presentationMode: "summary_then_evidence",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "markdown", slot: "lead", source: "textPresentation" }],
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Status produtivo\n\nOP em andamento.",
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicadores",
+            items: [],
+          },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "90269002", label: "90269002", children: [] },
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+
+    expect(segments.every((item) => item.kind === "markdown" || item.kind === "code")).toBe(true);
+    expect(segments.some((item) => item.kind === "tree" || item.kind === "kpi")).toBe(false);
+  });
+
   it("modo Texto explícito inclui tabelas do metadata quando o markdown não as embute", () => {
     const toolCalls = [
       {

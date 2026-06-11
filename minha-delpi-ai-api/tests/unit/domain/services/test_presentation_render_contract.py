@@ -198,3 +198,37 @@ def test_render_plan_includes_highlights_and_attention_when_markdown_has_section
 
     assert kinds.count("markdown") == 3
     assert slots == ["lead", "highlights", "attention"]
+
+
+def test_render_plan_single_text_first_evidence_only_includes_prose():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "single",
+            "selected": "text",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "tailVisualPolicy": "allowlist",
+            "tailVisualOrder": ["kpi", "tree", "chart"],
+            "narrativeOrder": ["lead", "operationalTables", "tailVisuals"],
+        },
+        "textPresentation": {"markdown": "### Status produtivo\n\nOP em andamento."},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "items": []},
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "chartPresentation": {"type": "chart", "title": "Saldo", "data": []},
+        "tablePresentations": [
+            {"type": "table", "title": "Ordens", "columns": [], "rows": []},
+        ],
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+    ChatPresentationPayloadPruningService.prune(metadata)
+    ChatPresentationRenderPlanService.build(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+    kinds = {segment["kind"] for segment in segments}
+
+    assert metadata["renderPlan"]["layoutMode"] == "single"
+    assert kinds == {"markdown"}
+    assert metadata.get("kpiPresentation") is not None
