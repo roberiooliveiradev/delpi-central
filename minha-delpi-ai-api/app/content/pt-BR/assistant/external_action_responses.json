@@ -288,6 +288,13 @@
         "matéria-prima exclusiva",
         "structure/exclusivity"
       ],
+      "exclusiveRawMaterialCatalogTerms": [
+        "exclusive-raw-materials/catalog",
+        "catalogo de exclusivas",
+        "catálogo de exclusivas",
+        "quais matérias-primas são exclusivas",
+        "quais produtos têm mp exclusiva"
+      ],
       "rawMaterialPriceIntelligenceTerms": [
         "analise de preco da materia-prima",
         "análise de preço da matéria-prima",
@@ -488,6 +495,7 @@
     "lmpQuery": "A pergunta solicita consulta de LMP via OpenAPI.",
     "departmentKpi": "Indicador departamental reconhecido na pergunta.",
     "saleOrdersList": "A pergunta solicita listagem de ordens de venda.",
+    "exclusiveRawMaterialCatalog": "A pergunta solicita o catálogo global de matérias-primas exclusivas via OpenAPI.",
     "transformaMais": "A pergunta solicita dados do programa Transforma Mais.",
     "systemMetadata": "A pergunta solicita metadados de tabelas/colunas do Protheus.",
     "paginationRefinementDefault": "A mensagem ajusta paginação da consulta operacional já feita nesta conversa.",

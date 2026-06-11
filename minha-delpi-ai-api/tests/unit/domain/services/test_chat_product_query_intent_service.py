@@ -189,6 +189,29 @@ def test_looks_like_structure_exclusivity_question():
     assert ChatProductQueryIntentService._looks_like_structure_exclusivity_question(normalized)
 
 
+def test_looks_like_exclusive_raw_material_catalog_question():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quais matérias-primas são exclusivas?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+        normalized
+    )
+    assert not ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
+        normalized
+    )
+
+
+def test_exclusive_catalog_by_finished_product_view_markers():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quais produtos têm matéria-prima exclusiva?"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+        normalized
+    )
+
+
 def test_detect_summary_intent():
     assert (
         ChatProductQueryIntentService.detect("resumo do produto 10080047")

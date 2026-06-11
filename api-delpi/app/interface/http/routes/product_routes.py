@@ -31,7 +31,9 @@ from app.application.dto.product.product_cost_impact_request import ProductCostI
 from app.application.dto.product.product_raw_material_price_request import (
     ProductRawMaterialPriceRequest,
 )
-from app.application.dto.product.product_analyser_request import ProductAnalyserRequest
+from app.application.dto.product.exclusive_raw_material_catalog_request import (
+    ExclusiveRawMaterialCatalogRequest,
+)
 
 from app.interface.http.openapi_agent_metadata import (
     PRODUCT_ANALYSER,
@@ -60,6 +62,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_PURCHASE_PRICE_HISTORY,
     PRODUCT_PURCHASE_BUDGET_HISTORY,
     PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE,
+    EXCLUSIVE_RAW_MATERIALS_CATALOG,
     PRODUCT_SUMMARY,
     PRODUCT_SUPPLIERS,
 )
@@ -120,6 +123,7 @@ from app.composition.product_composer import (
     build_get_product_purchase_price_history_use_case,
     build_get_product_purchase_budget_history_use_case,
     build_get_product_raw_material_price_intelligence_use_case,
+    build_list_exclusive_raw_materials_catalog_use_case,
     )
 
 
@@ -168,6 +172,65 @@ def search_products_route(
     except Exception as e:
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
+
+
+@router.get(
+    "/exclusive-raw-materials/catalog",
+    **EXCLUSIVE_RAW_MATERIALS_CATALOG,
+    response_model=PlaybookReportResponse,
+)
+@require_permission(API_DELPI_ACCESS)
+def list_exclusive_raw_materials_catalog(
+    view: str = Query(
+        default="by_material",
+        description="by_material=lista MPs exclusivas; by_finished_product=lista PAs com MP exclusiva",
+    ),
+    limit: Optional[int] = Query(default=None, ge=1, le=500),
+    offset: Optional[int] = Query(default=None, ge=0),
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    finished_product_code: Optional[str] = Query(default=None),
+    raw_material_code: Optional[str] = Query(default=None),
+    group_code: Optional[str] = Query(default=None),
+    include_test_products: bool = Query(default=False),
+    legacy: bool = Query(False, description="Reservado para normalização futura"),
+):
+    try:
+        if view not in {"by_material", "by_finished_product"}:
+            return error_response(
+                "Parâmetro view inválido. Use by_material ou by_finished_product.",
+                status_code=400,
+            )
+
+        dto = ExclusiveRawMaterialCatalogRequest(
+            view=view,
+            limit=limit,
+            offset=offset,
+            max_depth=max_depth,
+            include_test_products=include_test_products,
+            finished_product_code=finished_product_code,
+            raw_material_code=raw_material_code,
+            group_code=group_code,
+            legacy=legacy,
+        )
+        use_case = build_list_exclusive_raw_materials_catalog_use_case()
+        result = normalize_playbook_payload(use_case.execute(dto), legacy=legacy)
+
+        return product_success(
+            result,
+            operation_id=EXCLUSIVE_RAW_MATERIALS_CATALOG["operation_id"],
+            entity="exclusive_raw_materials_catalog",
+            shape="playbook_report",
+            message="Catálogo de matérias-primas exclusivas carregado com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação no catálogo de exclusividade: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar catálogo de matérias-primas exclusivas: {e}")
+        return error_response(str(e), status_code=500)
+
 
 @router.get(
     "/{code}",

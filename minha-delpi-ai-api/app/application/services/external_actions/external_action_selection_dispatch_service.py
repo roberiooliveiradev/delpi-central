@@ -414,6 +414,19 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
+        if ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+            normalized
+        ):
+            selected = self._route_selection.select_exclusive_raw_material_catalog(
+                message,
+                normalized,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=self._list_allowed_candidates,
+            )
+
+            if selected:
+                return selected
+
         if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
             normalized,
             extract_sale_number=self._extract_sale_number,

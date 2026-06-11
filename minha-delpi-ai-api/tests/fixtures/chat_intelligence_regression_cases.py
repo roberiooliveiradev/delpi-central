@@ -676,6 +676,48 @@ SELECTION_CASES = [
         "expected_action_id": "structure-exclusivity",
     },
     {
+        "message": "Quais matérias-primas são exclusivas?",
+        "actions": [
+            {
+                "actionId": "exclusive-raw-materials-catalog",
+                "method": "GET",
+                "path": "/products/exclusive-raw-materials/catalog",
+                "operationId": "list_exclusive_raw_materials_catalog",
+                "summary": "Catálogo global de MPs exclusivas",
+                "parametersSchema": [
+                    {"name": "view"},
+                    {"name": "limit"},
+                ],
+            },
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "operationId": "get_product_structure_exclusivity",
+                "summary": "Estrutura com exclusividade",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "exclusive-raw-materials-catalog",
+    },
+    {
+        "message": "Quais produtos têm matéria-prima exclusiva?",
+        "actions": [
+            {
+                "actionId": "exclusive-raw-materials-catalog",
+                "method": "GET",
+                "path": "/products/exclusive-raw-materials/catalog",
+                "operationId": "list_exclusive_raw_materials_catalog",
+                "summary": "Catálogo global de MPs exclusivas",
+                "parametersSchema": [
+                    {"name": "view"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "exclusive-raw-materials-catalog",
+    },
+    {
         "message": "Análise de preço da matéria-prima 10080001",
         "actions": [
             {

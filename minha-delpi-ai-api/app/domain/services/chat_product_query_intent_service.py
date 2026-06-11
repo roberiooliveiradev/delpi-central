@@ -992,8 +992,46 @@ class ChatProductQueryIntentService:
         return any(marker in lowered for marker in shipping_markers)
 
     @classmethod
+    def _looks_like_exclusive_raw_material_catalog_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("exclusiveRawMaterialCatalog", "excludeTerms")):
+            return False
+
+        has_catalog_term = any(
+            term in normalized for term in cls._terms("exclusiveRawMaterialCatalog", "terms")
+        )
+        exclusivity_markers = (
+            "exclusiv",
+            "mp exclus",
+            "materia prima exclus",
+            "materia-prima exclus",
+            "materias-primas exclus",
+        )
+        has_exclusivity = has_catalog_term or any(
+            marker in normalized for marker in exclusivity_markers
+        )
+        if not has_exclusivity:
+            return False
+
+        if cls._looks_like_structure_exclusivity_question(normalized):
+            return False
+
+        if cls.extract_product_code(normalized) and cls._has_product_scope_reference(normalized):
+            return False
+
+        return any(
+            marker in normalized
+            for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
+        )
+
+    @classmethod
     def _looks_like_structure_exclusivity_question(cls, normalized: str) -> bool:
         if any(term in normalized for term in cls._terms("structureExclusivity", "terms")):
+            if not cls.extract_product_code(normalized) and any(
+                marker in normalized
+                for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
+            ):
+                return False
+
             return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
                 normalized
             ) is not None
@@ -1001,6 +1039,12 @@ class ChatProductQueryIntentService:
         lowered = normalized.lower()
 
         if not cls._has_product_scope_reference(normalized):
+            return False
+
+        if not cls.extract_product_code(normalized) and any(
+            marker in normalized
+            for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
+        ):
             return False
 
         exclusivity_markers = (

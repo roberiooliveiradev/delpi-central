@@ -1381,6 +1381,10 @@
         "textTitle": "Estrutura com exclusividade",
         "tableTitle": "Exclusividade de MPs"
       },
+      "exclusive_raw_materials_catalog": {
+        "textTitle": "Catálogo de MPs exclusivas",
+        "tableTitle": "MPs exclusivas × PA"
+      },
       "product_last_purchase": {
         "textTitle": "Última compra da matéria-prima",
         "tableTitle": "Última compra"

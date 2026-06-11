@@ -20,6 +20,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_product_structure_exclusivity": RouteContract(
         "product_structure_exclusivity", "playbook_report"
     ),
+    "list_exclusive_raw_materials_catalog": RouteContract(
+        "exclusive_raw_materials_catalog", "playbook_report"
+    ),
     "get_product_production_status": RouteContract(
         "product_production_status", "playbook_report"
     ),

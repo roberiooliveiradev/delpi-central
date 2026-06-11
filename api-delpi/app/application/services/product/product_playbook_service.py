@@ -123,6 +123,74 @@ def summarize_shipping(items: list[dict]) -> dict:
     }
 
 
+def build_exclusive_catalog_by_material_items(rows: list[dict]) -> list[dict]:
+    return [
+        {
+            **row,
+            "exclusive_raw_material": True,
+        }
+        for row in rows
+    ]
+
+
+def group_exclusive_catalog_by_finished_product(rows: list[dict]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+
+    for row in rows:
+        code = row.get("finished_product_code")
+        if not code:
+            continue
+
+        entry = grouped.setdefault(
+            code,
+            {
+                "finished_product_code": code,
+                "finished_product_description": row.get("finished_product_description"),
+                "finished_product_unit": row.get("finished_product_unit"),
+                "exclusive_raw_material_count": int(
+                    row.get("exclusive_raw_material_count") or 0
+                ),
+                "exclusive_raw_materials": [],
+            },
+        )
+
+        mp_code = row.get("raw_material_code")
+        if not mp_code:
+            continue
+
+        entry["exclusive_raw_materials"].append(
+            {
+                "raw_material_code": mp_code,
+                "raw_material_description": row.get("raw_material_description"),
+                "raw_material_unit": row.get("raw_material_unit"),
+                "raw_material_group": row.get("raw_material_group"),
+            }
+        )
+
+    return list(grouped.values())
+
+
+def summarize_exclusive_catalog_by_material(totals: dict) -> dict:
+    from app.domain.constants.product_exclusivity import TEST_FINISHED_PRODUCT_PREFIXES
+
+    return {
+        "total_exclusive_materials": int(totals.get("total_exclusive_materials") or 0),
+        "total_finished_products_with_exclusive": int(
+            totals.get("total_finished_products_with_exclusive") or 0
+        ),
+        "excluded_test_product_prefixes": list(TEST_FINISHED_PRODUCT_PREFIXES),
+    }
+
+
+def summarize_exclusive_catalog_by_finished_product(totals: dict) -> dict:
+    return {
+        "total_finished_products": int(
+            totals.get("total_finished_products_with_exclusive") or 0
+        ),
+        "total_exclusive_links": int(totals.get("total_exclusive_links") or 0),
+    }
+
+
 def classify_factory_status(
     *,
     has_structure: bool,

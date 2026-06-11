@@ -645,3 +645,20 @@ Status da execução: sucesso
 ```text
 Matéria-prima exclusiva é aquela que, considerando a estrutura vigente e todos os intermediários, aparece em apenas um produto acabado válido, desconsiderando produtos de teste/amostra iniciados por 8000 ou 8001.
 ```
+
+---
+
+## 18. Catálogo global (roadmap)
+
+Perguntas **sem código de PA** («quais MPs são exclusivas?», «quais produtos têm MP exclusiva?») exigem rota de **catálogo** — não coberta por `/structure/exclusivity` (que é por produto).
+
+| Necessidade | Rota proposta | Status |
+|-------------|---------------|--------|
+| Listar MPs exclusivas + PA dono | `GET /products/exclusive-raw-materials/catalog?view=by_material` | Roadmap |
+| Listar PAs com ≥1 MP exclusiva | `...?view=by_finished_product` | Roadmap |
+| Estrutura de um PA com flags | `GET /products/{code}/structure/exclusivity` | ✅ Entregue |
+
+**Não** adicionar flag `exclusive_raw_material` em `/products/{code}/structure` por default — consulta global de exclusividade é cara e quebra expectativa de consumidores da árvore BOM.
+
+Playbook completo: [`playbook-catalogo-exclusividade-mp.md`](./playbook-catalogo-exclusividade-mp.md)  
+Integração chat: [`playbook-15-anexo-catalogo-exclusividade-mp.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-15-anexo-catalogo-exclusividade-mp.md).

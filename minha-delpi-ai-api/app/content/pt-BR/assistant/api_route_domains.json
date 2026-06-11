@@ -14,6 +14,12 @@
       "parameterStrategy": "product_search",
       "method": "GET"
     },
+    "product_exclusive_catalog": {
+      "label": "Catálogo MP exclusiva",
+      "pathMarkers": ["/products/exclusive-raw-materials/catalog"],
+      "parameterStrategy": "semantic",
+      "method": "GET"
+    },
     "department_kpi": {
       "label": "KPI departamental",
       "pathMarkers": [

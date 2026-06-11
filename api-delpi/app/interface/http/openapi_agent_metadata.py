@@ -148,6 +148,18 @@ PRODUCT_STRUCTURE_EXCLUSIVITY = agent_route(
     operation_id="get_product_structure_exclusivity",
 )
 
+EXCLUSIVE_RAW_MATERIALS_CATALOG = agent_route(
+    summary="Catálogo global de matérias-primas exclusivas",
+    description=(
+        "Lista MPs exclusivas (presentes em apenas um PA válido) ou PAs que possuem MPs exclusivas, "
+        "sem informar código de produto na pergunta. "
+        "Use view=by_material para «quais matérias-primas são exclusivas?» e "
+        "view=by_finished_product para «quais produtos têm MP exclusiva?». "
+        "Para estrutura detalhada de um PA específico, prefira /structure/exclusivity."
+    ),
+    operation_id="list_exclusive_raw_materials_catalog",
+)
+
 PRODUCT_PRODUCTION_STATUS = agent_route(
     summary="Situação produtiva do produto (PA, PI, OP e apontamentos)",
     description=(

@@ -323,6 +323,46 @@
       "definição de inspeção"
     ]
   },
+  "exclusiveRawMaterialCatalog": {
+    "terms": [
+      "matéria-prima exclusiva",
+      "materia prima exclusiva",
+      "materia-prima exclusiva",
+      "matérias-primas exclusivas",
+      "materias-primas exclusivas",
+      "materias primas exclusivas",
+      "mp exclusiva",
+      "mps exclusivas",
+      "produtos com mp exclusiva",
+      "produtos tem mp exclusiva",
+      "produtos com materia prima exclusiva",
+      "produtos com matéria-prima exclusiva",
+      "produtos tem materia-prima exclusiva",
+      "pas com mp exclusiva",
+      "pa com mp exclusiva",
+      "catálogo de exclusivas",
+      "catalogo de exclusivas",
+      "exclusive-raw-materials/catalog"
+    ],
+    "globalMarkers": [
+      "quais",
+      "liste",
+      "listar",
+      "listem",
+      "mostre",
+      "mostrar",
+      "existem",
+      "catalogo",
+      "catálogo"
+    ],
+    "excludeTerms": [
+      "estrutura do",
+      "estrutura completa",
+      "compare estruturas",
+      "bom do",
+      "componentes do"
+    ]
+  },
   "structureExclusivity": {
     "terms": [
       "exclusividade",

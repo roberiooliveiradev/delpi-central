@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 130,
+  "operation_count": 138,
   "operations": [
     {
       "method": "GET",
@@ -325,6 +325,26 @@
     },
     {
       "method": "GET",
+      "path": "/pedidos-venda-abertos/",
+      "operationId": "list_pedidos_venda_abertos_route_pedidos_venda_abertos__get",
+      "summary": "List Pedidos Venda Abertos Route",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/ops-abertas",
+      "operationId": "list_ops_abertas_route_pedidos_venda_abertos_ops_abertas_get",
+      "summary": "List Ops Abertas Route",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/production/depreciation_pct",
       "operationId": "get_depreciation_pct_production_depreciation_pct_get",
       "summary": "Get Depreciation Pct",
@@ -415,6 +435,16 @@
     },
     {
       "method": "GET",
+      "path": "/products/exclusive-raw-materials/catalog",
+      "operationId": "list_exclusive_raw_materials_catalog",
+      "summary": "Catálogo global de matérias-primas exclusivas",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/products/search",
       "operationId": "search_products",
       "summary": "Buscar produtos no Protheus",
@@ -438,6 +468,16 @@
       "path": "/products/{code}/analyser",
       "operationId": "get_product_analyser",
       "summary": "Analisador completo do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/cost-impact-simulation",
+      "operationId": "get_product_cost_impact_simulation",
+      "summary": "Simulador de impacto de custos do PA",
       "tags": [
         "products"
       ],
@@ -505,6 +545,16 @@
     },
     {
       "method": "GET",
+      "path": "/products/{code}/last-purchase",
+      "operationId": "get_product_last_purchase",
+      "summary": "Última compra válida da matéria-prima",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/products/{code}/outbound-invoice-items",
       "operationId": "get_product_outbound_invoice_items",
       "summary": "Itens de nota fiscal de saída do produto",
@@ -545,9 +595,39 @@
     },
     {
       "method": "GET",
+      "path": "/products/{code}/purchase-budget-history",
+      "operationId": "get_product_purchase_budget_history",
+      "summary": "Histórico de orçamento de compra (SC + PC)",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "operationId": "get_product_purchase_price_history",
+      "summary": "Histórico de preço de compra da matéria-prima",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/products/{code}/purchases",
       "operationId": "get_product_purchases",
       "summary": "Histórico de compras do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "operationId": "get_product_raw_material_price_intelligence",
+      "summary": "Análise inteligente de preço de matéria-prima",
       "tags": [
         "products"
       ],

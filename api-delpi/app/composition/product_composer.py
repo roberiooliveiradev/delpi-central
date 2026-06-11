@@ -32,7 +32,15 @@ from app.application.use_cases.product.get_product_sales_billing_use_case import
 from app.infrastructure.persistence.totvs.product_repositories.product_pricing_repository import ProductPricingRepository
 from app.application.use_cases.product.get_product_pricing_use_case import GetProductPricingUseCase
 from app.application.use_cases.product.product_analyser_use_case import ProductAnalyserUseCase
-from app.infrastructure.persistence.totvs.product_repositories.product_playbook_repository import ProductPlaybookRepository
+from app.application.use_cases.product.list_exclusive_raw_materials_catalog_use_case import (
+    ListExclusiveRawMaterialsCatalogUseCase,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_exclusive_raw_material_repository import (
+    ProductExclusiveRawMaterialRepository,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_playbook_repository import (
+    ProductPlaybookRepository,
+)
 from app.application.use_cases.product.get_product_structure_exclusivity_use_case import (
     GetProductStructureExclusivityUseCase,
 )
@@ -177,3 +185,9 @@ def build_get_product_raw_material_price_intelligence_use_case() -> (
     GetProductRawMaterialPriceIntelligenceUseCase
 ):
     return GetProductRawMaterialPriceIntelligenceUseCase(ProductRawMaterialPriceRepository())
+
+
+def build_list_exclusive_raw_materials_catalog_use_case() -> (
+    ListExclusiveRawMaterialsCatalogUseCase
+):
+    return ListExclusiveRawMaterialsCatalogUseCase(ProductExclusiveRawMaterialRepository())

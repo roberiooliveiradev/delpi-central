@@ -1032,6 +1032,114 @@ class ExternalActionProductRouteSelectionService:
 
         return None
 
+    def select_exclusive_raw_material_catalog(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        if not ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
+            normalized
+        ):
+            return None
+
+        candidates = self._load_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+            if "exclusive-raw-materials/catalog" not in path:
+                continue
+
+            parameters = self._build_exclusive_catalog_parameters(
+                action,
+                message=message,
+                normalized=normalized,
+            )
+
+            if not parameters:
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": parameters,
+                },
+                "reason": ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "exclusiveRawMaterialCatalog",
+                ),
+            }
+
+        return None
+
+    def _build_exclusive_catalog_parameters(
+        self,
+        action: dict,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict:
+        parameters: dict = {}
+        requested_page_size = ChatOperationalRefinementService.extract_requested_page_size(
+            normalized
+        )
+        requested_page = ChatOperationalRefinementService.extract_requested_page(normalized)
+        product_code = ChatProductQueryIntentService.extract_product_code(message or "")
+
+        finished_product_markers = (
+            "produto",
+            "produtos",
+            " pa ",
+            " pas ",
+            "acabado",
+            "acabados",
+        )
+        default_view = (
+            "by_finished_product"
+            if any(marker in normalized for marker in finished_product_markers)
+            else "by_material"
+        )
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered == "view":
+                parameters[name] = default_view
+            elif lowered == "limit":
+                parameters[name] = requested_page_size or 50
+            elif lowered == "offset":
+                page = requested_page or 1
+                page_size = requested_page_size or 50
+                parameters[name] = (page - 1) * page_size
+            elif lowered in {"finished_product_code", "finishedproductcode"} and product_code:
+                parameters[name] = product_code
+            elif lowered in {"raw_material_code", "rawmaterialcode"} and product_code:
+                parameters[name] = product_code
+            elif lowered in {"max_depth", "maxdepth"}:
+                parameters[name] = self.HIERARCHICAL_PRODUCT_MAX_DEPTH
+
+        if "view" not in {key.lower() for key in parameters}:
+            parameters["view"] = default_view
+
+        if "limit" not in {key.lower() for key in parameters}:
+            parameters["limit"] = requested_page_size or 50
+
+        return parameters
+
     @staticmethod
     def _extract_top_n(normalized: str) -> int | None:
         if not normalized:
