@@ -402,6 +402,7 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 |-----|----------|
 | [playbook-producao-consumo-compras-perdas-op.md](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md) | Implementação api-delpi (SQL, camadas, exemplos) |
 | [playbook-15-chat-integracao-producao-suprimentos.md](./playbook-15-chat-integracao-producao-suprimentos.md) | Integração chat base |
+| [playbook-16-openapi-import-async-e-readiness-operacional.md](./playbook-16-openapi-import-async-e-readiness-operacional.md) | Import async, progresso UI, readiness pós-deploy |
 | [playbook-10-contrato-respostas-api-delpi.md](./playbook-10-contrato-respostas-api-delpi.md) | meta.shape / operationId |
 | [playbook-11-clean-architecture-chat-api.md](./playbook-11-clean-architecture-chat-api.md) | Camadas chat |
 | [chat-intelligence-base.md](../architecture/chat-intelligence-base.md) | Pipeline |
@@ -424,3 +425,18 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 **Pendência operacional:** latência p95 em TOTVS dev; qualidade de resposta direct answer em alguns cenários (S9/S14) — evoluir no pipeline base, não no MFE.
 
 `POST /data/sql` permanece **fallback** para exploração ad hoc quando a action REST não estiver habilitada no agente.
+
+---
+
+## 13. Próximas implementações (Playbook 16)
+
+**Roadmap:** [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md)
+
+| Tema | Problema | Entrega alvo |
+|------|----------|--------------|
+| Import async | «Atualizar rotas» bloqueia ~minutos (embedding síncrono × N actions) | Job `202` + progresso `done/total` |
+| Readiness | Rota na api-delpi mas chat cai no LLM | 3 camadas: API → catálogo → agente enabled |
+| UX operador | «Atualizando…» sem percentual | Barra por fase; reload após cadastro das rotas |
+| Pipeline | Intent REST reconhecida, action ausente | Direct answer (JSON), não inferência silenciosa |
+
+**Nota:** rotas Playbook 15 (ex.: `get_production_schedule_today`) usam `path_token` — **não** dependem de embedding para seleção. Habilitar a action no agente após reimport da fase 2 já desbloqueia S4.

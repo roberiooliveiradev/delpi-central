@@ -160,8 +160,23 @@ cd minha-delpi-ai-api && pytest tests/unit/domain/services/test_chat_intelligenc
 
 ---
 
-## 10. Referências
+## 10. Pré-requisito operacional (três camadas)
+
+Antes de smoke S1–S14 em homolog/prod, validar:
+
+1. **api-delpi** — rota publicada no OpenAPI (`operationId` presente).
+2. **Catálogo global** — reimport concluído (`sync_api_delpi_openapi.py` ou «Atualizar rotas»).
+3. **Agente** — action correspondente **habilitada** no builder (ex.: `get_production_schedule_today`).
+
+Se (2) ou (3) falham, o pipeline reconhece o intent (`operationalOptimize`) mas **não** planeja `execute_external_action` → sintoma «Gerando resposta em linguagem natural…».
+
+Detalhes, import async e checklist: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md).
+
+---
+
+## 11. Referências
 
 - Master: [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)
+- Import / readiness: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md)
 - api-delpi: [`playbook-producao-consumo-compras-perdas-op.md`](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md)
 - Arquitetura: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

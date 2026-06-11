@@ -283,6 +283,9 @@ Atualiza configurações do provider/API.
 
 Atualiza/importa rotas a partir da URL OpenAPI configurada.
 
+**Comportamento atual:** requisição **síncrona** — bloqueia até import + embeddings (lento com ~135 rotas).  
+**Roadmap:** import assíncrono com progresso — [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
+
 ### Permissão
 
 `minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
