@@ -62,6 +62,7 @@ src/
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
 - **Feedback** (thumbs up/down) em respostas do assistente
 - Agentes, projetos, fontes e anexos por contexto
+- **Corretor de digitação (Playbook 14):** chip pré-envio para typos operacionais (`estouque` → `estoque`); aceitar ou manter original; textos em `message_composer.json` (sync: `npm run sync:message-composer-content`)
 - Notificações (sino) quando habilitado na Core API
 
 ### Gestão de agentes (plugin)
@@ -88,6 +89,7 @@ Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao
 | Tópico | Onde |
 |--------|------|
 | Arquitetura API + MFE | [`chat-assistant-content-presentation.md`](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md) |
+| Corretor de digitação (composer) | [Playbook 14](../../minha-delpi-ai-api/docs/roadmap/playbook-14-corretor-digitacao-chat.md) · [changelog](../../minha-delpi-ai-api/docs/changelog/2026-06-playbook-14-corretor-digitacao-composer.md) |
 | Playbook 09 (decisão de formato) | [`playbook-09-apresentacao-rica.md`](../../minha-delpi-ai-api/docs/roadmap/playbook-09-apresentacao-rica.md) |
 | Novo componente visual | `registerAssistantSegmentRenderer` em `src/ui/components/assistantContentRegistry.tsx` |
 | Segmentos / layout | `assistantContentSegments.ts`, `assistantContentLayout.ts`, `assistantContentVisualFormats.ts` |

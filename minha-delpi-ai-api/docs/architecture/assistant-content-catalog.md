@@ -60,7 +60,7 @@ Wrappers especializados (mantêm API estável):
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
-| `message_composer.json` | Composer (corretor de digitação P14) | MFE `messageComposerContent.ts` + `GET /chat/typing-suggestions` |
+| `message_composer.json` | Composer (corretor de digitação P14) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
 | `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom e feedback | `ChatPersonalityContentService` |

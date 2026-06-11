@@ -251,9 +251,18 @@ Envia mensagem sem streaming.
 {
   "message": "Explique o status do produto X",
   "context": "geral",
-  "attachmentIds": ["uuid"]
+  "attachmentIds": ["uuid"],
+  "typingCorrection": {
+    "original": "estouque do produto 90262404",
+    "corrected": "estoque do produto 90262404",
+    "accepted": true,
+    "source": "domain_dictionary",
+    "changes": [{ "from": "estouque", "to": "estoque", "kind": "typo_rule" }]
+  }
 }
 ```
+
+Campo opcional `typingCorrection` — preenchido pelo MFE quando o usuário aceita sugestão do corretor de digitação (Playbook 14). Persistido em `metadata` da mensagem user.
 
 ### Resposta `200`
 
@@ -272,6 +281,38 @@ Envia mensagem sem streaming.
 |-------|-----------|
 | `canvasOpen` | Opcional: `{ "title", "markdown", "sourceMessageId" }` quando o usuário pede envio à lousa. |
 | `adminDebug` | Objeto de diagnóstico; **só preenchido** para solicitante admin. Demais usuários recebem `null` ou campo ausente. |
+
+---
+
+## POST `/chat/typing-suggestions`
+
+Sugestões determinísticas de typos operacionais **antes do envio** (composer). Distinto da correção textual por LLM.
+
+### Permissão
+
+`minha-delpi.chat.access`
+
+### Body
+
+```json
+{ "text": "estouque do produto 90262404", "locale": "pt-BR" }
+```
+
+### Resposta `200`
+
+```json
+{
+  "hasSuggestions": true,
+  "original": "estouque do produto 90262404",
+  "corrected": "estoque do produto 90262404",
+  "changes": [{ "offset": 0, "length": 8, "from": "estouque", "to": "estoque", "kind": "typo_rule" }],
+  "protectedSpans": [{ "start": 19, "end": 27, "reason": "product_code" }]
+}
+```
+
+Desligado quando `CHAT_TYPING_CORRECTION_ENABLED=false`. Regras aprendidas carregadas via `ChatLearnedNormalizationService.ensure_loaded()`.
+
+Documentação: [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md), [changelog jun/2026](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
 
 ---
 

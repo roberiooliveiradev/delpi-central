@@ -12,6 +12,8 @@ Princípio: *pergunta simples → resposta simples*; usar ferramenta só quando 
 
 Entradas como «oq vc faz», «cmo», «cm», «qm», «qual eh», «seu nom», «vc s chama», «naum/num entendi» passam a normalizar para a forma canônica antes do roteamento, evitando que pequenos erros de digitação caiam em ferramenta ou LLM desnecessários.
 
+**UI (jun/2026):** [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer (`POST /chat/typing-suggestions`); [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+
 ---
 
 ## Fase 2 — Gate de turno simples

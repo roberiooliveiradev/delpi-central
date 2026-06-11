@@ -2,7 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Escopo:** reduzir erros de digitação em **perguntas operacionais** antes e no envio — sem confundir com a habilidade «corrija este texto».  
-**Status:** **Implementado (jun/2026)** — P14-1 a P14-3  
+**Status:** **Implementado (jun/2026)** — P14-1 a P14-3 + telemetria parcial  
+**Changelog:** [2026-06-playbook-14-corretor-digitacao-composer.md](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md)  
 **Relacionado:** [playbook-inteligencia.md](./playbook-inteligencia.md), [playbook-aprendizagem-continua.md](./playbook-aprendizagem-continua.md), [playbook_correcao_texto (melhorias)](./melhorias/playbook_correcao_texto_minha_delpi_chat.md), [chat-intelligence-base.md](../architecture/chat-intelligence-base.md)
 
 ---
@@ -238,10 +239,10 @@ Conteúdo PT: `message_composer.json` ou seção em `onboarding.json` — seguir
 
 Arquivos alvo:
 
-- `tests/unit/domain/services/test_chat_typing_correction_service.py` (novo)
-- `tests/fixtures/chat_typing_correction_cases.py` (novo)
-- `plugins/minha-delpi-chat/src/ui/chatTypingCorrection.test.ts` (novo)
-- Estender smoke U2 em [`smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md)
+- `tests/unit/domain/services/test_chat_typing_correction_service.py`
+- `tests/fixtures/chat_typing_correction_cases.py`
+- `plugins/minha-delpi-chat/src/state/chatTypingCorrection.test.ts`
+- Estender smoke U2b em [`smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md)
 
 ---
 
@@ -273,7 +274,8 @@ Arquivos alvo:
 - Normalizador: `app/domain/services/chat_message_normalization_service.py`
 - Aprendizado: `app/application/services/chat_learned_normalization_service.py`
 - Correção textual (LLM): `app/domain/services/chat_text_correction_*`
-- Capabilities já mencionam typos: `ChatCapabilitiesService` — alinhar copy após P14-2
+- Capabilities: `typingCorrectionEnabled` em `GET /chat/capabilities`
+- Changelog: [2026-06-playbook-14-corretor-digitacao-composer.md](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md)
 - Playbook inteligência § typos: [2026-06-playbook-inteligencia.md](../changelog/2026-06-playbook-inteligencia.md)
 
 ---
@@ -283,3 +285,40 @@ Arquivos alvo:
 Hoje o chat **já tolera** typos operacionais na API, mas **esconde** a correção do usuário. O Playbook 14 fecha essa lacuna com sugestões **determinísticas**, **confirmadas pelo usuário**, reutilizando o vocabulário existente e a aprendizagem contínua — sem misturar com a habilidade de revisão textual por LLM e sem autocorrect agressivo em códigos ERP.
 
 Próximo passo de engenharia: **P14-0** (extrair regras estáticas para catálogo JSON) e **P14-4** (dashboard admin de métricas).
+
+---
+
+## 16. Implementação entregue (jun/2026)
+
+Changelog detalhado: [2026-06-playbook-14-corretor-digitacao-composer.md](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+
+### Módulos
+
+| Camada | Arquivo |
+|--------|---------|
+| Domain | `app/domain/services/chat_typing_correction_service.py` |
+| Normalizador (fonte única) | `app/domain/services/chat_message_normalization_service.py` → `iter_typo_patterns()` |
+| HTTP | `app/interfaces/http/routes/chat/meta_routes.py` → `POST /typing-suggestions` |
+| Config | `CHAT_TYPING_CORRECTION_ENABLED` em `settings.py` |
+| Conteúdo | `app/content/pt-BR/assistant/message_composer.json` |
+| MFE hook | `plugins/minha-delpi-chat/src/state/hooks/useChatTypingCorrection.ts` |
+| MFE UI | `ChatInput.tsx` (chip), `ChatPage.tsx` (envio) |
+| Telemetria | `typing_correction_*` em `ChatHelpAdoptionService` |
+
+### Variáveis de ambiente
+
+| Variável | Default | Efeito |
+|----------|---------|--------|
+| `CHAT_TYPING_CORRECTION_ENABLED` | `true` | Desliga endpoint e flag `typingCorrectionEnabled` em capabilities |
+
+Aprendizado de vocabulário (regras dinâmicas) continua gated por `CHAT_LEARNING_ENABLED` + `CHAT_LEARNING_APPLY_VOCABULARY` — mesmas regras do normalizador.
+
+### Homologação
+
+| ID | Passo | Esperado |
+|----|-------|----------|
+| U2b | Digitar `estouque do produto 90262404`, pausar ~1 s | Chip com `estoque`; código intacto |
+| T6 | **Manter original** → reenviar igual | Chip não reaparece na sessão |
+| Aceite | **Enviar corrigido** | Histórico com texto corrigido; metadata `typingCorrection.accepted: true` |
+
+Ver também smoke operacional #2 em [smoke-operacional-manual.md](../testing/smoke-operacional-manual.md).

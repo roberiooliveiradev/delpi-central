@@ -93,6 +93,19 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 | U1 | que horas são? | Hora real (`America/Sao_Paulo` / `CHAT_UTILITY_TIMEZONE`); ~1 s; **sem** agentic/RAG/LLM |
 | U2 | que hors são? | Idem U1 (typo corrigido) |
 | U2b | *(composer)* digitar `estouque do produto 90262404` e pausar ~1 s | Chip «Você quis dizer…» com `estoque`; código intacto; **Enviar corrigido** ou **Manter original** |
+
+### Corretor de digitação no composer (Playbook 14)
+
+Requer `CHAT_TYPING_CORRECTION_ENABLED=true` (default) e MFE atualizado. Documentação: [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md), [changelog](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md).
+
+| # | Passo | Esperado |
+|---|-------|----------|
+| P14-T1 | Digitar `estouque do produto 90262404`, aguardar chip | Sugestão `estoque`; código `90262404` intacto |
+| P14-T3 | Digitar `corrija: estouque baixo` | **Sem** chip (trecho após `corrija:` ignorado) |
+| P14-T4 | Digitar `@Agente estouque` | `@Agente` intacto; sugestão só em `estouque` |
+| P14-T6 | Dispensar chip (**Manter original**) → reenviar igual | Chip **não** reaparece na mesma sessão |
+| P14-aceite | **Enviar corrigido** | Mensagem no histórico com texto corrigido; metadata `typingCorrection.accepted: true` |
+
 | U3 | q horas | Idem U1 (abreviação) |
 | U4 | que dia é hoje? | Data + dia da semana |
 | U5 | que dia é amanhã? | **Amanhã será** + data real (ex.: domingo, 31/05/2026); sem LLM |
