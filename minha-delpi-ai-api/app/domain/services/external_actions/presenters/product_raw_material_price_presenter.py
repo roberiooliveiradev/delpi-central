@@ -427,10 +427,10 @@ class ExternalActionProductRawMaterialPricePresenter:
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if last_purchase:
-            purchase_table = _OpsTable.build_fixed_items_table(
+            purchase_table = _OpsTable.build_items_table(
                 self._host,
                 [last_purchase],
-                table_id="lastPurchaseDetail",
+                profile_name="lastPurchaseDetail",
                 title=self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle"),
                 role="pricing",
             )
@@ -458,10 +458,10 @@ class ExternalActionProductRawMaterialPricePresenter:
                 if total > len(shown)
                 else self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle")
             )
-            history_table = _OpsTable.build_fixed_items_table(
+            history_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="mpPriceHistoryDetail",
+                profile_name="mpPriceHistoryDetail",
                 title=history_title,
                 role="list",
             )
@@ -487,10 +487,10 @@ class ExternalActionProductRawMaterialPricePresenter:
                 if total > len(shown)
                 else self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle")
             )
-            budget_table = _OpsTable.build_fixed_items_table(
+            budget_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="purchaseBudgetHistoryDetail",
+                profile_name="purchaseBudgetHistoryDetail",
                 title=budget_title,
                 role="other",
             )
@@ -563,10 +563,10 @@ class ExternalActionProductRawMaterialPricePresenter:
         last_purchase = root.get("last_purchase") if isinstance(root.get("last_purchase"), dict) else {}
 
         if last_purchase:
-            detail = _OpsTable.build_fixed_items_table(
+            detail = _OpsTable.build_items_table(
                 self._host,
                 [last_purchase],
-                table_id="lastPurchaseDetail",
+                profile_name="lastPurchaseDetail",
                 title=self._route("lastPurchase", "tableTitle"),
                 role="list",
             )

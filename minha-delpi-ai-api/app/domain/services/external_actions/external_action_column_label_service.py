@@ -7,6 +7,9 @@ from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.presentation_column_label_discovery_service import (
+    PresentationColumnLabelDiscoveryService,
+)
 
 
 def invalidate_column_label_cache() -> None:
@@ -173,6 +176,39 @@ class ExternalActionColumnLabelService:
                 return configured.strip()
 
         return self._humanize_field_key(normalized_key)
+
+    def is_catalog_label_resolved(
+        self,
+        key: str,
+        *,
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+    ) -> bool:
+        token = str(key or "").strip()
+
+        if not token:
+            return True
+
+        if schema_labels and str(schema_labels.get(token) or "").strip():
+            return True
+
+        hinted = self.column_label_hints(profile_name).get(token)
+
+        if str(hinted or "").strip():
+            return True
+
+        content = _column_labels_content()
+        fields = content.get("fields") or {}
+
+        if str(fields.get(token) or "").strip():
+            return True
+
+        snake_key = self._snake_case_key(token)
+
+        if snake_key != token and str(fields.get(snake_key) or "").strip():
+            return True
+
+        return False
 
     def resolve_field_format(
         self,
@@ -354,34 +390,21 @@ class ExternalActionColumnLabelService:
         *,
         schema_labels: dict[str, str] | None = None,
     ) -> list[dict[str, str]]:
-        presenter = _column_labels_content().get("presenter") or {}
-        tables = presenter.get("fixedTableColumns") or {}
-        raw = tables.get(table_id) or []
+        """Compat: defs de coluna a partir de `tableProfiles` (hints de ordem/rotulo)."""
+        hints = self.column_order_hints(table_id)
+
+        if not hints:
+            return []
+
         columns: list[dict[str, str]] = []
 
-        for column in raw:
-            if not isinstance(column, dict):
-                continue
-
-            key = str(column.get("key") or "").strip()
-
-            if not key:
-                continue
-
-            configured_label = column.get("label")
-            label = (
-                str(configured_label).strip()
-                if isinstance(configured_label, str) and configured_label.strip()
-                else self.label_for(key, schema_labels=schema_labels)
+        for key in hints:
+            label = self.resolve_label_for_column(
+                key,
+                profile_name=table_id,
+                schema_labels=schema_labels,
             )
-            entry: dict[str, str] = {"key": key, "label": label}
-
-            data_type = column.get("dataType")
-
-            if isinstance(data_type, str) and data_type.strip():
-                entry["dataType"] = data_type.strip()
-
-            columns.append(entry)
+            columns.append(self.enrich_column(key, label))
 
         return columns
 
@@ -485,10 +508,31 @@ class ExternalActionColumnLabelService:
         if not isinstance(row, dict):
             return []
 
-        content = _column_labels_content()
-        profile = (content.get("tableProfiles") or {}).get(profile_name) or {}
-        configured = profile.get("preferredColumns") or []
         columns: list[tuple[str, str]] = []
+
+        for key in self.column_order_hints(profile_name):
+            if key not in row:
+                continue
+
+            label = self.resolve_label_for_column(
+                key,
+                profile_name=profile_name,
+                schema_labels=schema_labels,
+            )
+            columns.append((key, label))
+
+        return columns
+
+    def column_order_hints(self, profile_name: str | None) -> list[str]:
+        token = str(profile_name or "").strip()
+
+        if not token:
+            return []
+
+        content = _column_labels_content()
+        profile = (content.get("tableProfiles") or {}).get(token) or {}
+        configured = profile.get("preferredColumns") or []
+        hints: list[str] = []
 
         for item in configured:
             if isinstance(item, (list, tuple)) and len(item) >= 1:
@@ -498,11 +542,121 @@ class ExternalActionColumnLabelService:
             else:
                 continue
 
-            if key not in row:
-                continue
+            if key and key not in hints:
+                hints.append(key)
 
-            label = self.label_for(key, schema_labels=schema_labels)
-            columns.append((key, label))
+        if hints:
+            return hints
+
+        return []
+
+    def column_label_hints(self, profile_name: str | None) -> dict[str, str]:
+        token = str(profile_name or "").strip()
+
+        if not token:
+            return {}
+
+        content = _column_labels_content()
+        profile = (content.get("tableProfiles") or {}).get(token) or {}
+        configured = profile.get("preferredColumns") or []
+        labels: dict[str, str] = {}
+
+        for item in configured:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                key = str(item[0]).strip()
+                label = str(item[1]).strip()
+
+                if key and label:
+                    labels[key] = label
+
+        return labels
+
+    def resolve_label_for_column(
+        self,
+        key: str,
+        *,
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+    ) -> str:
+        hinted = self.column_label_hints(profile_name).get(key)
+
+        if hinted:
+            return hinted
+
+        return self.label_for(key, schema_labels=schema_labels)
+
+    def resolve_columns_for_items(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        path: str = "",
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        skip_keys: frozenset[str] | None = None,
+    ) -> list[dict[str, str]]:
+        dict_items = [item for item in items if isinstance(item, dict)]
+
+        if not dict_items:
+            return []
+
+        skipped = skip_keys or frozenset({"_detailMeta"})
+        discovered: list[str] = []
+        present: set[str] = set()
+
+        for item in dict_items:
+            for key in item:
+                token = str(key or "").strip()
+
+                if not token or token.startswith("_") or token in skipped:
+                    continue
+
+                if token not in present:
+                    present.add(token)
+                    discovered.append(token)
+
+        resolved_profile = profile_name
+
+        if not resolved_profile:
+            resolved_profile = self.detect_table_profile(dict_items[0], path=path)
+
+        label_hints_profile = resolved_profile
+        ordered_keys: list[str] = []
+
+        for key in self.column_order_hints(resolved_profile):
+            if key in present and key not in ordered_keys:
+                ordered_keys.append(key)
+
+        for key in discovered:
+            if key not in ordered_keys:
+                ordered_keys.append(key)
+
+        profile_hints = self.column_label_hints(resolved_profile)
+        label_map: dict[str, str] = {}
+
+        for key in ordered_keys:
+            label_map[key] = self.resolve_label_for_column(
+                key,
+                profile_name=label_hints_profile,
+                schema_labels=schema_labels,
+            )
+
+        catalog_fields = (_column_labels_content().get("fields") or {})
+        discovered_labels = PresentationColumnLabelDiscoveryService.resolve_labels(
+            ordered_keys,
+            path=path,
+            schema_labels=schema_labels,
+            profile_labels=profile_hints,
+            fields=catalog_fields,
+        )
+
+        for key, label in discovered_labels.items():
+            if key in label_map and str(label or "").strip():
+                label_map[key] = str(label).strip()
+
+        columns: list[dict[str, str]] = []
+
+        for key in ordered_keys:
+            columns.append(self.enrich_column(key, label_map[key]))
 
         return columns
 

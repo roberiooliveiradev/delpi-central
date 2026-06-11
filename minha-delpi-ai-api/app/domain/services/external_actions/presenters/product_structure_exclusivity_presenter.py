@@ -379,10 +379,10 @@ class ExternalActionProductStructureExclusivityPresenter:
                 if total > len(shown)
                 else self._route("componentsTableTitle")
             )
-            table = _OpsTable.build_fixed_items_table(
+            table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="structureExclusivityDetail",
+                profile_name="structureExclusivityDetail",
                 title=title,
                 role="structure",
             )

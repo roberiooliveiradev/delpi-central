@@ -17,6 +17,42 @@ if TYPE_CHECKING:
 class ChatPresentationOperationalTableService:
     DEFAULT_LIST_LIMIT = 30
 
+    LMP_ITEM_ALIASES: dict[str, tuple[str, ...]] = {
+        "sale_number": ("saleNumber",),
+        "listing_kind": ("listingKind",),
+        "sale_description": ("saleDescription",),
+        "status": ("engineering_status",),
+    }
+
+    @classmethod
+    def apply_field_aliases(
+        cls,
+        item: dict[str, Any],
+        aliases: dict[str, tuple[str, ...]],
+    ) -> dict[str, Any]:
+        row = dict(item)
+
+        for canonical, alternate_keys in aliases.items():
+            if row.get(canonical) not in (None, ""):
+                continue
+
+            for alt in alternate_keys:
+                value = row.get(alt)
+
+                if value not in (None, ""):
+                    row[canonical] = value
+                    break
+
+        return row
+
+    @classmethod
+    def normalize_lmp_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            cls.apply_field_aliases(item, cls.LMP_ITEM_ALIASES)
+            for item in items
+            if isinstance(item, dict)
+        ]
+
     @classmethod
     def parse_quantity(cls, value: object) -> float:
         if value is None or value == "":
@@ -66,19 +102,27 @@ class ChatPresentationOperationalTableService:
         return "\n\n".join(block for block in blocks if block).strip()
 
     @classmethod
-    def build_fixed_items_table(
+    def build_items_table(
         cls,
         host: ExternalActionResultPresenter,
         items: list[dict[str, Any]],
         *,
-        table_id: str,
         title: str,
         role: str,
+        path: str = "",
+        profile_name: str | None = None,
     ) -> dict | None:
-        if not items:
+        dict_items = [item for item in items if isinstance(item, dict)]
+
+        if not dict_items:
             return None
 
-        columns = host._fixed_columns(table_id)
+        columns = host._column_labels.resolve_columns_for_items(
+            dict_items,
+            path=path,
+            profile_name=profile_name,
+            schema_labels=host._active_schema_labels,
+        )
         col_keys = [column["key"] for column in columns if column.get("key")]
 
         if not col_keys:
@@ -86,10 +130,7 @@ class ChatPresentationOperationalTableService:
 
         rows = []
 
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-
+        for item in dict_items:
             row = {key: item.get(key) for key in col_keys}
 
             if isinstance(item.get("_detailMeta"), dict):

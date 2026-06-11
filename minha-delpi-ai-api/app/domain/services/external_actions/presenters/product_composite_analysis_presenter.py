@@ -385,10 +385,10 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 if total > len(shown)
                 else self._route("factoryStatus", "sectionStructureTitle")
             )
-            structure_table = _OpsTable.build_fixed_items_table(
+            structure_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="structureExclusivityDetail",
+                profile_name="structureExclusivityDetail",
                 title=structure_title,
                 role="structure",
             )
@@ -435,10 +435,10 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 if total > len(shown)
                 else self._route("factoryStatus", "sectionShippingTitle")
             )
-            shipping_table = _OpsTable.build_fixed_items_table(
+            shipping_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="shippingStatusDetail",
+                profile_name="shippingStatusDetail",
                 title=shipping_title,
                 role="other",
             )
@@ -458,19 +458,19 @@ class ExternalActionProductCompositeAnalysisPresenter:
     def _build_factory_mp_stock_summary_table(self, stock_items: list) -> dict | None:
         rows = self._aggregate_mp_stock_rows(stock_items)
 
-        return _OpsTable.build_fixed_items_table(
+        return _OpsTable.build_items_table(
             self._host,
             rows,
-            table_id="factoryMpStockSummary",
+            profile_name="factoryMpStockSummary",
             title=self._route("factoryStatus", "sectionMpStockSummaryTitle"),
             role="stock",
         )
 
     def _build_factory_stock_detail_table(self, stock_items: list) -> dict | None:
-        return _OpsTable.build_fixed_items_table(
+        return _OpsTable.build_items_table(
             self._host,
             [item for item in stock_items if isinstance(item, dict)],
-            table_id="factoryRawMaterialStockDetail",
+            profile_name="factoryRawMaterialStockDetail",
             title=self._route("factoryStatus", "sectionStockTitle"),
             role="stock",
         )
@@ -489,10 +489,10 @@ class ExternalActionProductCompositeAnalysisPresenter:
             else self._route("factoryStatus", "sectionProductionTitle")
         )
 
-        return _OpsTable.build_fixed_items_table(
+        return _OpsTable.build_items_table(
             self._host,
             shown_items,
-            table_id="factoryProductionDetail",
+            profile_name="factoryProductionDetail",
             title=title,
             role="list",
         )

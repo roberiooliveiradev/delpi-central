@@ -178,12 +178,13 @@ class ExternalActionBillingPresenter:
             if not rows:
                 return None
 
-            return {
-                "type": "table",
-                "title": self._host._presenter_text("stockValue", "branchTableTitle"),
-                "columns": self._host._fixed_columns("stockValueByBranch"),
-                "rows": rows,
-            }
+            return self._host._build_profile_items_table(
+                rows,
+                profile_name="stockValueByBranch",
+                title=self._host._presenter_text("stockValue", "branchTableTitle"),
+                role="generic",
+                path="/stock-value",
+            )
 
     def _build_product_billing_table(
             self,

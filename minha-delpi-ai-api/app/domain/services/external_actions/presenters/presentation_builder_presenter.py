@@ -480,6 +480,21 @@ class ExternalActionPresentationBuilderPresenter:
     def _build_sale_orders_table(self, items: list, root: dict) -> dict:
             rows = [item for item in items if isinstance(item, dict)]
 
+            table = self._host._build_profile_items_table(
+                rows,
+                profile_name="saleOrders",
+                title=self._host._route_presentation(
+                    "tableTitles",
+                    "saleOrders",
+                    total=str(root.get("total", len(rows))),
+                ),
+                role="generic",
+                path="/sales",
+            )
+
+            if table:
+                return table
+
             return {
                 "type": "table",
                 "title": self._host._route_presentation(
@@ -487,8 +502,8 @@ class ExternalActionPresentationBuilderPresenter:
                     "saleOrders",
                     total=str(root.get("total", len(rows))),
                 ),
-                "columns": self._host._fixed_columns("saleOrders"),
-                "rows": rows,
+                "columns": [],
+                "rows": [],
             }
 
     def _flatten_nested_field(self, items: list) -> list:
@@ -513,35 +528,36 @@ class ExternalActionPresentationBuilderPresenter:
             return flattened
 
     def _build_product_search_table(self, items: list, root: dict, *, title: str | None = None) -> dict:
+            table_title = title or self._host._presenter_root_format(
+                "productSearchTableTitle",
+                total=str(root.get("total", len(items))),
+            )
             first = items[0] if items else {}
             has_extra = any(k in first for k in ("quantity", "level", "lot_quantity"))
 
             if has_extra:
-                flat_items = self._flatten_nested_field(items)
-                first_flat = flat_items[0] if flat_items else {}
-                all_keys = {}
-                for item in flat_items:
-                    for k in item:
-                        if k not in all_keys:
-                            all_keys[k] = True
-                columns = [self._host._enrich_column(k, self._host._humanize_key(k)) for k in all_keys]
-                rows = flat_items
+                rows = self._flatten_nested_field(items)
+                table = self._host._build_profile_items_table(
+                    rows,
+                    title=table_title,
+                    role="generic",
+                    path="/products/search",
+                )
             else:
-                columns = self._host._fixed_columns("productSearchBasic")
-                rows = [
-                    {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
-                    for i in items
-                    if isinstance(i, dict)
-                ]
+                table = self._host._build_profile_items_table(
+                    [item for item in items if isinstance(item, dict)],
+                    profile_name="productSearchBasic",
+                    title=table_title,
+                    role="generic",
+                    path="/products/search",
+                )
 
-            table_title = title or self._host._presenter_root_format(
-                "productSearchTableTitle",
-                total=str(root.get("total", len(rows))),
-            )
+            if table:
+                return table
 
             return {
                 "type": "table",
                 "title": table_title,
-                "columns": columns,
-                "rows": rows,
+                "columns": [],
+                "rows": [],
             }

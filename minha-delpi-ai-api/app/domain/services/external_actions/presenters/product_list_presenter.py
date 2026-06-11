@@ -722,27 +722,35 @@ class ExternalActionProductListPresenter:
         }
 
     def _build_lmp_table(self, items: list, root: dict) -> dict:
-        rows = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            rows.append({
-                "sale_number": item.get("sale_number") or item.get("saleNumber"),
-                "branch": item.get("branch"),
-                "listing_kind": item.get("listing_kind") or item.get("listingKind"),
-                "status": item.get("status") or item.get("engineering_status"),
-                "sale_description": item.get("sale_description") or item.get("saleDescription"),
-            })
+        from app.domain.services.chat_presentation_operational_table_service import (
+            ChatPresentationOperationalTableService as OpsTable,
+        )
+
+        dict_items = OpsTable.normalize_lmp_items(
+            [item for item in items if isinstance(item, dict)]
+        )
+        title = self._host._route_presentation(
+            "tableTitles",
+            "lmps",
+            total=str(root.get("total", len(dict_items))),
+        )
+        table = OpsTable.build_items_table(
+            self._host,
+            dict_items,
+            profile_name="lmpList",
+            title=title,
+            role="lmp",
+            path="/lmp",
+        )
+
+        if table:
+            return table
 
         return {
             "type": "table",
-            "title": self._host._route_presentation(
-                "tableTitles",
-                "lmps",
-                total=str(root.get("total", len(rows))),
-            ),
-            "columns": self._host._fixed_columns("lmpList"),
-            "rows": rows,
+            "title": title,
+            "columns": [],
+            "rows": [],
         }
 
     def _build_items_table(
@@ -752,63 +760,23 @@ class ExternalActionProductListPresenter:
         *,
         path: str = "",
     ) -> dict | None:
+        from app.domain.services.chat_presentation_operational_table_service import (
+            ChatPresentationOperationalTableService as OpsTable,
+        )
+
         if not items:
             return None
 
         if not title:
             title = self._host._presenter_text("generic", "itemsTableDefaultTitle")
 
-        first = next((item for item in items if isinstance(item, dict)), None)
-
-        if not first:
-            return None
-
-        profile_name = self._host._column_labels.detect_table_profile(first, path=path)
-        preferred = None
-
-        if profile_name:
-            preferred = self._host._column_labels.preferred_columns(
-                profile_name,
-                first,
-                schema_labels=self._host._active_schema_labels,
-            )
-
-        if preferred:
-            columns = [
-                self._host._enrich_column(key, label)
-                for key, label in preferred
-            ]
-        else:
-            columns = []
-
-        if not columns:
-            flat_items = self._host._flatten_nested_field(items)
-            first_flat = flat_items[0] if flat_items else first
-            columns = [
-                self._host._enrich_column(key, self._host._humanize_key(key))
-                for key in list(first_flat.keys())[:15]
-                if not isinstance(first_flat.get(key), (list, dict))
-            ]
-            col_keys = {c["key"] for c in columns}
-            rows = [
-                {k: item.get(k) for k in col_keys}
-                for item in flat_items
-                if isinstance(item, dict)
-            ]
-        else:
-            col_keys = {c["key"] for c in columns}
-            rows = [
-                {k: item.get(k) for k in col_keys}
-                for item in items
-                if isinstance(item, dict)
-            ]
-
-        return {
-            "type": "table",
-            "title": title,
-            "columns": columns,
-            "rows": rows,
-        }
+        return OpsTable.build_items_table(
+            self._host,
+            [item for item in items if isinstance(item, dict)],
+            title=title,
+            role="generic",
+            path=path,
+        )
 
     def _present_product_structure(self, root: dict, path: str) -> dict | None:
         root_node = root.get("root")

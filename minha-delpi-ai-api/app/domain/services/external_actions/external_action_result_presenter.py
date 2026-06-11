@@ -603,13 +603,72 @@ class ExternalActionResultPresenter:
             schema_formats=self._active_schema_formats,
         )
 
+    def _columns_for_items(
+        self,
+        items: list,
+        *,
+        profile_name: str | None = None,
+        path: str = "",
+    ) -> list[dict]:
+        dict_items = [item for item in items if isinstance(item, dict)]
+
+        if not dict_items:
+            return []
+
+        return self._column_labels.resolve_columns_for_items(
+            dict_items,
+            path=path,
+            profile_name=profile_name,
+            schema_labels=self._active_schema_labels,
+        )
+
+    def _markdown_column_pairs_for_items(
+        self,
+        items: list,
+        *,
+        profile_name: str | None = None,
+        path: str = "",
+    ) -> list[tuple[str, str]]:
+        return [
+            (column["key"], column["label"])
+            for column in self._columns_for_items(
+                items,
+                profile_name=profile_name,
+                path=path,
+            )
+        ]
+
+    def _build_profile_items_table(
+        self,
+        items: list,
+        *,
+        profile_name: str | None = None,
+        title: str,
+        role: str,
+        path: str = "",
+    ) -> dict | None:
+        from app.domain.services.chat_presentation_operational_table_service import (
+            ChatPresentationOperationalTableService as OpsTable,
+        )
+
+        return OpsTable.build_items_table(
+            self,
+            [item for item in items if isinstance(item, dict)],
+            title=title,
+            role=role,
+            path=path,
+            profile_name=profile_name,
+        )
+
     def _fixed_columns(self, table_id: str) -> list[dict]:
+        """Compat legado — preferir `_columns_for_items` / `_build_profile_items_table`."""
         return self._column_labels.fixed_table_columns(
             table_id,
             schema_labels=self._active_schema_labels,
         )
 
     def _markdown_column_pairs(self, table_id: str) -> list[tuple[str, str]]:
+        """Compat legado — preferir `_markdown_column_pairs_for_items`."""
         return self._column_labels.markdown_column_pairs(
             table_id,
             schema_labels=self._active_schema_labels,

@@ -205,13 +205,14 @@ class ExternalActionSystemTablesPresenter:
             if not rows:
                 return None
 
-            return {
-                "type": "table",
-                "title": self._host._route_presentation(
+            return self._host._build_profile_items_table(
+                rows,
+                profile_name="systemSx2Columns",
+                title=self._host._route_presentation(
                     "systemTables",
                     "columnsTitle",
                     table=table_name.upper(),
                 ),
-                "columns": self._host._fixed_columns("systemSx2Columns"),
-                "rows": rows,
-            }
+                role="generic",
+                path="/system/sx2",
+            )

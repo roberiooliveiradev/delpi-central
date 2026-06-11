@@ -300,7 +300,11 @@ class ExternalActionProductAnalyserPresenter:
             self._host._presenter_text("analyserGuideMarkdown", "header"),
             "",
             *self._markdown_table(
-                self._host._markdown_column_pairs("analyserGuide"),
+                self._host._markdown_column_pairs_for_items(
+                    rows,
+                    profile_name="analyserGuide",
+                    path="/analyser",
+                ),
                 rows,
             ),
         ]
@@ -320,12 +324,13 @@ class ExternalActionProductAnalyserPresenter:
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         product_code = str(product.get("code") or rows[0].get("product_code") or "").strip()
 
-        return {
-            "type": "table",
-            "title": self._analyser_table_title("guide", product_code),
-            "columns": self._host._fixed_columns("analyserGuide"),
-            "rows": rows,
-        }
+        return self._host._build_profile_items_table(
+            rows,
+            profile_name="analyserGuide",
+            title=self._analyser_table_title("guide", product_code),
+            role="guide",
+            path="/analyser",
+        )
 
     def _flatten_analyser_inspection_rows(self, inspection_items: list) -> list[dict]:
         rows: list[dict] = []
@@ -437,12 +442,13 @@ class ExternalActionProductAnalyserPresenter:
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         product_code = str(product.get("code") or "").strip()
 
-        return {
-            "type": "table",
-            "title": self._analyser_table_title("inspection", product_code),
-            "columns": self._host._fixed_columns("analyserInspection"),
-            "rows": rows,
-        }
+        return self._host._build_profile_items_table(
+            rows,
+            profile_name="analyserInspection",
+            title=self._analyser_table_title("inspection", product_code),
+            role="inspection",
+            path="/analyser",
+        )
 
     def _build_inspection_items_table(
         self,
@@ -463,12 +469,13 @@ class ExternalActionProductAnalyserPresenter:
             or self._host._presenter_text("analyserTableTitles", "inspectionGeneric")
         )
 
-        return {
-            "type": "table",
-            "title": title,
-            "columns": self._host._fixed_columns("analyserInspection"),
-            "rows": rows,
-        }
+        return self._host._build_profile_items_table(
+            rows,
+            profile_name="analyserInspection",
+            title=title,
+            role="inspection",
+            path=path or "/analyser",
+        )
 
     def _has_protheus_inspection_blocks(self, item: dict) -> bool:
         return any(
@@ -591,8 +598,10 @@ class ExternalActionProductAnalyserPresenter:
                     )
                     sections.extend(
                         self._markdown_table(
-                            self._host._markdown_column_pairs(
-                                "analyserInspectionDimensionalMarkdown"
+                            self._host._markdown_column_pairs_for_items(
+                                dim_rows,
+                                profile_name="analyserInspectionDimensionalMarkdown",
+                                path="/analyser",
                             ),
                             dim_rows,
                         )
@@ -625,8 +634,10 @@ class ExternalActionProductAnalyserPresenter:
                     )
                     sections.extend(
                         self._markdown_table(
-                            self._host._markdown_column_pairs(
-                                "analyserInspectionTextualMarkdown"
+                            self._host._markdown_column_pairs_for_items(
+                                text_rows,
+                                profile_name="analyserInspectionTextualMarkdown",
+                                path="/analyser",
                             ),
                             text_rows,
                         )
@@ -669,7 +680,11 @@ class ExternalActionProductAnalyserPresenter:
                 )
                 sections.extend(
                     self._markdown_table(
-                        self._host._markdown_column_pairs("analyserInspectionShallowMarkdown"),
+                        self._host._markdown_column_pairs_for_items(
+                            shallow_rows,
+                            profile_name="analyserInspectionShallowMarkdown",
+                            path="/analyser",
+                        ),
                         shallow_rows,
                     )
                 )

@@ -2391,5 +2391,12 @@
         ]
       ]
     }
+  },
+  "columnLabelDiscovery": {
+    "webSearchQueryTemplate": "{field} significado campo cadastro ERP Protheus",
+    "llmSystemPrompt": "Traduza nomes técnicos de campos JSON/API para rótulos curtos de cabeçalho de tabela em português brasileiro. Responda SOMENTE JSON objeto {\"nome_campo\": \"Rótulo\"}. Máximo 4 palavras por rótulo; sem markdown.",
+    "llmUserIntro": "Traduza estes campos técnicos para cabeçalhos de tabela PT-BR:",
+    "llmWebContextIntro": "Contexto público da web:",
+    "llmResponseHint": "Responda somente JSON: {\"campo_tecnico\": \"Rótulo PT-BR\"}"
   }
 }

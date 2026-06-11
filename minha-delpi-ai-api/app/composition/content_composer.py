@@ -5,6 +5,9 @@ from app.domain.services.chat_domain_config_service import ChatDomainConfigServi
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.presentation_column_label_discovery_service import (
+    PresentationColumnLabelDiscoveryService,
+)
 from app.domain.services.chat_runtime_intelligence_settings_service import (
     ChatRuntimeIntelligenceSettingsService,
 )
@@ -14,6 +17,9 @@ from app.infrastructure.config.chat_runtime_intelligence_settings_adapter import
 )
 from app.infrastructure.content.assistant_content_adapter import (
     InfrastructureAssistantContentAdapter,
+)
+from app.infrastructure.presentation.presentation_column_label_discovery_adapter import (
+    InfrastructurePresentationColumnLabelDiscoveryAdapter,
 )
 
 _CONFIGURED = False
@@ -56,6 +62,9 @@ def configure_domain_infrastructure_ports() -> None:
     ChatExternalActionDirectResponseService.configure(config)
     ChatRuntimeIntelligenceSettingsService.configure(
         InfrastructureChatRuntimeIntelligenceSettingsAdapter()
+    )
+    PresentationColumnLabelDiscoveryService.configure(
+        InfrastructurePresentationColumnLabelDiscoveryAdapter()
     )
     _configure_typo_correction_rules()
     _CONFIGURED = True

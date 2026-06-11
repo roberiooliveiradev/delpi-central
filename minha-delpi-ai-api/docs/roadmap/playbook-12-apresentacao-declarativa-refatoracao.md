@@ -36,8 +36,126 @@ Relacionado:
 | **R12** | Regressão entity contract + CI consolidado | ✅ Concluído |
 | **R13** | Correções pós-E2E (roteamento, chips POST, narrativa) | ✅ Concluído |
 | **R14** | Texto-first, visuais sob demanda e outline ASCII em estrutura | ✅ Concluído |
+| **R15** | Colunas dinâmicas da API (sem whitelist fixa) | ✅ Concluído |
+| **R16** | Rótulos desconhecidos — web + LLM (fallback pós-vocabulário) | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
+
+### R15 — Colunas dinâmicas (jun/2026)
+
+**Problema:** `fixedTableColumns` / `build_fixed_items_table` whitelistava campos — nova coluna na api-delpi exigia editar JSON + presenter.
+
+**Regra:**
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatPresentationOperationalTableService.build_items_table` | União de chaves dos rows da API; ignora só metadados (`_*`, exc. `_detailMeta` na linha) |
+| `ExternalActionResultPresenter._build_profile_items_table` | Atalho canônico nos presenters — delega a `build_items_table` + `profile_name` |
+| `ExternalActionColumnLabelService.resolve_columns_for_items` | Rótulo via `fields` + OpenAPI `meta.fields`; ordem opcional via `tableProfiles.preferredColumns` |
+| `tableProfiles` | Hints de ordem/rótulo + `detect` opcional; payload da API define colunas exibidas |
+| ~~`build_fixed_items_table`~~ | **Removido jun/2026** — usar `build_items_table(..., profile_name=...)` |
+| ~~`fixedTableColumns`~~ | **Removido jun/2026** — migrado para `tableProfiles` |
+| Presenters tier A | Montam título/role/seções; **não** decidem quais campos entram |
+
+**Proibido:** nova rota ou campo exigir editar whitelist para aparecer na tabela.
+
+**Testes:** `tests/unit/domain/services/test_dynamic_table_columns.py` + regressão por perfil.
+
+### R16 — Rótulos desconhecidos: web + LLM (jun/2026)
+
+**Problema:** quando a chave não está em `column_labels.fields`, `meta.fields` (OpenAPI) nem `tableProfiles.preferredColumns`, o fallback atual é `_humanize_field_key` (`impact_on_material_cost_percent` → «Impact On Material Cost Percent») — ruim para usuário e não escala quando actions/APIs mudam.
+
+**Princípio:** o chat **sempre** exibe colunas vindas do payload (R15); o vocabulário JSON **prioriza** rótulos; web + LLM **enriquecem** só o que faltar — sem bloquear renderização.
+
+#### Cascata de resolução de rótulo (ordem obrigatória)
+
+```
+1. meta.fields / responseSchema (OpenAPI title)
+2. column_labels.fields
+3. tableProfiles.preferredColumns (hint explícito do perfil)
+4. _humanize_field_key (fallback técnico imediato — UI nunca quebra)
+5. [R16] descoberta web + LLM → rótulo PT-BR curto (cache em memória)
+```
+
+A etapa 5 **não substitui** 1–3; só roda quando a chave **não** foi resolvida pelo catálogo.
+
+#### Arquitetura (clean — obrigatório antes de ligar)
+
+```
+ExternalActionColumnLabelService.resolve_columns_for_items
+  → PresentationColumnLabelDiscoveryPort (domain/port)
+  → InfrastructurePresentationColumnLabelDiscoveryAdapter (infra)
+  → ChatPresentationColumnLabelDiscoveryService (application)
+       → ChatPresentationColumnLabelEnrichmentService (domain — regras puras)
+       → WebSearchHttpGateway (opcional, gated)
+       → LlmGatewayPort (tradução em lote)
+```
+
+**Proibido:** `domain` importar `application` ou `infrastructure` diretamente (registrar port em `configure_domain_infrastructure_ports()`).
+
+| Módulo | Camada | Responsabilidade |
+|--------|--------|-------------------|
+| `ChatPresentationColumnLabelEnrichmentService` | `domain/services` | Detectar «ausente do catálogo»; montar query web; prompt LLM; parse JSON |
+| `ChatPresentationColumnLabelDiscoveryService` | `application/services` | Orquestrar web + LLM; cache LRU; limites por tabela |
+| `PresentationColumnLabelDiscoveryPort` | `domain/ports` | Contrato `resolve_labels(keys, *, path, schema_labels, profile_labels)` |
+| `InfrastructurePresentationColumnLabelDiscoveryAdapter` | `infrastructure` | Delega ao serviço de application |
+
+#### Conteúdo JSON (`column_labels.json` → `columnLabelDiscovery`)
+
+Prompts e templates **não** hardcoded em Python — ver `assistant-content-json.mdc`:
+
+```json
+{
+  "columnLabelDiscovery": {
+    "webSearchQueryTemplate": "{field} significado campo cadastro ERP Protheus",
+    "llmSystemPrompt": "Traduza nomes técnicos de campos JSON/API para rótulos curtos de cabeçalho de tabela em português brasileiro. Responda SOMENTE JSON objeto {\"nome_campo\": \"Rótulo\"}. Máximo 4 palavras por rótulo; sem markdown.",
+    "llmUserIntro": "Traduza estes campos técnicos para cabeçalhos de tabela PT-BR:",
+    "llmWebContextIntro": "Contexto público da web:",
+    "llmResponseHint": "Responda somente JSON: {\"campo_tecnico\": \"Rótulo PT-BR\"}"
+  }
+}
+```
+
+#### Fluxo web + LLM
+
+1. `resolve_columns_for_items` monta `ordered_keys` (R15).
+2. Filtra chaves **sem** rótulo de catálogo (passo 1–3 da cascata).
+3. Limita a `CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS` (default 8) por tabela.
+4. **Web** (opcional): até `CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES` buscas (default 3) via `WebSearchHttpGateway` — reutiliza pipeline `web_search` (SearXNG/Tavily/…); query de `webSearchQueryTemplate`.
+5. **LLM**: uma chamada em lote com chaves + snippets web + `path` da rota; resposta JSON `{ "campo": "Rótulo" }`.
+6. **Cache** processo (`CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE`, default 500) — mesma chave não repete web/LLM no turno seguinte.
+
+#### Feature flags (`.env`)
+
+| Variável | Default | Papel |
+|----------|---------|--------|
+| `CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED` | `true` | Master switch da descoberta |
+| `CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED` | `true` | Busca web antes do LLM (requer `CHAT_WEB_SEARCH_ENABLED`) |
+| `CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS` | `8` | Teto de chaves desconhecidas por tabela |
+| `CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES` | `3` | Teto de buscas web por tabela |
+| `CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE` | `500` | Entradas no cache em memória |
+
+#### O que NÃO fazer
+
+- Bloquear tabela ou omitir coluna por falta de rótulo no JSON.
+- Pesquisar na web valores de célula (PII, preços, clientes) — **somente nomes de campo**.
+- Gravar automaticamente em `column_labels.fields` sem fluxo de learning/revisão (fase futura opcional via `CHAT_LEARNING_*`).
+- Duplicar lógica de humanização no MFE.
+
+#### Entregáveis R16
+
+- [x] `PresentationColumnLabelDiscoveryPort` + adapter + registro em `content_composer.py`
+- [x] `columnLabelDiscovery` em `column_labels.json`
+- [x] Wiring em `resolve_columns_for_items` via port (sem import de application no domain)
+- [x] Testes: `test_chat_presentation_column_label_discovery_service.py`, `test_chat_presentation_column_label_enrichment_service.py`
+- [x] Atualizar `assistant-content-catalog.md`
+
+#### Critério de aceite
+
+- Campo novo na api-delpi aparece na tabela (R15) com rótulo humanizado PT-BR quando ausente do JSON.
+- Com web desligada, LLM ainda traduz chaves desconhecidas (batch).
+- Latência: falha silenciosa → permanece fallback `_humanize_field_key` (passo 4).
+- Domain sem import de infra/application.
 
 ---
 

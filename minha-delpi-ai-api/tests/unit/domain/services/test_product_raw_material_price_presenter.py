@@ -27,9 +27,9 @@ def test_raw_material_price_table_presentations_assign_stack_roles():
     history = next(table for table in tables if table.get("role") == "list")
     history_keys = [column["key"] for column in history.get("columns") or []]
 
-    assert "issue_date" in history_keys
-    assert "supplier_name" in history_keys
     assert "unit_price" in history_keys
+    assert "variation_percent" in history_keys
+    assert "supplier_code" in history_keys
 
 
 def test_intelligence_rich_narrative_for_stale_registered_price():
@@ -90,6 +90,7 @@ def test_visual_bundle_enriches_raw_material_price_with_auxiliary_slots():
         path=path,
         data=envelope,
         presenter=presenter,
+        explicit_format="kpi",
     )
 
     assert metadata.get("kpiPresentation", {}).get("type") == "kpi"

@@ -579,10 +579,10 @@ class ExternalActionProductStockPresenter:
             if total > len(shown)
             else self._route("positionsTableTitle")
         )
-        positions = _OpsTable.build_fixed_items_table(
+        positions = _OpsTable.build_items_table(
             self._host,
             shown,
-            table_id="stockProductPositions",
+            profile_name="stockProductPositions",
             title=title,
             role="list",
         )

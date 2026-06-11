@@ -123,7 +123,9 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
 - Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
 - Field labels do presenter (aliases de produto/preço/estoque, perfil KV, componentes da estrutura) → `column_labels.fields` + `column_labels.presenter`
-- Faturamento, PMR, valor de estoque (KPI + tabela filial), tabelas fixas (roteiro/inspeção analyser, LMP, OV, SX2, busca) e markdown de inspeção → `presenter_content` + `column_labels.presenter.fixedTableColumns`
+- Ordem/rótulo preferido de colunas tabulares (hints — **não** whitelist; payload da API define o que aparece) → `column_labels.tableProfiles` + `ExternalActionColumnLabelService.resolve_columns_for_items`
+- Descoberta de rótulo ausente (web + LLM, pós-vocabulário) — **R16 playbook-12** → `column_labels.columnLabelDiscovery` + `PresentationColumnLabelDiscoveryPort` → `ChatPresentationColumnLabelDiscoveryService`
+- ~~`column_labels.presenter.fixedTableColumns`~~ **deprecated jun/2026** — migrado para `tableProfiles`; ver Playbook 12 § R15
 - KPI genérico, títulos de detalhe de produto, gráficos (estrutura/estoque) e resumo compacto do analyser → `presenter_content.genericKpi`, `productDetailTitles`, `charts`, `analyserCompact`
 - Narrativas de visão geral, perfil analyser, insights, roteiro (markdown), SX2 e títulos de apresentação → `presenter_content.productOverview`, `analyserProfile`, `analyserInsights`, `guideItemNarrative`, `systemTablesNarrative`
 - Linhas de lista por rota (roteiro preview, LMP, OV, estrutura, busca) → `presenter_content.routePresentations.*`; cronograma SQL → `external_action_responses.productionSchedule`

@@ -233,3 +233,18 @@ def test_fixed_table_columns_for_billing_and_analyser():
         "lab",
         "Labor.",
     )
+
+
+def test_fixed_table_columns_removed_from_presenter_bundle():
+    from app.domain.services.external_actions.external_action_column_label_service import (
+        _column_labels_content,
+        invalidate_column_label_cache,
+    )
+
+    invalidate_column_label_cache()
+    presenter = (_column_labels_content().get("presenter") or {})
+
+    assert "fixedTableColumns" not in presenter
+    assert presenter.get("fixedTableColumnsDeprecated")
+    assert "tableProfiles" in _column_labels_content()
+    assert "lmpList" in (_column_labels_content().get("tableProfiles") or {})

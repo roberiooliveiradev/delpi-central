@@ -268,15 +268,15 @@ class ExternalActionProductPurchaseHistoryPresenter:
                 if total > len(shown)
                 else self._route(path, "itemsTableTitle")
             )
-            table_id = (
+            profile_name = (
                 "purchaseBudgetHistoryDetail"
                 if self._route_namespace(path) == "purchaseBudgetHistory"
                 else "mpPriceHistoryDetail"
             )
-            table = _OpsTable.build_fixed_items_table(
+            table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id=table_id,
+                profile_name=profile_name,
                 title=title,
                 role="list",
             )

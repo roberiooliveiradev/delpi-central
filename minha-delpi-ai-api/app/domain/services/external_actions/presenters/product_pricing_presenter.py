@@ -117,10 +117,10 @@ class ExternalActionProductPricingPresenter:
                 if total > len(shown)
                 else self._route("pricesTableTitle")
             )
-            prices_table = _OpsTable.build_fixed_items_table(
+            prices_table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="salePricingDetail",
+                profile_name="salePricingDetail",
                 title=title,
                 role="list",
             )

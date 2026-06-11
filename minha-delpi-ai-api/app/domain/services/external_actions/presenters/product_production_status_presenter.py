@@ -345,10 +345,10 @@ class ExternalActionProductProductionStatusPresenter:
                 if total > len(shown)
                 else self._route("ordersTableTitle")
             )
-            table = _OpsTable.build_fixed_items_table(
+            table = _OpsTable.build_items_table(
                 self._host,
                 shown,
-                table_id="factoryProductionDetail",
+                profile_name="factoryProductionDetail",
                 title=title,
                 role="list",
             )
