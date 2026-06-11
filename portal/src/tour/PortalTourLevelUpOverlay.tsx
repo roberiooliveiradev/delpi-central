@@ -32,7 +32,7 @@ export function PortalTourLevelUpOverlay({
       <div className="portal-tour-level-up-card">
         <button
           type="button"
-          className="portal-tour-level-up-close"
+          className="portal-tour-modal-close portal-tour-level-up-close"
           onClick={onClose}
           aria-label="Fechar celebração"
         >

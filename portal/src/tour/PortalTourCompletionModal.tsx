@@ -34,7 +34,7 @@ export function PortalTourCompletionModal({
       >
         <button
           type="button"
-          className="portal-tour-completion-close"
+          className="portal-tour-modal-close portal-tour-completion-close"
           onClick={onClose}
           aria-label="Fechar"
         >
