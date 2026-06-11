@@ -1,0 +1,111 @@
+{
+  "consumption": {
+    "terms": [
+      "maior consumo",
+      "itens mais consumidos",
+      "item mais consumido",
+      "ranking de consumo",
+      "consumo real",
+      "mais consumidos",
+      "top consumo"
+    ],
+    "excludeTerms": [
+      "comprad",
+      "compra",
+      "nota fiscal",
+      "fornecedor",
+      "estoque",
+      "ultima compra",
+      "última compra"
+    ]
+  },
+  "purchasesRanking": {
+    "terms": [
+      "produtos mais comprados",
+      "itens mais comprados",
+      "mais comprados",
+      "ranking de compras",
+      "ranking compras",
+      "top compras",
+      "maior quantidade comprada"
+    ],
+    "excludeTerms": [
+      "consumid",
+      "consumo",
+      "ultima compra",
+      "última compra",
+      "ultimo fornecedor",
+      "último fornecedor",
+      "preco",
+      "preço",
+      "icms"
+    ]
+  },
+  "lossesTop": {
+    "terms": [
+      "refugo",
+      "scrap",
+      "perda de materia-prima",
+      "perda de matéria-prima",
+      "perdas de mp",
+      "matérias-primas com mais perda",
+      "materias-primas com mais perda",
+      "mais refugo",
+      "top refugo"
+    ],
+    "excludeTerms": [
+      "detalh",
+      "linha a linha",
+      "registro",
+      "motivo da perda",
+      "qualidade kpi",
+      "ppm",
+      "nao conformidade",
+      "não conformidade"
+    ]
+  },
+  "lossesRecords": {
+    "terms": [
+      "refugo detalh",
+      "listar refugo",
+      "registros de refugo",
+      "registros de perda",
+      "detalhe refugo",
+      "detalhe da perda",
+      "scrap detalh"
+    ],
+    "excludeTerms": []
+  },
+  "scheduleToday": {
+    "terms": [
+      "programados hoje",
+      "programado hoje",
+      "produzir hoje",
+      "produzidos hoje",
+      "produzido hoje",
+      "plano de producao hoje",
+      "plano de produção hoje",
+      "producao hoje",
+      "produção hoje",
+      "para produzir hoje"
+    ],
+    "excludeTerms": [
+      "consumid",
+      "consumo",
+      "comprad",
+      "refugo",
+      "scrap",
+      "finalizad",
+      "abertas"
+    ]
+  },
+  "lossTypeRefugo": ["refugo"],
+  "lossTypeScrap": ["scrap"],
+  "pathTokens": {
+    "consumption": "/production/consumption/top-items",
+    "purchasesRanking": "/purchases/top-products",
+    "lossesTop": "/production/losses/top-materials",
+    "lossesRecords": "/production/losses/records",
+    "scheduleToday": "/production/schedule/today"
+  }
+}

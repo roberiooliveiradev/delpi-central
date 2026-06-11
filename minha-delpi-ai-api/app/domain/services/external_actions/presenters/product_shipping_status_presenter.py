@@ -353,7 +353,7 @@ class ExternalActionProductShippingStatusPresenter:
                 else self._route("movementsTableTitle")
             )
             table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="shippingStatusDetail",
                 title=title,
@@ -372,7 +372,7 @@ class ExternalActionProductShippingStatusPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = _OpsTable.summary_kv_rows(self._host, summary)
+        rows = _OpsTable.summary_kv_rows(self._host.column_label_context, summary)
 
         period = self._period_label(root)
 

@@ -718,6 +718,59 @@ SELECTION_CASES = [
         "expected_action_id": "exclusive-raw-materials-catalog",
     },
     {
+        "message": "Quais itens mais consumidos no mês?",
+        "actions": [
+            {
+                "actionId": "production-consumption-top-items",
+                "method": "GET",
+                "path": "/production/consumption/top-items",
+                "operationId": "get_production_consumption_top_items",
+                "summary": "Itens mais consumidos na produção",
+                "parametersSchema": [
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "production-consumption-top-items",
+    },
+    {
+        "message": "Produtos mais comprados em março",
+        "actions": [
+            {
+                "actionId": "purchases-top-products",
+                "method": "GET",
+                "path": "/purchases/top-products",
+                "operationId": "get_purchases_top_products",
+                "summary": "Produtos mais comprados no período",
+                "parametersSchema": [
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "purchases-top-products",
+    },
+    {
+        "message": "Quais produtos estão programados para produzir hoje?",
+        "actions": [
+            {
+                "actionId": "production-schedule-today",
+                "method": "GET",
+                "path": "/production/schedule/today",
+                "operationId": "get_production_schedule_today",
+                "summary": "Produtos programados para produzir na data",
+                "parametersSchema": [
+                    {"name": "reference_date"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "production-schedule-today",
+    },
+    {
         "message": "Análise de preço da matéria-prima 10080001",
         "actions": [
             {

@@ -18,7 +18,12 @@
     "/oee": "OEE — eficiência dos equipamentos",
     "/otd": "OTD — entrega no prazo",
     "/sale-order": "Ordens de venda",
-    "/orders": "Ordens de venda"
+    "/orders": "Ordens de venda",
+    "/consumption/top-items": "Itens mais consumidos",
+    "/losses/top-materials": "Refugos por matéria-prima",
+    "/losses/records": "Registros de refugo",
+    "/schedule/today": "Programação de produção",
+    "/purchases/top-products": "Produtos mais comprados"
   },
   "titlesByItemShape": {
     "structure": "Estrutura do produto",
@@ -1405,6 +1410,26 @@
       "product_cost_impact_simulation": {
         "textTitle": "Simulador de impacto de custos",
         "tableTitle": "Ranking de MPs por impacto"
+      },
+      "production_consumption_top_items": {
+        "textTitle": "Itens mais consumidos",
+        "tableTitle": "Ranking de consumo"
+      },
+      "purchases_top_products": {
+        "textTitle": "Produtos mais comprados",
+        "tableTitle": "Ranking de compras"
+      },
+      "production_losses_top_materials": {
+        "textTitle": "Refugos por matéria-prima",
+        "tableTitle": "Perdas agregadas"
+      },
+      "production_losses_records": {
+        "textTitle": "Registros de refugo",
+        "tableTitle": "Detalhe de perdas"
+      },
+      "production_schedule_today": {
+        "textTitle": "Programação de produção",
+        "tableTitle": "Produtos programados"
       }
     },
     "defaultTextTitle": "Relatório do produto",

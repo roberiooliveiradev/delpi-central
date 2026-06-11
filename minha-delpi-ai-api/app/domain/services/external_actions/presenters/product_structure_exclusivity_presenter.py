@@ -10,6 +10,9 @@ from app.domain.services.chat_presentation_operational_table_service import (
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
+from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+    enrich_structure_rows,
+)
 
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
@@ -364,7 +367,7 @@ class ExternalActionProductStructureExclusivityPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        items = _OpsTable.enrich_structure_rows(
+        items = enrich_structure_rows(
             [item for item in self._items(root) if isinstance(item, dict)]
         )
 
@@ -380,7 +383,7 @@ class ExternalActionProductStructureExclusivityPresenter:
                 else self._route("componentsTableTitle")
             )
             table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="structureExclusivityDetail",
                 title=title,
@@ -399,7 +402,7 @@ class ExternalActionProductStructureExclusivityPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = _OpsTable.summary_kv_rows(self._host, summary)
+        rows = _OpsTable.summary_kv_rows(self._host.column_label_context, summary)
 
         return {
             "type": "table",

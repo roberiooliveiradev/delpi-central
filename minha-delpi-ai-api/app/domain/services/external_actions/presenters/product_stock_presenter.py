@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Any
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
+from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+    enrich_stock_position_rows,
+)
 
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
@@ -564,7 +567,7 @@ class ExternalActionProductStockPresenter:
             or ""
         ).strip()
         description = str(product.get("description") or "").strip()
-        enriched = _OpsTable.enrich_stock_position_rows(
+        enriched = enrich_stock_position_rows(
             [item for item in items if isinstance(item, dict)],
             product_code=product_code,
             description=description,
@@ -580,7 +583,7 @@ class ExternalActionProductStockPresenter:
             else self._route("positionsTableTitle")
         )
         positions = _OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             shown,
             profile_name="stockProductPositions",
             title=title,

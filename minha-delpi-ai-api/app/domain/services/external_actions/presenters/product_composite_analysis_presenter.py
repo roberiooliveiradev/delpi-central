@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, Any
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
+from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+    enrich_structure_rows,
+)
 from app.domain.services.external_actions.operational_route_narrative_service import (
     ExternalActionOperationalRouteNarrativeService,
 )
@@ -371,7 +374,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         structure_items = self._section_block(root, "structure").get("items")
 
         if isinstance(structure_items, list) and structure_items:
-            enriched = _OpsTable.enrich_structure_rows(
+            enriched = enrich_structure_rows(
                 [item for item in structure_items if isinstance(item, dict)]
             )
             shown, total = _OpsTable.limit_items(enriched, sort_key="level", reverse=False)
@@ -386,7 +389,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 else self._route("factoryStatus", "sectionStructureTitle")
             )
             structure_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="structureExclusivityDetail",
                 title=structure_title,
@@ -436,7 +439,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 else self._route("factoryStatus", "sectionShippingTitle")
             )
             shipping_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="shippingStatusDetail",
                 title=shipping_title,
@@ -459,7 +462,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         rows = self._aggregate_mp_stock_rows(stock_items)
 
         return _OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             rows,
             profile_name="factoryMpStockSummary",
             title=self._route("factoryStatus", "sectionMpStockSummaryTitle"),
@@ -468,7 +471,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
     def _build_factory_stock_detail_table(self, stock_items: list) -> dict | None:
         return _OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             [item for item in stock_items if isinstance(item, dict)],
             profile_name="factoryRawMaterialStockDetail",
             title=self._route("factoryStatus", "sectionStockTitle"),
@@ -490,7 +493,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         )
 
         return _OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             shown_items,
             profile_name="factoryProductionDetail",
             title=title,

@@ -274,7 +274,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
                 else "mpPriceHistoryDetail"
             )
             table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name=profile_name,
                 title=title,
@@ -293,7 +293,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = _OpsTable.summary_kv_rows(self._host, summary)
+        rows = _OpsTable.summary_kv_rows(self._host.column_label_context, summary)
 
         period_start = str(root.get("date_start") or "").strip()
         period_end = str(root.get("date_end_exclusive") or "").strip()

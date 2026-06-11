@@ -119,6 +119,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "overall_equipment_effectiveness", "scalar"
     ),
     "get_on_time_delivery_pct": RouteContract("production_otd", "scalar"),
+    "get_production_consumption_top_items": RouteContract(
+        "production_consumption_top_items", "playbook_report"
+    ),
+    "get_production_losses_records": RouteContract(
+        "production_losses_records", "playbook_report"
+    ),
+    "get_production_losses_top_materials": RouteContract(
+        "production_losses_top_materials", "playbook_report"
+    ),
+    "get_production_schedule_today": RouteContract(
+        "production_schedule_today", "playbook_report"
+    ),
+    "get_purchases_top_products": RouteContract(
+        "purchases_top_products", "playbook_report"
+    ),
     "get_eficiencia_fabril_dashboard": RouteContract(
         "eficiencia_fabril_dashboard", "composite_analysis"
     ),

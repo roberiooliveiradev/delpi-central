@@ -183,6 +183,27 @@ def test_operational_pipeline_should_optimize_for_exclusive_catalog():
     )
 
 
+def test_missing_product_code_skipped_for_production_schedule_today():
+    message = "Quais produtos serão produzidos hoje?"
+
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(message)
+        is None
+    )
+    assert not ChatOperationalParameterService.should_skip_tools(message)
+
+
+def test_operational_pipeline_should_optimize_for_production_schedule_today():
+    from app.domain.services.chat_operational_pipeline_service import (
+        ChatOperationalPipelineService,
+    )
+
+    assert ChatOperationalPipelineService.should_optimize(
+        "Quais produtos serão produzidos hoje?",
+        ["api_delpi.produ_o_operacional.get_production_schedule_today"],
+    )
+
+
 def test_should_skip_agentic_after_successful_kpi_presentation():
     tool_context = {
         "directAnswer": "Valor Total de Estoque",

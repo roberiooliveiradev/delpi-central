@@ -428,7 +428,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         if last_purchase:
             purchase_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 [last_purchase],
                 profile_name="lastPurchaseDetail",
                 title=self._route("rawMaterialPriceIntelligence", "lastPurchaseTableTitle"),
@@ -459,7 +459,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                 else self._route("rawMaterialPriceIntelligence", "priceHistoryTableTitle")
             )
             history_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="mpPriceHistoryDetail",
                 title=history_title,
@@ -488,7 +488,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                 else self._route("rawMaterialPriceIntelligence", "budgetHistoryTableTitle")
             )
             budget_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="purchaseBudgetHistoryDetail",
                 title=budget_title,
@@ -528,7 +528,7 @@ class ExternalActionProductRawMaterialPricePresenter:
                 else self._route("costImpactSimulation", "materialsTableTitle")
             )
             materials_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 path=path,
                 profile_name="costImpactMaterials",
@@ -564,7 +564,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         if last_purchase:
             detail = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 [last_purchase],
                 profile_name="lastPurchaseDetail",
                 title=self._route("lastPurchase", "tableTitle"),
@@ -593,7 +593,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         rows.extend(
             _OpsTable.kv_rows_from_mapping(
-                self._host,
+                self._host.column_label_context,
                 {
                     key: last_purchase[key]
                     for key in (
@@ -744,12 +744,12 @@ class ExternalActionProductRawMaterialPricePresenter:
             )
             if product.get(key) not in (None, "")
         }
-        rows.extend(_OpsTable.summary_kv_rows(self._host, product_fields))
+        rows.extend(_OpsTable.summary_kv_rows(self._host.column_label_context, product_fields))
 
         price_summary = self._normalize_price_history_summary(root)
         rows.extend(
             _OpsTable.summary_kv_rows(
-                self._host,
+                self._host.column_label_context,
                 {
                     key: price_summary[key]
                     for key in (
@@ -766,7 +766,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         indicators = self._indicators(root)
 
-        rows.extend(_OpsTable.summary_kv_rows(self._host, indicators)[:6])
+        rows.extend(_OpsTable.summary_kv_rows(self._host.column_label_context, indicators)[:6])
 
         return {
             "type": "table",
@@ -805,7 +805,7 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         rows.extend(
             _OpsTable.summary_kv_rows(
-                self._host,
+                self._host.column_label_context,
                 merged,
                 path=path,
                 profile_name="costImpactOverview",
@@ -826,7 +826,7 @@ class ExternalActionProductRawMaterialPricePresenter:
             "type": "table",
             "title": title,
             "columns": columns,
-            "rows": _OpsTable.kv_rows_from_mapping(self._host, payload),
+            "rows": _OpsTable.kv_rows_from_mapping(self._host.column_label_context, payload),
         }
 
     def _build_intelligence_text_presentation(self, root: dict, path: str) -> dict | None:

@@ -20,6 +20,30 @@
       "parameterStrategy": "semantic",
       "method": "GET"
     },
+    "production_consumption": {
+      "label": "Consumo produção",
+      "pathMarkers": ["/production/consumption/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "production_losses": {
+      "label": "Perdas produção",
+      "pathMarkers": ["/production/losses/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "production_schedule": {
+      "label": "Programação produção",
+      "pathMarkers": ["/production/schedule/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "purchases_ranking": {
+      "label": "Ranking de compras",
+      "pathMarkers": ["/purchases/top-products"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
     "department_kpi": {
       "label": "KPI departamental",
       "pathMarkers": [
@@ -28,6 +52,11 @@
         "/production/",
         "/hr/",
         "/quality/"
+      ],
+      "excludePathMarkers": [
+        "/production/consumption/",
+        "/production/losses/",
+        "/production/schedule/"
       ],
       "parameterStrategy": "date_branch",
       "method": "GET"

@@ -141,6 +141,17 @@
     "registered_vs_last_nf_diff_percent": "Diferença cadastro vs última NF (%)",
     "dominant_supplier_code": "Fornecedor dominante",
     "total_material_cost": "Custo total materiais",
+    "simulated_total_material_cost": "Custo total materiais (simulado)",
+    "projected_total_material_cost": "Custo total projetado (MPs)",
+    "returned_materials": "MPs retornadas",
+    "top_material_impact_percent": "Maior impacto MP (%)",
+    "pa_standard_cost": "Custo padrão PA",
+    "material_cost_vs_pa_standard_percent": "Custo MP vs custo PA (%)",
+    "simulated_material_cost_vs_pa_standard_percent": "Custo MP simulado vs PA (%)",
+    "projected_pa_cost_delta_percent": "Delta custo PA projetado (%)",
+    "pa_cost_comparable": "Custos comparáveis",
+    "product_type": "Tipo de produto",
+    "standard_cost_date": "Data custo padrão",
     "total_materials": "Total MPs",
     "price_source": "Fonte de custo",
     "rank": "Rank",
@@ -175,6 +186,19 @@
     "warehouse_name": "Armazém",
     "item_code": "Item",
     "item_description": "Descrição item",
+    "real_consumption_qty": "Consumo real",
+    "invoice_count": "Qtd. NFs",
+    "total_value": "Valor total",
+    "last_purchase_date": "Última compra",
+    "material_code": "Matéria-prima",
+    "loss_type": "Tipo perda",
+    "total_loss_qty": "Qtd. perda total",
+    "occurrence_count": "Ocorrências",
+    "loss_date": "Data perda",
+    "loss_qty": "Qtd. perda",
+    "planned_qty": "Qtd. planejada",
+    "operation_start_date": "Início operação",
+    "production_order": "OP",
     "revision": "Revisão",
     "drawing_number": "Nº desenho",
     "last_sale_price": "Últ. preço venda",
@@ -522,6 +546,16 @@
     "projected_cost_delta": "currency",
     "registered_last_purchase_price": "currency",
     "total_material_cost": "currency",
+    "simulated_total_material_cost": "currency",
+    "projected_total_material_cost": "currency",
+    "pa_standard_cost": "currency",
+    "returned_materials": "quantity",
+    "standard_cost_date": "date",
+    "top_material_impact_percent": "percent",
+    "material_cost_vs_pa_standard_percent": "percent",
+    "simulated_material_cost_vs_pa_standard_percent": "percent",
+    "projected_pa_cost_delta_percent": "percent",
+    "simulated_impact_on_pa_cost_percent": "percent",
     "variation_percent": "percent",
     "impact_on_material_cost_percent": "percent",
     "impact_on_pa_cost_percent": "percent",
@@ -1445,6 +1479,86 @@
         [
           "simulated_extended_cost",
           "Custo simulado"
+        ]
+      ]
+    },
+    "costImpactOverview": {
+      "preferredColumns": [
+        [
+          "product_type",
+          "Tipo de produto"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "group_code",
+          "Grupo"
+        ],
+        [
+          "standard_cost",
+          "Custo padrão"
+        ],
+        [
+          "standard_cost_date",
+          "Data custo padrão"
+        ],
+        [
+          "last_purchase_price",
+          "Últ. preço compra"
+        ],
+        [
+          "total_raw_materials",
+          "Total de MPs"
+        ],
+        [
+          "returned_materials",
+          "MPs retornadas"
+        ],
+        [
+          "total_material_cost",
+          "Custo total materiais"
+        ],
+        [
+          "simulated_total_material_cost",
+          "Custo total materiais (simulado)"
+        ],
+        [
+          "projected_cost_delta",
+          "Delta projetado"
+        ],
+        [
+          "top_material_impact_percent",
+          "Maior impacto MP (%)"
+        ],
+        [
+          "pa_standard_cost",
+          "Custo padrão PA"
+        ],
+        [
+          "material_cost_vs_pa_standard_percent",
+          "Custo MP vs custo PA (%)"
+        ],
+        [
+          "simulated_material_cost_vs_pa_standard_percent",
+          "Custo MP simulado vs PA (%)"
+        ],
+        [
+          "pa_cost_comparable",
+          "Custos comparáveis"
+        ],
+        [
+          "adjustment_percent",
+          "Reajuste (%)"
+        ],
+        [
+          "projected_total_material_cost",
+          "Custo total projetado (MPs)"
+        ],
+        [
+          "projected_pa_cost_delta_percent",
+          "Delta custo PA projetado (%)"
         ]
       ]
     },

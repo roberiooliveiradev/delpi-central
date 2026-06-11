@@ -725,8 +725,11 @@ class ExternalActionProductListPresenter:
         from app.domain.services.chat_presentation_operational_table_service import (
             ChatPresentationOperationalTableService as OpsTable,
         )
+        from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+            normalize_lmp_items,
+        )
 
-        dict_items = OpsTable.normalize_lmp_items(
+        dict_items = normalize_lmp_items(
             [item for item in items if isinstance(item, dict)]
         )
         title = self._host._route_presentation(
@@ -735,7 +738,7 @@ class ExternalActionProductListPresenter:
             total=str(root.get("total", len(dict_items))),
         )
         table = OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             dict_items,
             profile_name="lmpList",
             title=title,
@@ -771,7 +774,7 @@ class ExternalActionProductListPresenter:
             title = self._host._presenter_text("generic", "itemsTableDefaultTitle")
 
         return OpsTable.build_items_table(
-            self._host,
+            self._host.column_label_context,
             [item for item in items if isinstance(item, dict)],
             title=title,
             role="generic",

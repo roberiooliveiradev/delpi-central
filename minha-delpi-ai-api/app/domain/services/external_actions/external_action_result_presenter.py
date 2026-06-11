@@ -1,3 +1,6 @@
+from app.domain.services.chat_presentation_column_label_context import (
+    ExternalActionColumnLabelContext,
+)
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
@@ -127,6 +130,14 @@ class ExternalActionResultPresenter:
         self._product_overview_presenter: ExternalActionProductOverviewPresenter | None = None
         self._presenter_content_presenter: ExternalActionPresenterContentPresenter | None = None
         self._presentation_shape_presenter: ExternalActionPresentationShapePresenter | None = None
+
+    @property
+    def column_label_context(self) -> ExternalActionColumnLabelContext:
+        return ExternalActionColumnLabelContext(
+            column_labels=self._column_labels,
+            schema_labels=self._active_schema_labels,
+            schema_formats=self._active_schema_formats,
+        )
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -652,7 +663,7 @@ class ExternalActionResultPresenter:
         )
 
         return OpsTable.build_items_table(
-            self,
+            self.column_label_context,
             [item for item in items if isinstance(item, dict)],
             title=title,
             role=role,

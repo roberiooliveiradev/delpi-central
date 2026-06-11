@@ -56,6 +56,13 @@ class ChatOperationalPipelineService:
         ):
             return True
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return True
+
         if ChatSqlIntentService.is_sql_conversation_turn(message):
             if ChatSqlIntentService.is_authoring_request(message):
                 return False

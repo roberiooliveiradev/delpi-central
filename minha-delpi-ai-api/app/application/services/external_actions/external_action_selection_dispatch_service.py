@@ -113,23 +113,28 @@ class ExternalActionSelectionDispatchService:
             ChatSqlOperationalIntentService.requires_production_sql_knowledge(message)
             and not ChatSqlIntentService.is_authoring_request(message)
         ):
-            from app.domain.services.chat_sql_production_query_service import (
-                ChatSqlProductionQueryService,
+            from app.domain.services.chat_production_operational_intent_service import (
+                ChatProductionOperationalIntentService,
             )
 
-            production_resolution = ChatSqlProductionQueryService.resolve(message)
-
-            if production_resolution and production_resolution.mode == "execute":
-                selected = self._select_sql_or_data_action(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    sql=production_resolution.sql,
-                    selection_reason_key="productionSqlFastPath",
-                    raw_message=sql_source,
+            if not ChatProductionOperationalIntentService.matches_rest_route(message):
+                from app.domain.services.chat_sql_production_query_service import (
+                    ChatSqlProductionQueryService,
                 )
 
-                if selected:
-                    return selected
+                production_resolution = ChatSqlProductionQueryService.resolve(message)
+
+                if production_resolution and production_resolution.mode == "execute":
+                    selected = self._select_sql_or_data_action(
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                        sql=production_resolution.sql,
+                        selection_reason_key="productionSqlFastPath",
+                        raw_message=sql_source,
+                    )
+
+                    if selected:
+                        return selected
 
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
@@ -435,6 +440,22 @@ class ExternalActionSelectionDispatchService:
                 message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
+            )
+
+            if selected:
+                return selected
+
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            selected = self._route_selection.select_production_operational(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                candidates_loader=self._list_allowed_candidates,
+                build_date_branch_parameters=self._build_date_branch_parameters,
             )
 
             if selected:

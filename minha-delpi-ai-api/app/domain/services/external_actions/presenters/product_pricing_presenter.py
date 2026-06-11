@@ -118,7 +118,7 @@ class ExternalActionProductPricingPresenter:
                 else self._route("pricesTableTitle")
             )
             prices_table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="salePricingDetail",
                 title=title,

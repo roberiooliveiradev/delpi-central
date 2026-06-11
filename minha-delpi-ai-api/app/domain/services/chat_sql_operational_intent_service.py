@@ -73,6 +73,13 @@ class ChatSqlOperationalIntentService:
 
     @classmethod
     def requires_production_sql_knowledge(cls, message: str | None) -> bool:
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return False
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:

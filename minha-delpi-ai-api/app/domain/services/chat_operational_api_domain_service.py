@@ -86,6 +86,11 @@ class ChatOperationalApiDomainService:
         priority = (
             "product_search",
             "product",
+            "product_exclusive_catalog",
+            "production_consumption",
+            "production_losses",
+            "production_schedule",
+            "purchases_ranking",
             "department_kpi",
             "supplies_kpi",
             "lmp",

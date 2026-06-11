@@ -41,6 +41,9 @@ from app.application.services.external_actions.external_action_refinement_route_
 from app.application.services.external_actions.external_action_generic_route_selection_service import (
     ExternalActionGenericRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_production_operational_route_selection_service import (
+    ExternalActionProductionOperationalRouteSelectionService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
@@ -62,6 +65,7 @@ class ExternalActionRouteSelectionService:
         product_search_route: ExternalActionProductSearchRouteSelectionService | None = None,
         refinement_route: ExternalActionRefinementRouteSelectionService | None = None,
         generic_route: ExternalActionGenericRouteSelectionService | None = None,
+        production_operational_route: ExternalActionProductionOperationalRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -81,6 +85,10 @@ class ExternalActionRouteSelectionService:
             repository
         )
         self._generic_route = generic_route or ExternalActionGenericRouteSelectionService()
+        self._production_operational_route = (
+            production_operational_route
+            or ExternalActionProductionOperationalRouteSelectionService()
+        )
 
     def select(
         self,
@@ -299,6 +307,23 @@ class ExternalActionRouteSelectionService:
             allowed_action_ids,
             candidates_loader=candidates_loader,
             description_override=description_override,
+        )
+
+    def select_production_operational(
+        self,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        return self._production_operational_route.try_select(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
         )
 
     def select_exclusive_raw_material_catalog(

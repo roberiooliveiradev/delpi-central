@@ -26,6 +26,8 @@ from app.interface.http.routes.financial import financial_routes
 from app.interface.http.routes.supplies import supplies_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
+from app.interface.http.routes.production import production_operational_router
+from app.interface.http.routes.purchases import purchases_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.hr import hr_router
@@ -181,6 +183,8 @@ app.include_router(financial_routes.router, prefix="/financial", tags=["Financei
 app.include_router(supplies_router.router)  
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)
+app.include_router(production_operational_router.router)
+app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)
 app.include_router(quality_router.router)
 app.include_router(hr_router.router)

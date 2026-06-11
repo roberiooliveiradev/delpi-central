@@ -208,6 +208,13 @@ class ChatOperationalParameterService:
         ):
             return None
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return None
+
         if ChatProductQueryIntentService.extract_product_code(message):
             return None
 

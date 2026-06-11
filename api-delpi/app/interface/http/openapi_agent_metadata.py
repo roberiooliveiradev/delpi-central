@@ -419,6 +419,53 @@ SALE_ORDERS_LIST = agent_route(
     operation_id="list_sale_orders",
 )
 
+PRODUCTION_CONSUMPTION_TOP_ITEMS = agent_route(
+    summary="Itens mais consumidos na produção",
+    description=(
+        "Ranking de itens com maior consumo real (SD4010) no período, usando a fórmula "
+        "D4_QTDEORI - D4_QUANT. Use para «itens mais consumidos», «maior consumo» ou "
+        "«ranking de consumo» — não confundir com estoque ou compras."
+    ),
+    operation_id="get_production_consumption_top_items",
+)
+
+PURCHASES_TOP_PRODUCTS = agent_route(
+    summary="Produtos mais comprados no período",
+    description=(
+        "Ranking agregado de produtos mais comprados (SD1010) por quantidade e valor, "
+        "excluindo transportadoras e fornecedores internos. "
+        "Use para «produtos mais comprados» ou ranking de compras — não para última compra de um item."
+    ),
+    operation_id="get_purchases_top_products",
+)
+
+PRODUCTION_LOSSES_TOP_MATERIALS = agent_route(
+    summary="Matérias-primas com mais refugo/scrap no período",
+    description=(
+        "Ranking agregado de perdas de matéria-prima (SBC010) por quantidade e ocorrências. "
+        "Use para «refugos de MP», «scrap no período» ou «matérias-primas com mais perda»."
+    ),
+    operation_id="get_production_losses_top_materials",
+)
+
+PRODUCTION_LOSSES_RECORDS = agent_route(
+    summary="Registros detalhados de refugo/scrap",
+    description=(
+        "Lista linha a linha os registros de perda de matéria-prima (SBC010) no período. "
+        "Use quando o usuário pedir detalhe de refugos, motivo ou OP da perda."
+    ),
+    operation_id="get_production_losses_records",
+)
+
+PRODUCTION_SCHEDULE_TODAY = agent_route(
+    summary="Produtos programados para produzir na data",
+    description=(
+        "Lista produtos acabados com OP ativa e operação programada para a data de referência "
+        "(SC2010 + SH8010). Use para «programados hoje», «produzir hoje» ou plano diário de PCP."
+    ),
+    operation_id="get_production_schedule_today",
+)
+
 DATA_SQL = agent_route(
     summary="Executar consulta SQL somente leitura",
     description=(

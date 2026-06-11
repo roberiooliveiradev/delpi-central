@@ -137,7 +137,7 @@ class ExternalActionProductPurchasesPresenter:
                 else self._route("ordersTableTitle")
             )
             table = _OpsTable.build_items_table(
-                self._host,
+                self._host.column_label_context,
                 shown,
                 profile_name="purchaseOrderList",
                 title=title,
