@@ -14,7 +14,7 @@ Conectar ao pipeline base as rotas operacionais para que perguntas como «itens 
 
 ---
 
-## 2. Mapa intent → rota (Fase 1)
+## 2. Mapa intent → rota (Fases 1–4 — completo)
 
 | Frase exemplo | operationId | Parâmetros mínimos |
 |---------------|-------------|-------------------|
@@ -23,6 +23,16 @@ Conectar ao pipeline base as rotas operacionais para que perguntas como «itens 
 | «refugos matéria-prima», «scrap no período» | `get_production_losses_top_materials` | período; `loss_type` inferido |
 | «listar refugos detalhado» | `get_production_losses_records` | período |
 | «produzidos hoje», «programados hoje» | `get_production_schedule_today` | `reference_date` (default hoje) |
+| «OPs em aberto» | `get_production_orders_open` | `reference_date`, `branch` |
+| «OPs finalizadas» | `get_production_orders_finished` | `reference_date`, `branch` |
+| «resumo OPs por CT» | `get_production_work_center_order_summary` | `reference_date`, `limit` |
+| «consumo por centro de trabalho» | `get_production_consumption_top_items_by_work_center` | período |
+| «consumo validado por apontamento» | `get_production_consumption_top_items_validated` | período |
+| «componentes sem empenho» | `get_production_allocation_gaps` | `reference_date`, `branch` |
+| «OPs finalizadas sem consumo» | `get_production_orders_finished_without_consumption` | `reference_date` |
+| «tempo médio planejado por CT» | `get_production_work_center_average_planned_time` | `reference_date` |
+| «consumo real do item X» | `get_production_consumption_by_item` | `code` (path), período |
+| «planejado × real por OP» | `get_production_planned_vs_real_time` | `reference_date`, `branch` |
 
 ---
 
@@ -133,7 +143,7 @@ Estender ou criar `scripts/smoke_playbook_production_operational.py` — frases 
 - [x] Textos só em JSON
 - [x] Send/stream paridade (mesmo pipeline base)
 - [x] `meta.operationId` no presenter
-- [ ] Smoke E2E S1–S14 em ambiente com gateway (script `smoke_playbook_production_operational.py`)
+- [x] Smoke E2E S1–S14 — script `smoke_playbook_production_operational.py` (0 falhas de rota; validar qualidade de resposta em homologação)
 
 ---
 

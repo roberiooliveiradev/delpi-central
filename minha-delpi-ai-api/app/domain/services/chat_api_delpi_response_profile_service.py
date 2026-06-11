@@ -442,6 +442,19 @@ class ChatApiDelpiResponseProfileService:
         return bool(entity and entity in ENTITY_ROUTED_FOR_PRESENT)
 
     @classmethod
+    def is_playbook_operational_entity(cls, entity: str | None) -> bool:
+        return bool(entity and entity in PLAYBOOK_OPERATIONAL_ENTITIES)
+
+    @classmethod
+    def resolve_entity_from_path(cls, path: str) -> str | None:
+        return cls._entity_from_path(path)
+
+    @classmethod
+    def is_playbook_operational_path(cls, path: str) -> bool:
+        entity = cls._entity_from_path(path)
+        return cls.is_playbook_operational_entity(entity)
+
+    @classmethod
     def entity_path_hint(cls, entity: str | None) -> str:
         if not entity:
             return ""

@@ -281,7 +281,27 @@ Preferir estas rotas em vez de `POST /data/sql` quando o agente tiver a action h
 
 **Não confundir:** `/purchases/top-products` (ranking global) ≠ `/products/{code}/purchases` (histórico de um produto).
 
----
+**Frases exemplo (RAG / agente):**
+
+| Intenção | Exemplos naturais |
+|----------|-------------------|
+| Consumo ranking | «itens mais consumidos mês passado», «top consumo MP filial 01» |
+| Compras ranking | «produtos mais comprados março», «ranking de compras» |
+| Refugo ranking | «refugos matéria-prima março top 10», «scrap MP filial 02» |
+| Refugo detalhe | «listar refugos detalhado», «registros de perda no período» |
+| Programação hoje | «quais produtos serão produzidos hoje?», «cronograma produção hoje» |
+| OPs abertas | «liste OPs em aberto hoje filial 01», «backlog produção» |
+| OPs finalizadas | «quais OPs finalizadas hoje?» |
+| Resumo por CT | «resumo de OPs por centro de trabalho hoje» |
+| Consumo por CT | «maior consumo por centro de trabalho mês passado» |
+| Consumo validado | «consumo validado por apontamento top 10» |
+| Sem empenho | «componentes sem empenho hoje», «travamento por falta de empenho» |
+| OP sem consumo | «OPs finalizadas sem consumo hoje» |
+| Tempo planejado CT | «tempo médio planejado por CT hoje» |
+| Consumo item | «consumo real do item 01010001» |
+| Planejado × real | «compare tempo planejado e tempo real das OPs hoje» |
+
+Vocabulário canônico: `production_operational_intent.json` · RAG: `capabilities.json` (`pathRules`, `commonExamples`, `richExamples.productionOperational`).
 
 ### RH (`/hr`)
 

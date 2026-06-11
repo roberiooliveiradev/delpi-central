@@ -552,6 +552,53 @@ class ChatRichPresentationTextService:
         )
 
     @classmethod
+    def _is_playbook_operational_tool_metadata(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_api_delpi_response_profile_service import (
+            ChatApiDelpiResponseProfileService,
+        )
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            entity = api_meta.get("entity")
+
+            if ChatApiDelpiResponseProfileService.is_playbook_operational_entity(
+                str(entity or "").strip() or None
+            ):
+                return True
+
+        path = str(metadata.get("path") or "")
+
+        return ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+
+    @classmethod
+    def _should_prefer_playbook_operational_text_answer(cls, metadata: dict[str, Any]) -> bool:
+        if not cls._is_playbook_operational_tool_metadata(metadata):
+            return False
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            linhas = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line or "").strip()
+            ]
+
+            if linhas:
+                return True
+
+        text_presentation = metadata.get("textPresentation")
+
+        if isinstance(text_presentation, dict):
+            markdown = str(text_presentation.get("markdown") or "").strip()
+
+            if markdown:
+                return True
+
+        return False
+
+    @classmethod
     def should_prefer_authorized_answer_over_llm(cls, tool_calls: list[dict] | None) -> bool:
         if not isinstance(tool_calls, list):
             return False
@@ -564,6 +611,9 @@ class ChatRichPresentationTextService:
 
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
+
+            if cls._should_prefer_playbook_operational_text_answer(metadata):
+                return True
 
             text_presentation = metadata.get("textPresentation")
 

@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.domain.services.chat_api_delpi_response_profile_service import (
+    ChatApiDelpiResponseProfileService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -28,6 +32,19 @@ class ExternalActionLegacyRoutePresenter:
 
             if empty_operational:
                 return empty_operational
+
+            if isinstance(root, dict):
+                profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+
+                if profile.entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
+                    playbook = self._host._present_playbook_report(
+                        root,
+                        path,
+                        entity=profile.entity,
+                    )
+
+                    if playbook:
+                        return playbook
 
             if isinstance(root, dict) and "/analyser" in str(path or "").lower():
                 root = self._host._normalize_analyser_root(root)
@@ -112,11 +129,18 @@ class ExternalActionLegacyRoutePresenter:
                 if items and isinstance(items[0], dict) and "sale_number" in items[0]:
                     return self._host._present_lmp_page(root)
 
-                if items and isinstance(items[0], dict) and "order_number" in items[0]:
+                lowered_path = str(path or "").lower()
+
+                if (
+                    items
+                    and isinstance(items[0], dict)
+                    and "order_number" in items[0]
+                    and "/production/" not in lowered_path
+                    and not ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+                ):
                     return self._host._present_sale_orders(root, items)
 
                 title = self._host._infer_items_title(items, path)
-                lowered_path = str(path or "").lower()
                 first_item = items[0] if items and isinstance(items[0], dict) else {}
 
                 if "/stock" in lowered_path or self._host._is_stock_data(first_item):

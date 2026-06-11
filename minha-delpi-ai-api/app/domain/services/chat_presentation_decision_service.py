@@ -612,12 +612,20 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if primary_presentation and primary_presentation.get("type") == "kpi":
+        kpi_presentation = cls._resolve_kpi_presentation(
+            primary_presentation=primary_presentation,
+            metadata=metadata,
+        )
+
+        if kpi_presentation:
             return cls._build(
                 selected="kpi",
                 fallback="table",
                 reason=cls._reason("kpiSingle"),
-                available_views=["kpi", "table", "chart", "text"],
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["kpi", "table", "chart", "text", "dashboard"],
+                ),
                 rows=rows,
                 intent=intent,
             )
@@ -839,6 +847,25 @@ class ChatPresentationDecisionService:
 
         if explicit:
             return explicit
+
+        return None
+
+    @staticmethod
+    def _resolve_kpi_presentation(
+        *,
+        primary_presentation: dict[str, Any] | None,
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        if isinstance(primary_presentation, dict) and primary_presentation.get("type") == "kpi":
+            return primary_presentation
+
+        if not isinstance(metadata, dict):
+            return None
+
+        kpi_slot = metadata.get("kpiPresentation")
+
+        if isinstance(kpi_slot, dict) and kpi_slot.get("type") == "kpi":
+            return kpi_slot
 
         return None
 

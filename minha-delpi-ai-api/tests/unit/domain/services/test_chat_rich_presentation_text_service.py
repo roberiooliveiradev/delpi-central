@@ -73,6 +73,29 @@ def test_should_prefer_authorized_answer_for_any_stack_tool_call():
     )
 
 
+def test_should_prefer_authorized_answer_for_playbook_operational_humanized():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/production/consumption/top-items-validated",
+                "apiDelpiResponseMeta": {
+                    "entity": "production_consumption_top_items_validated",
+                },
+                "humanizedSummary": {
+                    "titulo": "Consumo validado por apontamento",
+                    "linhas": ["- MP 01010001", "- MP 01010002"],
+                },
+            },
+        }
+    ]
+
+    assert ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+        tool_calls
+    )
+
+
 def test_should_not_prefer_authorized_markdown_for_single_table_layout():
     tool_calls = [
         {

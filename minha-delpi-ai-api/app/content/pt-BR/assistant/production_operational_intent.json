@@ -7,7 +7,19 @@
       "ranking de consumo",
       "consumo real",
       "mais consumidos",
-      "top consumo"
+      "top consumo",
+      "materia-prima mais consumida",
+      "matéria-prima mais consumida",
+      "mp mais consumida",
+      "componentes mais consumidos",
+      "insumos mais consumidos",
+      "consumo de producao",
+      "consumo de produção",
+      "consumo no chao de fabrica",
+      "consumo no chão de fábrica",
+      "ranking consumo mp",
+      "top 10 consumo",
+      "top consumo filial"
     ],
     "excludeTerms": [
       "comprad",
@@ -27,7 +39,15 @@
       "ranking de compras",
       "ranking compras",
       "top compras",
-      "maior quantidade comprada"
+      "maior quantidade comprada",
+      "ranking de fornecedores por produto",
+      "mais comprados no periodo",
+      "mais comprados no período",
+      "top produtos comprados",
+      "ranking sd1010",
+      "compras do mes ranking",
+      "compras do mês ranking",
+      "produtos mais adquiridos"
     ],
     "excludeTerms": [
       "consumid",
@@ -51,7 +71,16 @@
       "matérias-primas com mais perda",
       "materias-primas com mais perda",
       "mais refugo",
-      "top refugo"
+      "top refugo",
+      "ranking refugo",
+      "refugo mp",
+      "scrap mp",
+      "perdas sbc",
+      "quebra de materia-prima",
+      "quebra de matéria-prima",
+      "perda produtiva mp",
+      "refugo no periodo",
+      "refugo no período"
     ],
     "excludeTerms": [
       "detalh",
@@ -72,7 +101,14 @@
       "registros de perda",
       "detalhe refugo",
       "detalhe da perda",
-      "scrap detalh"
+      "scrap detalh",
+      "linha a linha refugo",
+      "historico de refugo",
+      "histórico de refugo",
+      "motivo da perda",
+      "registros sbc",
+      "listar perdas de producao",
+      "listar perdas de produção"
     ],
     "excludeTerms": []
   },
@@ -91,7 +127,14 @@
       "programado para produzir",
       "programados para produção",
       "programado para produção",
-      "para produzir hoje"
+      "para produzir hoje",
+      "cronograma de hoje",
+      "cronograma hoje",
+      "fabricar hoje",
+      "linha de producao hoje",
+      "linha de produção hoje",
+      "o que produzir hoje",
+      "ordens programadas hoje"
     ],
     "excludeTerms": [
       "consumid",
@@ -115,7 +158,16 @@
       "não finalizadas",
       "pendentes hoje",
       "backlog de producao",
-      "backlog de produção"
+      "backlog de produção",
+      "ops abertas",
+      "op aberta",
+      "ordens de producao abertas",
+      "ordens de produção abertas",
+      "producao em andamento",
+      "produção em andamento",
+      "ops nao encerradas",
+      "ops não encerradas",
+      "lista de ops abertas"
     ],
     "excludeTerms": ["finalizad", "concluid", "consumid", "comprad"]
   },
@@ -128,7 +180,13 @@
       "concluidas hoje",
       "concluídas hoje",
       "producao finalizada",
-      "produção finalizada"
+      "produção finalizada",
+      "ops encerradas",
+      "op encerrada",
+      "ordens encerradas hoje",
+      "ops concluidas",
+      "ops concluídas",
+      "fechadas hoje"
     ],
     "excludeTerms": ["abert", "pendent", "consumid", "comprad"]
   },
@@ -145,7 +203,11 @@
       "ordens por ct",
       "ordens por centro de trabalho",
       "finalizadas e nao finalizadas",
-      "finalizadas e não finalizadas"
+      "finalizadas e não finalizadas",
+      "resumo ops ct",
+      "painel por ct",
+      "quantidade ops por ct",
+      "abertas e fechadas por ct"
     ],
     "excludeTerms": ["consumid", "consumo", "empenho", "comprad", "refugo"]
   },
@@ -156,7 +218,11 @@
       "consumidos por ct",
       "empenho por ct",
       "maior consumo por ct",
-      "maior consumo por centro de trabalho"
+      "maior consumo por centro de trabalho",
+      "ranking consumo ct",
+      "top consumo ct",
+      "consumo planejado por ct",
+      "mp por centro de trabalho"
     ],
     "excludeTerms": [
       "validad",
@@ -175,7 +241,12 @@
       "consumo confirmado",
       "consumo com apontamento",
       "consumo por apontamento",
-      "consumo real validado"
+      "consumo real validado",
+      "consumo apontado",
+      "baixa validada",
+      "consumo sh6010",
+      "consumo apontamento real",
+      "validado por apontamento"
     ],
     "excludeTerms": ["centro de trabalho", " por ct", "comprad"]
   },
@@ -188,7 +259,12 @@
       "travamento no ct",
       "componentes sem empenho",
       "allocation gap",
-      "falta de empenho"
+      "falta de empenho",
+      "empenho zero",
+      "sd4010 sem empenho",
+      "materiais sem reserva",
+      "reserva zerada",
+      "bloqueio por empenho"
     ],
     "excludeTerms": ["consumid", "comprad", "refugo", "finalizad sem consumo"]
   },
@@ -199,7 +275,11 @@
       "sem consumo de componentes",
       "sem baixa de material",
       "op finalizada sem consumo",
-      "ordens finalizadas sem consumo"
+      "ordens finalizadas sem consumo",
+      "encerradas sem baixa",
+      "op sem baixa mp",
+      "op sem consumo mp",
+      "fechou op sem consumir"
     ],
     "excludeTerms": ["sem empenho", "travamento", "comprad"]
   },
@@ -213,7 +293,11 @@
       "tempo medio planejado",
       "tempo médio planejado",
       "media de tempo por centro de trabalho",
-      "média de tempo por centro de trabalho"
+      "média de tempo por centro de trabalho",
+      "setup medio ct",
+      "setup médio ct",
+      "tempo standard por ct",
+      "hora planejada por ct"
     ],
     "excludeTerms": [
       "consumid",
@@ -239,7 +323,13 @@
       "hora mil",
       "setup e tempo real",
       "eficiencia produtiva",
-      "eficiência produtiva"
+      "eficiência produtiva",
+      "compare tempo planejado",
+      "compare tempo real",
+      "variacao tempo op",
+      "variação tempo op",
+      "desvio setup",
+      "tempo real x planejado"
     ],
     "excludeTerms": ["consumid", "comprad", "por ct", "centro de trabalho"]
   },
@@ -251,7 +341,13 @@
       "consumido do item",
       "quantidade consumida do item",
       "consumo de materia-prima",
-      "consumo de matéria-prima"
+      "consumo de matéria-prima",
+      "quanto consumiu o item",
+      "consumo do codigo",
+      "consumo do código",
+      "consumo item producao",
+      "consumo item produção",
+      "baixa do componente"
     ],
     "excludeTerms": ["maior consumo", "top consumo", "ranking de consumo", "comprad"]
   },

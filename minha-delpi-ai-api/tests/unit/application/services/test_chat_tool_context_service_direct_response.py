@@ -514,6 +514,27 @@ def test_build_authorized_answer_prefers_text_presentation_markdown():
     )
 
 
+def test_sync_text_presentation_from_humanized_for_playbook_operational():
+    from app.domain.services.chat_tool_context_presentation_service import (
+        ChatToolContextPresentationService,
+    )
+
+    metadata = {
+        "path": "/production/planned-vs-real-time",
+        "humanizedSummary": {
+            "titulo": "Planejado × real",
+            "linhas": ["- OP 000001 — OK", "- OP 000002 — ESTOURO"],
+        },
+    }
+
+    ChatToolContextPresentationService.sync_text_presentation_from_humanized(metadata)
+
+    markdown = str(metadata["textPresentation"]["markdown"])
+
+    assert "### Planejado × real" in markdown
+    assert "OP 000001" in markdown
+
+
 def test_resolve_authorized_persisted_answer_replaces_llm_hallucination():
     authorized = "### Informações completas do produto 90260149\n\nCHICOTE EPR SINGELO 235MM."
     hallucinated = "Produtos Químicos e Solução Química Especializada."

@@ -426,7 +426,6 @@ export function ChatPage({
   const typingCorrectionLabels = useMemo(() => getTypingCorrectionContent(), []);
   const {
     suggestion: typingSuggestion,
-    isLoading: typingSuggestionLoading,
     dismissSuggestion: dismissTypingSuggestionState,
     clearSuggestion: clearTypingSuggestion,
   } = useChatTypingCorrection({
@@ -2134,7 +2133,6 @@ export function ChatPage({
 
   const composerTypingCorrectionProps = {
     typingSuggestion,
-    typingSuggestionLoading,
     typingSuggestionLabels: typingCorrectionLabels,
     onAcceptTypingSuggestion: handleAcceptTypingSuggestion,
     onDismissTypingSuggestion: handleDismissTypingSuggestion,

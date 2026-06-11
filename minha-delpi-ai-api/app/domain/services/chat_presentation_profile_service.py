@@ -247,6 +247,10 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             if has_tree and ("tree" in flags or "analyser" in flags):
                 return "tree"
 
+        if policy == "kpi_when_available":
+            if has_kpi and "kpi" in flags:
+                return "kpi"
+
         if policy == "text_when_available":
             if has_text:
                 return "text"

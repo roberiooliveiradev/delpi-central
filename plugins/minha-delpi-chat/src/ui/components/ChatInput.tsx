@@ -90,7 +90,6 @@ type ChatInputProps = {
   /** Chips de contexto no composer — regra em resolveComposerContextBar (chatAgentActivation). */
   contextBarItems?: ComposerContextBarItem[];
   typingSuggestion?: ChatTypingSuggestion | null;
-  typingSuggestionLoading?: boolean;
   typingSuggestionLabels?: MessageComposerTypingCorrectionContent;
   onAcceptTypingSuggestion?: () => void;
   onDismissTypingSuggestion?: () => void;
@@ -142,7 +141,6 @@ export function ChatInput({
   showPresentationFormatSelector = true,
   contextBarItems = [],
   typingSuggestion = null,
-  typingSuggestionLoading = false,
   typingSuggestionLabels,
   onAcceptTypingSuggestion,
   onDismissTypingSuggestion,
@@ -568,8 +566,6 @@ export function ChatInput({
               </button>
             </div>
           </div>
-        ) : typingSuggestionLoading ? (
-          <div className="mdc-chat-input__typing-suggestion mdc-chat-input__typing-suggestion--loading" aria-hidden="true" />
         ) : null}
 
         <div className="mdc-chat-input__composer-stack">

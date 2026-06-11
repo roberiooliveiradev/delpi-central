@@ -115,6 +115,47 @@ def test_playbook_operational_entity_uses_playbook_report_title():
     assert "Ordens de venda" not in str(result.get("titulo") or "")
 
 
+def test_legacy_playbook_operational_path_without_meta_entity():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    payload = {
+        "items": [
+            {"production_order": "OP-001", "description": "Produto A"},
+        ],
+    }
+
+    result = presenter.present(payload, path="/production/orders/open")
+
+    assert result is not None
+    assert result.get("titulo") == "Ordens de produção em aberto"
+    assert "Ordens de venda" not in str(result.get("titulo") or "")
+
+
+def test_legacy_production_path_does_not_route_order_number_to_sale_orders():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    payload = {
+        "items": [
+            {
+                "order_number": "000123",
+                "description": "Item produção",
+                "branch": "01",
+            },
+        ],
+    }
+
+    result = presenter.present(payload, path="/production/orders/finished")
+
+    assert result is not None
+    assert "Ordens de venda" not in str(result.get("titulo") or "")
+
+
 def test_sql_error_maps_to_error_handling_message():
     summary = ChatAssistantContentService.get_error_type(
         "sql_syntax_error",

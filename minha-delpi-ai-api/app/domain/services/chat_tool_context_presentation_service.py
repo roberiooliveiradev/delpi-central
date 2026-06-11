@@ -240,6 +240,49 @@ class ChatToolContextPresentationService:
             )
 
         @classmethod
+        def _markdown_from_humanized(cls, humanized: dict) -> str | None:
+            linhas = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line or "").strip()
+            ]
+
+            if not linhas:
+                return None
+
+            titulo = str(humanized.get("titulo") or "").strip()
+            body = "\n".join(linhas)
+
+            if titulo:
+                return f"### {titulo}\n\n{body}"
+
+            return body
+
+        @classmethod
+        def sync_text_presentation_from_humanized(cls, metadata: dict) -> None:
+            """Espelha humanizedSummary em textPresentation quando ainda vazio (rotas playbook)."""
+            humanized = metadata.get("humanizedSummary")
+
+            if not isinstance(humanized, dict):
+                return
+
+            markdown = cls._markdown_from_humanized(humanized)
+
+            if not markdown:
+                return
+
+            text_presentation = metadata.get("textPresentation")
+
+            if not isinstance(text_presentation, dict):
+                text_presentation = {"type": "markdown"}
+                metadata["textPresentation"] = text_presentation
+
+            if str(text_presentation.get("markdown") or "").strip():
+                return
+
+            text_presentation["markdown"] = markdown
+
+        @classmethod
         def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
             text_presentation = metadata.get("textPresentation")
 
@@ -252,22 +295,7 @@ class ChatToolContextPresentationService:
             humanized = metadata.get("humanizedSummary")
 
             if isinstance(humanized, dict):
-                linhas = [
-                    str(line).strip()
-                    for line in (humanized.get("linhas") or [])
-                    if str(line or "").strip()
-                ]
-
-                if not linhas:
-                    return None
-
-                titulo = str(humanized.get("titulo") or "").strip()
-                body = "\n".join(linhas)
-
-                if titulo:
-                    return f"### {titulo}\n\n{body}"
-
-                return body
+                return cls._markdown_from_humanized(humanized)
 
             return None
 

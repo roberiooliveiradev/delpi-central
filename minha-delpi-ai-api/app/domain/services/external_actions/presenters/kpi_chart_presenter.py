@@ -197,11 +197,46 @@ class ExternalActionKpiChartPresenter:
         from app.domain.services.chat_presentation_kpi_assembly_service import (
             ChatPresentationKpiAssemblyService,
         )
+        from app.domain.services.chat_presentation_scalar_dashboard_service import (
+            ChatPresentationScalarDashboardService,
+        )
 
         root = self._host._unwrap_data(data)
 
         if not isinstance(root, dict):
             return None
+
+        def _build_scalar_kpi(payload: dict, route: str) -> dict | None:
+            cards = self.build_generic_kpi_cards(payload, route)
+
+            if not cards:
+                return self.build_kpi_chart(payload, route)
+
+            return ChatPresentationKpiAssemblyService.build(
+                title=self.kpi_title(route)
+                or self._host._presenter_text("charts", "dashboardKpiFallbackTitle"),
+                cards=cards,
+                min_cards=1,
+            )
+
+        scalar_dashboard = ChatPresentationScalarDashboardService.build(
+            root,
+            path=path,
+            build_kpi=_build_scalar_kpi,
+            build_kv_table=lambda payload, route: ChatPresentationScalarDashboardService.build_kv_table(
+                payload,
+                path=route,
+                label_for=lambda key: self._host._column_labels.label_for(
+                    key,
+                    schema_labels=self._host._active_schema_labels,
+                ),
+                format_value=lambda key, value: self._host._format_field_value(key, value),
+                field_labels=self._host._active_schema_labels,
+            ),
+        )
+
+        if scalar_dashboard:
+            return scalar_dashboard
 
         return ChatDashboardPresentationService.build(
             root,

@@ -61,6 +61,9 @@ class ExternalActionPresentationBuilderPresenter:
             if not isinstance(root, dict):
                 return None
 
+            if entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
+                return self._host._build_playbook_report_table(root, path, entity=entity)
+
             if entity == "product_factory_status":
                 tables = self._host.build_factory_status_table_presentations(root, path)
 
@@ -298,6 +301,16 @@ class ExternalActionPresentationBuilderPresenter:
                     if "sale_number" in items[0] or "saleNumber" in items[0]:
                         return self._host._build_lmp_table(items, root)
 
+            if (
+                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                and isinstance(root, dict)
+            ):
+                return self._host._build_playbook_report_table(
+                    root,
+                    effective_path,
+                    entity=entity,
+                )
+
             return None
 
     def _build_factory_status_table(self, root: dict, path: str) -> dict:
@@ -400,7 +413,13 @@ class ExternalActionPresentationBuilderPresenter:
                 if "sale_number" in items[0] or "saleNumber" in items[0]:
                     return self._host._build_lmp_table(items, root)
 
-                if "order_number" in items[0]:
+                lowered_items_path = str(path or "").lower()
+
+                if (
+                    "order_number" in items[0]
+                    and "/production/" not in lowered_items_path
+                    and not ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+                ):
                     return self._build_sale_orders_table(items, root)
 
                 title = self._host._infer_items_title(items, path)

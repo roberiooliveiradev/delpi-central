@@ -34,6 +34,7 @@ Wrappers especializados (mantêm API estável):
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
+| `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `ExternalActionProductionOperationalRouteSelectionService` |
 | `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |

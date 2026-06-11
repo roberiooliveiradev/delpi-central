@@ -100,6 +100,38 @@ def test_financial_rol_text_presentation_includes_rol_value():
     )
 
 
+def test_financial_rol_dashboard_builds_dashboard_presentation():
+    meta = _build_metadata(session_format="dashboard")
+    dashboard = meta.get("dashboardPresentation") or meta.get("presentation") or {}
+    decision = meta.get("presentationDecision") or {}
+    render_plan = meta.get("renderPlan") or {}
+    segment_kinds = {
+        str(item.get("kind") or "").strip().lower()
+        for item in (render_plan.get("segments") or [])
+        if isinstance(item, dict)
+    }
+
+    assert decision.get("selected") == "dashboard"
+    assert dashboard.get("type") == "dashboard"
+    assert len(dashboard.get("panels") or []) >= 1
+    assert "dashboard" in segment_kinds or "kpi" in segment_kinds
+    assert "sem dados tabulares" not in str(decision.get("reason") or "").lower()
+
+
+def test_financial_rol_auto_prefers_kpi_over_empty_table_reason():
+    meta = _build_metadata()
+    decision = meta.get("presentationDecision") or {}
+
+    assert decision.get("selected") in {"kpi", "text", "dashboard"}
+    assert "sem dados tabulares" not in str(decision.get("reason") or "").lower()
+    kpi_or_dashboard = (meta.get("kpiPresentation") or meta.get("presentation") or {}).get(
+        "type"
+    ) in {"kpi", "dashboard"} or (
+        meta.get("dashboardPresentation") or {}
+    ).get("type") == "dashboard"
+    assert kpi_or_dashboard
+
+
 def test_formatter_does_not_downgrade_scalar_data_answer_without_api_meta():
     meta = _build_metadata(session_format="text")
     meta.pop("dataAnswer", None)

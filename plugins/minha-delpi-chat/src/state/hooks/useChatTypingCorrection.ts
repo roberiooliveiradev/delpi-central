@@ -25,15 +25,16 @@ export function useChatTypingCorrection({
   getAccessToken,
 }: UseChatTypingCorrectionOptions) {
   const [suggestion, setSuggestion] = useState<ChatTypingSuggestion | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const previousDraftRef = useRef(draft);
+  const draftRef = useRef(draft);
   const requestIdRef = useRef(0);
   const lastOfferedOriginalRef = useRef<string | null>(null);
+
+  draftRef.current = draft;
 
   useEffect(() => {
     if (!enabled) {
       setSuggestion(null);
-      setIsLoading(false);
       return;
     }
 
@@ -48,22 +49,30 @@ export function useChatTypingCorrection({
 
     if (trimmed.length < 4) {
       setSuggestion(null);
-      setIsLoading(false);
       return;
     }
 
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
-    setIsLoading(true);
+    let cancelled = false;
 
     const timer = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+
       void fetchTypingSuggestion(trimmed, {
         enabled,
         sessionId,
         getAccessToken,
       })
         .then((nextSuggestion) => {
-          if (requestIdRef.current !== requestId) {
+          if (cancelled || requestIdRef.current !== requestId) {
+            return;
+          }
+
+          if (draftRef.current.trim() !== trimmed) {
+            setSuggestion(null);
             return;
           }
 
@@ -82,18 +91,14 @@ export function useChatTypingCorrection({
           }
         })
         .catch(() => {
-          if (requestIdRef.current === requestId) {
+          if (!cancelled && requestIdRef.current === requestId) {
             setSuggestion(null);
-          }
-        })
-        .finally(() => {
-          if (requestIdRef.current === requestId) {
-            setIsLoading(false);
           }
         });
     }, TYPING_SUGGESTION_DEBOUNCE_MS);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(timer);
     };
   }, [draft, enabled, getAccessToken, sessionId]);
@@ -118,7 +123,6 @@ export function useChatTypingCorrection({
 
   return {
     suggestion,
-    isLoading,
     dismissSuggestion,
     clearSuggestion,
   };

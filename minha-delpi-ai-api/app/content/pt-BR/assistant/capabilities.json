@@ -631,7 +631,9 @@
       "category": "Consumo de produção (ranking)",
       "examples": [
         "itens mais consumidos no mes",
-        "top consumo de materia prima"
+        "top consumo de materia prima",
+        "ranking de consumo filial 01",
+        "materia prima mais consumida"
       ]
     },
     {
@@ -639,7 +641,9 @@
       "category": "Consumo por centro de trabalho",
       "examples": [
         "consumo por centro de trabalho",
-        "itens mais consumidos por ct"
+        "itens mais consumidos por ct",
+        "maior consumo por ct",
+        "ranking consumo centro de trabalho"
       ]
     },
     {
@@ -647,7 +651,9 @@
       "category": "Consumo validado por apontamento",
       "examples": [
         "consumo validado por apontamento",
-        "consumo apontado no mes"
+        "consumo apontado no mes",
+        "consumo confirmado por apontamento",
+        "baixa validada producao"
       ]
     },
     {
@@ -655,7 +661,9 @@
       "category": "Consumo real de um item",
       "examples": [
         "consumo real do item 01010001",
-        "quanto foi consumido do produto"
+        "quanto foi consumido do produto",
+        "consumo do codigo 01010001",
+        "baixa do componente na producao"
       ]
     },
     {
@@ -663,7 +671,9 @@
       "category": "Refugos por matéria-prima",
       "examples": [
         "refugos de materia prima",
-        "top perdas de mp"
+        "top perdas de mp",
+        "ranking refugo março",
+        "scrap matéria-prima filial 02"
       ]
     },
     {
@@ -671,7 +681,9 @@
       "category": "Registros de refugo",
       "examples": [
         "listar refugos detalhado",
-        "registros de perda no periodo"
+        "registros de perda no periodo",
+        "detalhe refugo linha a linha",
+        "historico de refugo"
       ]
     },
     {
@@ -679,7 +691,9 @@
       "category": "OPs em aberto",
       "examples": [
         "ops em aberto hoje",
-        "ordens de producao abertas"
+        "ordens de producao abertas",
+        "liste ops em aberto filial 01",
+        "backlog de producao hoje"
       ]
     },
     {
@@ -687,7 +701,9 @@
       "category": "OPs finalizadas",
       "examples": [
         "ops finalizadas hoje",
-        "ordens de producao encerradas"
+        "ordens de producao encerradas",
+        "quais ops finalizadas hoje",
+        "ops concluidas na data"
       ]
     },
     {
@@ -695,7 +711,9 @@
       "category": "OPs finalizadas sem consumo",
       "examples": [
         "ops finalizadas sem baixa de mp",
-        "ordens encerradas sem consumo"
+        "ordens encerradas sem consumo",
+        "op finalizada sem consumo hoje",
+        "fechou op sem baixa material"
       ]
     },
     {
@@ -703,7 +721,9 @@
       "category": "Resumo de OPs por CT",
       "examples": [
         "resumo de ops por centro de trabalho",
-        "ops por ct hoje"
+        "ops por ct hoje",
+        "finalizadas e abertas por ct",
+        "painel ops por ct"
       ]
     },
     {
@@ -711,7 +731,9 @@
       "category": "Tempo médio planejado por CT",
       "examples": [
         "tempo medio planejado por ct",
-        "tempo planejado por centro de trabalho"
+        "tempo planejado por centro de trabalho",
+        "media setup por ct",
+        "tempo standard ct hoje"
       ]
     },
     {
@@ -719,7 +741,9 @@
       "category": "Componentes sem empenho",
       "examples": [
         "componentes sem empenho",
-        "travamento por falta de empenho"
+        "travamento por falta de empenho",
+        "materiais sem reserva hoje",
+        "empenho zero filial 01"
       ]
     },
     {
@@ -727,7 +751,9 @@
       "category": "Planejado × real por OP",
       "examples": [
         "compare tempo planejado e real",
-        "planejado versus real das ops"
+        "planejado versus real das ops",
+        "desvio tempo produtivo hoje",
+        "estouro de tempo op"
       ]
     },
     {
@@ -735,7 +761,9 @@
       "category": "Programação de produção (hoje)",
       "examples": [
         "quais produtos serao produzidos hoje",
-        "programacao de producao hoje"
+        "programacao de producao hoje",
+        "cronograma producao hoje",
+        "o que fabricar hoje"
       ]
     },
     {
@@ -743,7 +771,9 @@
       "category": "Produtos mais comprados",
       "examples": [
         "produtos mais comprados no mes",
-        "ranking de compras por produto"
+        "ranking de compras por produto",
+        "top compras março 2026",
+        "itens mais adquiridos"
       ]
     },
     {
@@ -896,6 +926,12 @@
     "refugos de matéria-prima março",
     "componentes sem empenho hoje",
     "compare tempo planejado e real das OPs",
+    "consumo validado por apontamento top 10",
+    "resumo de OPs por centro de trabalho hoje",
+    "tempo medio planejado por CT hoje",
+    "consumo real do item 01010001",
+    "listar refugos detalhado março",
+    "ops finalizadas sem consumo hoje",
     "compare estoque, vendas e compras do produto 10080001",
     "que horas são",
     "bom dia",
@@ -909,6 +945,7 @@
     "product360": "Visão 360° do produto",
     "impactAnalysis": "Análise de impacto",
     "comparison": "Comparação",
+    "productionOperational": "Produção e suprimentos (Playbook 15)",
     "charts": "Gráficos e evolução",
     "diagnostics": "Diagnóstico de cadastro"
   },
@@ -924,6 +961,15 @@
     "comparison": [
       "Compare os produtos 10080001 e 10080002 em cadastro, estoque, vendas e estrutura",
       "Compare fornecedores, compras e preços desses dois itens"
+    ],
+    "productionOperational": [
+      "Itens mais consumidos mês passado filial 01 top 10",
+      "Produtos mais comprados março 2026",
+      "Quais produtos serão produzidos hoje?",
+      "Liste as OPs em aberto de hoje filial 01",
+      "Refugos de matéria-prima março filial 02 top 10",
+      "Consumo validado por apontamento no mês top 10",
+      "Compare tempo planejado e tempo real das OPs hoje filial 01"
     ],
     "charts": [
       "Mostre vendas mensais do produto 10080001 em gráfico",

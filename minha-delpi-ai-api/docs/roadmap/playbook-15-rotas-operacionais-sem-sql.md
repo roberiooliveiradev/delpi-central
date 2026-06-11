@@ -192,45 +192,45 @@ Preço MP + simulador PA + integração chat parcial.
 
 **Critério de aceite Fase 1:**
 
-- [ ] Perguntas smoke (§10) retornam `execute_external_action` sem `POST /data/sql`
-- [ ] Latência p95 &lt; 2s (TOTVS dev)
-- [ ] `meta.operationId` registrado em `route_contract_registry.py`
-- [ ] OpenAPI reimportado no chat (`sync_api_delpi_openapi.py`)
-- [ ] Presenter com título/colunas de `presenter_content.json`
-- [ ] Casos em `chat_intelligence_regression_cases.py`
+- [x] Perguntas smoke (§9) retornam `execute_external_action` sem `POST /data/sql`
+- [x] `meta.operationId` registrado em `route_contract_registry.py`
+- [x] OpenAPI reimportado no chat (`sync_api_delpi_openapi.py`)
+- [x] Presenter com título/colunas de `presenter_content.json`
+- [x] Casos PO01–PO14 em `production_operational_regression_cases.py` + smoke `scripts/smoke_playbook_production_operational.py`
+- [ ] Latência p95 &lt; 2s (TOTVS dev) — validar em homologação
 
 **Entrega chat (paralela):** [`playbook-15-chat-integracao-producao-suprimentos.md`](./playbook-15-chat-integracao-producao-suprimentos.md)
 
 ---
 
-### Fase 2 — P1 (OPs, CT, consumo contextual)
+### Fase 2 — P1 (OPs, CT, consumo contextual) ✅
 
-| Rota | operationId |
-|------|-------------|
-| `GET /production/orders/open` | `get_production_orders_open` |
-| `GET /production/orders/finished` | `get_production_orders_finished` |
-| `GET /production/work-centers/order-summary` | `get_production_work_center_order_summary` |
-| `GET /production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` |
-| `GET /production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` |
-
----
-
-### Fase 3 — P2 (qualidade produtiva, gaps)
-
-| Rota | operationId |
-|------|-------------|
-| `GET /production/allocation-gaps` | `get_production_allocation_gaps` |
-| `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` |
-| `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` |
-| `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` |
+| Rota | operationId | Status |
+|------|-------------|--------|
+| `GET /production/orders/open` | `get_production_orders_open` | ✅ |
+| `GET /production/orders/finished` | `get_production_orders_finished` | ✅ |
+| `GET /production/work-centers/order-summary` | `get_production_work_center_order_summary` | ✅ |
+| `GET /production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` | ✅ |
+| `GET /production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` | ✅ |
 
 ---
 
-### Fase 4 — P3 (analítico avançado)
+### Fase 3 — P2 (qualidade produtiva, gaps) ✅
 
-| Rota | operationId |
-|------|-------------|
-| `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` |
+| Rota | operationId | Status |
+|------|-------------|--------|
+| `GET /production/allocation-gaps` | `get_production_allocation_gaps` | ✅ |
+| `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | ✅ |
+| `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` | ✅ |
+| `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` | ✅ |
+
+---
+
+### Fase 4 — P3 (analítico avançado) ✅
+
+| Rota | operationId | Status |
+|------|-------------|--------|
+| `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` | ✅ |
 
 Manter `POST /data/sql` apenas para **exploração ad hoc** (agente SQL avançado com skill), não para intents cobertos pelas fases 1–3.
 
@@ -358,20 +358,28 @@ cd minha-delpi-ai-api && pytest \
   tests/unit/application/services/test_external_action_selection_service.py -q
 ```
 
-### 9.3 Smoke manual (Fase 1)
+### 9.3 Smoke E2E (Fases 1–4)
 
-| # | Pergunta | Rota esperada |
-|---|----------|---------------|
-| S1 | «Itens mais consumidos mês passado filial 01 top 10» | R01 |
-| S2 | «Produtos mais comprados março 2026» | R04 |
-| S3 | «Refugos de matéria-prima março filial 02 top 10» | R07 |
-| S4 | «Quais produtos serão produzidos hoje?» | R08 |
-| S5 | «Análise de preço MP 10080001» | Fase 0 ✅ |
-| S6 | «Materiais que impactam custo PA 90261255» | Fase 0 ✅ |
+Script: `scripts/smoke_playbook_production_operational.py` (API R01–R16 + chat S1–S14).
 
-Script alvo: estender `scripts/smoke_playbook_product_routes.py` → `smoke_playbook_production_operational.py`.
+| # | Pergunta | Rota / operationId |
+|---|----------|-------------------|
+| S1 | «Itens mais consumidos mês passado filial 01 top 10» | R01 `get_production_consumption_top_items` |
+| S2 | «Produtos mais comprados março 2026» | R04 `get_purchases_top_products` |
+| S3 | «Refugos de matéria-prima março filial 02 top 10» | R07 `get_production_losses_top_materials` |
+| S4 | «Quais produtos serão produzidos hoje?» | R08 `get_production_schedule_today` |
+| S5 | «Liste as OPs em aberto de hoje filial 01» | R09/R10 `get_production_orders_open` |
+| S6 | «Quais OPs finalizadas hoje?» | R09 `get_production_orders_finished` |
+| S7 | «Resumo de OPs por centro de trabalho hoje» | R11 `get_production_work_center_order_summary` |
+| S8 | «Itens com maior consumo por CT mês passado top 10» | R02 `get_production_consumption_top_items_by_work_center` |
+| S9 | «Consumo validado por apontamento no mês top 10» | R03 `get_production_consumption_top_items_validated` |
+| S10 | «Liste componentes sem empenho hoje filial 01» | R12 `get_production_allocation_gaps` |
+| S11 | «Quais OPs finalizadas sem consumo hoje?» | R13 `get_production_orders_finished_without_consumption` |
+| S12 | «Tempo médio planejado por CT hoje» | R14 `get_production_work_center_average_planned_time` |
+| S13 | «Consumo real do item 01010001» | R15 `get_production_consumption_by_item` |
+| S14 | «Compare tempo planejado e tempo real das OPs hoje filial 01» | R16 `get_production_planned_vs_real_time` |
 
-Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) (nova seção **Playbook 15**).
+Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) (seção **Playbook 15**).
 
 ---
 
@@ -403,4 +411,16 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 
 ## 12. Resumo executivo
 
-Os playbooks SQL validam **16 famílias de consulta**; **5 rotas de produto** (preço MP + simulador) já existem. Faltam **~11 rotas operacionais** agrupadas em produção/compras/perdas/OPs para eliminar inferência SQL no chat do dia a dia. Implementar primeiro **P0** (consumo, compras ranking, perdas, programação hoje), depois integrar no pipeline base com o mesmo padrão de `factory-status` e preço MP.
+**Status jun/2026:** as **15 rotas operacionais** do Playbook 15 (R01–R04, R06–R16) estão entregues na **api-delpi** e integradas no **chat base** (intent, seleção, presenter, regressão PO01–PO14, smoke S1–S14). Rotas de produto da Fase 0 (preço MP, simulador, exclusividade) permanecem como estavam.
+
+| Bloco | Rotas | api-delpi | chat | RAG |
+|-------|------:|-----------|------|-----|
+| Fase 0 (produto) | 5+ | ✅ | ✅ | ✅ |
+| Fase 1 P0 | 5 | ✅ | ✅ | ✅ |
+| Fase 2 P1 | 5 | ✅ | ✅ | ✅ |
+| Fase 3 P2 | 4 | ✅ | ✅ | ✅ |
+| Fase 4 P3 | 1 | ✅ | ✅ | ✅ |
+
+**Pendência operacional:** latência p95 em TOTVS dev; qualidade de resposta direct answer em alguns cenários (S9/S14) — evoluir no pipeline base, não no MFE.
+
+`POST /data/sql` permanece **fallback** para exploração ad hoc quando a action REST não estiver habilitada no agente.

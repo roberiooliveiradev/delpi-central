@@ -117,6 +117,14 @@ class ChatToolContextExternalActionFormatter:
                         }
                         self._merge_data_commentary_into_humanized_summary(safe_metadata)
 
+                        from app.domain.services.chat_tool_context_presentation_service import (
+                            ChatToolContextPresentationService,
+                        )
+
+                        ChatToolContextPresentationService.sync_text_presentation_from_humanized(
+                            safe_metadata,
+                        )
+
             return safe_metadata
 
     @staticmethod

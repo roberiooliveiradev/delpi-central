@@ -424,6 +424,7 @@
     },
     "generic_kpi_series": {
       "defaultViewPolicy": "kpi_when_available",
+      "visualBundlePolicy": "eager",
       "viewOrder": [
         "text",
         "kpi",
@@ -907,7 +908,8 @@
       ]
     },
     "kpi_series": {
-      "defaultViewPolicy": "generic",
+      "defaultViewPolicy": "kpi_when_available",
+      "visualBundlePolicy": "eager",
       "viewOrder": [
         "text",
         "kpi",

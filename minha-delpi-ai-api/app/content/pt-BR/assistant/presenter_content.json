@@ -1035,11 +1035,16 @@
     "panelItemsTitle": "Itens do painel",
     "titlesByPathFragment": {
       "/stock": "Painel de estoque",
+      "/financial/rol": "Indicador financeiro — ROL",
       "eficiencia-fabril": "Painel de eficiência fabril",
       "eficiencia_fabril": "Painel de eficiência fabril",
       "lmp": "Dashboard de LMPs",
       "engineering": "Painel de engenharia"
     },
+    "detailTableTitlesByPathFragment": {
+      "/financial/rol": "Composição do ROL"
+    },
+    "metricsFallbackTitle": "Detalhamento",
     "chartBlockTitles": {
       "levelData": "LMPs por nível",
       "statusData": "LMPs por status",

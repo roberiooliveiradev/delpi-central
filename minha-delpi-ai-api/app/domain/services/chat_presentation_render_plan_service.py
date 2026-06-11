@@ -199,6 +199,12 @@ class ChatPresentationRenderPlanService:
         if selected in _VISUAL_TOKEN_TO_KEY:
             source = cls._resolve_visual_source(metadata, selected)
 
+            if not source and selected == "dashboard":
+                source = cls._resolve_visual_source(metadata, "kpi")
+
+                if source:
+                    selected = "kpi"
+
             if source:
                 segments.append({"kind": selected, "slot": "primary", "source": source})
 

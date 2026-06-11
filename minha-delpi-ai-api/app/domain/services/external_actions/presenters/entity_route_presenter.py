@@ -69,6 +69,23 @@ class ExternalActionEntityRoutePresenter:
             if empty_operational:
                 return empty_operational
 
+            if (
+                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                and isinstance(root, dict)
+            ):
+                effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+                    path=path,
+                    entity=entity,
+                )
+                playbook = self._host._present_playbook_report(
+                    root,
+                    effective_path,
+                    entity=entity,
+                )
+
+                if playbook:
+                    return playbook
+
             if entity == "product_analyser" and isinstance(root, dict):
                 root = self._normalize_root_for_entity(root, profile)
                 product = root.get("product")
