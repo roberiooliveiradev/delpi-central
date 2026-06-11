@@ -27,6 +27,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [playbook-05-anexos-lousa.md](./playbook-05-anexos-lousa.md) | **Playbook 05:** anexos e lousa — welcome, chips, ambiguidade, metadata de versão (L1–L12). |
 | [apresentacao-dados-generalizada-jun2026.md](./apresentacao-dados-generalizada-jun2026.md) | **Jun/2026 (onda 1 concluída):** apresentação generalizada — 130 rotas, preferência UI, perfis declarativos, markdown canônico, chips. |
 | [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) | **Playbook 12 (onda 2 — em andamento):** refatoração declarativa — `role` em tabelas, registry de bundles, table assembly, section availability, MFE alinhado à API. |
+| [playbook-14-corretor-digitacao-chat.md](./playbook-14-corretor-digitacao-chat.md) | **Playbook 14 (planejado):** corretor de digitação no composer — sugestões pré-envio; distinto da habilidade «corrija este texto». |
 | [playbook-11-clean-architecture-chat-api.md](./playbook-11-clean-architecture-chat-api.md) | **Playbook 11:** clean architecture — revisão, roadmap por fases, checklist de PR, baseline de auditoria. |
 | [../architecture/adr/README.md](../architecture/adr/README.md) | **ADRs** do chat — decisões de camadas, JSON, ports e CI (Fase 6). |
 | [playbook-06-erros-resultados-vazios.md](./playbook-06-erros-resultados-vazios.md) | **Playbook 06:** erros e vazios — classificação, templates, chips de recuperação (E1–E15). |

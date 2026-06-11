@@ -313,7 +313,7 @@ Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?»
 | Classificação | `classify(message)` por categoria (`current_time`, `current_date`, `current_datetime`, `current_weekday`, `current_year`) |
 | Resposta | Template PT-BR com hora/data reais (`CHAT_UTILITY_TIMEZONE`, default `America/Sao_Paulo`) quando `CHAT_UTILITY_DIRECT_ENABLED=true` |
 | Pipeline | **Sem RAG**, **sem** loop agentic, **sem** LLM; estágio `utility_direct` |
-| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `q horas` → `que horas`, `q dia` → `que dia e hoje` |
+| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `q horas` → `que horas`, `estouque` → `estoque`. **Roadmap UI:** [playbook-14](../roadmap/playbook-14-corretor-digitacao-chat.md) — sugestão pré-envio no composer. |
 | Exclusões | Mensagens com contexto operacional (`producao`, `ordem`, `estoque`, …) não entram no atalho |
 
 Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).

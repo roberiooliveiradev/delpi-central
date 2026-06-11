@@ -9,7 +9,14 @@
 
 **Regra central:** correção boa = texto correto + sentido preservado + tom adequado + zero invenção.
 
-**Arquitetura:** [`docs/architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) — inteligência no chat base; ver também [`playbook_assistente_administrativo_textos_minha_delpi_chat.md`](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) (modo administrativo/textual).
+**Arquitetura:** [`docs/architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) — inteligência no chat base; ver também [`playbook_assistente_administrativo_textos_minha_delpi_chat.md`](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) (modo administrativo/textual) e [**Playbook 14** — typos no composer](../playbook-14-corretor-digitacao-chat.md) (distinto desta habilidade LLM).
+
+### Distinção — correção de texto vs typos no composer
+
+| Necessidade | Playbook |
+|-------------|----------|
+| «Corrija / revise / melhore este parágrafo» | **Este documento** — `text_correct_*` via LLM |
+| Erro ao digitar «estouque do produto…» | [**Playbook 14**](../playbook-14-corretor-digitacao-chat.md) — chip pré-envio determinístico |
 
 ---
 
