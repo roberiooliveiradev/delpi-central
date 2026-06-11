@@ -68,6 +68,31 @@ Documentação detalhada da API de chat: `minha-delpi-ai-api/README.md`.
 
 ---
 
+## Pós-deploy api-delpi → chat (OpenAPI sync)
+
+Após deploy de nova versão da `api-delpi`, rode o job que reimporta o schema no provider do chat, reindexa embeddings e regenera o catálogo MD:
+
+```bash
+# Stack local (compose prod ou dev com containers padrão)
+./scripts/homologacao/sync-api-delpi-openapi.sh
+
+# Servidor com gateway HTTPS
+BASE_URL=https://seu-dominio ./scripts/homologacao/sync-api-delpi-openapi.sh
+```
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `BASE_URL` | `http://localhost` | Gateway (health em `/apps/api-delpi/health`) |
+| `CHAT_API_CONTAINER` | `delpi-minha-delpi-ai-api` | Container onde roda o sync |
+| `WAIT_SECONDS` | `180` | Timeout aguardando api-delpi |
+| `PROVIDER_KEY` | `api-delpi` | Provider cadastrado no admin |
+
+CI manual: `.github/workflows/sync-api-delpi-openapi.yml` (Environment `homolog` / `prod` com secrets SSH).
+
+Procedimento completo: `api-delpi/docs/api/12-procedimento-reimport-openapi.md`.
+
+---
+
 ## Visão de documentos (Onda 13)
 
 | Variável | Dev (compose default) | Prod (recomendado no `.env`) |

@@ -141,8 +141,37 @@ def main() -> int:
             report["catalogOperations"] = len(collect_openapi_operations(schema))
 
     print(json.dumps(report, ensure_ascii=False, indent=2))
+
+    if not _report_is_successful(report, skip_import=args.skip_import):
+        return 1
+
     return 0
 
 
+def _report_is_successful(report: dict, *, skip_import: bool) -> bool:
+    if int(report.get("actionsInDatabase") or 0) <= 0:
+        return False
+
+    if skip_import:
+        return True
+
+    import_result = report.get("import")
+    if not isinstance(import_result, dict):
+        return False
+
+    if import_result.get("found") is False:
+        return False
+
+    actions_imported = import_result.get("actionsImported")
+    if actions_imported is not None and int(actions_imported) <= 0:
+        return False
+
+    return True
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:  # noqa: BLE001 — CLI de operação: falha explícita
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        sys.exit(2)

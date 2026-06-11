@@ -8,9 +8,23 @@ Subir o container/serviço com a versão nova da API.
 
 ## 2. Reimport no provider (minha-delpi-ai-api)
 
+**Job pós-deploy (recomendado em homolog/prod):**
+
+```bash
+# Na máquina com Docker Compose (gateway local ou BASE_URL público)
+./scripts/homologacao/sync-api-delpi-openapi.sh
+
+# Homolog/prod com URL pública
+BASE_URL=https://homolog.exemplo.com ./scripts/homologacao/sync-api-delpi-openapi.sh
+```
+
+O script aguarda `GET /apps/api-delpi/health`, executa o sync no container `delpi-minha-delpi-ai-api` e valida o JSON de saída (exit ≠ 0 em falha).
+
+**GitHub Actions (manual):** workflow `sync-api-delpi-openapi` (`workflow_dispatch`) — requer secrets `DEPLOY_SSH_*` e variável `DEPLOY_BASE_URL` no Environment `homolog` ou `prod`.
+
 **Via admin UI:** agente → provider `api-delpi` → importar schema.
 
-**Via script (container):**
+**Via script (container, manual):**
 
 ```bash
 docker exec delpi-minha-delpi-ai-api python3 scripts/sync_api_delpi_openapi.py
