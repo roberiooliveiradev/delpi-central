@@ -790,6 +790,8 @@ export type JsonBackupBundle = {
   schema_version: string;
   exported_at?: string;
   counts?: Record<string, number>;
+  setores: Record<string, unknown>[];
+  setor_filiais: Record<string, unknown>[];
   processos: Record<string, unknown>[];
   revisoes: Record<string, unknown>[];
   medicoes: Record<string, unknown>[];

@@ -6,6 +6,10 @@ from tm_app.application.services.json_backup_service import JsonBackupService, S
 from tm_app.infrastructure.persistence.json_backup_repository import JsonBackupRepository
 
 
+def _mock_service() -> JsonBackupService:
+    return JsonBackupService(MagicMock())
+
+
 def _sample_bundle() -> dict:
     pid = "11111111-1111-1111-1111-111111111111"
     rid = "22222222-2222-2222-2222-222222222222"
@@ -13,6 +17,15 @@ def _sample_bundle() -> dict:
     return {
         "schema_version": SCHEMA_VERSION,
         "exported_at": "2026-01-01T00:00:00+00:00",
+        "setores": [
+            {
+                "setor_id": "eng",
+                "nome_setor": "Engenharia",
+                "status_setor": "ativo",
+                "deletado": False,
+            }
+        ],
+        "setor_filiais": [{"setor_id": "eng", "filial_id": "01"}],
         "processos": [
             {
                 "processo_id": pid,
@@ -54,7 +67,7 @@ def _sample_bundle() -> dict:
 
 
 def test_validate_bundle_rejects_missing_fk():
-    errors = JsonBackupService().validate_bundle(_sample_bundle())
+    errors = _mock_service().validate_bundle(_sample_bundle())
     assert any("recursos_compartilhados" in err for err in errors)
 
 
@@ -74,7 +87,7 @@ def test_validate_bundle_accepts_consistent_fk():
             "deletado": False,
         }
     ]
-    assert JsonBackupService().validate_bundle(bundle) == []
+    assert _mock_service().validate_bundle(bundle) == []
 
 
 def test_validate_bundle_dedupes_repeated_fk_errors():
@@ -90,9 +103,16 @@ def test_validate_bundle_dedupes_repeated_fk_errors():
             "deletado": False,
         }
     )
-    errors = JsonBackupService().validate_bundle(bundle)
+    errors = _mock_service().validate_bundle(bundle)
     fk_errors = [e for e in errors if "processo_id" in e]
     assert len(fk_errors) == 1
+
+
+def test_validate_bundle_rejects_setor_filiais_without_setor():
+    bundle = _sample_bundle()
+    bundle["setor_filiais"] = [{"setor_id": "inexistente", "filial_id": "01"}]
+    errors = _mock_service().validate_bundle(bundle)
+    assert any("setor_filiais" in err and "setores" in err for err in errors)
 
 
 def test_ensure_bundle_includes_referenced_deleted_processo():
@@ -111,6 +131,7 @@ def test_ensure_bundle_includes_referenced_deleted_processo():
         }
     ]
     data = {
+        "setores": [],
         "processos": [],
         "revisoes": [{"revisao_id": rid, "processo_id": pid, "versao_revisao": "v1"}],
         "medicoes": [],
@@ -122,7 +143,12 @@ def test_ensure_bundle_includes_referenced_deleted_processo():
     enriched = JsonBackupRepository.ensure_bundle_parent_rows(repo, data)
     assert len(enriched["processos"]) == 1
     assert enriched["processos"][0]["processo_id"] == pid
-    repo.fetch_rows_by_ids.assert_called_once()
+    processo_calls = [
+        call
+        for call in repo.fetch_rows_by_ids.call_args_list
+        if call.args[0].bundle_key == "processos"
+    ]
+    assert len(processo_calls) == 1
 
 
 def test_preview_merge_counts_insert_and_update():
@@ -146,6 +172,7 @@ def test_preview_merge_counts_insert_and_update():
     repo.fetch_existing_ids.side_effect = lambda spec: (
         {"11111111-1111-1111-1111-111111111111"} if spec.bundle_key == "processos" else set()
     )
+    repo.fetch_setor_filiais.return_value = [{"setor_id": "eng", "filial_id": "01"}]
     repo.load_export_bundle.return_value = MagicMock(
         processos=[{}],
         revisoes=[],
@@ -161,3 +188,4 @@ def test_preview_merge_counts_insert_and_update():
     assert preview["entities"]["processos"]["update"] == 1
     assert preview["entities"]["processos"]["insert"] == 0
     assert preview["entities"]["revisoes"]["insert"] == 1
+    assert preview["entities"]["setor_filiais"]["total"] == 1

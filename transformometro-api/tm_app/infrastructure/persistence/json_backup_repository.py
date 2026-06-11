@@ -23,6 +23,19 @@ class EntitySpec:
 
 ENTITY_SPECS: tuple[EntitySpec, ...] = (
     EntitySpec(
+        "setores",
+        "transformometro.setores",
+        "setor_id",
+        (
+            "setor_id",
+            "nome_setor",
+            "status_setor",
+            "created_at",
+            "updated_at",
+            "deletado",
+        ),
+    ),
+    EntitySpec(
         "processos",
         "transformometro.processos",
         "processo_id",
@@ -42,6 +55,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "updated_at",
             "deletado",
         ),
+        (("setor_id", "setores", "setor_id"),),
     ),
     EntitySpec(
         "recursos_compartilhados",
@@ -185,12 +199,57 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
     ),
 )
 
-BUNDLE_KEYS = tuple(spec.bundle_key for spec in ENTITY_SPECS)
+SETOR_FILIAIS_BUNDLE_KEY = "setor_filiais"
+BUNDLE_KEYS = (*tuple(spec.bundle_key for spec in ENTITY_SPECS), SETOR_FILIAIS_BUNDLE_KEY)
 
 
 class JsonBackupRepository(PluginBaseRepository):
     def load_export_bundle(self) -> TransformometroRawData:
         return DashboardDataRepository(self._connection).load_raw()
+
+    def fetch_setores(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT * FROM transformometro.setores
+            WHERE deletado = FALSE
+            ORDER BY nome_setor ASC
+            """
+        )
+
+    def fetch_setor_filiais(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT setor_id, filial_id
+            FROM transformometro.setor_filiais
+            ORDER BY setor_id ASC, filial_id ASC
+            """
+        )
+
+    def sync_setor_filiais(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        self.execute("DELETE FROM transformometro.setor_filiais", auto_commit=False)
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            setor_id = row.get("setor_id")
+            filial_id = row.get("filial_id")
+            if not setor_id or not filial_id:
+                continue
+            self.execute(
+                """
+                INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
+                VALUES (%s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (setor_id, filial_id),
+                auto_commit=False,
+            )
+        if auto_commit:
+            self._connection.commit()
 
     def fetch_rows_by_ids(self, spec: EntitySpec, ids: set[str]) -> list[dict[str, Any]]:
         if not ids:
@@ -257,11 +316,31 @@ class JsonBackupRepository(PluginBaseRepository):
                 missing_revisoes,
             ))
 
+        setores = list(data.get("setores") or [])
+        setor_ids = {
+            str(row.get("setor_id"))
+            for row in setores
+            if isinstance(row, dict) and row.get("setor_id")
+        }
+        needed_setores: set[str] = set()
+        for row in processos:
+            if isinstance(row, dict) and row.get("setor_id"):
+                needed_setores.add(str(row["setor_id"]))
+        missing_setores = needed_setores - setor_ids
+        if missing_setores:
+            setores.extend(
+                self.fetch_rows_by_ids(
+                    next(s for s in ENTITY_SPECS if s.bundle_key == "setores"),
+                    missing_setores,
+                )
+            )
+
         return {
             **data,
             "processos": processos,
             "recursos_compartilhados": recursos,
             "revisoes": revisoes,
+            "setores": setores,
         }
 
     def fetch_existing_ids(self, spec: EntitySpec) -> set[str]:
@@ -281,7 +360,9 @@ class JsonBackupRepository(PluginBaseRepository):
                 transformometro.medicoes,
                 transformometro.revisoes,
                 transformometro.recursos_compartilhados,
-                transformometro.processos
+                transformometro.processos,
+                transformometro.setor_filiais,
+                transformometro.setores
             RESTART IDENTITY CASCADE
             """,
             auto_commit=False,

@@ -10,12 +10,13 @@ from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.infrastructure.persistence.json_backup_repository import (
     BUNDLE_KEYS,
     ENTITY_SPECS,
+    SETOR_FILIAIS_BUNDLE_KEY,
     EntitySpec,
     JsonBackupRepository,
 )
 
 ExportMode = Literal["replace", "merge"]
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 
 
 def _norm_id(value: Any) -> str:
@@ -34,6 +35,10 @@ def _as_dict(raw: TransformometroRawData) -> dict[str, list[dict[str, Any]]]:
     }
 
 
+def _entity_spec_for_key(key: str) -> EntitySpec:
+    return next(spec for spec in ENTITY_SPECS if spec.bundle_key == key)
+
+
 class JsonBackupService:
     def __init__(self, repo: JsonBackupRepository | None = None) -> None:
         self._repo = repo or JsonBackupRepository()
@@ -41,11 +46,14 @@ class JsonBackupService:
     def export_bundle(self) -> dict[str, Any]:
         raw = self._repo.load_export_bundle()
         data = self._repo.ensure_bundle_parent_rows(_as_dict(raw))
+        data["setores"] = self._repo.fetch_setores()
+        data["setor_filiais"] = self._repo.fetch_setor_filiais()
+        data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
             "exported_at": datetime.now(timezone.utc).isoformat(),
-            "counts": {key: len(data[key]) for key in BUNDLE_KEYS},
-            **{key: rows_to_json(data[key]) for key in BUNDLE_KEYS},
+            "counts": {key: len(data.get(key) or []) for key in BUNDLE_KEYS},
+            **{key: rows_to_json(data.get(key) or []) for key in BUNDLE_KEYS},
         }
 
     def validate_bundle(self, payload: dict[str, Any]) -> list[str]:
@@ -65,7 +73,28 @@ class JsonBackupService:
                 errors.append(f"{key} deve ser uma lista.")
                 continue
 
-            spec = next(s for s in ENTITY_SPECS if s.bundle_key == key)
+            if key == SETOR_FILIAIS_BUNDLE_KEY:
+                seen_pairs: set[tuple[str, str]] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    setor_id = row.get("setor_id")
+                    filial_id = row.get("filial_id")
+                    if not setor_id:
+                        errors.append(f"{key}[{index}]: setor_id obrigatório.")
+                    if not filial_id:
+                        errors.append(f"{key}[{index}]: filial_id obrigatório.")
+                    if setor_id and filial_id:
+                        pair = (_norm_id(setor_id), str(filial_id).strip())
+                        if pair in seen_pairs:
+                            errors.append(
+                                f"{key}: vínculo duplicado ({setor_id}, {filial_id})."
+                            )
+                        seen_pairs.add(pair)
+                continue
+
+            spec = _entity_spec_for_key(key)
             seen: set[str] = set()
             for index, row in enumerate(rows):
                 if not isinstance(row, dict):
@@ -96,7 +125,7 @@ class JsonBackupService:
             for row in payload.get(spec.bundle_key, []):
                 if not isinstance(row, dict):
                     continue
-                for fk_col, parent_key, parent_pk in spec.fk_checks:
+                for fk_col, parent_key, _parent_pk in spec.fk_checks:
                     fk_val = row.get(fk_col)
                     if fk_val is None:
                         errors.append(
@@ -108,6 +137,16 @@ class JsonBackupService:
                             f"{spec.bundle_key}: {fk_col}={fk_val} não está em {parent_key} "
                             f"no JSON (reexporte o backup ou inclua o registro pai)."
                         )
+
+        setor_ids = id_sets.get("setores", set())
+        for row in payload.get(SETOR_FILIAIS_BUNDLE_KEY, []):
+            if not isinstance(row, dict):
+                continue
+            setor_id = row.get("setor_id")
+            if setor_id and _norm_id(setor_id) not in setor_ids:
+                errors.append(
+                    f"setor_filiais: setor_id={setor_id} não está em setores no JSON."
+                )
 
         return _dedupe_errors(errors)
 
@@ -143,11 +182,19 @@ class JsonBackupService:
                 "skip": skip,
             }
 
+        sf_rows = payload.get(SETOR_FILIAIS_BUNDLE_KEY, [])
+        entities[SETOR_FILIAIS_BUNDLE_KEY] = {
+            "total": len(sf_rows),
+            "insert": len(sf_rows),
+            "update": 0,
+            "skip": 0,
+        }
+
         if mode == "replace":
-            current = self._repo.load_export_bundle()
-            current_counts = {key: len(getattr(current, key)) for key in BUNDLE_KEYS}
+            current_counts = self._current_bundle_counts()
         else:
-            current_counts = {key: len(existing[key]) for key in BUNDLE_KEYS}
+            current_counts = {key: len(existing.get(key, set())) for key in BUNDLE_KEYS}
+            current_counts[SETOR_FILIAIS_BUNDLE_KEY] = len(self._repo.fetch_setor_filiais())
 
         return {
             "valid": True,
@@ -176,6 +223,11 @@ class JsonBackupService:
                         if isinstance(row, dict):
                             self._repo.upsert_row(spec, self._normalize_row(spec, row), auto_commit=False)
 
+            sf_rows = [
+                row for row in payload.get(SETOR_FILIAIS_BUNDLE_KEY, []) if isinstance(row, dict)
+            ]
+            self._repo.sync_setor_filiais(sf_rows, auto_commit=False)
+
             self._repo._connection.commit()
         except Exception:
             self._repo._connection.rollback()
@@ -186,6 +238,15 @@ class JsonBackupService:
             "mode": mode,
             "entities": preview["entities"],
             "recalc": recalc,
+        }
+
+    def _current_bundle_counts(self) -> dict[str, int]:
+        raw = self._repo.load_export_bundle()
+        data = _as_dict(raw)
+        return {
+            **{key: len(data.get(key) or []) for key in BUNDLE_KEYS if key != SETOR_FILIAIS_BUNDLE_KEY},
+            "setores": len(self._repo.fetch_setores()),
+            SETOR_FILIAIS_BUNDLE_KEY: len(self._repo.fetch_setor_filiais()),
         }
 
     @staticmethod

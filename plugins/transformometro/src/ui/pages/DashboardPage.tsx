@@ -35,12 +35,14 @@ import {
   fetchDashboardPorFamilia,
   fetchDashboardProcessos,
   fetchDashboardResumo,
+  fetchOptions,
   recalcularDashboard,
   type DashboardAlertItem,
   type DashboardEvolucaoItem,
   type DashboardFamiliaItem,
   type DashboardProcessoItem,
   type DashboardResumo,
+  type OptionsData,
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
 import { CHART_MEASURE_OPTIONS, type ChartMeasure } from "../../types/chartMeasure";
@@ -57,6 +59,7 @@ import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
+import { filterSetoresByFilial } from "../../utils/setores";
 
 const CHART_COLORS = [
   "#1aa7d9",
@@ -176,9 +179,28 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     suggestGranularity(defaultFilters.dataInicial, defaultFilters.dataFinal)
   );
   const [savingsMeasure, setSavingsMeasure] = useState<ChartMeasure>("currency");
+  const [options, setOptions] = useState<OptionsData | null>(null);
 
   const params = useMemo(() => buildParams(filters), [filters]);
   const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
+  const setoresFiltrados = useMemo(
+    () => filterSetoresByFilial(options?.setores ?? [], filters.filialId),
+    [options?.setores, filters.filialId]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchOptions(getAccessToken)
+      .then((data) => {
+        if (!cancelled) setOptions(data);
+      })
+      .catch(() => {
+        if (!cancelled) setOptions(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [getAccessToken]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -491,11 +513,28 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             Filial
             <select
               value={filters.filialId}
-              onChange={(e) => setFilters((prev) => ({ ...prev, filialId: e.target.value }))}
+              onChange={(e) => {
+                const nextFilial = e.target.value;
+                setFilters((prev) => ({
+                  ...prev,
+                  filialId: nextFilial,
+                  setorId:
+                    nextFilial && prev.setorId
+                      ? filterSetoresByFilial(options?.setores ?? [], nextFilial).some(
+                          (setor) => setor.id === prev.setorId
+                        )
+                        ? prev.setorId
+                        : ""
+                      : prev.setorId,
+                }));
+              }}
             >
               <option value="">Consolidado</option>
-              <option value="01">Filial 01</option>
-              <option value="02">Filial 02</option>
+              {(options?.filiais ?? []).map((filial) => (
+                <option key={filial.id} value={filial.id}>
+                  {filial.id} — {filial.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="ds-filter-box">
@@ -505,13 +544,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               onChange={(e) => setFilters((prev) => ({ ...prev, setorId: e.target.value }))}
             >
               <option value="">Todos</option>
-              <option value="engenharia">Engenharia</option>
-              <option value="qualidade">Qualidade</option>
-              <option value="pcp">PCP</option>
-              <option value="producao">Produção</option>
-              <option value="comercial">Comercial</option>
-              <option value="compras">Compras</option>
-              <option value="almoxarifado">Almoxarifado</option>
+              {setoresFiltrados.map((setor) => (
+                <option key={setor.id} value={setor.id}>
+                  {setor.label}
+                </option>
+              ))}
             </select>
           </label>
       </section>
