@@ -58,9 +58,35 @@ def test_resolve_operational_guards_returns_guidance_for_lmp_list():
     assert "agente" in guards.common_chat_operational_answer.lower()
 
 
+def test_requires_agent_for_production_schedule_in_common_chat():
+    workspace = {"userActivatedAgent": False, "actionsEnabled": False}
+
+    assert ChatCommonChatOperationalGuidanceService.requires_agent(
+        "produtos programados para produzir hoje",
+        workspace_context=workspace,
+    )
+
+
 def test_resolve_operational_guards_returns_guidance_in_common_chat():
     guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
         message="estoque do produto 10080001",
+        history_source=[],
+        conversation_context="",
+        working_memory_snapshot={},
+        workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
+        canvas_action=None,
+        pre_capability_answer=None,
+        analysis_mode=False,
+        text_task_pure=False,
+    )
+
+    assert guards.common_chat_operational_answer
+    assert "agente" in guards.common_chat_operational_answer.lower()
+
+
+def test_resolve_operational_guards_returns_guidance_for_production_schedule():
+    guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
+        message="produtos programados para produzir hoje",
         history_source=[],
         conversation_context="",
         working_memory_snapshot={},

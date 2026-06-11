@@ -99,13 +99,19 @@ export function ChatContextBar({
     actions: ReturnType<typeof buildContextChipMenuActions>;
   } | null>(null);
 
-  if (!chips.length && !onAddContext && !onViewMemory) {
+  const hasContextContent =
+    chips.length > 0 ||
+    Boolean(summary?.trim()) ||
+    Boolean(preferenceHint?.trim());
+
+  if (!hasContextContent && !onAddContext && !onViewMemory) {
     return null;
   }
 
   const interactive = Boolean(onChipAction);
   const showClear = Boolean(onClearContext) && chips.length > 0;
   const showAdd = Boolean(onAddContext);
+  const actionsOnly = !hasContextContent;
 
   function openChipMenu(chip: ChatContextChip, element: HTMLElement) {
     if (!onChipAction) {
@@ -132,21 +138,32 @@ export function ChatContextBar({
   }
 
   return (
-    <div className="mdc-chat-context-bar" aria-label="Contexto ativo da conversa">
-      <div className="mdc-chat-context-bar__heading">
-        <span className="mdc-chat-context-bar__label">Contexto</span>
-        {summary ? (
-          <span className="mdc-chat-context-bar__summary" title={summary}>
-            {summary}
-          </span>
-        ) : null}
-      </div>
+    <div
+      className={[
+        "mdc-chat-context-bar",
+        actionsOnly ? "mdc-chat-context-bar--actions-only" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label="Contexto ativo da conversa"
+    >
+      {hasContextContent ? (
+        <div className="mdc-chat-context-bar__heading">
+          <span className="mdc-chat-context-bar__label">Contexto</span>
+          {summary ? (
+            <span className="mdc-chat-context-bar__summary" title={summary}>
+              {summary}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {preferenceHint ? (
         <span className="mdc-chat-context-bar__preference" title={preferenceHint}>
           {preferenceHint}
         </span>
       ) : null}
 
+      {hasContextContent ? (
       <div className="mdc-chat-context-bar__chips" role="list">
         {chips.map((chip) => {
           const key = contextChipKey(chip);
@@ -218,6 +235,7 @@ export function ChatContextBar({
           );
         })}
       </div>
+      ) : null}
 
       <div className="mdc-chat-context-bar__actions">
         {showClear ? (

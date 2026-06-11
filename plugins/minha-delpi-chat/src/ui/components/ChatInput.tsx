@@ -537,7 +537,9 @@ export function ChatInput({
           </div>
         ) : null}
 
-        {typingSuggestion && typingSuggestionLabels ? (
+        {typingSuggestion?.corrected?.trim() &&
+        typingSuggestion.corrected.trim() !== value.trim() &&
+        typingSuggestionLabels ? (
           <div
             className="mdc-chat-input__typing-suggestion"
             role="status"

@@ -17,6 +17,20 @@
   background: color-mix(in srgb, var(--mdc-bg) 88%, transparent);
 }
 
+.mdc-chat-context-bar--actions-only {
+  justify-content: flex-end;
+  gap: 0.25rem;
+  padding-top: 0.15rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.mdc-chat-composer-footer .mdc-chat-context-bar--actions-only {
+  border-bottom: 0;
+  background: transparent;
+}
+
 .mdc-chat-context-bar__label {
   flex-shrink: 0;
   font-size: 0.6875rem;

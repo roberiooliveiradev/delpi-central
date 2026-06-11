@@ -425,6 +425,13 @@ class ChatCapabilitiesService:
         if ChatDepartmentKpiIntentService.resolve(message):
             return True
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return True
+
         if cls._looks_like_supplies_kpi_request(message, normalized):
             return True
 

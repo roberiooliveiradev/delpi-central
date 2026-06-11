@@ -61,7 +61,9 @@ export async function fetchTypingSuggestion(
     getAccessToken: options.getAccessToken,
   });
 
-  if (!response.hasSuggestions || response.corrected === trimmed) {
+  const corrected = String(response.corrected ?? "").trim();
+
+  if (!response.hasSuggestions || !corrected || corrected === trimmed) {
     return null;
   }
 
