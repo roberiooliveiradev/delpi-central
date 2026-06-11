@@ -120,6 +120,9 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 | `CHAT_RAG_HYBRID_ENABLED` | `true` | `true` | RAG vetor + keyword |
 | `CHAT_RAG_RERANK_ENABLED` | `true` | `true` | Boost por overlap de keywords |
 | `CHAT_WEB_SEARCH_ENABLED` | `true` | `true` | Pesquisa web (SearXNG/Tavily/…) |
+| `CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED` | `false` | `false` | LLM para rótulos de coluna ausentes (humanização tabular) |
+| `CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED` | `false` | `false` | Web search auxiliar na descoberta de rótulos |
+| `CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES` | `0` | `0` | Máx. consultas web por tabela na descoberta de rótulos |
 | `CHAT_DEFAULT_SQL_AUTHORING_SKILL` | `true` | `true` | Skill `sql` no chat sem agente |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | `true` | `true` | Skill `company-knowledge` (RAG global) |
 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | `false` | Piloto tools nativas LLM (opt-in) |
@@ -129,7 +132,7 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 Conferir no container:
 
 ```bash
-docker exec delpi-minha-delpi-ai-api printenv | grep -E '^(CHAT_TOOL_ROUTER|CHAT_AGENTIC|CHAT_RAG_HYBRID|CHAT_DEFAULT_)'
+docker exec delpi-minha-delpi-ai-api printenv | grep -E '^(CHAT_TOOL_ROUTER|CHAT_AGENTIC|CHAT_RAG_HYBRID|CHAT_PRESENTATION_COLUMN_LABEL|CHAT_DEFAULT_)'
 ```
 
 Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
