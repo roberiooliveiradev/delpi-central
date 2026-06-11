@@ -136,7 +136,7 @@ Consolida a diretriz de apresentação generalizada (§1–§18) com o playbook 
 | A13 | Card de decisão (MFE) | **`ChatDecisionCard`** + segment registry | Segmento `decision` / `story.verdict` | ⬜ |
 | A14 | Tipo visual `story` | API presentation + MFE renderer | `{ type: "story", blocks[] }` | ⬜ |
 | A15 | Simplificar MFE (hooks) | `assistantContentSegments` (split) | Hooks §15 | ✅ |
-| A19 | MFE render-only (P6) | `ChatPresentationRenderPlanService` + prune payload | `renderPlan` / omissão de campos | 🟡 |
+| A19 | MFE render-only (P6) | `ChatPresentationRenderPlanService` + prune payload | `renderPlan` / omissão de campos | 🟢 |
 | A16 | Recomendações clicáveis | `ChatPresentationRecommendationService` (evoluir) | `{ label, query, reason }` | 🟡 |
 | A17 | Testes por shape | `humanized_data_response_cases.py` + shape fixtures | Critérios §17 | ✅ |
 | A18 | Auditoria de cobertura | `scripts/audit_presentation_coverage.py` | Colunas narrativa/limitações/gaps | ✅ |
@@ -395,7 +395,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
-| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟡 P6-A/B/C entregues · encerramento parcial |
+| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟢 P6-A/B/C entregues · homologação manual pendente |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -617,12 +617,12 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 #### 8.6.4 Plano de remoção no MFE (ordem)
 
 ```text
-1. P6-A API omite dashboard → remover shouldRenderDashboardSegment + filtro em visualSegmentCollector
-2. P6-A API omite tabelas duplicadas → remover shouldSkipTableSegment / isHierarchyDuplicateTable
-3. P6-A texto final na API → remover stripRichUi* do resolveAssistantRenderableMarkdown
-4. API tailVisualPolicy obrigatório → remover inferência em presentationStackPlan.parsePlan
-5. API renderPlan estável → `presentationStackBlueprint` reduzido a wrapper render-only (jun/2026)
-6. Remover fallback órfão legacy em appendTailVisuals (manter só allowlist)
+[x] 1. P6-A API omite dashboard → shouldRenderDashboardSegment removido; coletor usa renderPlan
+[x] 2. P6-A API omite tabelas duplicadas → shouldSkipTableSegment removido; dedup via structureDedupApplied + filter legacy
+[x] 3. P6-A texto final na API → stripRichUi* só quando !isApiPreparedMarkdown (renderHints/renderPlan)
+[x] 4. API tailVisualPolicy obrigatório → gate CI valida campo explícito
+[x] 5. API renderPlan estável → presentationStackBlueprint wrapper render-only + synthesize legado
+[x] 6. Fallback órfão appendTailVisuals removido com blueprint legado
 ```
 
 **Permanece no MFE:** `assistantProseRendering.ts` (reveal/streaming), `assistantContentRegistry`, toolbar do composer (`useChatPresentationFormat`), testes de snapshot de componentes.
@@ -645,7 +645,8 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 [x] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
 [x] textPresentation sem embeds no Automático (gate API + strip evidence-first single/stack)
 [x] Regressão 90262404: Automático sem painel — gate `factory_status_auto_reference` (90269002)
-[x] Blueprint legado removido; MFE sintetiza renderPlan para payloads antigos
+[x] Coletor MFE filtra visuais latentes pelo renderPlan v1
+[ ] Homologação manual portal 90262404 (Automático sem painel duplicado)
 ```
 
 #### 8.6.6 PR checklist (P6)

@@ -1,9 +1,10 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
-  getRenderPlanFromToolCalls,
+  getPresentationDecisionFromToolCalls,
   getTextMarkdownFromToolCalls,
 } from "./chatPresentation";
+import { resolveRenderPlanForExecution } from "./renderPlanSegmentBuilder";
 import {
   isNativeSingleViewSelection,
   orderVisualSegments,
@@ -18,7 +19,18 @@ export function buildNativeSingleViewSegments(
   toolCalls: ChatToolCall[],
   visuals: AssistantContentSegment[],
 ): AssistantContentSegment[] | null {
-  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const selected = String(decision?.selected ?? "").trim().toLowerCase();
+  const useFullText = !selected || selected === "text";
+  const caption = useFullText
+    ? rawMarkdown.trim() || getTextMarkdownFromToolCalls(toolCalls) || ""
+    : rawMarkdown.trim();
+  const renderPlan = resolveRenderPlanForExecution(toolCalls, caption, {
+    hasTableVisuals: visuals.some((segment) => segment.kind === "table"),
+    visualKinds: new Set(
+      visuals.map((segment) => String(segment.kind || "").trim().toLowerCase()).filter(Boolean),
+    ),
+  });
 
   if (
     renderPlan?.version === 1 &&
@@ -27,9 +39,8 @@ export function buildNativeSingleViewSegments(
     renderPlan.segments.length
   ) {
     const segments: AssistantContentSegment[] = [];
-    const caption = rawMarkdown.trim() || getTextMarkdownFromToolCalls(toolCalls) || "";
 
-    if (caption) {
+    if (caption && useFullText) {
       segments.push(...parseMarkdownAndCodeSegments(caption));
     }
 
@@ -61,11 +72,11 @@ export function buildNativeSingleViewSegments(
     return null;
   }
 
-  const caption = rawMarkdown.trim();
+  const legacyCaption = rawMarkdown.trim();
   const segments: AssistantContentSegment[] = [];
 
-  if (caption) {
-    segments.push(...parseMarkdownAndCodeSegments(caption));
+  if (legacyCaption) {
+    segments.push(...parseMarkdownAndCodeSegments(legacyCaption));
   }
 
   const orderedVisuals = orderVisualSegments(visuals, [nativeSingle.kind]);

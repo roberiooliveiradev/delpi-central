@@ -229,6 +229,27 @@ function buildStackRenderPlanSegments(
   return segments;
 }
 
+function resolveVisualSource(metadata: Record<string, unknown>, token: string): string | null {
+  const normalized = String(token || "").trim().toLowerCase();
+  const source = VISUAL_TOKEN_TO_KEY[normalized];
+
+  if (source && metadata[source]) {
+    return source;
+  }
+
+  const generic = metadata.presentation;
+
+  if (
+    generic &&
+    typeof generic === "object" &&
+    String((generic as Record<string, unknown>).type || "").trim().toLowerCase() === normalized
+  ) {
+    return "presentation";
+  }
+
+  return null;
+}
+
 function buildSingleViewRenderPlanSegments(
   metadata: Record<string, unknown>,
   plan: StackPresentationPlan,
@@ -236,20 +257,20 @@ function buildSingleViewRenderPlanSegments(
 ): NonNullable<PresentationRenderPlan["segments"]> {
   const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
   const decision = metadata.presentationDecision as Record<string, unknown> | undefined;
+  const selected = String(decision?.selected || "").trim().toLowerCase();
 
   if (shouldIncludeDecision(metadata, plan)) {
     segments.push({ kind: "decision", slot: "lead", source: "dataAnswer" });
   }
 
-  if (hasTextPresentation(metadata, commentary)) {
+  if (hasTextPresentation(metadata, commentary) && (!selected || selected === "text")) {
     segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
   }
 
-  const selected = String(decision?.selected || "").trim().toLowerCase();
-  const source = VISUAL_TOKEN_TO_KEY[selected];
+  const visualSource = selected ? resolveVisualSource(metadata, selected) : null;
 
-  if (source && metadata[source]) {
-    segments.push({ kind: selected, slot: "primary", source });
+  if (selected && visualSource) {
+    segments.push({ kind: selected, slot: "primary", source: visualSource });
   }
 
   if (!segments.length) {

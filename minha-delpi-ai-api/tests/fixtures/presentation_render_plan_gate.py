@@ -61,6 +61,29 @@ def _markdown_embed_issues(markdown: str) -> list[str]:
     return issues
 
 
+def _validate_suppressed_presentations_removed(metadata: dict[str, Any]) -> list[str]:
+    """MFE render-only: chaves suprimidas pela API não podem permanecer no payload."""
+    issues: list[str] = []
+    plan = metadata.get("stackPresentationPlan")
+
+    if not isinstance(plan, dict):
+        return issues
+
+    hints = plan.get("renderHints")
+
+    if not isinstance(hints, dict):
+        return issues
+
+    for kind in hints.get("suppressedKinds") or []:
+        normalized = str(kind).strip().lower()
+        key = _VISUAL_TOKEN_TO_KEY.get(normalized)
+
+        if key and metadata.get(key) is not None:
+            issues.append(f"{key} listado em renderHints.suppressedKinds mas presente no payload")
+
+    return issues
+
+
 def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     render_plan = metadata.get("renderPlan")
@@ -148,6 +171,8 @@ def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
             issues.append(
                 "renderPlan inclui visuais em layout single text-first evidence-first",
             )
+
+    issues.extend(_validate_suppressed_presentations_removed(metadata))
 
     return issues
 

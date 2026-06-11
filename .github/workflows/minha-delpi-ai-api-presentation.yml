@@ -4,15 +4,44 @@ on:
   push:
     paths:
       - "minha-delpi-ai-api/**"
+      - "plugins/minha-delpi-chat/**"
       - "api-delpi/app/content/openapi_baseline.json"
       - ".github/workflows/minha-delpi-ai-api-presentation.yml"
   pull_request:
     paths:
       - "minha-delpi-ai-api/**"
+      - "plugins/minha-delpi-chat/**"
       - "api-delpi/app/content/openapi_baseline.json"
       - ".github/workflows/minha-delpi-ai-api-presentation.yml"
 
 jobs:
+  mfe-presentation-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/minha-delpi-chat
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/minha-delpi-chat/package-lock.json
+
+      - name: Instalar dependências MFE
+        run: npm ci
+
+      - name: Testes P6 render-only (vitest)
+        run: |
+          npm run test -- --run \
+            src/ui/components/renderPlanSegmentBuilder.test.ts \
+            src/ui/components/visualSegmentCollector.test.ts \
+            src/ui/components/presentationRenderHints.test.ts \
+            src/ui/components/presentationStructureDedup.test.ts \
+            src/ui/components/assistantContentSegments.test.ts \
+            src/ui/components/presentationStackPlan.humanized.test.ts
+
   presentation-coverage:
     runs-on: ubuntu-latest
     defaults:
@@ -74,4 +103,5 @@ jobs:
             tests/unit/domain/services/test_chat_humanized_response_quality_service.py \
             tests/unit/fixtures/test_humanized_data_response_gate.py \
             tests/unit/fixtures/test_presentation_render_plan_gate.py \
+            tests/unit/application/test_presentation_mfe_parity.py \
             -q
