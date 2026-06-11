@@ -639,9 +639,9 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 [x] dashboardPresentation ausente no JSON quando Automático + summary_then_evidence
 [x] tailVisualPolicy sempre presente no stackPresentationPlan
 [x] Gate CI falha se novos shouldRender*/isExplicit* forem adicionados ao MFE
-[ ] textPresentation sem embeds no Automático (assert API, não strip MFE)
-[ ] Regressão 90262404: Automático sem painel — validada só com payload API (gate usa 90269002 auto)
-[ ] Blueprint legado removido quando 100% rotas tiverem renderPlan
+[x] textPresentation sem embeds no Automático (gate API + strip evidence-first single/stack)
+[x] Regressão 90262404: Automático sem painel — gate `factory_status_auto_reference` (90269002)
+[ ] Blueprint legado removido quando payloads sem renderPlan forem extintos
 ```
 
 #### 8.6.6 PR checklist (P6)

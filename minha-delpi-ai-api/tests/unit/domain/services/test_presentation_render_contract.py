@@ -263,3 +263,34 @@ def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
     assert segments == [
         {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
     ]
+
+
+def test_factory_auto_reference_metadata_has_compact_prose_without_embeds():
+    from app.application.use_cases.execute_external_action_use_case import (
+        ExecuteExternalActionUseCase,
+    )
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+    from tests.fixtures.presentation_render_plan_gate import (
+        P6_EXTENDED_PIPELINE_CASES,
+        _markdown_embed_issues,
+    )
+
+    case = next(item for item in P6_EXTENDED_PIPELINE_CASES if item["id"] == "factory_status_auto_reference")
+    use_case = ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
+    envelope = load_api_delpi_fixture_with_meta(case["fixture"])
+    metadata = use_case._build_presentation_metadata(
+        action={"path": case["path"]},
+        sanitized_data=envelope,
+        resolved_path=case["path"],
+        request_parameters={},
+    )
+    markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "")
+
+    assert metadata.get("dashboardPresentation") is None
+    assert _markdown_embed_issues(markdown) == []
+    assert metadata["stackPresentationPlan"]["renderHints"]["textRenderMode"] == "compact"

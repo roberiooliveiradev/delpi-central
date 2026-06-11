@@ -357,6 +357,31 @@ def test_prepare_evidence_first_chat_narrative_strips_embedded_visuals_in_stack_
     assert "| name |" not in markdown
 
 
+def test_prepare_evidence_first_chat_narrative_strips_embedded_visuals_in_single_auto():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "single",
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Status produtivo\n\n"
+                "OP em andamento.\n\n"
+                "| Campo | Valor |\n"
+                "| --- | --- |\n"
+                "| OPs de PA | 1 |"
+            ),
+        },
+    }
+
+    ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "OP em andamento" in markdown
+    assert "| --- |" not in markdown
+
+
 def test_prepare_evidence_first_chat_narrative_keeps_prose_strips_duplicates():
     metadata = {
         "presentationDecision": {

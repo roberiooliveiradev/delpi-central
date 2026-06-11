@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -36,6 +37,28 @@ def _segment_kinds(segments: list[Any]) -> set[str]:
         for item in segments
         if isinstance(item, dict)
     }
+
+
+_GFM_TABLE_RE = re.compile(r"\|[^\n]+\|\s*\n\s*\|[-: ]+\|")
+_PRESENTATION_MARKER_RE = re.compile(
+    r"\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)",
+    re.IGNORECASE,
+)
+
+
+def _markdown_embed_issues(markdown: str) -> list[str]:
+    issues: list[str] = []
+
+    if _GFM_TABLE_RE.search(markdown):
+        issues.append("tabela GFM embutida")
+
+    if "```" in markdown:
+        issues.append("code fence embutido")
+
+    if _PRESENTATION_MARKER_RE.search(markdown):
+        issues.append("marcador visual [[...]]")
+
+    return issues
 
 
 def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
@@ -86,6 +109,19 @@ def _validate_render_plan_contract(metadata: dict[str, Any]) -> list[str]:
 
         if "dashboard" in kinds:
             issues.append("renderPlan inclui dashboard no Automático evidence-first")
+
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if not explicit:
+            markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "")
+
+            for embed_issue in _markdown_embed_issues(markdown):
+                issues.append(f"textPresentation com embed no Automático: {embed_issue}")
+
+            hints = (plan or {}).get("renderHints") if isinstance(plan, dict) else {}
+
+            if str((hints or {}).get("textRenderMode") or "").strip() != "compact":
+                issues.append("renderHints.textRenderMode != compact no evidence-first Automático")
 
     if layout_mode == "stack" and isinstance(plan, dict):
         kinds = _segment_kinds(segments)

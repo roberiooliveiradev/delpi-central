@@ -311,7 +311,7 @@ class ChatRichPresentationTextService:
         body = cls.strip_data_answer_quick_layers(markdown)
         body = cls.strip_highlights_block(body)
 
-        if layout_mode == "stack" and explicit_format != "text":
+        if explicit_format != "text" and layout_mode in {"stack", "single"}:
             body = cls._strip_embedded_visual_sections_for_stack(body)
 
         if explicit_format == "dashboard":
