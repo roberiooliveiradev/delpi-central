@@ -1141,12 +1141,20 @@ class ExternalActionProductAnalyserPresenter:
             path="/analyser",
         )
 
-    def _build_product_analyser_profile_table(self, product: dict, root: dict) -> dict:
+    def _build_product_analyser_profile_table(
+        self,
+        product: dict,
+        root: dict,
+        *,
+        path: str = "/analyser",
+    ) -> dict:
         columns = self._host._column_labels.kv_table_column_defs()
         rows = self._host._column_labels.build_kv_profile_rows(
             product,
             extended=True,
             schema_labels=self._host._active_schema_labels,
+            path=path,
+            profile_name="productProfileExtended",
         )
 
         for key in ("guide", "inspection", "structure"):

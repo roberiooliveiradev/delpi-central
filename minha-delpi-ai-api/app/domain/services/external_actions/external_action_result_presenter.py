@@ -1407,8 +1407,18 @@ class ExternalActionResultPresenter:
     ) -> dict | None:
         return self._analyser()._build_analyser_structure_components_table(structure)
 
-    def _build_product_analyser_profile_table(self, product: dict, root: dict) -> dict:
-        return self._analyser()._build_product_analyser_profile_table(product, root)
+    def _build_product_analyser_profile_table(
+        self,
+        product: dict,
+        root: dict,
+        *,
+        path: str = "/analyser",
+    ) -> dict:
+        return self._analyser()._build_product_analyser_profile_table(
+            product,
+            root,
+            path=path,
+        )
 
     def _build_product_analyser_text_presentation(
         self,

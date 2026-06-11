@@ -41,8 +41,9 @@ Relacionado:
 | **R17** | Zero caminho legado `fixed_table_columns` em tabelas operacionais | ✅ Concluído |
 | **R18** | Discovery de rótulos — ports clean (LLM/web/settings) | ✅ Concluído |
 | **R19** | `build_items_table` desacoplado do god presenter | ✅ Concluído |
-| **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ⬜ Pendente |
+| **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ✅ Concluído |
 | **R21** | Humanização centralizada — rótulo + valor (tabular + KV) | ✅ Concluído |
+| **R22** | Cobertura KV — `path` + `profile_name` em todos os presenters | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -147,6 +148,66 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 - Resumo do simulador PA 90261255: rótulos PT-BR no catálogo; percentuais com `%`; contadores sem `R$`.
 - Nova chave em perfil KV herda discovery quando ausente do JSON.
 - Colunas tabulares e KV usam o mesmo batch de discovery no turno.
+
+#### Auditoria KV — `path` / `profile_name` (jun/2026)
+
+**Escopo:** chamadas a `summary_kv_rows`, `kv_rows_from_mapping`, `build_kv_profile_rows` e loops manuais com `label_for` nos presenters. Sem `path`, a discovery R16 perde contexto de rota; sem `profile_name`, perdem-se hints de `tableProfiles`.
+
+**Legenda:** ✅ ok · ⚠ `path` ou `profile_name` ausente · 🔴 bypass direto de `label_for` em loop KV
+
+##### Presenters — tabelas campo × valor
+
+| Arquivo | Método / trecho | `path` | `profile_name` | Perfil sugerido |
+|---------|-----------------|--------|----------------|-----------------|
+| `product_raw_material_price_presenter.py` | `_build_cost_impact_overview_table` | ✅ | ✅ `costImpactOverview` | — |
+| `product_raw_material_price_presenter.py` | `_build_intelligence_overview_table` (×3 `summary_kv_rows`) | ✅ | ✅ `rawMaterialPriceOverview` | — |
+| `product_raw_material_price_presenter.py` | `_build_last_purchase_overview` → `kv_rows_from_mapping` | ✅ | ✅ `lastPurchaseOverview` | — |
+| `product_raw_material_price_presenter.py` | `_build_kv_table` → `kv_rows_from_mapping` | ✅ param | ⚠ opcional | derivar do `path` do caller |
+| `product_purchase_history_presenter.py` | `_build_overview_table` | ✅ | ✅ `purchaseHistoryOverview` | — |
+| `product_production_status_presenter.py` | `_build_overview_table` | ✅ | ✅ `productionStatusOverview` | — |
+| `product_shipping_status_presenter.py` | `_build_overview_table` | ✅ | ✅ `shippingStatusOverview` | — |
+| `product_structure_exclusivity_presenter.py` | `_build_overview_table` | ✅ | ✅ `structureExclusivityOverview` | — |
+| `product_composite_analysis_presenter.py` | `_build_factory_overview_table` | ✅ | ✅ `factoryStatusOverview` | migrado para `summary_kv_rows(indicators)` |
+| `product_analyser_presenter.py` | `_build_product_analyser_profile_table` → `build_kv_profile_rows` | ✅ `/analyser` | ✅ `productProfileExtended` | — |
+| `presentation_builder_presenter.py` | `_build_product_table` → `build_kv_profile_rows` | ✅ | ✅ `productProfileStandard` | — |
+
+**Contagem presenters (pós-R22):** 11 ✅ · 0 ⚠ · 0 🔴
+
+##### Serviços transversais (fora de presenter, mas afetam metadata)
+
+| Módulo | Uso | `path` | Nota |
+|--------|-----|--------|------|
+| `ExternalActionResultPresenter._humanize_key` | `label_for` + schema | ⚠ | path da action disponível no presenter — não repassado |
+| `ChatPresentationFieldNormalizationService` | gráficos `fieldLabels` | ⚠ | só `schema_labels` |
+| `ChatPresentationChartExplainService` | explain de eixo | 🔴 | fallback local `replace("_")` |
+| `ChatSqlDynamicColumnRefinementService` | colunas SQL | 🔴 | sem rota |
+| `ChatPresentationTreeMetaCaptionService` | legenda árvore | 🔴 | `label_for` seco |
+
+##### Comportamento quando `path` / `profile_name` faltam
+
+| Camada | O que ainda funciona | O que degrada |
+|--------|----------------------|---------------|
+| `column_labels.fields` | Rótulos cadastrados | — |
+| OpenAPI `schema_labels` | Títulos do schema | — |
+| `_humanize_field_key` | Fallback imediato (EN) | UX ruim |
+| Discovery R16 | LLM batch | Menos contexto (sem fragmento de rota) |
+| `tableProfiles` hints | — | **Ignorado** sem `profile_name` |
+
+##### Próxima fase (R22 — cobertura KV) ✅ jun/2026
+
+- [x] Criar perfis `*Overview` em `tableProfiles` para cada rota da tabela acima
+- [x] Passar `path=` em todo `_build_overview_table` (adicionar param onde falta)
+- [x] Substituir loop `label_for` em `product_composite_analysis_presenter` por `summary_kv_rows(..., profile_name="factoryStatusOverview")`
+- [x] Estender `ColumnLabelContext` com `path` default do turno (R19) — fallback em `summary_kv_rows` / `kv_rows_from_mapping`
+- [x] Gate CI: `presentation_kv_label_context_gate.py` — falha se `summary_kv_rows(` sem `path=` em presenters
+
+**Comando de auditoria local:**
+
+```bash
+rg 'summary_kv_rows\(|kv_rows_from_mapping\(|build_kv_profile_rows\(' \
+  minha-delpi-ai-api/app/domain/services/external_actions/presenters -n
+rg 'label_for\(' minha-delpi-ai-api/app/domain/services/external_actions/presenters -n
+```
 
 ### R16 — Rótulos desconhecidos: web + LLM (jun/2026)
 
@@ -415,6 +476,8 @@ Adicional: `presentation_builder_presenter` chama `_build_items_table` **sem** `
 4. Documentar casos legacy remanescentes (< 5) em `presentation_vocabulary.json` → `legacyFallbacks`.
 
 **Critério:** homologação H17–H19 (§8) verde; inferência MFE só onde API não manda `role`/`label` (lista explícita no JSON).
+
+**Status (jun/2026):** ✅ — `legacyFallbacks` em `presentation_vocabulary.json`; gate MFE `presentationLegacyFallbackGate.test.ts`; gate API `presentation_table_column_label_gate.py` (H17/H18 tier A).
 
 **Esforço:** M (1 dia)
 
@@ -916,15 +979,18 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | Gate | `presentation_legacy_table_columns_gate.py` → `--check-playbook12` + `--check-no-legacy-table-columns` |
 | Testes | `test_presentation_legacy_table_columns_gate.py`, `test_chat_presentation_field_label_resolution_service.py`, analyser dinâmico |
 
-**Próximo passo imediato — R20 (MFE metadata único):**
+**Playbook 12 concluído (R15–R20).** Próximas ondas: Playbook 13 (respostas humanizadas) ou extensões declarativas fora do escopo tabular.
 
-| # | Ação | Critério |
-|---|------|----------|
-| 1 | Inventário fallbacks MFE | Contagem decrescente de `humanizeFieldKeyFallback` |
-| 2 | Gate MFE | Fail se novo `path.includes` em apresentação |
-| 3 | Homologação H17–H19 | Campo novo + rótulo PT em rota tier A |
+**R20 entregue (jun/2026):**
 
-**R19 entregue (jun/2026):**
+| Artefato | Detalhe |
+|----------|---------|
+| JSON | `presentation_vocabulary.json` → `legacyFallbacks` (baseline path.includes + fallbacks documentados) |
+| Gate MFE | `presentationLegacyFallbackGate.test.ts` — fail se novo `path.includes` ou ramos de título |
+| Gate API | `presentation_table_column_label_gate.py` — tier A com `columns[].label` PT (H17/H18) |
+| MFE | `resolveTableRole` prefere `presentation.role`; `buildFieldLabelsFromTableColumns` prioriza metadata |
+
+**Commit de referência R19:** `d050fbd3`.
 
 | Artefato | Detalhe |
 |----------|---------|

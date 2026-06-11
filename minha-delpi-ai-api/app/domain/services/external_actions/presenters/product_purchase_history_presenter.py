@@ -293,7 +293,12 @@ class ExternalActionProductPurchaseHistoryPresenter:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = _OpsTable.summary_kv_rows(self._host.column_label_context, summary)
+        rows = _OpsTable.summary_kv_rows(
+            self._host.column_label_context,
+            summary,
+            path=path,
+            profile_name="purchaseHistoryOverview",
+        )
 
         period_start = str(root.get("date_start") or "").strip()
         period_end = str(root.get("date_end_exclusive") or "").strip()

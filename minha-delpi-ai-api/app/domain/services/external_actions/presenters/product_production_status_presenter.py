@@ -326,7 +326,7 @@ class ExternalActionProductProductionStatusPresenter:
 
     def build_production_status_table_presentations(self, root: dict, path: str) -> list[dict]:
         tables: list[dict] = []
-        overview = self._build_overview_table(root)
+        overview = self._build_overview_table(root, path)
 
         if overview:
             overview["role"] = "profile"
@@ -358,14 +358,19 @@ class ExternalActionProductProductionStatusPresenter:
 
         return [table for table in tables if isinstance(table, dict)]
 
-    def _build_overview_table(self, root: dict) -> dict | None:
+    def _build_overview_table(self, root: dict, path: str) -> dict | None:
         summary = self._summary(root)
 
         if not summary:
             return None
 
         columns = self._host._column_labels.kv_table_column_defs()
-        rows = _OpsTable.summary_kv_rows(self._host.column_label_context, summary)
+        rows = _OpsTable.summary_kv_rows(
+            self._host.column_label_context,
+            summary,
+            path=path,
+            profile_name="productionStatusOverview",
+        )
 
         reference_date = str(root.get("reference_date") or "").strip()
 

@@ -1482,6 +1482,234 @@
         ]
       ]
     },
+    "rawMaterialPriceOverview": {
+      "preferredColumns": [
+        [
+          "product_type",
+          "Tipo de produto"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "group_code",
+          "Grupo"
+        ],
+        [
+          "standard_cost",
+          "Custo padrão"
+        ],
+        [
+          "registered_last_purchase_price",
+          "Últ. preço compra cadastrado"
+        ],
+        [
+          "registered_last_purchase_date",
+          "Data últ. compra cadastrada"
+        ],
+        [
+          "total_purchases",
+          "Total de compras"
+        ],
+        [
+          "avg_unit_price",
+          "Preço unitário médio"
+        ],
+        [
+          "min_unit_price",
+          "Preço unitário mínimo"
+        ],
+        [
+          "max_unit_price",
+          "Preço unitário máximo"
+        ],
+        [
+          "last_variation_percent",
+          "Última variação (%)"
+        ]
+      ]
+    },
+    "lastPurchaseOverview": {
+      "preferredColumns": [
+        [
+          "unit_price",
+          "Preço unitário"
+        ],
+        [
+          "supplier_code",
+          "Cód. fornecedor"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "icms_rate",
+          "Alíquota ICMS (%)"
+        ],
+        [
+          "invoice_date",
+          "Data NF"
+        ]
+      ]
+    },
+    "purchaseHistoryOverview": {
+      "preferredColumns": [
+        [
+          "total_items",
+          "Total de itens"
+        ],
+        [
+          "total_requisitions",
+          "Total de requisições"
+        ],
+        [
+          "total_purchase_orders",
+          "Total de pedidos de compra"
+        ]
+      ]
+    },
+    "productionStatusOverview": {
+      "preferredColumns": [
+        [
+          "total_pa_orders",
+          "OPs de PA"
+        ],
+        [
+          "total_pi_orders",
+          "OPs de PI"
+        ],
+        [
+          "pa_production_started",
+          "Produção PA iniciada"
+        ],
+        [
+          "pi_production_started",
+          "Produção PI iniciada"
+        ],
+        [
+          "total_pa_reported_quantity",
+          "Qtd. apontada PA"
+        ],
+        [
+          "total_pi_reported_quantity",
+          "Qtd. apontada PI"
+        ]
+      ]
+    },
+    "shippingStatusOverview": {
+      "preferredColumns": [
+        [
+          "total_shipped_quantity",
+          "Qtd. expedida total"
+        ],
+        [
+          "total_inspection_loss_quantity",
+          "Perda inspeção total"
+        ],
+        [
+          "total_reports",
+          "Total de apontamentos"
+        ]
+      ]
+    },
+    "structureExclusivityOverview": {
+      "preferredColumns": [
+        [
+          "total_components",
+          "Total componentes"
+        ],
+        [
+          "total_intermediates",
+          "Total de intermediários"
+        ],
+        [
+          "total_raw_materials",
+          "Total de MPs"
+        ],
+        [
+          "total_exclusive_raw_materials",
+          "MPs exclusivas"
+        ]
+      ]
+    },
+    "factoryStatusOverview": {
+      "preferredColumns": [
+        [
+          "total_raw_materials_without_stock_for_one_pa",
+          "MPs sem saldo p/ 1 PA"
+        ]
+      ]
+    },
+    "productProfileStandard": {
+      "preferredColumns": [
+        [
+          "code",
+          "Código"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "type",
+          "Tipo"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "group_code",
+          "Grupo"
+        ],
+        [
+          "active",
+          "Ativo"
+        ],
+        [
+          "standard_cost",
+          "Custo padrão"
+        ]
+      ]
+    },
+    "productProfileExtended": {
+      "preferredColumns": [
+        [
+          "code",
+          "Código"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "type",
+          "Tipo"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "group_code",
+          "Grupo"
+        ],
+        [
+          "blocked",
+          "Bloqueado"
+        ],
+        [
+          "barcode",
+          "Código de barras"
+        ],
+        [
+          "standard_cost",
+          "Custo padrão"
+        ]
+      ]
+    },
     "costImpactOverview": {
       "preferredColumns": [
         [

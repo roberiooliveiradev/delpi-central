@@ -14,6 +14,10 @@ class ColumnLabelContext(Protocol):
     """Port mínimo consumido por `ChatPresentationOperationalTableService`."""
 
     @property
+    def path(self) -> str:
+        ...
+
+    @property
     def schema_labels(self) -> dict[str, str] | None:
         ...
 
@@ -41,6 +45,7 @@ class ExternalActionColumnLabelContext:
     column_labels: ExternalActionColumnLabelService
     schema_labels: dict[str, str] | None = None
     schema_formats: dict[str, str] | None = None
+    path: str = ""
 
     def resolve_columns_for_items(
         self,

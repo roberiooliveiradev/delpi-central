@@ -605,6 +605,8 @@ class ExternalActionProductRawMaterialPricePresenter:
                     )
                     if key in last_purchase
                 },
+                path=path,
+                profile_name="lastPurchaseOverview",
             )
         )
 
@@ -744,7 +746,14 @@ class ExternalActionProductRawMaterialPricePresenter:
             )
             if product.get(key) not in (None, "")
         }
-        rows.extend(_OpsTable.summary_kv_rows(self._host.column_label_context, product_fields))
+        rows.extend(
+            _OpsTable.summary_kv_rows(
+                self._host.column_label_context,
+                product_fields,
+                path=path,
+                profile_name="rawMaterialPriceOverview",
+            )
+        )
 
         price_summary = self._normalize_price_history_summary(root)
         rows.extend(
@@ -761,12 +770,21 @@ class ExternalActionProductRawMaterialPricePresenter:
                     )
                     if price_summary.get(key) not in (None, "")
                 },
+                path=path,
+                profile_name="rawMaterialPriceOverview",
             )
         )
 
         indicators = self._indicators(root)
 
-        rows.extend(_OpsTable.summary_kv_rows(self._host.column_label_context, indicators)[:6])
+        rows.extend(
+            _OpsTable.summary_kv_rows(
+                self._host.column_label_context,
+                indicators,
+                path=path,
+                profile_name="rawMaterialPriceOverview",
+            )[:6]
+        )
 
         return {
             "type": "table",
@@ -819,14 +837,18 @@ class ExternalActionProductRawMaterialPricePresenter:
             "rows": rows,
         }
 
-    def _build_kv_table(self, payload: dict, title: str) -> dict:
+    def _build_kv_table(self, payload: dict, title: str, *, path: str = "") -> dict:
         columns = self._host._column_labels.kv_table_column_defs()
 
         return {
             "type": "table",
             "title": title,
             "columns": columns,
-            "rows": _OpsTable.kv_rows_from_mapping(self._host.column_label_context, payload),
+            "rows": _OpsTable.kv_rows_from_mapping(
+                self._host.column_label_context,
+                payload,
+                path=path,
+            ),
         }
 
     def _build_intelligence_text_presentation(self, root: dict, path: str) -> dict | None:

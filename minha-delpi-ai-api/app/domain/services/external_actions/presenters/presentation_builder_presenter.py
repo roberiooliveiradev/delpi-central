@@ -121,7 +121,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if guide_table:
                     return guide_table
 
-                return self._host._build_product_analyser_profile_table(product, root)
+                return self._host._build_product_analyser_profile_table(product, root, path=path)
 
             if entity == "product" and isinstance(product, dict):
                 detail_list = self._host._extract_product_detail_list(root)
@@ -129,7 +129,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if detail_list:
                     return self._build_product_detail_table(product, detail_list, root)
 
-                return self._build_product_table(product, root)
+                return self._build_product_table(product, root, path=path)
 
             if entity in {"product_structure", "product_parents"}:
                 if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
@@ -315,9 +315,9 @@ class ExternalActionPresentationBuilderPresenter:
                     if guide_table:
                         return guide_table
 
-                    return self._host._build_product_analyser_profile_table(product, root)
+                    return self._host._build_product_analyser_profile_table(product, root, path=path)
 
-                return self._build_product_table(product, root)
+                return self._build_product_table(product, root, path=path)
 
             if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
                 lowered = str(path or "").lower()
@@ -429,33 +429,35 @@ class ExternalActionPresentationBuilderPresenter:
 
             return None
 
-    def _build_product_table(self, product: dict, root: dict) -> dict:
-            columns = self._host._column_labels.kv_table_column_defs()
-            rows = self._host._column_labels.build_kv_profile_rows(
-                product,
-                skip_empty=False,
-                schema_labels=self._host._active_schema_labels,
-            )
-            rows = [row for row in rows if row.get("valor") is not None]
+    def _build_product_table(self, product: dict, root: dict, *, path: str = "") -> dict:
+        columns = self._host._column_labels.kv_table_column_defs()
+        rows = self._host._column_labels.build_kv_profile_rows(
+            product,
+            skip_empty=False,
+            schema_labels=self._host._active_schema_labels,
+            path=path,
+            profile_name="productProfileStandard",
+        )
+        rows = [row for row in rows if row.get("valor") is not None]
 
-            for key in ("guide", "inspection", "structure", "customers", "suppliers"):
-                value = root.get(key)
-                if isinstance(value, dict) and value.get("total") is not None:
-                    rows.append(
-                        {
-                            "campo": self._host._label_collection(key),
-                            "valor": self._host._column_labels.format_collection_total(value["total"]),
-                        }
-                    )
+        for key in ("guide", "inspection", "structure", "customers", "suppliers"):
+            value = root.get(key)
+            if isinstance(value, dict) and value.get("total") is not None:
+                rows.append(
+                    {
+                        "campo": self._host._label_collection(key),
+                        "valor": self._host._column_labels.format_collection_total(value["total"]),
+                    }
+                )
 
-            code = str(product.get("code") or "").strip()
+        code = str(product.get("code") or "").strip()
 
-            return {
-                "type": "table",
-                "title": self._host._presenter_root_format("productProfileTableTitle", code=code),
-                "columns": columns,
-                "rows": rows,
-            }
+        return {
+            "type": "table",
+            "title": self._host._presenter_root_format("productProfileTableTitle", code=code),
+            "columns": columns,
+            "rows": rows,
+        }
 
     def _build_product_detail_table(self, product: dict, detail_list: list, root: dict) -> dict:
             code = product.get("code", "")

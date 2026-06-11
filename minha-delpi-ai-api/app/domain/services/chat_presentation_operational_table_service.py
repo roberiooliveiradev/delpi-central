@@ -118,6 +118,10 @@ class ChatPresentationOperationalTableService:
         return ordered[:effective_limit], total
 
     @classmethod
+    def _effective_label_path(cls, context: ColumnLabelContext, path: str) -> str:
+        return path or getattr(context, "path", "") or ""
+
+    @classmethod
     def kv_rows_from_mapping(
         cls,
         context: ColumnLabelContext,
@@ -132,7 +136,7 @@ class ChatPresentationOperationalTableService:
                 key,
                 value,
             ),
-            path=path,
+            path=cls._effective_label_path(context, path),
             profile_name=profile_name,
             schema_labels=context.schema_labels,
             schema_formats=context.schema_formats,
@@ -156,7 +160,7 @@ class ChatPresentationOperationalTableService:
                 key,
                 value,
             ),
-            path=path,
+            path=cls._effective_label_path(context, path),
             profile_name=profile_name,
             schema_labels=context.schema_labels,
             schema_formats=context.schema_formats,

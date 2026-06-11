@@ -521,13 +521,14 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
 
-        for key, value in list(indicators.items())[:8]:
-            rows.append(
-                {
-                    "campo": self._host._column_labels.label_for(str(key)),
-                    "valor": self._host._format_field_value(str(key), value),
-                }
+        rows.extend(
+            _OpsTable.summary_kv_rows(
+                self._host.column_label_context,
+                dict(list(indicators.items())[:8]),
+                path=path,
+                profile_name="factoryStatusOverview",
             )
+        )
 
         return {
             "type": "table",
