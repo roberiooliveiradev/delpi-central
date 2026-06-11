@@ -183,6 +183,15 @@
   color: var(--mdc-text-muted);
 }
 
+.mdc-rich-presentation__insight .mdc-chat-markdown p {
+  margin: 0;
+}
+
+.mdc-rich-presentation__insight .mdc-chat-markdown strong {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+  font-weight: 700;
+}
+
 .mdc-rich-presentation__coverage-notice {
   margin: 0 0 0.65rem;
   padding: 0.55rem 0.75rem;
