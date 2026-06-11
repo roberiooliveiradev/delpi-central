@@ -138,7 +138,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 
 | Plugin | Doc específica |
 |---|---|
-| Chat / IA | [Plugin README](../../plugins/minha-delpi-chat/README.md) · [API](../../minha-delpi-ai-api/docs/api/README.md) · [Status](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
+| Chat / IA | **[API docs](../../minha-delpi-ai-api/docs/README.md)** · [Doc plataforma](./minha-delpi-chat/documentacao-tecnica.md) · [Plugin README](../../plugins/minha-delpi-chat/README.md) · [Status](../12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 | Indicadores | [Documentação SI (completa)](../../strategic-indicators-api/docs/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
 | Console API DELPI | [Plugin README](../../plugins/api-delpi-console/README.md) · [Playbook](../../api-delpi/docs/roadmaps/playbook-api-delpi-console.md) |

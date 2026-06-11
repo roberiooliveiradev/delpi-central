@@ -6,7 +6,8 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 
 | Área | Caminho |
 |------|---------|
-| API backend | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
+| **Documentação técnica (API)** | [../../minha-delpi-ai-api/docs/README.md](../../minha-delpi-ai-api/docs/README.md) |
+| API backend (HTTP) | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
 | Modelo conceitual (chat, skills, actions…) | [../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md](../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md) |
 | Inteligência no chat base (agentes herdam) | [../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md](../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md) |
 | Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |

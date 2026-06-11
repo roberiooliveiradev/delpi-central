@@ -43,7 +43,9 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 |---|---|
 | **Core API** | [04-core-api/controllers-e-rotas.md](./04-core-api/controllers-e-rotas.md) |
 | **API DELPI** | [api-delpi/docs/api/README.md](../api-delpi/docs/api/README.md) |
-| **Minha DELPI AI API** | [minha-delpi-ai-api/docs/api/README.md](../minha-delpi-ai-api/docs/api/README.md) |
+| **Minha DELPI AI API (índice)** | [minha-delpi-ai-api/docs/README.md](../minha-delpi-ai-api/docs/README.md) |
+| **Minha DELPI Chat (plataforma)** | [08-plugins/minha-delpi-chat/documentacao-tecnica.md](./08-plugins/minha-delpi-chat/documentacao-tecnica.md) |
+| **Minha DELPI AI API (HTTP)** | [minha-delpi-ai-api/docs/api/README.md](../minha-delpi-ai-api/docs/api/README.md) |
 
 ---
 

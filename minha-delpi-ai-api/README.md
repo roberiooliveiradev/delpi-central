@@ -4,21 +4,19 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 
 ## Documentação
 
+**Entrada principal:** [`docs/README.md`](docs/README.md)
+
 | Área | Caminho |
 |------|---------|
-| **API (referência completa)** | [docs/api/README.md](docs/api/README.md) |
-| **Conhecimento para agentes (RAG)** | [docs/knowledge/README.md](docs/knowledge/README.md) |
-| **Rotas api-delpi (agente)** | [docs/knowledge/api-delpi-rotas-agente.md](docs/knowledge/api-delpi-rotas-agente.md) |
-| Deploy e migrations | [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md) |
-| Roadmap admin (itens 1–15) | [docs/roadmap/admin-minha-delpi-chat.md](docs/roadmap/admin-minha-delpi-chat.md) |
-| Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
-| Inteligência do chat (ondas 1–10) | [docs/roadmap/README.md](docs/roadmap/README.md) |
-| Arquitetura inteligência base | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
-| Camadas pré-LLM (preparação do turno) | [docs/architecture/chat-pre-llm-layers.md](docs/architecture/chat-pre-llm-layers.md) |
-| Calibração `RAG_CONTEXT_MIN_SCORE` | [docs/roadmap/rag-context-min-score-calibracao.md](docs/roadmap/rag-context-min-score-calibracao.md) |
-| Auditoria rotas api-delpi (chat) | [docs/roadmap/api-delpi-chat-intelligence-audit.md](docs/roadmap/api-delpi-chat-intelligence-audit.md) |
-| Melhorias futuras (fechadas) | [docs/roadmap/melhorias-futuras.md](docs/roadmap/melhorias-futuras.md) |
+| **Índice completo** | [docs/README.md](docs/README.md) |
+| **Guia do desenvolvedor** | [docs/development/guia-desenvolvimento.md](docs/development/guia-desenvolvimento.md) |
+| **Arquitetura (pipeline)** | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
+| **API HTTP (endpoints)** | [docs/api/README.md](docs/api/README.md) |
+| **Testes e smokes** | [docs/testing/README.md](docs/testing/README.md) |
+| **Conhecimento RAG** | [docs/knowledge/README.md](docs/knowledge/README.md) |
+| **Roadmap** | [docs/roadmap/README.md](docs/roadmap/README.md) |
 | Plugin (UI) | [../plugins/minha-delpi-chat/README.md](../plugins/minha-delpi-chat/README.md) |
+| Visão plataforma | [../docs/08-plugins/minha-delpi-chat/documentacao-tecnica.md](../docs/08-plugins/minha-delpi-chat/documentacao-tecnica.md) |
 
 ## Base URL (via gateway)
 
@@ -60,70 +58,32 @@ Com Docker, migrations rodam no boot do container (`docker-entrypoint.sh`). Ver 
 
 ```text
 app/
-  application/     # use cases e serviços
-  domain/          # entidades, ports, exceções
-  infrastructure/  # DB, gateways, embeddings
-  interfaces/http/ # rotas Flask
-  composition/     # factories (DI)
-migrations/        # Alembic
-docs/              # documentação técnica
+  interfaces/http/routes/   # Rotas Flask (handlers finos)
+  composition/              # make_* — DI / composition root
+  application/              # Use cases + serviços de orquestração
+  domain/                   # Regras, presenter, policies, ports
+  infrastructure/           # Postgres, LLM, gateways
+  content/pt-BR/            # Textos PT-BR (JSON)
+migrations/                 # Alembic
+docs/                       # Documentação técnica (ver docs/README.md)
+tests/unit/                 # pytest
+scripts/                    # Smokes, sync OpenAPI
 ```
+
+Detalhes: [docs/development/guia-desenvolvimento.md](docs/development/guia-desenvolvimento.md).
 
 ## Funcionalidades principais
 
-- Chat com histórico, streaming SSE (`playback`, `canvas_open`), lousa por intent, anexos e artefatos
-- RAG documental (pgvector) com fontes na resposta; RAG híbrido, rerank e loop agentic (configurável)
-- Perguntas sobre o assistente («quem te criou», «o que você é») com **RAG + LLM** e policy dedicada (sem resposta enlatada no pipeline)
+- Chat com histórico, streaming SSE (`playback`, `canvas_open`), lousa, anexos e artefatos
+- RAG documental (pgvector); RAG híbrido, rerank e loop agentic (configurável)
+- Respostas diretas (identidade, small talk, utilidades, operacional) sem LLM quando aplicável
 - Diagnóstico **`adminDebug`** persistido em todo turno; visível na API/UI só para admin
-- **Agentes** com rascunho/publicação (`published_config`, histórico de versões), preview, instruções, compartilhamento, stats, duplicate/export/import, skills, fontes e actions OpenAPI
-- **Projetos** com instruções, agente padrão e compartilhamento
+- **Agentes** com rascunho/publicação, preview, skills, fontes e actions OpenAPI
+- **Projetos** com instruções, agente padrão e contexto compartilhado
 - Base global de conhecimento com pipeline de ingestão
-- Painel admin: diretrizes, métricas, auditoria, simulação, avaliações, segurança, especialização de agentes
-- Feedback do usuário (thumbs) nas respostas do assistente
-- Busca de usuários no diretório (core-api) para compartilhar agentes e projetos
-
-## Variáveis de ambiente relevantes
-
-| Variável | Descrição |
-|----------|-----------|
-| `DATABASE_URL` | Conexão PostgreSQL (obrigatória) |
-| `LLM_PROVIDER` | `ollama` ou `vllm` |
-| `OLLAMA_MODEL` | Default `qwen2.5:1.5b` (rápido em CPU). Ver [Onda 6](./docs/roadmap/inteligencia-chat-onda-6.md) |
-| `LLM_COST_TABLE_JSON` | Tabela de custo fallback (env) |
-| `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG (admin) |
-| `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
-| `RAG_IDENTITY_QUESTION_MIN_SCORE` | Score mínimo para perguntas de identidade (modo RAG+LLM legado) |
-| `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — identidade do assistente via `identity.json`, sem LLM |
-| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — persiste no banco antes do playback; front anima com escrita natural |
-| `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
-| `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
-| `CHAT_ATTACHMENT_IMAGE_OCR_ENABLED` | OCR legado em PNG/JPG/WebP (`false` por padrão); preferir `CHAT_DOCUMENT_VISION_*` |
-| `CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS` | Limite de caracteres do OCR legado (padrão 4000) |
-| `CHAT_DOCUMENT_VISION_ENABLED` | Skill `document-vision-delpi` — OCR PDF/imagem no chat base (`true` no compose dev) |
-| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` \| `native` \| `tesseract` \| `docling` \| `paddleocr` \| `ollama_vlm` |
-| `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` / `OLLAMA_BASE_URL` | VLM local (ex.: `qwen2.5vl:7b`) quando backend `ollama_vlm` |
-| `CHAT_DOCUMENT_VISION_PADDLE_USE_GPU` | GPU PaddleOCR no profile `vision` (`false` default) |
-| `CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING` | Enriquece extração da skill de desenho (default `true`) |
-| `CHAT_DOCUMENT_VISION_MAX_PAGES` / `DPI` / `MAX_CHARS` | Limites de rasterização e texto |
-| `CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS` | Mínimo para considerar PDF legível antes do OCR |
-| `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | Idiomas Tesseract (ex.: `por+eng`) |
-| `CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED` | Recorte heurístico do carimbo na 1ª página PDF (`true` default) |
-
-Profile Docker opcional `vision`: `requirements-vision.txt` + `Dockerfile.vision.dev` + `infra/docker-compose.vision.yml` (Docling; build: `scripts/build_vision_profile.sh`).
-
-Variáveis de ambiente (dev/prod): `infra/.env.dev.example` e `infra/.env.prod.example` — ver `infra/README-ambiente.md`.
-| `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
-| `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
-| `CHAT_HISTORY_SUMMARY_*` | Resumo de histórico longo no prompt |
-| `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT` | Gera embedding ao importar OpenAPI |
-| `CHAT_RAG_HYBRID_*` | RAG híbrido vetor + keyword |
-| `EMBEDDING_CACHE_*` | Cache em memória de embeddings |
-| `CHAT_AGENTIC_LOOP_*` | Loop agentic de tools (default **ligado**) |
-| `KNOWLEDGE_SEMANTIC_DEDUP_*` | Deduplicação semântica na pré-visualização |
-| `RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED` | Sugestões LLM nas avaliações |
-| `CHAT_INPUT_SECURITY_*` | Sanitização e anti prompt-injection |
-
-Lista completa: `app/infrastructure/config/settings.py` e `infra/docker-compose.dev.yml`.
+- Painel admin: diretrizes, métricas, auditoria, simulação, avaliações
+- Apresentação rica: tabelas, gráficos, árvore, KPI, multi-rota produto
+- Pesquisa web, OCR/visão documental, SQL avançado, escrita de e-mail
 
 ## Testes
 
@@ -131,9 +91,29 @@ Lista completa: `app/infrastructure/config/settings.py` e `infra/docker-compose.
 pytest tests/unit -q
 ```
 
+Índice completo: [docs/testing/README.md](docs/testing/README.md).
+
 Smoke local (identidade + RAG, dentro do container com DB):
 
 ```bash
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
 ```
+
+## Variáveis de ambiente
+
+Seleção das principais — lista completa em `app/infrastructure/config/settings.py` e `infra/.env.dev.example`.
+
+| Variável | Descrição |
+|----------|-----------|
+| `DATABASE_URL` | PostgreSQL + pgvector (obrigatória) |
+| `LLM_PROVIDER` | `ollama` ou `vllm` |
+| `OLLAMA_MODEL` | Default `qwen2.5:1.5b` |
+| `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto |
+| `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | Identidade sem LLM (default `true`) |
+| `CHAT_PERSIST_BEFORE_PLAYBACK` | Persistência antes do playback (default `true`) |
+| `CHAT_AGENTIC_LOOP_ENABLED` | Loop agentic (default `false`) |
+| `CHAT_WEB_SEARCH_ENABLED` | Pesquisa web |
+| `CHAT_DOCUMENT_VISION_ENABLED` | OCR PDF/imagem |
+
+Perfis dev/prod: [docs/knowledge/chat-intelligence-settings-profiles.md](docs/knowledge/chat-intelligence-settings-profiles.md).

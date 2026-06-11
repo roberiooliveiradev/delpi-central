@@ -10,6 +10,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 | Documento | Caminho |
 |-----------|---------|
+| **Documentação técnica (API)** | [minha-delpi-ai-api/docs/README.md](../../../minha-delpi-ai-api/docs/README.md) |
+| **Documentação técnica (plataforma)** | [docs/08-plugins/minha-delpi-chat/documentacao-tecnica.md](../../../08-plugins/minha-delpi-chat/documentacao-tecnica.md) |
 | API | [minha-delpi-ai-api/docs/api/README.md](../../../minha-delpi-ai-api/docs/api/README.md) |
 | Backend README | [minha-delpi-ai-api/README.md](../../../minha-delpi-ai-api/README.md) |
 | Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |

@@ -2,6 +2,8 @@
 
 Documentação técnica em Markdown da API `minha-delpi-ai-api`, baseada nas rotas reais do backend e nos clientes/types reais do frontend.
 
+**Índice geral do pacote:** [`../README.md`](../README.md) · **Arquitetura:** [`../architecture/README.md`](../architecture/README.md) · **Guia dev:** [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md)
+
 ## Base URL
 
 Em produção, o portal consome a API pelo gateway:
