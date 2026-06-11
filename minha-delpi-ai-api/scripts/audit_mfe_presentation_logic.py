@@ -35,13 +35,27 @@ FORBIDDEN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "isSummaryThenEvidenceMode (usar planUsesSummaryThenEvidence do stackPlan)",
         re.compile(r"\bisSummaryThenEvidenceMode\s*\("),
     ),
+    (
+        "stripRichUiRedundantProseFromMarkdown (texto final vem da API com renderHints)",
+        re.compile(r"\bstripRichUiRedundantProseFromMarkdown\s*\("),
+    ),
+    (
+        "buildPlanOrderedStackSegments (usar buildSegmentsFromRenderPlan)",
+        re.compile(r"\bbuildPlanOrderedStackSegments\s*\("),
+    ),
 )
 
 ALLOWLIST_FILES = frozenset(
     {
         "chatPresentation.ts",
+        "presentationStackBlueprint.ts",
+        "presentationStackBlueprint.live.test.ts",
+        "presentationStackPlan.humanized.test.ts",
+        "presentationStackSections.test.ts",
         "presentationStructureDedup.ts",
         "presentationStructureDedup.test.ts",
+        "richStackPresentation.test.ts",
+        "presentationRenderHints.test.ts",
     }
 )
 

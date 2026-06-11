@@ -555,6 +555,18 @@ export function renderPlanHasOnlyProseSegments(
   );
 }
 
+/** Playbook 13 P6 — contrato mínimo para executor render-only (sem fallback blueprint). */
+export function hasRenderPlanContract(toolCalls?: ChatToolCall[]): boolean {
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+
+  return Boolean(
+    renderPlan &&
+      renderPlan.version === 1 &&
+      Array.isArray(renderPlan.segments) &&
+      renderPlan.segments.length > 0,
+  );
+}
+
 /** Legacy: só compacta markdown no cliente quando a API não enviou `renderHints.textRenderMode`. */
 export function shouldApplyClientMarkdownCompaction(toolCalls?: ChatToolCall[]): boolean {
   const hints = getPresentationRenderHintsFromToolCalls(toolCalls);

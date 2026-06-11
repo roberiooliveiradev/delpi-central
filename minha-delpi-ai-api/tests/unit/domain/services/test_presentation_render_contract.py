@@ -232,3 +232,18 @@ def test_render_plan_single_text_first_evidence_only_includes_prose():
     assert metadata["renderPlan"]["layoutMode"] == "single"
     assert kinds == {"markdown"}
     assert metadata.get("kpiPresentation") is not None
+
+
+def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
+    metadata = {
+        "presentationDecision": {"layoutMode": "stack", "selected": "text"},
+        "textPresentation": {"markdown": "### Produto\n\nResumo curto."},
+    }
+
+    ChatPresentationRenderPlanService.build(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+
+    assert segments == [
+        {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
+    ]

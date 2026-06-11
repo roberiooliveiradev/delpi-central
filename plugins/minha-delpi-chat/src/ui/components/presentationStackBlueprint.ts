@@ -25,6 +25,7 @@ import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import { buildSegmentsFromRenderPlan } from "./renderPlanSegmentBuilder";
+import { hasRenderPlanContract } from "./chatPresentation";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
@@ -324,6 +325,7 @@ function profileTablesForPlan(
   return profileRoles.flatMap((role) => buckets[role]);
 }
 
+/** @deprecated Playbook 13 P6 — usar `buildSegmentsFromRenderPlan` quando `renderPlan.version === 1`. */
 export function buildPlanOrderedStackSegments(
   commentary: string,
   orderedVisuals: AssistantContentSegment[],
@@ -490,6 +492,31 @@ export function buildCanonicalStackSegments(
   }
 
   const plan = getStackPresentationPlanFromToolCalls(toolCalls);
+
+  if (hasRenderPlanContract(toolCalls)) {
+    const fromRenderPlan = buildSegmentsFromRenderPlan(
+      trimmedCommentary,
+      orderedVisuals,
+      parseMarkdown,
+      appendUnique,
+      toolCalls,
+    );
+
+    if (fromRenderPlan?.length) {
+      return fromRenderPlan;
+    }
+
+    if (trimmedCommentary) {
+      const fallback: AssistantContentSegment[] = [];
+      for (const segment of parseMarkdown(trimmedCommentary)) {
+        appendUnique(fallback, segment);
+      }
+      return fallback;
+    }
+
+    return [];
+  }
+
   const fromRenderPlan = buildSegmentsFromRenderPlan(
     trimmedCommentary,
     orderedVisuals,

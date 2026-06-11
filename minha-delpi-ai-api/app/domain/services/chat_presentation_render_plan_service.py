@@ -50,6 +50,11 @@ class ChatPresentationRenderPlanService:
             "segments": segments,
         }
 
+        if not segments and cls._has_text_presentation(metadata):
+            metadata["renderPlan"]["segments"] = [
+                {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
+            ]
+
     @classmethod
     def _resolve_stack_plan(cls, metadata: dict[str, Any]) -> dict[str, Any] | None:
         plan = metadata.get("stackPresentationPlan")
