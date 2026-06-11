@@ -46,8 +46,8 @@ def test_build_orders_fields_by_api_meta_labels_before_payload_sort():
 
     highlights = commentary.get("highlights") or []
 
-    assert highlights[0].startswith("**Receita bruta:**")
-    assert any("**ROL:**" in line for line in highlights)
+    assert highlights[0].startswith("**ROL:**")
+    assert any("**Receita bruta:**" in line for line in highlights)
 
 
 def test_build_generic_department_kpi_with_value_field():

@@ -11,6 +11,9 @@ from app.domain.services.chat_humanized_data_response_service import (
 from app.domain.services.chat_operational_data_commentary_service import (
     ChatOperationalDataCommentaryService,
 )
+from app.domain.services.chat_presentation_scalar_field_commentary_service import (
+    ChatPresentationScalarFieldCommentaryService,
+)
 
 
 class ChatDataInsightEnrichmentService:
@@ -42,6 +45,7 @@ class ChatDataInsightEnrichmentService:
             metadata["dataCommentary"] = commentary
 
         cls._merge_humanized_summary(metadata, commentary or data_answer)
+        ChatPresentationScalarFieldCommentaryService.apply_text_presentation(metadata, data_answer)
         cls._ensure_text_markdown_commentary(metadata, commentary)
         cls._append_narrative_closing(metadata, commentary)
 
@@ -70,6 +74,9 @@ class ChatDataInsightEnrichmentService:
         else:
             summary = str(commentary_or_answer.get("summary") or "").strip()
 
+        if summary and ChatPresentationScalarFieldCommentaryService._is_empty_list_summary(summary):
+            summary = ""
+
         commentary_lines = [summary] if summary else []
         commentary_lines.extend(
             str(line).strip()
@@ -78,7 +85,9 @@ class ChatDataInsightEnrichmentService:
                 or commentary_or_answer.get("highlights")
                 or []
             )
-            if str(line or "").strip() and str(line).strip() not in commentary_lines
+            if str(line or "").strip()
+            and str(line).strip() not in commentary_lines
+            and not ChatPresentationScalarFieldCommentaryService._is_empty_list_summary(str(line))
         )
 
         merged: list[str] = []

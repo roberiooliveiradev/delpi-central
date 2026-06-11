@@ -42,7 +42,101 @@ class ChatPresentationScalarFieldCommentaryService:
             metadata=metadata,
         )
 
-        return str(commentary_key or "").strip() in cls._commentary_profile_keys()
+        if str(commentary_key or "").strip() in cls._commentary_profile_keys():
+            return True
+
+        return cls._matches_kpi_series_profile(metadata, payload)
+
+    @classmethod
+    def apply_text_presentation(
+        cls,
+        metadata: dict[str, Any],
+        data_answer: dict[str, Any],
+    ) -> None:
+        """Substitui lead genérico de KPI por linhas de métricas reais (modo Texto / direct answer)."""
+        profile_key = str(data_answer.get("profileKey") or "").strip()
+
+        if profile_key not in cls._commentary_profile_keys():
+            return
+
+        highlights = cls._highlights_from_data_answer(data_answer)
+
+        if not highlights:
+            return
+
+        text_presentation = metadata.get("textPresentation")
+
+        if not isinstance(text_presentation, dict):
+            text_presentation = {"type": "markdown"}
+            metadata["textPresentation"] = text_presentation
+
+        title = str(
+            text_presentation.get("title")
+            or (metadata.get("humanizedSummary") or {}).get("titulo")
+            or ""
+        ).strip()
+
+        if not title:
+            from app.domain.services.chat_assistant_content_service import (
+                ChatAssistantContentService,
+            )
+
+            title = ChatAssistantContentService.title_for_path(str(metadata.get("path") or ""))
+
+        body = "\n".join(highlights)
+        markdown = f"### {title}\n\n<!-- section:scope -->\n\n{body}".strip()
+
+        text_presentation["type"] = "markdown"
+        text_presentation["title"] = title
+        text_presentation["markdown"] = markdown
+
+    @classmethod
+    def _matches_kpi_series_profile(cls, metadata: dict[str, Any], payload: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        api_meta = cls._api_response_meta(metadata)
+        entity = str(api_meta.get("entity") or "").strip() or None
+        profile_key = ChatPresentationProfileService.resolve_profile_key(
+            str(metadata.get("path") or ""),
+            entity,
+        )
+
+        return profile_key in {"kpi_series", "kpi_snapshot", "kpi_dashboard"}
+
+    @classmethod
+    def _highlights_from_data_answer(cls, data_answer: dict[str, Any]) -> list[str]:
+        highlights = [
+            str(item.get("text") or "").strip()
+            for item in (data_answer.get("facts") or [])
+            if isinstance(item, dict) and str(item.get("text") or "").strip()
+        ]
+
+        if highlights:
+            return highlights
+
+        summary = str((data_answer.get("summary") or {}).get("answer") or "").strip()
+
+        if summary and not cls._is_empty_list_summary(summary):
+            return [summary]
+
+        return []
+
+    @classmethod
+    def _is_empty_list_summary(cls, text: str) -> bool:
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        token = str(
+            ChatHumanizedDataResponseContentService.get("generic", "emptyList", default="")
+        ).strip()
+
+        if token and token.casefold() in str(text or "").casefold():
+            return True
+
+        return "retornou registros" in str(text or "").casefold()
 
     @classmethod
     def build(

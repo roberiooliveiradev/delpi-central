@@ -59,7 +59,24 @@ class ChatPresentationEvidenceFirstLayoutService:
         if not isinstance(summary, dict):
             return False
 
-        return bool(str(summary.get("answer") or "").strip())
+        answer = str(summary.get("answer") or "").strip()
+
+        if not answer:
+            return False
+
+        from app.domain.services.chat_presentation_scalar_field_commentary_service import (
+            ChatPresentationScalarFieldCommentaryService,
+        )
+
+        if ChatPresentationScalarFieldCommentaryService._is_empty_list_summary(answer):
+            return False
+
+        profile_key = str(data_answer.get("profileKey") or "").strip()
+
+        if profile_key == "generic_list":
+            return False
+
+        return True
 
     @classmethod
     def activate(cls, metadata: dict[str, Any]) -> bool:

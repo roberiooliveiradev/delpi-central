@@ -39,6 +39,15 @@ class ChatToolContextExternalActionFormatter:
                 attached_data = self._attach_request_sql(data, None, safe_metadata)
                 operational_root = self._presenter._unwrap_data(attached_data)
 
+                if isinstance(attached_data, dict):
+                    envelope_meta = attached_data.get("meta")
+
+                    if isinstance(envelope_meta, dict) and not isinstance(
+                        safe_metadata.get("apiDelpiResponseMeta"),
+                        dict,
+                    ):
+                        safe_metadata["apiDelpiResponseMeta"] = envelope_meta
+
                 if isinstance(operational_root, dict):
                     from app.domain.services.chat_operational_commentary_enrichment_service import (
                         ChatOperationalCommentaryEnrichmentService,
@@ -52,6 +61,23 @@ class ChatToolContextExternalActionFormatter:
                             value,
                         ),
                     )
+                    profile_key = str(
+                        (safe_metadata.get("dataAnswer") or {}).get("profileKey") or ""
+                    )
+                    data_answer = safe_metadata.get("dataAnswer")
+
+                    if isinstance(data_answer, dict) and profile_key in {
+                        "generic_kpi_series",
+                        "kpi_series",
+                    }:
+                        from app.domain.services.chat_presentation_scalar_field_commentary_service import (
+                            ChatPresentationScalarFieldCommentaryService,
+                        )
+
+                        ChatPresentationScalarFieldCommentaryService.apply_text_presentation(
+                            safe_metadata,
+                            data_answer,
+                        )
 
                 humanized = self._presenter.present(
                     attached_data,

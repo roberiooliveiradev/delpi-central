@@ -212,13 +212,41 @@ class ChatToolContextPresentationService:
             return "\n".join(f"- {title}" for title in titles)
 
         @classmethod
+        def _text_is_scalar_kpi_boilerplate(cls, markdown: str) -> bool:
+            body = str(markdown or "").strip()
+
+            if not body:
+                return False
+
+            from app.domain.services.chat_assistant_content_service import (
+                ChatAssistantContentService,
+            )
+
+            template = ChatAssistantContentService.get(
+                "presenter_content",
+                "generic",
+                "kpiLead",
+                default="",
+            )
+
+            if not template:
+                return "métrica(s) em destaque nos cartões abaixo" in body.casefold()
+
+            normalized = body.casefold()
+
+            return (
+                "métrica(s) em destaque nos cartões abaixo" in normalized
+                and "**" not in body.split("cartões abaixo")[-1]
+            )
+
+        @classmethod
         def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
             text_presentation = metadata.get("textPresentation")
 
             if isinstance(text_presentation, dict):
                 markdown = str(text_presentation.get("markdown") or "").strip()
 
-                if markdown:
+                if markdown and not cls._text_is_scalar_kpi_boilerplate(markdown):
                     return markdown
 
             humanized = metadata.get("humanizedSummary")

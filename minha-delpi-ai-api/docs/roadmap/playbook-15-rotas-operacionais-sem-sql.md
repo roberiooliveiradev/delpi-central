@@ -1,6 +1,6 @@
 # Playbook 15 — Rotas api-delpi para produção, suprimentos e perdas (sem inferir SQL)
 
-**Status:** roadmap (jun/2026) — **não implementado** (exceto rotas de preço MP / simulador PA já entregues)  
+**Status:** implementado Fases 1–4 (jun/2026) — rotas REST P0–P3 na api-delpi + roteamento/presenter no chat base; SQL playbook mantido como fallback quando a action não estiver habilitada  
 **Público:** api-delpi, minha-delpi-ai-api, gestão de agentes  
 **Objetivo:** substituir execução ad hoc via `POST /data/sql` por **rotas REST declarativas**, com presenter e roteamento determinístico no chat base.
 

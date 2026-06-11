@@ -627,6 +627,126 @@
       ]
     },
     {
+      "token": "/production/consumption/top-items",
+      "category": "Consumo de produção (ranking)",
+      "examples": [
+        "itens mais consumidos no mes",
+        "top consumo de materia prima"
+      ]
+    },
+    {
+      "token": "/production/consumption/top-items-by-work-center",
+      "category": "Consumo por centro de trabalho",
+      "examples": [
+        "consumo por centro de trabalho",
+        "itens mais consumidos por ct"
+      ]
+    },
+    {
+      "token": "/production/consumption/top-items-validated",
+      "category": "Consumo validado por apontamento",
+      "examples": [
+        "consumo validado por apontamento",
+        "consumo apontado no mes"
+      ]
+    },
+    {
+      "token": "/production/consumption/by-item",
+      "category": "Consumo real de um item",
+      "examples": [
+        "consumo real do item 01010001",
+        "quanto foi consumido do produto"
+      ]
+    },
+    {
+      "token": "/production/losses/top-materials",
+      "category": "Refugos por matéria-prima",
+      "examples": [
+        "refugos de materia prima",
+        "top perdas de mp"
+      ]
+    },
+    {
+      "token": "/production/losses/records",
+      "category": "Registros de refugo",
+      "examples": [
+        "listar refugos detalhado",
+        "registros de perda no periodo"
+      ]
+    },
+    {
+      "token": "/production/orders/open",
+      "category": "OPs em aberto",
+      "examples": [
+        "ops em aberto hoje",
+        "ordens de producao abertas"
+      ]
+    },
+    {
+      "token": "/production/orders/finished",
+      "category": "OPs finalizadas",
+      "examples": [
+        "ops finalizadas hoje",
+        "ordens de producao encerradas"
+      ]
+    },
+    {
+      "token": "/production/orders/finished-without-consumption",
+      "category": "OPs finalizadas sem consumo",
+      "examples": [
+        "ops finalizadas sem baixa de mp",
+        "ordens encerradas sem consumo"
+      ]
+    },
+    {
+      "token": "/production/work-centers/order-summary",
+      "category": "Resumo de OPs por CT",
+      "examples": [
+        "resumo de ops por centro de trabalho",
+        "ops por ct hoje"
+      ]
+    },
+    {
+      "token": "/production/work-centers/average-planned-time",
+      "category": "Tempo médio planejado por CT",
+      "examples": [
+        "tempo medio planejado por ct",
+        "tempo planejado por centro de trabalho"
+      ]
+    },
+    {
+      "token": "/production/allocation-gaps",
+      "category": "Componentes sem empenho",
+      "examples": [
+        "componentes sem empenho",
+        "travamento por falta de empenho"
+      ]
+    },
+    {
+      "token": "/production/planned-vs-real-time",
+      "category": "Planejado × real por OP",
+      "examples": [
+        "compare tempo planejado e real",
+        "planejado versus real das ops"
+      ]
+    },
+    {
+      "token": "/production/schedule/today",
+      "category": "Programação de produção (hoje)",
+      "examples": [
+        "quais produtos serao produzidos hoje",
+        "programacao de producao hoje"
+      ]
+    },
+    {
+      "token": "/purchases/top-products",
+      "category": "Produtos mais comprados",
+      "examples": [
+        "produtos mais comprados no mes",
+        "ranking de compras por produto"
+      ]
+    },
+    {
       "token": "/production/",
       "category": "Indicadores de produção",
       "examples": [
@@ -770,6 +890,12 @@
     "eficiencia fabril dashboard",
     "indicadores de qualidade ppm",
     "quais produtos serão produzidos hoje",
+    "itens mais consumidos no mês",
+    "produtos mais comprados em março",
+    "ops em aberto hoje filial 01",
+    "refugos de matéria-prima março",
+    "componentes sem empenho hoje",
+    "compare tempo planejado e real das OPs",
     "compare estoque, vendas e compras do produto 10080001",
     "que horas são",
     "bom dia",

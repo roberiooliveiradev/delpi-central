@@ -188,11 +188,13 @@
     "maxHighlights": 8,
     "highlightLineTemplate": "**{label}:** {value}",
     "primaryFieldKeys": [
+      "rol",
       "value",
       "percentage",
       "current",
       "target",
-      "previous"
+      "previous",
+      "gross_revenue"
     ],
     "skipFieldKeys": [
       "branch",

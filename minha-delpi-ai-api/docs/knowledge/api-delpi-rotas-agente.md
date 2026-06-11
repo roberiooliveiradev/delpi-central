@@ -255,6 +255,32 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 | Custo de produção | `GET /production/production_cost_pct` | `get_production_cost_pct` |
 | Depreciação % ROL | `GET /production/depreciation_pct` | `get_depreciation_pct` |
 
+#### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
+
+Preferir estas rotas em vez de `POST /data/sql` quando o agente tiver a action habilitada:
+
+| O usuário quer | Rota | operationId |
+|----------------|------|-------------|
+| Itens mais consumidos (geral) | `GET /production/consumption/top-items` | `get_production_consumption_top_items` |
+| Consumo por centro de trabalho | `GET /production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` |
+| Consumo validado por apontamento | `GET /production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` |
+| Consumo real de um item | `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` |
+| Refugos / perdas por MP (ranking) | `GET /production/losses/top-materials` | `get_production_losses_top_materials` |
+| Registros detalhados de refugo | `GET /production/losses/records` | `get_production_losses_records` |
+| OPs em aberto na data | `GET /production/orders/open` | `get_production_orders_open` |
+| OPs finalizadas na data | `GET /production/orders/finished` | `get_production_orders_finished` |
+| OPs finalizadas sem baixa de MP | `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` |
+| Resumo de OPs por centro de trabalho | `GET /production/work-centers/order-summary` | `get_production_work_center_order_summary` |
+| Tempo médio planejado por CT | `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` |
+| Componentes sem empenho (travamento) | `GET /production/allocation-gaps` | `get_production_allocation_gaps` |
+| Planejado × real por OP | `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` |
+| Programação / OPs do dia | `GET /production/schedule/today` | `get_production_schedule_today` |
+| Produtos mais comprados (ranking) | `GET /purchases/top-products` | `get_purchases_top_products` |
+
+**Parâmetros comuns:** `date_start`, `date_end`, `reference_date`, `branch`, `limit`, `code` (path em by-item).
+
+**Não confundir:** `/purchases/top-products` (ranking global) ≠ `/products/{code}/purchases` (histórico de um produto).
+
 ---
 
 ### RH (`/hr`)

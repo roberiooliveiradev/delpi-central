@@ -20,6 +20,9 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+from tests.fixtures.production_operational_regression_cases import (
+    PRODUCTION_OPERATIONAL_SELECTION_CASES,
+)
 from tests.fixtures.chat_intelligence_regression_cases import (
     AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
@@ -179,6 +182,7 @@ def test_agentic_skip_on_follow_up_chip_query():
 @pytest.mark.parametrize(
     "case",
     SELECTION_CASES
+    + PRODUCTION_OPERATIONAL_SELECTION_CASES
     + STOCK_REFINEMENT_SELECTION_CASES
     + METRIC_REFINEMENT_SELECTION_CASES
     + PAGINATION_REFINEMENT_SELECTION_CASES,

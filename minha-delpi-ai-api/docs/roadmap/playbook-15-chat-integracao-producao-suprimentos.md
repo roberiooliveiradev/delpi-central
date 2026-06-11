@@ -1,8 +1,8 @@
 # Playbook 15 — Integração chat: produção, suprimentos e perdas (sem SQL)
 
 **Parent:** [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)  
-**Pré-requisito:** rotas Fase 1 entregues na api-delpi + OpenAPI reimportado  
-**Escopo:** minha-delpi-ai-api + plugin (presenter apenas consome metadata)
+**Pré-requisito:** rotas Fases 1–4 entregues na api-delpi + OpenAPI reimportado  
+**Status:** implementado (jun/2026) — Fases P0–P3 + knowledge/regressão PO01–PO14
 
 Modelo: [`playbook-chat-preco-mp-simulador-custos-pa.md`](./playbook-chat-preco-mp-simulador-custos-pa.md).
 
@@ -115,23 +115,9 @@ Follow-up «filial 02», «top 20», «mês passado» → recomponer via `compos
 
 ## 7. Testes
 
-### Fixtures (`chat_intelligence_regression_cases.py`)
+### Fixtures (`tests/fixtures/production_operational_regression_cases.py`)
 
-```python
-PRODUCTION_OPERATIONAL_ROUTE_CASES = [
-    {
-        "id": "PO01",
-        "message": "itens mais consumidos mês passado filial 01 top 10",
-        "expected_operation_id": "get_production_consumption_top_items",
-    },
-    {
-        "id": "PO02",
-        "message": "produtos mais comprados março 2026",
-        "expected_operation_id": "get_purchases_top_products",
-    },
-    # ...
-]
-```
+Casos PO01–PO02/PO04 em `chat_intelligence_regression_cases.py`; PO03–PO14 no fixture dedicado — wired em `test_action_selection_regression`.
 
 ### Smoke
 
@@ -141,12 +127,13 @@ Estender ou criar `scripts/smoke_playbook_production_operational.py` — frases 
 
 ## 8. Checklist de aceite
 
-- [ ] PO01–PO04 passam sem `/data/sql`
-- [ ] «Produzidos hoje» usa `get_production_schedule_today` (não SQL template SC2010)
-- [ ] «Estoque do produto X» **não** aciona consumption top
-- [ ] Textos só em JSON
-- [ ] Send/stream paridade
-- [ ] `meta.operationId` no presenter
+- [x] PO01–PO14 passam seleção sem `/data/sql` (regressão `test_action_selection_regression`)
+- [x] «Produzidos hoje» usa `get_production_schedule_today` (não SQL template SC2010)
+- [x] «Estoque do produto X» **não** aciona consumption top (decoys nos fixtures)
+- [x] Textos só em JSON
+- [x] Send/stream paridade (mesmo pipeline base)
+- [x] `meta.operationId` no presenter
+- [ ] Smoke E2E S1–S14 em ambiente com gateway (script `smoke_playbook_production_operational.py`)
 
 ---
 
