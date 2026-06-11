@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -202,16 +202,10 @@ export function RecursoDetailPage({
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
-              <ArrowLeft size={16} />
-              Lista
-            </button>
-            <button type="button" className="ds-primary-btn" onClick={() => void load()}>
-              <RefreshCw size={16} />
-              Atualizar
-            </button>
-          </>
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            <ArrowLeft size={16} />
+            Lista
+          </button>
         }
       />
 
