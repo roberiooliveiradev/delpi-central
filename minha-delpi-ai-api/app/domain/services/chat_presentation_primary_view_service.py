@@ -145,6 +145,64 @@ class ChatPresentationPrimaryViewService:
         ChatPresentationTextModeService.align_explicit_session_decision(metadata)
 
     @classmethod
+    def sync_render_contract_for_explicit_session(cls, metadata: dict[str, Any]) -> None:
+        """Playbook 13 P6 — alinha decisão/renderPlan antes do prune para cada modo de sessão."""
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if not explicit:
+            return
+
+        if explicit in {"text", "topics"}:
+            cls._sync_explicit_text_session(metadata)
+            return
+
+        if explicit == "canvas":
+            cls._sync_explicit_canvas_session(metadata)
+            return
+
+        if explicit in _EXPLICIT_NATIVE_SINGLE:
+            cls._sync_explicit_native_single_session(metadata)
+
+    @classmethod
+    def sync_render_contract_for_explicit_native_view(cls, metadata: dict[str, Any]) -> None:
+        """Compat — delega para sync_render_contract_for_explicit_session."""
+        cls.sync_render_contract_for_explicit_session(metadata)
+
+    @classmethod
+    def _sync_explicit_native_single_session(cls, metadata: dict[str, Any]) -> None:
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        decision = metadata.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        decision["selected"] = explicit
+        decision["layoutMode"] = "single"
+        decision["visualOrder"] = [explicit]
+
+        cls.finalize_explicit_native_single_view(metadata)
+
+    @classmethod
+    def _sync_explicit_text_session(cls, metadata: dict[str, Any]) -> None:
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        ChatPresentationTextModeService.align_explicit_session_decision(metadata)
+
+    @classmethod
+    def _sync_explicit_canvas_session(cls, metadata: dict[str, Any]) -> None:
+        decision = metadata.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        decision["selected"] = "canvas"
+        decision["layoutMode"] = "single"
+        decision["visualOrder"] = ["canvas", "text"]
+
+    @classmethod
     def relocate_primary_to_text_auxiliary_slots(cls, metadata: dict[str, Any]) -> None:
         """Move visão primária para slots auxiliares sem marcar preferência explícita da sessão."""
         cls._apply_text_primary(metadata)

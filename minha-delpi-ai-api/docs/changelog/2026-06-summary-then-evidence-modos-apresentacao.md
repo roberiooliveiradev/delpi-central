@@ -43,7 +43,7 @@ A API define no `stackPresentationPlan`:
 
 O MFE (`visualSegmentCollector`, `appendTailVisuals`) só materializa `dashboard` quando `explicitSessionFormat: "dashboard"` ou o token está no `tailVisualOrder`.
 
-**Dívida técnica (P6):** `shouldRenderDashboardSegment` e filtros no MFE são **paliativo** — a API deve omitir `dashboardPresentation` do payload no Automático. Plano: [playbook-13 §8.6](../roadmap/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only-próxima-fase).
+**Dívida técnica (P6 — resolvida jun/2026):** a API omite `dashboardPresentation` no Automático e envia `renderPlan` explícito; ver [changelog P6 modos](./2026-06-p6-renderplan-modos-apresentacao.md).
 
 ---
 

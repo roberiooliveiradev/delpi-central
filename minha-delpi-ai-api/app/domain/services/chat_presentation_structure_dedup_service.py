@@ -168,15 +168,22 @@ class ChatPresentationStructureDedupService:
                 metadata[key] = None
 
     @classmethod
+    def _explicit_table_session(cls, metadata: dict[str, Any]) -> bool:
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        return explicit == "table"
+
+    @classmethod
     def _prefers_table_over_tree(cls, metadata: dict[str, Any]) -> bool:
+        if cls._explicit_table_session(metadata):
+            return True
+
         preferred = str(metadata.get("preferredFormat") or "").strip().lower()
 
         if preferred == "table":
             return True
 
-        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
-
-        return explicit == "table"
+        return False
 
     @classmethod
     def _should_preserve_tree_for_rich_stack(cls, metadata: dict[str, Any]) -> bool:
@@ -253,9 +260,13 @@ class ChatPresentationStructureDedupService:
 
         cls._normalize_auxiliary_table_slots(metadata)
 
-        if cls.metadata_has_tree(metadata) and (
-            cls._should_preserve_tree_for_rich_stack(metadata)
-            or not cls._prefers_table_over_tree(metadata)
+        if (
+            not cls._explicit_table_session(metadata)
+            and cls.metadata_has_tree(metadata)
+            and (
+                cls._should_preserve_tree_for_rich_stack(metadata)
+                or not cls._prefers_table_over_tree(metadata)
+            )
         ):
             primary = metadata.get("presentation")
 
@@ -294,7 +305,11 @@ class ChatPresentationStructureDedupService:
 
         if cls._prefers_table_over_tree(metadata) and cls._any_hierarchy_duplicate_table(metadata):
             structure_table = cls._first_hierarchy_duplicate_table(metadata)
-            cls._suppress_tree_presentations(metadata)
+
+            if cls._explicit_table_session(metadata) or not cls._should_preserve_tree_for_rich_stack(
+                metadata
+            ):
+                cls._suppress_tree_presentations(metadata)
 
             if structure_table is not None:
                 metadata["presentation"] = structure_table

@@ -51,11 +51,23 @@ class ChatPresentationTextModeService:
         from app.domain.services.chat_presentation_decision_service import (
             ChatPresentationDecisionService,
         )
+        from app.domain.services.chat_presentation_primary_view_service import (
+            _EXPLICIT_NATIVE_SINGLE,
+        )
 
         merged_views = ChatPresentationDecisionService._merge_views(
             metadata.get("availableFormats"),
             decision.get("availableViews"),
         )
+
+        token = str(decision.get("selected") or "").strip().lower()
+
+        if token in _EXPLICIT_NATIVE_SINGLE:
+            decision["layoutMode"] = "single"
+            decision["visualOrder"] = [token]
+            if merged_views:
+                decision["availableViews"] = merged_views
+            return
 
         if len(merged_views) >= 2:
             decision["layoutMode"] = "stack"

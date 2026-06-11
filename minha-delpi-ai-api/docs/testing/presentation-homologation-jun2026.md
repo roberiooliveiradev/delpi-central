@@ -2,6 +2,8 @@
 
 Checklist amostral para validar a generalização de apresentação **antes de release**. Complementa a suíte automatizada (Fase 6).
 
+**Contrato P6 modos (jun/2026):** [changelog P6 `renderPlan`](../changelog/2026-06-p6-renderplan-modos-apresentacao.md#validação-manual) — matriz Automático / Texto / Tabela / Árvore / Gráfico / Painel / Documento.
+
 **Roteiro copiável (playbook + apresentação):** [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md).
 
 ## Pré-requisitos
@@ -14,7 +16,7 @@ Checklist amostral para validar a generalização de apresentação **antes de r
 
 | Métrica | Meta | Como medir |
 |---------|------|------------|
-| Preferência respeitada | ≥ 95% | Toolbar Tabela/Gráfico/Árvore/Texto/Documento → `presentationDecision.selected` coerente |
+| Preferência respeitada | ≥ 95% | Toolbar Tabela/Gráfico/Árvore/Texto/Painel/Documento → `presentationDecision.selected` + `renderPlan` coerentes |
 | Rotas tier B+ com apresentação útil | ≥ 90% | Resposta com texto ou tabela/gráfico não vazio |
 | Layout stack vs single | documentar | `presentationDecision.layoutMode` em rotas multi-seção (analyser, estoque) |
 

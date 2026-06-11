@@ -237,7 +237,17 @@ def test_factory_status_explicit_dashboard_keeps_full_bundle_for_toolbar():
 
     assert meta.get("explicitSessionFormat") == "dashboard"
     assert decision.get("selected") == "dashboard"
-    assert decision.get("layoutMode") == "stack"
+    assert decision.get("layoutMode") == "single"
+
+    render_plan = meta.get("renderPlan") or {}
+    segment_kinds = {
+        str(item.get("kind") or "").strip().lower()
+        for item in render_plan.get("segments") or []
+        if isinstance(item, dict)
+    }
+
+    assert render_plan.get("layoutMode") == "single"
+    assert "dashboard" in segment_kinds
 
     dashboard = meta.get("presentation") or meta.get("dashboardPresentation") or {}
 

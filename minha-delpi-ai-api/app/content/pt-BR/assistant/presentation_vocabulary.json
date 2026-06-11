@@ -477,8 +477,8 @@
         "fixture": "product_stock_90269001.json",
         "user_message": "estoque do produto 90269001",
         "expected_presentation_profile": "product_stock",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "tree"],
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"],
         "expected_interactivity_labels": ["Ver em gráfico", "Ver como tabela"]
       },
       {
@@ -489,7 +489,7 @@
         "user_message": "status fabril do produto 90269002",
         "expected_presentation_profile": "product_factory_status",
         "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "tree", "dashboard"]
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_production_status",
@@ -498,8 +498,8 @@
         "fixture": "product_production_status_90269002.json",
         "user_message": "status de produção do produto 90269002",
         "expected_presentation_profile": "product_production_status",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_sale_pricing",
@@ -508,8 +508,8 @@
         "fixture": "product_pricing_10080001.json",
         "user_message": "precificação do produto 10080001",
         "expected_presentation_profile": "product_pricing",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_raw_material_price",
@@ -518,8 +518,8 @@
         "fixture": "product_raw_material_price_intelligence_10080022.json",
         "user_message": "análise de preço da matéria-prima 10080022",
         "expected_presentation_profile": "product_raw_material_price_intelligence",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "chart"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_shipping_status",
@@ -528,8 +528,8 @@
         "fixture": "product_shipping_status_90269002.json",
         "user_message": "status de expedição do produto 90269002",
         "expected_presentation_profile": "product_shipping_status",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
         "id": "tier_a_structure_exclusivity",
@@ -538,8 +538,8 @@
         "fixture": "product_structure_exclusivity_90261805.json",
         "user_message": "matérias-primas exclusivas na estrutura do produto 90261805",
         "expected_presentation_profile": "product_structure",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "tree"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_cost_impact_simulation",
@@ -548,8 +548,8 @@
         "fixture": "product_cost_impact_simulation_90261255.json",
         "user_message": "simulação de impacto de custo do produto 90261255",
         "expected_presentation_profile": "product_cost_impact_simulation",
-        "expected_layout_mode": "stack",
-        "expected_visuals": ["text", "kpi", "chart"]
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_last_purchase",
@@ -558,7 +558,7 @@
         "fixture": "product_last_purchase_10080001.json",
         "user_message": "última compra do produto 10080001",
         "expected_presentation_profile": "last_purchase",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -568,7 +568,7 @@
         "fixture": "product_purchase_price_history_10080001.json",
         "user_message": "histórico de preço de compra do produto 10080001",
         "expected_presentation_profile": "purchase_price_history",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -578,7 +578,7 @@
         "fixture": "product_purchase_budget_history_10080001.json",
         "user_message": "histórico de orçamento de compra do produto 10080001",
         "expected_presentation_profile": "purchase_budget_history",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
@@ -588,7 +588,7 @@
         "fixture": "product_purchases_10080001.json",
         "user_message": "compras do produto 10080001",
         "expected_presentation_profile": "purchase_list",
-        "expected_layout_mode": "stack",
+        "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       }
     ]

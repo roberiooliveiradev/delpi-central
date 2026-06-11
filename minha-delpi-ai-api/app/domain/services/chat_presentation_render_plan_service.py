@@ -128,6 +128,30 @@ class ChatPresentationRenderPlanService:
         return segments
 
     @classmethod
+    def _resolve_visual_source(cls, metadata: dict[str, Any], token: str) -> str | None:
+        normalized = str(token or "").strip().lower()
+        source = _VISUAL_TOKEN_TO_KEY.get(normalized)
+
+        if source and metadata.get(source):
+            return source
+
+        if normalized == "table":
+            bulk = metadata.get("tablePresentations")
+
+            if isinstance(bulk, list) and bulk:
+                return "tablePresentations"
+
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict):
+            presentation_type = str(presentation.get("type") or "").strip().lower()
+
+            if presentation_type == normalized:
+                return "presentation"
+
+        return None
+
+    @classmethod
     def _tail_visual_segments(
         cls,
         metadata: dict[str, Any],
@@ -137,9 +161,9 @@ class ChatPresentationRenderPlanService:
 
         for token in plan.get("tailVisualOrder") or []:
             normalized = str(token).strip().lower()
-            source = _VISUAL_TOKEN_TO_KEY.get(normalized)
+            source = cls._resolve_visual_source(metadata, normalized)
 
-            if not source or not metadata.get(source):
+            if not source:
                 continue
 
             segments.append(
@@ -163,15 +187,19 @@ class ChatPresentationRenderPlanService:
         if cls._should_include_decision(metadata):
             segments.append({"kind": "decision", "slot": "lead", "source": "dataAnswer"})
 
-        if cls._has_text_presentation(metadata):
-            segments.append({"kind": "markdown", "slot": "lead", "source": "textPresentation"})
-
         selected = str((decision or {}).get("selected") or "").strip().lower()
 
-        if selected in _VISUAL_TOKEN_TO_KEY:
-            source = _VISUAL_TOKEN_TO_KEY[selected]
+        if selected == "canvas" and cls._has_text_presentation(metadata):
+            segments.append({"kind": "markdown", "slot": "lead", "source": "textPresentation"})
+            return segments
 
-            if metadata.get(source):
+        if cls._has_text_presentation(metadata) and selected in {"", "text"}:
+            segments.append({"kind": "markdown", "slot": "lead", "source": "textPresentation"})
+
+        if selected in _VISUAL_TOKEN_TO_KEY:
+            source = cls._resolve_visual_source(metadata, selected)
+
+            if source:
                 segments.append({"kind": selected, "slot": "primary", "source": source})
 
         return segments

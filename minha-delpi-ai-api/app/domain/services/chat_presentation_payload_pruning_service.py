@@ -82,6 +82,18 @@ class ChatPresentationPayloadPruningService:
             for token in (plan.get("tailVisualOrder") or [])
             if str(token).strip()
         }
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if explicit in _VISUAL_TOKEN_TO_KEY:
+            allowed.add(explicit)
+
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            selected = str(decision.get("selected") or "").strip().lower()
+
+            if selected in _VISUAL_TOKEN_TO_KEY:
+                allowed.add(selected)
         suppressed: list[str] = []
 
         for token, key in _VISUAL_TOKEN_TO_KEY.items():
@@ -137,6 +149,8 @@ class ChatPresentationPayloadPruningService:
         if not ChatPresentationStructureDedupService.metadata_has_tree(metadata):
             return
 
+        prefers_table = ChatPresentationStructureDedupService._explicit_table_session(metadata)
+
         bundled = metadata.get("tablePresentations")
 
         if isinstance(bundled, list):
@@ -153,6 +167,9 @@ class ChatPresentationPayloadPruningService:
             "inspectionTablePresentation",
             "presentation",
         ):
+            if key == "presentation" and prefers_table:
+                continue
+
             presentation = metadata.get(key)
 
             if ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(presentation):
@@ -189,9 +206,9 @@ class ChatPresentationPayloadPruningService:
 
         presentation_type = str(presentation.get("type") or "").strip().lower()
 
-        if presentation_type == "dashboard" and "dashboard" not in allowed:
+        if presentation_type in _VISUAL_TOKEN_TO_KEY and presentation_type not in allowed:
             metadata.pop("presentation", None)
-            suppressed.append("dashboard")
+            suppressed.append(presentation_type)
 
     @classmethod
     def _resolve_text_render_mode(cls, metadata: dict[str, Any]) -> str:

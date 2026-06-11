@@ -106,4 +106,4 @@ def test_finalize_explicit_dashboard_preserves_full_bundle_for_toolbar():
     assert metadata.get("treePresentation") is not None
     assert metadata.get("chartPresentation") is not None
     assert "Narrativa longa" in metadata["textPresentation"]["markdown"]
-    assert metadata["presentationDecision"]["layoutMode"] == "stack"
+    assert metadata["presentationDecision"]["layoutMode"] == "single"

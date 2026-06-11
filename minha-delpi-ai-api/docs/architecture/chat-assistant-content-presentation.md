@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md).
 
 ---
 
@@ -10,12 +10,10 @@ Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanize
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **API (chat base)** | Decidir formato, ordem, supressões e narrativa; serializar **somente** o que deve aparecer (`textPresentation`, visuais, `stackPresentationPlan`, `presentationDecision`) |
-| **MFE** | Materializar segmentos a partir do metadata — registry, markdown/prosa, streaming; **sem** regras de negócio de apresentação (modo de sessão, omitir painel, strip de embeds, dedup estrutural) |
+| **API (chat base)** | Decidir formato, ordem, supressões e narrativa; serializar **somente** o que deve aparecer (`textPresentation`, visuais, `stackPresentationPlan`, `presentationDecision`, **`renderPlan`**) |
+| **MFE** | Materializar segmentos a partir do **`renderPlan`** (ou síntese legada); registry, markdown/prosa, streaming; **sem** regras de negócio de apresentação |
 
-Agentes **não** reimplementam layout; herdam metadata das tools.
-
-**Próxima fase (P6):** ver [playbook-13 §8.6](../roadmap/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only-próxima-fase) — inventário de lógica duplicada no MFE, contrato `renderPlan` e remoção progressiva de `shouldRender*` / `isExplicit*` no frontend.
+**P6 (jun/2026):** contrato fechado em [playbook-13 §8.6](../roadmap/playbook-13-respostas-humanizadas-dados.md#86-p6--mfe-render-only) e [changelog P6 modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md).
 
 ---
 
@@ -36,14 +34,15 @@ execute_external_action
        narrativa fina → panorama/leitura/atenção/conclusão (qualquer action com painéis)
   → ChatPresentationStackOrderService.enrich_metadata
        stackPresentationPlan (ordem narrativa + papéis de tabela por rota)
+  → ChatPresentationRenderPipelineService.finalize(metadata)
+       sync_render_contract_for_explicit_session → prune → renderPlan.build
   → toolCalls[].metadata no turno do chat
 
 MFE: buildAssistantContentSegments(content, toolCalls)
-  → (se 2+ rotas /products/… OK, exceto só analyser) buildMultiRouteStackSegments
-  → senão resolveAssistantContentLayout (stack | markers | text-only)
-  → presentationStackBlueprint: lead → ficha → destaques → tabelas operacionais → árvore/gráfico → pontos
-  → ChatAssistantContent: toolbar global OU AssistantContentRouteSection (toolbar por seção)
-  → assistantContentRegistry → ChatRichTable | ChatRichTree | ChatRichChart | …
+  → buildSegmentsFromRenderPlan(metadata) quando renderPlan.version === 1
+  → (legado) synthesizeRenderPlanFromToolCalls para mensagens antigas
+  → resolveAssistantContentLayout (stack | single | markers)
+  → assistantContentRegistry → ChatRichTable | ChatRichTree | …
 ```
 
 ---
@@ -61,6 +60,8 @@ MFE: buildAssistantContentSegments(content, toolCalls)
 | `availableFormats` | string[] | Compatível com `availableViews` |
 | `presentationDecision` | objeto | Decisão Playbook 09 + layout (abaixo) |
 | `stackPresentationPlan` | objeto | Ordem de intercalação no layout stack (abaixo) |
+| `renderPlan` | objeto | **P6** — lista ordenada de segmentos (`kind`, `slot`, `source`); MFE render-only |
+| `explicitSessionFormat` | string | Formato escolhido na toolbar (`text`, `table`, `tree`, `chart`, `dashboard`, `canvas`) |
 
 ### `stackPresentationPlan` (ordem humanizada)
 
@@ -87,13 +88,14 @@ Demais rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `str
 
 Rotas com `stackPlan: "summary_then_evidence"` (`factory_status`, `stock`, status operacionais): a interpretação (`dataAnswer`) vai para a **prosa do chat**; **não** há `storyPresentation` nem `ChatDecisionCard` duplicando o markdown.
 
-| Modo (`explicitSessionFormat`) | API (`textPresentation`) | MFE |
-|--------------------------------|--------------------------|-----|
-| Automático | Prosa sem embed de tabela/árvore/gráfico/composição | Tabelas/árvore com texto explicativo inline; **sem** `stackSection` numerado nem painel `dashboard` |
-| Texto | Markdown completo (`should_embed_in_markdown`) | Visão texto-first |
-| Painel (`dashboard`) | Lead compacto | Só dashboard; `operationalTables` vazio no plano |
+| Modo (`explicitSessionFormat`) | API (`textPresentation`) | `layoutMode` | `renderPlan` |
+|--------------------------------|--------------------------|--------------|--------------|
+| Automático | Prosa compacta; sem embed GFM | `stack` (ricas) ou `single` (simples) | Stack; **sem** `dashboard` |
+| Texto | Markdown completo (`should_embed_in_markdown`) | `stack` se ≥2 visões | Markdown + slots do plano |
+| Tabela / Árvore / Gráfico / Painel | Lead compacto ou ausente | **`single`** | Um segmento visual `primary` |
+| Documento (`canvas`) | Narrativa para lousa | **`single`** | Só markdown |
 
-Detalhes e módulos canônicos: [changelog `summary_then_evidence`](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md).
+Detalhes: [changelog `summary_then_evidence`](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md).
 
 ### Mockup de referência — `GET /products/{code}/analyser` (Completo)
 
@@ -131,7 +133,7 @@ Pergunta: «me fale do produto 90260149». Ordem: **ficha no início**, **alerta
 
 | Campo | Regra |
 |-------|--------|
-| `layoutMode` | `"single"` por default (R14 texto-first); `"stack"` só com visão integrada explícita, perfil `stackLayoutPolicy: always` (ex.: analyser) ou formato explícito ≠ texto |
+| `layoutMode` | `"single"` — default texto-first e **formatos nativos explícitos** (table/tree/chart/dashboard); `"stack"` — rotas integradas (analyser, fabril auto, modo Texto com ≥2 visões) |
 | `visualOrder` | Ordem de empilhamento: texto → tabela → árvore → gráfico → kpi → dashboard |
 | `selected` | Formato sugerido (texto, tabela, árvore, tipos de chart) |
 | `availableViews` | Formatos oferecidos na toolbar/chips — inclui views **latentes** do perfil mesmo sem slot montado (`visualBundlePolicy: on_demand`) |
@@ -145,12 +147,13 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 ## Modos de layout no MFE
 
 | Modo | Quando | Comportamento |
-|------|--------|----------------|
-| **stack** | `layoutMode === "stack"` (visão integrada / analyser / pedido explícito) | Narrativa intercalada com `stackPresentationPlan` + `humanizedSections`; analyser mantém mockup 1–7; demais rotas usam seções Panorama/Leitura/Atenção/Conclusão. Em stack humanizado, `textPresentation` **não** é compactado e **sem** marcadores `[[table]]`/`[[arvore]]` |
-| **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
-| **text-only** | `layoutMode === "single"` e `selected === "text"` (default R14) | Só markdown/código — sem tabelas/gráficos embutidos até pedido de formato |
+|------|--------|---------------|
+| **renderPlan** | `renderPlan.version === 1` | Executor mecânico (`renderPlanSegmentBuilder.ts`) — **preferido** |
+| **stack** | `layoutMode === "stack"` | Segmentos do plano stack (lead, tabelas, tail) |
+| **single** | `layoutMode === "single"` | Um visual nativo ou só markdown (`nativeSingleViewBuilder.ts`) |
+| **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Legado — posições de marcadores |
 
-Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`.
+Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`, `renderPlanSegmentBuilder.ts`.
 
 ---
 

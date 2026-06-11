@@ -145,10 +145,29 @@ def test_stock_session_table_prefers_table_primary():
 
     assert meta["presentation"]["type"] == "table"
     assert decision["selected"] == "table"
-    _assert_explicit_session_layout(decision)
+    _assert_explicit_session_layout(decision, meta.get("explicitSessionFormat"))
 
 
-def _assert_explicit_session_layout(decision: dict) -> None:
+def _assert_explicit_session_layout(
+    decision: dict,
+    explicit_format: str | None = None,
+) -> None:
+    explicit = str(explicit_format or "").strip().lower()
+    native_single = {"table", "tree", "chart", "dashboard", "kpi", "canvas"}
+
+    if explicit in native_single:
+        assert decision["layoutMode"] == "single"
+        return
+
+    if explicit in {"text", "topics"}:
+        views = decision.get("availableViews") or []
+
+        if len(views) >= 2:
+            assert decision["layoutMode"] == "stack"
+        else:
+            assert decision["layoutMode"] == "single"
+        return
+
     views = decision.get("availableViews") or []
 
     if len(views) >= 2:
@@ -189,7 +208,7 @@ def test_stock_session_tree_prefers_tree_primary():
 
     assert meta["presentation"]["type"] == "tree"
     assert decision["selected"] == "tree"
-    _assert_explicit_session_layout(decision)
+    _assert_explicit_session_layout(decision, meta.get("explicitSessionFormat"))
     assert meta.get("explicitSessionFormat") == "tree"
 
 
@@ -261,7 +280,7 @@ def test_stock_session_chart_prefers_chart_primary():
 
     assert meta["presentation"]["type"] == "chart"
     assert decision["selected"] == "chart"
-    _assert_explicit_session_layout(decision)
+    _assert_explicit_session_layout(decision, meta.get("explicitSessionFormat"))
 
 
 def test_parents_session_tree_keeps_tree_primary():
@@ -293,7 +312,7 @@ def test_parents_session_tree_keeps_tree_primary():
 
     assert meta["presentation"]["type"] == "tree"
     assert decision["selected"] == "tree"
-    _assert_explicit_session_layout(decision)
+    _assert_explicit_session_layout(decision, meta.get("explicitSessionFormat"))
 
 
 def test_commercial_kpi_session_canvas_keeps_canvas_preference():
@@ -365,12 +384,10 @@ def test_session_format_regression_cases_table_and_tree():
         if case["expected_primary_type"]:
             assert meta["presentation"]["type"] == case["expected_primary_type"]
 
-        views = meta["presentationDecision"].get("availableViews") or []
-
-        if len(views) >= 2:
-            assert meta["presentationDecision"]["layoutMode"] == "stack"
-        else:
-            assert meta["presentationDecision"]["layoutMode"] == "single"
+        _assert_explicit_session_layout(
+            meta["presentationDecision"],
+            meta.get("explicitSessionFormat"),
+        )
 
 
 def test_structure_text_mode_embeds_tree_outline_markdown():

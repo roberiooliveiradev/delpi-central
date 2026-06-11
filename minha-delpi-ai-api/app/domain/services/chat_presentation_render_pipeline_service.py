@@ -20,5 +20,16 @@ class ChatPresentationRenderPipelineService:
         if not isinstance(metadata, dict):
             return
 
+        cls._sync_explicit_session_before_render(metadata)
         ChatPresentationPayloadPruningService.prune(metadata)
         ChatPresentationRenderPlanService.build(metadata)
+
+    @classmethod
+    def _sync_explicit_session_before_render(cls, metadata: dict[str, Any]) -> None:
+        from app.domain.services.chat_presentation_primary_view_service import (
+            ChatPresentationPrimaryViewService,
+        )
+
+        ChatPresentationPrimaryViewService.sync_render_contract_for_explicit_session(
+            metadata,
+        )

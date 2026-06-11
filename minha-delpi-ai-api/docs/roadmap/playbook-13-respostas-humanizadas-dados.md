@@ -2,7 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Escopo:** qualquer resposta baseada em dados — financeiro, vendas, estoque, produção, atendimento, RH, projetos, qualidade, indicadores, relatórios, integrações, APIs ou bases internas.  
-**Status:** P1–P5 entregues (jun/2026) · **P6 planejada** — MFE render-only (sem lógica duplicada)  
+**Status:** P1–P5 entregues (jun/2026) · **P6 entregue** (renderPlan + modos explícitos — jun/2026)  
+**Changelog P6 modos:** [`2026-06-p6-renderplan-modos-apresentacao.md`](../changelog/2026-06-p6-renderplan-modos-apresentacao.md)  
 **Público:** backend, frontend MFE, revisores de PR, agentes Cursor
 
 > **Regra de ouro:** a IA não deve mostrar primeiro os dados. Deve primeiro explicar o que os dados significam. A apresentação visual é **evidência** da resposta, não substituto da interpretação.
@@ -395,7 +396,7 @@ Atualizar **Status** ao concluir cada fase.
 | **P3** | Preferência e automático | Pipeline §5 ordenado; `presentationDecision.scores`; `purpose` obrigatório; readingLayers no metadata | `test_chat_presentation_decision_scores.py` | ✅ |
 | **P4** | UX premium | `ChatDecisionCard`; renderer `story`; recomendações clicáveis; coverage notice humanizado; split hooks MFE | `assistantContentVisualFormats.test.ts` | ✅ |
 | **P5** | Governança e testes | `audit_presentation_coverage` estendido; fixtures por shape; `ChatHumanizedResponseQualityService`; smoke E2E | CI playbook-13 gate | ✅ |
-| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | 🟢 P6-A/B/C entregues · homologação manual pendente |
+| **P6** | MFE render-only | Payload final na API; remoção de `if` de apresentação no MFE; contrato `renderPlan` / omissão de campos suprimidos | `test_presentation_render_contract.py`; gate anti-duplicação MFE | ✅ entregue (jun/2026) — ver [changelog P6 modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md) |
 
 ### 8.1 P1 — Interpretação universal (detalhamento)
 
@@ -489,9 +490,11 @@ Módulos: `ChatPresentationEvidenceFirstLayoutService`, `ChatRichPresentationTex
 3. `tests/fixtures/humanized_data_response_cases.py` — 10 shapes §17 + gate `humanized_data_response_gate.py`
 4. CI `--check-humanized-answer` no workflow `minha-delpi-ai-api-presentation.yml`
 
-### 8.6 P6 — MFE render-only (próxima fase)
+### 8.6 P6 — MFE render-only
 
 **Motivação (jun/2026):** correções de regressão (`tailVisualPolicy: allowlist`, supressão de `dashboard` no Automático) reintroduziram **lógica de decisão no MFE** (`shouldRenderDashboardSegment`, fallback órfão em `appendTailVisuals`, inferência de `allowlist` quando o campo falta). Isso viola §2.2 e gera drift API↔MFE — o sintoma reaparece no frontend mesmo com o backend correto.
+
+**Entrega modos explícitos (jun/2026):** revisão dos sete modos do seletor; `sync_render_contract_for_explicit_session` + `_resolve_visual_source`; fix estrutura+Tabela; changelog dedicado — [`2026-06-p6-renderplan-modos-apresentacao.md`](../changelog/2026-06-p6-renderplan-modos-apresentacao.md).
 
 **Princípio:**
 
@@ -646,7 +649,9 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 [x] textPresentation sem embeds no Automático (gate API + strip evidence-first single/stack)
 [x] Regressão 90262404: Automático sem painel — gate `factory_status_auto_reference` (90269002)
 [x] Coletor MFE filtra visuais latentes pelo renderPlan v1
-[ ] Homologação manual portal 90262404 (Automático sem painel duplicado)
+[x] Painel explícito: renderPlan com dashboard (`source: presentation`) — ver changelog P6 modos
+[x] Nativos explícitos (table/tree/chart/dashboard): layoutMode single + segmento primary no renderPlan
+[ ] Homologação manual portal 90262404 (Automático sem painel; Painel com dashboard)
 ```
 
 #### 8.6.6 PR checklist (P6)

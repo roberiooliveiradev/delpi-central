@@ -296,6 +296,41 @@ def test_factory_auto_reference_metadata_has_compact_prose_without_embeds():
     assert metadata["stackPresentationPlan"]["renderHints"]["textRenderMode"] == "compact"
 
 
+def test_render_plan_includes_dashboard_from_presentation_slot_on_explicit_panel():
+    metadata = {
+        "explicitSessionFormat": "dashboard",
+        "preferredFormat": "dashboard",
+        "presentationDecision": {
+            "selected": "dashboard",
+            "layoutMode": "stack",
+            "availableViews": ["text", "dashboard", "kpi"],
+        },
+        "presentation": {"type": "dashboard", "title": "Painel fabril", "panels": []},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "cards": []},
+        "textPresentation": {"markdown": "### Status\n\nLead curto."},
+        "stackPresentationPlan": {
+            "tailVisualPolicy": "allowlist",
+            "tailVisualOrder": ["kpi", "dashboard"],
+            "narrativeOrder": ["lead", "tailVisuals"],
+        },
+    }
+
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    render_plan = metadata["renderPlan"]
+
+    assert render_plan["layoutMode"] == "single"
+    assert any(
+        segment.get("kind") == "dashboard" and segment.get("source") == "presentation"
+        for segment in render_plan.get("segments") or []
+    )
+    assert metadata.get("kpiPresentation") is not None
+
+
 def test_render_pipeline_finalize_prunes_and_builds_render_plan():
     metadata = {
         "presentationDecision": {
@@ -324,3 +359,145 @@ def test_render_pipeline_finalize_prunes_and_builds_render_plan():
     assert isinstance(render_plan, dict)
     assert render_plan.get("version") == 1
     assert any(segment.get("kind") == "tree" for segment in render_plan.get("segments") or [])
+
+
+def test_render_plan_explicit_modes_include_primary_visual_segment():
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    cases = [
+        (
+            "table",
+            {"type": "table", "title": "Estoque", "rows": []},
+            "tablePresentation",
+        ),
+        (
+            "tree",
+            {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+            "treePresentation",
+        ),
+        (
+            "chart",
+            {"type": "chart", "title": "Saldo", "data": []},
+            "chartPresentation",
+        ),
+    ]
+
+    for explicit, promoted, slot_key in cases:
+        metadata = {
+            "explicitSessionFormat": explicit,
+            "preferredFormat": explicit,
+            "presentationDecision": {
+                "selected": explicit,
+                "layoutMode": "stack",
+                "availableViews": ["text", explicit, "dashboard"],
+            },
+            "presentation": promoted,
+            "textPresentation": {"markdown": "### Status\n\nLead curto."},
+            slot_key: None,
+            "stackPresentationPlan": {
+                "tailVisualPolicy": "allowlist",
+                "tailVisualOrder": [explicit],
+                "narrativeOrder": ["lead", "tailVisuals"],
+            },
+        }
+
+        ChatPresentationRenderPipelineService.finalize(metadata)
+
+        render_plan = metadata["renderPlan"]
+
+        assert render_plan["layoutMode"] == "single", explicit
+        assert any(
+            segment.get("kind") == explicit and segment.get("source") == "presentation"
+            for segment in render_plan.get("segments") or []
+        ), explicit
+
+
+def test_render_plan_explicit_table_from_table_presentations_bundle():
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    metadata = {
+        "explicitSessionFormat": "table",
+        "preferredFormat": "table",
+        "presentationDecision": {
+            "selected": "table",
+            "layoutMode": "stack",
+            "availableViews": ["text", "table"],
+        },
+        "tablePresentations": [
+            {"type": "table", "title": "Estoque", "columns": [], "rows": []},
+        ],
+        "textPresentation": {"markdown": "### Estoque\n\nResumo."},
+    }
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+
+    assert metadata["renderPlan"]["layoutMode"] == "single"
+    assert any(
+        segment.get("kind") == "table" and segment.get("source") == "tablePresentations"
+        for segment in segments
+    )
+
+
+def test_render_plan_explicit_text_mode_uses_stack_with_markdown():
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    metadata = {
+        "explicitSessionFormat": "text",
+        "preferredFormat": "text",
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "single",
+            "availableViews": ["text", "table", "tree"],
+            "visualOrder": ["text", "table", "tree"],
+        },
+        "textPresentation": {"markdown": "### Produto\n\nNarrativa longa."},
+        "tablePresentation": {"type": "table", "title": "Detalhes", "rows": []},
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "stackPresentationPlan": {
+            "tailVisualPolicy": "allowlist",
+            "narrativeOrder": ["lead", "tailVisuals"],
+            "tailVisualOrder": ["tree"],
+        },
+    }
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    render_plan = metadata["renderPlan"]
+
+    assert render_plan["layoutMode"] == "stack"
+    assert any(segment.get("kind") == "markdown" for segment in render_plan["segments"])
+
+
+def test_render_plan_explicit_canvas_mode_uses_single_markdown_only():
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    metadata = {
+        "explicitSessionFormat": "canvas",
+        "preferredFormat": "canvas",
+        "presentationDecision": {
+            "selected": "canvas",
+            "layoutMode": "stack",
+            "availableViews": ["text", "canvas", "kpi"],
+        },
+        "textPresentation": {"markdown": "### Documento\n\nNarrativa para lousa."},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores", "cards": []},
+    }
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    render_plan = metadata["renderPlan"]
+
+    assert render_plan["layoutMode"] == "single"
+    assert render_plan["segments"] == [
+        {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
+    ]
