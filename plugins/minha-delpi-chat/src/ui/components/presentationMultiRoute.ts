@@ -33,18 +33,6 @@ const ROUTE_SHOW_IN: Record<ProductRouteKey, StackSectionChrome["showIn"]> = {
   other: ["complete", "text", "table", "tree", "chart"],
 };
 
-/** @deprecated Fallback de layout — preferir `presentationDecision.visualOrder` por tool call. */
-export const ROUTE_VISUAL_ORDER: Record<ProductRouteKey, AssistantVisualKind[]> = {
-  profile: ["table"],
-  guide: ["table"],
-  inspection: ["table"],
-  structure: ["table", "tree"],
-  stock: ["table", "chart"],
-  parents: ["table", "tree"],
-  analyser: ["table", "tree", "chart"],
-  other: ["table", "tree", "chart"],
-};
-
 function isSuccessfulExternalAction(toolCall: ChatToolCall): boolean {
   if (toolCall.name && toolCall.name !== "execute_external_action") {
     return false;
@@ -501,10 +489,7 @@ export function buildMultiRouteStackSegments(
     }
 
     const routeVisuals = collectVisualsForToolCall(block.toolCall);
-    const fromApi = resolveVisualOrderFromToolCalls([block.toolCall]);
-    const visualOrder = fromApi.length
-      ? fromApi
-      : ROUTE_VISUAL_ORDER[block.routeKey];
+    const visualOrder = resolveVisualOrderFromToolCalls([block.toolCall]);
     const ordered = orderVisualSegments(routeVisuals, visualOrder);
 
     for (const segment of ordered) {

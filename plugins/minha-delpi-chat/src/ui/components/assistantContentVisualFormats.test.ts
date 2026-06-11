@@ -327,12 +327,15 @@ describe("assistantContentVisualFormats", () => {
             title: "Estrutura do produto 90260149",
             root: { id: "90260149", label: "90260149", children: [] },
           },
-          tablePresentation: {
-            type: "table",
-            title: "Produto 90260149",
-            columns: [{ key: "campo", label: "Campo" }],
-            rows: [{ campo: "Código", valor: "90260149" }],
-          },
+          tablePresentations: [
+            {
+              type: "table",
+              title: "Produto 90260149",
+              role: "profile",
+              columns: [{ key: "campo", label: "Campo" }],
+              rows: [{ campo: "Código", valor: "90260149" }],
+            },
+          ],
           textPresentation: {
             type: "markdown",
             markdown: "### Informações completas\n\n**Destaques**\n\n- Item.",

@@ -8,6 +8,9 @@ from app.domain.services.chat_presentation_section_rules_service import (
 from app.domain.services.chat_presentation_stack_order_service import (
     ChatPresentationStackOrderService,
 )
+from app.domain.services.chat_presentation_vocabulary_service import (
+    ChatPresentationVocabularyService,
+)
 
 
 def test_factory_section_rules_resolve_tail_visuals():
@@ -126,6 +129,33 @@ def test_resolve_explicit_narrative_order_from_json_slots():
     )
 
     assert order == ["lead", "profileTables", "highlights", "operationalTables"]
+
+
+def test_narrative_order_templates_loaded_from_vocabulary():
+    keys = ChatPresentationVocabularyService.narrative_order_template_keys()
+
+    assert "operational_with_panels" in keys
+    assert "analyser" in keys
+
+
+def test_operational_with_panels_template_matches_legacy_order():
+    visibility = {
+        "profile": True,
+        "highlights": True,
+        "guide": False,
+        "structure": True,
+        "attention": False,
+    }
+    metadata = {"kpiPresentation": {"type": "kpi", "cards": []}}
+
+    order = ChatPresentationSectionRulesService.resolve_narrative_order(
+        "operational_with_panels",
+        visibility,
+        metadata,
+        {},
+    )
+
+    assert order == ["lead", "highlights", "operationalTables", "tailVisuals"]
 
 
 def test_resolve_visibility_from_json_rules():

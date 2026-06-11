@@ -73,4 +73,10 @@ describe("presentationLegacyFallbackGate (Playbook 12 R20)", () => {
       baseline.inferTableRoleFromTitleConditionalReturns,
     );
   });
+
+  it("não reintroduz ROUTE_VISUAL_ORDER no multi-rota", () => {
+    const source = readFileSync(join(componentsDir, "presentationMultiRoute.ts"), "utf8");
+
+    expect(source.includes("ROUTE_VISUAL_ORDER")).toBe(false);
+  });
 });

@@ -29,9 +29,9 @@ import {
 } from "./presentationMetadataPolicy";
 import {
   isMultiRouteProductPresentation,
-  ROUTE_VISUAL_ORDER,
   type ProductRouteKey,
 } from "./presentationMultiRoute";
+import { resolveVisualOrderFromToolCalls } from "./assistantContentLayout";
 
 export type VisualFormatOption = {
   kind: ContentFormatKind;
@@ -100,7 +100,7 @@ export function collectPresentVisualKinds(
 }
 
 function resolveRouteVisualOrder(
-  routeKey: ProductRouteKey,
+  _routeKey: ProductRouteKey,
   toolCall?: ChatToolCall,
 ): AssistantVisualKind[] {
   const decision = getPresentationDecisionFromToolCall(toolCall);
@@ -110,7 +110,7 @@ function resolveRouteVisualOrder(
     return fromDecision;
   }
 
-  return ROUTE_VISUAL_ORDER[routeKey];
+  return resolveVisualOrderFromToolCalls(toolCall ? [toolCall] : undefined);
 }
 
 export function resolveRouteSectionFormatOptions(

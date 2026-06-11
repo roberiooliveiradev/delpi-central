@@ -52,11 +52,16 @@ class ChatPresentationSectionRulesService:
             path=path,
         )
 
-        template = str(rules.get("narrativeOrder") or "operationalWithTail").strip()
+        template = str(rules.get("narrativeOrder") or "operational_with_tail").strip()
         explicit_slots = rules.get("narrativeOrderSlots")
 
         if isinstance(explicit_slots, list) and explicit_slots:
-            plan["narrativeOrder"] = cls._resolve_explicit_narrative_order(
+            inline_config = {
+                "slotSources": rules.get("narrativeSlotSources") or {},
+                "planFlags": rules.get("narrativePlanFlags") or {},
+            }
+            plan["narrativeOrder"] = cls._resolve_narrative_from_template_config(
+                inline_config,
                 explicit_slots,
                 visibility,
                 metadata,
@@ -140,26 +145,105 @@ class ChatPresentationSectionRulesService:
         plan: dict[str, Any],
     ) -> list[str]:
         token = str(template or "").strip().lower()
+        config = ChatPresentationVocabularyService.narrative_order_template(token)
 
-        if token == "analyser":
-            return cls._narrative_order_analyser(visibility, plan)
+        if not config:
+            config = ChatPresentationVocabularyService.narrative_order_template(
+                "operational_with_tail",
+            )
 
-        if token == "operational_stock":
-            return cls._narrative_order_operational_stock(visibility)
+        slots = config.get("slots") or ["lead"]
 
-        if token == "profile_then_structure":
-            return cls._narrative_order_profile_then_structure(visibility)
+        return cls._resolve_narrative_from_template_config(
+            config,
+            slots,
+            visibility,
+            metadata,
+            plan,
+        )
 
-        if token == "operational_with_panels":
-            return cls._narrative_order_operational_with_panels(visibility)
+    @classmethod
+    def _resolve_narrative_from_template_config(
+        cls,
+        config: dict[str, Any],
+        slots: list[Any],
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> list[str]:
+        slot_sources = config.get("slotSources") if isinstance(config.get("slotSources"), dict) else {}
+        plan_flags = config.get("planFlags") if isinstance(config.get("planFlags"), dict) else {}
+        order: list[str] = []
 
-        if token == "tree_hierarchy":
-            return cls._narrative_order_tree_hierarchy(visibility)
+        for slot in slots:
+            token = str(slot or "").strip()
 
-        if token == "summary_then_evidence":
-            return cls._narrative_order_summary_then_evidence(visibility, metadata)
+            if not token:
+                continue
 
-        return cls._narrative_order_operational_with_tail(visibility, metadata)
+            if not cls._narrative_slot_visible(
+                token,
+                slot_sources,
+                plan_flags,
+                visibility,
+                metadata,
+                plan,
+            ):
+                continue
+
+            if token not in order:
+                order.append(token)
+
+        return order or ["lead"]
+
+    @classmethod
+    def _narrative_slot_visible(
+        cls,
+        slot: str,
+        slot_sources: dict[str, Any],
+        plan_flags: dict[str, Any],
+        visibility: dict[str, bool],
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> bool:
+        if slot == "lead":
+            return True
+
+        flag_key = str(plan_flags.get(slot) or "").strip()
+
+        if flag_key and not bool(plan.get(flag_key)):
+            return False
+
+        if slot == "highlights":
+            return bool(visibility.get(cls._HIGHLIGHTS))
+
+        if slot == "attention":
+            return bool(visibility.get(cls._ATTENTION))
+
+        if slot == "profileTables":
+            return bool(visibility.get(cls._PROFILE))
+
+        sources = slot_sources.get(slot)
+
+        if slot == "operationalTables":
+            keys = sources if isinstance(sources, list) else ["guide", "inspection", "structure"]
+            return any(bool(visibility.get(str(key))) for key in keys)
+
+        if slot == "tailVisuals":
+            keys = sources if isinstance(sources, list) else ["auto_tail"]
+
+            if "auto_tail" in keys:
+                return cls._should_include_tail_visuals(metadata, visibility)
+
+            if "presentation_slots" in keys:
+                return any(
+                    cls._slot_has_type(metadata, presentation_type)
+                    for presentation_type in ("chart", "tree", "kpi")
+                )
+
+            return any(bool(visibility.get(str(key))) for key in keys)
+
+        return bool(visibility.get(slot))
 
     @classmethod
     def _resolve_explicit_narrative_order(
@@ -169,33 +253,13 @@ class ChatPresentationSectionRulesService:
         metadata: dict[str, Any],
         plan: dict[str, Any],
     ) -> list[str]:
-        slot_visibility = {
-            "lead": True,
-            "profileTables": visibility.get(cls._PROFILE),
-            "highlights": visibility.get(cls._HIGHLIGHTS),
-            "operationalTables": (
-                visibility.get(cls._GUIDE)
-                or visibility.get(cls._INSPECTION)
-                or visibility.get(cls._STRUCTURE)
-            ),
-            "tailVisuals": cls._should_include_tail_visuals(metadata, visibility),
-            "attention": visibility.get(cls._ATTENTION),
-        }
-        order: list[str] = []
-
-        for slot in slots:
-            token = str(slot or "").strip()
-
-            if not token:
-                continue
-
-            if slot_visibility.get(token) is False:
-                continue
-
-            if token not in order:
-                order.append(token)
-
-        return order or ["lead"]
+        return cls._resolve_narrative_from_template_config(
+            {},
+            slots,
+            visibility,
+            metadata,
+            plan,
+        )
 
     @classmethod
     def _evaluate_visibility_rule(
@@ -324,133 +388,6 @@ class ChatPresentationSectionRulesService:
         return {}
 
     @classmethod
-    def _narrative_order_analyser(cls, visibility: dict[str, bool], plan: dict[str, Any]) -> list[str]:
-        profile_first = bool(plan.get("profileFirst", True))
-        highlights_after_profile = bool(plan.get("highlightsAfterProfile", True))
-        attention_last = bool(plan.get("attentionLast"))
-
-        order = ["lead"]
-
-        if profile_first and visibility.get(cls._PROFILE):
-            order.append("profileTables")
-
-        if highlights_after_profile and visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._GUIDE) or visibility.get(cls._INSPECTION):
-            order.append("operationalTables")
-
-        if visibility.get(cls._STRUCTURE):
-            order.append("tailVisuals")
-
-        if attention_last and visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
-    def _narrative_order_operational_with_tail(
-        cls,
-        visibility: dict[str, bool],
-        metadata: dict[str, Any],
-    ) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._PROFILE):
-            order.append("profileTables")
-
-        if visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._STRUCTURE) or visibility.get(cls._GUIDE):
-            order.append("operationalTables")
-
-        if cls._should_include_tail_visuals(metadata, visibility):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
-    def _narrative_order_operational_stock(cls, visibility: dict[str, bool]) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
-            order.append("operationalTables")
-
-        if visibility.get(cls._STRUCTURE):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
-    def _narrative_order_profile_then_structure(cls, visibility: dict[str, bool]) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._PROFILE):
-            order.append("profileTables")
-
-        if visibility.get(cls._STRUCTURE):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
-    def _narrative_order_operational_with_panels(cls, visibility: dict[str, bool]) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._PROFILE) or visibility.get(cls._GUIDE):
-            order.append("operationalTables")
-
-        if visibility.get(cls._STRUCTURE):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
-    def _narrative_order_summary_then_evidence(
-        cls,
-        visibility: dict[str, bool],
-        metadata: dict[str, Any],
-    ) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._GUIDE) or visibility.get(cls._INSPECTION):
-            order.append("operationalTables")
-
-        if (
-            cls._slot_has_type(metadata, "chart")
-            or cls._slot_has_type(metadata, "tree")
-            or cls._slot_has_type(metadata, "kpi")
-        ):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
-
-    @classmethod
     def _has_operational_tables(cls, metadata: dict[str, Any]) -> bool:
         count = 0
 
@@ -476,24 +413,6 @@ class ChatPresentationSectionRulesService:
                     count += 1
 
         return count >= 1
-
-    @classmethod
-    def _narrative_order_tree_hierarchy(cls, visibility: dict[str, bool]) -> list[str]:
-        order = ["lead"]
-
-        if visibility.get(cls._HIGHLIGHTS):
-            order.append("highlights")
-
-        if visibility.get(cls._PROFILE):
-            order.append("profileTables")
-
-        if visibility.get(cls._STRUCTURE):
-            order.append("tailVisuals")
-
-        if visibility.get(cls._ATTENTION):
-            order.append("attention")
-
-        return order
 
     @classmethod
     def _should_include_tail_visuals(

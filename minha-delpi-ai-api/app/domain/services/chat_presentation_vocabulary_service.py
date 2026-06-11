@@ -205,6 +205,27 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return tuple(item for item in raw if isinstance(item, dict))
 
     @classmethod
+    def narrative_order_template(cls, key: str) -> dict[str, Any]:
+        token = str(key or "").strip().lower()
+        raw = cls.node("playbook12Refactor", "narrativeOrderTemplates")
+
+        if not isinstance(raw, dict):
+            return {}
+
+        template = raw.get(token)
+
+        return dict(template) if isinstance(template, dict) else {}
+
+    @classmethod
+    def narrative_order_template_keys(cls) -> tuple[str, ...]:
+        raw = cls.node("playbook12Refactor", "narrativeOrderTemplates")
+
+        if not isinstance(raw, dict):
+            return ()
+
+        return tuple(str(key) for key in raw if str(key).strip())
+
+    @classmethod
     def table_role_default(cls) -> str:
         return cls.text("tableRoles", "defaultRole", default="other")
 

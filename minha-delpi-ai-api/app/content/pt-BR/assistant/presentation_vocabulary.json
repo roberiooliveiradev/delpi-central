@@ -493,7 +493,8 @@
       "sectionAvailabilityRouteHandlerMax": 0,
       "totalPathConditionalsMax": 0,
       "useCaseMetadataPipelineMaxLines": 200,
-      "profileVisualBundleBuilderElifMax": 0
+      "profileVisualBundleBuilderElifMax": 0,
+      "narrativeOrderTemplateMethodMax": 0
     },
     "presentationTitlePolicies": [
       {
@@ -504,6 +505,64 @@
         "dashboardPanelTypes": ["table", "chart"]
       }
     ],
+    "narrativeOrderTemplates": {
+      "analyser": {
+        "slots": ["lead", "profileTables", "highlights", "operationalTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "profileTables": ["profile"],
+          "operationalTables": ["guide", "inspection"],
+          "tailVisuals": ["structure"]
+        },
+        "planFlags": {
+          "profileTables": "profileFirst",
+          "highlights": "highlightsAfterProfile",
+          "attention": "attentionLast"
+        }
+      },
+      "operational_with_tail": {
+        "slots": ["lead", "profileTables", "highlights", "operationalTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "profileTables": ["profile"],
+          "operationalTables": ["guide", "structure"],
+          "tailVisuals": ["auto_tail"]
+        }
+      },
+      "operational_stock": {
+        "slots": ["lead", "highlights", "operationalTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "operationalTables": ["profile", "guide"],
+          "tailVisuals": ["structure"]
+        }
+      },
+      "profile_then_structure": {
+        "slots": ["lead", "highlights", "profileTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "profileTables": ["profile"],
+          "tailVisuals": ["structure"]
+        }
+      },
+      "operational_with_panels": {
+        "slots": ["lead", "highlights", "operationalTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "operationalTables": ["profile", "guide"],
+          "tailVisuals": ["structure"]
+        }
+      },
+      "summary_then_evidence": {
+        "slots": ["lead", "operationalTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "operationalTables": ["guide", "inspection"],
+          "tailVisuals": ["presentation_slots"]
+        }
+      },
+      "tree_hierarchy": {
+        "slots": ["lead", "highlights", "profileTables", "tailVisuals", "attention"],
+        "slotSources": {
+          "profileTables": ["profile"],
+          "tailVisuals": ["structure"]
+        }
+      }
+    },
     "tierAPipelineCases": [
       {
         "id": "tier_a_analyser",

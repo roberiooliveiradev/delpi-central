@@ -52,6 +52,18 @@ def test_refactor_baseline_summary_has_expected_debt() -> None:
     assert report["profileGaps"]["tierAMissingSectionRules"] == []
 
 
+def test_section_rules_has_no_legacy_narrative_template_methods():
+    from pathlib import Path
+
+    service_path = (
+        Path(__file__).resolve().parents[3]
+        / "app/domain/services/chat_presentation_section_rules_service.py"
+    )
+    source = service_path.read_text(encoding="utf-8")
+
+    assert source.count("def _narrative_order_") == 0
+
+
 def test_tier_a_profiles_listed_in_vocabulary_cases() -> None:
     fixture_keys = {
         case["profile_key"]

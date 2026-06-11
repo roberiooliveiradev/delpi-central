@@ -413,6 +413,8 @@ Persistia o diagnóstico §1.2 (pré-R1–R4). **R24** fechou os resíduos estru
 | SectionAvailability ~1126 linhas | Já resolvido R4; `sectionRules` tier A MP/compras (4 rotas) |
 | MFE `inferTableRoleFromTitle` | Fallback reduzido a `other`; API manda `role` |
 | Títulos eficiência fabril no use case | `ChatPresentationTitleNormalizationService` + JSON |
+| Templates `_narrative_order_*` Python | `narrativeOrderTemplates` em `presentation_vocabulary.json` |
+| MFE `ROUTE_VISUAL_ORDER` | Removido — `resolveVisualOrderFromToolCalls` / `presentationDecision.visualOrder` |
 
 **Não** misturar correção desses itens com patch em `fixed_table_columns`; cada item = fase ou extensão de R existente + teste.
 
@@ -790,7 +792,7 @@ Tokens de título para inferência legacy: `presentation_vocabulary.json` → `s
 **Tarefas**
 
 1. `resolveInitialToolbarKind`: ler `presentationDecision.selected` e `availableViews` — não `routeKeyFromPath`.
-2. Eliminar ou sincronizar `ROUTE_VISUAL_ORDER` com `viewOrder` do perfil (script de validação ou remoção).
+2. ~~Eliminar ou sincronizar `ROUTE_VISUAL_ORDER`~~ ✅ removido jun/2026 — `resolveVisualOrderFromToolCalls` / `presentationDecision.visualOrder`.
 3. `isTableFirstRouteToolCalls` / `isStructureHeavyToolCalls`: substituir por `stackPresentationPlan` + `dataShape`.
 4. Após R1: remover ramos de `inferTableRoleFromTitle` cobertos por `role`.
 5. Testes: `presentationStackPlan.test.ts`, `chatPresentation.test.ts` — metadata mock da API como fonte única.
