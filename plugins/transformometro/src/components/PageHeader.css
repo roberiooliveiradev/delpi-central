@@ -41,11 +41,83 @@
     grid-template-columns: repeat(auto-fill, minmax(10.5rem, max-content));
   }
 
-  .dashboard-transformometro .ds-header-actions .ds-ghost-btn,
-  .dashboard-transformometro .ds-header-actions .ds-primary-btn {
-    min-height: 40px;
-    padding: 9px 12px;
-  }
+.dashboard-transformometro .ds-header-actions .ds-ghost-btn,
+.dashboard-transformometro .ds-header-actions .ds-primary-btn {
+  min-height: 40px;
+  padding: 9px 12px;
+}
+
+.dashboard-transformometro .ds-header-menu {
+  position: relative;
+}
+
+.dashboard-transformometro .ds-header-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-header-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-transformometro .ds-header-menu__chevron {
+  opacity: 0.7;
+}
+
+.dashboard-transformometro .ds-header-menu[open] .ds-header-menu__chevron {
+  transform: rotate(180deg);
+}
+
+.dashboard-transformometro .ds-header-menu__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 15.5rem;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--ds-border, rgba(255, 255, 255, 0.12));
+  background: var(--ds-surface-elevated, #1a2332);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-transformometro .ds-header-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-header-menu__item:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-transformometro .ds-header-menu__item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-transformometro .ds-header-menu__divider {
+  height: 1px;
+  margin: 6px 0;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-transformometro .ds-header-menu__hint {
+  margin: 4px 2px 0;
+  padding: 0 8px 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.72;
+}
 }
 
 @media (max-width: 760px) {

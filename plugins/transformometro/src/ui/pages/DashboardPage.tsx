@@ -3,11 +3,8 @@ import {
   AlertTriangle,
   Clock,
   Coins,
-  Download,
-  FileDown,
   Lightbulb,
   Percent,
-  RefreshCw,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -25,6 +22,7 @@ import { ChartGranularityToggle } from "../../components/ChartGranularityToggle"
 import { ChartSeriesViewport } from "../../components/ChartSeriesViewport";
 import { RankingBarChart } from "../../components/RankingBarChart";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+import { DashboardToolbarMenu } from "../../components/DashboardToolbarMenu";
 import { PageHeader } from "../../components/PageHeader";
 import { SegmentToggle } from "../../components/SegmentToggle";
 import { StatusAlerts } from "../../components/StatusAlerts";
@@ -171,6 +169,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
   const [exporting, setExporting] = useState<"csv" | "excel" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
@@ -219,7 +218,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   }
 
   async function handleRecalcCache() {
-    setRefreshing(true);
+    if (
+      !window.confirm(
+        "Recalcular o cache materializado (dashboard_calculos)? Pode levar alguns minutos."
+      )
+    ) {
+      return;
+    }
+    setRecalculating(true);
     setError(null);
     try {
       await recalcularDashboard(getAccessToken);
@@ -227,7 +233,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao recalcular cache do dashboard");
     } finally {
-      setRefreshing(false);
+      setRecalculating(false);
     }
   }
 
@@ -457,32 +463,16 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
         onRefresh={() => void handleRefresh()}
-        refreshing={refreshing}
+        refreshing={refreshing || recalculating}
         actions={
-          <>
-            <button type="button" className="ds-ghost-btn" onClick={handleDownloadCsv} disabled={exporting !== null}>
-              <Download size={16} />
-              {exporting === "csv" ? "Gerando..." : "CSV"}
-            </button>
-            <button type="button" className="ds-ghost-btn" onClick={handleDownloadExcel} disabled={exporting !== null}>
-              <FileDown size={16} />
-              {exporting === "excel" ? "Gerando..." : "Excel"}
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => void handleRecalcCache()}
-              disabled={refreshing}
-              title="Atualiza o cache materializado (dashboard_calculos) para integrações"
-            >
-              <RefreshCw size={16} />
-              {refreshing ? "Recalculando..." : "Recalcular cache"}
-            </button>
-            <button type="button" className="ds-primary-btn" onClick={() => void handleRefresh()} disabled={refreshing}>
-              <RefreshCw size={16} />
-              {refreshing ? "Atualizando..." : "Atualizar"}
-            </button>
-          </>
+          <DashboardToolbarMenu
+            exporting={exporting}
+            recalculating={recalculating}
+            disabled={refreshing}
+            onExportCsv={() => void handleDownloadCsv()}
+            onExportExcel={() => void handleDownloadExcel()}
+            onRecalcCache={() => void handleRecalcCache()}
+          />
         }
       />
 

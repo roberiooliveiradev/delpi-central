@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Gauge, ListFilter } from "lucide-react";
+import { Gauge, RefreshCw } from "lucide-react";
 import { TransformometroNav } from "./TransformometroNav";
 import "./PageHeader.css";
 
@@ -45,7 +45,7 @@ export function PageHeader({
             onClick={onRefresh}
             disabled={refreshing}
           >
-            <ListFilter size={16} />
+            <RefreshCw size={16} />
             {refreshing ? "Atualizando…" : "Atualizar"}
           </button>
         ) : null}
