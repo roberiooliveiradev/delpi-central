@@ -804,11 +804,11 @@ class ChatPresentationCompositeVisualBuilder:
         preprocess = str(tree_spec.get("preprocess") or "").strip()
 
         if preprocess == "enrich_structure_rows":
-            from app.domain.services.chat_presentation_operational_table_service import (
-                ChatPresentationOperationalTableService as OpsTable,
+            from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+                enrich_structure_rows,
             )
 
-            items = OpsTable.enrich_structure_rows(items)
+            items = enrich_structure_rows(items)
         elif preprocess == "enrich_history_items":
             code, _description = cls._product_context(host, root, path)
             items = cls._enrich_history_items(host, items, product_code=code)

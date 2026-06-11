@@ -1,3 +1,6 @@
+from app.domain.services.chat_presentation_column_label_context import (
+    ExternalActionColumnLabelContext,
+)
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as OpsTable,
 )
@@ -7,6 +10,9 @@ from app.domain.services.external_actions.external_action_column_label_service i
 )
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
+)
+from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+    normalize_lmp_items,
 )
 
 
@@ -41,7 +47,7 @@ def test_build_items_table_surfaces_new_fields_without_fixed_whitelist():
     invalidate_column_label_cache()
     presenter = ExternalActionResultPresenter()
     table = OpsTable.build_items_table(
-        presenter,
+        presenter.column_label_context,
         [
             {
                 "rank": 1,
@@ -67,8 +73,8 @@ def test_build_items_table_lmp_includes_new_api_fields():
     invalidate_column_label_cache()
     presenter = ExternalActionResultPresenter()
     table = OpsTable.build_items_table(
-        presenter,
-        OpsTable.normalize_lmp_items(
+        presenter.column_label_context,
+        normalize_lmp_items(
             [
                 {
                     "saleNumber": "OV123",
@@ -92,6 +98,26 @@ def test_build_items_table_lmp_includes_new_api_fields():
     assert "sale_number" in keys
     assert "new_lmp_field" in keys
     assert table["rows"][0]["sale_number"] == "OV123"
+
+
+def test_build_items_table_accepts_column_label_context_without_presenter():
+    invalidate_column_label_cache()
+    context = ExternalActionColumnLabelContext(
+        column_labels=ExternalActionColumnLabelService(),
+    )
+    table = OpsTable.build_items_table(
+        context,
+        [{"alpha_field": 1, "beta_field": 2}],
+        title="Fake",
+        role="list",
+        path="/fake",
+    )
+
+    assert table is not None
+    keys = [column["key"] for column in table["columns"]]
+
+    assert "alpha_field" in keys
+    assert "beta_field" in keys
 
 
 def test_build_profile_items_table_delegates_to_operational_builder():

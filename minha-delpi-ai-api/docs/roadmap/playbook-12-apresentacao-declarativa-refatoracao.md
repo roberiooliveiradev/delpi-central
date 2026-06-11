@@ -40,7 +40,7 @@ Relacionado:
 | **R16** | Rótulos desconhecidos — web + LLM (fallback pós-vocabulário) | ✅ Concluído |
 | **R17** | Zero caminho legado `fixed_table_columns` em tabelas operacionais | ✅ Concluído |
 | **R18** | Discovery de rótulos — ports clean (LLM/web/settings) | ✅ Concluído |
-| **R19** | `build_items_table` desacoplado do god presenter | ⬜ Pendente |
+| **R19** | `build_items_table` desacoplado do god presenter | ✅ Concluído |
 | **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ⬜ Pendente |
 | **R21** | Humanização centralizada — rótulo + valor (tabular + KV) | ✅ Concluído |
 
@@ -396,6 +396,8 @@ Adicional: `presentation_builder_presenter` chama `_build_items_table` **sem** `
 4. Testes: `test_dynamic_table_columns.py` com fake context.
 
 **Critério:** OpsTable importa só domain + typing; zero import de `external_action_result_presenter`.
+
+**Status (jun/2026):** ✅ — `ColumnLabelContext` + `ExternalActionColumnLabelContext`; `build_items_table`/`kv_rows_*` consomem contexto; enrichers LMP/estrutura/estoque em `product_operational_table_row_enrichment.py`.
 
 **Esforço:** M (1–2 dias)
 
@@ -914,13 +916,25 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | Gate | `presentation_legacy_table_columns_gate.py` → `--check-playbook12` + `--check-no-legacy-table-columns` |
 | Testes | `test_presentation_legacy_table_columns_gate.py`, `test_chat_presentation_field_label_resolution_service.py`, analyser dinâmico |
 
-**Próximo passo imediato — R19 (builder desacoplado do god presenter):**
+**Próximo passo imediato — R20 (MFE metadata único):**
 
 | # | Ação | Critério |
 |---|------|----------|
-| 1 | Protocolo `ColumnLabelContext` | OpsTable sem import de `ExternalActionResultPresenter` |
-| 2 | Mover aliases/enrichers para presenters ou `tableProfiles` | Zero regra de rota hardcoded no builder |
+| 1 | Inventário fallbacks MFE | Contagem decrescente de `humanizeFieldKeyFallback` |
+| 2 | Gate MFE | Fail se novo `path.includes` em apresentação |
 | 3 | Homologação H17–H19 | Campo novo + rótulo PT em rota tier A |
+
+**R19 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Protocolo | `ColumnLabelContext` + `ExternalActionColumnLabelContext` |
+| Builder | `build_items_table` / `kv_rows_*` sem `ExternalActionResultPresenter` |
+| Enrichers | `product_operational_table_row_enrichment.py` (LMP, estrutura, estoque) |
+| Host | `ExternalActionResultPresenter.column_label_context` |
+| Testes | `test_build_items_table_accepts_column_label_context_without_presenter` |
+
+**Commit de referência R18:** `3e4a8eb6`.
 
 **R18 entregue (jun/2026):**
 
