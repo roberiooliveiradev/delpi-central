@@ -76,6 +76,11 @@ def main() -> int:
         help="Falha se fixtures tier A com expected_interactivity_labels não produzirem chips",
     )
     parser.add_argument(
+        "--check-no-legacy-table-columns",
+        action="store_true",
+        help="Falha se presenters montarem colunas via fixed_table_columns (Playbook 12 R17)",
+    )
+    parser.add_argument(
         "--check-playbook12",
         action="store_true",
         help="Falha se qualquer gate R12 (perfis, roles, chips, path baseline) divergir",
@@ -299,6 +304,26 @@ def main() -> int:
                 )
         else:
             print("\nOK: Playbook 13 P6 — renderPlan + renderHints (tier A + casos estendidos)")
+
+    if args.check_no_legacy_table_columns:
+        from tests.fixtures.presentation_legacy_table_columns_gate import (  # noqa: E402
+            validate_no_legacy_table_columns_in_presenters,
+        )
+
+        legacy = validate_no_legacy_table_columns_in_presenters()
+        violations = legacy.get("violations") or []
+
+        if violations:
+            exit_code = 1
+            print(
+                f"\nERRO: {len(violations)} uso(s) legado(s) de colunas em presenters (R17)",
+                file=sys.stderr,
+            )
+
+            for violation in violations[:20]:
+                print(f"  - {violation}", file=sys.stderr)
+        else:
+            print("\nOK: Playbook 12 R17 — zero fixed_table_columns em presenters")
 
     if args.check_playbook12:
         from tests.fixtures.presentation_playbook12_regression_gate import (  # noqa: E402

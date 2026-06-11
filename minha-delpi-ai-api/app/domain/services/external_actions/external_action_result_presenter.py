@@ -660,20 +660,6 @@ class ExternalActionResultPresenter:
             profile_name=profile_name,
         )
 
-    def _fixed_columns(self, table_id: str) -> list[dict]:
-        """Compat legado — preferir `_columns_for_items` / `_build_profile_items_table`."""
-        return self._column_labels.fixed_table_columns(
-            table_id,
-            schema_labels=self._active_schema_labels,
-        )
-
-    def _markdown_column_pairs(self, table_id: str) -> list[tuple[str, str]]:
-        """Compat legado — preferir `_markdown_column_pairs_for_items`."""
-        return self._column_labels.markdown_column_pairs(
-            table_id,
-            schema_labels=self._active_schema_labels,
-        )
-
     def _format_structure_component_line(
         self,
         code: str,

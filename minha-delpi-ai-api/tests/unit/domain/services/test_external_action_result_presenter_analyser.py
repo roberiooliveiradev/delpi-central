@@ -145,6 +145,25 @@ def test_build_tree_presentation_for_analyser():
     assert tree["root"]["children"][0]["children"][0]["label"] == "10030015"
 
 
+def test_analyser_structure_components_table_uses_dynamic_columns():
+    presenter = ExternalActionResultPresenter()
+    table = presenter._build_analyser_structure_components_table(
+        _sample_analyser_payload()["structure"],
+    )
+
+    assert table is not None
+    assert table.get("role") == "structure"
+    column_keys = {column["key"] for column in table.get("columns") or []}
+    row_keys = {
+        key
+        for key in table["rows"][0].keys()
+        if not str(key).startswith("_")
+    }
+
+    assert "quantity" in column_keys
+    assert row_keys.issubset(column_keys)
+
+
 def test_present_product_analyser_unwraps_double_success_data_wrapper():
     presenter = ExternalActionResultPresenter()
 

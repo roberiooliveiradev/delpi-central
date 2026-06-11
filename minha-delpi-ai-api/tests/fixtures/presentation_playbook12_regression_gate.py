@@ -16,6 +16,9 @@ from app.domain.services.chat_presentation_vocabulary_service import (
 from tests.fixtures.presentation_interactivity_gate import (
     validate_tier_a_interactivity_cases,
 )
+from tests.fixtures.presentation_legacy_table_columns_gate import (
+    validate_no_legacy_table_columns_in_presenters,
+)
 from tests.fixtures.presentation_table_role_gate import validate_table_roles_for_ci
 
 
@@ -32,6 +35,7 @@ def validate_playbook12_ci_gates(
     builder_validation = ChatPresentationCoverageService.validate_visual_builders_for_ci()
     interactivity_gaps = validate_tier_a_interactivity_cases()
     path_baseline = ChatPresentationRefactorBaselineService.compare_to_stored()
+    legacy_columns = validate_no_legacy_table_columns_in_presenters()
 
     profile_gaps = list(profile_validation.get("profileGaps") or [])
     new_operation_gaps = list(profile_validation.get("newOperationGaps") or [])
@@ -61,6 +65,9 @@ def validate_playbook12_ci_gates(
     for item in path_drift:
         blocking_issues.append(f"path_baseline:{item}")
 
+    for violation in legacy_columns.get("violations") or []:
+        blocking_issues.append(f"legacy_table_columns:{violation}")
+
     return {
         "ok": not blocking_issues,
         "blockingIssues": blocking_issues,
@@ -70,6 +77,7 @@ def validate_playbook12_ci_gates(
         "interactivityGaps": interactivity_gaps,
         "visualBuilderWarnings": visual_builder_warnings,
         "pathBaselineDrift": path_drift,
+        "legacyTableColumnViolations": list(legacy_columns.get("violations") or []),
         "entityContractCaseCount": len(
             ChatPresentationCoverageService.build_entity_contract_cases()
         ),

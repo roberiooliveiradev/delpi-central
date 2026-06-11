@@ -124,6 +124,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
 - Field labels do presenter (aliases de produto/preço/estoque, perfil KV, componentes da estrutura) → `column_labels.fields` + `column_labels.presenter`
 - Ordem/rótulo preferido de colunas tabulares (hints — **não** whitelist; payload da API define o que aparece) → `column_labels.tableProfiles` + `ExternalActionColumnLabelService.resolve_columns_for_items`
+- Humanização centralizada (tabular + KV) — **R21 playbook-12** → `ChatPresentationFieldLabelResolutionService` + `resolve_field_labels` + `format_field_value`
 - Descoberta de rótulo ausente (web + LLM, pós-vocabulário) — **R16 playbook-12** → `column_labels.columnLabelDiscovery` + `PresentationColumnLabelDiscoveryPort` → `ChatPresentationColumnLabelDiscoveryService`
 - ~~`column_labels.presenter.fixedTableColumns`~~ **deprecated jun/2026** — migrado para `tableProfiles`; ver Playbook 12 § R15
 - KPI genérico, títulos de detalhe de produto, gráficos (estrutura/estoque) e resumo compacto do analyser → `presenter_content.genericKpi`, `productDetailTitles`, `charts`, `analyserCompact`

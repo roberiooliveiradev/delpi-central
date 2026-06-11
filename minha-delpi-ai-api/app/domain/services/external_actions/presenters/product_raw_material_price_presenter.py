@@ -803,7 +803,14 @@ class ExternalActionProductRawMaterialPricePresenter:
 
                 merged[str(key)] = value
 
-        rows.extend(_OpsTable.summary_kv_rows(self._host, merged))
+        rows.extend(
+            _OpsTable.summary_kv_rows(
+                self._host,
+                merged,
+                path=path,
+                profile_name="costImpactOverview",
+            )
+        )
 
         return {
             "type": "table",

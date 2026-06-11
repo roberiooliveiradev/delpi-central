@@ -178,14 +178,25 @@ class ChatPresentationOperationalTableService:
         cls,
         host: ExternalActionResultPresenter,
         payload: dict[str, Any],
+        *,
+        path: str = "",
+        profile_name: str | None = None,
     ) -> list[dict[str, str]]:
-        return [
-            {
-                "campo": host._column_labels.label_for(str(key)),
-                "valor": host._format_field_value(str(key), value),
-            }
-            for key, value in payload.items()
-        ]
+        from app.domain.services.chat_presentation_field_label_resolution_service import (
+            ChatPresentationFieldLabelResolutionService,
+        )
+
+        return ChatPresentationFieldLabelResolutionService.build_kv_rows(
+            payload,
+            format_value=lambda key, value, schema_formats=None: host._format_field_value(
+                key,
+                value,
+            ),
+            path=path,
+            profile_name=profile_name,
+            schema_labels=host._active_schema_labels,
+            schema_formats=host._active_schema_formats,
+        )
 
     @classmethod
     def summary_kv_rows(
@@ -193,18 +204,28 @@ class ChatPresentationOperationalTableService:
         host: ExternalActionResultPresenter,
         summary: dict[str, Any],
         *,
+        path: str = "",
+        profile_name: str | None = None,
         skip_keys: set[str] | None = None,
     ) -> list[dict[str, str]]:
+        from app.domain.services.chat_presentation_field_label_resolution_service import (
+            ChatPresentationFieldLabelResolutionService,
+        )
+
         skipped = skip_keys or set()
 
-        return [
-            {
-                "campo": host._column_labels.label_for(str(key)),
-                "valor": host._format_field_value(str(key), value),
-            }
-            for key, value in summary.items()
-            if str(key) not in skipped
-        ]
+        return ChatPresentationFieldLabelResolutionService.build_kv_rows(
+            summary,
+            format_value=lambda key, value, schema_formats=None: host._format_field_value(
+                key,
+                value,
+            ),
+            path=path,
+            profile_name=profile_name,
+            schema_labels=host._active_schema_labels,
+            schema_formats=host._active_schema_formats,
+            skip_keys=skipped,
+        )
 
     @classmethod
     def enrich_structure_rows(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -43,9 +43,6 @@ class ExternalActionColumnLabelService:
             "cofins",
             "iss",
             "ipi",
-            "discount",
-            "desconto",
-            "return",
             "devolv",
             "tax",
             "imposto",
@@ -148,34 +145,122 @@ class ExternalActionColumnLabelService:
         key: str,
         *,
         schema_labels: dict[str, str] | None = None,
+        path: str = "",
+        profile_name: str | None = None,
+        enable_discovery: bool = True,
     ) -> str:
-        normalized_key = str(key or "").strip()
+        token = str(key or "").strip()
 
-        if not normalized_key:
+        if not token:
             return ""
 
+        return self.resolve_field_labels(
+            [token],
+            path=path,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+            enable_discovery=enable_discovery,
+        ).get(token, self._humanize_field_key(token))
+
+    def _resolve_catalog_label(
+        self,
+        key: str,
+        *,
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+    ) -> str | None:
+        token = str(key or "").strip()
+
+        if not token:
+            return None
+
+        if profile_name:
+            hinted = self.column_label_hints(profile_name).get(token)
+
+            if str(hinted or "").strip():
+                return str(hinted).strip()
+
         if schema_labels:
-            schema_label = schema_labels.get(normalized_key)
+            schema_label = schema_labels.get(token)
 
             if isinstance(schema_label, str) and schema_label.strip():
                 return schema_label.strip()
 
         content = _column_labels_content()
         fields = content.get("fields") or {}
-        configured = fields.get(normalized_key)
+        configured = fields.get(token)
 
         if isinstance(configured, str) and configured.strip():
             return configured.strip()
 
-        snake_key = self._snake_case_key(normalized_key)
+        snake_key = self._snake_case_key(token)
 
-        if snake_key != normalized_key:
+        if snake_key != token:
             configured = fields.get(snake_key)
 
             if isinstance(configured, str) and configured.strip():
                 return configured.strip()
 
-        return self._humanize_field_key(normalized_key)
+        return None
+
+    def resolve_field_labels(
+        self,
+        keys: list[str],
+        *,
+        path: str = "",
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        enable_discovery: bool = True,
+    ) -> dict[str, str]:
+        """Cascata canônica R17: catálogo → humanize → discovery (web+LLM)."""
+        ordered: list[str] = []
+        seen: set[str] = set()
+
+        for raw in keys:
+            token = str(raw or "").strip()
+
+            if not token or token in seen:
+                continue
+
+            seen.add(token)
+            ordered.append(token)
+
+        if not ordered:
+            return {}
+
+        profile_hints = self.column_label_hints(profile_name) if profile_name else {}
+        label_map: dict[str, str] = {}
+        pending_discovery: list[str] = []
+
+        for key in ordered:
+            catalog = self._resolve_catalog_label(
+                key,
+                profile_name=profile_name,
+                schema_labels=schema_labels,
+            )
+
+            if catalog:
+                label_map[key] = catalog
+                continue
+
+            pending_discovery.append(key)
+            label_map[key] = self._humanize_field_key(key)
+
+        if enable_discovery and pending_discovery:
+            catalog_fields = (_column_labels_content().get("fields") or {})
+            discovered = PresentationColumnLabelDiscoveryService.resolve_labels(
+                pending_discovery,
+                path=path,
+                schema_labels=schema_labels,
+                profile_labels=profile_hints,
+                fields=catalog_fields,
+            )
+
+            for key, label in discovered.items():
+                if str(label or "").strip():
+                    label_map[key] = str(label).strip()
+
+        return label_map
 
     def is_catalog_label_resolved(
         self,
@@ -184,31 +269,14 @@ class ExternalActionColumnLabelService:
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
     ) -> bool:
-        token = str(key or "").strip()
-
-        if not token:
+        if not str(key or "").strip():
             return True
 
-        if schema_labels and str(schema_labels.get(token) or "").strip():
-            return True
-
-        hinted = self.column_label_hints(profile_name).get(token)
-
-        if str(hinted or "").strip():
-            return True
-
-        content = _column_labels_content()
-        fields = content.get("fields") or {}
-
-        if str(fields.get(token) or "").strip():
-            return True
-
-        snake_key = self._snake_case_key(token)
-
-        if snake_key != token and str(fields.get(snake_key) or "").strip():
-            return True
-
-        return False
+        return self._resolve_catalog_label(
+            key,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+        ) is not None
 
     def resolve_field_format(
         self,
@@ -357,13 +425,22 @@ class ExternalActionColumnLabelService:
         extended: bool = False,
         skip_empty: bool = True,
         schema_labels: dict[str, str] | None = None,
+        path: str = "",
+        profile_name: str | None = None,
     ) -> list[dict[str, object]]:
         if not isinstance(product, dict):
             return []
 
+        keys = self.product_profile_field_keys(extended=extended)
+        label_map = self.resolve_field_labels(
+            keys,
+            path=path,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+        )
         rows: list[dict[str, object]] = []
 
-        for key in self.product_profile_field_keys(extended=extended):
+        for key in keys:
             value = product.get(key)
 
             if skip_empty and value in (None, ""):
@@ -371,7 +448,7 @@ class ExternalActionColumnLabelService:
 
             rows.append(
                 {
-                    "campo": self.label_for(key, schema_labels=schema_labels),
+                    "campo": label_map.get(key) or self._humanize_field_key(key),
                     "valor": value,
                 }
             )
@@ -577,13 +654,14 @@ class ExternalActionColumnLabelService:
         *,
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
+        path: str = "",
     ) -> str:
-        hinted = self.column_label_hints(profile_name).get(key)
-
-        if hinted:
-            return hinted
-
-        return self.label_for(key, schema_labels=schema_labels)
+        return self.resolve_field_labels(
+            [key],
+            path=path,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+        ).get(str(key or "").strip(), self._humanize_field_key(str(key or "")))
 
     def resolve_columns_for_items(
         self,
@@ -631,27 +709,12 @@ class ExternalActionColumnLabelService:
                 ordered_keys.append(key)
 
         profile_hints = self.column_label_hints(resolved_profile)
-        label_map: dict[str, str] = {}
-
-        for key in ordered_keys:
-            label_map[key] = self.resolve_label_for_column(
-                key,
-                profile_name=label_hints_profile,
-                schema_labels=schema_labels,
-            )
-
-        catalog_fields = (_column_labels_content().get("fields") or {})
-        discovered_labels = PresentationColumnLabelDiscoveryService.resolve_labels(
+        label_map = self.resolve_field_labels(
             ordered_keys,
             path=path,
+            profile_name=label_hints_profile,
             schema_labels=schema_labels,
-            profile_labels=profile_hints,
-            fields=catalog_fields,
         )
-
-        for key, label in discovered_labels.items():
-            if key in label_map and str(label or "").strip():
-                label_map[key] = str(label).strip()
 
         columns: list[dict[str, str]] = []
 
@@ -706,6 +769,16 @@ class ExternalActionColumnLabelService:
 
         if not lowered:
             return None
+
+        if (
+            lowered.endswith("_percent")
+            or lowered.endswith("_pct")
+            or lowered.endswith("_percentage")
+        ):
+            return "percent"
+
+        if lowered.endswith("_date") or lowered.endswith("_at"):
+            return "date"
 
         for field_format, tokens in cls._FIELD_FORMAT_TOKENS.items():
             if any(token in lowered for token in tokens):

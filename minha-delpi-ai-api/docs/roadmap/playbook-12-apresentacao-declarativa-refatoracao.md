@@ -38,6 +38,11 @@ Relacionado:
 | **R14** | Texto-first, visuais sob demanda e outline ASCII em estrutura | ✅ Concluído |
 | **R15** | Colunas dinâmicas da API (sem whitelist fixa) | ✅ Concluído |
 | **R16** | Rótulos desconhecidos — web + LLM (fallback pós-vocabulário) | ✅ Concluído |
+| **R17** | Zero caminho legado `fixed_table_columns` em tabelas operacionais | ✅ Concluído |
+| **R18** | Discovery de rótulos — ports clean (LLM/web/settings) | ⬜ Pendente |
+| **R19** | `build_items_table` desacoplado do god presenter | ⬜ Pendente |
+| **R20** | MFE: rótulos/roles só do metadata (fallback < 5 casos) | ⬜ Pendente |
+| **R21** | Humanização centralizada — rótulo + valor (tabular + KV) | ✅ Concluído |
 
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
@@ -60,6 +65,88 @@ Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 **Proibido:** nova rota ou campo exigir editar whitelist para aparecer na tabela.
 
 **Testes:** `tests/unit/domain/services/test_dynamic_table_columns.py` + regressão por perfil.
+
+### R17 — Zero caminho legado (jun/2026)
+
+**Objetivo:** um único caminho R15+R16 para tabelas operacionais; grep zero de `fixed_table_columns` nos presenters.
+
+**Entregas:**
+
+| Item | Detalhe |
+|------|---------|
+| `product_analyser_presenter` | `analyserStructureComponents` via `_build_profile_items_table` |
+| `ExternalActionResultPresenter` | removidos `_fixed_columns` / `_markdown_column_pairs` |
+| `ChatPresentationFieldLabelResolutionService` | facade → `resolve_field_labels` |
+| `ExternalActionColumnLabelService.resolve_field_labels` | cascata catálogo → humanize → discovery |
+| Gate | `presentation_legacy_table_columns_gate.py` em `--check-playbook12` |
+
+**Testes:** `test_presentation_legacy_table_columns_gate.py`, `test_external_action_result_presenter_analyser.py`, `test_chat_presentation_field_label_resolution_service.py`.
+
+### R21 — Humanização e tradução centralizada (jun/2026)
+
+**Problema:** R15/R16 unificaram colunas tabulares, mas tabelas **campo × valor** (perfil KV, resumo do simulador de custos, etc.) ainda chamavam `label_for` isolado — sem discovery, sem `fieldFormats` consistentes, rótulos em inglês (`Product Type`) e valores mal tipados (`returned_materials` como R$, percentuais como moeda).
+
+**Princípio:** **uma cascata** para qualquer chave de campo da API — coluna de tabela **ou** linha `campo` de perfil KV — e **uma formatação** de valor via `format_field_value`.
+
+#### Entrada canônica
+
+| API | Uso |
+|-----|-----|
+| `ChatPresentationFieldLabelResolutionService.resolve_labels` / `resolve_label` | Facade — preferir em código novo |
+| `ExternalActionColumnLabelService.resolve_field_labels` | Implementação (batch) |
+| `ExternalActionColumnLabelService.format_field_value` | Valores (moeda, %, data, qtd.) |
+| `ChatPresentationFieldLabelResolutionService.build_kv_rows` | Tabelas campo/valor |
+
+#### Cascata unificada (R16 + catálogo + KV)
+
+```
+1. tableProfiles.preferredColumns (hint do profile_name, ex.: costImpactOverview)
+2. meta.fields / OpenAPI (schema_labels)
+3. column_labels.fields
+4. _humanize_field_key (fallback técnico)
+5. PresentationColumnLabelDiscoveryPort → web + LLM (batch por conjunto de chaves)
+```
+
+**Mesma cascata** em:
+
+- `resolve_columns_for_items` (tabelas listagem)
+- `summary_kv_rows` / `kv_rows_from_mapping` (perfil/resumo)
+- `build_kv_profile_rows` (quando recebe `path` / `profile_name`)
+- `label_for` (delega a `resolve_field_labels` — compat)
+
+#### Formatação de valor (`fieldFormats` + inferência)
+
+| Regra | Comportamento |
+|-------|----------------|
+| Sufixo `_percent` / `_pct` | **Percentual** vence tokens de moeda (`cost` no nome) |
+| Sufixo `_date` | Data (`YYYYMMDD` → `DD/MM/AAAA`) |
+| `column_labels.fieldFormats` | Override explícito por chave |
+| Token `return` | **Removido** de currency — evita `returned_materials` → R$ |
+
+#### Perfis KV (`tableProfiles`)
+
+Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview` para `/cost-impact-simulation`. **Não** whitelist de campos — só rótulos preferidos; campos extras do payload continuam aparecendo.
+
+#### O que NÃO fazer
+
+- `label_for` / `_humanize_field_key` direto em presenter para perfil KV.
+- `campo: "Product Type"` hardcoded em Python.
+- Formatar `valor` no MFE quando a API já enviou tabela com `dataType`.
+- Duplicar cascata só para colunas tabulares (R16) sem incluir KV.
+
+#### Entregáveis R21
+
+- [x] `resolve_field_labels` + `ChatPresentationFieldLabelResolutionService`
+- [x] `summary_kv_rows` / `kv_rows_from_mapping` → `build_kv_rows`
+- [x] Simulador de custos: `profile_name=costImpactOverview` + vocabulário em `column_labels.fields`
+- [x] Inferência percent/date antes de currency
+- [x] Testes: `test_chat_presentation_field_label_resolution_service.py`
+
+#### Critério de aceite
+
+- Resumo do simulador PA 90261255: rótulos PT-BR no catálogo; percentuais com `%`; contadores sem `R$`.
+- Nova chave em perfil KV herda discovery quando ausente do JSON.
+- Colunas tabulares e KV usam o mesmo batch de discovery no turno.
 
 ### R16 — Rótulos desconhecidos: web + LLM (jun/2026)
 
@@ -157,6 +244,176 @@ Prompts e templates **não** hardcoded em Python — ver `assistant-content-json
 - Latência: falha silenciosa → permanece fallback `_humanize_field_key` (passo 4).
 - Domain sem import de infra/application.
 
+### Acoplamentos remanescentes (pós R15/R16 — jun/2026)
+
+R15/R16 fecharam o fluxo **canônico** (`build_items_table` → `resolve_columns_for_items` → discovery via port). Ainda existem caminhos paralelos e dependências que **não** devem ser corrigidos com patch local — registrar aqui antes de nova fase.
+
+#### Mapa de prioridade
+
+| Prioridade | Acoplamento | Impacto | Canônico alvo |
+|------------|-------------|---------|---------------|
+| **Alta** | Dois caminhos de coluna (canônico vs legado) | Campos novos da API **não aparecem**; R16 **não roda** | Só `resolve_columns_for_items` / `build_items_table` |
+| **Média** | Discovery: application → infra/composition direto | Clean architecture incompleta na orquestração | Ports para LLM, web search e settings |
+| **Média** | LLM/web **síncronos** no hot path da tabela | Latência no turno quando há chaves desconhecidas | Discovery assíncrono ou warm cache |
+| **Média** | Duplicação `is_catalog_resolved` / `is_catalog_label_resolved` | Regra de catálogo em dois módulos | `is_catalog_label_resolved` → `_resolve_catalog_label` (R21) |
+| ~~Alta~~ | ~~KV perfil fora da cascata R16~~ | ~~Resumo simulador em inglês~~ | **R21** `resolve_field_labels` + `build_kv_rows` |
+| **Baixa** | `build_items_table(host: ExternalActionResultPresenter)` | Builder genérico acoplado ao god presenter | Contrato estreito (port/DTO) |
+| **Baixa** | Aliases/enriquecimento de row por rota no OpsTable | Semântica de rota no módulo «genérico» | Perfil JSON ou presenter tier A |
+| **Onda 2** | Use case / visual bundle / section availability / MFE | Nova rota rica = 3–4 arquivos + heurística UI | Playbook §1.2, R1–R14 |
+
+#### A1 — Dois caminhos de coluna (gap principal da R15)
+
+| Caminho | Módulo | Comportamento |
+|---------|--------|---------------|
+| **Canônico** ✅ | `resolve_columns_for_items` | União de chaves do payload + hints + discovery R16 |
+| **Legado** ⚠ | `fixed_table_columns` | Só chaves de `tableProfiles.preferredColumns` — **ignora campos extras do payload** |
+
+**Onde ainda usa legado (pré-R17):**
+
+- ~~`product_analyser_presenter.py` — `analyserStructureComponents`~~ migrado em R17.
+- ~~`ExternalActionResultPresenter._fixed_columns`~~ removido em R17.
+
+**Proibido:** novo código chamar `fixed_table_columns` para tabela operacional com rows da API.
+
+**Gate CI:** `validate_no_legacy_table_columns_in_presenters()` incluído em `--check-playbook12` e `--check-no-legacy-table-columns`.
+
+#### A2 — R16: orquestração ainda acoplada a infra
+
+O **domain** está correto (port + facade). Na **application**, `ChatPresentationColumnLabelDiscoveryService` ainda:
+
+- lê `Settings` direto (`infrastructure.config.settings`);
+- instancia `WebSearchHttpGateway` (infra);
+- chama `make_llm_gateway()` via `composition.llm_composer` (lazy).
+
+O adapter infra → application é pass-through fino (infra depende de application — aceitável hoje, não ideal).
+
+**Alvo:** `LlmGatewayPort` + port de web search + flags via `AppConfigPort` ou settings port; adapter infra implementa ports sem repassar para application.
+
+#### A3 — Discovery síncrono na montagem da tabela
+
+`resolve_columns_for_items` invoca discovery **no mesmo request** que monta colunas. Falha silenciosa ok; latência acoplada a tabelas com muitas chaves fora do catálogo.
+
+**Alvo (futuro):** fila/async, prefetch por rota OpenAPI, ou aceitar humanize no 1º turno e enriquecer no cache no 2º.
+
+#### A4 — Duplicação de regra «campo no catálogo»
+
+- `ExternalActionColumnLabelService.is_catalog_label_resolved`
+- `ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved`
+
+Discovery usa só enrichment; column label service mantém cópia paralela.
+
+**Alvo:** um método canônico (enrichment ou column label service); o outro delega.
+
+#### A5 — `build_items_table` acoplado ao presenter host
+
+`ChatPresentationOperationalTableService.build_items_table` recebe `ExternalActionResultPresenter` inteiro e acessa `_column_labels`, `_active_schema_labels`.
+
+**Alvo:** protocolo estreito, ex.: `ColumnLabelContext` com `resolve_columns_for_items` + `schema_labels`.
+
+#### A6 — Regras de rota no builder «genérico»
+
+Em `ChatPresentationOperationalTableService`:
+
+- `LMP_ITEM_ALIASES` — camelCase → snake só para LMP;
+- `enrich_structure_rows`, `enrich_stock_position_rows` — enriquecimento específico de produto/estoque.
+
+Não quebra colunas dinâmicas, mas concentra semântica de rota fora de `tableProfiles` / presenters.
+
+**Alvo:** aliases via perfil JSON ou normalização na api-delpi; enrichments nos presenters tier A.
+
+#### A7 — `tableProfiles` grande (manutenção, não whitelist)
+
+`column_labels.json` segue com dezenas de perfis `preferredColumns` + `detect`. No fluxo canônico **não** esconde colunas novas; ordem e rótulos preferidos ainda são curados manualmente. R16 só entra quando o campo não está em `fields` / OpenAPI / hint do perfil.
+
+#### A8 — MFE: fallback duplicado
+
+- `presentationFieldLabels.ts` — `humanizeFieldKeyFallback` para gráficos/KPIs quando `fieldLabels` vazio.
+- `presentationStackPlan.ts` — `inferTableRoleFromTitle` quando API não manda `role`.
+
+**Regra:** API deve mandar `columns[].label` e `role`; MFE fallback só legacy (< 5 casos — meta §1.3).
+
+#### A9 — Débito onda 2 (fora do escopo R15/R16)
+
+Persiste o diagnóstico §1.2:
+
+```
+ExecuteExternalActionUseCase              ~14 elif (tablePresentations)
+ChatPresentationVisualBundleService       ~12 flags + _enrich_* por rota
+ChatPresentationSectionAvailabilityService ~1126 linhas, handler por rota
+MFE presentationStackPlan                 inferTableRoleFromTitle, ROUTE_VISUAL_ORDER
+```
+
+Adicional: `presentation_builder_presenter` chama `_build_items_table` **sem** `profile_name` em vários ramos — perde hints/detect do perfil.
+
+**Não** misturar correção desses itens com patch em `fixed_table_columns`; cada item = fase ou extensão de R existente + teste.
+
+### R17 — Zero caminho legado em tabelas operacionais (A1)
+
+**Objetivo:** grep zero de `fixed_table_columns` / `_fixed_columns` para montagem de tabela com rows da API; um único caminho R15+R16.
+
+**Tarefas**
+
+1. Migrar `product_analyser_presenter._build_product_analyser_structure_components_table` → `_build_profile_items_table(..., profile_name="analyserStructureComponents")`.
+2. Auditar `presentation_builder_presenter` — passar `profile_name`/`path` em ramos que chamam `_build_items_table` sem perfil (perde hints `tableProfiles.detect`).
+3. Gate CI `--check-no-legacy-table-columns` (ou estender `--check-playbook12`): fail se Python montar `columns` via `fixed_table_columns` fora de testes unitários do serviço de labels.
+4. Deprecar `_fixed_columns` no host presenter (warn log ou remover após grep zero).
+5. Testes: `test_external_action_result_presenter_analyser.py` — campo extra no payload analyser aparece na tabela de componentes.
+
+**Critério:** nenhum presenter tier A monta tabela operacional sem `build_items_table` / `_build_profile_items_table`.
+
+**Esforço:** S (0,5 dia)
+
+---
+
+### R18 — Discovery clean architecture (A2 + A4)
+
+**Objeto:** `ChatPresentationColumnLabelDiscoveryService` sem import direto de `Settings`, `WebSearchHttpGateway`, `make_llm_gateway`.
+
+**Tarefas**
+
+1. Ports: `PresentationColumnLabelWebSearchPort`, reutilizar `LlmGatewayPort`; flags via `AppConfigPort` (ou extensão mínima).
+2. Wiring em `content_composer.py` / `configure_domain_infrastructure_ports()`.
+3. Unificar `is_catalog_resolved` (enrichment) e `is_catalog_label_resolved` (column label) — um helper canônico; o outro delega.
+4. Testes: mocks de port; domain continua sem import de application/infra.
+
+**Critério:** `rg 'from app.infrastructure' app/domain/services/external_actions/external_action_column_label_service.py` vazio; application discovery só usa ports injetados.
+
+**Esforço:** M (1 dia)
+
+---
+
+### R19 — Builder de tabela desacoplado (A5 + A6)
+
+**Objetivo:** `ChatPresentationOperationalTableService` não depende de `ExternalActionResultPresenter` god object; sem regra de rota hardcoded no builder genérico.
+
+**Tarefas**
+
+1. Introduzir protocolo/DTO `ColumnLabelContext` (`resolve_columns_for_items`, `schema_labels`).
+2. `build_items_table(context, items, ...)` — presenters/host implementam o protocolo.
+3. Mover `LMP_ITEM_ALIASES`, `enrich_structure_rows`, `enrich_stock_position_rows` para presenters tier A ou bloco `tableProfiles.fieldAliases` / `rowEnrichers` no JSON (registry fino).
+4. Testes: `test_dynamic_table_columns.py` com fake context.
+
+**Critério:** OpsTable importa só domain + typing; zero import de `external_action_result_presenter`.
+
+**Esforço:** M (1–2 dias)
+
+---
+
+### R20 — MFE e metadata como fonte única (A8 + trecho A9)
+
+**Objetivo:** reduzir fallbacks duplicados no MFE; API sempre envia `columns[].label` e `role`.
+
+**Tarefas**
+
+1. Inventário: `presentationFieldLabels.ts` (`humanizeFieldKeyFallback`), `inferTableRoleFromTitle` — contagem de ramos restantes.
+2. Gate MFE: teste de cobertura decrescente; fail se novo `path.includes` em módulos de apresentação.
+3. Rotas tier A: smoke que asserta `columns[].label` PT (não snake_case cru) quando campo ausente de `fields` mas presente no payload (R16).
+4. Documentar casos legacy remanescentes (< 5) em `presentation_vocabulary.json` → `legacyFallbacks`.
+
+**Critério:** homologação H17–H19 (§8) verde; inferência MFE só onde API não manda `role`/`label` (lista explícita no JSON).
+
+**Esforço:** M (1 dia)
+
 ---
 
 ## 1. Contexto
@@ -176,16 +433,17 @@ Prompts e templates **não** hardcoded em Python — ver `assistant-content-json
 
 ### 1.2 Débito técnico restante (diagnóstico jun/2026)
 
-Apesar da onda 1, ainda existem **três camadas paralelas** de regra por rota:
+Apesar da onda 1 e de R15/R16 (colunas dinâmicas + discovery de rótulos), ainda existem **camadas paralelas** de regra por rota e **acoplamentos documentados** na seção [Acoplamentos remanescentes (pós R15/R16)](#acoplamentos-remanescentes-pós-r15r16--jun2026) — em especial **A1** (caminho legado `fixed_table_columns`) e **A9** abaixo.
 
 ```
 ExecuteExternalActionUseCase     ~14 elif por path (tablePresentations)
 ChatPresentationVisualBundleService   ~12 flags + métodos _enrich_* dedicados
 ChatPresentationSectionAvailabilityService   ~1126 linhas, handler por rota
 MFE presentationStackPlan / presentationMultiRoute   inferTableRoleFromTitle, ROUTE_VISUAL_ORDER
+fixed_table_columns (legado R15)   ~~product_analyser~~ — fechado em R17; gate CI ativo
 ```
 
-**Sintoma:** nova rota rica exige Python em 3–4 arquivos + heurística MFE; risco de divergência API↔UI.
+**Sintoma:** nova rota rica exige Python em 3–4 arquivos + heurística MFE; risco de divergência API↔UI. Tabela via `fixed_table_columns` não herda colunas novas da API nem R16.
 
 ### 1.3 Meta da onda 2
 
@@ -193,9 +451,11 @@ MFE presentationStackPlan / presentationMultiRoute   inferTableRoleFromTitle, RO
 |---------|------|
 | Novo perfil rico | JSON + teste; **zero** `elif` novo no use case |
 | Tabelas com `role` | 100% dos `tablePresentations` em perfis tier A |
+| Colunas tabulares | 100% via `build_items_table` — zero whitelist presenter (R15; R17 fecha exceções) |
+| Rótulos de coluna | API envia `columns[].label`; discovery R16 só para chaves fora do catálogo |
 | MFE `inferTableRoleFromTitle` | Reduzido a fallback legacy (< 5 casos) |
 | `ChatPresentationSectionAvailabilityService` | < 400 linhas; regras em JSON |
-| Homologação | Roteiro R1–R12 (ver §8) verde |
+| Homologação | Roteiro §8 (H1–H20) verde |
 
 ---
 
@@ -206,11 +466,13 @@ MFE presentationStackPlan / presentationMultiRoute   inferTableRoleFromTitle, RO
 ```
 meta.entity + path
   → ChatPresentationProfileService.resolve_profile_key()
-  → ChatPresentationTableAssemblyService.assemble()          ← NOVO (R3)
-  → ChatPresentationProfileVisualBundleService.enrich()    ← NOVO (R2)
+  → ChatPresentationTableAssemblyService.assemble()          ← R3
+  → ChatPresentationProfileVisualBundleService.enrich()      ← R2
   → ChatPresentationFieldNormalizationService.normalize_metadata()
        → ChatPresentationKpiAssemblyService (já existe)
        → ChatPresentationTableRoleService (R1)
+  → [R15/R16] tablePresentations[].columns via build_items_table
+       → resolve_columns_for_items (+ PresentationColumnLabelDiscoveryPort)
   → ChatPresentationStructureDedupService.dedupe_metadata()
   → ChatPresentationHumanizedNarrativeService.enrich_metadata()
   → ChatPresentationStackOrderService.enrich_metadata()
@@ -515,6 +777,12 @@ flowchart LR
     R6 --> R8
     R7 --> R8
     R8 --> R9[R9 CI + homologação]
+    R9 --> R15[R15 Colunas dinâmicas]
+    R15 --> R16[R16 Discovery rótulos]
+    R16 --> R17[R17 Zero legado]
+    R17 --> R18[R18 Discovery ports]
+    R18 --> R19[R19 Builder desacoplado]
+    R19 --> R20[R20 MFE metadata]
 ```
 
 | Ordem | Fase | Por quê |
@@ -526,6 +794,9 @@ flowchart LR
 | 5 | **R5** + **R7** | Alinhar decisão API↔MFE |
 | 6 | **R6** | Incremental por família de presenter |
 | 7 | **R8** + **R9** | Polimento e gates |
+| 8 | **R15** + **R16** | Colunas da API + humanização sem whitelist |
+| 9 | **R17** | Fecha gap A1 (caminho legado) |
+| 10 | **R18**–**R20** | Acoplamentos A2–A8; paralelizável após R17 |
 
 ---
 
@@ -542,15 +813,22 @@ flowchart LR
 | Narrativa | `ChatPresentationHumanizedNarrativeService` | skip por path |
 | Render MFE | `chatPresentation.ts`, `assistantProseRendering.ts` | `ChatMessageList` ad hoc |
 | Textos PT | `presenter_content.json`, `presentation_vocabulary.json` | strings em use case |
+| Colunas tabulares (payload) | `ChatPresentationOperationalTableService.build_items_table` | `fixedTableColumns`, whitelist no presenter |
+| Rótulos de coluna | `ExternalActionColumnLabelService.resolve_columns_for_items` + `PresentationColumnLabelDiscoveryPort` | `_humanize_key` no MFE, strings PT em Python |
+| Hints ordem/rótulo | `column_labels.tableProfiles.preferredColumns` | listas fixas no presenter |
+| Atalho presenter | `ExternalActionResultPresenter._build_profile_items_table` | montar `columns`/`rows` inline |
+| Cascata rótulo (KV + colunas) | `ChatPresentationFieldLabelResolutionService` → `resolve_field_labels` | `_humanize_key` duplicado, discovery só no presenter |
 
 ---
 
 ## 6. Checklist por PR
 
-Antes de merge de qualquer fase R1–R8:
+Antes de merge de qualquer fase R1–R20:
 
 - [ ] Existe **um** ponto de verdade para a regra?
 - [ ] Nenhum consumidor novo bypassa o módulo canônico?
+- [ ] Tabelas operacionais usam `build_items_table` (R15) — não `fixed_table_columns`?
+- [ ] Rótulos novos passam por `resolve_columns_for_items` + discovery port (R16)?
 - [ ] Teste de regressão cobre o perfil/rota motivador?
 - [ ] Strings PT novas só em JSON (gate ADR-006)?
 - [ ] `pytest` nos pacotes alterados — verde?
@@ -591,6 +869,10 @@ Antes de merge de qualquer fase R1–R8:
 | R14 | `estrutura {code}` modo Tabela — preferência UI | R3, `d3d8ba15` |
 | R15 | `estrutura {code}` modo Árvore nativa | R2 |
 | R16 | Smoke estrutura text/table/tree | `smoke_structure_preference.py` |
+| H17 | Rota tier A com campo **novo** na api-delpi (não listado em `fields`) | Coluna aparece na tabela sem editar whitelist (R15) |
+| H18 | Mesmo campo novo — cabeçalho PT | Rótulo humanizado (LLM ou catálogo), não snake_case cru (R16) |
+| H19 | `simulação impacto custo {code}` — coluna `unit` / percentual material | Ordem hints `costImpactMaterials`; narrativa e tabela usam `% impacto no custo de materiais` |
+| H20 | Analyser — tabela componentes estrutura | Após R17: campo extra no payload visível na tabela |
 
 Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-teste-chat-jun2026.md).
 
@@ -611,12 +893,58 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | `presentation_vocabulary.json` | Tokens título/intent | Fonte de `role` |
 | MFE `presentationStackPlan.ts` | Ordem stack | Consumir `role` |
 | MFE `presentationMultiRoute.ts` | Multi-rota | Só layout, não decisão |
+| `chat_presentation_operational_table_service.py` | Tabelas operacionais tier A | Montagem inline de colunas |
+| `external_action_column_label_service.py` | Colunas + rótulos + discovery port | `fixedTableColumns`, whitelist |
+| `chat_presentation_column_label_discovery_service.py` | Orquestração web+LLM | Lógica no domain ou MFE |
+| `column_labels.json` → `tableProfiles`, `columnLabelDiscovery` | Hints + prompts discovery | Python hardcoded |
 
 ---
 
 ## 10. Próximo passo imediato
 
-**R13 (jun/2026) — backlog E2E pós-homologação manual (`rober` / `1234`, `smoke_perguntas_teste_chat_jun2026.py`):**
+**R17 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Analyser | `_build_analyser_structure_components_table` → `_build_profile_items_table` (`analyserStructureComponents`) |
+| Host | removidos `_fixed_columns` / `_markdown_column_pairs` legados |
+| Cascata rótulos | `resolve_field_labels` + `ChatPresentationFieldLabelResolutionService` (facade R17) |
+| Gate | `presentation_legacy_table_columns_gate.py` → `--check-playbook12` + `--check-no-legacy-table-columns` |
+| Testes | `test_presentation_legacy_table_columns_gate.py`, `test_chat_presentation_field_label_resolution_service.py`, analyser dinâmico |
+
+**Próximo passo imediato — R18 (ports clean na discovery):**
+
+| # | Ação | Critério |
+|---|------|----------|
+| 1 | Ports LLM/web/settings na application discovery | Domain sem import direto de infra |
+| 2 | Unificar `is_catalog_resolved` / `is_catalog_label_resolved` | Um helper canônico |
+| 3 | Homologação H17–H19 | Campo novo + rótulo PT em rota tier A |
+
+**Commit de referência R15+R16:** `8a7fdb50`.
+
+**R15 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Builder | `ChatPresentationOperationalTableService.build_items_table` — união de chaves do payload |
+| Migração | 10 presenters tier A: `build_fixed_items_table` removido → `profile_name` + `tableProfiles` |
+| Host | `_build_profile_items_table`, `_columns_for_items`, `_markdown_column_pairs_for_items` |
+| JSON | `fixedTableColumns` removido; 39 perfis em `tableProfiles` |
+| Testes | `test_dynamic_table_columns.py` (63 regressões presenters relacionados) |
+
+**R16 entregue (jun/2026):**
+
+| Artefato | Detalhe |
+|----------|---------|
+| Domain | `ChatPresentationColumnLabelEnrichmentService` — regras puras (query, prompt, parse) |
+| Application | `ChatPresentationColumnLabelDiscoveryService` — web + LLM + cache |
+| Port | `PresentationColumnLabelDiscoveryPort` + `InfrastructurePresentationColumnLabelDiscoveryAdapter` |
+| Wiring | `content_composer.py` → `configure_domain_infrastructure_ports()` |
+| JSON | `column_labels.columnLabelDiscovery` — prompts PT |
+| Settings | `CHAT_PRESENTATION_COLUMN_LABEL_*` (6 flags) |
+| Testes | `test_chat_presentation_column_label_discovery_service.py`, `test_chat_presentation_column_label_enrichment_service.py` |
+
+**Backlog histórico R13 (encerrado 10/jun/2026) — referência E2E (`rober` / `1234`, `smoke_perguntas_teste_chat_jun2026.py`):**
 
 | ID | Problema observado | Módulo canônico | Critério de aceite |
 |----|-------------------|-----------------|-------------------|
@@ -673,7 +1001,7 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 | Testes | `test_playbook12_regression_suite.py` + entity contract (≥40 entidades) |
 | Baseline | `totalPathConditionals` → **0** |
 
-**Playbook 12 encerrado (R0–R12).**
+**Onda principal encerrada (R0–R12).** Extensões R13–R16 documentadas abaixo; **R17–R20** fecham acoplamentos pós-colunas dinâmicas.
 
 **R14 — texto-first e visuais sob demanda (jun/2026):**
 
@@ -833,4 +1161,15 @@ Documentar resultados em [perguntas-teste-chat-jun2026.md](../testing/perguntas-
 
 ---
 
-*Playbook 12 — criado jun/2026. Mantenedor: equipe chat base / minha-delpi-ai-api.*
+### Riscos R15–R20
+
+| Risco | Mitigação |
+|-------|-----------|
+| Latência discovery síncrono (A3) | Limites `MAX_KEYS` / `WEB_MAX_QUERIES`; R18 ports; futuro async |
+| Rótulo LLM impreciso | Fallback `_humanize_field_key`; cache; revisão manual → `fields` |
+| Regressão analyser estrutura (R17) | Fixture + H20 antes de remover `_fixed_columns` |
+| Gate CI falso positivo | Excluir só `test_external_action_column_label_service` para `fixed_table_columns` unitário |
+
+---
+
+*Playbook 12 — criado jun/2026; extensão R15–R20 jun/2026. Mantenedor: equipe chat base / minha-delpi-ai-api.*

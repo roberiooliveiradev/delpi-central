@@ -1133,15 +1133,13 @@ class ExternalActionProductAnalyserPresenter:
             else self._host._presenter_text("structureComponents", "titleGeneric")
         )
 
-        return {
-            "type": "table",
-            "title": title,
-            "columns": self._host._column_labels.fixed_table_columns(
-                "analyserStructureComponents",
-                schema_labels=self._host._active_schema_labels,
-            ),
-            "rows": rows,
-        }
+        return self._host._build_profile_items_table(
+            rows,
+            profile_name="analyserStructureComponents",
+            title=title,
+            role="structure",
+            path="/analyser",
+        )
 
     def _build_product_analyser_profile_table(self, product: dict, root: dict) -> dict:
         columns = self._host._column_labels.kv_table_column_defs()
