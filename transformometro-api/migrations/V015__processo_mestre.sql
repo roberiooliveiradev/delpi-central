@@ -2,6 +2,8 @@
 -- Localização operacional fica em processo_instancias (Playbook 18 S4).
 BEGIN;
 
+DROP VIEW IF EXISTS transformometro.processo_competencia_snapshot;
+
 ALTER TABLE transformometro.processos DROP COLUMN IF EXISTS filial_id;
 ALTER TABLE transformometro.processos DROP COLUMN IF EXISTS setor_id;
 
