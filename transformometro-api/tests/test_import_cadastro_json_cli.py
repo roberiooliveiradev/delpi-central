@@ -45,5 +45,5 @@ def test_cmd_preview_invalid_exits(tmp_path: Path):
             "errors": ["schema_version inválida."],
         }
         with pytest.raises(SystemExit) as exc:
-            cmd_preview(Namespace(input=str(path), mode="replace"))
+            cmd_preview(Namespace(input=str(path), mode="replace", format="auto"))
     assert exc.value.code == 1

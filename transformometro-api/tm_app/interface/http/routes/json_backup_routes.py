@@ -30,7 +30,7 @@ def export_json(_request: Request):
 
 @router.post("/import/preview")
 def import_preview(body: JsonImportBody):
-    result = JsonBackupService().preview(body.data, body.mode)
+    result = JsonBackupService().preview(body.data, body.mode, body.import_format)
     if not result.get("valid"):
         return fail("Pacote JSON inválido.", 422, data=result)
     return ok(result, "Pré-visualização gerada.")
@@ -40,7 +40,7 @@ def import_preview(body: JsonImportBody):
 def import_apply(body: JsonImportBody, request: Request):
     user_id, user_email = actor_from_request(request)
     try:
-        result = JsonBackupService().apply(body.data, body.mode)
+        result = JsonBackupService().apply(body.data, body.mode, body.import_format)
     except ValueError as exc:
         return fail(str(exc), 422)
     except Exception as exc:
@@ -52,6 +52,10 @@ def import_apply(body: JsonImportBody, request: Request):
         action=f"import_{body.mode}",
         user_id=user_id,
         user_email=user_email,
-        payload={"mode": body.mode, "entities": result.get("entities")},
+        payload={
+            "mode": body.mode,
+            "import_format": body.import_format,
+            "entities": result.get("entities"),
+        },
     )
     return ok(result, "Importação concluída. Dashboard recalculado.")

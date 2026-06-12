@@ -882,10 +882,13 @@ export function fetchProcessoComparativo(
 export type JsonBackupBundle = {
   schema_version: string;
   exported_at?: string;
+  import_format?: "modern" | "legacy";
   counts?: Record<string, number>;
+  filiais?: Record<string, unknown>[];
   setores: Record<string, unknown>[];
   setor_filiais: Record<string, unknown>[];
   processos: Record<string, unknown>[];
+  processo_instancias?: Record<string, unknown>[];
   revisoes: Record<string, unknown>[];
   medicoes: Record<string, unknown>[];
   investimentos: Record<string, unknown>[];
@@ -895,6 +898,7 @@ export type JsonBackupBundle = {
 };
 
 export type JsonImportMode = "replace" | "merge";
+export type JsonImportFormat = "auto" | "modern" | "legacy";
 
 export type JsonImportEntityStats = {
   total: number;
@@ -907,6 +911,10 @@ export type JsonImportPreview = {
   valid: boolean;
   errors?: string[];
   mode: JsonImportMode;
+  requested_format?: JsonImportFormat;
+  resolved_format?: "modern" | "legacy";
+  detected_format?: "modern" | "legacy";
+  legacy_transformed?: boolean;
   entities?: Record<string, JsonImportEntityStats>;
   current_counts?: Record<string, number>;
   import_counts?: Record<string, number>;
@@ -920,17 +928,19 @@ export function downloadJsonExport(getAccessToken?: () => string | undefined) {
 export function previewJsonImport(
   data: JsonBackupBundle,
   mode: JsonImportMode,
+  importFormat: JsonImportFormat = "auto",
   getAccessToken?: () => string | undefined
 ) {
   return request<JsonImportPreview>("/data/import/preview", getAccessToken, {
     method: "POST",
-    body: JSON.stringify({ mode, data }),
+    body: JSON.stringify({ mode, import_format: importFormat, data }),
   });
 }
 
 export function applyJsonImport(
   data: JsonBackupBundle,
   mode: JsonImportMode,
+  importFormat: JsonImportFormat = "auto",
   getAccessToken?: () => string | undefined
 ) {
   return request<JsonImportPreview & { recalc?: DashboardRecalcResult }>(
@@ -938,7 +948,7 @@ export function applyJsonImport(
     getAccessToken,
     {
       method: "POST",
-      body: JSON.stringify({ mode, data }),
+      body: JSON.stringify({ mode, import_format: importFormat, data }),
     }
   );
 }

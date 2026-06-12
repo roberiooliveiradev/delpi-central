@@ -61,14 +61,14 @@ def cmd_export(args: argparse.Namespace) -> None:
 
 def cmd_preview(args: argparse.Namespace) -> None:
     payload = load_payload(Path(args.input))
-    result = JsonBackupService().preview(payload, args.mode)
+    result = JsonBackupService().preview(payload, args.mode, args.format)
     print_preview(result)
 
 
 def cmd_apply(args: argparse.Namespace) -> None:
     payload = load_payload(Path(args.input))
     service = JsonBackupService()
-    preview = service.preview(payload, args.mode)
+    preview = service.preview(payload, args.mode, args.format)
     print_preview(preview)
 
     if args.mode == "replace" and not args.yes:
@@ -79,7 +79,7 @@ def cmd_apply(args: argparse.Namespace) -> None:
         )
         raise SystemExit(2)
 
-    result = service.apply(payload, args.mode)
+    result = service.apply(payload, args.mode, args.format)
     recalc = result.get("recalc") or {}
     print("\nImportação concluída.")
     print(f"Recálculo dashboard: {recalc.get('status', recalc)}")
@@ -108,6 +108,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="replace",
         help="replace=substituir tudo; merge=upsert por PK (default: replace).",
     )
+    preview_p.add_argument(
+        "--format",
+        choices=("auto", "modern", "legacy"),
+        default="auto",
+        dest="format",
+        help="auto=detectar; legacy=JSON 1.1; modern=Playbook 18 (default: auto).",
+    )
     preview_p.set_defaults(func=cmd_preview)
 
     apply_p = sub.add_parser("apply", help="Importa JSON no Postgres e recalcula dashboard.")
@@ -117,6 +124,13 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("replace", "merge"),
         default="replace",
         help="replace=substituir tudo; merge=upsert por PK (default: replace).",
+    )
+    apply_p.add_argument(
+        "--format",
+        choices=("auto", "modern", "legacy"),
+        default="auto",
+        dest="format",
+        help="auto=detectar; legacy=JSON 1.1; modern=Playbook 18 (default: auto).",
     )
     apply_p.add_argument(
         "--yes",

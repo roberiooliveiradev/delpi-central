@@ -9,6 +9,7 @@ import {
   downloadJsonExport,
   previewJsonImport,
   type JsonBackupBundle,
+  type JsonImportFormat,
   type JsonImportMode,
   type JsonImportPreview,
 } from "../../data/api/transformometroApi";
@@ -20,9 +21,11 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 const ENTITY_LABELS: Record<string, string> = {
+  filiais: "Filiais",
   setores: "Setores",
   setor_filiais: "Setor × filial",
   processos: "Processos",
+  processo_instancias: "Instâncias de processo",
   revisoes: "Revisões",
   medicoes: "Medições",
   investimentos: "Investimentos",
@@ -31,9 +34,16 @@ const ENTITY_LABELS: Record<string, string> = {
   revisao_recursos_compartilhados: "Vínculos revisão ↔ recurso",
 };
 
+const FORMAT_LABELS: Record<JsonImportFormat, string> = {
+  auto: "Detectar automaticamente",
+  legacy: "Backup legado (1.1)",
+  modern: "Playbook 18 (instâncias)",
+};
+
 export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<JsonImportMode>("merge");
+  const [importFormat, setImportFormat] = useState<JsonImportFormat>("auto");
   const [bundle, setBundle] = useState<JsonBackupBundle | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<JsonImportPreview | null>(null);
@@ -83,7 +93,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     clearMessages();
     setBusy("preview");
     try {
-      const result = await previewJsonImport(bundle, mode, getAccessToken);
+      const result = await previewJsonImport(bundle, mode, importFormat, getAccessToken);
       setPreview(result);
       if (!result.valid) {
         setError((result.errors ?? []).join(" ") || "Pacote inválido.");
@@ -93,7 +103,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, getAccessToken]);
+  }, [bundle, mode, importFormat, getAccessToken]);
 
   const onApply = useCallback(async () => {
     if (!bundle) {
@@ -109,7 +119,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     clearMessages();
     setBusy("apply");
     try {
-      const result = await applyJsonImport(bundle, mode, getAccessToken);
+      const result = await applyJsonImport(bundle, mode, importFormat, getAccessToken);
       setPreview(result as JsonImportPreview);
       const rows = result.recalc?.rows_upserted ?? 0;
       setSuccess(
@@ -120,10 +130,15 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     } finally {
       setBusy(null);
     }
-  }, [bundle, mode, getAccessToken]);
+  }, [bundle, mode, importFormat, getAccessToken]);
 
   const selectMode = (next: JsonImportMode) => {
     setMode(next);
+    setPreview(null);
+  };
+
+  const selectImportFormat = (next: JsonImportFormat) => {
+    setImportFormat(next);
     setPreview(null);
   };
 
@@ -231,6 +246,39 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               </div>
             </div>
 
+            <div>
+              <p className="tm-data-transfer__field-label">Formato do backup</p>
+              <div
+                className="tm-data-transfer__formats"
+                role="radiogroup"
+                aria-label="Formato do backup JSON"
+              >
+                {(["auto", "legacy", "modern"] as const).map((value) => (
+                  <label
+                    key={value}
+                    className={`tm-data-transfer__format${
+                      importFormat === value ? " tm-data-transfer__format--active" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="import-format"
+                      checked={importFormat === value}
+                      onChange={() => selectImportFormat(value)}
+                    />
+                    <span className="tm-data-transfer__format-title">{FORMAT_LABELS[value]}</span>
+                    <span className="tm-data-transfer__format-desc">
+                      {value === "auto"
+                        ? "A API identifica se o arquivo é legado (processos com filial/setor) ou Playbook 18."
+                        : value === "legacy"
+                          ? "JSON antigo sem instâncias; filiais e revisões por instância são geradas na importação."
+                          : "Backup exportado após Playbook 18, com filiais, instâncias e revisoes.instancia_id."}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div
               className={`tm-data-transfer__file-block${
                 fileName ? " tm-data-transfer__file-block--has-file" : ""
@@ -288,6 +336,13 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 <h3 className="ds-section-title tm-data-transfer__preview-title">
                   Resumo da pré-visualização
                 </h3>
+                {preview.resolved_format ? (
+                  <p className="tm-data-transfer__format-summary">
+                    Formato: {FORMAT_LABELS[preview.requested_format ?? "auto"]} →{" "}
+                    {preview.resolved_format === "legacy" ? "legado convertido" : "Playbook 18"}
+                    {preview.legacy_transformed ? " (filiais e instâncias sintéticas geradas)" : ""}
+                  </p>
+                ) : null}
                 <div className="ds-table-wrap">
                   <table className="ds-table">
                     <thead>

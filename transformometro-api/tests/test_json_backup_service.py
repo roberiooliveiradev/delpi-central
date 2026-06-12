@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from tm_app.application.services.json_backup_service import JsonBackupService, SCHEMA_VERSION
+from tm_app.application.services.json_backup_service import (
+    JsonBackupService,
+    SCHEMA_VERSION,
+    detect_import_format,
+)
 from tm_app.infrastructure.persistence.json_backup_repository import JsonBackupRepository
 
 
@@ -68,13 +72,8 @@ def _sample_bundle() -> dict:
     }
 
 
-def test_validate_bundle_rejects_missing_fk():
-    errors = _mock_service().validate_bundle(_sample_bundle())
-    assert any("recursos_compartilhados" in err for err in errors)
-
-
-def test_validate_bundle_accepts_consistent_fk():
-    bundle = _sample_bundle()
+def _complete_legacy_bundle(bundle: dict) -> dict:
+    bundle = dict(bundle)
     bundle["recursos_compartilhados"] = [
         {
             "recurso_compartilhado_id": "33333333-3333-3333-3333-333333333333",
@@ -89,16 +88,41 @@ def test_validate_bundle_accepts_consistent_fk():
             "deletado": False,
         }
     ]
+    JsonBackupService(MagicMock())._prepare_legacy_payload(bundle)
+    return bundle
+
+
+def test_detect_import_format_legacy():
+    assert detect_import_format(_sample_bundle()) == "legacy"
+
+
+def test_prepare_legacy_backfills_instancia_and_filiais():
+    bundle = _complete_legacy_bundle(_sample_bundle())
+    assert len(bundle["filiais"]) >= 1
+    assert len(bundle["processo_instancias"]) == 1
+    assert bundle["revisoes"][0]["instancia_id"]
+
+
+def test_validate_bundle_rejects_missing_fk():
+    bundle = _sample_bundle()
+    JsonBackupService(MagicMock())._prepare_legacy_payload(bundle)
+    errors = _mock_service().validate_bundle(bundle)
+    assert any("recursos_compartilhados" in err for err in errors)
+
+
+def test_validate_bundle_accepts_consistent_fk():
+    bundle = _complete_legacy_bundle(_sample_bundle())
     assert _mock_service().validate_bundle(bundle) == []
 
 
 def test_validate_bundle_dedupes_repeated_fk_errors():
-    bundle = _sample_bundle()
+    bundle = _complete_legacy_bundle(_sample_bundle())
     bundle["recursos_compartilhados"] = []
     bundle["revisoes"].append(
         {
             "revisao_id": "55555555-5555-5555-5555-555555555555",
             "processo_id": "99999999-9999-9999-9999-999999999999",
+            "instancia_id": bundle["processo_instancias"][0]["instancia_id"],
             "versao_revisao": "v2",
             "cenario_tipo": "melhoria",
             "data_inicio_vigencia": "2025-02-01",
@@ -111,7 +135,7 @@ def test_validate_bundle_dedupes_repeated_fk_errors():
 
 
 def test_validate_bundle_rejects_setor_filiais_without_setor():
-    bundle = _sample_bundle()
+    bundle = _complete_legacy_bundle(_sample_bundle())
     bundle["setor_filiais"] = [{"setor_id": "inexistente", "filial_id": "01"}]
     errors = _mock_service().validate_bundle(bundle)
     assert any("setor_filiais" in err and "setores" in err for err in errors)
@@ -187,8 +211,10 @@ def test_preview_merge_counts_insert_and_update():
         recurso_custos=[],
     )
 
-    preview = JsonBackupService(repo).preview(bundle, "merge")
+    preview = JsonBackupService(repo).preview(bundle, "merge", "legacy")
     assert preview["valid"] is True
+    assert preview["resolved_format"] == "legacy"
+    assert preview["legacy_transformed"] is True
     assert preview["entities"]["processos"]["update"] == 1
     assert preview["entities"]["processos"]["insert"] == 0
     assert preview["entities"]["revisoes"]["insert"] == 1
