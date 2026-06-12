@@ -11,7 +11,7 @@ from maint_app.application.services.maintenance_submodule_catalog import (
     assert_submodule_manage,
     assert_submodule_view,
 )
-from maint_app.composition.maintenance_composer import build_reposicao_service
+from maint_app.composition.maintenance_composer import build_reposicao_service, build_revisao_programada_service
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.operational_repositories import (
@@ -62,6 +62,21 @@ class ReposicaoBody(BaseModel):
     golpes: int = Field(gt=0)
     motivo_id: str
     observacao: Optional[str] = None
+
+
+class RevisaoProgramadaCreateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
+    codigo_ferramenta: str = Field(min_length=1, max_length=40)
+    intervalo_meses: int = Field(ge=1, le=120)
+    observacao: Optional[str] = None
+    data_ultima_revisao: Optional[str] = None
+
+
+class RevisaoProgramadaUpdateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
+    intervalo_meses: Optional[int] = Field(default=None, ge=1, le=120)
+    observacao: Optional[str] = None
+    data_ultima_revisao: Optional[str] = None
 
 
 @router.get("/motivos")
@@ -213,6 +228,103 @@ def delete_status_peca(
         return fail(str(exc), 403)
     StatusPecaRepository().soft_delete(status_id, filial=filial)
     return ok(None, message="Status excluído.")
+
+
+@router.get("/revisoes-programadas")
+def list_revisoes_programadas(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    search: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    service = build_revisao_programada_service()
+    items, total = service.listar_programacoes(filial=filial, query=query, search=search)
+    return ok({"items": items, "total": total}, message="Revisões programadas listadas.")
+
+
+@router.post("/revisoes-programadas")
+def create_revisao_programada(body: RevisaoProgramadaCreateBody, request: Request):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    service = build_revisao_programada_service()
+    try:
+        item = service.create(body.model_dump())
+        return ok(item, message="Revisão programada criada.", status_code=201)
+    except ValueError as exc:
+        return fail(str(exc), 422)
+
+
+@router.put("/revisoes-programadas/{revisao_id}")
+def update_revisao_programada(
+    revisao_id: str,
+    body: RevisaoProgramadaUpdateBody,
+    request: Request,
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    service = build_revisao_programada_service()
+    try:
+        payload = body.model_dump(exclude_unset=True)
+        payload["filial"] = body.filial
+        item = service.update(revisao_id, filial=body.filial, payload=payload)
+        if not item:
+            return fail("Revisão programada não encontrada.", 404)
+        return ok(item, message="Revisão programada atualizada.")
+    except ValueError as exc:
+        return fail(str(exc), 422)
+
+
+@router.delete("/revisoes-programadas/{revisao_id}")
+def delete_revisao_programada(
+    revisao_id: str,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    build_revisao_programada_service().delete(revisao_id, filial=filial)
+    return ok(None, message="Revisão programada excluída.")
+
+
+@router.post("/revisoes-programadas/{revisao_id}/registrar")
+def registrar_revisao_programada(
+    revisao_id: str,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    item = build_revisao_programada_service().registrar_revisao(revisao_id, filial=filial)
+    if not item:
+        return fail("Revisão programada não encontrada.", 404)
+    return ok(item, message="Revisão registrada.")
 
 
 @router.get("/reposicoes")

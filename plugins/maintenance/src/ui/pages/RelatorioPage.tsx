@@ -31,9 +31,13 @@ import {
   fetchPreventivaAlertas,
   fetchPreventivaHistorico,
   fetchPreventivaResumo,
+  fetchRevisaoProgramadaAlertas,
+  fetchRevisaoProgramadaResumo,
   fetchUltimasReposicoes,
   type PreventivaAlerta,
   type PreventivaResumo,
+  type RevisaoProgramadaAlerta,
+  type RevisaoProgramadaResumo,
   type UltimaReposicaoItem,
 } from "../../data/api/maintenanceApi";
 
@@ -44,9 +48,10 @@ type RelatorioPageProps = {
   onNavigate: (path: string) => void;
 };
 
-type ListReportTab = "alertas" | "ultimas";
+type ListReportTab = "alertas" | "ultimas" | "revisoes";
 type ReportTab = ListReportTab | "detalhe";
 type StatusFilterValue = "CRÍTICO" | "ATENÇÃO" | "OK" | "SEM STATUS";
+type RevisaoStatusFilterValue = "CRÍTICO" | "ATENÇÃO" | "OK" | "SEM STATUS";
 
 type Selection = {
   codigo_ferramenta: string;
@@ -54,6 +59,25 @@ type Selection = {
 };
 
 const STATUS_OPTIONS: StatusFilterValue[] = ["CRÍTICO", "ATENÇÃO", "OK", "SEM STATUS"];
+const REVISAO_STATUS_OPTIONS: RevisaoStatusFilterValue[] = ["CRÍTICO", "ATENÇÃO", "OK", "SEM STATUS"];
+
+const EMPTY_REVISAO_RESUMO: RevisaoProgramadaResumo = {
+  critico: 0,
+  atencao: 0,
+  ok: 0,
+  sem_status: 0,
+  total: 0,
+};
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("pt-BR");
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("pt-BR");
+}
 
 const EMPTY_RESUMO: PreventivaResumo = {
   critico: 0,
@@ -98,23 +122,31 @@ export function RelatorioPage({
   const [activeTab, setActiveTab] = useState<ReportTab>("alertas");
   const alertasTable = useServerTable({ defaultSortKey: "percentual", defaultSortDirection: "desc" });
   const ultimasTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
+  const revisoesTable = useServerTable({ defaultSortKey: "dias_restantes", defaultSortDirection: "asc" });
   const [alertas, setAlertas] = useState<PreventivaAlerta[]>([]);
   const [alertasTotal, setAlertasTotal] = useState(0);
   const [ultimas, setUltimas] = useState<UltimaReposicaoItem[]>([]);
   const [ultimasTotal, setUltimasTotal] = useState(0);
+  const [revisoes, setRevisoes] = useState<RevisaoProgramadaAlerta[]>([]);
+  const [revisoesTotal, setRevisoesTotal] = useState(0);
   const [resumo, setResumo] = useState<PreventivaResumo>(EMPTY_RESUMO);
+  const [revisaoResumo, setRevisaoResumo] = useState<RevisaoProgramadaResumo>(EMPTY_REVISAO_RESUMO);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [detailData, setDetailData] = useState<PreventivaDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [alertasLoading, setAlertasLoading] = useState(false);
   const [ultimasLoading, setUltimasLoading] = useState(false);
+  const [revisoesLoading, setRevisoesLoading] = useState(false);
   const [resumoLoading, setResumoLoading] = useState(false);
+  const [revisaoResumoLoading, setRevisaoResumoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alertasError, setAlertasError] = useState<string | null>(null);
   const [ultimasError, setUltimasError] = useState<string | null>(null);
+  const [revisoesError, setRevisoesError] = useState<string | null>(null);
   const [ferramentaFiltro, setFerramentaFiltro] = useState("");
   const [pecaFiltro, setPecaFiltro] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<StatusFilterValue[]>([]);
+  const [revisaoStatusFiltro, setRevisaoStatusFiltro] = useState<RevisaoStatusFilterValue[]>([]);
   const [appliedFerramentaFiltro, setAppliedFerramentaFiltro] = useState("");
   const [appliedPecaFiltro, setAppliedPecaFiltro] = useState("");
 
@@ -123,8 +155,19 @@ export function RelatorioPage({
     [],
   );
 
+  const revisaoStatusOptions = useMemo(
+    () => REVISAO_STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
+    [],
+  );
+
   const toggleStatusFiltro = useCallback((status: StatusFilterValue) => {
     setStatusFiltro((current) =>
+      current.includes(status) ? current.filter((item) => item !== status) : [...current, status],
+    );
+  }, []);
+
+  const toggleRevisaoStatusFiltro = useCallback((status: RevisaoStatusFilterValue) => {
+    setRevisaoStatusFiltro((current) =>
       current.includes(status) ? current.filter((item) => item !== status) : [...current, status],
     );
   }, []);
@@ -207,13 +250,60 @@ export function RelatorioPage({
     }
   }, [appliedFerramentaFiltro, appliedPecaFiltro, filial, getAccessToken, ultimasTable.query]);
 
+  const loadRevisaoResumo = useCallback(async () => {
+    setRevisaoResumoLoading(true);
+    try {
+      const data = await fetchRevisaoProgramadaResumo(filial, getAccessToken);
+      setRevisaoResumo(data);
+    } catch {
+      setRevisaoResumo(EMPTY_REVISAO_RESUMO);
+    } finally {
+      setRevisaoResumoLoading(false);
+    }
+  }, [filial, getAccessToken]);
+
+  const loadRevisoes = useCallback(async () => {
+    setRevisoesLoading(true);
+    setRevisoesError(null);
+    try {
+      const data = await fetchRevisaoProgramadaAlertas(
+        filial,
+        {
+          page: revisoesTable.query.page,
+          pageSize: revisoesTable.query.pageSize,
+          sortKey: revisoesTable.query.sortKey,
+          sortDirection: revisoesTable.query.sortDirection,
+        },
+        {
+          ferramenta: appliedFerramentaFiltro.trim() || undefined,
+          status: revisaoStatusFiltro.length > 0 ? revisaoStatusFiltro : undefined,
+        },
+        getAccessToken,
+      );
+      setRevisoes(data.items ?? []);
+      setRevisoesTotal(data.total ?? 0);
+    } catch (err) {
+      setRevisoesError(err instanceof Error ? err.message : "Falha ao carregar revisões programadas.");
+      setRevisoes([]);
+      setRevisoesTotal(0);
+    } finally {
+      setRevisoesLoading(false);
+    }
+  }, [
+    appliedFerramentaFiltro,
+    filial,
+    getAccessToken,
+    revisaoStatusFiltro,
+    revisoesTable.query,
+  ]);
+
   const loadReport = useCallback(async () => {
-    await Promise.all([loadResumo(), loadAlertas(), loadUltimas()]);
-  }, [loadAlertas, loadResumo, loadUltimas]);
+    await Promise.all([loadResumo(), loadAlertas(), loadUltimas(), loadRevisaoResumo(), loadRevisoes()]);
+  }, [loadAlertas, loadResumo, loadRevisaoResumo, loadRevisoes, loadUltimas]);
 
   useEffect(() => {
-    setError(alertasError ?? ultimasError);
-  }, [alertasError, ultimasError]);
+    setError(alertasError ?? ultimasError ?? revisoesError);
+  }, [alertasError, revisoesError, ultimasError]);
 
   useEffect(() => {
     void loadResumo();
@@ -228,14 +318,24 @@ export function RelatorioPage({
   }, [loadUltimas]);
 
   useEffect(() => {
+    void loadRevisaoResumo();
+  }, [loadRevisaoResumo]);
+
+  useEffect(() => {
+    void loadRevisoes();
+  }, [loadRevisoes]);
+
+  useEffect(() => {
     alertasTable.resetPage();
     ultimasTable.resetPage();
+    revisoesTable.resetPage();
     setAppliedFerramentaFiltro("");
     setAppliedPecaFiltro("");
     setFerramentaFiltro("");
     setPecaFiltro("");
     setStatusFiltro([]);
-  }, [filial, alertasTable.resetPage, ultimasTable.resetPage]);
+    setRevisaoStatusFiltro([]);
+  }, [filial, alertasTable.resetPage, revisoesTable.resetPage, ultimasTable.resetPage]);
 
   const loadDetail = useCallback(
     async (next: Selection) => {
@@ -294,26 +394,33 @@ export function RelatorioPage({
     setAppliedPecaFiltro(pecaFiltro);
     alertasTable.resetPage();
     ultimasTable.resetPage();
+    revisoesTable.resetPage();
   };
 
   const clearFilters = () => {
     setFerramentaFiltro("");
     setPecaFiltro("");
     setStatusFiltro([]);
+    setRevisaoStatusFiltro([]);
     setAppliedFerramentaFiltro("");
     setAppliedPecaFiltro("");
     alertasTable.resetPage();
     ultimasTable.resetPage();
+    revisoesTable.resetPage();
   };
 
   useEffect(() => {
     alertasTable.resetPage();
   }, [statusFiltro, alertasTable.resetPage]);
 
+  useEffect(() => {
+    revisoesTable.resetPage();
+  }, [revisaoStatusFiltro, revisoesTable.resetPage]);
+
   const handleTabChange = (id: string) => {
     const tab = id as ReportTab;
     setActiveTab(tab);
-    if (tab === "alertas" || tab === "ultimas") {
+    if (tab === "alertas" || tab === "ultimas" || tab === "revisoes") {
       setListTab(tab);
     }
   };
@@ -439,6 +546,65 @@ export function RelatorioPage({
     [],
   );
 
+  const revisoesColumns = useMemo<DataTableColumn<RevisaoProgramadaAlerta>[]>(
+    () => [
+      {
+        key: "status",
+        header: "Status",
+        sortable: true,
+        sortValue: (item) => statusSortRank(item.status),
+        render: (item) => <StatusBadge status={item.status} />,
+      },
+      {
+        key: "ferramenta",
+        header: "Ferramenta",
+        sortable: true,
+        sortValue: (item) =>
+          formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
+        render: (item) => (
+          <CodigoDescricaoCell
+            codigo={item.codigo_ferramenta}
+            descricao={item.descricao_ferramenta}
+          />
+        ),
+      },
+      {
+        key: "intervalo",
+        header: "Intervalo",
+        sortable: true,
+        sortValue: (item) => item.intervalo_meses,
+        render: (item) => `${item.intervalo_meses} mes(es)`,
+        align: "right",
+      },
+      {
+        key: "ultima",
+        header: "Referência",
+        sortable: true,
+        sortValue: (item) => new Date(item.data_referencia ?? 0).getTime(),
+        render: (item) => formatDateTime(item.data_referencia),
+      },
+      {
+        key: "proxima",
+        header: "Próxima revisão",
+        sortable: true,
+        sortValue: (item) => new Date(item.data_proxima_revisao ?? 0).getTime(),
+        render: (item) => formatDate(item.data_proxima_revisao),
+      },
+      {
+        key: "dias_restantes",
+        header: "Dias restantes",
+        sortable: true,
+        sortValue: (item) => item.dias_restantes ?? 999999,
+        render: (item) =>
+          item.dias_restantes === null || item.dias_restantes === undefined
+            ? "—"
+            : item.dias_restantes.toLocaleString("pt-BR"),
+        align: "right",
+      },
+    ],
+    [],
+  );
+
   const handleSelectAlerta = (item: PreventivaAlerta) => {
     setListTab("alertas");
     void loadDetail({
@@ -462,7 +628,7 @@ export function RelatorioPage({
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
         title="Relatório preventivo"
-        subtitle="Alertas, últimas reposições e detalhe por ferramenta — use as abas para navegar."
+        subtitle="Preventiva por golpes, revisões programadas por tempo e detalhe por ferramenta/peça."
         icon={LineChart}
         filial={filial}
         filialDisplayName={filialDisplayName}
@@ -475,67 +641,128 @@ export function RelatorioPage({
             type="button"
             className="dm-primary-btn"
             onClick={() => void loadReport()}
-            disabled={alertasLoading || ultimasLoading || resumoLoading}
+            disabled={alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading}
           >
             <RefreshCw
               size={16}
-              className={alertasLoading || ultimasLoading || resumoLoading ? "dm-spin" : undefined}
+              className={
+                alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading
+                  ? "dm-spin"
+                  : undefined
+              }
             />
-            {alertasLoading || ultimasLoading || resumoLoading ? "Carregando…" : "Atualizar"}
+            {alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading
+              ? "Carregando…"
+              : "Atualizar"}
           </button>
         }
       />
 
       <section className="dm-kpi-grid dm-kpi-grid--report">
-        <button
-          type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
-          onClick={() => toggleStatusFiltro("CRÍTICO")}
-        >
-          <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
-            <AlertTriangle size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Crítico</p>
-            <p className="dm-kpi-card__value">{resumo.critico}</p>
-          </div>
-        </button>
-        <button
-          type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
-          onClick={() => toggleStatusFiltro("ATENÇÃO")}
-        >
-          <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
-            <AlertTriangle size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Atenção</p>
-            <p className="dm-kpi-card__value">{resumo.atencao}</p>
-          </div>
-        </button>
-        <button
-          type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("OK") ? " is-active" : ""}`}
-          onClick={() => toggleStatusFiltro("OK")}
-        >
-          <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
-            <AlertTriangle size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">OK</p>
-            <p className="dm-kpi-card__value">{resumo.ok}</p>
-          </div>
-        </button>
-        <article className="dm-card dm-kpi-card">
-          <div className="dm-kpi-card__icon" aria-hidden="true">
-            <LineChart size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Pares monitorados</p>
-            <p className="dm-kpi-card__value">{resumo.total}</p>
-            <p className="dm-kpi-card__hint">{ultimasTotal} últimas reposições na filial</p>
-          </div>
-        </article>
+        {listTab === "revisoes" ? (
+          <>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
+              onClick={() => toggleRevisaoStatusFiltro("CRÍTICO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Revisão vencida</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.critico}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
+              onClick={() => toggleRevisaoStatusFiltro("ATENÇÃO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Próxima do prazo</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.atencao}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("OK") ? " is-active" : ""}`}
+              onClick={() => toggleRevisaoStatusFiltro("OK")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">No prazo</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.ok}</p>
+              </div>
+            </button>
+            <article className="dm-card dm-kpi-card">
+              <div className="dm-kpi-card__icon" aria-hidden="true">
+                <LineChart size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Ferramentas programadas</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.total}</p>
+              </div>
+            </article>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
+              onClick={() => toggleStatusFiltro("CRÍTICO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Crítico</p>
+                <p className="dm-kpi-card__value">{resumo.critico}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
+              onClick={() => toggleStatusFiltro("ATENÇÃO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Atenção</p>
+                <p className="dm-kpi-card__value">{resumo.atencao}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("OK") ? " is-active" : ""}`}
+              onClick={() => toggleStatusFiltro("OK")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">OK</p>
+                <p className="dm-kpi-card__value">{resumo.ok}</p>
+              </div>
+            </button>
+            <article className="dm-card dm-kpi-card">
+              <div className="dm-kpi-card__icon" aria-hidden="true">
+                <LineChart size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Pares monitorados</p>
+                <p className="dm-kpi-card__value">{resumo.total}</p>
+                <p className="dm-kpi-card__hint">{ultimasTotal} últimas reposições na filial</p>
+              </div>
+            </article>
+          </>
+        )}
       </section>
 
       <FilterBar className="dm-filter-bar--relatorio">
@@ -553,15 +780,20 @@ export function RelatorioPage({
             value={pecaFiltro}
             onChange={(event) => setPecaFiltro(event.target.value)}
             placeholder="Código ou descrição…"
+            disabled={listTab === "revisoes"}
           />
         </label>
         <MultiSelectField
           className="dm-field--multi-select"
           label="Status"
           emptyLabel="Todos"
-          options={statusOptions}
-          selectedValues={statusFiltro}
-          onChange={(values) => setStatusFiltro(values as StatusFilterValue[])}
+          options={listTab === "revisoes" ? revisaoStatusOptions : statusOptions}
+          selectedValues={listTab === "revisoes" ? revisaoStatusFiltro : statusFiltro}
+          onChange={(values) =>
+            listTab === "revisoes"
+              ? setRevisaoStatusFiltro(values as RevisaoStatusFilterValue[])
+              : setStatusFiltro(values as StatusFilterValue[])
+          }
         />
         <div className="dm-filter-bar__actions">
           <button type="button" className="dm-ghost-btn" onClick={clearFilters}>
@@ -576,7 +808,7 @@ export function RelatorioPage({
             type="button"
             className="dm-ghost-btn"
             onClick={() => void loadReport()}
-            disabled={alertasLoading || ultimasLoading || resumoLoading}
+            disabled={alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading}
           >
             <RefreshCw size={16} />
             Recarregar
@@ -592,7 +824,8 @@ export function RelatorioPage({
           activeId={activeTab}
           onChange={handleTabChange}
           tabs={[
-            { id: "alertas", label: "Alertas preventivos", count: alertasTotal },
+            { id: "alertas", label: "Alertas por golpes", count: alertasTotal },
+            { id: "revisoes", label: "Revisões programadas", count: revisoesTotal },
             { id: "ultimas", label: "Últimas reposições", count: ultimasTotal },
             {
               id: "detalhe",
@@ -626,6 +859,28 @@ export function RelatorioPage({
                 onSortChange: alertasTable.handleSortChange,
               }}
               onRowClick={handleSelectAlerta}
+            />
+          ) : null}
+
+          {activeTab === "revisoes" ? (
+            <DataTableSection
+              embedded
+              title="Revisões programadas"
+              hint="Prazos calculados a partir da última revisão registrada ou da reposição mais recente da ferramenta."
+              columns={revisoesColumns}
+              rows={revisoes}
+              loading={revisoesLoading}
+              emptyMessage="Nenhuma revisão programada — cadastre em Configuração."
+              getRowKey={(item) => item.revisao_id}
+              serverTable={{
+                page: revisoesTable.query.page,
+                pageSize: revisoesTable.query.pageSize,
+                total: revisoesTotal,
+                onPageChange: revisoesTable.setPage,
+                sortKey: revisoesTable.query.sortKey,
+                sortDirection: revisoesTable.query.sortDirection,
+                onSortChange: revisoesTable.handleSortChange,
+              }}
             />
           ) : null}
 

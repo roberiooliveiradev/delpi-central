@@ -14,4 +14,14 @@ export const CONFIG_TOOLTIPS = {
     "Cadastro dos motivos disponíveis ao registrar uma reposição de peça na ferramenta.",
   statusSection:
     "Define como cada par ferramenta/peça é classificado no relatório preventivo.",
+  revisaoSection:
+    "Programação de revisão periódica da ferramenta (ex.: inspeção a cada 3 meses), independente da troca de peças.",
+  revisaoFerramenta:
+    "Código da ferramenta no TOTVS (ex.: 23-001). Uma programação por ferramenta e filial.",
+  revisaoIntervalo:
+    "Periodicidade em meses calendário entre revisões (1 a 120). Ex.: 3 = revisar a cada três meses.",
+  revisaoObservacao:
+    "Nota opcional sobre o que verificar na revisão (checklist, pontos críticos, etc.).",
+  revisaoRegistrar:
+    "Marca a revisão como realizada hoje e reinicia a contagem do próximo prazo.",
 } as const;

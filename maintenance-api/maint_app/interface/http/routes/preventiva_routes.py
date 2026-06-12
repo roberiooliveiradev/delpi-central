@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
 from maint_app.application.services.maintenance_submodule_catalog import assert_submodule_view
-from maint_app.composition.maintenance_composer import build_preventiva_service
+from maint_app.composition.maintenance_composer import build_preventiva_service, build_revisao_programada_service
 from maint_app.core.responses import fail, ok
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 from maint_app.interface.http.list_query_params import list_query_params
@@ -97,3 +97,40 @@ def list_ultimas_reposicoes(
         peca=peca,
     )
     return ok({"items": items, "total": total}, message="Últimas reposições listadas.")
+
+
+@router.get("/revisoes/resumo")
+def resumo_revisoes_programadas(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    data = build_revisao_programada_service().resumo_alertas(filial=filial)
+    return ok(data, message="Resumo de revisões programadas calculado.")
+
+
+@router.get("/revisoes/alertas")
+def list_revisoes_alertas(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    ferramenta: str | None = Query(None),
+    status: list[str] | None = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    items, total = build_revisao_programada_service().listar_alertas(
+        filial=filial,
+        query=query,
+        ferramenta=ferramenta,
+        statuses=status,
+    )
+    return ok({"items": items, "total": total}, message="Alertas de revisão programada listados.")

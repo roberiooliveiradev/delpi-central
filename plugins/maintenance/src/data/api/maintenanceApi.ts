@@ -204,6 +204,139 @@ export function fetchPreventivaHistorico(
   );
 }
 
+export type RevisaoProgramadaItem = {
+  revisao_id: string;
+  filial: string;
+  codigo_ferramenta: string;
+  intervalo_meses: number;
+  data_ultima_revisao?: string | null;
+  observacao?: string | null;
+  data_criacao?: string;
+  data_alteracao?: string;
+};
+
+export type RevisaoProgramadaAlerta = {
+  revisao_id: string;
+  filial: string;
+  codigo_ferramenta: string;
+  descricao_ferramenta?: string;
+  intervalo_meses: number;
+  observacao?: string | null;
+  data_ultima_revisao?: string | null;
+  data_referencia?: string | null;
+  data_proxima_revisao?: string | null;
+  dias_desde_revisao?: number | null;
+  dias_restantes?: number | null;
+  status: string;
+};
+
+export type RevisaoProgramadaResumo = PreventivaResumo;
+
+export function fetchRevisoesProgramadas(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<RevisaoProgramadaItem>>(
+    `/revisoes-programadas?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
+export function createRevisaoProgramada(
+  body: {
+    filial: string;
+    codigo_ferramenta: string;
+    intervalo_meses: number;
+    observacao?: string;
+    data_ultima_revisao?: string;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<RevisaoProgramadaItem>("/revisoes-programadas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    getAccessToken,
+  });
+}
+
+export function updateRevisaoProgramada(
+  revisaoId: string,
+  body: {
+    filial: string;
+    intervalo_meses?: number;
+    observacao?: string;
+    data_ultima_revisao?: string | null;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<RevisaoProgramadaItem>(
+    `/revisoes-programadas/${encodeURIComponent(revisaoId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      getAccessToken,
+    },
+  );
+}
+
+export function deleteRevisaoProgramada(
+  revisaoId: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<null>(
+    `/revisoes-programadas/${encodeURIComponent(revisaoId)}?filial=${encodeURIComponent(filial)}`,
+    {
+      method: "DELETE",
+      getAccessToken,
+    },
+  );
+}
+
+export function registrarRevisaoProgramada(
+  revisaoId: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<RevisaoProgramadaItem>(
+    `/revisoes-programadas/${encodeURIComponent(revisaoId)}/registrar?filial=${encodeURIComponent(filial)}`,
+    {
+      method: "POST",
+      getAccessToken,
+    },
+  );
+}
+
+export function fetchRevisaoProgramadaResumo(
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<RevisaoProgramadaResumo>(
+    `/preventiva/revisoes/resumo?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
+export function fetchRevisaoProgramadaAlertas(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<RevisaoProgramadaAlerta>>(
+    `/preventiva/revisoes/alertas?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
 export type MotivoItem = {
   motivo_id: string;
   descricao: string;

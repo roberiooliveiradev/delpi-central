@@ -40,3 +40,9 @@ def build_preventiva_service():
     from maint_app.application.services.preventiva_service import PreventivaService
 
     return PreventivaService(totvs_gateway=build_mini_applicators_totvs_gateway())
+
+
+def build_revisao_programada_service():
+    from maint_app.application.services.revisao_programada_service import RevisaoProgramadaService
+
+    return RevisaoProgramadaService(totvs_gateway=build_mini_applicators_totvs_gateway())

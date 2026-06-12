@@ -10,6 +10,7 @@ from maint_app.infrastructure.persistence.views import (
     VW_REPOSICOES_DETALHE,
     VW_REPOSICOES_PREVENTIVA,
     VW_REPOSICOES_ULTIMA_POR_PAR,
+    VW_REVISAO_PROGRAMADA_ATIVOS,
     VW_STATUS_PECA_ATIVOS,
 )
 
@@ -587,3 +588,228 @@ class ReposicaoRepository(PluginBaseRepository):
         if not row:
             return 0.0
         return float(row.get("media") or 0)
+
+    def map_ultima_reposicao_por_ferramenta(self, *, filial: str) -> dict[str, datetime]:
+        rows = self.fetch_all(
+            """
+            SELECT codigo_ferramenta, MAX(data_reposicao) AS data_reposicao
+            FROM maintenance.reposicoes
+            WHERE excluido = FALSE
+              AND filial = %s
+            GROUP BY codigo_ferramenta
+            """,
+            (filial,),
+        )
+        result: dict[str, datetime] = {}
+        for row in rows:
+            codigo = str(row["codigo_ferramenta"])
+            data = row.get("data_reposicao")
+            if isinstance(data, datetime):
+                result[codigo] = data
+        return result
+
+
+class RevisaoProgramadaRepository(PluginBaseRepository):
+    _SORT_COLUMNS = {
+        "ferramenta": "codigo_ferramenta",
+        "intervalo": "intervalo_meses",
+        "ultima": "data_ultima_revisao",
+    }
+
+    def list_active(self, *, filial: str) -> list[dict[str, Any]]:
+        rows, _total = self.list_active_paged(
+            filial=filial,
+            query=ListQuery(page=1, page_size=10_000, sort_by="ferramenta", sort_dir="asc"),
+        )
+        return rows
+
+    def list_active_paged(
+        self,
+        *,
+        filial: str,
+        query: ListQuery,
+        search: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        where = ["filial = %s"]
+        params: list[Any] = [filial]
+        if search and search.strip():
+            where.append("codigo_ferramenta ILIKE %s")
+            params.append(f"%{search.strip()}%")
+
+        where_sql = " AND ".join(where)
+        order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "ferramenta")
+        select_sql = f"""
+            SELECT
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                intervalo_meses,
+                data_ultima_revisao,
+                observacao,
+                data_criacao,
+                data_alteracao
+            FROM {VW_REVISAO_PROGRAMADA_ATIVOS}
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(1) AS total
+            FROM {VW_REVISAO_PROGRAMADA_ATIVOS}
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
+        )
+
+    def exists_active(self, *, filial: str, codigo_ferramenta: str) -> bool:
+        row = self.fetch_one(
+            f"""
+            SELECT 1
+            FROM {VW_REVISAO_PROGRAMADA_ATIVOS}
+            WHERE filial = %s
+              AND codigo_ferramenta = %s
+            LIMIT 1
+            """,
+            (filial, codigo_ferramenta.strip().upper()),
+        )
+        return row is not None
+
+    def get_by_id(self, revisao_id: str, *, filial: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            f"""
+            SELECT *
+            FROM {VW_REVISAO_PROGRAMADA_ATIVOS}
+            WHERE revisao_id = %s::uuid
+              AND filial = %s
+            """,
+            (revisao_id, filial),
+        )
+
+    def create(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        intervalo_meses: int,
+        observacao: str | None = None,
+        data_ultima_revisao: str | datetime | None = None,
+    ) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            """
+            INSERT INTO maintenance.revisao_programada (
+                filial,
+                codigo_ferramenta,
+                intervalo_meses,
+                observacao,
+                data_ultima_revisao
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                intervalo_meses,
+                data_ultima_revisao,
+                observacao,
+                data_criacao,
+                data_alteracao
+            """,
+            (
+                filial,
+                codigo_ferramenta.strip().upper(),
+                intervalo_meses,
+                observacao.strip() if observacao else None,
+                _coerce_reposicao_date_bound(str(data_ultima_revisao)) if data_ultima_revisao else None,
+            ),
+        )
+        return row or {}
+
+    def update(
+        self,
+        revisao_id: str,
+        *,
+        filial: str,
+        intervalo_meses: int | None = None,
+        observacao: str | None = None,
+        data_ultima_revisao: str | datetime | None = None,
+        update_data_ultima_revisao: bool = False,
+    ) -> dict[str, Any] | None:
+        fields: list[str] = ["data_alteracao = NOW()"]
+        params: list[Any] = []
+        if intervalo_meses is not None:
+            fields.append("intervalo_meses = %s")
+            params.append(intervalo_meses)
+        if observacao is not None:
+            fields.append("observacao = %s")
+            params.append(observacao.strip() or None)
+        if update_data_ultima_revisao:
+            parsed = (
+                _coerce_reposicao_date_bound(str(data_ultima_revisao))
+                if data_ultima_revisao
+                else None
+            )
+            fields.append("data_ultima_revisao = %s")
+            params.append(parsed)
+        if len(fields) == 1:
+            return self.get_by_id(revisao_id, filial=filial)
+
+        params.extend([revisao_id, filial])
+        return self.execute_returning_one(
+            f"""
+            UPDATE maintenance.revisao_programada
+            SET {", ".join(fields)}
+            WHERE revisao_id = %s::uuid
+              AND filial = %s
+              AND excluido = FALSE
+            RETURNING
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                intervalo_meses,
+                data_ultima_revisao,
+                observacao,
+                data_criacao,
+                data_alteracao
+            """,
+            tuple(params),
+        )
+
+    def registrar_revisao(self, revisao_id: str, *, filial: str) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            """
+            UPDATE maintenance.revisao_programada
+            SET data_ultima_revisao = NOW(),
+                data_alteracao = NOW()
+            WHERE revisao_id = %s::uuid
+              AND filial = %s
+              AND excluido = FALSE
+            RETURNING
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                intervalo_meses,
+                data_ultima_revisao,
+                observacao,
+                data_criacao,
+                data_alteracao
+            """,
+            (revisao_id, filial),
+        )
+
+    def soft_delete(self, revisao_id: str, *, filial: str) -> bool:
+        self.execute(
+            """
+            UPDATE maintenance.revisao_programada
+            SET excluido = TRUE,
+                data_alteracao = NOW()
+            WHERE revisao_id = %s::uuid
+              AND filial = %s
+              AND excluido = FALSE
+            """,
+            (revisao_id, filial),
+        )
+        return True

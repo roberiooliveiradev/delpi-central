@@ -22,14 +22,20 @@ import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import {
   createMotivo,
+  createRevisaoProgramada,
   createStatusPeca,
   deleteMotivo,
+  deleteRevisaoProgramada,
   deleteStatusPeca,
   fetchMotivos,
+  fetchRevisoesProgramadas,
   fetchStatusPeca,
+  registrarRevisaoProgramada,
   updateMotivo,
+  updateRevisaoProgramada,
   updateStatusPeca,
   type MotivoItem,
+  type RevisaoProgramadaItem,
   type StatusItem,
 } from "../../data/api/maintenanceApi";
 
@@ -51,6 +57,17 @@ type NovoStatusDraft = {
 type MotivoDraft = {
   descricao: string;
   excluir_preventiva: boolean;
+};
+
+type RevisaoDraft = {
+  intervalo_meses: number;
+  observacao: string;
+};
+
+const DEFAULT_NOVO_REVISAO = {
+  codigo_ferramenta: "",
+  intervalo_meses: 3,
+  observacao: "",
 };
 
 const DEFAULT_NOVO_STATUS: NovoStatusDraft = {
@@ -85,6 +102,22 @@ function isStatusDirty(item: StatusItem, edits: Record<string, StatusItem>): boo
   );
 }
 
+function toRevisaoDraft(item: RevisaoProgramadaItem): RevisaoDraft {
+  return {
+    intervalo_meses: item.intervalo_meses,
+    observacao: item.observacao ?? "",
+  };
+}
+
+function isRevisaoDirty(item: RevisaoProgramadaItem, edits: Record<string, RevisaoDraft>): boolean {
+  const draft = edits[item.revisao_id];
+  if (!draft) return false;
+  return (
+    draft.intervalo_meses !== item.intervalo_meses ||
+    draft.observacao.trim() !== (item.observacao ?? "").trim()
+  );
+}
+
 export function ConfiguracaoPage({
   getAccessToken,
   pathname,
@@ -97,19 +130,25 @@ export function ConfiguracaoPage({
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const motivosTable = useServerTable({ defaultSortKey: "descricao" });
   const statusTable = useServerTable({ defaultSortKey: "percentual" });
+  const revisoesTable = useServerTable({ defaultSortKey: "ferramenta" });
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
   const [motivosTotal, setMotivosTotal] = useState(0);
   const [status, setStatus] = useState<StatusItem[]>([]);
   const [statusTotal, setStatusTotal] = useState(0);
+  const [revisoes, setRevisoes] = useState<RevisaoProgramadaItem[]>([]);
+  const [revisoesTotal, setRevisoesTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [motivosLoading, setMotivosLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [revisoesLoading, setRevisoesLoading] = useState(false);
   const [novoMotivo, setNovoMotivo] = useState("");
   const [novoMotivoExcluirPreventiva, setNovoMotivoExcluirPreventiva] = useState(false);
   const [novoStatus, setNovoStatus] = useState<NovoStatusDraft>(DEFAULT_NOVO_STATUS);
+  const [novoRevisao, setNovoRevisao] = useState(DEFAULT_NOVO_REVISAO);
   const [motivoEdits, setMotivoEdits] = useState<Record<string, MotivoDraft>>({});
   const [statusEdits, setStatusEdits] = useState<Record<string, StatusItem>>({});
+  const [revisaoEdits, setRevisaoEdits] = useState<Record<string, RevisaoDraft>>({});
 
   const loadMotivos = useCallback(async () => {
     setMotivosLoading(true);
@@ -179,9 +218,43 @@ export function ConfiguracaoPage({
     }
   }, [filial, getAccessToken, statusTable.query]);
 
+  const loadRevisoes = useCallback(async () => {
+    setRevisoesLoading(true);
+    setError(null);
+    try {
+      const data = await fetchRevisoesProgramadas(
+        filial,
+        {
+          page: revisoesTable.query.page,
+          pageSize: revisoesTable.query.pageSize,
+          sortKey: revisoesTable.query.sortKey,
+          sortDirection: revisoesTable.query.sortDirection,
+        },
+        {},
+        getAccessToken,
+      );
+      const revisaoItems = data.items ?? [];
+      setRevisoes(revisaoItems);
+      setRevisoesTotal(data.total ?? 0);
+      setRevisaoEdits((current) => {
+        const next = { ...current };
+        for (const item of revisaoItems) {
+          if (next[item.revisao_id] === undefined) {
+            next[item.revisao_id] = toRevisaoDraft(item);
+          }
+        }
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar revisões programadas.");
+    } finally {
+      setRevisoesLoading(false);
+    }
+  }, [filial, getAccessToken, revisoesTable.query]);
+
   const loadData = useCallback(async () => {
-    await Promise.all([loadMotivos(), loadStatus()]);
-  }, [loadMotivos, loadStatus]);
+    await Promise.all([loadMotivos(), loadStatus(), loadRevisoes()]);
+  }, [loadMotivos, loadRevisoes, loadStatus]);
 
   useEffect(() => {
     void loadMotivos();
@@ -192,9 +265,14 @@ export function ConfiguracaoPage({
   }, [loadStatus]);
 
   useEffect(() => {
+    void loadRevisoes();
+  }, [loadRevisoes]);
+
+  useEffect(() => {
     motivosTable.resetPage();
     statusTable.resetPage();
-  }, [filial, motivosTable.resetPage, statusTable.resetPage]);
+    revisoesTable.resetPage();
+  }, [filial, motivosTable.resetPage, revisoesTable.resetPage, statusTable.resetPage]);
 
   async function handleCreateMotivo(event: React.FormEvent) {
     event.preventDefault();
@@ -306,6 +384,78 @@ export function ConfiguracaoPage({
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao excluir status.");
+    }
+  }
+
+  async function handleCreateRevisao(event: React.FormEvent) {
+    event.preventDefault();
+    const codigo = novoRevisao.codigo_ferramenta.trim().toUpperCase();
+    if (!codigo) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await createRevisaoProgramada(
+        {
+          filial,
+          codigo_ferramenta: codigo,
+          intervalo_meses: novoRevisao.intervalo_meses,
+          observacao: novoRevisao.observacao.trim() || undefined,
+        },
+        getAccessToken,
+      );
+      setNovoRevisao(DEFAULT_NOVO_REVISAO);
+      setSuccess("Revisão programada adicionada.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao adicionar revisão programada.");
+    }
+  }
+
+  async function handleSaveRevisao(revisaoId: string) {
+    const draft = revisaoEdits[revisaoId];
+    if (!draft || draft.intervalo_meses < 1) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateRevisaoProgramada(
+        revisaoId,
+        {
+          filial,
+          intervalo_meses: draft.intervalo_meses,
+          observacao: draft.observacao.trim(),
+        },
+        getAccessToken,
+      );
+      setSuccess("Revisão programada atualizada.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao atualizar revisão programada.");
+    }
+  }
+
+  async function handleRegistrarRevisao(revisaoId: string, codigo: string) {
+    if (!window.confirm(`Registrar revisão realizada hoje para a ferramenta ${codigo}?`)) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await registrarRevisaoProgramada(revisaoId, filial, getAccessToken);
+      setSuccess("Revisão registrada.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao registrar revisão.");
+    }
+  }
+
+  async function handleDeleteRevisao(revisaoId: string, codigo: string) {
+    if (!window.confirm(`Excluir programação de revisão da ferramenta ${codigo}?`)) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await deleteRevisaoProgramada(revisaoId, filial, getAccessToken);
+      setSuccess("Revisão programada excluída.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir revisão programada.");
     }
   }
 
@@ -511,11 +661,123 @@ export function ConfiguracaoPage({
     return columns;
   }, [canManageMiniApplicators, statusEdits]);
 
+  const revisoesColumns = useMemo<DataTableColumn<RevisaoProgramadaItem>[]>(() => {
+    const columns: DataTableColumn<RevisaoProgramadaItem>[] = [
+      {
+        key: "ferramenta",
+        header: "Ferramenta",
+        headerHint: CONFIG_TOOLTIPS.revisaoFerramenta,
+        sortable: true,
+        sortValue: (item) => item.codigo_ferramenta,
+        render: (item) => item.codigo_ferramenta,
+      },
+      {
+        key: "intervalo",
+        header: "Intervalo (meses)",
+        headerHint: CONFIG_TOOLTIPS.revisaoIntervalo,
+        sortable: true,
+        sortValue: (item) => revisaoEdits[item.revisao_id]?.intervalo_meses ?? item.intervalo_meses,
+        render: (item) =>
+          canManageMiniApplicators ? (
+            <div className="dm-editable-cell">
+              <input
+                type="number"
+                min={1}
+                max={120}
+                value={revisaoEdits[item.revisao_id]?.intervalo_meses ?? item.intervalo_meses}
+                onChange={(event) =>
+                  setRevisaoEdits((prev) => ({
+                    ...prev,
+                    [item.revisao_id]: {
+                      ...(prev[item.revisao_id] ?? toRevisaoDraft(item)),
+                      intervalo_meses: Number(event.target.value),
+                    },
+                  }))
+                }
+              />
+              <PendingChangeBadge visible={isRevisaoDirty(item, revisaoEdits)} />
+            </div>
+          ) : (
+            `${item.intervalo_meses} mes(es)`
+          ),
+        align: "right",
+      },
+      {
+        key: "observacao",
+        header: "Observação",
+        headerHint: CONFIG_TOOLTIPS.revisaoObservacao,
+        render: (item) =>
+          canManageMiniApplicators ? (
+            <input
+              value={revisaoEdits[item.revisao_id]?.observacao ?? item.observacao ?? ""}
+              onChange={(event) =>
+                setRevisaoEdits((prev) => ({
+                  ...prev,
+                  [item.revisao_id]: {
+                    ...(prev[item.revisao_id] ?? toRevisaoDraft(item)),
+                    observacao: event.target.value,
+                  },
+                }))
+              }
+              placeholder="Opcional"
+            />
+          ) : (
+            item.observacao ?? "—"
+          ),
+      },
+      {
+        key: "ultima",
+        header: "Última revisão",
+        render: (item) =>
+          item.data_ultima_revisao
+            ? new Date(item.data_ultima_revisao).toLocaleString("pt-BR")
+            : "—",
+      },
+    ];
+
+    if (canManageMiniApplicators) {
+      columns.push({
+        key: "acoes",
+        header: "Ações",
+        interactive: true,
+        render: (item) => (
+          <div className="dm-row-actions">
+            <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveRevisao(item.revisao_id)}>
+              Salvar
+            </button>
+            <HelpTooltip
+              content={CONFIG_TOOLTIPS.revisaoRegistrar}
+              wrap
+              ariaLabel="Ajuda: registrar revisão"
+            >
+              <button
+                type="button"
+                className="dm-ghost-btn"
+                onClick={() => void handleRegistrarRevisao(item.revisao_id, item.codigo_ferramenta)}
+              >
+                Registrar
+              </button>
+            </HelpTooltip>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--danger"
+              onClick={() => void handleDeleteRevisao(item.revisao_id, item.codigo_ferramenta)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      });
+    }
+
+    return columns;
+  }, [canManageMiniApplicators, revisaoEdits]);
+
   return (
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
         title="Configuração"
-        subtitle={`Motivos de troca e regras de status preventivo da filial ${filialDisplayName}.`}
+        subtitle={`Motivos, status por golpes e revisões programadas da filial ${filialDisplayName}.`}
         icon={Settings}
         filial={filial}
         filialDisplayName={filialDisplayName}
@@ -644,6 +906,70 @@ export function ConfiguracaoPage({
           sortKey: statusTable.query.sortKey,
           sortDirection: statusTable.query.sortDirection,
           onSortChange: statusTable.handleSortChange,
+        }}
+      />
+
+      <DataTableSection
+        className="dm-table-section--editable-config"
+        title="Revisões programadas"
+        titleHint={CONFIG_TOOLTIPS.revisaoSection}
+        toolbar={
+          canManageMiniApplicators ? (
+            <FilterBar embedded className="dm-filter-bar--revisao-create" onSubmit={handleCreateRevisao}>
+              <label className="dm-field">
+                <FieldLabel label="Ferramenta" hint={CONFIG_TOOLTIPS.revisaoFerramenta} />
+                <input
+                  value={novoRevisao.codigo_ferramenta}
+                  onChange={(event) =>
+                    setNovoRevisao((prev) => ({ ...prev, codigo_ferramenta: event.target.value }))
+                  }
+                  placeholder="Ex.: 23-001"
+                />
+              </label>
+              <label className="dm-field">
+                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={novoRevisao.intervalo_meses}
+                  onChange={(event) =>
+                    setNovoRevisao((prev) => ({
+                      ...prev,
+                      intervalo_meses: Number(event.target.value),
+                    }))
+                  }
+                />
+              </label>
+              <label className="dm-field">
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <input
+                  value={novoRevisao.observacao}
+                  onChange={(event) =>
+                    setNovoRevisao((prev) => ({ ...prev, observacao: event.target.value }))
+                  }
+                  placeholder="Opcional"
+                />
+              </label>
+              <button type="submit" className="dm-primary-btn">
+                Adicionar
+              </button>
+            </FilterBar>
+          ) : null
+        }
+        columns={revisoesColumns}
+        rows={revisoes}
+        loading={revisoesLoading}
+        emptyMessage="Nenhuma revisão programada — cadastre periodicidade por ferramenta."
+        getRowKey={(item) => item.revisao_id}
+        serverTable={{
+          page: revisoesTable.query.page,
+          pageSize: revisoesTable.query.pageSize,
+          total: revisoesTotal,
+          onPageChange: revisoesTable.setPage,
+          sortKey: revisoesTable.query.sortKey,
+          sortDirection: revisoesTable.query.sortDirection,
+          onSortChange: revisoesTable.handleSortChange,
         }}
       />
     </MaintenanceShell>

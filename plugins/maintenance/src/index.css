@@ -1691,6 +1691,15 @@
     grid-column: 1 / -1;
   }
 
+  .dashboard-maintenance .dm-filter-bar--revisao-create {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-maintenance .dm-filter-bar--revisao-create > .dm-field:first-of-type,
+  .dashboard-maintenance .dm-filter-bar--revisao-create > .dm-primary-btn {
+    grid-column: 1 / -1;
+  }
+
   .dashboard-maintenance .dm-filter-bar--motivo-create {
     grid-template-columns: 1fr auto;
   }
