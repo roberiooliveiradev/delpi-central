@@ -480,21 +480,36 @@ body:has(.app-shell) {
 /*
  * Manutenção geral (MFE): formulário Google em tela cheia na área do app.
  */
+html.maintenance-embed-active .main-area,
 html.maintenance-embed-active .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
 html.maintenance-embed-active .content > .app-host,
-html.maintenance-embed-active .content > .app-host-federated,
+html.maintenance-embed-active .content > .app-host-federated {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+html.maintenance-embed-active .app-host-federated.app-host--loading-shell,
 html.maintenance-embed-active .app-host-federated__mount,
 html.maintenance-embed-active .app-host-federated > div:not(.app-host-loading-screen):not(.app-host-federated-error):not(.app-host-federated-alt) {
   flex: 1 1 auto;
   width: 100%;
   max-width: none;
   min-width: 0;
-  height: 100%;
-  min-height: 0;
+  height: 100% !important;
+  min-height: 0 !important;
   overflow: hidden;
+}
+
+html.maintenance-embed-active .app-host-federated__mount.is-ready,
+html.maintenance-embed-active .app-host-federated__mount.is-loading {
+  opacity: 1;
 }
 
 /*

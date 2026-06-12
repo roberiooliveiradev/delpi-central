@@ -112,15 +112,17 @@ export function ManutencaoGeralFormEmbed({
         </div>
       ) : null}
 
-      <iframe
-        key={`manutencao-geral:${iframeReloadKey}`}
-        title="Formulário de manutenção geral"
-        src={formUrl}
-        className={["dm-form-embed__iframe", iframeReady ? "is-ready" : "is-loading"].join(" ")}
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="clipboard-read; clipboard-write; fullscreen"
-        onLoad={() => setIframeReady(true)}
-      />
+      <div className="dm-form-embed__frame">
+        <iframe
+          key={`manutencao-geral:${iframeReloadKey}`}
+          title="Formulário de manutenção geral"
+          src={formUrl}
+          className={["dm-form-embed__iframe", iframeReady ? "is-ready" : "is-loading"].join(" ")}
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          onLoad={() => setIframeReady(true)}
+        />
+      </div>
     </section>
   );
 }
