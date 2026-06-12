@@ -37,54 +37,112 @@ class DashboardCalculatorService:
     COMPARABLE_SCENARIOS = set(calc_rules.COMPARABLE_SCENARIOS)
 
     def build_process_list(self, raw: TransformometroRawData) -> List[dict]:
+        return self.build_instancia_list(raw)
+
+    def build_instancia_list(self, raw: TransformometroRawData) -> List[dict]:
         context = self._build_context(raw)
         items: List[dict] = []
+        for inst_row in self._instancias_for_list(raw):
+            item = self._build_instancia_list_item(inst_row, context)
+            if item:
+                items.append(item)
+        return items
 
+    def _instancias_for_list(self, raw: TransformometroRawData) -> List[dict]:
+        if raw.processo_instancias:
+            return list(raw.processo_instancias)
+        synth: List[dict] = []
         for process_row in raw.processos:
             process_id = self._empty_to_none(process_row.get("processo_id"))
             if not process_id:
                 continue
-
-            revisoes = context.revisoes_by_processo.get(process_id, [])
-            process_active = self._is_process_active(revisoes)
-            display_review = self._pick_display_review(revisoes) if process_active else None
-            implementation_review = self._pick_first_non_baseline_review(revisoes)
-            baseline_review = self._pick_baseline_review(revisoes)
-
-            daily_savings = self._calculate_process_daily_savings(
-                display_review=display_review,
-                baseline_review=baseline_review,
-                context=context,
-            )
-
-            payback_months = self._calculate_review_payback_months(
-                review=display_review,
-                baseline_review=baseline_review,
-                context=context,
-            )
-
-            implementation_date = None
-            if implementation_review:
-                implementation_date = self._format_display_date(
-                    implementation_review.get("data_implantacao")
-                    or implementation_review.get("data_inicio_vigencia")
-                )
-
-            items.append(
+            synth.append(
                 {
+                    "instancia_id": process_id,
                     "processo_id": process_id,
-                    "codigo_processo": self._empty_to_none(process_row.get("codigo_processo")),
-                    "nome_processo": self._empty_to_none(process_row.get("nome_processo")) or "",
-                    "filial_id": self._empty_to_none(process_row.get("filial_id")),
-                    "setor_id": self._empty_to_none(process_row.get("setor_id")),
-                    "economia_diaria": self._round_final(daily_savings),
-                    "payback_meses": self._round_final(payback_months),
-                    "status_processo": self._empty_to_none(process_row.get("status_processo")),
-                    "data_implantacao": implementation_date,
+                    "codigo_filial": process_row.get("filial_id"),
+                    "codigo_setor": process_row.get("setor_id"),
                 }
             )
+        return synth
 
-        return items
+    def _revisoes_for_instancia(
+        self,
+        context: CalculationContext,
+        *,
+        instancia_id: str,
+        process_id: str,
+    ) -> List[dict]:
+        all_revisoes = context.revisoes_by_processo.get(process_id, [])
+        scoped = [
+            revisao
+            for revisao in all_revisoes
+            if str(revisao.get("instancia_id") or "") == instancia_id
+        ]
+        if scoped:
+            return scoped
+        if not any(revisao.get("instancia_id") for revisao in all_revisoes):
+            return all_revisoes
+        return []
+
+    def _build_instancia_list_item(
+        self,
+        inst_row: dict,
+        context: CalculationContext,
+    ) -> dict | None:
+        process_id = self._empty_to_none(inst_row.get("processo_id"))
+        instancia_id = self._empty_to_none(inst_row.get("instancia_id"))
+        if not process_id or not instancia_id:
+            return None
+
+        process_row = context.processos_by_id.get(process_id, {})
+        revisoes = self._revisoes_for_instancia(
+            context,
+            instancia_id=str(instancia_id),
+            process_id=str(process_id),
+        )
+        process_active = self._is_process_active(revisoes)
+        display_review = self._pick_display_review(revisoes) if process_active else None
+        implementation_review = self._pick_first_non_baseline_review(revisoes)
+        baseline_review = self._pick_baseline_review(revisoes)
+
+        daily_savings = self._calculate_process_daily_savings(
+            display_review=display_review,
+            baseline_review=baseline_review,
+            context=context,
+        )
+        payback_months = self._calculate_review_payback_months(
+            review=display_review,
+            baseline_review=baseline_review,
+            context=context,
+        )
+
+        implementation_date = None
+        if implementation_review:
+            implementation_date = self._format_display_date(
+                implementation_review.get("data_implantacao")
+                or implementation_review.get("data_inicio_vigencia")
+            )
+
+        filial_codigo = self._empty_to_none(inst_row.get("codigo_filial")) or self._empty_to_none(
+            process_row.get("filial_id")
+        )
+        setor_codigo = self._empty_to_none(inst_row.get("codigo_setor")) or self._empty_to_none(
+            process_row.get("setor_id")
+        )
+
+        return {
+            "instancia_id": str(instancia_id),
+            "processo_id": str(process_id),
+            "codigo_processo": self._empty_to_none(process_row.get("codigo_processo")),
+            "nome_processo": self._empty_to_none(process_row.get("nome_processo")) or "",
+            "filial_id": filial_codigo,
+            "setor_id": setor_codigo,
+            "economia_diaria": self._round_final(daily_savings),
+            "payback_meses": self._round_final(payback_months),
+            "status_processo": self._empty_to_none(process_row.get("status_processo")),
+            "data_implantacao": implementation_date,
+        }
 
     def build_dashboard_rows(self, raw: TransformometroRawData) -> List[dict]:
         context = self._build_context(raw)

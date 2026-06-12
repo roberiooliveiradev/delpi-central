@@ -16,6 +16,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 | **S6 — Cache dashboard** | V017 | `dashboard_calculos` PK UUID, FKs instância/filial/setor, denorm `codigo_*`, view snapshot |
 | **S7 — Visões dashboard** | — | `DashboardViewScopeService`, query `view=consolidated\|filial\|department` |
 | **S8 — Duplicar instância** | V018 | `POST /instancias/{id}/duplicar`; depreca `POST /processos/{id}/duplicar` |
+| **S9 — Integração api-delpi** | — | Listagem por instância (`id` = `instancia_id`); backup `filiais` + `processo_instancias` |
 
 ## Migrations disponíveis
 
@@ -56,6 +57,15 @@ Inferência legada: só `filial_id` → filial; `filial_id` + `setor_id` → dep
 - Copia revisões, medições, investimentos e vínculos para nova instância do **mesmo processo-mestre**.
 - **V018:** unique `(instancia_id, versao_revisao)`; `chave_unica_processo_revisao` = `{instancia_id}|{versao}`.
 - **Legado:** `POST /processos/{id}/duplicar` mantido com header `Deprecation` e campo `deprecated` na resposta.
+
+## Integração Transforma+ (S9)
+
+- **Listagem S2S:** uma linha por instância operacional; `id` = `instancia_id` (UUID).
+- **Campos aditivos em `items[]`:** `processo_id`, `instancia_id`, `codigo_processo` (paridade api-delpi).
+- **Filtro `id`:** aceita UUID de instância, `processo_id` ou `codigo_processo`.
+- **Backup JSON 1.1:** bundles `filiais` e `processo_instancias` no export/import.
+
+Módulo canônico: `tm_app/application/integrations/engineering_transforma_mais.py`.
 
 ## Escopo de recurso (`escopo_recurso`)
 
@@ -98,11 +108,10 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V017: recalcular cache dashboard (full)
 ```
 
-## Próximo (S9+)
+## Próximo (S10+)
 
 | Sprint | Foco |
 |--------|------|
-| **S9** | Integração api-delpi (lista por instância) |
 | **S10** | RBAC filial (opcional) |
 
 ## Testes

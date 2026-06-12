@@ -43,6 +43,9 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
                 payback_months=row.get("payback_months"),
                 status=row.get("status"),
                 implementetion_date=row.get("implementetion_date"),
+                processo_id=row.get("processo_id"),
+                instancia_id=row.get("instancia_id") or row.get("id"),
+                codigo_processo=row.get("codigo_processo"),
             )
             for row in items
         ]

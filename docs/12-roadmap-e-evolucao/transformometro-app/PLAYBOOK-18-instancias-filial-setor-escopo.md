@@ -396,7 +396,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 | **S6 — Dashboard cache UUID** | V017, `dashboard_calculos` UUID, recalc full, I16 | ✅ Cache alinhado |
 | **S7 — Dashboard visões** | `DashboardViewScopeService`, toggle MFE, query alias I14, export I10 | ✅ API (MFE toggle pendente) |
 | **S8 — Duplicar instância** | Novo endpoint, deprecar duplicar processo | ✅ Rollout multi-unidade |
-| **S9 — Integração via api-delpi + backup** | Paridade TM S2S + gateway/DTO api-delpi; smoke; I11/I17; JSON I12 | Contrato público = `/engineering/transforma-mais/*`; SI/MFE só api-delpi |
+| **S9 — Integração via api-delpi + backup** | Paridade TM S2S + gateway/DTO api-delpi; smoke; I11/I17; JSON I12 | ✅ Listagem por instância |
 | **S10 — RBAC filial** (opcional) | Filtro server-side por filial do usuário | Permissão escopada |
 
 **Dependências:** S1 → S2 → S3 bloqueia S4–S9; S5–S6 após S3; S7 após S5–S6.
@@ -472,3 +472,4 @@ O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para 
 | S6 Cache dashboard | ✅ V017, `dashboard_cache_denorm_service`, view snapshot |
 | S7 Visões dashboard | ✅ `DashboardViewScopeService`, query `view` |
 | S8 Duplicar instância | ✅ V018, `POST /instancias/{id}/duplicar` |
+| S9 Integração api-delpi | ✅ `id` = `instancia_id`, backup filiais/instancias |

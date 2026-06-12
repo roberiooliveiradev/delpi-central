@@ -17,6 +17,7 @@ def _sample_bundle() -> dict:
     return {
         "schema_version": SCHEMA_VERSION,
         "exported_at": "2026-01-01T00:00:00+00:00",
+        "filiais": [],
         "setores": [
             {
                 "setor_id": "eng",
@@ -37,6 +38,7 @@ def _sample_bundle() -> dict:
                 "deletado": False,
             }
         ],
+        "processo_instancias": [],
         "recursos_compartilhados": [],
         "revisoes": [
             {
@@ -172,9 +174,11 @@ def test_preview_merge_counts_insert_and_update():
     repo.fetch_existing_ids.side_effect = lambda spec: (
         {"11111111-1111-1111-1111-111111111111"} if spec.bundle_key == "processos" else set()
     )
+    repo.fetch_filiais.return_value = []
     repo.fetch_setor_filiais.return_value = [{"setor_id": "eng", "filial_id": "01"}]
     repo.load_export_bundle.return_value = MagicMock(
         processos=[{}],
+        processo_instancias=[],
         revisoes=[],
         medicoes=[],
         investimentos=[],

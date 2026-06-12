@@ -23,6 +23,20 @@ class EntitySpec:
 
 ENTITY_SPECS: tuple[EntitySpec, ...] = (
     EntitySpec(
+        "filiais",
+        "transformometro.filiais",
+        "filial_id",
+        (
+            "filial_id",
+            "codigo_filial",
+            "nome_filial",
+            "status_filial",
+            "created_at",
+            "updated_at",
+            "deletado",
+        ),
+    ),
+    EntitySpec(
         "setores",
         "transformometro.setores",
         "setor_id",
@@ -53,6 +67,27 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "created_at",
             "updated_at",
             "deletado",
+        ),
+    ),
+    EntitySpec(
+        "processo_instancias",
+        "transformometro.processo_instancias",
+        "instancia_id",
+        (
+            "instancia_id",
+            "processo_id",
+            "filial_id",
+            "setor_id",
+            "rotulo_instancia",
+            "status_instancia",
+            "created_at",
+            "updated_at",
+            "deletado",
+        ),
+        (
+            ("processo_id", "processos", "processo_id"),
+            ("filial_id", "filiais", "filial_id"),
+            ("setor_id", "setores", "setor_id"),
         ),
     ),
     EntitySpec(
@@ -213,6 +248,34 @@ class JsonBackupRepository(PluginBaseRepository):
             SELECT * FROM transformometro.setores
             WHERE deletado = FALSE
             ORDER BY nome_setor ASC
+            """
+        )
+
+    def fetch_filiais(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT * FROM transformometro.filiais
+            WHERE deletado = FALSE
+            ORDER BY codigo_filial ASC
+            """
+        )
+
+    def fetch_processo_instancias(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                pi.instancia_id,
+                pi.processo_id,
+                pi.filial_id,
+                pi.setor_id,
+                pi.rotulo_instancia,
+                pi.status_instancia,
+                pi.created_at,
+                pi.updated_at,
+                pi.deletado
+            FROM transformometro.processo_instancias pi
+            WHERE pi.deletado = FALSE
+            ORDER BY pi.processo_id ASC, pi.created_at ASC
             """
         )
 
@@ -391,7 +454,8 @@ class JsonBackupRepository(PluginBaseRepository):
                 transformometro.recursos_compartilhados,
                 transformometro.processos,
                 transformometro.setor_filiais,
-                transformometro.setores
+                transformometro.setores,
+                transformometro.filiais
             RESTART IDENTITY CASCADE
             """,
             auto_commit=False,

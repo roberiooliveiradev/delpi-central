@@ -72,6 +72,7 @@ def _build_id_sets(payload: dict[str, Any]) -> dict[str, set[str]]:
 def _as_dict(raw: TransformometroRawData) -> dict[str, list[dict[str, Any]]]:
     return {
         "processos": raw.processos,
+        "processo_instancias": raw.processo_instancias,
         "revisoes": raw.revisoes,
         "medicoes": raw.medicoes,
         "investimentos": raw.investimentos,
@@ -92,8 +93,11 @@ class JsonBackupService:
     def export_bundle(self) -> dict[str, Any]:
         raw = self._repo.load_export_bundle()
         data = self._repo.ensure_bundle_parent_rows(_as_dict(raw))
+        data["filiais"] = self._repo.fetch_filiais()
         data["setores"] = self._repo.fetch_setores()
         data["setor_filiais"] = self._repo.fetch_setor_filiais()
+        if not data.get("processo_instancias"):
+            data["processo_instancias"] = self._repo.fetch_processo_instancias()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -300,6 +304,7 @@ class JsonBackupService:
         data = _as_dict(raw)
         return {
             **{key: len(data.get(key) or []) for key in BUNDLE_KEYS if key != SETOR_FILIAIS_BUNDLE_KEY},
+            "filiais": len(self._repo.fetch_filiais()),
             "setores": len(self._repo.fetch_setores()),
             SETOR_FILIAIS_BUNDLE_KEY: len(self._repo.fetch_setor_filiais()),
         }

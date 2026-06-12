@@ -26,7 +26,7 @@ class EngineeringTransformaMaisService:
 
     def list_processes(self, filters: EngineeringProcessFilters) -> dict[str, Any]:
         raw = DashboardDataRepository().load_raw()
-        items = self._calculator.build_process_list(raw)
+        items = self._calculator.build_instancia_list(raw)
         mapped = [_map_process_row(row) for row in items]
         filtered = _apply_process_filters(mapped, filters)
         return {"total": len(filtered), "items": filtered}
@@ -53,8 +53,14 @@ def _map_process_row(row: dict) -> dict:
     if hasattr(implantacao, "isoformat"):
         implantacao = implantacao.isoformat()
 
+    instancia_id = row.get("instancia_id") or row.get("processo_id")
+    processo_id = row.get("processo_id")
+
     return {
-        "id": row.get("processo_id"),
+        "id": instancia_id,
+        "processo_id": processo_id,
+        "instancia_id": instancia_id,
+        "codigo_processo": row.get("codigo_processo"),
         "name_process": row.get("nome_processo") or "",
         "filial_id": row.get("filial_id"),
         "sector_name": row.get("setor_id"),
@@ -107,7 +113,14 @@ def _apply_process_filters(
 
     if filters.id:
         needle = filters.id.lower()
-        result = [i for i in result if needle in str(i.get("id") or "").lower()]
+        result = [
+            i
+            for i in result
+            if needle in str(i.get("id") or "").lower()
+            or needle in str(i.get("processo_id") or "").lower()
+            or needle in str(i.get("instancia_id") or "").lower()
+            or needle in str(i.get("codigo_processo") or "").lower()
+        ]
 
     if filters.name_process:
         needle = filters.name_process.lower()

@@ -13,6 +13,9 @@ class Process:
     payback_months: Optional[float] = None
     status: Optional[str] = None
     implementetion_date: Optional[str] = None
+    processo_id: Optional[str] = None
+    instancia_id: Optional[str] = None
+    codigo_processo: Optional[str] = None
     
     def to_dict(self) -> dict:
         return asdict(self)

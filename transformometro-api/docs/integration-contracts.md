@@ -84,9 +84,13 @@ Na refatoração Playbook 18 (instâncias, UUID interno, escopo híbrido), **que
 
 | Campo | Congelado | Notas |
 |-------|-----------|-------|
+| `id` | sim | **`instancia_id` UUID** (Playbook 18 S9) — uma linha por instância operacional |
 | `implementetion_date` | sim | Typo legado — não renomear sem bump de contrato |
 | `filial_id` | sim | **`codigo_filial`** (`01`, `02`) — não UUID |
 | `sector_name` | sim | **`codigo_setor`** — não UUID |
+| `processo_id` | aditivo | UUID do processo-mestre |
+| `instancia_id` | aditivo | Igual a `id` quando presente |
+| `codigo_processo` | aditivo | Código de negócio do mestre |
 
 Query params públicos: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`.
 
