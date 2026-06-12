@@ -45,6 +45,13 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
             where_clauses.append("(" + " OR ".join(desc_where) + ")")
 
         where_sql = " AND ".join(where_clauses)
+        sort_columns = {
+            "codigo": "SB1.B1_COD",
+            "descricao": "SB1.B1_DESC",
+        }
+        sort_key = (request.sort_by or "codigo").strip().lower()
+        sort_column = sort_columns.get(sort_key, sort_columns["codigo"])
+        sort_direction = "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
 
         count_query = f"""
             SELECT COUNT(1) AS total
@@ -60,7 +67,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                 RTRIM(SB1.B1_GRUPO) AS grupo
             FROM SB1010 SB1 WITH (NOLOCK)
             WHERE {where_sql}
-            ORDER BY SB1.B1_COD
+            ORDER BY {sort_column} {sort_direction}
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 

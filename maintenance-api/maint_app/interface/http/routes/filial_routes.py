@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
 
 from maint_app.application.security.maintenance_permissions import assert_module_manage
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from maint_app.application.list_query import ListQuery
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
+from maint_app.interface.http.list_query_params import list_query_params
 
 router = APIRouter(prefix="/maintenance", tags=["Manutenção — filiais"])
 
@@ -43,6 +45,8 @@ def list_filiais(
     request: Request,
     include_inactive: bool = Query(default=False),
     admin: bool = Query(default=False),
+    search: str | None = Query(None),
+    query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
@@ -52,9 +56,13 @@ def list_filiais(
             assert_module_manage(user)
         except PermissionError as exc:
             return fail(str(exc), 403)
-        rows = FilialRepository().list(include_inactive=include_inactive)
+        rows, total = FilialRepository().list_paged(
+            include_inactive=include_inactive,
+            query=query,
+            search=search,
+        )
         items = [_serialize(row) for row in rows]
-        return ok({"items": items, "total": len(items)}, message="Filiais listadas.")
+        return ok({"items": items, "total": total}, message="Filiais listadas.")
 
     rows = FilialRepository().list(include_inactive=False)
     options = _scope.filter_filiais_options(

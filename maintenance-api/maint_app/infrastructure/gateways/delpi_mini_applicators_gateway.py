@@ -17,6 +17,8 @@ class DelpiMiniAplicatorsGateway:
         filial: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict:
         return self._client.list_mini_applicators_ferramentas(
             params={
@@ -25,6 +27,8 @@ class DelpiMiniAplicatorsGateway:
                 "filial": filial,
                 "page": str(page) if page is not None else None,
                 "page_size": str(page_size) if page_size is not None else None,
+                "sort_by": sort_by,
+                "sort_dir": sort_dir,
             },
             authorization=bearer_authorization_from_context(),
         )

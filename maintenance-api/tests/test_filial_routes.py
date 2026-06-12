@@ -73,16 +73,19 @@ def test_list_filiais_admin(mock_repo_cls, _public, mock_user, mock_scope):
         allowed_codigos=frozenset({"01"}),
         manage_codigos=frozenset({"01"}),
     )
-    mock_repo_cls.return_value.list.return_value = [
-        {
-            "filial_id": 1,
-            "codigo_filial": "01",
-            "nome_filial": "Matriz",
-            "status_filial": "ativo",
-            "data_criacao": None,
-            "data_alteracao": None,
-        }
-    ]
+    mock_repo_cls.return_value.list_paged.return_value = (
+        [
+            {
+                "filial_id": 1,
+                "codigo_filial": "01",
+                "nome_filial": "Matriz",
+                "status_filial": "ativo",
+                "data_criacao": None,
+                "data_alteracao": None,
+            }
+        ],
+        1,
+    )
 
     client = TestClient(app)
     response = client.get("/maintenance/filiais?admin=true&include_inactive=true")

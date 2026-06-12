@@ -47,6 +47,24 @@ class PluginBaseRepository:
             logger.exception("fetch_all failed")
             raise PluginsRepositoryError("Falha ao listar registros.") from exc
 
+    def fetch_paged(
+        self,
+        *,
+        select_sql: str,
+        count_sql: str,
+        params: tuple[Any, ...],
+        page: int,
+        page_size: int,
+    ) -> tuple[list[dict[str, Any]], int]:
+        total_row = self.fetch_one(count_sql, params)
+        total = int((total_row or {}).get("total") or 0)
+        offset = max(0, (page - 1) * page_size)
+        rows = self.fetch_all(
+            f"{select_sql} LIMIT %s OFFSET %s",
+            params + (page_size, offset),
+        )
+        return rows, total
+
     def execute_returning_one(
         self,
         query: str,

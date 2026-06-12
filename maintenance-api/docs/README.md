@@ -25,9 +25,26 @@
 
 ## Estado
 
-Fases 0–2 concluídas. Submódulos com RBAC por filial (manifesto v0.2.1), filial escolhida no início, CRUD completo e tabelas paginadas/ordenáveis no MFE (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
+Fases 0–2 concluídas. Submódulos com RBAC por filial (manifesto v0.2.1), filial escolhida no início, CRUD completo, listagens paginadas server-side e UX de reposição no MFE (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
 
-| Testes CI | 36 (`scripts/ci-maintenance-api.sh`) |
+| Testes CI | 37 (`scripts/ci-maintenance-api.sh`) |
+
+## Listagens paginadas
+
+Query params padronizados (`list_query_params.py`):
+
+| Parâmetro | Default | Descrição |
+|-----------|---------|-----------|
+| `page` | `1` | Página (≥ 1) |
+| `page_size` | `20` | Itens por página (1–200) |
+| `sort_by` | rota | Campo de ordenação |
+| `sort_dir` | `asc` | `asc` ou `desc` |
+
+Resposta em `data`: `{ "items": [...], "total": N }`.
+
+## Filtro de peças (3019)
+
+`GET .../ferramentas/{codigo}/pecas` — somente códigos `3019*` (peças substituíveis TOTVS).
 
 | Script | Uso |
 |--------|-----|

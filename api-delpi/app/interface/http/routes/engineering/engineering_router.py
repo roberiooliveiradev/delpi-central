@@ -429,6 +429,8 @@ def list_mini_applicators_ferramentas_route(
     filial: Optional[str] = Query(None),
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
+    sort_by: Optional[str] = Query(None),
+    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
 ):
     try:
         request = ListMiniApplicatorsFerramentasRequest(
@@ -437,6 +439,8 @@ def list_mini_applicators_ferramentas_route(
             filial=filial,
             page=page or 1,
             page_size=page_size or 50,
+            sort_by=sort_by,
+            sort_dir=sort_dir or "asc",
         )
         use_case = build_list_mini_applicators_ferramentas_use_case()
         result = use_case.execute(request)

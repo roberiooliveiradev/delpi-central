@@ -22,18 +22,21 @@ def test_preventiva_alertas_envelope(mock_service, _public, mock_user, mock_scop
         allowed_codigos=frozenset({"01"}),
         manage_codigos=frozenset(),
     )
-    mock_service.return_value.listar_alertas.return_value = [
-        {
-            "filial": "01",
-            "codigo_ferramenta": "23-001",
-            "codigo_peca": "P1",
-            "data_ultima_reposicao": datetime(2026, 6, 1),
-            "status": "OK",
-            "golpes_atuais": 10,
-            "media_golpes": 100,
-            "percentual_uso": 10,
-        }
-    ]
+    mock_service.return_value.listar_alertas.return_value = (
+        [
+            {
+                "filial": "01",
+                "codigo_ferramenta": "23-001",
+                "codigo_peca": "P1",
+                "data_ultima_reposicao": datetime(2026, 6, 1),
+                "status": "OK",
+                "golpes_atuais": 10,
+                "media_golpes": 100,
+                "percentual_uso": 10,
+            }
+        ],
+        1,
+    )
 
     client = TestClient(app)
     response = client.get("/maintenance/preventiva/alertas?filial=01")

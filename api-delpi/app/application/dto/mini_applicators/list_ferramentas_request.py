@@ -10,3 +10,5 @@ class ListMiniApplicatorsFerramentasRequest:
     filial: str | None = None
     page: int = 1
     page_size: int = 50
+    sort_by: str | None = None
+    sort_dir: str = "asc"

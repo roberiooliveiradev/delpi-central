@@ -1,4 +1,5 @@
 import { maintenanceFetch } from "./maintenanceApiBase";
+import { appendListQuery, type ListQueryFilters, type ListQueryParams } from "../../utils/listQuery";
 
 export type FerramentaItem = {
   id: number;
@@ -39,6 +40,19 @@ export type MaintenanceOptions = {
   can_manage_filiais?: boolean;
 };
 
+export type PagedItems<T> = {
+  items: T[];
+  total: number;
+};
+
+export type PreventivaResumo = {
+  critico: number;
+  atencao: number;
+  ok: number;
+  sem_status: number;
+  total: number;
+};
+
 export function fetchMaintenanceOptions(
   getAccessToken?: () => string | undefined,
   filial?: string,
@@ -52,23 +66,28 @@ export function fetchFerramentas(
     filial: string;
     codigo?: string;
     descricao?: string;
-    page?: number;
-    page_size?: number;
-  },
+  } & ListQueryParams,
   getAccessToken?: () => string | undefined,
 ) {
   const search = new URLSearchParams();
   search.set("filial", params.filial);
-  if (params.codigo) search.set("codigo", params.codigo);
-  if (params.descricao) search.set("descricao", params.descricao);
-  if (params.page) search.set("page", String(params.page));
-  if (params.page_size) search.set("page_size", String(params.page_size));
-
-  const query = search.toString();
-  return maintenanceFetch<FerramentasPage>(
-    `/mini-aplicadores/ferramentas${query ? `?${query}` : ""}`,
-    { getAccessToken },
+  appendListQuery(
+    search,
+    {
+      page: params.page,
+      pageSize: params.pageSize,
+      sortKey: params.sortKey,
+      sortDirection: params.sortDirection,
+    },
+    {
+      codigo: params.codigo,
+      descricao: params.descricao,
+    },
   );
+
+  return maintenanceFetch<FerramentasPage>(`/mini-aplicadores/ferramentas?${search.toString()}`, {
+    getAccessToken,
+  });
 }
 
 export function fetchFerramenta(
@@ -81,7 +100,6 @@ export function fetchFerramenta(
     { getAccessToken },
   );
 }
-
 
 export type ComponenteItem = {
   id: number;
@@ -98,6 +116,8 @@ export type UltimaReposicaoItem = {
   filial: string;
   codigo_ferramenta: string;
   codigo_peca: string;
+  descricao_ferramenta?: string;
+  descricao_peca?: string;
   data_reposicao: string;
   golpes: number;
 };
@@ -105,17 +125,27 @@ export type UltimaReposicaoItem = {
 export function fetchComponentes(
   codigoFerramenta: string,
   filial: string,
+  query: ListQueryParams = {},
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<{ items: ComponenteItem[]; total: number }>(
-    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/componentes?filial=${encodeURIComponent(filial)}`,
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query);
+  return maintenanceFetch<PagedItems<ComponenteItem>>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/componentes?${search.toString()}`,
     { getAccessToken },
   );
 }
 
-export function fetchUltimasReposicoes(filial: string, getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{ items: UltimaReposicaoItem[]; total: number }>(
-    `/preventiva/ultimas-reposicoes?filial=${encodeURIComponent(filial)}`,
+export function fetchUltimasReposicoes(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<UltimaReposicaoItem>>(
+    `/preventiva/ultimas-reposicoes?${search.toString()}`,
     { getAccessToken },
   );
 }
@@ -124,6 +154,8 @@ export type PreventivaAlerta = {
   filial: string;
   codigo_ferramenta: string;
   codigo_peca: string;
+  descricao_ferramenta?: string;
+  descricao_peca?: string;
   data_ultima_reposicao: string;
   media_golpes: number;
   golpes_atuais: number;
@@ -137,12 +169,26 @@ export type PreventivaHistoricoItem = {
   golpes: number;
 };
 
-export function fetchPreventivaAlertas(
+export function fetchPreventivaResumo(
   filial: string,
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<{ items: PreventivaAlerta[]; total: number }>(
-    `/preventiva/alertas?filial=${encodeURIComponent(filial)}`,
+  return maintenanceFetch<PreventivaResumo>(
+    `/preventiva/resumo?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
+export function fetchPreventivaAlertas(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<PreventivaAlerta>>(
+    `/preventiva/alertas?${search.toString()}`,
     { getAccessToken },
   );
 }
@@ -152,7 +198,7 @@ export function fetchPreventivaHistorico(
   getAccessToken?: () => string | undefined,
 ) {
   const search = new URLSearchParams(params);
-  return maintenanceFetch<{ items: PreventivaHistoricoItem[]; total: number }>(
+  return maintenanceFetch<PagedItems<PreventivaHistoricoItem>>(
     `/preventiva/historico?${search.toString()}`,
     { getAccessToken },
   );
@@ -179,29 +225,52 @@ export type ReposicaoItem = {
   observacao?: string | null;
 };
 
-export function fetchMotivos(filial: string, getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{ items: MotivoItem[]; total: number }>(
-    `/motivos?filial=${encodeURIComponent(filial)}`,
-    { getAccessToken },
-  );
+export function fetchMotivos(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<MotivoItem>>(`/motivos?${search.toString()}`, { getAccessToken });
 }
 
-export function fetchStatusPeca(filial: string, getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{ items: StatusItem[]; total: number }>(
-    `/status-peca?filial=${encodeURIComponent(filial)}`,
-    { getAccessToken },
-  );
+export function fetchStatusPeca(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: ListQueryFilters = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, filters);
+  return maintenanceFetch<PagedItems<StatusItem>>(`/status-peca?${search.toString()}`, {
+    getAccessToken,
+  });
 }
 
 export function fetchReposicoes(
-  params: { filial: string; codigo_ferramenta: string; codigo_peca?: string },
+  params: {
+    filial: string;
+    codigo_ferramenta: string;
+    codigo_peca?: string;
+  } & ListQueryParams,
   getAccessToken?: () => string | undefined,
 ) {
-  const search = new URLSearchParams(params as Record<string, string>);
-  return maintenanceFetch<{ items: ReposicaoItem[]; total: number }>(
-    `/reposicoes?${search.toString()}`,
-    { getAccessToken },
-  );
+  const search = new URLSearchParams({
+    filial: params.filial,
+    codigo_ferramenta: params.codigo_ferramenta,
+  });
+  if (params.codigo_peca) search.set("codigo_peca", params.codigo_peca);
+  appendListQuery(search, {
+    page: params.page,
+    pageSize: params.pageSize,
+    sortKey: params.sortKey,
+    sortDirection: params.sortDirection,
+  });
+  return maintenanceFetch<PagedItems<ReposicaoItem>>(`/reposicoes?${search.toString()}`, {
+    getAccessToken,
+  });
 }
 
 export function createReposicao(
@@ -342,7 +411,7 @@ export function fetchPecas(
   filial: string,
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<{ items: FerramentaItem[]; total: number }>(
+  return maintenanceFetch<PagedItems<FerramentaItem>>(
     `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/pecas?filial=${encodeURIComponent(filial)}`,
     { getAccessToken },
   );
@@ -388,15 +457,16 @@ export type FilialItem = {
 };
 
 export function fetchFiliaisAdmin(
+  query: ListQueryParams = {},
   getAccessToken?: () => string | undefined,
   includeInactive = true,
 ) {
   const search = new URLSearchParams({ admin: "true" });
   if (includeInactive) search.set("include_inactive", "true");
-  return maintenanceFetch<{ items: FilialItem[]; total: number }>(
-    `/filiais?${search.toString()}`,
-    { getAccessToken },
-  );
+  appendListQuery(search, query);
+  return maintenanceFetch<PagedItems<FilialItem>>(`/filiais?${search.toString()}`, {
+    getAccessToken,
+  });
 }
 
 export function createFilial(

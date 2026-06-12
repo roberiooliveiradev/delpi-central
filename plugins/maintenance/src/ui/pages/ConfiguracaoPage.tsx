@@ -15,6 +15,7 @@ import {
   useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
+import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import {
   createMotivo,
@@ -75,40 +76,105 @@ export function ConfiguracaoPage({
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
+  const motivosTable = useServerTable({ defaultSortKey: "descricao" });
+  const statusTable = useServerTable({ defaultSortKey: "percentual" });
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
+  const [motivosTotal, setMotivosTotal] = useState(0);
   const [status, setStatus] = useState<StatusItem[]>([]);
+  const [statusTotal, setStatusTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [motivosLoading, setMotivosLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [novoMotivo, setNovoMotivo] = useState("");
   const [novoStatus, setNovoStatus] = useState<NovoStatusDraft>(DEFAULT_NOVO_STATUS);
   const [motivoEdits, setMotivoEdits] = useState<Record<number, string>>({});
   const [statusEdits, setStatusEdits] = useState<Record<number, StatusItem>>({});
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadMotivos = useCallback(async () => {
+    setMotivosLoading(true);
     setError(null);
     try {
-      const [motivosData, statusData] = await Promise.all([
-        fetchMotivos(filial, getAccessToken),
-        fetchStatusPeca(filial, getAccessToken),
-      ]);
-      const motivoItems = motivosData.items ?? [];
-      const statusItems = statusData.items ?? [];
+      const data = await fetchMotivos(
+        filial,
+        {
+          page: motivosTable.query.page,
+          pageSize: motivosTable.query.pageSize,
+          sortKey: motivosTable.query.sortKey,
+          sortDirection: motivosTable.query.sortDirection,
+        },
+        {},
+        getAccessToken,
+      );
+      const motivoItems = data.items ?? [];
       setMotivos(motivoItems);
-      setStatus(statusItems);
-      setMotivoEdits(Object.fromEntries(motivoItems.map((item) => [item.motivo_id, item.descricao])));
-      setStatusEdits(Object.fromEntries(statusItems.map((item) => [item.status_id, { ...item }])));
+      setMotivosTotal(data.total ?? 0);
+      setMotivoEdits((current) => {
+        const next = { ...current };
+        for (const item of motivoItems) {
+          if (next[item.motivo_id] === undefined) {
+            next[item.motivo_id] = item.descricao;
+          }
+        }
+        return next;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar configuração.");
+      setError(err instanceof Error ? err.message : "Falha ao carregar motivos.");
     } finally {
-      setLoading(false);
+      setMotivosLoading(false);
     }
-  }, [filial, getAccessToken]);
+  }, [filial, getAccessToken, motivosTable.query]);
+
+  const loadStatus = useCallback(async () => {
+    setStatusLoading(true);
+    setError(null);
+    try {
+      const data = await fetchStatusPeca(
+        filial,
+        {
+          page: statusTable.query.page,
+          pageSize: statusTable.query.pageSize,
+          sortKey: statusTable.query.sortKey,
+          sortDirection: statusTable.query.sortDirection,
+        },
+        {},
+        getAccessToken,
+      );
+      const statusItems = data.items ?? [];
+      setStatus(statusItems);
+      setStatusTotal(data.total ?? 0);
+      setStatusEdits((current) => {
+        const next = { ...current };
+        for (const item of statusItems) {
+          if (!next[item.status_id]) {
+            next[item.status_id] = { ...item };
+          }
+        }
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar status.");
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [filial, getAccessToken, statusTable.query]);
+
+  const loadData = useCallback(async () => {
+    await Promise.all([loadMotivos(), loadStatus()]);
+  }, [loadMotivos, loadStatus]);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    void loadMotivos();
+  }, [loadMotivos]);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    motivosTable.resetPage();
+    statusTable.resetPage();
+  }, [filial, motivosTable.resetPage, statusTable.resetPage]);
 
   async function handleCreateMotivo(event: React.FormEvent) {
     event.preventDefault();
@@ -400,10 +466,10 @@ export function ConfiguracaoPage({
 
       {error ? <StateBox variant="error">{error}</StateBox> : null}
       {success ? <StateBox variant="success">{success}</StateBox> : null}
-      {loading ? <StateBox>Carregando…</StateBox> : null}
 
       <DataTableSection
         title="Motivos de reposição"
+        badge={`${motivosTotal} registro(s)`}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded onSubmit={handleCreateMotivo}>
@@ -423,13 +489,23 @@ export function ConfiguracaoPage({
         }
         columns={motivosColumns}
         rows={motivos}
-        loading={loading}
+        loading={motivosLoading}
         emptyMessage="Nenhum motivo cadastrado."
         getRowKey={(item) => String(item.motivo_id)}
+        serverTable={{
+          page: motivosTable.query.page,
+          pageSize: motivosTable.query.pageSize,
+          total: motivosTotal,
+          onPageChange: motivosTable.setPage,
+          sortKey: motivosTable.query.sortKey,
+          sortDirection: motivosTable.query.sortDirection,
+          onSortChange: motivosTable.handleSortChange,
+        }}
       />
 
       <DataTableSection
         title="Status preventivo"
+        badge={`${statusTotal} registro(s)`}
         hint="Regras de classificação por percentual de uso vs. média histórica de golpes."
         toolbar={
           canManageMiniApplicators ? (
@@ -485,9 +561,18 @@ export function ConfiguracaoPage({
         }
         columns={statusColumns}
         rows={status}
-        loading={loading}
+        loading={statusLoading}
         emptyMessage="Nenhuma regra de status cadastrada."
         getRowKey={(item) => String(item.status_id)}
+        serverTable={{
+          page: statusTable.query.page,
+          pageSize: statusTable.query.pageSize,
+          total: statusTotal,
+          onPageChange: statusTable.setPage,
+          sortKey: statusTable.query.sortKey,
+          sortDirection: statusTable.query.sortDirection,
+          onSortChange: statusTable.handleSortChange,
+        }}
       />
     </MaintenanceShell>
   );

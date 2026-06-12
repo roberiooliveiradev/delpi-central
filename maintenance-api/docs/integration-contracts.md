@@ -46,7 +46,9 @@ Leitura **TOTVS / Protheus** para mini-aplicadores passa **exclusivamente** pela
 |--------------|------------------------|----------|
 | `GET /engineering/mini-applicators/ferramentas` | `list_mini_applicators_ferramentas` | `mini_applicators_ferramenta` / `paged_list` |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}` | `get_mini_applicators_ferramenta` | `mini_applicators_ferramenta` / `scalar` |
-| `GET /engineering/mini-applicators/ferramentas/{codigo}/pecas` | `list_mini_applicators_pecas` | `mini_applicators_peca` / `list` |
+| `GET /engineering/mini-applicators/ferramentas/{codigo}/pecas` | `list_mini_applicators_pecas` | `mini_applicators_peca` / `list` — grupo TOTVS **3019** |
+
+A API dedicada reforça o filtro em `GET /maintenance/mini-aplicadores/ferramentas/{codigo}/pecas`: somente códigos que começam com `3019`.
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/golpes` | `get_mini_applicators_golpes` | `mini_applicators_golpes` / `scalar` |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/componentes` | `list_mini_applicators_componentes` | `mini_applicators_componente` / `list` |
 

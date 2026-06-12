@@ -118,9 +118,12 @@ def test_delete_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
 def test_list_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     mock_user.return_value = _view_user()
     mock_scope.return_value = _scope()
-    mock_repo_cls.return_value.list_active.return_value = [
-        {"status_id": 1, "descricao": "OK", "operador": "<", "percentual": 80, "filial": "01"},
-    ]
+    mock_repo_cls.return_value.list_active_paged.return_value = (
+        [
+            {"status_id": 1, "descricao": "OK", "operador": "<", "percentual": 80, "filial": "01"},
+        ],
+        1,
+    )
 
     client = TestClient(app)
     response = client.get("/maintenance/status-peca?filial=01")

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Hammer, Loader2, RefreshCw } from "lucide-react";
+import { Hammer, Loader2, PlusCircle, RefreshCw } from "lucide-react";
 
-import { type DataTableColumn, DataTableSection, DEFAULT_TABLE_PAGE_SIZE, FilterBar, StateBox } from "../../components/data";
+import { type DataTableColumn, DataTableSection, FilterBar, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
   useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
+import { useServerTable } from "../../hooks/useServerTable";
+import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import {
   createReposicao,
   deleteReposicao,
@@ -30,6 +32,7 @@ import {
   toDatetimeLocalValue,
 } from "../../utils/datetimeLocal";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
+import { formatPecaLabel, type PecaOption } from "../../utils/pecaOptions";
 
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
@@ -59,11 +62,18 @@ export function MiniAplicadoresPage({
   const [codigo, setCodigo] = useState("");
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [ferramentasPage, setFerramentasPage] = useState(1);
-  const [pecas, setPecas] = useState<FerramentaItem[]>([]);
+  const ferramentasTable = useServerTable({ defaultSortKey: "codigo" });
+  const reposicoesTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
+  const componentesTable = useServerTable({ defaultSortKey: "nivel" });
+  const [pecasOptions, setPecasOptions] = useState<PecaOption[]>([]);
+  const [chartReposicoes, setChartReposicoes] = useState<ReposicaoItem[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [showReposicaoForm, setShowReposicaoForm] = useState(false);
   const [componentes, setComponentes] = useState<ComponenteItem[]>([]);
+  const [componentesTotal, setComponentesTotal] = useState(0);
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
   const [reposicoes, setReposicoes] = useState<ReposicaoItem[]>([]);
+  const [reposicoesTotal, setReposicoesTotal] = useState(0);
   const [codigoPeca, setCodigoPeca] = useState("");
   const [golpes, setGolpes] = useState(0);
   const [motivoId, setMotivoId] = useState<number | "">("");
@@ -72,21 +82,57 @@ export function MiniAplicadoresPage({
   const [dataUltimaReposicao, setDataUltimaReposicao] = useState("");
   const [editingReposicaoId, setEditingReposicaoId] = useState<string | null>(null);
   const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [ferramentasLoading, setFerramentasLoading] = useState(false);
+  const [detalheLoading, setDetalheLoading] = useState(false);
+  const [reposicoesLoading, setReposicoesLoading] = useState(false);
+  const [componentesLoading, setComponentesLoading] = useState(false);
   const [golpesLoading, setGolpesLoading] = useState(false);
   const golpesRequestRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const pecasEstrutura = useMemo(() => {
+    const options = [...pecasOptions];
+    if (codigoPeca && !options.some((item) => item.codigo === codigoPeca)) {
+      options.push({ codigo: codigoPeca, descricao: codigoPeca });
+      options.sort((first, second) => first.codigo.localeCompare(second.codigo, "pt-BR"));
+    }
+    return options;
+  }, [pecasOptions, codigoPeca]);
+
   const resetReposicaoForm = useCallback(() => {
     setEditingReposicaoId(null);
-    setCodigoPeca(pecas[0]?.codigo ?? "");
+    setCodigoPeca(pecasEstrutura[0]?.codigo ?? "");
     setGolpes(0);
     setMotivoId("");
     setObservacao("");
     setDataReposicao(toDatetimeLocalValue(new Date()));
     setDataUltimaReposicao("");
-  }, [pecas]);
+  }, [pecasEstrutura]);
+
+  const openNovaReposicao = useCallback(() => {
+    setEditingReposicaoId(null);
+    setCodigoPeca(pecasEstrutura[0]?.codigo ?? "");
+    setGolpes(0);
+    setMotivoId("");
+    setObservacao("");
+    setDataReposicao(toDatetimeLocalValue(new Date()));
+    setDataUltimaReposicao("");
+    setSuccess(null);
+    setError(null);
+    setShowReposicaoForm(true);
+  }, [pecasEstrutura]);
+
+  const closeReposicaoForm = useCallback(() => {
+    resetReposicaoForm();
+    setShowReposicaoForm(false);
+  }, [resetReposicaoForm]);
+
+  useEffect(() => {
+    if (editingReposicaoId) {
+      setShowReposicaoForm(true);
+    }
+  }, [editingReposicaoId]);
 
   const refreshSuggestGolpes = useCallback(
     async (options: {
@@ -127,86 +173,191 @@ export function MiniAplicadoresPage({
     [codigoFerramenta, editingReposicaoId, filial, getAccessToken],
   );
 
-  const loadFerramentas = useCallback(
-    async (page = ferramentasPage) => {
-      setLoading(true);
-      setError(null);
+  const loadFerramentas = useCallback(async () => {
+    setFerramentasLoading(true);
+    setError(null);
+    try {
+      const data = await fetchFerramentas(
+        {
+          codigo: codigo.trim() || undefined,
+          descricao: descricao.trim() || undefined,
+          filial,
+          page: ferramentasTable.query.page,
+          pageSize: ferramentasTable.query.pageSize,
+          sortKey: ferramentasTable.query.sortKey,
+          sortDirection: ferramentasTable.query.sortDirection,
+        },
+        getAccessToken,
+      );
+      setItems(data.items ?? []);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
+      setItems([]);
+      setTotal(0);
+    } finally {
+      setFerramentasLoading(false);
+    }
+  }, [codigo, descricao, filial, ferramentasTable.query, getAccessToken]);
+
+  const loadChartReposicoes = useCallback(
+    async (total: number) => {
+      if (!codigoFerramenta || total <= 0) {
+        setChartReposicoes([]);
+        return;
+      }
+      setChartLoading(true);
       try {
-        const data = await fetchFerramentas(
+        const data = await fetchReposicoes(
           {
-            codigo: codigo.trim() || undefined,
-            descricao: descricao.trim() || undefined,
             filial,
-            page,
-            page_size: DEFAULT_TABLE_PAGE_SIZE,
+            codigo_ferramenta: codigoFerramenta,
+            codigo_peca: filtroHistoricoPeca || undefined,
+            page: 1,
+            pageSize: Math.min(total, 100),
+            sortKey: "data",
+            sortDirection: "asc",
           },
           getAccessToken,
         );
-        setItems(data.items ?? []);
-        setTotal(data.total ?? 0);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
-        setItems([]);
-        setTotal(0);
+        setChartReposicoes(data.items ?? []);
+      } catch {
+        setChartReposicoes([]);
       } finally {
-        setLoading(false);
-      }
-    },
-    [codigo, descricao, filial, ferramentasPage, getAccessToken],
-  );
-
-  const loadDetalhe = useCallback(
-    async (options?: { pecaFilter?: string }) => {
-      if (!codigoFerramenta) return;
-      const pecaFilter = options?.pecaFilter ?? filtroHistoricoPeca;
-      setLoading(true);
-      setError(null);
-      try {
-        const [pecasData, motivosData, reposicoesData, componentesData] = await Promise.all([
-          fetchPecas(codigoFerramenta, filial, getAccessToken),
-          fetchMotivos(filial, getAccessToken),
-          fetchReposicoes(
-            {
-              filial,
-              codigo_ferramenta: codigoFerramenta,
-              codigo_peca: pecaFilter || undefined,
-            },
-            getAccessToken,
-          ),
-          fetchComponentes(codigoFerramenta, filial, getAccessToken),
-        ]);
-        const pecaItems = pecasData.items ?? [];
-        setPecas(pecaItems);
-        setMotivos(motivosData.items ?? []);
-        setReposicoes(reposicoesData.items ?? []);
-        setComponentes(componentesData.items ?? []);
-        setCodigoPeca((current) => current || pecaItems[0]?.codigo || "");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
-      } finally {
-        setLoading(false);
+        setChartLoading(false);
       }
     },
     [codigoFerramenta, filial, filtroHistoricoPeca, getAccessToken],
   );
 
-  useEffect(() => {
-    if (codigoFerramenta) {
-      setFiltroHistoricoPeca("");
-      setEditingReposicaoId(null);
-      void loadDetalhe({ pecaFilter: "" });
+  const loadReposicoes = useCallback(async () => {
+    if (!codigoFerramenta) return;
+    setReposicoesLoading(true);
+    setError(null);
+    try {
+      const data = await fetchReposicoes(
+        {
+          filial,
+          codigo_ferramenta: codigoFerramenta,
+          codigo_peca: filtroHistoricoPeca || undefined,
+          page: reposicoesTable.query.page,
+          pageSize: reposicoesTable.query.pageSize,
+          sortKey: reposicoesTable.query.sortKey,
+          sortDirection: reposicoesTable.query.sortDirection,
+        },
+        getAccessToken,
+      );
+      const total = data.total ?? 0;
+      setReposicoes(data.items ?? []);
+      setReposicoesTotal(total);
+      await loadChartReposicoes(total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar reposições.");
+      setReposicoes([]);
+      setReposicoesTotal(0);
+      setChartReposicoes([]);
+    } finally {
+      setReposicoesLoading(false);
     }
-  }, [codigoFerramenta, filial, loadDetalhe]);
+  }, [
+    codigoFerramenta,
+    filial,
+    filtroHistoricoPeca,
+    getAccessToken,
+    loadChartReposicoes,
+    reposicoesTable.query,
+  ]);
+
+  const loadComponentesTable = useCallback(async () => {
+    if (!codigoFerramenta) return;
+    setComponentesLoading(true);
+    try {
+      const data = await fetchComponentes(
+        codigoFerramenta,
+        filial,
+        {
+          page: componentesTable.query.page,
+          pageSize: componentesTable.query.pageSize,
+          sortKey: componentesTable.query.sortKey,
+          sortDirection: componentesTable.query.sortDirection,
+        },
+        getAccessToken,
+      );
+      setComponentes(data.items ?? []);
+      setComponentesTotal(data.total ?? 0);
+    } catch {
+      setComponentes([]);
+      setComponentesTotal(0);
+    } finally {
+      setComponentesLoading(false);
+    }
+  }, [codigoFerramenta, componentesTable.query, filial, getAccessToken]);
+
+  const loadDetalheBase = useCallback(async () => {
+    if (!codigoFerramenta) return;
+    setDetalheLoading(true);
+    setError(null);
+    try {
+      const [motivosData, pecasData] = await Promise.all([
+        fetchMotivos(filial, { page: 1, pageSize: 200 }, {}, getAccessToken),
+        fetchPecas(codigoFerramenta, filial, getAccessToken),
+      ]);
+      const pecaItems = (pecasData.items ?? []).map((item) => ({
+        codigo: item.codigo,
+        descricao: item.descricao,
+      }));
+      setMotivos(motivosData.items ?? []);
+      setPecasOptions(pecaItems);
+      setCodigoPeca((current) => {
+        if (current && pecaItems.some((item) => item.codigo === current)) return current;
+        return pecaItems[0]?.codigo ?? "";
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
+    } finally {
+      setDetalheLoading(false);
+    }
+  }, [codigoFerramenta, filial, getAccessToken]);
+
+  const loadDetalhe = useCallback(async () => {
+    await Promise.all([loadDetalheBase(), loadReposicoes(), loadComponentesTable()]);
+  }, [loadComponentesTable, loadDetalheBase, loadReposicoes]);
+
+  useEffect(() => {
+    if (!codigoFerramenta) return;
+    setFiltroHistoricoPeca("");
+    setEditingReposicaoId(null);
+    setShowReposicaoForm(false);
+    reposicoesTable.resetPage();
+    componentesTable.resetPage();
+    void loadDetalheBase();
+  }, [
+    codigoFerramenta,
+    filial,
+    loadDetalheBase,
+    reposicoesTable.resetPage,
+    componentesTable.resetPage,
+  ]);
+
+  useEffect(() => {
+    if (!codigoFerramenta) return;
+    void loadReposicoes();
+  }, [codigoFerramenta, loadReposicoes]);
+
+  useEffect(() => {
+    if (!codigoFerramenta) return;
+    void loadComponentesTable();
+  }, [codigoFerramenta, loadComponentesTable]);
 
   useEffect(() => {
     if (codigoFerramenta) return;
-    void loadFerramentas(ferramentasPage);
-  }, [codigoFerramenta, ferramentasPage, filial, loadFerramentas]);
+    void loadFerramentas();
+  }, [codigoFerramenta, loadFerramentas]);
 
   useEffect(() => {
     if (codigoFerramenta) return;
-    setFerramentasPage(1);
-  }, [filial, codigoFerramenta]);
+    ferramentasTable.resetPage();
+  }, [filial, codigoFerramenta, ferramentasTable.resetPage]);
 
   useEffect(() => {
     if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
@@ -224,10 +375,17 @@ export function MiniAplicadoresPage({
     refreshSuggestGolpes,
   ]);
 
+  useEffect(() => {
+    if (!filtroHistoricoPeca) return;
+    if (!pecasEstrutura.some((item) => item.codigo === filtroHistoricoPeca)) {
+      setFiltroHistoricoPeca("");
+    }
+  }, [filtroHistoricoPeca, pecasEstrutura]);
+
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
-    setFerramentasPage(1);
-    await loadFerramentas(1);
+    ferramentasTable.resetPage();
+    await loadFerramentas();
   }
 
   async function handleSuggestGolpes() {
@@ -267,6 +425,7 @@ export function MiniAplicadoresPage({
       await deleteReposicao(item.reposicao_id, getAccessToken);
       setSuccess("Reposição excluída.");
       resetReposicaoForm();
+      setShowReposicaoForm(false);
       await loadDetalhe();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao excluir reposição.");
@@ -303,6 +462,7 @@ export function MiniAplicadoresPage({
         setSuccess("Reposição registrada.");
       }
       resetReposicaoForm();
+      setShowReposicaoForm(false);
       await loadDetalhe();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao salvar reposição.");
@@ -464,10 +624,19 @@ export function MiniAplicadoresPage({
             type="button"
             className="dm-primary-btn"
             onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
-            disabled={loading}
+            disabled={codigoFerramenta ? detalheLoading : ferramentasLoading}
           >
-            <RefreshCw size={16} className={loading ? "dm-spin" : undefined} />
-            {loading ? "Carregando…" : "Atualizar"}
+            <RefreshCw
+              size={16}
+              className={codigoFerramenta ? (detalheLoading ? "dm-spin" : undefined) : ferramentasLoading ? "dm-spin" : undefined}
+            />
+            {codigoFerramenta
+              ? detalheLoading
+                ? "Carregando…"
+                : "Atualizar"
+              : ferramentasLoading
+                ? "Carregando…"
+                : "Atualizar"}
           </button>
         }
       />
@@ -503,16 +672,18 @@ export function MiniAplicadoresPage({
             badge={`${total} registro(s)`}
             columns={ferramentasColumns}
             rows={items}
-            loading={loading}
+            loading={ferramentasLoading}
             emptyMessage="Nenhuma ferramenta encontrada."
             getRowKey={(item) => item.codigo}
             onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
-            defaultSortKey="codigo"
-            serverPagination={{
-              page: ferramentasPage,
-              pageSize: DEFAULT_TABLE_PAGE_SIZE,
+            serverTable={{
+              page: ferramentasTable.query.page,
+              pageSize: ferramentasTable.query.pageSize,
               total,
-              onPageChange: setFerramentasPage,
+              onPageChange: ferramentasTable.setPage,
+              sortKey: ferramentasTable.query.sortKey,
+              sortDirection: ferramentasTable.query.sortDirection,
+              onSortChange: ferramentasTable.handleSortChange,
             }}
           />
         </>
@@ -521,29 +692,41 @@ export function MiniAplicadoresPage({
           {error ? <StateBox variant="error">{error}</StateBox> : null}
           {success ? <StateBox variant="success">{success}</StateBox> : null}
 
-          {canManageMiniApplicators ? (
-            <section className="dm-card">
-              <h3 className="dm-section-header__title">
-                {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
-              </h3>
-              <form className="dm-form-grid" onSubmit={handleSubmitReposicao}>
-                <label className="dm-field dm-field--span-4">
+          {canManageMiniApplicators && showReposicaoForm ? (
+            <section className="dm-card dm-reposicao-form-card">
+              <div className="dm-section-header">
+                <h3 className="dm-section-header__title">
+                  {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
+                </h3>
+                {!editingReposicaoId ? (
+                  <button type="button" className="dm-ghost-btn" onClick={closeReposicaoForm}>
+                    Fechar
+                  </button>
+                ) : null}
+              </div>
+              <form className="dm-form-grid dm-form-grid--reposicao" onSubmit={handleSubmitReposicao}>
+                <label className="dm-field dm-field--span-full">
                   <span>Peça</span>
                   <select
+                    className="dm-select-peca"
                     value={codigoPeca}
                     onChange={(event) => {
                       setCodigoPeca(event.target.value);
                       setDataUltimaReposicao("");
                     }}
                   >
-                    {pecas.map((peca) => (
+                    {pecasEstrutura.length === 0 ? (
+                      <option value="">Nenhuma peça (3019) na estrutura</option>
+                    ) : null}
+                    {pecasEstrutura.map((peca) => (
                       <option key={peca.codigo} value={peca.codigo}>
-                        {peca.codigo} — {peca.descricao}
+                        {formatPecaLabel(peca)}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label className="dm-field dm-field--span-3">
+
+                <label className="dm-field dm-field--span-4">
                   <span>Data da reposição</span>
                   <input
                     type="datetime-local"
@@ -551,7 +734,7 @@ export function MiniAplicadoresPage({
                     onChange={(event) => setDataReposicao(event.target.value)}
                   />
                 </label>
-                <label className="dm-field dm-field--span-3">
+                <label className="dm-field dm-field--span-4">
                   <span>Data da última reposição</span>
                   <input
                     type="datetime-local"
@@ -584,93 +767,126 @@ export function MiniAplicadoresPage({
                   </div>
                 </div>
 
-                <div className="dm-form-grid__actions">
-                  <button
-                    type="button"
-                    className="dm-ghost-btn dm-form-grid__suggest"
-                    disabled={golpesLoading || !codigoPeca}
-                    onClick={() => void handleSuggestGolpes()}
+                <button
+                  type="button"
+                  className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
+                  disabled={golpesLoading || !codigoPeca}
+                  onClick={() => void handleSuggestGolpes()}
+                >
+                  {golpesLoading ? (
+                    <Loader2 size={16} className="dm-spin" aria-hidden="true" />
+                  ) : null}
+                  {golpesLoading ? "Calculando…" : "Sugerir golpes"}
+                </button>
+
+                <label className="dm-field dm-field--span-full">
+                  <span>Motivo</span>
+                  <select
+                    value={motivoId}
+                    onChange={(event) =>
+                      setMotivoId(event.target.value ? Number(event.target.value) : "")
+                    }
                   >
-                    {golpesLoading ? (
-                      <Loader2 size={16} className="dm-spin" aria-hidden="true" />
-                    ) : null}
-                    {golpesLoading ? "Calculando…" : "Sugerir golpes"}
+                    <option value="">Selecione…</option>
+                    {motivos.map((motivo) => (
+                      <option key={motivo.motivo_id} value={motivo.motivo_id}>
+                        {motivo.descricao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="dm-field dm-field--span-full dm-field--textarea">
+                  <span>Observação</span>
+                  <textarea
+                    rows={4}
+                    value={observacao}
+                    placeholder="Detalhes da troca, condição da peça, etc."
+                    onChange={(event) => setObservacao(event.target.value)}
+                  />
+                </label>
+
+                <div className="dm-form-grid__buttons dm-field--span-full">
+                  <button type="submit" className="dm-primary-btn" disabled={!codigoPeca}>
+                    {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
                   </button>
-                  <label className="dm-field dm-field--motivo">
-                    <span>Motivo</span>
-                    <select
-                      value={motivoId}
-                      onChange={(event) =>
-                        setMotivoId(event.target.value ? Number(event.target.value) : "")
-                      }
-                    >
-                      <option value="">Selecione…</option>
-                      {motivos.map((motivo) => (
-                        <option key={motivo.motivo_id} value={motivo.motivo_id}>
-                          {motivo.descricao}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="dm-field dm-field--grow">
-                    <span>Observação</span>
-                    <input value={observacao} onChange={(event) => setObservacao(event.target.value)} />
-                  </label>
-                  <div className="dm-form-grid__buttons">
-                    <button type="submit" className="dm-primary-btn">
-                      {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
+                  {editingReposicaoId ? (
+                    <button type="button" className="dm-ghost-btn" onClick={closeReposicaoForm}>
+                      Cancelar edição
                     </button>
-                    {editingReposicaoId ? (
-                      <button type="button" className="dm-ghost-btn" onClick={resetReposicaoForm}>
-                        Cancelar edição
-                      </button>
-                    ) : null}
-                  </div>
+                  ) : null}
                 </div>
               </form>
             </section>
           ) : null}
 
+          {reposicoesTotal > 0 ? (
+            <ReposicoesGolpesChart reposicoes={chartReposicoes} loading={chartLoading} />
+          ) : null}
+
           <DataTableSection
             title="Histórico de reposições"
             actions={
-              <button
-                type="button"
-                className="dm-ghost-btn"
-                onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadores)}
-              >
-                Voltar para lista
-              </button>
+              <div className="dm-row-actions">
+                {canManageMiniApplicators && !showReposicaoForm && !editingReposicaoId ? (
+                  <button type="button" className="dm-primary-btn" onClick={openNovaReposicao}>
+                    <PlusCircle size={16} />
+                    Nova reposição
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="dm-ghost-btn"
+                  onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadores)}
+                >
+                  Voltar para lista
+                </button>
+              </div>
             }
             toolbar={
               <FilterBar embedded>
-                <label className="dm-field">
+                <label className="dm-field dm-field--filter-peca">
                   <span>Filtrar por peça</span>
                   <select
+                    className="dm-select-peca"
                     value={filtroHistoricoPeca}
                     onChange={(event) => setFiltroHistoricoPeca(event.target.value)}
                   >
                     <option value="">Todas</option>
-                    {pecas.map((peca) => (
+                    {pecasEstrutura.map((peca) => (
                       <option key={peca.codigo} value={peca.codigo}>
-                        {peca.codigo}
+                        {formatPecaLabel(peca)}
                       </option>
                     ))}
                   </select>
                 </label>
-                <button type="button" className="dm-ghost-btn" onClick={() => void loadDetalhe()}>
+                <button
+                  type="button"
+                  className="dm-ghost-btn"
+                  onClick={() => {
+                    reposicoesTable.resetPage();
+                    void loadReposicoes();
+                  }}
+                >
                   Aplicar filtro
                 </button>
               </FilterBar>
             }
             columns={reposicoesColumns}
             rows={reposicoes}
-            loading={loading}
+            loading={reposicoesLoading}
             emptyMessage="Nenhuma reposição registrada."
             getRowKey={(item) => item.reposicao_id}
             getRowClassName={(item) => (editingReposicaoId === item.reposicao_id ? "is-selected" : undefined)}
-            defaultSortKey="data"
-            defaultSortDirection="desc"
+            serverTable={{
+              page: reposicoesTable.query.page,
+              pageSize: reposicoesTable.query.pageSize,
+              total: reposicoesTotal,
+              onPageChange: reposicoesTable.setPage,
+              sortKey: reposicoesTable.query.sortKey,
+              sortDirection: reposicoesTable.query.sortDirection,
+              onSortChange: reposicoesTable.handleSortChange,
+            }}
             onRowClick={
               canManageMiniApplicators ? (item) => handleEditReposicao(item) : undefined
             }
@@ -678,13 +894,21 @@ export function MiniAplicadoresPage({
 
           <DataTableSection
             title="Componentes e estoque"
-            badge={`${componentes.length} item(ns)`}
+            badge={`${componentesTotal} item(ns)`}
             columns={componentesColumns}
             rows={componentes}
-            loading={loading}
+            loading={componentesLoading}
             emptyMessage="Nenhum componente na estrutura desta ferramenta."
             getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
-            defaultSortKey="nivel"
+            serverTable={{
+              page: componentesTable.query.page,
+              pageSize: componentesTable.query.pageSize,
+              total: componentesTotal,
+              onPageChange: componentesTable.setPage,
+              sortKey: componentesTable.query.sortKey,
+              sortDirection: componentesTable.query.sortDirection,
+              onSortChange: componentesTable.handleSortChange,
+            }}
           />
         </>
       )}

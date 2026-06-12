@@ -47,15 +47,30 @@ export async function maintenanceFetch<T>(
     );
   }
 
-  let body: ApiEnvelope<T>;
+  let body: ApiEnvelope<T> | { detail?: string; message?: string; success?: boolean };
   try {
     body = JSON.parse(raw) as ApiEnvelope<T>;
   } catch {
     throw new Error("Resposta JSON inválida da API de Manutenção.");
   }
 
-  if (!response.ok || !body.success) {
-    throw new Error(body.message || "Falha na requisição.");
+  if (!response.ok || body.success === false) {
+    const envelopeMessage = "message" in body ? body.message : undefined;
+    const detailMessage =
+      "detail" in body && body.detail
+        ? typeof body.detail === "string"
+          ? body.detail
+          : JSON.stringify(body.detail)
+        : undefined;
+    throw new Error(
+      envelopeMessage ||
+        detailMessage ||
+        `Falha na requisição (HTTP ${response.status}).`,
+    );
+  }
+
+  if (!("data" in body)) {
+    throw new Error(`Resposta inválida da API de Manutenção (HTTP ${response.status}).`);
   }
 
   return body.data;

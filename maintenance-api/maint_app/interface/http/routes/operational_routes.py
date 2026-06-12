@@ -1,10 +1,11 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
 
 from delpi_api_client import DelpiApiError
 
+from maint_app.application.list_query import ListQuery
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
 from maint_app.application.services.maintenance_submodule_catalog import (
     assert_submodule_manage,
@@ -19,6 +20,7 @@ from maint_app.infrastructure.persistence.repositories.operational_repositories 
     StatusPecaRepository,
 )
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
+from maint_app.interface.http.list_query_params import list_query_params
 
 router = APIRouter(prefix="/maintenance", tags=["Manutenção — operacional"])
 
@@ -61,15 +63,24 @@ class ReposicaoBody(BaseModel):
 
 
 @router.get("/motivos")
-def list_motivos(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
+def list_motivos(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    search: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
         assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    items = MotivoRepository().list_active(filial=filial)
-    return ok({"items": items, "total": len(items)}, message="Motivos listados.")
+    items, total = MotivoRepository().list_active_paged(
+        filial=filial,
+        query=query,
+        search=search,
+    )
+    return ok({"items": items, "total": total}, message="Motivos listados.")
 
 
 @router.post("/motivos")
@@ -115,15 +126,24 @@ def delete_motivo(
 
 
 @router.get("/status-peca")
-def list_status_peca(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
+def list_status_peca(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    search: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
         assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    items = StatusPecaRepository().list_active(filial=filial)
-    return ok({"items": items, "total": len(items)}, message="Status listados.")
+    items, total = StatusPecaRepository().list_active_paged(
+        filial=filial,
+        query=query,
+        search=search,
+    )
+    return ok({"items": items, "total": total}, message="Status listados.")
 
 
 @router.post("/status-peca")
@@ -190,6 +210,7 @@ def list_reposicoes(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo_ferramenta: str = Query(...),
     codigo_peca: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
@@ -197,12 +218,13 @@ def list_reposicoes(
         assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    items = ReposicaoRepository().list_by_ferramenta(
+    items, total = ReposicaoRepository().list_by_ferramenta_paged(
         filial=filial,
         codigo_ferramenta=codigo_ferramenta,
         codigo_peca=codigo_peca,
+        query=query,
     )
-    return ok({"items": items, "total": len(items)}, message="Reposições listadas.")
+    return ok({"items": items, "total": total}, message="Reposições listadas.")
 
 
 @router.post("/reposicoes")

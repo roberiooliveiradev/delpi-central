@@ -80,8 +80,9 @@ O WinForms legado usa `UI/Controllers` finos. No MFE, o equivalente são **hooks
 | `DataTableSection` | Seção com título, toolbar, tabela, paginação e ordenação |
 | `DataTable` | Renderização tabular; cabeçalhos ordenáveis |
 | `Pagination` | Navegação Anterior / Página N de M / Próxima |
-| `useClientPagination` | Fatia local de arrays (default 20 itens) |
-| `dataTableSort.sortRows` | Ordenação por `sortValue` ou texto da célula |
+| `useServerTable` | Estado de paginação/ordenação sincronizado com query params da API |
+| `listQuery.appendListQuery` | Montagem de query string (`page`, `page_size`, `sort_by`, `sort_dir`) |
+| `ReposicoesGolpesChart` | Gráfico de golpes por reposição no detalhe da ferramenta |
 | `PreventivaDetailPanel` | Detalhe preventivo + gráficos Recharts |
 | `StateBox` | Feedback inline (sucesso/erro) com `--dm-section-gap` abaixo |
 

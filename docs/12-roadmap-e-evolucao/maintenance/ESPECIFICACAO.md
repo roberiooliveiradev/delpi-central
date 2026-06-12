@@ -89,7 +89,7 @@ Sessão de filial obrigatória para operações (equivalente ao combo empresa do
 | Home | Home tab | Seleção filial |
 | Ferramentas | Lista + filtros | Busca por código/descrição |
 | Ferramenta | Detalhe tab | Histórico reposições, filtros, CRUD |
-| Form reposição | FormReposicao | Nova/edição |
+| Form reposição | FormReposicao | Nova/edição — formulário colapsável; botão «Nova reposição» no histórico |
 | Componentes | FormInfo | Árvore componentes + estoque |
 | Relatório | Relatório tab | Últimas reposições + alertas + detalhe com gráficos |
 | Configuração | Config tab | Motivos + status |
@@ -100,11 +100,15 @@ Todas as telas de tabela usam o módulo canônico `DataTableSection` (`plugins/m
 
 | Comportamento | Detalhe |
 |---------------|---------|
-| Paginação | **Anterior · Página N de M · Próxima** — default 20 linhas/página |
-| Ferramentas | Paginação **server-side** (`GET .../ferramentas?page=&page_size=`) |
-| Demais listas | Paginação client-side sobre dados já carregados |
+| Paginação | **Anterior · Página N de M · Próxima** — default 20 linhas/página; estado via `useServerTable` |
+| Origen dos dados | **Server-side** em todas as listas (ferramentas, reposições, componentes, alertas, últimas, motivos, status, filiais) |
+| Query params | `page`, `page_size` (1–200), `sort_by`, `sort_dir` (`asc`/`desc`) + filtros por rota |
 | Ordenação | Colunas com `sortable` + `sortValue`; clique alterna asc/desc |
 | Ordenação padrão | Alertas: `% uso` desc; reposições: data desc; ferramentas: código asc |
+
+**Select de peça (reposição):** somente códigos **`3019*`** — filtro na api-delpi (`B1_GRUPO = 3019`) e reforço em `GET /ferramentas/{codigo}/pecas` na API dedicada.
+
+**Histórico de reposições:** gráfico de linha «Golpes por reposição» (`ReposicoesGolpesChart`) acima da tabela quando `total > 0`.
 
 ### 5.2 Gráficos (detalhe preventivo)
 

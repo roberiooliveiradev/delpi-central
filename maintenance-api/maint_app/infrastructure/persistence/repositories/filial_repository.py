@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from maint_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
+from maint_app.application.list_query import ListQuery, build_order_clause
 
 _CODIGO_PATTERN = re.compile(r"^[0-9]{2}$")
 
@@ -29,11 +30,59 @@ class FilialRepository(PluginBaseRepository):
     """
 
     def list(self, *, include_inactive: bool = False) -> list[dict[str, Any]]:
-        query = self._LIST_QUERY
+        rows, _total = self.list_paged(
+            include_inactive=include_inactive,
+            query=ListQuery(page=1, page_size=10_000, sort_by="codigo", sort_dir="asc"),
+        )
+        return rows
+
+    def list_paged(
+        self,
+        *,
+        include_inactive: bool,
+        query: ListQuery,
+        search: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        where = ["excluido = FALSE"]
+        params: list[Any] = []
         if not include_inactive:
-            query += " AND status_filial = 'ativo'"
-        query += " ORDER BY codigo_filial ASC"
-        return self.fetch_all(query)
+            where.append("status_filial = 'ativo'")
+        if search and search.strip():
+            where.append("(codigo_filial ILIKE %s OR nome_filial ILIKE %s)")
+            term = f"%{search.strip()}%"
+            params.extend([term, term])
+
+        where_sql = " AND ".join(where)
+        sort_columns = {
+            "codigo": "codigo_filial",
+            "nome": "nome_filial",
+            "status": "status_filial",
+        }
+        order = build_order_clause(query.sort_by, query.sort_dir, sort_columns, "codigo")
+        select_sql = f"""
+            SELECT
+                filial_id,
+                codigo_filial,
+                nome_filial,
+                status_filial,
+                data_criacao,
+                data_alteracao
+            FROM maintenance.filiais
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(1) AS total
+            FROM maintenance.filiais
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
+        )
 
     def get(self, filial_ref: str) -> dict[str, Any] | None:
         ref = str(filial_ref).strip()

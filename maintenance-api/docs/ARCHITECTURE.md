@@ -1,6 +1,6 @@
 # Arquitetura — Manutenção API (`maint_app`)
 
-**Última atualização:** jun/2026 (Fase 0)
+**Última atualização:** jun/2026 (Fases 0–2)
 
 ## Visão geral
 
@@ -89,14 +89,24 @@ Respostas via helper compartilhado (`shared` ou cópia do padrão TM/SI):
 
 Erros de validação: `success: false`, HTTP 4xx, mensagem clara (PT via content bundle quando houver UI).
 
-## Testes (alvo)
+## Listagens paginadas
+
+| Módulo | Arquivo |
+|--------|---------|
+| Normalização | `application/list_query.py` — `ListQuery`, `normalize_list_query`, `paginate_slice` |
+| FastAPI deps | `interface/http/list_query_params.py` — `page`, `page_size`, `sort_by`, `sort_dir` |
+
+Resposta típica em `data`: `{ "items": [...], "total": N }`.
+
+## Testes
 
 | Tipo | Onde |
 |------|------|
 | Validação reposição | `tests/test_reposicao_service.py` |
 | Preventiva / status | `tests/test_preventiva_service.py` |
 | Gateway (mock client) | `tests/test_delpi_mini_applicators_gateway.py` |
-| CI monorepo | `scripts/ci-maintenance-api.sh` |
+| Rotas paginadas / preventiva | `tests/test_preventiva_routes.py`, `tests/test_operational_status_routes.py` |
+| CI monorepo | `scripts/ci-maintenance-api.sh` (37 testes) |
 
 ## Referências
 

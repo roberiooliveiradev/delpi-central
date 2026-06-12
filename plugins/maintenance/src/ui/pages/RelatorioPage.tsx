@@ -20,15 +20,19 @@ import {
   useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
+import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
+import { formatCodigoDescricao } from "../../utils/pecaOptions";
 import {
   fetchComponentes,
   fetchFerramenta,
   fetchPecas,
   fetchPreventivaAlertas,
   fetchPreventivaHistorico,
+  fetchPreventivaResumo,
   fetchUltimasReposicoes,
   type PreventivaAlerta,
+  type PreventivaResumo,
   type UltimaReposicaoItem,
 } from "../../data/api/maintenanceApi";
 
@@ -50,20 +54,32 @@ type Selection = {
 
 const STATUS_FILTERS: StatusFilter[] = ["TODOS", "CRÍTICO", "ATENÇÃO", "OK", "SEM STATUS"];
 
-function matchesFilters(
-  item: { codigo_ferramenta: string; codigo_peca: string; status?: string },
-  filters: { ferramenta: string; peca: string; status: StatusFilter },
-): boolean {
-  if (filters.ferramenta.trim()) {
-    const term = filters.ferramenta.trim().toLowerCase();
-    if (!item.codigo_ferramenta.toLowerCase().includes(term)) return false;
+const EMPTY_RESUMO: PreventivaResumo = {
+  critico: 0,
+  atencao: 0,
+  ok: 0,
+  sem_status: 0,
+  total: 0,
+};
+
+function CodigoDescricaoCell({
+  codigo,
+  descricao,
+}: {
+  codigo: string;
+  descricao?: string | null;
+}) {
+  const label = descricao?.trim();
+  if (!label) {
+    return <span>{codigo}</span>;
   }
-  if (filters.peca.trim()) {
-    const term = filters.peca.trim().toLowerCase();
-    if (!item.codigo_peca.toLowerCase().includes(term)) return false;
-  }
-  if (filters.status !== "TODOS" && item.status !== filters.status) return false;
-  return true;
+
+  return (
+    <span className="dm-datatable__codigo-descricao">
+      <span className="dm-datatable__codigo-descricao__codigo">{codigo}</span>
+      <span className="dm-datatable__codigo-descricao__descricao">{label}</span>
+    </span>
+  );
 }
 
 export function RelatorioPage({
@@ -79,39 +95,135 @@ export function RelatorioPage({
 
   const [listTab, setListTab] = useState<ListReportTab>("alertas");
   const [activeTab, setActiveTab] = useState<ReportTab>("alertas");
+  const alertasTable = useServerTable({ defaultSortKey: "percentual", defaultSortDirection: "desc" });
+  const ultimasTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
   const [alertas, setAlertas] = useState<PreventivaAlerta[]>([]);
+  const [alertasTotal, setAlertasTotal] = useState(0);
   const [ultimas, setUltimas] = useState<UltimaReposicaoItem[]>([]);
+  const [ultimasTotal, setUltimasTotal] = useState(0);
+  const [resumo, setResumo] = useState<PreventivaResumo>(EMPTY_RESUMO);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [detailData, setDetailData] = useState<PreventivaDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [alertasLoading, setAlertasLoading] = useState(false);
+  const [ultimasLoading, setUltimasLoading] = useState(false);
+  const [resumoLoading, setResumoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alertasError, setAlertasError] = useState<string | null>(null);
+  const [ultimasError, setUltimasError] = useState<string | null>(null);
   const [ferramentaFiltro, setFerramentaFiltro] = useState("");
   const [pecaFiltro, setPecaFiltro] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<StatusFilter>("TODOS");
+  const [appliedFerramentaFiltro, setAppliedFerramentaFiltro] = useState("");
+  const [appliedPecaFiltro, setAppliedPecaFiltro] = useState("");
 
-  const loadReport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadResumo = useCallback(async () => {
+    setResumoLoading(true);
     try {
-      const [alertasData, ultimasData] = await Promise.all([
-        fetchPreventivaAlertas(filial, getAccessToken),
-        fetchUltimasReposicoes(filial, getAccessToken),
-      ]);
-      setAlertas(alertasData.items ?? []);
-      setUltimas(ultimasData.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar relatório.");
-      setAlertas([]);
-      setUltimas([]);
+      const data = await fetchPreventivaResumo(filial, getAccessToken);
+      setResumo(data);
+    } catch {
+      setResumo(EMPTY_RESUMO);
     } finally {
-      setLoading(false);
+      setResumoLoading(false);
     }
   }, [filial, getAccessToken]);
 
+  const loadAlertas = useCallback(async () => {
+    setAlertasLoading(true);
+    setAlertasError(null);
+    try {
+      const data = await fetchPreventivaAlertas(
+        filial,
+        {
+          page: alertasTable.query.page,
+          pageSize: alertasTable.query.pageSize,
+          sortKey: alertasTable.query.sortKey,
+          sortDirection: alertasTable.query.sortDirection,
+        },
+        {
+          ferramenta: appliedFerramentaFiltro.trim() || undefined,
+          peca: appliedPecaFiltro.trim() || undefined,
+          status: statusFiltro !== "TODOS" ? statusFiltro : undefined,
+        },
+        getAccessToken,
+      );
+      setAlertas(data.items ?? []);
+      setAlertasTotal(data.total ?? 0);
+    } catch (err) {
+      setAlertasError(err instanceof Error ? err.message : "Falha ao carregar alertas.");
+      setAlertas([]);
+      setAlertasTotal(0);
+    } finally {
+      setAlertasLoading(false);
+    }
+  }, [
+    alertasTable.query,
+    appliedFerramentaFiltro,
+    appliedPecaFiltro,
+    filial,
+    getAccessToken,
+    statusFiltro,
+  ]);
+
+  const loadUltimas = useCallback(async () => {
+    setUltimasLoading(true);
+    setUltimasError(null);
+    try {
+      const data = await fetchUltimasReposicoes(
+        filial,
+        {
+          page: ultimasTable.query.page,
+          pageSize: ultimasTable.query.pageSize,
+          sortKey: ultimasTable.query.sortKey,
+          sortDirection: ultimasTable.query.sortDirection,
+        },
+        {
+          ferramenta: appliedFerramentaFiltro.trim() || undefined,
+          peca: appliedPecaFiltro.trim() || undefined,
+        },
+        getAccessToken,
+      );
+      setUltimas(data.items ?? []);
+      setUltimasTotal(data.total ?? 0);
+    } catch (err) {
+      setUltimasError(err instanceof Error ? err.message : "Falha ao carregar últimas reposições.");
+      setUltimas([]);
+      setUltimasTotal(0);
+    } finally {
+      setUltimasLoading(false);
+    }
+  }, [appliedFerramentaFiltro, appliedPecaFiltro, filial, getAccessToken, ultimasTable.query]);
+
+  const loadReport = useCallback(async () => {
+    await Promise.all([loadResumo(), loadAlertas(), loadUltimas()]);
+  }, [loadAlertas, loadResumo, loadUltimas]);
+
   useEffect(() => {
-    void loadReport();
-  }, [loadReport]);
+    setError(alertasError ?? ultimasError);
+  }, [alertasError, ultimasError]);
+
+  useEffect(() => {
+    void loadResumo();
+  }, [loadResumo]);
+
+  useEffect(() => {
+    void loadAlertas();
+  }, [loadAlertas]);
+
+  useEffect(() => {
+    void loadUltimas();
+  }, [loadUltimas]);
+
+  useEffect(() => {
+    alertasTable.resetPage();
+    ultimasTable.resetPage();
+    setAppliedFerramentaFiltro("");
+    setAppliedPecaFiltro("");
+    setFerramentaFiltro("");
+    setPecaFiltro("");
+    setStatusFiltro("TODOS");
+  }, [filial, alertasTable.resetPage, ultimasTable.resetPage]);
 
   const loadDetail = useCallback(
     async (next: Selection) => {
@@ -138,7 +250,7 @@ export function RelatorioPage({
           ),
           fetchFerramenta(next.codigo_ferramenta, filial, getAccessToken).catch(() => null),
           fetchPecas(next.codigo_ferramenta, filial, getAccessToken).catch(() => ({ items: [] })),
-          fetchComponentes(next.codigo_ferramenta, filial, getAccessToken).catch(() => ({
+          fetchComponentes(next.codigo_ferramenta, filial, {}, getAccessToken).catch(() => ({
             items: [],
           })),
         ]);
@@ -165,47 +277,26 @@ export function RelatorioPage({
     [alertas, filial, getAccessToken],
   );
 
-  const resumo = useMemo(
-    () => ({
-      critico: alertas.filter((item) => item.status === "CRÍTICO").length,
-      atencao: alertas.filter((item) => item.status === "ATENÇÃO").length,
-      ok: alertas.filter((item) => item.status === "OK").length,
-      semStatus: alertas.filter((item) => item.status === "SEM STATUS").length,
-      total: alertas.length,
-    }),
-    [alertas],
-  );
-
-  const filterState = useMemo(
-    () => ({
-      ferramenta: ferramentaFiltro,
-      peca: pecaFiltro,
-      status: statusFiltro,
-    }),
-    [ferramentaFiltro, pecaFiltro, statusFiltro],
-  );
-
-  const alertasFiltrados = useMemo(
-    () => alertas.filter((item) => matchesFilters(item, filterState)),
-    [alertas, filterState],
-  );
-
-  const ultimasFiltradas = useMemo(
-    () =>
-      ultimas.filter((item) =>
-        matchesFilters(
-          { ...item, status: undefined },
-          { ...filterState, status: "TODOS" },
-        ),
-      ),
-    [ultimas, filterState],
-  );
+  const applyFilters = () => {
+    setAppliedFerramentaFiltro(ferramentaFiltro);
+    setAppliedPecaFiltro(pecaFiltro);
+    alertasTable.resetPage();
+    ultimasTable.resetPage();
+  };
 
   const clearFilters = () => {
     setFerramentaFiltro("");
     setPecaFiltro("");
     setStatusFiltro("TODOS");
+    setAppliedFerramentaFiltro("");
+    setAppliedPecaFiltro("");
+    alertasTable.resetPage();
+    ultimasTable.resetPage();
   };
+
+  useEffect(() => {
+    alertasTable.resetPage();
+  }, [statusFiltro, alertasTable.resetPage]);
 
   const handleTabChange = (id: string) => {
     const tab = id as ReportTab;
@@ -232,15 +323,23 @@ export function RelatorioPage({
         key: "ferramenta",
         header: "Ferramenta",
         sortable: true,
-        sortValue: (item) => item.codigo_ferramenta,
-        render: (item) => item.codigo_ferramenta,
+        sortValue: (item) =>
+          formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
+        render: (item) => (
+          <CodigoDescricaoCell
+            codigo={item.codigo_ferramenta}
+            descricao={item.descricao_ferramenta}
+          />
+        ),
       },
       {
         key: "peca",
         header: "Peça",
         sortable: true,
-        sortValue: (item) => item.codigo_peca,
-        render: (item) => item.codigo_peca,
+        sortValue: (item) => formatCodigoDescricao(item.codigo_peca, item.descricao_peca),
+        render: (item) => (
+          <CodigoDescricaoCell codigo={item.codigo_peca} descricao={item.descricao_peca} />
+        ),
       },
       {
         key: "golpes",
@@ -275,15 +374,23 @@ export function RelatorioPage({
         key: "ferramenta",
         header: "Ferramenta",
         sortable: true,
-        sortValue: (item) => item.codigo_ferramenta,
-        render: (item) => item.codigo_ferramenta,
+        sortValue: (item) =>
+          formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
+        render: (item) => (
+          <CodigoDescricaoCell
+            codigo={item.codigo_ferramenta}
+            descricao={item.descricao_ferramenta}
+          />
+        ),
       },
       {
         key: "peca",
         header: "Peça",
         sortable: true,
-        sortValue: (item) => item.codigo_peca,
-        render: (item) => item.codigo_peca,
+        sortValue: (item) => formatCodigoDescricao(item.codigo_peca, item.descricao_peca),
+        render: (item) => (
+          <CodigoDescricaoCell codigo={item.codigo_peca} descricao={item.descricao_peca} />
+        ),
       },
       {
         key: "ultima",
@@ -356,10 +463,13 @@ export function RelatorioPage({
             type="button"
             className="dm-primary-btn"
             onClick={() => void loadReport()}
-            disabled={loading}
+            disabled={alertasLoading || ultimasLoading || resumoLoading}
           >
-            <RefreshCw size={16} className={loading ? "dm-spin" : undefined} />
-            {loading ? "Carregando…" : "Atualizar"}
+            <RefreshCw
+              size={16}
+              className={alertasLoading || ultimasLoading || resumoLoading ? "dm-spin" : undefined}
+            />
+            {alertasLoading || ultimasLoading || resumoLoading ? "Carregando…" : "Atualizar"}
           </button>
         }
       />
@@ -411,7 +521,7 @@ export function RelatorioPage({
           <div>
             <p className="dm-kpi-card__label">Pares monitorados</p>
             <p className="dm-kpi-card__value">{resumo.total}</p>
-            <p className="dm-kpi-card__hint">{ultimas.length} últimas reposições na filial</p>
+            <p className="dm-kpi-card__hint">{ultimasTotal} últimas reposições na filial</p>
           </div>
         </article>
       </section>
@@ -422,7 +532,7 @@ export function RelatorioPage({
           <input
             value={ferramentaFiltro}
             onChange={(event) => setFerramentaFiltro(event.target.value)}
-            placeholder="Código…"
+            placeholder="Código ou descrição…"
           />
         </label>
         <label className="dm-field">
@@ -430,7 +540,7 @@ export function RelatorioPage({
           <input
             value={pecaFiltro}
             onChange={(event) => setPecaFiltro(event.target.value)}
-            placeholder="Código…"
+            placeholder="Código ou descrição…"
           />
         </label>
         <label className="dm-field">
@@ -450,8 +560,17 @@ export function RelatorioPage({
           <X size={16} />
           Limpar
         </button>
-        <button type="button" className="dm-ghost-btn" onClick={() => void loadReport()} disabled={loading}>
+        <button type="button" className="dm-primary-btn" onClick={applyFilters}>
           <Search size={16} />
+          Buscar
+        </button>
+        <button
+          type="button"
+          className="dm-ghost-btn"
+          onClick={() => void loadReport()}
+          disabled={alertasLoading || ultimasLoading || resumoLoading}
+        >
+          <RefreshCw size={16} />
           Recarregar
         </button>
       </FilterBar>
@@ -464,8 +583,8 @@ export function RelatorioPage({
           activeId={activeTab}
           onChange={handleTabChange}
           tabs={[
-            { id: "alertas", label: "Alertas preventivos", count: alertasFiltrados.length },
-            { id: "ultimas", label: "Últimas reposições", count: ultimasFiltradas.length },
+            { id: "alertas", label: "Alertas preventivos", count: alertasTotal },
+            { id: "ultimas", label: "Últimas reposições", count: ultimasTotal },
             {
               id: "detalhe",
               label: "Detalhe preventivo",
@@ -481,15 +600,22 @@ export function RelatorioPage({
               title="Ranking preventivo"
               hint="Clique em uma linha para abrir a aba Detalhe preventivo."
               columns={alertasColumns}
-              rows={alertasFiltrados}
-              loading={loading}
+              rows={alertas}
+              loading={alertasLoading}
               emptyMessage="Nenhum alerta — registre reposições para gerar preventiva."
               getRowKey={(item) => `${item.codigo_ferramenta}-${item.codigo_peca}`}
               getRowClassName={(item) =>
                 isRowSelected(item.codigo_ferramenta, item.codigo_peca) ? "is-selected" : undefined
               }
-              defaultSortKey="percentual"
-              defaultSortDirection="desc"
+              serverTable={{
+                page: alertasTable.query.page,
+                pageSize: alertasTable.query.pageSize,
+                total: alertasTotal,
+                onPageChange: alertasTable.setPage,
+                sortKey: alertasTable.query.sortKey,
+                sortDirection: alertasTable.query.sortDirection,
+                onSortChange: alertasTable.handleSortChange,
+              }}
               onRowClick={handleSelectAlerta}
             />
           ) : null}
@@ -500,15 +626,22 @@ export function RelatorioPage({
               title="Últimas reposições por peça"
               hint="Clique em uma linha para abrir o detalhe preventivo."
               columns={ultimasColumns}
-              rows={ultimasFiltradas}
-              loading={loading}
+              rows={ultimas}
+              loading={ultimasLoading}
               emptyMessage="Nenhuma reposição registrada nesta filial."
               getRowKey={(item) => item.reposicao_id}
               getRowClassName={(item) =>
                 isRowSelected(item.codigo_ferramenta, item.codigo_peca) ? "is-selected" : undefined
               }
-              defaultSortKey="data"
-              defaultSortDirection="desc"
+              serverTable={{
+                page: ultimasTable.query.page,
+                pageSize: ultimasTable.query.pageSize,
+                total: ultimasTotal,
+                onPageChange: ultimasTable.setPage,
+                sortKey: ultimasTable.query.sortKey,
+                sortDirection: ultimasTable.query.sortDirection,
+                onSortChange: ultimasTable.handleSortChange,
+              }}
               onRowClick={handleSelectUltima}
             />
           ) : null}

@@ -552,6 +552,89 @@
   grid-column: span 2;
 }
 
+.dashboard-maintenance .dm-field--span-full {
+  grid-column: 1 / -1;
+}
+
+.dashboard-maintenance .dm-form-grid--reposicao .dm-form-grid__suggest {
+  align-self: end;
+  justify-self: start;
+  min-height: var(--dm-control-height);
+}
+
+.dashboard-maintenance .dm-form-grid--reposicao .dm-form-grid__buttons {
+  margin-left: 0;
+  padding-top: 4px;
+}
+
+.dashboard-maintenance .dm-reposicao-form-card .dm-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.dashboard-maintenance .dm-chart-empty {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+  color: var(--dm-muted, #94a3b8);
+  font-size: var(--dm-font-sm);
+}
+
+.dashboard-maintenance .dm-peca-selecionada {
+  margin: -4px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: color-mix(in srgb, var(--dm-accent) 6%, var(--dm-card-bg));
+  font-size: var(--dm-font-sm);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.dashboard-maintenance .dm-select-peca {
+  font-size: var(--dm-font-sm);
+}
+
+.dashboard-maintenance .dm-field--textarea textarea {
+  width: 100%;
+  min-height: 108px;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-input-bg);
+  color: var(--dm-text);
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-field--filter-peca {
+  flex: 1 1 320px;
+  min-width: min(100%, 280px);
+}
+
+.dashboard-maintenance .dm-datatable__codigo-descricao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-datatable__codigo-descricao__codigo {
+  font-weight: 600;
+  color: var(--dm-text);
+}
+
+.dashboard-maintenance .dm-datatable__codigo-descricao__descricao {
+  font-size: var(--dm-font-xs);
+  color: var(--dm-text-muted);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
 .dashboard-maintenance .dm-form-grid__actions {
   grid-column: 1 / -1;
   display: flex;

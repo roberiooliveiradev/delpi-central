@@ -18,6 +18,7 @@ import {
   type FilialItem,
 } from "../../data/api/maintenanceApi";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
+import { useServerTable } from "../../hooks/useServerTable";
 
 type FiliaisPageProps = {
   getAccessToken?: () => string | undefined;
@@ -44,7 +45,9 @@ export function FiliaisPage({
   onNavigate,
 }: FiliaisPageProps) {
   const { canManageFiliais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const filiaisTable = useServerTable({ defaultSortKey: "codigo" });
   const [filiais, setFiliais] = useState<FilialItem[]>([]);
+  const [filiaisTotal, setFiliaisTotal] = useState(0);
   const [edits, setEdits] = useState<Record<number, FilialDraft>>({});
   const [novoCodigo, setNovoCodigo] = useState("");
   const [novoNome, setNovoNome] = useState("");
@@ -56,25 +59,40 @@ export function FiliaisPage({
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchFiliaisAdmin(getAccessToken, true);
+      const data = await fetchFiliaisAdmin(
+        {
+          page: filiaisTable.query.page,
+          pageSize: filiaisTable.query.pageSize,
+          sortKey: filiaisTable.query.sortKey,
+          sortDirection: filiaisTable.query.sortDirection,
+        },
+        getAccessToken,
+        true,
+      );
       const items = data.items ?? [];
       setFiliais(items);
-      setEdits(
-        Object.fromEntries(
-          items.map((item) => [
-            item.filial_id,
-            { nome_filial: item.nome_filial, status_filial: item.status_filial },
-          ]),
-        ),
-      );
+      setFiliaisTotal(data.total ?? 0);
+      setEdits((current) => {
+        const next = { ...current };
+        for (const item of items) {
+          if (!next[item.filial_id]) {
+            next[item.filial_id] = {
+              nome_filial: item.nome_filial,
+              status_filial: item.status_filial,
+            };
+          }
+        }
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar filiais.");
       setFiliais([]);
+      setFiliaisTotal(0);
       setEdits({});
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken]);
+  }, [filiaisTable.query, getAccessToken]);
 
   useEffect(() => {
     if (canManageFiliais) {
@@ -254,6 +272,7 @@ export function FiliaisPage({
 
       <DataTableSection
         title="Catálogo de filiais"
+        badge={`${filiaisTotal} registro(s)`}
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={
           <FilterBar embedded onSubmit={handleCreate}>
@@ -285,6 +304,15 @@ export function FiliaisPage({
         loading={loading}
         emptyMessage="Nenhuma filial cadastrada."
         getRowKey={(item) => String(item.filial_id)}
+        serverTable={{
+          page: filiaisTable.query.page,
+          pageSize: filiaisTable.query.pageSize,
+          total: filiaisTotal,
+          onPageChange: filiaisTable.setPage,
+          sortKey: filiaisTable.query.sortKey,
+          sortDirection: filiaisTable.query.sortDirection,
+          onSortChange: filiaisTable.handleSortChange,
+        }}
       />
     </MaintenanceShell>
   );

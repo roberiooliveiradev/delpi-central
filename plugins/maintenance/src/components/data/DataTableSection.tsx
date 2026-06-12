@@ -4,7 +4,7 @@ import { useClientPagination } from "../../hooks/useClientPagination";
 import { sortRows } from "../../utils/dataTableSort";
 import { DataTable } from "./DataTable";
 import { Pagination } from "./Pagination";
-import type { DataTableColumn, ServerPaginationConfig } from "./types";
+import type { DataTableColumn, ServerPaginationConfig, ServerTableConfig } from "./types";
 
 export const DEFAULT_TABLE_PAGE_SIZE = 20;
 
@@ -23,7 +23,9 @@ type DataTableSectionProps<T> = {
   embedded?: boolean;
   onRowClick?: (row: T) => void;
   pageSize?: number;
+  /** @deprecated Prefer serverTable */
   serverPagination?: ServerPaginationConfig;
+  serverTable?: ServerTableConfig;
   defaultSortKey?: string;
   defaultSortDirection?: "asc" | "desc";
   hidePaginationWhenSinglePage?: boolean;
@@ -45,45 +47,57 @@ export function DataTableSection<T>({
   onRowClick,
   pageSize = DEFAULT_TABLE_PAGE_SIZE,
   serverPagination,
+  serverTable,
   defaultSortKey,
   defaultSortDirection = "asc",
   hidePaginationWhenSinglePage = false,
 }: DataTableSectionProps<T>) {
+  const serverMode = serverTable ?? serverPagination;
+  const isFullServerTable = Boolean(serverTable);
+
   const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSortDirection);
 
   useEffect(() => {
+    if (isFullServerTable) return;
     setSortKey(defaultSortKey ?? null);
-  }, [defaultSortKey]);
+  }, [defaultSortKey, isFullServerTable]);
 
   useEffect(() => {
+    if (isFullServerTable) return;
     setSortDirection(defaultSortDirection);
-  }, [defaultSortDirection]);
+  }, [defaultSortDirection, isFullServerTable]);
+
+  const activeSortKey = isFullServerTable ? serverTable!.sortKey : sortKey;
+  const activeSortDirection = isFullServerTable ? serverTable!.sortDirection : sortDirection;
 
   const sortedRows = useMemo(() => {
+    if (serverMode) return rows;
     if (!sortKey) return rows;
     return sortRows(rows, columns, sortKey, sortDirection);
-  }, [rows, columns, sortKey, sortDirection]);
+  }, [rows, columns, sortKey, sortDirection, serverMode]);
 
-  const clientPagination = useClientPagination(
-    serverPagination ? [] : sortedRows,
-    pageSize,
-  );
+  const clientPagination = useClientPagination(serverMode ? [] : sortedRows, pageSize);
 
-  const displayRows = serverPagination ? sortedRows : clientPagination.slice;
-  const paginationPage = serverPagination?.page ?? clientPagination.page;
-  const paginationPageSize = serverPagination?.pageSize ?? clientPagination.pageSize;
-  const paginationTotal = serverPagination?.total ?? clientPagination.total;
+  const displayRows = serverMode ? rows : clientPagination.slice;
+  const paginationPage = serverMode?.page ?? clientPagination.page;
+  const paginationPageSize = serverMode?.pageSize ?? clientPagination.pageSize;
+  const paginationTotal = serverMode?.total ?? clientPagination.total;
   const handlePageChange =
-    serverPagination?.onPageChange ?? ((nextPage: number) => clientPagination.setPage(nextPage));
+    serverMode?.onPageChange ?? ((nextPage: number) => clientPagination.setPage(nextPage));
 
   useEffect(() => {
-    if (!serverPagination) {
+    if (!serverMode) {
       clientPagination.setPage(1);
     }
-  }, [sortKey, sortDirection, serverPagination]);
+  }, [sortKey, sortDirection, serverMode]);
 
   const handleSortChange = (columnKey: string) => {
+    if (isFullServerTable) {
+      serverTable!.onSortChange(columnKey);
+      return;
+    }
+
     const isSameColumn = sortKey === columnKey;
     const nextDirection = isSameColumn ? (sortDirection === "asc" ? "desc" : "asc") : "asc";
     setSortKey(columnKey);
@@ -118,8 +132,8 @@ export function DataTableSection<T>({
         getRowKey={getRowKey}
         getRowClassName={getRowClassName}
         onRowClick={onRowClick}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
+        sortKey={activeSortKey}
+        sortDirection={activeSortDirection}
         onSortChange={handleSortChange}
       />
 

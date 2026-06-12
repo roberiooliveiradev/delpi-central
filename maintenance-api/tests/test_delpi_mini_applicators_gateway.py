@@ -27,6 +27,8 @@ def test_listar_ferramentas_propaga_client(monkeypatch):
             "filial": "01",
             "page": "1",
             "page_size": "20",
+            "sort_by": None,
+            "sort_dir": None,
         },
         authorization="Bearer token",
     )

@@ -4,19 +4,51 @@ from datetime import datetime
 from typing import Any
 
 from maint_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
+from maint_app.application.list_query import ListQuery, build_order_clause
 
 
 class MotivoRepository(PluginBaseRepository):
+    _SORT_COLUMNS = {
+        "id": "motivo_id",
+        "descricao": "descricao",
+    }
+
     def list_active(self, *, filial: str) -> list[dict[str, Any]]:
-        return self.fetch_all(
-            """
+        rows, _total = self.list_active_paged(filial=filial, query=ListQuery(page=1, page_size=10_000))
+        return rows
+
+    def list_active_paged(
+        self,
+        *,
+        filial: str,
+        query: ListQuery,
+        search: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        where = ["excluido = FALSE", "filial = %s"]
+        params: list[Any] = [filial]
+        if search and search.strip():
+            where.append("descricao ILIKE %s")
+            params.append(f"%{search.strip()}%")
+
+        where_sql = " AND ".join(where)
+        order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "descricao")
+        select_sql = f"""
             SELECT motivo_id, descricao, filial
             FROM maintenance.motivos
-            WHERE excluido = FALSE
-              AND filial = %s
-            ORDER BY descricao
-            """,
-            (filial,),
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(1) AS total
+            FROM maintenance.motivos
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
         )
 
     def create(self, descricao: str, *, filial: str) -> dict[str, Any]:
@@ -60,16 +92,48 @@ class MotivoRepository(PluginBaseRepository):
 
 
 class StatusPecaRepository(PluginBaseRepository):
+    _SORT_COLUMNS = {
+        "status": "descricao",
+        "operador": "operador",
+        "percentual": "percentual",
+    }
+
     def list_active(self, *, filial: str) -> list[dict[str, Any]]:
-        return self.fetch_all(
-            """
+        rows, _total = self.list_active_paged(filial=filial, query=ListQuery(page=1, page_size=10_000))
+        return rows
+
+    def list_active_paged(
+        self,
+        *,
+        filial: str,
+        query: ListQuery,
+        search: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        where = ["excluido = FALSE", "filial = %s"]
+        params: list[Any] = [filial]
+        if search and search.strip():
+            where.append("descricao ILIKE %s")
+            params.append(f"%{search.strip()}%")
+
+        where_sql = " AND ".join(where)
+        order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "percentual")
+        select_sql = f"""
             SELECT status_id, descricao, operador, percentual, filial
             FROM maintenance.status_peca
-            WHERE excluido = FALSE
-              AND filial = %s
-            ORDER BY percentual DESC, descricao
-            """,
-            (filial,),
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(1) AS total
+            FROM maintenance.status_peca
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
         )
 
     def update(
@@ -148,6 +212,13 @@ class StatusPecaRepository(PluginBaseRepository):
 
 
 class ReposicaoRepository(PluginBaseRepository):
+    _SORT_COLUMNS = {
+        "data": "r.data_reposicao",
+        "peca": "r.codigo_peca",
+        "golpes": "r.golpes",
+        "motivo": "m.descricao",
+    }
+
     def list_by_ferramenta(
         self,
         *,
@@ -155,6 +226,22 @@ class ReposicaoRepository(PluginBaseRepository):
         codigo_ferramenta: str,
         codigo_peca: str | None = None,
     ) -> list[dict[str, Any]]:
+        rows, _total = self.list_by_ferramenta_paged(
+            filial=filial,
+            codigo_ferramenta=codigo_ferramenta,
+            codigo_peca=codigo_peca,
+            query=ListQuery(page=1, page_size=10_000, sort_by="data", sort_dir="desc"),
+        )
+        return rows
+
+    def list_by_ferramenta_paged(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        codigo_peca: str | None,
+        query: ListQuery,
+    ) -> tuple[list[dict[str, Any]], int]:
         where = [
             "r.excluido = FALSE",
             "r.filial = %s",
@@ -165,8 +252,9 @@ class ReposicaoRepository(PluginBaseRepository):
             where.append("r.codigo_peca = %s")
             params.append(codigo_peca)
 
-        return self.fetch_all(
-            f"""
+        where_sql = " AND ".join(where)
+        order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "data")
+        select_sql = f"""
             SELECT
                 r.reposicao_id,
                 r.filial,
@@ -182,10 +270,20 @@ class ReposicaoRepository(PluginBaseRepository):
                 r.data_alteracao
             FROM maintenance.reposicoes r
             INNER JOIN maintenance.motivos m ON m.motivo_id = r.motivo_id
-            WHERE {' AND '.join(where)}
-            ORDER BY r.data_reposicao DESC, r.data_criacao DESC
-            """,
-            tuple(params),
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(1) AS total
+            FROM maintenance.reposicoes r
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
         )
 
     def get_by_id(self, reposicao_id: str) -> dict[str, Any] | None:
@@ -326,21 +424,68 @@ class ReposicaoRepository(PluginBaseRepository):
         return [int(row["golpes"]) for row in rows]
 
     def list_ultimas_por_par(self, *, filial: str) -> list[dict[str, Any]]:
-        return self.fetch_all(
-            """
-            SELECT DISTINCT ON (filial, codigo_ferramenta, codigo_peca)
-                reposicao_id,
-                filial,
-                codigo_ferramenta,
-                codigo_peca,
-                data_reposicao,
-                golpes
-            FROM maintenance.reposicoes
-            WHERE excluido = FALSE
-              AND filial = %s
-            ORDER BY filial, codigo_ferramenta, codigo_peca, data_reposicao DESC
-            """,
-            (filial,),
+        rows, _total = self.list_ultimas_por_par_paged(
+            filial=filial,
+            query=ListQuery(page=1, page_size=10_000),
+        )
+        return rows
+
+    def list_ultimas_por_par_paged(
+        self,
+        *,
+        filial: str,
+        query: ListQuery,
+        ferramenta: str | None = None,
+        peca: str | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        filters = []
+        filter_params: list[Any] = []
+        if ferramenta and ferramenta.strip():
+            filters.append("codigo_ferramenta ILIKE %s")
+            filter_params.append(f"%{ferramenta.strip()}%")
+        if peca and peca.strip():
+            filters.append("codigo_peca ILIKE %s")
+            filter_params.append(f"%{peca.strip()}%")
+
+        filter_sql = f" AND {' AND '.join(filters)}" if filters else ""
+        sort_columns = {
+            "data": "data_reposicao",
+            "ferramenta": "codigo_ferramenta",
+            "peca": "codigo_peca",
+            "golpes": "golpes",
+        }
+        order = build_order_clause(query.sort_by, query.sort_dir, sort_columns, "data")
+
+        base_cte = f"""
+            WITH ultimas AS (
+                SELECT DISTINCT ON (filial, codigo_ferramenta, codigo_peca)
+                    reposicao_id,
+                    filial,
+                    codigo_ferramenta,
+                    codigo_peca,
+                    data_reposicao,
+                    golpes
+                FROM maintenance.reposicoes
+                WHERE excluido = FALSE
+                  AND filial = %s
+                ORDER BY filial, codigo_ferramenta, codigo_peca, data_reposicao DESC
+            )
+        """
+        params = (filial, *filter_params)
+        count_sql = f"{base_cte} SELECT COUNT(1) AS total FROM ultimas WHERE 1=1{filter_sql}"
+        select_sql = f"""
+            {base_cte}
+            SELECT reposicao_id, filial, codigo_ferramenta, codigo_peca, data_reposicao, golpes
+            FROM ultimas
+            WHERE 1=1{filter_sql}
+            ORDER BY {order}
+        """
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=params,
+            page=query.page,
+            page_size=query.page_size,
         )
 
     def media_golpes(

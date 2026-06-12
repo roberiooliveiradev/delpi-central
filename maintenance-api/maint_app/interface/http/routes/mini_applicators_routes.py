@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from delpi_api_client import DelpiApiError
 
@@ -10,11 +10,33 @@ from maint_app.composition.maintenance_composer import build_mini_applicators_to
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
+from maint_app.interface.http.list_query_params import list_query_params
+from maint_app.application.list_query import ListQuery, paginate_slice
 
 router = APIRouter(prefix="/maintenance/mini-aplicadores", tags=["Mini-aplicadores"])
 
 _scope = FilialAccessScopeService()
 _SUBMODULE_ID = "mini-aplicadores"
+
+
+def _sort_componentes(items: list, sort_by: str | None, sort_dir: str) -> list:
+    reverse = sort_dir == "desc"
+    key_name = (sort_by or "nivel").strip().lower()
+
+    def sort_key(item: dict) -> str | float | int:
+        if key_name == "codigo":
+            return str(item.get("codigo") or "")
+        if key_name == "descricao":
+            return str(item.get("descricao") or "")
+        if key_name == "unidade":
+            return str(item.get("unidade") or "")
+        if key_name == "estoque01":
+            return float(item.get("estoque_local_01") or 0)
+        if key_name == "estoque99":
+            return float(item.get("estoque_local_99") or 0)
+        return int(item.get("nivel") or 0)
+
+    return sorted(items, key=sort_key, reverse=reverse)
 
 
 @router.get("/ferramentas")
@@ -23,8 +45,7 @@ def list_ferramentas(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
-    page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=200),
+    query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
@@ -39,8 +60,10 @@ def list_ferramentas(
             codigo=codigo,
             descricao=descricao,
             filial=filial,
-            page=page,
-            page_size=page_size,
+            page=query.page,
+            page_size=query.page_size,
+            sort_by=query.sort_by,
+            sort_dir=query.sort_dir,
         )
         return ok(data, message="Ferramentas listadas.")
     except DelpiApiError as exc:
@@ -80,7 +103,12 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.listar_pecas(codigo)
-        return ok(data, message="Peças listadas.")
+        items = [
+            item
+            for item in (data.get("items") or [])
+            if str(item.get("codigo") or "").strip().startswith("3019")
+        ]
+        return ok({"items": items, "total": len(items)}, message="Peças listadas.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
@@ -88,7 +116,12 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
 
 
 @router.get("/ferramentas/{codigo}/componentes")
-def list_componentes(request: Request, codigo: str, filial: str = Query(..., min_length=2, max_length=2)):
+def list_componentes(
+    request: Request,
+    codigo: str,
+    filial: str = Query(..., min_length=2, max_length=2),
+    query: ListQuery = Depends(list_query_params),
+):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
@@ -99,7 +132,9 @@ def list_componentes(request: Request, codigo: str, filial: str = Query(..., min
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.listar_componentes(codigo_ferramenta=codigo, filial=filial)
-        return ok(data, message="Componentes listados.")
+        items = _sort_componentes(data.get("items") or [], query.sort_by, query.sort_dir)
+        page_items, total = paginate_slice(items, query)
+        return ok({"items": page_items, "total": total}, message="Componentes listados.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:

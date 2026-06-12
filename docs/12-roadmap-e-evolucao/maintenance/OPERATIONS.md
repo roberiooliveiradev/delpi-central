@@ -123,6 +123,8 @@ docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filia
 | 403 em mutação | RBAC — usuário precisa `maintenance.mini-applicators.manage.filial-XX` da filial escolhida no início |
 | Aba Configuração não aparece | Falta `mini-applicators.manage.filial-XX` ou manifesto desatualizado na Core API |
 | Tabela mostra só 50 ferramentas | Rebuild do MFE — lista usa paginação server-side (`page_size=20`) |
+| «Falha na requisição» genérico no relatório | Conferir JWT e permissão `mini-applicators.view.filial-XX`; resposta 403/401 agora exibe `detail` do FastAPI. Typo histórico em `_SUBMODULE_ID` (`mini-aplicadores`) causava 403 silencioso — corrigido |
+| Select de peça lista componentes | Rebuild API + MFE — peças vêm de `/pecas` com filtro `3019*` |
 
 ## CI
 

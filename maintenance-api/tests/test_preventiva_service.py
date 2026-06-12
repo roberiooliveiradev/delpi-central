@@ -40,9 +40,44 @@ def test_listar_alertas_ordenacao():
         status_repo=status_repo,
         totvs_gateway=totvs,
     )
-    alertas = service.listar_alertas(filial="01")
+    alertas, total = service.listar_alertas(filial="01")
 
     status_repo.list_active.assert_called_once_with(filial="01")
+    assert total == 1
     assert len(alertas) == 1
     assert alertas[0]["status"] == "CRÍTICO"
     assert alertas[0]["golpes_atuais"] == 96
+
+
+def test_listar_alertas_enriquece_descricoes():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    reposicao_repo.list_ultimas_por_par.return_value = [
+        {
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "30190006",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+    ]
+    status_repo.list_active.return_value = [
+        {"descricao": "OK", "operador": "<", "percentual": 80},
+    ]
+    reposicao_repo.media_golpes.return_value = 100.0
+
+    totvs = MagicMock()
+    totvs.obter_golpes.return_value = {"total_golpes": 50}
+    totvs.obter_ferramenta.return_value = {"codigo": "23-001", "descricao": "MINI APLICADOR"}
+    totvs.listar_pecas.return_value = {
+        "items": [{"codigo": "30190006", "descricao": "GRAMPEADOR DO ISOLANTE"}]
+    }
+    totvs.listar_componentes.return_value = {"items": []}
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    alertas, _total = service.listar_alertas(filial="01")
+
+    assert alertas[0]["descricao_ferramenta"] == "MINI APLICADOR"
+    assert alertas[0]["descricao_peca"] == "GRAMPEADOR DO ISOLANTE"
