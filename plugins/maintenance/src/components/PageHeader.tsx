@@ -8,6 +8,7 @@ type PageHeaderProps = {
   subtitle: string;
   icon: LucideIcon;
   eyebrow?: string;
+  /** Mantido por compatibilidade com chamadas existentes; a nav usa filialScope. */
   currentPath?: string;
   filialScope?: string;
   onNavigate: (path: string) => void;
@@ -20,7 +21,6 @@ export function PageHeader({
   subtitle,
   icon: Icon,
   eyebrow = "DELPI • Manutenção",
-  currentPath,
   filialScope,
   onNavigate,
   actions,
@@ -37,11 +37,7 @@ export function PageHeader({
           <h1>{title}</h1>
           <span className="dm-page-subtitle">{subtitle}</span>
           {showNav ? (
-            <MaintenanceNav
-              currentPath={currentPath}
-              filialScope={filialScope}
-              onNavigate={onNavigate}
-            />
+            <MaintenanceNav filialScope={filialScope} onNavigate={onNavigate} />
           ) : null}
         </div>
       </div>

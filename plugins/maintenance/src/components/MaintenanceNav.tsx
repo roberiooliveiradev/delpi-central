@@ -1,25 +1,17 @@
-import { MAINTENANCE_ROUTES } from "../constants/routes";
+import { ModuleHomeNavButton } from "./ModuleHomeNavButton";
 import { resolveMaintenanceHomePath } from "../utils/routeParser";
 
 type MaintenanceNavProps = {
-  currentPath?: string;
   filialScope?: string;
   onNavigate: (path: string) => void;
 };
 
-export function MaintenanceNav({ currentPath, filialScope, onNavigate }: MaintenanceNavProps) {
+export function MaintenanceNav({ filialScope, onNavigate }: MaintenanceNavProps) {
   const homePath = resolveMaintenanceHomePath(filialScope);
-  const active = currentPath === homePath || currentPath === MAINTENANCE_ROUTES.home;
 
   return (
-    <nav className="dm-nav" aria-label="Navegação do módulo Manutenção">
-      <button
-        type="button"
-        className={`dm-nav__link${active ? " is-active" : ""}`}
-        onClick={() => onNavigate(homePath)}
-      >
-        Início
-      </button>
+    <nav className="dm-nav dm-nav--submodule" aria-label="Navegação do módulo Manutenção">
+      <ModuleHomeNavButton label="Início" targetPath={homePath} onNavigate={onNavigate} />
     </nav>
   );
 }

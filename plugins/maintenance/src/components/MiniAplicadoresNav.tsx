@@ -1,5 +1,4 @@
-import { ArrowLeft } from "lucide-react";
-
+import { ModuleHomeNavButton } from "./ModuleHomeNavButton";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
 import { normalizeMaintenancePath, RESERVED_MINI_SEGMENTS } from "../utils/routeParser";
 
@@ -51,14 +50,12 @@ export function MiniAplicadoresNav({
 
   return (
     <nav className="dm-nav dm-nav--submodule" aria-label="Navegação mini-aplicadores">
-      <button
-        type="button"
-        className={`dm-nav__link${onDetailPage ? " dm-nav__link--back" : " dm-nav__link--home"}`}
-        onClick={() => onNavigate(backPath)}
-      >
-        <ArrowLeft size={14} aria-hidden="true" />
-        <span className="dm-nav__link-text">{backLabel}</span>
-      </button>
+      <ModuleHomeNavButton
+        label={backLabel}
+        targetPath={backPath}
+        onNavigate={onNavigate}
+        variant={onDetailPage ? "back" : "home"}
+      />
       <div className="dm-nav__tabs" role="tablist" aria-label="Abas do submódulo">
         {links.map((link) => {
           const active = isActive(currentPath, link.path);
