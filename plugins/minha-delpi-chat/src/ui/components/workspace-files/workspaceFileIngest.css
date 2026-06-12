@@ -243,7 +243,7 @@
   display: none;
 }
 
-.mdc-workspace-file-card--chip .mdc-workspace-file-card__remove {
+.mdc-workspace-file-card--chip .mdc-workspace-file-card__chip-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -252,4 +252,8 @@
   color: var(--mdc-text-muted);
   cursor: pointer;
   padding: 0;
+}
+
+.mdc-workspace-file-card--chip .mdc-workspace-file-card__chip-action:hover {
+  color: var(--mdc-primary);
 }

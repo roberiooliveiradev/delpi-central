@@ -3,6 +3,10 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
 import { workspaceFileAgentIngestLabels } from "../../../content/workspaceFileIngestContent";
 import { getSourceContentHash, sha256HexFromFile } from "../../../utils/fileContentHash";
+import {
+  buildWorkspaceSourcePreviewTarget,
+  useWorkspaceFilePreviewModal,
+} from "../../hooks/useWorkspaceFilePreviewModal";
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "../workspace-files/WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "../workspace-files/WorkspaceFileDropzone";
@@ -60,6 +64,7 @@ export function AgentKnowledgeSourcesPanel({
   noteSlot,
 }: AgentKnowledgeSourcesPanelProps) {
   const ingestLabels = workspaceFileAgentIngestLabels();
+  const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
   const [isDragActive, setIsDragActive] = useState(false);
   const [pendingHashes, setPendingHashes] = useState<Set<string>>(new Set());
 
@@ -169,6 +174,9 @@ export function AgentKnowledgeSourcesPanel({
                   secondaryLabel={isDuplicateMarked ? ingestLabels.duplicateMarked : undefined}
                   previewKind="file"
                   editable
+                  onPreview={() => {
+                    openPreview(buildWorkspaceSourcePreviewTarget(source));
+                  }}
                   onDownload={
                     onDownloadSource
                       ? () => {
@@ -189,6 +197,8 @@ export function AgentKnowledgeSourcesPanel({
       )}
 
       {noteSlot ? <div className="mdc-agent-knowledge__note">{noteSlot}</div> : null}
+
+      {previewModal}
     </div>
   );
 }

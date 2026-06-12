@@ -43,6 +43,10 @@ import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
 } from "../../content/workspaceFileIngestContent";
+import {
+  buildWorkspaceLocalFilePreviewTarget,
+  useWorkspaceFilePreviewModal,
+} from "../hooks/useWorkspaceFilePreviewModal";
 import { useWorkspaceFileIngestPolicy } from "../hooks/useWorkspaceFileIngestPolicy";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
@@ -152,6 +156,7 @@ export function ChatInput({
   onDismissTypingSuggestion,
   getAccessToken,
 }: ChatInputProps) {
+  const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
   const { accept: sessionAttachmentAccept } = useWorkspaceFileIngestPolicy("session_attachment", {
     getAccessToken,
   });
@@ -530,6 +535,9 @@ export function ChatInput({
                     statusLabel={statusLabel}
                     previewKind={isImage ? "image" : "file"}
                     editable
+                    onPreview={() => {
+                      openPreview(buildWorkspaceLocalFilePreviewTarget(attachment.file));
+                    }}
                     onRemove={() => onRemoveAttachment?.(attachment.id)}
                   />
                 );
@@ -688,6 +696,8 @@ export function ChatInput({
           ? "Arquivos anexados serão usados como fonte de conhecimento desta conversa."
           : "Digite @ para citar agente ou projeto na pergunta. A resposta será exibida em tempo real."}
       </small>
+
+      {previewModal}
     </form>
   );
 }

@@ -85,10 +85,22 @@ export function WorkspaceFileCard({
         {statusLabel ? (
           <small className="mdc-workspace-file-card__status">{statusLabel}</small>
         ) : null}
+        {onPreview ? (
+          <button
+            type="button"
+            className="mdc-workspace-file-card__chip-action"
+            onClick={onPreview}
+            aria-label={`Pré-visualizar ${filename}`}
+            title="Pré-visualizar"
+          >
+            <Eye size={13} aria-hidden="true" />
+          </button>
+        ) : null}
+
         {editable && onRemove ? (
           <button
             type="button"
-            className="mdc-workspace-file-card__remove"
+            className="mdc-workspace-file-card__chip-action mdc-workspace-file-card__remove"
             onClick={onRemove}
             aria-label={`Remover ${filename}`}
           >

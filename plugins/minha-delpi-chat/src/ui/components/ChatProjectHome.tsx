@@ -40,6 +40,10 @@ import {
   workspaceFileProjectFileKindLabel,
   workspaceFileProjectIngestLabels,
 } from "../../content/workspaceFileIngestContent";
+import {
+  buildWorkspaceSourcePreviewTarget,
+  useWorkspaceFilePreviewModal,
+} from "../hooks/useWorkspaceFilePreviewModal";
 import { IngestProgressIndicator } from "./shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
@@ -180,6 +184,7 @@ export function ChatProjectHome({
   const [isSourceDragActive, setIsSourceDragActive] = useState(false);
   const [uploadSourceError, setUploadSourceError] = useState<string | null>(null);
   const projectIngestLabels = workspaceFileProjectIngestLabels();
+  const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
   const projectUsagePath = useMemo(
     () => buildChatProjectHref(project.id),
     [project.id],
@@ -784,6 +789,9 @@ export function ChatProjectHome({
                       secondaryLabel={workspaceFileProjectFileKindLabel(sourceDate)}
                       previewKind="file"
                       editable
+                      onPreview={() => {
+                        openPreview(buildWorkspaceSourcePreviewTarget(source));
+                      }}
                       onDownload={
                         onDownloadSource
                           ? () => {
@@ -1027,6 +1035,8 @@ export function ChatProjectHome({
         </div>
         </ModalPortal>
       ) : null}
+
+      {previewModal}
     </section>
   );
 }

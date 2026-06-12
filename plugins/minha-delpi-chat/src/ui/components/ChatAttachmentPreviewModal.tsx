@@ -1,7 +1,11 @@
 import { Download, FileText, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { fetchChatAttachmentBlob } from "../../data/api/chatApi";
+import {
+  downloadChatSource,
+  fetchChatAttachmentBlob,
+  fetchChatSourceBlob,
+} from "../../data/api/chatApi";
 import {
   formatAttachmentSize,
   resolveAttachmentPreviewKind,
@@ -17,6 +21,7 @@ export type ChatAttachmentPreviewTarget = {
   contentType?: string | null;
   sizeBytes?: number;
   serverAttachmentId?: string;
+  serverSourceId?: string;
   localFile?: File;
   localPreviewUrl?: string | null;
 };
@@ -78,6 +83,32 @@ export function ChatAttachmentPreviewModal({
 
           if (active) {
             setPreviewUrl(url);
+          }
+          return;
+        }
+
+        if (target.serverSourceId) {
+          const fetched = await fetchChatSourceBlob(target.serverSourceId, {
+            getAccessToken,
+          });
+          const resolvedKind = resolveAttachmentPreviewKind(
+            fetched.contentType || target.contentType,
+            fetched.filename || target.filename,
+          );
+          setPreviewKind(resolvedKind);
+
+          if (resolvedKind === "text") {
+            const text = await fetched.blob.text();
+            if (active) {
+              setTextPreview(text.slice(0, 120_000));
+            }
+            return;
+          }
+
+          ownedUrl = URL.createObjectURL(fetched.blob);
+
+          if (active) {
+            setPreviewUrl(ownedUrl);
           }
           return;
         }
@@ -161,11 +192,20 @@ export function ChatAttachmentPreviewModal({
             </div>
 
             <div className="mdc-attachment-preview-modal__actions">
-              {target.serverAttachmentId && onDownload ? (
+              {target.serverSourceId || (target.serverAttachmentId && onDownload) ? (
                 <button
                   type="button"
                   className="mdc-attachment-preview-modal__tool-btn"
-                  onClick={() => void onDownload(target.serverAttachmentId!)}
+                  onClick={() => {
+                    if (target.serverSourceId) {
+                      void downloadChatSource(target.serverSourceId, { getAccessToken });
+                      return;
+                    }
+
+                    if (target.serverAttachmentId && onDownload) {
+                      void onDownload(target.serverAttachmentId);
+                    }
+                  }}
                 >
                   <Download size={15} aria-hidden="true" />
                   Baixar
