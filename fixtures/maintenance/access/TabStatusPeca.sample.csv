@@ -1,0 +1,4 @@
+Descricao,Operador,Percentual
+CRÍTICO,>=,95
+ATENÇÃO,>=,80
+OK,<,80

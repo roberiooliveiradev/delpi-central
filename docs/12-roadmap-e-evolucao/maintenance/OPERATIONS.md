@@ -71,6 +71,12 @@ python scripts/import_access_csv.py \
 
 Use `--dry-run` para validar contagem antes de gravar.
 
+**Dev local (sem Access):** seed mínimo para testar relatório:
+
+```bash
+docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filial 01
+```
+
 4. Validar preventiva: comparar ≥5 pares ferramenta/peça com WinForms.
 5. Desligar escrita no Access; manter WinForms somente leitura até validação completa.
 
@@ -81,7 +87,7 @@ Use `--dry-run` para validar contagem antes de gravar.
 | Card «Status da API» com erro no portal | Conferir JWT, gateway e `GET /apps/maintenance-api/maintenance/health` |
 | `db_ready: false` | Verificar migrations e variáveis `PLUGINS_DB_*` |
 | Golpes zerados no relatório | api-delpi indisponível ou filial incorreta; conferir logs `maintenance-api` |
-| 403 em mutação | RBAC filial — usuário precisa `maintenance.replacements.manage.filial-XX` |
+| 403 em mutação | RBAC filial — usuário precisa `maintenance.manage.filial-XX` ou `maintenance.replacements.manage` global |
 
 ## CI
 

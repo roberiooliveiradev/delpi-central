@@ -8,6 +8,7 @@
 |-----------|----------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Camadas, ports, gateways, Postgres |
 | [integration-contracts.md](./integration-contracts.md) | Consumo api-delpi (TOTVS) |
+| [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/maintenance/OPERATIONS.md) | Deploy, RBAC, import Access |
 | [../README.md](../README.md) | Quick start |
 | [Produto (roadmap/playbook)](../../docs/12-roadmap-e-evolucao/maintenance/README.md) | Visão de produto e fases |
 
@@ -24,4 +25,9 @@
 
 ## Estado
 
-Fase 0 — estrutura documental. Implementação segue [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md).
+Fases 0–2 concluídas (CRUD, preventiva, relatório UI). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
+
+| Script | Uso |
+|--------|-----|
+| `scripts/import_access_csv.py` | Migração CSV do Access |
+| `scripts/bootstrap_dev_sample.py` | Repos de exemplo em dev local |

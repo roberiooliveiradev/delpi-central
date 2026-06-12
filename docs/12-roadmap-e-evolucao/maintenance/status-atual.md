@@ -14,7 +14,8 @@
 | Docker Compose / gateway | `infra/docker-compose*.yml` | ✅ |
 | CI | `scripts/ci-maintenance-api.sh` | ✅ 9 testes |
 | Registro Core API | `plugins/maintenance/scripts/register-manifest.sh` | ✅ Script pronto |
-| Import Access | `maintenance-api/scripts/import_access_csv.py` | ✅ CLI CSV |
+| Import Access | `maintenance-api/scripts/import_access_csv.py` | ✅ CLI CSV + fixtures sample |
+| Bootstrap dev | `maintenance-api/scripts/bootstrap_dev_sample.py` | ✅ Seed local para relatório |
 
 ## Fases do roadmap
 

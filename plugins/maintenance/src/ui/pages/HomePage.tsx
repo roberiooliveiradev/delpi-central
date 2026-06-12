@@ -79,6 +79,13 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomePageProps
           >
             Abrir mini-aplicadores
           </button>
+          <button
+            type="button"
+            className="dm-ghost-btn"
+            onClick={() => onNavigate(MAINTENANCE_ROUTES.relatorio)}
+          >
+            Relatório preventivo
+          </button>
         </div>
       </section>
     </MaintenanceShell>
