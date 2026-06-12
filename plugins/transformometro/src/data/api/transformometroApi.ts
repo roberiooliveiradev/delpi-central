@@ -147,11 +147,27 @@ export type Setor = {
   filiais: string[];
 };
 
+export type Filial = {
+  filial_id: string;
+  codigo_filial?: string;
+  nome_filial: string;
+  status_filial: string;
+};
+
+export type ProcessoInstanciaSetor = {
+  setor_id: string;
+  codigo_setor?: string;
+  nome_setor?: string;
+};
+
 export type ProcessoInstancia = {
   instancia_id: string;
   processo_id: string;
-  filial_id: string;
-  setor_id: string;
+  filial_id?: string | null;
+  todas_filiais_ativas?: boolean;
+  setor_id?: string;
+  setor_ids?: string[];
+  setores?: ProcessoInstanciaSetor[];
   codigo_filial?: string;
   codigo_setor?: string;
   nome_filial?: string;
@@ -164,6 +180,7 @@ export type OptionsData = {
   filiais: FilialOption[];
   setores: SetorOption[];
   access_scope?: AccessScope;
+  status_filial?: string[];
   status_setor: string[];
   status_processo: string[];
   cenario_tipo: string[];
@@ -180,6 +197,50 @@ export type OptionsData = {
 
 export function fetchOptions(getAccessToken?: () => string | undefined) {
   return request<OptionsData>("/options", getAccessToken);
+}
+
+export function fetchFiliais(
+  getAccessToken?: () => string | undefined,
+  includeInactive = false
+) {
+  const qs = includeInactive ? "?include_inactive=true" : "";
+  return request<{ total: number; items: Filial[] }>(`/filiais${qs}`, getAccessToken);
+}
+
+export function fetchFilial(filialId: string, getAccessToken?: () => string | undefined) {
+  return request<Filial>(`/filiais/${filialId}`, getAccessToken);
+}
+
+export function createFilial(
+  payload: {
+    codigo_filial: string;
+    nome_filial: string;
+    status_filial?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Filial>("/filiais", getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateFilial(
+  filialId: string,
+  payload: {
+    nome_filial: string;
+    status_filial?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Filial>(`/filiais/${filialId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteFilial(filialId: string, getAccessToken?: () => string | undefined) {
+  return request<null>(`/filiais/${filialId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchSetores(
@@ -286,13 +347,38 @@ export function fetchInstancia(
 
 export function createProcessoInstancia(
   processoId: string,
-  payload: { filial_id: string; setor_id: string; rotulo_instancia?: string },
+  payload: {
+    filial_id?: string;
+    todas_filiais_ativas?: boolean;
+    setor_ids: string[];
+    rotulo_instancia?: string;
+    status_instancia?: string;
+  },
   getAccessToken?: () => string | undefined
 ) {
   return request<ProcessoInstancia>(`/processos/${processoId}/instancias`, getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function updateInstancia(
+  instanciaId: string,
+  payload: {
+    setor_ids: string[];
+    rotulo_instancia?: string;
+    status_instancia?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<ProcessoInstancia>(`/instancias/${instanciaId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteInstancia(instanciaId: string, getAccessToken?: () => string | undefined) {
+  return request<null>(`/instancias/${instanciaId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type InstanciaDuplicateResult = {

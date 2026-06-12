@@ -25,6 +25,8 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V016 | `V016__recurso_escopo_recurso.sql` | `escopo_recurso` em recursos (`empresa` \| `filial` \| `setor`) |
 | V017 | `V017__dashboard_calculos_uuid.sql` | Cache `dashboard_calculos` PK UUID + FKs instância/filial/setor; view snapshot recriada |
 | V018 | `V018__revisoes_unique_por_instancia.sql` | Unique `(instancia_id, versao_revisao)`; chave por instância |
+| V019 | `V019__processo_instancia_setores.sql` | Amarração N:N instância × setores; instância = processo × filial (ou todas ativas) |
+| V020 | `V020__dashboard_integration_views.sql` | Views `dashboard_competencia_evolucao` e `instancia_operacional_snapshot` (leitura rápida dashboard + api-delpi) |
 
 ## Comandos
 

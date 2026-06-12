@@ -100,6 +100,7 @@ def test_prepare_legacy_backfills_instancia_and_filiais():
     bundle = _complete_legacy_bundle(_sample_bundle())
     assert len(bundle["filiais"]) >= 1
     assert len(bundle["processo_instancias"]) == 1
+    assert len(bundle["processo_instancia_setores"]) == 1
     assert bundle["revisoes"][0]["instancia_id"]
 
 

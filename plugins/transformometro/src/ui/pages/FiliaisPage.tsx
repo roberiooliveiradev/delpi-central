@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -15,36 +15,36 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
-  createSetor,
-  deleteSetor,
+  createFilial,
+  deleteFilial,
+  fetchFiliais,
   fetchOptions,
-  fetchSetores,
-  updateSetor,
+  updateFilial,
+  type Filial,
   type OptionsData,
-  type Setor,
 } from "../../data/api/transformometroApi";
-import { SetorFormFields } from "../setores/SetorFormFields";
+import { FilialFormFields } from "../filiais/FilialFormFields";
 import {
-  emptySetorForm,
-  payloadFromSetorForm,
-  setorFormFromEntity,
-} from "../setores/setorCatalogForm";
+  emptyFilialForm,
+  filialFormFromEntity,
+  payloadFromFilialForm,
+} from "../filiais/filialCatalogForm";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
 };
 
-export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
-  const [items, setItems] = useState<Setor[]>([]);
+export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
+  const [items, setItems] = useState<Filial[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptySetorForm);
-  const [filialFilter, setFilialFilter] = useState("");
+  const [form, setForm] = useState(emptyFilialForm);
+  const [includeInactive, setIncludeInactive] = useState(true);
   const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
 
   const load = useCallback(async () => {
@@ -52,38 +52,33 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     setError(null);
     try {
       const [list, opts] = await Promise.all([
-        fetchSetores(getAccessToken, filialFilter || undefined),
+        fetchFiliais(getAccessToken, includeInactive),
         fetchOptions(getAccessToken),
       ]);
       setItems(list.items);
       setOptions(opts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar setores");
+      setError(err instanceof Error ? err.message : "Erro ao carregar filiais");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [filialFilter, getAccessToken]);
+  }, [getAccessToken, includeInactive]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const filialLabels = useMemo(() => {
-    const map = new Map((options?.filiais ?? []).map((filial) => [filial.id, filial.label]));
-    return map;
-  }, [options?.filiais]);
-
   function startCreate() {
     setEditingId(null);
-    setForm(emptySetorForm(filialFilter || "01"));
+    setForm(emptyFilialForm());
     setShowForm(true);
     scrollToForm();
   }
 
-  function startEdit(setor: Setor) {
-    setEditingId(setor.setor_id);
-    setForm(setorFormFromEntity(setor));
+  function startEdit(filial: Filial) {
+    setEditingId(filial.filial_id);
+    setForm(filialFormFromEntity(filial));
     setShowForm(true);
     scrollToForm();
   }
@@ -91,35 +86,29 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
-    setForm(emptySetorForm());
+    setForm(emptyFilialForm());
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (form.filiais.length === 0) {
-      setError("Selecione ao menos uma filial para o setor.");
-      return;
-    }
-    const payload = payloadFromSetorForm(form, Boolean(editingId));
+    const payload = payloadFromFilialForm(form, Boolean(editingId));
     try {
       if (editingId) {
-        await updateSetor(
+        await updateFilial(
           editingId,
           {
-            nome_setor: payload.nome_setor,
-            filiais: payload.filiais,
-            status_setor: payload.status_setor,
+            nome_filial: payload.nome_filial,
+            status_filial: payload.status_filial,
           },
           getAccessToken
         );
       } else {
-        await createSetor(
+        await createFilial(
           {
-            setor_id: form.codigo_setor.trim(),
-            nome_setor: payload.nome_setor,
-            filiais: payload.filiais,
-            status_setor: payload.status_setor,
+            codigo_filial: form.codigo_filial.trim(),
+            nome_filial: payload.nome_filial,
+            status_filial: payload.status_filial,
           },
           getAccessToken
         );
@@ -127,51 +116,49 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       cancelForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar setor");
+      setError(err instanceof Error ? err.message : "Erro ao salvar filial");
     }
   }
 
-  async function handleDelete(setor: Setor) {
-    if (!window.confirm(`Excluir setor ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
+  async function handleDelete(filial: Filial) {
+    if (
+      !window.confirm(
+        `Excluir filial ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`
+      )
+    ) {
+      return;
+    }
     setError(null);
     try {
-      await deleteSetor(setor.setor_id, getAccessToken);
-      if (editingId === setor.setor_id) cancelForm();
+      await deleteFilial(filial.filial_id, getAccessToken);
+      if (editingId === filial.filial_id) cancelForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir setor");
+      setError(err instanceof Error ? err.message : "Erro ao excluir filial");
     }
   }
 
-  const columns: DataTableColumn<Setor>[] = [
+  const columns: DataTableColumn<Filial>[] = [
     {
-      key: "codigo_setor",
+      key: "codigo_filial",
       header: "Código",
       sortable: true,
-      sortValue: (row) => row.codigo_setor ?? row.setor_id,
-      render: (row) => row.codigo_setor ?? row.setor_id,
+      sortValue: (row) => row.codigo_filial ?? row.filial_id,
+      render: (row) => row.codigo_filial ?? row.filial_id,
     },
     {
-      key: "nome_setor",
-      header: "Setor",
+      key: "nome_filial",
+      header: "Filial",
       sortable: true,
       className: "ds-table__col--wide",
-      sortValue: (row) => row.nome_setor,
-      render: (row) => <strong>{row.nome_setor}</strong>,
+      sortValue: (row) => row.nome_filial,
+      render: (row) => <strong>{row.nome_filial}</strong>,
     },
     {
-      key: "filiais",
-      header: "Filiais",
-      render: (row) =>
-        (row.filiais ?? [])
-          .map((filialId) => `${filialId} — ${filialLabels.get(filialId) ?? filialId}`)
-          .join(", ") || "—",
-    },
-    {
-      key: "status_setor",
+      key: "status_filial",
       header: "Status",
       sortable: true,
-      render: (row) => row.status_setor,
+      render: (row) => row.status_filial,
     },
     {
       key: "acoes",
@@ -211,8 +198,8 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     return (
       <TransformometroShell>
         <LoadingActivityCard
-          title="Carregando setores"
-          description="Catálogo de setores vinculados às filiais."
+          title="Carregando filiais"
+          description="Catálogo de unidades operacionais."
           progressPercent={catalogLoadingProgress}
         />
       </TransformometroShell>
@@ -222,16 +209,16 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   return (
     <TransformometroShell>
       <PageHeader
-        title="Setores"
-        subtitle="Cadastro de setores e vínculo com filiais — usado nos processos"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
+        title="Filiais"
+        subtitle="Cadastro de filiais — base para instâncias, setores e escopo do dashboard"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
           <button type="button" className="ds-primary-btn" onClick={startCreate}>
             <Plus size={16} />
-            Novo setor
+            Nova filial
           </button>
         }
       />
@@ -244,15 +231,15 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <p className="ds-hint">
-        Setores ativos e vinculados à filial aparecem no formulário de{" "}
+        Filiais ativas aparecem nos formulários de{" "}
         <button
           type="button"
           className="ds-ghost-btn"
-          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.filiais)}
+          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.setores)}
         >
-          Filiais
-        </button>
-        {" "}e{" "}
+          Setores
+        </button>{" "}
+        e{" "}
         <button
           type="button"
           className="ds-ghost-btn"
@@ -265,9 +252,9 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       {showForm && options ? (
         <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{editingId ? "Editar setor" : "Novo setor"}</h2>
+          <h2 className="ds-section-title">{editingId ? "Editar filial" : "Nova filial"}</h2>
           <form onSubmit={handleSubmit}>
-            <SetorFormFields
+            <FilialFormFields
               form={form}
               options={options}
               editing={Boolean(editingId)}
@@ -275,7 +262,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
             />
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">
-                {editingId ? "Salvar alterações" : "Cadastrar setor"}
+                {editingId ? "Salvar alterações" : "Cadastrar filial"}
               </button>
               <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
                 Cancelar
@@ -286,42 +273,30 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       ) : null}
 
       <DataTableSection
-        title="Catálogo de setores"
+        title="Catálogo de filiais"
         filters={
           <div className="ds-filters-row">
-            <div className="ds-filter-box">
-              <label htmlFor="tm-setor-list-filial">Filial</label>
-              <select
-                id="tm-setor-list-filial"
-                value={filialFilter}
-                onChange={(e) => setFilialFilter(e.target.value)}
-              >
-                <option value="">Todas</option>
-                {(options?.filiais ?? []).map((filial) => (
-                  <option key={filial.id} value={filial.id}>
-                    {filial.id} — {filial.label}
-                  </option>
-                ))}
-              </select>
+            <div className="ds-filter-box ds-filter-box--wide">
+              <label className="ds-filter-box__label">
+                <input
+                  type="checkbox"
+                  checked={includeInactive}
+                  onChange={(e) => setIncludeInactive(e.target.checked)}
+                />{" "}
+                Incluir filiais inativas
+              </label>
             </div>
           </div>
         }
         columns={columns}
         rows={items}
-        rowKey={(row) => row.setor_id}
+        rowKey={(row) => row.filial_id}
         loading={loading}
         refreshing={refreshing}
         hideSearch
         pageSize={15}
-        emptyMessage="Nenhum setor cadastrado. Use Novo setor para incluir."
-        footer={
-          <p className="ds-hint">
-            {items.length} registro(s)
-            {filialFilter
-              ? ` · filtrados para filial ${filialFilter}`
-              : ""}
-          </p>
-        }
+        emptyMessage="Nenhuma filial cadastrada. Use Nova filial para incluir."
+        footer={<p className="ds-hint">{items.length} registro(s)</p>}
       />
     </TransformometroShell>
   );

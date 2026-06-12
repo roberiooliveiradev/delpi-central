@@ -22,7 +22,6 @@ import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { filterSetoresByFilial, setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
-  createPayloadFromProcessoForm,
   emptyProcessoForm,
   masterPayloadFromProcessoForm,
   processoFormFromEntity,
@@ -32,7 +31,7 @@ import {
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
-  onOpenProcesso: (id: string) => void;
+  onOpenProcesso: (id: string, options?: { setupInstancia?: boolean }) => void;
 };
 
 export function ProcessosPage({
@@ -111,9 +110,7 @@ export function ProcessosPage({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const payload = editingId
-      ? masterPayloadFromProcessoForm(form)
-      : createPayloadFromProcessoForm(form);
+    const payload = masterPayloadFromProcessoForm(form);
     try {
       if (editingId) {
         await updateProcesso(editingId, payload, getAccessToken);
@@ -123,7 +120,7 @@ export function ProcessosPage({
         const created = await createProcesso(payload, getAccessToken);
         cancelForm();
         await load();
-        onOpenProcesso(created.processo_id);
+        onOpenProcesso(created.processo_id, { setupInstancia: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
@@ -181,11 +178,11 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "filial", header: "Filial", render: (row) => row.filial_id, sortable: true },
+      { key: "filial", header: "Filial", render: (row) => row.filial_id ?? "—", sortable: true },
       {
         key: "setor",
         header: "Setor",
-        render: (row) => setorLabel(options?.setores, row.setor_id),
+        render: (row) => (row.setor_id ? setorLabel(options?.setores, row.setor_id) : "—"),
         sortable: true,
       },
       {
@@ -268,12 +265,18 @@ export function ProcessosPage({
           <h2 className="ds-section-title">
             {editingId ? "Editar processo" : "Novo processo"}
           </h2>
+          {!editingId ? (
+            <p className="ds-hint">
+              Cadastre só o mestre aqui. Filial e setor entram na primeira instância operacional
+              na tela seguinte.
+            </p>
+          ) : null}
           <form onSubmit={handleSubmit}>
             <ProcessoFormFields
               form={form}
               options={options}
               codigoProcesso={editingRow?.codigo_processo}
-              showInstanciaFields={!editingId}
+              showInstanciaFields={false}
               onChange={setForm}
             />
             <div className="ds-cadastro-form__actions">

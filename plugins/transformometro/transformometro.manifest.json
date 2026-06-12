@@ -108,6 +108,15 @@
       "showInMenu": true
     },
     {
+      "path": "/apps/transformometro/filiais",
+      "label": "Filiais",
+      "permission": "transformometro.processes.manage",
+      "icon": "building",
+      "entry": null,
+      "order": 22.2,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/transformometro/setores",
       "label": "Setores",
       "permission": "transformometro.processes.manage",

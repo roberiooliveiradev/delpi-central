@@ -24,6 +24,8 @@ class DashboardSnapshotReadService:
             "row_count": self._repo.count(),
             "latest_calculated_at": self._repo.latest_calculated_at(),
             "aggregated_view": "processo_competencia_snapshot",
+            "evolucao_view": "dashboard_competencia_evolucao",
+            "instancia_view": "instancia_operacional_snapshot",
         }
 
     def _resolve(
@@ -104,6 +106,26 @@ class DashboardSnapshotReadService:
             setor_id=scope.setor_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            limit=limit,
+        )
+        return {
+            "meta": {**self.meta(), "scope": self._scope.scope_meta(scope)},
+            "total": len(rows),
+            "items": rows,
+        }
+
+    def instancias(
+        self,
+        *,
+        view: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        limit: int = 500,
+    ) -> dict[str, Any]:
+        scope = self._resolve(view=view, filial_id=filial_id, setor_id=setor_id)
+        rows = self._repo.query_instancias_operacionais(
+            filial_id=scope.filial_id,
+            setor_id=scope.setor_id,
             limit=limit,
         )
         return {

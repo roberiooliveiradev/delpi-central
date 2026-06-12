@@ -2,13 +2,21 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProcessoCreateBody(BaseModel):
     nome_processo: str = Field(min_length=1, max_length=500)
-    filial_id: str = Field(min_length=1, max_length=16)
-    setor_id: str = Field(min_length=1, max_length=64)
+    filial_id: Optional[str] = Field(
+        default=None,
+        max_length=16,
+        description="Opcional: cria a primeira instância operacional junto com o mestre.",
+    )
+    setor_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Opcional: par filial × setor da primeira instância.",
+    )
     status_processo: str = Field(min_length=1, max_length=32)
     descricao_processo: Optional[str] = None
     gestor_responsavel: Optional[str] = None
@@ -40,14 +48,59 @@ class ProcessoDuplicateBody(BaseModel):
 class InstanciaDuplicateBody(BaseModel):
     filial_id: str = Field(min_length=1, max_length=16)
     setor_id: str = Field(min_length=1, max_length=64)
+    setor_ids: list[str] = Field(default_factory=list)
     rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
+
+    @model_validator(mode="after")
+    def _normalize_setores(self) -> "InstanciaDuplicateBody":
+        if not self.setor_ids and self.setor_id:
+            self.setor_ids = [self.setor_id]
+        return self
 
 
 class InstanciaBody(BaseModel):
-    filial_id: str = Field(min_length=1, max_length=16)
-    setor_id: str = Field(min_length=1, max_length=64)
+    filial_id: Optional[str] = Field(
+        default=None,
+        max_length=16,
+        description="Filial da instância. Omita quando todas_filiais_ativas=true.",
+    )
+    todas_filiais_ativas: bool = Field(
+        default=False,
+        description="Instância válida em todas as filiais ativas.",
+    )
+    setor_ids: list[str] = Field(
+        default_factory=list,
+        description="Um ou mais setores amarrados à instância.",
+    )
+    setor_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Atalho legado para um único setor.",
+    )
     rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
     status_instancia: str = Field(default="ativo", max_length=32)
+
+    @model_validator(mode="after")
+    def _normalize_setores(self) -> "InstanciaBody":
+        if not self.setor_ids and self.setor_id:
+            self.setor_ids = [self.setor_id]
+        if not self.todas_filiais_ativas and not (self.filial_id or "").strip():
+            raise ValueError("Informe filial_id ou marque todas_filiais_ativas.")
+        if not self.setor_ids:
+            raise ValueError("Informe ao menos um setor em setor_ids.")
+        return self
+
+
+class InstanciaUpdateBody(BaseModel):
+    rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
+    status_instancia: str = Field(default="ativo", max_length=32)
+    setor_ids: list[str] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _normalize_setores(self) -> "InstanciaUpdateBody":
+        if not self.setor_ids:
+            raise ValueError("Informe ao menos um setor em setor_ids.")
+        return self
 
 
 class RevisaoBody(BaseModel):

@@ -25,7 +25,7 @@ _PROCESSO_SELECT = """
         s.codigo_setor AS setor_id
     FROM transformometro.processos p
     LEFT JOIN LATERAL (
-        SELECT pi2.instancia_id, pi2.filial_id, pi2.setor_id
+        SELECT pi2.instancia_id, pi2.filial_id
         FROM transformometro.processo_instancias pi2
         WHERE pi2.processo_id = p.processo_id
           AND pi2.deletado = FALSE
@@ -34,8 +34,14 @@ _PROCESSO_SELECT = """
     ) pi ON TRUE
     LEFT JOIN transformometro.filiais f
         ON f.filial_id = pi.filial_id AND f.deletado = FALSE
-    LEFT JOIN transformometro.setores s
-        ON s.setor_id = pi.setor_id AND s.deletado = FALSE
+    LEFT JOIN LATERAL (
+        SELECT s.codigo_setor
+        FROM transformometro.processo_instancia_setores pis
+        JOIN transformometro.setores s ON s.setor_id = pis.setor_id AND s.deletado = FALSE
+        WHERE pis.instancia_id = pi.instancia_id
+        ORDER BY s.codigo_setor ASC
+        LIMIT 1
+    ) s ON TRUE
 """
 
 
@@ -75,8 +81,16 @@ class ProcessoRepository(PluginBaseRepository):
                     JOIN transformometro.filiais f_f ON f_f.filial_id = pi_f.filial_id
                     WHERE pi_f.processo_id = p.processo_id
                       AND pi_f.deletado = FALSE
+                      AND pi_f.todas_filiais_ativas = FALSE
                       AND f_f.codigo_filial = %s
                       AND f_f.deletado = FALSE
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM transformometro.processo_instancias pi_all
+                    WHERE pi_all.processo_id = p.processo_id
+                      AND pi_all.deletado = FALSE
+                      AND pi_all.todas_filiais_ativas = TRUE
                 )
                 """
             )
@@ -87,7 +101,9 @@ class ProcessoRepository(PluginBaseRepository):
                 EXISTS (
                     SELECT 1
                     FROM transformometro.processo_instancias pi_s
-                    JOIN transformometro.setores s_s ON s_s.setor_id = pi_s.setor_id
+                    JOIN transformometro.processo_instancia_setores pis
+                        ON pis.instancia_id = pi_s.instancia_id
+                    JOIN transformometro.setores s_s ON s_s.setor_id = pis.setor_id
                     WHERE pi_s.processo_id = p.processo_id
                       AND pi_s.deletado = FALSE
                       AND s_s.codigo_setor = %s

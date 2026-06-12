@@ -154,6 +154,37 @@ def dashboard_snapshot_processos(
 
 
 @router.get(
+    "/snapshot/instancias",
+    operation_id="get_dashboard_snapshot_instancias",
+    summary="Instâncias operacionais (view instancia_operacional_snapshot)",
+    description=(
+        "Lista instâncias com economia diária, payback e data de implantação "
+        "a partir da última competência materializada — leitura rápida para dashboard e integrações."
+    ),
+    tags=["Transformômetro Snapshot"],
+)
+def dashboard_snapshot_instancias(
+    request: Request,
+    view: str | None = Query(default=None),
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    limit: int = Query(default=500, ge=1, le=5000),
+):
+    if err := _scope_error_response(request, view, filial_id, setor_id):
+        return err
+    data = _snapshot.instancias(
+        view=view,
+        filial_id=filial_id,
+        setor_id=setor_id,
+        limit=limit,
+    )
+    return ok(
+        {"meta": data["meta"], "total": data["total"], "items": rows_to_json(data["items"])},
+        "Instâncias operacionais (view instancia_operacional_snapshot).",
+    )
+
+
+@router.get(
     "/snapshot/linhas",
     operation_id="get_dashboard_snapshot_linhas",
     summary="Linhas detalhadas revisão × competência no cache",

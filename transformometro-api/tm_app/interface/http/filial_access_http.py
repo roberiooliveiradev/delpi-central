@@ -132,6 +132,10 @@ def check_instancia_view_access(request: Request, instancia_id: str) -> JSONResp
     if not row:
         return None
     scope = resolve_access_scope(request)
+    if row.get("todas_filiais_ativas"):
+        if scope.is_unrestricted or _scope_service.can_view_consolidated(scope):
+            return None
+        return access_denied()
     if _scope_service.can_view_filial(scope, row.get("codigo_filial")):
         return None
     return access_denied()

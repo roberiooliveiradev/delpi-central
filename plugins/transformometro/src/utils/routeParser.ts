@@ -3,6 +3,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
 export type TransformometroView =
   | "dashboard"
   | "dados"
+  | "filiais"
   | "setores"
   | "recursos"
   | "recurso"
@@ -88,6 +89,10 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
 
   if (path === TRANSFORMOMETRO_ROUTES.setores || path.endsWith("/setores")) {
     return { view: "setores" };
+  }
+
+  if (path === TRANSFORMOMETRO_ROUTES.filiais || path.endsWith("/filiais")) {
+    return { view: "filiais" };
   }
 
   if (path === TRANSFORMOMETRO_ROUTES.recursos || path.endsWith("/recursos")) {

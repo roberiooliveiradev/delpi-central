@@ -222,6 +222,37 @@
   grid-column: span 2;
 }
 
+.dashboard-transformometro .tm-inst-setores-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-inst-setores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 12px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-card-radius);
+  background: var(--ds-card-bg);
+}
+
+.dashboard-transformometro .tm-inst-setor-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .tm-inst-setor-option--used {
+  opacity: 0.65;
+}
+
 .dashboard-transformometro .ds-totvs-banner {
   display: flex;
   gap: 12px;

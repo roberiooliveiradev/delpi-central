@@ -3,6 +3,7 @@ import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { SetoresPage } from "./ui/pages/SetoresPage";
+import { FiliaisPage } from "./ui/pages/FiliaisPage";
 import { RecursosPage } from "./ui/pages/RecursosPage";
 import { DataTransferPage } from "./ui/pages/DataTransferPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
@@ -68,6 +69,12 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   }
 
+  if (route.view === "filiais") {
+    return (
+      <FiliaisPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    );
+  }
+
   if (route.view === "processo" && route.processoId) {
     return (
       <ProcessoDetailPage
@@ -89,7 +96,13 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
-        onOpenProcesso={(id) => onNavigate(buildProcessoPath(id))}
+        onOpenProcesso={(id, opts) =>
+          onNavigate(
+            opts?.setupInstancia
+              ? `${buildProcessoPath(id)}#nova-instancia`
+              : buildProcessoPath(id)
+          )
+        }
       />
     );
   }

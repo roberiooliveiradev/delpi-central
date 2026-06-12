@@ -48,9 +48,18 @@ class InstanciaDuplicateService:
 
         target_filial = str(filial_id).strip()
         target_setor = str(setor_id).strip()
+        source_setores = {
+            str(source.get("codigo_setor") or source.get("setor_id") or "").lower(),
+            *(
+                str(item.get("codigo_setor") or item.get("setor_id") or "").lower()
+                for item in (source.get("setores") or [])
+                if isinstance(item, dict)
+            ),
+        }
+        source_setores.discard("")
         if (
             str(source.get("codigo_filial") or "").lower() == target_filial.lower()
-            and str(source.get("codigo_setor") or "").lower() == target_setor.lower()
+            and target_setor.lower() in source_setores
         ):
             raise ValueError(
                 "Destino igual à instância origem. Informe outra filial ou setor."
@@ -66,7 +75,7 @@ class InstanciaDuplicateService:
                 {
                     "processo_id": processo_id,
                     "filial_id": target_filial,
-                    "setor_id": target_setor,
+                    "setor_ids": [target_setor],
                     "rotulo_instancia": rotulo_instancia,
                 },
                 auto_commit=False,

@@ -81,7 +81,7 @@ class FilialRepository(PluginBaseRepository):
             FROM transformometro.processo_instancias pi
             JOIN transformometro.filiais f ON f.filial_id = pi.filial_id
             JOIN transformometro.processos p ON p.processo_id = pi.processo_id
-            WHERE f.codigo_filial = %s
+            WHERE (f.codigo_filial = %s OR pi.todas_filiais_ativas = TRUE)
               AND pi.deletado = FALSE
               AND p.deletado = FALSE
               AND f.deletado = FALSE

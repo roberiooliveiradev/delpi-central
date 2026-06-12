@@ -68,6 +68,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     FilialUpdateBody,
     InstanciaBody,
     InstanciaDuplicateBody,
+    InstanciaUpdateBody,
     InvestimentoBody,
     InvestimentoUpdateBody,
     MedicaoBody,
@@ -159,12 +160,20 @@ def _active_filial_codigos() -> set[str]:
 
 
 def _validate_processo_body(body: ProcessoCreateBody):
+    assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
+    has_filial = bool((body.filial_id or "").strip())
+    has_setor = bool((body.setor_id or "").strip())
+    if has_filial != has_setor:
+        raise ValueError(
+            "filial_id e setor_id devem ser informados juntos para criar instância operacional."
+        )
+    if not has_filial:
+        return
     assert_filial_ativa(body.filial_id, _active_filial_codigos())
     if not SetorRepository().is_active_for_filial(body.setor_id, body.filial_id):
         raise ValueError(
             f"setor_id '{body.setor_id}' não está vinculado à filial {body.filial_id}"
         )
-    assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
 
 
 def _validate_filial_body(body: FilialBody | FilialUpdateBody, *, is_create: bool):
@@ -271,21 +280,26 @@ def _processo_master_payload(body: ProcessoCreateBody) -> dict:
 
 @router.post("/processos")
 def create_processo(body: ProcessoCreateBody, request: Request):
-    if err := check_manage_filial_access(request, body.filial_id):
-        return err
+    filial_id = (body.filial_id or "").strip() or None
+    setor_id = (body.setor_id or "").strip() or None
+    create_instancia = bool(filial_id and setor_id)
+    if create_instancia:
+        if err := check_manage_filial_access(request, filial_id):
+            return err
     try:
         _validate_processo_body(body)
         repo = ProcessoRepository()
         row = repo.create(_processo_master_payload(body))
         pid = str(row["processo_id"])
-        instancia = ProcessoInstanciaRepository().create(
-            {
-                "processo_id": pid,
-                "filial_id": body.filial_id,
-                "setor_id": body.setor_id,
-            }
-        )
-        row = repo.get(pid) or {**row, **instancia}
+        if create_instancia:
+            instancia = ProcessoInstanciaRepository().create(
+                {
+                    "processo_id": pid,
+                    "filial_id": filial_id,
+                    "setor_ids": [setor_id],
+                }
+            )
+            row = repo.get(pid) or {**row, **instancia}
     except ProcessoInstanciaDomainError as exc:
         return fail(str(exc), 400)
     except ValueError as exc:
@@ -313,16 +327,22 @@ def list_processo_instancias(processo_id: str, request: Request):
 
 @router.post("/processos/{processo_id}/instancias")
 def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Request):
-    if err := check_manage_filial_access(request, body.filial_id):
-        return err
+    if not body.todas_filiais_ativas:
+        if err := check_manage_filial_access(request, body.filial_id or ""):
+            return err
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
     try:
-        assert_filial_ativa(body.filial_id, _active_filial_codigos())
+        if not body.todas_filiais_ativas:
+            assert_filial_ativa(body.filial_id or "", _active_filial_codigos())
         row = ProcessoInstanciaRepository().create(
             {
                 "processo_id": processo_id,
-                **body.model_dump(),
+                "filial_id": body.filial_id,
+                "todas_filiais_ativas": body.todas_filiais_ativas,
+                "setor_ids": body.setor_ids,
+                "rotulo_instancia": body.rotulo_instancia,
+                "status_instancia": body.status_instancia,
             }
         )
     except ProcessoInstanciaDomainError as exc:
@@ -344,6 +364,60 @@ def get_instancia(instancia_id: str, request: Request):
     if not row:
         return fail("Instância não encontrada.", 404)
     return ok(row_to_json(row))
+
+
+@router.put("/instancias/{instancia_id}")
+def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Request):
+    if err := check_instancia_view_access(request, instancia_id):
+        return err
+    existing = ProcessoInstanciaRepository().get(instancia_id)
+    if not existing:
+        return fail("Instância não encontrada.", 404)
+    if not existing.get("todas_filiais_ativas"):
+        filial_codigo = str(existing.get("codigo_filial") or existing.get("filial_id") or "")
+        if err := check_manage_filial_access(request, filial_codigo):
+            return err
+    try:
+        row = ProcessoInstanciaRepository().update(
+            instancia_id,
+            {
+                "setor_ids": body.setor_ids,
+                "rotulo_instancia": body.rotulo_instancia,
+                "status_instancia": body.status_instancia,
+            },
+        )
+    except ProcessoInstanciaDomainError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("update_instancia_failed")
+        return fail(format_api_error(exc), 500)
+
+    _audit(request, "processo_instancia", instancia_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Instância operacional atualizada.")
+
+
+@router.delete("/instancias/{instancia_id}")
+def delete_instancia(instancia_id: str, request: Request):
+    if err := check_instancia_view_access(request, instancia_id):
+        return err
+    existing = ProcessoInstanciaRepository().get(instancia_id)
+    if not existing:
+        return fail("Instância não encontrada.", 404)
+    if not existing.get("todas_filiais_ativas"):
+        filial_codigo = str(existing.get("codigo_filial") or existing.get("filial_id") or "")
+        if err := check_manage_filial_access(request, filial_codigo):
+            return err
+    try:
+        if not ProcessoInstanciaRepository().soft_delete(instancia_id):
+            return fail("Instância não encontrada.", 404)
+    except ProcessoInstanciaDomainError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("delete_instancia_failed")
+        return fail(format_api_error(exc), 500)
+
+    _audit(request, "processo_instancia", instancia_id, "delete", {})
+    return ok(message="Instância operacional excluída.")
 
 
 @router.post("/instancias/{instancia_id}/duplicar")

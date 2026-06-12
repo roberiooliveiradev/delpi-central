@@ -17,6 +17,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRevisao,
   createProcessoInstancia,
+  deleteInstancia,
   deleteProcesso,
   deleteRevisao,
   duplicateInstancia,
@@ -26,6 +27,7 @@ import {
   fetchProcessoInstancias,
   fetchRevisoes,
   updateProcesso,
+  updateInstancia,
   type OptionsData,
   type Processo,
   type ProcessoComparativoItem,
@@ -34,7 +36,6 @@ import {
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
 import { buildProcessoPath } from "../../utils/routeParser";
-import { setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import {
@@ -66,6 +67,7 @@ export function ProcessoDetailPage({
   onNavigate,
   onBack,
 }: Props) {
+  const [openInstanciaForm, setOpenInstanciaForm] = useState(false);
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [selectedInstanciaId, setSelectedInstanciaId] = useState<string | null>(instanciaId);
@@ -129,6 +131,13 @@ export function ProcessoDetailPage({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#nova-instancia") return;
+    setOpenInstanciaForm(true);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [processoId]);
+
   const selectedInstancia = useMemo(
     () => instancias.find((row) => row.instancia_id === selectedInstanciaId) ?? null,
     [instancias, selectedInstanciaId]
@@ -156,7 +165,7 @@ export function ProcessoDetailPage({
     onNavigate(buildProcessoPath(processoId, nextRevisaoId, selectedInstanciaId));
   }
 
-  function navigateInstancia(nextInstanciaId: string) {
+  function navigateInstancia(nextInstanciaId: string | null) {
     setSelectedInstanciaId(nextInstanciaId);
     onNavigate(buildProcessoPath(processoId, null, nextInstanciaId));
   }
@@ -396,8 +405,8 @@ export function ProcessoDetailPage({
         subtitle={[
           selectedInstancia
             ? `Instância ${selectedInstancia.codigo_filial ?? selectedInstancia.filial_id} · ${selectedInstancia.codigo_setor ?? selectedInstancia.setor_id}`
-            : processo.filial_id
-              ? `Filial ${processo.filial_id} · ${setorLabel(options?.setores, processo.setor_id)}`
+            : instancias.length === 0
+              ? "sem instância operacional — cadastre abaixo"
               : null,
           processo.status_processo,
           processo.familia_processo ? `família ${processo.familia_processo}` : null,
@@ -423,7 +432,13 @@ export function ProcessoDetailPage({
               <Trash2 size={16} />
               Excluir
             </button>
-            <button type="button" className="ds-primary-btn" onClick={toggleRevisaoForm}>
+            <button
+              type="button"
+              className="ds-primary-btn"
+              disabled={refreshing || instancias.length === 0}
+              title={instancias.length === 0 ? "Cadastre uma instância operacional primeiro" : undefined}
+              onClick={toggleRevisaoForm}
+            >
               <Plus size={16} />
               {showRevisaoForm ? "Cancelar" : "Nova revisão"}
             </button>
@@ -471,7 +486,7 @@ export function ProcessoDetailPage({
               <dd>
                 {selectedInstancia
                   ? `${selectedInstancia.codigo_filial ?? selectedInstancia.filial_id} · ${selectedInstancia.codigo_setor ?? selectedInstancia.setor_id}`
-                  : `${processo.filial_id} · ${setorLabel(options?.setores, processo.setor_id)}`}
+                  : "Nenhuma — cadastre em Instâncias operacionais"}
               </dd>
             </div>
             {processo.familia_processo ? (
@@ -585,9 +600,23 @@ export function ProcessoDetailPage({
           selectedInstanciaId={selectedInstanciaId}
           options={options}
           busy={refreshing}
+          initialShowForm={openInstanciaForm}
           onSelect={navigateInstancia}
           onCreate={async (payload) => {
             await createProcessoInstancia(processoId, payload, getAccessToken);
+            setOpenInstanciaForm(false);
+            await load();
+          }}
+          onUpdate={async (instanciaId, payload) => {
+            await updateInstancia(instanciaId, payload, getAccessToken);
+            await load();
+          }}
+          onDelete={async (instanciaId) => {
+            await deleteInstancia(instanciaId, getAccessToken);
+            if (selectedInstanciaId === instanciaId) {
+              setSelectedInstanciaId(null);
+              navigateInstancia(null);
+            }
             await load();
           }}
           onDuplicate={async ({ origemInstanciaId, ...payload }) => {

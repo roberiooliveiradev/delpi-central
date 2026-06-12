@@ -17,6 +17,7 @@ from tm_app.infrastructure.persistence.repositories.processo_instancia_repositor
 from tm_app.infrastructure.persistence.json_backup_repository import (
     BUNDLE_KEYS,
     ENTITY_SPECS,
+    PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
     SETOR_FILIAIS_BUNDLE_KEY,
     EntitySpec,
     JsonBackupRepository,
@@ -57,11 +58,11 @@ def _legacy_setor_id(codigo_setor: str) -> str:
     return str(uuid5(LEGACY_IMPORT_NAMESPACE, f"transformometro.setor:{codigo_setor}"))
 
 
-def _legacy_instancia_id(processo_id: str, codigo_filial: str, codigo_setor: str) -> str:
+def _legacy_instancia_id(processo_id: str, codigo_filial: str) -> str:
     return str(
         uuid5(
             LEGACY_IMPORT_NAMESPACE,
-            f"transformometro.instancia:{processo_id}:{codigo_filial}:{codigo_setor}",
+            f"transformometro.instancia:{processo_id}:{codigo_filial}",
         )
     )
 
@@ -155,6 +156,7 @@ class JsonBackupService:
         data["setor_filiais"] = self._repo.fetch_setor_filiais()
         if not data.get("processo_instancias"):
             data["processo_instancias"] = self._repo.fetch_processo_instancias()
+        data["processo_instancia_setores"] = self._repo.fetch_processo_instancia_setores()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -415,7 +417,8 @@ class JsonBackupService:
                 if isinstance(row, dict)
             ]
             self._repo.sync_setor_filiais(sf_rows, auto_commit=False)
-            self._sync_processo_instancias_from_payload(payload)
+            self._sync_processo_instancias_from_payload(prepared)
+            self._sync_processo_instancia_setores_from_payload(prepared)
 
             self._repo._connection.commit()
         except Exception:
@@ -514,12 +517,13 @@ class JsonBackupService:
             for row in (payload.get("processo_instancias") or [])
             if isinstance(row, dict)
         ]
+        links = [
+            row
+            for row in (payload.get("processo_instancia_setores") or [])
+            if isinstance(row, dict)
+        ]
         inst_by_processo: dict[str, str] = {}
-        for row in instancias:
-            processo_id = str(row.get("processo_id") or "")
-            instancia_id = str(row.get("instancia_id") or "")
-            if processo_id and instancia_id:
-                inst_by_processo[processo_id] = instancia_id
+        inst_by_processo_filial: dict[tuple[str, str], str] = {}
 
         for processo in payload.get("processos") or []:
             if not isinstance(processo, dict):
@@ -529,28 +533,38 @@ class JsonBackupService:
             setor_codigo = normalize_codigo_setor(str(processo.get("setor_id") or ""))
             if not processo_id or not filial_codigo or not setor_codigo:
                 continue
-            if processo_id in inst_by_processo:
-                continue
             filial_uuid = filial_codigo_to_uuid.get(filial_codigo)
             setor_uuid = setor_codigo_to_uuid.get(setor_codigo) or setor_codigo_to_uuid.get(
                 _norm_id(setor_codigo)
             )
             if not filial_uuid or not setor_uuid:
                 continue
-            instancia_id = _legacy_instancia_id(processo_id, filial_codigo, setor_codigo)
-            instancias.append(
+
+            key = (processo_id, filial_codigo)
+            instancia_id = inst_by_processo_filial.get(key)
+            if not instancia_id:
+                instancia_id = _legacy_instancia_id(processo_id, filial_codigo)
+                instancias.append(
+                    {
+                        "instancia_id": instancia_id,
+                        "processo_id": processo_id,
+                        "filial_id": filial_uuid,
+                        "todas_filiais_ativas": False,
+                        "status_instancia": "ativo",
+                        "deletado": False,
+                    }
+                )
+                inst_by_processo_filial[key] = instancia_id
+            links.append(
                 {
                     "instancia_id": instancia_id,
-                    "processo_id": processo_id,
-                    "filial_id": filial_uuid,
                     "setor_id": setor_uuid,
-                    "status_instancia": "ativo",
-                    "deletado": False,
                 }
             )
-            inst_by_processo[processo_id] = instancia_id
+            inst_by_processo.setdefault(processo_id, instancia_id)
 
         payload["processo_instancias"] = instancias
+        payload["processo_instancia_setores"] = links
 
         for revisao in payload.get("revisoes") or []:
             if not isinstance(revisao, dict) or revisao.get("instancia_id"):
@@ -570,11 +584,14 @@ class JsonBackupService:
             **{
                 key: len(data.get(key) or [])
                 for key in BUNDLE_KEYS
-                if key != SETOR_FILIAIS_BUNDLE_KEY
+                if key not in {SETOR_FILIAIS_BUNDLE_KEY, PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY}
             },
             "filiais": len(self._repo.fetch_filiais()),
             "setores": len(self._repo.fetch_setores()),
             SETOR_FILIAIS_BUNDLE_KEY: len(self._repo.fetch_setor_filiais()),
+            PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY: len(
+                self._repo.fetch_processo_instancia_setores()
+            ),
         }
 
     @staticmethod
@@ -621,20 +638,48 @@ class JsonBackupService:
 
     def _sync_processo_instancias_from_payload(self, payload: dict[str, Any]) -> None:
         inst_repo = ProcessoInstanciaRepository(connection=self._repo._connection)
-        for row in payload.get("processos") or []:
+        links = [
+            row
+            for row in (payload.get("processo_instancia_setores") or [])
+            if isinstance(row, dict)
+        ]
+        setores_by_instancia: dict[str, list[str]] = {}
+        for row in links:
+            instancia_id = str(row.get("instancia_id") or "")
+            setor_id = str(row.get("setor_id") or "")
+            if instancia_id and setor_id:
+                setores_by_instancia.setdefault(instancia_id, []).append(setor_id)
+
+        for row in payload.get("processo_instancias") or []:
             if not isinstance(row, dict):
                 continue
             processo_id = row.get("processo_id")
             filial_id = row.get("filial_id")
-            setor_id = row.get("setor_id")
-            if not processo_id or not filial_id or not setor_id:
+            todas_filiais = bool(row.get("todas_filiais_ativas"))
+            instancia_id = str(row.get("instancia_id") or "")
+            setor_ids = [
+                str(item)
+                for item in (row.get("setor_ids") or [])
+                if str(item).strip()
+            ]
+            if not setor_ids and instancia_id:
+                setor_ids = setores_by_instancia.get(instancia_id, [])
+            legacy_setor = row.get("setor_id")
+            if legacy_setor:
+                setor_ids.append(str(legacy_setor))
+            setor_ids = list(dict.fromkeys(setor_ids))
+            if not processo_id or not setor_ids:
+                continue
+            if not todas_filiais and not filial_id:
                 continue
             try:
                 inst_repo.create(
                     {
                         "processo_id": str(processo_id),
-                        "filial_id": str(filial_id),
-                        "setor_id": str(setor_id),
+                        "filial_id": str(filial_id) if filial_id else None,
+                        "todas_filiais_ativas": todas_filiais,
+                        "setor_ids": setor_ids,
+                        "rotulo_instancia": row.get("rotulo_instancia"),
                     },
                     auto_commit=False,
                 )
@@ -642,6 +687,24 @@ class JsonBackupService:
                 existing = inst_repo.get_by_processo(str(processo_id))
                 if existing is None:
                     raise
+
+    def _sync_processo_instancia_setores_from_payload(self, payload: dict[str, Any]) -> None:
+        for row in payload.get("processo_instancia_setores") or []:
+            if not isinstance(row, dict):
+                continue
+            instancia_id = row.get("instancia_id")
+            setor_id = row.get("setor_id")
+            if not instancia_id or not setor_id:
+                continue
+            self._repo.execute(
+                """
+                INSERT INTO transformometro.processo_instancia_setores (instancia_id, setor_id)
+                VALUES (%s::uuid, %s::uuid)
+                ON CONFLICT (instancia_id, setor_id) DO NOTHING
+                """,
+                (str(instancia_id), str(setor_id)),
+                auto_commit=False,
+            )
 
 
 def _dedupe_errors(errors: list[str]) -> list[str]:

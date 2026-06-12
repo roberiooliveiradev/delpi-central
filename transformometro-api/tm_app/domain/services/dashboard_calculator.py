@@ -127,9 +127,17 @@ class DashboardCalculatorService:
         filial_codigo = self._empty_to_none(inst_row.get("codigo_filial")) or self._empty_to_none(
             process_row.get("filial_id")
         )
-        setor_codigo = self._empty_to_none(inst_row.get("codigo_setor")) or self._empty_to_none(
-            process_row.get("setor_id")
-        )
+        setor_codigo = self._empty_to_none(inst_row.get("codigo_setor"))
+        setores = inst_row.get("setores") or []
+        if isinstance(setores, list) and len(setores) > 1:
+            labels = [
+                self._empty_to_none(item.get("codigo_setor") or item.get("nome_setor"))
+                for item in setores
+                if isinstance(item, dict)
+            ]
+            setor_codigo = ", ".join(label for label in labels if label) or setor_codigo
+        if not setor_codigo:
+            setor_codigo = self._empty_to_none(process_row.get("setor_id"))
 
         return {
             "instancia_id": str(instancia_id),
@@ -245,22 +253,68 @@ class DashboardCalculatorService:
         setor_id: Optional[str] = None,
         familia_processo: Optional[str] = None,
     ) -> TransformometroRawData:
-        processos_filtrados = list(raw.processos)
         filial = self._empty_to_none(filial_id)
+        setor = self._empty_to_none(setor_id)
+        familia = self._empty_to_none(familia_processo)
+
+        if not (filial or setor or familia):
+            return raw
+
+        if raw.processo_instancias and (filial or setor):
+            allowed_instancia_ids = {
+                str(inst["instancia_id"])
+                for inst in raw.processo_instancias
+                if self._instancia_matches_scope(inst, filial=filial, setor=setor)
+            }
+            revisoes_filtradas = [
+                revisao
+                for revisao in raw.revisoes
+                if str(revisao.get("instancia_id") or "") in allowed_instancia_ids
+            ]
+            processo_ids = {
+                self._empty_to_none(revisao.get("processo_id"))
+                for revisao in revisoes_filtradas
+                if self._empty_to_none(revisao.get("processo_id"))
+            }
+            if familia:
+                processo_ids = {
+                    pid
+                    for pid in processo_ids
+                    if self._processo_matches_familia(
+                        raw.processos,
+                        processo_id=pid,
+                        familia=familia,
+                    )
+                }
+                revisoes_filtradas = [
+                    revisao
+                    for revisao in revisoes_filtradas
+                    if self._empty_to_none(revisao.get("processo_id")) in processo_ids
+                ]
+            processos_filtrados = [
+                processo
+                for processo in raw.processos
+                if self._empty_to_none(processo.get("processo_id")) in processo_ids
+            ]
+            return self._narrow_raw_to_revisoes(
+                raw,
+                processos_filtrados=processos_filtrados,
+                revisoes_filtradas=revisoes_filtradas,
+            )
+
+        processos_filtrados = list(raw.processos)
         if filial:
             processos_filtrados = [
                 processo
                 for processo in processos_filtrados
                 if (self._empty_to_none(processo.get("filial_id")) or "").lower() == filial.lower()
             ]
-        setor = self._empty_to_none(setor_id)
         if setor:
             processos_filtrados = [
                 processo
                 for processo in processos_filtrados
                 if (self._empty_to_none(processo.get("setor_id")) or "").lower() == setor.lower()
             ]
-        familia = self._empty_to_none(familia_processo)
         if familia:
             processos_filtrados = [
                 processo
@@ -269,10 +323,125 @@ class DashboardCalculatorService:
                 == familia.lower()
             ]
 
-        if not (filial or setor or familia):
-            return raw
-
         return self._narrow_raw_to_processos(raw, processos_filtrados)
+
+    @staticmethod
+    def _instancia_matches_scope(
+        instancia: dict,
+        *,
+        filial: str | None,
+        setor: str | None,
+    ) -> bool:
+        if filial:
+            if instancia.get("todas_filiais_ativas"):
+                pass
+            else:
+                codigo = str(instancia.get("codigo_filial") or instancia.get("filial_id") or "")
+                if codigo.lower() != filial.lower():
+                    return False
+        if not setor:
+            return True
+        setor_key = setor.lower()
+        setores = instancia.get("setores") or []
+        if isinstance(setores, list):
+            for item in setores:
+                if not isinstance(item, dict):
+                    continue
+                for field in ("codigo_setor", "setor_id"):
+                    value = str(item.get(field) or "").strip().lower()
+                    if value == setor_key:
+                        return True
+        for field in ("codigo_setor", "setor_id"):
+            value = str(instancia.get(field) or "").strip().lower()
+            if value == setor_key:
+                return True
+        return False
+
+    @staticmethod
+    def _processo_matches_familia(
+        processos: list[dict],
+        *,
+        processo_id: str,
+        familia: str,
+    ) -> bool:
+        for processo in processos:
+            if str(processo.get("processo_id") or "") != str(processo_id):
+                continue
+            return (
+                str(processo.get("familia_processo") or "").lower() == familia.lower()
+            )
+        return False
+
+    def _narrow_raw_to_revisoes(
+        self,
+        raw: TransformometroRawData,
+        *,
+        processos_filtrados: list[dict],
+        revisoes_filtradas: list[dict],
+    ) -> TransformometroRawData:
+        processo_ids = {
+            self._empty_to_none(processo.get("processo_id"))
+            for processo in processos_filtrados
+            if self._empty_to_none(processo.get("processo_id"))
+        }
+        revisao_ids = {
+            self._empty_to_none(revisao.get("revisao_id"))
+            for revisao in revisoes_filtradas
+            if self._empty_to_none(revisao.get("revisao_id"))
+        }
+        instancia_ids = {
+            str(revisao.get("instancia_id"))
+            for revisao in revisoes_filtradas
+            if revisao.get("instancia_id")
+        }
+
+        medicoes_filtradas = [
+            medicao
+            for medicao in raw.medicoes
+            if self._empty_to_none(medicao.get("revisao_id")) in revisao_ids
+        ]
+        investimentos_filtrados = [
+            investimento
+            for investimento in raw.investimentos
+            if self._empty_to_none(investimento.get("revisao_id")) in revisao_ids
+        ]
+        vinculos_filtrados = [
+            vinculo
+            for vinculo in raw.revisao_recursos_compartilhados
+            if self._empty_to_none(vinculo.get("revisao_id")) in revisao_ids
+        ]
+        recurso_ids = {
+            self._empty_to_none(vinculo.get("recurso_compartilhado_id"))
+            for vinculo in vinculos_filtrados
+            if self._empty_to_none(vinculo.get("recurso_compartilhado_id"))
+        }
+        recursos_filtrados = [
+            recurso
+            for recurso in raw.recursos_compartilhados
+            if self._empty_to_none(recurso.get("recurso_compartilhado_id")) in recurso_ids
+        ]
+        custos_filtrados = [
+            custo
+            for custo in raw.recurso_custos
+            if self._empty_to_none(custo.get("recurso_compartilhado_id")) in recurso_ids
+        ]
+        instancias_filtradas = [
+            instancia
+            for instancia in raw.processo_instancias
+            if str(instancia.get("instancia_id") or "") in instancia_ids
+            and self._empty_to_none(instancia.get("processo_id")) in processo_ids
+        ]
+
+        return TransformometroRawData(
+            processos=processos_filtrados,
+            processo_instancias=instancias_filtradas,
+            revisoes=revisoes_filtradas,
+            medicoes=medicoes_filtradas,
+            investimentos=investimentos_filtrados,
+            recursos_compartilhados=recursos_filtrados,
+            revisao_recursos_compartilhados=vinculos_filtrados,
+            recurso_custos=custos_filtrados,
+        )
 
     def _filter_raw_by_filial(
         self,

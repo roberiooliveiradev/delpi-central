@@ -77,7 +77,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "instancia_id",
             "processo_id",
             "filial_id",
-            "setor_id",
+            "todas_filiais_ativas",
             "rotulo_instancia",
             "status_instancia",
             "created_at",
@@ -87,7 +87,6 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
         (
             ("processo_id", "processos", "processo_id"),
             ("filial_id", "filiais", "filial_id"),
-            ("setor_id", "setores", "setor_id"),
         ),
     ),
     EntitySpec(
@@ -235,7 +234,12 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
 )
 
 SETOR_FILIAIS_BUNDLE_KEY = "setor_filiais"
-BUNDLE_KEYS = (*tuple(spec.bundle_key for spec in ENTITY_SPECS), SETOR_FILIAIS_BUNDLE_KEY)
+PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY = "processo_instancia_setores"
+BUNDLE_KEYS = (
+    *tuple(spec.bundle_key for spec in ENTITY_SPECS),
+    SETOR_FILIAIS_BUNDLE_KEY,
+    PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+)
 
 
 class JsonBackupRepository(PluginBaseRepository):
@@ -267,7 +271,7 @@ class JsonBackupRepository(PluginBaseRepository):
                 pi.instancia_id,
                 pi.processo_id,
                 pi.filial_id,
-                pi.setor_id,
+                pi.todas_filiais_ativas,
                 pi.rotulo_instancia,
                 pi.status_instancia,
                 pi.created_at,
@@ -276,6 +280,21 @@ class JsonBackupRepository(PluginBaseRepository):
             FROM transformometro.processo_instancias pi
             WHERE pi.deletado = FALSE
             ORDER BY pi.processo_id ASC, pi.created_at ASC
+            """
+        )
+
+    def fetch_processo_instancia_setores(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                pis.instancia_id,
+                pis.setor_id,
+                pis.created_at
+            FROM transformometro.processo_instancia_setores pis
+            JOIN transformometro.processo_instancias pi
+                ON pi.instancia_id = pis.instancia_id
+            WHERE pi.deletado = FALSE
+            ORDER BY pis.instancia_id ASC, pis.setor_id ASC
             """
         )
 
@@ -450,6 +469,7 @@ class JsonBackupRepository(PluginBaseRepository):
                 transformometro.investimentos,
                 transformometro.medicoes,
                 transformometro.revisoes,
+                transformometro.processo_instancia_setores,
                 transformometro.processo_instancias,
                 transformometro.recursos_compartilhados,
                 transformometro.processos,

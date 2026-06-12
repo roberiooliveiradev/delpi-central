@@ -202,9 +202,11 @@ class SetorRepository(PluginBaseRepository):
         row = self.fetch_one(
             """
             SELECT COUNT(DISTINCT pi.processo_id)::int AS total
-            FROM transformometro.processo_instancias pi
+            FROM transformometro.processo_instancia_setores pis
+            JOIN transformometro.processo_instancias pi
+                ON pi.instancia_id = pis.instancia_id
             JOIN transformometro.processos p ON p.processo_id = pi.processo_id
-            WHERE pi.setor_id = %s::uuid
+            WHERE pis.setor_id = %s::uuid
               AND pi.deletado = FALSE
               AND p.deletado = FALSE
             """,

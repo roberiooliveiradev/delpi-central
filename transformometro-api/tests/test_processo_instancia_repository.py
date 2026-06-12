@@ -37,7 +37,7 @@ def test_create_rejects_setor_not_linked_to_filial(monkeypatch):
             {
                 "processo_id": "11111111-1111-1111-1111-111111111111",
                 "filial_id": "01",
-                "setor_id": "engenharia",
+                "setor_ids": ["engenharia"],
             }
         )
 
@@ -48,3 +48,29 @@ def test_get_by_processo_returns_first_row():
     repo.list_by_processo = MagicMock(return_value=[instancia])
 
     assert repo.get_by_processo("11111111-1111-1111-1111-111111111111") == instancia
+
+
+def test_soft_delete_rejects_when_revisoes_exist():
+    repo = ProcessoInstanciaRepository(connection=MagicMock())
+    repo.get = MagicMock(
+        return_value={
+            "instancia_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "codigo_filial": "01",
+        }
+    )
+    repo.count_revisoes = MagicMock(return_value=2)
+
+    with pytest.raises(ProcessoInstanciaDomainError, match="revisões"):
+        repo.soft_delete("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", auto_commit=False)
+
+
+def test_update_requires_existing_instancia():
+    repo = ProcessoInstanciaRepository(connection=MagicMock())
+    repo.get = MagicMock(return_value=None)
+
+    with pytest.raises(ProcessoInstanciaDomainError, match="não encontrada"):
+        repo.update(
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            {"setor_ids": ["engenharia"]},
+            auto_commit=False,
+        )

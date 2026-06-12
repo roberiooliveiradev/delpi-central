@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from tm_app.domain.raw_data import TransformometroRawData
@@ -39,7 +40,7 @@ class DashboardDataRepository(PluginBaseRepository):
                 s.codigo_setor AS setor_id
             FROM transformometro.processos p
             LEFT JOIN LATERAL (
-                SELECT pi2.instancia_id, pi2.filial_id, pi2.setor_id
+                SELECT pi2.instancia_id, pi2.filial_id
                 FROM transformometro.processo_instancias pi2
                 WHERE pi2.processo_id = p.processo_id
                   AND pi2.deletado = FALSE
@@ -48,8 +49,14 @@ class DashboardDataRepository(PluginBaseRepository):
             ) pi ON TRUE
             LEFT JOIN transformometro.filiais f
                 ON f.filial_id = pi.filial_id AND f.deletado = FALSE
-            LEFT JOIN transformometro.setores s
-                ON s.setor_id = pi.setor_id AND s.deletado = FALSE
+            LEFT JOIN LATERAL (
+                SELECT s.codigo_setor
+                FROM transformometro.processo_instancia_setores pis
+                JOIN transformometro.setores s ON s.setor_id = pis.setor_id AND s.deletado = FALSE
+                WHERE pis.instancia_id = pi.instancia_id
+                ORDER BY s.codigo_setor ASC
+                LIMIT 1
+            ) s ON TRUE
             WHERE p.deletado = FALSE
             """
         )
@@ -77,17 +84,44 @@ class DashboardDataRepository(PluginBaseRepository):
                 pi.instancia_id,
                 pi.processo_id,
                 pi.filial_id,
-                pi.setor_id,
+                pi.todas_filiais_ativas,
                 f.codigo_filial,
-                s.codigo_setor
+                COALESCE(
+                    json_agg(
+                        json_build_object(
+                            'setor_id', s.setor_id,
+                            'codigo_setor', s.codigo_setor,
+                            'nome_setor', s.nome_setor
+                        )
+                        ORDER BY s.codigo_setor
+                    ) FILTER (WHERE s.setor_id IS NOT NULL),
+                    '[]'::json
+                ) AS setores
             FROM transformometro.processo_instancias pi
-            JOIN transformometro.filiais f ON f.filial_id = pi.filial_id
-            JOIN transformometro.setores s ON s.setor_id = pi.setor_id
+            LEFT JOIN transformometro.filiais f
+                ON f.filial_id = pi.filial_id AND f.deletado = FALSE
+            LEFT JOIN transformometro.processo_instancia_setores pis
+                ON pis.instancia_id = pi.instancia_id
+            LEFT JOIN transformometro.setores s
+                ON s.setor_id = pis.setor_id AND s.deletado = FALSE
             WHERE pi.deletado = FALSE
-              AND f.deletado = FALSE
-              AND s.deletado = FALSE
+            GROUP BY
+                pi.instancia_id,
+                pi.processo_id,
+                pi.filial_id,
+                pi.todas_filiais_ativas,
+                f.codigo_filial
             """
         )
+        for row in instancias:
+            setores = row.get("setores") or []
+            if isinstance(setores, str):
+                setores = json.loads(setores)
+            row["setores"] = setores
+            if setores:
+                first = setores[0]
+                row["setor_id"] = first.get("setor_id")
+                row["codigo_setor"] = first.get("codigo_setor")
         return TransformometroRawData(
             processos=processos,
             processo_instancias=instancias,
@@ -457,15 +491,15 @@ class DashboardCalculoRepository(PluginBaseRepository):
         self._append_scope_filters(
             clauses,
             params,
-            table_alias=None,
+            table_alias="v",
             filial_id=filial_id,
             setor_id=setor_id,
         )
         if competencia_inicio:
-            clauses.append("competencia >= %s")
+            clauses.append("v.competencia >= %s")
             params.append(competencia_inicio)
         if competencia_fim:
-            clauses.append("competencia <= %s")
+            clauses.append("v.competencia <= %s")
             params.append(competencia_fim)
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
@@ -473,17 +507,61 @@ class DashboardCalculoRepository(PluginBaseRepository):
         return self.fetch_all(
             f"""
             SELECT
-                competencia,
-                SUM(economia_bruta) AS economia_bruta,
-                SUM(investimento_unico_mes) AS investimento_unico_mes,
-                SUM(custo_recorrente_mes) AS custo_recorrente_mes,
-                SUM(custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
-                SUM({_INVESTIMENTO_TOTAL_SQL}) AS investimento_total_mes,
-                SUM(economia_liquida_mes) AS economia_liquida_mes
-            FROM transformometro.dashboard_calculos
+                v.competencia,
+                SUM(v.economia_bruta) AS economia_bruta,
+                SUM(v.investimento_unico_mes) AS investimento_unico_mes,
+                SUM(v.custo_recorrente_mes) AS custo_recorrente_mes,
+                SUM(v.custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+                SUM(v.investimento_total_mes) AS investimento_total_mes,
+                SUM(v.economia_liquida_mes) AS economia_liquida_mes
+            FROM transformometro.dashboard_competencia_evolucao v
             {where_sql}
-            GROUP BY competencia
-            ORDER BY competencia ASC
+            GROUP BY v.competencia
+            ORDER BY v.competencia ASC
+            """,
+            tuple(params),
+        )
+
+    def query_instancias_operacionais(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        limit: int = 5000,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        self._append_scope_filters(
+            clauses,
+            params,
+            table_alias="ios",
+            filial_id=filial_id,
+            setor_id=setor_id,
+        )
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(limit)
+
+        return self.fetch_all(
+            f"""
+            SELECT
+                ios.instancia_id,
+                ios.processo_id,
+                ios.codigo_processo,
+                ios.nome_processo,
+                ios.status_processo,
+                ios.todas_filiais_ativas,
+                ios.codigo_filial AS filial_id,
+                ios.nome_filial,
+                ios.setor_id,
+                ios.competencia_referencia,
+                ios.economia_diaria,
+                ios.payback_meses,
+                ios.data_implantacao
+            FROM transformometro.instancia_operacional_snapshot ios
+            {where_sql}
+            ORDER BY ios.nome_processo ASC, ios.codigo_filial ASC NULLS LAST
+            LIMIT %s
             """,
             tuple(params),
         )

@@ -16,8 +16,14 @@ def _load_fixture(name: str) -> TransformometroRawData:
     return TransformometroRawData(**payload)
 
 
+def _mock_cache_empty(mock_cache):
+    mock_cache.return_value.count.return_value = 0
+
+
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
 @patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
-def test_list_processes_legacy_contract(mock_repo):
+def test_list_processes_legacy_contract(mock_repo, mock_cache):
+    _mock_cache_empty(mock_cache)
     raw = _load_fixture("golden_baseline_melhoria.json")
     mock_repo.return_value.load_raw.return_value = raw
 
@@ -33,8 +39,10 @@ def test_list_processes_legacy_contract(mock_repo):
     assert item["daily_savings"] > 0
 
 
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
 @patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
-def test_list_processes_one_row_per_instancia(mock_repo):
+def test_list_processes_one_row_per_instancia(mock_repo, mock_cache):
+    _mock_cache_empty(mock_cache)
     raw = TransformometroRawData(
         processos=[
             {
@@ -130,8 +138,10 @@ def test_list_processes_one_row_per_instancia(mock_repo):
     assert by_inst["i2"]["filial_id"] == "02"
 
 
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
 @patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
-def test_summary_legacy_contract_fields(mock_repo):
+def test_summary_legacy_contract_fields(mock_repo, mock_cache):
+    _mock_cache_empty(mock_cache)
     raw = _load_fixture("golden_baseline_melhoria.json")
     mock_repo.return_value.load_raw.return_value = raw
 
@@ -151,8 +161,10 @@ def test_summary_legacy_contract_fields(mock_repo):
         assert "net_savings_month" in month
 
 
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
 @patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
-def test_list_processes_filter_by_filial(mock_repo):
+def test_list_processes_filter_by_filial(mock_repo, mock_cache):
+    _mock_cache_empty(mock_cache)
     raw = _load_fixture("golden_baseline_melhoria.json")
     mock_repo.return_value.load_raw.return_value = raw
 
@@ -165,3 +177,73 @@ def test_list_processes_filter_by_filial(mock_repo):
         EngineeringProcessFilters(filial_id="01")
     )
     assert hit["total"] == 1
+
+
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
+def test_list_processes_from_cache(mock_repo, mock_cache):
+    mock_cache.return_value.count.return_value = 3
+    mock_cache.return_value.query_instancias_operacionais.return_value = [
+        {
+            "instancia_id": "i1",
+            "processo_id": "p1",
+            "codigo_processo": "PROC-1",
+            "nome_processo": "Processo cache",
+            "status_processo": "ativo",
+            "filial_id": "01",
+            "setor_id": "engenharia",
+            "economia_diaria": 120.5,
+            "payback_meses": 6.0,
+            "data_implantacao": "2025-01-15",
+        }
+    ]
+
+    result = EngineeringTransformaMaisService().list_processes(EngineeringProcessFilters())
+
+    mock_repo.return_value.load_raw.assert_not_called()
+    assert result["total"] == 1
+    item = result["items"][0]
+    assert item["id"] == "i1"
+    assert item["daily_savings"] == 120.5
+    assert item["payback_months"] == 6.0
+
+
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardCalculoRepository")
+@patch("tm_app.application.integrations.engineering_transforma_mais.DashboardDataRepository")
+def test_summary_from_cache(mock_repo, mock_cache):
+    mock_cache.return_value.count.return_value = 10
+    mock_cache.return_value.query_resumo.return_value = {
+        "solucoes_implementadas": 2,
+        "economia_bruta_total": 1000.0,
+        "economia_liquida_total": 800.0,
+        "investimento_total": 400.0,
+        "horas_economizadas_total": 12.0,
+    }
+    mock_cache.return_value.query_evolucao.return_value = [
+        {
+            "competencia": "2025-02",
+            "economia_bruta": 1000.0,
+            "investimento_unico_mes": 200.0,
+            "custo_recorrente_mes": 100.0,
+            "custo_recursos_compartilhados_mes": 100.0,
+            "investimento_total_mes": 400.0,
+            "economia_liquida_mes": 800.0,
+        }
+    ]
+
+    data = EngineeringTransformaMaisService().get_summary(
+        filial_id="01",
+        start_date="2025-02-01",
+        end_date="2025-02-28",
+    )
+
+    mock_repo.return_value.load_raw.assert_not_called()
+    mock_cache.return_value.query_resumo.assert_called_once_with(
+        filial_id="01",
+        competencia_inicio="2025-02",
+        competencia_fim="2025-02",
+    )
+    assert data["implemented_solutions_count"] == 2
+    assert data["total_net_savings_until_now"] == 800.0
+    assert data["average_roi"] == 2.0
+    assert data["monthly_breakdown"][0]["month"] == "2025-02"
