@@ -12,7 +12,9 @@ from tm_app.core.catalogs import (
     CENARIO_TIPO,
     CATEGORIAS,
     CRITERIO_RATEIO,
+    FILIAIS,
     RECORRENCIAS,
+    STATUS_FILIAL,
     STATUS_PROCESSO,
     STATUS_RECURSO,
     STATUS_SETOR,
@@ -47,9 +49,14 @@ from tm_app.application.services.processo_duplicate_service import (
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
+from tm_app.domain.services.filial_catalog_service import assert_filial_ativa
+from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
+from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
 from tm_app.interface.http.schemas.crud_schemas import (
+    FilialBody,
+    FilialUpdateBody,
     InvestimentoBody,
     InvestimentoUpdateBody,
     MedicaoBody,
@@ -122,8 +129,18 @@ def _recalc_after_global_resource_change() -> None:
     _recalc_hook.after_global_resource_change()
 
 
+def _active_filial_codigos() -> set[str]:
+    try:
+        active = FilialRepository().list_active_codigos()
+    except PluginsRepositoryError:
+        active = set()
+    if active:
+        return active
+    return set(FILIAIS.keys())
+
+
 def _validate_processo_body(body: ProcessoCreateBody):
-    assert_in(body.filial_id, ("01", "02"), "filial_id")
+    assert_filial_ativa(body.filial_id, _active_filial_codigos())
     if not SetorRepository().is_active_for_filial(body.setor_id, body.filial_id):
         raise ValueError(
             f"setor_id '{body.setor_id}' não está vinculado à filial {body.filial_id}"
@@ -131,10 +148,18 @@ def _validate_processo_body(body: ProcessoCreateBody):
     assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
 
 
+def _validate_filial_body(body: FilialBody | FilialUpdateBody, *, is_create: bool):
+    assert_in(body.status_filial, STATUS_FILIAL, "status_filial")
+    if is_create and isinstance(body, FilialBody):
+        from tm_app.domain.services.filial_catalog_service import normalize_codigo_filial
+
+        normalize_codigo_filial(body.codigo_filial)
+
+
 def _validate_setor_body(body: SetorBody | SetorUpdateBody, *, is_create: bool):
     assert_in(body.status_setor, STATUS_SETOR, "status_setor")
     for filial_id in body.filiais:
-        assert_in(filial_id, ("01", "02"), "filial_id")
+        assert_filial_ativa(filial_id, _active_filial_codigos())
     if is_create and isinstance(body, SetorBody):
         from tm_app.infrastructure.persistence.repositories.setor_repository import (
             normalize_setor_id,
@@ -430,6 +455,72 @@ def delete_investimento(investimento_id: str, request: Request):
     _audit(request, "investimento", investimento_id, "delete", {})
     _recalc_after_revisao(str(existing["revisao_id"]))
     return ok(message="Investimento excluído.")
+
+
+# --- Filiais ---
+
+
+@router.get("/filiais")
+def list_filiais(include_inactive: bool = False):
+    rows = FilialRepository().list(include_inactive=include_inactive)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/filiais/{filial_id}")
+def get_filial(filial_id: str):
+    row = FilialRepository().get(filial_id)
+    if not row:
+        return fail("Filial não encontrada.", 404)
+    return ok(row_to_json(row))
+
+
+@router.post("/filiais")
+def create_filial(body: FilialBody, request: Request):
+    try:
+        _validate_filial_body(body, is_create=True)
+        row = FilialRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("create_filial_failed")
+        return fail(format_api_error(exc), 500)
+
+    fid = str(row["filial_id"])
+    _audit(request, "filial", fid, "create", body.model_dump())
+    return ok(row_to_json(row), "Filial criada.", 201)
+
+
+@router.put("/filiais/{filial_id}")
+def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
+    try:
+        _validate_filial_body(body, is_create=False)
+        row = FilialRepository().update(filial_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("update_filial_failed")
+        return fail(format_api_error(exc), 500)
+
+    if not row:
+        return fail("Filial não encontrada.", 404)
+
+    _audit(request, "filial", str(row["filial_id"]), "update", body.model_dump())
+    return ok(row_to_json(row), "Filial atualizada.")
+
+
+@router.delete("/filiais/{filial_id}")
+def delete_filial(filial_id: str, request: Request):
+    existing = FilialRepository().get(filial_id)
+    if not existing:
+        return fail("Filial não encontrada.", 404)
+    try:
+        if not FilialRepository().soft_delete(filial_id):
+            return fail("Filial não encontrada.", 404)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    _audit(request, "filial", str(existing["filial_id"]), "delete", {})
+    return ok(message="Filial excluída.")
 
 
 # --- Setores ---

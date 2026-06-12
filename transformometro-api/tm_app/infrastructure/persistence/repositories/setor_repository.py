@@ -4,9 +4,12 @@ import re
 from typing import Any
 
 from tm_app.core.catalogs import FILIAIS
+from tm_app.domain.services.filial_catalog_service import validate_codigos_filiais
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
+    PluginsRepositoryError,
 )
+from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 
 _SETOR_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
@@ -38,12 +41,17 @@ class SetorRepository(PluginBaseRepository):
         WHERE s.deletado = FALSE
     """
 
+    def _active_filial_codigos(self) -> set[str]:
+        try:
+            active = FilialRepository(connection=self._connection).list_active_codigos()
+        except PluginsRepositoryError:
+            active = set()
+        if active:
+            return active
+        return set(FILIAIS.keys())
+
     def _validate_filiais(self, filiais: list[str]) -> None:
-        if not filiais:
-            raise ValueError("Informe ao menos uma filial para o setor.")
-        invalid = [f for f in filiais if f not in FILIAIS]
-        if invalid:
-            raise ValueError(f"filial_id inválido: {', '.join(invalid)}")
+        validate_codigos_filiais(filiais, self._active_filial_codigos())
 
     def _sync_filiais(self, setor_id: str, filiais: list[str], *, auto_commit: bool) -> None:
         self.execute(

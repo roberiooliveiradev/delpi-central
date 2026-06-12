@@ -16,6 +16,8 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V007 | `V007__recurso_custos_vigencia.sql` | Histórico de `valor_mensal` por vigência (`recurso_custos`) + backfill do catálogo |
 | V008 | `V008__recurso_base_competencia.sql` | `base_competencia` em recursos compartilhados |
 | V009 | `V009__processo_competencia_snapshot_view.sql` | View `processo_competencia_snapshot` (agregação processo × competência) |
+| V010 | `V010__create_setores.sql` | Catálogo de setores + `setor_filiais` |
+| V011 | `V011__create_filiais.sql` | Catálogo de filiais (`filial_id UUID`, `codigo_filial`) — **sem seed** |
 
 ## Comandos
 

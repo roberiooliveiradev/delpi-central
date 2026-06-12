@@ -99,6 +99,17 @@ class RecursoCustoReajusteBody(BaseModel):
     observacoes: Optional[str] = None
 
 
+class FilialBody(BaseModel):
+    codigo_filial: str = Field(min_length=1, max_length=16)
+    nome_filial: str = Field(min_length=1, max_length=255)
+    status_filial: str = Field(default="ativo", max_length=32)
+
+
+class FilialUpdateBody(BaseModel):
+    nome_filial: str = Field(min_length=1, max_length=255)
+    status_filial: str = Field(default="ativo", max_length=32)
+
+
 class SetorBody(BaseModel):
     setor_id: str = Field(min_length=1, max_length=64)
     nome_setor: str = Field(min_length=1, max_length=255)

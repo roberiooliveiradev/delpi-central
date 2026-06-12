@@ -5,6 +5,7 @@ import logging
 from tm_app.core.catalogs import DEFAULT_SETORES, FILIAIS, options_payload
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import ok
+from tm_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
 from tm_app.infrastructure.persistence.repositories.setor_repository import SetorRepository
 
@@ -38,6 +39,16 @@ def module_health():
     }
 
 
+def _load_filiais_for_options() -> list[dict]:
+    try:
+        rows = FilialRepository().list_for_options()
+        if rows:
+            return rows
+    except Exception as exc:
+        logger.warning("filiais_options_fallback err=%s", format_api_error(exc))
+    return [{"id": k, "label": v} for k, v in FILIAIS.items()]
+
+
 def _load_setores_for_options() -> list[dict]:
     try:
         return SetorRepository().list_for_options()
@@ -51,4 +62,4 @@ def _load_setores_for_options() -> list[dict]:
 
 @router.get("/options")
 def get_options():
-    return ok(options_payload(_load_setores_for_options()))
+    return ok(options_payload(_load_setores_for_options(), _load_filiais_for_options()))
