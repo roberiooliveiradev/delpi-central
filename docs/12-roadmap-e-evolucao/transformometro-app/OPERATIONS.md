@@ -10,6 +10,7 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Portal | `https://www.minhadelpi.com.br/apps/transformometro` |
 | Dashboard | `/apps/transformometro/dashboard` |
 | Processos + instâncias | `/apps/transformometro/processos` → detalhe → painel instâncias |
+| Filiais | `/apps/transformometro/filiais` |
 | Setores | `/apps/transformometro/setores` |
 | Recursos (catálogo) | `/apps/transformometro/recursos` |
 | Exportar / Importar JSON | `/apps/transformometro/dados` |
@@ -38,7 +39,7 @@ cd transformometro-api
 set -a && source ../infra/.env && set +a
 python scripts/import_cadastro_json.py export -o fixtures/cadastro/transformometro-cadastro-$(date +%Y%m%d).json
 
-# 2. Rebuild containers (migrations V011–V018 no boot se TM_RUN_MIGRATIONS_ON_STARTUP=true)
+# 2. Rebuild containers (migrations V011–V020 no boot se TM_RUN_MIGRATIONS_ON_STARTUP=true)
 cd ..
 docker compose -f infra/docker-compose.dev.yml --env-file infra/.env build transformometro-api transformometro
 docker compose -f infra/docker-compose.dev.yml --env-file infra/.env up -d --force-recreate transformometro-api transformometro
@@ -101,7 +102,9 @@ Mutações gravam em `transformometro.audit_logs` (entity_type, action, user_id,
 
 ## Integração com api-delpi e Strategic Indicators
 
-Não duplicar leitura SQL nem calculador: consumir a API oficial.
+Não duplicar leitura SQL, planilha Google nem calculador legado: consumir a API oficial (Postgres via S2S).
+
+**Runtime verificado (jun/2026):** `engineering_composer` na api-delpi usa somente `TransformometroTransformaMaisGateway`. O repositório Sheets em `google_sheets/transforma_mais/` não está ligado ao fluxo.
 
 | Consumidor | Rotas públicas (inalteradas) | Upstream interno |
 |------------|------------------------------|-------------------|

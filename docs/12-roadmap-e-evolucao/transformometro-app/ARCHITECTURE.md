@@ -41,7 +41,8 @@ flowchart TB
 erDiagram
   processos ||--o{ processo_instancias : "1:N"
   filiais ||--o{ processo_instancias : "filial_id"
-  setores ||--o{ processo_instancias : "setor_id"
+  processo_instancias ||--o{ processo_instancia_setores : "N setores"
+  setores ||--o{ processo_instancia_setores : "setor_id"
   processo_instancias ||--o{ revisoes : "timeline"
   revisoes ||--o| medicoes : "1:1"
   revisoes ||--o{ investimentos : "N"
@@ -60,8 +61,12 @@ erDiagram
     uuid instancia_id PK
     uuid processo_id FK
     uuid filial_id FK
-    uuid setor_id FK
+    bool todas_filiais_ativas
     string rotulo_instancia
+  }
+  processo_instancia_setores {
+    uuid instancia_id FK
+    uuid setor_id FK
   }
   revisoes {
     uuid revisao_id PK
@@ -98,7 +103,7 @@ transformometro-api/
     config.py
     domain/
       entities/          # Processo, Revisao, Medicao, ...
-      services/          # ProcessSummaryCalculator (migrado)
+      services/          # DashboardCalculatorService, SharedResourceScopeService, ...
       ports/             # interfaces de repositório
     application/
       dto/
@@ -142,7 +147,7 @@ Sem regra de negócio em controllers; calculador **puro** (testável com fixture
 
 ## Modelo de dados (PostgreSQL)
 
-Schema: **`transformometro`**. Migrations **V001–V018** (ver [migrations/README.md](../../../transformometro-api/migrations/README.md)).
+Schema: **`transformometro`**. Migrations **V001–V020** (ver [migrations/README.md](../../../transformometro-api/migrations/README.md)).
 
 ### Catálogos e operacional
 
@@ -152,7 +157,8 @@ Schema: **`transformometro`**. Migrations **V001–V018** (ver [migrations/READM
 | `setores` | `setor_id` UUID | `codigo_setor` UNIQUE (V012) |
 | `setor_filiais` | — | FKs UUID filial ↔ setor |
 | `processos` | `processo_id` UUID | Mestre; sem filial/setor (V015) |
-| `processo_instancias` | `instancia_id` UUID | UNIQUE `(processo_id, filial_id, setor_id)` (V013) |
+| `processo_instancias` | `instancia_id` UUID | Processo × filial ou `todas_filiais_ativas` (V013/V019) |
+| `processo_instancia_setores` | — | N:N instância ↔ setores (V019) |
 | `revisoes` | `revisao_id` UUID | FK **`instancia_id`** NOT NULL (V014); unique `(instancia_id, versao_revisao)` (V018) |
 | `medicoes` | `medicao_id` UUID | FK `revisao_id` |
 | `investimentos` | `investimento_id` UUID | FK `revisao_id` |
@@ -290,6 +296,7 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Instância selecionada |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL **canônica** da revisão |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado → redirect para URL canônica |
+| `/apps/transformometro/filiais` | CRUD filiais |
 | `/apps/transformometro/setores` | Catálogo setores (`codigo_setor` na UI) |
 | `/apps/transformometro/recursos` | Catálogo global + campo **`escopo_recurso`** |
 | `/apps/transformometro/dados` | Export/import backup JSON 1.1 (`filiais`, `processo_instancias`) |

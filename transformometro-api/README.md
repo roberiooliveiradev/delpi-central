@@ -22,7 +22,7 @@ python -m uvicorn tm_app.main:app --reload --port 8010
 
 ## Migrations
 
-Ver [migrations/README.md](migrations/README.md) (**V001–V018**, Playbook 18). Startup automático: `TM_RUN_MIGRATIONS_ON_STARTUP=true`.
+Ver [migrations/README.md](migrations/README.md) (**V001–V020**, Playbook 18 S1–S12). Startup automático: `TM_RUN_MIGRATIONS_ON_STARTUP=true`.
 
 ```bash
 PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...
@@ -67,7 +67,7 @@ Detalhes: [`docs/integration-contracts.md`](docs/integration-contracts.md) · co
 
 ## Documentação
 
-- [docs/playbook-18-implementation-status.md](docs/playbook-18-implementation-status.md) — Playbook 18 (S1–S10 + MFE §9)
+- [docs/playbook-18-implementation-status.md](docs/playbook-18-implementation-status.md) — Playbook 18 (S1–S12 + MFE §9)
 - [docs/regras-de-calculo.md](docs/regras-de-calculo.md) — fórmulas e escopo de recurso
 - [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md) — índice completo
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)

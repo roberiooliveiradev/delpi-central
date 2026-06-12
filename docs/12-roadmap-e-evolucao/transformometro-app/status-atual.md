@@ -1,6 +1,19 @@
 # Status atual — Transformômetro
 
-Atualizado: **jun/2026** (Playbook 18 S1–S12 — instâncias N setores, views cache, Transforma+ acelerado).
+Atualizado: **jun/2026** (Playbook 18 S1–S12 — instâncias N setores, views cache, Transforma+ via Postgres).
+
+## Fonte de dados e pipeline (runtime)
+
+| Camada | Papel |
+|--------|-------|
+| **Postgres** (`schema transformometro`) | Fonte de verdade — cadastro, cache `dashboard_calculos`, views V020 |
+| **transformometro-api** | CRUD, cálculo, recalc, integração S2S |
+| **plugins/transformometro** | UI oficial de cadastro e dashboard |
+| **api-delpi** | Contrato público `GET /engineering/transforma-mais/*` → `TransformometroTransformaMaisGateway` |
+| **strategic-indicators-api** | KPI Transforma+ via `DelpiEngineeringGateway` → api-delpi |
+| **dashboard-engineering** | `TransformaPage` (read-only) → api-delpi |
+
+**Não participam do pipeline:** planilha Google Sheets, `ProcessSummaryCalculator`, `api-delpi/.../google_sheets/transforma_mais/process_repository.py` (código morto).
 
 ## Entregue
 
@@ -48,6 +61,26 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 
 Detalhe: [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [OPERATIONS.md](./OPERATIONS.md).
 
+## Verificação ambiente dev (jun/2026)
+
+Com `docker compose ... up` no stack local:
+
+- Migrations **V001–V020** aplicadas (`migrations_runner status`)
+- Integração S2S `GET .../integrations/engineering/transforma-mais/processes` retorna instâncias do Postgres (IDs UUID)
+- api-delpi `GET /engineering/transforma-mais/*` responde 200 via gateway interno
+
+```bash
+docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner status
+docker exec delpi-api-delpi python -c "
+import os, urllib.request, json
+t = os.environ['API_DELPI_INTERNAL_SERVICE_TOKEN']
+u = 'http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes'
+r = urllib.request.urlopen(urllib.request.Request(u, headers={'X-Delpi-Service-Token': t}))
+d = json.loads(r.read())['data']
+print('total instancias:', d.get('total'), 'items:', len(d.get('items') or []))
+"
+```
+
 ## Pendente (operacional)
 
 | Item | Responsável |
@@ -55,6 +88,7 @@ Detalhe: [playbook-18-implementation-status.md](../../../transformometro-api/doc
 | Deploy produção com runbook acima | Ops |
 | Atribuir permissões escopadas no Keycloak (quem precisar) | Ops |
 | Planilha somente leitura | Google Workspace |
+| Limpeza código morto Sheets na api-delpi (Fase 6) | Dev |
 
 ## Variáveis de produção (checklist)
 

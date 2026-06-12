@@ -6,14 +6,18 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 
 | Path | Página |
 |------|--------|
-| `/apps/transformometro/dashboard` | Dashboard |
-| `/apps/transformometro/dashboard` | Dashboard (KPIs, alertas, CSV/Excel, recalcular) |
-| `/apps/transformometro/processos` | Processos e cadastro de revisões (abas) |
-| `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
+| `/apps/transformometro/dashboard` | KPIs, 3 visões (consolidado/filial/dept), alertas, export, recalcular |
+| `/apps/transformometro/processos` | Lista; create com primeira instância |
+| `/apps/transformometro/processos/{id}` | Mestre + painel instâncias + revisões |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão |
+| `/apps/transformometro/filiais` | CRUD filiais |
+| `/apps/transformometro/setores` | Catálogo de setores |
+| `/apps/transformometro/recursos` | Catálogo global (`escopo_recurso`) |
+| `/apps/transformometro/dados` | Export/import backup JSON |
 
-Barra superior do módulo: **Dashboard · Processos · Recursos**.
+**Fonte de dados:** Postgres via `transformometro-api` (não planilha Google).
 
-Cadastro pelas telas do app. Backup/restauração completa via **Exportar / Importar JSON** (mesclar por ID ou substituir tudo).
+Cadastro pelas telas do app. Backup/restauração via **Exportar / Importar JSON** (mesclar por ID ou substituir tudo).
 
 ## Desenvolvimento
 

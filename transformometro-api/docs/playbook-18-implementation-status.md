@@ -164,12 +164,25 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V019–V020: recalcular cache (views dependem de dashboard_calculos)
 ```
 
+## Legado fora do runtime (jun/2026)
+
+| Artefato | Situação |
+|----------|----------|
+| Planilha Google Sheets | Não alimenta API/SI/MFE — desligar escrita (ops) |
+| `api-delpi/.../google_sheets/transforma_mais/process_repository.py` | Código morto — composer usa `TransformometroTransformaMaisGateway` |
+| `TRANSFORMA_MAIS_SHEET_*` / `TRANSFORMA_MAIS_DATA_SOURCE` | Config órfã na api-delpi |
+| `ProcessSummaryCalculator` (SI) | Removido — ver `strategic-indicators-api/docs/LEGACY_CLEANUP.md` |
+| Rotas `/engineering/transforma-mais/*` | Contrato HTTP **ativo**; backend = Postgres via S2S |
+
+Consumidores ativos: `plugins/transformometro` (cadastro), `dashboard-engineering/TransformaPage` (read-only), SI (KPI), chat (rotas api-delpi).
+
 ## Próximo (pós-Playbook 18)
 
 | Item | Foco |
 |--------|------|
 | **Deploy produção** | Runbook em [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md) |
 | **RBAC Keycloak** | Atribuir permissões escopadas onde necessário |
+| **Limpeza Fase 6** | Remover código Sheets morto e env vars órfãs na api-delpi — [ROADMAP.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ROADMAP.md) |
 
 ## Documentação (índice)
 

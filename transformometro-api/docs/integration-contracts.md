@@ -1,9 +1,11 @@
 # Contratos de integração — Transformômetro → outras aplicações
 
-Na refatoração Playbook 18 (instâncias, UUID interno, escopo híbrido), **quem consome dados de processos/melhorias fora do plugin Transformômetro não fala com transformometro-api**.
+Na refatoração Playbook 18 (instâncias, UUID interno, escopo híbrido), **quem consome dados de processos/melhorias fora do plugin Transformômetro não fala com transformometro-api** diretamente no browser.
 
 **Fronteira pública:** **api-delpi** (`GET /engineering/transforma-mais/*`).  
-**Backend interno:** transformometro-api (cadastro, cálculo, rotas S2S espelhadas).
+**Backend interno:** transformometro-api (Postgres — cadastro, cálculo, rotas S2S espelhadas).
+
+**Legado (jun/2026):** planilha Google Sheets e `ProcessSummaryCalculator` **não** participam do pipeline. A api-delpi usa `TransformometroTransformaMaisGateway` → `TransformometroApiClient`. Código Sheets em `api-delpi/.../google_sheets/transforma_mais/` é morto (limpeza pendente — ver [ROADMAP Fase 6](../../docs/12-roadmap-e-evolucao/transformometro-app/ROADMAP.md)).
 
 ---
 

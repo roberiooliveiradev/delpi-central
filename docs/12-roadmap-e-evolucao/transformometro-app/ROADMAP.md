@@ -57,7 +57,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
-| Dados em produção | Import planilha `--apply --replace` | ✅ |
+| Dados em produção | Migração via backup JSON (`import_cadastro_json.py --apply --replace`) | ✅ |
 | Documentação | [OPERATIONS.md](./OPERATIONS.md), [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md), [status-atual.md](./status-atual.md) | ✅ |
 | Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
 | Registro RBAC no portal | Atribuir `transformometro.*` aos perfis | Pendente (manual) |
@@ -85,13 +85,14 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Matriz de reaproveitamento
 
-| Ativo atual | Ação |
-|-------------|------|
-| `process_summary_calculator.py` | Mover para `tm_app`, ajustar à spec, testes |
-| `process_repository.py` (Sheets) | Referência para migração; deprecar após Fase 2 |
-| `dashboard-engineering/TransformaPage` | Inspirar UX; redirecionar para novo plugin |
-| `documentacao_modelagem_transformometro.md` | Fonte de verdade das regras (manter sync) |
-| Planilha `193G5ff5...` | Snapshot de migração; não produção |
+| Ativo | Status (jun/2026) |
+|-------|-------------------|
+| `DashboardCalculatorService` (`tm_app`) | ✅ Canônico — substitui `ProcessSummaryCalculator` |
+| `process_repository.py` (Sheets, api-delpi) | 🧹 Código morto — não ligado ao composer; remover em limpeza |
+| `dashboard-engineering/TransformaPage` | ✅ Ativo (read-only KPI) — dados via api-delpi → Postgres; não substitui cadastro |
+| `documentacao_modelagem_transformometro.md` | Referência histórica + regras; sync com `regras-de-calculo.md` |
+| Planilha Google Sheets | Fora do runtime; desligar escrita (ops) |
+| Rotas `/engineering/transforma-mais/*` | Contrato HTTP mantido; backend = `TransformometroTransformaMaisGateway` |
 
 ## Riscos e mitigação
 
@@ -121,7 +122,19 @@ Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-
 | MFE §9 | Instâncias, rotas, toggle dashboard, escopo recurso | ✅ |
 | Docs | MODELAGEM, ARCHITECTURE, regras-de-calculo | ✅ |
 
-**Deploy:** export JSON → migrations V011–V018 (auto) → bootstrap filiais → recalc dashboard → rebuild API + MFE → manifesto RBAC.
+**Deploy:** export JSON → migrations V011–V020 (auto) → bootstrap filiais → recalc dashboard → rebuild API + MFE → manifesto RBAC.
+
+## Fase 6 — Limpeza de legado (pendente)
+
+**Objetivo:** remover código e config órfãos após confirmação em produção.
+
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| Remover `google_sheets/transforma_mais` da api-delpi | `process_repository.py`, `sheet_sources.py`, port morto | Pendente |
+| Remover `TRANSFORMA_MAIS_SHEET_*` e `TRANSFORMA_MAIS_DATA_SOURCE` | Env vars sem consumidor | Pendente |
+| Planilha somente leitura | Google Workspace | Pendente (ops) |
+| Atualizar docs que citam Sheets como fonte ativa | README, ESPECIFICACAO (nota histórica) | ✅ parcial |
+| (Opcional) Link do TransformaPage → plugin transformometro | UX — painel read-only pode permanecer | Pendente |
 
 ## Próximo passo imediato
 
@@ -129,3 +142,4 @@ Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-
 2. **Registrar manifesto** na Core API + RBAC escopado (quem precisar)
 3. **Planilha somente leitura** (checklist Google)
 4. Validar smoke pós-deploy: 3 visões dashboard, instância → revisão canônica, Transforma+ por `instancia_id`
+5. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi

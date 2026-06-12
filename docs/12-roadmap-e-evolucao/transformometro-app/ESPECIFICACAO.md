@@ -1,5 +1,7 @@
 # Especificação da Aplicação Transformômetro
 
+> **Nota (jun/2026):** este documento descreve a especificação funcional original (planilha + Apps Script). A implementação entregue no monorepo usa **Postgres + transformometro-api + plugin MFE** como fonte de verdade. Para estado atual, pipeline e legado remanescente, ver [status-atual.md](./status-atual.md) e [README.md](./README.md).
+
 ## 1. Visão geral
 
 O **Transformômetro** é uma ferramenta para registrar, acompanhar e mensurar melhorias de processos.
