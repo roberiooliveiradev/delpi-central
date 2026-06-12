@@ -4,7 +4,7 @@
   "name": "Manutenção",
   "description": "Gestão de manutenção industrial. Filiais e nomes operacionais vêm do cadastro do módulo; submódulos têm permissões próprias por filial.",
   "icon": "wrench",
-  "version": "0.4.0",
+  "version": "0.1.0",
   "type": "microfrontend",
   "basePath": "/apps/maintenance",
   "entry": "/apps/maintenance/assets/remoteEntry.js",
@@ -76,7 +76,7 @@
       "label": "Manutenção geral",
       "permission": "maintenance.manutencao-geral.view.filial-01",
       "icon": "clipboard-list",
-      "entry": "https://script.google.com/macros/s/AKfycbx6CUMD9iqEnGatab85sHBx2drIxOKmOy5nFaRkUKsVXQa-8GNF0sl1Bm8lbFKBIToN/exec",
+      "entry": "https://script.google.com/macros/s/AKfycbwD5vJs0lraZEZbibUVM9tLc8kdW6T4h4c-QYEXEzKopVTNhhbLIwPUOGK41aX4WuJ0/exec",
       "order": 20,
       "showInMenu": false
     },
