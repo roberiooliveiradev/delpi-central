@@ -1,14 +1,21 @@
 import { useCallback, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { useGoogleEmbeddedForm } from "../hooks/useGoogleEmbeddedForm";
 
 type ManutencaoGeralFormEmbedProps = {
   formUrl: string;
   pathname?: string;
+  homePath: string;
+  onNavigate: (path: string) => void;
 };
 
-export function ManutencaoGeralFormEmbed({ formUrl, pathname }: ManutencaoGeralFormEmbedProps) {
+export function ManutencaoGeralFormEmbed({
+  formUrl,
+  pathname,
+  homePath,
+  onNavigate,
+}: ManutencaoGeralFormEmbedProps) {
   const [iframeReloadKey, setIframeReloadKey] = useState(0);
   const [iframeReady, setIframeReady] = useState(false);
 
@@ -29,6 +36,17 @@ export function ManutencaoGeralFormEmbed({ formUrl, pathname }: ManutencaoGeralF
 
   return (
     <section className="dm-form-embed" aria-label="Formulário de manutenção geral">
+      <button
+        type="button"
+        className="dm-embed-floating-button dm-embed-floating-button--left"
+        onClick={() => onNavigate(homePath)}
+        aria-label="Voltar ao início do módulo"
+        title="Início"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span className="dm-embed-floating-button__label">Início</span>
+      </button>
+
       {googleLogin.barVisible ? (
         <div className="dm-google-bar">
           <div className="dm-google-bar__info">
@@ -76,15 +94,15 @@ export function ManutencaoGeralFormEmbed({ formUrl, pathname }: ManutencaoGeralF
       {!googleLogin.barVisible && googleLogin.optionsAvailable ? (
         <button
           type="button"
-          className="dm-google-floating-button"
+          className="dm-embed-floating-button dm-embed-floating-button--right"
           onClick={googleLogin.showBar}
           aria-label="Abrir opções do Google"
           title="Opções Google"
         >
-          <span className="dm-google-floating-button__icon" aria-hidden="true">
+          <span className="dm-embed-floating-button__badge" aria-hidden="true">
             G
           </span>
-          <span className="dm-google-floating-button__label">Opções Google</span>
+          <span className="dm-embed-floating-button__label">Opções Google</span>
         </button>
       ) : null}
 

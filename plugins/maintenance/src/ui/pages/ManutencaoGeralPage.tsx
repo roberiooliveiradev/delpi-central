@@ -6,6 +6,7 @@ import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { MANUTENCAO_GERAL_FORM_URL } from "../../constants/manutencaoGeralForm";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
+import { resolveMaintenanceHomePath } from "../../utils/routeParser";
 
 type ManutencaoGeralPageProps = {
   getAccessToken?: () => string | undefined;
@@ -62,6 +63,8 @@ export function ManutencaoGeralPage({
     );
   }
 
+  const homePath = resolveMaintenanceHomePath(filialScope ?? effectiveFilial);
+
   return (
     <MaintenanceShell variant="embed">
       <PageHeader
@@ -71,9 +74,16 @@ export function ManutencaoGeralPage({
         currentPath={pathname}
         filialScope={filialScope}
         onNavigate={onNavigate}
+        showNav={false}
+        compact
       />
 
-      <ManutencaoGeralFormEmbed formUrl={MANUTENCAO_GERAL_FORM_URL} pathname={pathname} />
+      <ManutencaoGeralFormEmbed
+        formUrl={MANUTENCAO_GERAL_FORM_URL}
+        pathname={pathname}
+        homePath={homePath}
+        onNavigate={onNavigate}
+      />
     </MaintenanceShell>
   );
 }

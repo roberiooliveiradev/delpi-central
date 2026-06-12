@@ -14,6 +14,7 @@ type PageHeaderProps = {
   onNavigate: (path: string) => void;
   actions?: ReactNode;
   showNav?: boolean;
+  compact?: boolean;
 };
 
 export function PageHeader({
@@ -25,9 +26,10 @@ export function PageHeader({
   onNavigate,
   actions,
   showNav = true,
+  compact = false,
 }: PageHeaderProps) {
   return (
-    <header className="dm-page-header">
+    <header className={["dm-page-header", compact ? "dm-page-header--compact" : ""].filter(Boolean).join(" ")}>
       <div className="dm-page-header__brand">
         <div className="dm-header__icon" aria-hidden="true">
           <Icon size={28} strokeWidth={1.75} />
