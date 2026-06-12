@@ -414,12 +414,14 @@ export const AppHost = () => {
 
     async function mountFederated() {
       setFederatedError(null);
+      setHostContentReady(false);
 
       if (!app) return;
       if (app.renderMode !== "federated") return;
 
       if (!federationEntry) {
         setFederatedError("entryUrl não definido.");
+        setHostContentReady(true);
         return;
       }
 
@@ -440,7 +442,7 @@ export const AppHost = () => {
           }
         }
 
-        if (!isActive) return;
+        if (!isActive || !federatedHostRef.current) return;
 
         const exposedModule = (app as any).exposedModule ?? "./App";
 
@@ -493,7 +495,7 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [app?.id, app?.renderMode, federationEntry, getAccessToken, route?.label, routeAlternateUrl]);
+  }, [app?.id, app?.renderMode, federationEntry, getAccessToken]);
 
   useEffect(() => {
     if (!app) return;
@@ -736,7 +738,7 @@ export const AppHost = () => {
           </div>
         ) : null}
 
-        {routeAlternateUrl ? (
+        {routeAlternateUrl && !hostContentReady ? (
           <div className="app-host-federated-alt">
             <span className="app-host-federated-alt__label">
               Link alternativo{route?.label ? ` — ${route.label}` : ""}:

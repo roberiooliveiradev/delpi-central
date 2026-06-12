@@ -456,14 +456,23 @@ body:has(.app-shell) {
   }
 }
 
-.app-host-federated,
+.app-host-federated {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .app-host-federated__mount,
-.app-host-federated > div:not(.app-host-loading-screen):not(.app-host-federated-error) {
+.app-host-federated > div:not(.app-host-loading-screen):not(.app-host-federated-error):not(.app-host-federated-alt) {
   height: 100%;
   min-height: 100%;
 }
 
 .app-host-federated__mount {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
   width: 100%;
   min-width: 0;
 }
