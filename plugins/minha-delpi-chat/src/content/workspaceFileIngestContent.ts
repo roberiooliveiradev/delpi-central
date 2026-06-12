@@ -11,6 +11,8 @@ type ReadingStatusKey = keyof typeof attachmentsContent.preview.readingStatus;
 
 export type WorkspaceFileStatusTone = "default" | "pending" | "success" | "error";
 
+export type WorkspaceFileIconTone = "brand" | "pdf" | "image" | "pending" | "error";
+
 const READING_STATUS = attachmentsContent.preview.readingStatus;
 const INGEST_UI = attachmentsContent.ingestUi;
 
@@ -57,6 +59,69 @@ export function workspaceFileReadingStatusLabel(
   }
 
   return readingStatusFromKey("default");
+}
+
+export function workspaceFileKindLabel(filename: string): string {
+  const normalized = String(filename || "").trim().toLowerCase();
+  const extension = normalized.includes(".") ? normalized.split(".").pop() : "";
+
+  if (!extension) {
+    return INGEST_UI.project.fileKindLabel;
+  }
+
+  if (extension === "pdf") {
+    return "PDF";
+  }
+
+  if (extension === "md" || extension === "markdown") {
+    return "MD";
+  }
+
+  if (extension === "docx") {
+    return "DOCX";
+  }
+
+  if (extension === "xlsx") {
+    return "XLSX";
+  }
+
+  if (extension === "csv") {
+    return "CSV";
+  }
+
+  if (extension === "txt") {
+    return "TXT";
+  }
+
+  if (extension === "json") {
+    return "JSON";
+  }
+
+  return extension.toUpperCase();
+}
+
+export function workspaceFileIconToneForAttachment(
+  filename: string,
+  previewKind: "image" | "file",
+  statusTone: WorkspaceFileStatusTone,
+): WorkspaceFileIconTone {
+  if (statusTone === "error") {
+    return "error";
+  }
+
+  if (statusTone === "pending") {
+    return "pending";
+  }
+
+  if (previewKind === "image") {
+    return "image";
+  }
+
+  if (workspaceFileKindLabel(filename) === "PDF") {
+    return "pdf";
+  }
+
+  return "brand";
 }
 
 export function workspaceFileReadingStatusTone(

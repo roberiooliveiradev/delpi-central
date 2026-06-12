@@ -1,7 +1,18 @@
-import { Download, Eye, FileText, Image as ImageIcon, Trash2, X } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
-import type { WorkspaceFileStatusTone } from "../../../content/workspaceFileIngestContent";
+import type {
+  WorkspaceFileIconTone,
+  WorkspaceFileStatusTone,
+} from "../../../content/workspaceFileIngestContent";
 
 import "./workspaceFileIngest.css";
 
@@ -10,13 +21,17 @@ export type WorkspaceFileCardVariant = "card" | "chip" | "row";
 export type WorkspaceFileCardProps = {
   variant?: WorkspaceFileCardVariant;
   filename: string;
+  kindLabel?: string;
   sizeLabel?: string;
   statusLabel?: string;
   statusTone?: WorkspaceFileStatusTone;
+  iconTone?: WorkspaceFileIconTone;
   thumb?: ReactNode;
   previewKind?: "image" | "file";
   editable?: boolean;
   secondaryLabel?: string;
+  showInlineActions?: boolean;
+  dismissRemove?: boolean;
   onPreview?: () => void;
   onDownload?: () => void;
   onRemove?: () => void;
@@ -75,96 +90,172 @@ function FileCardDetails({
 function FileCardIcon({
   previewKind,
   thumb,
+  iconTone = "brand",
   compact = false,
 }: {
   previewKind: "image" | "file";
   thumb?: ReactNode;
+  iconTone?: WorkspaceFileIconTone;
   compact?: boolean;
 }) {
   const iconSize = compact ? 16 : 18;
 
   return (
-    <span className="mdc-workspace-file-card__icon" aria-hidden="true">
-      {thumb ?? (previewKind === "image" ? <ImageIcon size={iconSize} /> : <FileText size={iconSize} />)}
+    <span
+      className={`mdc-workspace-file-card__icon mdc-workspace-file-card__icon--${iconTone}`}
+      aria-hidden="true"
+    >
+      {iconTone === "pending" ? (
+        <Loader2 size={iconSize} className="mdc-workspace-file-card__icon-spinner" />
+      ) : thumb ? (
+        thumb
+      ) : previewKind === "image" ? (
+        <ImageIcon size={iconSize} />
+      ) : (
+        <FileText size={iconSize} />
+      )}
     </span>
   );
+}
+
+function FileCardSubtitle({
+  kindLabel,
+  secondaryLabel,
+  statusLabel,
+  statusTone = "default",
+  variant,
+}: {
+  kindLabel?: string;
+  secondaryLabel?: string;
+  statusLabel?: string;
+  statusTone?: WorkspaceFileStatusTone;
+  variant: WorkspaceFileCardVariant;
+}) {
+  if (variant === "card" || variant === "chip") {
+    const text =
+      statusTone === "error" && statusLabel?.trim() ? statusLabel : kindLabel;
+
+    if (!text) {
+      return null;
+    }
+
+    return (
+      <span
+        className={`mdc-workspace-file-card__subtitle ${statusTone === "error" ? "mdc-workspace-file-card__subtitle--error" : ""}`}
+      >
+        {text}
+      </span>
+    );
+  }
+
+  if (variant === "row") {
+    const text = kindLabel || secondaryLabel;
+
+    if (!text) {
+      return null;
+    }
+
+    return <span className="mdc-workspace-file-card__subtitle">{text}</span>;
+  }
+
+  return null;
 }
 
 export function WorkspaceFileCard({
   variant = "card",
   filename,
+  kindLabel,
   sizeLabel,
   statusLabel,
   statusTone = "default",
+  iconTone = "brand",
   thumb,
   previewKind = "file",
   editable = false,
+  showInlineActions = true,
+  dismissRemove = false,
   onPreview,
   onDownload,
   onRemove,
   secondaryLabel,
 }: WorkspaceFileCardProps) {
-  const actionButtons = (
-    <div className="mdc-workspace-file-card__actions">
-      {onPreview ? (
-        <button
-          type="button"
-          className="mdc-workspace-file-card__action"
-          onClick={onPreview}
-          aria-label={`Abrir pré-visualização de ${filename}`}
-          title="Pré-visualizar"
-        >
-          <Eye size={14} aria-hidden="true" />
-        </button>
-      ) : null}
+  const actionButtons =
+    showInlineActions || (editable && onRemove) ? (
+      <div className="mdc-workspace-file-card__actions">
+        {showInlineActions && onPreview ? (
+          <button
+            type="button"
+            className="mdc-workspace-file-card__action"
+            onClick={onPreview}
+            aria-label={`Abrir pré-visualização de ${filename}`}
+            title="Pré-visualizar"
+          >
+            <Eye size={14} aria-hidden="true" />
+          </button>
+        ) : null}
 
-      {onDownload ? (
-        <button
-          type="button"
-          className="mdc-workspace-file-card__action"
-          onClick={onDownload}
-          aria-label={`Baixar ${filename}`}
-          title="Baixar arquivo"
-        >
-          <Download size={14} aria-hidden="true" />
-        </button>
-      ) : null}
+        {showInlineActions && onDownload ? (
+          <button
+            type="button"
+            className="mdc-workspace-file-card__action"
+            onClick={onDownload}
+            aria-label={`Baixar ${filename}`}
+            title="Baixar arquivo"
+          >
+            <Download size={14} aria-hidden="true" />
+          </button>
+        ) : null}
 
-      {editable && onRemove ? (
-        <button
-          type="button"
-          className="mdc-workspace-file-card__action mdc-workspace-file-card__action--danger"
-          onClick={onRemove}
-          aria-label={`Remover ${filename}`}
-          title="Remover arquivo"
-        >
-          <Trash2 size={14} aria-hidden="true" />
-        </button>
-      ) : null}
-    </div>
-  );
+        {editable && onRemove ? (
+          <button
+            type="button"
+            className={`mdc-workspace-file-card__action ${dismissRemove ? "" : "mdc-workspace-file-card__action--danger"}`}
+            onClick={onRemove}
+            aria-label={`Remover ${filename}`}
+            title="Remover arquivo"
+          >
+            {dismissRemove ? (
+              <X size={14} aria-hidden="true" />
+            ) : (
+              <Trash2 size={14} aria-hidden="true" />
+            )}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
 
   const meta = (
     <div className="mdc-workspace-file-card__meta">
       <strong title={filename}>{filename}</strong>
-      <FileCardDetails
-        sizeLabel={sizeLabel}
+      <FileCardSubtitle
+        kindLabel={kindLabel}
+        secondaryLabel={secondaryLabel}
         statusLabel={statusLabel}
         statusTone={statusTone}
-        secondaryLabel={secondaryLabel}
+        variant={variant}
       />
+      {variant === "row" && (sizeLabel || statusLabel || (secondaryLabel && kindLabel)) ? (
+        <FileCardDetails
+          sizeLabel={sizeLabel}
+          statusLabel={statusLabel}
+          statusTone={statusTone}
+          secondaryLabel={kindLabel ? secondaryLabel : undefined}
+        />
+      ) : null}
     </div>
   );
 
   if (variant === "chip") {
     return (
       <span className="mdc-workspace-file-card mdc-workspace-file-card--chip">
-        <FileCardIcon previewKind={previewKind} compact />
+        <FileCardIcon previewKind={previewKind} iconTone={iconTone} compact thumb={thumb} />
         <strong title={filename}>{filename}</strong>
-        {sizeLabel ? <small className="mdc-workspace-file-card__chip-meta">{sizeLabel}</small> : null}
-        {statusLabel ? (
-          <small className={detailClassName(statusTone)}>{statusLabel}</small>
-        ) : null}
+        <FileCardSubtitle
+          kindLabel={kindLabel}
+          statusLabel={statusLabel}
+          statusTone={statusTone}
+          variant={variant}
+        />
         <span className="mdc-workspace-file-card__chip-actions">
           {onPreview ? (
             <button
@@ -195,7 +286,12 @@ export function WorkspaceFileCard({
 
   const body = (
     <>
-      <FileCardIcon previewKind={previewKind} thumb={thumb} compact={variant === "row"} />
+      <FileCardIcon
+        previewKind={previewKind}
+        thumb={thumb}
+        iconTone={iconTone}
+        compact={variant === "row"}
+      />
       {meta}
     </>
   );
@@ -221,7 +317,9 @@ export function WorkspaceFileCard({
   }
 
   return (
-    <article className="mdc-workspace-file-card mdc-workspace-file-card--card">
+    <article
+      className={`mdc-workspace-file-card mdc-workspace-file-card--card ${showInlineActions ? "" : "mdc-workspace-file-card--card-compact"}`}
+    >
       <div className="mdc-workspace-file-card__surface">
         {onPreview ? (
           <button

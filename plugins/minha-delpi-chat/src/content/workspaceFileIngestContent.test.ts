@@ -7,6 +7,8 @@ import {
   workspaceFileContextBinaryLine,
   workspaceFileDropzoneContent,
   workspaceFileProjectFileKindLabel,
+  workspaceFileIconToneForAttachment,
+  workspaceFileKindLabel,
   workspaceFileReadingStatusLabel,
   workspaceFileReadingStatusTone,
 } from "./workspaceFileIngestContent";
@@ -17,6 +19,19 @@ describe("workspaceFileIngestContent", () => {
     expect(workspaceFileReadingStatusLabel("indexing")).toBe("Indexando para consulta");
     expect(workspaceFileReadingStatusLabel("queued")).toBe("Aguardando envio");
     expect(workspaceFileReadingStatusLabel("index_failed")).toBe("Falha na leitura");
+  });
+
+  it("resolve rótulo curto do tipo de arquivo", () => {
+    expect(workspaceFileKindLabel("menu-dinamico.md")).toBe("MD");
+    expect(workspaceFileKindLabel("90261040.pdf")).toBe("PDF");
+  });
+
+  it("resolve tom do ícone por status e extensão", () => {
+    expect(
+      workspaceFileIconToneForAttachment("doc.pdf", "file", "pending"),
+    ).toBe("pending");
+    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "success")).toBe("pdf");
+    expect(workspaceFileIconToneForAttachment("foto.png", "image", "success")).toBe("image");
   });
 
   it("resolve tom visual do status de leitura", () => {

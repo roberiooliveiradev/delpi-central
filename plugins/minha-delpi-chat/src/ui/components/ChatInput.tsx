@@ -42,6 +42,8 @@ import type { MessageComposerTypingCorrectionContent } from "../../content/messa
 import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
+  workspaceFileIconToneForAttachment,
+  workspaceFileKindLabel,
   workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import {
@@ -105,18 +107,6 @@ type ChatInputProps = {
   onDismissTypingSuggestion?: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
-
-function formatFileSize(size: number): string {
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} MB`;
-}
 
 export function ChatInput({
   value,
@@ -531,16 +521,26 @@ export function ChatInput({
                   attachment.status === "indexed",
                 );
 
+                const kindLabel = workspaceFileKindLabel(attachment.name);
+                const previewKind = isImage ? "image" : "file";
+
                 return (
                   <WorkspaceFileCard
                     key={attachment.id}
-                    variant="chip"
+                    variant="card"
                     filename={attachment.name}
-                    sizeLabel={formatFileSize(attachment.size)}
+                    kindLabel={kindLabel}
                     statusLabel={statusLabel}
                     statusTone={statusTone}
-                    previewKind={isImage ? "image" : "file"}
+                    iconTone={workspaceFileIconToneForAttachment(
+                      attachment.name,
+                      previewKind,
+                      statusTone,
+                    )}
+                    previewKind={previewKind}
                     editable
+                    showInlineActions={false}
+                    dismissRemove
                     onPreview={() => {
                       openPreview(buildWorkspaceLocalFilePreviewTarget(attachment.file));
                     }}

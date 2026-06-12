@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 
 import { fetchChatAttachmentBlob } from "../../data/api/chatApi";
 import {
-  formatAttachmentSize,
   resolveAttachmentPreviewKind,
   revokeAttachmentPreviewUrl,
 } from "../chatAttachmentPreview";
 import {
+  workspaceFileIconToneForAttachment,
+  workspaceFileKindLabel,
   workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
@@ -54,8 +55,12 @@ export function ChatAttachmentCard({
     attachment.readingStatus ||
     attachmentReadingStatusLabel(attachment.status, attachment.parsed);
   const statusTone = workspaceFileReadingStatusTone(attachment.status, attachment.parsed);
-  const sizeLabel = formatAttachmentSize(
-    attachment.sizeBytes ?? attachment.localFile?.size,
+  const kindLabel = workspaceFileKindLabel(attachment.filename);
+  const resolvedPreviewKind = previewKind === "image" ? "image" : "file";
+  const iconTone = workspaceFileIconToneForAttachment(
+    attachment.filename,
+    resolvedPreviewKind,
+    statusTone,
   );
 
   useEffect(() => {
@@ -115,12 +120,15 @@ export function ChatAttachmentCard({
     <WorkspaceFileCard
       variant="card"
       filename={attachment.filename}
-      sizeLabel={sizeLabel}
+      kindLabel={kindLabel}
       statusLabel={statusLabel}
       statusTone={statusTone}
+      iconTone={iconTone}
       thumb={thumb}
-      previewKind={previewKind === "image" ? "image" : "file"}
+      previewKind={resolvedPreviewKind}
       editable={editable}
+      showInlineActions={editable}
+      dismissRemove={editable}
       onPreview={onPreview ? () => onPreview(attachment) : undefined}
       onRemove={onRemove ? () => onRemove(attachment.key) : undefined}
     />

@@ -786,6 +786,7 @@ export function ChatProjectHome({
                       key={source.id}
                       variant="row"
                       filename={source.title}
+                      iconTone="brand"
                       secondaryLabel={workspaceFileProjectFileKindLabel(sourceDate)}
                       previewKind="file"
                       editable
