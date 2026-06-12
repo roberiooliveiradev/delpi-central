@@ -20,6 +20,7 @@ import {
   useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
+import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import {
   fetchComponentes,
   fetchFerramenta,
@@ -73,7 +74,8 @@ export function RelatorioPage({
 }: RelatorioPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
-  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const filialDisplayName = resolveFilialDisplayName(filiais, filial);
 
   const [listTab, setListTab] = useState<ListReportTab>("alertas");
   const [activeTab, setActiveTab] = useState<ReportTab>("alertas");
@@ -307,6 +309,7 @@ export function RelatorioPage({
         subtitle="Alertas, últimas reposições e detalhe por ferramenta — use as abas para navegar."
         icon={LineChart}
         filial={filial}
+        filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
         showConfiguration={canManageMiniApplicators}
         currentPath={pathname}

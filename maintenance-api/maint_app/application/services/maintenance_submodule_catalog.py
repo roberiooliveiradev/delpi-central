@@ -151,7 +151,11 @@ def _can_manage_submodule(
     if not codigo:
         permissions = list(getattr(user, "permissions", []) or [])
         prefix = f"{SUBMODULE_MANAGE_PREFIXES[submodule_id]}.filial-"
-        return any(item.startswith(prefix) for item in permissions)
+        if any(item.startswith(prefix) for item in permissions):
+            return True
+        if scope is not None and scope.manage_codigos:
+            return True
+        return False
 
     if scope is not None:
         return _scope_service.can_manage_filial(

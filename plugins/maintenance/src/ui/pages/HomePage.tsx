@@ -8,7 +8,7 @@ import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
-import { setStoredFilial } from "../../utils/maintenanceFilialSelection";
+import { resolveFilialDisplayName, setStoredFilial } from "../../utils/maintenanceFilialSelection";
 
 type HomePageProps = {
   getAccessToken?: () => string | undefined;
@@ -27,12 +27,6 @@ function SubmoduleIcon({ icon }: { icon: string }) {
   return <Icon size={22} />;
 }
 
-function filialLabel(filiais: Array<{ id: string; label: string }>, filialId: string | undefined): string {
-  if (!filialId) return "";
-  const match = filiais.find((item) => item.id === filialId);
-  return match ? `${match.id} — ${match.label}` : filialId;
-}
-
 export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: HomePageProps) {
   const {
     filiais,
@@ -49,7 +43,7 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
       return "Escolha a filial e o submódulo para continuar.";
     }
     if (activeFilial) {
-      return `Submódulos disponíveis para a filial ${filialLabel(filiais, activeFilial)}.`;
+      return `Submódulos disponíveis para a filial ${resolveFilialDisplayName(filiais, activeFilial)}.`;
     }
     return "Gestão de manutenção industrial — escolha um submódulo para continuar.";
   }, [activeFilial, filiais]);
@@ -118,7 +112,9 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
               <h2 className="dm-kpi-card__value">{submodule.label}</h2>
               <p className="dm-kpi-card__hint">{submodule.description}</p>
               {activeFilial ? (
-                <p className="dm-kpi-card__meta">Filial: {filialLabel(filiais, activeFilial)}</p>
+                <p className="dm-kpi-card__meta">
+                  Filial: {resolveFilialDisplayName(filiais, activeFilial)}
+                </p>
               ) : null}
             </div>
           </button>

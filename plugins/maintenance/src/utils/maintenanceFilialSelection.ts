@@ -41,3 +41,15 @@ export function resolveActiveFilial(
 
   return allowedFiliais[0]?.id;
 }
+
+export function resolveFilialDisplayName(
+  filiais: Array<{ id: string; label: string }>,
+  filialId: string | undefined,
+): string {
+  if (!filialId) {
+    return "";
+  }
+  const match = filiais.find((item) => item.id === filialId);
+  const name = match?.label?.trim();
+  return name || filialId;
+}

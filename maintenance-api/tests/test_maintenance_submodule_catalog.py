@@ -1,6 +1,9 @@
 from types import SimpleNamespace
 
-from maint_app.application.services.filial_access_scope_service import FilialAccessScope
+from maint_app.application.services.filial_access_scope_service import (
+    FilialAccessScope,
+    FilialAccessScopeService,
+)
 from maint_app.application.services.maintenance_submodule_catalog import filter_submodules_for_user
 
 
@@ -44,6 +47,20 @@ def test_filter_submodules_manage_flag_per_filial():
     )
     items = filter_submodules_for_user(user, filial="01", scope=scope)
     assert items[0]["can_manage"] is True
+
+
+def test_filter_submodules_legacy_manage_filial_not_in_manifest():
+    user = SimpleNamespace(
+        is_superadmin=False,
+        permissions=[
+            "maintenance.mini-applicators.view.filial-01",
+            "maintenance.manage.filial-01",
+        ],
+    )
+    scope = FilialAccessScopeService().resolve(user)
+    assert scope.manage_codigos == frozenset()
+    items = filter_submodules_for_user(user, filial="01", scope=scope)
+    assert items[0]["can_manage"] is False
 
 
 def test_filter_submodules_manutencao_geral_filial_permission():

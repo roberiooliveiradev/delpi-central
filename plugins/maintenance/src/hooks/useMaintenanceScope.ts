@@ -21,7 +21,35 @@ function filterSubmodulesForFilial(
   );
 }
 
-export function useMaintenanceOptions(getAccessToken?: () => string | undefined) {
+function resolveOptionsFilialQuery(filialScope?: string): string | undefined {
+  if (filialScope && /^[0-9]{2}$/.test(filialScope)) {
+    return filialScope;
+  }
+  return getStoredFilial() ?? undefined;
+}
+
+export function resolveCanManageMiniApplicators(
+  options: MaintenanceOptions | null,
+  submodules: MaintenanceSubmodule[],
+  activeFilial?: string,
+): boolean {
+  const submodule = submodules.find((item) => item.id === "mini-aplicadores");
+  if (submodule?.can_manage) {
+    return true;
+  }
+
+  const manageFiliais = options?.access_scope?.manage_filiais ?? [];
+  if (activeFilial) {
+    return manageFiliais.includes(activeFilial);
+  }
+
+  return manageFiliais.length > 0;
+}
+
+export function useMaintenanceOptions(
+  getAccessToken?: () => string | undefined,
+  filialQuery?: string,
+) {
   const [options, setOptions] = useState<MaintenanceOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +57,7 @@ export function useMaintenanceOptions(getAccessToken?: () => string | undefined)
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetchMaintenanceOptions(getAccessToken)
+    fetchMaintenanceOptions(getAccessToken, filialQuery)
       .then((data) => {
         if (!active) return;
         setOptions(data);
@@ -47,7 +75,7 @@ export function useMaintenanceOptions(getAccessToken?: () => string | undefined)
     return () => {
       active = false;
     };
-  }, [getAccessToken]);
+  }, [getAccessToken, filialQuery]);
 
   return { options, loading, error };
 }
@@ -56,7 +84,7 @@ export function useMaintenanceModuleHomePath(
   getAccessToken?: () => string | undefined,
   filialScope?: string,
 ): string {
-  const { options } = useMaintenanceOptions(getAccessToken);
+  const { options } = useMaintenanceOptions(getAccessToken, resolveOptionsFilialQuery(filialScope));
   const filiais = options?.filiais ?? [];
 
   if (filialScope) {
@@ -75,9 +103,16 @@ export function useMaintenanceActiveFilial(
   getAccessToken?: () => string | undefined,
   filialScope?: string,
 ) {
-  const { options, loading, error } = useMaintenanceOptions(getAccessToken);
+  const [optionsFilialQuery, setOptionsFilialQuery] = useState<string | undefined>(
+    () => resolveOptionsFilialQuery(filialScope),
+  );
+  const { options, loading, error } = useMaintenanceOptions(getAccessToken, optionsFilialQuery);
   const filiais = options?.filiais ?? [];
   const [activeFilial, setActiveFilialState] = useState<string | undefined>();
+
+  useEffect(() => {
+    setOptionsFilialQuery(resolveOptionsFilialQuery(filialScope));
+  }, [filialScope]);
 
   useEffect(() => {
     const resolved = resolveActiveFilial(
@@ -88,18 +123,27 @@ export function useMaintenanceActiveFilial(
     setActiveFilialState(resolved);
     if (resolved) {
       setStoredFilial(resolved);
+      if (resolved !== optionsFilialQuery) {
+        setOptionsFilialQuery(resolved);
+      }
     }
-  }, [filialScope, filiais, options?.default_filial]);
+  }, [filialScope, filiais, options?.default_filial, optionsFilialQuery]);
 
   const setActiveFilial = (filialId: string) => {
     setStoredFilial(filialId);
     setActiveFilialState(filialId);
+    setOptionsFilialQuery(filialId);
   };
 
   const allSubmodules = options?.submodules ?? options?.modulos ?? [];
   const submodules = useMemo(
     () => filterSubmodulesForFilial(allSubmodules, activeFilial),
     [activeFilial, allSubmodules],
+  );
+
+  const canManageMiniApplicators = useMemo(
+    () => resolveCanManageMiniApplicators(options, submodules, activeFilial),
+    [activeFilial, options, submodules],
   );
 
   return {
@@ -110,8 +154,7 @@ export function useMaintenanceActiveFilial(
     error,
     submodules,
     canManageFiliais: options?.can_manage_filiais ?? false,
-    canManageMiniApplicators:
-      submodules.find((item) => item.id === "mini-applicadores")?.can_manage ?? false,
+    canManageMiniApplicators,
   };
 }
 

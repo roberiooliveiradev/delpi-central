@@ -10,6 +10,7 @@ type MiniAplicadoresPageHeaderProps = {
   subtitle: string;
   icon: LucideIcon;
   filial: string;
+  filialDisplayName?: string;
   moduleHomePath: string;
   showConfiguration?: boolean;
   currentPath?: string;
@@ -22,6 +23,7 @@ export function MiniAplicadoresPageHeader({
   subtitle,
   icon: Icon,
   filial,
+  filialDisplayName,
   moduleHomePath,
   showConfiguration = false,
   currentPath,
@@ -36,7 +38,7 @@ export function MiniAplicadoresPageHeader({
         </div>
         <div className="dm-page-header__content">
           <div className="dm-page-header__context">
-            <FilialBadge filial={filial} />
+            <FilialBadge filial={filial} displayName={filialDisplayName} />
           </div>
           <p className="dm-eyebrow">DELPI • Manutenção • Mini-aplicadores</p>
           <h1>{title}</h1>

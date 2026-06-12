@@ -29,6 +29,7 @@ import {
   fromDatetimeLocalValue,
   toDatetimeLocalValue,
 } from "../../utils/datetimeLocal";
+import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
@@ -52,7 +53,8 @@ export function MiniAplicadoresPage({
 }: MiniAplicadoresPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
-  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const [descricao, setDescricao] = useState("");
   const [codigo, setCodigo] = useState("");
   const [items, setItems] = useState<FerramentaItem[]>([]);
@@ -384,6 +386,7 @@ export function MiniAplicadoresPage({
         }
         icon={Hammer}
         filial={filial}
+        filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
         showConfiguration={canManageMiniApplicators}
         currentPath={pathname}

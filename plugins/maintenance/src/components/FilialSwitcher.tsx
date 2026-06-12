@@ -28,8 +28,8 @@ export function FilialSwitcher({ filiais, value, onChange }: FilialSwitcherProps
               aria-selected={active}
               className={`dm-filial-switcher__option${active ? " is-active" : ""}`}
               onClick={() => onChange(filial.id)}
+              title={`Filial ${filial.id}`}
             >
-              <span className="dm-filial-switcher__option-id">{filial.id}</span>
               <span className="dm-filial-switcher__option-label">{filial.label}</span>
             </button>
           );

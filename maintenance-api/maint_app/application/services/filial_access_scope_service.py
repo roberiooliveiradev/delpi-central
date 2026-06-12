@@ -6,10 +6,9 @@ from typing import Any
 from delpi_auth.authz_core import has_permission
 
 from maint_app.application.security.maintenance_permissions import (
-    _SUBMODULE_MANAGE_FILIAL_MARKER,
-    _SUBMODULE_VIEW_FILIAL_MARKER,
-    codigos_from_submodule_filial_permissions,
+    manage_filial_codes_from_permissions,
     submodule_manage_permission,
+    view_filial_codes_from_permissions,
 )
 
 
@@ -53,14 +52,8 @@ class FilialAccessScopeService:
             )
 
         permissions = list(getattr(user, "permissions", []) or [])
-        branch_view = codigos_from_submodule_filial_permissions(
-            permissions,
-            marker=_SUBMODULE_VIEW_FILIAL_MARKER,
-        )
-        branch_manage = codigos_from_submodule_filial_permissions(
-            permissions,
-            marker=_SUBMODULE_MANAGE_FILIAL_MARKER,
-        )
+        branch_view = view_filial_codes_from_permissions(permissions)
+        branch_manage = manage_filial_codes_from_permissions(permissions)
 
         if branch_view:
             return FilialAccessScope(
@@ -72,7 +65,7 @@ class FilialAccessScopeService:
         return FilialAccessScope(
             mode="scoped",
             allowed_codigos=frozenset(),
-            manage_codigos=frozenset(),
+            manage_codigos=frozenset(branch_manage),
         )
 
     def can_view_filial(self, scope: FilialAccessScope, codigo_filial: str | None) -> bool:

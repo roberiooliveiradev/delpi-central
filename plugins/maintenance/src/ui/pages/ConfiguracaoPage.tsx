@@ -15,6 +15,7 @@ import {
   useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
+import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import {
   createMotivo,
   createStatusPeca,
@@ -72,7 +73,8 @@ export function ConfiguracaoPage({
 }: ConfiguracaoPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
-  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
   const [status, setStatus] = useState<StatusItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -371,9 +373,10 @@ export function ConfiguracaoPage({
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
         title="Configuração"
-        subtitle={`Motivos de troca e regras de status preventivo da filial ${filial}.`}
+        subtitle={`Motivos de troca e regras de status preventivo da filial ${filialDisplayName}.`}
         icon={Settings}
         filial={filial}
+        filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
         showConfiguration={canManageMiniApplicators}
         currentPath={pathname}
