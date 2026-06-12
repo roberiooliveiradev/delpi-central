@@ -4,6 +4,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -11,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { ExternalLink, Hammer, Package, PlusCircle } from "lucide-react";
+import { useMemo } from "react";
 
 import { ChartSection, StateBox, StatusBadge } from "./data";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
@@ -51,6 +54,29 @@ function statusAccent(status: string | undefined): string {
   return "var(--dm-accent, #089bdb)";
 }
 
+function buildLinearTrend(values: number[]): number[] {
+  const points = values.map((value, index) => ({ x: index, y: value }));
+  const count = points.length;
+  if (count === 0) return [];
+  if (count === 1) return [values[0] ?? 0];
+
+  const sumX = points.reduce((total, point) => total + point.x, 0);
+  const sumY = points.reduce((total, point) => total + point.y, 0);
+  const sumXY = points.reduce((total, point) => total + point.x * point.y, 0);
+  const sumXX = points.reduce((total, point) => total + point.x * point.x, 0);
+  const denominator = count * sumXX - sumX * sumX;
+
+  if (denominator === 0) {
+    const average = sumY / count;
+    return values.map(() => Math.round(average));
+  }
+
+  const slope = (count * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / count;
+
+  return points.map((point) => Math.round(slope * point.x + intercept));
+}
+
 export function PreventivaDetailPanel({
   codigoFerramenta,
   codigoPeca,
@@ -64,14 +90,21 @@ export function PreventivaDetailPanel({
   const hasSelection = Boolean(codigoFerramenta && codigoPeca);
   const alerta = data?.alerta;
   const ferramenta = data?.ferramenta;
-  const historicoChart = (data?.historico ?? []).map((row) => ({
-    label: new Date(row.data_reposicao).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "2-digit",
-    }),
-    golpes: row.golpes,
-  }));
+
+  const historicoChart = useMemo(() => {
+    const golpes = (data?.historico ?? []).map((row) => row.golpes);
+    const tendencia = buildLinearTrend(golpes);
+
+    return (data?.historico ?? []).map((row, index) => ({
+      label: new Date(row.data_reposicao).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "2-digit",
+      }),
+      golpes: row.golpes,
+      tendencia: tendencia[index] ?? row.golpes,
+    }));
+  }, [data?.historico]);
 
   const usageChart =
     alerta && alerta.media_golpes > 0
@@ -182,23 +215,29 @@ export function PreventivaDetailPanel({
 
           {usageChart.length > 0 ? (
             <ChartSection title="Uso vs. média">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={usageChart} layout="vertical" margin={{ left: 8, right: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="name" width={120} />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={usageChart} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
                   <Tooltip formatter={(value) => formatNumber(Number(value))} />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                  <Legend />
+                  <Bar dataKey="value" name="Golpes" radius={[8, 8, 0, 0]} maxBarSize={72}>
                     {usageChart.map((entry) => (
                       <Cell key={entry.name} fill={entry.fill} />
                     ))}
                   </Bar>
                   {alerta ? (
                     <ReferenceLine
-                      x={alerta.media_golpes}
+                      y={alerta.media_golpes}
                       stroke="#64748b"
                       strokeDasharray="4 4"
-                      label={{ value: "Média", position: "insideTopRight", fill: "#64748b" }}
+                      label={{
+                        value: `Média ${formatNumber(Math.round(alerta.media_golpes))}`,
+                        position: "insideTopRight",
+                        fill: "#64748b",
+                        fontSize: 11,
+                      }}
                     />
                   ) : null}
                 </BarChart>
@@ -217,20 +256,37 @@ export function PreventivaDetailPanel({
             {historicoChart.length === 0 ? (
               <StateBox>Nenhuma reposição registrada para este par.</StateBox>
             ) : (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={historicoChart}>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={historicoChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [formatNumber(Number(value)), "Golpes"]} />
+                  <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      formatNumber(Number(value)),
+                      name === "tendencia" ? "Tendência" : "Golpes por ciclo",
+                    ]}
+                  />
                   <Legend />
-                  <Bar
+                  <Line
+                    type="monotone"
                     dataKey="golpes"
                     name="Golpes por ciclo"
-                    fill="var(--dm-accent, #089bdb)"
-                    radius={[8, 8, 0, 0]}
+                    stroke="var(--dm-accent, #089bdb)"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
                   />
-                </BarChart>
+                  <Line
+                    type="linear"
+                    dataKey="tendencia"
+                    name="Tendência"
+                    stroke="#94a3b8"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    dot={false}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             )}
           </ChartSection>

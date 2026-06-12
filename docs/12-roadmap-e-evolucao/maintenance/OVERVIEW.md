@@ -44,7 +44,7 @@ O sistema responde cruzando:
 | `/apps/maintenance/filial-01` / `filial-02` | Home com escopo de filial na URL |
 | `/apps/maintenance/mini-aplicadores` | Lista de ferramentas (TOTVS via API plugin → api-delpi) |
 | `/apps/maintenance/mini-aplicadores/{codigo}` | Detalhe: reposições, CRUD, golpes sugeridos |
-| `/apps/maintenance/mini-aplicadores/relatorio` | Alertas preventivos + gráfico |
+| `/apps/maintenance/mini-aplicadores/relatorio` | Alertas preventivos, tabelas paginadas/ordenáveis, detalhe com gráficos |
 | `/apps/maintenance/mini-aplicadores/configuracao` | Motivos e regras de status (manage) |
 
 ## Fluxo do usuário
@@ -70,17 +70,17 @@ O id `maintenance` agrupa **todos** os domínios de manutenção industrial. **M
 - **Não** expõe SQL Server ao browser nem ao MFE.
 - **Não** mantém Access como fonte de verdade após migração (Postgres canônico).
 
-## Permissões (manifesto v0.3.0)
+## Permissões (manifesto v0.2.1)
 
 | Código | Uso |
 |--------|-----|
 | `maintenance.view` | Abrir módulo (início) |
-| `maintenance.view.filial-01` / `filial-02` | Escopo de **dados** na API (filial) |
-| `maintenance.manage.filial-01` / `filial-02` | Escrita operacional na filial |
-| `maintenance.mini-applicators.view` | Ver submódulo mini-aplicadores (ferramentas, relatório) |
-| `maintenance.mini-applicators.manage` | Reposições, motivos, status preventivo |
+| `maintenance.manage` | Cadastro de filiais operacionais (`/filiais`) |
+| `maintenance.mini-applicators.view.filial-01` / `filial-02` | Ler mini-aplicadores na filial |
+| `maintenance.mini-applicators.manage.filial-01` / `filial-02` | Reposições, motivos e status preventivo na filial |
+| `maintenance.manutencao-geral.view.filial-01` | Submódulo manutenção geral (filial 01) |
 
-Mutações exigem **manage do submódulo** e **manage da filial** ativa. Visibilidade do card do submódulo depende só de `mini-applicators.view`.
+Mutações exigem **`mini-applicators.manage.filial-XX`** da filial ativa. Visibilidade do submódulo depende de **`mini-applicators.view.filial-XX`**. A API resolve escopo via `FilialAccessScopeService` — permissões legadas genéricas `maintenance.view.filial-XX` / `maintenance.manage.filial-XX` **não** estão no manifesto e não concedem escopo.
 
 ## Stack alinhada ao monorepo
 

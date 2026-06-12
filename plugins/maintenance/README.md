@@ -2,7 +2,7 @@
 
 Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module Federation + Vite.
 
-**Estado:** Fases 0–2 concluídas; submódulos com RBAC próprio, filial no início e CRUD completo na UI (jun/2026).
+**Estado:** Fases 0–2 concluídas; submódulos com RBAC por filial, filial no início, CRUD completo e tabelas paginadas/ordenáveis (jun/2026).
 
 ## Documentação
 
@@ -22,7 +22,7 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 | Item | Valor |
 |------|-------|
-| Manifesto | `maintenance.manifest.json` |
+| Manifesto | `maintenance.manifest.json` (v0.2.1) |
 | `id` | `maintenance` |
 | `name` | Manutenção |
 | `basePath` | `/apps/maintenance` |
@@ -33,6 +33,21 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 **Mini-aplicadores** (ferramentaria) — reposição de peças, golpes e alertas preventivos. Migração do legado WinForms `MiniAplicadores`.
 
+## Componentes de UI (canônicos)
+
+| Módulo | Caminho | Uso |
+|--------|---------|-----|
+| `DataTableSection` | `src/components/data/DataTableSection.tsx` | Título, toolbar, tabela, paginação e ordenação |
+| `DataTable` | `src/components/data/DataTable.tsx` | Cabeçalhos ordenáveis (↕ / ↑ / ↓) |
+| `Pagination` | `src/components/data/Pagination.tsx` | Anterior · Página **N** de M · Próxima |
+| `useClientPagination` | `src/hooks/useClientPagination.ts` | Paginação client-side (default 20 linhas) |
+| `sortRows` | `src/utils/dataTableSort.ts` | Ordenação por coluna (`sortValue` ou texto renderizado) |
+| `PreventivaDetailPanel` | `src/components/PreventivaDetailPanel.tsx` | Detalhe preventivo + gráficos Recharts |
+
+**Paginação server-side:** lista de ferramentas (`fetchFerramentas` com `page` / `page_size`). Demais tabelas usam paginação client-side sobre o conjunto já carregado.
+
+**Filial na UI:** nome exibido vem do catálogo Postgres (`resolveFilialDisplayName`), não só o código `01`/`02`.
+
 ## Registro no portal
 
 ```bash
@@ -42,13 +57,15 @@ chmod +x scripts/register-manifest.sh
 ./scripts/register-manifest.sh
 ```
 
-Atribuir permissões no RBAC da Core API (ver matriz em [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/maintenance/OPERATIONS.md)):
+Permissões canônicas (manifesto v0.2.1 — ver matriz completa em [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/maintenance/OPERATIONS.md)):
 
-- `maintenance.view` — abrir o módulo
-- `maintenance.view.filial-XX` — escopo de dados na API
-- `maintenance.manage.filial-XX` — escrita na filial
-- `maintenance.mini-applicators.view` — submódulo mini-aplicadores
-- `maintenance.mini-applicators.manage` — reposições, motivos e status
+| Permissão | Uso |
+|-----------|-----|
+| `maintenance.view` | Abrir o módulo |
+| `maintenance.manage` | Cadastro de filiais (`/filiais`) |
+| `maintenance.mini-applicators.view.filial-XX` | Ler mini-aplicadores na filial |
+| `maintenance.mini-applicators.manage.filial-XX` | Reposições, motivos e status na filial |
+| `maintenance.manutencao-geral.view.filial-01` | Submódulo manutenção geral (filial 01) |
 
 ## Desenvolvimento
 
@@ -69,4 +86,4 @@ Ver [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-front
 
 ## Design
 
-Seguir [plugins-visual-design-system](../../.cursor/rules/plugins-visual-design-system.mdc) — copiar esqueleto de `plugins/dashboard-production` ou `plugins/transformometro`.
+Seguir [plugins-visual-design-system](../../.cursor/rules/plugins-visual-design-system.mdc) — padrão de tabelas alinhado ao Transformômetro (`DataTableSection`, paginação, ordenação).

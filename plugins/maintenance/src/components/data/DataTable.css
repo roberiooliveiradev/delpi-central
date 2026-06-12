@@ -82,6 +82,63 @@
   display: inline-block;
 }
 
+.dashboard-maintenance .dm-datatable__col--sortable {
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-datatable__sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-datatable__sort-button:hover,
+.dashboard-maintenance .dm-datatable__sort-button:focus-visible {
+  color: var(--dm-text);
+}
+
+.dashboard-maintenance .dm-datatable__sort-indicator {
+  color: var(--dm-text-muted);
+  font-size: 0.85em;
+  flex: none;
+}
+
+.dashboard-maintenance .dm-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dm-card-border);
+}
+
+.dashboard-maintenance .dm-pagination__info {
+  margin: 0;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-pagination__current {
+  color: var(--dm-accent);
+  font-weight: 700;
+}
+
+.dashboard-maintenance .dm-pagination__nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .dashboard-maintenance .dm-datatable__table,
   .dashboard-maintenance .dm-datatable__table tbody,

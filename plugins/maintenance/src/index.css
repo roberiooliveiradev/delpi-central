@@ -737,11 +737,12 @@
 }
 
 .dashboard-maintenance .dm-state-box {
-  margin: 0;
+  margin: 0 0 var(--dm-section-gap);
   padding: 14px 16px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
   color: var(--dm-text);
+  transition: opacity 0.2s ease;
 }
 
 .dashboard-maintenance .dm-state-box--error {
@@ -1030,10 +1031,6 @@
 .dashboard-maintenance .dm-detail-panel .dm-chart-section {
   margin-bottom: 0;
   padding: 14px;
-}
-
-.dashboard-maintenance .dm-state-box {
-  transition: opacity 0.2s ease;
 }
 
 @media (max-width: 1100px) {

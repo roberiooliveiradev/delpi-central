@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hammer, Loader2, RefreshCw } from "lucide-react";
 
-import { type DataTableColumn, DataTableSection, FilterBar, StateBox } from "../../components/data";
+import { type DataTableColumn, DataTableSection, DEFAULT_TABLE_PAGE_SIZE, FilterBar, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -59,6 +59,7 @@ export function MiniAplicadoresPage({
   const [codigo, setCodigo] = useState("");
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [ferramentasPage, setFerramentasPage] = useState(1);
   const [pecas, setPecas] = useState<FerramentaItem[]>([]);
   const [componentes, setComponentes] = useState<ComponenteItem[]>([]);
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
@@ -126,30 +127,33 @@ export function MiniAplicadoresPage({
     [codigoFerramenta, editingReposicaoId, filial, getAccessToken],
   );
 
-  const loadFerramentas = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchFerramentas(
-        {
-          codigo: codigo.trim() || undefined,
-          descricao: descricao.trim() || undefined,
-          filial,
-          page: 1,
-          page_size: 50,
-        },
-        getAccessToken,
-      );
-      setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
-      setItems([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [codigo, descricao, filial, getAccessToken]);
+  const loadFerramentas = useCallback(
+    async (page = ferramentasPage) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchFerramentas(
+          {
+            codigo: codigo.trim() || undefined,
+            descricao: descricao.trim() || undefined,
+            filial,
+            page,
+            page_size: DEFAULT_TABLE_PAGE_SIZE,
+          },
+          getAccessToken,
+        );
+        setItems(data.items ?? []);
+        setTotal(data.total ?? 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
+        setItems([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [codigo, descricao, filial, ferramentasPage, getAccessToken],
+  );
 
   const loadDetalhe = useCallback(
     async (options?: { pecaFilter?: string }) => {
@@ -191,10 +195,18 @@ export function MiniAplicadoresPage({
       setFiltroHistoricoPeca("");
       setEditingReposicaoId(null);
       void loadDetalhe({ pecaFilter: "" });
-      return;
     }
-    void loadFerramentas();
-  }, [codigoFerramenta, filial, loadDetalhe, loadFerramentas]);
+  }, [codigoFerramenta, filial, loadDetalhe]);
+
+  useEffect(() => {
+    if (codigoFerramenta) return;
+    void loadFerramentas(ferramentasPage);
+  }, [codigoFerramenta, ferramentasPage, filial, loadFerramentas]);
+
+  useEffect(() => {
+    if (codigoFerramenta) return;
+    setFerramentasPage(1);
+  }, [filial, codigoFerramenta]);
 
   useEffect(() => {
     if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
@@ -214,7 +226,8 @@ export function MiniAplicadoresPage({
 
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
-    await loadFerramentas();
+    setFerramentasPage(1);
+    await loadFerramentas(1);
   }
 
   async function handleSuggestGolpes() {
@@ -298,8 +311,20 @@ export function MiniAplicadoresPage({
 
   const ferramentasColumns = useMemo<DataTableColumn<FerramentaItem>[]>(
     () => [
-      { key: "codigo", header: "Código", render: (item) => item.codigo },
-      { key: "descricao", header: "Descrição", render: (item) => item.descricao },
+      {
+        key: "codigo",
+        header: "Código",
+        sortable: true,
+        sortValue: (item) => item.codigo,
+        render: (item) => item.codigo,
+      },
+      {
+        key: "descricao",
+        header: "Descrição",
+        sortable: true,
+        sortValue: (item) => item.descricao,
+        render: (item) => item.descricao,
+      },
     ],
     [],
   );
@@ -309,13 +334,30 @@ export function MiniAplicadoresPage({
       {
         key: "data",
         header: "Data",
+        sortable: true,
+        sortValue: (item) => new Date(item.data_reposicao).getTime(),
         render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
       },
-      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
-      { key: "golpes", header: "Golpes", render: (item) => item.golpes, align: "right" },
+      {
+        key: "peca",
+        header: "Peça",
+        sortable: true,
+        sortValue: (item) => item.codigo_peca,
+        render: (item) => item.codigo_peca,
+      },
+      {
+        key: "golpes",
+        header: "Golpes",
+        sortable: true,
+        sortValue: (item) => item.golpes,
+        render: (item) => item.golpes,
+        align: "right",
+      },
       {
         key: "motivo",
         header: "Motivo",
+        sortable: true,
+        sortValue: (item) => item.motivo_descricao ?? String(item.motivo_id),
         render: (item) => item.motivo_descricao ?? item.motivo_id,
       },
     ];
@@ -347,27 +389,53 @@ export function MiniAplicadoresPage({
 
   const componentesColumns = useMemo<DataTableColumn<ComponenteItem>[]>(
     () => [
-      { key: "nivel", header: "Nível", render: (item) => item.nivel, align: "center" },
+      {
+        key: "nivel",
+        header: "Nível",
+        sortable: true,
+        sortValue: (item) => item.nivel,
+        render: (item) => item.nivel,
+        align: "center",
+      },
       {
         key: "codigo",
         header: "Código",
+        sortable: true,
+        sortValue: (item) => item.codigo,
         render: (item) => (
           <span className="dm-datatable__cell-indent" style={{ paddingLeft: `${item.nivel * 12}px` }}>
             {item.codigo}
           </span>
         ),
       },
-      { key: "descricao", header: "Descrição", render: (item) => item.descricao },
-      { key: "unidade", header: "Un.", render: (item) => item.unidade, align: "center" },
+      {
+        key: "descricao",
+        header: "Descrição",
+        sortable: true,
+        sortValue: (item) => item.descricao,
+        render: (item) => item.descricao,
+      },
+      {
+        key: "unidade",
+        header: "Un.",
+        sortable: true,
+        sortValue: (item) => item.unidade,
+        render: (item) => item.unidade,
+        align: "center",
+      },
       {
         key: "estoque01",
         header: "Estoque 01",
+        sortable: true,
+        sortValue: (item) => item.estoque_local_01,
         render: (item) => item.estoque_local_01.toLocaleString("pt-BR"),
         align: "right",
       },
       {
         key: "estoque99",
         header: "Estoque 99",
+        sortable: true,
+        sortValue: (item) => item.estoque_local_99,
         render: (item) => item.estoque_local_99.toLocaleString("pt-BR"),
         align: "right",
       },
@@ -439,6 +507,13 @@ export function MiniAplicadoresPage({
             emptyMessage="Nenhuma ferramenta encontrada."
             getRowKey={(item) => item.codigo}
             onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
+            defaultSortKey="codigo"
+            serverPagination={{
+              page: ferramentasPage,
+              pageSize: DEFAULT_TABLE_PAGE_SIZE,
+              total,
+              onPageChange: setFerramentasPage,
+            }}
           />
         </>
       ) : (
@@ -594,6 +669,8 @@ export function MiniAplicadoresPage({
             emptyMessage="Nenhuma reposição registrada."
             getRowKey={(item) => item.reposicao_id}
             getRowClassName={(item) => (editingReposicaoId === item.reposicao_id ? "is-selected" : undefined)}
+            defaultSortKey="data"
+            defaultSortDirection="desc"
             onRowClick={
               canManageMiniApplicators ? (item) => handleEditReposicao(item) : undefined
             }
@@ -607,6 +684,7 @@ export function MiniAplicadoresPage({
             loading={loading}
             emptyMessage="Nenhum componente na estrutura desta ferramenta."
             getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
+            defaultSortKey="nivel"
           />
         </>
       )}

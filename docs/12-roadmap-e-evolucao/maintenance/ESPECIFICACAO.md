@@ -91,8 +91,27 @@ Sessão de filial obrigatória para operações (equivalente ao combo empresa do
 | Ferramenta | Detalhe tab | Histórico reposições, filtros, CRUD |
 | Form reposição | FormReposicao | Nova/edição |
 | Componentes | FormInfo | Árvore componentes + estoque |
-| Relatório | Relatório tab | Últimas reposições + alertas + gráfico |
+| Relatório | Relatório tab | Últimas reposições + alertas + detalhe com gráficos |
 | Configuração | Config tab | Motivos + status |
+
+### 5.1 Apresentação de listas (MFE)
+
+Todas as telas de tabela usam o módulo canônico `DataTableSection` (`plugins/maintenance/src/components/data/`):
+
+| Comportamento | Detalhe |
+|---------------|---------|
+| Paginação | **Anterior · Página N de M · Próxima** — default 20 linhas/página |
+| Ferramentas | Paginação **server-side** (`GET .../ferramentas?page=&page_size=`) |
+| Demais listas | Paginação client-side sobre dados já carregados |
+| Ordenação | Colunas com `sortable` + `sortValue`; clique alterna asc/desc |
+| Ordenação padrão | Alertas: `% uso` desc; reposições: data desc; ferramentas: código asc |
+
+### 5.2 Gráficos (detalhe preventivo)
+
+| Gráfico | Tipo | Detalhe |
+|---------|------|---------|
+| Uso vs. média | Barras verticais | Golpes atuais vs. média histórica + linha de referência |
+| Histórico entre reposições | Linha + tendência | Série de golpes por ciclo + regressão linear tracejada (Recharts) |
 
 Wireframe futuro preventiva parametrizável: legado `telas.md` (critério, limites por filial) — **Fase 4**.
 
@@ -117,5 +136,6 @@ Wireframe futuro preventiva parametrizável: legado `telas.md` (critério, limit
 - [ ] Listagem ferramentas/peças idêntica ao filtro TOTVS legado.
 - [ ] Golpes calculados via api-delpi com amostra validada.
 - [ ] Relatório preventivo com status e ordenação equivalentes.
+- [ ] Listas web com paginação e ordenação de colunas (paridade UX legado em telas longas).
 - [ ] Permissões RBAC filial funcionando.
 - [ ] Zero query Protheus fora da api-delpi.

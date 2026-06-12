@@ -215,10 +215,19 @@ export function ConfiguracaoPage({
 
   const motivosColumns = useMemo<DataTableColumn<MotivoItem>[]>(() => {
     const columns: DataTableColumn<MotivoItem>[] = [
-      { key: "id", header: "ID", render: (item) => item.motivo_id, align: "center" },
+      {
+        key: "id",
+        header: "ID",
+        sortable: true,
+        sortValue: (item) => item.motivo_id,
+        render: (item) => item.motivo_id,
+        align: "center",
+      },
       {
         key: "descricao",
         header: "Descrição",
+        sortable: true,
+        sortValue: (item) => motivoEdits[item.motivo_id] ?? item.descricao,
         render: (item) =>
           canManageMiniApplicators ? (
             <div className="dm-editable-cell">
@@ -269,6 +278,8 @@ export function ConfiguracaoPage({
       {
         key: "status",
         header: "Status",
+        sortable: true,
+        sortValue: (item) => (statusEdits[item.status_id] ?? item).descricao,
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
@@ -292,6 +303,8 @@ export function ConfiguracaoPage({
       {
         key: "operador",
         header: "Operador",
+        sortable: true,
+        sortValue: (item) => (statusEdits[item.status_id] ?? item).operador,
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
@@ -318,6 +331,8 @@ export function ConfiguracaoPage({
       {
         key: "percentual",
         header: "Percentual",
+        sortable: true,
+        sortValue: (item) => (statusEdits[item.status_id] ?? item).percentual,
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (

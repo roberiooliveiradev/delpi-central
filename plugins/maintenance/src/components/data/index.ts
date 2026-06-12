@@ -1,6 +1,7 @@
 export { ChartSection } from "./ChartSection";
 export { DataTable } from "./DataTable";
-export { DataTableSection } from "./DataTableSection";
+export { DataTableSection, DEFAULT_TABLE_PAGE_SIZE } from "./DataTableSection";
+export { Pagination } from "./Pagination";
 export { FilialBadge } from "./FilialBadge";
 export { FilterBar } from "./FilterBar";
 export { PendingChangeBadge } from "./PendingChangeBadge";

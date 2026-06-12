@@ -135,11 +135,15 @@ export function FiliaisPage({
       {
         key: "codigo",
         header: "Código",
+        sortable: true,
+        sortValue: (item) => item.codigo_filial,
         render: (item) => item.codigo_filial,
       },
       {
         key: "nome",
         header: "Nome",
+        sortable: true,
+        sortValue: (item) => (edits[item.filial_id] ?? item).nome_filial,
         render: (item) => {
           const draft = edits[item.filial_id] ?? item;
           return (
@@ -164,6 +168,8 @@ export function FiliaisPage({
       {
         key: "status",
         header: "Status",
+        sortable: true,
+        sortValue: (item) => (edits[item.filial_id] ?? item).status_filial,
         render: (item) => {
           const draft = edits[item.filial_id] ?? item;
           return (

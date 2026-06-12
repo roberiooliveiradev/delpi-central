@@ -39,7 +39,9 @@ bash scripts/homologacao/check-maintenance-prod.sh
 # ou: curl -s https://minhadelpi.com.br/apps/maintenance-api/maintenance/health | head -c 80
 ```
 
-Re-registrar manifest v0.4 na Core API se permissões/rotas ainda não foram atualizadas.
+Re-registrar manifest **v0.2.1** na Core API se permissões/rotas ainda não foram atualizadas.
+
+**Gateway:** locations de API devem enviar `Cache-Control: no-store` (commit `e38ff14c` e posteriores). Sem isso, CDN/proxy pode devolver HTML do portal em `/apps/maintenance-api/*`.
 
 ### Dev local
 
@@ -70,17 +72,19 @@ export BASE_URL="http://localhost"
 ./plugins/maintenance/scripts/register-manifest.sh
 ```
 
-Permissões mínimas (ver `maintenance.manifest.json`):
+Permissões canônicas (ver `maintenance.manifest.json` v0.2.1):
 
 | Permissão | Uso |
 |-----------|-----|
 | `maintenance.view` | Abrir o módulo (início) |
-| `maintenance.view.filial-01` / `02` | Escopo de **dados** na API (filial) |
-| `maintenance.manage.filial-01` / `02` | Escrita operacional na filial |
-| `maintenance.mini-applicators.view` | Ver submódulo (ferramentas, relatório) |
-| `maintenance.mini-applicators.manage` | Reposições, motivos, status preventivo |
+| `maintenance.manage` | Cadastro de filiais (`/apps/maintenance/filiais`) |
+| `maintenance.mini-applicators.view.filial-01` / `02` | Ler ferramentas, relatório e histórico na filial |
+| `maintenance.mini-applicators.manage.filial-01` / `02` | Reposições, motivos e status preventivo na filial |
+| `maintenance.manutencao-geral.view.filial-01` | Formulário manutenção geral (filial 01) |
 
-Fluxo: escolher filial no **Início** (se houver mais de uma); submódulos visíveis conforme `mini-applicators.view`; mutações exigem `mini-applicators.manage` **e** `manage.filial-XX` da filial ativa.
+Fluxo: escolher filial no **Início** (se houver mais de uma); submódulos visíveis conforme `mini-applicators.view.filial-XX`; mutações exigem `mini-applicators.manage.filial-XX` da filial ativa. Após alterar permissões na Core API, o usuário deve **logout/login**.
+
+**Não usar** permissões genéricas fora do manifesto (`maintenance.view.filial-XX`, `maintenance.manage.filial-XX`, `maintenance.mini-applicators.view` sem sufixo de filial) — a API não as mapeia para escopo.
 
 ## Migração Access → Postgres (one-shot)
 
@@ -116,7 +120,9 @@ docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filia
 | Card «Status da API» com erro no portal | Conferir JWT, gateway e `GET /apps/maintenance-api/maintenance/health` |
 | `db_ready: false` | Verificar migrations e variáveis `PLUGINS_DB_*` |
 | Golpes zerados no relatório | api-delpi indisponível ou filial incorreta; conferir logs `maintenance-api` |
-| 403 em mutação | RBAC — usuário precisa `maintenance.mini-applicators.manage` **e** `maintenance.manage.filial-XX` da filial escolhida no início |
+| 403 em mutação | RBAC — usuário precisa `maintenance.mini-applicators.manage.filial-XX` da filial escolhida no início |
+| Aba Configuração não aparece | Falta `mini-applicators.manage.filial-XX` ou manifesto desatualizado na Core API |
+| Tabela mostra só 50 ferramentas | Rebuild do MFE — lista usa paginação server-side (`page_size=20`) |
 
 ## CI
 

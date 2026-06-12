@@ -9,6 +9,9 @@ type DataTableProps<T> = {
   getRowKey: (row: T, index: number) => string;
   getRowClassName?: (row: T) => string | undefined;
   onRowClick?: (row: T) => void;
+  sortKey?: string | null;
+  sortDirection?: "asc" | "desc";
+  onSortChange?: (columnKey: string) => void;
 };
 
 export function DataTable<T>({
@@ -19,6 +22,9 @@ export function DataTable<T>({
   getRowKey,
   getRowClassName,
   onRowClick,
+  sortKey = null,
+  sortDirection = "asc",
+  onSortChange,
 }: DataTableProps<T>) {
   const tableClass = onRowClick ? "dm-datatable__table dm-datatable__table--clickable" : "dm-datatable__table";
 
@@ -28,11 +34,43 @@ export function DataTable<T>({
         <table className={tableClass}>
           <thead>
             <tr>
-              {columns.map((column) => (
-                <th key={column.key} className={column.className}>
-                  {column.header}
-                </th>
-              ))}
+              {columns.map((column) => {
+                const isSorted = sortKey === column.key;
+                const sortClass = column.sortable ? "dm-datatable__col--sortable" : "";
+                const headerClass = [column.className, sortClass].filter(Boolean).join(" ");
+
+                return (
+                  <th
+                    key={column.key}
+                    className={headerClass || undefined}
+                    aria-sort={
+                      column.sortable
+                        ? isSorted
+                          ? sortDirection === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : "none"
+                        : undefined
+                    }
+                  >
+                    {column.sortable && onSortChange ? (
+                      <button
+                        type="button"
+                        className="dm-datatable__sort-button"
+                        onClick={() => onSortChange(column.key)}
+                        aria-label={`Ordenar por ${column.header}`}
+                      >
+                        <span>{column.header}</span>
+                        <span className="dm-datatable__sort-indicator" aria-hidden="true">
+                          {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                        </span>
+                      </button>
+                    ) : (
+                      column.header
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

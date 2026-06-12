@@ -224,17 +224,29 @@ export function RelatorioPage({
       {
         key: "data",
         header: "Data",
+        sortable: true,
+        sortValue: (item) => new Date(item.data_reposicao).getTime(),
         render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
       },
       {
         key: "ferramenta",
         header: "Ferramenta",
+        sortable: true,
+        sortValue: (item) => item.codigo_ferramenta,
         render: (item) => item.codigo_ferramenta,
       },
-      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
+      {
+        key: "peca",
+        header: "Peça",
+        sortable: true,
+        sortValue: (item) => item.codigo_peca,
+        render: (item) => item.codigo_peca,
+      },
       {
         key: "golpes",
         header: "Golpes",
+        sortable: true,
+        sortValue: (item) => item.golpes,
         render: (item) => item.golpes.toLocaleString("pt-BR"),
         align: "right",
       },
@@ -242,40 +254,65 @@ export function RelatorioPage({
     [],
   );
 
+  const statusSortRank = (status: string) => {
+    if (status === "CRÍTICO") return 0;
+    if (status === "ATENÇÃO") return 1;
+    if (status === "OK") return 2;
+    return 3;
+  };
+
   const alertasColumns = useMemo<DataTableColumn<PreventivaAlerta>[]>(
     () => [
       {
         key: "status",
         header: "Status",
         interactive: true,
+        sortable: true,
+        sortValue: (item) => statusSortRank(item.status),
         render: (item) => <StatusBadge status={item.status} />,
       },
       {
         key: "ferramenta",
         header: "Ferramenta",
+        sortable: true,
+        sortValue: (item) => item.codigo_ferramenta,
         render: (item) => item.codigo_ferramenta,
       },
-      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
+      {
+        key: "peca",
+        header: "Peça",
+        sortable: true,
+        sortValue: (item) => item.codigo_peca,
+        render: (item) => item.codigo_peca,
+      },
       {
         key: "ultima",
         header: "Última reposição",
+        sortable: true,
+        sortValue: (item) => new Date(item.data_ultima_reposicao).getTime(),
         render: (item) => new Date(item.data_ultima_reposicao).toLocaleString("pt-BR"),
       },
       {
         key: "golpes_atuais",
         header: "Golpes atuais",
+        sortable: true,
+        sortValue: (item) => item.golpes_atuais,
         render: (item) => item.golpes_atuais.toLocaleString("pt-BR"),
         align: "right",
       },
       {
         key: "media",
         header: "Média",
+        sortable: true,
+        sortValue: (item) => item.media_golpes,
         render: (item) => item.media_golpes.toLocaleString("pt-BR"),
         align: "right",
       },
       {
         key: "percentual",
         header: "% uso",
+        sortable: true,
+        sortValue: (item) => item.percentual_uso,
         render: (item) => `${item.percentual_uso.toLocaleString("pt-BR")}%`,
         align: "right",
       },
@@ -451,6 +488,8 @@ export function RelatorioPage({
               getRowClassName={(item) =>
                 isRowSelected(item.codigo_ferramenta, item.codigo_peca) ? "is-selected" : undefined
               }
+              defaultSortKey="percentual"
+              defaultSortDirection="desc"
               onRowClick={handleSelectAlerta}
             />
           ) : null}
@@ -468,6 +507,8 @@ export function RelatorioPage({
               getRowClassName={(item) =>
                 isRowSelected(item.codigo_ferramenta, item.codigo_peca) ? "is-selected" : undefined
               }
+              defaultSortKey="data"
+              defaultSortDirection="desc"
               onRowClick={handleSelectUltima}
             />
           ) : null}

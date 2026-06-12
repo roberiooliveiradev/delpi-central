@@ -1,7 +1,12 @@
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { useClientPagination } from "../../hooks/useClientPagination";
+import { sortRows } from "../../utils/dataTableSort";
 import { DataTable } from "./DataTable";
-import type { DataTableColumn } from "./types";
+import { Pagination } from "./Pagination";
+import type { DataTableColumn, ServerPaginationConfig } from "./types";
+
+export const DEFAULT_TABLE_PAGE_SIZE = 20;
 
 type DataTableSectionProps<T> = {
   title: string;
@@ -17,6 +22,11 @@ type DataTableSectionProps<T> = {
   getRowClassName?: (row: T) => string | undefined;
   embedded?: boolean;
   onRowClick?: (row: T) => void;
+  pageSize?: number;
+  serverPagination?: ServerPaginationConfig;
+  defaultSortKey?: string;
+  defaultSortDirection?: "asc" | "desc";
+  hidePaginationWhenSinglePage?: boolean;
 };
 
 export function DataTableSection<T>({
@@ -33,7 +43,58 @@ export function DataTableSection<T>({
   getRowClassName,
   embedded = false,
   onRowClick,
+  pageSize = DEFAULT_TABLE_PAGE_SIZE,
+  serverPagination,
+  defaultSortKey,
+  defaultSortDirection = "asc",
+  hidePaginationWhenSinglePage = false,
 }: DataTableSectionProps<T>) {
+  const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSortDirection);
+
+  useEffect(() => {
+    setSortKey(defaultSortKey ?? null);
+  }, [defaultSortKey]);
+
+  useEffect(() => {
+    setSortDirection(defaultSortDirection);
+  }, [defaultSortDirection]);
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return rows;
+    return sortRows(rows, columns, sortKey, sortDirection);
+  }, [rows, columns, sortKey, sortDirection]);
+
+  const clientPagination = useClientPagination(
+    serverPagination ? [] : sortedRows,
+    pageSize,
+  );
+
+  const displayRows = serverPagination ? sortedRows : clientPagination.slice;
+  const paginationPage = serverPagination?.page ?? clientPagination.page;
+  const paginationPageSize = serverPagination?.pageSize ?? clientPagination.pageSize;
+  const paginationTotal = serverPagination?.total ?? clientPagination.total;
+  const handlePageChange =
+    serverPagination?.onPageChange ?? ((nextPage: number) => clientPagination.setPage(nextPage));
+
+  useEffect(() => {
+    if (!serverPagination) {
+      clientPagination.setPage(1);
+    }
+  }, [sortKey, sortDirection, serverPagination]);
+
+  const handleSortChange = (columnKey: string) => {
+    const isSameColumn = sortKey === columnKey;
+    const nextDirection = isSameColumn ? (sortDirection === "asc" ? "desc" : "asc") : "asc";
+    setSortKey(columnKey);
+    setSortDirection(nextDirection);
+    if (serverPagination) {
+      serverPagination.onPageChange(1);
+      return;
+    }
+    clientPagination.setPage(1);
+  };
+
   const content = (
     <>
       <div className="dm-section-header">
@@ -51,13 +112,26 @@ export function DataTableSection<T>({
 
       <DataTable
         columns={columns}
-        rows={rows}
+        rows={displayRows}
         loading={loading}
         emptyMessage={emptyMessage}
         getRowKey={getRowKey}
         getRowClassName={getRowClassName}
         onRowClick={onRowClick}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
       />
+
+      {!loading && paginationTotal > 0 ? (
+        <Pagination
+          page={paginationPage}
+          pageSize={paginationPageSize}
+          total={paginationTotal}
+          onPageChange={handlePageChange}
+          hideWhenSinglePage={hidePaginationWhenSinglePage}
+        />
+      ) : null}
     </>
   );
 

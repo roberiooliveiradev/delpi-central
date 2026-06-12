@@ -73,6 +73,20 @@ maint_app/
 
 O WinForms legado usa `UI/Controllers` finos. No MFE, o equivalente são **hooks + api clients** em `src/data/api/` — sem lógica de negócio duplicada.
 
+### Apresentação de dados (MFE)
+
+| Componente | Responsabilidade |
+|------------|------------------|
+| `DataTableSection` | Seção com título, toolbar, tabela, paginação e ordenação |
+| `DataTable` | Renderização tabular; cabeçalhos ordenáveis |
+| `Pagination` | Navegação Anterior / Página N de M / Próxima |
+| `useClientPagination` | Fatia local de arrays (default 20 itens) |
+| `dataTableSort.sortRows` | Ordenação por `sortValue` ou texto da célula |
+| `PreventivaDetailPanel` | Detalhe preventivo + gráficos Recharts |
+| `StateBox` | Feedback inline (sucesso/erro) com `--dm-section-gap` abaixo |
+
+Padrão alinhado ao Transformômetro — **não** duplicar paginação/ordenação em páginas individuais.
+
 ## Modelo de domínio — mini-aplicadores (Postgres)
 
 Migrado do Access `MiniAplicadoresBD`:
@@ -148,7 +162,7 @@ Detalhe das rotas propostas: [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01
 | maintenance-api → api-delpi | JWT propagado do request |
 | Consumidor externo → dados operacionais | **Não** expor Postgres direto; futura fachada api-delpi se necessário (padrão Transforma+) |
 
-RBAC por filial: espelhar `transformometro.view.filial-XX` / `manage.filial-XX`.
+RBAC por filial: permissões explícitas no manifesto (`maintenance.mini-applicators.view.filial-XX`, `manage.filial-XX`). Escopo resolvido em `FilialAccessScopeService` — ver `maintenance_permissions.py` e testes `test_filial_access_scope_service.py`.
 
 ## Referências no monorepo
 

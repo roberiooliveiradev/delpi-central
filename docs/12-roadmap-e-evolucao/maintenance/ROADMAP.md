@@ -42,8 +42,8 @@ Entregas em fases para reduzir risco, reaproveitar padrões do monorepo e migrar
 |---------|---------|
 | `PreventivaService` | média golpes, % uso, classificação status |
 | Endpoints | últimas reposições, alertas, histórico por ferramenta/peça |
-| UI relatório | tabelas, cores CRÍTICO/ATENÇÃO/OK, painel detalhe |
-| Gráfico | histórico golpes entre trocas (Recharts) |
+| UI relatório | tabelas paginadas/ordenáveis, cores CRÍTICO/ATENÇÃO/OK, painel detalhe |
+| Gráfico | histórico golpes (linha + tendência) e uso vs. média (Recharts) |
 | Testes | golden cases a partir de fixtures legado |
 
 **Critério de pronto:** ranking preventivo bate com amostra validada contra WinForms para ≥5 pares ferramenta/peça.
