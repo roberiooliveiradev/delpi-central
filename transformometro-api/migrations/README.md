@@ -23,6 +23,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V014 | `V014__revisoes_instancia_id.sql` | `revisoes.instancia_id` + backfill a partir de processos legados |
 | V015 | `V015__processo_mestre.sql` | Remove `filial_id`/`setor_id` de `processos` (par em `processo_instancias`) |
 | V016 | `V016__recurso_escopo_recurso.sql` | `escopo_recurso` em recursos (`empresa` \| `filial` \| `setor`) |
+| V017 | `V017__dashboard_calculos_uuid.sql` | Cache `dashboard_calculos` PK UUID + FKs instância/filial/setor; view snapshot recriada |
 
 ## Comandos
 

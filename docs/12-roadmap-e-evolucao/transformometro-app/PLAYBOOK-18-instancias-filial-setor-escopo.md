@@ -393,7 +393,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 | **S3 — Instâncias + backfill** | V013–V014, repos, backfill script, testes I1–I3, I15 | Revisões com `instancia_id` UUID |
 | **S4 — Processo mestre** | V015, API cadastro mestre + instância na criação | ✅ API (MFE pendente) |
 | **S5 — Escopo híbrido** | V016, `SharedResourceScopeService`, testes I4–I7 | ✅ Calculador live |
-| **S6 — Dashboard cache UUID** | V017, `dashboard_calculos` UUID, recalc full, I16 | Cache alinhado |
+| **S6 — Dashboard cache UUID** | V017, `dashboard_calculos` UUID, recalc full, I16 | ✅ Cache alinhado |
 | **S7 — Dashboard visões** | `DashboardViewScopeService`, toggle MFE, query alias I14, export I10 | Consolidado / filial / dept |
 | **S8 — Duplicar instância** | Novo endpoint, deprecar duplicar processo | Rollout multi-unidade |
 | **S9 — Integração via api-delpi + backup** | Paridade TM S2S + gateway/DTO api-delpi; smoke; I11/I17; JSON I12 | Contrato público = `/engineering/transforma-mais/*`; SI/MFE só api-delpi |
@@ -469,3 +469,4 @@ O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para 
 | S3 Instâncias | ✅ V013–V014, rotas instância, `revisoes.instancia_id` |
 | S4 Processo mestre | ✅ V015, create processo + instância |
 | S5 Escopo híbrido | ✅ V016, SharedResourceScopeService |
+| S6 Cache dashboard | ✅ V017, `dashboard_cache_denorm_service`, view snapshot |

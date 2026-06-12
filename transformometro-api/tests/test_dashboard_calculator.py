@@ -34,6 +34,9 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
     assert row["custo_recursos_compartilhados_mes"] == 150.0
     assert row["investimento_total_mes"] == 150.0
     assert row["economia_liquida_mes"] == row["economia_bruta"] - 150.0
+    assert row["codigo_filial"] == "01"
+    assert row["codigo_setor"] == "engenharia"
+    assert "dashboard_calculo_id" not in row
 
 
 def test_baseline_row_is_not_materialized():

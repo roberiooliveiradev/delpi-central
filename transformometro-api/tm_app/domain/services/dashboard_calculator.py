@@ -14,6 +14,9 @@ from tm_app.core.business_days import (
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
+from tm_app.domain.services.dashboard_cache_denorm_service import (
+    resolve_cache_scope_for_review,
+)
 from tm_app.domain.services.shared_resource_scope_service import filter_rateio_pool
 
 
@@ -501,14 +504,21 @@ class DashboardCalculatorService:
 
         competencia = competencia_date.strftime("%Y-%m")
         processo_id = self._empty_to_none(process_row.get("processo_id")) or ""
+        scope = resolve_cache_scope_for_review(
+            review,
+            process_row,
+            instancias_by_id=context.instancias_by_id,
+        )
 
         return {
-            "dashboard_calculo_id": f"{review_id}::{competencia}",
             "revisao_id": review_id,
             "processo_id": processo_id,
+            "instancia_id": scope.get("instancia_id"),
             "competencia": competencia,
-            "filial_id": self._empty_to_none(process_row.get("filial_id")),
-            "setor_id": self._empty_to_none(process_row.get("setor_id")),
+            "filial_id": scope.get("filial_id"),
+            "setor_id": scope.get("setor_id"),
+            "codigo_filial": scope.get("codigo_filial"),
+            "codigo_setor": scope.get("codigo_setor"),
             "cenario_tipo": (self._empty_to_none(review.get("cenario_tipo")) or "").lower(),
             "revisao_ativa": self._is_true(review.get("revisao_ativa")),
             "economia_tempo": savings["economia_tempo"],

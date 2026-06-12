@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from tm_app.domain.raw_data import TransformometroRawData
+from tm_app.domain.services.dashboard_cache_denorm_service import (
+    filial_filter_sql,
+    setor_filter_sql,
+)
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
@@ -99,22 +103,24 @@ class DashboardDataRepository(PluginBaseRepository):
 class DashboardCalculoRepository(PluginBaseRepository):
     _UPSERT_SQL = """
             INSERT INTO transformometro.dashboard_calculos (
-                dashboard_calculo_id, revisao_id, processo_id, competencia,
-                filial_id, setor_id, cenario_tipo, revisao_ativa,
+                revisao_id, processo_id, instancia_id, competencia,
+                filial_id, setor_id, codigo_filial, codigo_setor,
+                cenario_tipo, revisao_ativa,
                 economia_tempo, economia_retrabalho, economia_erros, economia_outros,
                 economia_recursos_compartilhados, economia_bruta,
                 investimento_unico_mes, custo_recorrente_mes, economia_liquida_mes,
                 custo_recursos_compartilhados_mes, horas_economizadas_mes
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
-            ON CONFLICT (dashboard_calculo_id) DO UPDATE SET
-                revisao_id = EXCLUDED.revisao_id,
+            ON CONFLICT (revisao_id, competencia) DO UPDATE SET
                 processo_id = EXCLUDED.processo_id,
-                competencia = EXCLUDED.competencia,
+                instancia_id = EXCLUDED.instancia_id,
                 filial_id = EXCLUDED.filial_id,
                 setor_id = EXCLUDED.setor_id,
+                codigo_filial = EXCLUDED.codigo_filial,
+                codigo_setor = EXCLUDED.codigo_setor,
                 cenario_tipo = EXCLUDED.cenario_tipo,
                 revisao_ativa = EXCLUDED.revisao_ativa,
                 economia_tempo = EXCLUDED.economia_tempo,
@@ -131,14 +137,34 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 calculated_at = NOW()
             """
 
+    @staticmethod
+    def _append_scope_filters(
+        clauses: list[str],
+        params: list[Any],
+        *,
+        table_alias: str | None = "d",
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+    ) -> None:
+        if filial_id:
+            sql, bound = filial_filter_sql(table_alias or "", filial_id)
+            clauses.append(sql)
+            params.extend(bound)
+        if setor_id:
+            sql, bound = setor_filter_sql(table_alias or "", setor_id)
+            clauses.append(sql)
+            params.extend(bound)
+
     def _row_params(self, row: dict[str, Any]) -> tuple[Any, ...]:
         return (
-            row["dashboard_calculo_id"],
             row["revisao_id"],
             row["processo_id"],
+            row.get("instancia_id"),
             row["competencia"],
             row.get("filial_id"),
             row.get("setor_id"),
+            row.get("codigo_filial"),
+            row.get("codigo_setor"),
             row["cenario_tipo"],
             row.get("revisao_ativa", False),
             row.get("economia_tempo", 0),
@@ -275,12 +301,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
         if revisao_id:
             clauses.append("d.revisao_id = %s")
             params.append(revisao_id)
-        if filial_id:
-            clauses.append("d.filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("d.setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses, params, filial_id=filial_id, setor_id=setor_id
+        )
         if competencia_inicio:
             clauses.append("d.competencia >= %s")
             params.append(competencia_inicio)
@@ -300,8 +323,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 p.codigo_processo,
                 p.nome_processo,
                 d.competencia,
-                d.filial_id,
-                d.setor_id,
+                d.instancia_id,
+                d.codigo_filial AS filial_id,
+                d.codigo_setor AS setor_id,
                 d.cenario_tipo,
                 d.revisao_ativa,
                 d.economia_bruta,
@@ -383,12 +407,13 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses: list[str] = []
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses,
+            params,
+            table_alias=None,
+            filial_id=filial_id,
+            setor_id=setor_id,
+        )
         if competencia_inicio:
             clauses.append("competencia >= %s")
             params.append(competencia_inicio)
@@ -429,12 +454,13 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses: list[str] = []
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses,
+            params,
+            table_alias=None,
+            filial_id=filial_id,
+            setor_id=setor_id,
+        )
         if competencia_inicio:
             clauses.append("competencia >= %s")
             params.append(competencia_inicio)
@@ -474,12 +500,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses: list[str] = []
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("d.filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("d.setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses, params, filial_id=filial_id, setor_id=setor_id
+        )
         if competencia:
             clauses.append("d.competencia = %s")
             params.append(competencia)
@@ -497,8 +520,8 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 p.processo_id,
                 p.codigo_processo,
                 p.nome_processo,
-                p.filial_id,
-                p.setor_id,
+                d.codigo_filial AS filial_id,
+                d.codigo_setor AS setor_id,
                 SUM(d.economia_liquida_mes) AS economia_liquida_mes,
                 SUM(d.economia_bruta) AS economia_bruta,
                 SUM(d.investimento_unico_mes) AS investimento_unico_mes,
@@ -530,7 +553,12 @@ class DashboardCalculoRepository(PluginBaseRepository):
             FROM transformometro.dashboard_calculos d
             JOIN transformometro.processos p ON p.processo_id = d.processo_id
             {where_sql}
-            GROUP BY p.processo_id, p.codigo_processo, p.nome_processo, p.filial_id, p.setor_id
+            GROUP BY
+                p.processo_id,
+                p.codigo_processo,
+                p.nome_processo,
+                d.codigo_filial,
+                d.codigo_setor
             ORDER BY economia_diaria DESC
             LIMIT %s
             """,
@@ -549,12 +577,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses = ["d.cenario_tipo IN ('melhoria', 'automacao', 'correcao')"]
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("d.filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("d.setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses, params, filial_id=filial_id, setor_id=setor_id
+        )
         if familia_processo:
             clauses.append("p.familia_processo = %s")
             params.append(familia_processo)
@@ -573,8 +598,8 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 d.processo_id,
                 p.codigo_processo,
                 p.nome_processo,
-                p.filial_id,
-                p.setor_id,
+                d.codigo_filial AS filial_id,
+                d.codigo_setor AS setor_id,
                 p.familia_processo,
                 p.agrupador_ferramenta,
                 d.competencia,
@@ -584,7 +609,7 @@ class DashboardCalculoRepository(PluginBaseRepository):
             WHERE {where_sql}
             GROUP BY
                 d.processo_id, p.codigo_processo, p.nome_processo,
-                p.filial_id, p.setor_id, p.familia_processo, p.agrupador_ferramenta,
+                d.codigo_filial, d.codigo_setor, p.familia_processo, p.agrupador_ferramenta,
                 d.competencia
             ORDER BY d.processo_id, d.competencia
             """,
@@ -603,12 +628,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses: list[str] = []
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("d.filial_id = %s")
-            params.append(filial_id)
-        if setor_id:
-            clauses.append("d.setor_id = %s")
-            params.append(setor_id)
+        self._append_scope_filters(
+            clauses, params, filial_id=filial_id, setor_id=setor_id
+        )
         if familia_processo:
             clauses.append("p.familia_processo = %s")
             params.append(familia_processo)
@@ -628,8 +650,8 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 p.nome_processo,
                 p.familia_processo,
                 p.agrupador_ferramenta,
-                d.filial_id,
-                d.setor_id,
+                d.codigo_filial AS filial_id,
+                d.codigo_setor AS setor_id,
                 d.competencia,
                 d.cenario_tipo,
                 d.economia_bruta,
@@ -661,9 +683,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
         clauses = ["p.familia_processo IS NOT NULL", "p.familia_processo <> ''"]
         params: list[Any] = []
 
-        if filial_id:
-            clauses.append("d.filial_id = %s")
-            params.append(filial_id)
+        self._append_scope_filters(
+            clauses, params, filial_id=filial_id, setor_id=None
+        )
         if competencia_inicio:
             clauses.append("d.competencia >= %s")
             params.append(competencia_inicio)
