@@ -233,4 +233,79 @@
   .dashboard-maintenance .dm-datatable__table .dm-editable-cell {
     align-items: stretch;
   }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "desc desc"
+      "flag actions";
+    align-items: center;
+    gap: 8px 10px;
+    padding: 12px 14px;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr {
+    grid-template-areas:
+      "desc desc"
+      "oper pct"
+      "actions actions";
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td {
+    display: block;
+    padding: 0;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td::before {
+    display: block;
+    margin-bottom: 4px;
+    font-size: var(--dm-font-xs);
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(1) {
+    grid-area: desc;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(2) {
+    grid-area: flag;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(3) {
+    grid-area: actions;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(2) {
+    grid-area: oper;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(3) {
+    grid-area: pct;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(4) {
+    grid-area: actions;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Ignora preventiva"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Ações"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Descrição"]::before {
+    display: none;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table td[data-label="Operador"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table td[data-label="Percentual"]::before {
+    display: block;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-row-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
+  .dashboard-maintenance .dm-table-section--editable-config .dm-row-actions .dm-ghost-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }

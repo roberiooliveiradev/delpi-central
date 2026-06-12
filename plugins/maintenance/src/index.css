@@ -419,10 +419,6 @@
   transform: translateY(-1px);
 }
 
-.dashboard-maintenance .dm-nav--submodule {
-  flex-wrap: nowrap;
-}
-
 .dashboard-maintenance .dm-nav__link--back {
   display: inline-flex;
   align-items: center;
@@ -638,6 +634,13 @@
   gap: 12px;
   align-items: flex-end;
   min-width: 0;
+}
+
+.dashboard-maintenance .dm-filter-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .dashboard-maintenance .dm-field {
@@ -1640,8 +1643,75 @@
   }
 
   .dashboard-maintenance .dm-filter-bar {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
     align-items: stretch;
+  }
+
+  .dashboard-maintenance .dm-section-toolbar .dm-filter-bar {
+    margin-bottom: 0;
+  }
+
+  .dashboard-maintenance .dm-filter-bar > .dm-field,
+  .dashboard-maintenance .dm-filter-bar > .dm-field--multi-select {
+    width: 100%;
+    min-width: 0;
+    flex: unset;
+  }
+
+  .dashboard-maintenance .dm-filter-bar__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .dashboard-maintenance .dm-filter-bar__actions .dm-primary-btn,
+  .dashboard-maintenance .dm-filter-bar__actions .dm-ghost-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions .dm-primary-btn {
+    order: -1;
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--status-create {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-maintenance .dm-filter-bar--status-create > .dm-field:first-of-type,
+  .dashboard-maintenance .dm-filter-bar--status-create > .dm-primary-btn {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--motivo-create {
+    grid-template-columns: 1fr auto;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--motivo-create > .dm-field:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--motivo-create > .dm-checkbox-field {
+    min-height: 0;
+    align-self: center;
+    white-space: normal;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--search > .dm-primary-btn {
+    width: 100%;
+  }
+
+  .dashboard-maintenance .dm-checkbox-field {
+    min-height: 0;
+    white-space: normal;
   }
 
   .dashboard-maintenance .dm-form-grid {
@@ -1679,11 +1749,17 @@
   .dashboard-maintenance .dm-filter-bar > .dm-primary-btn,
   .dashboard-maintenance .dm-filter-bar > .dm-ghost-btn,
   .dashboard-maintenance .dm-filter-bar > .dm-link-btn,
-  .dashboard-maintenance .dm-section-toolbar .dm-filter-bar .dm-primary-btn,
-  .dashboard-maintenance .dm-section-toolbar .dm-filter-bar .dm-ghost-btn,
-  .dashboard-maintenance .dm-card > .dm-filter-bar .dm-primary-btn,
-  .dashboard-maintenance .dm-card > .dm-filter-bar .dm-ghost-btn {
+  .dashboard-maintenance .dm-section-toolbar .dm-filter-bar > .dm-primary-btn,
+  .dashboard-maintenance .dm-section-toolbar .dm-filter-bar > .dm-ghost-btn,
+  .dashboard-maintenance .dm-card > .dm-filter-bar > .dm-primary-btn,
+  .dashboard-maintenance .dm-card > .dm-filter-bar > .dm-ghost-btn {
     width: 100%;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--motivo-create > .dm-primary-btn {
+    width: auto;
+    min-width: 7.5rem;
+    justify-self: end;
   }
 
   .dashboard-maintenance .dm-nav__link,

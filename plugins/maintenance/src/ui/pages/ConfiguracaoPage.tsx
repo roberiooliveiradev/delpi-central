@@ -529,11 +529,12 @@ export function ConfiguracaoPage({
       {success ? <StateBox variant="success">{success}</StateBox> : null}
 
       <DataTableSection
+        className="dm-table-section--editable-config"
         title="Motivos de reposição"
         titleHint={CONFIG_TOOLTIPS.motivosSection}
         toolbar={
           canManageMiniApplicators ? (
-            <FilterBar embedded onSubmit={handleCreateMotivo}>
+            <FilterBar embedded className="dm-filter-bar--motivo-create" onSubmit={handleCreateMotivo}>
               <label className="dm-field">
                 <FieldLabel label="Novo motivo" hint={CONFIG_TOOLTIPS.motivoDescricao} />
                 <input
@@ -575,11 +576,12 @@ export function ConfiguracaoPage({
       />
 
       <DataTableSection
+        className="dm-table-section--editable-config dm-table-section--editable-status"
         title="Status preventivo"
         titleHint={CONFIG_TOOLTIPS.statusSection}
         toolbar={
           canManageMiniApplicators ? (
-            <FilterBar embedded onSubmit={handleCreateStatus}>
+            <FilterBar embedded className="dm-filter-bar--status-create" onSubmit={handleCreateStatus}>
               <label className="dm-field">
                 <FieldLabel label="Novo status" hint={CONFIG_TOOLTIPS.statusDescricao} />
                 <input

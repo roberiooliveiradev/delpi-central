@@ -10,13 +10,18 @@ type MiniAplicadoresNavProps = {
 };
 
 const BASE_LINKS = [
-  { path: MAINTENANCE_ROUTES.miniAplicadores, label: "Ferramentas" },
-  { path: MAINTENANCE_ROUTES.miniAplicadoresRelatorio, label: "Relatório preventivo" },
+  { path: MAINTENANCE_ROUTES.miniAplicadores, label: "Ferramentas", shortLabel: "Ferramentas" },
+  {
+    path: MAINTENANCE_ROUTES.miniAplicadoresRelatorio,
+    label: "Relatório preventivo",
+    shortLabel: "Preventivo",
+  },
 ];
 
 const CONFIG_LINK = {
   path: MAINTENANCE_ROUTES.miniAplicadoresConfiguracao,
   label: "Configuração",
+  shortLabel: "Config.",
 };
 
 function isToolDetailPath(currentPath: string | undefined): boolean {
@@ -68,7 +73,8 @@ export function MiniAplicadoresNav({
               className={`dm-nav__link${active ? " is-active" : ""}`}
               onClick={() => onNavigate(link.path)}
             >
-              {link.label}
+              <span className="dm-nav__link-label dm-nav__link-label--full">{link.label}</span>
+              <span className="dm-nav__link-label dm-nav__link-label--short">{link.shortLabel}</span>
             </button>
           );
         })}

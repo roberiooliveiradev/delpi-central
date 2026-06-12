@@ -21,6 +21,7 @@
 
 .dashboard-maintenance .dm-page-header__content {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .dashboard-maintenance .dm-page-header__context {
@@ -57,6 +58,8 @@
   display: grid;
   gap: 10px;
   margin-top: 14px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .dashboard-maintenance .dm-nav__tabs {
@@ -64,9 +67,11 @@
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 
-.dashboard-maintenance .dm-nav__link--home {
+.dashboard-maintenance .dm-nav__link--home,
+.dashboard-maintenance .dm-nav__link--back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -81,9 +86,35 @@
   white-space: nowrap;
 }
 
+.dashboard-maintenance .dm-nav__link-label--short {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-maintenance .dm-nav--submodule {
+    gap: 8px;
+  }
+
+  .dashboard-maintenance .dm-nav__tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dashboard-maintenance .dm-nav__tabs .dm-nav__link {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: var(--dm-font-sm);
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-maintenance .dm-page-header {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .dashboard-maintenance .dm-page-header__brand {
@@ -98,10 +129,6 @@
     width: 100%;
   }
 
-  .dashboard-maintenance .dm-page-header {
-    gap: 12px;
-  }
-
   .dashboard-maintenance .dm-header-actions .dm-primary-btn {
     width: 100%;
   }
@@ -114,17 +141,14 @@
   .dashboard-maintenance .dm-nav__link-text {
     white-space: normal;
   }
+}
 
-  .dashboard-maintenance .dm-nav__tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
+@media (max-width: 640px) {
+  .dashboard-maintenance .dm-nav__link-label--full {
+    display: none;
   }
 
-  .dashboard-maintenance .dm-nav__tabs .dm-nav__link {
-    flex: 0 0 auto;
+  .dashboard-maintenance .dm-nav__link-label--short {
+    display: inline;
   }
 }

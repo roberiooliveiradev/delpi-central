@@ -889,7 +889,7 @@ export function MiniAplicadoresPage({
 
       {!codigoFerramenta ? (
         <>
-          <FilterBar onSubmit={handleSearch}>
+          <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
             <label className="dm-field">
               <span>Buscar por código</span>
               <input

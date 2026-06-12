@@ -35,6 +35,8 @@ type DataTableSectionProps<T> = {
   defaultSortKey?: string;
   defaultSortDirection?: "asc" | "desc";
   hidePaginationWhenSinglePage?: boolean;
+  /** Classe extra no container da seção (ex.: variantes mobile). */
+  className?: string;
 };
 
 export function DataTableSection<T>({
@@ -59,6 +61,7 @@ export function DataTableSection<T>({
   defaultSortKey,
   defaultSortDirection = "asc",
   hidePaginationWhenSinglePage = false,
+  className,
 }: DataTableSectionProps<T>) {
   const serverMode = serverTable ?? serverPagination;
   const isFullServerTable = Boolean(serverTable);
@@ -165,8 +168,12 @@ export function DataTableSection<T>({
   );
 
   if (embedded) {
-    return <section className="dm-table-section dm-table-section--embedded">{content}</section>;
+    return (
+      <section className={["dm-table-section", "dm-table-section--embedded", className].filter(Boolean).join(" ")}>
+        {content}
+      </section>
+    );
   }
 
-  return <section className="dm-card dm-table-section">{content}</section>;
+  return <section className={["dm-card", "dm-table-section", className].filter(Boolean).join(" ")}>{content}</section>;
 }

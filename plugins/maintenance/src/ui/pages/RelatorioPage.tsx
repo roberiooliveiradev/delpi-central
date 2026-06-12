@@ -538,7 +538,7 @@ export function RelatorioPage({
         </article>
       </section>
 
-      <FilterBar>
+      <FilterBar className="dm-filter-bar--relatorio">
         <label className="dm-field">
           <span>Ferramenta</span>
           <input
@@ -556,29 +556,32 @@ export function RelatorioPage({
           />
         </label>
         <MultiSelectField
+          className="dm-field--multi-select"
           label="Status"
           emptyLabel="Todos"
           options={statusOptions}
           selectedValues={statusFiltro}
           onChange={(values) => setStatusFiltro(values as StatusFilterValue[])}
         />
-        <button type="button" className="dm-ghost-btn" onClick={clearFilters}>
-          <X size={16} />
-          Limpar
-        </button>
-        <button type="button" className="dm-primary-btn" onClick={applyFilters}>
-          <Search size={16} />
-          Buscar
-        </button>
-        <button
-          type="button"
-          className="dm-ghost-btn"
-          onClick={() => void loadReport()}
-          disabled={alertasLoading || ultimasLoading || resumoLoading}
-        >
-          <RefreshCw size={16} />
-          Recarregar
-        </button>
+        <div className="dm-filter-bar__actions">
+          <button type="button" className="dm-ghost-btn" onClick={clearFilters}>
+            <X size={16} />
+            Limpar
+          </button>
+          <button type="button" className="dm-primary-btn" onClick={applyFilters}>
+            <Search size={16} />
+            Buscar
+          </button>
+          <button
+            type="button"
+            className="dm-ghost-btn"
+            onClick={() => void loadReport()}
+            disabled={alertasLoading || ultimasLoading || resumoLoading}
+          >
+            <RefreshCw size={16} />
+            Recarregar
+          </button>
+        </div>
       </FilterBar>
 
       {error ? <StateBox variant="error">{error}</StateBox> : null}
