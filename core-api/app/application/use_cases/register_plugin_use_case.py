@@ -22,6 +22,22 @@ def _checksum(manifest: Dict[str, Any]) -> str:
     ).hexdigest()
 
 
+def _route_row(plugin_id: str, route: Dict[str, Any]) -> Dict[str, Any]:
+    show_in_menu = route.get("showInMenu")
+    if show_in_menu is None:
+        show_in_menu = route.get("show_in_menu", True)
+
+    return {
+        "app_id": plugin_id,
+        "path": route.get("path"),
+        "label": route.get("label"),
+        "icon": route.get("icon"),
+        "permission": route.get("permission"),
+        "order": route.get("order", 0),
+        "show_in_menu": True if show_in_menu is None else bool(show_in_menu),
+    }
+
+
 class RegisterPluginUseCase:
 
     def __init__(self, uow: UnitOfWork, validator: ManifestValidator):
@@ -102,7 +118,7 @@ class RegisterPluginUseCase:
 
             # then routes
             self._uow.plugin_routes.bulk_create([
-                {"app_id": plugin_id, **route}
+                _route_row(plugin_id, route)
                 for route in (manifest.get("routes") or [])
             ])
 
@@ -154,15 +170,7 @@ class RegisterPluginUseCase:
             ])
 
             self._uow.plugin_routes.bulk_create([
-                {
-                    "app_id": plugin_id,
-                    "path": r.get("path"),
-                    "label": r.get("label"),
-                    "icon": r.get("icon"),
-                    "permission": r.get("permission"),
-                    "order": r.get("order", 0),
-                    "show_in_menu": r.get("showInMenu", True),
-                }
+                _route_row(plugin_id, r)
                 for r in (manifest.get("routes") or [])
             ])
 
