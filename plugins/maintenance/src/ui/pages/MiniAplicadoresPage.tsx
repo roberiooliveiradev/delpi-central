@@ -2,15 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Hammer, RefreshCw } from "lucide-react";
 
 import { MaintenanceShell } from "../../components/MaintenanceShell";
-import { PageHeader } from "../../components/PageHeader";
+import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
+  useMaintenanceActiveFilial,
+  useMaintenanceModuleHomePath,
+  useOperationalFilial,
+} from "../../hooks/useMaintenanceScope";
+import {
   createReposicao,
+  deleteReposicao,
   fetchFerramentas,
   fetchMotivos,
   fetchPecas,
   fetchReposicoes,
   suggestGolpes,
+  updateReposicao,
   type FerramentaItem,
   type MotivoItem,
   type ReposicaoItem,
@@ -19,6 +26,7 @@ import {
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  filialScope?: string;
   onNavigate: (path: string) => void;
   codigoFerramenta?: string;
 };
@@ -26,11 +34,14 @@ type MiniAplicadoresPageProps = {
 export function MiniAplicadoresPage({
   getAccessToken,
   pathname,
+  filialScope,
   onNavigate,
   codigoFerramenta,
 }: MiniAplicadoresPageProps) {
+  const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
+  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
+  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const [descricao, setDescricao] = useState("");
-  const [filial, setFilial] = useState("01");
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
   const [pecas, setPecas] = useState<FerramentaItem[]>([]);
@@ -40,9 +51,21 @@ export function MiniAplicadoresPage({
   const [golpes, setGolpes] = useState(0);
   const [motivoId, setMotivoId] = useState<number | "">("");
   const [observacao, setObservacao] = useState("");
+  const [dataReposicao, setDataReposicao] = useState(() => new Date().toISOString());
+  const [editingReposicaoId, setEditingReposicaoId] = useState<string | null>(null);
+  const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const resetReposicaoForm = useCallback(() => {
+    setEditingReposicaoId(null);
+    setCodigoPeca(pecas[0]?.codigo ?? "");
+    setGolpes(0);
+    setMotivoId("");
+    setObservacao("");
+    setDataReposicao(new Date().toISOString());
+  }, [pecas]);
 
   const loadFerramentas = useCallback(async () => {
     setLoading(true);
@@ -63,36 +86,63 @@ export function MiniAplicadoresPage({
     }
   }, [descricao, filial, getAccessToken]);
 
-  const loadDetalhe = useCallback(async () => {
+  const loadDetalhe = useCallback(
+    async (options?: { pecaFilter?: string }) => {
     if (!codigoFerramenta) return;
+    const pecaFilter = options?.pecaFilter ?? filtroHistoricoPeca;
     setLoading(true);
     setError(null);
     try {
       const [pecasData, motivosData, reposicoesData] = await Promise.all([
-        fetchPecas(codigoFerramenta, getAccessToken),
-        fetchMotivos(getAccessToken),
-        fetchReposicoes({ filial, codigo_ferramenta: codigoFerramenta }, getAccessToken),
+        fetchPecas(codigoFerramenta, filial, getAccessToken),
+        fetchMotivos(filial, getAccessToken),
+        fetchReposicoes(
+          {
+            filial,
+            codigo_ferramenta: codigoFerramenta,
+            codigo_peca: pecaFilter || undefined,
+          },
+          getAccessToken,
+        ),
       ]);
-      setPecas(pecasData.items ?? []);
+      const pecaItems = pecasData.items ?? [];
+      setPecas(pecaItems);
       setMotivos(motivosData.items ?? []);
       setReposicoes(reposicoesData.items ?? []);
-      if ((pecasData.items ?? []).length > 0 && !codigoPeca) {
-        setCodigoPeca(pecasData.items[0].codigo);
-      }
+      setCodigoPeca((current) => current || pecaItems[0]?.codigo || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
     } finally {
       setLoading(false);
     }
-  }, [codigoFerramenta, codigoPeca, filial, getAccessToken]);
+  },
+    [codigoFerramenta, filial, filtroHistoricoPeca, getAccessToken],
+  );
 
   useEffect(() => {
     if (codigoFerramenta) {
-      void loadDetalhe();
+      setFiltroHistoricoPeca("");
+      setEditingReposicaoId(null);
+      void loadDetalhe({ pecaFilter: "" });
       return;
     }
     void loadFerramentas();
-  }, [codigoFerramenta, loadDetalhe, loadFerramentas]);
+  }, [codigoFerramenta, filial, loadFerramentas]);
+
+  useEffect(() => {
+    if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
+    let active = true;
+    suggestGolpes({ filial, codigo_ferramenta: codigoFerramenta, codigo_peca: codigoPeca }, getAccessToken)
+      .then((data) => {
+        if (active) setGolpes(data.total_golpes ?? 0);
+      })
+      .catch(() => {
+        if (active) setGolpes(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [codigoFerramenta, codigoPeca, editingReposicaoId, filial, getAccessToken]);
 
   async function handleSuggestGolpes() {
     if (!codigoFerramenta || !codigoPeca) return;
@@ -107,42 +157,74 @@ export function MiniAplicadoresPage({
     }
   }
 
-  async function handleCreateReposicao(event: React.FormEvent) {
+  function handleEditReposicao(item: ReposicaoItem) {
+    setEditingReposicaoId(item.reposicao_id);
+    setCodigoPeca(item.codigo_peca);
+    setGolpes(item.golpes);
+    setMotivoId(item.motivo_id);
+    setObservacao(item.observacao ?? "");
+    setDataReposicao(item.data_reposicao);
+    setSuccess(null);
+    setError(null);
+  }
+
+  async function handleDeleteReposicao(item: ReposicaoItem) {
+    if (!window.confirm(`Excluir reposição de ${item.codigo_peca} em ${new Date(item.data_reposicao).toLocaleString("pt-BR")}?`)) {
+      return;
+    }
+    setError(null);
+    setSuccess(null);
+    try {
+      await deleteReposicao(item.reposicao_id, getAccessToken);
+      setSuccess("Reposição excluída.");
+      resetReposicaoForm();
+      await loadDetalhe();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir reposição.");
+    }
+  }
+
+  async function handleSubmitReposicao(event: React.FormEvent) {
     event.preventDefault();
     if (!codigoFerramenta || !codigoPeca || motivoId === "") return;
     setError(null);
     setSuccess(null);
+    const payload = {
+      filial,
+      codigo_ferramenta: codigoFerramenta,
+      codigo_peca: codigoPeca,
+      data_reposicao: dataReposicao,
+      golpes,
+      motivo_id: Number(motivoId),
+      observacao: observacao.trim() || undefined,
+    };
     try {
-      await createReposicao(
-        {
-          filial,
-          codigo_ferramenta: codigoFerramenta,
-          codigo_peca: codigoPeca,
-          data_reposicao: new Date().toISOString(),
-          golpes,
-          motivo_id: Number(motivoId),
-          observacao: observacao.trim() || undefined,
-        },
-        getAccessToken,
-      );
-      setSuccess("Reposição registrada.");
-      setObservacao("");
+      if (editingReposicaoId) {
+        await updateReposicao(editingReposicaoId, payload, getAccessToken);
+        setSuccess("Reposição atualizada.");
+      } else {
+        await createReposicao(payload, getAccessToken);
+        setSuccess("Reposição registrada.");
+      }
+      resetReposicaoForm();
       await loadDetalhe();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao registrar reposição.");
+      setError(err instanceof Error ? err.message : "Falha ao salvar reposição.");
     }
   }
 
   return (
     <MaintenanceShell>
-      <PageHeader
-        title={codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Mini-aplicadores"}
+      <MiniAplicadoresPageHeader
+        title={codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Ferramentas"}
         subtitle={
           codigoFerramenta
             ? "Histórico de reposições e cadastro de nova troca."
             : "Ferramentas dos grupos 23 e 24 via api-delpi."
         }
         icon={Hammer}
+        moduleHomePath={moduleHomePath}
+        showConfiguration={canManageMiniApplicators}
         currentPath={pathname}
         onNavigate={onNavigate}
         actions={
@@ -161,13 +243,7 @@ export function MiniAplicadoresPage({
       {!codigoFerramenta ? (
         <>
           <section className="dm-card dm-filter-bar">
-            <label className="dm-field">
-              <span>Filial</span>
-              <select value={filial} onChange={(event) => setFilial(event.target.value)}>
-                <option value="01">01 — Matriz</option>
-                <option value="02">02 — ES</option>
-              </select>
-            </label>
+            <p className="dm-filial-badge">Filial operacional: {filial}</p>
             <label className="dm-field">
               <span>Buscar por descrição</span>
               <input
@@ -210,7 +286,7 @@ export function MiniAplicadoresPage({
                           type="button"
                           className="dm-link-btn"
                           onClick={() =>
-                            onNavigate(`${MAINTENANCE_ROUTES.miniAplicadores}/${item.codigo}`)
+                            onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))
                           }
                         >
                           {item.codigo}
@@ -229,63 +305,66 @@ export function MiniAplicadoresPage({
           {error ? <p className="dm-state-box dm-state-box--error">{error}</p> : null}
           {success ? <p className="dm-state-box">{success}</p> : null}
 
-          <section className="dm-card">
-            <h3 className="dm-card__title">Nova reposição</h3>
-            <form className="dm-filter-bar" onSubmit={handleCreateReposicao}>
-              <label className="dm-field">
-                <span>Filial</span>
-                <select value={filial} onChange={(event) => setFilial(event.target.value)}>
-                  <option value="01">01 — Matriz</option>
-                  <option value="02">02 — ES</option>
-                </select>
-              </label>
-              <label className="dm-field">
-                <span>Peça</span>
-                <select value={codigoPeca} onChange={(event) => setCodigoPeca(event.target.value)}>
-                  {pecas.map((peca) => (
-                    <option key={peca.codigo} value={peca.codigo}>
-                      {peca.codigo} — {peca.descricao}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="dm-field">
-                <span>Golpes</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={golpes}
-                  onChange={(event) => setGolpes(Number(event.target.value))}
-                />
-              </label>
-              <button type="button" className="dm-ghost-btn" onClick={() => void handleSuggestGolpes()}>
-                Sugerir golpes
-              </button>
-              <label className="dm-field">
-                <span>Motivo</span>
-                <select
-                  value={motivoId}
-                  onChange={(event) =>
-                    setMotivoId(event.target.value ? Number(event.target.value) : "")
-                  }
-                >
-                  <option value="">Selecione…</option>
-                  {motivos.map((motivo) => (
-                    <option key={motivo.motivo_id} value={motivo.motivo_id}>
-                      {motivo.descricao}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="dm-field">
-                <span>Observação</span>
-                <input value={observacao} onChange={(event) => setObservacao(event.target.value)} />
-              </label>
-              <button type="submit" className="dm-primary-btn">
-                Registrar reposição
-              </button>
-            </form>
-          </section>
+          {canManageMiniApplicators ? (
+            <section className="dm-card">
+              <h3 className="dm-card__title">
+                {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
+              </h3>
+              <form className="dm-filter-bar" onSubmit={handleSubmitReposicao}>
+                <p className="dm-filial-badge">Filial operacional: {filial}</p>
+                <label className="dm-field">
+                  <span>Peça</span>
+                  <select value={codigoPeca} onChange={(event) => setCodigoPeca(event.target.value)}>
+                    {pecas.map((peca) => (
+                      <option key={peca.codigo} value={peca.codigo}>
+                        {peca.codigo} — {peca.descricao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="dm-field">
+                  <span>Golpes</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={golpes}
+                    onChange={(event) => setGolpes(Number(event.target.value))}
+                  />
+                </label>
+                <button type="button" className="dm-ghost-btn" onClick={() => void handleSuggestGolpes()}>
+                  Sugerir golpes
+                </button>
+                <label className="dm-field">
+                  <span>Motivo</span>
+                  <select
+                    value={motivoId}
+                    onChange={(event) =>
+                      setMotivoId(event.target.value ? Number(event.target.value) : "")
+                    }
+                  >
+                    <option value="">Selecione…</option>
+                    {motivos.map((motivo) => (
+                      <option key={motivo.motivo_id} value={motivo.motivo_id}>
+                        {motivo.descricao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="dm-field">
+                  <span>Observação</span>
+                  <input value={observacao} onChange={(event) => setObservacao(event.target.value)} />
+                </label>
+                <button type="submit" className="dm-primary-btn">
+                  {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
+                </button>
+                {editingReposicaoId ? (
+                  <button type="button" className="dm-ghost-btn" onClick={resetReposicaoForm}>
+                    Cancelar edição
+                  </button>
+                ) : null}
+              </form>
+            </section>
+          ) : null}
 
           <section className="dm-card">
             <div className="dm-card__header">
@@ -298,6 +377,25 @@ export function MiniAplicadoresPage({
                 Voltar para lista
               </button>
             </div>
+            <div className="dm-filter-bar">
+              <label className="dm-field">
+                <span>Filtrar por peça</span>
+                <select
+                  value={filtroHistoricoPeca}
+                  onChange={(event) => setFiltroHistoricoPeca(event.target.value)}
+                >
+                  <option value="">Todas</option>
+                  {pecas.map((peca) => (
+                    <option key={peca.codigo} value={peca.codigo}>
+                      {peca.codigo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" className="dm-ghost-btn" onClick={() => void loadDetalhe()}>
+                Aplicar filtro
+              </button>
+            </div>
             <div className="dm-table-wrap">
               <table className="dm-table">
                 <thead>
@@ -306,22 +404,43 @@ export function MiniAplicadoresPage({
                     <th>Peça</th>
                     <th>Golpes</th>
                     <th>Motivo</th>
+                    {canManageMiniApplicators ? <th>Ações</th> : null}
                   </tr>
                 </thead>
                 <tbody>
                   {reposicoes.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="dm-table__empty">
+                      <td colSpan={canManageMiniApplicators ? 5 : 4} className="dm-table__empty">
                         Nenhuma reposição registrada.
                       </td>
                     </tr>
                   ) : null}
                   {reposicoes.map((item) => (
-                    <tr key={item.reposicao_id}>
+                    <tr key={item.reposicao_id} className={editingReposicaoId === item.reposicao_id ? "is-selected" : ""}>
                       <td data-label="Data">{new Date(item.data_reposicao).toLocaleString("pt-BR")}</td>
                       <td data-label="Peça">{item.codigo_peca}</td>
                       <td data-label="Golpes">{item.golpes}</td>
                       <td data-label="Motivo">{item.motivo_descricao ?? item.motivo_id}</td>
+                      {canManageMiniApplicators ? (
+                        <td data-label="Ações">
+                          <div className="dm-row-actions">
+                            <button
+                              type="button"
+                              className="dm-ghost-btn"
+                              onClick={() => handleEditReposicao(item)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className="dm-ghost-btn dm-ghost-btn--danger"
+                              onClick={() => void handleDeleteReposicao(item)}
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

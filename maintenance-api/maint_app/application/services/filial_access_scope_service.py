@@ -3,14 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from delpi_auth.authz_core import has_any_permission, has_permission
+from delpi_auth.authz_core import has_permission
 
 from maint_app.application.security.maintenance_permissions import (
-    BRANCH_MANAGE_PERMISSIONS,
-    BRANCH_VIEW_PERMISSIONS,
-    GLOBAL_MANAGE_PERMISSIONS,
     MAINTENANCE_VIEW,
     MANAGE_FILIAL_PERMISSIONS,
+    MINI_APPLICATORS_MANAGE,
     VIEW_FILIAL_PERMISSIONS,
 )
 
@@ -102,16 +100,16 @@ class FilialAccessScopeService:
         if user is not None and getattr(user, "is_superadmin", False):
             return True
 
+        if user is not None and not has_permission(user, MINI_APPLICATORS_MANAGE):
+            return False
+
         permissions = list(getattr(user, "permissions", []) or []) if user else []
         manage_perm = MANAGE_FILIAL_PERMISSIONS.get(codigo)
         if manage_perm and manage_perm in permissions:
             return True
 
         if scope.is_unrestricted and not scope.scoped_manage:
-            return has_any_permission(user, GLOBAL_MANAGE_PERMISSIONS) if user else False
-
-        if has_any_permission(user, GLOBAL_MANAGE_PERMISSIONS):
-            return True
+            return has_permission(user, MINI_APPLICATORS_MANAGE) if user else False
 
         return False
 
@@ -127,7 +125,7 @@ class FilialAccessScopeService:
 
     def assert_view_filial(self, scope: FilialAccessScope, codigo_filial: str) -> None:
         if not self.can_view_filial(scope, codigo_filial):
-            raise PermissionError("Sem permissão para acessar esta filial.")
+            raise PermissionError("Sem permissão para acessar dados desta filial.")
 
     def assert_manage_filial(
         self,
@@ -138,3 +136,14 @@ class FilialAccessScopeService:
     ) -> None:
         if not self.can_manage_filial(scope, codigo_filial, user=user):
             raise PermissionError("Sem permissão para alterar dados nesta filial.")
+
+    def resolve_default_filial(
+        self,
+        scope: FilialAccessScope,
+        filiais: list[dict[str, Any]],
+    ) -> str | None:
+        if not filiais:
+            return None
+        if len(filiais) == 1:
+            return str(filiais[0]["id"])
+        return None

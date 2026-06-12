@@ -15,9 +15,25 @@ export type FerramentasPage = {
   total_pages?: number;
 };
 
+export type MaintenanceSubmodule = {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  entry_path: string;
+  can_manage?: boolean;
+};
+
 export type MaintenanceOptions = {
   filiais: Array<{ id: string; label: string }>;
-  modulos: Array<{ id: string; label: string }>;
+  submodules: MaintenanceSubmodule[];
+  modulos: MaintenanceSubmodule[];
+  default_filial?: string | null;
+  access_scope?: {
+    mode: string;
+    allowed_filiais: string[];
+    scoped_manage: boolean;
+  };
 };
 
 export function fetchMaintenanceOptions(getAccessToken?: () => string | undefined) {
@@ -26,18 +42,18 @@ export function fetchMaintenanceOptions(getAccessToken?: () => string | undefine
 
 export function fetchFerramentas(
   params: {
+    filial: string;
     codigo?: string;
     descricao?: string;
-    filial?: string;
     page?: number;
     page_size?: number;
   },
   getAccessToken?: () => string | undefined,
 ) {
   const search = new URLSearchParams();
+  search.set("filial", params.filial);
   if (params.codigo) search.set("codigo", params.codigo);
   if (params.descricao) search.set("descricao", params.descricao);
-  if (params.filial) search.set("filial", params.filial);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
 
@@ -48,10 +64,15 @@ export function fetchFerramentas(
   );
 }
 
-export function fetchFerramenta(codigo: string, getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<FerramentaItem>(`/mini-aplicadores/ferramentas/${encodeURIComponent(codigo)}`, {
-    getAccessToken,
-  });
+export function fetchFerramenta(
+  codigo: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<FerramentaItem>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigo)}?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
 }
 
 
@@ -113,14 +134,18 @@ export type ReposicaoItem = {
   observacao?: string | null;
 };
 
-export function fetchMotivos(getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{ items: MotivoItem[]; total: number }>("/motivos", { getAccessToken });
+export function fetchMotivos(filial: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: MotivoItem[]; total: number }>(
+    `/motivos?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
 }
 
-export function fetchStatusPeca(getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{ items: StatusItem[]; total: number }>("/status-peca", {
-    getAccessToken,
-  });
+export function fetchStatusPeca(filial: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: StatusItem[]; total: number }>(
+    `/status-peca?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
 }
 
 export function fetchReposicoes(
@@ -154,9 +179,83 @@ export function createReposicao(
   });
 }
 
-export function fetchPecas(codigoFerramenta: string, getAccessToken?: () => string | undefined) {
+export function updateReposicao(
+  reposicaoId: string,
+  body: {
+    filial: string;
+    codigo_ferramenta: string;
+    codigo_peca: string;
+    data_reposicao: string;
+    golpes: number;
+    motivo_id: number;
+    observacao?: string;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<ReposicaoItem>(`/reposicoes/${encodeURIComponent(reposicaoId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    getAccessToken,
+  });
+}
+
+export function deleteReposicao(reposicaoId: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<null>(`/reposicoes/${encodeURIComponent(reposicaoId)}`, {
+    method: "DELETE",
+    getAccessToken,
+  });
+}
+
+export function createMotivo(descricao: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<MotivoItem>("/motivos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ descricao }),
+    getAccessToken,
+  });
+}
+
+export function updateMotivo(
+  motivoId: number,
+  descricao: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<MotivoItem>(`/motivos/${motivoId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ descricao }),
+    getAccessToken,
+  });
+}
+
+export function deleteMotivo(motivoId: number, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<null>(`/motivos/${motivoId}`, {
+    method: "DELETE",
+    getAccessToken,
+  });
+}
+
+export function updateStatusPeca(
+  statusId: number,
+  body: { descricao?: string; operador?: string; percentual?: number },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<StatusItem>(`/status-peca/${statusId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    getAccessToken,
+  });
+}
+
+export function fetchPecas(
+  codigoFerramenta: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
   return maintenanceFetch<{ items: FerramentaItem[]; total: number }>(
-    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/pecas`,
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/pecas?filial=${encodeURIComponent(filial)}`,
     { getAccessToken },
   );
 }

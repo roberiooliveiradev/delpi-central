@@ -1,6 +1,6 @@
 # Visão geral — Manutenção
 
-**Última atualização:** jun/2026 (Fase 0 — documentação)
+**Última atualização:** jun/2026 (Fases 0–2 + submódulos RBAC)
 
 ## O que é
 
@@ -40,11 +40,12 @@ O sistema responde cruzando:
 
 | Rota | Função |
 |------|--------|
-| `/apps/maintenance` | Home — seleção de filial / atalhos |
+| `/apps/maintenance` | Home — seleção de filial (se >1) e cards de submódulos |
+| `/apps/maintenance/filial-01` / `filial-02` | Home com escopo de filial na URL |
 | `/apps/maintenance/mini-aplicadores` | Lista de ferramentas (TOTVS via API plugin → api-delpi) |
-| `/apps/maintenance/mini-aplicadores/{codigo}` | Detalhe: reposições, filtros, CRUD |
-| `/apps/maintenance/relatorio` | Últimas reposições + alertas preventivos + gráfico |
-| `/apps/maintenance/configuracao` | Motivos e regras de status |
+| `/apps/maintenance/mini-aplicadores/{codigo}` | Detalhe: reposições, CRUD, golpes sugeridos |
+| `/apps/maintenance/mini-aplicadores/relatorio` | Alertas preventivos + gráfico |
+| `/apps/maintenance/mini-aplicadores/configuracao` | Motivos e regras de status (manage) |
 
 ## Fluxo do usuário
 
@@ -69,16 +70,17 @@ O id `maintenance` agrupa **todos** os domínios de manutenção industrial. **M
 - **Não** expõe SQL Server ao browser nem ao MFE.
 - **Não** mantém Access como fonte de verdade após migração (Postgres canônico).
 
-## Permissões (manifesto — proposta)
+## Permissões (manifesto v0.3.0)
 
 | Código | Uso |
 |--------|-----|
-| `maintenance.view` | Abrir módulo, listagens e relatório |
-| `maintenance.replacements.manage` | Criar/editar/excluir reposições |
-| `maintenance.reasons.manage` | CRUD motivos de troca |
-| `maintenance.status.manage` | Editar percentuais de status preventivo |
-| `maintenance.view.filial-01` / `filial-02` | Leitura restrita à filial |
-| `maintenance.manage.filial-01` / `filial-02` | CRUD operacional na filial |
+| `maintenance.view` | Abrir módulo (início) |
+| `maintenance.view.filial-01` / `filial-02` | Escopo de **dados** na API (filial) |
+| `maintenance.manage.filial-01` / `filial-02` | Escrita operacional na filial |
+| `maintenance.mini-applicators.view` | Ver submódulo mini-aplicadores (ferramentas, relatório) |
+| `maintenance.mini-applicators.manage` | Reposições, motivos, status preventivo |
+
+Mutações exigem **manage do submódulo** e **manage da filial** ativa. Visibilidade do card do submódulo depende só de `mini-applicators.view`.
 
 ## Stack alinhada ao monorepo
 

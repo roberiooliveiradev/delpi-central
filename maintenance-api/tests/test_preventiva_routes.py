@@ -1,14 +1,27 @@
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from maint_app.application.services.filial_access_scope_service import FilialAccessScope
 from maint_app.main import app
 
 
+@patch("maint_app.interface.http.routes.preventiva_routes.resolve_access_scope")
+@patch("maint_app.interface.http.routes.preventiva_routes.resolve_user")
 @patch("delpi_auth.middleware.fastapi_auth.is_public_path", return_value=True)
 @patch("maint_app.interface.http.routes.preventiva_routes.build_preventiva_service")
-def test_preventiva_alertas_envelope(mock_service, _public):
+def test_preventiva_alertas_envelope(mock_service, _public, mock_user, mock_scope):
+    mock_user.return_value = SimpleNamespace(
+        is_superadmin=False,
+        permissions=["maintenance.mini-applicators.view", "maintenance.view.filial-01"],
+    )
+    mock_scope.return_value = FilialAccessScope(
+        mode="scoped",
+        allowed_codigos=frozenset({"01"}),
+        scoped_manage=False,
+    )
     mock_service.return_value.listar_alertas.return_value = [
         {
             "filial": "01",

@@ -25,7 +25,7 @@
 
 ## Estado
 
-Fases 0–2 concluídas (CRUD, preventiva, relatório UI). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
+Fases 0–2 concluídas. Submódulos com RBAC próprio, filial escolhida no início, CRUD completo na UI (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
 
 | Script | Uso |
 |--------|-----|

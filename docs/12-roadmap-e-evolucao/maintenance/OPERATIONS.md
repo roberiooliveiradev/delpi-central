@@ -8,8 +8,10 @@ Runbook para equipe após go-live. Postgres (`maintenance` schema) é a fonte de
 |---------|-----|
 | Portal | `http://localhost/apps/maintenance` |
 | Mini-aplicadores | `/apps/maintenance/mini-aplicadores` |
-| Relatório preventivo | `/apps/maintenance/relatorio` |
-| Configuração | `/apps/maintenance/configuracao` |
+| Relatório preventivo | `/apps/maintenance/mini-aplicadores/relatorio` |
+| Configuração | `/apps/maintenance/mini-aplicadores/configuracao` |
+| Home filial 01 | `/apps/maintenance/filial-01` |
+| Home filial 02 | `/apps/maintenance/filial-02` |
 | API health | `/apps/maintenance-api/maintenance/health` |
 
 ## Rotina diária
@@ -40,18 +42,25 @@ curl -s http://localhost/apps/maintenance-api/maintenance/health | python3 -m js
 
 O manifesto registra o app; permissões são atribuídas na **Core API** (não Keycloak).
 
+O **manifesto** registra o app e declara permissões/rotas. Rotas internas usam `"showInMenu": false` — o menu lateral do portal mostra só o tile **Manutenção**; filial e submódulos ficam no MFE.
+
 ```bash
 export TOKEN="<jwt com apps.manage>"
 export BASE_URL="http://localhost"
-chmod +x plugins/maintenance/scripts/register-manifest.sh
 ./plugins/maintenance/scripts/register-manifest.sh
 ```
 
 Permissões mínimas (ver `maintenance.manifest.json`):
 
-- `maintenance.view`
-- `maintenance.replacements.manage`
-- `maintenance.view.filial-01` / `maintenance.view.filial-02` (escopo filial)
+| Permissão | Uso |
+|-----------|-----|
+| `maintenance.view` | Abrir o módulo (início) |
+| `maintenance.view.filial-01` / `02` | Escopo de **dados** na API (filial) |
+| `maintenance.manage.filial-01` / `02` | Escrita operacional na filial |
+| `maintenance.mini-applicators.view` | Ver submódulo (ferramentas, relatório) |
+| `maintenance.mini-applicators.manage` | Reposições, motivos, status preventivo |
+
+Fluxo: escolher filial no **Início** (se houver mais de uma); submódulos visíveis conforme `mini-applicators.view`; mutações exigem `mini-applicators.manage` **e** `manage.filial-XX` da filial ativa.
 
 ## Migração Access → Postgres (one-shot)
 
@@ -87,7 +96,7 @@ docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filia
 | Card «Status da API» com erro no portal | Conferir JWT, gateway e `GET /apps/maintenance-api/maintenance/health` |
 | `db_ready: false` | Verificar migrations e variáveis `PLUGINS_DB_*` |
 | Golpes zerados no relatório | api-delpi indisponível ou filial incorreta; conferir logs `maintenance-api` |
-| 403 em mutação | RBAC filial — usuário precisa `maintenance.manage.filial-XX` ou `maintenance.replacements.manage` global |
+| 403 em mutação | RBAC — usuário precisa `maintenance.mini-applicators.manage` **e** `maintenance.manage.filial-XX` da filial escolhida no início |
 
 ## CI
 

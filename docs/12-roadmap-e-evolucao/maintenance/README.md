@@ -38,7 +38,7 @@ A **primeira entrega** cobre **ferramentaria — mini-aplicadores** (reposição
 
 ## Estado atual no monorepo
 
-Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; Fase 3 (migração Access + go-live) em curso.
+Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; submódulos RBAC + UI CRUD (jun/2026). Fase 3 (migração Access + go-live) em curso.
 
 ## Legado de referência
 

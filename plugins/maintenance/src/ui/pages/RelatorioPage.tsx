@@ -11,8 +11,9 @@ import {
 import { LineChart, RefreshCw } from "lucide-react";
 
 import { MaintenanceShell } from "../../components/MaintenanceShell";
-import { PageHeader } from "../../components/PageHeader";
+import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
+import { useMaintenanceActiveFilial, useMaintenanceModuleHomePath, useOperationalFilial } from "../../hooks/useMaintenanceScope";
 import {
   fetchPreventivaAlertas,
   fetchPreventivaHistorico,
@@ -22,6 +23,7 @@ import {
 type RelatorioPageProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  filialScope?: string;
   onNavigate: (path: string) => void;
 };
 
@@ -32,8 +34,15 @@ function statusClass(status: string): string {
   return "dm-badge";
 }
 
-export function RelatorioPage({ getAccessToken, pathname, onNavigate }: RelatorioPageProps) {
-  const [filial, setFilial] = useState("01");
+export function RelatorioPage({
+  getAccessToken,
+  pathname,
+  filialScope,
+  onNavigate,
+}: RelatorioPageProps) {
+  const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
+  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
+  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const [alertas, setAlertas] = useState<PreventivaAlerta[]>([]);
   const [selected, setSelected] = useState<PreventivaAlerta | null>(null);
   const [historico, setHistorico] = useState<Array<{ label: string; golpes: number }>>([]);
@@ -94,10 +103,12 @@ export function RelatorioPage({ getAccessToken, pathname, onNavigate }: Relatori
 
   return (
     <MaintenanceShell>
-      <PageHeader
+      <MiniAplicadoresPageHeader
         title="Relatório preventivo"
         subtitle="Alertas por percentual de uso vs. média histórica de golpes."
         icon={LineChart}
+        moduleHomePath={moduleHomePath}
+        showConfiguration={canManageMiniApplicators}
         currentPath={pathname}
         onNavigate={onNavigate}
         actions={
@@ -109,13 +120,7 @@ export function RelatorioPage({ getAccessToken, pathname, onNavigate }: Relatori
       />
 
       <section className="dm-card dm-filter-bar">
-        <label className="dm-field">
-          <span>Filial</span>
-          <select value={filial} onChange={(event) => setFilial(event.target.value)}>
-            <option value="01">01 — Matriz</option>
-            <option value="02">02 — ES</option>
-          </select>
-        </label>
+        <p className="dm-filial-badge">Filial operacional: {filial}</p>
         <div className="dm-kpi-inline">
           <span className="dm-badge dm-badge--danger">CRÍTICO: {resumo.critico}</span>
           <span className="dm-badge dm-badge--warning">ATENÇÃO: {resumo.atencao}</span>
@@ -189,7 +194,7 @@ export function RelatorioPage({ getAccessToken, pathname, onNavigate }: Relatori
             type="button"
             className="dm-ghost-btn"
             onClick={() =>
-              onNavigate(`${MAINTENANCE_ROUTES.miniAplicadores}/${selected.codigo_ferramenta}`)
+              onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(selected.codigo_ferramenta))
             }
           >
             Abrir ferramenta

@@ -1,19 +1,23 @@
 from fastapi import APIRouter, Query, Request
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from maint_app.application.services.maintenance_submodule_catalog import assert_submodule_view
 from maint_app.composition.maintenance_composer import build_preventiva_service
 from maint_app.core.responses import fail, ok
-from maint_app.interface.http.filial_access_http import resolve_access_scope
+from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 
 router = APIRouter(prefix="/maintenance/preventiva", tags=["Preventiva"])
 
 _scope = FilialAccessScopeService()
+_SUBMODULE_ID = "mini-aplicadores"
 
 
 @router.get("/alertas")
 def list_alertas(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
     scope = resolve_access_scope(request)
+    user = resolve_user(request)
     try:
+        assert_submodule_view(user, _SUBMODULE_ID)
         _scope.assert_view_filial(scope, filial)
     except PermissionError as exc:
         return fail(str(exc), 403)
@@ -30,7 +34,9 @@ def list_historico(
     codigo_peca: str = Query(...),
 ):
     scope = resolve_access_scope(request)
+    user = resolve_user(request)
     try:
+        assert_submodule_view(user, _SUBMODULE_ID)
         _scope.assert_view_filial(scope, filial)
     except PermissionError as exc:
         return fail(str(exc), 403)

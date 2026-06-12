@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "maintenance",
   "name": "Manutenção",
-  "description": "Gestão de manutenção industrial — começa por ferramentaria (mini-aplicadores) e evolui para outros domínios de manutenção.",
+  "description": "Gestão de manutenção industrial — submódulos com permissões próprias; filial define escopo de dados na API.",
   "icon": "wrench",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "microfrontend",
   "basePath": "/apps/maintenance",
   "entry": "/apps/maintenance/assets/remoteEntry.js",
@@ -12,49 +12,43 @@
     {
       "code": "maintenance.view",
       "name": "Acessar Manutenção",
-      "description": "Permite abrir o módulo e consultar listagens e relatórios.",
-      "module": "maintenance"
-    },
-    {
-      "code": "maintenance.replacements.manage",
-      "name": "Gerenciar reposições",
-      "description": "Permite registrar e editar reposições de peças (mini-aplicadores).",
-      "module": "maintenance"
-    },
-    {
-      "code": "maintenance.reasons.manage",
-      "name": "Gerenciar motivos de troca",
-      "description": "Permite cadastrar motivos de reposição.",
-      "module": "maintenance"
-    },
-    {
-      "code": "maintenance.status.manage",
-      "name": "Gerenciar regras de status preventivo",
-      "description": "Permite ajustar percentuais e operadores de status (CRÍTICO, ATENÇÃO, OK).",
+      "description": "Permite abrir o módulo (início). Não substitui permissões de submódulo.",
       "module": "maintenance"
     },
     {
       "code": "maintenance.view.filial-01",
-      "name": "Visualizar — Filial 01",
-      "description": "Leitura operacional restrita à filial 01.",
+      "name": "Dados — Filial 01 (Matriz)",
+      "description": "Escopo de leitura de dados operacionais da filial 01 na API.",
       "module": "maintenance"
     },
     {
       "code": "maintenance.view.filial-02",
-      "name": "Visualizar — Filial 02",
-      "description": "Leitura operacional restrita à filial 02.",
+      "name": "Dados — Filial 02 (ES)",
+      "description": "Escopo de leitura de dados operacionais da filial 02 na API.",
       "module": "maintenance"
     },
     {
       "code": "maintenance.manage.filial-01",
-      "name": "Gerenciar — Filial 01",
-      "description": "CRUD operacional na filial 01.",
+      "name": "Gerenciar dados — Filial 01",
+      "description": "Escopo de escrita operacional na filial 01 (com submódulo manage).",
       "module": "maintenance"
     },
     {
       "code": "maintenance.manage.filial-02",
-      "name": "Gerenciar — Filial 02",
-      "description": "CRUD operacional na filial 02.",
+      "name": "Gerenciar dados — Filial 02",
+      "description": "Escopo de escrita operacional na filial 02 (com submódulo manage).",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.mini-applicators.view",
+      "name": "Visualizar mini-aplicadores",
+      "description": "Acesso ao submódulo mini-aplicadores (ferramentas, relatório preventivo).",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.mini-applicators.manage",
+      "name": "Gerenciar mini-aplicadores",
+      "description": "Reposições, motivos, status preventivo e demais mutações do submódulo.",
       "module": "maintenance"
     }
   ],
@@ -66,34 +60,52 @@
       "icon": "home",
       "entry": null,
       "order": 10,
-      "showInMenu": true
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/filial-01",
+      "label": "Manutenção — Matriz",
+      "permission": "maintenance.view.filial-01",
+      "icon": "wrench",
+      "entry": null,
+      "order": 11,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/filial-02",
+      "label": "Manutenção — ES",
+      "permission": "maintenance.view.filial-02",
+      "icon": "wrench",
+      "entry": null,
+      "order": 12,
+      "showInMenu": false
     },
     {
       "path": "/apps/maintenance/mini-aplicadores",
       "label": "Mini-aplicadores",
-      "permission": "maintenance.view",
+      "permission": "maintenance.mini-applicators.view",
       "icon": "hammer",
       "entry": null,
       "order": 20,
-      "showInMenu": true
+      "showInMenu": false
     },
     {
-      "path": "/apps/maintenance/relatorio",
+      "path": "/apps/maintenance/mini-aplicadores/relatorio",
       "label": "Relatório preventivo",
-      "permission": "maintenance.view",
+      "permission": "maintenance.mini-applicators.view",
       "icon": "chart-line",
       "entry": null,
-      "order": 30,
-      "showInMenu": true
+      "order": 21,
+      "showInMenu": false
     },
     {
-      "path": "/apps/maintenance/configuracao",
+      "path": "/apps/maintenance/mini-aplicadores/configuracao",
       "label": "Configuração",
-      "permission": "maintenance.reasons.manage",
+      "permission": "maintenance.mini-applicators.manage",
       "icon": "settings",
       "entry": null,
-      "order": 40,
-      "showInMenu": true
+      "order": 22,
+      "showInMenu": false
     }
   ],
   "backend": {

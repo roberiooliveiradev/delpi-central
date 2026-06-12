@@ -1,29 +1,30 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { MaintenanceNav } from "./MaintenanceNav";
+
+import { MiniAplicadoresNav } from "./MiniAplicadoresNav";
 import "./PageHeader.css";
 
-type PageHeaderProps = {
+type MiniAplicadoresPageHeaderProps = {
   title: string;
   subtitle: string;
   icon: LucideIcon;
-  eyebrow?: string;
+  moduleHomePath: string;
+  showConfiguration?: boolean;
   currentPath?: string;
-  filialScope?: string;
   onNavigate: (path: string) => void;
   actions?: ReactNode;
 };
 
-export function PageHeader({
+export function MiniAplicadoresPageHeader({
   title,
   subtitle,
   icon: Icon,
-  eyebrow = "DELPI • Manutenção",
+  moduleHomePath,
+  showConfiguration = false,
   currentPath,
-  filialScope,
   onNavigate,
   actions,
-}: PageHeaderProps) {
+}: MiniAplicadoresPageHeaderProps) {
   return (
     <header className="dm-page-header">
       <div className="dm-page-header__brand">
@@ -31,12 +32,13 @@ export function PageHeader({
           <Icon size={28} strokeWidth={1.75} />
         </div>
         <div className="dm-page-header__content">
-          <p className="dm-eyebrow">{eyebrow}</p>
+          <p className="dm-eyebrow">DELPI • Manutenção • Mini-aplicadores</p>
           <h1>{title}</h1>
           <span className="dm-page-subtitle">{subtitle}</span>
-          <MaintenanceNav
+          <MiniAplicadoresNav
             currentPath={currentPath}
-            filialScope={filialScope}
+            moduleHomePath={moduleHomePath}
+            showConfiguration={showConfiguration}
             onNavigate={onNavigate}
           />
         </div>

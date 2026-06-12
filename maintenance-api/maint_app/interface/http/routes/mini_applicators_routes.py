@@ -1,24 +1,39 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
 from delpi_api_client import DelpiApiError
 
+from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from maint_app.application.services.maintenance_submodule_catalog import assert_submodule_view
 from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
+from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 
 router = APIRouter(prefix="/maintenance/mini-aplicadores", tags=["Mini-aplicadores"])
+
+_scope = FilialAccessScopeService()
+_SUBMODULE_ID = "mini-aplicadores"
 
 
 @router.get("/ferramentas")
 def list_ferramentas(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
-    filial: Optional[str] = Query(None),
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
 ):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID)
+        _scope.assert_view_filial(scope, filial)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.listar_ferramentas(
@@ -36,7 +51,15 @@ def list_ferramentas(
 
 
 @router.get("/ferramentas/{codigo}")
-def get_ferramenta(codigo: str):
+def get_ferramenta(request: Request, codigo: str, filial: str = Query(..., min_length=2, max_length=2)):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID)
+        _scope.assert_view_filial(scope, filial)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.obter_ferramenta(codigo)
@@ -48,7 +71,15 @@ def get_ferramenta(codigo: str):
 
 
 @router.get("/ferramentas/{codigo}/pecas")
-def list_pecas(codigo: str):
+def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_length=2, max_length=2)):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID)
+        _scope.assert_view_filial(scope, filial)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.listar_pecas(codigo)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query, Request
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
+from maint_app.application.services.maintenance_submodule_catalog import filter_submodules_for_user
 from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
@@ -43,17 +44,20 @@ def module_health():
 @router.get("/options")
 def get_options(request: Request):
     scope = resolve_access_scope(request)
+    user = resolve_user(request)
     filiais = [
         {"id": "01", "label": "Matriz"},
         {"id": "02", "label": "ES"},
     ]
     filiais = _scope.filter_filiais_options(filiais, scope)
+    submodules = filter_submodules_for_user(user)
+    default_filial = _scope.resolve_default_filial(scope, filiais)
     return ok(
         {
             "filiais": filiais,
-            "modulos": [
-                {"id": "mini-aplicadores", "label": "Mini-aplicadores"},
-            ],
+            "submodules": submodules,
+            "modulos": submodules,
+            "default_filial": default_filial,
             "access_scope": scope.meta(),
         },
         message="Opções carregadas.",

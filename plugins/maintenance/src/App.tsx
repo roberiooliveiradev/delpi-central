@@ -21,6 +21,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       <MiniAplicadoresPage
         getAccessToken={getAccessToken}
         pathname={pathname}
+        filialScope={route.filialScope}
         onNavigate={onNavigate}
         codigoFerramenta={route.codigoFerramenta}
       />
@@ -32,6 +33,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       <RelatorioPage
         getAccessToken={getAccessToken}
         pathname={pathname}
+        filialScope={route.filialScope}
         onNavigate={onNavigate}
       />
     );
@@ -42,12 +44,18 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       <ConfiguracaoPage
         getAccessToken={getAccessToken}
         pathname={pathname}
+        filialScope={route.filialScope}
         onNavigate={onNavigate}
       />
     );
   }
 
   return (
-    <HomePage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    <HomePage
+      getAccessToken={getAccessToken}
+      pathname={pathname}
+      filialScope={route.filialScope}
+      onNavigate={onNavigate}
+    />
   );
 }

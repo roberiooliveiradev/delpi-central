@@ -2,7 +2,7 @@
 
 Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module Federation + Vite.
 
-**Estado:** Fases 0–2 concluídas — mini-aplicadores, relatório preventivo e configuração.
+**Estado:** Fases 0–2 concluídas; submódulos com RBAC próprio, filial no início e CRUD completo na UI (jun/2026).
 
 ## Documentação
 
@@ -42,7 +42,13 @@ chmod +x scripts/register-manifest.sh
 ./scripts/register-manifest.sh
 ```
 
-Atribuir permissões `maintenance.*` no RBAC da Core API.
+Atribuir permissões no RBAC da Core API (ver matriz em [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/maintenance/OPERATIONS.md)):
+
+- `maintenance.view` — abrir o módulo
+- `maintenance.view.filial-XX` — escopo de dados na API
+- `maintenance.manage.filial-XX` — escrita na filial
+- `maintenance.mini-applicators.view` — submódulo mini-aplicadores
+- `maintenance.mini-applicators.manage` — reposições, motivos e status
 
 ## Desenvolvimento
 
