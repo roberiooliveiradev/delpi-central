@@ -22,6 +22,8 @@ Referência para **Admin → Inteligência do chat** (`ChatIntelligenceSettingsS
 
 O painel admin **persiste em runtime** (`chat_intelligence_settings`); variáveis de ambiente abaixo servem como bootstrap ao subir o container.
 
+**Outros bundles de plataforma** (modos de resposta, visão, pipeline de aprendizagem): ver [`chat-admin-platform-settings.md`](chat-admin-platform-settings.md).
+
 ---
 
 ## 1. Recuperação de conhecimento (RAG)

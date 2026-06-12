@@ -31,6 +31,14 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def chat_response_modes_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_typing_correction_fuzzy_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def chat_web_search_direct_response_enabled(self) -> bool:
         raise NotImplementedError
 

@@ -250,10 +250,17 @@ class ChatKnowledgeCandidateService:
 
     @staticmethod
     def _initial_status(*, confidence: float | None, risk_level: str) -> tuple[str, str]:
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
+
+        learning = learning_pipeline_settings()
         auto = (
-            Settings.CHAT_LEARNING_AUTO_APPROVE_ENABLED
+            learning.get("learningEnabled")
+            and learning.get("learningAutoApproveEnabled")
             and risk_level == "low"
-            and (confidence or 0.0) >= Settings.CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE
+            and (confidence or 0.0)
+            >= float(learning.get("learningAutoApproveMinConfidence", 0.95))
         )
         return ("auto_approved" if auto else "pending", risk_level)
 

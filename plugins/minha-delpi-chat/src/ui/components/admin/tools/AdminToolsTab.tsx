@@ -31,6 +31,8 @@ import type {
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatIntelligenceSettingsPanel } from "../metrics-tab/ChatIntelligenceSettingsPanel";
+import { ChatResponseModeSettingsPanel } from "../metrics-tab/ChatResponseModeSettingsPanel";
+import { ChatVisionSettingsPanel } from "../metrics-tab/ChatVisionSettingsPanel";
 import { ToolsSummaryStrip } from "./ToolsSummaryStrip";
 import { computeToolsSummary } from "./toolsSummary";
 
@@ -52,8 +54,8 @@ type AdminToolsTabProps = {
   llmStatus?: AdminLlmStatus | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   rbac?: AdminRbacSummary | null;
-  /** tools = health/actions; intelligence = só políticas do pipeline */
-  view?: "tools" | "intelligence";
+  /** tools = health/actions; demais = bundles de plataforma */
+  view?: "tools" | "intelligence" | "response" | "vision";
 };
 
 export function AdminToolsTab({
@@ -203,6 +205,32 @@ export function AdminToolsTab({
           description="Políticas globais do pipeline (roteamento, RAG, tools). Métricas ficam em Qualidade."
         />
         <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
+      </section>
+    );
+  }
+
+  if (view === "response") {
+    return (
+      <section className="mdc-admin-tools-tab mdc-admin-tools-tab--intelligence">
+        <AdminTabHeader
+          eyebrow="Plataforma"
+          title="Modos de resposta"
+          description="Seletor Texto / Painel / Automático na sessão do chat."
+        />
+        <ChatResponseModeSettingsPanel getAccessToken={getAccessToken} />
+      </section>
+    );
+  }
+
+  if (view === "vision") {
+    return (
+      <section className="mdc-admin-tools-tab mdc-admin-tools-tab--intelligence">
+        <AdminTabHeader
+          eyebrow="Plataforma"
+          title="Visão e anexos"
+          description="OCR, desenhos técnicos e limites de extração de documentos."
+        />
+        <ChatVisionSettingsPanel getAccessToken={getAccessToken} />
       </section>
     );
   }

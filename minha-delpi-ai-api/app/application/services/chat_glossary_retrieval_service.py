@@ -75,7 +75,14 @@ class ChatGlossaryRetrievalService:
         message: str,
         project_id: str | None = None,
     ) -> str:
-        if not (Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_GLOSSARY_RETRIEVAL):
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
+
+        learning = learning_pipeline_settings()
+        if not (
+            learning.get("learningEnabled") and learning.get("learningGlossaryRetrieval")
+        ):
             return ""
 
         if not message:

@@ -137,7 +137,11 @@ class ChatExternalActionOrchestrationService:
             if prefetch:
                 return _return_planned(prefetch)
 
-        if not Settings.CHAT_MULTI_ACTION_ENABLED:
+        from app.application.services.chat_intelligence_runtime_access import (
+            resolve_chat_intelligence_runtime,
+        )
+
+        if not resolve_chat_intelligence_runtime().multi_action_enabled:
             selected = selection_service.select_action(
                 selection_message,
                 allowed_action_ids=allowed_action_ids,

@@ -18,6 +18,18 @@ def _defaults() -> ChatIntelligenceSettingsSnapshot:
         agentic_loop_enabled=True,
         agentic_loop_max_steps=2,
         web_search_enabled=True,
+        operational_fast_path_enabled=True,
+        external_action_direct_response_enabled=True,
+        prefer_api_externa_provider=True,
+        multi_action_enabled=True,
+        pagination_auto_fetch_enabled=True,
+        external_action_embedding_on_import=True,
+        rag_prefer_keyword_search=True,
+        rag_identity_question_min_score=0.22,
+        fast_path_enabled=True,
+        assistant_identity_direct_enabled=True,
+        web_search_direct_response_enabled=True,
+        web_search_auto_augment_enabled=True,
     )
 
 
@@ -26,14 +38,20 @@ def test_resolve_returns_defaults_when_stored_empty():
 
     assert resolved.rag_context_min_score == 0.35
     assert resolved.web_search_enabled is True
+    assert resolved.external_action_embedding_on_import is True
 
 
-def test_resolve_overrides_single_admin_field():
+def test_resolve_overrides_admin_fields():
     resolved = resolve_chat_intelligence_settings(
         defaults=_defaults(),
-        stored={"webSearchEnabled": False, "ragContextMinScore": 0.5},
+        stored={
+            "webSearchEnabled": False,
+            "externalActionEmbeddingOnImport": False,
+            "ragContextMinScore": 0.5,
+        },
     )
 
     assert resolved.web_search_enabled is False
+    assert resolved.external_action_embedding_on_import is False
     assert resolved.rag_context_min_score == 0.5
-    assert resolved.chat_tool_router_enabled is True
+    assert resolved.multi_action_enabled is True

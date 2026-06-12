@@ -256,6 +256,22 @@ export function ChatAdminPage({
             />
           ) : null}
 
+          {nav.section === "platform" && nav.subTab === "response" ? (
+            <AdminToolsTab
+              getAccessToken={getAccessToken}
+              rbac={adminRbac}
+              view="response"
+            />
+          ) : null}
+
+          {nav.section === "platform" && nav.subTab === "vision" ? (
+            <AdminToolsTab
+              getAccessToken={getAccessToken}
+              rbac={adminRbac}
+              view="vision"
+            />
+          ) : null}
+
           {nav.section === "governance" && nav.subTab === "security" ? (
             <AdminSecurityTab
               getAccessToken={getAccessToken}

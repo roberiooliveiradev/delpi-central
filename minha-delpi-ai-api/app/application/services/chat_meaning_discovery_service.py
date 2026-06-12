@@ -110,12 +110,17 @@ class ChatMeaningDiscoveryService:
         created_by: str | None = None,
     ) -> dict | None:
         """Detecta "o que é X?"; se X for desconhecido internamente, cria candidato."""
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
+
+        learning = learning_pipeline_settings()
         if not (
-            Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_GLOSSARY_CAPTURE
+            learning.get("learningEnabled") and learning.get("learningGlossaryCapture")
         ):
             return None
 
-        if Settings.CHAT_LEARNING_TERM_CONFIRMATION_ENABLED:
+        if learning.get("learningTermConfirmationEnabled"):
             return None
 
         term = ChatTermExtractionService.detect_definition_question(message or "")

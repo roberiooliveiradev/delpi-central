@@ -14,7 +14,7 @@ DEFAULT_MODE = "normal"
 class ChatResponseModeService:
     @staticmethod
     def is_enabled() -> bool:
-        return os.getenv("CHAT_RESPONSE_MODES_ENABLED", "true").lower() == "true"
+        return ChatDomainConfigService.chat_response_modes_enabled()
 
     @staticmethod
     def normalize(mode: str | None) -> str:

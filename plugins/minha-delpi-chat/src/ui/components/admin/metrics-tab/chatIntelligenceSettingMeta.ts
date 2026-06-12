@@ -56,9 +56,20 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
   | "ragHybridEnabled"
   | "ragRerankEnabled"
   | "ragFtsEnabled"
+  | "ragPreferKeywordSearch"
   | "nativeToolCallingEnabled"
   | "agenticLoopEnabled"
-  | "webSearchEnabled",
+  | "fastPathEnabled"
+  | "assistantIdentityDirectEnabled"
+  | "operationalFastPathEnabled"
+  | "externalActionDirectResponseEnabled"
+  | "preferApiExternaProvider"
+  | "multiActionEnabled"
+  | "paginationAutoFetchEnabled"
+  | "externalActionEmbeddingOnImport"
+  | "webSearchEnabled"
+  | "webSearchDirectResponseEnabled"
+  | "webSearchAutoAugmentEnabled",
   ChatIntelligenceSettingMeta
 > = {
   ragHybridEnabled: {
@@ -93,6 +104,21 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
     qualityWhenEnabled: "higher",
     tip: "Ligue junto com RAG híbrido; sozinho não substitui a busca vetorial.",
   },
+  ragPreferKeywordSearch: {
+    title: "Preferir busca por palavra-chave (sem híbrido)",
+    summary:
+      "Quando o RAG híbrido está desligado, tenta FTS/keyword antes do vetor puro.",
+    pros: [
+      "Melhor para códigos e termos exatos sem custo do modo híbrido completo.",
+      "Útil em bases pequenas com vocabulário técnico previsível.",
+    ],
+    cons: [
+      "Só faz sentido com FTS ativo; sem híbrido pode perder recall semântico.",
+      "Menos robusto que o par híbrido + rerank em bases grandes.",
+    ],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "neutral",
+  },
   ragRerankEnabled: {
     title: "Rerank pós-híbrido no RAG",
     summary:
@@ -107,6 +133,97 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
     ],
     speedWhenEnabled: "slow",
     qualityWhenEnabled: "higher",
+  },
+  operationalFastPathEnabled: {
+    title: "Fast path operacional",
+    summary:
+      "Atalha o pipeline para perguntas operacionais reconhecidas (estoque, produto, rotas REST), pulando etapas genéricas.",
+    pros: [
+      "Respostas mais rápidas em consultas DELPI típicas.",
+      "Menos tokens e menos chamadas LLM intermediárias.",
+    ],
+    cons: [
+      "Perguntas ambíguas podem ir direto demais sem desambiguação.",
+      "Depende de intents e actions bem calibradas.",
+    ],
+    speedWhenEnabled: "fast",
+    qualityWhenEnabled: "neutral",
+  },
+  externalActionDirectResponseEnabled: {
+    title: "Resposta direta pós-action",
+    summary:
+      "Quando uma action retorna dados estruturados, o chat pode responder sem passar tudo pelo LLM.",
+    pros: [
+      "Menor latência e custo após consultas API.",
+      "Apresentação consistente via presenter canônico.",
+    ],
+    cons: [
+      "Perguntas que pedem análise criativa podem ficar mais secas.",
+      "Exige presenter alinhado ao contrato da API.",
+    ],
+    speedWhenEnabled: "fast",
+    qualityWhenEnabled: "neutral",
+  },
+  preferApiExternaProvider: {
+    title: "Priorizar provider api_externa",
+    summary:
+      "Dá preferência a actions do catálogo api_externa/api-delpi na seleção quando há empate.",
+    pros: [
+      "Reduz escolha de actions legadas ou duplicadas.",
+      "Alinha homologação local com rotas REST modernas.",
+    ],
+    cons: [
+      "Pode suprimir actions customizadas se nomes colidirem.",
+      "Desligue ao testar providers alternativos.",
+    ],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "higher",
+  },
+  multiActionEnabled: {
+    title: "Múltiplas actions por turno",
+    summary:
+      "Permite planejar e executar mais de uma action na mesma mensagem quando necessário.",
+    pros: [
+      "Suporta perguntas compostas (ex.: estoque + preço).",
+      "Evita resposta incompleta em fluxos operacionais encadeados.",
+    ],
+    cons: [
+      "Aumenta latência proporcional ao número de chamadas API.",
+      "Mais difícil depurar qual action falhou.",
+    ],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "higher",
+  },
+  paginationAutoFetchEnabled: {
+    title: "Buscar páginas extras automaticamente",
+    summary:
+      "Quando a API pagina resultados, o chat pode buscar páginas adicionais antes de responder.",
+    pros: [
+      "Listas longas chegam completas sem o usuário pedir “próxima página”.",
+      "Melhora tabelas operacionais com muitos itens.",
+    ],
+    cons: [
+      "Multiplica chamadas HTTP e tempo de resposta.",
+      "Pode estourar timeout em APIs lentas.",
+    ],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "higher",
+  },
+  externalActionEmbeddingOnImport: {
+    title: "Embedding ao importar OpenAPI",
+    summary:
+      "Recalcula embedding de cada action durante o botão “Atualizar rotas” (import síncrono).",
+    pros: [
+      "Ranking semântico fica pronto imediatamente após import.",
+      "Menos passo manual de reindexação.",
+    ],
+    cons: [
+      "Import demora muito com catálogos grandes (~135 rotas).",
+      "Recomendado desligar até import assíncrono (Playbook 16).",
+    ],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "neutral",
+    tip: "Desligado + reindex separado acelera o cadastro de rotas novas.",
   },
   externalActionSemanticRankEnabled: {
     title: "Ranking semântico de actions",
@@ -156,6 +273,36 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
     qualityWhenEnabled: "neutral",
     tip: "Teste com o modelo de produção antes de ativar em massa.",
   },
+  fastPathEnabled: {
+    title: "Fast path geral (mensagens curtas)",
+    summary:
+      "Atalha turnos muito curtos ou triviais (saudação, utilitários) com prompt reduzido.",
+    pros: [
+      "Respostas instantâneas para “oi”, “obrigado”, hora/data.",
+      "Economia de tokens em interações sociais.",
+    ],
+    cons: [
+      "Mensagens curtas mas operacionais podem perder contexto se mal classificadas.",
+      "Limite de caracteres do fast path continua no servidor.",
+    ],
+    speedWhenEnabled: "fast",
+    qualityWhenEnabled: "lower",
+  },
+  assistantIdentityDirectEnabled: {
+    title: "Resposta direta de identidade do assistente",
+    summary:
+      "Responde “quem é você / o que faz” sem acionar tools nem RAG pesado.",
+    pros: [
+      "Resposta imediata e estável sobre capacidades do agente.",
+      "Evita alucinação em perguntas de identidade.",
+    ],
+    cons: [
+      "Não personaliza com dados dinâmicos do turno.",
+      "Perguntas mistas (identidade + operação) podem precisar de follow-up.",
+    ],
+    speedWhenEnabled: "fast",
+    qualityWhenEnabled: "neutral",
+  },
   agenticLoopEnabled: {
     title: "Loop agentic de ferramentas",
     summary:
@@ -171,6 +318,36 @@ export const CHAT_INTELLIGENCE_TOGGLE_META: Record<
     speedWhenEnabled: "slow",
     qualityWhenEnabled: "higher",
     tip: "Mantenha “Máx. passos” baixo (1–2) salvo casos muito controlados.",
+  },
+  webSearchDirectResponseEnabled: {
+    title: "Resposta direta pós-pesquisa web",
+    summary:
+      "Formata resultados da web sem reescrever tudo pelo LLM quando o modo direto está ativo.",
+    pros: [
+      "Menor latência após a busca externa.",
+      "Citações mais fiéis aos snippets retornados.",
+    ],
+    cons: [
+      "Menos prosa fluida; tom pode ficar mais técnico.",
+      "Análises comparativas podem precisar do LLM.",
+    ],
+    speedWhenEnabled: "fast",
+    qualityWhenEnabled: "neutral",
+  },
+  webSearchAutoAugmentEnabled: {
+    title: "Complemento automático com web",
+    summary:
+      "O pipeline pode sugerir pesquisa web quando a confiança do RAG interno é baixa.",
+    pros: [
+      "Cobre lacunas da base curada sem o usuário pedir explicitamente.",
+      "Útil para temas externos à DELPI.",
+    ],
+    cons: [
+      "Pode disparar busca web indevida se heurística errar.",
+      "Aumenta latência e dependência de rede.",
+    ],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "higher",
   },
   webSearchEnabled: {
     title: "Pesquisa web (tool interna)",
@@ -239,6 +416,24 @@ export const CHAT_INTELLIGENCE_NUMBER_META = {
     ],
     speedNote: "Impacto pequeno na latência; afeta sobretudo acerto da primeira tool.",
     qualityNote: "↑ score = mais conservador; ↓ score = mais permissivo.",
+    min: 0,
+    max: 1,
+    step: 0.01,
+  },
+  ragIdentityQuestionMinScore: {
+    title: "Score mínimo RAG (perguntas de identidade)",
+    summary:
+      "Limiar mais baixo ao buscar trechos para “quem é você / o que faz”, ampliando recall em FAQs.",
+    pros: [
+      "Encontra políticas e textos de identidade mesmo com match fraco.",
+      "Evita resposta vazia em bases pequenas.",
+    ],
+    cons: [
+      "Trechos pouco relacionados podem entrar no prompt.",
+      "Ajuste fino necessário se respostas ficarem genéricas.",
+    ],
+    speedNote: "Impacto leve; afeta sobretudo qualidade em perguntas de identidade.",
+    qualityNote: "↓ score = mais recall; ↑ score = contexto mais estrito.",
     min: 0,
     max: 1,
     step: 0.01,

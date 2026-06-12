@@ -8,6 +8,7 @@ from app.application.services.chat_attachment_text_extractor import ChatAttachme
 from app.application.use_cases.ingest_knowledge_document_use_case import (
     IngestKnowledgeDocumentUseCase,
 )
+from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.infrastructure.config.settings import Settings
 
@@ -110,16 +111,12 @@ class IndexChatAttachmentUseCase:
         )
 
         should_refresh_vision = (
-            Settings.CHAT_DOCUMENT_VISION_ENABLED
+            ChatDocumentVisionService.is_enabled()
             and not Settings.CHAT_ATTACHMENT_DEFER_VISION_ON_INDEX
             and updated
         )
 
         if should_refresh_vision:
-            from app.application.services.chat_document_vision_service import (
-                ChatDocumentVisionService,
-            )
-
             ChatDocumentVisionService.refresh_attachment_vision_snapshot(
                 updated,
                 skills={"documentVision": True},

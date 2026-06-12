@@ -296,7 +296,7 @@ export type AdminLlmCostTableResponse = {
   source: "database" | "env" | string;
 };
 
-export type AdminChatIntelligenceSettings = {
+export type AdminChatIntelligenceSettingsPayload = {
   ragContextMinScore: number;
   externalActionSemanticMinScore: number;
   externalActionSemanticRankEnabled: boolean;
@@ -309,21 +309,67 @@ export type AdminChatIntelligenceSettings = {
   agenticLoopEnabled: boolean;
   agenticLoopMaxSteps: number;
   webSearchEnabled: boolean;
+  operationalFastPathEnabled: boolean;
+  externalActionDirectResponseEnabled: boolean;
+  preferApiExternaProvider: boolean;
+  multiActionEnabled: boolean;
+  paginationAutoFetchEnabled: boolean;
+  externalActionEmbeddingOnImport: boolean;
+  ragPreferKeywordSearch: boolean;
+  ragIdentityQuestionMinScore: number;
+  fastPathEnabled: boolean;
+  assistantIdentityDirectEnabled: boolean;
+  webSearchDirectResponseEnabled: boolean;
+  webSearchAutoAugmentEnabled: boolean;
+};
+
+export type AdminChatIntelligenceSettings = AdminChatIntelligenceSettingsPayload & {
   source?: "admin" | "defaults" | string;
-  defaults: {
-    ragContextMinScore: number;
-    externalActionSemanticMinScore: number;
-    externalActionSemanticRankEnabled: boolean;
-    chatToolRouterEnabled: boolean;
-    chatHistorySummaryEnabled: boolean;
-    ragHybridEnabled: boolean;
-    ragRerankEnabled: boolean;
-    ragFtsEnabled: boolean;
-    nativeToolCallingEnabled: boolean;
-    agenticLoopEnabled: boolean;
-    agenticLoopMaxSteps: number;
-    webSearchEnabled: boolean;
-  };
+  defaults: AdminChatIntelligenceSettingsPayload;
+};
+
+export type AdminChatResponseModeSettingsPayload = {
+  responseModesEnabled: boolean;
+};
+
+export type AdminChatResponseModeSettings = AdminChatResponseModeSettingsPayload & {
+  source?: "admin" | "defaults" | string;
+  defaults: AdminChatResponseModeSettingsPayload;
+};
+
+export type AdminChatVisionSettingsPayload = {
+  documentVisionEnabled: boolean;
+  documentVisionAutoWithDrawing: boolean;
+  documentVisionAutoVlmFallback: boolean;
+  attachmentImageOcrEnabled: boolean;
+  documentVisionStampCropEnabled: boolean;
+  documentVisionImageDescribeEnabled: boolean;
+  documentVisionMaxPages: number;
+  documentVisionMaxChars: number;
+};
+
+export type AdminChatVisionSettings = AdminChatVisionSettingsPayload & {
+  source?: "admin" | "defaults" | string;
+  defaults: AdminChatVisionSettingsPayload;
+};
+
+export type AdminChatLearningPipelineSettingsPayload = {
+  learningEnabled: boolean;
+  typingCorrectionEnabled: boolean;
+  typingCorrectionFuzzyEnabled: boolean;
+  learningApplyVocabulary: boolean;
+  learningCaptureFromFeedback: boolean;
+  learningCaptureFromTurn: boolean;
+  learningAutoApproveEnabled: boolean;
+  learningAutoApproveMinConfidence: number;
+  learningGlossaryRetrieval: boolean;
+  learningGlossaryCapture: boolean;
+  learningTermConfirmationEnabled: boolean;
+};
+
+export type AdminChatLearningPipelineSettings = AdminChatLearningPipelineSettingsPayload & {
+  source?: "admin" | "defaults" | string;
+  defaults: AdminChatLearningPipelineSettingsPayload;
 };
 
 export type AdminMetricsTimeseriesBucket = {

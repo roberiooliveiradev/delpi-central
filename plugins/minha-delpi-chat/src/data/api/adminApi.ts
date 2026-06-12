@@ -1173,6 +1173,78 @@ export async function saveAdminChatIntelligenceSettings(
   return parseJsonResponse<AdminChatIntelligenceSettings>(response);
 }
 
+export async function getAdminChatResponseModeSettings(
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatResponseModeSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/response-mode-settings`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function saveAdminChatResponseModeSettings(
+  payload: Partial<import("./adminTypes").AdminChatResponseModeSettings>,
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatResponseModeSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/response-mode-settings`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function getAdminChatVisionSettings(
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatVisionSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/vision-settings`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function saveAdminChatVisionSettings(
+  payload: Partial<import("./adminTypes").AdminChatVisionSettings>,
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatVisionSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/vision-settings`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function getAdminChatLearningPipelineSettings(
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatLearningPipelineSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/learning-pipeline-settings`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function saveAdminChatLearningPipelineSettings(
+  payload: Partial<import("./adminTypes").AdminChatLearningPipelineSettings>,
+  options: AdminApiOptions = {},
+): Promise<import("./adminTypes").AdminChatLearningPipelineSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/learning-pipeline-settings`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
 export async function reindexExternalActionEmbeddings(
   payload: { providerKey?: string } = {},
   options: AdminApiOptions = {},

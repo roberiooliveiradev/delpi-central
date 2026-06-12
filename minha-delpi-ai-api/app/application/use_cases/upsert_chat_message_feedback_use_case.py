@@ -165,9 +165,14 @@ class UpsertChatMessageFeedbackUseCase:
         user_id: str,
     ) -> None:
         """Aprendizagem contínua (playbook §16): best-effort, nunca quebra o feedback."""
-        from app.infrastructure.config.settings import Settings
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
 
-        if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_FEEDBACK:
+        learning = learning_pipeline_settings()
+        if not learning.get("learningEnabled") or not learning.get(
+            "learningCaptureFromFeedback"
+        ):
             return
 
         try:

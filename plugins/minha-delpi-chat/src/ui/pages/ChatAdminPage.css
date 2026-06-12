@@ -129,9 +129,46 @@
 }
 
 @media (max-width: 1023px) {
+  .mdc-chat-page-panel--fill:has(> .mdc-admin-root) {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .minha-delpi-chat.mdc-admin-root.mdc-chat-ws-directory {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
   .mdc-admin-root .mdc-admin-container {
-    flex: 1;
-    min-height: 0;
+    flex: 0 1 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .mdc-admin-root .mdc-admin-layout {
+    flex: 0 1 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .mdc-admin-root .mdc-admin-layout__body:not(.mdc-admin-layout__body--nav-open) {
+    flex: 0 1 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .mdc-admin-root .mdc-admin-layout__content {
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .mdc-admin-root .mdc-admin-shell.mdc-chat-ws-directory__main {
+    overflow: visible;
   }
 
   .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {

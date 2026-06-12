@@ -23,6 +23,9 @@ from app.application.services.chat_turn.chat_turn_preparation_service import (
 from app.application.services.chat_turn.chat_turn_side_effects_service import (
     ChatTurnSideEffectsService,
 )
+from app.application.services.chat_intelligence_runtime_access import (
+    resolve_chat_intelligence_runtime,
+)
 from app.application.services.chat_turn.chat_turn_use_case_support_service import (
     ChatTurnUseCaseSupportService,
 )
@@ -221,7 +224,7 @@ class SendChatMessageUseCase:
             ),
             prepare_history=self.turn_support.prepare_history,
             history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
-            fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+            fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
             fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
             resolve_user_identity_answer=lambda msg: (
                 self.turn_support.resolve_user_identity_answer(request.access_token, msg)

@@ -9,6 +9,7 @@ export type AdminNestedPage = {
 /** Sub-abas com páginas internas (3º nível na sidebar e na URL). */
 export const ADMIN_NESTED_PAGES: Partial<Record<AdminSubTab, AdminNestedPage[]>> = {
   learning: [
+    { key: "pipeline", label: "Pipeline", slug: "pipeline" },
     { key: "candidates", label: "Candidatos", slug: "candidatos" },
     { key: "vocabulary", label: "Vocabulário", slug: "vocabulario" },
     { key: "memory", label: "Memória", slug: "memoria" },

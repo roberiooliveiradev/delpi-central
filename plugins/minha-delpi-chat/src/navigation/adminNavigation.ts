@@ -56,6 +56,8 @@ export type AdminSubTab =
   | "evaluations"
   | "tools"
   | "intelligence"
+  | "response"
+  | "vision"
   | "security"
   | "audit";
 
@@ -98,6 +100,8 @@ const SUB_SLUG: Record<AdminSubTab, string> = {
   evaluations: "avaliacoes",
   tools: "ferramentas",
   intelligence: "inteligencia",
+  response: "modos-resposta",
+  vision: "visao",
   security: "seguranca",
   audit: "auditoria",
 };
@@ -154,6 +158,8 @@ export const ADMIN_SECTIONS: AdminSectionItem[] = [
     subTabs: [
       { key: "tools", label: "Ferramentas" },
       { key: "intelligence", label: "Inteligência" },
+      { key: "response", label: "Modos de resposta" },
+      { key: "vision", label: "Visão e anexos" },
     ],
   },
   {

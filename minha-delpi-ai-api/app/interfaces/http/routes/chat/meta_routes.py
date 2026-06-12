@@ -237,7 +237,14 @@ def typing_suggestions():
 
     text = str(payload.get("text") or "")
 
-    if not Settings.CHAT_TYPING_CORRECTION_ENABLED:
+    from app.application.services.chat_platform_runtime_access import (
+        learning_pipeline_settings,
+    )
+
+    learning = learning_pipeline_settings()
+    if not (
+        learning.get("learningEnabled") and learning.get("typingCorrectionEnabled")
+    ):
         return jsonify(
             {
                 "hasSuggestions": False,

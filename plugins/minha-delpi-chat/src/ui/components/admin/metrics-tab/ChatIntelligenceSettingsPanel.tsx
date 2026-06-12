@@ -5,7 +5,10 @@ import {
   reindexExternalActionEmbeddings,
   saveAdminChatIntelligenceSettings,
 } from "../../../../data/api/adminApi";
-import type { AdminChatIntelligenceSettings } from "../../../../data/api/adminTypes";
+import type {
+  AdminChatIntelligenceSettings,
+  AdminChatIntelligenceSettingsPayload,
+} from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 import {
   CHAT_INTELLIGENCE_NUMBER_META,
@@ -203,21 +206,9 @@ export function ChatIntelligenceSettingsPanel({
     setIsSaving(true);
 
     try {
+      const { defaults: _defaults, source: _source, ...payload } = settings;
       const saved = await saveAdminChatIntelligenceSettings(
-        {
-          ragContextMinScore: settings.ragContextMinScore,
-          externalActionSemanticMinScore: settings.externalActionSemanticMinScore,
-          externalActionSemanticRankEnabled: settings.externalActionSemanticRankEnabled,
-          chatToolRouterEnabled: settings.chatToolRouterEnabled,
-          chatHistorySummaryEnabled: settings.chatHistorySummaryEnabled,
-          ragHybridEnabled: settings.ragHybridEnabled,
-          ragRerankEnabled: settings.ragRerankEnabled,
-          ragFtsEnabled: settings.ragFtsEnabled,
-          nativeToolCallingEnabled: settings.nativeToolCallingEnabled,
-          agenticLoopEnabled: settings.agenticLoopEnabled,
-          agenticLoopMaxSteps: settings.agenticLoopMaxSteps,
-          webSearchEnabled: settings.webSearchEnabled,
-        },
+        payload as AdminChatIntelligenceSettingsPayload,
         { getAccessToken },
       );
       setSettings(saved);
@@ -259,6 +250,11 @@ export function ChatIntelligenceSettingsPanel({
         checked={settings.ragRerankEnabled}
         onChange={(checked) => updateToggle("ragRerankEnabled", checked)}
       />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.ragPreferKeywordSearch}
+        checked={settings.ragPreferKeywordSearch}
+        onChange={(checked) => updateToggle("ragPreferKeywordSearch", checked)}
+      />
       <NumberSettingCard
         fieldKey="ragContextMinScore"
         value={settings.ragContextMinScore}
@@ -266,11 +262,52 @@ export function ChatIntelligenceSettingsPanel({
           setSettings({ ...settings, ragContextMinScore: value })
         }
       />
+      <NumberSettingCard
+        fieldKey="ragIdentityQuestionMinScore"
+        value={settings.ragIdentityQuestionMinScore}
+        onChange={(value) =>
+          setSettings({ ...settings, ragIdentityQuestionMinScore: value })
+        }
+      />
     </>
   );
 
   const actionsSection = (
     <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.operationalFastPathEnabled}
+        checked={settings.operationalFastPathEnabled}
+        onChange={(checked) => updateToggle("operationalFastPathEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.externalActionDirectResponseEnabled}
+        checked={settings.externalActionDirectResponseEnabled}
+        onChange={(checked) =>
+          updateToggle("externalActionDirectResponseEnabled", checked)
+        }
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.preferApiExternaProvider}
+        checked={settings.preferApiExternaProvider}
+        onChange={(checked) => updateToggle("preferApiExternaProvider", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.multiActionEnabled}
+        checked={settings.multiActionEnabled}
+        onChange={(checked) => updateToggle("multiActionEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.paginationAutoFetchEnabled}
+        checked={settings.paginationAutoFetchEnabled}
+        onChange={(checked) => updateToggle("paginationAutoFetchEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.externalActionEmbeddingOnImport}
+        checked={settings.externalActionEmbeddingOnImport}
+        onChange={(checked) =>
+          updateToggle("externalActionEmbeddingOnImport", checked)
+        }
+      />
       <ToggleSettingCard
         meta={CHAT_INTELLIGENCE_TOGGLE_META.externalActionSemanticRankEnabled}
         checked={settings.externalActionSemanticRankEnabled}
@@ -290,6 +327,18 @@ export function ChatIntelligenceSettingsPanel({
 
   const orchestrationSection = (
     <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.fastPathEnabled}
+        checked={settings.fastPathEnabled}
+        onChange={(checked) => updateToggle("fastPathEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.assistantIdentityDirectEnabled}
+        checked={settings.assistantIdentityDirectEnabled}
+        onChange={(checked) =>
+          updateToggle("assistantIdentityDirectEnabled", checked)
+        }
+      />
       <ToggleSettingCard
         meta={CHAT_INTELLIGENCE_TOGGLE_META.chatToolRouterEnabled}
         checked={settings.chatToolRouterEnabled}
@@ -324,11 +373,25 @@ export function ChatIntelligenceSettingsPanel({
   );
 
   const toolsSection = (
-    <ToggleSettingCard
-      meta={CHAT_INTELLIGENCE_TOGGLE_META.webSearchEnabled}
-      checked={settings.webSearchEnabled}
-      onChange={(checked) => updateToggle("webSearchEnabled", checked)}
-    />
+    <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.webSearchEnabled}
+        checked={settings.webSearchEnabled}
+        onChange={(checked) => updateToggle("webSearchEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.webSearchDirectResponseEnabled}
+        checked={settings.webSearchDirectResponseEnabled}
+        onChange={(checked) =>
+          updateToggle("webSearchDirectResponseEnabled", checked)
+        }
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.webSearchAutoAugmentEnabled}
+        checked={settings.webSearchAutoAugmentEnabled}
+        onChange={(checked) => updateToggle("webSearchAutoAugmentEnabled", checked)}
+      />
+    </>
   );
 
   const sectionContent: Record<string, ReactNode> = {

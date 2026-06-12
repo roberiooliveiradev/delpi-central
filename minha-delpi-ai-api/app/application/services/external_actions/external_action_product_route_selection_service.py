@@ -803,9 +803,11 @@ class ExternalActionProductRouteSelectionService:
         *,
         suppress_playbook_bias: bool = False,
     ) -> int:
-        from app.infrastructure.config.settings import Settings
+        from app.application.services.chat_intelligence_runtime_access import (
+            resolve_chat_intelligence_runtime,
+        )
 
-        if suppress_playbook_bias or not Settings.CHAT_PREFER_API_EXTERNA_PROVIDER:
+        if suppress_playbook_bias or not resolve_chat_intelligence_runtime().prefer_api_externa_provider:
             return 0
 
         action_id = str(action.get("actionId") or "").lower()

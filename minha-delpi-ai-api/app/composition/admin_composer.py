@@ -111,6 +111,17 @@ from app.application.use_cases.admin_chat_intelligence_use_cases import (
     ReindexExternalActionEmbeddingsUseCase,
     SaveAdminChatIntelligenceSettingsUseCase,
 )
+from app.application.use_cases.admin_chat_platform_settings_use_cases import (
+    GetAdminChatLearningPipelineSettingsUseCase,
+    GetAdminChatResponseModeSettingsUseCase,
+    GetAdminChatVisionSettingsUseCase,
+    SaveAdminChatLearningPipelineSettingsUseCase,
+    SaveAdminChatResponseModeSettingsUseCase,
+    SaveAdminChatVisionSettingsUseCase,
+    make_learning_pipeline_settings_service,
+    make_response_mode_settings_service,
+    make_vision_settings_service,
+)
 from app.composition.chat_composer import (
     make_admin_guideline_prompt_service,
     make_chat_tool_context_service,
@@ -643,6 +654,46 @@ def make_save_admin_chat_intelligence_settings_use_case() -> SaveAdminChatIntell
 
     return SaveAdminChatIntelligenceSettingsUseCase(
         service=make_chat_intelligence_settings_service(),
+    )
+
+
+def make_get_admin_chat_response_mode_settings_use_case() -> (
+    GetAdminChatResponseModeSettingsUseCase
+):
+    return GetAdminChatResponseModeSettingsUseCase(
+        service=make_response_mode_settings_service(),
+    )
+
+
+def make_save_admin_chat_response_mode_settings_use_case() -> (
+    SaveAdminChatResponseModeSettingsUseCase
+):
+    return SaveAdminChatResponseModeSettingsUseCase(
+        service=make_response_mode_settings_service(),
+    )
+
+
+def make_get_admin_chat_vision_settings_use_case() -> GetAdminChatVisionSettingsUseCase:
+    return GetAdminChatVisionSettingsUseCase(service=make_vision_settings_service())
+
+
+def make_save_admin_chat_vision_settings_use_case() -> SaveAdminChatVisionSettingsUseCase:
+    return SaveAdminChatVisionSettingsUseCase(service=make_vision_settings_service())
+
+
+def make_get_admin_chat_learning_pipeline_settings_use_case() -> (
+    GetAdminChatLearningPipelineSettingsUseCase
+):
+    return GetAdminChatLearningPipelineSettingsUseCase(
+        service=make_learning_pipeline_settings_service(),
+    )
+
+
+def make_save_admin_chat_learning_pipeline_settings_use_case() -> (
+    SaveAdminChatLearningPipelineSettingsUseCase
+):
+    return SaveAdminChatLearningPipelineSettingsUseCase(
+        service=make_learning_pipeline_settings_service(),
     )
 
 

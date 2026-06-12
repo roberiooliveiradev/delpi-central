@@ -14,6 +14,12 @@ from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepos
 from app.infrastructure.config.settings import Settings
 
 
+def _vision_runtime() -> dict:
+    from app.application.services.chat_platform_runtime_access import vision_settings
+
+    return vision_settings()
+
+
 def _default_attachment_repository() -> ChatAttachmentRepositoryPort:
     from app.composition.repository_composer import make_chat_attachment_repository
 
@@ -25,19 +31,19 @@ class ChatDocumentVisionService:
 
     @classmethod
     def is_enabled(cls) -> bool:
-        return Settings.CHAT_DOCUMENT_VISION_ENABLED
+        return bool(_vision_runtime().get("documentVisionEnabled"))
 
     @classmethod
     def _auto_vlm_fallback_enabled(cls) -> bool:
         return bool(
-            Settings.CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK
+            _vision_runtime().get("documentVisionAutoVlmFallback")
             and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
         )
 
     @classmethod
     def _image_describe_enabled(cls) -> bool:
         return bool(
-            Settings.CHAT_DOCUMENT_VISION_IMAGE_DESCRIBE_ENABLED
+            _vision_runtime().get("documentVisionImageDescribeEnabled")
             and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
         )
 
@@ -870,7 +876,7 @@ class ChatDocumentVisionService:
 
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
         dpi = max(72, int(Settings.CHAT_DOCUMENT_VISION_DPI))
-        max_pages = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES))
+        max_pages = max(1, int(_vision_runtime().get("documentVisionMaxPages", 10)))
         zoom = dpi / 72.0
         matrix = fitz.Matrix(zoom, zoom)
 
@@ -905,7 +911,7 @@ class ChatDocumentVisionService:
                 if chunk:
                     texts.append(chunk)
 
-                if index == 0 and Settings.CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED:
+                if index == 0 and _vision_runtime().get("documentVisionStampCropEnabled"):
                     from app.domain.services.chat_drawing_region_service import (
                         ChatDrawingRegionService,
                     )
@@ -1116,7 +1122,7 @@ class ChatDocumentVisionService:
     @classmethod
     def _stage_tesseract_image(cls, storage_path: str) -> dict[str, Any]:
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
-        max_chars = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))
+        max_chars = max(1, int(_vision_runtime().get("documentVisionMaxChars", 12000)))
 
         try:
             import pytesseract
@@ -1460,7 +1466,7 @@ class ChatDocumentVisionService:
 
     @classmethod
     def _truncate_vision_text(cls, text: str) -> str:
-        max_chars = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))
+        max_chars = max(1, int(_vision_runtime().get("documentVisionMaxChars", 12000)))
         normalized = str(text or "").strip()
 
         if len(normalized) <= max_chars:
@@ -1479,7 +1485,7 @@ class ChatDocumentVisionService:
             return [], [f"dependencies_unavailable:{exc.__class__.__name__}"]
 
         dpi = max(72, int(Settings.CHAT_DOCUMENT_VISION_DPI))
-        max_pages = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES))
+        max_pages = max(1, int(_vision_runtime().get("documentVisionMaxPages", 10)))
         zoom = dpi / 72.0
         matrix = fitz.Matrix(zoom, zoom)
         images: list[Any] = []
@@ -1529,7 +1535,10 @@ class ChatDocumentVisionService:
             Settings.CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL
             or Settings.OLLAMA_BASE_URL
         ).strip().rstrip("/")
-        max_vlm_pages = max(1, min(3, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES)))
+        max_vlm_pages = max(
+            1,
+            min(3, int(_vision_runtime().get("documentVisionMaxPages", 10))),
+        )
 
         try:
             import requests
@@ -1580,7 +1589,12 @@ class ChatDocumentVisionService:
                 }
             ],
             "stream": False,
-            "options": {"num_predict": min(4096, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))},
+            "options": {
+                "num_predict": min(
+                    4096,
+                    int(_vision_runtime().get("documentVisionMaxChars", 12000)),
+                )
+            },
         }
 
         try:

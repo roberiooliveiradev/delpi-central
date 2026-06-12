@@ -36,6 +36,14 @@ class ChatDomainConfigService:
         return cls._require_config().chat_document_vision_auto_with_drawing()
 
     @classmethod
+    def chat_response_modes_enabled(cls) -> bool:
+        return cls._require_config().chat_response_modes_enabled()
+
+    @classmethod
+    def chat_typing_correction_fuzzy_enabled(cls) -> bool:
+        return cls._require_config().chat_typing_correction_fuzzy_enabled()
+
+    @classmethod
     def chat_web_search_direct_response_enabled(cls) -> bool:
         return cls._require_config().chat_web_search_direct_response_enabled()
 

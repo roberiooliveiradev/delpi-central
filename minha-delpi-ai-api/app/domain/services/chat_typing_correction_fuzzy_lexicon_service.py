@@ -53,7 +53,12 @@ class ChatTypingCorrectionFuzzyLexiconService:
 
     @classmethod
     def is_enabled(cls) -> bool:
-        return cls._enabled
+        if not cls._enabled:
+            return False
+
+        from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+
+        return ChatDomainConfigService.chat_typing_correction_fuzzy_enabled()
 
     @classmethod
     def term_count(cls) -> int:

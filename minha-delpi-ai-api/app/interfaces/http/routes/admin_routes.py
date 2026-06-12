@@ -41,9 +41,15 @@ from app.composition.admin_composer import (
     make_get_admin_text_task_summary_use_case,
     make_get_admin_metrics_summary_use_case,
     make_get_admin_chat_intelligence_settings_use_case,
+    make_get_admin_chat_learning_pipeline_settings_use_case,
+    make_get_admin_chat_response_mode_settings_use_case,
+    make_get_admin_chat_vision_settings_use_case,
     make_get_admin_llm_cost_table_use_case,
     make_reindex_external_action_embeddings_use_case,
     make_save_admin_chat_intelligence_settings_use_case,
+    make_save_admin_chat_learning_pipeline_settings_use_case,
+    make_save_admin_chat_response_mode_settings_use_case,
+    make_save_admin_chat_vision_settings_use_case,
     make_save_admin_llm_cost_table_use_case,
     make_get_admin_tools_health_use_case,
     make_get_admin_rbac_summary_use_case,
@@ -1623,6 +1629,101 @@ def save_admin_chat_intelligence_settings():
         db.session.rollback()
 
     return jsonify(result), 200
+
+
+def _save_admin_runtime_bundle(
+    *,
+    use_case_factory,
+    audit_action: str,
+    payload: dict,
+):
+    use_case = use_case_factory()
+
+    try:
+        result = use_case.execute(payload)
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    try:
+        make_audit_repository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action=audit_action,
+            context="admin",
+            metadata={"keys": list(payload.keys())},
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/chat/response-mode-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_chat_response_mode_settings():
+    return jsonify(make_get_admin_chat_response_mode_settings_use_case().execute()), 200
+
+
+@admin_bp.put("/chat/response-mode-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_chat_response_mode_settings():
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+    return _save_admin_runtime_bundle(
+        use_case_factory=make_save_admin_chat_response_mode_settings_use_case,
+        audit_action="admin.chat.response_mode_settings.updated",
+        payload=payload,
+    )
+
+
+@admin_bp.get("/chat/vision-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_chat_vision_settings():
+    return jsonify(make_get_admin_chat_vision_settings_use_case().execute()), 200
+
+
+@admin_bp.put("/chat/vision-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_chat_vision_settings():
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+    return _save_admin_runtime_bundle(
+        use_case_factory=make_save_admin_chat_vision_settings_use_case,
+        audit_action="admin.chat.vision_settings.updated",
+        payload=payload,
+    )
+
+
+@admin_bp.get("/chat/learning-pipeline-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_chat_learning_pipeline_settings():
+    return jsonify(make_get_admin_chat_learning_pipeline_settings_use_case().execute()), 200
+
+
+@admin_bp.put("/chat/learning-pipeline-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_chat_learning_pipeline_settings():
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+    return _save_admin_runtime_bundle(
+        use_case_factory=make_save_admin_chat_learning_pipeline_settings_use_case,
+        audit_action="admin.chat.learning_pipeline_settings.updated",
+        payload=payload,
+    )
 
 
 @admin_bp.post("/tools/actions/reindex-embeddings")

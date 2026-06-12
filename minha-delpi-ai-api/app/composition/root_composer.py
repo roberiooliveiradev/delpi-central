@@ -63,10 +63,14 @@ def create_application() -> Flask:
         seed_chat_intelligence_defaults_command,
         sync_chat_intelligence_env_command,
     )
+    from app.infrastructure.cli.chat_platform_settings_cli import (
+        seed_chat_platform_settings_command,
+    )
 
     app.cli.add_command(data_retention_cli)
     app.cli.add_command(sync_chat_intelligence_env_command)
     app.cli.add_command(seed_chat_intelligence_defaults_command)
+    app.cli.add_command(seed_chat_platform_settings_command)
 
     warmup_ollama()
 

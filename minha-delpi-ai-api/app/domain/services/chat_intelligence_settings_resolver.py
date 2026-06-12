@@ -18,6 +18,18 @@ class ChatIntelligenceSettingsSnapshot:
     agentic_loop_enabled: bool
     agentic_loop_max_steps: int
     web_search_enabled: bool
+    operational_fast_path_enabled: bool
+    external_action_direct_response_enabled: bool
+    prefer_api_externa_provider: bool
+    multi_action_enabled: bool
+    pagination_auto_fetch_enabled: bool
+    external_action_embedding_on_import: bool
+    rag_prefer_keyword_search: bool
+    rag_identity_question_min_score: float
+    fast_path_enabled: bool
+    assistant_identity_direct_enabled: bool
+    web_search_direct_response_enabled: bool
+    web_search_auto_augment_enabled: bool
 
 
 def chat_intelligence_settings_to_payload(
@@ -36,6 +48,18 @@ def chat_intelligence_settings_to_payload(
         "agenticLoopEnabled": settings.agentic_loop_enabled,
         "agenticLoopMaxSteps": settings.agentic_loop_max_steps,
         "webSearchEnabled": settings.web_search_enabled,
+        "operationalFastPathEnabled": settings.operational_fast_path_enabled,
+        "externalActionDirectResponseEnabled": settings.external_action_direct_response_enabled,
+        "preferApiExternaProvider": settings.prefer_api_externa_provider,
+        "multiActionEnabled": settings.multi_action_enabled,
+        "paginationAutoFetchEnabled": settings.pagination_auto_fetch_enabled,
+        "externalActionEmbeddingOnImport": settings.external_action_embedding_on_import,
+        "ragPreferKeywordSearch": settings.rag_prefer_keyword_search,
+        "ragIdentityQuestionMinScore": settings.rag_identity_question_min_score,
+        "fastPathEnabled": settings.fast_path_enabled,
+        "assistantIdentityDirectEnabled": settings.assistant_identity_direct_enabled,
+        "webSearchDirectResponseEnabled": settings.web_search_direct_response_enabled,
+        "webSearchAutoAugmentEnabled": settings.web_search_auto_augment_enabled,
     }
 
 
@@ -88,13 +112,61 @@ def resolve_chat_intelligence_settings(
             stored.get("agenticLoopEnabled"),
             defaults.agentic_loop_enabled,
         ),
-        agentic_loop_max_steps=_int(
+        agentic_loop_max_steps=_loop_steps(
             stored.get("agenticLoopMaxSteps"),
             defaults.agentic_loop_max_steps,
         ),
         web_search_enabled=_bool(
             stored.get("webSearchEnabled"),
             defaults.web_search_enabled,
+        ),
+        operational_fast_path_enabled=_bool(
+            stored.get("operationalFastPathEnabled"),
+            defaults.operational_fast_path_enabled,
+        ),
+        external_action_direct_response_enabled=_bool(
+            stored.get("externalActionDirectResponseEnabled"),
+            defaults.external_action_direct_response_enabled,
+        ),
+        prefer_api_externa_provider=_bool(
+            stored.get("preferApiExternaProvider"),
+            defaults.prefer_api_externa_provider,
+        ),
+        multi_action_enabled=_bool(
+            stored.get("multiActionEnabled"),
+            defaults.multi_action_enabled,
+        ),
+        pagination_auto_fetch_enabled=_bool(
+            stored.get("paginationAutoFetchEnabled"),
+            defaults.pagination_auto_fetch_enabled,
+        ),
+        external_action_embedding_on_import=_bool(
+            stored.get("externalActionEmbeddingOnImport"),
+            defaults.external_action_embedding_on_import,
+        ),
+        rag_prefer_keyword_search=_bool(
+            stored.get("ragPreferKeywordSearch"),
+            defaults.rag_prefer_keyword_search,
+        ),
+        rag_identity_question_min_score=_score(
+            stored.get("ragIdentityQuestionMinScore"),
+            defaults.rag_identity_question_min_score,
+        ),
+        fast_path_enabled=_bool(
+            stored.get("fastPathEnabled"),
+            defaults.fast_path_enabled,
+        ),
+        assistant_identity_direct_enabled=_bool(
+            stored.get("assistantIdentityDirectEnabled"),
+            defaults.assistant_identity_direct_enabled,
+        ),
+        web_search_direct_response_enabled=_bool(
+            stored.get("webSearchDirectResponseEnabled"),
+            defaults.web_search_direct_response_enabled,
+        ),
+        web_search_auto_augment_enabled=_bool(
+            stored.get("webSearchAutoAugmentEnabled"),
+            defaults.web_search_auto_augment_enabled,
         ),
     )
 
@@ -109,7 +181,12 @@ def _float(value: Any, default: float) -> float:
         return float(default)
 
 
-def _int(value: Any, default: int) -> int:
+def _score(value: Any, default: float) -> float:
+    parsed = _float(value, default)
+    return max(0.0, min(parsed, 1.0))
+
+
+def _loop_steps(value: Any, default: int) -> int:
     if value is None:
         return int(default)
 

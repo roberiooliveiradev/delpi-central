@@ -83,9 +83,13 @@ class ChatTurnPreparationPostToolResolutionService:
         )
         assistant_identity_direct = None
 
+        from app.application.services.chat_intelligence_runtime_access import (
+            resolve_chat_intelligence_runtime,
+        )
+
         if (
             assistant_identity_question
-            and Settings.CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED
+            and resolve_chat_intelligence_runtime().assistant_identity_direct_enabled
         ):
             assistant_identity_direct = ChatAssistantIdentityService.build_direct_answer(
                 message=message,

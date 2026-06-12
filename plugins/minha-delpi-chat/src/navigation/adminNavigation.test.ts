@@ -40,12 +40,12 @@ describe("adminNavigation", () => {
 
   it("monta e parseia a sub-aba de aprendizagem com página padrão", () => {
     expect(buildAdminHref({ section: "knowledge", subTab: "learning" })).toBe(
-      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/candidatos",
+      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/pipeline",
     );
     expect(parseAdminPathSegments(["conhecimento", "aprendizagem"])).toEqual({
       section: "knowledge",
       subTab: "learning",
-      page: "candidates",
+      page: "pipeline",
     });
   });
 

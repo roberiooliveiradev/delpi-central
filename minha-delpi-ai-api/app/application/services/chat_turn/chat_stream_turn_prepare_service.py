@@ -12,6 +12,9 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+from app.application.services.chat_intelligence_runtime_access import (
+    resolve_chat_intelligence_runtime,
+)
 from app.application.services.chat_turn.chat_stream_session_title_service import (
     ChatStreamSessionTitleService,
 )
@@ -208,7 +211,7 @@ class ChatStreamTurnPrepareService:
                 ),
                 prepare_history=self.turn_support.prepare_history,
                 history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
-                fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+                fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
                 fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
                 resolve_user_identity_answer=lambda msg: (
                     self.turn_support.resolve_user_identity_answer(request.access_token, msg)

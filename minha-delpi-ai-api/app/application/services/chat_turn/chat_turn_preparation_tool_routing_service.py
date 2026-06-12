@@ -155,8 +155,12 @@ class ChatTurnPreparationToolRoutingService:
             getattr(request, "access_token", None)
             and ChatUserContextService.is_user_identity_question(message)
         )
+        from app.application.services.chat_intelligence_runtime_access import (
+            resolve_chat_intelligence_runtime,
+        )
+
         skip_tools_for_assistant_identity = bool(
-            Settings.CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED
+            resolve_chat_intelligence_runtime().assistant_identity_direct_enabled
             and ChatAssistantIdentityService.is_assistant_identity_question(message)
         )
         skip_tools_for_data_interpretation = (

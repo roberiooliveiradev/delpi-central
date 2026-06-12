@@ -30,7 +30,13 @@ class ChatLearnedNormalizationService:
 
     def ensure_loaded(self, *, force: bool = False) -> None:
         """Carrega regras se a flag estiver ligada e o cache expirou. Best-effort."""
-        if not (Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_APPLY_VOCABULARY):
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
+
+        learning = learning_pipeline_settings()
+
+        if not (learning.get("learningEnabled") and learning.get("learningApplyVocabulary")):
             return
 
         now = time.monotonic()

@@ -29,11 +29,13 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
+import { ChatLearningPipelineSettingsPanel } from "./ChatLearningPipelineSettingsPanel";
 import { LearningSummaryStrip } from "./LearningSummaryStrip";
 
 import "./AdminLearningTab.css";
 
 export type AdminLearningView =
+  | "pipeline"
   | "candidates"
   | "vocabulary"
   | "memory"
@@ -41,6 +43,7 @@ export type AdminLearningView =
   | "finetuning";
 
 const LEARNING_VIEWS: AdminLearningView[] = [
+  "pipeline",
   "candidates",
   "vocabulary",
   "memory",
@@ -53,7 +56,7 @@ function resolveLearningView(page?: string): AdminLearningView {
     return page as AdminLearningView;
   }
 
-  return "candidates";
+  return "pipeline";
 }
 
 type AdminLearningTabProps = {
@@ -263,6 +266,10 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
   }, [getAccessToken]);
 
   useEffect(() => {
+    if (view === "pipeline") {
+      return;
+    }
+
     if (view === "candidates") {
       void loadCandidates();
     } else if (view === "vocabulary") {
@@ -529,6 +536,19 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
     } finally {
       setIsBusy(false);
     }
+  }
+
+  if (view === "pipeline") {
+    return (
+      <section className="mdc-admin-learning">
+        <AdminTabHeader
+          eyebrow="Conhecimento"
+          title="Pipeline de aprendizagem"
+          description="Interruptores do pipeline (captura, vocabulário, glossário e correção de digitação)."
+        />
+        <ChatLearningPipelineSettingsPanel getAccessToken={getAccessToken} />
+      </section>
+    );
   }
 
   return (

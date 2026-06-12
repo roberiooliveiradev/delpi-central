@@ -1,12 +1,27 @@
 from __future__ import annotations
 
+from app.domain.ports.admin_runtime_settings_repository_port import (
+    AdminRuntimeSettingsRepositoryPort,
+)
 from app.domain.ports.app_config_port import AppConfigPort
+from app.infrastructure.config.chat_intelligence_runtime_reader import (
+    read_resolved_chat_intelligence,
+)
 from app.infrastructure.config.settings import Settings
 
 
 class InfrastructureAppConfigAdapter(AppConfigPort):
+    def __init__(
+        self,
+        settings_repository: AdminRuntimeSettingsRepositoryPort | None = None,
+    ) -> None:
+        self._settings_repository = settings_repository
+
+    def _intelligence(self):
+        return read_resolved_chat_intelligence(self._settings_repository)
+
     def chat_external_action_direct_response_enabled(self) -> bool:
-        return bool(Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED)
+        return self._intelligence().external_action_direct_response_enabled
 
     def chat_direct_response_stream_chunk_chars(self) -> int:
         return int(Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS)
@@ -18,16 +33,50 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return bool(Settings.CHAT_DEFAULT_SQL_AUTHORING_SKILL)
 
     def chat_document_vision_enabled(self) -> bool:
-        return bool(Settings.CHAT_DOCUMENT_VISION_ENABLED)
+        from app.infrastructure.config.chat_admin_settings_runtime_reader import (
+            read_vision_settings,
+        )
+
+        return bool(read_vision_settings(self._settings_repository).get("documentVisionEnabled"))
 
     def chat_document_vision_auto_with_drawing(self) -> bool:
-        return bool(Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING)
+        from app.infrastructure.config.chat_admin_settings_runtime_reader import (
+            read_vision_settings,
+        )
+
+        return bool(
+            read_vision_settings(self._settings_repository).get(
+                "documentVisionAutoWithDrawing"
+            )
+        )
+
+    def chat_response_modes_enabled(self) -> bool:
+        from app.infrastructure.config.chat_admin_settings_runtime_reader import (
+            read_response_mode_settings,
+        )
+
+        return bool(
+            read_response_mode_settings(self._settings_repository).get(
+                "responseModesEnabled",
+                True,
+            )
+        )
+
+    def chat_typing_correction_fuzzy_enabled(self) -> bool:
+        from app.infrastructure.config.chat_admin_settings_runtime_reader import (
+            read_learning_pipeline_settings,
+        )
+
+        learning = read_learning_pipeline_settings(self._settings_repository)
+        return bool(
+            learning.get("learningEnabled") and learning.get("typingCorrectionFuzzyEnabled")
+        )
 
     def chat_web_search_direct_response_enabled(self) -> bool:
-        return bool(Settings.CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED)
+        return self._intelligence().web_search_direct_response_enabled
 
     def chat_web_search_enabled(self) -> bool:
-        return bool(Settings.CHAT_WEB_SEARCH_ENABLED)
+        return self._intelligence().web_search_enabled
 
     def chat_web_search_max_results(self) -> int:
         return int(Settings.CHAT_WEB_SEARCH_MAX_RESULTS)
@@ -36,16 +85,16 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return float(Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS)
 
     def chat_web_search_auto_augment_enabled(self) -> bool:
-        return bool(Settings.CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED)
+        return self._intelligence().web_search_auto_augment_enabled
 
     def chat_pagination_auto_fetch_enabled(self) -> bool:
-        return bool(Settings.CHAT_PAGINATION_AUTO_FETCH_ENABLED)
+        return self._intelligence().pagination_auto_fetch_enabled
 
     def chat_pagination_max_pages_per_turn(self) -> int:
         return int(Settings.CHAT_PAGINATION_MAX_PAGES_PER_TURN)
 
     def chat_operational_fast_path_enabled(self) -> bool:
-        return bool(Settings.CHAT_OPERATIONAL_FAST_PATH_ENABLED)
+        return self._intelligence().operational_fast_path_enabled
 
     def chat_default_sql_dialect(self) -> str:
         return str(Settings.CHAT_DEFAULT_SQL_DIALECT or "sqlserver").strip().lower()

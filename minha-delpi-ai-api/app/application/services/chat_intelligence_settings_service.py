@@ -12,6 +12,35 @@ from app.infrastructure.config.chat_intelligence_settings_defaults import (
     build_chat_intelligence_defaults_from_settings,
 )
 
+_PAYLOAD_BOOL_KEYS = (
+    "externalActionSemanticRankEnabled",
+    "chatToolRouterEnabled",
+    "chatHistorySummaryEnabled",
+    "ragHybridEnabled",
+    "ragRerankEnabled",
+    "ragFtsEnabled",
+    "nativeToolCallingEnabled",
+    "agenticLoopEnabled",
+    "webSearchEnabled",
+    "operationalFastPathEnabled",
+    "externalActionDirectResponseEnabled",
+    "preferApiExternaProvider",
+    "multiActionEnabled",
+    "paginationAutoFetchEnabled",
+    "externalActionEmbeddingOnImport",
+    "ragPreferKeywordSearch",
+    "fastPathEnabled",
+    "assistantIdentityDirectEnabled",
+    "webSearchDirectResponseEnabled",
+    "webSearchAutoAugmentEnabled",
+)
+
+_PAYLOAD_FLOAT_KEYS = (
+    "ragContextMinScore",
+    "externalActionSemanticMinScore",
+    "ragIdentityQuestionMinScore",
+)
+
 
 @dataclass(frozen=True)
 class ChatIntelligenceSettings:
@@ -27,6 +56,18 @@ class ChatIntelligenceSettings:
     agentic_loop_enabled: bool
     agentic_loop_max_steps: int
     web_search_enabled: bool
+    operational_fast_path_enabled: bool
+    external_action_direct_response_enabled: bool
+    prefer_api_externa_provider: bool
+    multi_action_enabled: bool
+    pagination_auto_fetch_enabled: bool
+    external_action_embedding_on_import: bool
+    rag_prefer_keyword_search: bool
+    rag_identity_question_min_score: float
+    fast_path_enabled: bool
+    assistant_identity_direct_enabled: bool
+    web_search_direct_response_enabled: bool
+    web_search_auto_augment_enabled: bool
 
 
 class ChatIntelligenceSettingsService:
@@ -44,8 +85,7 @@ class ChatIntelligenceSettingsService:
 
     @classmethod
     def build_from_settings(cls) -> ChatIntelligenceSettings:
-        snapshot = cls.build_defaults_from_settings()
-        return cls._snapshot_to_dataclass(snapshot)
+        return cls._snapshot_to_dataclass(cls.build_defaults_from_settings())
 
     def _load_stored_payload(self) -> dict | None:
         if self.settings_repository is None:
@@ -87,81 +127,42 @@ class ChatIntelligenceSettingsService:
         resolved = settings or self.resolve()
         stored = self._load_stored_payload()
         defaults = self.build_defaults_from_settings()
+        snapshot = self._dataclass_to_snapshot(resolved)
 
         return {
-            "ragContextMinScore": resolved.rag_context_min_score,
-            "externalActionSemanticMinScore": resolved.external_action_semantic_min_score,
-            "externalActionSemanticRankEnabled": resolved.external_action_semantic_rank_enabled,
-            "chatToolRouterEnabled": resolved.chat_tool_router_enabled,
-            "chatHistorySummaryEnabled": resolved.chat_history_summary_enabled,
-            "ragHybridEnabled": resolved.rag_hybrid_enabled,
-            "ragRerankEnabled": resolved.rag_rerank_enabled,
-            "ragFtsEnabled": resolved.rag_fts_enabled,
-            "nativeToolCallingEnabled": resolved.native_tool_calling_enabled,
-            "agenticLoopEnabled": resolved.agentic_loop_enabled,
-            "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
-            "webSearchEnabled": resolved.web_search_enabled,
+            **chat_intelligence_settings_to_payload(snapshot),
             "source": "admin" if stored else "defaults",
             "defaults": chat_intelligence_settings_to_payload(defaults),
         }
 
     def save(self, payload: dict) -> dict:
-        current = self.resolve()
-        merged = {
-            "ragContextMinScore": self._float(
-                payload.get("ragContextMinScore"),
-                current.rag_context_min_score,
-            ),
-            "externalActionSemanticMinScore": self._float(
-                payload.get("externalActionSemanticMinScore"),
-                current.external_action_semantic_min_score,
-            ),
-            "externalActionSemanticRankEnabled": self._bool(
-                payload.get("externalActionSemanticRankEnabled"),
-                current.external_action_semantic_rank_enabled,
-            ),
-            "chatToolRouterEnabled": self._bool(
-                payload.get("chatToolRouterEnabled"),
-                current.chat_tool_router_enabled,
-            ),
-            "chatHistorySummaryEnabled": self._bool(
-                payload.get("chatHistorySummaryEnabled"),
-                current.chat_history_summary_enabled,
-            ),
-            "ragHybridEnabled": self._bool(
-                payload.get("ragHybridEnabled"),
-                current.rag_hybrid_enabled,
-            ),
-            "ragRerankEnabled": self._bool(
-                payload.get("ragRerankEnabled"),
-                current.rag_rerank_enabled,
-            ),
-            "ragFtsEnabled": self._bool(
-                payload.get("ragFtsEnabled"),
-                current.rag_fts_enabled,
-            ),
-            "nativeToolCallingEnabled": self._bool(
-                payload.get("nativeToolCallingEnabled"),
-                current.native_tool_calling_enabled,
-            ),
-            "agenticLoopEnabled": self._bool(
-                payload.get("agenticLoopEnabled"),
-                current.agentic_loop_enabled,
-            ),
-            "agenticLoopMaxSteps": self._int(
+        current = chat_intelligence_settings_to_payload(self._resolve_snapshot())
+        merged = dict(current)
+
+        for key in _PAYLOAD_FLOAT_KEYS:
+            if key in payload:
+                merged[key] = self._score(
+                    payload.get(key),
+                    float(merged.get(key, 0)),
+                )
+
+        if "agenticLoopMaxSteps" in payload:
+            merged["agenticLoopMaxSteps"] = self._int(
                 payload.get("agenticLoopMaxSteps"),
-                current.agentic_loop_max_steps,
-            ),
-            "webSearchEnabled": self._bool(
-                payload.get("webSearchEnabled"),
-                current.web_search_enabled,
-            ),
-        }
+                int(merged.get("agenticLoopMaxSteps", 2)),
+            )
+
+        for key in _PAYLOAD_BOOL_KEYS:
+            if key in payload:
+                merged[key] = self._bool(
+                    payload.get(key),
+                    bool(merged.get(key, False)),
+                )
 
         if self.settings_repository is not None:
             self.settings_repository.save_chat_intelligence_settings(merged)
 
-        return self.to_dict(self.resolve())
+        return self.to_dict()
 
     @staticmethod
     def _snapshot_to_dataclass(
@@ -180,16 +181,59 @@ class ChatIntelligenceSettingsService:
             agentic_loop_enabled=snapshot.agentic_loop_enabled,
             agentic_loop_max_steps=snapshot.agentic_loop_max_steps,
             web_search_enabled=snapshot.web_search_enabled,
+            operational_fast_path_enabled=snapshot.operational_fast_path_enabled,
+            external_action_direct_response_enabled=snapshot.external_action_direct_response_enabled,
+            prefer_api_externa_provider=snapshot.prefer_api_externa_provider,
+            multi_action_enabled=snapshot.multi_action_enabled,
+            pagination_auto_fetch_enabled=snapshot.pagination_auto_fetch_enabled,
+            external_action_embedding_on_import=snapshot.external_action_embedding_on_import,
+            rag_prefer_keyword_search=snapshot.rag_prefer_keyword_search,
+            rag_identity_question_min_score=snapshot.rag_identity_question_min_score,
+            fast_path_enabled=snapshot.fast_path_enabled,
+            assistant_identity_direct_enabled=snapshot.assistant_identity_direct_enabled,
+            web_search_direct_response_enabled=snapshot.web_search_direct_response_enabled,
+            web_search_auto_augment_enabled=snapshot.web_search_auto_augment_enabled,
         )
 
-    def _float(self, value, default: float) -> float:
+    @staticmethod
+    def _dataclass_to_snapshot(
+        settings: ChatIntelligenceSettings,
+    ) -> ChatIntelligenceSettingsSnapshot:
+        return ChatIntelligenceSettingsSnapshot(
+            rag_context_min_score=settings.rag_context_min_score,
+            external_action_semantic_min_score=settings.external_action_semantic_min_score,
+            external_action_semantic_rank_enabled=settings.external_action_semantic_rank_enabled,
+            chat_tool_router_enabled=settings.chat_tool_router_enabled,
+            chat_history_summary_enabled=settings.chat_history_summary_enabled,
+            rag_hybrid_enabled=settings.rag_hybrid_enabled,
+            rag_rerank_enabled=settings.rag_rerank_enabled,
+            rag_fts_enabled=settings.rag_fts_enabled,
+            native_tool_calling_enabled=settings.native_tool_calling_enabled,
+            agentic_loop_enabled=settings.agentic_loop_enabled,
+            agentic_loop_max_steps=settings.agentic_loop_max_steps,
+            web_search_enabled=settings.web_search_enabled,
+            operational_fast_path_enabled=settings.operational_fast_path_enabled,
+            external_action_direct_response_enabled=settings.external_action_direct_response_enabled,
+            prefer_api_externa_provider=settings.prefer_api_externa_provider,
+            multi_action_enabled=settings.multi_action_enabled,
+            pagination_auto_fetch_enabled=settings.pagination_auto_fetch_enabled,
+            external_action_embedding_on_import=settings.external_action_embedding_on_import,
+            rag_prefer_keyword_search=settings.rag_prefer_keyword_search,
+            rag_identity_question_min_score=settings.rag_identity_question_min_score,
+            fast_path_enabled=settings.fast_path_enabled,
+            assistant_identity_direct_enabled=settings.assistant_identity_direct_enabled,
+            web_search_direct_response_enabled=settings.web_search_direct_response_enabled,
+            web_search_auto_augment_enabled=settings.web_search_auto_augment_enabled,
+        )
+
+    def _score(self, value, default: float) -> float:
         if value is None:
-            return float(default)
+            return max(0.0, min(float(default), 1.0))
 
         try:
-            return float(value)
+            return max(0.0, min(float(value), 1.0))
         except (TypeError, ValueError):
-            return float(default)
+            return max(0.0, min(float(default), 1.0))
 
     def _int(self, value, default: int) -> int:
         if value is None:

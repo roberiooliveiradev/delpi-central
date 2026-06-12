@@ -52,10 +52,7 @@ def _configure_typo_correction_rules() -> None:
         ChatMessageNormalizationService.configure_static_rules(rules)
 
     lexicon_payload = ContentService.load_json("assistant/typing_correction_lexicon")
-    ChatTypingCorrectionFuzzyLexiconService.configure(
-        lexicon_payload,
-        enabled=Settings.CHAT_TYPING_CORRECTION_FUZZY_ENABLED,
-    )
+    ChatTypingCorrectionFuzzyLexiconService.configure(lexicon_payload, enabled=True)
 
 
 def configure_domain_infrastructure_ports() -> None:

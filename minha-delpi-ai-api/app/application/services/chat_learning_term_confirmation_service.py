@@ -33,10 +33,15 @@ class ChatLearningTermConfirmationService:
 
     @staticmethod
     def _enabled() -> bool:
+        from app.application.services.chat_platform_runtime_access import (
+            learning_pipeline_settings,
+        )
+
+        learning = learning_pipeline_settings()
         return bool(
-            Settings.CHAT_LEARNING_ENABLED
-            and Settings.CHAT_LEARNING_GLOSSARY_CAPTURE
-            and Settings.CHAT_LEARNING_TERM_CONFIRMATION_ENABLED
+            learning.get("learningEnabled")
+            and learning.get("learningGlossaryCapture")
+            and learning.get("learningTermConfirmationEnabled")
         )
 
     def try_build(

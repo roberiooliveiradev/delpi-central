@@ -66,18 +66,22 @@
 
   .mdc-admin-layout__body {
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
   }
 
-  .mdc-admin-layout__sidebar {
-    display: none;
+  .mdc-admin-layout__body:not(.mdc-admin-layout__body--nav-open) {
+    flex: 0 1 auto;
+    min-height: auto;
   }
 
   .mdc-admin-layout__body--nav-open {
     flex: 1;
     min-height: 0;
+    max-height: calc(100dvh - 3.5rem);
     overflow: hidden;
+  }
+
+  .mdc-admin-layout__sidebar {
+    display: none;
   }
 
   .mdc-admin-layout__body--nav-open .mdc-admin-layout__sidebar {

@@ -4,7 +4,7 @@ from app.application.services.chat_knowledge_candidate_service import (
 from app.domain.services.chat_vocabulary_learning_service import (
     ChatVocabularyLearningService,
 )
-from app.infrastructure.config.settings import Settings
+from app.application.services.chat_platform_runtime_access import learning_pipeline_settings
 
 # Motivos de feedback negativo que indicam falha de entendimento/normalização.
 _UNDERSTANDING_REASONS = frozenset(
@@ -39,7 +39,10 @@ class ChatLearningCaptureService:
         project_id: str | None = None,
         created_by: str | None = None,
     ) -> dict | None:
-        if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_FEEDBACK:
+        learning = learning_pipeline_settings()
+        if not learning.get("learningEnabled") or not learning.get(
+            "learningCaptureFromFeedback"
+        ):
             return None
 
         question = str(user_question or "").strip()
@@ -78,7 +81,8 @@ class ChatLearningCaptureService:
         Isola a escrita num SAVEPOINT: uma falha aqui nunca polui nem quebra a
         transação do turno (playbook §17, §31 — captura sem efeito colateral).
         """
-        if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_TURN:
+        learning = learning_pipeline_settings()
+        if not learning.get("learningEnabled") or not learning.get("learningCaptureFromTurn"):
             return None
 
         candidate = ChatVocabularyLearningService.detect_explicit_definition(message or "")

@@ -20,7 +20,15 @@ class ChatTurnSideEffectsService:
         try:
             from app.infrastructure.config.settings import Settings
 
-            if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_TURN:
+            from app.application.services.chat_platform_runtime_access import (
+                learning_pipeline_settings,
+            )
+
+            learning = learning_pipeline_settings()
+
+            if not learning.get("learningEnabled") or not learning.get(
+                "learningCaptureFromTurn"
+            ):
                 return
 
             from app.application.services.chat_learning_capture_service import (
@@ -67,9 +75,15 @@ class ChatTurnSideEffectsService:
     @staticmethod
     def capture_glossary_from_turn(*, message: str, session, user_id: str) -> None:
         try:
-            from app.infrastructure.config.settings import Settings
+            from app.application.services.chat_platform_runtime_access import (
+                learning_pipeline_settings,
+            )
 
-            if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_GLOSSARY_CAPTURE:
+            learning = learning_pipeline_settings()
+
+            if not learning.get("learningEnabled") or not learning.get(
+                "learningGlossaryCapture"
+            ):
                 return
 
             from app.application.services.chat_meaning_discovery_service import (

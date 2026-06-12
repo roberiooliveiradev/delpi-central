@@ -11,7 +11,9 @@ from app.infrastructure.config.settings import Settings
 class ChatAttachmentImageOcrService:
     @classmethod
     def is_enabled(cls) -> bool:
-        return Settings.CHAT_ATTACHMENT_IMAGE_OCR_ENABLED
+        from app.application.services.chat_platform_runtime_access import vision_settings
+
+        return bool(vision_settings().get("attachmentImageOcrEnabled"))
 
     @classmethod
     def try_extract_text(cls, path: Path) -> dict:

@@ -61,6 +61,15 @@ def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
+def _typing_correction_enabled() -> bool:
+    from app.application.services.chat_platform_runtime_access import (
+        learning_pipeline_settings,
+    )
+
+    learning = learning_pipeline_settings()
+    return bool(learning.get("learningEnabled") and learning.get("typingCorrectionEnabled"))
+
+
 def _get_chat_capabilities_from_request() -> dict:
     authorization_header = request.headers.get("Authorization")
     core_user = CoreMeGateway().get_me(authorization_header)
@@ -107,7 +116,7 @@ def _get_chat_capabilities_from_request() -> dict:
             can_manage_tools
             or CHAT_TOOLS_MANAGE_PERMISSION in permissions
         ),
-        "typingCorrectionEnabled": Settings.CHAT_TYPING_CORRECTION_ENABLED,
+        "typingCorrectionEnabled": _typing_correction_enabled(),
         "knowledgeDocumentMaxChars": Settings.KNOWLEDGE_DOCUMENT_MAX_CHARS,
     }
 

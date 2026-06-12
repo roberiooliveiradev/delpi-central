@@ -142,10 +142,22 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         importer = OpenApiActionImporter()
         actions = importer.import_actions(provider.provider_key, schema_json)
 
+        from app.infrastructure.config.chat_intelligence_runtime_reader import (
+            read_resolved_chat_intelligence,
+        )
+        from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
+            PostgresAdminRuntimeSettingsRepository,
+        )
+
+        intelligence = read_resolved_chat_intelligence(
+            PostgresAdminRuntimeSettingsRepository()
+        )
+        embed_on_import = intelligence.external_action_embedding_on_import
+
         for action in actions:
             embedding = None
 
-            if self.embedding_service and Settings.EXTERNAL_ACTION_EMBEDDING_ON_IMPORT:
+            if self.embedding_service and embed_on_import:
                 embedding = self.embedding_service.embed_action(
                     {
                         "actionId": action["action_id"],

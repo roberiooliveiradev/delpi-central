@@ -103,7 +103,11 @@ class ChatTurnPreparationRagService:
 
             if assistant_identity_question:
                 rag_query = ChatAssistantIdentityService.build_rag_query(message)
-                rag_min_score = Settings.RAG_IDENTITY_QUESTION_MIN_SCORE
+                from app.application.services.chat_intelligence_runtime_access import (
+                    resolve_chat_intelligence_runtime,
+                )
+
+                rag_min_score = resolve_chat_intelligence_runtime().rag_identity_question_min_score
             elif technical_description_normas:
                 rag_query = ChatTechnicalDescriptionIntentService.build_rag_query(message)
             elif semantic_memory_service.should_use_enriched_query(workspace_context):
