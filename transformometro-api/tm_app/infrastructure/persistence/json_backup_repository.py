@@ -28,6 +28,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
         "setor_id",
         (
             "setor_id",
+            "codigo_setor",
             "nome_setor",
             "status_setor",
             "created_at",
@@ -55,7 +56,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "updated_at",
             "deletado",
         ),
-        (("setor_id", "setores", "setor_id"),),
+        (("setor_id", "setores", "codigo_setor"),),
     ),
     EntitySpec(
         "recursos_compartilhados",
@@ -219,10 +220,27 @@ class JsonBackupRepository(PluginBaseRepository):
     def fetch_setor_filiais(self) -> list[dict[str, Any]]:
         return self.fetch_all(
             """
-            SELECT setor_id, filial_id
-            FROM transformometro.setor_filiais
-            ORDER BY setor_id ASC, filial_id ASC
+            SELECT
+                s.codigo_setor AS setor_id,
+                f.codigo_filial AS filial_id
+            FROM transformometro.setor_filiais sf
+            JOIN transformometro.setores s ON s.setor_id = sf.setor_id
+            JOIN transformometro.filiais f ON f.filial_id = sf.filial_id
+            WHERE s.deletado = FALSE AND f.deletado = FALSE
+            ORDER BY s.codigo_setor ASC, f.codigo_filial ASC
             """
+        )
+
+    def fetch_setores_by_codigos(self, codigos: set[str]) -> list[dict[str, Any]]:
+        if not codigos:
+            return []
+        return self.fetch_all(
+            """
+            SELECT *
+            FROM transformometro.setores
+            WHERE codigo_setor = ANY(%s)
+            """,
+            (list(codigos),),
         )
 
     def sync_setor_filiais(
@@ -235,17 +253,22 @@ class JsonBackupRepository(PluginBaseRepository):
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            setor_id = row.get("setor_id")
-            filial_id = row.get("filial_id")
-            if not setor_id or not filial_id:
+            setor_codigo = row.get("codigo_setor") or row.get("setor_id")
+            filial_codigo = row.get("codigo_filial") or row.get("filial_id")
+            if not setor_codigo or not filial_codigo:
                 continue
             self.execute(
                 """
                 INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
-                VALUES (%s, %s)
+                SELECT s.setor_id, f.filial_id
+                FROM transformometro.setores s
+                JOIN transformometro.filiais f ON f.codigo_filial = %s
+                WHERE s.codigo_setor = %s
+                  AND s.deletado = FALSE
+                  AND f.deletado = FALSE
                 ON CONFLICT DO NOTHING
                 """,
-                (setor_id, filial_id),
+                (str(filial_codigo).strip(), str(setor_codigo).strip()),
                 auto_commit=False,
             )
         if auto_commit:
@@ -322,18 +345,24 @@ class JsonBackupRepository(PluginBaseRepository):
             for row in setores
             if isinstance(row, dict) and row.get("setor_id")
         }
+        setor_codigos = {
+            str(row.get("codigo_setor"))
+            for row in setores
+            if isinstance(row, dict) and row.get("codigo_setor")
+        }
+        for row in setores:
+            if not isinstance(row, dict):
+                continue
+            sid = row.get("setor_id")
+            if sid and len(str(sid)) != 36:
+                setor_codigos.add(str(sid))
         needed_setores: set[str] = set()
         for row in processos:
             if isinstance(row, dict) and row.get("setor_id"):
                 needed_setores.add(str(row["setor_id"]))
-        missing_setores = needed_setores - setor_ids
+        missing_setores = needed_setores - setor_ids - setor_codigos
         if missing_setores:
-            setores.extend(
-                self.fetch_rows_by_ids(
-                    next(s for s in ENTITY_SPECS if s.bundle_key == "setores"),
-                    missing_setores,
-                )
-            )
+            setores.extend(self.fetch_setores_by_codigos(missing_setores))
 
         return {
             **data,

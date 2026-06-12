@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
 from tm_app.core.serialize import rows_to_json
 from tm_app.domain.raw_data import TransformometroRawData
+from tm_app.domain.services.setor_catalog_service import normalize_codigo_setor
 from tm_app.infrastructure.persistence.json_backup_repository import (
     BUNDLE_KEYS,
     ENTITY_SPECS,
@@ -18,9 +20,51 @@ from tm_app.infrastructure.persistence.json_backup_repository import (
 ExportMode = Literal["replace", "merge"]
 SCHEMA_VERSION = "1.1"
 
+_UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
 
 def _norm_id(value: Any) -> str:
     return str(value).strip().lower()
+
+
+def _is_uuid(value: Any) -> bool:
+    text = str(value).strip()
+    if not _UUID_PATTERN.match(text):
+        return False
+    try:
+        UUID(text)
+    except ValueError:
+        return False
+    return True
+
+
+def _setor_keys_in_row(row: dict[str, Any]) -> set[str]:
+    keys: set[str] = set()
+    setor_id = row.get("setor_id")
+    if setor_id:
+        keys.add(_norm_id(setor_id))
+    codigo = row.get("codigo_setor")
+    if codigo:
+        keys.add(_norm_id(codigo))
+    return keys
+
+
+def _build_id_sets(payload: dict[str, Any]) -> dict[str, set[str]]:
+    id_sets: dict[str, set[str]] = {}
+    for spec in ENTITY_SPECS:
+        keys: set[str] = set()
+        for row in payload.get(spec.bundle_key, []):
+            if not isinstance(row, dict):
+                continue
+            if spec.bundle_key == "setores":
+                keys.update(_setor_keys_in_row(row))
+            elif row.get(spec.pk):
+                keys.add(_norm_id(row[spec.pk]))
+        id_sets[spec.bundle_key] = keys
+    return id_sets
 
 
 def _as_dict(raw: TransformometroRawData) -> dict[str, list[dict[str, Any]]]:
@@ -104,35 +148,32 @@ class JsonBackupService:
                 if not pk:
                     errors.append(f"{key}[{index}]: {spec.pk} obrigatório.")
                     continue
-                pk_str = _norm_id(pk)
-                if pk_str in seen:
-                    errors.append(f"{key}: {spec.pk} duplicado ({pk_str}).")
-                seen.add(pk_str)
+                row_keys = {_norm_id(pk)}
+                if spec.bundle_key == "setores":
+                    row_keys = _setor_keys_in_row(row)
+                for pk_str in row_keys:
+                    if pk_str in seen:
+                        errors.append(f"{key}: {spec.pk} duplicado ({pk_str}).")
+                    seen.add(pk_str)
 
         if errors:
             return _dedupe_errors(errors)
 
-        id_sets = {
-            spec.bundle_key: {
-                _norm_id(row[spec.pk])
-                for row in payload.get(spec.bundle_key, [])
-                if isinstance(row, dict) and row.get(spec.pk)
-            }
-            for spec in ENTITY_SPECS
-        }
+        id_sets = _build_id_sets(payload)
 
         for spec in ENTITY_SPECS:
             for row in payload.get(spec.bundle_key, []):
                 if not isinstance(row, dict):
                     continue
-                for fk_col, parent_key, _parent_pk in spec.fk_checks:
+                for fk_col, parent_key, parent_pk in spec.fk_checks:
                     fk_val = row.get(fk_col)
                     if fk_val is None:
                         errors.append(
                             f"{spec.bundle_key}: {fk_col} ausente em {row.get(spec.pk)}."
                         )
                         continue
-                    if _norm_id(fk_val) not in id_sets.get(parent_key, set()):
+                    parent_keys = id_sets.get(parent_key, set())
+                    if _norm_id(fk_val) not in parent_keys:
                         errors.append(
                             f"{spec.bundle_key}: {fk_col}={fk_val} não está em {parent_key} "
                             f"no JSON (reexporte o backup ou inclua o registro pai)."
@@ -265,6 +306,19 @@ class JsonBackupService:
             out["chave_unica_processo_revisao"] = (
                 f"{out.get('processo_id')}|{out.get('versao_revisao')}"
             )
+        if spec.bundle_key == "setores":
+            raw_id = row.get("setor_id")
+            codigo = row.get("codigo_setor")
+            if codigo:
+                out["codigo_setor"] = normalize_codigo_setor(str(codigo))
+            elif raw_id is not None and not _is_uuid(raw_id):
+                out["codigo_setor"] = normalize_codigo_setor(str(raw_id))
+            if raw_id is not None and _is_uuid(raw_id):
+                out["setor_id"] = str(raw_id)
+            else:
+                out["setor_id"] = str(uuid4())
+                if "codigo_setor" not in out and raw_id is not None:
+                    out["codigo_setor"] = normalize_codigo_setor(str(raw_id))
         return out
 
 

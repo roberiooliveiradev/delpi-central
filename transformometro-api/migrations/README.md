@@ -18,6 +18,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V009 | `V009__processo_competencia_snapshot_view.sql` | View `processo_competencia_snapshot` (agregação processo × competência) |
 | V010 | `V010__create_setores.sql` | Catálogo de setores + `setor_filiais` |
 | V011 | `V011__create_filiais.sql` | Catálogo de filiais (`filial_id UUID`, `codigo_filial`) — **sem seed** |
+| V012 | `V012__setores_uuid.sql` | Setores com PK UUID + `codigo_setor`; `setor_filiais` com FKs UUID |
 
 ## Comandos
 
