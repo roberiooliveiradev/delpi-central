@@ -914,7 +914,11 @@ export function RelatorioPage({
         </div>
       </FilterBar>
 
-      {error ? <StateBox variant="error">{error}</StateBox> : null}
+      {error ? (
+        <StateBox variant="error" onDismiss={() => setError(null)}>
+          {error}
+        </StateBox>
+      ) : null}
 
       <section className="dm-card dm-report-table-card">
         <SectionTabs

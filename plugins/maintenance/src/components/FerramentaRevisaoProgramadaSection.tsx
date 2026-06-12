@@ -5,11 +5,13 @@ import { CONFIG_TOOLTIPS } from "../content/configTooltips";
 import {
   createRevisaoProgramada,
   deleteRevisaoProgramada,
+  deleteRevisaoProgramadaRealizacao,
   fetchRevisaoProgramadaAlertas,
   fetchRevisaoProgramadaRealizacoes,
   fetchRevisoesProgramadas,
   registrarRevisaoProgramada,
   updateRevisaoProgramada,
+  updateRevisaoProgramadaRealizacao,
   type RevisaoProgramadaAlerta,
   type RevisaoProgramadaItem,
   type RevisaoProgramadaRealizacao,
@@ -39,6 +41,25 @@ const DEFAULT_DRAFT: RevisaoDraft = {
 };
 
 const REALIZACOES_LIMIT = 8;
+
+type RealizacaoDraft = {
+  data_revisao: string;
+  observacao: string;
+};
+
+function toRealizacaoDraft(item: RevisaoProgramadaRealizacao): RealizacaoDraft {
+  return {
+    data_revisao: toDateInputValue(item.data_revisao),
+    observacao: item.observacao ?? "",
+  };
+}
+
+function isRealizacaoDirty(item: RevisaoProgramadaRealizacao, draft: RealizacaoDraft): boolean {
+  return (
+    draft.data_revisao !== toDateInputValue(item.data_revisao) ||
+    draft.observacao.trim() !== (item.observacao ?? "").trim()
+  );
+}
 
 function toDraft(item: RevisaoProgramadaItem): RevisaoDraft {
   return {
@@ -86,6 +107,8 @@ export function FerramentaRevisaoProgramadaSection({
   const [createDraft, setCreateDraft] = useState<RevisaoDraft>(DEFAULT_DRAFT);
   const [feitoDate, setFeitoDate] = useState(() => toDateInputValue(new Date()));
   const [formExpanded, setFormExpanded] = useState(false);
+  const [editingRealizacaoId, setEditingRealizacaoId] = useState<string | null>(null);
+  const [realizacaoDraft, setRealizacaoDraft] = useState<RealizacaoDraft | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -229,12 +252,81 @@ export function FerramentaRevisaoProgramadaSection({
     try {
       await deleteRevisaoProgramada(schedule.revisao_id, filial, getAccessToken);
       setFormExpanded(false);
+      setEditingRealizacaoId(null);
+      setRealizacaoDraft(null);
       onFeedback?.({ type: "success", text: "Revisão programada removida." });
       await load();
     } catch (err) {
       onFeedback?.({
         type: "error",
         text: err instanceof Error ? err.message : "Falha ao remover revisão programada.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEditRealizacao(item: RevisaoProgramadaRealizacao) {
+    setEditingRealizacaoId(item.realizacao_id);
+    setRealizacaoDraft(toRealizacaoDraft(item));
+  }
+
+  function cancelEditRealizacao() {
+    setEditingRealizacaoId(null);
+    setRealizacaoDraft(null);
+  }
+
+  async function handleSaveRealizacao(item: RevisaoProgramadaRealizacao) {
+    if (!canManage || !realizacaoDraft) return;
+    if (!isRealizacaoDirty(item, realizacaoDraft)) {
+      cancelEditRealizacao();
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateRevisaoProgramadaRealizacao(
+        item.realizacao_id,
+        {
+          filial,
+          data_revisao: fromDateInputValue(realizacaoDraft.data_revisao),
+          observacao: realizacaoDraft.observacao.trim(),
+        },
+        getAccessToken,
+      );
+      cancelEditRealizacao();
+      onFeedback?.({ type: "success", text: "Marcação de revisão atualizada." });
+      await load();
+    } catch (err) {
+      onFeedback?.({
+        type: "error",
+        text: err instanceof Error ? err.message : "Falha ao atualizar marcação de revisão.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteRealizacao(item: RevisaoProgramadaRealizacao) {
+    if (!canManage) return;
+    if (
+      !window.confirm(
+        `Remover a marcação de revisão de ${formatDateTime(item.data_revisao)}? A referência será recalculada.`,
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await deleteRevisaoProgramadaRealizacao(item.realizacao_id, filial, getAccessToken);
+      if (editingRealizacaoId === item.realizacao_id) {
+        cancelEditRealizacao();
+      }
+      onFeedback?.({ type: "success", text: "Marcação de revisão removida." });
+      await load();
+    } catch (err) {
+      onFeedback?.({
+        type: "error",
+        text: err instanceof Error ? err.message : "Falha ao remover marcação de revisão.",
       });
     } finally {
       setSaving(false);
@@ -343,17 +435,96 @@ export function FerramentaRevisaoProgramadaSection({
                     <th>Intervalo</th>
                     <th>Registrado em</th>
                     <th>Observação</th>
+                    {canManage ? <th>Ações</th> : null}
                   </tr>
                 </thead>
                 <tbody>
-                  {realizacoes.map((item) => (
-                    <tr key={item.realizacao_id}>
-                      <td>{formatDateTime(item.data_revisao)}</td>
-                      <td>{item.intervalo_meses} mes(es)</td>
-                      <td>{formatDateTime(item.data_registro)}</td>
-                      <td>{item.observacao?.trim() || "—"}</td>
-                    </tr>
-                  ))}
+                  {realizacoes.map((item) => {
+                    const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
+                    return (
+                      <tr key={item.realizacao_id}>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              value={realizacaoDraft.data_revisao}
+                              onChange={(event) =>
+                                setRealizacaoDraft((prev) =>
+                                  prev ? { ...prev, data_revisao: event.target.value } : prev,
+                                )
+                              }
+                            />
+                          ) : (
+                            formatDateTime(item.data_revisao)
+                          )}
+                        </td>
+                        <td>{item.intervalo_meses} mes(es)</td>
+                        <td>{formatDateTime(item.data_registro)}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              value={realizacaoDraft.observacao}
+                              onChange={(event) =>
+                                setRealizacaoDraft((prev) =>
+                                  prev ? { ...prev, observacao: event.target.value } : prev,
+                                )
+                              }
+                              placeholder="Opcional"
+                            />
+                          ) : (
+                            item.observacao?.trim() || "—"
+                          )}
+                        </td>
+                        {canManage ? (
+                          <td>
+                            <div className="dm-row-actions dm-revisao-historico-actions">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="dm-ghost-btn dm-ghost-btn--sm"
+                                    disabled={saving || !isRealizacaoDirty(item, realizacaoDraft)}
+                                    onClick={() => void handleSaveRealizacao(item)}
+                                  >
+                                    Salvar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="dm-ghost-btn dm-ghost-btn--sm"
+                                    disabled={saving}
+                                    onClick={cancelEditRealizacao}
+                                  >
+                                    Cancelar
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="dm-ghost-btn dm-ghost-btn--sm"
+                                    disabled={saving || Boolean(editingRealizacaoId)}
+                                    title={CONFIG_TOOLTIPS.revisaoHistoricoEditar}
+                                    onClick={() => startEditRealizacao(item)}
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="dm-ghost-btn dm-ghost-btn--sm dm-ghost-btn--danger"
+                                    disabled={saving || Boolean(editingRealizacaoId)}
+                                    title={CONFIG_TOOLTIPS.revisaoHistoricoExcluir}
+                                    onClick={() => void handleDeleteRealizacao(item)}
+                                  >
+                                    Excluir
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        ) : null}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

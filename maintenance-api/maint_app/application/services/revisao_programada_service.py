@@ -166,6 +166,54 @@ class RevisaoProgramadaService:
             query=query,
         )
 
+    def atualizar_realizacao(
+        self,
+        realizacao_id: str,
+        *,
+        filial: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if not self._realizacao_repo.get_by_id(realizacao_id, filial=filial):
+            return None
+        updated = self._realizacao_repo.update(
+            realizacao_id,
+            filial=filial,
+            data_revisao=payload.get("data_revisao")
+            if "data_revisao" in payload
+            else None,
+            observacao=payload.get("observacao") if "observacao" in payload else None,
+            update_data_revisao="data_revisao" in payload,
+            update_observacao="observacao" in payload,
+        )
+        if updated:
+            self._sync_schedule_reference(
+                revisao_id=str(updated["revisao_id"]),
+                filial=filial,
+            )
+        return updated
+
+    def remover_realizacao(self, realizacao_id: str, *, filial: str) -> bool:
+        row = self._realizacao_repo.get_by_id(realizacao_id, filial=filial)
+        if not row:
+            return False
+        revisao_id = str(row["revisao_id"])
+        if not self._realizacao_repo.delete(realizacao_id, filial=filial):
+            return False
+        self._sync_schedule_reference(revisao_id=revisao_id, filial=filial)
+        return True
+
+    def _sync_schedule_reference(self, *, revisao_id: str, filial: str) -> None:
+        latest = self._realizacao_repo.get_latest_data_revisao(
+            revisao_id=revisao_id,
+            filial=filial,
+        )
+        self._revisao_repo.update(
+            revisao_id,
+            filial=filial,
+            data_ultima_revisao=latest,
+            update_data_ultima_revisao=True,
+        )
+
     def resumo_alertas(self, *, filial: str) -> dict[str, int]:
         alertas = self._build_alertas(filial=filial)
         return {

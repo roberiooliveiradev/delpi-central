@@ -368,6 +368,40 @@ export function fetchRevisaoProgramadaRealizacoes(
   );
 }
 
+export function updateRevisaoProgramadaRealizacao(
+  realizacaoId: string,
+  body: {
+    filial: string;
+    data_revisao?: string;
+    observacao?: string;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<RevisaoProgramadaRealizacao>(
+    `/revisoes-programadas/realizacoes/${encodeURIComponent(realizacaoId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      getAccessToken,
+    },
+  );
+}
+
+export function deleteRevisaoProgramadaRealizacao(
+  realizacaoId: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<null>(
+    `/revisoes-programadas/realizacoes/${encodeURIComponent(realizacaoId)}?filial=${encodeURIComponent(filial)}`,
+    {
+      method: "DELETE",
+      getAccessToken,
+    },
+  );
+}
+
 export type MotivoItem = {
   motivo_id: string;
   descricao: string;
@@ -641,6 +675,37 @@ export function fetchPecas(
 ) {
   return maintenanceFetch<PagedItems<FerramentaItem>>(
     `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/pecas?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
+export type FerramentaAuditItem = {
+  audit_id: string;
+  entidade: string;
+  entidade_id: string;
+  acao: string;
+  filial: string;
+  payload?: Record<string, unknown> | null;
+  usuario_sub?: string | null;
+  data_criacao?: string | null;
+};
+
+export function fetchFerramentaAuditoria(
+  params: {
+    filial: string;
+    codigoFerramenta: string;
+  } & ListQueryParams,
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial: params.filial });
+  appendListQuery(search, {
+    page: params.page,
+    pageSize: params.pageSize,
+    sortKey: params.sortKey,
+    sortDirection: params.sortDirection,
+  });
+  return maintenanceFetch<PagedItems<FerramentaAuditItem>>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(params.codigoFerramenta)}/auditoria?${search.toString()}`,
     { getAccessToken },
   );
 }

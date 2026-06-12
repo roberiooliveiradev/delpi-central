@@ -28,4 +28,8 @@ export const CONFIG_TOOLTIPS = {
     "Marca a revisão como feita na data informada e recalcula a próxima revisão a partir dela.",
   revisaoHistorico:
     "Registros de revisões marcadas como feitas nesta ferramenta (a partir de agora).",
+  revisaoHistoricoEditar:
+    "Corrige a data ou observação de uma marcação feita. A referência da programação é recalculada.",
+  revisaoHistoricoExcluir:
+    "Remove a marcação do histórico e recalcula a referência com base na revisão feita mais recente.",
 } as const;

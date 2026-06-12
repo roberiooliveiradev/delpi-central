@@ -1307,6 +1307,18 @@
   border-bottom: 0;
 }
 
+.dashboard-maintenance .dm-revisao-historico-table td input[type="date"],
+.dashboard-maintenance .dm-revisao-historico-table td input:not([type="date"]) {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-revisao-historico-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
 .dashboard-maintenance .dm-revisao-ferramenta__form-panel {
   border-top: 1px solid var(--dm-card-border);
   padding-top: 12px;
@@ -1538,6 +1550,41 @@
 .dashboard-maintenance .dm-state-box--success {
   background: color-mix(in srgb, #22c55e 12%, var(--dm-card-bg));
   color: #15803d;
+}
+
+.dashboard-maintenance .dm-state-box--dismissible {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-maintenance .dm-state-box__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-state-box__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.72;
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-state-box__dismiss:hover,
+.dashboard-maintenance .dm-state-box__dismiss:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  outline: none;
 }
 
 .dashboard-maintenance .dm-shortcuts {

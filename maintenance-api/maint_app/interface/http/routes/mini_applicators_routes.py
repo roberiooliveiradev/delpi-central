@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from delpi_api_client import DelpiApiError
 
+from maint_app.application.list_query import ListQuery, paginate_slice
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
 from maint_app.application.services.maintenance_submodule_catalog import assert_submodule_view
 from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
+from maint_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 from maint_app.interface.http.list_query_params import list_query_params
 from maint_app.application.list_query import ListQuery, paginate_slice
@@ -99,6 +101,28 @@ def get_ferramenta(request: Request, codigo: str, filial: str = Query(..., min_l
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
         return fail(format_api_error(exc), status_code=500)
+
+
+@router.get("/ferramentas/{codigo}/auditoria")
+def list_ferramenta_auditoria(
+    request: Request,
+    codigo: str,
+    filial: str = Query(..., min_length=2, max_length=2),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    items, total = AuditRepository().list_by_ferramenta_paged(
+        filial=filial,
+        codigo_ferramenta=codigo.strip(),
+        query=query,
+    )
+    return ok({"items": items, "total": total}, message="Auditoria da ferramenta listada.")
 
 
 @router.get("/ferramentas/{codigo}/pecas")

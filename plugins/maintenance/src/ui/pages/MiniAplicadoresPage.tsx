@@ -9,6 +9,7 @@ import {
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
+import { FerramentaAuditoriaSection } from "../../components/FerramentaAuditoriaSection";
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import { FerramentaReposicaoIndicadores } from "../../components/FerramentaReposicaoIndicadores";
@@ -924,7 +925,11 @@ export function MiniAplicadoresPage({
             </button>
           </FilterBar>
 
-          {error ? <StateBox variant="error">{error}</StateBox> : null}
+          {error ? (
+            <StateBox variant="error" onDismiss={() => setError(null)}>
+              {error}
+            </StateBox>
+          ) : null}
 
           <DataTableSection
             title="Ferramentas"
@@ -947,8 +952,16 @@ export function MiniAplicadoresPage({
         </>
       ) : (
         <>
-          {error ? <StateBox variant="error">{error}</StateBox> : null}
-          {success ? <StateBox variant="success">{success}</StateBox> : null}
+          {error ? (
+            <StateBox variant="error" onDismiss={() => setError(null)}>
+              {error}
+            </StateBox>
+          ) : null}
+          {success ? (
+            <StateBox variant="success" onDismiss={() => setSuccess(null)}>
+              {success}
+            </StateBox>
+          ) : null}
 
           {canManageMiniApplicators && showReposicaoForm ? (
             <section ref={reposicaoFormRef} className="dm-card dm-reposicao-form-card">
@@ -1142,6 +1155,13 @@ export function MiniAplicadoresPage({
             reloadKey={detalheVersion}
             getAccessToken={getAccessToken}
             onFeedback={handleRevisaoFeedback}
+          />
+
+          <FerramentaAuditoriaSection
+            filial={filial}
+            codigoFerramenta={codigoFerramenta}
+            reloadKey={detalheVersion}
+            getAccessToken={getAccessToken}
           />
 
           <div ref={historicoSectionRef} className="dm-historico-anchor">

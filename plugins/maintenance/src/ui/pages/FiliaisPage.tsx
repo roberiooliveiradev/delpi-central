@@ -267,8 +267,16 @@ export function FiliaisPage({
         }
       />
 
-      {error ? <StateBox variant="error">{error}</StateBox> : null}
-      {success ? <StateBox variant="success">{success}</StateBox> : null}
+      {error ? (
+        <StateBox variant="error" onDismiss={() => setError(null)}>
+          {error}
+        </StateBox>
+      ) : null}
+      {success ? (
+        <StateBox variant="success" onDismiss={() => setSuccess(null)}>
+          {success}
+        </StateBox>
+      ) : null}
 
       <DataTableSection
         title="Catálogo de filiais"

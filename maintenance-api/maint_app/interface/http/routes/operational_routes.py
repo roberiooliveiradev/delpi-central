@@ -17,8 +17,11 @@ from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.operational_repositories import (
     MotivoRepository,
     ReposicaoRepository,
+    RevisaoProgramadaRealizacaoRepository,
+    RevisaoProgramadaRepository,
     StatusPecaRepository,
 )
+from maint_app.interface.http.audit_http import log_ferramenta_audit
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 from maint_app.interface.http.list_query_params import list_query_params
 
@@ -81,6 +84,12 @@ class RevisaoProgramadaUpdateBody(BaseModel):
 
 class RevisaoProgramadaRegistrarBody(BaseModel):
     data_revisao: Optional[str] = None
+
+
+class RevisaoProgramadaRealizacaoUpdateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
+    data_revisao: Optional[str] = None
+    observacao: Optional[str] = None
 
 
 @router.get("/motivos")
@@ -281,6 +290,76 @@ def list_revisao_programada_realizacoes(
     return ok({"items": items, "total": total}, message="Revisões realizadas listadas.")
 
 
+@router.put("/revisoes-programadas/realizacoes/{realizacao_id}")
+def update_revisao_programada_realizacao(
+    realizacao_id: str,
+    body: RevisaoProgramadaRealizacaoUpdateBody,
+    request: Request,
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    service = build_revisao_programada_service()
+    try:
+        payload = body.model_dump(exclude_unset=True)
+        payload["filial"] = body.filial
+        item = service.atualizar_realizacao(realizacao_id, filial=body.filial, payload=payload)
+        if not item:
+            return fail("Marcação de revisão não encontrada.", 404)
+        log_ferramenta_audit(
+            request,
+            acao="revisao_realizacao.update",
+            filial=body.filial,
+            codigo_ferramenta=str(item["codigo_ferramenta"]),
+            payload={
+                "realizacao_id": realizacao_id,
+                "revisao_id": str(item.get("revisao_id") or ""),
+                "data_revisao": item.get("data_revisao"),
+                "observacao": item.get("observacao"),
+            },
+        )
+        return ok(item, message="Marcação de revisão atualizada.")
+    except ValueError as exc:
+        return fail(str(exc), 422)
+
+
+@router.delete("/revisoes-programadas/realizacoes/{realizacao_id}")
+def delete_revisao_programada_realizacao(
+    realizacao_id: str,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    realizacao_repo = RevisaoProgramadaRealizacaoRepository()
+    existing = realizacao_repo.get_by_id(realizacao_id, filial=filial)
+    deleted = build_revisao_programada_service().remover_realizacao(realizacao_id, filial=filial)
+    if not deleted:
+        return fail("Marcação de revisão não encontrada.", 404)
+    if existing:
+        log_ferramenta_audit(
+            request,
+            acao="revisao_realizacao.delete",
+            filial=filial,
+            codigo_ferramenta=str(existing["codigo_ferramenta"]),
+            payload={
+                "realizacao_id": realizacao_id,
+                "revisao_id": str(existing.get("revisao_id") or ""),
+                "data_revisao": existing.get("data_revisao"),
+            },
+        )
+    return ok(None, message="Marcação de revisão removida.")
+
+
 @router.post("/revisoes-programadas")
 def create_revisao_programada(body: RevisaoProgramadaCreateBody, request: Request):
     user = resolve_user(request)
@@ -293,6 +372,18 @@ def create_revisao_programada(body: RevisaoProgramadaCreateBody, request: Reques
     service = build_revisao_programada_service()
     try:
         item = service.create(body.model_dump())
+        log_ferramenta_audit(
+            request,
+            acao="revisao_programada.create",
+            filial=body.filial,
+            codigo_ferramenta=str(item["codigo_ferramenta"]),
+            payload={
+                "revisao_id": str(item.get("revisao_id") or ""),
+                "intervalo_meses": item.get("intervalo_meses"),
+                "data_ultima_revisao": item.get("data_ultima_revisao"),
+                "observacao": item.get("observacao"),
+            },
+        )
         return ok(item, message="Revisão programada criada.", status_code=201)
     except ValueError as exc:
         return fail(str(exc), 422)
@@ -318,6 +409,18 @@ def update_revisao_programada(
         item = service.update(revisao_id, filial=body.filial, payload=payload)
         if not item:
             return fail("Revisão programada não encontrada.", 404)
+        log_ferramenta_audit(
+            request,
+            acao="revisao_programada.update",
+            filial=body.filial,
+            codigo_ferramenta=str(item["codigo_ferramenta"]),
+            payload={
+                "revisao_id": revisao_id,
+                "intervalo_meses": item.get("intervalo_meses"),
+                "data_ultima_revisao": item.get("data_ultima_revisao"),
+                "observacao": item.get("observacao"),
+            },
+        )
         return ok(item, message="Revisão programada atualizada.")
     except ValueError as exc:
         return fail(str(exc), 422)
@@ -336,7 +439,17 @@ def delete_revisao_programada(
     except PermissionError as exc:
         return fail(str(exc), 403)
 
+    revisao_repo = RevisaoProgramadaRepository()
+    existing = revisao_repo.get_by_id(revisao_id, filial=filial)
     build_revisao_programada_service().delete(revisao_id, filial=filial)
+    if existing:
+        log_ferramenta_audit(
+            request,
+            acao="revisao_programada.delete",
+            filial=filial,
+            codigo_ferramenta=str(existing["codigo_ferramenta"]),
+            payload={"revisao_id": revisao_id},
+        )
     return ok(None, message="Revisão programada excluída.")
 
 
@@ -361,6 +474,17 @@ def registrar_revisao_programada(
     )
     if not item:
         return fail("Revisão programada não encontrada.", 404)
+    log_ferramenta_audit(
+        request,
+        acao="revisao_programada.registrar",
+        filial=filial,
+        codigo_ferramenta=str(item["codigo_ferramenta"]),
+        payload={
+            "revisao_id": revisao_id,
+            "data_ultima_revisao": item.get("data_ultima_revisao"),
+            "data_revisao": body.data_revisao if body else None,
+        },
+    )
     return ok(item, message="Revisão registrada.")
 
 
@@ -401,6 +525,19 @@ def create_reposicao(body: ReposicaoBody, request: Request):
     try:
         assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
         item = service.create(body.model_dump(), scope=scope, user=user)
+        log_ferramenta_audit(
+            request,
+            acao="reposicao.create",
+            filial=body.filial,
+            codigo_ferramenta=body.codigo_ferramenta,
+            payload={
+                "reposicao_id": str(item.get("reposicao_id") or ""),
+                "codigo_peca": body.codigo_peca,
+                "golpes": body.golpes,
+                "data_reposicao": body.data_reposicao,
+                "motivo_id": body.motivo_id,
+            },
+        )
         return ok(item, message="Reposição registrada.", status_code=201)
     except PermissionError as exc:
         return fail(str(exc), 403)
@@ -418,6 +555,19 @@ def update_reposicao(reposicao_id: str, body: ReposicaoBody, request: Request):
         item = service.update(reposicao_id, body.model_dump(), scope=scope, user=user)
         if not item:
             return fail("Reposição não encontrada.", 404)
+        log_ferramenta_audit(
+            request,
+            acao="reposicao.update",
+            filial=body.filial,
+            codigo_ferramenta=body.codigo_ferramenta,
+            payload={
+                "reposicao_id": reposicao_id,
+                "codigo_peca": body.codigo_peca,
+                "golpes": body.golpes,
+                "data_reposicao": body.data_reposicao,
+                "motivo_id": body.motivo_id,
+            },
+        )
         return ok(item, message="Reposição atualizada.")
     except PermissionError as exc:
         return fail(str(exc), 403)
@@ -432,9 +582,23 @@ def delete_reposicao(reposicao_id: str, request: Request):
     service = build_reposicao_service()
     try:
         assert_submodule_manage(user, _SUBMODULE_ID)
+        existing = ReposicaoRepository().get_by_id(reposicao_id)
         deleted = service.delete(reposicao_id, scope=scope, user=user)
         if not deleted:
             return fail("Reposição não encontrada.", 404)
+        if existing:
+            log_ferramenta_audit(
+                request,
+                acao="reposicao.delete",
+                filial=str(existing["filial"]),
+                codigo_ferramenta=str(existing["codigo_ferramenta"]),
+                payload={
+                    "reposicao_id": reposicao_id,
+                    "codigo_peca": existing.get("codigo_peca"),
+                    "golpes": existing.get("golpes"),
+                    "data_reposicao": existing.get("data_reposicao"),
+                },
+            )
         return ok(None, message="Reposição excluída.")
     except PermissionError as exc:
         return fail(str(exc), 403)

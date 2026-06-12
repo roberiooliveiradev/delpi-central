@@ -932,3 +932,95 @@ class RevisaoProgramadaRealizacaoRepository(PluginBaseRepository):
             page=query.page,
             page_size=query.page_size,
         )
+
+    def get_by_id(self, realizacao_id: str, *, filial: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            """
+            SELECT
+                realizacao_id,
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                data_revisao,
+                intervalo_meses,
+                observacao,
+                data_registro
+            FROM maintenance.revisao_programada_realizacao
+            WHERE realizacao_id = %s::uuid
+              AND filial = %s
+            """,
+            (realizacao_id, filial),
+        )
+
+    def get_latest_data_revisao(self, *, revisao_id: str, filial: str) -> datetime | None:
+        row = self.fetch_one(
+            """
+            SELECT data_revisao
+            FROM maintenance.revisao_programada_realizacao
+            WHERE revisao_id = %s::uuid
+              AND filial = %s
+            ORDER BY data_revisao DESC, data_registro DESC
+            LIMIT 1
+            """,
+            (revisao_id, filial),
+        )
+        if not row:
+            return None
+        value = row.get("data_revisao")
+        return value if isinstance(value, datetime) else None
+
+    def update(
+        self,
+        realizacao_id: str,
+        *,
+        filial: str,
+        data_revisao: str | datetime | None = None,
+        observacao: str | None = None,
+        update_data_revisao: bool = False,
+        update_observacao: bool = False,
+    ) -> dict[str, Any] | None:
+        fields: list[str] = []
+        params: list[Any] = []
+        if update_data_revisao:
+            parsed = _coerce_reposicao_date_bound(str(data_revisao)) if data_revisao else None
+            if parsed is None:
+                raise ValueError("Informe a data da revisão feita.")
+            fields.append("data_revisao = %s")
+            params.append(parsed)
+        if update_observacao:
+            fields.append("observacao = %s")
+            params.append(observacao.strip() if observacao else None)
+        if not fields:
+            return self.get_by_id(realizacao_id, filial=filial)
+
+        params.extend([realizacao_id, filial])
+        return self.execute_returning_one(
+            f"""
+            UPDATE maintenance.revisao_programada_realizacao
+            SET {", ".join(fields)}
+            WHERE realizacao_id = %s::uuid
+              AND filial = %s
+            RETURNING
+                realizacao_id,
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                data_revisao,
+                intervalo_meses,
+                observacao,
+                data_registro
+            """,
+            tuple(params),
+        )
+
+    def delete(self, realizacao_id: str, *, filial: str) -> bool:
+        row = self.execute_returning_one(
+            """
+            DELETE FROM maintenance.revisao_programada_realizacao
+            WHERE realizacao_id = %s::uuid
+              AND filial = %s
+            RETURNING realizacao_id
+            """,
+            (realizacao_id, filial),
+        )
+        return row is not None

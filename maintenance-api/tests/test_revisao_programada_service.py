@@ -137,3 +137,63 @@ def test_registrar_revisao_grava_realizacao():
     call_kwargs = realizacao_repo.create.call_args.kwargs
     assert call_kwargs["codigo_ferramenta"] == "23-001"
     assert call_kwargs["intervalo_meses"] == 3
+
+
+def test_remover_realizacao_sincroniza_referencia():
+    revisao_repo = MagicMock()
+    realizacao_repo = MagicMock()
+    realizacao_repo.get_by_id.return_value = {
+        "realizacao_id": "r1",
+        "revisao_id": "abc-123",
+        "filial": "01",
+    }
+    realizacao_repo.delete.return_value = True
+    realizacao_repo.get_latest_data_revisao.return_value = datetime(2026, 1, 15)
+
+    service = RevisaoProgramadaService(
+        revisao_repo=revisao_repo,
+        realizacao_repo=realizacao_repo,
+        reposicao_repo=MagicMock(),
+        totvs_gateway=None,
+    )
+
+    assert service.remover_realizacao("r1", filial="01") is True
+    revisao_repo.update.assert_called_once_with(
+        "abc-123",
+        filial="01",
+        data_ultima_revisao=datetime(2026, 1, 15),
+        update_data_ultima_revisao=True,
+    )
+
+
+def test_atualizar_realizacao_sincroniza_referencia():
+    revisao_repo = MagicMock()
+    realizacao_repo = MagicMock()
+    realizacao_repo.get_by_id.return_value = {"realizacao_id": "r1", "filial": "01"}
+    realizacao_repo.update.return_value = {
+        "realizacao_id": "r1",
+        "revisao_id": "abc-123",
+        "filial": "01",
+        "codigo_ferramenta": "23-001",
+        "data_revisao": datetime(2026, 5, 10),
+        "intervalo_meses": 3,
+        "observacao": "Ajuste",
+        "data_registro": datetime(2026, 6, 12),
+    }
+    realizacao_repo.get_latest_data_revisao.return_value = datetime(2026, 5, 10)
+
+    service = RevisaoProgramadaService(
+        revisao_repo=revisao_repo,
+        realizacao_repo=realizacao_repo,
+        reposicao_repo=MagicMock(),
+        totvs_gateway=None,
+    )
+
+    item = service.atualizar_realizacao(
+        "r1",
+        filial="01",
+        payload={"data_revisao": "2026-05-10", "observacao": "Ajuste"},
+    )
+
+    assert item is not None
+    revisao_repo.update.assert_called_once()
