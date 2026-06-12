@@ -465,7 +465,7 @@ export function ProcessoInstanciasPanel({
                         );
                         const disabled =
                           usedByOther ||
-                          (editingInstanciaId && checked && setorIds.length <= 1);
+                          (!!editingInstanciaId && checked && setorIds.length <= 1);
                         return (
                           <label
                             key={setor.id}
