@@ -9,6 +9,7 @@ type BrDatetimeInputProps = {
   disabled?: boolean;
   readOnly?: boolean;
   placeholder?: string;
+  error?: string;
 };
 
 export function BrDatetimeInput({
@@ -18,6 +19,7 @@ export function BrDatetimeInput({
   disabled = false,
   readOnly = false,
   placeholder = "dd/mm/aaaa HH:mm",
+  error,
 }: BrDatetimeInputProps) {
   const [display, setDisplay] = useState(() => toBrDatetimeDisplay(value));
 
@@ -35,19 +37,31 @@ export function BrDatetimeInput({
     setDisplay(parsed ? toBrDatetimeDisplay(parsed) : "");
   }
 
+  function handleChange(nextDisplay: string) {
+    setDisplay(nextDisplay);
+    const parsed = parseBrDatetimeDisplay(nextDisplay);
+    if (parsed !== null && parsed !== "") {
+      onChange(parsed);
+    }
+  }
+
   return (
-    <input
-      type="text"
-      inputMode="numeric"
-      autoComplete="off"
-      spellCheck={false}
-      className={className ?? "dm-br-datetime-input"}
-      placeholder={placeholder}
-      value={display}
-      disabled={disabled}
-      readOnly={readOnly}
-      onChange={(event) => setDisplay(event.target.value)}
-      onBlur={(event) => commit(event.target.value)}
-    />
+    <>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        spellCheck={false}
+        className={className ?? "dm-br-datetime-input"}
+        placeholder={placeholder}
+        value={display}
+        disabled={disabled}
+        readOnly={readOnly}
+        aria-invalid={Boolean(error)}
+        onChange={(event) => handleChange(event.target.value)}
+        onBlur={(event) => commit(event.target.value)}
+      />
+      {error ? <span className="dm-field__error">{error}</span> : null}
+    </>
   );
 }

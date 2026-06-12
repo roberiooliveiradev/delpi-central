@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 export type DataTableColumn<T> = {
   key: string;
   header: string;
+  /** Balão explicativo no cabeçalho da coluna. */
+  headerHint?: string;
   render: (row: T) => ReactNode;
   className?: string;
   align?: "left" | "right" | "center";

@@ -73,14 +73,24 @@ export function parseBrDatetimeDisplay(value: string): string | null {
 }
 
 export function fromDatetimeLocalValue(value: string): string {
-  if (!value) return new Date().toISOString();
-  const parsedLocal = parseBrDatetimeDisplay(value);
-  if (parsedLocal) {
-    const date = new Date(parsedLocal);
-    return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+  const resolved = resolveDatetimeLocalValue(value);
+  if (!resolved) {
+    throw new Error("Data inválida.");
   }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+  const date = new Date(resolved);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Data inválida.");
+  }
+  return date.toISOString();
+}
+
+function resolveDatetimeLocalValue(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  const parsedLocal = parseBrDatetimeDisplay(trimmed);
+  if (parsedLocal === null || parsedLocal === "") return null;
+  return parsedLocal;
 }
 
 export function toDateInputValue(value: string | Date): string {

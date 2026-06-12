@@ -4,10 +4,13 @@ import { Settings } from "lucide-react";
 import {
   type DataTableColumn,
   DataTableSection,
+  FieldLabel,
   FilterBar,
+  HelpTooltip,
   PendingChangeBadge,
   StateBox,
 } from "../../components/data";
+import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
@@ -319,6 +322,7 @@ export function ConfiguracaoPage({
       {
         key: "descricao",
         header: "Descrição",
+        headerHint: CONFIG_TOOLTIPS.motivoDescricao,
         sortable: true,
         sortValue: (item) => motivoEdits[item.motivo_id]?.descricao ?? item.descricao,
         render: (item) =>
@@ -345,6 +349,7 @@ export function ConfiguracaoPage({
       {
         key: "excluir_preventiva",
         header: "Ignora preventiva",
+        headerHint: CONFIG_TOOLTIPS.excluirPreventiva,
         align: "center",
         render: (item) => {
           const draft = motivoEdits[item.motivo_id] ?? toMotivoDraft(item);
@@ -366,7 +371,9 @@ export function ConfiguracaoPage({
                   }))
                 }
               />
-              <span>Não conta</span>
+              <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: ignora preventiva">
+                <span>Não conta</span>
+              </HelpTooltip>
             </label>
           );
         },
@@ -403,6 +410,7 @@ export function ConfiguracaoPage({
       {
         key: "status",
         header: "Status",
+        headerHint: CONFIG_TOOLTIPS.statusDescricao,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).descricao,
         render: (item) => {
@@ -428,6 +436,7 @@ export function ConfiguracaoPage({
       {
         key: "operador",
         header: "Operador",
+        headerHint: CONFIG_TOOLTIPS.statusOperador,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).operador,
         render: (item) => {
@@ -456,6 +465,7 @@ export function ConfiguracaoPage({
       {
         key: "percentual",
         header: "Percentual",
+        headerHint: CONFIG_TOOLTIPS.statusPercentual,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).percentual,
         render: (item) => {
@@ -528,11 +538,12 @@ export function ConfiguracaoPage({
 
       <DataTableSection
         title="Motivos de reposição"
+        titleHint={CONFIG_TOOLTIPS.motivosSection}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded onSubmit={handleCreateMotivo}>
               <label className="dm-field">
-                <span>Novo motivo</span>
+                <FieldLabel label="Novo motivo" hint={CONFIG_TOOLTIPS.motivoDescricao} />
                 <input
                   value={novoMotivo}
                   onChange={(event) => setNovoMotivo(event.target.value)}
@@ -545,7 +556,9 @@ export function ConfiguracaoPage({
                   checked={novoMotivoExcluirPreventiva}
                   onChange={(event) => setNovoMotivoExcluirPreventiva(event.target.checked)}
                 />
-                <span>Não conta no preventivo</span>
+                <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: não conta no preventivo">
+                  <span>Não conta no preventivo</span>
+                </HelpTooltip>
               </label>
               <button type="submit" className="dm-primary-btn">
                 Adicionar
@@ -571,12 +584,12 @@ export function ConfiguracaoPage({
 
       <DataTableSection
         title="Status preventivo"
-        hint="Regras de classificação por percentual de uso vs. média histórica de golpes."
+        titleHint={CONFIG_TOOLTIPS.statusSection}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded onSubmit={handleCreateStatus}>
               <label className="dm-field">
-                <span>Novo status</span>
+                <FieldLabel label="Novo status" hint={CONFIG_TOOLTIPS.statusDescricao} />
                 <input
                   value={novoStatus.descricao}
                   onChange={(event) =>
@@ -586,7 +599,7 @@ export function ConfiguracaoPage({
                 />
               </label>
               <label className="dm-field">
-                <span>Operador</span>
+                <FieldLabel label="Operador" hint={CONFIG_TOOLTIPS.statusOperador} />
                 <select
                   value={novoStatus.operador}
                   onChange={(event) =>
@@ -604,7 +617,7 @@ export function ConfiguracaoPage({
                 </select>
               </label>
               <label className="dm-field">
-                <span>Percentual</span>
+                <FieldLabel label="Percentual" hint={CONFIG_TOOLTIPS.statusPercentual} />
                 <input
                   type="number"
                   min={0}

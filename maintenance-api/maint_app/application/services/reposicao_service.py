@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScope
@@ -19,9 +19,18 @@ class ReposicaoService:
         self._reposicao_repo = reposicao_repo or ReposicaoRepository()
         self._totvs = totvs_gateway
 
+    @staticmethod
+    def _as_naive(dt: datetime) -> datetime:
+        if dt.tzinfo is not None:
+            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+
     def _parse_datetime(self, value: Any, *, field_name: str) -> datetime:
         if isinstance(value, str):
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            raw = value.strip()
+            if not raw:
+                raise ValueError(f"{field_name} é obrigatória.")
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
         if isinstance(value, datetime):
             return value
         raise ValueError(f"{field_name} é obrigatória.")
@@ -73,7 +82,9 @@ class ReposicaoService:
         else:
             data_ultima_reposicao_dt = ultima
 
-        if ultima and data_reposicao_dt <= ultima:
+        if data_ultima_reposicao_dt and self._as_naive(data_reposicao_dt) <= self._as_naive(
+            data_ultima_reposicao_dt
+        ):
             raise ValueError("Data de reposição deve ser posterior à última reposição.")
 
         return {

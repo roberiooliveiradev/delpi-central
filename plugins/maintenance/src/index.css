@@ -183,6 +183,129 @@
   color: var(--dm-title);
 }
 
+.dashboard-maintenance .dm-section-header__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dashboard-maintenance .dm-section-header__help {
+  margin-left: 2px;
+}
+
+.dashboard-maintenance .dm-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-maintenance .dm-help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.dashboard-maintenance .dm-help-tooltip--wrap {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--dm-text-muted) 55%, transparent);
+}
+
+.dashboard-maintenance .dm-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dm-text-muted);
+  cursor: help;
+  opacity: 0.72;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.dashboard-maintenance .dm-help-tooltip__trigger:hover,
+.dashboard-maintenance .dm-help-tooltip__trigger:focus-visible {
+  opacity: 1;
+  color: var(--dm-accent);
+  background: color-mix(in srgb, var(--dm-accent) 10%, transparent);
+  outline: none;
+}
+
+.dashboard-maintenance .dm-help-tooltip__bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 50;
+  min-width: 200px;
+  max-width: min(280px, 70vw);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--dm-card-border);
+  background: color-mix(in srgb, var(--dm-card-bg) 96%, var(--dm-accent));
+  box-shadow: 0 10px 28px color-mix(in srgb, black 22%, transparent);
+  font-size: var(--dm-font-xs);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--dm-text);
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.dashboard-maintenance .dm-help-tooltip:hover .dm-help-tooltip__bubble,
+.dashboard-maintenance .dm-help-tooltip:focus-within .dm-help-tooltip__bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dashboard-maintenance .dm-help-tooltip--wrap .dm-help-tooltip__bubble {
+  left: 0;
+  transform: translateY(4px);
+}
+
+.dashboard-maintenance .dm-help-tooltip--wrap:hover .dm-help-tooltip__bubble,
+.dashboard-maintenance .dm-help-tooltip--wrap:focus-within .dm-help-tooltip__bubble {
+  transform: translateY(0);
+}
+
+.dashboard-maintenance .dm-help-tooltip--wrap:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--dm-accent) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dashboard-maintenance .dm-datatable__table th .dm-help-tooltip__bubble {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.dashboard-maintenance .dm-datatable__table th .dm-help-tooltip:hover .dm-help-tooltip__bubble,
+.dashboard-maintenance .dm-datatable__table th .dm-help-tooltip:focus-within .dm-help-tooltip__bubble {
+  transform: translateX(-50%) translateY(0);
+}
+
+.dashboard-maintenance .dm-datatable__header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .dashboard-maintenance .dm-section-header__hint {
   margin: 6px 0 0;
   font-size: var(--dm-font-sm);
@@ -517,6 +640,26 @@
   line-height: 1.35;
   font-size: var(--dm-font-sm);
   color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-field--invalid span {
+  color: #f87171;
+}
+
+.dashboard-maintenance .dm-field__error {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--dm-font-xs);
+  line-height: 1.35;
+  color: #f87171;
+}
+
+.dashboard-maintenance .dm-field--invalid input,
+.dashboard-maintenance .dm-field--invalid select,
+.dashboard-maintenance .dm-field--invalid textarea,
+.dashboard-maintenance .dm-field--invalid .dm-br-date-input,
+.dashboard-maintenance .dm-field--invalid .dm-br-datetime-input {
+  border-color: color-mix(in srgb, #ef4444 55%, var(--dm-card-border));
 }
 
 .dashboard-maintenance .dm-field input,

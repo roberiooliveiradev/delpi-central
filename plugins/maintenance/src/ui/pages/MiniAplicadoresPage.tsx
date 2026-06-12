@@ -43,6 +43,12 @@ import {
   formatPecaLabel,
   reposicoesToPecaOptions,
 } from "../../utils/pecaOptions";
+import {
+  hasReposicaoFormErrors,
+  mapReposicaoApiError,
+  validateReposicaoForm,
+  type ReposicaoFormErrors,
+} from "../../utils/reposicaoFormValidation";
 
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
@@ -111,6 +117,7 @@ export function MiniAplicadoresPage({
   const golpesRequestRef = useRef(0);
   const editingReposicaoRef = useRef<ReposicaoItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reposicaoFormErrors, setReposicaoFormErrors] = useState<ReposicaoFormErrors>({});
   const [success, setSuccess] = useState<string | null>(null);
 
   const pecaDescricaoMap = useMemo(
@@ -213,6 +220,7 @@ export function MiniAplicadoresPage({
     setObservacao("");
     setDataReposicao(toDatetimeLocalValue(new Date()));
     setDataUltimaReposicao("");
+    setReposicaoFormErrors({});
   }, [pecasReposicao]);
 
   const openNovaReposicao = useCallback(() => {
@@ -226,6 +234,7 @@ export function MiniAplicadoresPage({
     setDataUltimaReposicao("");
     setSuccess(null);
     setError(null);
+    setReposicaoFormErrors({});
     setShowReposicaoForm(true);
   }, [pecasReposicao]);
 
@@ -610,6 +619,16 @@ export function MiniAplicadoresPage({
     );
     setSuccess(null);
     setError(null);
+    setReposicaoFormErrors({});
+  }
+
+  function clearReposicaoFieldError(field: keyof ReposicaoFormErrors) {
+    setReposicaoFormErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   }
 
   async function handleDeleteReposicao(item: ReposicaoItem) {
@@ -634,11 +653,21 @@ export function MiniAplicadoresPage({
 
   async function handleSubmitReposicao(event: React.FormEvent) {
     event.preventDefault();
-    if (!codigoFerramenta || !codigoPeca || motivoId === "") return;
-    if (golpes <= 0) {
-      setError("Informe golpes maior que zero ou use «Sugerir golpes».");
+    const validationErrors = validateReposicaoForm({
+      codigoPeca,
+      dataReposicao,
+      dataUltimaReposicao,
+      golpes,
+      motivoId,
+    });
+    if (hasReposicaoFormErrors(validationErrors)) {
+      setReposicaoFormErrors(validationErrors);
+      setError("Corrija os campos destacados antes de continuar.");
+      setSuccess(null);
       return;
     }
+    if (!codigoFerramenta) return;
+    setReposicaoFormErrors({});
     setError(null);
     setSuccess(null);
     const payload = {
@@ -666,7 +695,14 @@ export function MiniAplicadoresPage({
       closeReposicaoForm();
       await loadDetalhe();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao salvar reposição.");
+      const message = err instanceof Error ? err.message : "Falha ao salvar reposição.";
+      const apiErrors = mapReposicaoApiError(message);
+      if (hasReposicaoFormErrors(apiErrors)) {
+        setReposicaoFormErrors(apiErrors);
+        setError("Corrija os campos destacados antes de continuar.");
+      } else {
+        setError(message);
+      }
     }
   }
 
@@ -914,12 +950,16 @@ export function MiniAplicadoresPage({
                 lang="pt-BR"
                 onSubmit={handleSubmitReposicao}
               >
-                <label className="dm-field dm-field--span-full">
+                <label
+                  className={`dm-field dm-field--span-full${reposicaoFormErrors.codigoPeca ? " dm-field--invalid" : ""}`}
+                >
                   <span>Peça</span>
                   <select
                     className="dm-select-peca"
                     value={codigoPeca}
+                    aria-invalid={Boolean(reposicaoFormErrors.codigoPeca)}
                     onChange={(event) => {
+                      clearReposicaoFieldError("codigoPeca");
                       setCodigoPeca(event.target.value);
                       if (!editingReposicaoId) {
                         setDataUltimaReposicao("");
@@ -935,23 +975,41 @@ export function MiniAplicadoresPage({
                       </option>
                     ))}
                   </select>
+                  {reposicaoFormErrors.codigoPeca ? (
+                    <span className="dm-field__error">{reposicaoFormErrors.codigoPeca}</span>
+                  ) : null}
                 </label>
 
-                <label className="dm-field dm-field--span-4">
+                <label
+                  className={`dm-field dm-field--span-4${reposicaoFormErrors.dataReposicao ? " dm-field--invalid" : ""}`}
+                >
                   <span>Data da reposição</span>
-                  <BrDatetimeInput value={dataReposicao} onChange={setDataReposicao} />
+                  <BrDatetimeInput
+                    value={dataReposicao}
+                    error={reposicaoFormErrors.dataReposicao}
+                    onChange={(value) => {
+                      clearReposicaoFieldError("dataReposicao");
+                      setDataReposicao(value);
+                    }}
+                  />
                 </label>
-                <label className="dm-field dm-field--span-4">
+                <label
+                  className={`dm-field dm-field--span-4${reposicaoFormErrors.dataUltimaReposicao ? " dm-field--invalid" : ""}`}
+                >
                   <span>Data da última reposição</span>
                   <BrDatetimeInput
                     value={dataUltimaReposicao}
-                    onChange={setDataUltimaReposicao}
+                    error={reposicaoFormErrors.dataUltimaReposicao}
+                    onChange={(value) => {
+                      clearReposicaoFieldError("dataUltimaReposicao");
+                      setDataUltimaReposicao(value);
+                    }}
                     readOnly={Boolean(editingReposicaoId)}
                     disabled={Boolean(editingReposicaoId)}
                   />
                 </label>
                 <div
-                  className={`dm-field dm-field--span-2 dm-golpes-field${golpesLoading ? " is-loading" : ""}`}
+                  className={`dm-field dm-field--span-2 dm-golpes-field${golpesLoading ? " is-loading" : ""}${reposicaoFormErrors.golpes ? " dm-field--invalid" : ""}`}
                   aria-busy={golpesLoading}
                 >
                   <span>{golpesLoading ? "Calculando golpes…" : "Golpes"}</span>
@@ -962,7 +1020,11 @@ export function MiniAplicadoresPage({
                       value={golpes}
                       disabled={golpesLoading}
                       readOnly={golpesLoading}
-                      onChange={(event) => setGolpes(Number(event.target.value))}
+                      aria-invalid={Boolean(reposicaoFormErrors.golpes)}
+                      onChange={(event) => {
+                        clearReposicaoFieldError("golpes");
+                        setGolpes(Number(event.target.value));
+                      }}
                       aria-live="polite"
                     />
                     {golpesLoading ? (
@@ -973,6 +1035,9 @@ export function MiniAplicadoresPage({
                       />
                     ) : null}
                   </div>
+                  {reposicaoFormErrors.golpes ? (
+                    <span className="dm-field__error">{reposicaoFormErrors.golpes}</span>
+                  ) : null}
                 </div>
 
                 <button
@@ -987,13 +1052,17 @@ export function MiniAplicadoresPage({
                   {golpesLoading ? "Calculando…" : "Sugerir golpes"}
                 </button>
 
-                <label className="dm-field dm-field--span-full">
+                <label
+                  className={`dm-field dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
+                >
                   <span>Motivo</span>
                   <select
                     value={motivoId}
-                    onChange={(event) =>
-                      setMotivoId(event.target.value ? Number(event.target.value) : "")
-                    }
+                    aria-invalid={Boolean(reposicaoFormErrors.motivoId)}
+                    onChange={(event) => {
+                      clearReposicaoFieldError("motivoId");
+                      setMotivoId(event.target.value ? Number(event.target.value) : "");
+                    }}
                   >
                     <option value="">Selecione…</option>
                     {motivos.map((motivo) => (
@@ -1002,6 +1071,9 @@ export function MiniAplicadoresPage({
                       </option>
                     ))}
                   </select>
+                  {reposicaoFormErrors.motivoId ? (
+                    <span className="dm-field__error">{reposicaoFormErrors.motivoId}</span>
+                  ) : null}
                 </label>
 
                 <label className="dm-field dm-field--span-full dm-field--textarea">

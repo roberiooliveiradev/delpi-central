@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import { sortRows } from "../../utils/dataTableSort";
 import { DataTable } from "./DataTable";
+import { HelpTooltip } from "./HelpTooltip";
 import { Pagination } from "./Pagination";
 import type { DataTableColumn, ServerPaginationConfig, ServerTableConfig } from "./types";
 
@@ -11,6 +12,8 @@ export const DEFAULT_TABLE_PAGE_SIZE = 20;
 type DataTableSectionProps<T> = {
   title: string;
   hint?: string;
+  /** Balão explicativo ao lado do título da seção. */
+  titleHint?: string;
   /** Sobrescreve o badge automático de contagem. */
   badge?: ReactNode;
   /** Sufixo do badge automático quando `badge` não é informado. Padrão: registro(s). */
@@ -37,6 +40,7 @@ type DataTableSectionProps<T> = {
 export function DataTableSection<T>({
   title,
   hint,
+  titleHint,
   badge,
   countBadgeLabel = "registro(s)",
   actions,
@@ -119,7 +123,12 @@ export function DataTableSection<T>({
     <>
       <div className="dm-section-header">
         <div className="dm-section-header__title-group">
-          <h3 className="dm-section-header__title">{title}</h3>
+          <h3 className="dm-section-header__title">
+            {title}
+            {titleHint ? (
+              <HelpTooltip content={titleHint} ariaLabel={`Ajuda: ${title}`} className="dm-section-header__help" />
+            ) : null}
+          </h3>
           {hint ? <p className="dm-section-header__hint">{hint}</p> : null}
         </div>
         <div className="dm-section-header__meta">

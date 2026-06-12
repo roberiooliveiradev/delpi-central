@@ -34,10 +34,32 @@ def test_validate_payload_requires_date_after_last_replacement():
                 "codigo_ferramenta": "23-001",
                 "codigo_peca": "P001",
                 "data_reposicao": "2026-06-01T10:00:00+00:00",
+                "data_ultima_reposicao": "2026-06-01T12:00:00+00:00",
                 "golpes": 10,
                 "motivo_id": 1,
             }
         )
+
+
+def test_validate_payload_uses_form_last_replacement_not_db_max():
+    repo = MagicMock()
+    repo.get_ultima_data.return_value = datetime(2026, 6, 12, 10, 51, tzinfo=timezone.utc)
+    service = ReposicaoService(reposicao_repo=repo)
+
+    result = service.validate_payload(
+        {
+            "filial": "01",
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "P001",
+            "data_reposicao": "2019-06-12T16:44:00",
+            "data_ultima_reposicao": "2000-06-12T10:51:00",
+            "golpes": 50,
+            "motivo_id": 1,
+        }
+    )
+
+    assert result["data_reposicao"].year == 2019
+    assert result["data_ultima_reposicao"].year == 2000
 
 
 def test_sugerir_golpes_usa_intervalo_datetime_no_totvs():

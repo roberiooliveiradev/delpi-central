@@ -1,4 +1,5 @@
 import type { DataTableColumn } from "./types";
+import { HelpTooltip } from "./HelpTooltip";
 import "./DataTable.css";
 
 type DataTableProps<T> = {
@@ -61,12 +62,23 @@ export function DataTable<T>({
                         aria-label={`Ordenar por ${column.header}`}
                       >
                         <span>{column.header}</span>
+                        {column.headerHint ? (
+                          <HelpTooltip
+                            content={column.headerHint}
+                            ariaLabel={`Ajuda: ${column.header}`}
+                          />
+                        ) : null}
                         <span className="dm-datatable__sort-indicator" aria-hidden="true">
                           {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                         </span>
                       </button>
                     ) : (
-                      column.header
+                      <span className="dm-datatable__header-label">
+                        {column.header}
+                        {column.headerHint ? (
+                          <HelpTooltip content={column.headerHint} ariaLabel={`Ajuda: ${column.header}`} />
+                        ) : null}
+                      </span>
                     )}
                   </th>
                 );
