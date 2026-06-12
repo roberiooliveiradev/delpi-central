@@ -86,6 +86,26 @@ Onde `economia_operacional_mensal = economia_bruta - custo_recorrente_mes - cust
 | `mensal_cheio` | Valor mensal integral na competência, se recurso e vínculo vigentes |
 | `proporcional_dias` | `valor_mensal × (dias efetivos / dias do mês)` considerando `data_inicio_uso`, `data_fim_uso`, vigências do recurso |
 
+## Recursos compartilhados — `escopo_recurso`
+
+Implementação: `SharedResourceScopeService.filter_rateio_pool` · consumido por `DashboardCalculatorService`.
+
+Define **quais vínculos revisão↔recurso** entram no denominador do rateio antes de aplicar `criterio_rateio` (`igualitario`, `por_revisoes_ativas`, `por_peso`).
+
+| Valor | Pool de vínculos elegíveis |
+|-------|----------------------------|
+| `empresa` (padrão legado) | Todos os vínculos vigentes da empresa |
+| `filial` | Vínculos cuja instância operacional tem a **mesma filial** da revisão âncora |
+| `setor` | Vínculos cuja instância tem o **mesmo par filial × setor** da revisão âncora |
+
+A **âncora** é a instância da revisão que recebe o custo rateado (`revisoes.instancia_id` → `processo_instancias`). Recursos sem `escopo_recurso` no JSON importado assumem `empresa` (sem mudança numérica imediata).
+
+### Visões do dashboard e escopo
+
+O parâmetro `view` (`consolidated` \| `filial` \| `department`) filtra **quais instâncias/revisões** entram nos KPIs. Recursos `empresa` continuam rateando no pool global; em visão filial ou departamento a **fatia exibida** é a parcela rateada para as revisões do recorte — nunca o custo integral do recurso.
+
+Módulos: `DashboardViewScopeService` (filtro analítico) + `SharedResourceScopeService` (pool de rateio).
+
 ## Filtros de data no dashboard
 
 Com filtro em formato **YYYY-MM-DD** (data inicial e final com dia), os cards de resumo, a evolução mensal retornada pela API e o ranking por família recalculam **linha a linha**:

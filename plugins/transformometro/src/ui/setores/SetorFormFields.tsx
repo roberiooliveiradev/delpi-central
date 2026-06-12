@@ -24,14 +24,14 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
   return (
     <div className="ds-filters-row ds-filters-row--extended">
       <div className="ds-filter-box">
-        <label htmlFor="tm-setor-id">Código (slug) *</label>
+        <label htmlFor="tm-setor-codigo">Código de negócio *</label>
         <input
-          id="tm-setor-id"
+          id="tm-setor-codigo"
           required
           readOnly={editing}
-          placeholder="ex.: comercial"
-          value={form.setor_id}
-          onChange={(e) => set({ setor_id: e.target.value.toLowerCase() })}
+          placeholder="ex.: engenharia"
+          value={form.codigo_setor}
+          onChange={(e) => set({ codigo_setor: e.target.value.toLowerCase() })}
         />
       </div>
       <div className="ds-filter-box ds-filter-box--wide">

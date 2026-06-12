@@ -131,7 +131,7 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 
 | Item | Foco |
 |--------|------|
-| **Docs modelo** | Atualizar `PLAYBOOK-MODELAGEM.md`, `ARCHITECTURE.md`, `regras-de-calculo.md` conforme §9 do playbook |
+| **Docs modelo** | Atualizar `PLAYBOOK-MODELAGEM.md` e `ARCHITECTURE.md` conforme §9 do playbook |
 
 ## MFE Playbook §9 (jun/2026)
 
@@ -143,6 +143,9 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 | Dashboard toggle visão (`view`) + `access_scope` | ✅ `DashboardPage` + `dashboardViewScope.ts` |
 | Tipos/API instância, `Revisao.instancia_id` | ✅ `transformometroApi.ts` |
 | Create processo com primeira instância | ✅ `createPayloadFromProcessoForm` |
+| Setores: `codigo_setor` na UI (UUID só na API) | ✅ `setorCatalogForm` |
+| Recursos: campo `escopo_recurso` no formulário | ✅ `recursoCatalogForm` + `RecursoCatalogFormFields` |
+| Doc `regras-de-calculo.md` § escopo recurso | ✅ alinhado a `SharedResourceScopeService` |
 
 Módulos: `plugins/transformometro/src/utils/dashboardViewScope.ts`, `ProcessoInstanciasPanel.tsx`, `routeParser.ts`.
 

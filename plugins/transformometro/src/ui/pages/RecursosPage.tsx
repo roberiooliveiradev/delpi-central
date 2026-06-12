@@ -23,7 +23,7 @@ import {
   type OptionsData,
   type RecursoCompartilhado,
 } from "../../data/api/transformometroApi";
-import { labelBaseCompetencia, labelCriterioRateio } from "../../utils/catalogLabels";
+import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { buildRecursoPath } from "../../utils/routeParser";
@@ -172,6 +172,13 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       render: (r) => formatCurrency(r.valor_total_recorrente),
     },
     { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio), sortable: true },
+    {
+      key: "escopo_recurso",
+      header: "Escopo",
+      render: (r) => labelEscopoRecurso(r.escopo_recurso),
+      sortable: true,
+      sortValue: (r) => r.escopo_recurso ?? "empresa",
+    },
     {
       key: "base_competencia",
       header: "Competência",

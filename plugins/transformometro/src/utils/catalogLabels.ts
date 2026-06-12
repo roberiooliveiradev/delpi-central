@@ -1,3 +1,14 @@
+const ESCOPO_RECURSO_LABELS: Record<string, string> = {
+  empresa: "Empresa (pool global)",
+  filial: "Filial (mesma filial da instância)",
+  setor: "Departamento (filial × setor)",
+};
+
+export function labelEscopoRecurso(value?: string | null): string {
+  if (!value) return "Empresa (pool global)";
+  return ESCOPO_RECURSO_LABELS[value] ?? value;
+}
+
 const CRITERIO_RATEIO_LABELS: Record<string, string> = {
   igualitario: "Igualitário entre vínculos",
   por_revisoes_ativas: "Por revisões ativas",

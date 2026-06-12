@@ -116,7 +116,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       } else {
         await createSetor(
           {
-            setor_id: form.setor_id.trim(),
+            setor_id: form.codigo_setor.trim(),
             nome_setor: payload.nome_setor,
             filiais: payload.filiais,
             status_setor: payload.status_setor,
@@ -132,7 +132,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
   }
 
   async function handleDelete(setor: Setor) {
-    if (!window.confirm(`Excluir setor ${setor.setor_id} — ${setor.nome_setor}?`)) return;
+    if (!window.confirm(`Excluir setor ${setor.codigo_setor ?? setor.setor_id} — ${setor.nome_setor}?`)) return;
     setError(null);
     try {
       await deleteSetor(setor.setor_id, getAccessToken);
@@ -145,11 +145,11 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const columns: DataTableColumn<Setor>[] = [
     {
-      key: "setor_id",
+      key: "codigo_setor",
       header: "Código",
       sortable: true,
-      sortValue: (row) => row.setor_id,
-      render: (row) => row.setor_id,
+      sortValue: (row) => row.codigo_setor ?? row.setor_id,
+      render: (row) => row.codigo_setor ?? row.setor_id,
     },
     {
       key: "nome_setor",

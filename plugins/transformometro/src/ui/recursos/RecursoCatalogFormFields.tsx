@@ -1,5 +1,5 @@
 import type { OptionsData } from "../../data/api/transformometroApi";
-import { labelBaseCompetencia, labelCriterioRateio } from "../../utils/catalogLabels";
+import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
 
 const DEFAULT_BASE_COMPETENCIA_OPTIONS = ["mensal_cheio", "proporcional_dias"];
@@ -11,10 +11,15 @@ type Props = {
   submitLabel: string;
 };
 
+const DEFAULT_ESCOPO_RECURSO_OPTIONS = ["empresa", "filial", "setor"];
+
 export function RecursoCatalogFormFields({ form, options, onChange, submitLabel }: Props) {
   const baseCompetenciaOptions = options.base_competencia_recurso?.length
     ? options.base_competencia_recurso
     : DEFAULT_BASE_COMPETENCIA_OPTIONS;
+  const escopoOptions = options.escopo_recurso?.length
+    ? options.escopo_recurso
+    : DEFAULT_ESCOPO_RECURSO_OPTIONS;
 
   return (
     <>
@@ -83,6 +88,19 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
             {options.criterio_rateio.map((c) => (
               <option key={c} value={c}>
                 {labelCriterioRateio(c)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ds-filter-box">
+          Escopo de rateio *
+          <select
+            value={form.escopo_recurso}
+            onChange={(e) => onChange({ ...form, escopo_recurso: e.target.value })}
+          >
+            {escopoOptions.map((escopo) => (
+              <option key={escopo} value={escopo}>
+                {labelEscopoRecurso(escopo)}
               </option>
             ))}
           </select>

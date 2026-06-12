@@ -15,7 +15,7 @@ import {
   type RecursoCompartilhado,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
-import { labelBaseCompetencia, labelCriterioRateio } from "../../utils/catalogLabels";
+import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import { optionalDateField, toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -229,6 +229,7 @@ export function RecursoDetailPage({
             <DetailMetric label="Fornecedor" value={recurso.fornecedor || "—"} />
             <DetailMetric label="Tipo / recorrência" value={`${recurso.tipo_custo} · ${recurso.recorrencia}`} />
             <DetailMetric label="Rateio" value={labelCriterioRateio(recurso.criterio_rateio)} />
+            <DetailMetric label="Escopo" value={labelEscopoRecurso(recurso.escopo_recurso)} />
             <DetailMetric
               label="Competência do custo"
               value={labelBaseCompetencia(recurso.base_competencia)}

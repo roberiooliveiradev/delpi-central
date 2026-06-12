@@ -1,7 +1,7 @@
 import type { Setor } from "../../data/api/transformometroApi";
 
 export type SetorFormState = {
-  setor_id: string;
+  codigo_setor: string;
   nome_setor: string;
   filiais: string[];
   status_setor: string;
@@ -9,7 +9,7 @@ export type SetorFormState = {
 
 export function emptySetorForm(defaultFilialId = "01"): SetorFormState {
   return {
-    setor_id: "",
+    codigo_setor: "",
     nome_setor: "",
     filiais: [defaultFilialId],
     status_setor: "ativo",
@@ -18,7 +18,7 @@ export function emptySetorForm(defaultFilialId = "01"): SetorFormState {
 
 export function setorFormFromEntity(setor: Setor): SetorFormState {
   return {
-    setor_id: setor.setor_id,
+    codigo_setor: setor.codigo_setor ?? "",
     nome_setor: setor.nome_setor,
     filiais: [...(setor.filiais ?? [])],
     status_setor: setor.status_setor ?? "ativo",
@@ -36,6 +36,6 @@ export function payloadFromSetorForm(form: SetorFormState, editing: boolean) {
   }
   return {
     ...base,
-    setor_id: form.setor_id.trim(),
+    setor_id: form.codigo_setor.trim(),
   };
 }

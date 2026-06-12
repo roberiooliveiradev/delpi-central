@@ -411,10 +411,10 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 - [x] `DashboardPage` — toggle visão
 - [x] `transformometroApi.ts` — tipos `ProcessoInstancia`, `Filial`, `Setor` com UUID + `codigo_*`
 - [x] Rotas MFE e forms usam UUID; exibem `codigo_*` / `nome_*` na UI
-- [ ] `setorCatalogForm` / `ProcessoFormFields` — parar de usar slug como id técnico
+- [x] `setorCatalogForm` / `ProcessoFormFields` — parar de usar slug como id técnico
 - [ ] `PLAYBOOK-MODELAGEM.md` — § entidades atualizado (pós-S2)
 - [ ] `ARCHITECTURE.md` — diagrama com instâncias (pós-S3)
-- [ ] `regras-de-calculo.md` — § escopo recurso (pós-S4)
+- [x] `regras-de-calculo.md` — § escopo recurso (pós-S4)
 
 ---
 

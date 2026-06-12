@@ -437,6 +437,7 @@ export type RecursoCompartilhado = {
   recorrencia: string;
   valor_total_recorrente: number;
   criterio_rateio: string;
+  escopo_recurso?: string;
   base_competencia?: string;
   status_recurso: string;
   categoria_recurso?: string | null;
