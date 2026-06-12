@@ -33,7 +33,7 @@ def list_alertas(
     filial: str = Query(..., min_length=2, max_length=2),
     ferramenta: str | None = Query(None),
     peca: str | None = Query(None),
-    status: str | None = Query(None),
+    status: list[str] | None = Query(None),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -48,7 +48,7 @@ def list_alertas(
         query=query,
         ferramenta=ferramenta,
         peca=peca,
-        status=status,
+        statuses=status,
     )
     return ok({"items": items, "total": total}, message="Alertas preventivos listados.")
 

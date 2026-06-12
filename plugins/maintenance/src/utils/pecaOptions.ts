@@ -32,7 +32,7 @@ export function ferramentasToPecaOptions(items: FerramentaItem[]): PecaOption[] 
   );
 }
 
-/** Peças da estrutura do mini-aplicador (mesma origem da tabela Componentes e estoque). */
+/** Peças amarradas na estrutura (qualquer grupo) — ex.: tabela Componentes e estoque. */
 export function estruturaToPecaOptions(componentes: ComponenteItem[]): PecaOption[] {
   const seen = new Set<string>();
   return componentes

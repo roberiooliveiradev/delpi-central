@@ -220,8 +220,10 @@ def list_reposicoes(
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
     codigo_ferramenta: str = Query(...),
-    codigo_peca: Optional[str] = Query(None),
-    motivo_id: Optional[int] = Query(None, ge=1),
+    codigo_peca: list[str] | None = Query(None),
+    motivo_id: list[int] | None = Query(None),
+    data_inicial: Optional[str] = Query(None),
+    data_final: Optional[str] = Query(None),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -234,7 +236,9 @@ def list_reposicoes(
         filial=filial,
         codigo_ferramenta=codigo_ferramenta,
         codigo_peca=codigo_peca,
-        motivo_id=motivo_id,
+        motivo_ids=motivo_id,
+        data_inicial=data_inicial,
+        data_final=data_final,
         query=query,
     )
     return ok({"items": items, "total": total}, message="Reposições listadas.")

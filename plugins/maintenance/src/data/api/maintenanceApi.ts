@@ -257,8 +257,10 @@ export function fetchReposicoes(
   params: {
     filial: string;
     codigo_ferramenta: string;
-    codigo_peca?: string;
-    motivo_id?: number;
+    codigo_peca?: string[];
+    motivo_id?: number[];
+    data_inicial?: string;
+    data_final?: string;
   } & ListQueryParams,
   getAccessToken?: () => string | undefined,
 ) {
@@ -266,8 +268,18 @@ export function fetchReposicoes(
     filial: params.filial,
     codigo_ferramenta: params.codigo_ferramenta,
   });
-  if (params.codigo_peca) search.set("codigo_peca", params.codigo_peca);
-  if (params.motivo_id) search.set("motivo_id", String(params.motivo_id));
+  if (params.codigo_peca?.length) {
+    for (const peca of params.codigo_peca) {
+      search.append("codigo_peca", peca);
+    }
+  }
+  if (params.motivo_id?.length) {
+    for (const motivoId of params.motivo_id) {
+      search.append("motivo_id", String(motivoId));
+    }
+  }
+  if (params.data_inicial) search.set("data_inicial", params.data_inicial);
+  if (params.data_final) search.set("data_final", params.data_final);
   appendListQuery(search, {
     page: params.page,
     pageSize: params.pageSize,
@@ -283,8 +295,10 @@ export async function fetchAllReposicoes(
   params: {
     filial: string;
     codigo_ferramenta: string;
-    codigo_peca?: string;
-    motivo_id?: number;
+    codigo_peca?: string[];
+    motivo_id?: number[];
+    data_inicial?: string;
+    data_final?: string;
     sortKey?: string | null;
     sortDirection?: "asc" | "desc";
     maxItems?: number;
@@ -303,6 +317,8 @@ export async function fetchAllReposicoes(
         codigo_ferramenta: params.codigo_ferramenta,
         codigo_peca: params.codigo_peca,
         motivo_id: params.motivo_id,
+        data_inicial: params.data_inicial,
+        data_final: params.data_final,
         page,
         pageSize: MAX_LIST_PAGE_SIZE,
         sortKey: params.sortKey,

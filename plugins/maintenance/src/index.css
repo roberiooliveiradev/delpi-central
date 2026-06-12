@@ -605,8 +605,28 @@
   scroll-margin-top: 24px;
 }
 
-.dashboard-maintenance .dm-datetime-local {
+.dashboard-maintenance .dm-datetime-local,
+.dashboard-maintenance .dm-br-date-input,
+.dashboard-maintenance .dm-br-datetime-input {
   font-variant-numeric: tabular-nums;
+}
+
+.dashboard-maintenance .dm-br-date-input,
+.dashboard-maintenance .dm-br-datetime-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-input-bg);
+  color: var(--dm-text);
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-br-date-input::placeholder,
+.dashboard-maintenance .dm-br-datetime-input::placeholder {
+  color: var(--dm-text-muted);
 }
 
 .dashboard-maintenance .dm-reposicao-form-card .dm-section-header {
@@ -654,9 +674,140 @@
 }
 
 .dashboard-maintenance .dm-field--filter-peca,
-.dashboard-maintenance .dm-field--filter-motivo {
+.dashboard-maintenance .dm-field--filter-motivo,
+.dashboard-maintenance .dm-field--filter-date {
   flex: 1 1 240px;
   min-width: min(100%, 220px);
+}
+
+.dashboard-maintenance .dm-field--filter-date {
+  flex-basis: 180px;
+  min-width: min(100%, 160px);
+}
+
+.dashboard-maintenance .dm-field--multi-select {
+  position: relative;
+}
+
+.dashboard-maintenance .dm-multi-select {
+  position: relative;
+}
+
+.dashboard-maintenance .dm-multi-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-input-bg);
+  color: var(--dm-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-multi-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-multi-select--open .dm-multi-select__trigger {
+  border-color: color-mix(in srgb, var(--dm-accent) 45%, var(--dm-card-border));
+}
+
+.dashboard-maintenance .dm-multi-select__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-card-bg);
+  box-shadow: 0 10px 28px color-mix(in srgb, black 22%, transparent);
+}
+
+.dashboard-maintenance .dm-multi-select__search {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-input-bg);
+  color: var(--dm-text);
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-multi-select__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dashboard-maintenance .dm-ghost-btn--sm {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: var(--dm-font-xs);
+}
+
+.dashboard-maintenance .dm-multi-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 168px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-maintenance .dm-multi-select__option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--dm-text);
+  font-size: var(--dm-font-sm);
+  line-height: 1.25;
+}
+
+.dashboard-maintenance .dm-multi-select__option:hover {
+  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
+}
+
+.dashboard-maintenance .dm-multi-select__option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  accent-color: var(--dm-accent, #3b82f6);
+}
+
+.dashboard-maintenance .dm-multi-select__option span {
+  min-width: 0;
+  flex: 1 1 auto;
+  line-height: 1.25;
+}
+
+.dashboard-maintenance .dm-multi-select__empty {
+  padding: 8px 10px;
+  color: var(--dm-text-muted);
+  font-size: var(--dm-font-sm);
 }
 
 .dashboard-maintenance .dm-datatable__codigo-descricao {

@@ -27,7 +27,7 @@
 
 Fases 0–2 concluídas. Submódulos com RBAC por filial (manifesto v0.2.1), filial escolhida no início, CRUD completo, listagens paginadas server-side e UX de reposição no MFE (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
 
-| Testes CI | 37 (`scripts/ci-maintenance-api.sh`) |
+| Testes CI | 39 (`scripts/ci-maintenance-api.sh`) |
 
 ## Listagens paginadas
 
@@ -42,9 +42,20 @@ Query params padronizados (`list_query_params.py`):
 
 Resposta em `data`: `{ "items": [...], "total": N }`.
 
+### Filtros adicionais por rota
+
+| Rota | Parâmetros | Formato |
+|------|------------|---------|
+| `GET .../reposicoes` | `codigo_peca`, `motivo_id`, `data_inicial`, `data_final` | Arrays repetidos na query; datas `YYYY-MM-DD` ou ISO datetime |
+| `GET .../preventiva/alertas` | `status`, `ferramenta`, `peca` | `status` repetido para multi-seleção |
+
 ## Filtro de peças (3019)
 
-`GET .../ferramentas/{codigo}/pecas` — somente códigos `3019*` (peças substituíveis TOTVS).
+`GET .../ferramentas/{codigo}/pecas` — somente códigos `3019*` amarrados à ferramenta (peças substituíveis).
+
+`GET .../ferramentas/{codigo}/componentes` — **todos** os componentes amarrados (árvore + estoque); **não** aplica filtro 3019.
+
+Função de reforço: `_filter_pecas_reposicao` em `mini_applicators_routes.py` (teste `test_mini_applicators_routes.py`).
 
 | Script | Uso |
 |--------|-----|

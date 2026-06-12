@@ -1,3 +1,5 @@
+export { BrDateInput } from "./BrDateInput";
+export { BrDatetimeInput } from "./BrDatetimeInput";
 export { ChartSection } from "./ChartSection";
 export { CodigoDescricaoCell } from "./CodigoDescricaoCell";
 export { DataTable } from "./DataTable";
@@ -5,6 +7,8 @@ export { DataTableSection, DEFAULT_TABLE_PAGE_SIZE } from "./DataTableSection";
 export { Pagination } from "./Pagination";
 export { FilialBadge } from "./FilialBadge";
 export { FilterBar } from "./FilterBar";
+export { MultiSelectField } from "./MultiSelectField";
+export type { MultiSelectOption } from "./MultiSelectField";
 export { PendingChangeBadge } from "./PendingChangeBadge";
 export { StateBox } from "./StateBox";
 export { StatusBadge } from "./StatusBadge";

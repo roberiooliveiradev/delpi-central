@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hammer, Loader2, PlusCircle, RefreshCw } from "lucide-react";
 
-import { type DataTableColumn, CodigoDescricaoCell, DataTableSection, FilterBar, StateBox } from "../../components/data";
+import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -31,13 +31,15 @@ import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
   fromDatetimeLocalValue,
+  isValidDateRange,
+  matchesReposicaoDateRange,
   toDatetimeLocalValue,
 } from "../../utils/datetimeLocal";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import { MAX_LIST_PAGE_SIZE } from "../../utils/listQuery";
 import {
   buildPecaDescricaoMap,
-  estruturaToPecaOptions,
+  ferramentasToPecaOptions,
   formatPecaLabel,
   reposicoesToPecaOptions,
 } from "../../utils/pecaOptions";
@@ -93,10 +95,14 @@ export function MiniAplicadoresPage({
   const [dataReposicao, setDataReposicao] = useState(() => toDatetimeLocalValue(new Date()));
   const [dataUltimaReposicao, setDataUltimaReposicao] = useState("");
   const [editingReposicaoId, setEditingReposicaoId] = useState<string | null>(null);
-  const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState("");
-  const [filtroHistoricoMotivo, setFiltroHistoricoMotivo] = useState<number | "">("");
-  const [filtroHistoricoPecaDraft, setFiltroHistoricoPecaDraft] = useState("");
-  const [filtroHistoricoMotivoDraft, setFiltroHistoricoMotivoDraft] = useState<number | "">("");
+  const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState<string[]>([]);
+  const [filtroHistoricoMotivo, setFiltroHistoricoMotivo] = useState<number[]>([]);
+  const [filtroHistoricoDataInicial, setFiltroHistoricoDataInicial] = useState("");
+  const [filtroHistoricoDataFinal, setFiltroHistoricoDataFinal] = useState("");
+  const [filtroHistoricoPecaDraft, setFiltroHistoricoPecaDraft] = useState<string[]>([]);
+  const [filtroHistoricoMotivoDraft, setFiltroHistoricoMotivoDraft] = useState<number[]>([]);
+  const [filtroHistoricoDataInicialDraft, setFiltroHistoricoDataInicialDraft] = useState("");
+  const [filtroHistoricoDataFinalDraft, setFiltroHistoricoDataFinalDraft] = useState("");
   const [ferramentasLoading, setFerramentasLoading] = useState(false);
   const [detalheLoading, setDetalheLoading] = useState(false);
   const [reposicoesLoading, setReposicoesLoading] = useState(false);
@@ -112,14 +118,14 @@ export function MiniAplicadoresPage({
     [estruturaComponentes, pecasCatalogo],
   );
 
-  const pecasEstrutura = useMemo(() => {
-    const options = estruturaToPecaOptions(estruturaComponentes);
+  const pecasReposicao = useMemo(() => {
+    const options = ferramentasToPecaOptions(pecasCatalogo);
     if (codigoPeca && !options.some((item) => item.codigo === codigoPeca)) {
       options.push({ codigo: codigoPeca, descricao: pecaDescricaoMap[codigoPeca] ?? "" });
       options.sort((first, second) => first.codigo.localeCompare(second.codigo, "pt-BR"));
     }
     return options;
-  }, [estruturaComponentes, codigoPeca, pecaDescricaoMap]);
+  }, [pecasCatalogo, codigoPeca, pecaDescricaoMap]);
 
   const pecasHistorico = useMemo(
     () => reposicoesToPecaOptions(allReposicoesChart, pecaDescricaoMap),
@@ -146,31 +152,73 @@ export function MiniAplicadoresPage({
     );
   }, [allReposicoesChart, motivos]);
 
+  const pecaHistoricoOptions = useMemo(
+    () =>
+      pecasHistorico.map((peca) => ({
+        value: peca.codigo,
+        label: formatPecaLabel(peca),
+      })),
+    [pecasHistorico],
+  );
+
+  const motivoHistoricoOptions = useMemo(
+    () =>
+      motivosHistorico.map((motivo) => ({
+        value: String(motivo.motivo_id),
+        label: motivo.descricao,
+      })),
+    [motivosHistorico],
+  );
+
   const chartReposicoes = useMemo(() => {
     return allReposicoesChart.filter((item) => {
-      if (filtroHistoricoPeca && item.codigo_peca !== filtroHistoricoPeca) return false;
-      if (filtroHistoricoMotivo !== "" && item.motivo_id !== filtroHistoricoMotivo) return false;
+      if (filtroHistoricoPeca.length > 0 && !filtroHistoricoPeca.includes(item.codigo_peca)) {
+        return false;
+      }
+      if (filtroHistoricoMotivo.length > 0 && !filtroHistoricoMotivo.includes(item.motivo_id)) {
+        return false;
+      }
+      if (
+        !matchesReposicaoDateRange(
+          item.data_reposicao,
+          filtroHistoricoDataInicial,
+          filtroHistoricoDataFinal,
+        )
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [allReposicoesChart, filtroHistoricoMotivo, filtroHistoricoPeca]);
+  }, [
+    allReposicoesChart,
+    filtroHistoricoDataFinal,
+    filtroHistoricoDataInicial,
+    filtroHistoricoMotivo,
+    filtroHistoricoPeca,
+  ]);
 
-  const historicoFiltrosAtivos = Boolean(filtroHistoricoPeca || filtroHistoricoMotivo !== "");
+  const historicoFiltrosAtivos = Boolean(
+    filtroHistoricoPeca.length > 0 ||
+      filtroHistoricoMotivo.length > 0 ||
+      filtroHistoricoDataInicial ||
+      filtroHistoricoDataFinal,
+  );
 
   const resetReposicaoForm = useCallback(() => {
     editingReposicaoRef.current = null;
     setEditingReposicaoId(null);
-    setCodigoPeca(pecasEstrutura[0]?.codigo ?? "");
+    setCodigoPeca(pecasReposicao[0]?.codigo ?? "");
     setGolpes(0);
     setMotivoId("");
     setObservacao("");
     setDataReposicao(toDatetimeLocalValue(new Date()));
     setDataUltimaReposicao("");
-  }, [pecasEstrutura]);
+  }, [pecasReposicao]);
 
   const openNovaReposicao = useCallback(() => {
     editingReposicaoRef.current = null;
     setEditingReposicaoId(null);
-    setCodigoPeca(pecasEstrutura[0]?.codigo ?? "");
+    setCodigoPeca(pecasReposicao[0]?.codigo ?? "");
     setGolpes(0);
     setMotivoId("");
     setObservacao("");
@@ -179,7 +227,7 @@ export function MiniAplicadoresPage({
     setSuccess(null);
     setError(null);
     setShowReposicaoForm(true);
-  }, [pecasEstrutura]);
+  }, [pecasReposicao]);
 
   const closeReposicaoForm = useCallback((options?: { scrollToHistorico?: boolean }) => {
     resetReposicaoForm();
@@ -332,8 +380,10 @@ export function MiniAplicadoresPage({
         {
           filial,
           codigo_ferramenta: codigoFerramenta,
-          codigo_peca: filtroHistoricoPeca || undefined,
-          motivo_id: filtroHistoricoMotivo === "" ? undefined : filtroHistoricoMotivo,
+          codigo_peca: filtroHistoricoPeca.length > 0 ? filtroHistoricoPeca : undefined,
+          motivo_id: filtroHistoricoMotivo.length > 0 ? filtroHistoricoMotivo : undefined,
+          data_inicial: filtroHistoricoDataInicial || undefined,
+          data_final: filtroHistoricoDataFinal || undefined,
           page: reposicoesTable.query.page,
           pageSize: reposicoesTable.query.pageSize,
           sortKey: reposicoesTable.query.sortKey,
@@ -358,6 +408,8 @@ export function MiniAplicadoresPage({
     filial,
     filtroHistoricoPeca,
     filtroHistoricoMotivo,
+    filtroHistoricoDataInicial,
+    filtroHistoricoDataFinal,
     getAccessToken,
     reposicoesTable.query,
   ]);
@@ -403,13 +455,13 @@ export function MiniAplicadoresPage({
         fetchPecas(codigoFerramenta, filial, getAccessToken),
       ]);
       const estruturaItems = componentesData.items ?? [];
-      const estruturaOptions = estruturaToPecaOptions(estruturaItems);
+      const pecaItems = ferramentasToPecaOptions(pecasData.items ?? []);
       setMotivos(motivosData.items ?? []);
       setEstruturaComponentes(estruturaItems);
       setPecasCatalogo(pecasData.items ?? []);
       setCodigoPeca((current) => {
-        if (current && estruturaOptions.some((item) => item.codigo === current)) return current;
-        return estruturaOptions[0]?.codigo ?? "";
+        if (current && pecaItems.some((item) => item.codigo === current)) return current;
+        return pecaItems[0]?.codigo ?? "";
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
@@ -429,17 +481,34 @@ export function MiniAplicadoresPage({
   }, [loadComponentesTable, loadDetalheBase, loadReposicoesTable, refreshHistoricoChart]);
 
   const applyHistoricoFilters = useCallback(() => {
+    if (!isValidDateRange(filtroHistoricoDataInicialDraft, filtroHistoricoDataFinalDraft)) {
+      setError("A data inicial não pode ser posterior à data final.");
+      return;
+    }
+    setError(null);
     setFiltroHistoricoPeca(filtroHistoricoPecaDraft);
     setFiltroHistoricoMotivo(filtroHistoricoMotivoDraft);
+    setFiltroHistoricoDataInicial(filtroHistoricoDataInicialDraft);
+    setFiltroHistoricoDataFinal(filtroHistoricoDataFinalDraft);
     reposicoesTable.resetPage();
-  }, [filtroHistoricoMotivoDraft, filtroHistoricoPecaDraft, reposicoesTable.resetPage]);
+  }, [
+    filtroHistoricoDataFinalDraft,
+    filtroHistoricoDataInicialDraft,
+    filtroHistoricoMotivoDraft,
+    filtroHistoricoPecaDraft,
+    reposicoesTable.resetPage,
+  ]);
 
   useEffect(() => {
     if (!codigoFerramenta) return;
-    setFiltroHistoricoPeca("");
-    setFiltroHistoricoMotivo("");
-    setFiltroHistoricoPecaDraft("");
-    setFiltroHistoricoMotivoDraft("");
+    setFiltroHistoricoPeca([]);
+    setFiltroHistoricoMotivo([]);
+    setFiltroHistoricoDataInicial("");
+    setFiltroHistoricoDataFinal("");
+    setFiltroHistoricoPecaDraft([]);
+    setFiltroHistoricoMotivoDraft([]);
+    setFiltroHistoricoDataInicialDraft("");
+    setFiltroHistoricoDataFinalDraft("");
     setEditingReposicaoId(null);
     scrollHistoricoOnCloseRef.current = false;
     setShowReposicaoForm(false);
@@ -496,18 +565,22 @@ export function MiniAplicadoresPage({
   ]);
 
   useEffect(() => {
-    if (filtroHistoricoMotivo === "") return;
-    if (!motivosHistorico.some((item) => item.motivo_id === filtroHistoricoMotivo)) {
-      setFiltroHistoricoMotivo("");
-    }
-  }, [filtroHistoricoMotivo, motivosHistorico]);
+    setFiltroHistoricoMotivo((current) =>
+      current.filter((motivoId) => motivosHistorico.some((item) => item.motivo_id === motivoId)),
+    );
+    setFiltroHistoricoMotivoDraft((current) =>
+      current.filter((motivoId) => motivosHistorico.some((item) => item.motivo_id === motivoId)),
+    );
+  }, [motivosHistorico]);
 
   useEffect(() => {
-    if (!filtroHistoricoPeca) return;
-    if (!pecasHistorico.some((item) => item.codigo === filtroHistoricoPeca)) {
-      setFiltroHistoricoPeca("");
-    }
-  }, [filtroHistoricoPeca, pecasHistorico]);
+    setFiltroHistoricoPeca((current) =>
+      current.filter((codigo) => pecasHistorico.some((item) => item.codigo === codigo)),
+    );
+    setFiltroHistoricoPecaDraft((current) =>
+      current.filter((codigo) => pecasHistorico.some((item) => item.codigo === codigo)),
+    );
+  }, [pecasHistorico]);
 
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -853,10 +926,10 @@ export function MiniAplicadoresPage({
                       }
                     }}
                   >
-                    {pecasEstrutura.length === 0 ? (
-                      <option value="">Nenhum componente da estrutura vinculado ao mini-aplicador</option>
+                    {pecasReposicao.length === 0 ? (
+                      <option value="">Nenhuma peça 3019 amarrada ao mini-aplicador</option>
                     ) : null}
-                    {pecasEstrutura.map((peca) => (
+                    {pecasReposicao.map((peca) => (
                       <option key={peca.codigo} value={peca.codigo}>
                         {formatPecaLabel(peca)}
                       </option>
@@ -866,26 +939,15 @@ export function MiniAplicadoresPage({
 
                 <label className="dm-field dm-field--span-4">
                   <span>Data da reposição</span>
-                  <input
-                    type="datetime-local"
-                    className="dm-datetime-local"
-                    lang="pt-BR"
-                    step="60"
-                    value={dataReposicao}
-                    onChange={(event) => setDataReposicao(event.target.value)}
-                  />
+                  <BrDatetimeInput value={dataReposicao} onChange={setDataReposicao} />
                 </label>
                 <label className="dm-field dm-field--span-4">
                   <span>Data da última reposição</span>
-                  <input
-                    type="datetime-local"
-                    className="dm-datetime-local"
-                    lang="pt-BR"
-                    step="60"
+                  <BrDatetimeInput
                     value={dataUltimaReposicao}
+                    onChange={setDataUltimaReposicao}
                     readOnly={Boolean(editingReposicaoId)}
                     disabled={Boolean(editingReposicaoId)}
-                    onChange={(event) => setDataUltimaReposicao(event.target.value)}
                   />
                 </label>
                 <div
@@ -1004,38 +1066,38 @@ export function MiniAplicadoresPage({
             }
             toolbar={
               <FilterBar embedded>
-                <label className="dm-field dm-field--filter-peca">
-                  <span>Filtrar por peça</span>
-                  <select
-                    className="dm-select-peca"
-                    value={filtroHistoricoPecaDraft}
-                    onChange={(event) => setFiltroHistoricoPecaDraft(event.target.value)}
-                  >
-                    <option value="">Todas</option>
-                    {pecasHistorico.map((peca) => (
-                      <option key={peca.codigo} value={peca.codigo}>
-                        {formatPecaLabel(peca)}
-                      </option>
-                    ))}
-                  </select>
+                <MultiSelectField
+                  label="Filtrar por peça"
+                  className="dm-field--filter-peca"
+                  emptyLabel="Todas"
+                  searchable
+                  options={pecaHistoricoOptions}
+                  selectedValues={filtroHistoricoPecaDraft}
+                  onChange={setFiltroHistoricoPecaDraft}
+                />
+                <MultiSelectField
+                  label="Filtrar por motivo"
+                  className="dm-field--filter-motivo"
+                  emptyLabel="Todos"
+                  options={motivoHistoricoOptions}
+                  selectedValues={filtroHistoricoMotivoDraft.map(String)}
+                  onChange={(values) =>
+                    setFiltroHistoricoMotivoDraft(values.map((value) => Number(value)))
+                  }
+                />
+                <label className="dm-field dm-field--filter-date">
+                  <span>De</span>
+                  <BrDateInput
+                    value={filtroHistoricoDataInicialDraft}
+                    onChange={setFiltroHistoricoDataInicialDraft}
+                  />
                 </label>
-                <label className="dm-field dm-field--filter-motivo">
-                  <span>Filtrar por motivo</span>
-                  <select
-                    value={filtroHistoricoMotivoDraft}
-                    onChange={(event) =>
-                      setFiltroHistoricoMotivoDraft(
-                        event.target.value ? Number(event.target.value) : "",
-                      )
-                    }
-                  >
-                    <option value="">Todos</option>
-                    {motivosHistorico.map((motivo) => (
-                      <option key={motivo.motivo_id} value={motivo.motivo_id}>
-                        {motivo.descricao}
-                      </option>
-                    ))}
-                  </select>
+                <label className="dm-field dm-field--filter-date">
+                  <span>Até</span>
+                  <BrDateInput
+                    value={filtroHistoricoDataFinalDraft}
+                    onChange={setFiltroHistoricoDataFinalDraft}
+                  />
                 </label>
                 <button type="button" className="dm-ghost-btn" onClick={applyHistoricoFilters}>
                   Aplicar filtro
@@ -1069,7 +1131,7 @@ export function MiniAplicadoresPage({
             columns={componentesColumns}
             rows={componentes}
             loading={componentesLoading}
-            emptyMessage="Nenhum componente na estrutura desta ferramenta."
+            emptyMessage="Nenhum componente amarrado a esta ferramenta."
             getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
             serverTable={{
               page: componentesTable.query.page,

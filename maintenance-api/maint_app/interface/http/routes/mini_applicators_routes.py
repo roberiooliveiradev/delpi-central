@@ -17,6 +17,16 @@ router = APIRouter(prefix="/maintenance/mini-aplicadores", tags=["Mini-aplicador
 
 _scope = FilialAccessScopeService()
 _SUBMODULE_ID = "mini-aplicadores"
+_PECA_REPOSICAO_PREFIX = "3019"
+
+
+def _filter_pecas_reposicao(items: list) -> list[dict]:
+    """Peças substituíveis: amarradas à ferramenta (SG1010) com código 3019*."""
+    return [
+        item
+        for item in items
+        if str(item.get("codigo") or "").strip().startswith(_PECA_REPOSICAO_PREFIX)
+    ]
 
 
 def _sort_componentes(items: list, sort_by: str | None, sort_dir: str) -> list:
@@ -103,12 +113,8 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
     try:
         gateway = build_mini_applicators_totvs_gateway()
         data = gateway.listar_pecas(codigo)
-        items = [
-            item
-            for item in (data.get("items") or [])
-            if str(item.get("codigo") or "").strip().startswith("3019")
-        ]
-        return ok({"items": items, "total": len(items)}, message="Peças listadas.")
+        items = _filter_pecas_reposicao(data.get("items") or [])
+        return ok({"items": items, "total": len(items)}, message="Peças de reposição (3019) listadas.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
@@ -134,7 +140,7 @@ def list_componentes(
         data = gateway.listar_componentes(codigo_ferramenta=codigo, filial=filial)
         items = _sort_componentes(data.get("items") or [], query.sort_by, query.sort_dir)
         page_items, total = paginate_slice(items, query)
-        return ok({"items": page_items, "total": total}, message="Componentes listados.")
+        return ok({"items": page_items, "total": total}, message="Componentes amarrados listados.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:

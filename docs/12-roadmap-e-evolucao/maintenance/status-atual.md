@@ -12,7 +12,7 @@
 | API dedicada | `maintenance-api/` | ✅ CRUD operacional + preventiva + catálogo de submódulos + gateways TOTVS |
 | Rotas TOTVS api-delpi | `/engineering/mini-applicators/*` | ✅ ferramentas, peças, golpes, componentes |
 | Docker Compose / gateway | `infra/docker-compose*.yml`, `gateway/nginx*.conf` | ✅ Anti-cache em rotas de API |
-| CI | `scripts/ci-maintenance-api.sh` | ✅ 37 testes |
+| CI | `scripts/ci-maintenance-api.sh` | ✅ 39 testes |
 | Registro Core API | `plugins/maintenance/scripts/register-manifest.sh` | ✅ Script pronto |
 | Import Access | `maintenance-api/scripts/import_access_csv.py` | ✅ CLI CSV + fixtures sample |
 | Bootstrap dev | `maintenance-api/scripts/bootstrap_dev_sample.py` | ✅ Seed local para relatório |
@@ -34,6 +34,13 @@
 | **Componentes / estoque** | Rota TOTVS + painel na ferramenta (estrutura recursiva, locais 01/99) |
 | **UI configuração** | CRUD motivos + status preventivo; feedback (`StateBox`) com espaçamento correto |
 | **Manifesto v0.2.1** | Rotas internas `showInMenu: false`; tile único no portal |
+| **Preventiva por motivo** | Flag `excluir_preventiva` em motivos (migration V005); reposições com esse motivo não entram no cálculo preventivo |
+| **Indicadores da ferramenta** | `FerramentaReposicaoIndicadores` ao lado do gráfico de golpes no histórico |
+| **Filtros histórico** | Multi-select peça e motivo; intervalo **De/Até** (`data_inicial` / `data_final` na API) |
+| **Filtro relatório** | Multi-select de status preventivo (`status` repetido na query) |
+| **Peças vs. componentes** | `/pecas` → só `3019*` (reposição); `/componentes` → árvore completa amarrada (estoque) |
+| **Datas pt-BR (MFE)** | `BrDateInput` / `BrDatetimeInput` — exibição `dd/mm/aaaa` e `dd/mm/aaaa HH:mm` (24h) |
+| **MultiSelectField** | Painel compacto; checkbox à esquerda na mesma linha do rótulo |
 
 ## Fases do roadmap
 

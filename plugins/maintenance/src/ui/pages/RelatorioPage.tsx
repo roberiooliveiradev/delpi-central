@@ -10,6 +10,7 @@ import {
   type DataTableColumn,
   DataTableSection,
   FilterBar,
+  MultiSelectField,
   StateBox,
   StatusBadge,
 } from "../../components/data";
@@ -45,14 +46,14 @@ type RelatorioPageProps = {
 
 type ListReportTab = "alertas" | "ultimas";
 type ReportTab = ListReportTab | "detalhe";
-type StatusFilter = "TODOS" | "CRÍTICO" | "ATENÇÃO" | "OK" | "SEM STATUS";
+type StatusFilterValue = "CRÍTICO" | "ATENÇÃO" | "OK" | "SEM STATUS";
 
 type Selection = {
   codigo_ferramenta: string;
   codigo_peca: string;
 };
 
-const STATUS_FILTERS: StatusFilter[] = ["TODOS", "CRÍTICO", "ATENÇÃO", "OK", "SEM STATUS"];
+const STATUS_OPTIONS: StatusFilterValue[] = ["CRÍTICO", "ATENÇÃO", "OK", "SEM STATUS"];
 
 const EMPTY_RESUMO: PreventivaResumo = {
   critico: 0,
@@ -113,9 +114,20 @@ export function RelatorioPage({
   const [ultimasError, setUltimasError] = useState<string | null>(null);
   const [ferramentaFiltro, setFerramentaFiltro] = useState("");
   const [pecaFiltro, setPecaFiltro] = useState("");
-  const [statusFiltro, setStatusFiltro] = useState<StatusFilter>("TODOS");
+  const [statusFiltro, setStatusFiltro] = useState<StatusFilterValue[]>([]);
   const [appliedFerramentaFiltro, setAppliedFerramentaFiltro] = useState("");
   const [appliedPecaFiltro, setAppliedPecaFiltro] = useState("");
+
+  const statusOptions = useMemo(
+    () => STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
+    [],
+  );
+
+  const toggleStatusFiltro = useCallback((status: StatusFilterValue) => {
+    setStatusFiltro((current) =>
+      current.includes(status) ? current.filter((item) => item !== status) : [...current, status],
+    );
+  }, []);
 
   const loadResumo = useCallback(async () => {
     setResumoLoading(true);
@@ -144,7 +156,7 @@ export function RelatorioPage({
         {
           ferramenta: appliedFerramentaFiltro.trim() || undefined,
           peca: appliedPecaFiltro.trim() || undefined,
-          status: statusFiltro !== "TODOS" ? statusFiltro : undefined,
+          status: statusFiltro.length > 0 ? statusFiltro : undefined,
         },
         getAccessToken,
       );
@@ -222,7 +234,7 @@ export function RelatorioPage({
     setAppliedPecaFiltro("");
     setFerramentaFiltro("");
     setPecaFiltro("");
-    setStatusFiltro("TODOS");
+    setStatusFiltro([]);
   }, [filial, alertasTable.resetPage, ultimasTable.resetPage]);
 
   const loadDetail = useCallback(
@@ -287,7 +299,7 @@ export function RelatorioPage({
   const clearFilters = () => {
     setFerramentaFiltro("");
     setPecaFiltro("");
-    setStatusFiltro("TODOS");
+    setStatusFiltro([]);
     setAppliedFerramentaFiltro("");
     setAppliedPecaFiltro("");
     alertasTable.resetPage();
@@ -477,8 +489,8 @@ export function RelatorioPage({
       <section className="dm-kpi-grid dm-kpi-grid--report">
         <button
           type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro === "CRÍTICO" ? " is-active" : ""}`}
-          onClick={() => setStatusFiltro((current) => (current === "CRÍTICO" ? "TODOS" : "CRÍTICO"))}
+          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
+          onClick={() => toggleStatusFiltro("CRÍTICO")}
         >
           <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
             <AlertTriangle size={20} />
@@ -490,8 +502,8 @@ export function RelatorioPage({
         </button>
         <button
           type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro === "ATENÇÃO" ? " is-active" : ""}`}
-          onClick={() => setStatusFiltro((current) => (current === "ATENÇÃO" ? "TODOS" : "ATENÇÃO"))}
+          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
+          onClick={() => toggleStatusFiltro("ATENÇÃO")}
         >
           <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
             <AlertTriangle size={20} />
@@ -503,8 +515,8 @@ export function RelatorioPage({
         </button>
         <button
           type="button"
-          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro === "OK" ? " is-active" : ""}`}
-          onClick={() => setStatusFiltro((current) => (current === "OK" ? "TODOS" : "OK"))}
+          className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("OK") ? " is-active" : ""}`}
+          onClick={() => toggleStatusFiltro("OK")}
         >
           <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
             <AlertTriangle size={20} />
@@ -543,19 +555,13 @@ export function RelatorioPage({
             placeholder="Código ou descrição…"
           />
         </label>
-        <label className="dm-field">
-          <span>Status</span>
-          <select
-            value={statusFiltro}
-            onChange={(event) => setStatusFiltro(event.target.value as StatusFilter)}
-          >
-            {STATUS_FILTERS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MultiSelectField
+          label="Status"
+          emptyLabel="Todos"
+          options={statusOptions}
+          selectedValues={statusFiltro}
+          onChange={(values) => setStatusFiltro(values as StatusFilterValue[])}
+        />
         <button type="button" className="dm-ghost-btn" onClick={clearFilters}>
           <X size={16} />
           Limpar

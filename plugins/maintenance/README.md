@@ -41,8 +41,13 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 | `DataTable` | `src/components/data/DataTable.tsx` | Cabeçalhos ordenáveis (↕ / ↑ / ↓) |
 | `Pagination` | `src/components/data/Pagination.tsx` | Anterior · Página **N** de M · Próxima |
 | `useServerTable` | `src/hooks/useServerTable.ts` | Estado de `page`, `page_size`, `sort_by`, `sort_dir` para API |
-| `appendListQuery` | `src/utils/listQuery.ts` | Monta query string de listagem paginada |
+| `appendListQuery` | `src/utils/listQuery.ts` | Monta query string de listagem paginada (suporta arrays repetidos) |
+| `MultiSelectField` | `src/components/data/MultiSelectField.tsx` | Filtro multi-valor (peça, motivo, status) |
+| `BrDateInput` | `src/components/data/BrDateInput.tsx` | Data em pt-BR (`dd/mm/aaaa`); valor interno `YYYY-MM-DD` |
+| `BrDatetimeInput` | `src/components/data/BrDatetimeInput.tsx` | Data/hora em pt-BR (`dd/mm/aaaa HH:mm`, 24h); valor interno `YYYY-MM-DDTHH:mm` |
+| `datetimeLocal` | `src/utils/datetimeLocal.ts` | Conversão exibição pt-BR ↔ ISO para API |
 | `ReposicoesGolpesChart` | `src/components/ReposicoesGolpesChart.tsx` | Gráfico de linha (golpes por reposição) no detalhe da ferramenta |
+| `FerramentaReposicaoIndicadores` | `src/components/FerramentaReposicaoIndicadores.tsx` | KPIs de reposição ao lado do gráfico |
 | `PreventivaDetailPanel` | `src/components/PreventivaDetailPanel.tsx` | Detalhe preventivo + gráficos Recharts |
 | `pecaOptions` | `src/utils/pecaOptions.ts` | Rótulos de peça; prefixo canônico `3019` |
 
@@ -52,7 +57,18 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 - Formulário **colapsável** — botão **Nova reposição** no cabeçalho do histórico; edição de linha abre o formulário.
 - Select de peça via `GET .../ferramentas/{codigo}/pecas` — API retorna só códigos **`3019*`** (grupo TOTVS de peças substituíveis).
-- Gráfico **Golpes por reposição** acima do histórico quando existir ao menos um cadastro.
+- Tabela **Componentes e estoque** usa `GET .../componentes` — todos os itens amarrados à ferramenta (sem filtro 3019).
+- Gráfico **Golpes por reposição** + indicadores (`FerramentaReposicaoIndicadores`) acima do histórico quando existir ao menos um cadastro.
+- Datas do formulário em **pt-BR** (`BrDatetimeInput`); envio à API em ISO.
+
+**Filtros (histórico e relatório):**
+
+| Tela | Filtro | API |
+|------|--------|-----|
+| Histórico reposições | Peça, motivo (multi), De/Até | `codigo_peca`, `motivo_id`, `data_inicial`, `data_final` |
+| Relatório preventivo | Status (multi) | `status` (repetido na query) |
+
+**Datas pt-BR:** todos os campos de data/hora usam `BrDateInput` / `BrDatetimeInput` — exibição `dd/mm/aaaa` e `dd/mm/aaaa HH:mm` (24h); estado interno e query params permanecem em ISO (`YYYY-MM-DD` / `YYYY-MM-DDTHH:mm`).
 
 **Erros HTTP:** `maintenanceApiBase.ts` propaga `message` ou `detail` do envelope FastAPI (ex.: 401/403 legíveis), em vez de «Falha na requisição» genérico.
 

@@ -65,19 +65,30 @@ class PreventivaService:
         ferramenta: str | None = None,
         peca: str | None = None,
         status: str | None = None,
+        statuses: list[str] | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
         query = query or ListQuery(page=1, page_size=20, sort_by="percentual", sort_dir="desc")
         rules = self._status_repo.list_active(filial=filial)
-        status_filter = (status or "TODOS").strip().upper()
+        status_values = statuses if statuses is not None else ([status] if status else [])
+        normalized_statuses = [
+            str(item).strip().upper()
+            for item in status_values
+            if str(item).strip() and str(item).strip().upper() not in {"", "TODOS"}
+        ]
         sql_sort_keys = frozenset({"data", "ferramenta", "peca", "golpes"})
         sort_key = (query.sort_by or "percentual").strip().lower()
-        use_memory_path = status_filter not in {"", "TODOS"} or sort_key not in sql_sort_keys
+        use_memory_path = len(normalized_statuses) > 0 or sort_key not in sql_sort_keys
 
         if use_memory_path:
             rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
             alertas = self._build_alertas(rows, filial=filial, rules=rules)
             alertas = self._enriquecer_descricoes(alertas, filial=filial)
-            alertas = self._filter_alertas(alertas, ferramenta=ferramenta, peca=peca, status=status_filter)
+            alertas = self._filter_alertas(
+                alertas,
+                ferramenta=ferramenta,
+                peca=peca,
+                statuses=normalized_statuses,
+            )
             alertas = self._sort_alertas(alertas, query.sort_by, query.sort_dir)
             return paginate_slice(alertas, query)
 
@@ -89,7 +100,7 @@ class PreventivaService:
         )
         alertas = self._build_alertas(rows, filial=filial, rules=rules)
         alertas = self._enriquecer_descricoes(alertas, filial=filial)
-        alertas = self._filter_alertas(alertas, ferramenta=ferramenta, peca=peca, status=None)
+        alertas = self._filter_alertas(alertas, ferramenta=ferramenta, peca=peca, statuses=[])
         return alertas, total
 
     def listar_historico(
@@ -229,7 +240,7 @@ class PreventivaService:
         *,
         ferramenta: str | None,
         peca: str | None,
-        status: str | None,
+        statuses: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         result = alertas
         if ferramenta:
@@ -252,8 +263,9 @@ class PreventivaService:
                     str(item.get("descricao_peca") or ""),
                 )
             ]
-        if status and status not in {"", "TODOS"}:
-            result = [item for item in result if str(item.get("status")) == status]
+        if statuses:
+            allowed = set(statuses)
+            result = [item for item in result if str(item.get("status")) in allowed]
         return result
 
     def _filter_ultimas(

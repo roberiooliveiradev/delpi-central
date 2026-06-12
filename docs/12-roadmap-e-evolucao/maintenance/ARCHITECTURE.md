@@ -1,6 +1,6 @@
 # Arquitetura — Manutenção
 
-**Última atualização:** jun/2026 (Fase 0 — documentação)
+**Última atualização:** jun/2026 (Fase 2 — UX filtros e datas pt-BR)
 
 ## Diagrama de contexto
 
@@ -80,9 +80,13 @@ O WinForms legado usa `UI/Controllers` finos. No MFE, o equivalente são **hooks
 | `DataTableSection` | Seção com título, toolbar, tabela, paginação e ordenação |
 | `DataTable` | Renderização tabular; cabeçalhos ordenáveis |
 | `Pagination` | Navegação Anterior / Página N de M / Próxima |
+| `MultiSelectField` | Filtro multi-valor (peça, motivo, status) com painel compacto |
+| `BrDateInput` / `BrDatetimeInput` | Entrada de data/hora em pt-BR (`dd/mm/aaaa`, 24h); valor interno ISO |
+| `FilterBar` | Barra de filtros com ações Limpar / Buscar |
 | `useServerTable` | Estado de paginação/ordenação sincronizado com query params da API |
-| `listQuery.appendListQuery` | Montagem de query string (`page`, `page_size`, `sort_by`, `sort_dir`) |
+| `listQuery.appendListQuery` | Montagem de query string (`page`, `page_size`, `sort_by`, `sort_dir`, arrays) |
 | `ReposicoesGolpesChart` | Gráfico de golpes por reposição no detalhe da ferramenta |
+| `FerramentaReposicaoIndicadores` | KPIs ao lado do gráfico (média, última troca, etc.) |
 | `PreventivaDetailPanel` | Detalhe preventivo + gráficos Recharts |
 | `StateBox` | Feedback inline (sucesso/erro) com `--dm-section-gap` abaixo |
 

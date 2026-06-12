@@ -108,7 +108,21 @@ Todas as telas de tabela usam o módulo canônico `DataTableSection` (`plugins/m
 
 **Select de peça (reposição):** somente códigos **`3019*`** — filtro na api-delpi (`B1_GRUPO = 3019`) e reforço em `GET /ferramentas/{codigo}/pecas` na API dedicada.
 
-**Histórico de reposições:** gráfico de linha «Golpes por reposição» (`ReposicoesGolpesChart`) acima da tabela quando `total > 0`.
+**Componentes e estoque:** tabela usa `GET /ferramentas/{codigo}/componentes` — árvore completa amarrada; **não** reutilizar rota `/pecas`.
+
+**Filtros do histórico de reposições:**
+
+| Filtro UI | Query API | Observação |
+|-----------|-----------|------------|
+| Peça | `codigo_peca` (repetido) | Multi-select |
+| Motivo | `motivo_id` (repetido) | Multi-select |
+| De / Até | `data_inicial`, `data_final` | `YYYY-MM-DD`; fim do dia inclusivo no backend |
+
+**Filtro do relatório preventivo:** status multi via `status` repetido na query.
+
+**Datas na UI:** exibição pt-BR (`dd/mm/aaaa`, `dd/mm/aaaa HH:mm` 24h) via `BrDateInput` / `BrDatetimeInput`; conversão em `datetimeLocal.ts`.
+
+**Histórico de reposições:** gráfico de linha «Golpes por reposição» (`ReposicoesGolpesChart`) + indicadores (`FerramentaReposicaoIndicadores`) acima da tabela quando `total > 0`.
 
 ### 5.2 Gráficos (detalhe preventivo)
 

@@ -7,6 +7,23 @@ from maint_app.infrastructure.persistence.plugins.plugin_base_repository import 
 from maint_app.application.list_query import ListQuery, build_order_clause
 
 
+def _coerce_reposicao_date_bound(value: str | None, *, end_of_day: bool = False) -> datetime | None:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    if "T" in raw:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            parsed = parsed.replace(tzinfo=None)
+        return parsed
+    parsed = datetime.strptime(raw[:10], "%Y-%m-%d")
+    if end_of_day:
+        return parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return parsed.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
 class MotivoRepository(PluginBaseRepository):
     _SORT_COLUMNS = {
         "id": "motivo_id",
@@ -259,7 +276,7 @@ class ReposicaoRepository(PluginBaseRepository):
         rows, _total = self.list_by_ferramenta_paged(
             filial=filial,
             codigo_ferramenta=codigo_ferramenta,
-            codigo_peca=codigo_peca,
+            codigo_peca=[codigo_peca] if codigo_peca else None,
             query=ListQuery(page=1, page_size=10_000, sort_by="data", sort_dir="desc"),
         )
         return rows
@@ -302,8 +319,10 @@ class ReposicaoRepository(PluginBaseRepository):
         *,
         filial: str,
         codigo_ferramenta: str,
-        codigo_peca: str | None,
-        motivo_id: int | None = None,
+        codigo_peca: list[str] | None = None,
+        motivo_ids: list[int] | None = None,
+        data_inicial: str | None = None,
+        data_final: str | None = None,
         query: ListQuery,
     ) -> tuple[list[dict[str, Any]], int]:
         where = [
@@ -313,11 +332,21 @@ class ReposicaoRepository(PluginBaseRepository):
         ]
         params: list[Any] = [filial, codigo_ferramenta]
         if codigo_peca:
-            where.append("r.codigo_peca = %s")
+            where.append("r.codigo_peca = ANY(%s)")
             params.append(codigo_peca)
-        if motivo_id is not None:
-            where.append("r.motivo_id = %s")
-            params.append(motivo_id)
+        if motivo_ids:
+            where.append("r.motivo_id = ANY(%s)")
+            params.append(motivo_ids)
+
+        start = _coerce_reposicao_date_bound(data_inicial)
+        if start is not None:
+            where.append("r.data_reposicao >= %s")
+            params.append(start)
+
+        end = _coerce_reposicao_date_bound(data_final, end_of_day=True)
+        if end is not None:
+            where.append("r.data_reposicao <= %s")
+            params.append(end)
 
         where_sql = " AND ".join(where)
         order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "data")
