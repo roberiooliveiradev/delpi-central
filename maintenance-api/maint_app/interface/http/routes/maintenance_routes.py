@@ -43,7 +43,10 @@ def module_health():
 
 
 @router.get("/options")
-def get_options(request: Request):
+def get_options(
+    request: Request,
+    filial: str | None = Query(default=None, description="Filtra submódulos da filial informada."),
+):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
@@ -57,7 +60,7 @@ def get_options(request: Request):
         [{"id": item["id"], "label": item["label"]} for item in filiais],
         scope,
     )
-    submodules = filter_submodules_for_user(user)
+    submodules = filter_submodules_for_user(user, filial=filial, scope=scope)
     default_filial = _scope.resolve_default_filial(scope, filiais)
     return ok(
         {

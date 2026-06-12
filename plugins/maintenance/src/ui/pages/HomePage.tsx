@@ -129,8 +129,7 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
 
       {!optionsError && !filialLoading && submodules.length === 0 ? (
         <StateBox>
-          Nenhum submódulo disponível. Solicite permissões como{" "}
-          <code>maintenance.mini-applicators.view</code> e escopo de filial{" "}
+          Nenhum submódulo disponível para esta filial. Solicite permissões de submódulo e escopo{" "}
           <code>maintenance.view.filial-XX</code> na Core API.
         </StateBox>
       ) : null}

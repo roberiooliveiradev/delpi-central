@@ -52,9 +52,9 @@
       "module": "maintenance"
     },
     {
-      "code": "maintenance.manutencao-geral.view",
-      "name": "Manutenção geral",
-      "description": "Acesso ao formulário de registro de máquinas, equipamentos e lâmpadas.",
+      "code": "maintenance.manutencao-geral.view.filial-01",
+      "name": "Manutenção geral — Filial 01",
+      "description": "Formulário de registro de máquinas, equipamentos e lâmpadas (somente filial 01).",
       "module": "maintenance"
     }
   ],
@@ -96,11 +96,11 @@
       "showInMenu": false
     },
     {
-      "path": "/apps/maintenance/manutencao-geral",
+      "path": "/apps/maintenance/filial-01/manutencao-geral",
       "label": "Manutenção geral",
-      "permission": "maintenance.manutencao-geral.view",
+      "permission": "maintenance.manutencao-geral.view.filial-01",
       "icon": "clipboard-list",
-      "entry": null,
+      "entry": "https://script.google.com/macros/s/AKfycbx6CUMD9iqEnGatab85sHBx2drIxOKmOy5nFaRkUKsVXQa-8GNF0sl1Bm8lbFKBIToN/exec",
       "order": 18,
       "showInMenu": false
     },

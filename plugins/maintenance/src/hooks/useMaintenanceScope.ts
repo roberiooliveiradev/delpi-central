@@ -1,13 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MAINTENANCE_ROUTES } from "../constants/routes";
-import { fetchMaintenanceOptions, type MaintenanceOptions } from "../data/api/maintenanceApi";
+import { fetchMaintenanceOptions, type MaintenanceOptions, type MaintenanceSubmodule } from "../data/api/maintenanceApi";
 import {
   getStoredFilial,
   resolveActiveFilial,
   setStoredFilial,
 } from "../utils/maintenanceFilialSelection";
 import { resolveMaintenanceHomePath } from "../utils/routeParser";
+
+function filterSubmodulesForFilial(
+  submodules: MaintenanceSubmodule[],
+  filialId: string | undefined,
+): MaintenanceSubmodule[] {
+  if (!filialId) {
+    return submodules;
+  }
+  return submodules.filter(
+    (item) => !item.filiais?.length || item.filiais.includes(filialId),
+  );
+}
 
 export function useMaintenanceOptions(getAccessToken?: () => string | undefined) {
   const [options, setOptions] = useState<MaintenanceOptions | null>(null);
@@ -84,16 +96,21 @@ export function useMaintenanceActiveFilial(
     setActiveFilialState(filialId);
   };
 
+  const allSubmodules = options?.submodules ?? options?.modulos ?? [];
+  const submodules = useMemo(
+    () => filterSubmodulesForFilial(allSubmodules, activeFilial),
+    [activeFilial, allSubmodules],
+  );
+
   return {
     filiais,
     activeFilial,
     setActiveFilial,
     loading,
     error,
-    submodules: options?.submodules ?? options?.modulos ?? [],
+    submodules,
     canManageMiniApplicators:
-      (options?.submodules ?? options?.modulos ?? []).find((item) => item.id === "mini-aplicadores")
-        ?.can_manage ?? false,
+      allSubmodules.find((item) => item.id === "mini-aplicadores")?.can_manage ?? false,
   };
 }
 

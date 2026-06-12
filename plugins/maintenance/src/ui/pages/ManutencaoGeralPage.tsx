@@ -3,11 +3,8 @@ import { ClipboardList, ExternalLink } from "lucide-react";
 import { StateBox } from "../../components/data";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
-import {
-  MANUTENCAO_GERAL_FORM_URL,
-  manutencaoGeralFormEmbedUrl,
-} from "../../constants/manutencaoGeralForm";
-import { useMaintenanceActiveFilial, useMaintenanceModuleHomePath } from "../../hooks/useMaintenanceScope";
+import { MANUTENCAO_GERAL_FORM_URL } from "../../constants/manutencaoGeralForm";
+import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 
 type ManutencaoGeralPageProps = {
   getAccessToken?: () => string | undefined;
@@ -22,8 +19,8 @@ export function ManutencaoGeralPage({
   filialScope,
   onNavigate,
 }: ManutencaoGeralPageProps) {
-  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope);
-  const { submodules } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { submodules, activeFilial } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const effectiveFilial = filialScope ?? activeFilial ?? "01";
   const canAccess = submodules.some((item) => item.id === "manutencao-geral");
 
   if (!canAccess) {
@@ -34,11 +31,12 @@ export function ManutencaoGeralPage({
           subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
           icon={ClipboardList}
           currentPath={pathname}
-          filialScope={filialScope}
+          filialScope={filialScope ?? effectiveFilial}
           onNavigate={onNavigate}
         />
         <StateBox variant="error">
-          Acesso restrito. Solicite a permissão <code>maintenance.manutencao-geral.view</code>.
+          Acesso restrito para a filial {effectiveFilial}. Solicite{" "}
+          <code>maintenance.manutencao-geral.view.filial-01</code>.
         </StateBox>
       </MaintenanceShell>
     );
@@ -53,7 +51,19 @@ export function ManutencaoGeralPage({
         currentPath={pathname}
         filialScope={filialScope}
         onNavigate={onNavigate}
-        actions={
+      />
+
+      <section className="dm-card dm-external-form-card">
+        <div className="dm-external-form-card__icon" aria-hidden="true">
+          <ClipboardList size={40} strokeWidth={1.5} />
+        </div>
+        <h2 className="dm-external-form-card__title">Formulário Google Sheets</h2>
+        <p className="dm-external-form-card__text">
+          O Google Apps Script não permite exibir este formulário dentro do portal (
+          <code>X-Frame-Options: sameorigin</code>). Abra em uma nova aba para registrar a
+          ocorrência.
+        </p>
+        <div className="dm-external-form-card__actions">
           <a
             className="dm-primary-btn"
             href={MANUTENCAO_GERAL_FORM_URL}
@@ -61,27 +71,12 @@ export function ManutencaoGeralPage({
             rel="noopener noreferrer"
           >
             <ExternalLink size={16} />
-            Abrir em nova aba
+            Abrir formulário
           </a>
-        }
-      />
-
-      <section className="dm-card dm-embedded-form-card">
-        <p className="dm-embedded-form-card__hint">
-          Se o formulário não carregar abaixo, use <strong>Abrir em nova aba</strong> ou volte ao{" "}
-          <button type="button" className="dm-inline-link" onClick={() => onNavigate(moduleHomePath)}>
-            início do módulo
-          </button>
-          .
+        </div>
+        <p className="dm-external-form-card__hint">
+          Os registros continuam sendo salvos na planilha configurada no Apps Script.
         </p>
-        <iframe
-          className="dm-embedded-form"
-          title="Formulário — Manutenção geral"
-          src={manutencaoGeralFormEmbedUrl()}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          allow="forms *; clipboard-write"
-        />
       </section>
     </MaintenanceShell>
   );

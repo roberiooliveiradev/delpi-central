@@ -9,7 +9,8 @@ MAINTENANCE_VIEW = "maintenance.view"
 MINI_APPLICATORS_VIEW = "maintenance.mini-applicators.view"
 MINI_APPLICATORS_MANAGE = "maintenance.mini-applicators.manage"
 
-MANUTENCAO_GERAL_VIEW = "maintenance.manutencao-geral.view"
+MANUTENCAO_GERAL_VIEW_PREFIX = "maintenance.manutencao-geral.view"
+MANUTENCAO_GERAL_VIEW_FILIAL_01 = f"{MANUTENCAO_GERAL_VIEW_PREFIX}.filial-01"
 
 VIEW_FILIAL_PREFIX = "maintenance.view.filial-"
 MANAGE_FILIAL_PREFIX = "maintenance.manage.filial-"
@@ -56,8 +57,13 @@ def codigos_from_filial_permissions(
 
 SUBMODULE_VIEW_PERMISSIONS: dict[str, str] = {
     "mini-aplicadores": MINI_APPLICATORS_VIEW,
-    "manutencao-geral": MANUTENCAO_GERAL_VIEW,
+    "manutencao-geral": MANUTENCAO_GERAL_VIEW_PREFIX,
 }
+
+
+def submodule_view_permission(submodule_id: str, codigo_filial: str) -> str:
+    base = SUBMODULE_VIEW_PERMISSIONS[submodule_id]
+    return f"{base}.filial-{codigo_filial}"
 
 SUBMODULE_MANAGE_PERMISSIONS: dict[str, str] = {
     "mini-aplicadores": MINI_APPLICATORS_MANAGE,

@@ -2,7 +2,9 @@ export const MAINTENANCE_ROUTES = {
   home: "/apps/maintenance",
   filialHome: (filial: string) => `/apps/maintenance/filial-${filial}`,
   filiais: "/apps/maintenance/filiais",
-  manutencaoGeral: "/apps/maintenance/manutencao-geral",
+  manutencaoGeral: (filial = "01") => `/apps/maintenance/filial-${filial}/manutencao-geral`,
+  /** @deprecated Caminho legado — mantido para bookmarks antigos. */
+  manutencaoGeralLegacy: "/apps/maintenance/manutencao-geral",
   miniAplicadores: "/apps/maintenance/mini-aplicadores",
   miniAplicadoresRelatorio: "/apps/maintenance/mini-aplicadores/relatorio",
   miniAplicadoresConfiguracao: "/apps/maintenance/mini-aplicadores/configuracao",

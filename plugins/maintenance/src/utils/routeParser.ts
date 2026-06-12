@@ -38,12 +38,19 @@ export function parseMaintenancePath(pathname: string): ParsedMaintenanceRoute {
     return { view: "home", filialScope: filialHomeMatch[1] };
   }
 
+  const filialManutencaoMatch = path.match(
+    /^\/apps\/maintenance\/filial-([0-9]{2})\/manutencao-geral$/,
+  );
+  if (filialManutencaoMatch) {
+    return { view: "manutencao-geral", filialScope: filialManutencaoMatch[1] };
+  }
+
   if (path === MAINTENANCE_ROUTES.filiais) {
     return { view: "filiais" };
   }
 
-  if (path === MAINTENANCE_ROUTES.manutencaoGeral) {
-    return { view: "manutencao-geral" };
+  if (path === MAINTENANCE_ROUTES.manutencaoGeralLegacy) {
+    return { view: "manutencao-geral", filialScope: "01" };
   }
 
   if (path === MAINTENANCE_ROUTES.miniAplicadoresRelatorio || path === LEGACY_RELATORIO_ROUTE) {

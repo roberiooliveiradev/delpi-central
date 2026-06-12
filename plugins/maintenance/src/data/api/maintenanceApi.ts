@@ -22,6 +22,7 @@ export type MaintenanceSubmodule = {
   icon: string;
   entry_path: string;
   can_manage?: boolean;
+  filiais?: string[] | null;
 };
 
 export type MaintenanceOptions = {
@@ -36,8 +37,12 @@ export type MaintenanceOptions = {
   };
 };
 
-export function fetchMaintenanceOptions(getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<MaintenanceOptions>("/options", { getAccessToken });
+export function fetchMaintenanceOptions(
+  getAccessToken?: () => string | undefined,
+  filial?: string,
+) {
+  const search = filial ? `?filial=${encodeURIComponent(filial)}` : "";
+  return maintenanceFetch<MaintenanceOptions>(`/options${search}`, { getAccessToken });
 }
 
 export function fetchFerramentas(
