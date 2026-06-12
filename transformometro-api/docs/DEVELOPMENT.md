@@ -16,7 +16,7 @@ curl -s http://localhost/apps/transformometro-api/transformometro/health
 
 ## Migrations
 
-Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose dev), as migrations V001–V006 são aplicadas no boot.
+Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose dev), as migrations V001–V014 são aplicadas no boot (Playbook 18: V011–V014).
 
 Manual:
 
@@ -38,7 +38,7 @@ set -a && source ../infra/.env && set +a
 python scripts/import_cadastro_json.py export -o fixtures/cadastro/transformometro-cadastro.json
 ```
 
-Detalhes: [fixtures/cadastro/README.md](../fixtures/cadastro/README.md) · [docs/json-backup.md](../docs/json-backup.md).
+Detalhes: [fixtures/cadastro/README.md](../fixtures/cadastro/README.md) · [docs/json-backup.md](json-backup.md) · [docs/playbook-18-implementation-status.md](playbook-18-implementation-status.md).
 
 ## MFE
 

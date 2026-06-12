@@ -458,4 +458,13 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 
 O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para **processo-mestre + instâncias operacionais** `(filial × departamento)`, cada uma com **timeline própria de revisões**. Filiais e setores passam a ser entidades com **PK UUID** e **`codigo_*` de negócio**; recursos compartilhados ganham **escopo híbrido**; o dashboard passa a ter **visões consolidado / filial / departamento** com cálculo coerente no live, cache, export e integrações.
 
-**Próximo passo:** Sprint **S1** (tabela `filiais` UUID + seed) em sequência com **S2** (migração setores UUID) — ou spike de backfill + fixtures I1/I13 em branch de feature.
+**Próximo passo:** Sprint **S4** (V015 — processo mestre sem `filial_id`/`setor_id` na tabela `processos`) · status: [`transformometro-api/docs/playbook-18-implementation-status.md`](../../../transformometro-api/docs/playbook-18-implementation-status.md).
+
+### Progresso API (jun/2026)
+
+| Sprint | Status |
+|--------|--------|
+| S1 Filiais UUID | ✅ V011, CRUD, options, bootstrap JSON |
+| S2 Setores UUID | ✅ V012, `codigo_setor`, backup 1.1 |
+| S3 Instâncias | ✅ V013–V014, rotas instância, `revisoes.instancia_id` |
+| S4 Processo mestre | 🔲 V015 |

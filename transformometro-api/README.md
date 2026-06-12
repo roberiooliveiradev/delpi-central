@@ -22,7 +22,7 @@ python -m uvicorn tm_app.main:app --reload --port 8010
 
 ## Migrations
 
-Ver [migrations/README.md](migrations/README.md) (V001–V005).
+Ver [migrations/README.md](migrations/README.md) (V001–V014, Playbook 18 S1–S3).
 
 ```bash
 PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...
@@ -42,6 +42,8 @@ make test
 
 | Grupo | Exemplos |
 |-------|----------|
+| Filiais / setores | `/filiais`, `/setores`, `GET /options` (UUID + `codigo_*`) |
+| Instâncias | `GET/POST /processos/{id}/instancias`, `GET /instancias/{id}` |
 | Processos / revisões | `/processos`, `POST /processos/{id}/duplicar`, `/revisoes`, `POST /revisoes/{id}/ativar` |
 | Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
 | Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências), **`GET /dashboard/snapshot/*`** (leitura do cache) |
@@ -64,6 +66,7 @@ Detalhes: [`docs/integration-contracts.md`](docs/integration-contracts.md) · co
 
 ## Documentação
 
+- [docs/playbook-18-implementation-status.md](docs/playbook-18-implementation-status.md) — progresso Playbook 18 (S1–S3)
 - [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md)
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
