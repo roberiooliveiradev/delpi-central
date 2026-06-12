@@ -5,7 +5,7 @@ Este documento orienta a **seleção automática de rotas** quando um agente do 
 **Versão expandida para RAG (recomendada na base de conhecimento):**  
 [`minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md)
 
-**Última revisão:** jun/2026 (playbooks fabril: estrutura/exclusividade, produção, expedição, status fabril).
+**Última revisão:** jun/2026 (playbooks fabril + Playbook 15 operacional sem SQL).
 
 **Roadmap — padronizar JSON para IA:** [`playbook-10-contrato-respostas-api-delpi.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md) (índice api-delpi: [`docs/roadmaps/playbook-contrato-respostas-ia.md`](../roadmaps/playbook-contrato-respostas-ia.md)).
 
@@ -98,15 +98,41 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 
 ---
 
-## Vendas, comercial, financeiro, produção, RH
+## Vendas, comercial, financeiro, produção (KPI), RH
 
 | Domínio | Exemplos de rota |
 |---|---|
 | Ordens de venda (lista) | `GET /sales/` — não confundir com `/products/{code}/sales` |
 | KPI comercial | `/commercial/closing-rate`, `/commercial/rol/series`, metas ROL, OTD, novos clientes/negócios |
 | Financeiro | `GET /financial/rol`, `/financial/ebitda_pct`, `/financial/pmr`, `/financial/fixed_cost_pct` (também legado `/finacial/*`) |
-| Produção | `/production/on_time_delivery_pct`, OEE, custos, `depreciation_pct` |
+| Produção (KPI) | `/production/on_time_delivery_pct`, OEE, custos, `depreciation_pct` |
 | RH | `/hr/branches`, `/hr/snapshot`, PDIs, avaliações |
+
+---
+
+## Produção operacional — Playbook 15 (`/production`, `/purchases`)
+
+Preferir estas rotas REST em vez de `POST /data/sql` quando o agente tiver a action habilitada. Doc completa: [13-producao-operacional.md](./13-producao-operacional.md).
+
+| O usuário quer… | Rota | `operationId` |
+|---|---|---|
+| Itens mais consumidos | `GET /production/consumption/top-items` | `get_production_consumption_top_items` |
+| Consumo por centro de trabalho | `GET /production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` |
+| Consumo validado (apontamento) | `GET /production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` |
+| Consumo real de um item | `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` |
+| Refugos/scrap ranking MP | `GET /production/losses/top-materials` | `get_production_losses_top_materials` |
+| Detalhe de refugos | `GET /production/losses/records` | `get_production_losses_records` |
+| Programados para produzir hoje | `GET /production/schedule/today` | `get_production_schedule_today` |
+| OPs em aberto na data | `GET /production/orders/open` | `get_production_orders_open` |
+| OPs finalizadas na data | `GET /production/orders/finished` | `get_production_orders_finished` |
+| OPs finalizadas sem baixa MP | `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` |
+| Resumo OPs por CT | `GET /production/work-centers/order-summary` | `get_production_work_center_order_summary` |
+| Tempo médio planejado por CT | `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` |
+| Componentes sem empenho | `GET /production/allocation-gaps` | `get_production_allocation_gaps` |
+| Planejado × real por OP | `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` |
+| Produtos mais comprados (ranking) | `GET /purchases/top-products` | `get_purchases_top_products` |
+
+**Não confundir:** `/purchases/top-products` (ranking global) ≠ `/products/{code}/purchases` (histórico de um item). Consumo de produção ≠ estoque do item (`/products/{code}/stock`).
 
 ---
 

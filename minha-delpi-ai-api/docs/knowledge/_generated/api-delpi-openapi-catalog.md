@@ -2,7 +2,11 @@
 
 **Provider:** `api-delpi` · **Rotas:** 83 · **Gerado em:** 2026-05-29 16:45 UTC
 
-> Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
+> **⚠ Snapshot desatualizado (pré-Playbook 15).** Não inclui rotas operacionais `/production/consumption/*`, `/production/losses/*`, `/purchases/top-products`, etc.  
+> **Regenerar:** `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (container `minha-delpi-ai-api`) após deploy api-delpi.  
+> **Referência canônica até regeneração:** [`api-delpi-rotas-agente.md`](../api-delpi-rotas-agente.md) § Playbook 15 e [`13-producao-operacional.md`](../../../../api-delpi/docs/api/13-producao-operacional.md).
+
+> Corpo abaixo: não editar manualmente — regenerado por `scripts/sync_api_delpi_openapi.py`.
 
 ## Comercial (9)
 
@@ -146,3 +150,34 @@
 | `GET` | `/system/tables/{tableName}/indexes` | `table_indexes_system_tables__tableName__indexes_get` | Consulta índices (SIX010) |
 | `GET` | `/system/tables/{tableName}/relations` | `table_relations_system_tables__tableName__relations_get` | Consulta relacionamentos (SX9010) |
 | `GET` | `/system/tables/{tableName}/schema` | `table_schema_system_tables__tableName__schema_get` | Schema completo da tabela (SX2, SX3, SIX, SX9) |
+
+---
+
+## Apêndice manual — Playbook 15 (jun/2026, pós-deploy)
+
+Rotas implementadas no código mas **ausentes** no snapshot de 29/05/2026 acima. Remover este apêndice após regenerar o catálogo.
+
+### Produção operacional (14)
+
+| Método | Path | operationId |
+|--------|------|-------------|
+| `GET` | `/production/consumption/top-items` | `get_production_consumption_top_items` |
+| `GET` | `/production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` |
+| `GET` | `/production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` |
+| `GET` | `/production/consumption/by-item/{code}` | `get_production_consumption_by_item` |
+| `GET` | `/production/losses/top-materials` | `get_production_losses_top_materials` |
+| `GET` | `/production/losses/records` | `get_production_losses_records` |
+| `GET` | `/production/schedule/today` | `get_production_schedule_today` |
+| `GET` | `/production/orders/open` | `get_production_orders_open` |
+| `GET` | `/production/orders/finished` | `get_production_orders_finished` |
+| `GET` | `/production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` |
+| `GET` | `/production/work-centers/order-summary` | `get_production_work_center_order_summary` |
+| `GET` | `/production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` |
+| `GET` | `/production/allocation-gaps` | `get_production_allocation_gaps` |
+| `GET` | `/production/planned-vs-real-time` | `get_production_planned_vs_real_time` |
+
+### Compras operacionais (1)
+
+| Método | Path | operationId |
+|--------|------|-------------|
+| `GET` | `/purchases/top-products` | `get_purchases_top_products` |

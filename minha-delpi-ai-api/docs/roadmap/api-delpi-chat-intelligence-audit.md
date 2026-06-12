@@ -2,7 +2,7 @@
 
 **Objetivo:** garantir que o **chat base** (`minha-delpi-ai-api`) selecione a rota correta, responda com clareza (texto/tabela/markdown), trate typos e informe limitações — para **todos os agentes** herdarem o mesmo comportamento.
 
-**Última atualização:** 2026-05-30  
+**Última atualização:** 2026-06-12  
 **Branch de trabalho:** `main`
 
 ---
@@ -28,7 +28,8 @@
 | Vendas (OV) | 1 | OK | `list_sale_orders` |
 | Comercial | 9 | OK | + `/commercial/proposals`; heurísticas KPI |
 | Financeiro | 4 | OK | EBITDA, PMR, ROL, custo fixo + typos |
-| Produção | 9 | OK | OEE/OTD %, séries, eficiência fabril, custos |
+| Produção (KPI) | 9 | OK | OEE/OTD %, séries, eficiência fabril, custos |
+| Produção operacional (PB15) | 15 | OK | Consumo, OPs, perdas, programação, ranking compras — `ChatProductionOperationalIntentService` |
 | RH | 4 | OK | Snapshot, PDI, avaliações, filiais |
 | Qualidade TOTVS | 10 | OK | NC, PPM, kaizen, 5S, filiais |
 | Dados SQL | 1 | OK | Intent SQL + policy skill |
@@ -154,6 +155,30 @@ Legado `/finacial/*`: mesmo router; preferir `/financial` no catálogo.
 | `GET /otd/series` | série histórica otd | | OK |
 | `GET /eficiencia-fabril/dashboard` | painel eficiência fabril | eficiencia | OK |
 | `GET /eficiencia-fabril/appointments` | apontamentos eficiência | | OK |
+
+### 7.1 Playbook 15 — operacional sem SQL (jun/2026) ✅
+
+Doc: [`13-producao-operacional.md`](../../../api-delpi/docs/api/13-producao-operacional.md). Intent: `ChatProductionOperationalIntentService` + `production_operational_intent.json`.
+
+| Rota | Frases teste | operationId | Status |
+|------|--------------|-------------|--------|
+| `GET /consumption/top-items` | itens mais consumidos mês passado | `get_production_consumption_top_items` | OK |
+| `GET /consumption/top-items-by-work-center` | consumo por centro de trabalho | `get_production_consumption_top_items_by_work_center` | OK |
+| `GET /consumption/top-items-validated` | consumo validado apontamento | `get_production_consumption_top_items_validated` | OK |
+| `GET /consumption/by-item/{code}` | consumo real do item X | `get_production_consumption_by_item` | OK |
+| `GET /losses/top-materials` | refugos de MP ranking | `get_production_losses_top_materials` | OK |
+| `GET /losses/records` | detalhe refugos | `get_production_losses_records` | OK |
+| `GET /schedule/today` | programados para produzir hoje | `get_production_schedule_today` | OK |
+| `GET /orders/open` | OPs em aberto hoje | `get_production_orders_open` | OK |
+| `GET /orders/finished` | OPs finalizadas hoje | `get_production_orders_finished` | OK |
+| `GET /orders/finished-without-consumption` | OP finalizada sem baixa MP | `get_production_orders_finished_without_consumption` | OK |
+| `GET /work-centers/order-summary` | resumo OPs por CT | `get_production_work_center_order_summary` | OK |
+| `GET /work-centers/average-planned-time` | tempo médio planejado CT | `get_production_work_center_average_planned_time` | OK |
+| `GET /allocation-gaps` | componentes sem empenho | `get_production_allocation_gaps` | OK |
+| `GET /planned-vs-real-time` | planejado x real OP | `get_production_planned_vs_real_time` | OK |
+| `GET /purchases/top-products` | produtos mais comprados | `get_purchases_top_products` | OK |
+
+Regressão: `production_operational_regression_cases.py`, `smoke_playbook_production_operational.py`.
 
 ---
 
@@ -284,4 +309,6 @@ Itens 1–5 abaixo foram entregues na **Onda 11** — ver [inteligencia-chat-ond
 4. ~~Testes E2E com api-delpi mockada por domínio~~ — ✅ `smoke_api_delpi_domain_routing.py` + [smoke-api-delpi-domain-routing.md](../testing/smoke-api-delpi-domain-routing.md)
 5. ~~Expor `knowledgeDocumentMaxChars` em capabilities~~ — ✅ 11.5.2
 
-**Próxima onda de produto:** [Onda 12 — drawing-analyser PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md).
+**Entregue jun/2026:** [Playbook 15](./playbook-15-rotas-operacionais-sem-sql.md) — 15 rotas REST + seleção determinística no chat base.
+
+**Próximas ondas:** [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) (BOM/cotas OCR), [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) refinamentos.

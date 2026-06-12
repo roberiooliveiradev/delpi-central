@@ -1,7 +1,7 @@
 # Inteligência do chat — Onda 14: OCR hierárquico de desenhos DELPI
 
-**Status:** em andamento (Fase 14.1 contrato + baseline — jun/2026); extração carimbo → fases 14.2–14.8  
-**Criado:** 2026-06-08  
+**Status:** parcial — Fases 14.1–14.4 e 14.7 ✅; homologação carimbo **13/13** em `desenhos/`; Fases 14.5–14.6 e 14.8 (BOM/cotas/CI) ⬜  
+**Criado:** 2026-06-08 · **Última revisão doc:** jun/2026  
 **Playbook:** [playbook_ocr_hierarquico_desenhos_delpi.md](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [Onda 13](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) MVP
 

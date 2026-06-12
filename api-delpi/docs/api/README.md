@@ -53,6 +53,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
+| [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
 | [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
 
 ## Permissões principais

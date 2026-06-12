@@ -1,14 +1,29 @@
 # Playbook api-delpi — Produção operacional, compras ranking e perdas
 
 **Parent:** [`minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md`](../../../minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md)  
-**Status:** roadmap (jun/2026)  
-**Público:** desenvolvimento api-delpi
+**Status:** implementado Fases 1–4 (jun/2026) — 15 rotas REST + integração chat base  
+**Público:** desenvolvimento api-delpi  
+**Doc API:** [`13-producao-operacional.md`](../api/13-producao-operacional.md)
+
+---
+
+## Resumo executivo (estado do código)
+
+| Bloco | Rotas | api-delpi | chat base | Notas |
+|-------|------:|-----------|-----------|-------|
+| Fase 1 P0 | R01–R04, R06–R08 | ✅ | ✅ | Consumo, compras ranking, perdas, programação |
+| Fase 2 P1 | R09–R11, R02b, R03 | ✅ | ✅ | OPs abertas/finalizadas, CT, consumo por CT/validado |
+| Fase 3 P2 | R12–R15 | ✅ | ✅ | Gaps empenho, OP sem consumo, tempo médio CT, consumo por item |
+| Fase 4 P3 | R16 | ✅ | ✅ | Planejado × real por OP |
+| R05 (produto) | `/products/{code}/last-purchase` | ✅ | ✅ | Rota de produto, não operacional |
+
+**Pendências operacionais (não bloqueiam release):** latência p95 em TOTVS dev; smoke meta em `test_route_meta_smoke.py` para rotas operacionais; regenerar `openapi_baseline.json` e catálogo `_generated`.
 
 ---
 
 ## 1. Objetivo
 
-Implementar rotas REST que encapsulam os SQL validados nos playbooks:
+Rotas REST que encapsulam os SQL validados nos playbooks:
 
 - [`sql-playbook-producao-suprimentos-perdas.txt`](../../../minha-delpi-ai-api/docs/knowledge/domains/agents/minha-delpi-chat/sql-playbook-producao-suprimentos-perdas.txt)
 - [`sql-data-api-instructions.md`](../../../minha-delpi-ai-api/docs/knowledge/domains/agents/minha-delpi-chat/sql-data-api-instructions.md) (exemplos §1–8, §17–20)
@@ -151,7 +166,7 @@ Filtro MP: `SB1.B1_TIPO = 'MP'`.
 
 ---
 
-## 4. Rotas Fase 2 (P1) — resumo
+## 4. Rotas Fase 2 (P1) — resumo ✅
 
 | Path | operationId | SQL ref |
 |------|-------------|---------|
@@ -163,9 +178,28 @@ Filtro MP: `SB1.B1_TIPO = 'MP'`.
 
 ---
 
-## 5. Serviços de domínio compartilhados
+## 4.1 Rotas Fase 3 (P2) — resumo ✅
 
-Criar `app/domain/services/production/` (api-delpi):
+| Path | operationId | Uso |
+|------|-------------|-----|
+| `GET /production/allocation-gaps` | `get_production_allocation_gaps` | Componentes sem empenho (travamento) |
+| `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | OP finalizada sem baixa de MP |
+| `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` | Tempo médio planejado por CT |
+| `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` | Consumo real de item por produto |
+
+---
+
+## 4.2 Rotas Fase 4 (P3) — resumo ✅
+
+| Path | operationId | Uso |
+|------|-------------|-----|
+| `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` | Planejado × real por OP (classificação OK/ATENÇÃO/ESTOURO) |
+
+---
+
+## 5. Serviços de domínio compartilhados ✅
+
+Implementados em `app/domain/services/production/` (api-delpi):
 
 | Serviço | Função |
 |---------|--------|
@@ -178,71 +212,38 @@ Evita duplicar SQL entre repositórios.
 
 ---
 
-## 6. Registro HTTP
+## 6. Registro HTTP ✅
 
-### 6.1 Router
+### 6.1 Routers
 
-```python
-# app/interface/http/routes/production/production_operational_router.py
-from app.interface.http.route_response_helpers import api_delpi_success
+- `app/interface/http/routes/production/production_operational_router.py` — 14 endpoints sob `/production`
+- `app/interface/http/routes/purchases/purchases_router.py` — `GET /purchases/top-products`
+- Montados em `app/main.py` (prefix `/production` compartilhado com KPIs — paths não colidem)
 
-@router.get("/consumption/top-items")
-def get_consumption_top_items(...):
-    result = build_get_production_consumption_top_items_use_case().execute(dto)
-    return api_delpi_success(
-        result,
-        operation_id="get_production_consumption_top_items",
-        message="Itens mais consumidos consultados com sucesso.",
-    )
-```
+### 6.2 OpenAPI agent metadata ✅
 
-Montar router em `app/main.py` com prefix `/production` (mesmo prefix dos KPIs — paths não colidem).
+Constantes `PRODUCTION_*` e `PURCHASES_TOP_PRODUCTS` em `openapi_agent_metadata.py` via `agent_route()` (`summary`, `description`, `operation_id`).  
+**Nota:** `agent_route()` não expõe `tags` FastAPI — routers usam `tags=["Produção operacional"]` / `["Compras operacionais"]`.
 
-### 6.2 OpenAPI agent metadata
+### 6.3 route_contract_registry.py ✅
 
-```python
-# openapi_agent_metadata.py
-PRODUCTION_CONSUMPTION_TOP_ITEMS = agent_route(
-    summary="Itens mais consumidos no período",
-    description="Ranking de consumo real (SD4010) por filial ou geral.",
-    operation_id="get_production_consumption_top_items",
-    tags=["production", "chat-critical"],
-)
-```
-
-### 6.3 route_contract_registry.py
-
-```python
-"get_production_consumption_top_items": RouteContract(
-    "production_consumption_top_items", "playbook_report"
-),
-```
+Todos os 15 `operationId` registrados com `shape: playbook_report`.
 
 ---
 
 ## 7. Permissões RBAC
 
-Sugestão (validar com Core API):
+**Implementação atual (jun/2026):** todos os endpoints operacionais usam `API_DELPI_ACCESS` (`api-delpi.access`) via `@require_permission` em `api_delpi_permissions.py`.
 
-| Rota | Permissão |
-|------|-----------|
-| `/production/consumption/*`, `/production/losses/*`, `/production/schedule/*`, `/production/orders/*` | `api-delpi.production.access` ou `api-delpi.access` |
-| `/purchases/top-products` | `api-delpi.purchases.access` ou `api-delpi.access` |
-
-Importar de `api_delpi_permissions.py` — não strings literais no router.
+Permissões granulares (`api-delpi.production.access`, `api-delpi.purchases.access`) permanecem **backlog** — depende de perfis formais no Core API.
 
 ---
 
-## 8. Testes
+## 8. Testes ✅
 
 ### 8.1 Unitário (mock repository)
 
-```python
-def test_consumption_top_items_groups_by_branch(repository_mock):
-    repository_mock.fetch_top_items.return_value = [{"item_code": "10080001", ...}]
-    result = GetProductionConsumptionTopItemsUseCase(repository_mock).execute(dto)
-    assert result["items"][0]["item_code"] == "10080001"
-```
+Arquivos: `tests/test_production_operational_use_cases.py`, `tests/test_production_operational_domain_services.py`.
 
 ### 8.2 Integração TOTVS (manual)
 
@@ -262,26 +263,20 @@ assert body["meta"]["shape"] == "playbook_report"
 
 ---
 
-## 9. Documentação api-delpi
+## 9. Documentação api-delpi ✅
 
-Após implementar Fase 1:
+1. ✅ [`13-producao-operacional.md`](../api/13-producao-operacional.md)
+2. ✅ [`10-referencia-rapida-endpoints.md`](../api/10-referencia-rapida-endpoints.md) — rotas operacionais + `/purchases`
+3. ✅ [`11-guia-agente-chat.md`](../api/11-guia-agente-chat.md) — seção Playbook 15
+4. ✅ [`fase-0-inventario-contrato-respostas.md`](./fase-0-inventario-contrato-respostas.md) — matriz operationId operacional
 
-1. Criar `api-delpi/docs/api/13-producao-operacional.md`
-2. Atualizar `10-referencia-rapida-endpoints.md`
-3. Atualizar `11-guia-agente-chat.md`
-4. Atualizar `fase-0-inventario-contrato-respostas.md` (matriz operationId)
+**Pendente:** smoke meta em `test_route_meta_smoke.py`; regenerar `openapi_baseline.json` e catálogo `_generated` após deploy.
 
 ---
 
-## 10. Ordem de implementação recomendada (Fase 1)
+## 10. Ordem de implementação (concluída)
 
-1. `ProtheusDateRangeService` + testes
-2. `production_consumption_repository` + R01
-3. `purchases_ranking_repository` + R04
-4. `production_losses_repository` + R06, R07
-5. `production_schedule_repository` + R08
-6. Registro contrato + OpenAPI + testes smoke
-7. PR api-delpi → deploy → avisar equipe chat
+Fases 1–4 entregues conforme §Resumo executivo. Pós-deploy: `sync_api_delpi_openapi.py` + reindex RAG + homologação `smoke_playbook_production_operational.py`.
 
 ---
 

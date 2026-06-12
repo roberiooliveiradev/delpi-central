@@ -1,6 +1,9 @@
 # API DELPI — Guia de rotas para agentes operacionais
 
-**Uso:** anexar este documento à inteligência do agente (base de conhecimento / RAG) ou colar trechos relevantes no `system_prompt` de agentes que usam o provider OpenAPI `api-delpi`.
+> **⚠ Cópia legada (167 linhas).** Fonte canônica para RAG e ingestão: [`api-delpi-rotas-agente.md`](../../../../api-delpi-rotas-agente.md) (428 linhas, inclui Playbook 15 operacional, comercial, financeiro, RH, qualidade).  
+> Não indexar esta cópia sem sincronizar com o canônico — risco de agente cego para rotas `/production/consumption/*`, `/purchases/top-products`, etc.
+
+**Uso:** anexar o **documento canônico** à base de conhecimento / RAG ou colar trechos no `system_prompt` de agentes que usam o provider OpenAPI `api-delpi`.
 
 **Provider:** `api-delpi` · **Base:** `/apps/api-delpi` · **OpenAPI:** `/apps/api-delpi/openapi.json`
 

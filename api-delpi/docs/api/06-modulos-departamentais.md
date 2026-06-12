@@ -69,6 +69,9 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/overall_equipment_effectiveness_pct` | OEE. |
 | GET | `/production/on_time_delivery_pct` | On-Time Delivery (OTD produção). |
 
+**Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  
+**Compras ranking:** `GET /purchases/top-products` — mesma doc.
+
 ---
 
 ## Suprimentos — `/supplies`

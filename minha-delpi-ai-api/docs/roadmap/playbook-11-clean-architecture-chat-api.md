@@ -18,7 +18,7 @@ Não é reescrever o projeto. É **convergir** o que já funciona (chat base, JS
 | Métrica | Hoje (jun/2026) | Alvo |
 |---------|-----------------|------|
 | Use cases send/stream | ~1,5k–2k linhas cada | < 400 linhas cada (orquestração) |
-| `external_action_result_presenter` | ~5,1k linhas | < 800 linhas + sub-presenters |
+| `external_action_result_presenter` | ~1,6k linhas (jun/2026) | < 800 linhas + sub-presenters |
 | Domain importando `ContentService` / `Settings` / ORM | ~30 arquivos | 0 |
 | Repos sem port | ~6 críticos | 0 nos eixos chat/tools |
 | Strings PT-BR fora de `content/` | residual | 0 (enforcement em CI) |

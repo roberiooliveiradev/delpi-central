@@ -123,7 +123,7 @@ GET /chat/providers/{providerKey}/import/jobs/{jobId}
 }
 ```
 
-**SSE opcional (fase 2):** `GET .../import/jobs/{jobId}/stream` — mesmo padrão de eventos do chat (`phase`, `progress`).
+**SSE opcional (backlog):** `GET .../import/jobs/{jobId}/stream` — **não implementado** (jun/2026); UI usa poll HTTP `GET .../import/jobs/{id}` a cada 1–2s.
 
 ### 3.3 Camadas (clean architecture)
 

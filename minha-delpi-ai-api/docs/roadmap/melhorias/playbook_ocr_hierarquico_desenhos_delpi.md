@@ -1,6 +1,6 @@
 # Playbook — OCR hierárquico de desenhos DELPI (chat base)
 
-> **Status (08/06/2026):** Backlog aprovado — roadmap abaixo; implementação na [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md).  
+> **Status (jun/2026):** Parcial — Fases 14.1–14.4 e 14.7 implementadas; homologação carimbo 13/13; Fases 14.5–14.6 (BOM/cotas) e 14.8 (CI) pendentes. Ver [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md).  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** serviço transversal no [chat base](../../architecture/chat-intelligence-base.md); **não** duplicar heurísticas no `system_prompt` de agentes nem no use case de stream/send.
 

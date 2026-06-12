@@ -124,7 +124,7 @@ Legenda de permissões:
 
 ---
 
-## Produção (`/production`)
+## Produção — KPIs (`/production`)
 
 | Método | Endpoint | Perm. |
 |---|---|---|
@@ -133,6 +133,37 @@ Legenda de permissões:
 | GET | `/production/depreciation_pct` | A |
 | GET | `/production/overall_equipment_effectiveness_pct` | A |
 | GET | `/production/on_time_delivery_pct` | A |
+
+---
+
+## Produção operacional — Playbook 15 (`/production`)
+
+> Detalhes, parâmetros e frases para agentes: [13-producao-operacional.md](./13-producao-operacional.md)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/production/consumption/top-items` | A |
+| GET | `/production/consumption/top-items-by-work-center` | A |
+| GET | `/production/consumption/top-items-validated` | A |
+| GET | `/production/consumption/by-item/{code}` | A |
+| GET | `/production/losses/top-materials` | A |
+| GET | `/production/losses/records` | A |
+| GET | `/production/schedule/today` | A |
+| GET | `/production/orders/open` | A |
+| GET | `/production/orders/finished` | A |
+| GET | `/production/orders/finished-without-consumption` | A |
+| GET | `/production/work-centers/order-summary` | A |
+| GET | `/production/work-centers/average-planned-time` | A |
+| GET | `/production/allocation-gaps` | A |
+| GET | `/production/planned-vs-real-time` | A |
+
+---
+
+## Compras operacionais — Playbook 15 (`/purchases`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/purchases/top-products` | A |
 
 ---
 

@@ -1,4 +1,4 @@
-# Status — roadmap `docs/roadmap/melhorias` (03/06/2026, revisão fechamento)
+# Status — roadmap `docs/roadmap/melhorias` (12/06/2026, revisão doc↔código)
 
 Índice de **fechamento documental** dos 40 arquivos desta pasta.  
 **Concluído** = implementado no código ou arquivado como referência estável. **Parcial** = entregas iniciais + backlog explícito. **Aguardando** = depende de aprovação de produto.
@@ -26,7 +26,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | **Concluído (MVP)** | F1–4 + `AgentMiniDashboard`; refinamentos PNG multi-painel → backlog |
 | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; extração carimbo/cotas → [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) |
 | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem; regiões hierárquicas → Onda 14 |
-| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Em andamento** | Onda 14 Fase 14.1 ✅; OCR carimbo 14.2+ |
+| [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Parcial** | Onda 14: 14.1–14.4 + 14.7 ✅; homologação 13/13; 14.5–14.6 BOM/cotas ⬜ |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)

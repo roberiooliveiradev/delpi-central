@@ -1,6 +1,6 @@
 # Playbook 17 — Importação de arquivos e fontes unificada
 
-**Status:** roadmap (jun/2026)  
+**Status:** MVP concluído (jun/2026) — kit UI + policy API; orquestração unificada e poll cross-família em backlog  
 **Parent:** [`playbook-05-anexos-lousa.md`](./playbook-05-anexos-lousa.md) (comportamento pós-upload: welcome, chips, lousa)  
 **Relacionado:** [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md) (não confundir com import OpenAPI — Playbook 16)
 
@@ -98,9 +98,9 @@ O chat expõe **sete superfícies distintas** para enviar ou ingerir arquivos. C
 
 | Módulo | Camada | Responsabilidade |
 |--------|--------|------------------|
-| `WorkspaceFileIngestPolicyService` | domain | `accept` MIME/ext, tamanho máx, famílias permitidas |
-| `WorkspaceFileIngestStatusService` | domain | Máquina de estados + labels via `attachments.json` |
-| `WorkspaceFileIngestOrchestratorService` | application | Upload → persist → enqueue index (por família) |
+| `WorkspaceFileIngestPolicyService` | domain | ✅ `accept` MIME/ext, tamanho máx, famílias — `GET /chat/ingest/policy` |
+| `WorkspaceFileIngestStatusService` | domain | **Backlog** — hoje labels via `workspaceFileIngestContent.ts` + `attachments.json` |
+| `WorkspaceFileIngestOrchestratorService` | application | **Backlog** — hoje cada família usa endpoint próprio (anexo, source, knowledge) |
 | Ports por família | domain | `ChatAttachmentRepositoryPort`, source repos, knowledge repo |
 | **Proibido** | — | Novo texto PT em use case — só `attachments.json` + `error_handling.json` |
 
@@ -171,12 +171,12 @@ queued → uploading → processing → indexed
 
 ## 6. Padronização visual (aceite)
 
-- [ ] Mesmo copy de dropzone: «Arraste arquivos aqui ou clique para selecionar»
+- [x] Copy de dropzone via `workspaceFileIngestContent.ts` (espelho de `attachments.json`)
 - [x] Extensões exibidas vêm de `WorkspaceFileIngestPolicyService` (`GET /chat/ingest/policy`)
 - [x] Status sempre de `attachments.json` — zero string em TS/Python para usuário (superfícies migradas)
-- [ ] Card: ícone por MIME, nome truncado, tamanho humanizado, badge de status, ações à direita
-- [ ] Composer: lista horizontal de cards; agente: grid; projeto/admin: lista vertical
-- [ ] Erro de upload: toast + `error_handling.json` por código (`FILE_TOO_LARGE`, `UNSUPPORTED_TYPE`, …)
+- [x] Card: ícone colorido por tipo, nome truncado, tamanho humanizado, badge de status, preview
+- [x] Composer: cards via `WorkspaceFileCard`; agente/projeto/admin: listas com mesmo kit
+- [x] Erro de upload: `error_handling.json` por código (`FILE_TOO_LARGE`, `UNSUPPORTED_TYPE`, …) — API + feedback MFE
 
 ---
 
@@ -212,10 +212,11 @@ Implementar 17 **não** altera welcome/chips — só unifica **entrada** e **vis
 
 - [x] Um `WorkspaceFileDropzone` usado em ≥ 4 superfícies
 - [x] Um `WorkspaceFileCard` usado em composer, mensagem, agente, projeto
-- [ ] Status 100% de `attachments.json` no MFE
+- [x] Status de leitura/indexação de `attachments.json` no MFE (superfícies migradas)
 - [x] `accept` único documentado e enforced na API (+ MFE via `useWorkspaceFileIngestPolicy`)
-- [ ] Playbook 05 casos L1–L12 continuam passando
-- [ ] Documentação `04-actions-openapi` ou doc dedicada de attachments/sources atualizada
+- [ ] Playbook 05 casos L1–L12 — smoke E2E em homolog (não revalidado em lote pós-17)
+- [ ] Poll unificado cross-família (`ingestId` + progresso para agente/projeto/admin)
+- [ ] `WorkspaceFileIngestOrchestratorService` (API) — ver §3 módulos canônicos
 
 ---
 

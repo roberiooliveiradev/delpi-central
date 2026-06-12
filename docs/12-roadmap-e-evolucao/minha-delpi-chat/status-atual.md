@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **03/06/2026** — Onda 10, contexto manual/Q&A, fechamento pacote melhorias (STATUS/BACKLOG).
+> Atualizado em **12/06/2026** — sincronização doc↔código: Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial, catálogo OpenAPI (regenerar pós-deploy).
 
 ## Visão geral
 
@@ -64,7 +64,9 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Inteligência Onda 9:** concluída — colunas preferenciais por tipo de dado, build com shared/delpi_auth, modal expandir, copiar API, streaming direct response, estabilidade memória (ctx 2048)
 - **Inteligência Onda 10:** concluída — rotas `/products/{code}` e `/summary`, vocabulário e scoring de intent, fix OVs vs produto, títulos contextuais no presenter, doc RAG `api-delpi-rotas-agente.md` revisado
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
-- **Playbooks melhorias (pacote 01–10):** fechados como MVP/Concluído — [`STATUS_ROADMAP_MELHORIAS.md`](../../../minha-delpi-ai-api/docs/roadmap/melhorias/STATUS_ROADMAP_MELHORIAS.md); backlog: mockup admin 11, Ondas 12/13
+- **Playbooks melhorias (pacote 01–10):** fechados como MVP/Concluído — [`STATUS_ROADMAP_MELHORIAS.md`](../../../minha-delpi-ai-api/docs/roadmap/melhorias/STATUS_ROADMAP_MELHORIAS.md); backlog: mockup admin 11, Ondas 12/13 refinamentos, Onda 14 BOM/cotas
+- **Playbook 15 (rotas operacionais):** concluído api-delpi + chat — doc [`13-producao-operacional.md`](../../../api-delpi/docs/api/13-producao-operacional.md)
+- **Playbook 17 (ingestão unificada):** MVP concluído (kit UI + policy); orchestrator em backlog
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
 ## Banco de dados

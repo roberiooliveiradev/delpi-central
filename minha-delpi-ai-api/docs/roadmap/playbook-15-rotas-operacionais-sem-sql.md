@@ -401,6 +401,7 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 | Doc | Conteúdo |
 |-----|----------|
 | [playbook-producao-consumo-compras-perdas-op.md](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md) | Implementação api-delpi (SQL, camadas, exemplos) |
+| [13-producao-operacional.md](../../../api-delpi/docs/api/13-producao-operacional.md) | Referência API — rotas, parâmetros, integração chat |
 | [playbook-15-chat-integracao-producao-suprimentos.md](./playbook-15-chat-integracao-producao-suprimentos.md) | Integração chat base |
 | [playbook-16-openapi-import-async-e-readiness-operacional.md](./playbook-16-openapi-import-async-e-readiness-operacional.md) | Import async, progresso UI, readiness pós-deploy |
 | [playbook-10-contrato-respostas-api-delpi.md](./playbook-10-contrato-respostas-api-delpi.md) | meta.shape / operationId |

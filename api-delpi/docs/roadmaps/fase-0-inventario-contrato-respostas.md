@@ -83,6 +83,28 @@ Perfis propostos para Fase 3 (`meta.shape`). `operationId` após Fase 1 em produ
 | `GET /transforma-mais/processes` | *(auto)* | `paged_list` | dashboard-engineering |
 | `GET /transforma-mais/processes/summary` | *(auto)* | `scalar` | chat, engineering |
 
+### Produção operacional — Playbook 15 (`/production`, `/purchases`) — jun/2026
+
+| Rota | `operationId` | `meta.shape` | `meta.entity` |
+|------|---------------|--------------|---------------|
+| `GET /production/consumption/top-items` | `get_production_consumption_top_items` | `playbook_report` | `production_consumption_top_items` |
+| `GET /production/consumption/top-items-by-work-center` | `get_production_consumption_top_items_by_work_center` | `playbook_report` | `production_consumption_top_items_by_work_center` |
+| `GET /production/consumption/top-items-validated` | `get_production_consumption_top_items_validated` | `playbook_report` | `production_consumption_top_items_validated` |
+| `GET /production/consumption/by-item/{code}` | `get_production_consumption_by_item` | `playbook_report` | `production_consumption_by_item` |
+| `GET /production/losses/top-materials` | `get_production_losses_top_materials` | `playbook_report` | `production_losses_top_materials` |
+| `GET /production/losses/records` | `get_production_losses_records` | `playbook_report` | `production_losses_records` |
+| `GET /production/schedule/today` | `get_production_schedule_today` | `playbook_report` | `production_schedule_today` |
+| `GET /production/orders/open` | `get_production_orders_open` | `playbook_report` | `production_orders_open` |
+| `GET /production/orders/finished` | `get_production_orders_finished` | `playbook_report` | `production_orders_finished` |
+| `GET /production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | `playbook_report` | `production_orders_finished_without_consumption` |
+| `GET /production/work-centers/order-summary` | `get_production_work_center_order_summary` | `playbook_report` | `production_work_center_order_summary` |
+| `GET /production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` | `playbook_report` | `production_work_center_average_planned_time` |
+| `GET /production/allocation-gaps` | `get_production_allocation_gaps` | `playbook_report` | `production_allocation_gaps` |
+| `GET /production/planned-vs-real-time` | `get_production_planned_vs_real_time` | `playbook_report` | `production_planned_vs_real_time` |
+| `GET /purchases/top-products` | `get_purchases_top_products` | `playbook_report` | `purchases_top_products` |
+
+Doc: [`13-producao-operacional.md`](../api/13-producao-operacional.md). Chat: `ChatProductionOperationalIntentService` + `production_operational_intent.json`.
+
 ### SQL e vendas
 
 | Rota | `operationId` | `meta.shape` |
@@ -90,7 +112,7 @@ Perfis propostos para Fase 3 (`meta.shape`). `operationId` após Fase 1 em produ
 | `POST /data/sql` | `execute_readonly_sql` | `paged_list` |
 | `GET /sales/` | `list_sale_orders` | `paged_list` |
 
-Catálogo OpenAPI completo (83 rotas): [`minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md`](../../../minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md).
+Catálogo OpenAPI gerado: [`minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md`](../../../minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md) — **regenerar** após deploy (`sync_api_delpi_openapi.py`); snapshot de 29/05/2026 não inclui Playbook 15.
 
 ---
 
