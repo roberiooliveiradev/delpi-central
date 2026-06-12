@@ -41,7 +41,7 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
     loading: filialLoading,
     error: optionsError,
     submodules,
-    canManageMiniApplicators,
+    canManageFiliais,
   } = useMaintenanceActiveFilial(getAccessToken, filialScope);
 
   const subtitle = useMemo(() => {
@@ -87,7 +87,7 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
       ) : null}
 
       <section className="dm-kpi-grid">
-        {canManageMiniApplicators ? (
+        {canManageFiliais ? (
           <button
             type="button"
             className="dm-card dm-kpi-card dm-kpi-card--action"
@@ -129,8 +129,9 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
 
       {!optionsError && !filialLoading && submodules.length === 0 ? (
         <StateBox>
-          Nenhum submódulo disponível para esta filial. Solicite permissões de submódulo e escopo{" "}
-          <code>maintenance.view.filial-XX</code> na Core API.
+          Nenhum submódulo disponível para esta filial. Solicite permissões como{" "}
+          <code>maintenance.mini-applicators.view.filial-XX</code> ou{" "}
+          <code>maintenance.manutencao-geral.view.filial-XX</code>.
         </StateBox>
       ) : null}
     </MaintenanceShell>

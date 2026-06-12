@@ -3,71 +3,64 @@
 from __future__ import annotations
 
 import re
+from typing import Any
+
+from delpi_auth.authz_core import has_permission
 
 MAINTENANCE_VIEW = "maintenance.view"
+MAINTENANCE_MANAGE = "maintenance.manage"
 
-MINI_APPLICATORS_VIEW = "maintenance.mini-applicators.view"
-MINI_APPLICATORS_MANAGE = "maintenance.mini-applicators.manage"
-
+MINI_APPLICATORS_VIEW_PREFIX = "maintenance.mini-applicators.view"
+MINI_APPLICATORS_MANAGE_PREFIX = "maintenance.mini-applicators.manage"
 MANUTENCAO_GERAL_VIEW_PREFIX = "maintenance.manutencao-geral.view"
-MANUTENCAO_GERAL_VIEW_FILIAL_01 = f"{MANUTENCAO_GERAL_VIEW_PREFIX}.filial-01"
 
-VIEW_FILIAL_PREFIX = "maintenance.view.filial-"
-MANAGE_FILIAL_PREFIX = "maintenance.manage.filial-"
 _FILIAL_CODE_SUFFIX = re.compile(r"^[0-9]{2}$")
+_SUBMODULE_VIEW_FILIAL_MARKER = ".view.filial-"
+_SUBMODULE_MANAGE_FILIAL_MARKER = ".manage.filial-"
 
-MAINTENANCE_VIEW_FILIAL_01 = "maintenance.view.filial-01"
-MAINTENANCE_VIEW_FILIAL_02 = "maintenance.view.filial-02"
-MAINTENANCE_MANAGE_FILIAL_01 = "maintenance.manage.filial-01"
-MAINTENANCE_MANAGE_FILIAL_02 = "maintenance.manage.filial-02"
-
-VIEW_FILIAL_PERMISSIONS: dict[str, str] = {
-    "01": MAINTENANCE_VIEW_FILIAL_01,
-    "02": MAINTENANCE_VIEW_FILIAL_02,
+SUBMODULE_VIEW_PREFIXES: dict[str, str] = {
+    "mini-aplicadores": MINI_APPLICATORS_VIEW_PREFIX,
+    "manutencao-geral": MANUTENCAO_GERAL_VIEW_PREFIX,
 }
 
-MANAGE_FILIAL_PERMISSIONS: dict[str, str] = {
-    "01": MAINTENANCE_MANAGE_FILIAL_01,
-    "02": MAINTENANCE_MANAGE_FILIAL_02,
+SUBMODULE_MANAGE_PREFIXES: dict[str, str] = {
+    "mini-aplicadores": MINI_APPLICATORS_MANAGE_PREFIX,
 }
 
 
-def view_filial_permission(codigo_filial: str) -> str:
-    return f"{VIEW_FILIAL_PREFIX}{codigo_filial}"
+def submodule_view_permission(submodule_id: str, codigo_filial: str) -> str:
+    base = SUBMODULE_VIEW_PREFIXES[submodule_id]
+    return f"{base}.filial-{codigo_filial}"
 
 
-def manage_filial_permission(codigo_filial: str) -> str:
-    return f"{MANAGE_FILIAL_PREFIX}{codigo_filial}"
+def submodule_manage_permission(submodule_id: str, codigo_filial: str) -> str:
+    base = SUBMODULE_MANAGE_PREFIXES[submodule_id]
+    return f"{base}.filial-{codigo_filial}"
 
 
-def codigos_from_filial_permissions(
+def codigos_from_submodule_filial_permissions(
     permissions: list[str],
     *,
-    prefix: str,
+    marker: str,
 ) -> list[str]:
     codigos: list[str] = []
     for permission in permissions:
-        if not permission.startswith(prefix):
+        if not permission.startswith("maintenance.") or marker not in permission:
             continue
-        codigo = permission[len(prefix) :]
+        codigo = permission.rsplit(marker, maxsplit=1)[-1]
         if _FILIAL_CODE_SUFFIX.match(codigo):
             codigos.append(codigo)
     return codigos
 
 
-SUBMODULE_VIEW_PERMISSIONS: dict[str, str] = {
-    "mini-aplicadores": MINI_APPLICATORS_VIEW,
-    "manutencao-geral": MANUTENCAO_GERAL_VIEW_PREFIX,
-}
+def can_manage_module(user: Any | None) -> bool:
+    if user is None:
+        return False
+    if getattr(user, "is_superadmin", False):
+        return True
+    return has_permission(user, MAINTENANCE_MANAGE)
 
 
-def submodule_view_permission(submodule_id: str, codigo_filial: str) -> str:
-    base = SUBMODULE_VIEW_PERMISSIONS[submodule_id]
-    return f"{base}.filial-{codigo_filial}"
-
-SUBMODULE_MANAGE_PERMISSIONS: dict[str, str] = {
-    "mini-aplicadores": MINI_APPLICATORS_MANAGE,
-}
-
-BRANCH_VIEW_PERMISSIONS: tuple[str, ...] = tuple(VIEW_FILIAL_PERMISSIONS.values())
-BRANCH_MANAGE_PERMISSIONS: tuple[str, ...] = tuple(MANAGE_FILIAL_PERMISSIONS.values())
+def assert_module_manage(user: Any | None) -> None:
+    if not can_manage_module(user):
+        raise PermissionError("Sem permissão para gerenciar filiais do módulo.")

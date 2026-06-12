@@ -6,14 +6,10 @@ from typing import Any
 from delpi_auth.authz_core import has_permission
 
 from maint_app.application.security.maintenance_permissions import (
-    MAINTENANCE_VIEW,
-    MANAGE_FILIAL_PERMISSIONS,
-    MANAGE_FILIAL_PREFIX,
-    MINI_APPLICATORS_MANAGE,
-    VIEW_FILIAL_PERMISSIONS,
-    VIEW_FILIAL_PREFIX,
-    codigos_from_filial_permissions,
-    manage_filial_permission,
+    _SUBMODULE_MANAGE_FILIAL_MARKER,
+    _SUBMODULE_VIEW_FILIAL_MARKER,
+    codigos_from_submodule_filial_permissions,
+    submodule_manage_permission,
 )
 
 
@@ -28,16 +24,21 @@ def _normalize_codigo(codigo: str | None) -> str | None:
 class FilialAccessScope:
     mode: str
     allowed_codigos: frozenset[str]
-    scoped_manage: bool
+    manage_codigos: frozenset[str]
 
     @property
     def is_unrestricted(self) -> bool:
         return self.mode == "unrestricted"
 
+    @property
+    def scoped_manage(self) -> bool:
+        return bool(self.manage_codigos)
+
     def meta(self) -> dict[str, Any]:
         return {
             "mode": self.mode,
             "allowed_filiais": sorted(self.allowed_codigos),
+            "manage_filiais": sorted(self.manage_codigos),
             "scoped_manage": self.scoped_manage,
         }
 
@@ -48,43 +49,30 @@ class FilialAccessScopeService:
             return FilialAccessScope(
                 mode="unrestricted",
                 allowed_codigos=frozenset(),
-                scoped_manage=False,
+                manage_codigos=frozenset(),
             )
 
         permissions = list(getattr(user, "permissions", []) or [])
-        branch_view = codigos_from_filial_permissions(permissions, prefix=VIEW_FILIAL_PREFIX)
-        if not branch_view:
-            branch_view = [
-                codigo
-                for codigo, perm in VIEW_FILIAL_PERMISSIONS.items()
-                if perm in permissions
-            ]
-        branch_manage = codigos_from_filial_permissions(permissions, prefix=MANAGE_FILIAL_PREFIX)
-        if not branch_manage:
-            branch_manage = [
-                codigo
-                for codigo, perm in MANAGE_FILIAL_PERMISSIONS.items()
-                if perm in permissions
-            ]
+        branch_view = codigos_from_submodule_filial_permissions(
+            permissions,
+            marker=_SUBMODULE_VIEW_FILIAL_MARKER,
+        )
+        branch_manage = codigos_from_submodule_filial_permissions(
+            permissions,
+            marker=_SUBMODULE_MANAGE_FILIAL_MARKER,
+        )
 
         if branch_view:
             return FilialAccessScope(
                 mode="scoped",
                 allowed_codigos=frozenset(branch_view),
-                scoped_manage=bool(branch_manage),
-            )
-
-        if has_permission(user, MAINTENANCE_VIEW):
-            return FilialAccessScope(
-                mode="unrestricted",
-                allowed_codigos=frozenset(),
-                scoped_manage=bool(branch_manage),
+                manage_codigos=frozenset(branch_manage),
             )
 
         return FilialAccessScope(
             mode="scoped",
             allowed_codigos=frozenset(),
-            scoped_manage=False,
+            manage_codigos=frozenset(),
         )
 
     def can_view_filial(self, scope: FilialAccessScope, codigo_filial: str | None) -> bool:
@@ -101,6 +89,7 @@ class FilialAccessScopeService:
         codigo_filial: str | None,
         *,
         user: Any | None,
+        submodule_id: str = "mini-aplicadores",
     ) -> bool:
         codigo = _normalize_codigo(codigo_filial)
         if not codigo:
@@ -108,21 +97,14 @@ class FilialAccessScopeService:
         if user is not None and getattr(user, "is_superadmin", False):
             return True
 
-        if user is not None and not has_permission(user, MINI_APPLICATORS_MANAGE):
-            return False
-
-        permissions = list(getattr(user, "permissions", []) or []) if user else []
-        manage_perm = manage_filial_permission(codigo)
-        if manage_perm in permissions:
-            return True
-        legacy_manage = MANAGE_FILIAL_PERMISSIONS.get(codigo)
-        if legacy_manage and legacy_manage in permissions:
+        manage_perm = submodule_manage_permission(submodule_id, codigo)
+        if user is not None and has_permission(user, manage_perm):
             return True
 
-        if scope.is_unrestricted and not scope.scoped_manage:
-            return has_permission(user, MINI_APPLICATORS_MANAGE) if user else False
+        if scope.is_unrestricted:
+            return True
 
-        return False
+        return codigo in scope.manage_codigos
 
     def filter_filiais_options(
         self,
@@ -144,8 +126,14 @@ class FilialAccessScopeService:
         codigo_filial: str,
         *,
         user: Any | None,
+        submodule_id: str = "mini-aplicadores",
     ) -> None:
-        if not self.can_manage_filial(scope, codigo_filial, user=user):
+        if not self.can_manage_filial(
+            scope,
+            codigo_filial,
+            user=user,
+            submodule_id=submodule_id,
+        ):
             raise PermissionError("Sem permissão para alterar dados nesta filial.")
 
     def resolve_default_filial(

@@ -23,6 +23,12 @@ import { resolveIcon } from "../utils/iconResolver";
 import { useAppHostRouteTransition } from "./appHostRouteTransition";
 import { AppHostLoadingScreen } from "./AppHostLoadingScreen";
 import { useAppHostLoadingOverlay } from "./useAppHostLoadingOverlay";
+import {
+  resolveFederationEntry,
+  resolveHostedEntry,
+  resolveMatchingRoute,
+  resolveRouteAlternateUrl,
+} from "./appHostEntry";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -80,24 +86,30 @@ export const AppHost = () => {
 
   const route = useMemo<RouteItem | null>(() => {
     if (!app) return null;
-    return app.routes?.find((r) => r.path === location.pathname) ?? null;
+    return resolveMatchingRoute(app.routes, location.pathname);
   }, [app, location.pathname]);
+
+  const federationEntry = useMemo(
+    () => resolveFederationEntry(app),
+    [app],
+  );
 
   const resolvedEntry = useMemo<string | undefined>(() => {
     if (!app) return undefined;
-
-    const routeEntry = route?.entry?.trim();
-
-    if (routeEntry) return routeEntry;
-    if (app.entryUrl?.trim()) return app.entryUrl.trim();
-
-    return undefined;
+    return resolveHostedEntry(app, route);
   }, [app, route]);
+
+  const routeAlternateUrl = useMemo(
+    () => resolveRouteAlternateUrl(app, route),
+    [app, route],
+  );
 
   const hostLoadResetKey = useMemo(() => {
     if (!app) return "none";
-    return `${app.id}:${resolvedEntry ?? ""}:${iframeReloadKey}`;
-  }, [app, resolvedEntry, iframeReloadKey]);
+    const entryKey =
+      app.renderMode === "federated" ? (federationEntry ?? "") : (resolvedEntry ?? "");
+    return `${app.id}:${entryKey}:${iframeReloadKey}`;
+  }, [app, federationEntry, resolvedEntry, iframeReloadKey]);
 
   const hostLoading = useAppHostLoadingOverlay({
     resetKey: hostLoadResetKey,
@@ -406,7 +418,7 @@ export const AppHost = () => {
       if (!app) return;
       if (app.renderMode !== "federated") return;
 
-      if (!resolvedEntry) {
+      if (!federationEntry) {
         setFederatedError("entryUrl não definido.");
         return;
       }
@@ -416,7 +428,7 @@ export const AppHost = () => {
       federatedHostRef.current.innerHTML = "";
 
       try {
-        const container = await loadFederatedContainer(resolvedEntry);
+        const container = await loadFederatedContainer(federationEntry);
 
         if (typeof container.init === "function") {
           const shareScope = getViteFederationShareScope();
@@ -444,6 +456,8 @@ export const AppHost = () => {
           basePath: app.basePath,
           pathname: location.pathname,
           search: location.search,
+          alternateEntry: routeAlternateUrl,
+          routeLabel: route?.label,
         };
 
         mod.mount(federatedHostRef.current, props);
@@ -479,7 +493,7 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [app?.id, app?.renderMode, resolvedEntry, getAccessToken]);
+  }, [app?.id, app?.renderMode, federationEntry, getAccessToken, route?.label, routeAlternateUrl]);
 
   useEffect(() => {
     if (!app) return;
@@ -492,6 +506,8 @@ export const AppHost = () => {
       basePath: app.basePath,
       pathname: location.pathname,
       search: location.search,
+      alternateEntry: routeAlternateUrl,
+      routeLabel: route?.label,
     };
 
     const mod = mountedModuleRef.current;
@@ -504,7 +520,15 @@ export const AppHost = () => {
     if (typeof mod.mount === "function") {
       mod.mount(federatedHostRef.current, props);
     }
-  }, [app?.id, app?.renderMode, app?.basePath, location.pathname, getAccessToken]);
+  }, [
+    app?.id,
+    app?.renderMode,
+    app?.basePath,
+    location.pathname,
+    getAccessToken,
+    route?.label,
+    routeAlternateUrl,
+  ]);
 
   useEffect(() => {
     const forwardTokenUpdate = async () => {
@@ -709,6 +733,22 @@ export const AppHost = () => {
           <div className="app-host-federated-error">
             <b>Falha ao carregar microfrontend</b>
             <div className="app-host-federated-error-message">{federatedError}</div>
+          </div>
+        ) : null}
+
+        {routeAlternateUrl ? (
+          <div className="app-host-federated-alt">
+            <span className="app-host-federated-alt__label">
+              Link alternativo{route?.label ? ` — ${route.label}` : ""}:
+            </span>
+            <a
+              className="app-host-federated-alt__link"
+              href={routeAlternateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Abrir em nova aba
+            </a>
           </div>
         ) : null}
 

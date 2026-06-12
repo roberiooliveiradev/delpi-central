@@ -109,8 +109,9 @@ export function useMaintenanceActiveFilial(
     loading,
     error,
     submodules,
+    canManageFiliais: options?.can_manage_filiais ?? false,
     canManageMiniApplicators:
-      allSubmodules.find((item) => item.id === "mini-aplicadores")?.can_manage ?? false,
+      submodules.find((item) => item.id === "mini-applicadores")?.can_manage ?? false,
   };
 }
 

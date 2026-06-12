@@ -33,8 +33,10 @@ export type MaintenanceOptions = {
   access_scope?: {
     mode: string;
     allowed_filiais: string[];
+    manage_filiais?: string[];
     scoped_manage: boolean;
   };
+  can_manage_filiais?: boolean;
 };
 
 export function fetchMaintenanceOptions(

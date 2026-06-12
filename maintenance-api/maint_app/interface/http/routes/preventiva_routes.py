@@ -17,8 +17,7 @@ def list_alertas(request: Request, filial: str = Query(..., min_length=2, max_le
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -36,8 +35,7 @@ def list_historico(
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -54,8 +52,7 @@ def list_ultimas_reposicoes(request: Request, filial: str = Query(..., min_lengt
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 

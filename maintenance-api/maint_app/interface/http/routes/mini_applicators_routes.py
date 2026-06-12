@@ -29,8 +29,7 @@ def list_ferramentas(
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -55,8 +54,7 @@ def get_ferramenta(request: Request, codigo: str, filial: str = Query(..., min_l
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -75,8 +73,7 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -95,8 +92,7 @@ def list_componentes(request: Request, codigo: str, filial: str = Query(..., min
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 

@@ -5,8 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
+from maint_app.application.security.maintenance_permissions import assert_module_manage
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
-from maint_app.application.services.maintenance_submodule_catalog import assert_submodule_manage
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
@@ -14,7 +14,6 @@ from maint_app.interface.http.filial_access_http import resolve_access_scope, re
 router = APIRouter(prefix="/maintenance", tags=["Manutenção — filiais"])
 
 _scope = FilialAccessScopeService()
-_SUBMODULE_ID = "mini-aplicadores"
 
 
 class FilialCreateBody(BaseModel):
@@ -50,7 +49,7 @@ def list_filiais(
 
     if admin:
         try:
-            assert_submodule_manage(user, _SUBMODULE_ID)
+            assert_module_manage(user)
         except PermissionError as exc:
             return fail(str(exc), 403)
         rows = FilialRepository().list(include_inactive=include_inactive)
@@ -70,7 +69,7 @@ def get_filial(filial_ref: str, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_module_manage(user)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -84,7 +83,7 @@ def get_filial(filial_ref: str, request: Request):
 def create_filial(body: FilialCreateBody, request: Request):
     user = resolve_user(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_module_manage(user)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -100,7 +99,7 @@ def create_filial(body: FilialCreateBody, request: Request):
 def update_filial(filial_ref: str, body: FilialUpdateBody, request: Request):
     user = resolve_user(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_module_manage(user)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -118,7 +117,7 @@ def update_filial(filial_ref: str, body: FilialUpdateBody, request: Request):
 def delete_filial(filial_ref: str, request: Request):
     user = resolve_user(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_module_manage(user)
     except PermissionError as exc:
         return fail(str(exc), 403)
 

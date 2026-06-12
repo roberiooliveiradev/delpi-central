@@ -15,12 +15,12 @@ from maint_app.main import app
 def test_preventiva_alertas_envelope(mock_service, _public, mock_user, mock_scope):
     mock_user.return_value = SimpleNamespace(
         is_superadmin=False,
-        permissions=["maintenance.mini-applicators.view", "maintenance.view.filial-01"],
+        permissions=["maintenance.mini-applicators.view.filial-01"],
     )
     mock_scope.return_value = FilialAccessScope(
         mode="scoped",
         allowed_codigos=frozenset({"01"}),
-        scoped_manage=False,
+        manage_codigos=frozenset(),
     )
     mock_service.return_value.listar_alertas.return_value = [
         {

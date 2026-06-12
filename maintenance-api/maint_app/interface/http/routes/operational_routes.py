@@ -65,8 +65,7 @@ def list_motivos(request: Request, filial: str = Query(..., min_length=2, max_le
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     items = MotivoRepository().list_active(filial=filial)
@@ -78,8 +77,7 @@ def create_motivo(body: MotivoCreateBody, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, body.filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     item = MotivoRepository().create(body.descricao, filial=body.filial)
@@ -91,8 +89,7 @@ def update_motivo(motivo_id: int, body: MotivoUpdateBody, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, body.filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     item = MotivoRepository().update(motivo_id, body.descricao, filial=body.filial)
@@ -110,8 +107,7 @@ def delete_motivo(
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     MotivoRepository().soft_delete(motivo_id, filial=filial)
@@ -123,8 +119,7 @@ def list_status_peca(request: Request, filial: str = Query(..., min_length=2, ma
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     items = StatusPecaRepository().list_active(filial=filial)
@@ -136,8 +131,7 @@ def create_status_peca(body: StatusCreateBody, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, body.filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     item = StatusPecaRepository().create(
@@ -159,8 +153,7 @@ def update_status_peca(
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     item = StatusPecaRepository().update(
@@ -184,8 +177,7 @@ def delete_status_peca(
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
-        _scope.assert_manage_filial(scope, filial, user=user)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     StatusPecaRepository().soft_delete(status_id, filial=filial)
@@ -202,8 +194,7 @@ def list_reposicoes(
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
     items = ReposicaoRepository().list_by_ferramenta(
@@ -220,7 +211,7 @@ def create_reposicao(body: ReposicaoBody, request: Request):
     user = resolve_user(request)
     service = build_reposicao_service()
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
         item = service.create(body.model_dump(), scope=scope, user=user)
         return ok(item, message="Reposição registrada.", status_code=201)
     except PermissionError as exc:
@@ -235,7 +226,7 @@ def update_reposicao(reposicao_id: str, body: ReposicaoBody, request: Request):
     user = resolve_user(request)
     service = build_reposicao_service()
     try:
-        assert_submodule_manage(user, _SUBMODULE_ID)
+        assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
         item = service.update(reposicao_id, body.model_dump(), scope=scope, user=user)
         if not item:
             return fail("Reposição não encontrada.", 404)
@@ -273,8 +264,7 @@ def sugerir_golpes(
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
-        assert_submodule_view(user, _SUBMODULE_ID)
-        _scope.assert_view_filial(scope, filial)
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
 

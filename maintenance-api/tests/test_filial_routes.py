@@ -9,18 +9,14 @@ from maint_app.main import app
 def _manage_user():
     return SimpleNamespace(
         is_superadmin=False,
-        permissions=[
-            "maintenance.mini-applicators.manage",
-            "maintenance.view.filial-01",
-            "maintenance.manage.filial-01",
-        ],
+        permissions=["maintenance.manage"],
     )
 
 
 def _view_user():
     return SimpleNamespace(
         is_superadmin=False,
-        permissions=["maintenance.mini-applicators.view", "maintenance.view.filial-01"],
+        permissions=["maintenance.mini-applicators.view.filial-01"],
     )
 
 
@@ -75,7 +71,7 @@ def test_list_filiais_admin(mock_repo_cls, _public, mock_user, mock_scope):
     mock_scope.return_value = FilialAccessScope(
         mode="scoped",
         allowed_codigos=frozenset({"01"}),
-        scoped_manage=True,
+        manage_codigos=frozenset({"01"}),
     )
     mock_repo_cls.return_value.list.return_value = [
         {

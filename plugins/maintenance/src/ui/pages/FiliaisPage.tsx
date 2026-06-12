@@ -43,7 +43,7 @@ export function FiliaisPage({
   filialScope,
   onNavigate,
 }: FiliaisPageProps) {
-  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { canManageFiliais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const [filiais, setFiliais] = useState<FilialItem[]>([]);
   const [edits, setEdits] = useState<Record<number, FilialDraft>>({});
   const [novoCodigo, setNovoCodigo] = useState("");
@@ -77,10 +77,10 @@ export function FiliaisPage({
   }, [getAccessToken]);
 
   useEffect(() => {
-    if (canManageMiniApplicators) {
+    if (canManageFiliais) {
       void loadData();
     }
-  }, [canManageMiniApplicators, loadData]);
+  }, [canManageFiliais, loadData]);
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
@@ -208,7 +208,7 @@ export function FiliaisPage({
     [edits],
   );
 
-  if (!canManageMiniApplicators) {
+  if (!canManageFiliais) {
     return (
       <MaintenanceShell>
         <PageHeader
@@ -220,8 +220,7 @@ export function FiliaisPage({
           onNavigate={onNavigate}
         />
         <StateBox variant="error">
-          Acesso restrito. É necessária a permissão{" "}
-          <code>maintenance.mini-applicators.manage</code>.
+          Acesso restrito. É necessária a permissão <code>maintenance.manage</code>.
         </StateBox>
       </MaintenanceShell>
     );
@@ -231,7 +230,7 @@ export function FiliaisPage({
     <MaintenanceShell>
       <PageHeader
         title="Filiais"
-        subtitle="Cadastro de filiais operacionais. Novas filiais exigem permissões RBAC maintenance.view/manage.filial-XX na Core API."
+        subtitle="Cadastro de filiais operacionais. Os nomes cadastrados aqui aparecem no seletor de filial e nas telas do módulo."
         icon={Building2}
         currentPath={pathname}
         filialScope={filialScope}

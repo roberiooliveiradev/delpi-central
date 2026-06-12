@@ -69,7 +69,7 @@ def test_create_checks_manage_permission():
     repo.get_ultima_data.return_value = None
     repo.create.return_value = {"reposicao_id": "abc"}
     service = ReposicaoService(reposicao_repo=repo)
-    scope = FilialAccessScope(mode="scoped", allowed_codigos=frozenset({"01"}), scoped_manage=False)
+    scope = FilialAccessScope(mode="scoped", allowed_codigos=frozenset({"01"}), manage_codigos=frozenset())
 
     with pytest.raises(PermissionError):
         service.create(

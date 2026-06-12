@@ -696,6 +696,27 @@ body.portal-has-embedded-app .content {
   white-space: pre-wrap;
 }
 
+.app-host-federated-alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border, rgba(128, 128, 128, 0.25));
+  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+  font-size: 0.875rem;
+}
+
+.app-host-federated-alt__link {
+  color: var(--primary, #2563eb);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-host-federated-alt__link:hover {
+  text-decoration: underline;
+}
+
 @media (hover: none) {
   .app-host-google-floating-button {
     opacity: 0.55;

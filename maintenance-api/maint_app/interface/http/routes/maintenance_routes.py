@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Request
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
 from maint_app.application.services.maintenance_submodule_catalog import filter_submodules_for_user
-from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
+from maint_app.application.security.maintenance_permissions import can_manage_module
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
@@ -53,8 +53,8 @@ def get_options(
         filiais = FilialRepository().list_for_options()
     except Exception:
         filiais = [
-            {"id": "01", "label": "Matriz", "codigo_filial": "01"},
-            {"id": "02", "label": "ES", "codigo_filial": "02"},
+            {"id": "01", "label": "01", "codigo_filial": "01"},
+            {"id": "02", "label": "02", "codigo_filial": "02"},
         ]
     filiais = _scope.filter_filiais_options(
         [{"id": item["id"], "label": item["label"]} for item in filiais],
@@ -68,6 +68,7 @@ def get_options(
             "submodules": submodules,
             "modulos": submodules,
             "default_filial": default_filial,
+            "can_manage_filiais": can_manage_module(user),
             "access_scope": scope.meta(),
         },
         message="Opções carregadas.",
