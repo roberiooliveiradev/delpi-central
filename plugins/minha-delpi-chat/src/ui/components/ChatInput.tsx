@@ -43,6 +43,7 @@ import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
 } from "../../content/workspaceFileIngestContent";
+import { useWorkspaceFileIngestPolicy } from "../hooks/useWorkspaceFileIngestPolicy";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
 import "./ChatInput.css";
@@ -97,6 +98,7 @@ type ChatInputProps = {
   typingSuggestionLabels?: MessageComposerTypingCorrectionContent;
   onAcceptTypingSuggestion?: () => void;
   onDismissTypingSuggestion?: () => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 function formatFileSize(size: number): string {
@@ -148,7 +150,11 @@ export function ChatInput({
   typingSuggestionLabels,
   onAcceptTypingSuggestion,
   onDismissTypingSuggestion,
+  getAccessToken,
 }: ChatInputProps) {
+  const { accept: sessionAttachmentAccept } = useWorkspaceFileIngestPolicy("session_attachment", {
+    getAccessToken,
+  });
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
   const isMenuOpen = isPlusMenuControlled ? plusMenuOpen : internalMenuOpen;
@@ -413,7 +419,7 @@ export function ChatInput({
         className="mdc-chat-input__file-input"
         type="file"
         multiple
-        accept=".pdf,.txt,.md,.doc,.docx,.xls,.xlsx,.csv,.json,.png,.jpg,.jpeg,.webp"
+        accept={sessionAttachmentAccept}
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
 

@@ -13,6 +13,7 @@ type AgentKnowledgeSourcesPanelProps = {
   sources: ChatWorkspaceSource[];
   isUploading?: boolean;
   notice?: string | null;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onUploadFiles: (files: File[]) => Promise<void>;
   onRemoveSource: (sourceId: string) => Promise<void>;
   onDownloadSource?: (sourceId: string) => Promise<void>;
@@ -50,6 +51,7 @@ export function AgentKnowledgeSourcesPanel({
   sources,
   isUploading = false,
   notice,
+  getAccessToken,
   onUploadFiles,
   onRemoveSource,
   onDownloadSource,
@@ -133,6 +135,8 @@ export function AgentKnowledgeSourcesPanel({
         isBusy={isUploading}
         isDragActive={isDragActive}
         contentVariant="agent"
+        ingestFamily="agent_source"
+        getAccessToken={getAccessToken}
         ariaLabel={ingestLabels.ariaAddFiles}
         onDragActiveChange={setIsDragActive}
         onFilesSelected={(files) => {

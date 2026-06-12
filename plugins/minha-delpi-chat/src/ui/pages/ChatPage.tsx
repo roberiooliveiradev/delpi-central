@@ -2115,6 +2115,7 @@ export function ChatPage({
     onAttachFiles: handleAttachFiles,
     onRemoveAttachment: handleRemoveAttachment,
     onClearAttachments: () => setComposerAttachments([]),
+    getAccessToken,
   };
 
   const composerResponseModeProps = {
@@ -2185,6 +2186,7 @@ export function ChatPage({
         onCancel={() => setAddContextDialogOpen(false)}
         onConfirm={handleAddContextPayload}
         recentConversation={recentConversationPicks}
+        getAccessToken={getAccessToken}
       />
       <ChatMemoryUsedDialog
         open={memoryUsedDialogOpen}

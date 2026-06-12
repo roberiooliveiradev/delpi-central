@@ -21,11 +21,11 @@ type ChatAddContextDialogProps = {
   onCancel: () => void;
   onConfirm: (payload: UserContextPayload) => void;
   recentConversation?: ConversationContextPick[];
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 const MAX_CHARS = 12_000;
 const TEXT_EXTENSIONS = /\.(txt|md|csv|tsv|json)$/i;
-const CONTEXT_FILE_ACCEPT = ".txt,.md,.csv,.tsv,.json,text/plain,text/markdown";
 
 async function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -42,6 +42,7 @@ export function ChatAddContextDialog({
   onCancel,
   onConfirm,
   recentConversation = [],
+  getAccessToken,
 }: ChatAddContextDialogProps) {
   const contextLabels = workspaceFileContextIngestLabels();
   const formId = useId();
@@ -208,11 +209,12 @@ export function ChatAddContextDialog({
 
             <WorkspaceFileDropzone
               compact
-              accept={CONTEXT_FILE_ACCEPT}
               disabled={isReadingFile}
               isBusy={isReadingFile}
               isDragActive={isDragActive}
               contentVariant="context"
+              ingestFamily="context_paste"
+              getAccessToken={getAccessToken}
               onDragActiveChange={setIsDragActive}
               onFilesSelected={(files) => {
                 void ingestFiles(files);

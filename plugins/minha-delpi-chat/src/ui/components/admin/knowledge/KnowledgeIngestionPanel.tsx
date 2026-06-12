@@ -12,9 +12,8 @@ import "./KnowledgeIngestionPanel.css";
 type KnowledgeIngestionPanelProps = KnowledgeIngestionActions & {
   isMutating: boolean;
   canManageKnowledge: boolean;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
-
-const ACCEPTED_KNOWLEDGE_EXTENSIONS = ".pdf,.txt,.md,.doc,.docx,.xls,.xlsx,.csv,.json";
 
 function formatFileSize(size: number): string {
   if (size < 1024) {
@@ -35,6 +34,7 @@ export function KnowledgeIngestionPanel({
   uploadDocumentFile,
   previewIngestion,
   ingestionPreview,
+  getAccessToken,
 }: KnowledgeIngestionPanelProps) {
   const [title, setTitle] = useState("");
   const [sourceType, setSourceType] = useState("diretriz");
@@ -202,7 +202,8 @@ export function KnowledgeIngestionPanel({
         {ingestMode === "file" ? (
           <AdminFileDropzone
             label="Arquivo de conhecimento"
-            accept={ACCEPTED_KNOWLEDGE_EXTENSIONS}
+            ingestFamily="global_knowledge"
+            getAccessToken={getAccessToken}
             disabled={isMutating || !canManageKnowledge}
             isBusy={isMutating}
             isDragActive={isDragging}

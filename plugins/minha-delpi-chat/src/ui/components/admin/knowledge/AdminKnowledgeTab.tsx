@@ -21,6 +21,7 @@ type AdminKnowledgeTabProps = KnowledgeDocumentsState &
     rbac?: AdminRbacSummary | null;
     documentSummary?: AdminKnowledgeDocumentsSummary | null;
     onDocumentStatusFilterChange?: (filter: DocumentStatusFilter) => void;
+    getAccessToken?: () => string | undefined | Promise<string | undefined>;
   };
 
 export function AdminKnowledgeTab({
@@ -59,6 +60,7 @@ export function AdminKnowledgeTab({
   rbac,
   documentSummary,
   onDocumentStatusFilterChange,
+  getAccessToken,
 }: AdminKnowledgeTabProps) {
   const canManageKnowledge = Boolean(
     rbac?.capabilities.canDeleteKnowledgeDocuments ||
@@ -96,6 +98,7 @@ export function AdminKnowledgeTab({
           previewIngestion={previewIngestion}
           ingestionPreview={ingestionPreview}
           canManageKnowledge={canManageKnowledge}
+          getAccessToken={getAccessToken}
         />
       </div>
 

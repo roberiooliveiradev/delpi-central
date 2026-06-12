@@ -1,5 +1,12 @@
 import attachmentsContent from "./attachments_content.json";
 
+export type WorkspaceFileDropzoneContentVariant =
+  | "session"
+  | "workspace"
+  | "agent"
+  | "project"
+  | "context";
+
 type ReadingStatusKey = keyof typeof attachmentsContent.preview.readingStatus;
 
 const READING_STATUS = attachmentsContent.preview.readingStatus;
@@ -51,7 +58,7 @@ export function workspaceFileReadingStatusLabel(
 }
 
 export function workspaceFileDropzoneContent(
-  variant: "session" | "workspace" | "agent" | "project" | "context" = "workspace",
+  variant: WorkspaceFileDropzoneContentVariant = "workspace",
 ) {
   const hintByVariant = {
     session: INGEST_UI.dropzone.hintSession,

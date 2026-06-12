@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
 
+import type { WorkspaceFileIngestPolicyFamily } from "../../../../data/api/chatTypes";
 import { WorkspaceFileDropzone } from "../../workspace-files/WorkspaceFileDropzone";
 
 import "./AdminFileDropzone.css";
 
+type TokenProvider = () => string | undefined | Promise<string | undefined>;
+
 type AdminFileDropzoneProps = {
   label: string;
   accept?: string;
+  ingestFamily?: WorkspaceFileIngestPolicyFamily;
+  getAccessToken?: TokenProvider;
   multiple?: boolean;
   disabled?: boolean;
   isBusy?: boolean;
@@ -22,6 +27,8 @@ type AdminFileDropzoneProps = {
 export function AdminFileDropzone({
   label,
   accept,
+  ingestFamily = "global_knowledge",
+  getAccessToken,
   multiple = false,
   disabled = false,
   isBusy = false,
@@ -37,6 +44,8 @@ export function AdminFileDropzone({
     <WorkspaceFileDropzone
       showFieldLabel={label}
       accept={accept}
+      ingestFamily={ingestFamily}
+      getAccessToken={getAccessToken}
       multiple={multiple}
       disabled={disabled}
       isBusy={isBusy}

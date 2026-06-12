@@ -186,6 +186,7 @@ export function ChatAdminPage({
                   .then(() => undefined)
               }
               rbac={adminRbac}
+              getAccessToken={getAccessToken}
             />
           ) : null}
 

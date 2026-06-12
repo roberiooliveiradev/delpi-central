@@ -1,12 +1,21 @@
 import { Plus, Upload } from "lucide-react";
 import { useRef, type DragEvent, type ReactNode } from "react";
 
+import type { WorkspaceFileIngestPolicyFamily } from "../../../data/api/chatTypes";
 import { workspaceFileDropzoneContent } from "../../../content/workspaceFileIngestContent";
+import {
+  useWorkspaceFileIngestPolicy,
+  workspaceFileIngestFamilyForContentVariant,
+} from "../../hooks/useWorkspaceFileIngestPolicy";
 
 import "./workspaceFileIngest.css";
 
+type TokenProvider = () => string | undefined | Promise<string | undefined>;
+
 type WorkspaceFileDropzoneProps = {
   accept?: string;
+  ingestFamily?: WorkspaceFileIngestPolicyFamily;
+  getAccessToken?: TokenProvider;
   multiple?: boolean;
   disabled?: boolean;
   isBusy?: boolean;
@@ -25,6 +34,8 @@ type WorkspaceFileDropzoneProps = {
 
 export function WorkspaceFileDropzone({
   accept,
+  ingestFamily,
+  getAccessToken,
   multiple = false,
   disabled = false,
   isBusy = false,
@@ -41,6 +52,14 @@ export function WorkspaceFileDropzone({
   compact = false,
 }: WorkspaceFileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const resolvedFamily =
+    ingestFamily ?? workspaceFileIngestFamilyForContentVariant(contentVariant);
+  const shouldLoadPolicy = accept === undefined;
+  const { accept: policyAccept } = useWorkspaceFileIngestPolicy(
+    shouldLoadPolicy ? resolvedFamily : undefined,
+    { getAccessToken },
+  );
+  const resolvedAccept = accept ?? policyAccept;
   const content = workspaceFileDropzoneContent(contentVariant);
   const resolvedTitle = title ?? content.title;
   const resolvedHint = hint ?? content.hint;
@@ -130,7 +149,7 @@ export function WorkspaceFileDropzone({
         ref={inputRef}
         type="file"
         hidden
-        accept={accept}
+        accept={resolvedAccept}
         multiple={multiple}
         disabled={disabled || isBusy}
         onChange={(event) => {

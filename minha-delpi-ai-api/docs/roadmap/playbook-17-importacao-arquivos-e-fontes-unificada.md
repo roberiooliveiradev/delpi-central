@@ -210,10 +210,10 @@ Implementar 17 **não** altera welcome/chips — só unifica **entrada** e **vis
 
 ## 9. Checklist de aceite (Playbook 17)
 
-- [ ] Um `WorkspaceFileDropzone` usado em ≥ 4 superfícies
-- [ ] Um `WorkspaceFileCard` usado em composer, mensagem, agente, projeto
+- [x] Um `WorkspaceFileDropzone` usado em ≥ 4 superfícies
+- [x] Um `WorkspaceFileCard` usado em composer, mensagem, agente, projeto
 - [ ] Status 100% de `attachments.json` no MFE
-- [ ] `accept` único documentado e enforced na API
+- [x] `accept` único documentado e enforced na API (+ MFE via `useWorkspaceFileIngestPolicy`)
 - [ ] Playbook 05 casos L1–L12 continuam passando
 - [ ] Documentação `04-actions-openapi` ou doc dedicada de attachments/sources atualizada
 
@@ -238,7 +238,7 @@ A revisão UI cobriu as **superfícies principais**, mas faltaram **cinco áreas
 
 O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE e **sprints de migração** sem duplicar o Playbook 05 (inteligência pós-leitura).
 
-**Próximo passo:** MFE consumir `fetchWorkspaceFileIngestPolicy` (em `chatApi.ts`) nos dropzones; smoke F1–F5; poll async se fontes passarem a indexar em background.
+**Próximo passo:** smoke E2E F1–F5 em homolog; erros de upload via `error_handling.json`; poll async se fontes indexarem em background.
 
 ### Progresso (jun/2026)
 
@@ -256,3 +256,5 @@ O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE
 | E | `workspaceFileIngestPolling` (sessão) | ✅ |
 | E | API `WorkspaceFileIngestPolicyService` + `GET /chat/ingest/policy` | ✅ |
 | E | Fixtures F6/F7 + `workspaceFileIngest.test.ts` | ✅ parcial |
+| F | `useWorkspaceFileIngestPolicy` nos dropzones + composer | ✅ |
+| F | `scripts/smoke_workspace_file_ingest.py` (policy HTTP) | ✅ |

@@ -1744,6 +1744,7 @@ export function ChatAgentBuilderPage({
                   sources={agentSources}
                   isUploading={isSavingSource}
                   notice={sourceNotice}
+                  getAccessToken={getAccessToken}
                   onUploadFiles={uploadAgentKnowledgeFiles}
                   onLocalDuplicatesSkipped={(count) =>
                     setSourceNotice(

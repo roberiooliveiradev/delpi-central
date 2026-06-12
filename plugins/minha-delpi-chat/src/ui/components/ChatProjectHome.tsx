@@ -739,6 +739,8 @@ export function ChatProjectHome({
               isBusy={isSavingSource}
               isDragActive={isSourceDragActive}
               contentVariant="project"
+              ingestFamily="project_source"
+              getAccessToken={getAccessToken}
               onDragActiveChange={setIsSourceDragActive}
               onFilesSelected={(files) => {
                 void uploadSourceFile(files[0]);
