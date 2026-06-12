@@ -22,7 +22,7 @@ python -m uvicorn tm_app.main:app --reload --port 8010
 
 ## Migrations
 
-Ver [migrations/README.md](migrations/README.md) (V001–V015, Playbook 18 S1–S4).
+Ver [migrations/README.md](migrations/README.md) (V001–V016, Playbook 18 S1–S5).
 
 ```bash
 PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...

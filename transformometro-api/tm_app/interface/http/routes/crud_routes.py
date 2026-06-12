@@ -14,6 +14,7 @@ from tm_app.core.catalogs import (
     CRITERIO_RATEIO,
     FILIAIS,
     RECORRENCIAS,
+    ESCOPO_RECURSO,
     STATUS_FILIAL,
     STATUS_PROCESSO,
     STATUS_RECURSO,
@@ -179,6 +180,7 @@ def _validate_recurso_body(body: RecursoBody):
     assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
     assert_in(body.base_competencia, BASE_COMPETENCIA_RECURSO, "base_competencia")
     assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
+    assert_in(body.escopo_recurso, ESCOPO_RECURSO, "escopo_recurso")
     if body.categoria_recurso:
         assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
 

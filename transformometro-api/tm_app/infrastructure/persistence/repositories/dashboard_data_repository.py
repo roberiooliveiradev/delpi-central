@@ -67,8 +67,26 @@ class DashboardDataRepository(PluginBaseRepository):
         custos = self.fetch_all(
             "SELECT * FROM transformometro.recurso_custos WHERE deletado = FALSE"
         )
+        instancias = self.fetch_all(
+            """
+            SELECT
+                pi.instancia_id,
+                pi.processo_id,
+                pi.filial_id,
+                pi.setor_id,
+                f.codigo_filial,
+                s.codigo_setor
+            FROM transformometro.processo_instancias pi
+            JOIN transformometro.filiais f ON f.filial_id = pi.filial_id
+            JOIN transformometro.setores s ON s.setor_id = pi.setor_id
+            WHERE pi.deletado = FALSE
+              AND f.deletado = FALSE
+              AND s.deletado = FALSE
+            """
+        )
         return TransformometroRawData(
             processos=processos,
+            processo_instancias=instancias,
             revisoes=revisoes,
             medicoes=medicoes,
             investimentos=investimentos,

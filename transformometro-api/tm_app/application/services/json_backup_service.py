@@ -316,6 +316,8 @@ class JsonBackupService:
             out[col] = value
         if "deletado" not in out:
             out["deletado"] = False
+        if spec.bundle_key == "recursos_compartilhados" and "escopo_recurso" not in out:
+            out["escopo_recurso"] = "empresa"
         if spec.bundle_key == "revisoes" and out.get("chave_unica_processo_revisao") is None:
             out["chave_unica_processo_revisao"] = (
                 f"{out.get('processo_id')}|{out.get('versao_revisao')}"

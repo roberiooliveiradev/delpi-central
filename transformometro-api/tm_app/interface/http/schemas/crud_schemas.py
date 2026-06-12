@@ -136,6 +136,7 @@ class RecursoBody(BaseModel):
     recorrencia: str
     valor_total_recorrente: float = 0
     criterio_rateio: str = "igualitario"
+    escopo_recurso: str = Field(default="empresa", max_length=32)
     base_competencia: str = "mensal_cheio"
     status_recurso: str = "ativo"
     categoria_recurso: Optional[str] = None

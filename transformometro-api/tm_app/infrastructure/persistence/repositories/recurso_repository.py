@@ -47,8 +47,8 @@ class RecursoRepository(PluginBaseRepository):
                 codigo_recurso, nome_recurso, categoria_recurso, fornecedor,
                 tipo_custo, recorrencia, valor_total_recorrente,
                 data_inicio_vigencia, data_fim_vigencia, centro_custo,
-                criterio_rateio, base_competencia, status_recurso, observacoes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                criterio_rateio, escopo_recurso, base_competencia, status_recurso, observacoes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
@@ -63,6 +63,7 @@ class RecursoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("centro_custo"),
                 data.get("criterio_rateio", "igualitario"),
+                data.get("escopo_recurso", "empresa"),
                 data.get("base_competencia", "mensal_cheio"),
                 data.get("status_recurso", "ativo"),
                 data.get("observacoes"),
@@ -86,6 +87,7 @@ class RecursoRepository(PluginBaseRepository):
                 data_fim_vigencia = %s,
                 centro_custo = %s,
                 criterio_rateio = %s,
+                escopo_recurso = %s,
                 base_competencia = %s,
                 status_recurso = %s,
                 observacoes = %s,
@@ -104,6 +106,7 @@ class RecursoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("centro_custo"),
                 data.get("criterio_rateio", "igualitario"),
+                data.get("escopo_recurso", "empresa"),
                 data.get("base_competencia", "mensal_cheio"),
                 data.get("status_recurso", "ativo"),
                 data.get("observacoes"),

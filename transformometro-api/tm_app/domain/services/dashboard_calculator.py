@@ -14,11 +14,14 @@ from tm_app.core.business_days import (
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
+from tm_app.domain.services.shared_resource_scope_service import filter_rateio_pool
 
 
 @dataclass(frozen=True)
 class CalculationContext:
     processos_by_id: Dict[str, dict]
+    revisoes_by_id: Dict[str, dict]
+    instancias_by_id: Dict[str, dict]
     revisoes_by_processo: Dict[str, List[dict]]
     medicoes_by_revisao: Dict[str, dict]
     investimentos_by_revisao: Dict[str, List[dict]]
@@ -276,8 +279,15 @@ class DashboardCalculatorService:
             if self._empty_to_none(custo.get("recurso_compartilhado_id")) in recurso_ids
         ]
 
+        instancias_filtradas = [
+            instancia
+            for instancia in raw.processo_instancias
+            if self._empty_to_none(instancia.get("processo_id")) in processo_ids
+        ]
+
         return TransformometroRawData(
             processos=processos_filtrados,
+            processo_instancias=instancias_filtradas,
             revisoes=revisoes_filtradas,
             medicoes=medicoes_filtradas,
             investimentos=investimentos_filtrados,
@@ -289,6 +299,8 @@ class DashboardCalculatorService:
     def _build_context(self, raw: TransformometroRawData) -> CalculationContext:
         return CalculationContext(
             processos_by_id=self._index_by(raw.processos, "processo_id"),
+            revisoes_by_id=self._index_by(raw.revisoes, "revisao_id"),
+            instancias_by_id=self._index_by(raw.processo_instancias, "instancia_id"),
             revisoes_by_processo=self._group_by(raw.revisoes, "processo_id"),
             medicoes_by_revisao=self._group_first_by(raw.medicoes, "revisao_id"),
             investimentos_by_revisao=self._group_by(raw.investimentos, "revisao_id"),
@@ -877,7 +889,9 @@ class DashboardCalculatorService:
 
             eligible_links = self._get_eligible_links_for_resource(
                 resource_id=resource_id or "",
-                vinculos_by_revisao=context.vinculos_by_revisao,
+                resource=resource,
+                anchor_revisao_id=review_id,
+                context=context,
                 competencia_date=competencia_date,
             )
 
@@ -919,19 +933,31 @@ class DashboardCalculatorService:
     def _get_eligible_links_for_resource(
         self,
         resource_id: str,
-        vinculos_by_revisao: Dict[str, List[dict]],
+        resource: dict,
+        anchor_revisao_id: str,
+        context: CalculationContext,
         competencia_date: date,
     ) -> List[dict]:
         result: List[dict] = []
 
-        for review_links in vinculos_by_revisao.values():
+        for revisao_id, review_links in context.vinculos_by_revisao.items():
             for link in review_links:
                 if self._empty_to_none(link.get("recurso_compartilhado_id")) != resource_id:
                     continue
-                if self._is_link_eligible(link, competencia_date):
-                    result.append(link)
+                if not self._is_link_eligible(link, competencia_date):
+                    continue
+                enriched = dict(link)
+                enriched.setdefault("revisao_id", revisao_id)
+                result.append(enriched)
 
-        return result
+        return filter_rateio_pool(
+            resource,
+            result,
+            anchor_revisao_id=anchor_revisao_id,
+            revisoes_by_id=context.revisoes_by_id,
+            instancias_by_id=context.instancias_by_id,
+            processos_by_id=context.processos_by_id,
+        )
 
     def _calculate_recurring_investment_month(
         self,

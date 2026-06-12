@@ -72,6 +72,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "data_fim_vigencia",
             "centro_custo",
             "criterio_rateio",
+            "escopo_recurso",
             "status_recurso",
             "observacoes",
             "base_competencia",
