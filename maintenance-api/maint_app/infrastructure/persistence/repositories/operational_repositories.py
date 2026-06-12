@@ -7,76 +7,89 @@ from maint_app.infrastructure.persistence.plugins.plugin_base_repository import 
 
 
 class MotivoRepository(PluginBaseRepository):
-    def list_active(self) -> list[dict[str, Any]]:
+    def list_active(self, *, filial: str) -> list[dict[str, Any]]:
         return self.fetch_all(
             """
-            SELECT motivo_id, descricao
+            SELECT motivo_id, descricao, filial
             FROM maintenance.motivos
             WHERE excluido = FALSE
+              AND filial = %s
             ORDER BY descricao
-            """
+            """,
+            (filial,),
         )
 
-    def create(self, descricao: str) -> dict[str, Any]:
+    def create(self, descricao: str, *, filial: str) -> dict[str, Any]:
         row = self.execute_returning_one(
             """
-            INSERT INTO maintenance.motivos (descricao)
-            VALUES (%s)
-            RETURNING motivo_id, descricao
+            INSERT INTO maintenance.motivos (descricao, filial)
+            VALUES (%s, %s)
+            RETURNING motivo_id, descricao, filial
             """,
-            (descricao.strip(),),
+            (descricao.strip(), filial),
         )
         return row or {}
 
-    def update(self, motivo_id: int, descricao: str) -> dict[str, Any] | None:
+    def update(self, motivo_id: int, descricao: str, *, filial: str) -> dict[str, Any] | None:
         return self.execute_returning_one(
             """
             UPDATE maintenance.motivos
             SET descricao = %s,
                 data_alteracao = NOW()
             WHERE motivo_id = %s
+              AND filial = %s
               AND excluido = FALSE
-            RETURNING motivo_id, descricao
+            RETURNING motivo_id, descricao, filial
             """,
-            (descricao.strip(), motivo_id),
+            (descricao.strip(), motivo_id, filial),
         )
 
-    def soft_delete(self, motivo_id: int) -> bool:
+    def soft_delete(self, motivo_id: int, *, filial: str) -> bool:
         self.execute(
             """
             UPDATE maintenance.motivos
             SET excluido = TRUE,
                 data_alteracao = NOW()
             WHERE motivo_id = %s
+              AND filial = %s
               AND excluido = FALSE
             """,
-            (motivo_id,),
+            (motivo_id, filial),
         )
         return True
 
 
 class StatusPecaRepository(PluginBaseRepository):
-    def list_active(self) -> list[dict[str, Any]]:
+    def list_active(self, *, filial: str) -> list[dict[str, Any]]:
         return self.fetch_all(
             """
-            SELECT status_id, descricao, operador, percentual
+            SELECT status_id, descricao, operador, percentual, filial
             FROM maintenance.status_peca
             WHERE excluido = FALSE
+              AND filial = %s
             ORDER BY percentual DESC, descricao
-            """
+            """,
+            (filial,),
         )
 
     def update(
         self,
         status_id: int,
         *,
+        filial: str,
         descricao: str | None = None,
         operador: str | None = None,
         percentual: int | None = None,
     ) -> dict[str, Any] | None:
         row = self.fetch_one(
-            "SELECT * FROM maintenance.status_peca WHERE status_id = %s AND excluido = FALSE",
-            (status_id,),
+            """
+            SELECT *
+            FROM maintenance.status_peca
+            WHERE status_id = %s
+              AND filial = %s
+              AND excluido = FALSE
+            """,
+            (status_id, filial),
         )
         if not row:
             return None
@@ -88,15 +101,50 @@ class StatusPecaRepository(PluginBaseRepository):
                 percentual = %s,
                 data_alteracao = NOW()
             WHERE status_id = %s
-            RETURNING status_id, descricao, operador, percentual
+              AND filial = %s
+            RETURNING status_id, descricao, operador, percentual, filial
             """,
             (
                 descricao if descricao is not None else row["descricao"],
                 operador if operador is not None else row["operador"],
                 percentual if percentual is not None else row["percentual"],
                 status_id,
+                filial,
             ),
         )
+
+
+    def create(
+        self,
+        *,
+        filial: str,
+        descricao: str,
+        operador: str,
+        percentual: int,
+    ) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            """
+            INSERT INTO maintenance.status_peca (descricao, operador, percentual, filial)
+            VALUES (%s, %s, %s, %s)
+            RETURNING status_id, descricao, operador, percentual, filial
+            """,
+            (descricao.strip(), operador, percentual, filial),
+        )
+        return row or {}
+
+    def soft_delete(self, status_id: int, *, filial: str) -> bool:
+        self.execute(
+            """
+            UPDATE maintenance.status_peca
+            SET excluido = TRUE,
+                data_alteracao = NOW()
+            WHERE status_id = %s
+              AND filial = %s
+              AND excluido = FALSE
+            """,
+            (status_id, filial),
+        )
+        return True
 
 
 class ReposicaoRepository(PluginBaseRepository):
@@ -157,19 +205,28 @@ class ReposicaoRepository(PluginBaseRepository):
         filial: str,
         codigo_ferramenta: str,
         codigo_peca: str,
+        exclude_reposicao_id: str | None = None,
     ) -> datetime | None:
+        where = [
+            "excluido = FALSE",
+            "filial = %s",
+            "codigo_ferramenta = %s",
+            "codigo_peca = %s",
+        ]
+        params: list[Any] = [filial, codigo_ferramenta, codigo_peca]
+        if exclude_reposicao_id:
+            where.append("reposicao_id <> %s::uuid")
+            params.append(exclude_reposicao_id)
+
         row = self.fetch_one(
-            """
+            f"""
             SELECT data_reposicao
             FROM maintenance.reposicoes
-            WHERE excluido = FALSE
-              AND filial = %s
-              AND codigo_ferramenta = %s
-              AND codigo_peca = %s
+            WHERE {' AND '.join(where)}
             ORDER BY data_reposicao DESC
             LIMIT 1
             """,
-            (filial, codigo_ferramenta, codigo_peca),
+            tuple(params),
         )
         if not row:
             return None

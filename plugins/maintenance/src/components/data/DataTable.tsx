@@ -8,6 +8,7 @@ type DataTableProps<T> = {
   emptyMessage?: string;
   getRowKey: (row: T, index: number) => string;
   getRowClassName?: (row: T) => string | undefined;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTable<T>({
@@ -17,11 +18,14 @@ export function DataTable<T>({
   emptyMessage = "Nenhum registro encontrado.",
   getRowKey,
   getRowClassName,
+  onRowClick,
 }: DataTableProps<T>) {
+  const tableClass = onRowClick ? "dm-datatable__table dm-datatable__table--clickable" : "dm-datatable__table";
+
   return (
     <div className="dm-datatable">
       <div className="dm-datatable__scroll">
-        <table className="dm-datatable__table">
+        <table className={tableClass}>
           <thead>
             <tr>
               {columns.map((column) => (
@@ -45,20 +49,50 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              rows.map((row, index) => (
-                <tr key={getRowKey(row, index)} className={getRowClassName?.(row)}>
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className={column.className}
-                      data-label={column.header}
-                      data-align={column.align}
-                    >
-                      {column.render(row)}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              rows.map((row, index) => {
+                const rowClass = [getRowClassName?.(row), onRowClick ? "is-clickable" : ""]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <tr
+                    key={getRowKey(row, index)}
+                    className={rowClass || undefined}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onRowClick(row);
+                            }
+                          }
+                        : undefined
+                    }
+                    tabIndex={onRowClick ? 0 : undefined}
+                    role={onRowClick ? "button" : undefined}
+                  >
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className={column.className}
+                        data-label={column.header}
+                        data-align={column.align}
+                        data-interactive={column.interactive ? "true" : undefined}
+                        onClick={
+                          column.interactive
+                            ? (event) => {
+                                event.stopPropagation();
+                              }
+                            : undefined
+                        }
+                      >
+                        {column.render(row)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

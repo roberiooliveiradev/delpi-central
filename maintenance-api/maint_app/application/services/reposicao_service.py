@@ -19,7 +19,19 @@ class ReposicaoService:
         self._reposicao_repo = reposicao_repo or ReposicaoRepository()
         self._totvs = totvs_gateway
 
-    def validate_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def _parse_datetime(self, value: Any, *, field_name: str) -> datetime:
+        if isinstance(value, str):
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if isinstance(value, datetime):
+            return value
+        raise ValueError(f"{field_name} é obrigatória.")
+
+    def validate_payload(
+        self,
+        payload: dict[str, Any],
+        *,
+        exclude_reposicao_id: str | None = None,
+    ) -> dict[str, Any]:
         filial = str(payload.get("filial") or "").strip()
         codigo_ferramenta = str(payload.get("codigo_ferramenta") or "").strip()
         codigo_peca = str(payload.get("codigo_peca") or "").strip()
@@ -43,18 +55,24 @@ class ReposicaoService:
         if golpes_int <= 0:
             raise ValueError("Golpes deve ser maior que zero.")
 
-        if isinstance(data_reposicao, str):
-            data_reposicao_dt = datetime.fromisoformat(data_reposicao.replace("Z", "+00:00"))
-        elif isinstance(data_reposicao, datetime):
-            data_reposicao_dt = data_reposicao
-        else:
-            raise ValueError("Data de reposição é obrigatória.")
+        data_reposicao_dt = self._parse_datetime(data_reposicao, field_name="Data de reposição")
 
         ultima = self._reposicao_repo.get_ultima_data(
             filial=filial,
             codigo_ferramenta=codigo_ferramenta,
             codigo_peca=codigo_peca,
+            exclude_reposicao_id=exclude_reposicao_id,
         )
+
+        raw_data_ultima = payload.get("data_ultima_reposicao")
+        if raw_data_ultima:
+            data_ultima_reposicao_dt = self._parse_datetime(
+                raw_data_ultima,
+                field_name="Data da última reposição",
+            )
+        else:
+            data_ultima_reposicao_dt = ultima
+
         if ultima and data_reposicao_dt <= ultima:
             raise ValueError("Data de reposição deve ser posterior à última reposição.")
 
@@ -63,7 +81,7 @@ class ReposicaoService:
             "codigo_ferramenta": codigo_ferramenta,
             "codigo_peca": codigo_peca,
             "data_reposicao": data_reposicao_dt,
-            "data_ultima_reposicao": ultima,
+            "data_ultima_reposicao": data_ultima_reposicao_dt,
             "golpes": golpes_int,
             "motivo_id": int(motivo_id),
             "observacao": (payload.get("observacao") or "").strip() or None,
@@ -75,23 +93,42 @@ class ReposicaoService:
         filial: str,
         codigo_ferramenta: str,
         codigo_peca: str,
-    ) -> int:
-        if self._totvs is None:
-            return 0
+        data_inicial: str | None = None,
+        data_final: str | None = None,
+    ) -> dict[str, Any]:
         ultima = self._reposicao_repo.get_ultima_data(
             filial=filial,
             codigo_ferramenta=codigo_ferramenta,
             codigo_peca=codigo_peca,
         )
-        data_inicial = ultima.date().isoformat() if ultima else "2000-01-01"
-        data_final = datetime.utcnow().date().isoformat()
-        data = self._totvs.obter_golpes(
-            filial=filial,
-            codigo_ferramenta=codigo_ferramenta,
-            data_inicial=data_inicial,
-            data_final=data_final,
-        )
-        return int(data.get("total_golpes") or 0)
+        if data_inicial:
+            resolved_inicial = data_inicial
+        elif ultima:
+            resolved_inicial = ultima.replace(tzinfo=None).isoformat(timespec="seconds")
+        else:
+            resolved_inicial = "2000-01-01T00:00:00"
+
+        if data_final:
+            resolved_final = data_final
+        else:
+            resolved_final = datetime.utcnow().replace(microsecond=0).isoformat()
+
+        total = 0
+        if self._totvs is not None:
+            data = self._totvs.obter_golpes(
+                filial=filial,
+                codigo_ferramenta=codigo_ferramenta,
+                data_inicial=resolved_inicial,
+                data_final=resolved_final,
+            )
+            total = int(data.get("total_golpes") or 0)
+
+        return {
+            "total_golpes": total,
+            "data_ultima_reposicao": ultima.isoformat() if ultima else None,
+            "data_inicial": resolved_inicial,
+            "data_final": resolved_final,
+        }
 
     def create(
         self,
@@ -123,7 +160,10 @@ class ReposicaoService:
         existing = self._reposicao_repo.get_by_id(reposicao_id)
         if not existing:
             return None
-        normalized = self.validate_payload({**existing, **payload})
+        normalized = self.validate_payload(
+            {**existing, **payload},
+            exclude_reposicao_id=reposicao_id,
+        )
         from maint_app.application.services.filial_access_scope_service import (
             FilialAccessScopeService,
         )

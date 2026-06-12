@@ -45,7 +45,7 @@ class PreventivaService:
         self._totvs = totvs_gateway
 
     def listar_alertas(self, *, filial: str) -> list[dict[str, Any]]:
-        rules = self._status_repo.list_active()
+        rules = self._status_repo.list_active(filial=filial)
         ultimas = self._reposicao_repo.list_ultimas_por_par(filial=filial)
         alertas: list[dict[str, Any]] = []
 
@@ -133,11 +133,12 @@ class PreventivaService:
             return 0
 
         if isinstance(data_ultima, datetime):
-            data_inicial = data_ultima.date().isoformat()
+            data_inicial = data_ultima.replace(tzinfo=None).isoformat(timespec="seconds")
         else:
-            data_inicial = str(data_ultima)[:10]
+            raw = str(data_ultima or "").strip()
+            data_inicial = raw if "T" in raw else f"{raw[:10]}T00:00:00"
 
-        data_final = datetime.now(timezone.utc).date().isoformat()
+        data_final = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat()
         try:
             payload = self._totvs.obter_golpes(
                 filial=filial,

@@ -1,9 +1,12 @@
 import { useMaintenanceRouterPath } from "./hooks/useMaintenanceRouterPath";
 import { parseMaintenancePath } from "./utils/routeParser";
 import { navigateMaintenance } from "./utils/navigation";
+import { PageTransition } from "./components/PageTransition";
 import { HomePage } from "./ui/pages/HomePage";
 import { MiniAplicadoresPage } from "./ui/pages/MiniAplicadoresPage";
 import { ConfiguracaoPage } from "./ui/pages/ConfiguracaoPage";
+import { FiliaisPage } from "./ui/pages/FiliaisPage";
+import { ManutencaoGeralPage } from "./ui/pages/ManutencaoGeralPage";
 import { RelatorioPage } from "./ui/pages/RelatorioPage";
 
 export type AppProps = {
@@ -15,9 +18,19 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const pathname = useMaintenanceRouterPath(pathnameFromHost);
   const route = parseMaintenancePath(pathname);
   const onNavigate = navigateMaintenance;
+  const transitionKey = `${route.view}:${route.codigoFerramenta ?? ""}:${route.filialScope ?? ""}`;
+
+  let page = (
+    <HomePage
+      getAccessToken={getAccessToken}
+      pathname={pathname}
+      filialScope={route.filialScope}
+      onNavigate={onNavigate}
+    />
+  );
 
   if (route.view === "mini-aplicadores" || route.view === "mini-aplicador") {
-    return (
+    page = (
       <MiniAplicadoresPage
         getAccessToken={getAccessToken}
         pathname={pathname}
@@ -26,10 +39,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         codigoFerramenta={route.codigoFerramenta}
       />
     );
-  }
-
-  if (route.view === "relatorio") {
-    return (
+  } else if (route.view === "relatorio") {
+    page = (
       <RelatorioPage
         getAccessToken={getAccessToken}
         pathname={pathname}
@@ -37,11 +48,27 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onNavigate={onNavigate}
       />
     );
-  }
-
-  if (route.view === "configuracao") {
-    return (
+  } else if (route.view === "configuracao") {
+    page = (
       <ConfiguracaoPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        filialScope={route.filialScope}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (route.view === "filiais") {
+    page = (
+      <FiliaisPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        filialScope={route.filialScope}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (route.view === "manutencao-geral") {
+    page = (
+      <ManutencaoGeralPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         filialScope={route.filialScope}
@@ -50,12 +77,5 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   }
 
-  return (
-    <HomePage
-      getAccessToken={getAccessToken}
-      pathname={pathname}
-      filialScope={route.filialScope}
-      onNavigate={onNavigate}
-    />
-  );
+  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
 }

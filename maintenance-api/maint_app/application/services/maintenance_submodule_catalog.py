@@ -19,6 +19,15 @@ SUBMODULE_CATALOG: tuple[dict[str, Any], ...] = (
         "view_permission": SUBMODULE_VIEW_PERMISSIONS["mini-aplicadores"],
         "manage_permission": SUBMODULE_MANAGE_PERMISSIONS["mini-aplicadores"],
     },
+    {
+        "id": "manutencao-geral",
+        "label": "Manutenção geral",
+        "description": "Registro de máquinas, equipamentos, lâmpadas e demais ocorrências.",
+        "icon": "clipboard-list",
+        "entry_path": "/apps/maintenance/manutencao-geral",
+        "view_permission": SUBMODULE_VIEW_PERMISSIONS["manutencao-geral"],
+        "manage_permission": None,
+    },
 )
 
 
@@ -45,6 +54,10 @@ def filter_submodules_for_user(user: Any | None) -> list[dict[str, Any]]:
     for submodule in SUBMODULE_CATALOG:
         if not _can_view_submodule(user, submodule["id"]):
             continue
+        manage_permission = submodule.get("manage_permission")
+        can_manage = False
+        if manage_permission:
+            can_manage = _can_manage_submodule(user, submodule["id"])
         result.append(
             {
                 "id": submodule["id"],
@@ -52,7 +65,7 @@ def filter_submodules_for_user(user: Any | None) -> list[dict[str, Any]]:
                 "description": submodule["description"],
                 "icon": submodule["icon"],
                 "entry_path": submodule["entry_path"],
-                "can_manage": _can_manage_submodule(user, submodule["id"]),
+                "can_manage": can_manage,
             }
         )
     return result

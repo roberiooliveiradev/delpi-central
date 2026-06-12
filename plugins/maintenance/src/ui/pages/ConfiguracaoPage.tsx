@@ -4,8 +4,8 @@ import { Settings } from "lucide-react";
 import {
   type DataTableColumn,
   DataTableSection,
-  FilialBadge,
   FilterBar,
+  PendingChangeBadge,
   StateBox,
 } from "../../components/data";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
@@ -17,7 +17,9 @@ import {
 } from "../../hooks/useMaintenanceScope";
 import {
   createMotivo,
+  createStatusPeca,
   deleteMotivo,
+  deleteStatusPeca,
   fetchMotivos,
   fetchStatusPeca,
   updateMotivo,
@@ -35,6 +37,33 @@ type ConfiguracaoPageProps = {
 
 const STATUS_OPERATORS = [">=", "<=", ">", "<"] as const;
 
+type NovoStatusDraft = {
+  descricao: string;
+  operador: (typeof STATUS_OPERATORS)[number];
+  percentual: number;
+};
+
+const DEFAULT_NOVO_STATUS: NovoStatusDraft = {
+  descricao: "",
+  operador: ">=",
+  percentual: 80,
+};
+
+function isMotivoDirty(item: MotivoItem, edits: Record<number, string>): boolean {
+  const draft = edits[item.motivo_id];
+  return draft !== undefined && draft.trim() !== item.descricao;
+}
+
+function isStatusDirty(item: StatusItem, edits: Record<number, StatusItem>): boolean {
+  const draft = edits[item.status_id];
+  if (!draft) return false;
+  return (
+    draft.descricao !== item.descricao ||
+    draft.operador !== item.operador ||
+    draft.percentual !== item.percentual
+  );
+}
+
 export function ConfiguracaoPage({
   getAccessToken,
   pathname,
@@ -50,6 +79,7 @@ export function ConfiguracaoPage({
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [novoMotivo, setNovoMotivo] = useState("");
+  const [novoStatus, setNovoStatus] = useState<NovoStatusDraft>(DEFAULT_NOVO_STATUS);
   const [motivoEdits, setMotivoEdits] = useState<Record<number, string>>({});
   const [statusEdits, setStatusEdits] = useState<Record<number, StatusItem>>({});
 
@@ -85,7 +115,7 @@ export function ConfiguracaoPage({
     setError(null);
     setSuccess(null);
     try {
-      await createMotivo(descricao, getAccessToken);
+      await createMotivo(filial, descricao, getAccessToken);
       setNovoMotivo("");
       setSuccess("Motivo adicionado.");
       await loadData();
@@ -100,7 +130,7 @@ export function ConfiguracaoPage({
     setError(null);
     setSuccess(null);
     try {
-      await updateMotivo(motivoId, descricao, getAccessToken);
+      await updateMotivo(motivoId, filial, descricao, getAccessToken);
       setSuccess("Motivo atualizado.");
       await loadData();
     } catch (err) {
@@ -113,11 +143,35 @@ export function ConfiguracaoPage({
     setError(null);
     setSuccess(null);
     try {
-      await deleteMotivo(motivoId, getAccessToken);
+      await deleteMotivo(motivoId, filial, getAccessToken);
       setSuccess("Motivo excluído.");
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao excluir motivo.");
+    }
+  }
+
+  async function handleCreateStatus(event: React.FormEvent) {
+    event.preventDefault();
+    const descricao = novoStatus.descricao.trim();
+    if (!descricao) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await createStatusPeca(
+        {
+          filial,
+          descricao,
+          operador: novoStatus.operador,
+          percentual: novoStatus.percentual,
+        },
+        getAccessToken,
+      );
+      setNovoStatus(DEFAULT_NOVO_STATUS);
+      setSuccess("Status preventivo adicionado.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao adicionar status.");
     }
   }
 
@@ -129,6 +183,7 @@ export function ConfiguracaoPage({
     try {
       await updateStatusPeca(
         statusId,
+        filial,
         {
           descricao: draft.descricao,
           operador: draft.operador,
@@ -143,6 +198,19 @@ export function ConfiguracaoPage({
     }
   }
 
+  async function handleDeleteStatus(statusId: number, descricao: string) {
+    if (!window.confirm(`Excluir regra de status "${descricao}"?`)) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await deleteStatusPeca(statusId, filial, getAccessToken);
+      setSuccess("Status excluído.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir status.");
+    }
+  }
+
   const motivosColumns = useMemo<DataTableColumn<MotivoItem>[]>(() => {
     const columns: DataTableColumn<MotivoItem>[] = [
       { key: "id", header: "ID", render: (item) => item.motivo_id, align: "center" },
@@ -151,15 +219,18 @@ export function ConfiguracaoPage({
         header: "Descrição",
         render: (item) =>
           canManageMiniApplicators ? (
-            <input
-              value={motivoEdits[item.motivo_id] ?? item.descricao}
-              onChange={(event) =>
-                setMotivoEdits((prev) => ({
-                  ...prev,
-                  [item.motivo_id]: event.target.value,
-                }))
-              }
-            />
+            <div className="dm-editable-cell">
+              <input
+                value={motivoEdits[item.motivo_id] ?? item.descricao}
+                onChange={(event) =>
+                  setMotivoEdits((prev) => ({
+                    ...prev,
+                    [item.motivo_id]: event.target.value,
+                  }))
+                }
+              />
+              <PendingChangeBadge visible={isMotivoDirty(item, motivoEdits)} />
+            </div>
           ) : (
             item.descricao
           ),
@@ -170,6 +241,7 @@ export function ConfiguracaoPage({
       columns.push({
         key: "acoes",
         header: "Ações",
+        interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
             <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveMotivo(item.motivo_id)}>
@@ -198,15 +270,18 @@ export function ConfiguracaoPage({
         render: (item) => {
           const draft = statusEdits[item.status_id] ?? item;
           return canManageMiniApplicators ? (
-            <input
-              value={draft.descricao}
-              onChange={(event) =>
-                setStatusEdits((prev) => ({
-                  ...prev,
-                  [item.status_id]: { ...draft, descricao: event.target.value },
-                }))
-              }
-            />
+            <div className="dm-editable-cell">
+              <input
+                value={draft.descricao}
+                onChange={(event) =>
+                  setStatusEdits((prev) => ({
+                    ...prev,
+                    [item.status_id]: { ...draft, descricao: event.target.value },
+                  }))
+                }
+              />
+              <PendingChangeBadge visible={isStatusDirty(item, statusEdits)} />
+            </div>
           ) : (
             item.descricao
           );
@@ -271,10 +346,20 @@ export function ConfiguracaoPage({
       columns.push({
         key: "acoes",
         header: "Ações",
+        interactive: true,
         render: (item) => (
-          <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveStatus(item.status_id)}>
-            Salvar
-          </button>
+          <div className="dm-row-actions">
+            <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveStatus(item.status_id)}>
+              Salvar
+            </button>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--danger"
+              onClick={() => void handleDeleteStatus(item.status_id, item.descricao)}
+            >
+              Excluir
+            </button>
+          </div>
         ),
       });
     }
@@ -286,15 +371,14 @@ export function ConfiguracaoPage({
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
         title="Configuração"
-        subtitle="Motivos de troca e regras de status preventivo."
+        subtitle={`Motivos de troca e regras de status preventivo da filial ${filial}.`}
         icon={Settings}
+        filial={filial}
         moduleHomePath={moduleHomePath}
         showConfiguration={canManageMiniApplicators}
         currentPath={pathname}
         onNavigate={onNavigate}
       />
-
-      <FilterBar leading={<FilialBadge filial={filial} />} />
 
       {error ? <StateBox variant="error">{error}</StateBox> : null}
       {success ? <StateBox variant="success">{success}</StateBox> : null}
@@ -328,6 +412,59 @@ export function ConfiguracaoPage({
 
       <DataTableSection
         title="Status preventivo"
+        hint="Regras de classificação por percentual de uso vs. média histórica de golpes."
+        toolbar={
+          canManageMiniApplicators ? (
+            <FilterBar embedded onSubmit={handleCreateStatus}>
+              <label className="dm-field">
+                <span>Novo status</span>
+                <input
+                  value={novoStatus.descricao}
+                  onChange={(event) =>
+                    setNovoStatus((prev) => ({ ...prev, descricao: event.target.value }))
+                  }
+                  placeholder="Ex.: CRÍTICO"
+                />
+              </label>
+              <label className="dm-field">
+                <span>Operador</span>
+                <select
+                  value={novoStatus.operador}
+                  onChange={(event) =>
+                    setNovoStatus((prev) => ({
+                      ...prev,
+                      operador: event.target.value as NovoStatusDraft["operador"],
+                    }))
+                  }
+                >
+                  {STATUS_OPERATORS.map((operador) => (
+                    <option key={operador} value={operador}>
+                      {operador}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="dm-field">
+                <span>Percentual</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  value={novoStatus.percentual}
+                  onChange={(event) =>
+                    setNovoStatus((prev) => ({
+                      ...prev,
+                      percentual: Number(event.target.value),
+                    }))
+                  }
+                />
+              </label>
+              <button type="submit" className="dm-primary-btn">
+                Adicionar
+              </button>
+            </FilterBar>
+          ) : null
+        }
         columns={statusColumns}
         rows={status}
         loading={loading}

@@ -32,3 +32,15 @@ def test_filter_submodules_manage_flag():
     )
     items = filter_submodules_for_user(user)
     assert items[0]["can_manage"] is True
+
+
+def test_filter_submodules_manutencao_geral():
+    user = SimpleNamespace(
+        is_superadmin=False,
+        permissions=["maintenance.manutencao-geral.view"],
+    )
+    items = filter_submodules_for_user(user)
+    assert len(items) == 1
+    assert items[0]["id"] == "manutencao-geral"
+    assert items[0]["can_manage"] is False
+    assert items[0]["entry_path"] == "/apps/maintenance/manutencao-geral"

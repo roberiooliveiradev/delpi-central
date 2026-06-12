@@ -1,6 +1,8 @@
 export const MAINTENANCE_ROUTES = {
   home: "/apps/maintenance",
   filialHome: (filial: string) => `/apps/maintenance/filial-${filial}`,
+  filiais: "/apps/maintenance/filiais",
+  manutencaoGeral: "/apps/maintenance/manutencao-geral",
   miniAplicadores: "/apps/maintenance/mini-aplicadores",
   miniAplicadoresRelatorio: "/apps/maintenance/mini-aplicadores/relatorio",
   miniAplicadoresConfiguracao: "/apps/maintenance/mini-aplicadores/configuracao",

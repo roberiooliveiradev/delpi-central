@@ -16,6 +16,7 @@ type DataTableSectionProps<T> = {
   getRowKey: (row: T, index: number) => string;
   getRowClassName?: (row: T) => string | undefined;
   embedded?: boolean;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTableSection<T>({
@@ -31,6 +32,7 @@ export function DataTableSection<T>({
   getRowKey,
   getRowClassName,
   embedded = false,
+  onRowClick,
 }: DataTableSectionProps<T>) {
   const content = (
     <>
@@ -54,6 +56,7 @@ export function DataTableSection<T>({
         emptyMessage={emptyMessage}
         getRowKey={getRowKey}
         getRowClassName={getRowClassName}
+        onRowClick={onRowClick}
       />
     </>
   );

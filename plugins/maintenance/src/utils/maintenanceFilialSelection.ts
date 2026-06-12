@@ -1,9 +1,13 @@
 const STORAGE_KEY = "maintenance.selectedFilial";
 
+function isValidFilialCode(value: string | null | undefined): value is string {
+  return typeof value === "string" && /^[0-9]{2}$/.test(value);
+}
+
 export function getStoredFilial(): string | null {
   if (typeof window === "undefined") return null;
   const value = window.sessionStorage.getItem(STORAGE_KEY);
-  return value === "01" || value === "02" ? value : null;
+  return isValidFilialCode(value) ? value : null;
 }
 
 export function setStoredFilial(filial: string): void {
@@ -16,7 +20,7 @@ export function resolveActiveFilial(
   allowedFiliais: Array<{ id: string; label: string }>,
   defaultFilial?: string | null,
 ): string | undefined {
-  if (filialScope === "01" || filialScope === "02") {
+  if (isValidFilialCode(filialScope)) {
     if (allowedFiliais.some((item) => item.id === filialScope)) {
       return filialScope;
     }

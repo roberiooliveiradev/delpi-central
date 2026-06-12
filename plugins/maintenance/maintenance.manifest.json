@@ -50,6 +50,12 @@
       "name": "Gerenciar mini-aplicadores",
       "description": "Reposições, motivos, status preventivo e demais mutações do submódulo.",
       "module": "maintenance"
+    },
+    {
+      "code": "maintenance.manutencao-geral.view",
+      "name": "Manutenção geral",
+      "description": "Acesso ao formulário de registro de máquinas, equipamentos e lâmpadas.",
+      "module": "maintenance"
     }
   ],
   "routes": [
@@ -78,6 +84,24 @@
       "icon": "wrench",
       "entry": null,
       "order": 12,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/filiais",
+      "label": "Filiais",
+      "permission": "maintenance.mini-applicators.manage",
+      "icon": "building",
+      "entry": null,
+      "order": 13,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/manutencao-geral",
+      "label": "Manutenção geral",
+      "permission": "maintenance.manutencao-geral.view",
+      "icon": "clipboard-list",
+      "entry": null,
+      "order": 18,
       "showInMenu": false
     },
     {

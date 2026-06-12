@@ -6,6 +6,8 @@ import {
 
 export type MaintenanceView =
   | "home"
+  | "filiais"
+  | "manutencao-geral"
   | "mini-aplicadores"
   | "mini-aplicador"
   | "relatorio"
@@ -18,7 +20,7 @@ export type ParsedMaintenanceRoute = {
 };
 
 const MINI_APP = MAINTENANCE_ROUTES.miniAplicadores;
-const RESERVED_MINI_SEGMENTS = new Set(["relatorio", "configuracao"]);
+export const RESERVED_MINI_SEGMENTS = new Set(["relatorio", "configuracao"]);
 
 export function normalizeMaintenancePath(pathname: string): string {
   if (!pathname) return MAINTENANCE_ROUTES.home;
@@ -31,9 +33,17 @@ export function normalizeMaintenancePath(pathname: string): string {
 export function parseMaintenancePath(pathname: string): ParsedMaintenanceRoute {
   const path = normalizeMaintenancePath(pathname);
 
-  const filialHomeMatch = path.match(/^\/apps\/maintenance\/filial-(01|02)$/);
+  const filialHomeMatch = path.match(/^\/apps\/maintenance\/filial-([0-9]{2})$/);
   if (filialHomeMatch) {
     return { view: "home", filialScope: filialHomeMatch[1] };
+  }
+
+  if (path === MAINTENANCE_ROUTES.filiais) {
+    return { view: "filiais" };
+  }
+
+  if (path === MAINTENANCE_ROUTES.manutencaoGeral) {
+    return { view: "manutencao-geral" };
   }
 
   if (path === MAINTENANCE_ROUTES.miniAplicadoresRelatorio || path === LEGACY_RELATORIO_ROUTE) {
@@ -64,7 +74,7 @@ export function parseMaintenancePath(pathname: string): ParsedMaintenanceRoute {
 }
 
 export function resolveMaintenanceHomePath(filialScope?: string): string {
-  if (filialScope === "01" || filialScope === "02") {
+  if (filialScope && /^[0-9]{2}$/.test(filialScope)) {
     return MAINTENANCE_ROUTES.filialHome(filialScope);
   }
   return MAINTENANCE_ROUTES.home;

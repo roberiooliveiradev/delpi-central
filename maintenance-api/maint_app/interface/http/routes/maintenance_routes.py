@@ -5,6 +5,7 @@ from maint_app.application.services.maintenance_submodule_catalog import filter_
 from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
+from maint_app.infrastructure.persistence.repositories.filial_repository import FilialRepository
 from maint_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 
@@ -45,11 +46,17 @@ def module_health():
 def get_options(request: Request):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
-    filiais = [
-        {"id": "01", "label": "Matriz"},
-        {"id": "02", "label": "ES"},
-    ]
-    filiais = _scope.filter_filiais_options(filiais, scope)
+    try:
+        filiais = FilialRepository().list_for_options()
+    except Exception:
+        filiais = [
+            {"id": "01", "label": "Matriz", "codigo_filial": "01"},
+            {"id": "02", "label": "ES", "codigo_filial": "02"},
+        ]
+    filiais = _scope.filter_filiais_options(
+        [{"id": item["id"], "label": item["label"]} for item in filiais],
+        scope,
+    )
     submodules = filter_submodules_for_user(user)
     default_filial = _scope.resolve_default_filial(scope, filiais)
     return ok(

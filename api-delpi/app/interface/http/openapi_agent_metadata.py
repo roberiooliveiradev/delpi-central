@@ -339,7 +339,10 @@ MINI_APPLICATORS_PECAS_LIST = agent_route(
 
 MINI_APPLICATORS_GOLPES_GET = agent_route(
     summary="Golpes do mini-aplicador no período",
-    description="Soma apontamentos SH6010 do recurso entre data_inicial e data_final.",
+    description=(
+        "Soma consumo SD4010 da ferramenta no período, filtrando apontamentos SH6010 "
+        "por data/hora (legado MiniAplicadores). Aceita ISO date ou datetime em data_inicial/data_final."
+    ),
     operation_id="get_mini_applicators_golpes",
 )
 

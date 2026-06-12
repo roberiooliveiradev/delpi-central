@@ -1,13 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Hammer, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Hammer, Loader2, RefreshCw } from "lucide-react";
 
-import {
-  type DataTableColumn,
-  DataTableSection,
-  FilialBadge,
-  FilterBar,
-  StateBox,
-} from "../../components/data";
+import { type DataTableColumn, DataTableSection, FilterBar, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -31,6 +25,10 @@ import {
 } from "../../data/api/maintenanceApi";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
+import {
+  fromDatetimeLocalValue,
+  toDatetimeLocalValue,
+} from "../../utils/datetimeLocal";
 
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
@@ -39,6 +37,11 @@ type MiniAplicadoresPageProps = {
   onNavigate: (path: string) => void;
   codigoFerramenta?: string;
 };
+
+function datetimeParamFromLocal(value: string): string | undefined {
+  if (!value) return undefined;
+  return value.length === 16 ? `${value}:00` : value;
+}
 
 export function MiniAplicadoresPage({
   getAccessToken,
@@ -62,10 +65,13 @@ export function MiniAplicadoresPage({
   const [golpes, setGolpes] = useState(0);
   const [motivoId, setMotivoId] = useState<number | "">("");
   const [observacao, setObservacao] = useState("");
-  const [dataReposicao, setDataReposicao] = useState(() => new Date().toISOString());
+  const [dataReposicao, setDataReposicao] = useState(() => toDatetimeLocalValue(new Date()));
+  const [dataUltimaReposicao, setDataUltimaReposicao] = useState("");
   const [editingReposicaoId, setEditingReposicaoId] = useState<string | null>(null);
   const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState("");
   const [loading, setLoading] = useState(false);
+  const [golpesLoading, setGolpesLoading] = useState(false);
+  const golpesRequestRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -75,8 +81,48 @@ export function MiniAplicadoresPage({
     setGolpes(0);
     setMotivoId("");
     setObservacao("");
-    setDataReposicao(new Date().toISOString());
+    setDataReposicao(toDatetimeLocalValue(new Date()));
+    setDataUltimaReposicao("");
   }, [pecas]);
+
+  const refreshSuggestGolpes = useCallback(
+    async (options: {
+      codigoPecaValue: string;
+      dataReposicaoValue: string;
+      dataUltimaValue: string;
+    }) => {
+      if (!codigoFerramenta || !options.codigoPecaValue) return;
+      const requestId = ++golpesRequestRef.current;
+      setGolpesLoading(true);
+      try {
+        const data = await suggestGolpes(
+          {
+            filial,
+            codigo_ferramenta: codigoFerramenta,
+            codigo_peca: options.codigoPecaValue,
+            data_inicial: datetimeParamFromLocal(options.dataUltimaValue),
+            data_final: datetimeParamFromLocal(options.dataReposicaoValue),
+          },
+          getAccessToken,
+        );
+        if (requestId !== golpesRequestRef.current) return;
+        if (data.data_ultima_reposicao && !options.dataUltimaValue) {
+          setDataUltimaReposicao(toDatetimeLocalValue(data.data_ultima_reposicao));
+        }
+        if (!editingReposicaoId) {
+          setGolpes(data.total_golpes ?? 0);
+        }
+      } catch {
+        if (requestId !== golpesRequestRef.current) return;
+        if (!editingReposicaoId) setGolpes(0);
+      } finally {
+        if (requestId === golpesRequestRef.current) {
+          setGolpesLoading(false);
+        }
+      }
+    },
+    [codigoFerramenta, editingReposicaoId, filial, getAccessToken],
+  );
 
   const loadFerramentas = useCallback(async () => {
     setLoading(true);
@@ -105,36 +151,36 @@ export function MiniAplicadoresPage({
 
   const loadDetalhe = useCallback(
     async (options?: { pecaFilter?: string }) => {
-    if (!codigoFerramenta) return;
-    const pecaFilter = options?.pecaFilter ?? filtroHistoricoPeca;
-    setLoading(true);
-    setError(null);
-    try {
-      const [pecasData, motivosData, reposicoesData, componentesData] = await Promise.all([
-        fetchPecas(codigoFerramenta, filial, getAccessToken),
-        fetchMotivos(filial, getAccessToken),
-        fetchReposicoes(
-          {
-            filial,
-            codigo_ferramenta: codigoFerramenta,
-            codigo_peca: pecaFilter || undefined,
-          },
-          getAccessToken,
-        ),
-        fetchComponentes(codigoFerramenta, filial, getAccessToken),
-      ]);
-      const pecaItems = pecasData.items ?? [];
-      setPecas(pecaItems);
-      setMotivos(motivosData.items ?? []);
-      setReposicoes(reposicoesData.items ?? []);
-      setComponentes(componentesData.items ?? []);
-      setCodigoPeca((current) => current || pecaItems[0]?.codigo || "");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
-    } finally {
-      setLoading(false);
-    }
-  },
+      if (!codigoFerramenta) return;
+      const pecaFilter = options?.pecaFilter ?? filtroHistoricoPeca;
+      setLoading(true);
+      setError(null);
+      try {
+        const [pecasData, motivosData, reposicoesData, componentesData] = await Promise.all([
+          fetchPecas(codigoFerramenta, filial, getAccessToken),
+          fetchMotivos(filial, getAccessToken),
+          fetchReposicoes(
+            {
+              filial,
+              codigo_ferramenta: codigoFerramenta,
+              codigo_peca: pecaFilter || undefined,
+            },
+            getAccessToken,
+          ),
+          fetchComponentes(codigoFerramenta, filial, getAccessToken),
+        ]);
+        const pecaItems = pecasData.items ?? [];
+        setPecas(pecaItems);
+        setMotivos(motivosData.items ?? []);
+        setReposicoes(reposicoesData.items ?? []);
+        setComponentes(componentesData.items ?? []);
+        setCodigoPeca((current) => current || pecaItems[0]?.codigo || "");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
+      } finally {
+        setLoading(false);
+      }
+    },
     [codigoFerramenta, filial, filtroHistoricoPeca, getAccessToken],
   );
 
@@ -146,34 +192,36 @@ export function MiniAplicadoresPage({
       return;
     }
     void loadFerramentas();
-  }, [codigoFerramenta, filial, loadFerramentas]);
+  }, [codigoFerramenta, filial, loadDetalhe, loadFerramentas]);
 
   useEffect(() => {
     if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
-    let active = true;
-    suggestGolpes({ filial, codigo_ferramenta: codigoFerramenta, codigo_peca: codigoPeca }, getAccessToken)
-      .then((data) => {
-        if (active) setGolpes(data.total_golpes ?? 0);
-      })
-      .catch(() => {
-        if (active) setGolpes(0);
-      });
-    return () => {
-      active = false;
-    };
-  }, [codigoFerramenta, codigoPeca, editingReposicaoId, filial, getAccessToken]);
+    void refreshSuggestGolpes({
+      codigoPecaValue: codigoPeca,
+      dataReposicaoValue: dataReposicao,
+      dataUltimaValue: dataUltimaReposicao,
+    });
+  }, [
+    codigoFerramenta,
+    codigoPeca,
+    dataReposicao,
+    dataUltimaReposicao,
+    editingReposicaoId,
+    refreshSuggestGolpes,
+  ]);
+
+  async function handleSearch(event: React.FormEvent) {
+    event.preventDefault();
+    await loadFerramentas();
+  }
 
   async function handleSuggestGolpes() {
     if (!codigoFerramenta || !codigoPeca) return;
-    try {
-      const data = await suggestGolpes(
-        { filial, codigo_ferramenta: codigoFerramenta, codigo_peca: codigoPeca },
-        getAccessToken,
-      );
-      setGolpes(data.total_golpes ?? 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao sugerir golpes.");
-    }
+    await refreshSuggestGolpes({
+      codigoPecaValue: codigoPeca,
+      dataReposicaoValue: dataReposicao,
+      dataUltimaValue: dataUltimaReposicao,
+    });
   }
 
   function handleEditReposicao(item: ReposicaoItem) {
@@ -182,13 +230,20 @@ export function MiniAplicadoresPage({
     setGolpes(item.golpes);
     setMotivoId(item.motivo_id);
     setObservacao(item.observacao ?? "");
-    setDataReposicao(item.data_reposicao);
+    setDataReposicao(toDatetimeLocalValue(item.data_reposicao));
+    setDataUltimaReposicao(
+      item.data_ultima_reposicao ? toDatetimeLocalValue(item.data_ultima_reposicao) : "",
+    );
     setSuccess(null);
     setError(null);
   }
 
   async function handleDeleteReposicao(item: ReposicaoItem) {
-    if (!window.confirm(`Excluir reposição de ${item.codigo_peca} em ${new Date(item.data_reposicao).toLocaleString("pt-BR")}?`)) {
+    if (
+      !window.confirm(
+        `Excluir reposição de ${item.codigo_peca} em ${new Date(item.data_reposicao).toLocaleString("pt-BR")}?`,
+      )
+    ) {
       return;
     }
     setError(null);
@@ -206,13 +261,20 @@ export function MiniAplicadoresPage({
   async function handleSubmitReposicao(event: React.FormEvent) {
     event.preventDefault();
     if (!codigoFerramenta || !codigoPeca || motivoId === "") return;
+    if (golpes <= 0) {
+      setError("Informe golpes maior que zero ou use «Sugerir golpes».");
+      return;
+    }
     setError(null);
     setSuccess(null);
     const payload = {
       filial,
       codigo_ferramenta: codigoFerramenta,
       codigo_peca: codigoPeca,
-      data_reposicao: dataReposicao,
+      data_reposicao: fromDatetimeLocalValue(dataReposicao),
+      data_ultima_reposicao: dataUltimaReposicao
+        ? fromDatetimeLocalValue(dataUltimaReposicao)
+        : undefined,
       golpes,
       motivo_id: Number(motivoId),
       observacao: observacao.trim() || undefined,
@@ -234,26 +296,10 @@ export function MiniAplicadoresPage({
 
   const ferramentasColumns = useMemo<DataTableColumn<FerramentaItem>[]>(
     () => [
-      {
-        key: "codigo",
-        header: "Código",
-        render: (item) => (
-          <button
-            type="button"
-            className="dm-link-btn"
-            onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
-          >
-            {item.codigo}
-          </button>
-        ),
-      },
-      {
-        key: "descricao",
-        header: "Descrição",
-        render: (item) => item.descricao,
-      },
+      { key: "codigo", header: "Código", render: (item) => item.codigo },
+      { key: "descricao", header: "Descrição", render: (item) => item.descricao },
     ],
-    [onNavigate],
+    [],
   );
 
   const reposicoesColumns = useMemo<DataTableColumn<ReposicaoItem>[]>(() => {
@@ -276,6 +322,7 @@ export function MiniAplicadoresPage({
       columns.push({
         key: "acoes",
         header: "Ações",
+        interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
             <button type="button" className="dm-ghost-btn" onClick={() => handleEditReposicao(item)}>
@@ -336,6 +383,7 @@ export function MiniAplicadoresPage({
             : "Ferramentas dos grupos 23 e 24 via api-delpi."
         }
         icon={Hammer}
+        filial={filial}
         moduleHomePath={moduleHomePath}
         showConfiguration={canManageMiniApplicators}
         currentPath={pathname}
@@ -347,7 +395,7 @@ export function MiniAplicadoresPage({
             onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
             disabled={loading}
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={16} className={loading ? "dm-spin" : undefined} />
             {loading ? "Carregando…" : "Atualizar"}
           </button>
         }
@@ -355,7 +403,7 @@ export function MiniAplicadoresPage({
 
       {!codigoFerramenta ? (
         <>
-          <FilterBar leading={<FilialBadge filial={filial} />}>
+          <FilterBar onSubmit={handleSearch}>
             <label className="dm-field">
               <span>Buscar por código</span>
               <input
@@ -372,7 +420,7 @@ export function MiniAplicadoresPage({
                 placeholder="Ex.: 23-"
               />
             </label>
-            <button type="button" className="dm-primary-btn" onClick={() => void loadFerramentas()}>
+            <button type="submit" className="dm-primary-btn">
               Buscar
             </button>
           </FilterBar>
@@ -387,6 +435,7 @@ export function MiniAplicadoresPage({
             loading={loading}
             emptyMessage="Nenhuma ferramenta encontrada."
             getRowKey={(item) => item.codigo}
+            onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
           />
         </>
       ) : (
@@ -399,10 +448,16 @@ export function MiniAplicadoresPage({
               <h3 className="dm-section-header__title">
                 {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
               </h3>
-              <FilterBar embedded leading={<FilialBadge filial={filial} />} onSubmit={handleSubmitReposicao}>
-                <label className="dm-field">
+              <form className="dm-form-grid" onSubmit={handleSubmitReposicao}>
+                <label className="dm-field dm-field--span-4">
                   <span>Peça</span>
-                  <select value={codigoPeca} onChange={(event) => setCodigoPeca(event.target.value)}>
+                  <select
+                    value={codigoPeca}
+                    onChange={(event) => {
+                      setCodigoPeca(event.target.value);
+                      setDataUltimaReposicao("");
+                    }}
+                  >
                     {pecas.map((peca) => (
                       <option key={peca.codigo} value={peca.codigo}>
                         {peca.codigo} — {peca.descricao}
@@ -410,47 +465,91 @@ export function MiniAplicadoresPage({
                     ))}
                   </select>
                 </label>
-                <label className="dm-field">
-                  <span>Golpes</span>
+                <label className="dm-field dm-field--span-3">
+                  <span>Data da reposição</span>
                   <input
-                    type="number"
-                    min={1}
-                    value={golpes}
-                    onChange={(event) => setGolpes(Number(event.target.value))}
+                    type="datetime-local"
+                    value={dataReposicao}
+                    onChange={(event) => setDataReposicao(event.target.value)}
                   />
                 </label>
-                <button type="button" className="dm-ghost-btn" onClick={() => void handleSuggestGolpes()}>
-                  Sugerir golpes
-                </button>
-                <label className="dm-field">
-                  <span>Motivo</span>
-                  <select
-                    value={motivoId}
-                    onChange={(event) =>
-                      setMotivoId(event.target.value ? Number(event.target.value) : "")
-                    }
+                <label className="dm-field dm-field--span-3">
+                  <span>Data da última reposição</span>
+                  <input
+                    type="datetime-local"
+                    value={dataUltimaReposicao}
+                    onChange={(event) => setDataUltimaReposicao(event.target.value)}
+                  />
+                </label>
+                <div
+                  className={`dm-field dm-field--span-2 dm-golpes-field${golpesLoading ? " is-loading" : ""}`}
+                  aria-busy={golpesLoading}
+                >
+                  <span>{golpesLoading ? "Calculando golpes…" : "Golpes"}</span>
+                  <div className="dm-golpes-field__control">
+                    <input
+                      type="number"
+                      min={1}
+                      value={golpes}
+                      disabled={golpesLoading}
+                      readOnly={golpesLoading}
+                      onChange={(event) => setGolpes(Number(event.target.value))}
+                      aria-live="polite"
+                    />
+                    {golpesLoading ? (
+                      <Loader2
+                        size={18}
+                        className="dm-golpes-field__spinner dm-spin"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="dm-form-grid__actions">
+                  <button
+                    type="button"
+                    className="dm-ghost-btn dm-form-grid__suggest"
+                    disabled={golpesLoading || !codigoPeca}
+                    onClick={() => void handleSuggestGolpes()}
                   >
-                    <option value="">Selecione…</option>
-                    {motivos.map((motivo) => (
-                      <option key={motivo.motivo_id} value={motivo.motivo_id}>
-                        {motivo.descricao}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="dm-field">
-                  <span>Observação</span>
-                  <input value={observacao} onChange={(event) => setObservacao(event.target.value)} />
-                </label>
-                <button type="submit" className="dm-primary-btn">
-                  {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
-                </button>
-                {editingReposicaoId ? (
-                  <button type="button" className="dm-ghost-btn" onClick={resetReposicaoForm}>
-                    Cancelar edição
+                    {golpesLoading ? (
+                      <Loader2 size={16} className="dm-spin" aria-hidden="true" />
+                    ) : null}
+                    {golpesLoading ? "Calculando…" : "Sugerir golpes"}
                   </button>
-                ) : null}
-              </FilterBar>
+                  <label className="dm-field dm-field--motivo">
+                    <span>Motivo</span>
+                    <select
+                      value={motivoId}
+                      onChange={(event) =>
+                        setMotivoId(event.target.value ? Number(event.target.value) : "")
+                      }
+                    >
+                      <option value="">Selecione…</option>
+                      {motivos.map((motivo) => (
+                        <option key={motivo.motivo_id} value={motivo.motivo_id}>
+                          {motivo.descricao}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="dm-field dm-field--grow">
+                    <span>Observação</span>
+                    <input value={observacao} onChange={(event) => setObservacao(event.target.value)} />
+                  </label>
+                  <div className="dm-form-grid__buttons">
+                    <button type="submit" className="dm-primary-btn">
+                      {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
+                    </button>
+                    {editingReposicaoId ? (
+                      <button type="button" className="dm-ghost-btn" onClick={resetReposicaoForm}>
+                        Cancelar edição
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </form>
             </section>
           ) : null}
 
@@ -492,6 +591,9 @@ export function MiniAplicadoresPage({
             emptyMessage="Nenhuma reposição registrada."
             getRowKey={(item) => item.reposicao_id}
             getRowClassName={(item) => (editingReposicaoId === item.reposicao_id ? "is-selected" : undefined)}
+            onRowClick={
+              canManageMiniApplicators ? (item) => handleEditReposicao(item) : undefined
+            }
           />
 
           <DataTableSection

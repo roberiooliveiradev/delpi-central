@@ -10,6 +10,10 @@ from app.domain.ports.mini_applicators.mini_applicators_repository_port import (
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.protheus_datetime import (
+    parse_protheus_period_end,
+    parse_protheus_period_start,
+)
 
 
 class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
@@ -136,20 +140,69 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
         data_inicial: str,
         data_final: str,
     ) -> dict:
+        data_ini, hora_ini = parse_protheus_period_start(data_inicial)
+        data_fim, hora_fim = parse_protheus_period_end(data_final)
         query = """
-            SELECT COALESCE(SUM(CAST(SH6.H6_QTDPROD AS BIGINT)), 0) AS total_golpes
-            FROM SH6010 SH6 WITH (NOLOCK)
-            WHERE SH6.D_E_L_E_T_ = ''
-              AND SH6.H6_FILIAL = ?
-              AND RTRIM(SH6.H6_RECURSO) = ?
-              AND SH6.H6_DATAINI >= ?
-              AND SH6.H6_DATAINI <= ?
+            SELECT CAST(
+                SUM(
+                    CASE
+                        WHEN SD4.D4_QTDEORI > SD4.D4_QUANT
+                        THEN SD4.D4_QTDEORI - SD4.D4_QUANT
+                        ELSE SD4.D4_QTDEORI
+                    END
+                ) AS BIGINT
+            ) AS total_golpes
+            FROM SD4010 AS SD4 WITH (NOLOCK)
+            INNER JOIN SHY010 AS SHY WITH (NOLOCK)
+                ON SHY.HY_FILIAL = SD4.D4_FILIAL
+               AND SHY.HY_OP = SD4.D4_OP
+               AND SHY.HY_ROTEIRO = SD4.D4_ROTEIRO
+               AND SHY.HY_OPERAC = SD4.D4_OPERAC
+            INNER JOIN SH4010 AS SH4 WITH (NOLOCK)
+                ON SHY.HY_FERRAM = SH4.H4_CODIGO
+            INNER JOIN SB1010 AS SB1 WITH (NOLOCK)
+                ON SD4.D4_COD = SB1.B1_COD
+            WHERE SD4.D_E_L_E_T_ = ''
+              AND SD4.D4_FILIAL = ?
+              AND SHY.D_E_L_E_T_ = ''
+              AND SHY.HY_FILIAL = ?
+              AND SH4.D_E_L_E_T_ = ''
+              AND SH4.H4_FILIAL = ?
+              AND SB1.D_E_L_E_T_ = ''
+              AND SB1.B1_GRUPO = '1008'
+              AND SH4.H4_CODIGO = ?
+              AND EXISTS (
+                SELECT 1
+                FROM SH6010 AS SH6 WITH (NOLOCK)
+                WHERE SH6.D_E_L_E_T_ = ''
+                  AND SH6.H6_TIPO = 'P'
+                  AND SH6.H6_FILIAL = SD4.D4_FILIAL
+                  AND SH6.H6_OP = SD4.D4_OP
+                  AND SH6.H6_OPERAC = SD4.D4_OPERAC
+                  AND (
+                      (SH6.H6_DATAINI > ?)
+                      OR (SH6.H6_DATAINI = ? AND SH6.H6_HORAINI >= ?)
+                  )
+                  AND (
+                      (SH6.H6_DATAINI < ?)
+                      OR (SH6.H6_DATAINI = ? AND SH6.H6_HORAINI <= ?)
+                  )
+              )
         """
+        params = (
+            filial.strip(),
+            filial.strip(),
+            filial.strip(),
+            codigo_ferramenta.strip(),
+            data_ini,
+            data_ini,
+            hora_ini,
+            data_fim,
+            data_fim,
+            hora_fim,
+        )
         with self:
-            total = self.execute_scalar(
-                query,
-                (filial.strip(), codigo_ferramenta.strip(), data_inicial, data_final),
-            )
+            total = self.execute_scalar(query, params)
         return {
             "codigo_ferramenta": codigo_ferramenta.strip(),
             "filial": filial.strip(),

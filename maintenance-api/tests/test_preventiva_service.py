@@ -42,6 +42,7 @@ def test_listar_alertas_ordenacao():
     )
     alertas = service.listar_alertas(filial="01")
 
+    status_repo.list_active.assert_called_once_with(filial="01")
     assert len(alertas) == 1
     assert alertas[0]["status"] == "CRÍTICO"
     assert alertas[0]["golpes_atuais"] == 96

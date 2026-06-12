@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 
 import { MAINTENANCE_ROUTES } from "../constants/routes";
-import { normalizeMaintenancePath } from "../utils/routeParser";
+import { normalizeMaintenancePath, RESERVED_MINI_SEGMENTS } from "../utils/routeParser";
 
 type MiniAplicadoresNavProps = {
   currentPath?: string;
@@ -20,11 +20,21 @@ const CONFIG_LINK = {
   label: "Configuração",
 };
 
+function isToolDetailPath(currentPath: string | undefined): boolean {
+  const path = normalizeMaintenancePath(currentPath ?? "");
+  const detailMatch = path.match(/^\/apps\/maintenance\/mini-aplicadores\/([^/]+)$/);
+  return Boolean(detailMatch && !RESERVED_MINI_SEGMENTS.has(detailMatch[1]));
+}
+
 function isActive(currentPath: string | undefined, linkPath: string): boolean {
   const path = normalizeMaintenancePath(currentPath ?? "");
+
   if (linkPath === MAINTENANCE_ROUTES.miniAplicadores) {
-    return path === linkPath || /^\/apps\/maintenance\/mini-aplicadores\/[^/]+$/.test(path);
+    if (path === linkPath) return true;
+    const detailMatch = path.match(/^\/apps\/maintenance\/mini-aplicadores\/([^/]+)$/);
+    return Boolean(detailMatch && !RESERVED_MINI_SEGMENTS.has(detailMatch[1]));
   }
+
   return path === linkPath;
 }
 
@@ -35,30 +45,37 @@ export function MiniAplicadoresNav({
   onNavigate,
 }: MiniAplicadoresNavProps) {
   const links = showConfiguration ? [...BASE_LINKS, CONFIG_LINK] : BASE_LINKS;
+  const onDetailPage = isToolDetailPath(currentPath);
+  const backLabel = onDetailPage ? "Voltar" : "Início";
+  const backPath = onDetailPage ? MAINTENANCE_ROUTES.miniAplicadores : moduleHomePath;
 
   return (
     <nav className="dm-nav dm-nav--submodule" aria-label="Navegação mini-aplicadores">
       <button
         type="button"
-        className="dm-nav__link dm-nav__link--back"
-        onClick={() => onNavigate(moduleHomePath)}
+        className={`dm-nav__link${onDetailPage ? " dm-nav__link--back" : " dm-nav__link--home"}`}
+        onClick={() => onNavigate(backPath)}
       >
         <ArrowLeft size={14} aria-hidden="true" />
-        Manutenção
+        <span className="dm-nav__link-text">{backLabel}</span>
       </button>
-      {links.map((link) => {
-        const active = isActive(currentPath, link.path);
-        return (
-          <button
-            key={link.path}
-            type="button"
-            className={`dm-nav__link${active ? " is-active" : ""}`}
-            onClick={() => onNavigate(link.path)}
-          >
-            {link.label}
-          </button>
-        );
-      })}
+      <div className="dm-nav__tabs" role="tablist" aria-label="Abas do submódulo">
+        {links.map((link) => {
+          const active = isActive(currentPath, link.path);
+          return (
+            <button
+              key={link.path}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`dm-nav__link${active ? " is-active" : ""}`}
+              onClick={() => onNavigate(link.path)}
+            >
+              {link.label}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

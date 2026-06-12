@@ -1,0 +1,286 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Building2, RefreshCw } from "lucide-react";
+
+import {
+  type DataTableColumn,
+  DataTableSection,
+  FilterBar,
+  PendingChangeBadge,
+  StateBox,
+} from "../../components/data";
+import { MaintenanceShell } from "../../components/MaintenanceShell";
+import { PageHeader } from "../../components/PageHeader";
+import {
+  createFilial,
+  deleteFilial,
+  fetchFiliaisAdmin,
+  updateFilial,
+  type FilialItem,
+} from "../../data/api/maintenanceApi";
+import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
+
+type FiliaisPageProps = {
+  getAccessToken?: () => string | undefined;
+  pathname?: string;
+  filialScope?: string;
+  onNavigate: (path: string) => void;
+};
+
+type FilialDraft = {
+  nome_filial: string;
+  status_filial: "ativo" | "inativo";
+};
+
+function isFilialDirty(item: FilialItem, edits: Record<number, FilialDraft>): boolean {
+  const draft = edits[item.filial_id];
+  if (!draft) return false;
+  return draft.nome_filial !== item.nome_filial || draft.status_filial !== item.status_filial;
+}
+
+export function FiliaisPage({
+  getAccessToken,
+  pathname,
+  filialScope,
+  onNavigate,
+}: FiliaisPageProps) {
+  const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const [filiais, setFiliais] = useState<FilialItem[]>([]);
+  const [edits, setEdits] = useState<Record<number, FilialDraft>>({});
+  const [novoCodigo, setNovoCodigo] = useState("");
+  const [novoNome, setNovoNome] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchFiliaisAdmin(getAccessToken, true);
+      const items = data.items ?? [];
+      setFiliais(items);
+      setEdits(
+        Object.fromEntries(
+          items.map((item) => [
+            item.filial_id,
+            { nome_filial: item.nome_filial, status_filial: item.status_filial },
+          ]),
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar filiais.");
+      setFiliais([]);
+      setEdits({});
+    } finally {
+      setLoading(false);
+    }
+  }, [getAccessToken]);
+
+  useEffect(() => {
+    if (canManageMiniApplicators) {
+      void loadData();
+    }
+  }, [canManageMiniApplicators, loadData]);
+
+  async function handleCreate(event: React.FormEvent) {
+    event.preventDefault();
+    const codigo = novoCodigo.trim();
+    const nome = novoNome.trim();
+    if (!/^[0-9]{2}$/.test(codigo) || !nome) {
+      setError("Informe código com 2 dígitos e nome da filial.");
+      return;
+    }
+    setError(null);
+    setSuccess(null);
+    try {
+      await createFilial({ codigo_filial: codigo, nome_filial: nome }, getAccessToken);
+      setNovoCodigo("");
+      setNovoNome("");
+      setSuccess("Filial criada.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao criar filial.");
+    }
+  }
+
+  async function handleSave(filialId: number) {
+    const draft = edits[filialId];
+    if (!draft) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateFilial(filialId, draft, getAccessToken);
+      setSuccess("Filial atualizada.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao salvar filial.");
+    }
+  }
+
+  async function handleDelete(item: FilialItem) {
+    if (!window.confirm(`Excluir filial ${item.codigo_filial} — ${item.nome_filial}?`)) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await deleteFilial(item.filial_id, getAccessToken);
+      setSuccess("Filial excluída.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir filial.");
+    }
+  }
+
+  const columns = useMemo<DataTableColumn<FilialItem>[]>(
+    () => [
+      {
+        key: "codigo",
+        header: "Código",
+        render: (item) => item.codigo_filial,
+      },
+      {
+        key: "nome",
+        header: "Nome",
+        render: (item) => {
+          const draft = edits[item.filial_id] ?? item;
+          return (
+            <div className="dm-editable-cell">
+              <input
+                value={draft.nome_filial}
+                onChange={(event) =>
+                  setEdits((prev) => ({
+                    ...prev,
+                    [item.filial_id]: {
+                      ...draft,
+                      nome_filial: event.target.value,
+                    },
+                  }))
+                }
+              />
+              <PendingChangeBadge visible={isFilialDirty(item, edits)} />
+            </div>
+          );
+        },
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (item) => {
+          const draft = edits[item.filial_id] ?? item;
+          return (
+            <select
+              value={draft.status_filial}
+              onChange={(event) =>
+                setEdits((prev) => ({
+                  ...prev,
+                  [item.filial_id]: {
+                    ...draft,
+                    status_filial: event.target.value as FilialDraft["status_filial"],
+                  },
+                }))
+              }
+            >
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          );
+        },
+      },
+      {
+        key: "acoes",
+        header: "Ações",
+        interactive: true,
+        render: (item) => (
+          <div className="dm-row-actions">
+            <button type="button" className="dm-ghost-btn" onClick={() => void handleSave(item.filial_id)}>
+              Salvar
+            </button>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--danger"
+              onClick={() => void handleDelete(item)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [edits],
+  );
+
+  if (!canManageMiniApplicators) {
+    return (
+      <MaintenanceShell>
+        <PageHeader
+          title="Filiais"
+          subtitle="Cadastro de filiais operacionais do módulo Manutenção."
+          icon={Building2}
+          currentPath={pathname}
+          filialScope={filialScope}
+          onNavigate={onNavigate}
+        />
+        <StateBox variant="error">
+          Acesso restrito. É necessária a permissão{" "}
+          <code>maintenance.mini-applicators.manage</code>.
+        </StateBox>
+      </MaintenanceShell>
+    );
+  }
+
+  return (
+    <MaintenanceShell>
+      <PageHeader
+        title="Filiais"
+        subtitle="Cadastro de filiais operacionais. Novas filiais exigem permissões RBAC maintenance.view/manage.filial-XX na Core API."
+        icon={Building2}
+        currentPath={pathname}
+        filialScope={filialScope}
+        onNavigate={onNavigate}
+        actions={
+          <button type="button" className="dm-primary-btn" onClick={() => void loadData()} disabled={loading}>
+            <RefreshCw size={16} className={loading ? "dm-spin" : undefined} />
+            {loading ? "Carregando…" : "Atualizar"}
+          </button>
+        }
+      />
+
+      {error ? <StateBox variant="error">{error}</StateBox> : null}
+      {success ? <StateBox variant="success">{success}</StateBox> : null}
+
+      <DataTableSection
+        title="Catálogo de filiais"
+        hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
+        toolbar={
+          <FilterBar embedded onSubmit={handleCreate}>
+            <label className="dm-field">
+              <span>Código</span>
+              <input
+                value={novoCodigo}
+                onChange={(event) => setNovoCodigo(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                placeholder="01"
+                inputMode="numeric"
+                maxLength={2}
+              />
+            </label>
+            <label className="dm-field">
+              <span>Nome</span>
+              <input
+                value={novoNome}
+                onChange={(event) => setNovoNome(event.target.value)}
+                placeholder="Matriz"
+              />
+            </label>
+            <button type="submit" className="dm-primary-btn">
+              Adicionar filial
+            </button>
+          </FilterBar>
+        }
+        columns={columns}
+        rows={filiais}
+        loading={loading}
+        emptyMessage="Nenhuma filial cadastrada."
+        getRowKey={(item) => String(item.filial_id)}
+      />
+    </MaintenanceShell>
+  );
+}

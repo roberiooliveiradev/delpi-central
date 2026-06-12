@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from maint_app.config import settings
 from maint_app.core.responses import fail
+from maint_app.interface.http.routes.filial_routes import router as filial_router
 from maint_app.interface.http.routes.maintenance_routes import router as maintenance_router
 from maint_app.interface.http.routes.mini_applicators_routes import router as mini_applicators_router
 from maint_app.interface.http.routes.operational_routes import router as operational_router
@@ -93,6 +94,7 @@ def health():
 
 
 app.include_router(maintenance_router)
+app.include_router(filial_router)
 app.include_router(mini_applicators_router)
 app.include_router(operational_router)
 app.include_router(preventiva_router)

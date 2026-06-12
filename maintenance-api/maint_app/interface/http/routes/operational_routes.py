@@ -27,10 +27,12 @@ _SUBMODULE_ID = "mini-aplicadores"
 
 
 class MotivoCreateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
     descricao: str = Field(min_length=1, max_length=120)
 
 
 class MotivoUpdateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
     descricao: str = Field(min_length=1, max_length=120)
 
 
@@ -40,11 +42,19 @@ class StatusUpdateBody(BaseModel):
     percentual: Optional[int] = Field(default=None, ge=0, le=200)
 
 
+class StatusCreateBody(BaseModel):
+    filial: str = Field(min_length=2, max_length=2)
+    descricao: str = Field(min_length=1, max_length=60)
+    operador: str = Field(pattern="^(>=|<=|>|<)$")
+    percentual: int = Field(ge=0, le=200)
+
+
 class ReposicaoBody(BaseModel):
     filial: str = Field(min_length=2, max_length=2)
     codigo_ferramenta: str = Field(min_length=1, max_length=40)
     codigo_peca: str = Field(min_length=1, max_length=40)
     data_reposicao: str
+    data_ultima_reposicao: Optional[str] = None
     golpes: int = Field(gt=0)
     motivo_id: int
     observacao: Optional[str] = None
@@ -59,7 +69,7 @@ def list_motivos(request: Request, filial: str = Query(..., min_length=2, max_le
         _scope.assert_view_filial(scope, filial)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    items = MotivoRepository().list_active()
+    items = MotivoRepository().list_active(filial=filial)
     return ok({"items": items, "total": len(items)}, message="Motivos listados.")
 
 
@@ -69,13 +79,10 @@ def create_motivo(body: MotivoCreateBody, request: Request):
     scope = resolve_access_scope(request)
     try:
         assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, body.filial, user=user)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    if not _scope.can_manage_filial(scope, "01", user=user) and not _scope.can_manage_filial(
-        scope, "02", user=user
-    ):
-        return fail("Sem permissão para gerenciar motivos.", 403)
-    item = MotivoRepository().create(body.descricao)
+    item = MotivoRepository().create(body.descricao, filial=body.filial)
     return ok(item, message="Motivo criado.", status_code=201)
 
 
@@ -85,31 +92,29 @@ def update_motivo(motivo_id: int, body: MotivoUpdateBody, request: Request):
     scope = resolve_access_scope(request)
     try:
         assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, body.filial, user=user)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    if not _scope.can_manage_filial(scope, "01", user=user) and not _scope.can_manage_filial(
-        scope, "02", user=user
-    ):
-        return fail("Sem permissão para gerenciar motivos.", 403)
-    item = MotivoRepository().update(motivo_id, body.descricao)
+    item = MotivoRepository().update(motivo_id, body.descricao, filial=body.filial)
     if not item:
         return fail("Motivo não encontrado.", 404)
     return ok(item, message="Motivo atualizado.")
 
 
 @router.delete("/motivos/{motivo_id}")
-def delete_motivo(motivo_id: int, request: Request):
+def delete_motivo(
+    motivo_id: int,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
         assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, filial, user=user)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    if not _scope.can_manage_filial(scope, "01", user=user) and not _scope.can_manage_filial(
-        scope, "02", user=user
-    ):
-        return fail("Sem permissão para gerenciar motivos.", 403)
-    MotivoRepository().soft_delete(motivo_id)
+    MotivoRepository().soft_delete(motivo_id, filial=filial)
     return ok(None, message="Motivo excluído.")
 
 
@@ -122,24 +127,45 @@ def list_status_peca(request: Request, filial: str = Query(..., min_length=2, ma
         _scope.assert_view_filial(scope, filial)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    items = StatusPecaRepository().list_active()
+    items = StatusPecaRepository().list_active(filial=filial)
     return ok({"items": items, "total": len(items)}, message="Status listados.")
 
 
-@router.put("/status-peca/{status_id}")
-def update_status_peca(status_id: int, body: StatusUpdateBody, request: Request):
+@router.post("/status-peca")
+def create_status_peca(body: StatusCreateBody, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
         assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, body.filial, user=user)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    if not _scope.can_manage_filial(scope, "01", user=user) and not _scope.can_manage_filial(
-        scope, "02", user=user
-    ):
-        return fail("Sem permissão para gerenciar status.", 403)
+    item = StatusPecaRepository().create(
+        filial=body.filial,
+        descricao=body.descricao,
+        operador=body.operador,
+        percentual=body.percentual,
+    )
+    return ok(item, message="Status criado.", status_code=201)
+
+
+@router.put("/status-peca/{status_id}")
+def update_status_peca(
+    status_id: int,
+    body: StatusUpdateBody,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, filial, user=user)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
     item = StatusPecaRepository().update(
         status_id,
+        filial=filial,
         descricao=body.descricao,
         operador=body.operador,
         percentual=body.percentual,
@@ -147,6 +173,23 @@ def update_status_peca(status_id: int, body: StatusUpdateBody, request: Request)
     if not item:
         return fail("Status não encontrado.", 404)
     return ok(item, message="Status atualizado.")
+
+
+@router.delete("/status-peca/{status_id}")
+def delete_status_peca(
+    status_id: int,
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    user = resolve_user(request)
+    scope = resolve_access_scope(request)
+    try:
+        assert_submodule_manage(user, _SUBMODULE_ID)
+        _scope.assert_manage_filial(scope, filial, user=user)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    StatusPecaRepository().soft_delete(status_id, filial=filial)
+    return ok(None, message="Status excluído.")
 
 
 @router.get("/reposicoes")
@@ -224,6 +267,8 @@ def sugerir_golpes(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo_ferramenta: str = Query(...),
     codigo_peca: str = Query(...),
+    data_inicial: Optional[str] = Query(None),
+    data_final: Optional[str] = Query(None),
 ):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
@@ -235,17 +280,19 @@ def sugerir_golpes(
 
     service = build_reposicao_service()
     try:
-        total = service.sugerir_golpes(
+        payload = service.sugerir_golpes(
             filial=filial,
             codigo_ferramenta=codigo_ferramenta,
             codigo_peca=codigo_peca,
+            data_inicial=data_inicial,
+            data_final=data_final,
         )
         return ok(
             {
                 "filial": filial,
                 "codigo_ferramenta": codigo_ferramenta,
                 "codigo_peca": codigo_peca,
-                "total_golpes": total,
+                **payload,
             },
             message="Golpes sugeridos.",
         )

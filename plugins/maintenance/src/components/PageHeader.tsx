@@ -12,6 +12,7 @@ type PageHeaderProps = {
   filialScope?: string;
   onNavigate: (path: string) => void;
   actions?: ReactNode;
+  showNav?: boolean;
 };
 
 export function PageHeader({
@@ -23,6 +24,7 @@ export function PageHeader({
   filialScope,
   onNavigate,
   actions,
+  showNav = true,
 }: PageHeaderProps) {
   return (
     <header className="dm-page-header">
@@ -34,11 +36,13 @@ export function PageHeader({
           <p className="dm-eyebrow">{eyebrow}</p>
           <h1>{title}</h1>
           <span className="dm-page-subtitle">{subtitle}</span>
-          <MaintenanceNav
-            currentPath={currentPath}
-            filialScope={filialScope}
-            onNavigate={onNavigate}
-          />
+          {showNav ? (
+            <MaintenanceNav
+              currentPath={currentPath}
+              filialScope={filialScope}
+              onNavigate={onNavigate}
+            />
+          ) : null}
         </div>
       </div>
       {actions ? <div className="dm-header-actions">{actions}</div> : null}

@@ -8,8 +8,12 @@ from delpi_auth.authz_core import has_permission
 from maint_app.application.security.maintenance_permissions import (
     MAINTENANCE_VIEW,
     MANAGE_FILIAL_PERMISSIONS,
+    MANAGE_FILIAL_PREFIX,
     MINI_APPLICATORS_MANAGE,
     VIEW_FILIAL_PERMISSIONS,
+    VIEW_FILIAL_PREFIX,
+    codigos_from_filial_permissions,
+    manage_filial_permission,
 )
 
 
@@ -48,16 +52,20 @@ class FilialAccessScopeService:
             )
 
         permissions = list(getattr(user, "permissions", []) or [])
-        branch_view = [
-            codigo
-            for codigo, perm in VIEW_FILIAL_PERMISSIONS.items()
-            if perm in permissions
-        ]
-        branch_manage = [
-            codigo
-            for codigo, perm in MANAGE_FILIAL_PERMISSIONS.items()
-            if perm in permissions
-        ]
+        branch_view = codigos_from_filial_permissions(permissions, prefix=VIEW_FILIAL_PREFIX)
+        if not branch_view:
+            branch_view = [
+                codigo
+                for codigo, perm in VIEW_FILIAL_PERMISSIONS.items()
+                if perm in permissions
+            ]
+        branch_manage = codigos_from_filial_permissions(permissions, prefix=MANAGE_FILIAL_PREFIX)
+        if not branch_manage:
+            branch_manage = [
+                codigo
+                for codigo, perm in MANAGE_FILIAL_PERMISSIONS.items()
+                if perm in permissions
+            ]
 
         if branch_view:
             return FilialAccessScope(
@@ -104,8 +112,11 @@ class FilialAccessScopeService:
             return False
 
         permissions = list(getattr(user, "permissions", []) or []) if user else []
-        manage_perm = MANAGE_FILIAL_PERMISSIONS.get(codigo)
-        if manage_perm and manage_perm in permissions:
+        manage_perm = manage_filial_permission(codigo)
+        if manage_perm in permissions:
+            return True
+        legacy_manage = MANAGE_FILIAL_PERMISSIONS.get(codigo)
+        if legacy_manage and legacy_manage in permissions:
             return True
 
         if scope.is_unrestricted and not scope.scoped_manage:
