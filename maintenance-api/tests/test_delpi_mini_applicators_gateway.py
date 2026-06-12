@@ -52,3 +52,25 @@ def test_obter_ferramenta_propaga_client(monkeypatch):
         "23-026",
         authorization="Bearer token",
     )
+
+
+def test_listar_componentes_propaga_client(monkeypatch):
+    client = MagicMock()
+    client.list_mini_applicators_componentes.return_value = {
+        "items": [{"codigo": "3019-001", "nivel": 1}],
+        "total": 1,
+    }
+    monkeypatch.setattr(
+        "maint_app.infrastructure.gateways.delpi_mini_applicators_gateway.bearer_authorization_from_context",
+        lambda: "Bearer token",
+    )
+
+    gateway = DelpiMiniAplicatorsGateway(client)
+    result = gateway.listar_componentes(codigo_ferramenta="23-026", filial="01")
+
+    assert result["total"] == 1
+    client.list_mini_applicators_componentes.assert_called_once_with(
+        "23-026",
+        params={"filial": "01"},
+        authorization="Bearer token",
+    )

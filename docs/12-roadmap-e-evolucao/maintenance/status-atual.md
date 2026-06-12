@@ -10,7 +10,7 @@
 | Docs API | `maintenance-api/docs/` | ✅ README, arquitetura, contratos |
 | MFE | `plugins/maintenance/` | ✅ Home (filial no início), mini-aplicadores, relatório, configuração CRUD |
 | API dedicada | `maintenance-api/` | ✅ CRUD operacional + preventiva + catálogo de submódulos + gateways TOTVS |
-| Rotas TOTVS api-delpi | `/engineering/mini-applicators/*` | ✅ ferramentas, peças, golpes |
+| Rotas TOTVS api-delpi | `/engineering/mini-applicators/*` | ✅ ferramentas, peças, golpes, componentes |
 | Docker Compose / gateway | `infra/docker-compose*.yml` | ✅ |
 | CI | `scripts/ci-maintenance-api.sh` | ✅ 16 testes |
 | Registro Core API | `plugins/maintenance/scripts/register-manifest.sh` | ✅ Script pronto |
@@ -25,6 +25,8 @@
 | **Submódulos** | Catálogo API (`/options`); permissões `maintenance.mini-applicators.view\|manage` independentes de filial |
 | **Escopo filial** | `maintenance.view.filial-XX` / `manage.filial-XX` filtram dados na API |
 | **UI mini-aplicadores** | CRUD reposição (criar/editar/excluir), golpes automáticos, filtro histórico por peça |
+| **Componentes / estoque** | Rota TOTVS + painel na ferramenta (estrutura recursiva, locais 01/99) |
+| **Relatório** | Últimas reposições por peça + ranking preventivo |
 | **UI configuração** | CRUD motivos + edição de status preventivo (manage) |
 | **Manifesto v0.3.0** | Rotas internas `showInMenu: false`; tile único no portal |
 
@@ -36,7 +38,7 @@
 | 1 — CRUD operacional | ✅ Concluída |
 | 2 — Preventiva + relatório | ✅ Concluída (validar amostra vs WinForms) |
 | 3 — Migração + produção | 🚧 Script import + runbook prontos; aguarda export Access e RBAC |
-| 4 — Extensões | ⏳ Backlog (componentes/estoque, links externos) |
+| 4 — Extensões | ⏳ Backlog (links externos, preventiva parametrizável) |
 
 ## Próximo passo recomendado
 

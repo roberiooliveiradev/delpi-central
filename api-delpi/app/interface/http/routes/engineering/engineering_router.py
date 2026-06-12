@@ -28,6 +28,7 @@ from app.composition.engineering_composer import (
     build_engineering_list_transforma_mais_processes_use_case,
     build_get_mini_applicators_ferramenta_use_case,
     build_get_mini_applicators_golpes_use_case,
+    build_list_mini_applicators_componentes_use_case,
     build_list_mini_applicators_ferramentas_use_case,
     build_list_mini_applicators_pecas_use_case,
 )
@@ -51,6 +52,7 @@ from app.interface.http.openapi_agent_metadata import (
     MINI_APPLICATORS_FERRAMENTA_GET,
     MINI_APPLICATORS_PECAS_LIST,
     MINI_APPLICATORS_GOLPES_GET,
+    MINI_APPLICATORS_COMPONENTES_LIST,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
@@ -522,5 +524,27 @@ def get_mini_applicators_golpes_route(
         log_error(f"Erro ao calcular golpes mini-aplicador {codigo}: {exc}")
         return error_response(
             "Erro interno ao calcular golpes do mini-aplicador.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/ferramentas/{codigo}/componentes", **MINI_APPLICATORS_COMPONENTES_LIST)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def list_mini_applicators_componentes_route(
+    codigo: str,
+    filial: str = Query(..., min_length=2, max_length=2),
+):
+    try:
+        use_case = build_list_mini_applicators_componentes_use_case()
+        items = use_case.execute(codigo_ferramenta=codigo, filial=filial)
+        return api_delpi_success(
+            {"items": items, "total": len(items)},
+            operation_id="list_mini_applicators_componentes",
+            message="Componentes listados.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar componentes mini-aplicador {codigo}: {exc}")
+        return error_response(
+            "Erro interno ao listar componentes do mini-aplicador.",
             status_code=500,
         )

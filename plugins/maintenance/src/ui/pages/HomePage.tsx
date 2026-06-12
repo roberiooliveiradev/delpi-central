@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Hammer, Home, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { StateBox } from "../../components/data";
 import { FilialSwitcher } from "../../components/FilialSwitcher";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
@@ -138,14 +139,14 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
         </article>
       </section>
 
-      {optionsError ? <p className="dm-state-box dm-state-box--error">{optionsError}</p> : null}
+      {optionsError ? <StateBox variant="error">{optionsError}</StateBox> : null}
 
       {!optionsError && !filialLoading && submodules.length === 0 ? (
-        <p className="dm-state-box">
+        <StateBox>
           Nenhum submódulo disponível. Solicite permissões como{" "}
           <code>maintenance.mini-applicators.view</code> e escopo de filial{" "}
           <code>maintenance.view.filial-XX</code> na Core API.
-        </p>
+        </StateBox>
       ) : null}
     </MaintenanceShell>
   );

@@ -107,6 +107,20 @@ class PreventivaService:
             for row in rows
         ]
 
+    def listar_ultimas_reposicoes(self, *, filial: str) -> list[dict[str, Any]]:
+        rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
+        return [
+            {
+                "reposicao_id": str(row["reposicao_id"]),
+                "filial": row["filial"],
+                "codigo_ferramenta": row["codigo_ferramenta"],
+                "codigo_peca": row["codigo_peca"],
+                "data_reposicao": row["data_reposicao"],
+                "golpes": int(row["golpes"]),
+            }
+            for row in rows
+        ]
+
     def _obter_golpes_atuais(
         self,
         *,

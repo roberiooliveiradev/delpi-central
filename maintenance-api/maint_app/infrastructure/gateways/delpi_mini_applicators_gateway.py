@@ -58,3 +58,10 @@ class DelpiMiniAplicatorsGateway:
             },
             authorization=bearer_authorization_from_context(),
         )
+
+    def listar_componentes(self, *, codigo_ferramenta: str, filial: str) -> dict:
+        return self._client.list_mini_applicators_componentes(
+            codigo_ferramenta,
+            params={"filial": filial},
+            authorization=bearer_authorization_from_context(),
+        )

@@ -27,3 +27,29 @@ def test_list_mini_applicators_ferramentas_use_case():
     assert result.total == 1
     assert result.items[0].codigo == "23-001"
     mock_repo.list_ferramentas.assert_called_once()
+
+
+def test_list_mini_applicators_componentes_use_case():
+    mock_repo = MagicMock()
+    mock_repo.list_componentes.return_value = [
+        {
+            "id": 1,
+            "nivel": 1,
+            "codigo": "3019-001",
+            "descricao": "Peça teste",
+            "unidade": "UN",
+            "estoque_local_01": 10.0,
+            "estoque_local_99": 0.0,
+        }
+    ]
+
+    from app.application.use_cases.mini_applicators.mini_applicators_use_cases import (
+        ListMiniApplicatorsComponentesUseCase,
+    )
+
+    use_case = ListMiniApplicatorsComponentesUseCase(mock_repo)
+    result = use_case.execute(codigo_ferramenta="23-001", filial="01")
+
+    assert len(result) == 1
+    assert result[0]["codigo"] == "3019-001"
+    mock_repo.list_componentes.assert_called_once_with(codigo_ferramenta="23-001", filial="01")

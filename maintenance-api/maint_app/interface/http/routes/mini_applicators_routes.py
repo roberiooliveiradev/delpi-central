@@ -88,3 +88,23 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
         return fail(format_api_error(exc), status_code=500)
+
+
+@router.get("/ferramentas/{codigo}/componentes")
+def list_componentes(request: Request, codigo: str, filial: str = Query(..., min_length=2, max_length=2)):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID)
+        _scope.assert_view_filial(scope, filial)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        gateway = build_mini_applicators_totvs_gateway()
+        data = gateway.listar_componentes(codigo_ferramenta=codigo, filial=filial)
+        return ok(data, message="Componentes listados.")
+    except DelpiApiError as exc:
+        return fail(exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        return fail(format_api_error(exc), status_code=500)

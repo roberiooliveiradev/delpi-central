@@ -343,6 +343,15 @@ MINI_APPLICATORS_GOLPES_GET = agent_route(
     operation_id="get_mini_applicators_golpes",
 )
 
+MINI_APPLICATORS_COMPONENTES_LIST = agent_route(
+    summary="Componentes do mini-aplicador",
+    description=(
+        "Explosão recursiva da estrutura (SG1010) com estoque nos locais 01 e 99 "
+        "para a filial informada."
+    ),
+    operation_id="list_mini_applicators_componentes",
+)
+
 LMP_BY_SALE = agent_route(
     summary="Detalhe da LMP por ordem de venda",
     description=(

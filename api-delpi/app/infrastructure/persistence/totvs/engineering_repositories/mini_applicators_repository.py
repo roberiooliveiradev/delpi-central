@@ -157,3 +157,76 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
             "data_final": data_final,
             "total_golpes": int(total or 0),
         }
+
+    def list_componentes(self, *, codigo_ferramenta: str, filial: str) -> list[dict]:
+        query = """
+WITH EstruturaCTE AS (
+    SELECT
+        0 AS NIVEL,
+        CAST(NULL AS VARCHAR(50)) AS COD_PAI,
+        CAST(RTRIM(LTRIM(?)) AS VARCHAR(50)) AS COD_COMPONENTE,
+        CAST('000' AS VARCHAR(MAX)) AS PATH
+    UNION ALL
+    SELECT
+        E.NIVEL + 1 AS NIVEL,
+        CAST(RTRIM(LTRIM(G1.G1_COD)) AS VARCHAR(50)) AS COD_PAI,
+        CAST(RTRIM(LTRIM(G1.G1_COMP)) AS VARCHAR(50)) AS COD_COMPONENTE,
+        CAST(E.PATH + '.' + RIGHT('000' + CAST(
+            ROW_NUMBER() OVER (PARTITION BY G1.G1_COD ORDER BY G1.G1_COMP) AS VARCHAR(3)
+        ), 3) AS VARCHAR(MAX)) AS PATH
+    FROM SG1010 AS G1
+    INNER JOIN EstruturaCTE AS E
+        ON RTRIM(LTRIM(G1.G1_COD)) = RTRIM(LTRIM(E.COD_COMPONENTE))
+    WHERE G1.D_E_L_E_T_ = ''
+      AND (
+            RTRIM(LTRIM(G1.G1_FIM)) = ''
+            OR RTRIM(LTRIM(G1.G1_FIM)) > CONVERT(CHAR(8), GETDATE(), 112)
+          )
+)
+SELECT
+    C.R_E_C_N_O_ AS id,
+    E.NIVEL AS nivel,
+    RTRIM(LTRIM(E.COD_COMPONENTE)) AS codigo,
+    RTRIM(LTRIM(C.B1_DESC)) AS descricao,
+    RTRIM(LTRIM(C.B1_UM)) AS unidade,
+    ISNULL((
+        SELECT SUM(B2_QATU)
+        FROM SB2010 AS S1
+        WHERE RTRIM(LTRIM(S1.B2_COD)) = RTRIM(LTRIM(C.B1_COD))
+          AND RTRIM(LTRIM(S1.B2_LOCAL)) = '01'
+          AND S1.D_E_L_E_T_ = ''
+          AND S1.B2_FILIAL = ?
+    ), 0) AS estoque_local_01,
+    ISNULL((
+        SELECT SUM(B2_QATU)
+        FROM SB2010 AS S2
+        WHERE RTRIM(LTRIM(S2.B2_COD)) = RTRIM(LTRIM(C.B1_COD))
+          AND RTRIM(LTRIM(S2.B2_LOCAL)) = '99'
+          AND S2.D_E_L_E_T_ = ''
+          AND S2.B2_FILIAL = ?
+    ), 0) AS estoque_local_99
+FROM EstruturaCTE AS E
+INNER JOIN SB1010 AS C
+    ON RTRIM(LTRIM(E.COD_COMPONENTE)) = RTRIM(LTRIM(C.B1_COD))
+WHERE C.D_E_L_E_T_ = ''
+  AND E.NIVEL > 0
+ORDER BY E.PATH
+OPTION (MAXRECURSION 100)
+"""
+        codigo = codigo_ferramenta.strip()
+        filial_code = filial.strip()
+        with self:
+            rows = self.execute_query(query, (codigo, filial_code, filial_code))
+
+        return [
+            {
+                "id": int(row["id"]),
+                "nivel": int(row["nivel"]),
+                "codigo": str(row["codigo"]),
+                "descricao": str(row["descricao"]),
+                "unidade": str(row.get("unidade") or ""),
+                "estoque_local_01": float(row.get("estoque_local_01") or 0),
+                "estoque_local_99": float(row.get("estoque_local_99") or 0),
+            }
+            for row in rows
+        ]

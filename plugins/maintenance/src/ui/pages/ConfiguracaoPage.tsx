@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Settings } from "lucide-react";
 
+import {
+  type DataTableColumn,
+  DataTableSection,
+  FilialBadge,
+  FilterBar,
+  StateBox,
+} from "../../components/data";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
@@ -80,10 +87,10 @@ export function ConfiguracaoPage({
     try {
       await createMotivo(descricao, getAccessToken);
       setNovoMotivo("");
-      setSuccess("Motivo criado.");
+      setSuccess("Motivo adicionado.");
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao criar motivo.");
+      setError(err instanceof Error ? err.message : "Falha ao adicionar motivo.");
     }
   }
 
@@ -102,7 +109,7 @@ export function ConfiguracaoPage({
   }
 
   async function handleDeleteMotivo(motivoId: number, descricao: string) {
-    if (!window.confirm(`Excluir motivo «${descricao}»?`)) return;
+    if (!window.confirm(`Excluir motivo "${descricao}"?`)) return;
     setError(null);
     setSuccess(null);
     try {
@@ -136,6 +143,145 @@ export function ConfiguracaoPage({
     }
   }
 
+  const motivosColumns = useMemo<DataTableColumn<MotivoItem>[]>(() => {
+    const columns: DataTableColumn<MotivoItem>[] = [
+      { key: "id", header: "ID", render: (item) => item.motivo_id, align: "center" },
+      {
+        key: "descricao",
+        header: "Descrição",
+        render: (item) =>
+          canManageMiniApplicators ? (
+            <input
+              value={motivoEdits[item.motivo_id] ?? item.descricao}
+              onChange={(event) =>
+                setMotivoEdits((prev) => ({
+                  ...prev,
+                  [item.motivo_id]: event.target.value,
+                }))
+              }
+            />
+          ) : (
+            item.descricao
+          ),
+      },
+    ];
+
+    if (canManageMiniApplicators) {
+      columns.push({
+        key: "acoes",
+        header: "Ações",
+        render: (item) => (
+          <div className="dm-row-actions">
+            <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveMotivo(item.motivo_id)}>
+              Salvar
+            </button>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--danger"
+              onClick={() => void handleDeleteMotivo(item.motivo_id, item.descricao)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      });
+    }
+
+    return columns;
+  }, [canManageMiniApplicators, motivoEdits]);
+
+  const statusColumns = useMemo<DataTableColumn<StatusItem>[]>(() => {
+    const columns: DataTableColumn<StatusItem>[] = [
+      {
+        key: "status",
+        header: "Status",
+        render: (item) => {
+          const draft = statusEdits[item.status_id] ?? item;
+          return canManageMiniApplicators ? (
+            <input
+              value={draft.descricao}
+              onChange={(event) =>
+                setStatusEdits((prev) => ({
+                  ...prev,
+                  [item.status_id]: { ...draft, descricao: event.target.value },
+                }))
+              }
+            />
+          ) : (
+            item.descricao
+          );
+        },
+      },
+      {
+        key: "operador",
+        header: "Operador",
+        render: (item) => {
+          const draft = statusEdits[item.status_id] ?? item;
+          return canManageMiniApplicators ? (
+            <select
+              value={draft.operador}
+              onChange={(event) =>
+                setStatusEdits((prev) => ({
+                  ...prev,
+                  [item.status_id]: { ...draft, operador: event.target.value },
+                }))
+              }
+            >
+              {STATUS_OPERATORS.map((operador) => (
+                <option key={operador} value={operador}>
+                  {operador}
+                </option>
+              ))}
+            </select>
+          ) : (
+            item.operador
+          );
+        },
+      },
+      {
+        key: "percentual",
+        header: "Percentual",
+        render: (item) => {
+          const draft = statusEdits[item.status_id] ?? item;
+          return canManageMiniApplicators ? (
+            <input
+              type="number"
+              min={0}
+              max={200}
+              value={draft.percentual}
+              onChange={(event) =>
+                setStatusEdits((prev) => ({
+                  ...prev,
+                  [item.status_id]: {
+                    ...draft,
+                    percentual: Number(event.target.value),
+                  },
+                }))
+              }
+            />
+          ) : (
+            `${item.percentual}%`
+          );
+        },
+        align: "right",
+      },
+    ];
+
+    if (canManageMiniApplicators) {
+      columns.push({
+        key: "acoes",
+        header: "Ações",
+        render: (item) => (
+          <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveStatus(item.status_id)}>
+            Salvar
+          </button>
+        ),
+      });
+    }
+
+    return columns;
+  }, [canManageMiniApplicators, statusEdits]);
+
   return (
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
@@ -148,178 +294,46 @@ export function ConfiguracaoPage({
         onNavigate={onNavigate}
       />
 
-      <section className="dm-card dm-filter-bar">
-        <p className="dm-filial-badge">Filial operacional: {filial}</p>
-      </section>
+      <FilterBar leading={<FilialBadge filial={filial} />} />
 
-      {error ? <p className="dm-state-box dm-state-box--error">{error}</p> : null}
-      {success ? <p className="dm-state-box">{success}</p> : null}
-      {loading ? <p className="dm-state-box">Carregando…</p> : null}
+      {error ? <StateBox variant="error">{error}</StateBox> : null}
+      {success ? <StateBox variant="success">{success}</StateBox> : null}
+      {loading ? <StateBox>Carregando…</StateBox> : null}
 
-      <section className="dm-card">
-        <h3 className="dm-card__title">Motivos de reposição</h3>
-        {canManageMiniApplicators ? (
-          <form className="dm-filter-bar" onSubmit={handleCreateMotivo}>
-            <label className="dm-field">
-              <span>Novo motivo</span>
-              <input
-                value={novoMotivo}
-                onChange={(event) => setNovoMotivo(event.target.value)}
-                placeholder="Ex.: DESGASTE"
-              />
-            </label>
-            <button type="submit" className="dm-primary-btn">
-              Adicionar
-            </button>
-          </form>
-        ) : null}
-        <div className="dm-table-wrap">
-          <table className="dm-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Descrição</th>
-                {canManageMiniApplicators ? <th>Ações</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {motivos.map((item) => (
-                <tr key={item.motivo_id}>
-                  <td data-label="ID">{item.motivo_id}</td>
-                  <td data-label="Descrição">
-                    {canManageMiniApplicators ? (
-                      <input
-                        value={motivoEdits[item.motivo_id] ?? item.descricao}
-                        onChange={(event) =>
-                          setMotivoEdits((prev) => ({
-                            ...prev,
-                            [item.motivo_id]: event.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      item.descricao
-                    )}
-                  </td>
-                  {canManageMiniApplicators ? (
-                    <td data-label="Ações">
-                      <div className="dm-row-actions">
-                        <button
-                          type="button"
-                          className="dm-ghost-btn"
-                          onClick={() => void handleSaveMotivo(item.motivo_id)}
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          type="button"
-                          className="dm-ghost-btn dm-ghost-btn--danger"
-                          onClick={() => void handleDeleteMotivo(item.motivo_id, item.descricao)}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTableSection
+        title="Motivos de reposição"
+        toolbar={
+          canManageMiniApplicators ? (
+            <FilterBar embedded onSubmit={handleCreateMotivo}>
+              <label className="dm-field">
+                <span>Novo motivo</span>
+                <input
+                  value={novoMotivo}
+                  onChange={(event) => setNovoMotivo(event.target.value)}
+                  placeholder="Ex.: DESGASTE"
+                />
+              </label>
+              <button type="submit" className="dm-primary-btn">
+                Adicionar
+              </button>
+            </FilterBar>
+          ) : null
+        }
+        columns={motivosColumns}
+        rows={motivos}
+        loading={loading}
+        emptyMessage="Nenhum motivo cadastrado."
+        getRowKey={(item) => String(item.motivo_id)}
+      />
 
-      <section className="dm-card">
-        <h3 className="dm-card__title">Status preventivo</h3>
-        <div className="dm-table-wrap">
-          <table className="dm-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Operador</th>
-                <th>Percentual</th>
-                {canManageMiniApplicators ? <th>Ações</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {status.map((item) => {
-                const draft = statusEdits[item.status_id] ?? item;
-                return (
-                  <tr key={item.status_id}>
-                    <td data-label="Status">
-                      {canManageMiniApplicators ? (
-                        <input
-                          value={draft.descricao}
-                          onChange={(event) =>
-                            setStatusEdits((prev) => ({
-                              ...prev,
-                              [item.status_id]: { ...draft, descricao: event.target.value },
-                            }))
-                          }
-                        />
-                      ) : (
-                        item.descricao
-                      )}
-                    </td>
-                    <td data-label="Operador">
-                      {canManageMiniApplicators ? (
-                        <select
-                          value={draft.operador}
-                          onChange={(event) =>
-                            setStatusEdits((prev) => ({
-                              ...prev,
-                              [item.status_id]: { ...draft, operador: event.target.value },
-                            }))
-                          }
-                        >
-                          {STATUS_OPERATORS.map((operador) => (
-                            <option key={operador} value={operador}>
-                              {operador}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        item.operador
-                      )}
-                    </td>
-                    <td data-label="Percentual">
-                      {canManageMiniApplicators ? (
-                        <input
-                          type="number"
-                          min={0}
-                          max={200}
-                          value={draft.percentual}
-                          onChange={(event) =>
-                            setStatusEdits((prev) => ({
-                              ...prev,
-                              [item.status_id]: {
-                                ...draft,
-                                percentual: Number(event.target.value),
-                              },
-                            }))
-                          }
-                        />
-                      ) : (
-                        `${item.percentual}%`
-                      )}
-                    </td>
-                    {canManageMiniApplicators ? (
-                      <td data-label="Ações">
-                        <button
-                          type="button"
-                          className="dm-ghost-btn"
-                          onClick={() => void handleSaveStatus(item.status_id)}
-                        >
-                          Salvar
-                        </button>
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTableSection
+        title="Status preventivo"
+        columns={statusColumns}
+        rows={status}
+        loading={loading}
+        emptyMessage="Nenhuma regra de status cadastrada."
+        getRowKey={(item) => String(item.status_id)}
+      />
     </MaintenanceShell>
   );
 }

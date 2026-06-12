@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Hammer, RefreshCw } from "lucide-react";
 
-import { MaintenanceShell } from "../../components/MaintenanceShell";
-import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
+import {
+  type DataTableColumn,
+  DataTableSection,
+  FilialBadge,
+  FilterBar,
+  StateBox,
+} from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -12,16 +17,20 @@ import {
 import {
   createReposicao,
   deleteReposicao,
+  fetchComponentes,
   fetchFerramentas,
   fetchMotivos,
   fetchPecas,
   fetchReposicoes,
   suggestGolpes,
   updateReposicao,
+  type ComponenteItem,
   type FerramentaItem,
   type MotivoItem,
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
+import { MaintenanceShell } from "../../components/MaintenanceShell";
+import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 
 type MiniAplicadoresPageProps = {
   getAccessToken?: () => string | undefined;
@@ -42,9 +51,11 @@ export function MiniAplicadoresPage({
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const [descricao, setDescricao] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
   const [pecas, setPecas] = useState<FerramentaItem[]>([]);
+  const [componentes, setComponentes] = useState<ComponenteItem[]>([]);
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
   const [reposicoes, setReposicoes] = useState<ReposicaoItem[]>([]);
   const [codigoPeca, setCodigoPeca] = useState("");
@@ -72,7 +83,13 @@ export function MiniAplicadoresPage({
     setError(null);
     try {
       const data = await fetchFerramentas(
-        { descricao: descricao.trim() || undefined, filial, page: 1, page_size: 50 },
+        {
+          codigo: codigo.trim() || undefined,
+          descricao: descricao.trim() || undefined,
+          filial,
+          page: 1,
+          page_size: 50,
+        },
         getAccessToken,
       );
       setItems(data.items ?? []);
@@ -84,7 +101,7 @@ export function MiniAplicadoresPage({
     } finally {
       setLoading(false);
     }
-  }, [descricao, filial, getAccessToken]);
+  }, [codigo, descricao, filial, getAccessToken]);
 
   const loadDetalhe = useCallback(
     async (options?: { pecaFilter?: string }) => {
@@ -93,7 +110,7 @@ export function MiniAplicadoresPage({
     setLoading(true);
     setError(null);
     try {
-      const [pecasData, motivosData, reposicoesData] = await Promise.all([
+      const [pecasData, motivosData, reposicoesData, componentesData] = await Promise.all([
         fetchPecas(codigoFerramenta, filial, getAccessToken),
         fetchMotivos(filial, getAccessToken),
         fetchReposicoes(
@@ -104,11 +121,13 @@ export function MiniAplicadoresPage({
           },
           getAccessToken,
         ),
+        fetchComponentes(codigoFerramenta, filial, getAccessToken),
       ]);
       const pecaItems = pecasData.items ?? [];
       setPecas(pecaItems);
       setMotivos(motivosData.items ?? []);
       setReposicoes(reposicoesData.items ?? []);
+      setComponentes(componentesData.items ?? []);
       setCodigoPeca((current) => current || pecaItems[0]?.codigo || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar detalhe.");
@@ -213,6 +232,100 @@ export function MiniAplicadoresPage({
     }
   }
 
+  const ferramentasColumns = useMemo<DataTableColumn<FerramentaItem>[]>(
+    () => [
+      {
+        key: "codigo",
+        header: "Código",
+        render: (item) => (
+          <button
+            type="button"
+            className="dm-link-btn"
+            onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
+          >
+            {item.codigo}
+          </button>
+        ),
+      },
+      {
+        key: "descricao",
+        header: "Descrição",
+        render: (item) => item.descricao,
+      },
+    ],
+    [onNavigate],
+  );
+
+  const reposicoesColumns = useMemo<DataTableColumn<ReposicaoItem>[]>(() => {
+    const columns: DataTableColumn<ReposicaoItem>[] = [
+      {
+        key: "data",
+        header: "Data",
+        render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
+      },
+      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
+      { key: "golpes", header: "Golpes", render: (item) => item.golpes, align: "right" },
+      {
+        key: "motivo",
+        header: "Motivo",
+        render: (item) => item.motivo_descricao ?? item.motivo_id,
+      },
+    ];
+
+    if (canManageMiniApplicators) {
+      columns.push({
+        key: "acoes",
+        header: "Ações",
+        render: (item) => (
+          <div className="dm-row-actions">
+            <button type="button" className="dm-ghost-btn" onClick={() => handleEditReposicao(item)}>
+              Editar
+            </button>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--danger"
+              onClick={() => void handleDeleteReposicao(item)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      });
+    }
+
+    return columns;
+  }, [canManageMiniApplicators]);
+
+  const componentesColumns = useMemo<DataTableColumn<ComponenteItem>[]>(
+    () => [
+      { key: "nivel", header: "Nível", render: (item) => item.nivel, align: "center" },
+      {
+        key: "codigo",
+        header: "Código",
+        render: (item) => (
+          <span className="dm-datatable__cell-indent" style={{ paddingLeft: `${item.nivel * 12}px` }}>
+            {item.codigo}
+          </span>
+        ),
+      },
+      { key: "descricao", header: "Descrição", render: (item) => item.descricao },
+      { key: "unidade", header: "Un.", render: (item) => item.unidade, align: "center" },
+      {
+        key: "estoque01",
+        header: "Estoque 01",
+        render: (item) => item.estoque_local_01.toLocaleString("pt-BR"),
+        align: "right",
+      },
+      {
+        key: "estoque99",
+        header: "Estoque 99",
+        render: (item) => item.estoque_local_99.toLocaleString("pt-BR"),
+        align: "right",
+      },
+    ],
+    [],
+  );
+
   return (
     <MaintenanceShell>
       <MiniAplicadoresPageHeader
@@ -242,8 +355,15 @@ export function MiniAplicadoresPage({
 
       {!codigoFerramenta ? (
         <>
-          <section className="dm-card dm-filter-bar">
-            <p className="dm-filial-badge">Filial operacional: {filial}</p>
+          <FilterBar leading={<FilialBadge filial={filial} />}>
+            <label className="dm-field">
+              <span>Buscar por código</span>
+              <input
+                value={codigo}
+                onChange={(event) => setCodigo(event.target.value)}
+                placeholder="Ex.: 23-026"
+              />
+            </label>
             <label className="dm-field">
               <span>Buscar por descrição</span>
               <input
@@ -255,63 +375,31 @@ export function MiniAplicadoresPage({
             <button type="button" className="dm-primary-btn" onClick={() => void loadFerramentas()}>
               Buscar
             </button>
-          </section>
+          </FilterBar>
 
-          <section className="dm-card">
-            <div className="dm-card__header">
-              <h3 className="dm-card__title">Ferramentas</h3>
-              <span className="dm-badge">{total} registro(s)</span>
-            </div>
-            {error ? <p className="dm-state-box dm-state-box--error">{error}</p> : null}
-            <div className="dm-table-wrap">
-              <table className="dm-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Descrição</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length === 0 && !loading ? (
-                    <tr>
-                      <td colSpan={2} className="dm-table__empty">
-                        Nenhuma ferramenta encontrada.
-                      </td>
-                    </tr>
-                  ) : null}
-                  {items.map((item) => (
-                    <tr key={item.codigo}>
-                      <td data-label="Código">
-                        <button
-                          type="button"
-                          className="dm-link-btn"
-                          onClick={() =>
-                            onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))
-                          }
-                        >
-                          {item.codigo}
-                        </button>
-                      </td>
-                      <td data-label="Descrição">{item.descricao}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          {error ? <StateBox variant="error">{error}</StateBox> : null}
+
+          <DataTableSection
+            title="Ferramentas"
+            badge={`${total} registro(s)`}
+            columns={ferramentasColumns}
+            rows={items}
+            loading={loading}
+            emptyMessage="Nenhuma ferramenta encontrada."
+            getRowKey={(item) => item.codigo}
+          />
         </>
       ) : (
         <>
-          {error ? <p className="dm-state-box dm-state-box--error">{error}</p> : null}
-          {success ? <p className="dm-state-box">{success}</p> : null}
+          {error ? <StateBox variant="error">{error}</StateBox> : null}
+          {success ? <StateBox variant="success">{success}</StateBox> : null}
 
           {canManageMiniApplicators ? (
             <section className="dm-card">
-              <h3 className="dm-card__title">
+              <h3 className="dm-section-header__title">
                 {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
               </h3>
-              <form className="dm-filter-bar" onSubmit={handleSubmitReposicao}>
-                <p className="dm-filial-badge">Filial operacional: {filial}</p>
+              <FilterBar embedded leading={<FilialBadge filial={filial} />} onSubmit={handleSubmitReposicao}>
                 <label className="dm-field">
                   <span>Peça</span>
                   <select value={codigoPeca} onChange={(event) => setCodigoPeca(event.target.value)}>
@@ -362,13 +450,13 @@ export function MiniAplicadoresPage({
                     Cancelar edição
                   </button>
                 ) : null}
-              </form>
+              </FilterBar>
             </section>
           ) : null}
 
-          <section className="dm-card">
-            <div className="dm-card__header">
-              <h3 className="dm-card__title">Histórico de reposições</h3>
+          <DataTableSection
+            title="Histórico de reposições"
+            actions={
               <button
                 type="button"
                 className="dm-ghost-btn"
@@ -376,77 +464,45 @@ export function MiniAplicadoresPage({
               >
                 Voltar para lista
               </button>
-            </div>
-            <div className="dm-filter-bar">
-              <label className="dm-field">
-                <span>Filtrar por peça</span>
-                <select
-                  value={filtroHistoricoPeca}
-                  onChange={(event) => setFiltroHistoricoPeca(event.target.value)}
-                >
-                  <option value="">Todas</option>
-                  {pecas.map((peca) => (
-                    <option key={peca.codigo} value={peca.codigo}>
-                      {peca.codigo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="button" className="dm-ghost-btn" onClick={() => void loadDetalhe()}>
-                Aplicar filtro
-              </button>
-            </div>
-            <div className="dm-table-wrap">
-              <table className="dm-table">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Peça</th>
-                    <th>Golpes</th>
-                    <th>Motivo</th>
-                    {canManageMiniApplicators ? <th>Ações</th> : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {reposicoes.length === 0 ? (
-                    <tr>
-                      <td colSpan={canManageMiniApplicators ? 5 : 4} className="dm-table__empty">
-                        Nenhuma reposição registrada.
-                      </td>
-                    </tr>
-                  ) : null}
-                  {reposicoes.map((item) => (
-                    <tr key={item.reposicao_id} className={editingReposicaoId === item.reposicao_id ? "is-selected" : ""}>
-                      <td data-label="Data">{new Date(item.data_reposicao).toLocaleString("pt-BR")}</td>
-                      <td data-label="Peça">{item.codigo_peca}</td>
-                      <td data-label="Golpes">{item.golpes}</td>
-                      <td data-label="Motivo">{item.motivo_descricao ?? item.motivo_id}</td>
-                      {canManageMiniApplicators ? (
-                        <td data-label="Ações">
-                          <div className="dm-row-actions">
-                            <button
-                              type="button"
-                              className="dm-ghost-btn"
-                              onClick={() => handleEditReposicao(item)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              className="dm-ghost-btn dm-ghost-btn--danger"
-                              onClick={() => void handleDeleteReposicao(item)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        </td>
-                      ) : null}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+            }
+            toolbar={
+              <FilterBar embedded>
+                <label className="dm-field">
+                  <span>Filtrar por peça</span>
+                  <select
+                    value={filtroHistoricoPeca}
+                    onChange={(event) => setFiltroHistoricoPeca(event.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {pecas.map((peca) => (
+                      <option key={peca.codigo} value={peca.codigo}>
+                        {peca.codigo}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button type="button" className="dm-ghost-btn" onClick={() => void loadDetalhe()}>
+                  Aplicar filtro
+                </button>
+              </FilterBar>
+            }
+            columns={reposicoesColumns}
+            rows={reposicoes}
+            loading={loading}
+            emptyMessage="Nenhuma reposição registrada."
+            getRowKey={(item) => item.reposicao_id}
+            getRowClassName={(item) => (editingReposicaoId === item.reposicao_id ? "is-selected" : undefined)}
+          />
+
+          <DataTableSection
+            title="Componentes e estoque"
+            badge={`${componentes.length} item(ns)`}
+            columns={componentesColumns}
+            rows={componentes}
+            loading={loading}
+            emptyMessage="Nenhum componente na estrutura desta ferramenta."
+            getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
+          />
         </>
       )}
     </MaintenanceShell>

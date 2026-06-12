@@ -76,6 +76,43 @@ export function fetchFerramenta(
 }
 
 
+export type ComponenteItem = {
+  id: number;
+  nivel: number;
+  codigo: string;
+  descricao: string;
+  unidade: string;
+  estoque_local_01: number;
+  estoque_local_99: number;
+};
+
+export type UltimaReposicaoItem = {
+  reposicao_id: string;
+  filial: string;
+  codigo_ferramenta: string;
+  codigo_peca: string;
+  data_reposicao: string;
+  golpes: number;
+};
+
+export function fetchComponentes(
+  codigoFerramenta: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<{ items: ComponenteItem[]; total: number }>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/componentes?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
+export function fetchUltimasReposicoes(filial: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: UltimaReposicaoItem[]; total: number }>(
+    `/preventiva/ultimas-reposicoes?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
 export type PreventivaAlerta = {
   filial: string;
   codigo_ferramenta: string;

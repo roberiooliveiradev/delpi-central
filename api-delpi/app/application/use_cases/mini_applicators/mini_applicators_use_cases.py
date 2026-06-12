@@ -50,3 +50,14 @@ class GetMiniApplicatorsGolpesUseCase:
             data_inicial=data_inicial,
             data_final=data_final,
         )
+
+
+class ListMiniApplicatorsComponentesUseCase:
+    def __init__(self, repository: MiniApplicatorsRepositoryPort):
+        self._repository = repository
+
+    def execute(self, *, codigo_ferramenta: str, filial: str) -> list[dict]:
+        return self._repository.list_componentes(
+            codigo_ferramenta=codigo_ferramenta,
+            filial=filial,
+        )

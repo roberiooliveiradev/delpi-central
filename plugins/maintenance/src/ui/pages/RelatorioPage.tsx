@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -10,14 +10,29 @@ import {
 } from "recharts";
 import { LineChart, RefreshCw } from "lucide-react";
 
+import {
+  ChartSection,
+  type DataTableColumn,
+  DataTableSection,
+  FilialBadge,
+  FilterBar,
+  StateBox,
+  StatusBadge,
+} from "../../components/data";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { useMaintenanceActiveFilial, useMaintenanceModuleHomePath, useOperationalFilial } from "../../hooks/useMaintenanceScope";
+import {
+  useMaintenanceActiveFilial,
+  useMaintenanceModuleHomePath,
+  useOperationalFilial,
+} from "../../hooks/useMaintenanceScope";
 import {
   fetchPreventivaAlertas,
   fetchPreventivaHistorico,
+  fetchUltimasReposicoes,
   type PreventivaAlerta,
+  type UltimaReposicaoItem,
 } from "../../data/api/maintenanceApi";
 
 type RelatorioPageProps = {
@@ -26,13 +41,6 @@ type RelatorioPageProps = {
   filialScope?: string;
   onNavigate: (path: string) => void;
 };
-
-function statusClass(status: string): string {
-  if (status === "CRÍTICO") return "dm-badge dm-badge--danger";
-  if (status === "ATENÇÃO") return "dm-badge dm-badge--warning";
-  if (status === "OK") return "dm-badge dm-badge--success";
-  return "dm-badge";
-}
 
 export function RelatorioPage({
   getAccessToken,
@@ -44,53 +52,62 @@ export function RelatorioPage({
   const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const [alertas, setAlertas] = useState<PreventivaAlerta[]>([]);
+  const [ultimas, setUltimas] = useState<UltimaReposicaoItem[]>([]);
   const [selected, setSelected] = useState<PreventivaAlerta | null>(null);
   const [historico, setHistorico] = useState<Array<{ label: string; golpes: number }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadAlertas = async () => {
+  const loadAlertas = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchPreventivaAlertas(filial, getAccessToken);
-      setAlertas(data.items ?? []);
+      const [alertasData, ultimasData] = await Promise.all([
+        fetchPreventivaAlertas(filial, getAccessToken),
+        fetchUltimasReposicoes(filial, getAccessToken),
+      ]);
+      setAlertas(alertasData.items ?? []);
+      setUltimas(ultimasData.items ?? []);
       setSelected(null);
       setHistorico([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar alertas.");
       setAlertas([]);
+      setUltimas([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filial, getAccessToken]);
 
   useEffect(() => {
     void loadAlertas();
-  }, [filial, getAccessToken]);
+  }, [loadAlertas]);
 
-  const loadHistorico = async (item: PreventivaAlerta) => {
-    setSelected(item);
-    try {
-      const data = await fetchPreventivaHistorico(
-        {
-          filial: item.filial,
-          codigo_ferramenta: item.codigo_ferramenta,
-          codigo_peca: item.codigo_peca,
-        },
-        getAccessToken,
-      );
-      setHistorico(
-        (data.items ?? []).map((row, index) => ({
-          label: `#${index + 1}`,
-          golpes: row.golpes,
-        })),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar histórico.");
-      setHistorico([]);
-    }
-  };
+  const loadHistorico = useCallback(
+    async (item: PreventivaAlerta) => {
+      setSelected(item);
+      try {
+        const data = await fetchPreventivaHistorico(
+          {
+            filial: item.filial,
+            codigo_ferramenta: item.codigo_ferramenta,
+            codigo_peca: item.codigo_peca,
+          },
+          getAccessToken,
+        );
+        setHistorico(
+          (data.items ?? []).map((row, index) => ({
+            label: `#${index + 1}`,
+            golpes: row.golpes,
+          })),
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao carregar histórico.");
+        setHistorico([]);
+      }
+    },
+    [getAccessToken],
+  );
 
   const resumo = useMemo(
     () => ({
@@ -99,6 +116,60 @@ export function RelatorioPage({
       ok: alertas.filter((item) => item.status === "OK").length,
     }),
     [alertas],
+  );
+
+  const ultimasColumns = useMemo<DataTableColumn<UltimaReposicaoItem>[]>(
+    () => [
+      {
+        key: "data",
+        header: "Data",
+        render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
+      },
+      {
+        key: "ferramenta",
+        header: "Ferramenta",
+        render: (item) => (
+          <button
+            type="button"
+            className="dm-link-btn"
+            onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo_ferramenta))}
+          >
+            {item.codigo_ferramenta}
+          </button>
+        ),
+      },
+      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
+      { key: "golpes", header: "Golpes", render: (item) => item.golpes, align: "right" },
+    ],
+    [onNavigate],
+  );
+
+  const alertasColumns = useMemo<DataTableColumn<PreventivaAlerta>[]>(
+    () => [
+      {
+        key: "status",
+        header: "Status",
+        render: (item) => (
+          <StatusBadge status={item.status} onClick={() => void loadHistorico(item)} />
+        ),
+      },
+      { key: "ferramenta", header: "Ferramenta", render: (item) => item.codigo_ferramenta },
+      { key: "peca", header: "Peça", render: (item) => item.codigo_peca },
+      {
+        key: "golpes_atuais",
+        header: "Golpes atuais",
+        render: (item) => item.golpes_atuais,
+        align: "right",
+      },
+      { key: "media", header: "Média", render: (item) => item.media_golpes, align: "right" },
+      {
+        key: "percentual",
+        header: "% uso",
+        render: (item) => `${item.percentual_uso}%`,
+        align: "right",
+      },
+    ],
+    [loadHistorico],
   );
 
   return (
@@ -119,87 +190,62 @@ export function RelatorioPage({
         }
       />
 
-      <section className="dm-card dm-filter-bar">
-        <p className="dm-filial-badge">Filial operacional: {filial}</p>
+      <FilterBar leading={<FilialBadge filial={filial} />}>
         <div className="dm-kpi-inline">
           <span className="dm-badge dm-badge--danger">CRÍTICO: {resumo.critico}</span>
           <span className="dm-badge dm-badge--warning">ATENÇÃO: {resumo.atencao}</span>
           <span className="dm-badge dm-badge--success">OK: {resumo.ok}</span>
         </div>
-      </section>
+      </FilterBar>
 
-      {error ? <p className="dm-state-box dm-state-box--error">{error}</p> : null}
+      {error ? <StateBox variant="error">{error}</StateBox> : null}
 
-      <section className="dm-card">
-        <h3 className="dm-card__title">Ranking preventivo</h3>
-        <div className="dm-table-wrap">
-          <table className="dm-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Ferramenta</th>
-                <th>Peça</th>
-                <th>Golpes atuais</th>
-                <th>Média</th>
-                <th>% uso</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alertas.length === 0 && !loading ? (
-                <tr>
-                  <td colSpan={6} className="dm-table__empty">
-                    Nenhum alerta — registre reposições para gerar preventiva.
-                  </td>
-                </tr>
-              ) : null}
-              {alertas.map((item) => (
-                <tr
-                  key={`${item.codigo_ferramenta}-${item.codigo_peca}`}
-                  className={selected?.codigo_peca === item.codigo_peca ? "is-selected" : ""}
-                >
-                  <td data-label="Status">
-                    <button type="button" className={statusClass(item.status)} onClick={() => void loadHistorico(item)}>
-                      {item.status}
-                    </button>
-                  </td>
-                  <td data-label="Ferramenta">{item.codigo_ferramenta}</td>
-                  <td data-label="Peça">{item.codigo_peca}</td>
-                  <td data-label="Golpes atuais">{item.golpes_atuais}</td>
-                  <td data-label="Média">{item.media_golpes}</td>
-                  <td data-label="% uso">{item.percentual_uso}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTableSection
+        title="Últimas reposições por peça"
+        columns={ultimasColumns}
+        rows={ultimas}
+        loading={loading}
+        emptyMessage="Nenhuma reposição registrada nesta filial."
+        getRowKey={(item) => item.reposicao_id}
+      />
+
+      <DataTableSection
+        title="Ranking preventivo"
+        columns={alertasColumns}
+        rows={alertas}
+        loading={loading}
+        emptyMessage="Nenhum alerta — registre reposições para gerar preventiva."
+        getRowKey={(item) => `${item.codigo_ferramenta}-${item.codigo_peca}`}
+        getRowClassName={(item) =>
+          selected?.codigo_peca === item.codigo_peca && selected?.codigo_ferramenta === item.codigo_ferramenta
+            ? "is-selected"
+            : undefined
+        }
+      />
 
       {selected ? (
-        <section className="dm-card">
-          <h3 className="dm-card__title">
-            Histórico — {selected.codigo_ferramenta} / {selected.codigo_peca}
-          </h3>
-          <div className="dm-chart-wrap">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={historico}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="golpes" fill="var(--dm-accent, #089bdb)" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <button
-            type="button"
-            className="dm-ghost-btn"
-            onClick={() =>
-              onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(selected.codigo_ferramenta))
-            }
-          >
-            Abrir ferramenta
-          </button>
-        </section>
+        <ChartSection
+          title={`Histórico — ${selected.codigo_ferramenta} / ${selected.codigo_peca}`}
+          actions={
+            <button
+              type="button"
+              className="dm-ghost-btn"
+              onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(selected.codigo_ferramenta))}
+            >
+              Abrir ferramenta
+            </button>
+          }
+        >
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={historico}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="golpes" fill="var(--dm-accent, #089bdb)" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartSection>
       ) : null}
     </MaintenanceShell>
   );

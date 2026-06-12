@@ -47,3 +47,17 @@ def list_historico(
         codigo_peca=codigo_peca,
     )
     return ok({"items": items, "total": len(items)}, message="Histórico listado.")
+
+
+@router.get("/ultimas-reposicoes")
+def list_ultimas_reposicoes(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID)
+        _scope.assert_view_filial(scope, filial)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    items = build_preventiva_service().listar_ultimas_reposicoes(filial=filial)
+    return ok({"items": items, "total": len(items)}, message="Últimas reposições listadas.")
