@@ -23,6 +23,26 @@ Runbook para equipe após go-live. Postgres (`maintenance` schema) é a fonte de
 
 ## Deploy / upgrade
 
+### Produção (`minhadelpi.com.br`)
+
+Sintoma típico: home do módulo com `Unexpected token '<'` — o gateway ainda não roteia `/apps/maintenance-api/` (resposta = HTML do portal).
+
+```bash
+cd /path/to/delpi-central
+git pull
+
+docker compose -f infra/docker-compose.yml --env-file infra/.env build maintenance-api maintenance gateway
+docker compose -f infra/docker-compose.yml --env-file infra/.env up -d --force-recreate maintenance-api maintenance gateway
+
+# Smoke (deve retornar JSON, não HTML)
+bash scripts/homologacao/check-maintenance-prod.sh
+# ou: curl -s https://minhadelpi.com.br/apps/maintenance-api/maintenance/health | head -c 80
+```
+
+Re-registrar manifest v0.4 na Core API se permissões/rotas ainda não foram atualizadas.
+
+### Dev local
+
 ```bash
 # 1. Backup Postgres (schema maintenance)
 pg_dump -h localhost -U plugins -n maintenance plugins > maintenance-$(date +%Y%m%d).sql

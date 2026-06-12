@@ -35,7 +35,25 @@ export async function maintenanceFetch<T>(
     headers,
   });
 
-  const body = (await response.json()) as ApiEnvelope<T>;
+  const contentType = response.headers.get("content-type") ?? "";
+  const raw = await response.text();
+
+  if (!contentType.includes("application/json")) {
+    const looksLikePortal = raw.trimStart().startsWith("<!") || raw.includes("<!doctype");
+    throw new Error(
+      looksLikePortal
+        ? "API de Manutenção indisponível no gateway (resposta HTML do portal). Peça deploy de maintenance-api + gateway atualizado."
+        : `Resposta inválida da API de Manutenção (HTTP ${response.status}).`,
+    );
+  }
+
+  let body: ApiEnvelope<T>;
+  try {
+    body = JSON.parse(raw) as ApiEnvelope<T>;
+  } catch {
+    throw new Error("Resposta JSON inválida da API de Manutenção.");
+  }
+
   if (!response.ok || !body.success) {
     throw new Error(body.message || "Falha na requisição.");
   }

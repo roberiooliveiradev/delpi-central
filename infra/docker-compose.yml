@@ -933,6 +933,9 @@ services:
       MAINT_API_ROOT_PATH: /apps/maintenance-api
       MAINT_RUN_MIGRATIONS_ON_STARTUP: ${MAINT_RUN_MIGRATIONS_ON_STARTUP:-true}
 
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
@@ -955,8 +958,14 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
     depends_on:
-      - keycloak
-      - postgres-plugins
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_healthy
 
     logging:
       driver: "json-file"
@@ -1002,6 +1011,8 @@ services:
       - api-delpi-console
       - minha-delpi-ai-api
       - minha-delpi-chat
+      - maintenance-api
+      - maintenance
 
     logging:
       driver: "json-file"
