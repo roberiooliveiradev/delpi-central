@@ -25,9 +25,9 @@
 
 ## Estado
 
-Fases 0–2 concluídas. Submódulos com RBAC por filial (manifesto v0.2.1), filial escolhida no início, CRUD completo, listagens paginadas server-side e UX de reposição no MFE (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
+Fases 0–2 concluídas. Submódulos com RBAC por filial (manifesto v0.2.1), filial escolhida no início, CRUD completo, revisão programada por tempo, auditoria da ferramenta, listagens paginadas server-side e UX de reposição no MFE (jun/2026). Fase 3: import Access e go-live — ver [ROADMAP](../../docs/12-roadmap-e-evolucao/maintenance/ROADMAP.md) e scripts em `scripts/`.
 
-| Testes CI | 39 (`scripts/ci-maintenance-api.sh`) |
+| Testes CI | 56 (`scripts/ci-maintenance-api.sh`) |
 
 ## Listagens paginadas
 
@@ -48,6 +48,12 @@ Resposta em `data`: `{ "items": [...], "total": N }`.
 |------|------------|---------|
 | `GET .../reposicoes` | `codigo_peca`, `motivo_id`, `data_inicial`, `data_final` | Arrays repetidos na query; datas `YYYY-MM-DD` ou ISO datetime |
 | `GET .../preventiva/alertas` | `status`, `ferramenta`, `peca` | `status` repetido para multi-seleção |
+| `GET .../revisoes-programadas/realizacoes` | `filial`, `codigo_ferramenta` | Histórico de revisões feitas |
+| `GET .../ferramentas/{codigo}/auditoria` | `filial`, paginação | Timeline de mutações da ferramenta |
+
+## Auditoria
+
+Mutações em reposição e revisão programada chamam `log_ferramenta_audit()` — ver [ARCHITECTURE.md](./ARCHITECTURE.md) § Auditoria.
 
 ## Filtro de peças (3019)
 

@@ -64,6 +64,31 @@ curl -s http://localhost/apps/maintenance-api/maintenance/health | python3 -m js
 
 **V007 (views):** cria views `vw_motivos_ativos`, `vw_status_peca_ativos`, `vw_reposicoes_detalhe`, `vw_reposicoes_preventiva`, `vw_reposicoes_ultima_por_par` e índice parcial em `reposicoes`. Repositórios de leitura usam as views — recriar `maintenance-api` após deploy para aplicar a migration.
 
+**V008 (revisão programada):** tabela `revisao_programada` + view `vw_revisao_programada_ativos` — agenda por ferramenta (intervalo em meses, data de referência).
+
+**V009 (realizações):** tabela `revisao_programada_realizacao` — histórico de marcações «feito» com data customizada.
+
+**V010 (auditoria):** índice parcial `idx_audit_logs_filial_ferramenta_data` em `audit_logs` para timeline por ferramenta.
+
+## Auditoria operacional (ferramenta)
+
+Mutações de **reposição** e **revisão programada** (incluindo marcar feito, editar e remover realizações) gravam em `maintenance.audit_logs`:
+
+| Campo | Valor típico |
+|-------|----------------|
+| `entidade` | `ferramenta` |
+| `entidade_id` | código da ferramenta |
+| `acao` | ex.: `reposicao.create`, `revisao_programada.registrar`, `revisao_realizacao.delete` |
+| `filial` | `01` ou `02` |
+| `usuario_sub` | subject do JWT |
+| `payload` | JSON com ids e campos relevantes (peça, golpes, datas, etc.) |
+
+**Consulta:** `GET /maintenance/mini-aplicadores/ferramentas/{codigo}/auditoria?filial=01&page=1&page_size=10` — exige `mini-applicators.view.filial-XX`.
+
+**UI:** seção «Auditoria da ferramenta» no detalhe do mini-aplicador (`FerramentaAuditoriaSection`).
+
+**Importante:** eventos aparecem **a partir das mutações após o deploy** — histórico anterior ao go-live da feature não é retroativo.
+
 ## Registro Core API e RBAC
 
 O manifesto registra o app; permissões são atribuídas na **Core API** (não Keycloak).
@@ -130,6 +155,9 @@ docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filia
 | «Falha na requisição» genérico no relatório | Conferir JWT e permissão `mini-applicators.view.filial-XX`; resposta 403/401 agora exibe `detail` do FastAPI. Typo histórico em `_SUBMODULE_ID` (`mini-aplicadores`) causava 403 silencioso — corrigido |
 | Select de peça lista mais itens que componentes | Rebuild API + MFE — `/pecas` e select derivam da árvore `/componentes` (3019*), não de vínculos SG1010 expirados |
 | Checkbox do multi-select enorme | Rebuild MFE — override CSS em `.dm-multi-select__option input[type="checkbox"]` |
+| Auditoria vazia no detalhe da ferramenta | Normal se não houve mutação após deploy; conferir V010 aplicada e permissão `view.filial-XX` |
+| 500 em `/revisoes-programadas/realizacoes` | Rebuild API — listagem usa `fetch_paged` com argumentos nomeados (commit `91796098`) |
+| Referência de revisão «volta» após editar feito | Esperado — API recalcula `data_ultima_revisao` pela realização mais recente |
 
 ## CI
 

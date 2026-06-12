@@ -31,6 +31,9 @@ O submódulo **mini-aplicadores** registra trocas de peças em ferramentas de pr
 | **Reposição** | Troca de peça registrada | filial, codigo_ferramenta, codigo_peca, datas, golpes, motivo_id, observacao |
 | **Motivo** | Causa da troca | descricao (QUEBRA, DESGASTE, …) |
 | **Status peça** | Regra preventiva | descricao, operador (`>=`, `<`), percentual |
+| **Revisão programada** | Agenda por ferramenta (tempo) | filial, codigo_ferramenta, intervalo_meses, data_ultima_revisao, observacao |
+| **Realização de revisão** | Marcação «feito» | revisao_id, data_revisao, observacao; recalcula referência da agenda |
+| **Audit log** | Trilha operacional por ferramenta | entidade, acao, payload, usuario_sub, data_criacao |
 
 Seeds iniciais (legado): CRÍTICO ≥95%, ATENÇÃO ≥80%, OK <80%.
 
@@ -53,7 +56,8 @@ Seeds iniciais (legado): CRÍTICO ≥95%, ATENÇÃO ≥80%, OK <80%.
 - Golpes > 0.
 - Motivo obrigatório.
 - `data_reposicao` > `data_ultima_reposicao` (mesma regra do legado).
-- Exclusão lógica (`excluido`); auditoria `data_criacao` / `data_alteracao`.
+- Exclusão lógica (`excluido`); campos `data_criacao` / `data_alteracao` em todas as tabelas operacionais.
+- Mutações de reposição gravam evento em `audit_logs` (entidade `ferramenta`, ação `reposicao.*`).
 
 ### 4.2 Golpes automáticos (cadastro)
 
@@ -82,16 +86,31 @@ Cores UI: CRÍTICO (vermelho claro), ATENÇÃO (amarelo), OK (verde), SEM STATUS
 
 Sessão de filial obrigatória para operações (equivalente ao combo empresa do legado). Filiais conhecidas: 01 Matriz, 02 ES.
 
+### 4.5 Revisão programada (por tempo)
+
+- Uma agenda ativa por ferramenta e filial (`revisao_programada`).
+- **Referência** para próxima revisão: `data_ultima_revisao` informada manualmente ou, se ausente, `data_criacao` da agenda — **não** usa última reposição de peça.
+- **Marcar feito:** grava linha em `revisao_programada_realizacao` e atualiza `data_ultima_revisao` da agenda.
+- **Editar/remover feito:** recalcula referência pela realização mais recente restante.
+- Status no relatório: CRÍTICO (vencida), ATENÇÃO (dentro da janela), OK — com base em dias restantes vs. intervalo.
+
+### 4.6 Auditoria da ferramenta
+
+- Toda mutação de reposição ou revisão programada (incl. realizações) registra em `audit_logs`.
+- Chave de consulta: `filial` + `entidade = 'ferramenta'` + `entidade_id = codigo_ferramenta`.
+- Timeline read-only no detalhe da ferramenta; permissão de leitura `mini-applicators.view.filial-XX`.
+- Não retroativo: dados anteriores ao deploy da feature não geram eventos.
+
 ## 5. Telas (MFE)
 
 | Tela | Legado | Função |
 |------|--------|--------|
 | Home | Home tab | Seleção filial |
 | Ferramentas | Lista + filtros | Busca por código/descrição |
-| Ferramenta | Detalhe tab | Histórico reposições, filtros, CRUD |
+| Ferramenta | Detalhe tab | Histórico reposições, revisão programada, auditoria, filtros, CRUD |
 | Form reposição | FormReposicao | Nova/edição — formulário colapsável; botão «Nova reposição» no histórico |
 | Componentes | FormInfo | Árvore componentes + estoque |
-| Relatório | Relatório tab | Últimas reposições + alertas + detalhe com gráficos |
+| Relatório | Relatório tab | Últimas reposições + alertas preventivos + alertas de revisão programada + detalhe com gráficos |
 | Configuração | Config tab | Motivos + status |
 
 ### 5.1 Apresentação de listas (MFE)

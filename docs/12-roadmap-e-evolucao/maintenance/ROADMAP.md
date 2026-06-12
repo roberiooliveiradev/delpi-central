@@ -25,10 +25,10 @@ Entregas em fases para reduzir risco, reaproveitar padrões do monorepo e migrar
 
 | Entrega | Detalhe |
 |---------|---------|
-| Migration V002 | `motivos`, `reposicoes`, `status_peca`, `audit_logs` |
-| API CRUD | reposições (soft delete), motivos, status |
+| Migration V002 | `motivos`, `reposicoes`, `status_peca`, `audit_logs` (tabela; gravação ativa jun/2026) |
+| API CRUD | reposições (soft delete), motivos, status, revisão programada, realizações |
 | Gateways TOTVS | ferramentas, peças por ferramenta, golpes no período |
-| UI mini-aplicadores | lista ferramentas, detalhe, form reposição |
+| UI mini-aplicadores | lista ferramentas, detalhe, form reposição, revisão programada, auditoria |
 | Validações | espelhar `ReposicaoService` legado (golpes > 0, data > última troca) |
 | RBAC filial | escopo 01/02 nas mutações |
 

@@ -12,7 +12,7 @@
 | API dedicada | `maintenance-api/` | ✅ CRUD operacional + preventiva + catálogo de submódulos + gateways TOTVS |
 | Rotas TOTVS api-delpi | `/engineering/mini-applicators/*` | ✅ ferramentas, peças, golpes, componentes |
 | Docker Compose / gateway | `infra/docker-compose*.yml`, `gateway/nginx*.conf` | ✅ Anti-cache em rotas de API |
-| CI | `scripts/ci-maintenance-api.sh` | ✅ 39 testes |
+| CI | `scripts/ci-maintenance-api.sh` | ✅ 56 testes |
 | Registro Core API | `plugins/maintenance/scripts/register-manifest.sh` | ✅ Script pronto |
 | Import Access | `maintenance-api/scripts/import_access_csv.py` | ✅ CLI CSV + fixtures sample |
 | Bootstrap dev | `maintenance-api/scripts/bootstrap_dev_sample.py` | ✅ Seed local para relatório |
@@ -41,6 +41,9 @@
 | **Peças vs. componentes** | `/pecas` → só `3019*` (reposição); `/componentes` → árvore completa amarrada (estoque) |
 | **Datas pt-BR (MFE)** | `BrDateInput` / `BrDatetimeInput` — exibição `dd/mm/aaaa` e `dd/mm/aaaa HH:mm` (24h) |
 | **MultiSelectField** | Painel compacto; checkbox à esquerda na mesma linha do rótulo |
+| **Revisão programada** | Agenda por ferramenta no detalhe (intervalo, referência manual, marcar feito); alertas no relatório; histórico de realizações com editar/excluir |
+| **Auditoria da ferramenta** | `audit_logs` nas mutações de reposição/revisão; timeline paginada no detalhe (`GET .../auditoria`) |
+| **StateBox dismissível** | Botão fechar em avisos de sucesso/erro (mini-aplicadores, config, filiais, relatório) |
 
 ## Fases do roadmap
 

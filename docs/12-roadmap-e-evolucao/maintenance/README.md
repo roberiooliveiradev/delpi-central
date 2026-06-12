@@ -31,14 +31,14 @@ A **primeira entrega** cobre **ferramentaria — mini-aplicadores** (reposição
 
 | Regra | Aplicação |
 |-------|-----------|
-| **CRUD operacional** | Postgres na `maintenance-api` (reposições, motivos, status, parâmetros preventivos) |
+| **CRUD operacional** | Postgres na `maintenance-api` (reposições, motivos, status, revisão programada, audit_logs) |
 | **Leitura TOTVS** | Somente via **api-delpi** — gateways HTTP (`shared/delpi_api_client`), **sem** SQL Protheus duplicado na API do plugin |
 | **Contrato público TOTVS** | Novas rotas registradas na api-delpi (`route_contract_registry`, OpenAPI, Playbook 10) |
 | **UI** | MFE federado `plugins/maintenance` — JWT → API dedicada; nunca TOTVS direto no browser |
 
 ## Estado atual no monorepo
 
-Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; RBAC manifesto v0.2.1, tabelas paginadas/ordenáveis e gráficos preventivos no MFE (jun/2026). Fase 3 (migração Access + go-live) em curso.
+Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; RBAC manifesto v0.2.1, revisão programada por tempo, auditoria da ferramenta, tabelas paginadas/ordenáveis e gráficos preventivos no MFE (jun/2026). Fase 3 (migração Access + go-live) em curso.
 
 ## Legado de referência
 

@@ -1,6 +1,6 @@
 # Arquitetura — Manutenção
 
-**Última atualização:** jun/2026 (Fase 2 — UX filtros e datas pt-BR)
+**Última atualização:** jun/2026 (revisão programada + auditoria da ferramenta)
 
 ## Diagrama de contexto
 
@@ -41,7 +41,7 @@ flowchart TB
 
 | Dado / operação | Onde vive | Quem consome |
 |-----------------|-----------|--------------|
-| Reposições, motivos, status, auditoria | Postgres `maintenance` | MFE → API dedicada |
+| Reposições, motivos, status, revisão programada, auditoria | Postgres `maintenance` | MFE → API dedicada |
 | Média de golpes, últimas reposições | Postgres (agregação SQL ou service) | API dedicada |
 | Cadastro ferramentas/peças (SB1010, SG1010) | TOTVS via **api-delpi** | Gateway na API dedicada |
 | Golpes no período (SD4/SHY/SH4/SH6) | TOTVS via **api-delpi** | Gateway na API dedicada |
@@ -87,8 +87,10 @@ O WinForms legado usa `UI/Controllers` finos. No MFE, o equivalente são **hooks
 | `listQuery.appendListQuery` | Montagem de query string (`page`, `page_size`, `sort_by`, `sort_dir`, arrays) |
 | `ReposicoesGolpesChart` | Gráfico de golpes por reposição no detalhe da ferramenta |
 | `FerramentaReposicaoIndicadores` | KPIs ao lado do gráfico (média, última troca, etc.) |
+| `FerramentaRevisaoProgramadaSection` | Agenda de revisão por tempo, marcar feito, histórico editável |
+| `FerramentaAuditoriaSection` | Timeline de mutações (reposição + revisão) por ferramenta |
 | `PreventivaDetailPanel` | Detalhe preventivo + gráficos Recharts |
-| `StateBox` | Feedback inline (sucesso/erro) com `--dm-section-gap` abaixo |
+| `StateBox` | Feedback inline (sucesso/erro) dismissível; `--dm-section-gap` abaixo |
 
 Padrão alinhado ao Transformômetro — **não** duplicar paginação/ordenação em páginas individuais.
 
@@ -128,6 +130,26 @@ erDiagram
     string operador
     int percentual
     bool excluido
+  }
+  revisao_programada {
+    uuid revisao_id PK
+    string filial
+    string codigo_ferramenta
+    int intervalo_meses
+    datetime data_ultima_revisao
+  }
+  revisao_programada_realizacao {
+    uuid realizacao_id PK
+    uuid revisao_id FK
+    datetime data_revisao
+  }
+  audit_logs {
+    uuid audit_id PK
+    string entidade
+    string entidade_id
+    string acao
+    jsonb payload
+    string usuario_sub
   }
 ```
 
@@ -169,6 +191,19 @@ Detalhe das rotas propostas: [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01
 | Consumidor externo → dados operacionais | **Não** expor Postgres direto; futura fachada api-delpi se necessário (padrão Transforma+) |
 
 RBAC por filial: permissões explícitas no manifesto (`maintenance.mini-applicators.view.filial-XX`, `manage.filial-XX`). Escopo resolvido em `FilialAccessScopeService` — ver `maintenance_permissions.py` e testes `test_filial_access_scope_service.py`.
+
+### Auditoria operacional
+
+Padrão alinhado ao Transformômetro (`audit_logs` nas mutações):
+
+| Camada | Arquivo |
+|--------|---------|
+| Repositório | `infrastructure/persistence/repositories/audit_repository.py` |
+| Helper HTTP | `interface/http/audit_http.py` → `log_ferramenta_audit()` |
+| Actor JWT | `core/auth_actor.py` → `actor_sub_from_request()` |
+| Rotas | `operational_routes.py` (write); `mini_applicators_routes.py` (read timeline) |
+
+Falha ao gravar audit **não bloqueia** a mutação — log de warning apenas.
 
 ## Referências no monorepo
 
