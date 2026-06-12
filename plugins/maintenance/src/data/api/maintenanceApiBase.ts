@@ -26,6 +26,10 @@ export async function maintenanceFetch<T>(
     headers.set("Authorization", token.startsWith("Bearer ") ? token : `Bearer ${token}`);
   }
 
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(`${MAINTENANCE_API_BASE}${path}`, {
     ...init,
     headers,

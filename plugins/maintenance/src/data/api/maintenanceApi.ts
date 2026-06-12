@@ -398,6 +398,7 @@ export function createFilial(
 ) {
   return maintenanceFetch<FilialItem>("/filiais", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     getAccessToken,
     body: JSON.stringify({
       status_filial: "ativo",
@@ -413,6 +414,7 @@ export function updateFilial(
 ) {
   return maintenanceFetch<FilialItem>(`/filiais/${filialRef}`, {
     method: "PUT",
+    headers: { "Content-Type": "application/json" },
     getAccessToken,
     body: JSON.stringify(payload),
   });
