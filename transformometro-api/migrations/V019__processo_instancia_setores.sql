@@ -21,12 +21,31 @@ FROM transformometro.processo_instancias pi
 WHERE pi.deletado = FALSE
 ON CONFLICT (instancia_id, setor_id) DO NOTHING;
 
+-- Consolidar setores das duplicatas na instância canônica
+WITH grouped AS (
+    SELECT
+        processo_id,
+        filial_id,
+        (MIN(instancia_id::text))::uuid AS canonical_id,
+        ARRAY_AGG(instancia_id) AS all_ids
+    FROM transformometro.processo_instancias
+    WHERE deletado = FALSE
+    GROUP BY processo_id, filial_id
+    HAVING COUNT(*) > 1
+)
+INSERT INTO transformometro.processo_instancia_setores (instancia_id, setor_id)
+SELECT DISTINCT g.canonical_id, pis.setor_id
+FROM grouped g
+CROSS JOIN LATERAL UNNEST(g.all_ids) AS u(instancia_id)
+JOIN transformometro.processo_instancia_setores pis ON pis.instancia_id = u.instancia_id
+ON CONFLICT (instancia_id, setor_id) DO NOTHING;
+
 -- Consolidar instâncias duplicadas (mesmo processo × filial, setores distintos)
 WITH grouped AS (
     SELECT
         processo_id,
         filial_id,
-        MIN(instancia_id) AS canonical_id,
+        (MIN(instancia_id::text))::uuid AS canonical_id,
         ARRAY_AGG(instancia_id) AS all_ids
     FROM transformometro.processo_instancias
     WHERE deletado = FALSE
@@ -50,7 +69,7 @@ WITH grouped AS (
     SELECT
         processo_id,
         filial_id,
-        MIN(instancia_id) AS canonical_id,
+        (MIN(instancia_id::text))::uuid AS canonical_id,
         ARRAY_AGG(instancia_id) AS all_ids
     FROM transformometro.processo_instancias
     WHERE deletado = FALSE
@@ -74,7 +93,7 @@ WITH grouped AS (
     SELECT
         processo_id,
         filial_id,
-        MIN(instancia_id) AS canonical_id,
+        (MIN(instancia_id::text))::uuid AS canonical_id,
         ARRAY_AGG(instancia_id) AS all_ids
     FROM transformometro.processo_instancias
     WHERE deletado = FALSE
