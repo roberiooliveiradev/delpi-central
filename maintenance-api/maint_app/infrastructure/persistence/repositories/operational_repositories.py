@@ -925,4 +925,10 @@ class RevisaoProgramadaRealizacaoRepository(PluginBaseRepository):
             FROM maintenance.revisao_programada_realizacao
             WHERE {where_sql}
         """
-        return self.fetch_paged(select_sql, count_sql, params, query.page, query.page_size)
+        return self.fetch_paged(
+            select_sql=select_sql,
+            count_sql=count_sql,
+            params=tuple(params),
+            page=query.page,
+            page_size=query.page_size,
+        )
