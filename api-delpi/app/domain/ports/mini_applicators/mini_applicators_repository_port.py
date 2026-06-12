@@ -16,3 +16,14 @@ class MiniApplicatorsRepositoryPort(Protocol):
     ) -> Page[MiniApplicatorTool]: ...
 
     def get_ferramenta(self, codigo: str) -> MiniApplicatorTool | None: ...
+
+    def list_pecas(self, codigo_ferramenta: str) -> list[dict]: ...
+
+    def get_golpes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        data_inicial: str,
+        data_final: str,
+    ) -> dict: ...

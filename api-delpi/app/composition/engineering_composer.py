@@ -25,7 +25,9 @@ from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicat
 )
 from app.application.use_cases.mini_applicators.mini_applicators_use_cases import (
     GetMiniApplicatorsFerramentaUseCase,
+    GetMiniApplicatorsGolpesUseCase,
     ListMiniApplicatorsFerramentasUseCase,
+    ListMiniApplicatorsPecasUseCase,
 )
 
 
@@ -71,3 +73,11 @@ def build_list_mini_applicators_ferramentas_use_case() -> ListMiniApplicatorsFer
 
 def build_get_mini_applicators_ferramenta_use_case() -> GetMiniApplicatorsFerramentaUseCase:
     return GetMiniApplicatorsFerramentaUseCase(_build_mini_applicators_repository())
+
+
+def build_list_mini_applicators_pecas_use_case() -> ListMiniApplicatorsPecasUseCase:
+    return ListMiniApplicatorsPecasUseCase(_build_mini_applicators_repository())
+
+
+def build_get_mini_applicators_golpes_use_case() -> GetMiniApplicatorsGolpesUseCase:
+    return GetMiniApplicatorsGolpesUseCase(_build_mini_applicators_repository())

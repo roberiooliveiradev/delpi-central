@@ -95,6 +95,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_mini_applicators_ferramenta": RouteContract(
         "mini_applicators_ferramenta", "scalar"
     ),
+    "list_mini_applicators_pecas": RouteContract("mini_applicators_peca", "list"),
+    "get_mini_applicators_golpes": RouteContract("mini_applicators_golpes", "scalar"),
     # Vendas e dados
     "list_sale_orders": RouteContract("sale_order", "paged_list"),
     "execute_readonly_sql": RouteContract("sql_result", "paged_list"),

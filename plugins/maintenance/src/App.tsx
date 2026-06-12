@@ -5,9 +5,9 @@ import { HomePage } from "./ui/pages/HomePage";
 import { MiniAplicadoresPage } from "./ui/pages/MiniAplicadoresPage";
 import {
   PlaceholderPage,
-  ConfigIcon,
   ReportIcon,
 } from "./ui/pages/PlaceholderPage";
+import { ConfiguracaoPage } from "./ui/pages/ConfiguracaoPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -45,11 +45,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   if (route.view === "configuracao") {
     return (
-      <PlaceholderPage
-        title="Configuração"
-        subtitle="Motivos de troca e regras de status preventivo."
-        icon={ConfigIcon}
-        phase="Fase 1"
+      <ConfiguracaoPage
+        getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
       />

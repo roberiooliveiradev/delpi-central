@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Query, Request
 
+from maint_app.application.services.filial_access_scope_service import FilialAccessScopeService
 from maint_app.composition.maintenance_composer import build_mini_applicators_totvs_gateway
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
+from maint_app.interface.http.filial_access_http import resolve_access_scope, resolve_user
 
 router = APIRouter(prefix="/maintenance", tags=["Manutenção"])
+
+_scope = FilialAccessScopeService()
 
 
 @router.get("/health")
@@ -37,16 +41,20 @@ def module_health():
 
 
 @router.get("/options")
-def get_options():
+def get_options(request: Request):
+    scope = resolve_access_scope(request)
+    filiais = [
+        {"id": "01", "label": "Matriz"},
+        {"id": "02", "label": "ES"},
+    ]
+    filiais = _scope.filter_filiais_options(filiais, scope)
     return ok(
         {
-            "filiais": [
-                {"id": "01", "label": "Matriz"},
-                {"id": "02", "label": "ES"},
-            ],
+            "filiais": filiais,
             "modulos": [
                 {"id": "mini-aplicadores", "label": "Mini-aplicadores"},
             ],
+            "access_scope": scope.meta(),
         },
         message="Opções carregadas.",
     )

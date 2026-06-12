@@ -15,3 +15,14 @@ class MiniApplicatorsTotvsPort(Protocol):
     ) -> dict: ...
 
     def obter_ferramenta(self, codigo: str) -> dict: ...
+
+    def listar_pecas(self, codigo_ferramenta: str) -> dict: ...
+
+    def obter_golpes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        data_inicial: str,
+        data_final: str,
+    ) -> dict: ...

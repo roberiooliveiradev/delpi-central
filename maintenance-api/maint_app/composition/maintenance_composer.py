@@ -28,3 +28,9 @@ def build_mini_applicators_totvs_gateway() -> MiniApplicatorsTotvsPort:
     if _totvs_gateway is None:
         _totvs_gateway = DelpiMiniAplicatorsGateway(_get_delpi_client())
     return _totvs_gateway
+
+
+def build_reposicao_service() -> ReposicaoService:
+    from maint_app.application.services.reposicao_service import ReposicaoService
+
+    return ReposicaoService(totvs_gateway=build_mini_applicators_totvs_gateway())

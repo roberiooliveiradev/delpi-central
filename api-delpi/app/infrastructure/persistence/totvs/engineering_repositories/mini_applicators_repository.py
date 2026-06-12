@@ -109,3 +109,51 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
             descricao=str(row["descricao"]),
             grupo=str(row.get("grupo") or ""),
         )
+
+    def list_pecas(self, codigo_ferramenta: str) -> list[dict]:
+        query = """
+            SELECT
+                RTRIM(G1.G1_COMP) AS codigo,
+                RTRIM(SB1.B1_DESC) AS descricao,
+                RTRIM(SB1.B1_GRUPO) AS grupo
+            FROM SG1010 G1 WITH (NOLOCK)
+            INNER JOIN SB1010 SB1 WITH (NOLOCK)
+                ON SB1.B1_COD = G1.G1_COMP
+               AND SB1.D_E_L_E_T_ = ''
+            WHERE G1.D_E_L_E_T_ = ''
+              AND G1.G1_COD = ?
+              AND SB1.B1_GRUPO = '3019'
+            ORDER BY G1.G1_COMP
+        """
+        with self:
+            return self.execute_query(query, (codigo_ferramenta.strip(),))
+
+    def get_golpes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        data_inicial: str,
+        data_final: str,
+    ) -> dict:
+        query = """
+            SELECT COALESCE(SUM(CAST(SH6.H6_QTDPROD AS BIGINT)), 0) AS total_golpes
+            FROM SH6010 SH6 WITH (NOLOCK)
+            WHERE SH6.D_E_L_E_T_ = ''
+              AND SH6.H6_FILIAL = ?
+              AND RTRIM(SH6.H6_RECURSO) = ?
+              AND SH6.H6_DATAINI >= ?
+              AND SH6.H6_DATAINI <= ?
+        """
+        with self:
+            total = self.execute_scalar(
+                query,
+                (filial.strip(), codigo_ferramenta.strip(), data_inicial, data_final),
+            )
+        return {
+            "codigo_ferramenta": codigo_ferramenta.strip(),
+            "filial": filial.strip(),
+            "data_inicial": data_inicial,
+            "data_final": data_final,
+            "total_golpes": int(total or 0),
+        }

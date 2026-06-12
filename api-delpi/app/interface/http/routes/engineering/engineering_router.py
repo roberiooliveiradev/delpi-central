@@ -27,7 +27,9 @@ from app.composition.engineering_composer import (
     build_engineering_list_lmps_use_case,
     build_engineering_list_transforma_mais_processes_use_case,
     build_get_mini_applicators_ferramenta_use_case,
+    build_get_mini_applicators_golpes_use_case,
     build_list_mini_applicators_ferramentas_use_case,
+    build_list_mini_applicators_pecas_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
@@ -47,6 +49,8 @@ from app.interface.http.openapi_agent_metadata import (
     TRANSFORMA_MAIS_SUMMARY,
     MINI_APPLICATORS_FERRAMENTAS_LIST,
     MINI_APPLICATORS_FERRAMENTA_GET,
+    MINI_APPLICATORS_PECAS_LIST,
+    MINI_APPLICATORS_GOLPES_GET,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
@@ -470,5 +474,53 @@ def get_mini_applicators_ferramenta_route(codigo: str):
         log_error(f"Erro ao buscar ferramenta mini-aplicador {codigo}: {exc}")
         return error_response(
             "Erro interno ao buscar ferramenta mini-aplicador.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/ferramentas/{codigo}/pecas", **MINI_APPLICATORS_PECAS_LIST)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def list_mini_applicators_pecas_route(codigo: str):
+    try:
+        use_case = build_list_mini_applicators_pecas_use_case()
+        items = use_case.execute(codigo)
+        return api_delpi_success(
+            {"items": items, "total": len(items)},
+            operation_id="list_mini_applicators_pecas",
+            message="Peças listadas.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar peças mini-aplicador {codigo}: {exc}")
+        return error_response(
+            "Erro interno ao listar peças do mini-aplicador.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/ferramentas/{codigo}/golpes", **MINI_APPLICATORS_GOLPES_GET)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def get_mini_applicators_golpes_route(
+    codigo: str,
+    filial: str = Query(..., min_length=2, max_length=2),
+    data_inicial: str = Query(...),
+    data_final: str = Query(...),
+):
+    try:
+        use_case = build_get_mini_applicators_golpes_use_case()
+        result = use_case.execute(
+            filial=filial,
+            codigo_ferramenta=codigo,
+            data_inicial=data_inicial,
+            data_final=data_final,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_mini_applicators_golpes",
+            message="Golpes calculados.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao calcular golpes mini-aplicador {codigo}: {exc}")
+        return error_response(
+            "Erro interno ao calcular golpes do mini-aplicador.",
             status_code=500,
         )

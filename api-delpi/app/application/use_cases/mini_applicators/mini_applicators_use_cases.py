@@ -22,3 +22,31 @@ class GetMiniApplicatorsFerramentaUseCase:
 
     def execute(self, codigo: str) -> MiniApplicatorTool | None:
         return self._repository.get_ferramenta(codigo)
+
+
+class ListMiniApplicatorsPecasUseCase:
+    def __init__(self, repository: MiniApplicatorsRepositoryPort):
+        self._repository = repository
+
+    def execute(self, codigo_ferramenta: str) -> list[dict]:
+        return self._repository.list_pecas(codigo_ferramenta)
+
+
+class GetMiniApplicatorsGolpesUseCase:
+    def __init__(self, repository: MiniApplicatorsRepositoryPort):
+        self._repository = repository
+
+    def execute(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        data_inicial: str,
+        data_final: str,
+    ) -> dict:
+        return self._repository.get_golpes(
+            filial=filial,
+            codigo_ferramenta=codigo_ferramenta,
+            data_inicial=data_inicial,
+            data_final=data_final,
+        )

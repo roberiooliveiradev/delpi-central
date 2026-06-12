@@ -45,3 +45,15 @@ def get_ferramenta(codigo: str):
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
         return fail(format_api_error(exc), status_code=500)
+
+
+@router.get("/ferramentas/{codigo}/pecas")
+def list_pecas(codigo: str):
+    try:
+        gateway = build_mini_applicators_totvs_gateway()
+        data = gateway.listar_pecas(codigo)
+        return ok(data, message="Peças listadas.")
+    except DelpiApiError as exc:
+        return fail(exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        return fail(format_api_error(exc), status_code=500)

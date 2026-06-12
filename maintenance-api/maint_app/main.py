@@ -12,6 +12,7 @@ from maint_app.config import settings
 from maint_app.core.responses import fail
 from maint_app.interface.http.routes.maintenance_routes import router as maintenance_router
 from maint_app.interface.http.routes.mini_applicators_routes import router as mini_applicators_router
+from maint_app.interface.http.routes.operational_routes import router as operational_router
 from maint_app.middleware.auth_middleware import jwt_middleware
 from maint_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -92,3 +93,4 @@ def health():
 
 app.include_router(maintenance_router)
 app.include_router(mini_applicators_router)
+app.include_router(operational_router)

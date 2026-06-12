@@ -34,3 +34,27 @@ class DelpiMiniAplicatorsGateway:
             codigo,
             authorization=bearer_authorization_from_context(),
         )
+
+    def listar_pecas(self, codigo_ferramenta: str) -> dict:
+        return self._client.list_mini_applicators_pecas(
+            codigo_ferramenta,
+            authorization=bearer_authorization_from_context(),
+        )
+
+    def obter_golpes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        data_inicial: str,
+        data_final: str,
+    ) -> dict:
+        return self._client.get_mini_applicators_golpes(
+            codigo_ferramenta,
+            params={
+                "filial": filial,
+                "data_inicial": data_inicial,
+                "data_final": data_final,
+            },
+            authorization=bearer_authorization_from_context(),
+        )

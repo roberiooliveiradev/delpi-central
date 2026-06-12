@@ -331,6 +331,18 @@ MINI_APPLICATORS_FERRAMENTA_GET = agent_route(
     operation_id="get_mini_applicators_ferramenta",
 )
 
+MINI_APPLICATORS_PECAS_LIST = agent_route(
+    summary="Listar peças do mini-aplicador",
+    description="Lista peças amarradas à ferramenta (SG1010 + SB1010 grupo 3019).",
+    operation_id="list_mini_applicators_pecas",
+)
+
+MINI_APPLICATORS_GOLPES_GET = agent_route(
+    summary="Golpes do mini-aplicador no período",
+    description="Soma apontamentos SH6010 do recurso entre data_inicial e data_final.",
+    operation_id="get_mini_applicators_golpes",
+)
+
 LMP_BY_SALE = agent_route(
     summary="Detalhe da LMP por ordem de venda",
     description=(

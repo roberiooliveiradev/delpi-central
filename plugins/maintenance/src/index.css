@@ -251,6 +251,15 @@
   padding: 0 12px;
 }
 
+.dashboard-maintenance .dm-field select {
+  min-height: var(--dm-control-height);
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: var(--dm-input-bg);
+  color: var(--dm-text);
+  padding: 0 12px;
+}
+
 .dashboard-maintenance .dm-badge {
   display: inline-flex;
   align-items: center;

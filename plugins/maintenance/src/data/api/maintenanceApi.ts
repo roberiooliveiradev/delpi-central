@@ -63,3 +63,81 @@ export function fetchModuleHealth(getAccessToken?: () => string | undefined) {
     db_hint?: string | null;
   }>("/health", { getAccessToken });
 }
+
+export type MotivoItem = { motivo_id: number; descricao: string };
+export type StatusItem = {
+  status_id: number;
+  descricao: string;
+  operador: string;
+  percentual: number;
+};
+export type ReposicaoItem = {
+  reposicao_id: string;
+  filial: string;
+  codigo_ferramenta: string;
+  codigo_peca: string;
+  data_reposicao: string;
+  golpes: number;
+  motivo_id: number;
+  motivo_descricao?: string;
+  observacao?: string | null;
+};
+
+export function fetchMotivos(getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: MotivoItem[]; total: number }>("/motivos", { getAccessToken });
+}
+
+export function fetchStatusPeca(getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: StatusItem[]; total: number }>("/status-peca", {
+    getAccessToken,
+  });
+}
+
+export function fetchReposicoes(
+  params: { filial: string; codigo_ferramenta: string; codigo_peca?: string },
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams(params as Record<string, string>);
+  return maintenanceFetch<{ items: ReposicaoItem[]; total: number }>(
+    `/reposicoes?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
+export function createReposicao(
+  body: {
+    filial: string;
+    codigo_ferramenta: string;
+    codigo_peca: string;
+    data_reposicao: string;
+    golpes: number;
+    motivo_id: number;
+    observacao?: string;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<ReposicaoItem>("/reposicoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    getAccessToken,
+  });
+}
+
+export function fetchPecas(codigoFerramenta: string, getAccessToken?: () => string | undefined) {
+  return maintenanceFetch<{ items: FerramentaItem[]; total: number }>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/pecas`,
+    { getAccessToken },
+  );
+}
+
+export function suggestGolpes(
+  params: { filial: string; codigo_ferramenta: string; codigo_peca: string },
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams(params);
+  return maintenanceFetch<{ total_golpes: number }>(
+    `/mini-aplicadores/sugerir-golpes?${search.toString()}`,
+    { getAccessToken },
+  );
+}
