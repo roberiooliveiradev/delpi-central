@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hammer, Loader2, PlusCircle, RefreshCw } from "lucide-react";
 
-import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FilterBar, MultiSelectField, StateBox } from "../../components/data";
+import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FieldLabel, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
@@ -1073,7 +1073,7 @@ export function MiniAplicadoresPage({
                 </label>
 
                 <label className="dm-field dm-field--span-full dm-field--textarea">
-                  <span>Observação</span>
+                  <FieldLabel label="Observação" />
                   <textarea
                     rows={4}
                     value={observacao}

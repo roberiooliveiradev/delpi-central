@@ -198,6 +198,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  line-height: 1.35;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-field > span:not(.dm-field__label):not(.dm-field__error) {
+  display: block;
+  line-height: 1.35;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
 }
 
 .dashboard-maintenance .dm-help-tooltip {
@@ -298,6 +308,11 @@
 .dashboard-maintenance .dm-datatable__table th .dm-help-tooltip:hover .dm-help-tooltip__bubble,
 .dashboard-maintenance .dm-datatable__table th .dm-help-tooltip:focus-within .dm-help-tooltip__bubble {
   transform: translateX(-50%) translateY(0);
+}
+
+.dashboard-maintenance .dm-datatable__table th .dm-help-tooltip {
+  flex: none;
+  align-self: center;
 }
 
 .dashboard-maintenance .dm-datatable__header-label {
@@ -635,14 +650,8 @@
   flex: 1 1 200px;
 }
 
-.dashboard-maintenance .dm-field span {
-  display: block;
-  line-height: 1.35;
-  font-size: var(--dm-font-sm);
-  color: var(--dm-text-muted);
-}
-
-.dashboard-maintenance .dm-field--invalid span {
+.dashboard-maintenance .dm-field--invalid .dm-field__label,
+.dashboard-maintenance .dm-field--invalid > span:not(.dm-field__error) {
   color: #f87171;
 }
 
@@ -677,6 +686,12 @@
   font-size: var(--dm-font-sm);
   color: var(--dm-text-muted);
   white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-checkbox-field .dm-help-tooltip--wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .dashboard-maintenance .dm-checkbox-field input[type="checkbox"] {

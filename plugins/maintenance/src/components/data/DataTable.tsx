@@ -44,6 +44,7 @@ export function DataTable<T>({
                   <th
                     key={column.key}
                     className={headerClass || undefined}
+                    data-align={column.align}
                     aria-sort={
                       column.sortable
                         ? isSorted
@@ -61,13 +62,15 @@ export function DataTable<T>({
                         onClick={() => onSortChange(column.key)}
                         aria-label={`Ordenar por ${column.header}`}
                       >
-                        <span>{column.header}</span>
-                        {column.headerHint ? (
-                          <HelpTooltip
-                            content={column.headerHint}
-                            ariaLabel={`Ajuda: ${column.header}`}
-                          />
-                        ) : null}
+                        <span className="dm-datatable__header-label">
+                          <span>{column.header}</span>
+                          {column.headerHint ? (
+                            <HelpTooltip
+                              content={column.headerHint}
+                              ariaLabel={`Ajuda: ${column.header}`}
+                            />
+                          ) : null}
+                        </span>
                         <span className="dm-datatable__sort-indicator" aria-hidden="true">
                           {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                         </span>

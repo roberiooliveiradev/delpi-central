@@ -49,11 +49,11 @@ export function HelpTooltip({
   );
 }
 
-export function FieldLabel({ label, hint }: { label: string; hint: string }) {
+export function FieldLabel({ label, hint }: { label: string; hint?: string }) {
   return (
     <span className="dm-field__label">
       {label}
-      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} />
+      {hint ? <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} /> : null}
     </span>
   );
 }
