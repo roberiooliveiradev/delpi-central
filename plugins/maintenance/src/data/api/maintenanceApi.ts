@@ -54,17 +54,47 @@ export function fetchFerramenta(codigo: string, getAccessToken?: () => string | 
   });
 }
 
-export function fetchModuleHealth(getAccessToken?: () => string | undefined) {
-  return maintenanceFetch<{
-    status: string;
-    module: string;
-    phase: string;
-    db_ready: boolean;
-    db_hint?: string | null;
-  }>("/health", { getAccessToken });
+
+export type PreventivaAlerta = {
+  filial: string;
+  codigo_ferramenta: string;
+  codigo_peca: string;
+  data_ultima_reposicao: string;
+  media_golpes: number;
+  golpes_atuais: number;
+  percentual_uso: number;
+  status: string;
+};
+
+export type PreventivaHistoricoItem = {
+  reposicao_id: string;
+  data_reposicao: string;
+  golpes: number;
+};
+
+export function fetchPreventivaAlertas(
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<{ items: PreventivaAlerta[]; total: number }>(
+    `/preventiva/alertas?filial=${encodeURIComponent(filial)}`,
+    { getAccessToken },
+  );
+}
+
+export function fetchPreventivaHistorico(
+  params: { filial: string; codigo_ferramenta: string; codigo_peca: string },
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams(params);
+  return maintenanceFetch<{ items: PreventivaHistoricoItem[]; total: number }>(
+    `/preventiva/historico?${search.toString()}`,
+    { getAccessToken },
+  );
 }
 
 export type MotivoItem = { motivo_id: number; descricao: string };
+
 export type StatusItem = {
   status_id: number;
   descricao: string;

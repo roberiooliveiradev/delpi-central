@@ -34,7 +34,7 @@ def module_health():
     return {
         "status": "online" if db_ready else "degraded",
         "module": "maintenance",
-        "phase": "0-fundacao",
+        "phase": "2-preventiva",
         "db_ready": db_ready,
         "db_hint": db_hint,
     }

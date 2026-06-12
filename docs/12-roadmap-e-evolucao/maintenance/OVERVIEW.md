@@ -12,7 +12,7 @@ Origem histórica: aplicativo desktop **MiniAplicadores** (WinForms + Access loc
 
 - **API própria** (`maintenance-api`) — fonte de verdade do **cadastro operacional** no **PostgreSQL**
 - **Plugin MFE** (`plugins/maintenance`) — UI oficial
-- **Autenticação e permissões** via Core API / Keycloak
+- **Autenticação** via Keycloak (JWT); **autorização/RBAC** via Core API (`GET /core-api/me`, roles e overrides)
 - **Dados TOTVS** (ferramentas, peças, golpes, estoque) via **api-delpi** — sem duplicar queries Protheus na API do plugin
 
 ## Pergunta de negócio (mini-aplicadores)

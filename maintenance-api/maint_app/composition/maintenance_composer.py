@@ -34,3 +34,9 @@ def build_reposicao_service() -> ReposicaoService:
     from maint_app.application.services.reposicao_service import ReposicaoService
 
     return ReposicaoService(totvs_gateway=build_mini_applicators_totvs_gateway())
+
+
+def build_preventiva_service():
+    from maint_app.application.services.preventiva_service import PreventivaService
+
+    return PreventivaService(totvs_gateway=build_mini_applicators_totvs_gateway())

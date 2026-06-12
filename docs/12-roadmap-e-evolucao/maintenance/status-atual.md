@@ -6,23 +6,29 @@
 
 | Peça | Caminho | Status |
 |------|---------|--------|
-| Docs produto | `docs/12-roadmap-e-evolucao/maintenance/` | ✅ Índice, overview, arquitetura, roadmap, playbook, especificação |
-| Docs API | `maintenance-api/docs/` | ✅ README, arquitetura, contratos de integração |
-| MFE (stub) | `plugins/maintenance/` | ✅ Scaffold Vite + placeholder (Fase 0) |
-| API dedicada (código) | `maintenance-api/` | ✅ Skeleton FastAPI + health + gateway (Fase 0) |
-| Rotas TOTVS na api-delpi | `api-delpi` prefixo `/engineering/mini-applicators/*` | ✅ `GET .../ferramentas` + detalhe (Fase 0) |
-| Docker Compose / gateway | `infra/docker-compose*.yml` | ✅ Fase 0 |
-| Registro Core API | manifesto no portal | ⏳ Após validação local |
+| Docs produto | `docs/12-roadmap-e-evolucao/maintenance/` | ✅ Índice, overview, arquitetura, roadmap, playbook, OPERATIONS |
+| Docs API | `maintenance-api/docs/` | ✅ README, arquitetura, contratos |
+| MFE | `plugins/maintenance/` | ✅ Home, mini-aplicadores, relatório preventivo, configuração |
+| API dedicada | `maintenance-api/` | ✅ CRUD operacional + preventiva + gateways TOTVS |
+| Rotas TOTVS api-delpi | `/engineering/mini-applicators/*` | ✅ ferramentas, peças, golpes |
+| Docker Compose / gateway | `infra/docker-compose*.yml` | ✅ |
+| CI | `scripts/ci-maintenance-api.sh` | ✅ 9 testes |
+| Registro Core API | `plugins/maintenance/scripts/register-manifest.sh` | ✅ Script pronto |
+| Import Access | `maintenance-api/scripts/import_access_csv.py` | ✅ CLI CSV |
 
-## O que já existe fora do monorepo
+## Fases do roadmap
 
-| Peça | Status |
+| Fase | Status |
 |------|--------|
-| App WinForms `MiniAplicadores` | ✅ Produção legada (Access + TOTVS direto) |
-| Regras de negócio documentadas | ✅ Reposição, média de golpes, status preventivo |
+| 0 — Fundação | ✅ Concluída |
+| 1 — CRUD operacional | ✅ Concluída |
+| 2 — Preventiva + relatório | ✅ Concluída (validar amostra vs WinForms) |
+| 3 — Migração + produção | 🚧 Script import + runbook prontos; aguarda export Access e RBAC |
+| 4 — Extensões | ⏳ Backlog |
 
 ## Próximo passo recomendado
 
-1. Fase 0 — esqueleto `maintenance-api` (`main.py`, health, V001 schema) + MFE hello world + compose.
-2. Playbook 01 — implementar primeira rota api-delpi (`GET /engineering/mini-applicators/ferramentas`) com contrato registrado.
-3. Fase 1 — CRUD reposições/motivos no Postgres + gateway de ferramentas.
+1. Registrar manifesto (`register-manifest.sh`) e atribuir `maintenance.*` no RBAC.
+2. Exportar CSV do Access e rodar `import_access_csv.py`.
+3. Validar ranking preventivo contra WinForms (≥5 pares).
+4. Rebuild containers locais e smoke test com usuário `rober`.

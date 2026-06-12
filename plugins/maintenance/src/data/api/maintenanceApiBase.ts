@@ -1,6 +1,12 @@
 export const MAINTENANCE_API_BASE =
   import.meta.env.VITE_MAINTENANCE_API_BASE?.trim() || "/apps/maintenance-api/maintenance";
 
+export function buildAuthHeaders(getAccessToken?: () => string | undefined): HeadersInit {
+  const token = getAccessToken?.();
+  if (!token) return {};
+  return { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` };
+}
+
 export type ApiEnvelope<T> = {
   success: boolean;
   message: string;

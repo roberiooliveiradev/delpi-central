@@ -19,7 +19,7 @@ Entregas em fases para reduzir risco, reaproveitar padrões do monorepo e migrar
 
 **Critério de pronto:** `GET /health` na API dedicada; MFE placeholder no portal; uma rota TOTVS na api-delpi consumida por gateway de teste.
 
-## Fase 1 — CRUD operacional (2–3 sprints) 🚧 em curso
+## Fase 1 — CRUD operacional (2–3 sprints) ✅ concluída
 
 **Objetivo:** substituir Access para reposições e configuração.
 
@@ -34,7 +34,7 @@ Entregas em fases para reduzir risco, reaproveitar padrões do monorepo e migrar
 
 **Critério de pronto:** registrar reposição completa pela UI web, sem Access; listar ferramentas/peças via api-delpi.
 
-## Fase 2 — Preventiva e relatório (2 sprints)
+## Fase 2 — Preventiva e relatório (2 sprints) ✅ concluída
 
 **Objetivo:** paridade com aba Relatório + alertas do WinForms.
 
@@ -48,12 +48,12 @@ Entregas em fases para reduzir risco, reaproveitar padrões do monorepo e migrar
 
 **Critério de pronto:** ranking preventivo bate com amostra validada contra WinForms para ≥5 pares ferramenta/peça.
 
-## Fase 3 — Migração de dados e produção (1 sprint)
+## Fase 3 — Migração de dados e produção (1 sprint) 🚧 em curso
 
 | Entrega | Detalhe |
 |---------|---------|
 | Script import Access → Postgres | one-shot ou CLI |
-| Registro manifesto + permissões Keycloak | `register-manifest.sh` |
+| Registro manifesto na Core API + RBAC (perfis/roles) | `plugins/maintenance/scripts/register-manifest.sh` |
 | Desligar WinForms | somente leitura ou descontinuado |
 | Runbook | OPERATIONS.md |
 

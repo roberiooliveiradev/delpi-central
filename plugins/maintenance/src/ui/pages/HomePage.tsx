@@ -4,7 +4,7 @@ import { Hammer, Home, Wrench } from "lucide-react";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { fetchModuleHealth } from "../../data/api/maintenanceApi";
+import { fetchModuleHealthRaw } from "../../data/api/maintenanceHealthApi";
 
 type HomePageProps = {
   getAccessToken?: () => string | undefined;
@@ -17,7 +17,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomePageProps
 
   useEffect(() => {
     let active = true;
-    fetchModuleHealth(getAccessToken)
+    fetchModuleHealthRaw(getAccessToken)
       .then((data) => {
         if (!active) return;
         setHealth(
@@ -64,7 +64,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomePageProps
           <div>
             <p className="dm-kpi-card__label">Status da API</p>
             <h2 className="dm-kpi-card__value dm-kpi-card__value--sm">{health}</h2>
-            <p className="dm-kpi-card__hint">Fase 0 — fundação deployável no portal.</p>
+            <p className="dm-kpi-card__hint">Monitoramento da API dedicada do módulo.</p>
           </div>
         </article>
       </section>

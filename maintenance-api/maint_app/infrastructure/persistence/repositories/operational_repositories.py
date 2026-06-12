@@ -267,3 +267,43 @@ class ReposicaoRepository(PluginBaseRepository):
             (filial, codigo_ferramenta, codigo_peca),
         )
         return [int(row["golpes"]) for row in rows]
+
+    def list_ultimas_por_par(self, *, filial: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT DISTINCT ON (filial, codigo_ferramenta, codigo_peca)
+                reposicao_id,
+                filial,
+                codigo_ferramenta,
+                codigo_peca,
+                data_reposicao,
+                golpes
+            FROM maintenance.reposicoes
+            WHERE excluido = FALSE
+              AND filial = %s
+            ORDER BY filial, codigo_ferramenta, codigo_peca, data_reposicao DESC
+            """,
+            (filial,),
+        )
+
+    def media_golpes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        codigo_peca: str,
+    ) -> float:
+        row = self.fetch_one(
+            """
+            SELECT COALESCE(AVG(golpes), 0) AS media
+            FROM maintenance.reposicoes
+            WHERE excluido = FALSE
+              AND filial = %s
+              AND codigo_ferramenta = %s
+              AND codigo_peca = %s
+            """,
+            (filial, codigo_ferramenta, codigo_peca),
+        )
+        if not row:
+            return 0.0
+        return float(row.get("media") or 0)

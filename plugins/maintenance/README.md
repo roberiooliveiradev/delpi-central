@@ -2,7 +2,7 @@
 
 Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module Federation + Vite.
 
-**Estado:** Fase 0 — manifesto rascunho e documentação; scaffold Vite na próxima entrega.
+**Estado:** Fases 0–2 concluídas — mini-aplicadores, relatório preventivo e configuração.
 
 ## Documentação
 
@@ -33,7 +33,18 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 **Mini-aplicadores** (ferramentaria) — reposição de peças, golpes e alertas preventivos. Migração do legado WinForms `MiniAplicadores`.
 
-## Desenvolvimento (quando scaffold existir)
+## Registro no portal
+
+```bash
+export TOKEN="<jwt com apps.manage>"
+export BASE_URL="http://localhost"
+chmod +x scripts/register-manifest.sh
+./scripts/register-manifest.sh
+```
+
+Atribuir permissões `maintenance.*` no RBAC da Core API.
+
+## Desenvolvimento
 
 ```bash
 npm install

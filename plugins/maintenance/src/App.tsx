@@ -3,11 +3,8 @@ import { parseMaintenancePath } from "./utils/routeParser";
 import { navigateMaintenance } from "./utils/navigation";
 import { HomePage } from "./ui/pages/HomePage";
 import { MiniAplicadoresPage } from "./ui/pages/MiniAplicadoresPage";
-import {
-  PlaceholderPage,
-  ReportIcon,
-} from "./ui/pages/PlaceholderPage";
 import { ConfiguracaoPage } from "./ui/pages/ConfiguracaoPage";
+import { RelatorioPage } from "./ui/pages/RelatorioPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -32,11 +29,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   if (route.view === "relatorio") {
     return (
-      <PlaceholderPage
-        title="Relatório preventivo"
-        subtitle="Alertas e histórico de golpes entre reposições."
-        icon={ReportIcon}
-        phase="Fase 2"
+      <RelatorioPage
+        getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={onNavigate}
       />

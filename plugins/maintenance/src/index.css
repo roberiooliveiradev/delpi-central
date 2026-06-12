@@ -251,6 +251,43 @@
   padding: 0 12px;
 }
 
+.dashboard-maintenance .dm-badge--danger {
+  background: color-mix(in srgb, #ef4444 16%, var(--dm-card-bg));
+  color: #b91c1c;
+}
+
+.dashboard-maintenance .dm-badge--warning {
+  background: color-mix(in srgb, #f59e0b 16%, var(--dm-card-bg));
+  color: #b45309;
+}
+
+.dashboard-maintenance .dm-badge--success {
+  background: color-mix(in srgb, #22c55e 16%, var(--dm-card-bg));
+  color: #15803d;
+}
+
+.dashboard-maintenance .dm-kpi-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-maintenance .dm-chart-wrap {
+  width: 100%;
+  min-height: 280px;
+  margin-bottom: 16px;
+}
+
+.dashboard-maintenance .dm-table tr.is-selected {
+  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
+}
+
+.dashboard-maintenance .dm-table .dm-badge {
+  border: 0;
+  cursor: pointer;
+}
+
 .dashboard-maintenance .dm-field select {
   min-height: var(--dm-control-height);
   border-radius: var(--dm-control-radius);

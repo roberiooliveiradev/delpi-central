@@ -23,6 +23,7 @@ A **primeira entrega** cobre **ferramentaria — mini-aplicadores** (reposição
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (mini-aplicadores + escopo futuro) |
 | [status-atual.md](./status-atual.md) | Snapshot do que existe no repo |
+| [OPERATIONS.md](./OPERATIONS.md) | Runbook deploy, RBAC, import Access |
 | [ARCHITECTURE.md (API)](../../../maintenance-api/docs/ARCHITECTURE.md) | Detalhe técnico da API dedicada |
 | [integration-contracts.md (API)](../../../maintenance-api/docs/integration-contracts.md) | Contratos HTTP com api-delpi |
 
@@ -37,7 +38,7 @@ A **primeira entrega** cobre **ferramentaria — mini-aplicadores** (reposição
 
 ## Estado atual no monorepo
 
-Ver [status-atual.md](./status-atual.md). **Fase 0 — documentação e esqueleto de pastas** (este commit).
+Ver [status-atual.md](./status-atual.md). **Fases 0–2 concluídas**; Fase 3 (migração Access + go-live) em curso.
 
 ## Legado de referência
 
