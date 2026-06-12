@@ -319,9 +319,15 @@ class JsonBackupService:
         if spec.bundle_key == "recursos_compartilhados" and "escopo_recurso" not in out:
             out["escopo_recurso"] = "empresa"
         if spec.bundle_key == "revisoes" and out.get("chave_unica_processo_revisao") is None:
-            out["chave_unica_processo_revisao"] = (
-                f"{out.get('processo_id')}|{out.get('versao_revisao')}"
-            )
+            instancia_id = out.get("instancia_id")
+            if instancia_id:
+                out["chave_unica_processo_revisao"] = (
+                    f"{instancia_id}|{out.get('versao_revisao')}"
+                )
+            else:
+                out["chave_unica_processo_revisao"] = (
+                    f"{out.get('processo_id')}|{out.get('versao_revisao')}"
+                )
         if spec.bundle_key == "setores":
             raw_id = row.get("setor_id")
             codigo = row.get("codigo_setor")

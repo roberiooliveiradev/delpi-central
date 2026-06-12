@@ -15,10 +15,11 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 | **S5 — Escopo híbrido** | V016 | `escopo_recurso` + `SharedResourceScopeService` no calculador |
 | **S6 — Cache dashboard** | V017 | `dashboard_calculos` PK UUID, FKs instância/filial/setor, denorm `codigo_*`, view snapshot |
 | **S7 — Visões dashboard** | — | `DashboardViewScopeService`, query `view=consolidated\|filial\|department` |
+| **S8 — Duplicar instância** | V018 | `POST /instancias/{id}/duplicar`; depreca `POST /processos/{id}/duplicar` |
 
 ## Migrations disponíveis
 
-V001–V010 (legado) · **V011–V017** (Playbook 18 S1–S6)
+V001–V010 (legado) · **V011–V018** (Playbook 18 S1–S8)
 
 Ver [migrations/README.md](../migrations/README.md).
 
@@ -49,6 +50,13 @@ Módulo canônico: `tm_app/application/services/dashboard_view_scope_service.py`
 
 Inferência legada: só `filial_id` → filial; `filial_id` + `setor_id` → departamento; nenhum → consolidado.
 
+## Duplicar instância (S8)
+
+- **Canônico:** `InstanciaDuplicateService` + `POST /instancias/{id}/duplicar` com `{ filial_id, setor_id }` destino.
+- Copia revisões, medições, investimentos e vínculos para nova instância do **mesmo processo-mestre**.
+- **V018:** unique `(instancia_id, versao_revisao)`; `chave_unica_processo_revisao` = `{instancia_id}|{versao}`.
+- **Legado:** `POST /processos/{id}/duplicar` mantido com header `Deprecation` e campo `deprecated` na resposta.
+
 ## Escopo de recurso (`escopo_recurso`)
 
 | Valor | Pool de rateio |
@@ -69,7 +77,9 @@ Campo exposto em `GET /options` (`escopo_recurso`) e CRUD `/recursos-compartilha
 | GET/PUT/DELETE | `/transformometro/filiais/{id}` | Aceita UUID ou `codigo_filial` |
 | GET/POST | `/transformometro/processos/{id}/instancias` | Par operacional `(filial × setor)` |
 | GET | `/transformometro/instancias/{id}` | Detalhe com `codigo_filial`, `codigo_setor` |
+| POST | `/transformometro/instancias/{id}/duplicar` | Copia timeline para outro par filial × setor (S8) |
 | POST | `/transformometro/processos` | Corpo ainda aceita `filial_id`/`setor_id` → cria **instância** |
+| POST | `/transformometro/processos/{id}/duplicar` | **Deprecado** — header `Deprecation: true` |
 
 ## Compatibilidade MFE / JSON 1.1
 
@@ -88,12 +98,12 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V017: recalcular cache dashboard (full)
 ```
 
-## Próximo (S8+)
+## Próximo (S9+)
 
 | Sprint | Foco |
 |--------|------|
-| **S8** | Duplicar instância (deprecar duplicar processo) |
-| **S9–S10** | api-delpi, RBAC |
+| **S9** | Integração api-delpi (lista por instância) |
+| **S10** | RBAC filial (opcional) |
 
 ## Testes
 

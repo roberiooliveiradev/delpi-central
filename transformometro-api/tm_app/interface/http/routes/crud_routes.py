@@ -51,6 +51,10 @@ from tm_app.application.services.processo_duplicate_service import (
     ProcessoDuplicateService,
     ProcessoNotFoundError,
 )
+from tm_app.application.services.instancia_duplicate_service import (
+    InstanciaDuplicateService,
+    InstanciaNotFoundError,
+)
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
@@ -63,6 +67,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     FilialBody,
     FilialUpdateBody,
     InstanciaBody,
+    InstanciaDuplicateBody,
     InvestimentoBody,
     InvestimentoUpdateBody,
     MedicaoBody,
@@ -312,6 +317,50 @@ def get_instancia(instancia_id: str):
     return ok(row_to_json(row))
 
 
+@router.post("/instancias/{instancia_id}/duplicar")
+def duplicate_instancia(instancia_id: str, body: InstanciaDuplicateBody, request: Request):
+    try:
+        result = InstanciaDuplicateService().duplicate(
+            instancia_id,
+            filial_id=body.filial_id,
+            setor_id=body.setor_id,
+            rotulo_instancia=body.rotulo_instancia,
+        )
+    except InstanciaNotFoundError as exc:
+        return fail(str(exc), 404)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("duplicate_instancia_failed")
+        return fail(format_api_error(exc), 500)
+
+    target_id = str(result["instancia"]["instancia_id"])
+    processo_id = str(result["processo_id"])
+    _audit(
+        request,
+        "processo_instancia",
+        target_id,
+        "duplicate",
+        {
+            "origem_instancia_id": instancia_id,
+            "filial_id": body.filial_id,
+            "setor_id": body.setor_id,
+            "copiados": result["copiados"],
+        },
+    )
+    _recalc_after_processo(processo_id)
+    return ok(
+        {
+            "instancia": row_to_json(result["instancia"]),
+            "processo_id": processo_id,
+            "origem_instancia_id": instancia_id,
+            "copiados": result["copiados"],
+        },
+        "Instância replicada com timeline de revisões.",
+        201,
+    )
+
+
 @router.put("/processos/{processo_id}")
 def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request):
     try:
@@ -365,15 +414,19 @@ def duplicate_processo(
         },
     )
     _recalc_after_processo(new_id)
-    return ok(
-        {
-            "processo": row_to_json(result["processo"]),
-            "origem_processo_id": processo_id,
-            "copiados": result["copiados"],
-        },
-        "Processo duplicado com revisões e vínculos.",
-        201,
+    payload = {
+        "processo": row_to_json(result["processo"]),
+        "origem_processo_id": processo_id,
+        "copiados": result["copiados"],
+        "deprecated": True,
+        "successor_route": "POST /transformometro/instancias/{instancia_id}/duplicar",
+    }
+    response = ok(payload, "Processo duplicado com revisões e vínculos.", 201)
+    response.headers["Deprecation"] = "true"
+    response.headers["Link"] = (
+        '</transformometro/instancias/{instancia_id}/duplicar>; rel="successor-version"'
     )
+    return response
 
 
 # --- Revisões ---

@@ -29,6 +29,27 @@ class RevisaoRepository(PluginBaseRepository):
             (processo_id,),
         )
 
+    def list_by_instancia(self, instancia_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                *,
+                CASE
+                    WHEN lower(coalesce(cenario_tipo, '')) = 'baseline' THEN FALSE
+                    WHEN data_fim_vigencia IS NOT NULL AND data_fim_vigencia < CURRENT_DATE THEN FALSE
+                    ELSE revisao_ativa
+                END AS revisao_ativa
+            FROM transformometro.revisoes
+            WHERE instancia_id = %s::uuid AND deletado = FALSE
+            ORDER BY data_inicio_vigencia ASC, versao_revisao ASC
+            """,
+            (instancia_id,),
+        )
+
+    @staticmethod
+    def build_chave_unica(instancia_id: str, versao_revisao: str) -> str:
+        return f"{instancia_id}|{versao_revisao}"
+
     def get(self, revisao_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             """
@@ -47,11 +68,14 @@ class RevisaoRepository(PluginBaseRepository):
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         data = self._normalize_lifecycle_payload(data)
-        instancia = ProcessoInstanciaRepository(connection=self._connection).ensure_from_processo(
-            str(data["processo_id"])
-        )
-        instancia_id = str(instancia["instancia_id"])
-        chave = f"{data['processo_id']}|{data['versao_revisao']}"
+        if data.get("instancia_id"):
+            instancia_id = str(data["instancia_id"])
+        else:
+            instancia = ProcessoInstanciaRepository(connection=self._connection).ensure_from_processo(
+                str(data["processo_id"])
+            )
+            instancia_id = str(instancia["instancia_id"])
+        chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
         row = self.execute_returning_one(
             """
             INSERT INTO transformometro.revisoes (
@@ -89,7 +113,13 @@ class RevisaoRepository(PluginBaseRepository):
 
     def update(self, revisao_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
         data = self._normalize_lifecycle_payload(data)
-        chave = f"{data['processo_id']}|{data['versao_revisao']}"
+        current = self.get(revisao_id)
+        instancia_id = str(
+            data.get("instancia_id")
+            or (current or {}).get("instancia_id")
+            or ""
+        )
+        chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
         row = self.execute_returning_one(
             """
             UPDATE transformometro.revisoes SET

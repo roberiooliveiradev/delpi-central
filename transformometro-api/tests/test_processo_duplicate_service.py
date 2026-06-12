@@ -40,6 +40,7 @@ def test_duplicate_copies_process_tree(
         "status_processo": "ativo",
     }
     inst_repo.get_by_processo.return_value = {
+        "instancia_id": "i-source",
         "codigo_filial": "01",
         "codigo_setor": "engenharia",
     }

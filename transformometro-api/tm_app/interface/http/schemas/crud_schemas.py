@@ -30,6 +30,12 @@ class ProcessoDuplicateBody(BaseModel):
     )
 
 
+class InstanciaDuplicateBody(BaseModel):
+    filial_id: str = Field(min_length=1, max_length=16)
+    setor_id: str = Field(min_length=1, max_length=64)
+    rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
+
+
 class InstanciaBody(BaseModel):
     filial_id: str = Field(min_length=1, max_length=16)
     setor_id: str = Field(min_length=1, max_length=64)

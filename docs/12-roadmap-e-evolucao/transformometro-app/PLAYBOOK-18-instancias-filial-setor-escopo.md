@@ -395,7 +395,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 | **S5 — Escopo híbrido** | V016, `SharedResourceScopeService`, testes I4–I7 | ✅ Calculador live |
 | **S6 — Dashboard cache UUID** | V017, `dashboard_calculos` UUID, recalc full, I16 | ✅ Cache alinhado |
 | **S7 — Dashboard visões** | `DashboardViewScopeService`, toggle MFE, query alias I14, export I10 | ✅ API (MFE toggle pendente) |
-| **S8 — Duplicar instância** | Novo endpoint, deprecar duplicar processo | Rollout multi-unidade |
+| **S8 — Duplicar instância** | Novo endpoint, deprecar duplicar processo | ✅ Rollout multi-unidade |
 | **S9 — Integração via api-delpi + backup** | Paridade TM S2S + gateway/DTO api-delpi; smoke; I11/I17; JSON I12 | Contrato público = `/engineering/transforma-mais/*`; SI/MFE só api-delpi |
 | **S10 — RBAC filial** (opcional) | Filtro server-side por filial do usuário | Permissão escopada |
 
@@ -471,3 +471,4 @@ O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para 
 | S5 Escopo híbrido | ✅ V016, SharedResourceScopeService |
 | S6 Cache dashboard | ✅ V017, `dashboard_cache_denorm_service`, view snapshot |
 | S7 Visões dashboard | ✅ `DashboardViewScopeService`, query `view` |
+| S8 Duplicar instância | ✅ V018, `POST /instancias/{id}/duplicar` |
