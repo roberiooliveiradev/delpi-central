@@ -1,0 +1,38 @@
+.dashboard-maintenance .dm-page-header,
+.dashboard-maintenance .dm-page-header__brand,
+.dashboard-maintenance .dm-page-header__content,
+.dashboard-maintenance .dm-header-actions,
+.dashboard-maintenance .dm-nav {
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-page-header__content {
+  flex: 1 1 auto;
+}
+
+.dashboard-maintenance .dm-page-header h1 {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+  .dashboard-maintenance .dm-page-header {
+    gap: 14px;
+  }
+
+  .dashboard-maintenance .dm-header-actions {
+    width: 100%;
+  }
+
+  .dashboard-maintenance .dm-nav {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    gap: 8px;
+    scrollbar-width: thin;
+  }
+
+  .dashboard-maintenance .dm-nav__link {
+    flex: 0 0 auto;
+  }
+}

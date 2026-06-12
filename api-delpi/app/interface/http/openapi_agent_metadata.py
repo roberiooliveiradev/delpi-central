@@ -316,6 +316,21 @@ TRANSFORMA_MAIS_SUMMARY = agent_route(
     operation_id="get_transforma_mais_summary",
 )
 
+MINI_APPLICATORS_FERRAMENTAS_LIST = agent_route(
+    summary="Listar ferramentas mini-aplicadores",
+    description=(
+        "Lista ferramentas dos grupos Protheus 23 e 24 (mini-aplicadores). "
+        "Filtros opcionais: codigo, descricao, filial."
+    ),
+    operation_id="list_mini_applicators_ferramentas",
+)
+
+MINI_APPLICATORS_FERRAMENTA_GET = agent_route(
+    summary="Detalhe de ferramenta mini-aplicador",
+    description="Retorna cadastro SB1010 de uma ferramenta mini-aplicador pelo código.",
+    operation_id="get_mini_applicators_ferramenta",
+)
+
 LMP_BY_SALE = agent_route(
     summary="Detalhe da LMP por ordem de venda",
     description=(

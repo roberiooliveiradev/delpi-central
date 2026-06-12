@@ -20,6 +20,13 @@ from app.infrastructure.gateways.transformometro_transforma_mais_gateway import 
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
     LMPQueryRepository,
 )
+from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_repository import (
+    MiniApplicatorsRepository,
+)
+from app.application.use_cases.mini_applicators.mini_applicators_use_cases import (
+    GetMiniApplicatorsFerramentaUseCase,
+    ListMiniApplicatorsFerramentasUseCase,
+)
 
 
 def _build_lmp_repository() -> LMPQueryRepository:
@@ -52,3 +59,15 @@ def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummar
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
     return GetLMPDashboardSummaryUseCase(_build_lmp_repository())
+
+
+def _build_mini_applicators_repository() -> MiniApplicatorsRepository:
+    return MiniApplicatorsRepository()
+
+
+def build_list_mini_applicators_ferramentas_use_case() -> ListMiniApplicatorsFerramentasUseCase:
+    return ListMiniApplicatorsFerramentasUseCase(_build_mini_applicators_repository())
+
+
+def build_get_mini_applicators_ferramenta_use_case() -> GetMiniApplicatorsFerramentaUseCase:
+    return GetMiniApplicatorsFerramentaUseCase(_build_mini_applicators_repository())

@@ -5,13 +5,19 @@ from typing import Optional
 from fastapi import APIRouter, Query
 from delpi_auth.authorization import require_any_permission
 
-from app.application.security.api_delpi_permissions import ENGINEERING_LMP_ACCESS
+from app.application.security.api_delpi_permissions import (
+    ENGINEERING_LMP_ACCESS,
+    MINI_APPLICATORS_ACCESS,
+)
 
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.application.dto.transforma_mais.process_request import ProcessRequest
 from app.application.dto.transforma_mais.process_summary_request import (
     ProcessSummaryRequest,
+)
+from app.application.dto.mini_applicators.list_ferramentas_request import (
+    ListMiniApplicatorsFerramentasRequest,
 )
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.engineering_composer import (
@@ -20,6 +26,8 @@ from app.composition.engineering_composer import (
     build_engineering_list_lmps_dashboard_use_case,
     build_engineering_list_lmps_use_case,
     build_engineering_list_transforma_mais_processes_use_case,
+    build_get_mini_applicators_ferramenta_use_case,
+    build_list_mini_applicators_ferramentas_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
@@ -37,6 +45,8 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_LIST,
     TRANSFORMA_MAIS_LIST,
     TRANSFORMA_MAIS_SUMMARY,
+    MINI_APPLICATORS_FERRAMENTAS_LIST,
+    MINI_APPLICATORS_FERRAMENTA_GET,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
@@ -401,5 +411,64 @@ def get_process_summary(
         log_error(f"Erro ao gerar resumo do Transforma Mais: {exc}")
         return error_response(
             "Erro interno ao gerar resumo dos processos do Transforma Mais.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/ferramentas", **MINI_APPLICATORS_FERRAMENTAS_LIST)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def list_mini_applicators_ferramentas_route(
+    codigo: Optional[str] = Query(None),
+    descricao: Optional[str] = Query(None),
+    filial: Optional[str] = Query(None),
+    page: Optional[int] = Query(1, ge=1),
+    page_size: Optional[int] = Query(50, ge=1, le=200),
+):
+    try:
+        request = ListMiniApplicatorsFerramentasRequest(
+            codigo=codigo,
+            descricao=descricao,
+            filial=filial,
+            page=page or 1,
+            page_size=page_size or 50,
+        )
+        use_case = build_list_mini_applicators_ferramentas_use_case()
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_mini_applicators_ferramentas",
+            message="Ferramentas listadas.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar ferramentas mini-aplicadores: {exc}")
+        return error_response(
+            "Erro interno ao listar ferramentas mini-aplicadores.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/ferramentas/{codigo}", **MINI_APPLICATORS_FERRAMENTA_GET)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def get_mini_applicators_ferramenta_route(codigo: str):
+    try:
+        use_case = build_get_mini_applicators_ferramenta_use_case()
+        result = use_case.execute(codigo)
+        if result is None:
+            return error_response(
+                "Ferramenta não encontrada.",
+                status_code=404,
+                code="MINI_APPLICATOR_TOOL_NOT_FOUND",
+            )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_mini_applicators_ferramenta",
+            message="Ferramenta encontrada.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar ferramenta mini-aplicador {codigo}: {exc}")
+        return error_response(
+            "Erro interno ao buscar ferramenta mini-aplicador.",
             status_code=500,
         )

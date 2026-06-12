@@ -424,6 +424,20 @@ services:
     networks:
       - delpi-network
 
+  maintenance:
+    build:
+      context: ../plugins/maintenance
+      dockerfile: Dockerfile
+
+    container_name: delpi-maintenance
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   minha-delpi-chat:
     build:
       context: ../plugins/minha-delpi-chat
@@ -829,6 +843,54 @@ services:
 
     volumes:
       - ../transformometro-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+
+    networks:
+      - delpi-network
+
+  maintenance-api:
+    build:
+      context: ..
+      dockerfile: maintenance-api/Dockerfile
+
+    container_name: delpi-maintenance-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      MAINT_API_ROOT_PATH: /apps/maintenance-api
+      MAINT_RUN_MIGRATIONS_ON_STARTUP: ${MAINT_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: maintenance-api
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ../maintenance-api:/app
       - ../shared:/shared
 
     depends_on:

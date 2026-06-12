@@ -1,0 +1,105 @@
+# Arquitetura — Manutenção API (`maint_app`)
+
+**Última atualização:** jun/2026 (Fase 0)
+
+## Visão geral
+
+```text
+Portal (shell)
+  └── MFE plugins/maintenance
+        └── GET /apps/maintenance-api/maintenance/*
+              └── maintenance-api (FastAPI, maint_app)
+                    ├── Postgres plugins (reposições, motivos, status)
+                    └── api-delpi via HTTP (ferramentas, peças, golpes TOTVS)
+```
+
+Produto e diagramas de contexto: [ARCHITECTURE.md produto](../../docs/12-roadmap-e-evolucao/maintenance/ARCHITECTURE.md).
+
+## Componentes (alvo)
+
+| Componente | Container (dev) | Responsabilidade |
+|------------|-----------------|------------------|
+| MFE | `delpi-maintenance` | UI React federada |
+| API | `delpi-maintenance-api` | CRUD + preventiva + gateways |
+| API Delpi | `delpi-api-delpi` | SQL Protheus — contrato único |
+| Gateway nginx | `delpi-gateway` | Proxy `/apps/maintenance-api/` e `/apps/maintenance/` |
+| Postgres | `delpi-postgres-plugins` | Schema `maintenance` |
+
+## Pacote `maint_app` (estrutura alvo)
+
+```text
+maint_app/
+  main.py
+  config.py
+  composition/maintenance_composer.py
+  interface/http/routes/
+    reposicao_routes.py
+    motivo_routes.py
+    status_routes.py
+    preventiva_routes.py
+    options_routes.py
+  application/services/
+    reposicao_service.py
+    preventiva_service.py
+  domain/
+    entities/
+    services/          # validadores puros
+    ports/
+      reposicao_repository_port.py
+      mini_applicators_totvs_port.py
+  infrastructure/
+    persistence/repositories/
+    gateways/delpi_mini_applicators_gateway.py
+  infrastructure/persistence/migrations_runner.py
+```
+
+## Gateways api-delpi
+
+| Gateway | Port | Endpoints |
+|---------|------|-----------|
+| `delpi_mini_applicators_gateway.py` | `MiniApplicatorsTotvsPort` | `/engineering/mini-applicators/*` |
+
+Fluxo (igual SI):
+
+1. Composer instancia `DelpiApiClient` + gateway.
+2. Service de aplicação depende do **port**, não do client.
+3. JWT propagado: `bearer_authorization_from_context()`.
+
+Variáveis: `DELPI_API_URL`, `DELPI_API_TIMEOUT`.
+
+## Postgres
+
+| Tabela | Fase |
+|--------|------|
+| `schema_migrations` | V001 |
+| `motivos`, `reposicoes`, `status_peca`, `audit_logs` | V002 |
+
+Índices sugeridos:
+
+- `(filial, codigo_ferramenta, codigo_peca, data_reposicao DESC)` em `reposicoes`
+- `(excluido)` parcial onde aplicável
+
+## Envelope HTTP
+
+Respostas via helper compartilhado (`shared` ou cópia do padrão TM/SI):
+
+```json
+{ "success": true, "message": "...", "data": { } }
+```
+
+Erros de validação: `success: false`, HTTP 4xx, mensagem clara (PT via content bundle quando houver UI).
+
+## Testes (alvo)
+
+| Tipo | Onde |
+|------|------|
+| Validação reposição | `tests/test_reposicao_service.py` |
+| Preventiva / status | `tests/test_preventiva_service.py` |
+| Gateway (mock client) | `tests/test_delpi_mini_applicators_gateway.py` |
+| CI monorepo | `scripts/ci-maintenance-api.sh` |
+
+## Referências
+
+- SI: `strategic-indicators-api/docs/ARCHITECTURE.md`
+- TM: `transformometro-api/tm_app/`
+- Playbook fronteiras: [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-fronteiras-api-delpi.md)

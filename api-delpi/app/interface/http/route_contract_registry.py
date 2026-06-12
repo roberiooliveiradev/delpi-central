@@ -89,6 +89,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "transforma_mais_process", "paged_list"
     ),
     "get_transforma_mais_summary": RouteContract("transforma_mais_summary", "scalar"),
+    "list_mini_applicators_ferramentas": RouteContract(
+        "mini_applicators_ferramenta", "paged_list"
+    ),
+    "get_mini_applicators_ferramenta": RouteContract(
+        "mini_applicators_ferramenta", "scalar"
+    ),
     # Vendas e dados
     "list_sale_orders": RouteContract("sale_order", "paged_list"),
     "execute_readonly_sql": RouteContract("sql_result", "paged_list"),

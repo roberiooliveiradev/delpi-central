@@ -252,6 +252,66 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def list_mini_applicators_ferramentas(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/engineering/mini-applicators/ferramentas",
+            params=params,
+            authorization=authorization,
+        )
+
+    def get_mini_applicators_ferramenta(
+        self,
+        codigo: str,
+        *,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            f"/engineering/mini-applicators/ferramentas/{codigo}",
+            authorization=authorization,
+        )
+
+    def list_mini_applicators_pecas(
+        self,
+        codigo: str,
+        *,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            f"/engineering/mini-applicators/ferramentas/{codigo}/pecas",
+            authorization=authorization,
+        )
+
+    def get_mini_applicators_golpes(
+        self,
+        codigo: str,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            f"/engineering/mini-applicators/ferramentas/{codigo}/golpes",
+            params=params,
+            authorization=authorization,
+        )
+
+    def list_mini_applicators_componentes(
+        self,
+        codigo: str,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            f"/engineering/mini-applicators/ferramentas/{codigo}/componentes",
+            params=params,
+            authorization=authorization,
+        )
+
     # -- HR --
     def get_hr_snapshot(
         self,

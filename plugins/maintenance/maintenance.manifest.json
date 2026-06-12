@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "maintenance",
+  "name": "Manutenção",
+  "description": "Gestão de manutenção industrial — começa por ferramentaria (mini-aplicadores) e evolui para outros domínios de manutenção.",
+  "icon": "wrench",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/maintenance",
+  "entry": "/apps/maintenance/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "maintenance.view",
+      "name": "Acessar Manutenção",
+      "description": "Permite abrir o módulo e consultar listagens e relatórios.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.replacements.manage",
+      "name": "Gerenciar reposições",
+      "description": "Permite registrar e editar reposições de peças (mini-aplicadores).",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.reasons.manage",
+      "name": "Gerenciar motivos de troca",
+      "description": "Permite cadastrar motivos de reposição.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.status.manage",
+      "name": "Gerenciar regras de status preventivo",
+      "description": "Permite ajustar percentuais e operadores de status (CRÍTICO, ATENÇÃO, OK).",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.view.filial-01",
+      "name": "Visualizar — Filial 01",
+      "description": "Leitura operacional restrita à filial 01.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.view.filial-02",
+      "name": "Visualizar — Filial 02",
+      "description": "Leitura operacional restrita à filial 02.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.manage.filial-01",
+      "name": "Gerenciar — Filial 01",
+      "description": "CRUD operacional na filial 01.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.manage.filial-02",
+      "name": "Gerenciar — Filial 02",
+      "description": "CRUD operacional na filial 02.",
+      "module": "maintenance"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/maintenance",
+      "label": "Início",
+      "permission": "maintenance.view",
+      "icon": "home",
+      "entry": null,
+      "order": 10,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/maintenance/mini-aplicadores",
+      "label": "Mini-aplicadores",
+      "permission": "maintenance.view",
+      "icon": "hammer",
+      "entry": null,
+      "order": 20,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/maintenance/relatorio",
+      "label": "Relatório preventivo",
+      "permission": "maintenance.view",
+      "icon": "chart-line",
+      "entry": null,
+      "order": 30,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/maintenance/configuracao",
+      "label": "Configuração",
+      "permission": "maintenance.reasons.manage",
+      "icon": "settings",
+      "entry": null,
+      "order": 40,
+      "showInMenu": true
+    }
+  ],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/maintenance-api/maintenance",
+    "issuer": "https://www.minhadelpi.com.br/auth",
+    "required": true,
+    "serviceName": "maintenance-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}
