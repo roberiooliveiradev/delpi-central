@@ -1,0 +1,74 @@
+.mdc-ingest-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.mdc-ingest-progress--compact {
+  gap: 0.25rem;
+}
+
+.mdc-ingest-progress__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--mdc-text-secondary, #5f6368);
+}
+
+.mdc-ingest-progress--compact .mdc-ingest-progress__label {
+  font-size: 0.75rem;
+}
+
+.mdc-ingest-progress__bar {
+  width: 100%;
+  height: 0.45rem;
+  border: none;
+  border-radius: 999px;
+  overflow: hidden;
+  appearance: none;
+  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+}
+
+.mdc-ingest-progress__bar::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+  border-radius: 999px;
+}
+
+.mdc-ingest-progress__bar::-webkit-progress-value {
+  background: var(--mdc-primary, #1a73e8);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.mdc-ingest-progress__bar::-moz-progress-bar {
+  background: var(--mdc-primary, #1a73e8);
+  border-radius: 999px;
+}
+
+.mdc-ingest-progress__bar--indeterminate {
+  position: relative;
+  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+}
+
+.mdc-ingest-progress__bar--indeterminate::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--mdc-primary, #1a73e8);
+  animation: mdc-ingest-progress-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes mdc-ingest-progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}

@@ -31,11 +31,20 @@ def test_storage_scope_maps_to_ingest_family(scope, family):
     assert WorkspaceFileIngestPolicyService.family_for_storage_scope(scope) == family
 
 
+def test_workspace_ingest_errors_use_attachments_json():
+    assert "extrair texto" in ChatAssistantContentService.get(
+        "attachments",
+        "ingestUi",
+        "workspace",
+        "extractFailed",
+    )
+
+
 def test_agent_source_storage_rejects_images(tmp_path, monkeypatch):
     monkeypatch.setenv("CHAT_SOURCE_STORAGE_PATH", str(tmp_path))
     storage = ChatSourceFileStorage()
 
-    with pytest.raises(ValueError, match="not allowed"):
+    with pytest.raises(ValueError, match="permitido"):
         storage.save(
             user_id="user-1",
             scope="agent",

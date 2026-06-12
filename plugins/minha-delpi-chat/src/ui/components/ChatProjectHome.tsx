@@ -40,6 +40,7 @@ import {
   workspaceFileProjectFileKindLabel,
   workspaceFileProjectIngestLabels,
 } from "../../content/workspaceFileIngestContent";
+import { IngestProgressIndicator } from "./shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
 
@@ -177,6 +178,7 @@ export function ChatProjectHome({
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
   const [projectLinkCopied, setProjectLinkCopied] = useState(false);
   const [isSourceDragActive, setIsSourceDragActive] = useState(false);
+  const [uploadSourceError, setUploadSourceError] = useState<string | null>(null);
   const projectIngestLabels = workspaceFileProjectIngestLabels();
   const projectUsagePath = useMemo(
     () => buildChatProjectHref(project.id),
@@ -335,9 +337,16 @@ export function ChatProjectHome({
     }
 
     setIsSavingSource(true);
+    setUploadSourceError(null);
 
     try {
       await onUploadSource?.(file);
+    } catch (error) {
+      setUploadSourceError(
+        error instanceof Error
+          ? error.message
+          : workspaceFileProjectIngestLabels().emptyState,
+      );
     } finally {
       setIsSavingSource(false);
     }
@@ -748,7 +757,13 @@ export function ChatProjectHome({
             />
 
             {isSavingSource ? (
-              <p className="mdc-chat-project-home__empty">{projectIngestLabels.uploadingStatus}</p>
+              <IngestProgressIndicator label={projectIngestLabels.uploadingStatus} />
+            ) : null}
+
+            {uploadSourceError ? (
+              <p className="mdc-chat-project-sources__error" role="alert">
+                {uploadSourceError}
+              </p>
             ) : null}
 
             {isLoadingSources ? (

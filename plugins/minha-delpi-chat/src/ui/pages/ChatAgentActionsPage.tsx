@@ -36,6 +36,7 @@ import {
   isBackgroundIndexingJob,
   pollChatActionProviderImportJob,
 } from "../../data/chatActionImportPolling";
+import { IngestProgressIndicator } from "../components/shared/IngestProgressIndicator";
 import type {
   ChatActionCatalogItem,
   ChatExternalActionImportJob,
@@ -1262,25 +1263,12 @@ export function ChatAgentActionsPage({
                   </p>
 
                   {isUpdatingRoutes && importJob ? (
-                    <div
+                    <IngestProgressIndicator
                       className="mdc-chat-agent-actions-page__import-progress"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      <p className="mdc-chat-agent-actions-page__import-progress-label">
-                        {importJob.phaseLabel}
-                        {importJob.progress.total > 0
-                          ? ` — ${importJob.progress.done}/${importJob.progress.total}`
-                          : ""}
-                      </p>
-                      {importJob.progress.total > 0 ? (
-                        <progress
-                          className="mdc-chat-agent-actions-page__import-progress-bar"
-                          max={importJob.progress.total}
-                          value={importJob.progress.done}
-                        />
-                      ) : null}
-                    </div>
+                      label={importJob.phaseLabel}
+                      done={importJob.progress.done}
+                      total={importJob.progress.total}
+                    />
                   ) : null}
                 </div>
               </section>

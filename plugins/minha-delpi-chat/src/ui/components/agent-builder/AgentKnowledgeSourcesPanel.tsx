@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
 import { workspaceFileAgentIngestLabels } from "../../../content/workspaceFileIngestContent";
 import { getSourceContentHash, sha256HexFromFile } from "../../../utils/fileContentHash";
+import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "../workspace-files/WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "../workspace-files/WorkspaceFileDropzone";
 
@@ -147,7 +148,10 @@ export function AgentKnowledgeSourcesPanel({
       {notice ? <p className="mdc-agent-knowledge__notice">{notice}</p> : null}
 
       {isUploading ? (
-        <p className="mdc-agent-knowledge__status">{ingestLabels.uploadingStatus}</p>
+        <IngestProgressIndicator
+          className="mdc-agent-knowledge__status"
+          label={ingestLabels.uploadingStatus}
+        />
       ) : null}
 
       {sources.length > 0 ? (

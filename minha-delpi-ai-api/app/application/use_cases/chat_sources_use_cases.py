@@ -18,9 +18,14 @@ from app.application.use_cases.ingest_knowledge_document_use_case import (
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.workspace_file_ingest_policy_service import (
     WorkspaceFileIngestPolicyService,
 )
+
+
+def _workspace_ingest_message(key: str) -> str:
+    return ChatAssistantContentService.get("attachments", "ingestUi", "workspace", key)
 
 
 def _source_response(document, chunk_count: int | None = None) -> ChatSourceResponse:
@@ -67,17 +72,17 @@ class ChatSourceFileStorage:
         content: bytes,
     ) -> dict:
         if not content:
-            raise ValueError("File is empty")
+            raise ValueError(_workspace_ingest_message("fileEmpty"))
 
         family = WorkspaceFileIngestPolicyService.family_for_storage_scope(scope)
 
         if len(content) > WorkspaceFileIngestPolicyService.max_size_bytes(family):
-            raise ValueError("File exceeds maximum size")
+            raise ValueError(_workspace_ingest_message("fileTooLarge"))
 
         safe_name = secure_filename(original_filename) or "arquivo"
 
         if not WorkspaceFileIngestPolicyService.is_extension_allowed(family, safe_name):
-            raise ValueError("File type is not allowed")
+            raise ValueError(_workspace_ingest_message("unsupportedType"))
 
         extension = Path(safe_name).suffix.lower()
 
@@ -169,7 +174,7 @@ class CreateProjectSourceUseCase:
         )
 
         if not extracted["supported"] or not str(extracted.get("content") or "").strip():
-            raise ValueError("File could not be extracted or is unsupported")
+            raise ValueError(_workspace_ingest_message("extractFailed"))
 
         document = self.ingest_use_case.execute(
             IngestDocumentRequest(
@@ -352,7 +357,7 @@ class CreateAgentSourceUseCase:
         )
 
         if not extracted["supported"] or not str(extracted.get("content") or "").strip():
-            raise ValueError("File could not be extracted or is unsupported")
+            raise ValueError(_workspace_ingest_message("extractFailed"))
 
         extracted_content = str(extracted.get("content") or "").strip()
 

@@ -112,13 +112,24 @@
     "agent": {
       "ariaAddFiles": "Adicionar arquivos de conhecimento",
       "listAriaLabel": "Arquivos do agente",
-      "uploadingStatus": "Enviando arquivos...",
+      "uploadingStatus": "Enviando e extraindo texto... PDFs grandes podem levar até um minuto.",
       "emptyState": "Nenhum arquivo ainda. Arraste documentos para começar.",
       "duplicateMarked": "Já indexado — conteúdo igual"
     },
+    "progress": {
+      "percentLabel": "{percent}%",
+      "fractionLabel": "{done}/{total}",
+      "indeterminateLabel": "Processando..."
+    },
+    "workspace": {
+      "extractFailed": "Não foi possível extrair texto do arquivo. Envie PDF, DOCX, TXT, MD ou planilha com conteúdo legível.",
+      "unsupportedType": "Tipo de arquivo não permitido. Use txt, md, csv, json, docx, xlsx ou pdf.",
+      "fileTooLarge": "Arquivo excede o tamanho máximo permitido (25 MB).",
+      "fileEmpty": "O arquivo está vazio."
+    },
     "project": {
       "listAriaLabel": "Fontes do projeto",
-      "uploadingStatus": "Enviando...",
+      "uploadingStatus": "Enviando e extraindo texto... PDFs grandes podem levar até um minuto.",
       "loadingSources": "Carregando fontes...",
       "emptyState": "Nenhuma fonte adicionada. Arraste arquivos acima para começar.",
       "fileKindLabel": "Arquivo",

@@ -461,6 +461,13 @@
   padding-right: 0;
 }
 
+.mdc-chat-project-sources__error {
+  margin: 0;
+  color: var(--mdc-danger, #c0392b);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .mdc-chat-project-source-list {
   display: grid;
   gap: 0.15rem;
