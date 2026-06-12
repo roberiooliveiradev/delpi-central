@@ -83,11 +83,21 @@ ALTER TABLE transformometro.setor_filiais_new RENAME TO setor_filiais;
 CREATE INDEX IF NOT EXISTS idx_setor_filiais_filial
     ON transformometro.setor_filiais (filial_id);
 
+ALTER TABLE transformometro.setor_filiais
+    DROP CONSTRAINT IF EXISTS fk_setor_filiais_setor;
+
 ALTER TABLE transformometro.setores DROP CONSTRAINT setores_pkey;
 ALTER TABLE transformometro.setores DROP COLUMN setor_id;
 ALTER TABLE transformometro.setores RENAME COLUMN setor_uuid TO setor_id;
 ALTER TABLE transformometro.setores DROP CONSTRAINT IF EXISTS uq_setores_uuid_migration;
 ALTER TABLE transformometro.setores ADD PRIMARY KEY (setor_id);
+
+ALTER TABLE transformometro.setor_filiais
+    ADD CONSTRAINT fk_setor_filiais_setor
+        FOREIGN KEY (setor_id)
+        REFERENCES transformometro.setores (setor_id)
+        ON DELETE CASCADE;
+
 ALTER TABLE transformometro.setores
     ADD CONSTRAINT uq_setores_codigo_setor UNIQUE (codigo_setor);
 
