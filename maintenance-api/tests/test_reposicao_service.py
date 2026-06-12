@@ -65,6 +65,49 @@ def test_validate_payload_uses_form_last_replacement_not_db_max():
     assert result["motivo_id"] == MOTIVO_ID
 
 
+def test_validate_payload_update_ignora_ultima_do_banco_sem_data_ultima_no_form():
+    repo = MagicMock()
+    repo.get_ultima_data.return_value = datetime(2026, 6, 12, 17, 24, tzinfo=timezone.utc)
+    service = ReposicaoService(reposicao_repo=repo)
+
+    result = service.validate_payload(
+        {
+            "filial": "01",
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "30190038",
+            "data_reposicao": "2025-06-12T17:22:00",
+            "golpes": 733,
+            "motivo_id": MOTIVO_ID,
+        },
+        exclude_reposicao_id="f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    )
+
+    assert result["data_reposicao"].year == 2025
+    assert result["data_ultima_reposicao"] is None
+    repo.get_ultima_data.assert_not_called()
+
+
+def test_validate_payload_update_validates_quando_data_ultima_informada():
+    repo = MagicMock()
+    service = ReposicaoService(reposicao_repo=repo)
+
+    with pytest.raises(ValueError, match="posterior"):
+        service.validate_payload(
+            {
+                "filial": "01",
+                "codigo_ferramenta": "23-001",
+                "codigo_peca": "30190038",
+                "data_reposicao": "2025-06-12T17:22:00",
+                "data_ultima_reposicao": "2025-06-12T18:00:00",
+                "golpes": 733,
+                "motivo_id": MOTIVO_ID,
+            },
+            exclude_reposicao_id="f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        )
+
+    repo.get_ultima_data.assert_not_called()
+
+
 def test_sugerir_golpes_usa_intervalo_datetime_no_totvs():
     repo = MagicMock()
     repo.get_ultima_data.return_value = datetime(2026, 6, 12, 10, 51, tzinfo=timezone.utc)

@@ -66,21 +66,22 @@ class ReposicaoService:
 
         data_reposicao_dt = self._parse_datetime(data_reposicao, field_name="Data de reposição")
 
-        ultima = self._reposicao_repo.get_ultima_data(
-            filial=filial,
-            codigo_ferramenta=codigo_ferramenta,
-            codigo_peca=codigo_peca,
-            exclude_reposicao_id=exclude_reposicao_id,
-        )
-
         raw_data_ultima = payload.get("data_ultima_reposicao")
         if raw_data_ultima:
             data_ultima_reposicao_dt = self._parse_datetime(
                 raw_data_ultima,
                 field_name="Data da última reposição",
             )
-        else:
+        elif exclude_reposicao_id is None:
+            ultima = self._reposicao_repo.get_ultima_data(
+                filial=filial,
+                codigo_ferramenta=codigo_ferramenta,
+                codigo_peca=codigo_peca,
+            )
             data_ultima_reposicao_dt = ultima
+        else:
+            # Edição: não inferir última reposição do banco — regra de ordem vale no cadastro novo.
+            data_ultima_reposicao_dt = None
 
         if data_ultima_reposicao_dt and self._as_naive(data_reposicao_dt) <= self._as_naive(
             data_ultima_reposicao_dt

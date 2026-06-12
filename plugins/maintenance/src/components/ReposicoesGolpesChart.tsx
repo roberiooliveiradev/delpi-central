@@ -116,7 +116,7 @@ export function ReposicoesGolpesChart({
               strokeWidth={2}
               dot={{ r: 3, strokeWidth: 2 }}
               activeDot={{ r: 5 }}
-              connectNulls={false}
+              connectNulls
             />
           ))}
         </LineChart>

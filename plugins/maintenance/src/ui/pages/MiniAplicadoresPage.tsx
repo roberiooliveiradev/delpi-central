@@ -210,6 +210,8 @@ export function MiniAplicadoresPage({
   );
 
   const resetReposicaoForm = useCallback(() => {
+    golpesRequestRef.current += 1;
+    setGolpesLoading(false);
     editingReposicaoRef.current = null;
     setEditingReposicaoId(null);
     setCodigoPeca(pecasReposicao[0]?.codigo ?? "");
@@ -222,6 +224,8 @@ export function MiniAplicadoresPage({
   }, [pecasReposicao]);
 
   const openNovaReposicao = useCallback(() => {
+    golpesRequestRef.current += 1;
+    setGolpesLoading(false);
     editingReposicaoRef.current = null;
     setEditingReposicaoId(null);
     setCodigoPeca(pecasReposicao[0]?.codigo ?? "");
@@ -554,7 +558,7 @@ export function MiniAplicadoresPage({
   }, [filial, codigoFerramenta, ferramentasTable.resetPage]);
 
   useEffect(() => {
-    if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
+    if (!codigoFerramenta || !codigoPeca || !showReposicaoForm || editingReposicaoId) return;
     void refreshSuggestGolpes({
       codigoPecaValue: codigoPeca,
       dataReposicaoValue: dataReposicao,
@@ -567,6 +571,7 @@ export function MiniAplicadoresPage({
     dataUltimaReposicao,
     editingReposicaoId,
     refreshSuggestGolpes,
+    showReposicaoForm,
   ]);
 
   useEffect(() => {
@@ -594,7 +599,7 @@ export function MiniAplicadoresPage({
   }
 
   async function handleSuggestGolpes() {
-    if (!codigoFerramenta || !codigoPeca) return;
+    if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
     await refreshSuggestGolpes({
       codigoPecaValue: codigoPeca,
       dataReposicaoValue: dataReposicao,
@@ -603,8 +608,11 @@ export function MiniAplicadoresPage({
   }
 
   function handleEditReposicao(item: ReposicaoItem) {
+    golpesRequestRef.current += 1;
+    setGolpesLoading(false);
     editingReposicaoRef.current = item;
     setEditingReposicaoId(item.reposicao_id);
+    setShowReposicaoForm(true);
     setCodigoPeca(item.codigo_peca);
     setGolpes(item.golpes);
     setMotivoId(item.motivo_id);
@@ -1036,17 +1044,19 @@ export function MiniAplicadoresPage({
                   ) : null}
                 </div>
 
-                <button
-                  type="button"
-                  className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
-                  disabled={golpesLoading || !codigoPeca}
-                  onClick={() => void handleSuggestGolpes()}
-                >
-                  {golpesLoading ? (
-                    <Loader2 size={16} className="dm-spin" aria-hidden="true" />
-                  ) : null}
-                  {golpesLoading ? "Calculando…" : "Sugerir golpes"}
-                </button>
+                {!editingReposicaoId ? (
+                  <button
+                    type="button"
+                    className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
+                    disabled={golpesLoading || !codigoPeca}
+                    onClick={() => void handleSuggestGolpes()}
+                  >
+                    {golpesLoading ? (
+                      <Loader2 size={16} className="dm-spin" aria-hidden="true" />
+                    ) : null}
+                    {golpesLoading ? "Calculando…" : "Sugerir golpes"}
+                  </button>
+                ) : null}
 
                 <label
                   className={`dm-field dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
