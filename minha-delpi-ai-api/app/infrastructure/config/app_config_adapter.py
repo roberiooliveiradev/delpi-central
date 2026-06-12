@@ -63,14 +63,19 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         )
 
     def chat_typing_correction_fuzzy_enabled(self) -> bool:
+        return self.learning_pipeline_flag("typingCorrectionFuzzyEnabled")
+
+    def learning_pipeline_flag(self, key: str) -> bool:
         from app.infrastructure.config.chat_admin_settings_runtime_reader import (
             read_learning_pipeline_settings,
         )
 
         learning = read_learning_pipeline_settings(self._settings_repository)
-        return bool(
-            learning.get("learningEnabled") and learning.get("typingCorrectionFuzzyEnabled")
-        )
+
+        if not learning.get("learningEnabled"):
+            return False
+
+        return bool(learning.get(key))
 
     def chat_web_search_direct_response_enabled(self) -> bool:
         return self._intelligence().web_search_direct_response_enabled

@@ -212,5 +212,40 @@ CHAT_LEARNING_PIPELINE_BUNDLE = AdminSettingsBundleSpec(
             "bool",
             lambda: bool(Settings.CHAT_LEARNING_TERM_CONFIRMATION_ENABLED),
         ),
+        AdminSettingsFieldSpec(
+            "learningGlossaryWebMeaning",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_GLOSSARY_WEB_MEANING),
+        ),
+        AdminSettingsFieldSpec(
+            "learningGlossaryRagIndex",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_GLOSSARY_RAG_INDEX),
+        ),
+        AdminSettingsFieldSpec(
+            "learningEvaluationEnabled",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_EVALUATION_ENABLED),
+        ),
+        AdminSettingsFieldSpec(
+            "learningEvaluationBlockPromotion",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION),
+        ),
+        AdminSettingsFieldSpec(
+            "learningEvaluationCaptureFromFeedback",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK),
+        ),
+        AdminSettingsFieldSpec(
+            "learningFineTuningEnabled",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_FINE_TUNING_ENABLED),
+        ),
+        AdminSettingsFieldSpec(
+            "learningFineTuningCapturePositiveFeedback",
+            "bool",
+            lambda: bool(Settings.CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK),
+        ),
     ),
 )

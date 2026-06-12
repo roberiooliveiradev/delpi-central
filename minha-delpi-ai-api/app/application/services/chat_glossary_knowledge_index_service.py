@@ -49,9 +49,9 @@ class ChatGlossaryKnowledgeIndexService:
 
     @staticmethod
     def _enabled() -> bool:
-        return bool(
-            Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_GLOSSARY_RAG_INDEX
-        )
+        from app.application.services.chat_platform_runtime_access import learning_flag
+
+        return learning_flag("learningGlossaryRagIndex")
 
     @staticmethod
     def build_content(term: str, meaning: str) -> str:

@@ -27,3 +27,9 @@ def learning_pipeline_settings() -> dict:
     )
 
     return read_learning_pipeline_settings(_repository())
+
+
+def learning_flag(key: str) -> bool:
+    from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+
+    return ChatDomainConfigService.learning_pipeline_flag(key)

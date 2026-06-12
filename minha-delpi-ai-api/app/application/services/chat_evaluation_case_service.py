@@ -13,7 +13,7 @@ from app.domain.services.chat_message_normalization_service import (
 )
 from app.domain.ports.evaluation_case_repository_port import EvaluationCaseRepositoryPort
 from app.domain.services.chat_simple_turn_gate_service import ChatSimpleTurnGateService
-from app.infrastructure.config.settings import Settings
+from app.application.services.chat_platform_runtime_access import learning_flag
 
 
 def _default_evaluation_repository() -> EvaluationCaseRepositoryPort:
@@ -34,17 +34,14 @@ class ChatEvaluationCaseService:
 
     @staticmethod
     def _capture_enabled() -> bool:
-        return bool(
-            Settings.CHAT_LEARNING_ENABLED
-            and Settings.CHAT_LEARNING_EVALUATION_ENABLED
-            and Settings.CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK
+        return (
+            learning_flag("learningEvaluationEnabled")
+            and learning_flag("learningEvaluationCaptureFromFeedback")
         )
 
     @staticmethod
     def _run_enabled() -> bool:
-        return bool(
-            Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_EVALUATION_ENABLED
-        )
+        return learning_flag("learningEvaluationEnabled")
 
     def create_case(self, *, payload: dict, created_by: str | None = None) -> dict:
         if not isinstance(payload, dict):

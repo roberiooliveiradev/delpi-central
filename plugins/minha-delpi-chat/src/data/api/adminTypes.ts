@@ -365,6 +365,13 @@ export type AdminChatLearningPipelineSettingsPayload = {
   learningGlossaryRetrieval: boolean;
   learningGlossaryCapture: boolean;
   learningTermConfirmationEnabled: boolean;
+  learningGlossaryWebMeaning: boolean;
+  learningGlossaryRagIndex: boolean;
+  learningEvaluationEnabled: boolean;
+  learningEvaluationBlockPromotion: boolean;
+  learningEvaluationCaptureFromFeedback: boolean;
+  learningFineTuningEnabled: boolean;
+  learningFineTuningCapturePositiveFeedback: boolean;
 };
 
 export type AdminChatLearningPipelineSettings = AdminChatLearningPipelineSettingsPayload & {

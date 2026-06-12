@@ -58,10 +58,11 @@ class ChatLearningPromotionGateService:
 
     @staticmethod
     def _enabled() -> bool:
-        return bool(
-            Settings.CHAT_LEARNING_ENABLED
-            and Settings.CHAT_LEARNING_EVALUATION_ENABLED
-            and Settings.CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION
+        from app.application.services.chat_platform_runtime_access import learning_flag
+
+        return (
+            learning_flag("learningEvaluationEnabled")
+            and learning_flag("learningEvaluationBlockPromotion")
         )
 
     def validate_promotion(

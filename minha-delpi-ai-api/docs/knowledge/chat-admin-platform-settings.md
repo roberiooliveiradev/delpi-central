@@ -46,8 +46,8 @@ Não migrado para admin (infra, segredos, modelos):
 - URLs de APIs, Postgres, Redis, Ollama/vLLM
 - API keys e credenciais
 - `CHAT_DOCUMENT_VISION_BACKEND`, `CHAT_DOCUMENT_VISION_OLLAMA_*`, DPI, timeouts
-- Fine-tuning webhook, evaluation block, glossary web meaning
-- Limites fixos de vocabulário (`CHAT_LEARNING_VOCABULARY_MAX_RULES`, etc.)
+- Fine-tuning webhook, modelos base e `OLLAMA_CREATE`
+- Limites fixos de vocabulário (`CHAT_LEARNING_VOCABULARY_MAX_RULES`, `CHAT_LEARNING_GLOSSARY_MAX_TERMS`, etc.)
 
 ---
 
@@ -70,6 +70,9 @@ Não migrado para admin (infra, segredos, modelos):
 - `learningApplyVocabulary`, `learningCaptureFromFeedback`, `learningCaptureFromTurn`
 - `learningAutoApproveEnabled`, `learningAutoApproveMinConfidence`
 - `learningGlossaryRetrieval`, `learningGlossaryCapture`, `learningTermConfirmationEnabled`
+- `learningGlossaryWebMeaning`, `learningGlossaryRagIndex`
+- `learningEvaluationEnabled`, `learningEvaluationBlockPromotion`, `learningEvaluationCaptureFromFeedback`
+- `learningFineTuningEnabled`, `learningFineTuningCapturePositiveFeedback`
 
 ---
 

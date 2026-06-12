@@ -211,9 +211,9 @@ class UpsertChatMessageFeedbackUseCase:
         user_id: str,
     ) -> None:
         """Casos de regressão (Fase 6): best-effort, nunca quebra o feedback."""
-        from app.infrastructure.config.settings import Settings
+        from app.application.services.chat_platform_runtime_access import learning_flag
 
-        if not Settings.CHAT_LEARNING_ENABLED:
+        if not learning_flag("learningEvaluationEnabled"):
             return
 
         try:
@@ -246,9 +246,9 @@ class UpsertChatMessageFeedbackUseCase:
         user_id: str,
     ) -> None:
         """Fine-tuning offline (Fase 7): best-effort em feedback positivo."""
-        from app.infrastructure.config.settings import Settings
+        from app.application.services.chat_platform_runtime_access import learning_flag
 
-        if not Settings.CHAT_LEARNING_ENABLED:
+        if not learning_flag("learningFineTuningEnabled"):
             return
 
         try:

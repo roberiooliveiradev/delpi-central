@@ -15,7 +15,17 @@ export const CHAT_LEARNING_PIPELINE_SECTIONS: AdminBundleSectionMeta[] = [
   {
     id: "glossary",
     title: "Glossário vivo",
-    description: "Termos internos, confirmação e injeção no contexto do turno.",
+    description: "Termos internos, confirmação, indexação RAG e pesquisa web.",
+  },
+  {
+    id: "evaluation",
+    title: "Regressão e promoção",
+    description: "Casos de avaliação e bloqueio de promoção sem teste.",
+  },
+  {
+    id: "finetuning",
+    title: "Ajuste fino offline",
+    description: "Captura de amostras positivas para datasets de fine-tuning.",
   },
 ];
 
@@ -29,7 +39,14 @@ export const CHAT_LEARNING_PIPELINE_TOGGLE_META: Record<
   | "learningAutoApproveEnabled"
   | "learningGlossaryRetrieval"
   | "learningGlossaryCapture"
-  | "learningTermConfirmationEnabled",
+  | "learningTermConfirmationEnabled"
+  | "learningGlossaryWebMeaning"
+  | "learningGlossaryRagIndex"
+  | "learningEvaluationEnabled"
+  | "learningEvaluationBlockPromotion"
+  | "learningEvaluationCaptureFromFeedback"
+  | "learningFineTuningEnabled"
+  | "learningFineTuningCapturePositiveFeedback",
   ChatIntelligenceSettingMeta
 > = {
   learningEnabled: {
@@ -113,6 +130,63 @@ export const CHAT_LEARNING_PIPELINE_TOGGLE_META: Record<
     cons: ["Mais um passo na conversa."],
     speedWhenEnabled: "neutral",
     qualityWhenEnabled: "higher",
+  },
+  learningGlossaryWebMeaning: {
+    title: "Significado via busca web",
+    summary: "Pesquisa definição pública quando o termo é desconhecido internamente.",
+    pros: ["Acelera glossário para siglas e conceitos de mercado."],
+    cons: ["Depende de web search; significado pode ser genérico."],
+    speedWhenEnabled: "slow",
+    qualityWhenEnabled: "neutral",
+    tip: "Webhook e limites de busca continuam no Docker.",
+  },
+  learningGlossaryRagIndex: {
+    title: "Indexar glossário no RAG",
+    summary: "Embute termos aprovados na base de conhecimento recuperável.",
+    pros: ["Termos promovidos entram na busca híbrida."],
+    cons: ["Reindexação adiciona carga no Postgres."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "higher",
+  },
+  learningEvaluationEnabled: {
+    title: "Casos de regressão",
+    summary: "Habilita criação e execução de casos na aba Regressão.",
+    pros: ["Detecta quebra de roteamento após mudanças."],
+    cons: ["Exige manutenção da suíte de casos."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "higher",
+  },
+  learningEvaluationBlockPromotion: {
+    title: "Bloquear promoção sem regressão",
+    summary: "Impede promover candidato se casos relacionados falharem.",
+    pros: ["Evita vocabulário ruim em produção."],
+    cons: ["Promoções manuais podem travar até corrigir casos."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "higher",
+  },
+  learningEvaluationCaptureFromFeedback: {
+    title: "Captura de casos via feedback",
+    summary: "Grava pergunta como caso de regressão em feedback negativo.",
+    pros: ["Suíte cresce com falhas reais."],
+    cons: ["Pode poluir regressão com perguntas one-off."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "higher",
+  },
+  learningFineTuningEnabled: {
+    title: "Pipeline de ajuste fino",
+    summary: "Permite captura e datasets para treino offline.",
+    pros: ["Base para modelo especializado da empresa."],
+    cons: ["Infra de treino (webhook, Ollama) fica no Docker."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "neutral",
+  },
+  learningFineTuningCapturePositiveFeedback: {
+    title: "Captura em feedback positivo",
+    summary: "Salva par pergunta/resposta quando o usuário aprova a resposta.",
+    pros: ["Amostras de alta qualidade para fine-tuning."],
+    cons: ["Volume baixo; requer curadoria na aba Ajuste fino."],
+    speedWhenEnabled: "neutral",
+    qualityWhenEnabled: "neutral",
   },
 };
 

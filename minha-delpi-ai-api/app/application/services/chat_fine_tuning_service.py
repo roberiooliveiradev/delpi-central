@@ -57,14 +57,15 @@ class ChatFineTuningService:
 
     @staticmethod
     def _enabled() -> bool:
-        return bool(Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_FINE_TUNING_ENABLED)
+        from app.application.services.chat_platform_runtime_access import learning_flag
+
+        return learning_flag("learningFineTuningEnabled")
 
     @staticmethod
     def _capture_positive_enabled() -> bool:
-        return bool(
-            ChatFineTuningService._enabled()
-            and Settings.CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK
-        )
+        from app.application.services.chat_platform_runtime_access import learning_flag
+
+        return learning_flag("learningFineTuningCapturePositiveFeedback")
 
     def capture_from_positive_feedback(
         self,

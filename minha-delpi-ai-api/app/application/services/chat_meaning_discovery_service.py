@@ -55,9 +55,9 @@ class ChatMeaningDiscoveryService:
 
     def research_web_meaning(self, term: str, *, message: str | None = None) -> dict | None:
         """Pesquisa significado público na web (gated). Retorna {meaning, sources}."""
-        if not (
-            Settings.CHAT_LEARNING_ENABLED and Settings.CHAT_LEARNING_GLOSSARY_WEB_MEANING
-        ):
+        from app.application.services.chat_platform_runtime_access import learning_flag
+
+        if not learning_flag("learningGlossaryWebMeaning"):
             return None
 
         if not ChatWebMeaningResearchService.is_eligible(term, message=message):

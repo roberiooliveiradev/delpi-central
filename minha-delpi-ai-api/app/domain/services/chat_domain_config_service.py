@@ -44,6 +44,10 @@ class ChatDomainConfigService:
         return cls._require_config().chat_typing_correction_fuzzy_enabled()
 
     @classmethod
+    def learning_pipeline_flag(cls, key: str) -> bool:
+        return cls._require_config().learning_pipeline_flag(key)
+
+    @classmethod
     def chat_web_search_direct_response_enabled(cls) -> bool:
         return cls._require_config().chat_web_search_direct_response_enabled()
 

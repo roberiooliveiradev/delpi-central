@@ -12,12 +12,9 @@ class ChatFineTuningDeployResolverService:
             return fallback
 
         try:
-            from app.infrastructure.config.settings import Settings
+            from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
-            if not (
-                Settings.CHAT_LEARNING_ENABLED
-                and Settings.CHAT_LEARNING_FINE_TUNING_ENABLED
-            ):
+            if not ChatDomainConfigService.learning_pipeline_flag("learningFineTuningEnabled"):
                 return fallback
 
             from app.composition.repository_composer import make_fine_tuning_repository

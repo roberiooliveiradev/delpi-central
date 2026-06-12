@@ -39,6 +39,10 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def learning_pipeline_flag(self, key: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def chat_web_search_direct_response_enabled(self) -> bool:
         raise NotImplementedError
 
