@@ -18,7 +18,6 @@ import {
   fetchComponentes,
   fetchFerramentas,
   fetchMotivos,
-  fetchPecas,
   fetchReposicoes,
   suggestGolpes,
   updateReposicao,
@@ -39,7 +38,7 @@ import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection
 import { MAX_LIST_PAGE_SIZE } from "../../utils/listQuery";
 import {
   buildPecaDescricaoMap,
-  ferramentasToPecaOptions,
+  componentesToPecaOptions,
   formatPecaLabel,
   reposicoesToPecaOptions,
 } from "../../utils/pecaOptions";
@@ -82,7 +81,6 @@ export function MiniAplicadoresPage({
   const reposicoesTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
   const componentesTable = useServerTable({ defaultSortKey: "nivel" });
   const [estruturaComponentes, setEstruturaComponentes] = useState<ComponenteItem[]>([]);
-  const [pecasCatalogo, setPecasCatalogo] = useState<FerramentaItem[]>([]);
   const [allReposicoesChart, setAllReposicoesChart] = useState<ReposicaoItem[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [showReposicaoForm, setShowReposicaoForm] = useState(false);
@@ -121,18 +119,18 @@ export function MiniAplicadoresPage({
   const [success, setSuccess] = useState<string | null>(null);
 
   const pecaDescricaoMap = useMemo(
-    () => buildPecaDescricaoMap([estruturaComponentes, pecasCatalogo]),
-    [estruturaComponentes, pecasCatalogo],
+    () => buildPecaDescricaoMap([estruturaComponentes]),
+    [estruturaComponentes],
   );
 
   const pecasReposicao = useMemo(() => {
-    const options = ferramentasToPecaOptions(pecasCatalogo);
+    const options = componentesToPecaOptions(estruturaComponentes);
     if (codigoPeca && !options.some((item) => item.codigo === codigoPeca)) {
       options.push({ codigo: codigoPeca, descricao: pecaDescricaoMap[codigoPeca] ?? "" });
       options.sort((first, second) => first.codigo.localeCompare(second.codigo, "pt-BR"));
     }
     return options;
-  }, [pecasCatalogo, codigoPeca, pecaDescricaoMap]);
+  }, [estruturaComponentes, codigoPeca, pecaDescricaoMap]);
 
   const pecasHistorico = useMemo(
     () => reposicoesToPecaOptions(allReposicoesChart, pecaDescricaoMap),
@@ -453,7 +451,7 @@ export function MiniAplicadoresPage({
     setDetalheLoading(true);
     setError(null);
     try {
-      const [motivosData, componentesData, pecasData] = await Promise.all([
+      const [motivosData, componentesData] = await Promise.all([
         fetchMotivos(filial, { page: 1, pageSize: 200 }, {}, getAccessToken),
         fetchComponentes(
           codigoFerramenta,
@@ -461,13 +459,11 @@ export function MiniAplicadoresPage({
           { page: 1, pageSize: MAX_LIST_PAGE_SIZE, sortKey: "nivel", sortDirection: "asc" },
           getAccessToken,
         ),
-        fetchPecas(codigoFerramenta, filial, getAccessToken),
       ]);
       const estruturaItems = componentesData.items ?? [];
-      const pecaItems = ferramentasToPecaOptions(pecasData.items ?? []);
+      const pecaItems = componentesToPecaOptions(estruturaItems);
       setMotivos(motivosData.items ?? []);
       setEstruturaComponentes(estruturaItems);
-      setPecasCatalogo(pecasData.items ?? []);
       setCodigoPeca((current) => {
         if (current && pecaItems.some((item) => item.codigo === current)) return current;
         return pecaItems[0]?.codigo ?? "";

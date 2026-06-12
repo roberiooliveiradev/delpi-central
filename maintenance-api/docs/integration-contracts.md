@@ -50,7 +50,7 @@ Leitura **TOTVS / Protheus** para mini-aplicadores passa **exclusivamente** pela
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/golpes` | `get_mini_applicators_golpes` | `mini_applicators_golpes` / `scalar` |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/componentes` | `list_mini_applicators_componentes` | `mini_applicators_componente` / `list` — árvore completa (estoque) |
 
-A API dedicada reforça o filtro **3019** apenas em `GET /maintenance/mini-aplicadores/ferramentas/{codigo}/pecas` (select de reposição). A rota `/componentes` lista todos os itens amarrados — **sem** filtro 3019.
+A API dedicada reforça o filtro **3019** em `GET /maintenance/mini-aplicadores/ferramentas/{codigo}/pecas` (select de reposição), derivando da **mesma árvore vigente** de `/componentes`. A rota `/componentes` lista todos os itens amarrados — **sem** filtro 3019.
 
 **Implementação api-delpi (alvo):**
 

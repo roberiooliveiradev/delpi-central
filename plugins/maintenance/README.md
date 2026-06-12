@@ -56,7 +56,7 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 **Reposição (detalhe da ferramenta):**
 
 - Formulário **colapsável** — botão **Nova reposição** no cabeçalho do histórico; edição de linha abre o formulário.
-- Select de peça via `GET .../ferramentas/{codigo}/pecas` — API retorna só códigos **`3019*`** (grupo TOTVS de peças substituíveis).
+- Select de peça via `componentesToPecaOptions(estrutura)` — mesma árvore vigente de **Componentes e estoque**, filtrada para **`3019*`**.
 - Tabela **Componentes e estoque** usa `GET .../componentes` — todos os itens amarrados à ferramenta (sem filtro 3019).
 - Gráfico **Golpes por reposição** + indicadores (`FerramentaReposicaoIndicadores`) acima do histórico quando existir ao menos um cadastro.
 - Datas do formulário em **pt-BR** (`BrDatetimeInput`); envio à API em ISO.

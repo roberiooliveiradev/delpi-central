@@ -112,7 +112,8 @@ def list_pecas(request: Request, codigo: str, filial: str = Query(..., min_lengt
 
     try:
         gateway = build_mini_applicators_totvs_gateway()
-        data = gateway.listar_pecas(codigo)
+        # Mesma árvore vigente de /componentes — evita peças 3019* fora da estrutura ativa.
+        data = gateway.listar_componentes(codigo_ferramenta=codigo, filial=filial)
         items = _filter_pecas_reposicao(data.get("items") or [])
         return ok({"items": items, "total": len(items)}, message="Peças de reposição (3019) listadas.")
     except DelpiApiError as exc:

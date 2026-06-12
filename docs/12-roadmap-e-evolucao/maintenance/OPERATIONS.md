@@ -128,7 +128,7 @@ docker exec delpi-maintenance-api python scripts/bootstrap_dev_sample.py --filia
 | Aba Configuração não aparece | Falta `mini-applicators.manage.filial-XX` ou manifesto desatualizado na Core API |
 | Tabela mostra só 50 ferramentas | Rebuild do MFE — lista usa paginação server-side (`page_size=20`) |
 | «Falha na requisição» genérico no relatório | Conferir JWT e permissão `mini-applicators.view.filial-XX`; resposta 403/401 agora exibe `detail` do FastAPI. Typo histórico em `_SUBMODULE_ID` (`mini-aplicadores`) causava 403 silencioso — corrigido |
-| Select de peça lista componentes | Rebuild API + MFE — reposição usa `/pecas` (`3019*`); estoque usa `/componentes` |
+| Select de peça lista mais itens que componentes | Rebuild API + MFE — `/pecas` e select derivam da árvore `/componentes` (3019*), não de vínculos SG1010 expirados |
 | Checkbox do multi-select enorme | Rebuild MFE — override CSS em `.dm-multi-select__option input[type="checkbox"]` |
 
 ## CI

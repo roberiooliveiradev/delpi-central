@@ -121,23 +121,26 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
             grupo=str(row.get("grupo") or ""),
         )
 
-    def list_pecas(self, codigo_ferramenta: str) -> list[dict]:
-        query = """
-            SELECT
-                RTRIM(G1.G1_COMP) AS codigo,
-                RTRIM(SB1.B1_DESC) AS descricao,
-                RTRIM(SB1.B1_GRUPO) AS grupo
-            FROM SG1010 G1 WITH (NOLOCK)
-            INNER JOIN SB1010 SB1 WITH (NOLOCK)
-                ON SB1.B1_COD = G1.G1_COMP
-               AND SB1.D_E_L_E_T_ = ''
-            WHERE G1.D_E_L_E_T_ = ''
-              AND G1.G1_COD = ?
-              AND SB1.B1_GRUPO = '3019'
-            ORDER BY G1.G1_COMP
-        """
-        with self:
-            return self.execute_query(query, (codigo_ferramenta.strip(),))
+    def list_pecas(self, codigo_ferramenta: str, *, filial: str = "01") -> list[dict]:
+        """Peças 3019* presentes na árvore vigente (mesma regra de list_componentes)."""
+        seen: set[str] = set()
+        pecas: list[dict] = []
+        for row in self.list_componentes(
+            codigo_ferramenta=codigo_ferramenta,
+            filial=filial,
+        ):
+            codigo = str(row.get("codigo") or "").strip()
+            if not codigo or codigo in seen or not codigo.startswith("3019"):
+                continue
+            seen.add(codigo)
+            pecas.append(
+                {
+                    "codigo": codigo,
+                    "descricao": str(row.get("descricao") or ""),
+                    "grupo": "3019",
+                }
+            )
+        return sorted(pecas, key=lambda item: item["codigo"])
 
     def get_golpes(
         self,
