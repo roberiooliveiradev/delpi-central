@@ -44,7 +44,10 @@ export function FiliaisPage({
   filialScope,
   onNavigate,
 }: FiliaisPageProps) {
-  const { canManageFiliais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { canManageFiliais, loading: scopeLoading } = useMaintenanceActiveFilial(
+    getAccessToken,
+    filialScope,
+  );
   const filiaisTable = useServerTable({ defaultSortKey: "codigo" });
   const [filiais, setFiliais] = useState<FilialItem[]>([]);
   const [filiaisTotal, setFiliaisTotal] = useState(0);
@@ -231,6 +234,22 @@ export function FiliaisPage({
     ],
     [edits],
   );
+
+  if (scopeLoading) {
+    return (
+      <MaintenanceShell>
+        <PageHeader
+          title="Filiais"
+          subtitle="Cadastro de filiais operacionais do módulo Manutenção."
+          icon={Building2}
+          currentPath={pathname}
+          filialScope={filialScope}
+          onNavigate={onNavigate}
+        />
+        <StateBox>Carregando…</StateBox>
+      </MaintenanceShell>
+    );
+  }
 
   if (!canManageFiliais) {
     return (

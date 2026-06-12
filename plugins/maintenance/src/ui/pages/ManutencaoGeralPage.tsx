@@ -1,6 +1,7 @@
-import { ClipboardList, ExternalLink } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 
 import { StateBox } from "../../components/data";
+import { ManutencaoGeralFormEmbed } from "../../components/ManutencaoGeralFormEmbed";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { MANUTENCAO_GERAL_FORM_URL } from "../../constants/manutencaoGeralForm";
@@ -19,9 +20,28 @@ export function ManutencaoGeralPage({
   filialScope,
   onNavigate,
 }: ManutencaoGeralPageProps) {
-  const { submodules, activeFilial } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+  const { submodules, activeFilial, loading: scopeLoading } = useMaintenanceActiveFilial(
+    getAccessToken,
+    filialScope,
+  );
   const effectiveFilial = filialScope ?? activeFilial ?? "01";
   const canAccess = submodules.some((item) => item.id === "manutencao-geral");
+
+  if (scopeLoading) {
+    return (
+      <MaintenanceShell>
+        <PageHeader
+          title="Manutenção geral"
+          subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
+          icon={ClipboardList}
+          currentPath={pathname}
+          filialScope={filialScope ?? effectiveFilial}
+          onNavigate={onNavigate}
+        />
+        <StateBox>Carregando…</StateBox>
+      </MaintenanceShell>
+    );
+  }
 
   if (!canAccess) {
     return (
@@ -43,7 +63,7 @@ export function ManutencaoGeralPage({
   }
 
   return (
-    <MaintenanceShell>
+    <MaintenanceShell variant="embed">
       <PageHeader
         title="Manutenção geral"
         subtitle="Registre ocorrências de máquinas, equipamentos, lâmpadas e demais itens."
@@ -53,31 +73,7 @@ export function ManutencaoGeralPage({
         onNavigate={onNavigate}
       />
 
-      <section className="dm-card dm-external-form-card">
-        <div className="dm-external-form-card__icon" aria-hidden="true">
-          <ClipboardList size={40} strokeWidth={1.5} />
-        </div>
-        <h2 className="dm-external-form-card__title">Formulário Google Sheets</h2>
-        <p className="dm-external-form-card__text">
-          O Google Apps Script não permite exibir este formulário dentro do portal (
-          <code>X-Frame-Options: sameorigin</code>). Abra em uma nova aba para registrar a
-          ocorrência.
-        </p>
-        <div className="dm-external-form-card__actions">
-          <a
-            className="dm-primary-btn"
-            href={MANUTENCAO_GERAL_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink size={16} />
-            Abrir formulário
-          </a>
-        </div>
-        <p className="dm-external-form-card__hint">
-          Os registros continuam sendo salvos na planilha configurada no Apps Script.
-        </p>
-      </section>
+      <ManutencaoGeralFormEmbed formUrl={MANUTENCAO_GERAL_FORM_URL} pathname={pathname} />
     </MaintenanceShell>
   );
 }

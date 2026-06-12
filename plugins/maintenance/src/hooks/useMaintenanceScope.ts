@@ -9,6 +9,21 @@ import {
 } from "../utils/maintenanceFilialSelection";
 import { resolveMaintenanceHomePath } from "../utils/routeParser";
 
+type OptionsCacheEntry = {
+  key: string;
+  data: MaintenanceOptions;
+};
+
+let optionsCache: OptionsCacheEntry | null = null;
+
+function optionsCacheKey(filialQuery?: string): string {
+  return filialQuery ?? "__default__";
+}
+
+export function invalidateMaintenanceOptionsCache(): void {
+  optionsCache = null;
+}
+
 function filterSubmodulesForFilial(
   submodules: MaintenanceSubmodule[],
   filialId: string | undefined,
@@ -50,16 +65,30 @@ export function useMaintenanceOptions(
   getAccessToken?: () => string | undefined,
   filialQuery?: string,
 ) {
-  const [options, setOptions] = useState<MaintenanceOptions | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = optionsCacheKey(filialQuery);
+  const cachedOptions = optionsCache?.key === cacheKey ? optionsCache.data : null;
+
+  const [options, setOptions] = useState<MaintenanceOptions | null>(cachedOptions);
+  const [loading, setLoading] = useState(!cachedOptions);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+
+    if (optionsCache?.key === cacheKey) {
+      setOptions(optionsCache.data);
+      setError(null);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
     setLoading(true);
     fetchMaintenanceOptions(getAccessToken, filialQuery)
       .then((data) => {
         if (!active) return;
+        optionsCache = { key: cacheKey, data };
         setOptions(data);
         setError(null);
       })
@@ -75,7 +104,7 @@ export function useMaintenanceOptions(
     return () => {
       active = false;
     };
-  }, [getAccessToken, filialQuery]);
+  }, [cacheKey, getAccessToken, filialQuery]);
 
   return { options, loading, error };
 }
