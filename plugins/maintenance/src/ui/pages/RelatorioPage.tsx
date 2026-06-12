@@ -10,7 +10,6 @@ import {
   type DataTableColumn,
   DataTableSection,
   FilterBar,
-  HelpTooltip,
   MultiSelectField,
   StateBox,
   StatusBadge,
@@ -662,10 +661,12 @@ export function RelatorioPage({
     if (canManageMiniApplicators) {
       columns.push({
         key: "acoes",
-        header: "Marcar feito",
+        header: "Feito",
+        headerHint: CONFIG_TOOLTIPS.revisaoRegistrar,
+        className: "dm-datatable__col--revisao-feito",
         interactive: true,
         render: (item) => (
-          <div className="dm-row-actions dm-revisao-feito-actions">
+          <div className="dm-revisao-feito-actions">
             <input
               type="date"
               aria-label={`Data da revisão feita para ${item.codigo_ferramenta}`}
@@ -677,16 +678,14 @@ export function RelatorioPage({
                 }))
               }
             />
-            <HelpTooltip content={CONFIG_TOOLTIPS.revisaoRegistrar} wrap ariaLabel="Ajuda: marcar feito">
-              <button
-                type="button"
-                className="dm-ghost-btn"
-                disabled={feitoSavingId === item.revisao_id}
-                onClick={() => void handleMarcarRevisaoFeita(item)}
-              >
-                {feitoSavingId === item.revisao_id ? "Salvando…" : "Marcar feito"}
-              </button>
-            </HelpTooltip>
+            <button
+              type="button"
+              className="dm-ghost-btn dm-ghost-btn--sm"
+              disabled={feitoSavingId === item.revisao_id}
+              onClick={() => void handleMarcarRevisaoFeita(item)}
+            >
+              {feitoSavingId === item.revisao_id ? "Salvando…" : "Marcar feito"}
+            </button>
           </div>
         ),
       });

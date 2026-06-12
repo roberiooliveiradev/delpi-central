@@ -37,6 +37,7 @@ def test_listar_alertas_revisao_vencida():
 
     service = RevisaoProgramadaService(
         revisao_repo=revisao_repo,
+        realizacao_repo=MagicMock(),
         reposicao_repo=reposicao_repo,
         totvs_gateway=None,
     )
@@ -66,6 +67,7 @@ def test_listar_alertas_usa_data_criacao_quando_sem_revisao_manual():
 
     service = RevisaoProgramadaService(
         revisao_repo=revisao_repo,
+        realizacao_repo=MagicMock(),
         reposicao_repo=reposicao_repo,
         totvs_gateway=None,
     )
@@ -101,6 +103,7 @@ def test_resumo_alertas_revisao():
 
     service = RevisaoProgramadaService(
         revisao_repo=revisao_repo,
+        realizacao_repo=MagicMock(),
         reposicao_repo=reposicao_repo,
         totvs_gateway=None,
     )
@@ -108,3 +111,29 @@ def test_resumo_alertas_revisao():
 
     assert resumo["total"] == 2
     assert resumo["critico"] >= 1
+
+
+def test_registrar_revisao_grava_realizacao():
+    revisao_repo = MagicMock()
+    realizacao_repo = MagicMock()
+    revisao_repo.registrar_revisao.return_value = {
+        "revisao_id": "abc-123",
+        "codigo_ferramenta": "23-001",
+        "intervalo_meses": 3,
+        "data_ultima_revisao": datetime(2026, 6, 12, 10, 0, 0),
+        "observacao": "Checklist ok",
+    }
+
+    service = RevisaoProgramadaService(
+        revisao_repo=revisao_repo,
+        realizacao_repo=realizacao_repo,
+        reposicao_repo=MagicMock(),
+        totvs_gateway=None,
+    )
+    result = service.registrar_revisao("abc-123", filial="01", data_revisao="2026-06-12")
+
+    assert result is not None
+    realizacao_repo.create.assert_called_once()
+    call_kwargs = realizacao_repo.create.call_args.kwargs
+    assert call_kwargs["codigo_ferramenta"] == "23-001"
+    assert call_kwargs["intervalo_meses"] == 3

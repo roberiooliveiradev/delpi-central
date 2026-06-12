@@ -26,4 +26,6 @@ export const CONFIG_TOOLTIPS = {
     "Nota opcional sobre o que verificar na revisão (checklist, pontos críticos, etc.).",
   revisaoRegistrar:
     "Marca a revisão como feita na data informada e recalcula a próxima revisão a partir dela.",
+  revisaoHistorico:
+    "Registros de revisões marcadas como feitas nesta ferramenta (a partir de agora).",
 } as const;

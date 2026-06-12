@@ -8,6 +8,7 @@ from maint_app.application.list_query import ListQuery, paginate_slice
 from maint_app.domain.ports.mini_applicators_totvs_port import MiniApplicatorsTotvsPort
 from maint_app.infrastructure.persistence.repositories.operational_repositories import (
     ReposicaoRepository,
+    RevisaoProgramadaRealizacaoRepository,
     RevisaoProgramadaRepository,
 )
 
@@ -63,10 +64,12 @@ class RevisaoProgramadaService:
     def __init__(
         self,
         revisao_repo: RevisaoProgramadaRepository | None = None,
+        realizacao_repo: RevisaoProgramadaRealizacaoRepository | None = None,
         reposicao_repo: ReposicaoRepository | None = None,
         totvs_gateway: MiniApplicatorsTotvsPort | None = None,
     ) -> None:
         self._revisao_repo = revisao_repo or RevisaoProgramadaRepository()
+        self._realizacao_repo = realizacao_repo or RevisaoProgramadaRealizacaoRepository()
         self._reposicao_repo = reposicao_repo or ReposicaoRepository()
         self._totvs = totvs_gateway
 
@@ -133,10 +136,34 @@ class RevisaoProgramadaService:
         filial: str,
         data_revisao: str | None = None,
     ) -> dict[str, Any] | None:
-        return self._revisao_repo.registrar_revisao(
+        row = self._revisao_repo.registrar_revisao(
             revisao_id,
             filial=filial,
             data_revisao=data_revisao,
+        )
+        if row and row.get("data_ultima_revisao"):
+            self._realizacao_repo.create(
+                revisao_id=str(row["revisao_id"]),
+                filial=filial,
+                codigo_ferramenta=str(row["codigo_ferramenta"]),
+                data_revisao=_as_naive_datetime(row["data_ultima_revisao"]) or datetime.now(),
+                intervalo_meses=int(row["intervalo_meses"]),
+                observacao=row.get("observacao"),
+            )
+        return row
+
+    def listar_realizacoes(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        query: ListQuery | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        query = query or ListQuery(page=1, page_size=10, sort_by="data", sort_dir="desc")
+        return self._realizacao_repo.list_by_ferramenta_paged(
+            filial=filial,
+            codigo_ferramenta=codigo_ferramenta,
+            query=query,
         )
 
     def resumo_alertas(self, *, filial: str) -> dict[str, int]:

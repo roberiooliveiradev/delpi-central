@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, ChevronDown } from "lucide-react";
 
 import { CONFIG_TOOLTIPS } from "../content/configTooltips";
 import {
   createRevisaoProgramada,
   deleteRevisaoProgramada,
   fetchRevisaoProgramadaAlertas,
+  fetchRevisaoProgramadaRealizacoes,
   fetchRevisoesProgramadas,
   registrarRevisaoProgramada,
   updateRevisaoProgramada,
   type RevisaoProgramadaAlerta,
   type RevisaoProgramadaItem,
+  type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
 import { FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
 import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
@@ -35,6 +37,8 @@ const DEFAULT_DRAFT: RevisaoDraft = {
   observacao: "",
   data_referencia: "",
 };
+
+const REALIZACOES_LIMIT = 8;
 
 function toDraft(item: RevisaoProgramadaItem): RevisaoDraft {
   return {
@@ -77,15 +81,17 @@ export function FerramentaRevisaoProgramadaSection({
   const [loading, setLoading] = useState(false);
   const [schedule, setSchedule] = useState<RevisaoProgramadaItem | null>(null);
   const [alerta, setAlerta] = useState<RevisaoProgramadaAlerta | null>(null);
+  const [realizacoes, setRealizacoes] = useState<RevisaoProgramadaRealizacao[]>([]);
   const [draft, setDraft] = useState<RevisaoDraft>(DEFAULT_DRAFT);
   const [createDraft, setCreateDraft] = useState<RevisaoDraft>(DEFAULT_DRAFT);
   const [feitoDate, setFeitoDate] = useState(() => toDateInputValue(new Date()));
+  const [formExpanded, setFormExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [programacao, alertas] = await Promise.all([
+      const [programacao, alertas, historico] = await Promise.all([
         fetchRevisoesProgramadas(
           filial,
           { page: 1, pageSize: 1 },
@@ -98,12 +104,19 @@ export function FerramentaRevisaoProgramadaSection({
           { ferramenta: codigoFerramenta },
           getAccessToken,
         ),
+        fetchRevisaoProgramadaRealizacoes(
+          filial,
+          codigoFerramenta,
+          { page: 1, pageSize: REALIZACOES_LIMIT, sortKey: "data", sortDirection: "desc" },
+          getAccessToken,
+        ),
       ]);
 
       const item = programacao.items?.[0] ?? null;
       setSchedule(item);
       setDraft(item ? toDraft(item) : DEFAULT_DRAFT);
       setAlerta(alertas.items?.[0] ?? null);
+      setRealizacoes(historico.items ?? []);
     } catch (err) {
       onFeedback?.({
         type: "error",
@@ -111,6 +124,7 @@ export function FerramentaRevisaoProgramadaSection({
       });
       setSchedule(null);
       setAlerta(null);
+      setRealizacoes([]);
     } finally {
       setLoading(false);
     }
@@ -138,6 +152,7 @@ export function FerramentaRevisaoProgramadaSection({
         getAccessToken,
       );
       setCreateDraft(DEFAULT_DRAFT);
+      setFormExpanded(false);
       onFeedback?.({ type: "success", text: "Revisão programada criada." });
       await load();
     } catch (err) {
@@ -213,6 +228,7 @@ export function FerramentaRevisaoProgramadaSection({
     setSaving(true);
     try {
       await deleteRevisaoProgramada(schedule.revisao_id, filial, getAccessToken);
+      setFormExpanded(false);
       onFeedback?.({ type: "success", text: "Revisão programada removida." });
       await load();
     } catch (err) {
@@ -224,6 +240,14 @@ export function FerramentaRevisaoProgramadaSection({
       setSaving(false);
     }
   }
+
+  const formToggleLabel = schedule
+    ? formExpanded
+      ? "Ocultar configuração"
+      : "Configurar programação"
+    : formExpanded
+      ? "Ocultar formulário"
+      : "Programar revisão";
 
   return (
     <section className="dm-card dm-revisao-ferramenta">
@@ -276,130 +300,196 @@ export function FerramentaRevisaoProgramadaSection({
         <StateBox>Revisão periódica não programada para esta ferramenta.</StateBox>
       ) : null}
 
-      {!loading && canManage && !schedule ? (
-        <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
+      {!loading && canManage && schedule ? (
+        <div className="dm-revisao-ferramenta__feito">
           <label className="dm-field">
-            <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
-            <input
-              type="number"
-              min={1}
-              max={120}
-              value={createDraft.intervalo_meses}
-              onChange={(event) =>
-                setCreateDraft((prev) => ({
-                  ...prev,
-                  intervalo_meses: Number(event.target.value),
-                }))
-              }
-            />
-          </label>
-          <label className="dm-field">
-            <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
+            <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar} />
             <input
               type="date"
-              value={createDraft.data_referencia}
-              onChange={(event) =>
-                setCreateDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
-              }
+              value={feitoDate}
+              onChange={(event) => setFeitoDate(event.target.value)}
             />
           </label>
-          <label className="dm-field dm-field--span-full">
-            <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
-            <input
-              value={createDraft.observacao}
-              onChange={(event) =>
-                setCreateDraft((prev) => ({ ...prev, observacao: event.target.value }))
-              }
-              placeholder="Opcional — checklist ou pontos a verificar"
-            />
-          </label>
-          <div className="dm-form-grid__buttons dm-field--span-full">
-            <button type="submit" className="dm-primary-btn" disabled={saving}>
-              Programar revisão
-            </button>
-          </div>
-        </form>
+          <button
+            type="button"
+            className="dm-primary-btn"
+            onClick={() => void handleRegistrar()}
+            disabled={saving}
+          >
+            Marcar feito
+          </button>
+        </div>
       ) : null}
 
-      {!loading && canManage && schedule ? (
-        <div className="dm-revisao-ferramenta__edit">
-          <label className="dm-field">
-            <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
-            <div className="dm-editable-cell">
-              <input
-                type="number"
-                min={1}
-                max={120}
-                value={draft.intervalo_meses}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, intervalo_meses: Number(event.target.value) }))
-                }
+      {!loading ? (
+        <div className="dm-revisao-ferramenta__historico">
+          <div className="dm-revisao-ferramenta__historico-header">
+            <h4 className="dm-revisao-ferramenta__historico-title">
+              Últimas revisões feitas
+              <HelpTooltip
+                content={CONFIG_TOOLTIPS.revisaoHistorico}
+                ariaLabel="Ajuda: histórico de revisões"
               />
-              <PendingChangeBadge visible={isDirty(schedule, draft)} />
+            </h4>
+          </div>
+          {realizacoes.length === 0 ? (
+            <StateBox>Nenhuma revisão marcada como feita ainda.</StateBox>
+          ) : (
+            <div className="dm-revisao-historico-scroll">
+              <table className="dm-revisao-historico-table">
+                <thead>
+                  <tr>
+                    <th>Data da revisão</th>
+                    <th>Intervalo</th>
+                    <th>Registrado em</th>
+                    <th>Observação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {realizacoes.map((item) => (
+                    <tr key={item.realizacao_id}>
+                      <td>{formatDateTime(item.data_revisao)}</td>
+                      <td>{item.intervalo_meses} mes(es)</td>
+                      <td>{formatDateTime(item.data_registro)}</td>
+                      <td>{item.observacao?.trim() || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </label>
-          <label className="dm-field">
-            <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
-            <input
-              value={draft.observacao}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, observacao: event.target.value }))
-              }
-              placeholder="Opcional"
+          )}
+        </div>
+      ) : null}
+
+      {!loading && canManage ? (
+        <div className="dm-revisao-ferramenta__form-panel">
+          <button
+            type="button"
+            className="dm-revisao-ferramenta__toggle"
+            aria-expanded={formExpanded}
+            onClick={() => setFormExpanded((current) => !current)}
+          >
+            <span>{formToggleLabel}</span>
+            <ChevronDown
+              size={16}
+              aria-hidden="true"
+              className={formExpanded ? "dm-revisao-ferramenta__toggle-icon is-open" : "dm-revisao-ferramenta__toggle-icon"}
             />
-          </label>
-          <label className="dm-field">
-            <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
-            <div className="dm-editable-cell">
-              <input
-                type="date"
-                value={draft.data_referencia}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
-                }
-              />
-              <PendingChangeBadge visible={draft.data_referencia !== referenceInputValue(schedule)} />
+          </button>
+
+          {formExpanded && !schedule ? (
+            <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
+              <label className="dm-field">
+                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={createDraft.intervalo_meses}
+                  onChange={(event) =>
+                    setCreateDraft((prev) => ({
+                      ...prev,
+                      intervalo_meses: Number(event.target.value),
+                    }))
+                  }
+                />
+              </label>
+              <label className="dm-field">
+                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
+                <input
+                  type="date"
+                  value={createDraft.data_referencia}
+                  onChange={(event) =>
+                    setCreateDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="dm-field dm-field--span-full">
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <input
+                  value={createDraft.observacao}
+                  onChange={(event) =>
+                    setCreateDraft((prev) => ({ ...prev, observacao: event.target.value }))
+                  }
+                  placeholder="Opcional — checklist ou pontos a verificar"
+                />
+              </label>
+              <div className="dm-form-grid__buttons dm-field--span-full">
+                <button type="submit" className="dm-primary-btn" disabled={saving}>
+                  Programar revisão
+                </button>
+              </div>
+            </form>
+          ) : null}
+
+          {formExpanded && schedule ? (
+            <div className="dm-revisao-ferramenta__edit">
+              <label className="dm-field">
+                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
+                <div className="dm-editable-cell">
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={draft.intervalo_meses}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, intervalo_meses: Number(event.target.value) }))
+                    }
+                  />
+                  <PendingChangeBadge visible={isDirty(schedule, draft)} />
+                </div>
+              </label>
+              <label className="dm-field">
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <input
+                  value={draft.observacao}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, observacao: event.target.value }))
+                  }
+                  placeholder="Opcional"
+                />
+              </label>
+              <label className="dm-field">
+                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
+                <div className="dm-editable-cell">
+                  <input
+                    type="date"
+                    value={draft.data_referencia}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
+                    }
+                  />
+                  <PendingChangeBadge
+                    visible={draft.data_referencia !== referenceInputValue(schedule)}
+                  />
+                </div>
+                {!schedule.data_ultima_revisao && alerta?.data_referencia ? (
+                  <span className="dm-field-hint">
+                    Referência automática: {formatDate(alerta.data_referencia)} (data de criação da
+                    programação). Preencha para fixar manualmente.
+                  </span>
+                ) : null}
+              </label>
+              <div className="dm-revisao-ferramenta__actions">
+                <button
+                  type="button"
+                  className="dm-ghost-btn"
+                  onClick={() => void handleSave()}
+                  disabled={saving || !isDirty(schedule, draft)}
+                >
+                  Salvar alterações
+                </button>
+                <button
+                  type="button"
+                  className="dm-ghost-btn dm-ghost-btn--danger"
+                  onClick={() => void handleDelete()}
+                  disabled={saving}
+                >
+                  Remover
+                </button>
+              </div>
             </div>
-            {!schedule.data_ultima_revisao && alerta?.data_referencia ? (
-              <span className="dm-field-hint">
-                Referência automática: {formatDate(alerta.data_referencia)} (data de criação da
-                programação). Preencha para fixar manualmente.
-              </span>
-            ) : null}
-          </label>
-          <div className="dm-revisao-ferramenta__feito">
-            <label className="dm-field">
-              <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar} />
-              <input
-                type="date"
-                value={feitoDate}
-                onChange={(event) => setFeitoDate(event.target.value)}
-              />
-            </label>
-            <HelpTooltip content={CONFIG_TOOLTIPS.revisaoRegistrar} wrap ariaLabel="Ajuda: marcar feito">
-              <button type="button" className="dm-primary-btn" onClick={() => void handleRegistrar()} disabled={saving}>
-                Marcar feito
-              </button>
-            </HelpTooltip>
-          </div>
-          <div className="dm-revisao-ferramenta__actions">
-            <button
-              type="button"
-              className="dm-ghost-btn"
-              onClick={() => void handleSave()}
-              disabled={saving || !isDirty(schedule, draft)}
-            >
-              Salvar alterações
-            </button>
-            <button
-              type="button"
-              className="dm-ghost-btn dm-ghost-btn--danger"
-              onClick={() => void handleDelete()}
-              disabled={saving}
-            >
-              Remover
-            </button>
-          </div>
+          ) : null}
         </div>
       ) : null}
     </section>

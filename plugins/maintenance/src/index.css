@@ -1241,12 +1241,6 @@
   color: var(--dm-accent);
 }
 
-.dashboard-maintenance .dm-revisao-ferramenta__form,
-.dashboard-maintenance .dm-revisao-ferramenta__edit {
-  display: grid;
-  gap: 12px;
-}
-
 .dashboard-maintenance .dm-revisao-ferramenta__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1261,13 +1255,96 @@
   margin-bottom: 12px;
 }
 
-.dashboard-maintenance .dm-revisao-feito-actions {
-  flex-wrap: nowrap;
-  align-items: center;
+.dashboard-maintenance .dm-revisao-ferramenta__historico {
+  margin-bottom: 16px;
 }
 
-.dashboard-maintenance .dm-revisao-feito-actions input[type="date"] {
-  min-width: 148px;
+.dashboard-maintenance .dm-revisao-ferramenta__historico-header {
+  margin-bottom: 10px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__historico-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--dm-font-sm);
+  font-weight: 600;
+  color: var(--dm-title);
+}
+
+.dashboard-maintenance .dm-revisao-historico-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--dm-card-border);
+  border-radius: 12px;
+}
+
+.dashboard-maintenance .dm-revisao-historico-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: var(--dm-font-sm);
+}
+
+.dashboard-maintenance .dm-revisao-historico-table th,
+.dashboard-maintenance .dm-revisao-historico-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dm-card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-maintenance .dm-revisao-historico-table th {
+  font-size: var(--dm-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dm-text-muted);
+  background: color-mix(in srgb, var(--dm-accent) 6%, var(--dm-card-bg));
+}
+
+.dashboard-maintenance .dm-revisao-historico-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form-panel {
+  border-top: 1px solid var(--dm-card-border);
+  padding-top: 12px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--dm-card-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--dm-card-bg) 94%, var(--dm-accent) 6%);
+  color: var(--dm-title);
+  font-size: var(--dm-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__toggle:hover,
+.dashboard-maintenance .dm-revisao-ferramenta__toggle:focus-visible {
+  border-color: color-mix(in srgb, var(--dm-accent) 35%, var(--dm-card-border));
+  outline: none;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__toggle-icon {
+  transition: transform 0.15s ease;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__toggle-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form,
+.dashboard-maintenance .dm-revisao-ferramenta__edit {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .dashboard-maintenance .dm-ferramenta-analytics {

@@ -340,6 +340,34 @@ export function fetchRevisaoProgramadaAlertas(
   );
 }
 
+export type RevisaoProgramadaRealizacao = {
+  realizacao_id: string;
+  revisao_id: string;
+  filial: string;
+  codigo_ferramenta: string;
+  data_revisao: string;
+  intervalo_meses: number;
+  observacao?: string | null;
+  data_registro: string;
+};
+
+export function fetchRevisaoProgramadaRealizacoes(
+  filial: string,
+  codigoFerramenta: string,
+  query: ListQueryParams = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({
+    filial,
+    codigo_ferramenta: codigoFerramenta,
+  });
+  appendListQuery(search, query);
+  return maintenanceFetch<PagedItems<RevisaoProgramadaRealizacao>>(
+    `/revisoes-programadas/realizacoes?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
 export type MotivoItem = {
   motivo_id: string;
   descricao: string;

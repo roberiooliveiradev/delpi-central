@@ -259,6 +259,28 @@ def list_revisoes_programadas(
     return ok({"items": items, "total": total}, message="Revisões programadas listadas.")
 
 
+@router.get("/revisoes-programadas/realizacoes")
+def list_revisao_programada_realizacoes(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    codigo_ferramenta: str = Query(..., min_length=1, max_length=40),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    items, total = build_revisao_programada_service().listar_realizacoes(
+        filial=filial,
+        codigo_ferramenta=codigo_ferramenta,
+        query=query,
+    )
+    return ok({"items": items, "total": total}, message="Revisões realizadas listadas.")
+
+
 @router.post("/revisoes-programadas")
 def create_revisao_programada(body: RevisaoProgramadaCreateBody, request: Request):
     user = resolve_user(request)

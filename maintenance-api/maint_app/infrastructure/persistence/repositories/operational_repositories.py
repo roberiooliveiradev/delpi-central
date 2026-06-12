@@ -845,3 +845,84 @@ class RevisaoProgramadaRepository(PluginBaseRepository):
             (revisao_id, filial),
         )
         return True
+
+
+class RevisaoProgramadaRealizacaoRepository(PluginBaseRepository):
+    _SORT_COLUMNS = {
+        "data": "data_revisao",
+        "registro": "data_registro",
+        "intervalo": "intervalo_meses",
+    }
+
+    def create(
+        self,
+        *,
+        revisao_id: str,
+        filial: str,
+        codigo_ferramenta: str,
+        data_revisao: datetime,
+        intervalo_meses: int,
+        observacao: str | None = None,
+    ) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            """
+            INSERT INTO maintenance.revisao_programada_realizacao (
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                data_revisao,
+                intervalo_meses,
+                observacao
+            )
+            VALUES (%s::uuid, %s, %s, %s, %s, %s)
+            RETURNING
+                realizacao_id,
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                data_revisao,
+                intervalo_meses,
+                observacao,
+                data_registro
+            """,
+            (
+                revisao_id,
+                filial,
+                codigo_ferramenta.strip().upper(),
+                data_revisao,
+                intervalo_meses,
+                observacao.strip() if observacao else None,
+            ),
+        )
+        return row or {}
+
+    def list_by_ferramenta_paged(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        query: ListQuery,
+    ) -> tuple[list[dict[str, Any]], int]:
+        where_sql = "filial = %s AND codigo_ferramenta = %s"
+        params: list[Any] = [filial, codigo_ferramenta.strip().upper()]
+        order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "data")
+        select_sql = f"""
+            SELECT
+                realizacao_id,
+                revisao_id,
+                filial,
+                codigo_ferramenta,
+                data_revisao,
+                intervalo_meses,
+                observacao,
+                data_registro
+            FROM maintenance.revisao_programada_realizacao
+            WHERE {where_sql}
+            ORDER BY {order}
+        """
+        count_sql = f"""
+            SELECT COUNT(*) AS total
+            FROM maintenance.revisao_programada_realizacao
+            WHERE {where_sql}
+        """
+        return self.fetch_paged(select_sql, count_sql, params, query.page, query.page_size)

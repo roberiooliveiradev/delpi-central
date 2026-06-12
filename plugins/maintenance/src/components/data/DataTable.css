@@ -72,6 +72,31 @@
   background: color-mix(in srgb, var(--dm-accent) 10%, var(--dm-card-bg));
 }
 
+.dashboard-maintenance .dm-datatable__col--revisao-feito {
+  width: 8.75rem;
+  max-width: 8.75rem;
+}
+
+.dashboard-maintenance .dm-revisao-feito-actions {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-revisao-feito-actions input[type="date"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-revisao-feito-actions .dm-ghost-btn {
+  width: 100%;
+  justify-content: center;
+  padding-inline: 8px;
+}
+
 .dashboard-maintenance .dm-datatable__empty {
   padding: 24px 16px;
   text-align: center;
@@ -228,6 +253,21 @@
   .dashboard-maintenance .dm-datatable__table .dm-row-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .dashboard-maintenance .dm-datatable__col--revisao-feito {
+    width: auto;
+    max-width: none;
+  }
+
+  .dashboard-maintenance .dm-revisao-feito-actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .dashboard-maintenance .dm-revisao-feito-actions .dm-ghost-btn {
+    width: auto;
+    flex-shrink: 0;
   }
 
   .dashboard-maintenance .dm-datatable__table .dm-editable-cell {
