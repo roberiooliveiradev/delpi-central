@@ -460,7 +460,7 @@ export const AppLauncherCard = ({
                     aria-current={isActive ? "page" : undefined}
                     tabIndex={routesPanelExpanded ? undefined : -1}
                   >
-                    <Icon size={16} />
+                    <Icon size={isSidebar ? 16 : 14} />
                     <span>{prettifyLabel(route)}</span>
                   </a>
                 );
