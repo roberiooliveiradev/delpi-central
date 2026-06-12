@@ -234,28 +234,28 @@ Script proposto: `scripts/check_operational_action_readiness.py` — exit 1 list
 - [x] Default `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT=false` (bootstrap `.env`; admin pode ligar `externalActionEmbeddingOnImport`)
 - [x] `scripts/check_operational_action_readiness.py` — 4 actions críticas Playbook 15
 - [x] O5 parcial: direct answer quando intent REST sem action (`turn_preparation.json` + `ChatProductionOperationalActionReadinessService`)
-- [ ] Documentar no builder: «Rotas disponíveis após import; indexação semântica em background»
+- [x] Documentar no builder: «Rotas disponíveis após import; indexação semântica em background»
 
 ### Sprint B — Job async + progresso API
 
-- [ ] Modelo/tabela job + `ExternalActionImportJobService`
-- [ ] `POST import?async=true` → `202`
-- [ ] `GET import/jobs/{id}` com `progress`
-- [ ] Refatorar `import_schema_from_json`: fase 2 sem embed; fase 3 com callback
-- [ ] Testes unitários job + import split
+- [x] Modelo/tabela job + `ExternalActionImportJobService`
+- [x] `POST import?async=true` → `202`
+- [x] `GET import/jobs/{id}` com `progress`
+- [x] Refatorar `import_schema_from_json`: fase 2 sem embed; fase 3 com callback
+- [x] Testes unitários job + import split
 
 ### Sprint C — UI progresso
 
-- [ ] `chatApi.ts` + poll
-- [ ] Barra e fases no `ChatAgentActionsPage`
-- [ ] Reload rotas ao completar fase 2
-- [ ] Testes MFE
+- [x] `chatApi.ts` + poll
+- [x] Barra e fases no `ChatAgentActionsPage`
+- [x] Reload rotas ao completar fase 2
+- [x] Testes MFE
 
 ### Sprint D — Readiness + mensagens operador (O5)
 
 - [x] Direct answer quando action missing (`turn_preparation.json`)
 - [x] Regressão unitária: `test_chat_production_operational_action_readiness_service.py`
-- [ ] Smoke S4 no playbook de homologação
+- [x] Smoke S4 no playbook de homologação (`scripts/homologacao/check-playbook16-operational-readiness.sh`)
 
 ---
 

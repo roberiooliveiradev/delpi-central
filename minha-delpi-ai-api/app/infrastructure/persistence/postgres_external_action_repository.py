@@ -116,6 +116,8 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         schema_json: dict,
         source_type: str,
         source_url: str | None = None,
+        *,
+        embed_on_import: bool | None = None,
     ) -> dict:
         provider = self.get_provider_by_key(provider_key)
 
@@ -149,10 +151,11 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             PostgresAdminRuntimeSettingsRepository,
         )
 
-        intelligence = read_resolved_chat_intelligence(
-            PostgresAdminRuntimeSettingsRepository()
-        )
-        embed_on_import = intelligence.external_action_embedding_on_import
+        if embed_on_import is None:
+            intelligence = read_resolved_chat_intelligence(
+                PostgresAdminRuntimeSettingsRepository()
+            )
+            embed_on_import = intelligence.external_action_embedding_on_import
 
         for action in actions:
             embedding = None
@@ -199,7 +202,13 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             "actionsImported": len(actions),
         }
 
-    def import_schema_from_url(self, provider_key: str, timeout: int = 20) -> dict:
+    def import_schema_from_url(
+        self,
+        provider_key: str,
+        timeout: int = 20,
+        *,
+        embed_on_import: bool | None = None,
+    ) -> dict:
         provider = self.get_provider_by_key(provider_key)
 
         if not provider:
@@ -218,6 +227,7 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             schema_json=schema_json,
             source_type="url",
             source_url=provider.openapi_url,
+            embed_on_import=embed_on_import,
         )
 
 
@@ -414,9 +424,15 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
 
         return result
 
-    def backfill_action_embeddings(self, *, provider_key: str | None = None) -> dict:
+    def backfill_action_embeddings(
+        self,
+        *,
+        provider_key: str | None = None,
+        on_progress=None,
+        commit_batch_size: int = 0,
+    ) -> dict:
         if not self.embedding_service:
-            return {"updated": 0, "skipped": 0}
+            return {"updated": 0, "skipped": 0, "total": 0}
 
         query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
             ExternalActionModel.enabled.is_(True),
@@ -430,8 +446,10 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         actions = query.all()
         updated = 0
         skipped = 0
+        total = len(actions)
+        batch_size = max(0, int(commit_batch_size or 0))
 
-        for action in actions:
+        for index, action in enumerate(actions, start=1):
             embedding = self.embedding_service.embed_action(self._action_to_dict(action))
 
             if embedding:
@@ -440,12 +458,18 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             else:
                 skipped += 1
 
+            if on_progress:
+                on_progress(index, total)
+
+            if batch_size and index % batch_size == 0:
+                db.session.flush()
+
         db.session.flush()
 
         return {
             "updated": updated,
             "skipped": skipped,
-            "total": len(actions),
+            "total": total,
         }
 
     def get_action_for_execution(self, action_id: str) -> dict | None:

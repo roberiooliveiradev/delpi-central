@@ -189,6 +189,12 @@ def update_agent_action_provider(agent_id: str, provider_key: str):
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/import")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def import_agent_action_provider_schema(agent_id: str, provider_key: str):
+    from flask import current_app
+
+    from app.application.services.external_action_import_job_service import (
+        ExternalActionImportJobService,
+    )
+
     can_manage_agent, _capabilities = _can_manage_agent_configuration(agent_id)
 
     if not can_manage_agent:
@@ -211,6 +217,28 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
     if not provider:
         return _not_found_response()
 
+    async_requested = request.args.get("async", "").lower() == "true"
+
+    if async_requested:
+        if not Settings.EXTERNAL_ACTION_IMPORT_ASYNC_ENABLED:
+            return bad_request("Async import is disabled")
+
+        try:
+            job = ExternalActionImportJobService.start(
+                current_app._get_current_object(),
+                provider_key=provider_key,
+                user_id=g.current_user.sub,
+                agent_id=agent_id,
+            )
+        except ValueError as exc:
+            db.session.rollback()
+            return bad_request(str(exc))
+        except Exception:
+            db.session.rollback()
+            raise
+
+        return jsonify(job), 202
+
     repository = make_external_action_repository()
 
     try:
@@ -224,6 +252,24 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
         raise
 
     return jsonify(result), 200
+
+
+@chat_bp.get("/providers/<provider_key>/import/jobs/<job_id>")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_external_action_import_job(provider_key: str, job_id: str):
+    from app.application.services.external_action_import_job_service import (
+        ExternalActionImportJobService,
+    )
+
+    job = ExternalActionImportJobService.get(
+        provider_key=provider_key,
+        job_id=job_id,
+    )
+
+    if not job:
+        return _not_found_response()
+
+    return jsonify(job), 200
 
 
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/actions/<action_id>/test")

@@ -8,7 +8,7 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   formatIcebreakerForDisplay,
@@ -20,7 +20,7 @@ import {
   deleteChatAgentAction,
   deleteChatAgentActionProvider,
   getChatAgentActionProvider,
-  importChatAgentActionProviderSchema,
+  startChatAgentActionProviderImportJob,
   listActionProviders,
   listChatActions,
   listChatAgentActions,
@@ -31,8 +31,10 @@ import {
   updateChatAgentActionProvider,
   upsertChatAgentAction,
 } from "../../data/api/chatApi";
+import { pollChatActionProviderImportJob } from "../../data/chatActionImportPolling";
 import type {
   ChatActionCatalogItem,
+  ChatExternalActionImportJob,
   ChatActionProvider,
   ChatActionTestLog,
   ChatActionTestResult,
@@ -178,6 +180,8 @@ export function ChatAgentActionsPage({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
+  const [importJob, setImportJob] = useState<ChatExternalActionImportJob | null>(null);
+  const routesReloadedForImportRef = useRef(false);
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [testingActionId, setTestingActionId] = useState<string | null>(null);
   const [testAction, setTestAction] = useState<ChatActionCatalogItem | null>(null);
@@ -581,15 +585,46 @@ export function ChatAgentActionsPage({
 
     setIsUpdatingRoutes(true);
     setError(null);
+    setImportJob(null);
+    routesReloadedForImportRef.current = false;
 
     try {
-      await importChatAgentActionProviderSchema(agent.id, selectedProviderKey, {
-        getAccessToken,
-      });
+      const started = await startChatAgentActionProviderImportJob(
+        agent.id,
+        selectedProviderKey,
+        { getAccessToken },
+      );
+
+      setImportJob(started);
+
+      const finished = await pollChatActionProviderImportJob(
+        selectedProviderKey,
+        started.jobId,
+        {
+          getAccessToken,
+          onJobUpdate: setImportJob,
+          onImportActionsReady: async () => {
+            routesReloadedForImportRef.current = true;
+            await reloadRoutes(selectedProviderKey);
+            await reloadProviderDetails(selectedProviderKey);
+          },
+        },
+      );
+
+      if (finished.status === "failed") {
+        throw new Error(
+          finished.error?.trim() || "Não foi possível concluir a importação das rotas.",
+        );
+      }
 
       await reloadProviders();
       await reloadProviderDetails(selectedProviderKey);
-      await reloadRoutes(selectedProviderKey);
+
+      if (!routesReloadedForImportRef.current) {
+        await reloadRoutes(selectedProviderKey);
+      }
+
+      setSuccessMessage("Rotas atualizadas com sucesso.");
     } catch (updateError) {
       setError(
         updateError instanceof Error
@@ -598,6 +633,7 @@ export function ChatAgentActionsPage({
       );
     } finally {
       setIsUpdatingRoutes(false);
+      setImportJob(null);
     }
   }
 
@@ -1163,6 +1199,33 @@ export function ChatAgentActionsPage({
                       <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
                     </button>
                   </div>
+
+                  <p className="mdc-chat-agent-actions-page__import-hint mdc-chat-muted">
+                    As rotas ficam disponíveis logo após o cadastro no catálogo; a indexação
+                    semântica continua em segundo plano.
+                  </p>
+
+                  {isUpdatingRoutes && importJob ? (
+                    <div
+                      className="mdc-chat-agent-actions-page__import-progress"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <p className="mdc-chat-agent-actions-page__import-progress-label">
+                        {importJob.phaseLabel}
+                        {importJob.progress.total > 0
+                          ? ` — ${importJob.progress.done}/${importJob.progress.total}`
+                          : ""}
+                      </p>
+                      {importJob.progress.total > 0 ? (
+                        <progress
+                          className="mdc-chat-agent-actions-page__import-progress-bar"
+                          max={importJob.progress.total}
+                          value={importJob.progress.done}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </section>
 

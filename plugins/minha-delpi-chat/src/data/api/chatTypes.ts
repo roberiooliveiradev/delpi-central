@@ -1134,6 +1134,29 @@ export type UpsertChatAgentSkillPayload = {
   enabled: boolean;
 };
 
+export type ChatExternalActionImportJob = {
+  jobId: string;
+  providerKey: string;
+  status: "queued" | "running" | "completed" | "failed" | string;
+  phase: string;
+  phaseLabel: string;
+  progress: {
+    done: number;
+    total: number;
+    unit: string;
+  };
+  result?: {
+    actionsImported?: number;
+    schemaHash?: string;
+    embeddingsUpdated?: number;
+    embeddingsSkipped?: boolean;
+  } | null;
+  error?: string | null;
+  startedAt?: string | null;
+  updatedAt?: string | null;
+  pollUrl?: string;
+};
+
 export type ChatActionProvider = {
   id: string;
   providerKey: string;

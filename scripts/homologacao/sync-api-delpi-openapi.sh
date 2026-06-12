@@ -56,7 +56,7 @@ wait_api_delpi_health() {
     return 0
   fi
 
-  echo "[1/4] Aguardando api-delpi saudável (até ${WAIT_SECONDS}s) — ${API_HEALTH_URL}"
+  echo "[1/5] Aguardando api-delpi saudável (até ${WAIT_SECONDS}s) — ${API_HEALTH_URL}"
   local deadline=$((SECONDS + WAIT_SECONDS))
 
   while [ "$SECONDS" -lt "$deadline" ]; do
@@ -79,7 +79,7 @@ wait_api_delpi_health() {
 }
 
 wait_chat_api_container() {
-  echo "[2/4] Verificando container do chat (${CHAT_API_CONTAINER})"
+  echo "[2/5] Verificando container do chat (${CHAT_API_CONTAINER})"
   local deadline=$((SECONDS + 60))
 
   while [ "$SECONDS" -lt "$deadline" ]; do
@@ -94,7 +94,7 @@ wait_chat_api_container() {
 }
 
 run_sync_in_container() {
-  echo "[3/4] Executando sync_api_delpi_openapi.py (provider=${PROVIDER_KEY})"
+  echo "[3/5] Executando sync_api_delpi_openapi.py (provider=${PROVIDER_KEY})"
 
   # shellcheck disable=SC2086
   docker exec "$CHAT_API_CONTAINER" python3 scripts/sync_api_delpi_openapi.py \
@@ -107,7 +107,7 @@ run_sync_in_container() {
 }
 
 validate_report() {
-  echo "[4/4] Validando relatório JSON"
+  echo "[4/5] Validando relatório JSON"
   python3 - "$REPORT_FILE" <<'PY'
 import json
 import sys
@@ -158,6 +158,9 @@ wait_api_delpi_health
 wait_chat_api_container
 run_sync_in_container
 validate_report
+
+echo "[5/5] Readiness operacional (Playbook 16)"
+docker exec "$CHAT_API_CONTAINER" python3 scripts/check_operational_action_readiness.py
 
 ok "Pós-deploy sync-api-delpi-openapi concluído."
 echo

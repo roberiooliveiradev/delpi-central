@@ -1,5 +1,6 @@
 import type {
   ChatActionCatalogItem,
+  ChatExternalActionImportJob,
   ChatActionProvider,
   ChatActionTestLog,
   ChatCapabilities,
@@ -1768,6 +1769,40 @@ export async function importChatAgentActionProviderSchema(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/import`,
     {
       method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse(response);
+}
+
+
+export async function startChatAgentActionProviderImportJob(
+  agentId: string,
+  providerKey: string,
+  options: ChatApiOptions = {},
+): Promise<ChatExternalActionImportJob> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/import?async=true`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse(response);
+}
+
+
+export async function getChatAgentActionProviderImportJob(
+  providerKey: string,
+  jobId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatExternalActionImportJob> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/providers/${providerKey}/import/jobs/${jobId}`,
+    {
+      method: "GET",
       headers: await getAuthHeaders(options),
     },
   );

@@ -28,6 +28,9 @@ from app.infrastructure.db.models.evaluation_case_model import AiEvaluationCaseM
 from app.infrastructure.db.models.fine_tuning_dataset_model import AiFineTuningDatasetModel
 from app.infrastructure.db.models.fine_tuning_sample_model import AiFineTuningSampleModel
 from app.infrastructure.db.models.fine_tuning_run_model import AiFineTuningRunModel
+from app.infrastructure.db.models.external_action_import_job_model import (
+    ExternalActionImportJobModel,
+)
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -60,4 +63,5 @@ __all__ = [
     "AiFineTuningDatasetModel",
     "AiFineTuningSampleModel",
     "AiFineTuningRunModel",
+    "ExternalActionImportJobModel",
 ]

@@ -284,6 +284,12 @@ class Settings:
     EXTERNAL_ACTION_EMBEDDING_ON_IMPORT = (
         os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "false").lower() == "true"
     )
+    EXTERNAL_ACTION_IMPORT_ASYNC_ENABLED = (
+        os.getenv("EXTERNAL_ACTION_IMPORT_ASYNC_ENABLED", "true").lower() == "true"
+    )
+    EXTERNAL_ACTION_IMPORT_EMBED_BATCH_SIZE = int(
+        os.getenv("EXTERNAL_ACTION_IMPORT_EMBED_BATCH_SIZE", "8")
+    )
 
     CHAT_RAG_HYBRID_ENABLED = (
         os.getenv("CHAT_RAG_HYBRID_ENABLED", "true").lower() == "true"

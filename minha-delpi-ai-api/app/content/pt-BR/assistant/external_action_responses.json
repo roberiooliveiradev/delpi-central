@@ -640,6 +640,16 @@
     "weekdayReference": "Referência a dia da semana: {label}.",
     "quarterReference": "Trimestre {quarter} de {year}."
   },
+  "importJob": {
+    "phaseLabels": {
+      "queued": "Na fila",
+      "fetch_schema": "Baixando OpenAPI",
+      "import_actions": "Cadastrando rotas",
+      "embed_actions": "Indexando busca semântica",
+      "done": "Concluído",
+      "failed": "Falhou"
+    }
+  },
   "security": {
     "destructiveSqlBlocked": "Não executo comandos que alteram ou apagam dados (DELETE, UPDATE, INSERT, DROP, ALTER, TRUNCATE, etc.). Posso montar ou executar uma consulta somente leitura (SELECT).",
     "actionNotPermitted": "Essa consulta não está liberada para este agente ou perfil. Posso ajudar com outra consulta disponível.",

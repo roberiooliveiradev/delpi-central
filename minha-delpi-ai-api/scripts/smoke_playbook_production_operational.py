@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -190,6 +191,15 @@ def _run_chat_checks(
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--only-chat",
+        metavar="PREFIX",
+        help="Executa só cenários de chat cujo título começa com PREFIX (ex.: S4).",
+    )
+    args = parser.parse_args()
+    only_chat_prefix = str(args.only_chat or "").strip()
+
     token = _token()
     agent_id = _agent_id(token)
 
@@ -336,6 +346,27 @@ def main() -> int:
             "get_production_planned_vs_real_time",
         ),
     ]
+
+    all_chat = p0_chat + p1_chat + p2_chat + p3_chat
+
+    if only_chat_prefix:
+        selected = [
+            scenario
+            for scenario in all_chat
+            if scenario[0].startswith(only_chat_prefix)
+        ]
+
+        if not selected:
+            print(
+                f"Nenhum cenário de chat com prefixo {only_chat_prefix!r}.",
+                file=sys.stderr,
+            )
+            return 1
+
+        print(f"=== chat E2E ({only_chat_prefix}) ===")
+        failed = _run_chat_checks(token, agent_id, selected)
+        print(f"\n{'FAIL' if failed else 'PASS'} — total failures: {failed}")
+        return 1 if failed else 0
 
     failed = 0
 
