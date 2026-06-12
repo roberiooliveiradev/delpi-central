@@ -31,6 +31,21 @@ Ordem lógica de dependência:
 
 O export inclui pais referenciados por FK mesmo quando `deletado = true` (ex.: processo só citado em revisão arquivada), para o JSON ser autocontido.
 
+## CLI (Postgres direto)
+
+Recomendado para baseline Playbook 18 e restore entre ambientes:
+
+```bash
+cd transformometro-api
+set -a && source ../infra/.env && set +a
+
+python scripts/import_cadastro_json.py export -o fixtures/cadastro/backup.json
+python scripts/import_cadastro_json.py preview -i fixtures/cadastro/backup.json --mode replace
+python scripts/import_cadastro_json.py apply -i fixtures/cadastro/backup.json --mode replace --yes
+```
+
+Implementação: `tm_app/cli/cadastro_json_cli.py` · wrapper `scripts/import_cadastro_json.py`.
+
 ## Código
 
 - Serviço: `tm_app/application/services/json_backup_service.py`

@@ -1,0 +1,6 @@
+# Dados operacionais — não versionar
+*.json
+!README.md
+
+# Raiz do pacote (export casual)
+../transformometro-backup.json

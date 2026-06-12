@@ -9,6 +9,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [OVERVIEW.md](./OVERVIEW.md) | Visão geral, objetivo, componentes, URLs, permissões |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Camadas, domínio, cálculo, banco, integração portal |
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |
+| [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) | Refatoração: instâncias operacionais, filiais/setores UUID, escopo híbrido de recursos, visões consolidado/filial/dept |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega, dependências, o que reaproveitar do legado |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional completa (origem: planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook: recalcular, cadastro, troubleshooting |

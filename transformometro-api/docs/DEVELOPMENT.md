@@ -29,6 +29,17 @@ python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 
 Ver tabela de versões em [migrations/README.md](../migrations/README.md).
 
+## Cadastro JSON (export/import)
+
+Baseline e restore **sem seed em migrations**:
+
+```bash
+set -a && source ../infra/.env && set +a
+python scripts/import_cadastro_json.py export -o fixtures/cadastro/transformometro-cadastro.json
+```
+
+Detalhes: [fixtures/cadastro/README.md](../fixtures/cadastro/README.md) · [docs/json-backup.md](../docs/json-backup.md).
+
 ## MFE
 
 ```bash

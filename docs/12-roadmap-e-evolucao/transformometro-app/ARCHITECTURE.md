@@ -23,8 +23,8 @@ flowchart TB
   end
   Shell --> MFE
   MFE -->|JWT| HTTP
-  SI -->|X-Delpi-Service-Token ou JWT| INT
-  AD -->|idem| INT
+  SI -->|delpi_api_client JWT| AD
+  AD -->|TransformometroApiClient S2S| INT
   HTTP --> UC
   INT --> CALC
   UC --> REPO
@@ -163,7 +163,9 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Revisões (Fase 4) | `GET /revisoes/{id}/diagnostico-rateio` |
 | Catálogos | `GET /options/*` |
 | Sistema | `GET /health` |
-| Integrações | `GET /integrations/engineering/transforma-mais/processes`, `.../summary` |
+| Integrações (S2S interno) | `GET /integrations/engineering/transforma-mais/processes`, `.../summary` — consumidas **só** pela api-delpi |
+
+**Contrato público Transforma+** (SI, dashboard-engineering): `GET /engineering/transforma-mais/*` na **api-delpi** — ver [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
 
 **URL interna (Docker):** `http://transformometro-api:8000/transformometro/...`  
 **URL pública (nginx):** `/apps/transformometro-api/transformometro/...`

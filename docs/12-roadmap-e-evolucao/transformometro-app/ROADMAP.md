@@ -102,9 +102,18 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Datas UTC | `DATE` no PG; API só `yyyy-MM-dd` |
 | Performance recálculo | Recalcular competências incrementais |
 
+## Fase 5 — Instâncias, filiais UUID e escopo híbrido (roadmap)
+
+**Objetivo:** processo-mestre + instâncias `(filial × setor)`, PK UUID, rateio híbrido, visões consolidado/filial/dept — sem quebrar contrato **api-delpi** Transforma+.
+
+Plano completo: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · contratos: [`integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
+
+**Pré-requisito operacional:** export JSON do cadastro atual (`transformometro-api/scripts/import_cadastro_json.py export`).
+
 ## Próximo passo imediato
 
-1. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V005); registrar manifesto (rota `/recursos`)
-2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
-3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. Validar **ativar revisão** após deploy V006 (revisões antigas em `rascunho` passam a `aprovada`)
+1. **Playbook 18:** exportar baseline cadastral antes das migrations de schema (ver Playbook 18 §3.2).
+2. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V010); registrar manifesto (rota `/recursos`)
+3. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
+4. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
+5. Validar **ativar revisão** após deploy V006 (revisões antigas em `rascunho` passam a `aprovada`)

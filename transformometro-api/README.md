@@ -53,10 +53,14 @@ Processos, revisões, medições e recursos são mantidos pelo CRUD e pelas tela
 
 ## Integração engenharia / SI
 
+Contrato **público** (SI, dashboard-engineering): **api-delpi** `GET /engineering/transforma-mais/processes` e `.../summary`.
+
+Backend interno (S2S):
+
 - `GET /transformometro/integrations/engineering/transforma-mais/processes`
 - `GET /transformometro/integrations/engineering/transforma-mais/processes/summary`
 
-Consumidores: `shared/transformometro_client` + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
+Detalhes: [`docs/integration-contracts.md`](docs/integration-contracts.md) · consumidores: `shared/transformometro_client` + gateway api-delpi + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
 
 ## Documentação
 

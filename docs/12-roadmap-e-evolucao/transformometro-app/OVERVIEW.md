@@ -61,7 +61,7 @@ Tudo gira em torno de **`revisao_id`**:
 
 ## O que não é
 
-- **Não** é extensão do painel Strategic Indicators — o SI e o `api-delpi` consomem dados via HTTP na `transformometro-api` (rotas `/integrations/engineering/transforma-mais/*`).
+- **Não** é extensão do painel Strategic Indicators — o SI e o `dashboard-engineering` consomem Transforma+ via **api-delpi** (`GET /engineering/transforma-mais/*`). A transformometro-api expõe rotas S2S internas (`/integrations/engineering/transforma-mais/*`) só para o gateway api-delpi. Ver [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
 - O `dashboard-engineering` (TRANSFORMA+) usa as mesmas rotas `/engineering/transforma-mais/*`, agora alimentadas pelo banco.
 - **Não** usa planilha como fonte de dados (cadastro somente no app).
 

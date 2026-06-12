@@ -1,0 +1,4 @@
+# Backups cadastrais — dados operacionais (usar fixtures/cadastro/)
+transformometro-backup.json
+transformometro-cadastro*.json
+*-backup.json
