@@ -39,6 +39,7 @@ def test_list_ferramenta_auditoria(mock_repo_cls, _public, mock_user, mock_scope
                 "filial": "01",
                 "payload": {"golpes": 100},
                 "usuario_sub": "user-1",
+                "usuario_nome": "João Manutenção",
                 "data_criacao": "2026-06-12T10:00:00",
             }
         ],

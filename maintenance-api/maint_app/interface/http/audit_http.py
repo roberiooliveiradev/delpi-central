@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import Request
 
-from maint_app.core.auth_actor import actor_sub_from_request
+from maint_app.core.auth_actor import actor_nome_from_request, actor_sub_from_request
 from maint_app.core.errors import format_api_error
 from maint_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 
@@ -37,6 +37,7 @@ def log_ferramenta_audit(
             acao=acao,
             filial=filial,
             usuario_sub=actor_sub_from_request(request),
+            usuario_nome=actor_nome_from_request(request),
             payload=payload or {},
         )
     except Exception as exc:

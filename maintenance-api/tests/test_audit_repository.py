@@ -16,18 +16,21 @@ def test_log_inserts_audit_row(mock_execute):
         acao="reposicao.create",
         filial="01",
         usuario_sub="user-123",
+        usuario_nome="Maria Silva",
         payload={"reposicao_id": "abc", "golpes": 1000},
     )
 
     mock_execute.assert_called_once()
     query, params = mock_execute.call_args[0]
     assert "INSERT INTO maintenance.audit_logs" in query
+    assert "usuario_nome" in query
     assert params[0] == "ferramenta"
     assert params[1] == "23-026"
     assert params[2] == "reposicao.create"
     assert params[3] == "01"
     assert '"golpes": 1000' in params[4]
     assert params[5] == "user-123"
+    assert params[6] == "Maria Silva"
 
 
 @patch.object(AuditRepository, "fetch_paged")

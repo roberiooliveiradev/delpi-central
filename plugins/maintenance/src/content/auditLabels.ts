@@ -42,3 +42,14 @@ export function auditPayloadSummary(payload: Record<string, unknown> | null | un
 
   return parts.length > 0 ? parts.join(" · ") : "—";
 }
+
+export function formatAuditUser(
+  usuarioNome?: string | null,
+  usuarioSub?: string | null,
+): string {
+  const name = usuarioNome?.trim();
+  if (name) return name;
+  const sub = usuarioSub?.trim();
+  if (sub) return sub;
+  return "—";
+}

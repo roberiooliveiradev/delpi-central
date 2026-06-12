@@ -1157,13 +1157,6 @@ export function MiniAplicadoresPage({
             onFeedback={handleRevisaoFeedback}
           />
 
-          <FerramentaAuditoriaSection
-            filial={filial}
-            codigoFerramenta={codigoFerramenta}
-            reloadKey={detalheVersion}
-            getAccessToken={getAccessToken}
-          />
-
           <div ref={historicoSectionRef} className="dm-historico-anchor">
             <DataTableSection
               title="Histórico de reposições"
@@ -1260,6 +1253,13 @@ export function MiniAplicadoresPage({
               sortDirection: componentesTable.query.sortDirection,
               onSortChange: componentesTable.handleSortChange,
             }}
+          />
+
+          <FerramentaAuditoriaSection
+            filial={filial}
+            codigoFerramenta={codigoFerramenta}
+            reloadKey={detalheVersion}
+            getAccessToken={getAccessToken}
           />
         </>
       )}

@@ -16,13 +16,14 @@ class AuditRepository(PluginBaseRepository):
         acao: str,
         filial: str | None = None,
         usuario_sub: str | None = None,
+        usuario_nome: str | None = None,
         payload: dict[str, Any] | None = None,
     ) -> None:
         self.execute(
             """
             INSERT INTO maintenance.audit_logs (
-                entidade, entidade_id, acao, filial, payload, usuario_sub
-            ) VALUES (%s, %s, %s, %s, %s::jsonb, %s)
+                entidade, entidade_id, acao, filial, payload, usuario_sub, usuario_nome
+            ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s)
             """,
             (
                 entidade,
@@ -31,6 +32,7 @@ class AuditRepository(PluginBaseRepository):
                 filial,
                 json.dumps(payload or {}, default=str),
                 usuario_sub,
+                usuario_nome,
             ),
         )
 
@@ -50,6 +52,7 @@ class AuditRepository(PluginBaseRepository):
                 filial,
                 payload,
                 usuario_sub,
+                usuario_nome,
                 data_criacao
             FROM maintenance.audit_logs
             WHERE filial = %s

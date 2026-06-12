@@ -687,6 +687,7 @@ export type FerramentaAuditItem = {
   filial: string;
   payload?: Record<string, unknown> | null;
   usuario_sub?: string | null;
+  usuario_nome?: string | null;
   data_criacao?: string | null;
 };
 

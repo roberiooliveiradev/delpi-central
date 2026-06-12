@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { auditActionLabel, auditPayloadSummary } from "../content/auditLabels";
+import { auditActionLabel, auditPayloadSummary, formatAuditUser } from "../content/auditLabels";
 import { fetchFerramentaAuditoria, type FerramentaAuditItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
 import { DataTableSection, type DataTableColumn } from "./data";
@@ -48,7 +48,14 @@ const auditColumns: DataTableColumn<FerramentaAuditItem>[] = [
     key: "usuario",
     header: "Usuário",
     sortable: false,
-    render: (item) => item.usuario_sub ?? "—",
+    render: (item) => {
+      const label = formatAuditUser(item.usuario_nome, item.usuario_sub);
+      const id = item.usuario_sub?.trim();
+      if (item.usuario_nome?.trim() && id) {
+        return <span title={id}>{label}</span>;
+      }
+      return label;
+    },
   },
 ];
 
