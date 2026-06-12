@@ -7,8 +7,8 @@ import {
   revokeAttachmentPreviewUrl,
 } from "../chatAttachmentPreview";
 import {
+  workspaceFileAttachmentIndexPresentation,
   workspaceFileIconToneForAttachment,
-  workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
@@ -50,15 +50,19 @@ export function ChatAttachmentCard({
   const [thumbUrl, setThumbUrl] = useState<string | null>(
     attachment.localPreviewUrl || null,
   );
-  const statusTone = workspaceFileReadingStatusTone(attachment.status, attachment.parsed);
-  const subtitleLabel = formatAttachmentSize(
+  const indexPresentation = workspaceFileAttachmentIndexPresentation({
+    status: attachment.status,
+    parsed: attachment.parsed,
+    readingStatus: attachment.readingStatus,
+  });
+  const sizeLabel = formatAttachmentSize(
     attachment.sizeBytes ?? attachment.localFile?.size,
   );
   const resolvedPreviewKind = previewKind === "image" ? "image" : "file";
   const iconTone = workspaceFileIconToneForAttachment(
     attachment.filename,
     resolvedPreviewKind,
-    statusTone,
+    indexPresentation.statusTone,
   );
 
   useEffect(() => {
@@ -118,8 +122,9 @@ export function ChatAttachmentCard({
     <WorkspaceFileCard
       variant="card"
       filename={attachment.filename}
-      subtitleLabel={subtitleLabel || undefined}
-      statusTone={statusTone}
+      sizeLabel={sizeLabel || undefined}
+      statusLabel={indexPresentation.statusLabel}
+      statusTone={indexPresentation.statusTone}
       iconTone={iconTone}
       thumb={thumb}
       previewKind={resolvedPreviewKind}

@@ -124,6 +124,80 @@ export function workspaceFileIconToneForAttachment(
   return "brand";
 }
 
+export type WorkspaceFileIndexPresentation = {
+  statusLabel?: string;
+  statusTone: WorkspaceFileStatusTone;
+};
+
+export function workspaceFileIndexPresentation(input: {
+  chunkCount?: number | null;
+  status?: string | null;
+  parsed?: boolean;
+  readingStatus?: string | null;
+  indexStatus?: string | null;
+}): WorkspaceFileIndexPresentation {
+  if ((input.chunkCount ?? 0) > 0 || input.parsed) {
+    return {
+      statusLabel: workspaceFileReadingStatusLabel("indexed", true),
+      statusTone: workspaceFileReadingStatusTone("indexed", true),
+    };
+  }
+
+  const raw =
+    (typeof input.readingStatus === "string" && input.readingStatus.trim()) ||
+    (typeof input.indexStatus === "string" && input.indexStatus.trim()) ||
+    (typeof input.status === "string" && input.status.trim()) ||
+    null;
+
+  if (!raw) {
+    return { statusTone: "default" };
+  }
+
+  const normalized = raw.toLowerCase();
+
+  return {
+    statusLabel: workspaceFileReadingStatusLabel(normalized, false),
+    statusTone: workspaceFileReadingStatusTone(normalized, false),
+  };
+}
+
+export function workspaceFileSourceIndexPresentation(source: {
+  chunk_count?: number | null;
+  metadata?: Record<string, unknown> | null;
+}): WorkspaceFileIndexPresentation {
+  const metadata = source.metadata;
+
+  return workspaceFileIndexPresentation({
+    chunkCount: source.chunk_count,
+    readingStatus:
+      typeof metadata?.readingStatus === "string" ? metadata.readingStatus : null,
+    indexStatus: typeof metadata?.indexStatus === "string" ? metadata.indexStatus : null,
+    status: typeof metadata?.status === "string" ? metadata.status : null,
+  });
+}
+
+export function workspaceFileAttachmentIndexPresentation(input: {
+  status?: string | null;
+  parsed?: boolean;
+  readingStatus?: string | null;
+}): WorkspaceFileIndexPresentation {
+  const parsed =
+    input.parsed === true ||
+    normalizeStatus(input.status) === "indexed" ||
+    input.status === "indexed";
+
+  const effectiveStatus = input.readingStatus?.trim() || input.status;
+
+  if (!effectiveStatus && !parsed) {
+    return { statusTone: "default" };
+  }
+
+  return {
+    statusLabel: workspaceFileReadingStatusLabel(effectiveStatus, parsed),
+    statusTone: workspaceFileReadingStatusTone(effectiveStatus, parsed),
+  };
+}
+
 export function workspaceFileReadingStatusTone(
   status?: string | null,
   parsed?: boolean,

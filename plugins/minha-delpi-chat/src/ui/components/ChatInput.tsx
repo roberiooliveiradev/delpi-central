@@ -40,8 +40,8 @@ import type { MessageComposerTypingCorrectionContent } from "../../content/messa
 import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
+  workspaceFileAttachmentIndexPresentation,
   workspaceFileIconToneForAttachment,
-  workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import {
   buildWorkspaceLocalFilePreviewTarget,
@@ -509,25 +509,27 @@ export function ChatInput({
             <div className="mdc-chat-input__attachment-list">
               {attachments.map((attachment) => {
                 const isImage = attachment.type.startsWith("image/");
-                const statusTone = workspaceFileReadingStatusTone(
-                  attachment.status ?? "queued",
-                  attachment.status === "indexed",
-                );
+                const indexPresentation = workspaceFileAttachmentIndexPresentation({
+                  status: attachment.status ?? "queued",
+                  parsed: attachment.status === "indexed",
+                  readingStatus: attachment.readingStatus,
+                });
 
                 const previewKind = isImage ? "image" : "file";
-                const subtitleLabel = formatAttachmentSize(attachment.size);
+                const sizeLabel = formatAttachmentSize(attachment.size);
 
                 return (
                   <WorkspaceFileCard
                     key={attachment.id}
                     variant="card"
                     filename={attachment.name}
-                    subtitleLabel={subtitleLabel || undefined}
-                    statusTone={statusTone}
+                    sizeLabel={sizeLabel || undefined}
+                    statusLabel={indexPresentation.statusLabel}
+                    statusTone={indexPresentation.statusTone}
                     iconTone={workspaceFileIconToneForAttachment(
                       attachment.name,
                       previewKind,
-                      statusTone,
+                      indexPresentation.statusTone,
                     )}
                     previewKind={previewKind}
                     editable

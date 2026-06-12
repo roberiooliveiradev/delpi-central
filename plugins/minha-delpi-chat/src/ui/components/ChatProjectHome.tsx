@@ -37,9 +37,11 @@ import { formatSessionDate } from "./chatSidebarUtils";
 
 import { ModalPortal } from "./ModalPortal";
 import {
-  workspaceFileProjectFileKindLabel,
+  workspaceFileKindLabel,
   workspaceFileProjectIngestLabels,
+  workspaceFileSourceIndexPresentation,
 } from "../../content/workspaceFileIngestContent";
+import { formatAttachmentSize } from "../chatAttachmentPreview";
 import {
   buildWorkspaceSourcePreviewTarget,
   useWorkspaceFilePreviewModal,
@@ -780,14 +782,23 @@ export function ChatProjectHome({
               >
                 {sources.map((source) => {
                   const sourceDate = formatSourceDate(source.updated_at || source.created_at);
+                  const label = source.original_filename || source.title || "Arquivo";
+                  const indexStatus = workspaceFileSourceIndexPresentation(source);
+                  const sizeBytes = source.metadata?.sizeBytes;
+                  const sizeLabel =
+                    typeof sizeBytes === "number" ? formatAttachmentSize(sizeBytes) : undefined;
 
                   return (
                     <WorkspaceFileCard
                       key={source.id}
                       variant="row"
-                      filename={source.title}
+                      filename={label}
                       iconTone="brand"
-                      secondaryLabel={workspaceFileProjectFileKindLabel(sourceDate)}
+                      kindLabel={workspaceFileKindLabel(label)}
+                      sizeLabel={sizeLabel}
+                      statusLabel={indexStatus.statusLabel}
+                      statusTone={indexStatus.statusTone}
+                      secondaryLabel={sourceDate || undefined}
                       previewKind="file"
                       editable
                       onPreview={() => {

@@ -211,23 +211,28 @@ export function WorkspaceFileCard({
 
   const previewAriaLabel = `Pré-visualizar ${filename}`;
 
+  const showStructuredDetails =
+    Boolean(sizeLabel || statusLabel) ||
+    (variant === "row" && Boolean(secondaryLabel && kindLabel));
+
   const meta = (
     <div className="mdc-workspace-file-card__meta">
       <strong title={filename}>{filename}</strong>
-      <FileCardSubtitle
-        subtitleLabel={subtitleLabel}
-        kindLabel={kindLabel}
-        secondaryLabel={secondaryLabel}
-        variant={variant}
-      />
-      {variant === "row" && (sizeLabel || statusLabel || (secondaryLabel && kindLabel)) ? (
+      {showStructuredDetails ? (
         <FileCardDetails
           sizeLabel={sizeLabel}
           statusLabel={statusLabel}
           statusTone={statusTone}
-          secondaryLabel={kindLabel ? secondaryLabel : undefined}
+          secondaryLabel={variant === "row" && kindLabel ? secondaryLabel : undefined}
         />
-      ) : null}
+      ) : (
+        <FileCardSubtitle
+          subtitleLabel={subtitleLabel}
+          kindLabel={kindLabel}
+          secondaryLabel={secondaryLabel}
+          variant={variant}
+        />
+      )}
     </div>
   );
 
