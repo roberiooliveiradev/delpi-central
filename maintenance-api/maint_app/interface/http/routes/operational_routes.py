@@ -79,6 +79,10 @@ class RevisaoProgramadaUpdateBody(BaseModel):
     data_ultima_revisao: Optional[str] = None
 
 
+class RevisaoProgramadaRegistrarBody(BaseModel):
+    data_revisao: Optional[str] = None
+
+
 @router.get("/motivos")
 def list_motivos(
     request: Request,
@@ -235,6 +239,7 @@ def list_revisoes_programadas(
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
     search: Optional[str] = Query(None),
+    codigo_ferramenta: Optional[str] = Query(None),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -245,7 +250,12 @@ def list_revisoes_programadas(
         return fail(str(exc), 403)
 
     service = build_revisao_programada_service()
-    items, total = service.listar_programacoes(filial=filial, query=query, search=search)
+    items, total = service.listar_programacoes(
+        filial=filial,
+        query=query,
+        search=search,
+        codigo_ferramenta=codigo_ferramenta,
+    )
     return ok({"items": items, "total": total}, message="Revisões programadas listadas.")
 
 
@@ -313,6 +323,7 @@ def registrar_revisao_programada(
     revisao_id: str,
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
+    body: RevisaoProgramadaRegistrarBody | None = None,
 ):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
@@ -321,7 +332,11 @@ def registrar_revisao_programada(
     except PermissionError as exc:
         return fail(str(exc), 403)
 
-    item = build_revisao_programada_service().registrar_revisao(revisao_id, filial=filial)
+    item = build_revisao_programada_service().registrar_revisao(
+        revisao_id,
+        filial=filial,
+        data_revisao=body.data_revisao if body else None,
+    )
     if not item:
         return fail("Revisão programada não encontrada.", 404)
     return ok(item, message="Revisão registrada.")

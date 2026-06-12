@@ -302,12 +302,15 @@ export function deleteRevisaoProgramada(
 export function registrarRevisaoProgramada(
   revisaoId: string,
   filial: string,
+  dataRevisao?: string,
   getAccessToken?: () => string | undefined,
 ) {
   return maintenanceFetch<RevisaoProgramadaItem>(
     `/revisoes-programadas/${encodeURIComponent(revisaoId)}/registrar?filial=${encodeURIComponent(filial)}`,
     {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dataRevisao ? { data_revisao: dataRevisao } : {}),
       getAccessToken,
     },
   );

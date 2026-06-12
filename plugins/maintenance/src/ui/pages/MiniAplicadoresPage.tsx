@@ -9,6 +9,7 @@ import {
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
+import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import { FerramentaReposicaoIndicadores } from "../../components/FerramentaReposicaoIndicadores";
 import {
@@ -117,6 +118,7 @@ export function MiniAplicadoresPage({
   const [error, setError] = useState<string | null>(null);
   const [reposicaoFormErrors, setReposicaoFormErrors] = useState<ReposicaoFormErrors>({});
   const [success, setSuccess] = useState<string | null>(null);
+  const [detalheVersion, setDetalheVersion] = useState(0);
 
   const pecaDescricaoMap = useMemo(
     () => buildPecaDescricaoMap([estruturaComponentes]),
@@ -487,7 +489,18 @@ export function MiniAplicadoresPage({
       loadReposicoesTable(),
       refreshHistoricoChart(),
     ]);
+    setDetalheVersion((current) => current + 1);
   }, [loadComponentesTable, loadDetalheBase, loadReposicoesTable, refreshHistoricoChart]);
+
+  const handleRevisaoFeedback = useCallback((message: { type: "success" | "error"; text: string }) => {
+    if (message.type === "success") {
+      setSuccess(message.text);
+      setError(null);
+      return;
+    }
+    setError(message.text);
+    setSuccess(null);
+  }, []);
 
   const applyHistoricoFilters = useCallback(() => {
     if (!isValidDateRange(filtroHistoricoDataInicialDraft, filtroHistoricoDataFinalDraft)) {
@@ -855,7 +868,7 @@ export function MiniAplicadoresPage({
         title={codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Ferramentas"}
         subtitle={
           codigoFerramenta
-            ? "Histórico de reposições e cadastro de nova troca."
+            ? "Histórico de reposições, revisão programada e cadastro de nova troca."
             : "Ferramentas dos grupos 23 e 24 via api-delpi."
         }
         icon={Hammer}
@@ -1121,6 +1134,15 @@ export function MiniAplicadoresPage({
               />
             </section>
           ) : null}
+
+          <FerramentaRevisaoProgramadaSection
+            filial={filial}
+            codigoFerramenta={codigoFerramenta}
+            canManage={canManageMiniApplicators}
+            reloadKey={detalheVersion}
+            getAccessToken={getAccessToken}
+            onFeedback={handleRevisaoFeedback}
+          />
 
           <div ref={historicoSectionRef} className="dm-historico-anchor">
             <DataTableSection

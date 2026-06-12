@@ -15,13 +15,15 @@ export const CONFIG_TOOLTIPS = {
   statusSection:
     "Define como cada par ferramenta/peça é classificado no relatório preventivo.",
   revisaoSection:
-    "Programação de revisão periódica da ferramenta (ex.: inspeção a cada 3 meses), independente da troca de peças.",
+    "Programação de revisão periódica desta ferramenta no módulo preventivo (ex.: inspeção a cada 3 meses).",
   revisaoFerramenta:
-    "Código da ferramenta no TOTVS (ex.: 23-001). Uma programação por ferramenta e filial.",
+    "Código da ferramenta atual no TOTVS — a programação fica vinculada a ela na filial.",
+  revisaoReferencia:
+    "Data da última revisão feita ou marco inicial do ciclo. Vazio usa a data de criação da programação.",
   revisaoIntervalo:
     "Periodicidade em meses calendário entre revisões (1 a 120). Ex.: 3 = revisar a cada três meses.",
   revisaoObservacao:
     "Nota opcional sobre o que verificar na revisão (checklist, pontos críticos, etc.).",
   revisaoRegistrar:
-    "Marca a revisão como realizada hoje e reinicia a contagem do próximo prazo.",
+    "Marca a revisão como feita na data informada e recalcula a próxima revisão a partir dela.",
 } as const;

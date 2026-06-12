@@ -666,6 +666,14 @@
   color: #f87171;
 }
 
+.dashboard-maintenance .dm-field-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--dm-font-xs);
+  line-height: 1.4;
+  color: var(--dm-text-muted);
+}
+
 .dashboard-maintenance .dm-field--invalid input,
 .dashboard-maintenance .dm-field--invalid select,
 .dashboard-maintenance .dm-field--invalid textarea,
@@ -1109,6 +1117,157 @@
 
 .dashboard-maintenance .dm-chart-section .dm-chart-wrap {
   margin-bottom: 0;
+}
+
+.dashboard-maintenance .dm-chart-section__expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: var(--dm-font-sm);
+  white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-chart-section .dm-section-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-maintenance .dm-chart-wrap--expanded {
+  min-height: clamp(360px, 62vh, 640px);
+  height: clamp(360px, 62vh, 640px);
+}
+
+.dashboard-maintenance .dm-chart-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.dashboard-maintenance .dm-chart-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(2, 8, 23, 0.72);
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-chart-modal__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1280px, calc(100vw - 32px));
+  max-height: min(94vh, 920px);
+  overflow: hidden;
+  border: 1px solid var(--dm-card-border);
+  border-radius: 18px;
+  background: var(--dm-card-bg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-maintenance .dm-chart-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--dm-card-border);
+}
+
+.dashboard-maintenance .dm-chart-modal__header-text {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-chart-modal__title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--dm-title);
+}
+
+.dashboard-maintenance .dm-chart-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-maintenance .dm-chart-modal__close {
+  flex: 0 0 auto;
+}
+
+.dashboard-maintenance .dm-chart-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 16px 18px;
+  overflow: auto;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta {
+  margin-bottom: var(--dm-section-gap);
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__metric {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--dm-card-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--dm-card-bg) 92%, var(--dm-accent) 8%);
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__metric strong {
+  color: var(--dm-title);
+  font-size: var(--dm-font-base);
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__metric svg {
+  color: var(--dm-accent);
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form,
+.dashboard-maintenance .dm-revisao-ferramenta__edit {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__feito {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-maintenance .dm-revisao-feito-actions {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.dashboard-maintenance .dm-revisao-feito-actions input[type="date"] {
+  min-width: 148px;
 }
 
 .dashboard-maintenance .dm-ferramenta-analytics {
@@ -1608,6 +1767,10 @@
   }
 
   .dashboard-maintenance .dm-ferramenta-analytics {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-maintenance .dm-revisao-ferramenta__metrics {
     grid-template-columns: 1fr;
   }
 

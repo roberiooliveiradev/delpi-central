@@ -214,35 +214,39 @@ export function PreventivaDetailPanel({
           )}
 
           {usageChart.length > 0 ? (
-            <ChartSection title="Uso vs. média">
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={usageChart} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
-                  <Tooltip formatter={(value) => formatNumber(Number(value))} />
-                  <Legend />
-                  <Bar dataKey="value" name="Golpes" radius={[8, 8, 0, 0]} maxBarSize={72}>
-                    {usageChart.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                  {alerta ? (
-                    <ReferenceLine
-                      y={alerta.media_golpes}
-                      stroke="#64748b"
-                      strokeDasharray="4 4"
-                      label={{
-                        value: `Média ${formatNumber(Math.round(alerta.media_golpes))}`,
-                        position: "insideTopRight",
-                        fill: "#64748b",
-                        fontSize: 11,
-                      }}
-                    />
-                  ) : null}
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartSection>
+            <ChartSection
+              title="Uso vs. média"
+              inlineChartHeight={240}
+              renderChart={(height) => (
+                <ResponsiveContainer width="100%" height={height}>
+                  <BarChart data={usageChart} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
+                    <Tooltip formatter={(value) => formatNumber(Number(value))} />
+                    <Legend />
+                    <Bar dataKey="value" name="Golpes" radius={[8, 8, 0, 0]} maxBarSize={72}>
+                      {usageChart.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                    {alerta ? (
+                      <ReferenceLine
+                        y={alerta.media_golpes}
+                        stroke="#64748b"
+                        strokeDasharray="4 4"
+                        label={{
+                          value: `Média ${formatNumber(Math.round(alerta.media_golpes))}`,
+                          position: "insideTopRight",
+                          fill: "#64748b",
+                          fontSize: 11,
+                        }}
+                      />
+                    ) : null}
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            />
           ) : null}
 
           <ChartSection
@@ -252,43 +256,49 @@ export function PreventivaDetailPanel({
                 <span className="dm-badge">{historicoChart.length} trocas</span>
               ) : undefined
             }
+            inlineChartHeight={280}
+            renderChart={
+              historicoChart.length > 0
+                ? (height) => (
+                    <ResponsiveContainer width="100%" height={height}>
+                      <LineChart data={historicoChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
+                        <Tooltip
+                          formatter={(value, name) => [
+                            formatNumber(Number(value)),
+                            name === "tendencia" ? "Tendência" : "Golpes por ciclo",
+                          ]}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="golpes"
+                          name="Golpes por ciclo"
+                          stroke="var(--dm-accent, #089bdb)"
+                          strokeWidth={2.5}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line
+                          type="linear"
+                          dataKey="tendencia"
+                          name="Tendência"
+                          stroke="#94a3b8"
+                          strokeWidth={2}
+                          strokeDasharray="6 4"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )
+                : undefined
+            }
           >
             {historicoChart.length === 0 ? (
               <StateBox>Nenhuma reposição registrada para este par.</StateBox>
-            ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={historicoChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      formatNumber(Number(value)),
-                      name === "tendencia" ? "Tendência" : "Golpes por ciclo",
-                    ]}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="golpes"
-                    name="Golpes por ciclo"
-                    stroke="var(--dm-accent, #089bdb)"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="linear"
-                    dataKey="tendencia"
-                    name="Tendência"
-                    stroke="#94a3b8"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
+            ) : null}
           </ChartSection>
 
           <div className="dm-detail-panel__actions">

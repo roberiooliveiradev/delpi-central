@@ -42,16 +42,10 @@ def add_months(value: datetime, months: int) -> datetime:
     return value.replace(year=year, month=month, day=day)
 
 
-def _resolve_data_referencia(
-    row: dict[str, Any],
-    *,
-    ultima_reposicao: datetime | None,
-) -> datetime | None:
+def _resolve_data_referencia(row: dict[str, Any]) -> datetime | None:
     manual = _as_naive_datetime(row.get("data_ultima_revisao"))
     if manual is not None:
         return manual
-    if ultima_reposicao is not None:
-        return _as_naive_datetime(ultima_reposicao)
     return _as_naive_datetime(row.get("data_criacao"))
 
 
@@ -82,9 +76,15 @@ class RevisaoProgramadaService:
         filial: str,
         query: ListQuery | None = None,
         search: str | None = None,
+        codigo_ferramenta: str | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
         query = query or ListQuery(page=1, page_size=20, sort_by="ferramenta", sort_dir="asc")
-        return self._revisao_repo.list_active_paged(filial=filial, query=query, search=search)
+        return self._revisao_repo.list_active_paged(
+            filial=filial,
+            query=query,
+            search=search,
+            codigo_ferramenta=codigo_ferramenta,
+        )
 
     def create(self, payload: dict[str, Any]) -> dict[str, Any]:
         codigo = str(payload.get("codigo_ferramenta") or "").strip().upper()
@@ -126,8 +126,18 @@ class RevisaoProgramadaService:
     def delete(self, revisao_id: str, *, filial: str) -> bool:
         return self._revisao_repo.soft_delete(revisao_id, filial=filial)
 
-    def registrar_revisao(self, revisao_id: str, *, filial: str) -> dict[str, Any] | None:
-        return self._revisao_repo.registrar_revisao(revisao_id, filial=filial)
+    def registrar_revisao(
+        self,
+        revisao_id: str,
+        *,
+        filial: str,
+        data_revisao: str | None = None,
+    ) -> dict[str, Any] | None:
+        return self._revisao_repo.registrar_revisao(
+            revisao_id,
+            filial=filial,
+            data_revisao=data_revisao,
+        )
 
     def resumo_alertas(self, *, filial: str) -> dict[str, int]:
         alertas = self._build_alertas(filial=filial)
@@ -156,17 +166,12 @@ class RevisaoProgramadaService:
 
     def _build_alertas(self, *, filial: str) -> list[dict[str, Any]]:
         rows = self._revisao_repo.list_active(filial=filial)
-        ultimas_reposicoes = self._reposicao_repo.map_ultima_reposicao_por_ferramenta(filial=filial)
         hoje = datetime.now(timezone.utc).replace(tzinfo=None).date()
         alertas: list[dict[str, Any]] = []
 
         for row in rows:
-            codigo = str(row["codigo_ferramenta"])
             intervalo_meses = int(row["intervalo_meses"])
-            data_referencia = _resolve_data_referencia(
-                row,
-                ultima_reposicao=ultimas_reposicoes.get(codigo),
-            )
+            data_referencia = _resolve_data_referencia(row)
             if data_referencia is None:
                 alertas.append(
                     self._build_alerta_item(

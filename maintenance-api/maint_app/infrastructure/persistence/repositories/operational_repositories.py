@@ -629,10 +629,14 @@ class RevisaoProgramadaRepository(PluginBaseRepository):
         filial: str,
         query: ListQuery,
         search: str | None = None,
+        codigo_ferramenta: str | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
         where = ["filial = %s"]
         params: list[Any] = [filial]
-        if search and search.strip():
+        if codigo_ferramenta and codigo_ferramenta.strip():
+            where.append("codigo_ferramenta = %s")
+            params.append(codigo_ferramenta.strip().upper())
+        elif search and search.strip():
             where.append("codigo_ferramenta ILIKE %s")
             params.append(f"%{search.strip()}%")
 
@@ -778,7 +782,35 @@ class RevisaoProgramadaRepository(PluginBaseRepository):
             tuple(params),
         )
 
-    def registrar_revisao(self, revisao_id: str, *, filial: str) -> dict[str, Any] | None:
+    def registrar_revisao(
+        self,
+        revisao_id: str,
+        *,
+        filial: str,
+        data_revisao: str | datetime | None = None,
+    ) -> dict[str, Any] | None:
+        if data_revisao:
+            parsed = _coerce_reposicao_date_bound(str(data_revisao))
+            return self.execute_returning_one(
+                """
+                UPDATE maintenance.revisao_programada
+                SET data_ultima_revisao = %s,
+                    data_alteracao = NOW()
+                WHERE revisao_id = %s::uuid
+                  AND filial = %s
+                  AND excluido = FALSE
+                RETURNING
+                    revisao_id,
+                    filial,
+                    codigo_ferramenta,
+                    intervalo_meses,
+                    data_ultima_revisao,
+                    observacao,
+                    data_criacao,
+                    data_alteracao
+                """,
+                (parsed, revisao_id, filial),
+            )
         return self.execute_returning_one(
             """
             UPDATE maintenance.revisao_programada

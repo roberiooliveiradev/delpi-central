@@ -1,5 +1,6 @@
 export { BrDateInput } from "./BrDateInput";
 export { BrDatetimeInput } from "./BrDatetimeInput";
+export { ChartExpandModal } from "./ChartExpandModal";
 export { ChartSection } from "./ChartSection";
 export { CodigoDescricaoCell } from "./CodigoDescricaoCell";
 export { DataTable } from "./DataTable";

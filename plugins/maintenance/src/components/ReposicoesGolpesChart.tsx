@@ -41,6 +41,50 @@ function formatEventLabel(value: string): string {
   });
 }
 
+type GolpesChartBodyProps = {
+  chartData: Record<string, string | number | null>[];
+  pecaSeries: Array<{ codigo: string; name: string; color: string }>;
+  pecaLabels: Record<string, string>;
+  height: number;
+};
+
+function GolpesChartBody({ chartData, pecaSeries, pecaLabels, height }: GolpesChartBodyProps) {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={chartData} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--dm-card-border, #334155)" />
+        <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+        <YAxis tick={{ fontSize: 12 }} />
+        <Tooltip
+          formatter={(value, name) => {
+            const codigo = String(name);
+            const descricao = pecaLabels[codigo];
+            return [
+              Number(value ?? 0).toLocaleString("pt-BR"),
+              descricao ? formatCodigoDescricao(codigo, descricao) : codigo,
+            ];
+          }}
+          labelFormatter={(label) => label}
+        />
+        <Legend />
+        {pecaSeries.map((series) => (
+          <Line
+            key={series.codigo}
+            type="monotone"
+            dataKey={series.codigo}
+            name={series.name}
+            stroke={series.color}
+            strokeWidth={2}
+            dot={{ r: 3, strokeWidth: 2 }}
+            activeDot={{ r: 5 }}
+            connectNulls
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function ReposicoesGolpesChart({
   reposicoes,
   pecaLabels = {},
@@ -88,39 +132,17 @@ export function ReposicoesGolpesChart({
   }
 
   return (
-    <ChartSection title="Golpes por reposição">
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--dm-card-border, #334155)" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-          <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip
-            formatter={(value, name) => {
-              const codigo = String(name);
-              const descricao = pecaLabels[codigo];
-              return [
-                Number(value ?? 0).toLocaleString("pt-BR"),
-                descricao ? formatCodigoDescricao(codigo, descricao) : codigo,
-              ];
-            }}
-            labelFormatter={(label) => label}
-          />
-          <Legend />
-          {pecaSeries.map((series) => (
-            <Line
-              key={series.codigo}
-              type="monotone"
-              dataKey={series.codigo}
-              name={series.name}
-              stroke={series.color}
-              strokeWidth={2}
-              dot={{ r: 3, strokeWidth: 2 }}
-              activeDot={{ r: 5 }}
-              connectNulls
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </ChartSection>
+    <ChartSection
+      title="Golpes por reposição"
+      inlineChartHeight={300}
+      renderChart={(height) => (
+        <GolpesChartBody
+          chartData={chartData}
+          pecaSeries={pecaSeries}
+          pecaLabels={pecaLabels}
+          height={height}
+        />
+      )}
+    />
   );
 }

@@ -10,10 +10,13 @@ import {
   type DataTableColumn,
   DataTableSection,
   FilterBar,
+  HelpTooltip,
   MultiSelectField,
   StateBox,
   StatusBadge,
 } from "../../components/data";
+import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
+import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
@@ -34,12 +37,14 @@ import {
   fetchRevisaoProgramadaAlertas,
   fetchRevisaoProgramadaResumo,
   fetchUltimasReposicoes,
+  registrarRevisaoProgramada,
   type PreventivaAlerta,
   type PreventivaResumo,
   type RevisaoProgramadaAlerta,
   type RevisaoProgramadaResumo,
   type UltimaReposicaoItem,
 } from "../../data/api/maintenanceApi";
+import { fromDateInputValue, toDateInputValue } from "../../utils/datetimeLocal";
 
 type RelatorioPageProps = {
   getAccessToken?: () => string | undefined;
@@ -147,6 +152,8 @@ export function RelatorioPage({
   const [pecaFiltro, setPecaFiltro] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<StatusFilterValue[]>([]);
   const [revisaoStatusFiltro, setRevisaoStatusFiltro] = useState<RevisaoStatusFilterValue[]>([]);
+  const [feitoDrafts, setFeitoDrafts] = useState<Record<string, string>>({});
+  const [feitoSavingId, setFeitoSavingId] = useState<string | null>(null);
   const [appliedFerramentaFiltro, setAppliedFerramentaFiltro] = useState("");
   const [appliedPecaFiltro, setAppliedPecaFiltro] = useState("");
 
@@ -300,6 +307,55 @@ export function RelatorioPage({
   const loadReport = useCallback(async () => {
     await Promise.all([loadResumo(), loadAlertas(), loadUltimas(), loadRevisaoResumo(), loadRevisoes()]);
   }, [loadAlertas, loadResumo, loadRevisaoResumo, loadRevisoes, loadUltimas]);
+
+  const resolveFeitoDate = useCallback(
+    (item: RevisaoProgramadaAlerta) =>
+      feitoDrafts[item.revisao_id] ?? toDateInputValue(new Date()),
+    [feitoDrafts],
+  );
+
+  const handleMarcarRevisaoFeita = useCallback(
+    async (item: RevisaoProgramadaAlerta) => {
+      if (!canManageMiniApplicators) return;
+      const feitoDate = resolveFeitoDate(item);
+      const label = formatDate(fromDateInputValue(feitoDate));
+      if (
+        !window.confirm(
+          `Registrar revisão feita em ${label} para ${item.codigo_ferramenta} e reprogramar a próxima?`,
+        )
+      ) {
+        return;
+      }
+      setFeitoSavingId(item.revisao_id);
+      setRevisoesError(null);
+      try {
+        await registrarRevisaoProgramada(
+          item.revisao_id,
+          filial,
+          fromDateInputValue(feitoDate),
+          getAccessToken,
+        );
+        setFeitoDrafts((prev) => {
+          const next = { ...prev };
+          delete next[item.revisao_id];
+          return next;
+        });
+        await Promise.all([loadRevisaoResumo(), loadRevisoes()]);
+      } catch (err) {
+        setRevisoesError(err instanceof Error ? err.message : "Falha ao registrar revisão feita.");
+      } finally {
+        setFeitoSavingId(null);
+      }
+    },
+    [
+      canManageMiniApplicators,
+      filial,
+      getAccessToken,
+      loadRevisaoResumo,
+      loadRevisoes,
+      resolveFeitoDate,
+    ],
+  );
 
   useEffect(() => {
     setError(alertasError ?? ultimasError ?? revisoesError);
@@ -546,8 +602,8 @@ export function RelatorioPage({
     [],
   );
 
-  const revisoesColumns = useMemo<DataTableColumn<RevisaoProgramadaAlerta>[]>(
-    () => [
+  const revisoesColumns = useMemo<DataTableColumn<RevisaoProgramadaAlerta>[]>(() => {
+    const columns: DataTableColumn<RevisaoProgramadaAlerta>[] = [
       {
         key: "status",
         header: "Status",
@@ -601,9 +657,48 @@ export function RelatorioPage({
             : item.dias_restantes.toLocaleString("pt-BR"),
         align: "right",
       },
-    ],
-    [],
-  );
+    ];
+
+    if (canManageMiniApplicators) {
+      columns.push({
+        key: "acoes",
+        header: "Marcar feito",
+        interactive: true,
+        render: (item) => (
+          <div className="dm-row-actions dm-revisao-feito-actions">
+            <input
+              type="date"
+              aria-label={`Data da revisão feita para ${item.codigo_ferramenta}`}
+              value={resolveFeitoDate(item)}
+              onChange={(event) =>
+                setFeitoDrafts((prev) => ({
+                  ...prev,
+                  [item.revisao_id]: event.target.value,
+                }))
+              }
+            />
+            <HelpTooltip content={CONFIG_TOOLTIPS.revisaoRegistrar} wrap ariaLabel="Ajuda: marcar feito">
+              <button
+                type="button"
+                className="dm-ghost-btn"
+                disabled={feitoSavingId === item.revisao_id}
+                onClick={() => void handleMarcarRevisaoFeita(item)}
+              >
+                {feitoSavingId === item.revisao_id ? "Salvando…" : "Marcar feito"}
+              </button>
+            </HelpTooltip>
+          </div>
+        ),
+      });
+    }
+
+    return columns;
+  }, [
+    canManageMiniApplicators,
+    feitoSavingId,
+    handleMarcarRevisaoFeita,
+    resolveFeitoDate,
+  ]);
 
   const handleSelectAlerta = (item: PreventivaAlerta) => {
     setListTab("alertas");
@@ -619,6 +714,10 @@ export function RelatorioPage({
       codigo_ferramenta: item.codigo_ferramenta,
       codigo_peca: item.codigo_peca,
     });
+  };
+
+  const handleSelectRevisao = (item: RevisaoProgramadaAlerta) => {
+    onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo_ferramenta));
   };
 
   const isRowSelected = (codigoFerramenta: string, codigoPeca: string) =>
@@ -866,12 +965,13 @@ export function RelatorioPage({
             <DataTableSection
               embedded
               title="Revisões programadas"
-              hint="Prazos calculados a partir da última revisão registrada ou da reposição mais recente da ferramenta."
+              hint="Clique em uma linha para abrir a ferramenta. Marque a revisão como feita para reprogramar a próxima."
               columns={revisoesColumns}
               rows={revisoes}
               loading={revisoesLoading}
-              emptyMessage="Nenhuma revisão programada — cadastre em Configuração."
+              emptyMessage="Nenhuma revisão programada — configure na ferramenta desejada."
               getRowKey={(item) => item.revisao_id}
+              onRowClick={handleSelectRevisao}
               serverTable={{
                 page: revisoesTable.query.page,
                 pageSize: revisoesTable.query.pageSize,
