@@ -92,7 +92,7 @@ No boot do container, `docker-entrypoint.sh` chama o mesmo comando quando `RUN_M
 
 ```bash
 docker compose -f infra/docker-compose.dev.yml exec minha-delpi-ai-api \
-  python scripts/check_operational_action_readiness.py
+  sh -c 'PYTHONPATH=/app python scripts/check_operational_action_readiness.py'
 ```
 
 Import OpenAPI sem embedding bloqueante: default `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT=false`; reindexar depois via admin ou `sync_api_delpi_openapi.py`.
