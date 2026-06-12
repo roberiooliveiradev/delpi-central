@@ -90,6 +90,47 @@ class ExternalActionSelectionSupportService:
 
         return matches
 
+    def find_catalog_actions_by_path_token(
+        self,
+        *,
+        path_token: str,
+        operation_token: str = "",
+        provider_key: str | None = "api-delpi",
+        method: str = "GET",
+    ) -> list[dict]:
+        token = str(path_token or "").lower().strip()
+        op_token = str(operation_token or "").lower().strip()
+
+        if not token and not op_token:
+            return []
+
+        list_actions = getattr(self.repository, "list_actions", None)
+
+        if not callable(list_actions):
+            return []
+
+        matches: list[dict] = []
+
+        for action in list_actions(provider_key=provider_key):
+            if str(action.get("method") or "").upper() != method.upper():
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if token and token in path:
+                matches.append(action)
+                continue
+
+            if op_token and op_token in operation_id:
+                matches.append(action)
+                continue
+
+            if token and token.replace("-", "_") in operation_id:
+                matches.append(action)
+
+        return matches
+
     @staticmethod
     def resolve_previous_external_action_id(
         previous_messages: list | None,

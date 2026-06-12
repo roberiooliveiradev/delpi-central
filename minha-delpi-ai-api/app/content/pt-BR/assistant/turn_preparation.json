@@ -13,6 +13,10 @@
         "Abrir ou atualizar a **lousa** e montar **gráficos** a partir de dados já mostrados."
       ],
       "agentHint": "Para consultar **dados reais**, abra o menu **+** no composer e escolha um **agente especializado** (ex.: **Agente Minha DELPI**)."
+    },
+    "productionOperational": {
+      "actionMissingFromCatalog": "A rota operacional **{pathLabel}** ainda não está no catálogo do provider **{providerKey}**. No builder do agente, use **Atualizar rotas** (ou rode o script de reimport pós-deploy) e habilite a action neste agente.",
+      "actionNotEnabledOnAgent": "A rota **{pathLabel}** já existe no catálogo (`{actionId}`), mas não está **habilitada** neste agente. No builder → Rotas OpenAPI, marque a action como ativa."
     }
   }
 }

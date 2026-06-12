@@ -32,6 +32,26 @@ def test_interpretation_without_data_reads_turn_preparation_json():
     assert "consulta operacional" in message
 
 
+def test_production_operational_gap_messages_exist():
+    missing = ChatTurnPreparationContentService.format(
+        "directAnswers",
+        "productionOperational",
+        "actionMissingFromCatalog",
+        pathLabel="/production/schedule/today",
+        providerKey="api-delpi",
+    )
+    disabled = ChatTurnPreparationContentService.format(
+        "directAnswers",
+        "productionOperational",
+        "actionNotEnabledOnAgent",
+        pathLabel="/production/schedule/today",
+        actionId="get_production_schedule_today",
+    )
+
+    assert "Atualizar rotas" in missing
+    assert "habilitada" in disabled.lower()
+
+
 def test_resolve_interpretation_without_data_when_no_tool_history():
     answer = ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
         message="explique os dados acima",

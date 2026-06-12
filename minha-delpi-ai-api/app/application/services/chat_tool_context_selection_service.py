@@ -182,6 +182,35 @@ class ChatToolContextSelectionService:
                 ),
             )
 
+            if not planned_external_actions and host.external_action_repository:
+                from app.application.services.chat_production_operational_action_readiness_service import (
+                    ChatProductionOperationalActionReadinessService,
+                )
+
+                gap_answer = (
+                    ChatProductionOperationalActionReadinessService.resolve_gap_direct_answer(
+                        message,
+                        allowed_action_ids=allowed_action_ids or [],
+                        repository=host.external_action_repository,
+                    )
+                )
+
+                if gap_answer:
+                    return ToolSelectionOutcome(
+                        early_result=host._finalize_tool_context_result(
+                            message=raw_message,
+                            previous_messages=previous_messages,
+                            result={
+                                "context": "",
+                                "toolCalls": [],
+                                "nativeToolCalling": native_meta,
+                                "directAnswer": gap_answer,
+                                "skipRag": True,
+                                "currentMessage": raw_message,
+                            },
+                        ),
+                    )
+
             if planned_external_actions:
                 selected_tools = [
                     item

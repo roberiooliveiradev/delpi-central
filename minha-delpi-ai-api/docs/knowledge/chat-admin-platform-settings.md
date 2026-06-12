@@ -88,6 +88,17 @@ No boot do container, `docker-entrypoint.sh` chama o mesmo comando quando `RUN_M
 
 ---
 
+## Readiness pós-deploy (Playbook 16)
+
+```bash
+docker compose -f infra/docker-compose.dev.yml exec minha-delpi-ai-api \
+  python scripts/check_operational_action_readiness.py
+```
+
+Import OpenAPI sem embedding bloqueante: default `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT=false`; reindexar depois via admin ou `sync_api_delpi_openapi.py`.
+
+---
+
 ## Smoke rápido
 
 1. Abrir **Plataforma → Modos de resposta** e alternar `responseModesEnabled`; salvar — recarregar deve mostrar origem **admin**.

@@ -1,6 +1,6 @@
 # Playbook 16 — Import OpenAPI assíncrono e readiness operacional
 
-**Status:** roadmap (jun/2026) — **não implementado**  
+**Status:** parcial (jun/2026) — Sprint A entregue; job async (Sprint B/C) pendente  
 **Parent:** [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)  
 **Relacionado:** [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md), [`../../../api-delpi/docs/api/12-procedimento-reimport-openapi.md`](../../../api-delpi/docs/api/12-procedimento-reimport-openapi.md)
 
@@ -231,9 +231,10 @@ Script proposto: `scripts/check_operational_action_readiness.py` — exit 1 list
 
 ### Sprint A — Quick win (sem job table)
 
-- [ ] Default `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT=false` em prod/homolog **ou** split: import rápido + `POST .../reindex-embeddings` separado
+- [x] Default `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT=false` (bootstrap `.env`; admin pode ligar `externalActionEmbeddingOnImport`)
+- [x] `scripts/check_operational_action_readiness.py` — 4 actions críticas Playbook 15
+- [x] O5 parcial: direct answer quando intent REST sem action (`turn_preparation.json` + `ChatProductionOperationalActionReadinessService`)
 - [ ] Documentar no builder: «Rotas disponíveis após import; indexação semântica em background»
-- [ ] `check_operational_action_readiness.py` + CI opcional pós-deploy
 
 ### Sprint B — Job async + progresso API
 
@@ -252,8 +253,8 @@ Script proposto: `scripts/check_operational_action_readiness.py` — exit 1 list
 
 ### Sprint D — Readiness + mensagens operador (O5)
 
-- [ ] Direct answer quando action missing (`assistant/*.json`)
-- [ ] Regressão: intent schedule + allowed vazio → mensagem, não LLM
+- [x] Direct answer quando action missing (`turn_preparation.json`)
+- [x] Regressão unitária: `test_chat_production_operational_action_readiness_service.py`
 - [ ] Smoke S4 no playbook de homologação
 
 ---

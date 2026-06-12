@@ -213,6 +213,8 @@ class ChatExternalActionOrchestrationService:
             if selected:
                 return _return_planned([selected])
 
+            return []
+
         from app.application.services.external_actions.external_action_domain_route_selection_service import (
             ExternalActionDomainRouteSelectionService,
         )

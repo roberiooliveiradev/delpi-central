@@ -282,7 +282,7 @@ class Settings:
     )
 
     EXTERNAL_ACTION_EMBEDDING_ON_IMPORT = (
-        os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "true").lower() == "true"
+        os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "false").lower() == "true"
     )
 
     CHAT_RAG_HYBRID_ENABLED = (
