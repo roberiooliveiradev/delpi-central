@@ -461,87 +461,9 @@
   padding-right: 0;
 }
 
-.mdc-chat-project-sources__add {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 750;
-  padding: 0.55rem 0.9rem;
-}
-
-.mdc-chat-project-sources__add input {
-  display: none;
-}
-
-.mdc-chat-project-sources__add:hover {
-  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
-}
-
 .mdc-chat-project-source-list {
   display: grid;
   gap: 0.15rem;
-}
-
-.mdc-chat-project-source-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.8rem;
-  min-height: 3.6rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
-  padding: 0.45rem 0.1rem;
-}
-
-.mdc-chat-project-source-row__icon {
-  color: color-mix(in srgb, var(--mdc-primary) 80%, var(--mdc-text));
-}
-
-.mdc-chat-project-source-row__copy strong,
-.mdc-chat-project-source-row__copy small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mdc-chat-project-source-row__copy small {
-  color: var(--mdc-text-muted);
-  font-size: 0.78rem;
-}
-
-.mdc-chat-project-source-row__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.mdc-chat-project-source-row__actions button {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
-.mdc-chat-project-source-row__actions button:hover {
-  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
-  color: var(--mdc-danger);
-}
-
-.mdc-chat-project-source-row__actions button:first-child:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  color: var(--mdc-primary);
 }
 
 .mdc-chat-project-sources__note {

@@ -1,10 +1,13 @@
-import { FileText, Plus, Trash2, Upload, Download } from "lucide-react";
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
+import { workspaceFileAgentIngestLabels } from "../../../content/workspaceFileIngestContent";
 import { getSourceContentHash, sha256HexFromFile } from "../../../utils/fileContentHash";
+import { WorkspaceFileCard } from "../workspace-files/WorkspaceFileCard";
+import { WorkspaceFileDropzone } from "../workspace-files/WorkspaceFileDropzone";
 
 import "./AgentKnowledgeSourcesPanel.css";
+import "../workspace-files/workspaceFileIngest.css";
 
 type AgentKnowledgeSourcesPanelProps = {
   sources: ChatWorkspaceSource[];
@@ -53,7 +56,7 @@ export function AgentKnowledgeSourcesPanel({
   onLocalDuplicatesSkipped,
   noteSlot,
 }: AgentKnowledgeSourcesPanelProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const ingestLabels = workspaceFileAgentIngestLabels();
   const [isDragActive, setIsDragActive] = useState(false);
   const [pendingHashes, setPendingHashes] = useState<Set<string>>(new Set());
 
@@ -122,155 +125,59 @@ export function AgentKnowledgeSourcesPanel({
     [knownHashes, onLocalDuplicatesSkipped, onUploadFiles, pendingHashes],
   );
 
-  function handleDragOver(event: React.DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(true);
-  }
-
-  function handleDragLeave(event: React.DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(false);
-  }
-
-  function handleDrop(event: React.DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(false);
-
-    if (isUploading) {
-      return;
-    }
-
-    void processFiles(event.dataTransfer.files);
-  }
-
   return (
     <div className="mdc-agent-knowledge">
-      <div
-        className={[
-          "mdc-agent-knowledge__dropzone",
-          isDragActive ? "mdc-agent-knowledge__dropzone--active" : "",
-          isUploading ? "mdc-agent-knowledge__dropzone--busy" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        onDragEnter={handleDragOver}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => {
-          if (!isUploading) {
-            inputRef.current?.click();
-          }
+      <WorkspaceFileDropzone
+        multiple
+        disabled={isUploading}
+        isBusy={isUploading}
+        isDragActive={isDragActive}
+        contentVariant="agent"
+        ariaLabel={ingestLabels.ariaAddFiles}
+        onDragActiveChange={setIsDragActive}
+        onFilesSelected={(files) => {
+          void processFiles(files);
         }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label="Adicionar arquivos de conhecimento"
-      >
-        <span className="mdc-agent-knowledge__dropzone-icon">
-          <Upload size={20} aria-hidden="true" />
-        </span>
-        <div className="mdc-agent-knowledge__dropzone-copy">
-          <strong>Arraste arquivos aqui</strong>
-          <span>ou clique para selecionar · PDF, TXT, MD e outros formatos suportados</span>
-        </div>
-        <span className="mdc-chat-ws-outline-btn mdc-agent-knowledge__dropzone-action">
-          <Plus size={16} aria-hidden="true" />
-          <span>Adicionar</span>
-        </span>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          hidden
-          disabled={isUploading}
-          onChange={(event) => {
-            if (event.target.files?.length) {
-              void processFiles(event.target.files);
-            }
-
-            event.target.value = "";
-          }}
-        />
-      </div>
+      />
 
       {notice ? <p className="mdc-agent-knowledge__notice">{notice}</p> : null}
 
       {isUploading ? (
-        <p className="mdc-agent-knowledge__status">Enviando arquivos...</p>
+        <p className="mdc-agent-knowledge__status">{ingestLabels.uploadingStatus}</p>
       ) : null}
 
       {sources.length > 0 ? (
-        <ul className="mdc-agent-knowledge__cards" aria-label="Arquivos do agente">
+        <ul className="mdc-agent-knowledge__cards" aria-label={ingestLabels.listAriaLabel}>
           {sources.map((source) => {
-            const hash = getSourceContentHash(source.metadata);
+            const label = getSourceLabel(source);
             const isDuplicateMarked = source.duplicate === true;
 
             return (
               <li key={source.id}>
-                <article
-                  className={[
-                    "mdc-agent-knowledge__card",
-                    isDuplicateMarked ? "mdc-agent-knowledge__card--duplicate" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  title={getSourceLabel(source)}
-                >
-                  <div className="mdc-agent-knowledge__card-head">
-                    <span className="mdc-agent-knowledge__card-icon">
-                      <FileText size={18} aria-hidden="true" />
-                    </span>
-                    <div className="mdc-agent-knowledge__card-actions">
-                      {onDownloadSource ? (
-                        <button
-                          type="button"
-                          className="mdc-agent-knowledge__card-download"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void onDownloadSource(source.id);
-                          }}
-                          aria-label={`Baixar ${getSourceLabel(source)}`}
-                          title="Baixar arquivo"
-                        >
-                          <Download size={14} aria-hidden="true" />
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="mdc-agent-knowledge__card-remove"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void onRemoveSource(source.id);
-                        }}
-                        aria-label={`Remover ${getSourceLabel(source)}`}
-                      >
-                        <Trash2 size={14} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mdc-agent-knowledge__card-copy">
-                    <strong>{getSourceLabel(source)}</strong>
-                    {getSourceSize(source) ? <small>{getSourceSize(source)}</small> : null}
-                    {isDuplicateMarked ? (
-                      <em>Já indexado — conteúdo igual</em>
-                    ) : hash && knownHashes.has(hash) ? null : null}
-                  </div>
-                </article>
+                <WorkspaceFileCard
+                  variant="card"
+                  filename={label}
+                  sizeLabel={getSourceSize(source) || undefined}
+                  secondaryLabel={isDuplicateMarked ? ingestLabels.duplicateMarked : undefined}
+                  previewKind="file"
+                  editable
+                  onDownload={
+                    onDownloadSource
+                      ? () => {
+                          void onDownloadSource(source.id);
+                        }
+                      : undefined
+                  }
+                  onRemove={() => {
+                    void onRemoveSource(source.id);
+                  }}
+                />
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className="mdc-chat-ws-empty">Nenhum arquivo ainda. Arraste documentos para começar.</p>
+        <p className="mdc-chat-ws-empty">{ingestLabels.emptyState}</p>
       )}
 
       {noteSlot ? <div className="mdc-agent-knowledge__note">{noteSlot}</div> : null}

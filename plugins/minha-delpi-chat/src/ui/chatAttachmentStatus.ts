@@ -1,3 +1,5 @@
+import { workspaceFileReadingStatusLabel } from "../content/workspaceFileIngestContent";
+
 export type ComposerAttachmentStatus =
   | "queued"
   | "uploading"
@@ -9,33 +11,7 @@ export function attachmentReadingStatusLabel(
   status?: string | null,
   parsed?: boolean,
 ): string {
-  const normalized = String(status || "").trim().toLowerCase();
-
-  if (parsed || normalized === "indexed") {
-    return "Indexado";
-  }
-
-  if (normalized === "indexing") {
-    return "Indexando para consulta";
-  }
-
-  if (normalized === "uploading" || normalized === "uploaded") {
-    return "Processando leitura";
-  }
-
-  if (normalized === "unsupported") {
-    return "Leitura limitada";
-  }
-
-  if (normalized === "index_failed" || normalized === "failed") {
-    return "Falha na leitura";
-  }
-
-  if (normalized === "queued") {
-    return "Aguardando envio";
-  }
-
-  return "Aguardando envio";
+  return workspaceFileReadingStatusLabel(status, parsed);
 }
 
 export function composerAttachmentStatusLabel(

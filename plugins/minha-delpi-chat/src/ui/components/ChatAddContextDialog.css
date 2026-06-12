@@ -134,32 +134,6 @@
   outline-offset: 1px;
 }
 
-.mdc-chat-add-context__dropzone {
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  padding: 0.85rem;
-  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
-  border-radius: 0.75rem;
-  color: var(--mdc-text-muted);
-  font-size: 0.84rem;
-  text-align: center;
-}
-
-.mdc-chat-add-context__dropzone p {
-  margin: 0;
-}
-
-.mdc-chat-add-context__link {
-  border: none;
-  background: none;
-  color: var(--mdc-primary);
-  font-size: inherit;
-  font-weight: 650;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
 .mdc-chat-add-context__file-hint {
   display: flex;
   align-items: center;

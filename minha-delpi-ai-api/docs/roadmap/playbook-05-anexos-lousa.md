@@ -11,6 +11,8 @@ Escopo: arquivos anexados, lousa/canvas, transformação de respostas em documen
 
 **Anexo é fonte de trabalho. Lousa é área de produção.**
 
+**Ingestão unificada (UI/API):** [`playbook-17-importacao-arquivos-e-fontes-unificada.md`](./playbook-17-importacao-arquivos-e-fontes-unificada.md) — dropzone, cards e status; este playbook (05) cobre o comportamento **depois** da leitura.
+
 ---
 
 ## Fluxo de anexo

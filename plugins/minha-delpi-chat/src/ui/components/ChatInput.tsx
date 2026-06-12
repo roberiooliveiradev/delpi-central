@@ -2,9 +2,7 @@ import {
   ArrowUpRight,
   ArrowUp,
   Bot,
-  FileText,
   Folder,
-  Image as ImageIcon,
   Paperclip,
   Plus,
   Trash2,
@@ -41,8 +39,14 @@ import type {
   ChatTypingSuggestion,
 } from "../../data/api/chatTypes";
 import type { MessageComposerTypingCorrectionContent } from "../../content/messageComposerContent";
+import {
+  workspaceFileComposerAttachmentsHeader,
+  workspaceFileComposerLabels,
+} from "../../content/workspaceFileIngestContent";
+import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
 import "./ChatInput.css";
+import "./workspace-files/workspaceFileIngest.css";
 
 export type ChatInputAttachment = {
   id: string;
@@ -304,7 +308,7 @@ export function ChatInput({
               }}
             >
               <Upload size={16} aria-hidden="true" />
-              <span>Anexar arquivos</span>
+              <span>{workspaceFileComposerLabels().attachMenuLabel}</span>
             </button>
           </div>
 
@@ -494,12 +498,12 @@ export function ChatInput({
             <div className="mdc-chat-input__attachments-header">
               <span>
                 <Paperclip size={15} aria-hidden="true" />
-                {attachments.length} arquivo(s) anexado(s)
+                {workspaceFileComposerAttachmentsHeader(attachments.length)}
               </span>
 
               <button type="button" onClick={onClearAttachments}>
                 <Trash2 size={14} aria-hidden="true" />
-                <span>Limpar</span>
+                <span>{workspaceFileComposerLabels().clearAttachments}</span>
               </button>
             </div>
 
@@ -512,25 +516,16 @@ export function ChatInput({
                 );
 
                 return (
-                <span key={attachment.id} className="mdc-chat-input__attachment-chip">
-                  {isImage ? (
-                    <ImageIcon size={14} aria-hidden="true" />
-                  ) : (
-                    <FileText size={14} aria-hidden="true" />
-                  )}
-
-                  <strong>{attachment.name}</strong>
-                  <small>{formatFileSize(attachment.size)}</small>
-                  <small className="mdc-chat-input__attachment-chip-status">{statusLabel}</small>
-
-                  <button
-                    type="button"
-                    onClick={() => onRemoveAttachment?.(attachment.id)}
-                    aria-label={`Remover ${attachment.name}`}
-                  >
-                    <X size={13} aria-hidden="true" />
-                  </button>
-                </span>
+                  <WorkspaceFileCard
+                    key={attachment.id}
+                    variant="chip"
+                    filename={attachment.name}
+                    sizeLabel={formatFileSize(attachment.size)}
+                    statusLabel={statusLabel}
+                    previewKind={isImage ? "image" : "file"}
+                    editable
+                    onRemove={() => onRemoveAttachment?.(attachment.id)}
+                  />
                 );
               })}
             </div>

@@ -61,6 +61,7 @@ Wrappers especializados (mantêm API estável):
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
+| `attachments.json` | Welcome/chips pós-upload (PB05), preview de leitura, **`ingestUi`** (dropzone, composer, agente — PB17) | API `ChatAttachmentContentService`; MFE `workspaceFileIngestContent.ts` + `sync:attachments-content` |
 | `message_composer.json` | Composer (corretor de digitação P14) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
 | `typing_correction_rules.json` | Typos operacionais estáticos (normalização + sugestões P14) | `ChatMessageNormalizationService.configure_static_rules` |
 | `typing_correction_lexicon.json` | Vocabulário operacional para fuzzy P14-5 | `ChatTypingCorrectionFuzzyLexiconService.configure` |

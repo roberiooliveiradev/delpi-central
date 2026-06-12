@@ -1,12 +1,18 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { FileText, Upload } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { FileText } from "lucide-react";
 
 import type { ConversationContextPick } from "../chatContextFromMessage";
 import type { ContextItemPayload } from "../chatContextFromMessage";
+import {
+  workspaceFileContextBinaryLine,
+  workspaceFileContextIngestLabels,
+} from "../../content/workspaceFileIngestContent";
+import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
 
 import { ModalPortal } from "./ModalPortal";
 import "./chat-modal-surface.css";
 import "./ChatAddContextDialog.css";
+import "./workspace-files/workspaceFileIngest.css";
 
 export type UserContextPayload = ContextItemPayload;
 
@@ -19,6 +25,7 @@ type ChatAddContextDialogProps = {
 
 const MAX_CHARS = 12_000;
 const TEXT_EXTENSIONS = /\.(txt|md|csv|tsv|json)$/i;
+const CONTEXT_FILE_ACCEPT = ".txt,.md,.csv,.tsv,.json,text/plain,text/markdown";
 
 async function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -36,12 +43,13 @@ export function ChatAddContextDialog({
   onConfirm,
   recentConversation = [],
 }: ChatAddContextDialogProps) {
+  const contextLabels = workspaceFileContextIngestLabels();
   const formId = useId();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [content, setContent] = useState("");
   const [filename, setFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [pendingPickId, setPendingPickId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +61,7 @@ export function ChatAddContextDialog({
     setFilename(null);
     setError(null);
     setIsReadingFile(false);
+    setIsDragActive(false);
     setPendingPickId(null);
   }, [open]);
 
@@ -80,14 +89,14 @@ export function ChatAddContextDialog({
         setContent((current) => {
           const merged =
             (current ? `${current}\n\n` : "") +
-            `Arquivo de contexto: ${file.name} (${file.type || "binário"})`;
+            workspaceFileContextBinaryLine(file.name, file.type || "binário");
 
           return merged.slice(0, MAX_CHARS);
         });
         setFilename(file.name);
       }
     } catch {
-      setError("Não foi possível ler o arquivo selecionado.");
+      setError(contextLabels.readError);
     } finally {
       setIsReadingFile(false);
     }
@@ -99,7 +108,7 @@ export function ChatAddContextDialog({
     const trimmed = content.trim();
 
     if (!trimmed && !filename) {
-      setError("Cole texto, uma tabela ou anexe um arquivo.");
+      setError(contextLabels.emptySubmitError);
       return;
     }
 
@@ -197,45 +206,18 @@ export function ChatAddContextDialog({
               </p>
             ) : null}
 
-            <div
-              className="mdc-chat-add-context__dropzone"
-              onDragOver={(event) => {
-                event.preventDefault();
+            <WorkspaceFileDropzone
+              compact
+              accept={CONTEXT_FILE_ACCEPT}
+              disabled={isReadingFile}
+              isBusy={isReadingFile}
+              isDragActive={isDragActive}
+              contentVariant="context"
+              onDragActiveChange={setIsDragActive}
+              onFilesSelected={(files) => {
+                void ingestFiles(files);
               }}
-              onDrop={(event) => {
-                event.preventDefault();
-
-                if (event.dataTransfer.files.length > 0) {
-                  void ingestFiles(event.dataTransfer.files);
-                }
-              }}
-            >
-              <Upload size={18} aria-hidden />
-              <p>Arraste um arquivo ou</p>
-              <button
-                type="button"
-                className="mdc-chat-add-context__link"
-                disabled={isReadingFile}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                selecione do computador
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept=".txt,.md,.csv,.tsv,.json,text/plain,text/markdown"
-                onChange={(event) => {
-                  const files = event.target.files;
-
-                  if (files && files.length > 0) {
-                    void ingestFiles(files);
-                  }
-
-                  event.target.value = "";
-                }}
-              />
-            </div>
+            />
 
             {error ? <p className="mdc-chat-add-context__error">{error}</p> : null}
 

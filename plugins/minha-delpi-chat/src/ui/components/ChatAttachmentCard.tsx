@@ -1,4 +1,3 @@
-import { Eye, FileText, Image as ImageIcon, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { fetchChatAttachmentBlob } from "../../data/api/chatApi";
@@ -8,7 +7,10 @@ import {
   revokeAttachmentPreviewUrl,
 } from "../chatAttachmentPreview";
 import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
+import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
+
 import "./ChatAttachmentCard.css";
+import "./workspace-files/workspaceFileIngest.css";
 
 export type ChatAttachmentCardModel = {
   key: string;
@@ -102,56 +104,20 @@ export function ChatAttachmentCard({
     previewKind,
   ]);
 
+  const thumb =
+    thumbUrl && previewKind === "image" ? <img src={thumbUrl} alt="" /> : undefined;
+
   return (
-    <article className="mdc-chat-attachment-card">
-      <button
-        type="button"
-        className="mdc-chat-attachment-card__preview-hit"
-        onClick={() => onPreview?.(attachment)}
-        aria-label={`Pré-visualizar ${attachment.filename}`}
-      >
-        <div className="mdc-chat-attachment-card__thumb" aria-hidden="true">
-          {thumbUrl ? (
-            <img src={thumbUrl} alt="" />
-          ) : previewKind === "image" ? (
-            <ImageIcon size={20} />
-          ) : (
-            <FileText size={20} />
-          )}
-        </div>
-
-        <div className="mdc-chat-attachment-card__meta">
-          <strong title={attachment.filename}>{attachment.filename}</strong>
-          <div className="mdc-chat-attachment-card__details">
-            {sizeLabel ? <span>{sizeLabel}</span> : null}
-            {statusLabel ? <span>{statusLabel}</span> : null}
-          </div>
-        </div>
-      </button>
-
-      <div className="mdc-chat-attachment-card__actions">
-        <button
-          type="button"
-          className="mdc-chat-attachment-card__action"
-          onClick={() => onPreview?.(attachment)}
-          aria-label={`Abrir pré-visualização de ${attachment.filename}`}
-          title="Pré-visualizar"
-        >
-          <Eye size={15} aria-hidden="true" />
-        </button>
-
-        {editable && onRemove ? (
-          <button
-            type="button"
-            className="mdc-chat-attachment-card__action mdc-chat-attachment-card__action--danger"
-            onClick={() => onRemove(attachment.key)}
-            aria-label={`Remover ${attachment.filename}`}
-            title="Remover anexo"
-          >
-            {editable ? <Trash2 size={15} aria-hidden="true" /> : <X size={15} aria-hidden="true" />}
-          </button>
-        ) : null}
-      </div>
-    </article>
+    <WorkspaceFileCard
+      variant="card"
+      filename={attachment.filename}
+      sizeLabel={sizeLabel}
+      statusLabel={statusLabel}
+      thumb={thumb}
+      previewKind={previewKind === "image" ? "image" : "file"}
+      editable={editable}
+      onPreview={onPreview ? () => onPreview(attachment) : undefined}
+      onRemove={onRemove ? () => onRemove(attachment.key) : undefined}
+    />
   );
 }

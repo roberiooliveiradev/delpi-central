@@ -2,13 +2,10 @@ import {
   ArrowUpRight,
   Bot,
   Copy,
-  Download,
-  FileText,
   Folder,
   Loader2,
   MoreHorizontal,
   Pencil,
-  Plus,
   Settings,
   Trash2,
   X,
@@ -39,7 +36,15 @@ import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
 import { ModalPortal } from "./ModalPortal";
+import {
+  workspaceFileProjectFileKindLabel,
+  workspaceFileProjectIngestLabels,
+} from "../../content/workspaceFileIngestContent";
+import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
+import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
+
 import "./ChatProjectHome.css";
+import "./workspace-files/workspaceFileIngest.css";
 
 type ProjectTab = "chats" | "sources" | "agents";
 
@@ -171,6 +176,8 @@ export function ChatProjectHome({
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
   const [projectLinkCopied, setProjectLinkCopied] = useState(false);
+  const [isSourceDragActive, setIsSourceDragActive] = useState(false);
+  const projectIngestLabels = workspaceFileProjectIngestLabels();
   const projectUsagePath = useMemo(
     () => buildChatProjectHref(project.id),
     [project.id],
@@ -727,65 +734,55 @@ export function ChatProjectHome({
           </div>
         ) : (
           <div className="mdc-chat-project-sources" role="tabpanel">
-            <label className="mdc-chat-project-sources__add">
-              <Plus size={16} aria-hidden="true" />
-              <span>{isSavingSource ? "Enviando..." : "Adicionar fontes"}</span>
-              <input
-                type="file"
-                disabled={isSavingSource}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  void uploadSourceFile(file);
-                  event.target.value = "";
-                }}
-              />
-            </label>
+            <WorkspaceFileDropzone
+              disabled={isSavingSource}
+              isBusy={isSavingSource}
+              isDragActive={isSourceDragActive}
+              contentVariant="project"
+              onDragActiveChange={setIsSourceDragActive}
+              onFilesSelected={(files) => {
+                void uploadSourceFile(files[0]);
+              }}
+            />
+
+            {isSavingSource ? (
+              <p className="mdc-chat-project-home__empty">{projectIngestLabels.uploadingStatus}</p>
+            ) : null}
 
             {isLoadingSources ? (
-              <p className="mdc-chat-project-home__empty">Carregando fontes...</p>
+              <p className="mdc-chat-project-home__empty">{projectIngestLabels.loadingSources}</p>
             ) : sources.length > 0 ? (
-              <div className="mdc-chat-project-source-list">
-                {sources.map((source) => (
-                  <article key={source.id} className="mdc-chat-project-source-row">
-                    <span className="mdc-chat-project-source-row__icon">
-                      <FileText size={18} aria-hidden="true" />
-                    </span>
-                    <div className="mdc-chat-project-source-row__copy">
-                      <strong>{source.title}</strong>
-                      <small>
-                        Arquivo
-                        {formatSourceDate(source.updated_at || source.created_at)
-                          ? ` · ${formatSourceDate(source.updated_at || source.created_at)}`
-                          : ""}
-                      </small>
-                    </div>
-                    <div className="mdc-chat-project-source-row__actions">
-                      {onDownloadSource ? (
-                        <button
-                          type="button"
-                          onClick={() => void onDownloadSource(source.id)}
-                          title="Baixar arquivo"
-                          aria-label={`Baixar ${source.title}`}
-                        >
-                          <Download size={16} aria-hidden="true" />
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => void onDeleteSource?.(source.id)}
-                        title="Remover fonte"
-                        aria-label={`Remover ${source.title}`}
-                      >
-                        <Trash2 size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </article>
-                ))}
+              <div
+                className="mdc-chat-project-source-list"
+                aria-label={projectIngestLabels.listAriaLabel}
+              >
+                {sources.map((source) => {
+                  const sourceDate = formatSourceDate(source.updated_at || source.created_at);
+
+                  return (
+                    <WorkspaceFileCard
+                      key={source.id}
+                      variant="row"
+                      filename={source.title}
+                      secondaryLabel={workspaceFileProjectFileKindLabel(sourceDate)}
+                      previewKind="file"
+                      editable
+                      onDownload={
+                        onDownloadSource
+                          ? () => {
+                              void onDownloadSource(source.id);
+                            }
+                          : undefined
+                      }
+                      onRemove={() => {
+                        void onDeleteSource?.(source.id);
+                      }}
+                    />
+                  );
+                })}
               </div>
             ) : (
-              <p className="mdc-chat-project-home__empty">
-                Nenhuma fonte adicionada. Use o botão acima para enviar arquivos.
-              </p>
+              <p className="mdc-chat-project-home__empty">{projectIngestLabels.emptyState}</p>
             )}
 
             <details className="mdc-chat-project-sources__note">
