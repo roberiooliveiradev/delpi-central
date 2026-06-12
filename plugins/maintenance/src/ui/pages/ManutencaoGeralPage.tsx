@@ -67,17 +67,6 @@ export function ManutencaoGeralPage({
 
   return (
     <MaintenanceShell variant="embed">
-      <PageHeader
-        title="Manutenção geral"
-        subtitle="Registre ocorrências de máquinas, equipamentos, lâmpadas e demais itens."
-        icon={ClipboardList}
-        currentPath={pathname}
-        filialScope={filialScope}
-        onNavigate={onNavigate}
-        showNav={false}
-        compact
-      />
-
       <ManutencaoGeralFormEmbed
         formUrl={MANUTENCAO_GERAL_FORM_URL}
         pathname={pathname}
