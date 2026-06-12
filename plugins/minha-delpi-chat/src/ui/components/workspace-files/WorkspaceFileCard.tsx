@@ -22,6 +22,8 @@ export type WorkspaceFileCardProps = {
   variant?: WorkspaceFileCardVariant;
   filename: string;
   kindLabel?: string;
+  /** Segunda linha em card/chip (ex.: tamanho do arquivo). */
+  subtitleLabel?: string;
   sizeLabel?: string;
   statusLabel?: string;
   statusTone?: WorkspaceFileStatusTone;
@@ -119,33 +121,24 @@ function FileCardIcon({
 }
 
 function FileCardSubtitle({
+  subtitleLabel,
   kindLabel,
   secondaryLabel,
-  statusLabel,
-  statusTone = "default",
   variant,
 }: {
+  subtitleLabel?: string;
   kindLabel?: string;
   secondaryLabel?: string;
-  statusLabel?: string;
-  statusTone?: WorkspaceFileStatusTone;
   variant: WorkspaceFileCardVariant;
 }) {
   if (variant === "card" || variant === "chip") {
-    const text =
-      statusTone === "error" && statusLabel?.trim() ? statusLabel : kindLabel;
+    const text = subtitleLabel || kindLabel;
 
     if (!text) {
       return null;
     }
 
-    return (
-      <span
-        className={`mdc-workspace-file-card__subtitle ${statusTone === "error" ? "mdc-workspace-file-card__subtitle--error" : ""}`}
-      >
-        {text}
-      </span>
-    );
+    return <span className="mdc-workspace-file-card__subtitle">{text}</span>;
   }
 
   if (variant === "row") {
@@ -165,6 +158,7 @@ export function WorkspaceFileCard({
   variant = "card",
   filename,
   kindLabel,
+  subtitleLabel,
   sizeLabel,
   statusLabel,
   statusTone = "default",
@@ -228,10 +222,9 @@ export function WorkspaceFileCard({
     <div className="mdc-workspace-file-card__meta">
       <strong title={filename}>{filename}</strong>
       <FileCardSubtitle
+        subtitleLabel={subtitleLabel}
         kindLabel={kindLabel}
         secondaryLabel={secondaryLabel}
-        statusLabel={statusLabel}
-        statusTone={statusTone}
         variant={variant}
       />
       {variant === "row" && (sizeLabel || statusLabel || (secondaryLabel && kindLabel)) ? (
@@ -251,9 +244,8 @@ export function WorkspaceFileCard({
         <FileCardIcon previewKind={previewKind} iconTone={iconTone} compact thumb={thumb} />
         <strong title={filename}>{filename}</strong>
         <FileCardSubtitle
+          subtitleLabel={subtitleLabel}
           kindLabel={kindLabel}
-          statusLabel={statusLabel}
-          statusTone={statusTone}
           variant={variant}
         />
         <span className="mdc-workspace-file-card__chip-actions">

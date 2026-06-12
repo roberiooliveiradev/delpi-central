@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 
 import { fetchChatAttachmentBlob } from "../../data/api/chatApi";
 import {
+  formatAttachmentSize,
   resolveAttachmentPreviewKind,
   revokeAttachmentPreviewUrl,
 } from "../chatAttachmentPreview";
 import {
   workspaceFileIconToneForAttachment,
-  workspaceFileKindLabel,
   workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
-import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
 import "./ChatAttachmentCard.css";
@@ -51,11 +50,10 @@ export function ChatAttachmentCard({
   const [thumbUrl, setThumbUrl] = useState<string | null>(
     attachment.localPreviewUrl || null,
   );
-  const statusLabel =
-    attachment.readingStatus ||
-    attachmentReadingStatusLabel(attachment.status, attachment.parsed);
   const statusTone = workspaceFileReadingStatusTone(attachment.status, attachment.parsed);
-  const kindLabel = workspaceFileKindLabel(attachment.filename);
+  const subtitleLabel = formatAttachmentSize(
+    attachment.sizeBytes ?? attachment.localFile?.size,
+  );
   const resolvedPreviewKind = previewKind === "image" ? "image" : "file";
   const iconTone = workspaceFileIconToneForAttachment(
     attachment.filename,
@@ -120,8 +118,7 @@ export function ChatAttachmentCard({
     <WorkspaceFileCard
       variant="card"
       filename={attachment.filename}
-      kindLabel={kindLabel}
-      statusLabel={statusLabel}
+      subtitleLabel={subtitleLabel || undefined}
       statusTone={statusTone}
       iconTone={iconTone}
       thumb={thumb}

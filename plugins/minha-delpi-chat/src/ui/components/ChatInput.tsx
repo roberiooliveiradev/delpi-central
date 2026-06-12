@@ -29,10 +29,8 @@ import type {
 import type { ChatPresentationFormatOption } from "../../state/hooks/useChatPresentationFormat";
 import { ChatPresentationFormatSelector } from "./ChatPresentationFormatSelector";
 import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
-import {
-  composerAttachmentStatusLabel,
-  type ComposerAttachmentStatus,
-} from "../chatAttachmentStatus";
+import { formatAttachmentSize } from "../chatAttachmentPreview";
+import type { ComposerAttachmentStatus } from "../chatAttachmentStatus";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../state/chatAgentActivation";
 import type {
@@ -43,7 +41,6 @@ import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
   workspaceFileIconToneForAttachment,
-  workspaceFileKindLabel,
   workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import {
@@ -512,25 +509,20 @@ export function ChatInput({
             <div className="mdc-chat-input__attachment-list">
               {attachments.map((attachment) => {
                 const isImage = attachment.type.startsWith("image/");
-                const statusLabel = composerAttachmentStatusLabel(
-                  attachment.status ?? "queued",
-                  attachment.readingStatus,
-                );
                 const statusTone = workspaceFileReadingStatusTone(
                   attachment.status ?? "queued",
                   attachment.status === "indexed",
                 );
 
-                const kindLabel = workspaceFileKindLabel(attachment.name);
                 const previewKind = isImage ? "image" : "file";
+                const subtitleLabel = formatAttachmentSize(attachment.size);
 
                 return (
                   <WorkspaceFileCard
                     key={attachment.id}
                     variant="card"
                     filename={attachment.name}
-                    kindLabel={kindLabel}
-                    statusLabel={statusLabel}
+                    subtitleLabel={subtitleLabel || undefined}
                     statusTone={statusTone}
                     iconTone={workspaceFileIconToneForAttachment(
                       attachment.name,
