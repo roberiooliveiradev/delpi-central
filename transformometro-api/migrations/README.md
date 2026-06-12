@@ -28,6 +28,12 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V019 | `V019__processo_instancia_setores.sql` | Amarração N:N instância × setores; instância = processo × filial (ou todas ativas) |
 | V020 | `V020__dashboard_integration_views.sql` | Views `dashboard_competencia_evolucao` e `instancia_operacional_snapshot` (leitura rápida dashboard + api-delpi) |
 
+## Notas V019–V020
+
+- **V019** remove `setor_id` de `processo_instancias`; setores passam por `processo_instancia_setores`. Consolida duplicatas `(processo, filial)` usando `(MIN(instancia_id::text))::uuid` — Postgres não suporta `MIN(uuid)` nativo.
+- **V020** depende de V019 (`todas_filiais_ativas`). Views leem `dashboard_calculos`; executar recalc após aplicar.
+- Se a API não sobe no boot: `docker logs delpi-transformometro-api --tail 50` e conferir migration pendente com `migrations_runner status`.
+
 ## Comandos
 
 Na raiz do monorepo (com `PLUGINS_DB_*` exportadas):

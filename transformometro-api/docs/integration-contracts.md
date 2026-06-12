@@ -130,6 +130,19 @@ Rotas S2S espelhadas para o gateway api-delpi:
 
 Testes TM: `tests/test_engineering_transforma_mais.py`.
 
+### 3.1 Leitura rápida via cache (jun/2026)
+
+Quando `dashboard_calculos` contém linhas (após `POST /transformometro/dashboard/recalcular`):
+
+| Rota S2S | Fonte | Fallback |
+|----------|-------|----------|
+| `GET …/processes` | View `instancia_operacional_snapshot` | Cálculo live (`build_instancia_list`) |
+| `GET …/processes/summary` | `query_resumo` + `query_evolucao` (view `dashboard_competencia_evolucao`) | Cálculo live (`build_summary`) |
+
+- Filtros de data no summary são normalizados para competência `YYYY-MM` (`_normalize_competencia_bound`).
+- Contrato `data` **inalterado** — só muda latência (~ms vs ~1s+).
+- Views SQL: migration **V020**; modelo instância N:N setores: **V019**.
+
 ---
 
 ## 4. Playbook 18 — checklist de compatibilidade
@@ -164,7 +177,8 @@ Uma linha por **instância operacional**; `id` = `instancia_id` (UUID); incluir 
 | Superfície | Observação |
 |------------|------------|
 | CRUD `/transformometro/processos`, dashboard nativo | Plugin Transformômetro only |
-| Snapshot chat | `GET /transformometro/dashboard/snapshot/*` — agente via OpenAPI TM; contrato próprio |
+| Snapshot chat / dashboard | `GET /transformometro/dashboard/snapshot/*` — agente via OpenAPI TM; contrato próprio |
+| Instâncias operacionais (cache) | `GET /transformometro/dashboard/snapshot/instancias` — view `instancia_operacional_snapshot` |
 
 ---
 

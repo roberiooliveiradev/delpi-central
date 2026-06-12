@@ -18,10 +18,12 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 | **S8 — Duplicar instância** | V018 | `POST /instancias/{id}/duplicar`; depreca `POST /processos/{id}/duplicar` |
 | **S9 — Integração api-delpi** | — | Listagem por instância (`id` = `instancia_id`); backup `filiais` + `processo_instancias` |
 | **S10 — RBAC filial** | — | `FilialAccessScopeService`, permissões escopadas, filtro server-side |
+| **S11 — Instância × N setores** | V019 | Junction `processo_instancia_setores`; instância = processo × filial ou `todas_filiais_ativas`; CRUD filiais/instâncias no MFE |
+| **S12 — Leitura rápida (cache/views)** | V020 | Views SQL + rotas snapshot; Transforma+ S2S lê `dashboard_calculos` quando populado |
 
 ## Migrations disponíveis
 
-V001–V010 (legado) · **V011–V018** (Playbook 18 S1–S8)
+V001–V010 (legado) · **V011–V020** (Playbook 18 S1–S12)
 
 Ver [migrations/README.md](../migrations/README.md).
 
@@ -39,6 +41,20 @@ Módulo canônico: `tm_app/domain/services/dashboard_cache_denorm_service.py` ·
 **Pós-V017:** executar recalc full (`POST /dashboard/recalc` ou job interno) — a migration trunca o cache.
 
 View `processo_competencia_snapshot` usa `codigo_*` como `filial_id`/`setor_id` expostos (compat MFE).
+
+### Views de integração (V020)
+
+| View | Uso |
+|------|-----|
+| `dashboard_competencia_evolucao` | Evolução mensal agregada (base de `query_evolucao`) |
+| `instancia_operacional_snapshot` | Uma linha por instância com economia diária, payback e implantação (última competência materializada) |
+
+Rotas snapshot:
+
+- `GET /transformometro/dashboard/snapshot/instancias` — leitura via view acima
+- Metadados em `GET /transformometro/dashboard/snapshot/meta` (`evolucao_view`, `instancia_view`)
+
+**Pós-V020:** exige V019 aplicada (`todas_filiais_ativas` em `processo_instancias`). Recalcular cache após migrations.
 
 ## Visões analíticas (`view`)
 
@@ -59,14 +75,33 @@ Inferência legada: só `filial_id` → filial; `filial_id` + `setor_id` → dep
 - **V018:** unique `(instancia_id, versao_revisao)`; `chave_unica_processo_revisao` = `{instancia_id}|{versao}`.
 - **Legado:** `POST /processos/{id}/duplicar` mantido com header `Deprecation` e campo `deprecated` na resposta.
 
-## Integração Transforma+ (S9)
+## Integração Transforma+ (S9 + S12)
 
 - **Listagem S2S:** uma linha por instância operacional; `id` = `instancia_id` (UUID).
 - **Campos aditivos em `items[]`:** `processo_id`, `instancia_id`, `codigo_processo` (paridade api-delpi).
 - **Filtro `id`:** aceita UUID de instância, `processo_id` ou `codigo_processo`.
-- **Backup JSON 1.1:** bundles `filiais` e `processo_instancias` no export/import.
+- **Backup JSON 1.1:** bundles `filiais`, `processo_instancias` e `processo_instancia_setores` no export/import.
+- **Leitura rápida (S12):** com `dashboard_calculos` populado, `EngineeringTransformaMaisService` lê cache/views em vez de `load_raw()` + cálculo live (~1s+). Fallback live se cache vazio.
 
-Módulo canônico: `tm_app/application/integrations/engineering_transforma_mais.py`.
+Módulo canônico: `tm_app/application/integrations/engineering_transforma_mais.py` · repositório `DashboardCalculoRepository.query_instancias_operacionais` / `query_resumo` / `query_evolucao`.
+
+## Instância × N setores (S11 — V019)
+
+| Conceito | Regra |
+|----------|-------|
+| Instância | `(processo_id, filial_id)` **ou** `todas_filiais_ativas = true` (filial nullable) |
+| Setores | N:N em `processo_instancia_setores` |
+| Revisões | Timeline na **instância** (compartilhada entre setores amarrados) |
+| Consolidação legado | Duplicatas `(processo, filial)` mescladas; `MIN(instancia_id::text)::uuid` escolhe canônica |
+
+Rotas CRUD adicionais:
+
+| Método | Rota | Notas |
+|--------|------|-------|
+| PUT/DELETE | `/transformometro/instancias/{id}` | Atualiza setores, filial, rótulo, status |
+| GET/POST/PUT/DELETE | `/transformometro/filiais` | CRUD filial (MFE `FiliaisPage`) |
+
+Módulo canônico: `ProcessoInstanciaRepository` · junction sync em `_sync_setores`.
 
 ## RBAC por filial (S10)
 
@@ -104,8 +139,9 @@ Campo exposto em `GET /options` (`escopo_recurso`) e CRUD `/recursos-compartilha
 |--------|------|-------|
 | GET/POST | `/transformometro/filiais` | CRUD filial |
 | GET/PUT/DELETE | `/transformometro/filiais/{id}` | Aceita UUID ou `codigo_filial` |
-| GET/POST | `/transformometro/processos/{id}/instancias` | Par operacional `(filial × setor)` |
-| GET | `/transformometro/instancias/{id}` | Detalhe com `codigo_filial`, `codigo_setor` |
+| GET/POST | `/transformometro/processos/{id}/instancias` | Instância operacional (filial + N setores) |
+| GET | `/transformometro/instancias/{id}` | Detalhe com `codigo_filial`, setores[] |
+| PUT/DELETE | `/transformometro/instancias/{id}` | Editar setores/filial ou soft-delete (S11) |
 | POST | `/transformometro/instancias/{id}/duplicar` | Copia timeline para outro par filial × setor (S8) |
 | POST | `/transformometro/processos` | Corpo ainda aceita `filial_id`/`setor_id` → cria **instância** |
 | POST | `/transformometro/processos/{id}/duplicar` | **Deprecado** — header `Deprecation: true` |
@@ -125,6 +161,7 @@ set -a && source ../infra/.env && set +a
 python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transformometro-cadastro-YYYYMMDD.json
 # Após V017: recalcular cache dashboard (full)
+# Após V019–V020: recalcular cache (views dependem de dashboard_calculos)
 ```
 
 ## Próximo (pós-Playbook 18)
@@ -143,14 +180,15 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 | [ARCHITECTURE](../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE.md) | Diagramas, rotas, RBAC, MFE |
 | [regras-de-calculo.md](regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões |
 | [OPERATIONS](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) | Runbook deploy e troubleshooting |
-| [migrations/README.md](../migrations/README.md) | V001–V018 |
+| [migrations/README.md](../migrations/README.md) | V001–V020 |
 
 ## MFE Playbook §9 (jun/2026)
 
 | Entrega | Status |
 |---------|--------|
 | Formulário mestre sem `filial_id`/`setor_id` no edit | ✅ `ProcessoFormFields` + `ProcessoUpdateBody` |
-| Painel instâncias + replicar timeline | ✅ `ProcessoInstanciasPanel` |
+| Painel instâncias + replicar timeline | ✅ `ProcessoInstanciasPanel` (multi-setor, editar/excluir) |
+| Página Filiais (CRUD) | ✅ `FiliaisPage` + rota `/filiais` |
 | URL canônica revisão + redirect legado | ✅ `routeParser` + `ProcessoDetailPage` |
 | Dashboard toggle visão (`view`) + `access_scope` | ✅ `DashboardPage` + `dashboardViewScope.ts` |
 | Tipos/API instância, `Revisao.instancia_id` | ✅ `transformometroApi.ts` |
