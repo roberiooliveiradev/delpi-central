@@ -11,7 +11,10 @@ export const DEFAULT_TABLE_PAGE_SIZE = 20;
 type DataTableSectionProps<T> = {
   title: string;
   hint?: string;
+  /** Sobrescreve o badge automático de contagem. */
   badge?: ReactNode;
+  /** Sufixo do badge automático quando `badge` não é informado. Padrão: registro(s). */
+  countBadgeLabel?: string;
   actions?: ReactNode;
   toolbar?: ReactNode;
   columns: DataTableColumn<T>[];
@@ -35,6 +38,7 @@ export function DataTableSection<T>({
   title,
   hint,
   badge,
+  countBadgeLabel = "registro(s)",
   actions,
   toolbar,
   columns,
@@ -86,6 +90,8 @@ export function DataTableSection<T>({
   const handlePageChange =
     serverMode?.onPageChange ?? ((nextPage: number) => clientPagination.setPage(nextPage));
 
+  const resolvedBadge = badge ?? `${paginationTotal} ${countBadgeLabel}`;
+
   useEffect(() => {
     if (!serverMode) {
       clientPagination.setPage(1);
@@ -117,7 +123,7 @@ export function DataTableSection<T>({
           {hint ? <p className="dm-section-header__hint">{hint}</p> : null}
         </div>
         <div className="dm-section-header__meta">
-          {badge ? <span className="dm-badge">{badge}</span> : null}
+          <span className="dm-badge">{resolvedBadge}</span>
           {actions}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { maintenanceFetch } from "./maintenanceApiBase";
-import { appendListQuery, type ListQueryFilters, type ListQueryParams } from "../../utils/listQuery";
+import { appendListQuery, MAX_LIST_PAGE_SIZE, type ListQueryFilters, type ListQueryParams } from "../../utils/listQuery";
 
 export type FerramentaItem = {
   id: number;
@@ -204,7 +204,11 @@ export function fetchPreventivaHistorico(
   );
 }
 
-export type MotivoItem = { motivo_id: number; descricao: string };
+export type MotivoItem = {
+  motivo_id: number;
+  descricao: string;
+  excluir_preventiva?: boolean;
+};
 
 export type StatusItem = {
   status_id: number;
@@ -254,6 +258,7 @@ export function fetchReposicoes(
     filial: string;
     codigo_ferramenta: string;
     codigo_peca?: string;
+    motivo_id?: number;
   } & ListQueryParams,
   getAccessToken?: () => string | undefined,
 ) {
@@ -262,6 +267,7 @@ export function fetchReposicoes(
     codigo_ferramenta: params.codigo_ferramenta,
   });
   if (params.codigo_peca) search.set("codigo_peca", params.codigo_peca);
+  if (params.motivo_id) search.set("motivo_id", String(params.motivo_id));
   appendListQuery(search, {
     page: params.page,
     pageSize: params.pageSize,
@@ -271,6 +277,47 @@ export function fetchReposicoes(
   return maintenanceFetch<PagedItems<ReposicaoItem>>(`/reposicoes?${search.toString()}`, {
     getAccessToken,
   });
+}
+
+export async function fetchAllReposicoes(
+  params: {
+    filial: string;
+    codigo_ferramenta: string;
+    codigo_peca?: string;
+    motivo_id?: number;
+    sortKey?: string | null;
+    sortDirection?: "asc" | "desc";
+    maxItems?: number;
+  },
+  getAccessToken?: () => string | undefined,
+): Promise<ReposicaoItem[]> {
+  const items: ReposicaoItem[] = [];
+  const maxItems = params.maxItems ?? Number.POSITIVE_INFINITY;
+  let page = 1;
+  let total = Number.POSITIVE_INFINITY;
+
+  while (items.length < total && items.length < maxItems) {
+    const data = await fetchReposicoes(
+      {
+        filial: params.filial,
+        codigo_ferramenta: params.codigo_ferramenta,
+        codigo_peca: params.codigo_peca,
+        motivo_id: params.motivo_id,
+        page,
+        pageSize: MAX_LIST_PAGE_SIZE,
+        sortKey: params.sortKey,
+        sortDirection: params.sortDirection,
+      },
+      getAccessToken,
+    );
+    total = data.total ?? 0;
+    const pageItems = data.items ?? [];
+    if (pageItems.length === 0) break;
+    items.push(...pageItems);
+    page += 1;
+  }
+
+  return items.slice(0, maxItems);
 }
 
 export function createReposicao(
@@ -327,11 +374,12 @@ export function createMotivo(
   filial: string,
   descricao: string,
   getAccessToken?: () => string | undefined,
+  excluirPreventiva = false,
 ) {
   return maintenanceFetch<MotivoItem>("/motivos", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ filial, descricao }),
+    body: JSON.stringify({ filial, descricao, excluir_preventiva: excluirPreventiva }),
     getAccessToken,
   });
 }
@@ -339,13 +387,13 @@ export function createMotivo(
 export function updateMotivo(
   motivoId: number,
   filial: string,
-  descricao: string,
+  payload: { descricao: string; excluir_preventiva?: boolean },
   getAccessToken?: () => string | undefined,
 ) {
   return maintenanceFetch<MotivoItem>(`/motivos/${motivoId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ filial, descricao }),
+    body: JSON.stringify({ filial, ...payload }),
     getAccessToken,
   });
 }

@@ -31,11 +31,13 @@ _SUBMODULE_ID = "mini-aplicadores"
 class MotivoCreateBody(BaseModel):
     filial: str = Field(min_length=2, max_length=2)
     descricao: str = Field(min_length=1, max_length=120)
+    excluir_preventiva: bool = False
 
 
 class MotivoUpdateBody(BaseModel):
     filial: str = Field(min_length=2, max_length=2)
     descricao: str = Field(min_length=1, max_length=120)
+    excluir_preventiva: bool | None = None
 
 
 class StatusUpdateBody(BaseModel):
@@ -91,7 +93,11 @@ def create_motivo(body: MotivoCreateBody, request: Request):
         assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    item = MotivoRepository().create(body.descricao, filial=body.filial)
+    item = MotivoRepository().create(
+        body.descricao,
+        filial=body.filial,
+        excluir_preventiva=body.excluir_preventiva,
+    )
     return ok(item, message="Motivo criado.", status_code=201)
 
 
@@ -103,7 +109,12 @@ def update_motivo(motivo_id: int, body: MotivoUpdateBody, request: Request):
         assert_submodule_manage(user, _SUBMODULE_ID, codigo_filial=body.filial, scope=scope)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    item = MotivoRepository().update(motivo_id, body.descricao, filial=body.filial)
+    item = MotivoRepository().update(
+        motivo_id,
+        filial=body.filial,
+        descricao=body.descricao,
+        excluir_preventiva=body.excluir_preventiva,
+    )
     if not item:
         return fail("Motivo não encontrado.", 404)
     return ok(item, message="Motivo atualizado.")
@@ -210,6 +221,7 @@ def list_reposicoes(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo_ferramenta: str = Query(...),
     codigo_peca: Optional[str] = Query(None),
+    motivo_id: Optional[int] = Query(None, ge=1),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -222,6 +234,7 @@ def list_reposicoes(
         filial=filial,
         codigo_ferramenta=codigo_ferramenta,
         codigo_peca=codigo_peca,
+        motivo_id=motivo_id,
         query=query,
     )
     return ok({"items": items, "total": total}, message="Reposições listadas.")

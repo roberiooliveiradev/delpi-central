@@ -5,5 +5,9 @@ type MaintenanceShellProps = {
 };
 
 export function MaintenanceShell({ children }: MaintenanceShellProps) {
-  return <div className="dashboard-maintenance dashboard-page dm-app-shell">{children}</div>;
+  return (
+    <div className="dashboard-maintenance dashboard-page dm-app-shell" lang="pt-BR">
+      {children}
+    </div>
+  );
 }

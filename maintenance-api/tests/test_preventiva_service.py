@@ -81,3 +81,29 @@ def test_listar_alertas_enriquece_descricoes():
 
     assert alertas[0]["descricao_ferramenta"] == "MINI APLICADOR"
     assert alertas[0]["descricao_peca"] == "GRAMPEADOR DO ISOLANTE"
+
+
+def test_listar_historico_exclui_motivos_marcados():
+    reposicao_repo = MagicMock()
+    reposicao_repo.list_preventiva_by_ferramenta.return_value = [
+        {
+            "reposicao_id": "abc",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+            "golpes": 80_000,
+        }
+    ]
+
+    service = PreventivaService(reposicao_repo=reposicao_repo, status_repo=MagicMock())
+    historico = service.listar_historico(
+        filial="01",
+        codigo_ferramenta="23-014",
+        codigo_peca="30190026",
+    )
+
+    reposicao_repo.list_preventiva_by_ferramenta.assert_called_once_with(
+        filial="01",
+        codigo_ferramenta="23-014",
+        codigo_peca="30190026",
+    )
+    assert len(historico) == 1
+    assert historico[0]["golpes"] == 80_000

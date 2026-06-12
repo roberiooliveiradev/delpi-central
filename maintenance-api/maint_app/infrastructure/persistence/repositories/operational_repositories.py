@@ -33,7 +33,7 @@ class MotivoRepository(PluginBaseRepository):
         where_sql = " AND ".join(where)
         order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "descricao")
         select_sql = f"""
-            SELECT motivo_id, descricao, filial
+            SELECT motivo_id, descricao, filial, excluir_preventiva
             FROM maintenance.motivos
             WHERE {where_sql}
             ORDER BY {order}
@@ -51,29 +51,53 @@ class MotivoRepository(PluginBaseRepository):
             page_size=query.page_size,
         )
 
-    def create(self, descricao: str, *, filial: str) -> dict[str, Any]:
+    def create(
+        self,
+        descricao: str,
+        *,
+        filial: str,
+        excluir_preventiva: bool = False,
+    ) -> dict[str, Any]:
         row = self.execute_returning_one(
             """
-            INSERT INTO maintenance.motivos (descricao, filial)
-            VALUES (%s, %s)
-            RETURNING motivo_id, descricao, filial
+            INSERT INTO maintenance.motivos (descricao, filial, excluir_preventiva)
+            VALUES (%s, %s, %s)
+            RETURNING motivo_id, descricao, filial, excluir_preventiva
             """,
-            (descricao.strip(), filial),
+            (descricao.strip(), filial, excluir_preventiva),
         )
         return row or {}
 
-    def update(self, motivo_id: int, descricao: str, *, filial: str) -> dict[str, Any] | None:
+    def update(
+        self,
+        motivo_id: int,
+        *,
+        filial: str,
+        descricao: str | None = None,
+        excluir_preventiva: bool | None = None,
+    ) -> dict[str, Any] | None:
+        fields: list[str] = ["data_alteracao = NOW()"]
+        params: list[Any] = []
+        if descricao is not None:
+            fields.append("descricao = %s")
+            params.append(descricao.strip())
+        if excluir_preventiva is not None:
+            fields.append("excluir_preventiva = %s")
+            params.append(excluir_preventiva)
+        if len(fields) == 1:
+            return None
+
+        params.extend([motivo_id, filial])
         return self.execute_returning_one(
-            """
+            f"""
             UPDATE maintenance.motivos
-            SET descricao = %s,
-                data_alteracao = NOW()
+            SET {", ".join(fields)}
             WHERE motivo_id = %s
               AND filial = %s
               AND excluido = FALSE
-            RETURNING motivo_id, descricao, filial
+            RETURNING motivo_id, descricao, filial, excluir_preventiva
             """,
-            (descricao.strip(), motivo_id, filial),
+            tuple(params),
         )
 
     def soft_delete(self, motivo_id: int, *, filial: str) -> bool:
@@ -212,6 +236,12 @@ class StatusPecaRepository(PluginBaseRepository):
 
 
 class ReposicaoRepository(PluginBaseRepository):
+    _PREVENTIVA_MOTIVO_JOIN = """
+        INNER JOIN maintenance.motivos m_preventiva
+            ON m_preventiva.motivo_id = r.motivo_id
+           AND m_preventiva.excluir_preventiva = FALSE
+    """
+
     _SORT_COLUMNS = {
         "data": "r.data_reposicao",
         "peca": "r.codigo_peca",
@@ -234,12 +264,46 @@ class ReposicaoRepository(PluginBaseRepository):
         )
         return rows
 
+    def list_preventiva_by_ferramenta(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        codigo_peca: str | None = None,
+    ) -> list[dict[str, Any]]:
+        where = [
+            "r.excluido = FALSE",
+            "r.filial = %s",
+            "r.codigo_ferramenta = %s",
+        ]
+        params: list[Any] = [filial, codigo_ferramenta]
+        if codigo_peca:
+            where.append("r.codigo_peca = %s")
+            params.append(codigo_peca)
+
+        where_sql = " AND ".join(where)
+        rows = self.fetch_all(
+            f"""
+            SELECT
+                r.reposicao_id,
+                r.data_reposicao,
+                r.golpes
+            FROM maintenance.reposicoes r
+            {self._PREVENTIVA_MOTIVO_JOIN}
+            WHERE {where_sql}
+            ORDER BY r.data_reposicao ASC
+            """,
+            tuple(params),
+        )
+        return rows
+
     def list_by_ferramenta_paged(
         self,
         *,
         filial: str,
         codigo_ferramenta: str,
         codigo_peca: str | None,
+        motivo_id: int | None = None,
         query: ListQuery,
     ) -> tuple[list[dict[str, Any]], int]:
         where = [
@@ -251,6 +315,9 @@ class ReposicaoRepository(PluginBaseRepository):
         if codigo_peca:
             where.append("r.codigo_peca = %s")
             params.append(codigo_peca)
+        if motivo_id is not None:
+            where.append("r.motivo_id = %s")
+            params.append(motivo_id)
 
         where_sql = " AND ".join(where)
         order = build_order_clause(query.sort_by, query.sort_dir, self._SORT_COLUMNS, "data")
@@ -410,14 +477,15 @@ class ReposicaoRepository(PluginBaseRepository):
         codigo_peca: str,
     ) -> list[int]:
         rows = self.fetch_all(
-            """
-            SELECT golpes
-            FROM maintenance.reposicoes
-            WHERE excluido = FALSE
-              AND filial = %s
-              AND codigo_ferramenta = %s
-              AND codigo_peca = %s
-            ORDER BY data_reposicao ASC
+            f"""
+            SELECT r.golpes
+            FROM maintenance.reposicoes r
+            {self._PREVENTIVA_MOTIVO_JOIN}
+            WHERE r.excluido = FALSE
+              AND r.filial = %s
+              AND r.codigo_ferramenta = %s
+              AND r.codigo_peca = %s
+            ORDER BY r.data_reposicao ASC
             """,
             (filial, codigo_ferramenta, codigo_peca),
         )
@@ -458,17 +526,18 @@ class ReposicaoRepository(PluginBaseRepository):
 
         base_cte = f"""
             WITH ultimas AS (
-                SELECT DISTINCT ON (filial, codigo_ferramenta, codigo_peca)
-                    reposicao_id,
-                    filial,
-                    codigo_ferramenta,
-                    codigo_peca,
-                    data_reposicao,
-                    golpes
-                FROM maintenance.reposicoes
-                WHERE excluido = FALSE
-                  AND filial = %s
-                ORDER BY filial, codigo_ferramenta, codigo_peca, data_reposicao DESC
+                SELECT DISTINCT ON (r.filial, r.codigo_ferramenta, r.codigo_peca)
+                    r.reposicao_id,
+                    r.filial,
+                    r.codigo_ferramenta,
+                    r.codigo_peca,
+                    r.data_reposicao,
+                    r.golpes
+                FROM maintenance.reposicoes r
+                {self._PREVENTIVA_MOTIVO_JOIN}
+                WHERE r.excluido = FALSE
+                  AND r.filial = %s
+                ORDER BY r.filial, r.codigo_ferramenta, r.codigo_peca, r.data_reposicao DESC
             )
         """
         params = (filial, *filter_params)
@@ -496,13 +565,14 @@ class ReposicaoRepository(PluginBaseRepository):
         codigo_peca: str,
     ) -> float:
         row = self.fetch_one(
-            """
-            SELECT COALESCE(AVG(golpes), 0) AS media
-            FROM maintenance.reposicoes
-            WHERE excluido = FALSE
-              AND filial = %s
-              AND codigo_ferramenta = %s
-              AND codigo_peca = %s
+            f"""
+            SELECT COALESCE(AVG(r.golpes), 0) AS media
+            FROM maintenance.reposicoes r
+            {self._PREVENTIVA_MOTIVO_JOIN}
+            WHERE r.excluido = FALSE
+              AND r.filial = %s
+              AND r.codigo_ferramenta = %s
+              AND r.codigo_peca = %s
             """,
             (filial, codigo_ferramenta, codigo_peca),
         )

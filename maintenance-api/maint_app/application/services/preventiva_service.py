@@ -99,7 +99,7 @@ class PreventivaService:
         codigo_ferramenta: str,
         codigo_peca: str,
     ) -> list[dict[str, Any]]:
-        rows = self._reposicao_repo.list_by_ferramenta(
+        rows = self._reposicao_repo.list_preventiva_by_ferramenta(
             filial=filial,
             codigo_ferramenta=codigo_ferramenta,
             codigo_peca=codigo_peca,

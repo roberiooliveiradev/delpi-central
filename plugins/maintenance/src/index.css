@@ -526,6 +526,23 @@
   box-sizing: border-box;
 }
 
+.dashboard-maintenance .dm-checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+  white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--dm-accent, #3b82f6);
+}
+
 .dashboard-maintenance .dm-form-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -565,6 +582,31 @@
 .dashboard-maintenance .dm-form-grid--reposicao .dm-form-grid__buttons {
   margin-left: 0;
   padding-top: 4px;
+}
+
+.dashboard-maintenance .dm-reposicao-form-card {
+  scroll-margin-top: 24px;
+  animation: dm-reposicao-form-in 0.32s ease-out;
+}
+
+@keyframes dm-reposicao-form-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-maintenance .dm-historico-anchor {
+  scroll-margin-top: 24px;
+}
+
+.dashboard-maintenance .dm-datetime-local {
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-maintenance .dm-reposicao-form-card .dm-section-header {
@@ -611,9 +653,10 @@
   box-sizing: border-box;
 }
 
-.dashboard-maintenance .dm-field--filter-peca {
-  flex: 1 1 320px;
-  min-width: min(100%, 280px);
+.dashboard-maintenance .dm-field--filter-peca,
+.dashboard-maintenance .dm-field--filter-motivo {
+  flex: 1 1 240px;
+  min-width: min(100%, 220px);
 }
 
 .dashboard-maintenance .dm-datatable__codigo-descricao {
@@ -754,6 +797,117 @@
 
 .dashboard-maintenance .dm-chart-section .dm-chart-wrap {
   margin-bottom: 0;
+}
+
+.dashboard-maintenance .dm-ferramenta-analytics {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--dm-grid-gap);
+  margin-bottom: var(--dm-section-gap);
+  align-items: stretch;
+}
+
+.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section {
+  margin-bottom: 0;
+  min-height: 100%;
+}
+
+.dashboard-maintenance .dm-indicadores-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+.dashboard-maintenance .dm-indicadores-card__empty,
+.dashboard-maintenance .dm-indicadores-card__highlight {
+  margin: 0;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-indicadores-card__highlight strong {
+  color: var(--dm-title);
+  font-weight: 600;
+}
+
+.dashboard-maintenance .dm-indicadores-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-maintenance .dm-indicadores-kpi {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--dm-card-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--dm-card-bg) 92%, var(--dm-accent) 8%);
+}
+
+.dashboard-maintenance .dm-indicadores-kpi .dm-kpi-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.dashboard-maintenance .dm-indicadores-breakdown {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-maintenance .dm-indicadores-breakdown__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dm-title);
+}
+
+.dashboard-maintenance .dm-indicadores-breakdown__title h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-maintenance .dm-motivo-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-maintenance .dm-motivo-stats__item {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-maintenance .dm-motivo-stats__label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}
+
+.dashboard-maintenance .dm-motivo-stats__label strong {
+  color: var(--dm-title);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-motivo-stats__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--dm-accent) 85%, white),
+    color-mix(in srgb, var(--dm-accent) 55%, transparent)
+  );
+  min-width: 4%;
 }
 
 .dashboard-maintenance .dm-table tr.is-selected {
@@ -1139,6 +1293,10 @@
 
   .dashboard-maintenance .dm-kpi-grid--report {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-maintenance .dm-ferramenta-analytics {
+    grid-template-columns: 1fr;
   }
 
   .dashboard-maintenance .dm-report-layout {

@@ -5,6 +5,9 @@ export type ListQueryParams = {
   sortDirection?: "asc" | "desc";
 };
 
+/** Limite máximo aceito pela maintenance-api (`list_query_params.page_size`). */
+export const MAX_LIST_PAGE_SIZE = 200;
+
 export type ListQueryFilters = Record<string, string | number | boolean | null | undefined>;
 
 export function appendListQuery(

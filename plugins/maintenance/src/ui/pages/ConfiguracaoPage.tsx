@@ -45,15 +45,31 @@ type NovoStatusDraft = {
   percentual: number;
 };
 
+type MotivoDraft = {
+  descricao: string;
+  excluir_preventiva: boolean;
+};
+
 const DEFAULT_NOVO_STATUS: NovoStatusDraft = {
   descricao: "",
   operador: ">=",
   percentual: 80,
 };
 
-function isMotivoDirty(item: MotivoItem, edits: Record<number, string>): boolean {
+function toMotivoDraft(item: MotivoItem): MotivoDraft {
+  return {
+    descricao: item.descricao,
+    excluir_preventiva: Boolean(item.excluir_preventiva),
+  };
+}
+
+function isMotivoDirty(item: MotivoItem, edits: Record<number, MotivoDraft>): boolean {
   const draft = edits[item.motivo_id];
-  return draft !== undefined && draft.trim() !== item.descricao;
+  if (!draft) return false;
+  return (
+    draft.descricao.trim() !== item.descricao ||
+    draft.excluir_preventiva !== Boolean(item.excluir_preventiva)
+  );
 }
 
 function isStatusDirty(item: StatusItem, edits: Record<number, StatusItem>): boolean {
@@ -87,8 +103,9 @@ export function ConfiguracaoPage({
   const [motivosLoading, setMotivosLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [novoMotivo, setNovoMotivo] = useState("");
+  const [novoMotivoExcluirPreventiva, setNovoMotivoExcluirPreventiva] = useState(false);
   const [novoStatus, setNovoStatus] = useState<NovoStatusDraft>(DEFAULT_NOVO_STATUS);
-  const [motivoEdits, setMotivoEdits] = useState<Record<number, string>>({});
+  const [motivoEdits, setMotivoEdits] = useState<Record<number, MotivoDraft>>({});
   const [statusEdits, setStatusEdits] = useState<Record<number, StatusItem>>({});
 
   const loadMotivos = useCallback(async () => {
@@ -113,7 +130,7 @@ export function ConfiguracaoPage({
         const next = { ...current };
         for (const item of motivoItems) {
           if (next[item.motivo_id] === undefined) {
-            next[item.motivo_id] = item.descricao;
+            next[item.motivo_id] = toMotivoDraft(item);
           }
         }
         return next;
@@ -183,8 +200,9 @@ export function ConfiguracaoPage({
     setError(null);
     setSuccess(null);
     try {
-      await createMotivo(filial, descricao, getAccessToken);
+      await createMotivo(filial, descricao, getAccessToken, novoMotivoExcluirPreventiva);
       setNovoMotivo("");
+      setNovoMotivoExcluirPreventiva(false);
       setSuccess("Motivo adicionado.");
       await loadData();
     } catch (err) {
@@ -193,12 +211,21 @@ export function ConfiguracaoPage({
   }
 
   async function handleSaveMotivo(motivoId: number) {
-    const descricao = (motivoEdits[motivoId] ?? "").trim();
+    const draft = motivoEdits[motivoId];
+    const descricao = (draft?.descricao ?? "").trim();
     if (!descricao) return;
     setError(null);
     setSuccess(null);
     try {
-      await updateMotivo(motivoId, filial, descricao, getAccessToken);
+      await updateMotivo(
+        motivoId,
+        filial,
+        {
+          descricao,
+          excluir_preventiva: draft?.excluir_preventiva ?? false,
+        },
+        getAccessToken,
+      );
       setSuccess("Motivo atualizado.");
       await loadData();
     } catch (err) {
@@ -293,16 +320,19 @@ export function ConfiguracaoPage({
         key: "descricao",
         header: "Descrição",
         sortable: true,
-        sortValue: (item) => motivoEdits[item.motivo_id] ?? item.descricao,
+        sortValue: (item) => motivoEdits[item.motivo_id]?.descricao ?? item.descricao,
         render: (item) =>
           canManageMiniApplicators ? (
             <div className="dm-editable-cell">
               <input
-                value={motivoEdits[item.motivo_id] ?? item.descricao}
+                value={motivoEdits[item.motivo_id]?.descricao ?? item.descricao}
                 onChange={(event) =>
                   setMotivoEdits((prev) => ({
                     ...prev,
-                    [item.motivo_id]: event.target.value,
+                    [item.motivo_id]: {
+                      ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                      descricao: event.target.value,
+                    },
                   }))
                 }
               />
@@ -311,6 +341,35 @@ export function ConfiguracaoPage({
           ) : (
             item.descricao
           ),
+      },
+      {
+        key: "excluir_preventiva",
+        header: "Ignora preventiva",
+        align: "center",
+        render: (item) => {
+          const draft = motivoEdits[item.motivo_id] ?? toMotivoDraft(item);
+          if (!canManageMiniApplicators) {
+            return draft.excluir_preventiva ? "Sim" : "Não";
+          }
+          return (
+            <label className="dm-checkbox-field">
+              <input
+                type="checkbox"
+                checked={draft.excluir_preventiva}
+                onChange={(event) =>
+                  setMotivoEdits((prev) => ({
+                    ...prev,
+                    [item.motivo_id]: {
+                      ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                      excluir_preventiva: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              <span>Não conta</span>
+            </label>
+          );
+        },
       },
     ];
 
@@ -469,7 +528,6 @@ export function ConfiguracaoPage({
 
       <DataTableSection
         title="Motivos de reposição"
-        badge={`${motivosTotal} registro(s)`}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded onSubmit={handleCreateMotivo}>
@@ -480,6 +538,14 @@ export function ConfiguracaoPage({
                   onChange={(event) => setNovoMotivo(event.target.value)}
                   placeholder="Ex.: DESGASTE"
                 />
+              </label>
+              <label className="dm-checkbox-field">
+                <input
+                  type="checkbox"
+                  checked={novoMotivoExcluirPreventiva}
+                  onChange={(event) => setNovoMotivoExcluirPreventiva(event.target.checked)}
+                />
+                <span>Não conta no preventivo</span>
               </label>
               <button type="submit" className="dm-primary-btn">
                 Adicionar
@@ -505,7 +571,6 @@ export function ConfiguracaoPage({
 
       <DataTableSection
         title="Status preventivo"
-        badge={`${statusTotal} registro(s)`}
         hint="Regras de classificação por percentual de uso vs. média histórica de golpes."
         toolbar={
           canManageMiniApplicators ? (

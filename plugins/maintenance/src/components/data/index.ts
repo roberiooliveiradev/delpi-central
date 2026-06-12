@@ -1,4 +1,5 @@
 export { ChartSection } from "./ChartSection";
+export { CodigoDescricaoCell } from "./CodigoDescricaoCell";
 export { DataTable } from "./DataTable";
 export { DataTableSection, DEFAULT_TABLE_PAGE_SIZE } from "./DataTableSection";
 export { Pagination } from "./Pagination";

@@ -272,7 +272,6 @@ export function FiliaisPage({
 
       <DataTableSection
         title="Catálogo de filiais"
-        badge={`${filiaisTotal} registro(s)`}
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={
           <FilterBar embedded onSubmit={handleCreate}>
