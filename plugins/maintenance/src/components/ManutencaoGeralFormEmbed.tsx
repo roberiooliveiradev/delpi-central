@@ -1,7 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { useGoogleEmbeddedForm } from "../hooks/useGoogleEmbeddedForm";
+
+const IFRAME_LOAD_TIMEOUT_MS = 20_000;
 
 type ManutencaoGeralFormEmbedProps = {
   formUrl: string;
@@ -29,6 +31,16 @@ export function ManutencaoGeralFormEmbed({
     pathname,
     onReloadIframe: reloadIframe,
   });
+
+  useEffect(() => {
+    if (iframeReady) return;
+
+    const timer = window.setTimeout(() => {
+      setIframeReady(true);
+    }, IFRAME_LOAD_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [iframeReady, iframeReloadKey]);
 
   function openFormInNewTab() {
     window.open(formUrl, "_blank", "noopener,noreferrer");

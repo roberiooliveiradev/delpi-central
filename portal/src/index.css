@@ -480,11 +480,15 @@ body:has(.app-shell) {
 /*
  * Manutenção geral (MFE): formulário Google em tela cheia na área do app.
  */
-html.maintenance-embed-active .main-area,
+html.maintenance-embed-active .main-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 html.maintenance-embed-active .content {
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
   overflow: hidden;
 }
 
@@ -492,24 +496,30 @@ html.maintenance-embed-active .content > .app-host,
 html.maintenance-embed-active .content > .app-host-federated {
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
+  height: auto;
 }
 
-html.maintenance-embed-active .app-host-federated.app-host--loading-shell,
-html.maintenance-embed-active .app-host-federated__mount,
-html.maintenance-embed-active .app-host-federated > div:not(.app-host-loading-screen):not(.app-host-federated-error):not(.app-host-federated-alt) {
+html.maintenance-embed-active .app-host-federated.app-host--loading-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+html.maintenance-embed-active .app-host-federated__mount {
+  position: relative;
   flex: 1 1 auto;
   width: 100%;
   max-width: none;
   min-width: 0;
-  height: 100% !important;
-  min-height: 0 !important;
+  min-height: 0;
+  height: auto !important;
   overflow: hidden;
 }
 
 html.maintenance-embed-active .app-host-federated__mount.is-ready,
 html.maintenance-embed-active .app-host-federated__mount.is-loading {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /*
