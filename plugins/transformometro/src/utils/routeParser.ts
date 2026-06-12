@@ -12,8 +12,10 @@ export type TransformometroView =
 export type ParsedTransformometroRoute = {
   view: TransformometroView;
   processoId?: string;
+  instanciaId?: string;
   revisaoId?: string;
   recursoId?: string;
+  legacyRevisaoPath?: boolean;
 };
 
 export function normalizeTransformometroPath(pathname: string): string {
@@ -27,14 +29,38 @@ export function normalizeTransformometroPath(pathname: string): string {
 export function parseTransformometroPath(pathname: string): ParsedTransformometroRoute {
   const path = normalizeTransformometroPath(pathname);
 
-  const revisaoMatch = path.match(
-    /^\/apps\/transformometro\/processos\/([^/]+)\/revisoes\/([^/]+)$/
+  const canonicalRevisaoMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/instancias\/([^/]+)\/revisoes\/([^/]+)$/
   );
-  if (revisaoMatch) {
+  if (canonicalRevisaoMatch) {
     return {
       view: "processo",
-      processoId: revisaoMatch[1],
-      revisaoId: revisaoMatch[2],
+      processoId: canonicalRevisaoMatch[1],
+      instanciaId: canonicalRevisaoMatch[2],
+      revisaoId: canonicalRevisaoMatch[3],
+    };
+  }
+
+  const legacyRevisaoMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/revisoes\/([^/]+)$/
+  );
+  if (legacyRevisaoMatch) {
+    return {
+      view: "processo",
+      processoId: legacyRevisaoMatch[1],
+      revisaoId: legacyRevisaoMatch[2],
+      legacyRevisaoPath: true,
+    };
+  }
+
+  const instanciaMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/instancias\/([^/]+)$/
+  );
+  if (instanciaMatch) {
+    return {
+      view: "processo",
+      processoId: instanciaMatch[1],
+      instanciaId: instanciaMatch[2],
     };
   }
 
@@ -75,12 +101,22 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
   return { view: "dashboard" };
 }
 
-export function buildProcessoPath(processoId: string, revisaoId?: string | null): string {
-  const base = `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`;
-  if (revisaoId) {
-    return `${base}/revisoes/${revisaoId}`;
+export function buildInstanciaPath(processoId: string, instanciaId: string): string {
+  return `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}/instancias/${instanciaId}`;
+}
+
+export function buildProcessoPath(
+  processoId: string,
+  revisaoId?: string | null,
+  instanciaId?: string | null
+): string {
+  if (revisaoId && instanciaId) {
+    return `${buildInstanciaPath(processoId, instanciaId)}/revisoes/${revisaoId}`;
   }
-  return base;
+  if (instanciaId) {
+    return buildInstanciaPath(processoId, instanciaId);
+  }
+  return `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`;
 }
 
 export function buildRecursoPath(recursoId: string): string {

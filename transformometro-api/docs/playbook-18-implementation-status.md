@@ -127,11 +127,24 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V017: recalcular cache dashboard (full)
 ```
 
-## Próximo (S10+)
+## Próximo (pós-Playbook 18 API)
 
-| Sprint | Foco |
+| Item | Foco |
 |--------|------|
-| **MFE Playbook §9** | Toggle dashboard, tipos UUID, rotas instância |
+| **Docs modelo** | Atualizar `PLAYBOOK-MODELAGEM.md`, `ARCHITECTURE.md`, `regras-de-calculo.md` conforme §9 do playbook |
+
+## MFE Playbook §9 (jun/2026)
+
+| Entrega | Status |
+|---------|--------|
+| Formulário mestre sem `filial_id`/`setor_id` no edit | ✅ `ProcessoFormFields` + `ProcessoUpdateBody` |
+| Painel instâncias + replicar timeline | ✅ `ProcessoInstanciasPanel` |
+| URL canônica revisão + redirect legado | ✅ `routeParser` + `ProcessoDetailPage` |
+| Dashboard toggle visão (`view`) + `access_scope` | ✅ `DashboardPage` + `dashboardViewScope.ts` |
+| Tipos/API instância, `Revisao.instancia_id` | ✅ `transformometroApi.ts` |
+| Create processo com primeira instância | ✅ `createPayloadFromProcessoForm` |
+
+Módulos: `plugins/transformometro/src/utils/dashboardViewScope.ts`, `ProcessoInstanciasPanel.tsx`, `routeParser.ts`.
 
 ## Testes
 

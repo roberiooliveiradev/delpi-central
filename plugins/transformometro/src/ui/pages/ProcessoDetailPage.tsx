@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -16,24 +16,29 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRevisao,
+  createProcessoInstancia,
   deleteProcesso,
   deleteRevisao,
-  duplicateProcesso,
+  duplicateInstancia,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
+  fetchProcessoInstancias,
   fetchRevisoes,
   updateProcesso,
   type OptionsData,
   type Processo,
   type ProcessoComparativoItem,
+  type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
+import { buildProcessoPath } from "../../utils/routeParser";
 import { setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
+import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import {
-  payloadFromProcessoForm,
+  masterPayloadFromProcessoForm,
   processoFormFromEntity,
   type ProcessoFormState,
 } from "../processos/processoForm";
@@ -43,23 +48,27 @@ const formatNumber = (value?: number | null) => Number(value ?? 0).toLocaleStrin
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
+  instanciaId?: string | null;
   revisaoId?: string | null;
+  legacyRevisaoPath?: boolean;
   pathname?: string;
   onNavigate: (path: string) => void;
-  onRevisaoChange: (revisaoId: string | null) => void;
   onBack: () => void;
 };
 
 export function ProcessoDetailPage({
   getAccessToken,
   processoId,
+  instanciaId = null,
   revisaoId = null,
+  legacyRevisaoPath = false,
   pathname,
   onNavigate,
-  onRevisaoChange,
   onBack,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
+  const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
+  const [selectedInstanciaId, setSelectedInstanciaId] = useState<string | null>(instanciaId);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,27 +96,70 @@ export function ProcessoDetailPage({
     setRefreshing(true);
     setError(null);
     try {
-      const [proc, revs, opts, comp] = await Promise.all([
+      const [proc, revs, opts, comp, inst] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
         fetchProcessoComparativo(processoId, getAccessToken),
+        fetchProcessoInstancias(processoId, getAccessToken),
       ]);
       setProcesso(proc);
       setRevisoes(revs.items);
       setOptions(opts);
       setComparativo(comp.items);
+      setInstancias(inst.items);
+      setSelectedInstanciaId((current) => {
+        if (instanciaId && inst.items.some((row) => row.instancia_id === instanciaId)) {
+          return instanciaId;
+        }
+        if (current && inst.items.some((row) => row.instancia_id === current)) {
+          return current;
+        }
+        return inst.items[0]?.instancia_id ?? null;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getAccessToken, processoId]);
+  }, [getAccessToken, instanciaId, processoId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const selectedInstancia = useMemo(
+    () => instancias.find((row) => row.instancia_id === selectedInstanciaId) ?? null,
+    [instancias, selectedInstanciaId]
+  );
+
+  const revisoesFiltradas = useMemo(() => {
+    if (!selectedInstanciaId) return revisoes;
+    return revisoes.filter((row) => row.instancia_id === selectedInstanciaId);
+  }, [revisoes, selectedInstanciaId]);
+
+  useEffect(() => {
+    if (!legacyRevisaoPath || !revisaoId || revisoes.length === 0) return;
+    const revisao = revisoes.find((row) => row.revisao_id === revisaoId);
+    const targetInstancia = revisao?.instancia_id ?? selectedInstanciaId;
+    if (targetInstancia) {
+      onNavigate(buildProcessoPath(processoId, revisaoId, targetInstancia));
+    }
+  }, [legacyRevisaoPath, onNavigate, processoId, revisaoId, revisoes, selectedInstanciaId]);
+
+  function navigateRevisao(nextRevisaoId: string | null) {
+    if (!selectedInstanciaId) {
+      onNavigate(buildProcessoPath(processoId));
+      return;
+    }
+    onNavigate(buildProcessoPath(processoId, nextRevisaoId, selectedInstanciaId));
+  }
+
+  function navigateInstancia(nextInstanciaId: string) {
+    setSelectedInstanciaId(nextInstanciaId);
+    onNavigate(buildProcessoPath(processoId, null, nextInstanciaId));
+  }
 
   function startEditProcesso() {
     if (!processo) return;
@@ -138,7 +190,7 @@ export function ProcessoDetailPage({
     try {
       const updated = await updateProcesso(
         processoId,
-        payloadFromProcessoForm(processoForm),
+        masterPayloadFromProcessoForm(processoForm),
         getAccessToken
       );
       setProcesso(updated);
@@ -147,25 +199,6 @@ export function ProcessoDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
     } finally {
       setSavingProcesso(false);
-    }
-  }
-
-  async function handleDuplicateProcesso() {
-    if (!processo) return;
-    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
-    if (
-      !window.confirm(
-        `Duplicar ${label}? Serão copiadas todas as revisões, medições, investimentos e vínculos de recursos.`
-      )
-    ) {
-      return;
-    }
-    setError(null);
-    try {
-      const result = await duplicateProcesso(processoId, undefined, getAccessToken);
-      onNavigate(`/processos/${result.processo.processo_id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
     }
   }
 
@@ -190,7 +223,7 @@ export function ProcessoDetailPage({
     setError(null);
     try {
       await deleteRevisao(revisao.revisao_id, getAccessToken);
-      if (revisaoId === revisao.revisao_id) onRevisaoChange(null);
+      if (revisaoId === revisao.revisao_id) navigateRevisao(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir revisão");
@@ -199,11 +232,16 @@ export function ProcessoDetailPage({
 
   async function handleCreateRevisao(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedInstanciaId) {
+      setError("Selecione uma instância operacional antes de criar revisão.");
+      return;
+    }
     setError(null);
     try {
       await createRevisao(
         {
           processo_id: processoId,
+          instancia_id: selectedInstanciaId,
           versao_revisao: revForm.versao_revisao,
           cenario_tipo: revForm.cenario_tipo,
           data_inicio_vigencia: revForm.data_inicio_vigencia,
@@ -220,7 +258,7 @@ export function ProcessoDetailPage({
     }
   }
 
-  const selectedRevisao = revisoes.find((r) => r.revisao_id === revisaoId);
+  const selectedRevisao = revisoesFiltradas.find((r) => r.revisao_id === revisaoId);
 
   const comparativoColumns = useMemo<DataTableColumn<ProcessoComparativoItem>[]>(
     () => [
@@ -302,7 +340,7 @@ export function ProcessoDetailPage({
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <button type="button" className="ds-ghost-btn" onClick={() => onRevisaoChange(r.revisao_id)}>
+            <button type="button" className="ds-ghost-btn" onClick={() => navigateRevisao(r.revisao_id)}>
               Abrir
             </button>
             <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRevisao(r)}>
@@ -312,7 +350,7 @@ export function ProcessoDetailPage({
         ),
       },
     ],
-    [onRevisaoChange]
+    [navigateRevisao]
   );
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
@@ -356,8 +394,11 @@ export function ProcessoDetailPage({
       <PageHeader
         title={`${processo.codigo_processo} — ${processo.nome_processo}`}
         subtitle={[
-          `Filial ${processo.filial_id}`,
-          setorLabel(options?.setores, processo.setor_id),
+          selectedInstancia
+            ? `Instância ${selectedInstancia.codigo_filial ?? selectedInstancia.filial_id} · ${selectedInstancia.codigo_setor ?? selectedInstancia.setor_id}`
+            : processo.filial_id
+              ? `Filial ${processo.filial_id} · ${setorLabel(options?.setores, processo.setor_id)}`
+              : null,
           processo.status_processo,
           processo.familia_processo ? `família ${processo.familia_processo}` : null,
           processo.agrupador_ferramenta ? processo.agrupador_ferramenta : null,
@@ -376,11 +417,7 @@ export function ProcessoDetailPage({
             </button>
             <button type="button" className="ds-ghost-btn" disabled={editingProcesso} onClick={startEditProcesso}>
               <Pencil size={16} />
-              Editar processo
-            </button>
-            <button type="button" className="ds-ghost-btn" disabled={refreshing} onClick={() => void handleDuplicateProcesso()}>
-              <Copy size={16} />
-              Duplicar
+              Editar mestre
             </button>
             <button type="button" className="ds-ghost-btn" disabled={refreshing} onClick={() => void handleDeleteProcesso()}>
               <Trash2 size={16} />
@@ -404,6 +441,7 @@ export function ProcessoDetailPage({
               form={processoForm}
               options={options}
               codigoProcesso={processo.codigo_processo}
+              showInstanciaFields={false}
               onChange={setProcessoForm}
             />
             <div className="ds-cadastro-form__actions">
@@ -429,9 +467,11 @@ export function ProcessoDetailPage({
               <dd>{processo.status_processo}</dd>
             </div>
             <div>
-              <dt>Filial / setor</dt>
+              <dt>Instância ativa</dt>
               <dd>
-                {processo.filial_id} · {setorLabel(options?.setores, processo.setor_id)}
+                {selectedInstancia
+                  ? `${selectedInstancia.codigo_filial ?? selectedInstancia.filial_id} · ${selectedInstancia.codigo_setor ?? selectedInstancia.setor_id}`
+                  : `${processo.filial_id} · ${setorLabel(options?.setores, processo.setor_id)}`}
               </dd>
             </div>
             {processo.familia_processo ? (
@@ -539,6 +579,24 @@ export function ProcessoDetailPage({
         </section>
       ) : null}
 
+      {options ? (
+        <ProcessoInstanciasPanel
+          instancias={instancias}
+          selectedInstanciaId={selectedInstanciaId}
+          options={options}
+          busy={refreshing}
+          onSelect={navigateInstancia}
+          onCreate={async (payload) => {
+            await createProcessoInstancia(processoId, payload, getAccessToken);
+            await load();
+          }}
+          onDuplicate={async ({ origemInstanciaId, ...payload }) => {
+            await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
+            await load();
+          }}
+        />
+      ) : null}
+
       {comparativo.length > 0 ? (
         <DataTableSection
           title="Comparativo de revisões"
@@ -552,14 +610,14 @@ export function ProcessoDetailPage({
       ) : null}
 
       <DataTableSection
-        title={`Revisões (${revisoes.length})`}
+        title={`Revisões (${revisoesFiltradas.length})`}
         columns={revisaoColumns}
-        rows={revisoes}
+        rows={revisoesFiltradas}
         rowKey={(r) => r.revisao_id}
         hideSearch
         pageSize={10}
-        emptyMessage="Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia."
-        onRowClick={(r) => onRevisaoChange(revisaoId === r.revisao_id ? null : r.revisao_id)}
+        emptyMessage="Nenhuma revisão nesta instância. Cadastre baseline e melhoria para mensurar economia."
+        onRowClick={(r) => navigateRevisao(revisaoId === r.revisao_id ? null : r.revisao_id)}
         getRowClassName={(r) => revisaoId === r.revisao_id ? "ds-table__row--selected" : undefined}
         footer={
           <p className="ds-hint">
@@ -576,7 +634,7 @@ export function ProcessoDetailPage({
           onError={setError}
           onRevisaoUpdated={load}
           onRevisaoDeleted={() => {
-            onRevisaoChange(null);
+            navigateRevisao(null);
             void load();
           }}
         />

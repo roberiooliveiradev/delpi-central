@@ -18,8 +18,15 @@ class ProcessoCreateBody(BaseModel):
     agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
 
 
-class ProcessoUpdateBody(ProcessoCreateBody):
-    pass
+class ProcessoUpdateBody(BaseModel):
+    nome_processo: str = Field(min_length=1, max_length=500)
+    status_processo: str = Field(min_length=1, max_length=32)
+    descricao_processo: Optional[str] = None
+    gestor_responsavel: Optional[str] = None
+    objetivo_processo: Optional[str] = None
+    codigo_processo: Optional[str] = None
+    familia_processo: Optional[str] = Field(default=None, max_length=64)
+    agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
 
 
 class ProcessoDuplicateBody(BaseModel):
@@ -45,6 +52,7 @@ class InstanciaBody(BaseModel):
 
 class RevisaoBody(BaseModel):
     processo_id: str
+    instancia_id: Optional[str] = None
     versao_revisao: str = Field(min_length=1, max_length=32)
     cenario_tipo: str
     data_inicio_vigencia: str

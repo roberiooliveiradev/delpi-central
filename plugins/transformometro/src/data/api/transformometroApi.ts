@@ -100,6 +100,7 @@ export type Processo = {
 export type Revisao = {
   revisao_id: string;
   processo_id: string;
+  instancia_id?: string;
   versao_revisao: string;
   cenario_tipo: string;
   data_inicio_vigencia: string;
@@ -118,18 +119,51 @@ export type SetorOption = {
   id: string;
   label: string;
   filiais: string[];
+  setor_id?: string;
+  codigo_setor?: string;
 };
+
+export type FilialOption = {
+  id: string;
+  label: string;
+  filial_id?: string;
+  codigo_filial?: string;
+};
+
+export type AccessScope = {
+  mode: "unrestricted" | "scoped";
+  allowed_filiais: string[];
+  can_view_consolidated: boolean;
+  scoped_manage?: boolean;
+};
+
+export type DashboardViewMode = "consolidated" | "filial" | "department";
 
 export type Setor = {
   setor_id: string;
+  codigo_setor?: string;
   nome_setor: string;
   status_setor: string;
   filiais: string[];
 };
 
+export type ProcessoInstancia = {
+  instancia_id: string;
+  processo_id: string;
+  filial_id: string;
+  setor_id: string;
+  codigo_filial?: string;
+  codigo_setor?: string;
+  nome_filial?: string;
+  nome_setor?: string;
+  rotulo_instancia?: string | null;
+  status_instancia?: string;
+};
+
 export type OptionsData = {
-  filiais: { id: string; label: string }[];
+  filiais: FilialOption[];
   setores: SetorOption[];
+  access_scope?: AccessScope;
   status_setor: string[];
   status_processo: string[];
   cenario_tipo: string[];
@@ -137,6 +171,7 @@ export type OptionsData = {
   criterio_rateio: string[];
   base_competencia_recurso?: string[];
   status_recurso: string[];
+  escopo_recurso?: string[];
   tipo_investimento: string[];
   tipo_custo: string[];
   categorias: string[];
@@ -232,6 +267,57 @@ export function deleteProcesso(
   return request<null>(`/processos/${processoId}`, getAccessToken, { method: "DELETE" });
 }
 
+export function fetchProcessoInstancias(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<{ total: number; items: ProcessoInstancia[] }>(
+    `/processos/${processoId}/instancias`,
+    getAccessToken
+  );
+}
+
+export function fetchInstancia(
+  instanciaId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<ProcessoInstancia>(`/instancias/${instanciaId}`, getAccessToken);
+}
+
+export function createProcessoInstancia(
+  processoId: string,
+  payload: { filial_id: string; setor_id: string; rotulo_instancia?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<ProcessoInstancia>(`/processos/${processoId}/instancias`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export type InstanciaDuplicateResult = {
+  instancia: ProcessoInstancia;
+  processo_id: string;
+  origem_instancia_id: string;
+  copiados: {
+    revisoes: number;
+    medicoes: number;
+    investimentos: number;
+    vinculos: number;
+  };
+};
+
+export function duplicateInstancia(
+  instanciaId: string,
+  payload: { filial_id: string; setor_id: string; rotulo_instancia?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<InstanciaDuplicateResult>(`/instancias/${instanciaId}/duplicar`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export type ProcessoDuplicateResult = {
   processo: Processo;
   origem_processo_id: string;
@@ -265,7 +351,13 @@ export function fetchRevisoes(
 }
 
 export function createRevisao(
-  payload: Partial<Revisao>,
+  payload: Partial<Revisao> & {
+    processo_id: string;
+    versao_revisao: string;
+    cenario_tipo: string;
+    data_inicio_vigencia: string;
+    instancia_id?: string;
+  },
   getAccessToken?: () => string | undefined
 ) {
   return request<Revisao>("/revisoes", getAccessToken, {

@@ -22,8 +22,9 @@ import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { filterSetoresByFilial, setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
+  createPayloadFromProcessoForm,
   emptyProcessoForm,
-  payloadFromProcessoForm,
+  masterPayloadFromProcessoForm,
   processoFormFromEntity,
   type ProcessoFormState,
 } from "../processos/processoForm";
@@ -110,7 +111,9 @@ export function ProcessosPage({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const payload = payloadFromProcessoForm(form);
+    const payload = editingId
+      ? masterPayloadFromProcessoForm(form)
+      : createPayloadFromProcessoForm(form);
     try {
       if (editingId) {
         await updateProcesso(editingId, payload, getAccessToken);
@@ -270,6 +273,7 @@ export function ProcessosPage({
               form={form}
               options={options}
               codigoProcesso={editingRow?.codigo_processo}
+              showInstanciaFields={!editingId}
               onChange={setForm}
             />
             <div className="ds-cadastro-form__actions">

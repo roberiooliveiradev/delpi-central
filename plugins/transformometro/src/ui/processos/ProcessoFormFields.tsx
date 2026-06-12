@@ -6,10 +6,17 @@ type Props = {
   form: ProcessoFormState;
   options: OptionsData;
   codigoProcesso?: string | null;
+  showInstanciaFields?: boolean;
   onChange: (next: ProcessoFormState) => void;
 };
 
-export function ProcessoFormFields({ form, options, codigoProcesso, onChange }: Props) {
+export function ProcessoFormFields({
+  form,
+  options,
+  codigoProcesso,
+  showInstanciaFields = true,
+  onChange,
+}: Props) {
   const set = (patch: Partial<ProcessoFormState>) => onChange({ ...form, ...patch });
   const setoresDisponiveis = filterSetoresByFilial(options.setores, form.filial_id);
 
@@ -38,35 +45,39 @@ export function ProcessoFormFields({ form, options, codigoProcesso, onChange }: 
           onChange={(e) => set({ nome_processo: e.target.value })}
         />
       </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-filial">Filial *</label>
-        <select
-          id="tm-proc-filial"
-          value={form.filial_id}
-          onChange={(e) => handleFilialChange(e.target.value)}
-        >
-          {options.filiais.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="ds-filter-box">
-        <label htmlFor="tm-proc-setor">Setor *</label>
-        <select
-          id="tm-proc-setor"
-          value={form.setor_id}
-          onChange={(e) => set({ setor_id: e.target.value })}
-          disabled={setoresDisponiveis.length === 0}
-        >
-          {setoresDisponiveis.map((setor) => (
-            <option key={setor.id} value={setor.id}>
-              {setor.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {showInstanciaFields ? (
+        <>
+          <div className="ds-filter-box">
+            <label htmlFor="tm-proc-filial">Filial *</label>
+            <select
+              id="tm-proc-filial"
+              value={form.filial_id}
+              onChange={(e) => handleFilialChange(e.target.value)}
+            >
+              {options.filiais.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="ds-filter-box">
+            <label htmlFor="tm-proc-setor">Setor *</label>
+            <select
+              id="tm-proc-setor"
+              value={form.setor_id}
+              onChange={(e) => set({ setor_id: e.target.value })}
+              disabled={setoresDisponiveis.length === 0}
+            >
+              {setoresDisponiveis.map((setor) => (
+                <option key={setor.id} value={setor.id}>
+                  {setor.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </>
+      ) : null}
       <div className="ds-filter-box">
         <label htmlFor="tm-proc-status">Status *</label>
         <select

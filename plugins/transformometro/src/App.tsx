@@ -73,12 +73,11 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       <ProcessoDetailPage
         getAccessToken={getAccessToken}
         processoId={route.processoId}
+        instanciaId={route.instanciaId ?? null}
         revisaoId={route.revisaoId ?? null}
+        legacyRevisaoPath={route.legacyRevisaoPath}
         pathname={pathname}
         onNavigate={onNavigate}
-        onRevisaoChange={(revisaoId) =>
-          onNavigate(buildProcessoPath(route.processoId!, revisaoId))
-        }
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
       />
     );

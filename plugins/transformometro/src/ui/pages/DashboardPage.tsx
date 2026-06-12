@@ -60,6 +60,11 @@ import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { filterSetoresByFilial } from "../../utils/setores";
+import {
+  buildDashboardQueryParams,
+  canSelectConsolidatedView,
+  defaultDashboardFilialFilter,
+} from "../../utils/dashboardViewScope";
 
 const CHART_COLORS = [
   "#1aa7d9",
@@ -86,10 +91,7 @@ type Filters = {
   setorId: string;
 };
 
-type TopDailyPoint = {
-  name: string;
-  value: number;
-};
+type DashboardViewMode = "consolidated" | "filial" | "department";
 
 const monthRange = currentMonthFilterRange();
 const defaultFilters: Filters = {
@@ -99,14 +101,16 @@ const defaultFilters: Filters = {
   setorId: "",
 };
 
-function buildParams(filters: Filters) {
-  const params: Record<string, string> = {};
-  if (filters.dataInicial) params.competencia_inicio = filters.dataInicial;
-  if (filters.dataFinal) params.competencia_fim = filters.dataFinal;
-  if (filters.filialId) params.filial_id = filters.filialId;
-  if (filters.setorId) params.setor_id = filters.setorId;
-  return params;
-}
+const VIEW_OPTIONS: { value: DashboardViewMode; label: string }[] = [
+  { value: "consolidated", label: "Consolidado" },
+  { value: "filial", label: "Filial" },
+  { value: "department", label: "Departamento" },
+];
+
+type TopDailyPoint = {
+  name: string;
+  value: number;
+};
 
 function formatPeriod(filters: Filters) {
   return `${filters.dataInicial.split("-").reverse().join("/")} — ${filters.dataFinal
@@ -180,8 +184,21 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   );
   const [savingsMeasure, setSavingsMeasure] = useState<ChartMeasure>("currency");
   const [options, setOptions] = useState<OptionsData | null>(null);
+  const [viewMode, setViewMode] = useState<DashboardViewMode>("consolidated");
 
-  const params = useMemo(() => buildParams(filters), [filters]);
+  const params = useMemo(
+    () =>
+      buildDashboardQueryParams(
+        {
+          dataInicial: filters.dataInicial,
+          dataFinal: filters.dataFinal,
+          filialId: viewMode === "consolidated" ? "" : filters.filialId,
+          setorId: viewMode === "department" ? filters.setorId : "",
+        },
+        options?.access_scope
+      ),
+    [filters, options?.access_scope, viewMode]
+  );
   const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
   const setoresFiltrados = useMemo(
     () => filterSetoresByFilial(options?.setores ?? [], filters.filialId),
@@ -192,7 +209,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     let cancelled = false;
     fetchOptions(getAccessToken)
       .then((data) => {
-        if (!cancelled) setOptions(data);
+        if (cancelled) return;
+        setOptions(data);
+        const defaultFilial = defaultDashboardFilialFilter(data.access_scope);
+        if (defaultFilial) {
+          setFilters((prev) => ({ ...prev, filialId: defaultFilial }));
+          setViewMode("filial");
+        }
       })
       .catch(() => {
         if (!cancelled) setOptions(null);
@@ -201,6 +224,15 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       cancelled = true;
     };
   }, [getAccessToken]);
+
+  useEffect(() => {
+    if (viewMode === "consolidated") {
+      setFilters((prev) => ({ ...prev, setorId: "" }));
+    }
+    if (viewMode === "filial") {
+      setFilters((prev) => ({ ...prev, setorId: "" }));
+    }
+  }, [viewMode]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -499,6 +531,29 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <section className="ds-filters-row ds-no-print">
+          <SegmentToggle
+            ariaLabel="Visão analítica do dashboard"
+            idPrefix="tm-dashboard-view"
+            options={
+              canSelectConsolidatedView(options?.access_scope)
+                ? VIEW_OPTIONS
+                : VIEW_OPTIONS.filter((option) => option.value !== "consolidated")
+            }
+            value={viewMode}
+            onChange={(next) => {
+              setViewMode(next);
+              if (next === "consolidated") {
+                setFilters((prev) => ({ ...prev, filialId: "", setorId: "" }));
+              }
+              if (next === "filial" && !filters.filialId) {
+                const fallback =
+                  options?.filiais[0]?.id ?? defaultDashboardFilialFilter(options?.access_scope);
+                if (fallback) {
+                  setFilters((prev) => ({ ...prev, filialId: fallback, setorId: "" }));
+                }
+              }
+            }}
+          />
           <DateField
             label="Data inicial"
             value={filters.dataInicial}
@@ -513,6 +568,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             Filial
             <select
               value={filters.filialId}
+              disabled={viewMode === "consolidated"}
               onChange={(e) => {
                 const nextFilial = e.target.value;
                 setFilters((prev) => ({
@@ -529,7 +585,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 }));
               }}
             >
-              <option value="">Consolidado</option>
+              <option value="">Selecione…</option>
               {(options?.filiais ?? []).map((filial) => (
                 <option key={filial.id} value={filial.id}>
                   {filial.id} — {filial.label}
@@ -541,9 +597,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             Setor
             <select
               value={filters.setorId}
+              disabled={viewMode !== "department"}
               onChange={(e) => setFilters((prev) => ({ ...prev, setorId: e.target.value }))}
             >
-              <option value="">Todos</option>
+              <option value="">Selecione…</option>
               {setoresFiltrados.map((setor) => (
                 <option key={setor.id} value={setor.id}>
                   {setor.label}

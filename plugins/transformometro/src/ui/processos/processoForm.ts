@@ -41,15 +41,25 @@ export function processoFormFromEntity(processo: Processo): ProcessoFormState {
 }
 
 export function payloadFromProcessoForm(form: ProcessoFormState): Partial<Processo> {
+  return masterPayloadFromProcessoForm(form);
+}
+
+export function masterPayloadFromProcessoForm(form: ProcessoFormState): Partial<Processo> {
   return {
     nome_processo: form.nome_processo.trim(),
-    filial_id: form.filial_id,
-    setor_id: form.setor_id,
     status_processo: form.status_processo,
     descricao_processo: form.descricao_processo.trim() || undefined,
     gestor_responsavel: form.gestor_responsavel.trim() || undefined,
     objetivo_processo: form.objetivo_processo.trim() || undefined,
     familia_processo: form.familia_processo.trim() || undefined,
     agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
+  };
+}
+
+export function createPayloadFromProcessoForm(form: ProcessoFormState): Partial<Processo> {
+  return {
+    ...masterPayloadFromProcessoForm(form),
+    filial_id: form.filial_id,
+    setor_id: form.setor_id,
   };
 }
