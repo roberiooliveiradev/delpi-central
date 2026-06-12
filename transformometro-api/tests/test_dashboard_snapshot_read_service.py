@@ -5,6 +5,10 @@ from unittest.mock import MagicMock, patch
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
+from tm_app.application.services.dashboard_view_scope_service import (
+    DashboardScopeFilters,
+    DashboardView,
+)
 
 
 def test_meta_exposes_cache_freshness():
@@ -32,6 +36,18 @@ def test_processos_delegates_to_repository():
     with patch.object(DashboardSnapshotReadService, "__init__", lambda self: None):
         svc = DashboardSnapshotReadService()
         svc._repo = repo
+        scope_svc = MagicMock()
+        scope_svc.resolve.return_value = DashboardScopeFilters(
+            view=DashboardView.FILIAL,
+            filial_id="01",
+            setor_id=None,
+        )
+        scope_svc.scope_meta.return_value = {
+            "view": "filial",
+            "filial_id": "01",
+            "setor_id": None,
+        }
+        svc._scope = scope_svc
 
         data = svc.processos(filial_id="01", limit=10)
 

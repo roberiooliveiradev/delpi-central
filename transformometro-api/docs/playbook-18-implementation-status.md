@@ -14,6 +14,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 | **S4 — Processo mestre** | V015 | Remove `filial_id`/`setor_id` de `processos`; create API grava instância |
 | **S5 — Escopo híbrido** | V016 | `escopo_recurso` + `SharedResourceScopeService` no calculador |
 | **S6 — Cache dashboard** | V017 | `dashboard_calculos` PK UUID, FKs instância/filial/setor, denorm `codigo_*`, view snapshot |
+| **S7 — Visões dashboard** | — | `DashboardViewScopeService`, query `view=consolidated\|filial\|department` |
 
 ## Migrations disponíveis
 
@@ -35,6 +36,18 @@ Módulo canônico: `tm_app/domain/services/dashboard_cache_denorm_service.py` ·
 **Pós-V017:** executar recalc full (`POST /dashboard/recalc` ou job interno) — a migration trunca o cache.
 
 View `processo_competencia_snapshot` usa `codigo_*` como `filial_id`/`setor_id` expostos (compat MFE).
+
+## Visões analíticas (`view`)
+
+| Valor | Comportamento |
+|-------|----------------|
+| `consolidated` (default) | Sem filtro de filial/setor |
+| `filial` | Exige `filial_id` (código ou UUID) |
+| `department` | Exige `filial_id` + `setor_id` |
+
+Módulo canônico: `tm_app/application/services/dashboard_view_scope_service.py` · usado por live, snapshot, export e rotas `/dashboard/*`.
+
+Inferência legada: só `filial_id` → filial; `filial_id` + `setor_id` → departamento; nenhum → consolidado.
 
 ## Escopo de recurso (`escopo_recurso`)
 
@@ -75,12 +88,12 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V017: recalcular cache dashboard (full)
 ```
 
-## Próximo (S7+)
+## Próximo (S8+)
 
 | Sprint | Foco |
 |--------|------|
-| **S7** | `DashboardViewScopeService`, visões consolidado/filial/dept, MFE toggle |
-| **S8–S10** | Duplicar instância, api-delpi, RBAC |
+| **S8** | Duplicar instância (deprecar duplicar processo) |
+| **S9–S10** | api-delpi, RBAC |
 
 ## Testes
 

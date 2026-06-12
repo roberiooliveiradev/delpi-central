@@ -3,6 +3,10 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+from tm_app.application.services.dashboard_view_scope_service import (
+    DashboardScopeFilters,
+    DashboardViewScopeService,
+)
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
@@ -19,72 +23,32 @@ class DashboardLiveService:
     def __init__(self) -> None:
         self._calculator = DashboardCalculatorService()
         self._data_repo = DashboardDataRepository()
+        self._scope = DashboardViewScopeService()
 
     def load_filtered_raw(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
+        scope: DashboardScopeFilters | None = None,
     ) -> TransformometroRawData:
+        resolved = scope or self._scope.resolve(
+            view=view, filial_id=filial_id, setor_id=setor_id
+        )
         raw = self._data_repo.load_raw()
-        return self._filter_raw_preserving_resource_rateio(
+        return self._scope.filter_raw_preserving_resource_rateio(
             raw,
-            filial_id=filial_id,
-            setor_id=setor_id,
+            resolved,
+            self._calculator,
             familia_processo=familia_processo,
-        )
-
-    def _filter_raw_preserving_resource_rateio(
-        self,
-        raw: TransformometroRawData,
-        *,
-        filial_id: str | None = None,
-        setor_id: str | None = None,
-        familia_processo: str | None = None,
-    ) -> TransformometroRawData:
-        filtered = self._calculator.filter_raw(
-            raw,
-            filial_id=filial_id,
-            setor_id=setor_id,
-            familia_processo=familia_processo,
-        )
-        if filtered is raw:
-            return raw
-
-        target_resource_ids = {
-            str(v.get("recurso_compartilhado_id"))
-            for v in filtered.revisao_recursos_compartilhados
-            if v.get("recurso_compartilhado_id") is not None
-        }
-        if not target_resource_ids:
-            return filtered
-
-        return TransformometroRawData(
-            processos=filtered.processos,
-            revisoes=filtered.revisoes,
-            medicoes=filtered.medicoes,
-            investimentos=filtered.investimentos,
-            recursos_compartilhados=[
-                r
-                for r in raw.recursos_compartilhados
-                if str(r.get("recurso_compartilhado_id")) in target_resource_ids
-            ],
-            revisao_recursos_compartilhados=[
-                v
-                for v in raw.revisao_recursos_compartilhados
-                if str(v.get("recurso_compartilhado_id")) in target_resource_ids
-            ],
-            recurso_custos=[
-                c
-                for c in raw.recurso_custos
-                if str(c.get("recurso_compartilhado_id")) in target_resource_ids
-            ],
         )
 
     def calculation_rows(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -92,6 +56,7 @@ class DashboardLiveService:
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         filtered = self.load_filtered_raw(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -107,12 +72,14 @@ class DashboardLiveService:
     def build_summary(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        filtered = self.load_filtered_raw(filial_id=filial_id, setor_id=setor_id)
+        scope = self._scope.resolve(view=view, filial_id=filial_id, setor_id=setor_id)
+        filtered = self.load_filtered_raw(scope=scope)
         summary = self._calculator.build_summary(
             filtered,
             filial_id=None,
@@ -121,6 +88,7 @@ class DashboardLiveService:
         )
         summary["roi_medio"] = self._calculate_consolidated_roi(summary)
         summary["fonte"] = "cadastro_tempo_real"
+        summary["scope"] = self._scope.scope_meta(scope)
         return summary
 
     @staticmethod
@@ -140,12 +108,14 @@ class DashboardLiveService:
     def query_evolucao(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         summary = self.build_summary(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             competencia_inicio=competencia_inicio,
@@ -156,6 +126,7 @@ class DashboardLiveService:
     def query_ranking_processos(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         competencia: str | None = None,
@@ -164,6 +135,7 @@ class DashboardLiveService:
         limit: int = 50,
     ) -> list[dict[str, Any]]:
         rows = self.calculation_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             competencia_inicio=competencia_inicio,
@@ -191,7 +163,7 @@ class DashboardLiveService:
         if not target_rows:
             return []
 
-        raw = self.load_filtered_raw(filial_id=filial_id, setor_id=setor_id)
+        raw = self.load_filtered_raw(view=view, filial_id=filial_id, setor_id=setor_id)
         processos_by_id = {
             str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
         }
@@ -319,16 +291,18 @@ class DashboardLiveService:
     def query_resumo_por_familia(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         rows = self.calculation_rows(
+            view=view,
             filial_id=filial_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
         )
-        raw = self.load_filtered_raw(filial_id=filial_id)
+        raw = self.load_filtered_raw(view=view, filial_id=filial_id)
         processos_by_id = {
             str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
         }
@@ -374,6 +348,7 @@ class DashboardLiveService:
     def query_process_monthly_liquida(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -381,6 +356,7 @@ class DashboardLiveService:
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         rows = self.calculation_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -388,6 +364,7 @@ class DashboardLiveService:
             competencia_fim=competencia_fim,
         )
         raw = self.load_filtered_raw(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -427,6 +404,7 @@ class DashboardLiveService:
     def query_export_rows(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -434,6 +412,7 @@ class DashboardLiveService:
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         rows = self.calculation_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -441,6 +420,7 @@ class DashboardLiveService:
             competencia_fim=competencia_fim,
         )
         raw = self.load_filtered_raw(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -459,8 +439,8 @@ class DashboardLiveService:
                     "nome_processo": proc.get("nome_processo"),
                     "familia_processo": proc.get("familia_processo"),
                     "agrupador_ferramenta": proc.get("agrupador_ferramenta"),
-                    "filial_id": row.get("filial_id") or proc.get("filial_id"),
-                    "setor_id": row.get("setor_id") or proc.get("setor_id"),
+                    "filial_id": row.get("codigo_filial") or proc.get("filial_id"),
+                    "setor_id": row.get("codigo_setor") or proc.get("setor_id"),
                     "competencia": row.get("competencia"),
                     "cenario_tipo": row.get("cenario_tipo"),
                     "economia_bruta": row.get("economia_bruta"),
@@ -479,11 +459,13 @@ class DashboardLiveService:
     def list_processos_calculados(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
     ) -> list[dict[str, Any]]:
         raw = self.load_filtered_raw(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,

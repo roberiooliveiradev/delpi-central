@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.application.services.dashboard_view_scope_service import (
+    DashboardScopeFilters,
+    DashboardViewScopeService,
+)
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardCalculoRepository,
 )
@@ -12,6 +16,7 @@ class DashboardSnapshotReadService:
 
     def __init__(self) -> None:
         self._repo = DashboardCalculoRepository()
+        self._scope = DashboardViewScopeService()
 
     def meta(self) -> dict[str, Any]:
         return {
@@ -21,25 +26,40 @@ class DashboardSnapshotReadService:
             "aggregated_view": "processo_competencia_snapshot",
         }
 
+    def _resolve(
+        self,
+        *,
+        view: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+    ) -> DashboardScopeFilters:
+        return self._scope.resolve(view=view, filial_id=filial_id, setor_id=setor_id)
+
     def resumo(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
+        scope = self._resolve(view=view, filial_id=filial_id, setor_id=setor_id)
         summary = self._repo.query_resumo(
-            filial_id=filial_id,
-            setor_id=setor_id,
+            filial_id=scope.filial_id,
+            setor_id=scope.setor_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
         )
-        return {"meta": self.meta(), "summary": summary}
+        return {
+            "meta": {**self.meta(), "scope": self._scope.scope_meta(scope)},
+            "summary": summary,
+        }
 
     def processos(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -48,20 +68,26 @@ class DashboardSnapshotReadService:
         competencia_fim: str | None = None,
         limit: int = 200,
     ) -> dict[str, Any]:
+        scope = self._resolve(view=view, filial_id=filial_id, setor_id=setor_id)
         rows = self._repo.query_processo_competencia_snapshot(
-            filial_id=filial_id,
-            setor_id=setor_id,
+            filial_id=scope.filial_id,
+            setor_id=scope.setor_id,
             familia_processo=familia_processo,
             processo_id=processo_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
             limit=limit,
         )
-        return {"meta": self.meta(), "total": len(rows), "items": rows}
+        return {
+            "meta": {**self.meta(), "scope": self._scope.scope_meta(scope)},
+            "total": len(rows),
+            "items": rows,
+        }
 
     def linhas(
         self,
         *,
+        view: str | None = None,
         processo_id: str | None = None,
         revisao_id: str | None = None,
         filial_id: str | None = None,
@@ -70,13 +96,18 @@ class DashboardSnapshotReadService:
         competencia_fim: str | None = None,
         limit: int = 500,
     ) -> dict[str, Any]:
+        scope = self._resolve(view=view, filial_id=filial_id, setor_id=setor_id)
         rows = self._repo.query_linhas(
             processo_id=processo_id,
             revisao_id=revisao_id,
-            filial_id=filial_id,
-            setor_id=setor_id,
+            filial_id=scope.filial_id,
+            setor_id=scope.setor_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
             limit=limit,
         )
-        return {"meta": self.meta(), "total": len(rows), "items": rows}
+        return {
+            "meta": {**self.meta(), "scope": self._scope.scope_meta(scope)},
+            "total": len(rows),
+            "items": rows,
+        }

@@ -12,6 +12,7 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
+from tm_app.application.services.dashboard_view_scope_service import DashboardViewScopeService
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import rows_to_json
@@ -21,6 +22,19 @@ logger = logging.getLogger(__name__)
 
 _live = DashboardLiveService()
 _snapshot = DashboardSnapshotReadService()
+_scope = DashboardViewScopeService()
+
+
+def _scope_error_response(
+    view: str | None,
+    filial_id: str | None,
+    setor_id: str | None,
+):
+    try:
+        _scope.resolve(view=view, filial_id=filial_id, setor_id=setor_id)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    return None
 
 
 @router.post("/recalcular")
@@ -78,12 +92,16 @@ def dashboard_snapshot_meta():
     tags=["Transformômetro Snapshot"],
 )
 def dashboard_snapshot_resumo(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     data = _snapshot.resumo(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         competencia_inicio=competencia_inicio,
@@ -103,6 +121,7 @@ def dashboard_snapshot_resumo(
     tags=["Transformômetro Snapshot"],
 )
 def dashboard_snapshot_processos(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     familia_processo: str | None = None,
@@ -111,7 +130,10 @@ def dashboard_snapshot_processos(
     competencia_fim: str | None = None,
     limit: int = Query(default=200, ge=1, le=1000),
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     data = _snapshot.processos(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         familia_processo=familia_processo,
@@ -137,6 +159,7 @@ def dashboard_snapshot_processos(
     tags=["Transformômetro Snapshot"],
 )
 def dashboard_snapshot_linhas(
+    view: str | None = Query(default=None),
     processo_id: str | None = None,
     revisao_id: str | None = None,
     filial_id: str | None = None,
@@ -145,7 +168,10 @@ def dashboard_snapshot_linhas(
     competencia_fim: str | None = None,
     limit: int = Query(default=500, ge=1, le=2000),
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     data = _snapshot.linhas(
+        view=view,
         processo_id=processo_id,
         revisao_id=revisao_id,
         filial_id=filial_id,
@@ -162,12 +188,16 @@ def dashboard_snapshot_linhas(
 
 @router.get("/resumo")
 def dashboard_resumo(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     summary = _live.build_summary(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         competencia_inicio=competencia_inicio,
@@ -178,12 +208,16 @@ def dashboard_resumo(
 
 @router.get("/evolucao")
 def dashboard_evolucao(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     rows = _live.query_evolucao(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         competencia_inicio=competencia_inicio,
@@ -194,6 +228,7 @@ def dashboard_evolucao(
 
 @router.get("/processos")
 def dashboard_processos(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     competencia: str | None = None,
@@ -201,7 +236,10 @@ def dashboard_processos(
     competencia_fim: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     rows = _live.query_ranking_processos(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         competencia=competencia,
@@ -215,13 +253,17 @@ def dashboard_processos(
 @router.get("/alertas")
 def dashboard_alertas(
     meses_consecutivos: int = Query(default=3, ge=1, le=24),
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     familia_processo: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     data = DashboardAlertsService(min_consecutive_months=meses_consecutivos).list_negative_savings_alerts(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         familia_processo=familia_processo,
@@ -233,11 +275,15 @@ def dashboard_alertas(
 
 @router.get("/por-familia")
 def dashboard_por_familia(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, None):
+        return err
     rows = _live.query_resumo_por_familia(
+        view=view,
         filial_id=filial_id,
         competencia_inicio=competencia_inicio,
         competencia_fim=competencia_fim,
@@ -247,13 +293,17 @@ def dashboard_por_familia(
 
 @router.get("/export.csv")
 def dashboard_export_csv(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     familia_processo: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     content = DashboardExportService().build_csv(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         familia_processo=familia_processo,
@@ -269,13 +319,17 @@ def dashboard_export_csv(
 
 @router.get("/export.xls")
 def dashboard_export_excel(
+    view: str | None = Query(default=None),
     filial_id: str | None = None,
     setor_id: str | None = None,
     familia_processo: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
+    if err := _scope_error_response(view, filial_id, setor_id):
+        return err
     content = DashboardExportService().build_excel_html(
+        view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         familia_processo=familia_processo,

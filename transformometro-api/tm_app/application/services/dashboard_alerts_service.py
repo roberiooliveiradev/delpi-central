@@ -14,6 +14,7 @@ class DashboardAlertsService:
     def list_negative_savings_alerts(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -21,6 +22,7 @@ class DashboardAlertsService:
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
         rows = DashboardLiveService().query_process_monthly_liquida(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,

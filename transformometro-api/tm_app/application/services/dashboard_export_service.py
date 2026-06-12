@@ -26,16 +26,21 @@ EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
 )
 
 class DashboardExportService:
+    def __init__(self) -> None:
+        self._live = DashboardLiveService()
+
     def _fetch_rows(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        return DashboardLiveService().query_export_rows(
+        return self._live.query_export_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -46,12 +51,14 @@ class DashboardExportService:
     def _fetch_summary_row(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        summary = DashboardLiveService().build_summary(
+        summary = self._live.build_summary(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             competencia_inicio=competencia_inicio,
@@ -77,6 +84,7 @@ class DashboardExportService:
     def build_csv(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -84,6 +92,7 @@ class DashboardExportService:
         competencia_fim: str | None = None,
     ) -> str:
         rows = self._fetch_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -91,6 +100,7 @@ class DashboardExportService:
             competencia_fim=competencia_fim,
         )
         summary = self._fetch_summary_row(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             competencia_inicio=competencia_inicio,
@@ -109,6 +119,7 @@ class DashboardExportService:
     def build_excel_html(
         self,
         *,
+        view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         familia_processo: str | None = None,
@@ -117,6 +128,7 @@ class DashboardExportService:
     ) -> str:
         """Planilha HTML compatível com Excel (sem dependência openpyxl)."""
         rows = self._fetch_rows(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
@@ -124,6 +136,7 @@ class DashboardExportService:
             competencia_fim=competencia_fim,
         )
         summary = self._fetch_summary_row(
+            view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             competencia_inicio=competencia_inicio,
