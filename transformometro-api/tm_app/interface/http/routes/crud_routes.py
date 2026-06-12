@@ -29,6 +29,10 @@ from tm_app.infrastructure.persistence.repositories.investimento_repository impo
     InvestimentoRepository,
 )
 from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
+from tm_app.domain.services.processo_instancia_service import ProcessoInstanciaDomainError
+from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+    ProcessoInstanciaRepository,
+)
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
 from tm_app.infrastructure.persistence.repositories.recurso_custo_repository import (
     RecursoCustoRepository,
@@ -57,6 +61,7 @@ from tm_app.infrastructure.persistence.repositories.setor_repository import Seto
 from tm_app.interface.http.schemas.crud_schemas import (
     FilialBody,
     FilialUpdateBody,
+    InstanciaBody,
     InvestimentoBody,
     InvestimentoUpdateBody,
     MedicaoBody,
@@ -236,9 +241,52 @@ def create_processo(body: ProcessoCreateBody, request: Request):
         return fail(format_api_error(exc), 500)
 
     pid = str(row["processo_id"])
+    try:
+        ProcessoInstanciaRepository().ensure_from_processo(pid)
+    except ProcessoInstanciaDomainError as exc:
+        logger.warning("create_processo_instancia_failed processo_id=%s err=%s", pid, exc)
     _audit(request, "processo", pid, "create", body.model_dump())
     _recalc_after_processo(pid)
     return ok(row_to_json(row), "Processo criado.", 201)
+
+
+@router.get("/processos/{processo_id}/instancias")
+def list_processo_instancias(processo_id: str):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    rows = ProcessoInstanciaRepository().list_by_processo(processo_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/processos/{processo_id}/instancias")
+def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Request):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    try:
+        assert_filial_ativa(body.filial_id, _active_filial_codigos())
+        row = ProcessoInstanciaRepository().create(
+            {
+                "processo_id": processo_id,
+                **body.model_dump(),
+            }
+        )
+    except ProcessoInstanciaDomainError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        logger.exception("create_processo_instancia_failed")
+        return fail(format_api_error(exc), 500)
+
+    iid = str(row["instancia_id"])
+    _audit(request, "processo_instancia", iid, "create", body.model_dump())
+    return ok(row_to_json(row), "Instância operacional criada.", 201)
+
+
+@router.get("/instancias/{instancia_id}")
+def get_instancia(instancia_id: str):
+    row = ProcessoInstanciaRepository().get(instancia_id)
+    if not row:
+        return fail("Instância não encontrada.", 404)
+    return ok(row_to_json(row))
 
 
 @router.put("/processos/{processo_id}")

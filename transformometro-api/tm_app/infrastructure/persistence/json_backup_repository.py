@@ -90,6 +90,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
         (
             "revisao_id",
             "processo_id",
+            "instancia_id",
             "versao_revisao",
             "chave_unica_processo_revisao",
             "descricao_revisao",

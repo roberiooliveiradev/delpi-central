@@ -3,6 +3,9 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+    ProcessoInstanciaRepository,
+)
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
@@ -44,19 +47,24 @@ class RevisaoRepository(PluginBaseRepository):
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         data = self._normalize_lifecycle_payload(data)
+        instancia = ProcessoInstanciaRepository(connection=self._connection).ensure_from_processo(
+            str(data["processo_id"])
+        )
+        instancia_id = str(instancia["instancia_id"])
         chave = f"{data['processo_id']}|{data['versao_revisao']}"
         row = self.execute_returning_one(
             """
             INSERT INTO transformometro.revisoes (
-                processo_id, versao_revisao, chave_unica_processo_revisao,
+                processo_id, instancia_id, versao_revisao, chave_unica_processo_revisao,
                 descricao_revisao, motivo_revisao, cenario_tipo,
                 data_implantacao, data_inicio_vigencia, data_fim_vigencia,
                 revisao_ativa, observacoes, status_aprovacao
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
                 data["processo_id"],
+                instancia_id,
                 data["versao_revisao"],
                 chave,
                 data.get("descricao_revisao"),
@@ -253,19 +261,35 @@ class RevisaoRepository(PluginBaseRepository):
             return self.get(revision_id) or revision
 
         boundary_date = revision.get("data_implantacao") or revision.get("data_inicio_vigencia")
-        self.execute(
-            """
-            UPDATE transformometro.revisoes
-            SET revisao_ativa = FALSE,
-                data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
-                updated_at = NOW()
-            WHERE processo_id = %s
-              AND revisao_id <> %s
-              AND deletado = FALSE
-            """,
-            (boundary_date, processo_id, revision_id),
-            auto_commit=False,
-        )
+        instancia_id = revision.get("instancia_id")
+        if instancia_id:
+            self.execute(
+                """
+                UPDATE transformometro.revisoes
+                SET revisao_ativa = FALSE,
+                    data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
+                    updated_at = NOW()
+                WHERE instancia_id = %s::uuid
+                  AND revisao_id <> %s
+                  AND deletado = FALSE
+                """,
+                (boundary_date, str(instancia_id), revision_id),
+                auto_commit=False,
+            )
+        else:
+            self.execute(
+                """
+                UPDATE transformometro.revisoes
+                SET revisao_ativa = FALSE,
+                    data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
+                    updated_at = NOW()
+                WHERE processo_id = %s
+                  AND revisao_id <> %s
+                  AND deletado = FALSE
+                """,
+                (boundary_date, processo_id, revision_id),
+                auto_commit=False,
+            )
         row = self.execute_returning_one(
             """
             UPDATE transformometro.revisoes
