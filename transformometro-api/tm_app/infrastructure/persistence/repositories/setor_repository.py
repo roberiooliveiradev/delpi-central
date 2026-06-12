@@ -199,14 +199,16 @@ class SetorRepository(PluginBaseRepository):
         row_data = self.get(setor_ref)
         if not row_data:
             return 0
-        codigo = str(row_data["codigo_setor"])
         row = self.fetch_one(
             """
-            SELECT COUNT(*)::int AS total
-            FROM transformometro.processos
-            WHERE setor_id = %s AND deletado = FALSE
+            SELECT COUNT(DISTINCT pi.processo_id)::int AS total
+            FROM transformometro.processo_instancias pi
+            JOIN transformometro.processos p ON p.processo_id = pi.processo_id
+            WHERE pi.setor_id = %s::uuid
+              AND pi.deletado = FALSE
+              AND p.deletado = FALSE
             """,
-            (codigo,),
+            (row_data["setor_id"],),
         )
         return int((row or {}).get("total") or 0)
 

@@ -26,8 +26,6 @@ def test_create_uses_generated_codigo_when_missing():
     row = repo.create(
         {
             "nome_processo": "Teste",
-            "filial_id": "01",
-            "setor_id": "engenharia",
             "status_processo": "ativo",
         }
     )

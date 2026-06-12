@@ -16,7 +16,38 @@ _INVESTIMENTO_TOTAL_SQL = """
 class DashboardDataRepository(PluginBaseRepository):
     def load_raw(self) -> TransformometroRawData:
         processos = self.fetch_all(
-            "SELECT * FROM transformometro.processos WHERE deletado = FALSE"
+            """
+            SELECT
+                p.processo_id,
+                p.codigo_processo,
+                p.nome_processo,
+                p.descricao_processo,
+                p.gestor_responsavel,
+                p.objetivo_processo,
+                p.status_processo,
+                p.familia_processo,
+                p.agrupador_ferramenta,
+                p.created_at,
+                p.updated_at,
+                p.deletado,
+                pi.instancia_id,
+                f.codigo_filial AS filial_id,
+                s.codigo_setor AS setor_id
+            FROM transformometro.processos p
+            LEFT JOIN LATERAL (
+                SELECT pi2.instancia_id, pi2.filial_id, pi2.setor_id
+                FROM transformometro.processo_instancias pi2
+                WHERE pi2.processo_id = p.processo_id
+                  AND pi2.deletado = FALSE
+                ORDER BY pi2.created_at ASC
+                LIMIT 1
+            ) pi ON TRUE
+            LEFT JOIN transformometro.filiais f
+                ON f.filial_id = pi.filial_id AND f.deletado = FALSE
+            LEFT JOIN transformometro.setores s
+                ON s.setor_id = pi.setor_id AND s.deletado = FALSE
+            WHERE p.deletado = FALSE
+            """
         )
         revisoes = self.fetch_all(
             "SELECT * FROM transformometro.revisoes WHERE deletado = FALSE"

@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
-from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
+from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+    ProcessoInstanciaRepository,
+)
 from tm_app.core.serialize import rows_to_json
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.setor_catalog_service import normalize_codigo_setor
@@ -189,6 +191,17 @@ class JsonBackupService:
                     f"setor_filiais: setor_id={setor_id} não está em setores no JSON."
                 )
 
+        setor_keys = id_sets.get("setores", set())
+        for row in payload.get("processos", []):
+            if not isinstance(row, dict):
+                continue
+            setor_id = row.get("setor_id")
+            if setor_id and _norm_id(setor_id) not in setor_keys:
+                errors.append(
+                    f"processos: setor_id={setor_id} não está em setores no JSON "
+                    f"(reexporte o backup ou inclua o setor)."
+                )
+
         return _dedupe_errors(errors)
 
     def preview(self, payload: dict[str, Any], mode: ExportMode) -> dict[str, Any]:
@@ -268,6 +281,7 @@ class JsonBackupService:
                 row for row in payload.get(SETOR_FILIAIS_BUNDLE_KEY, []) if isinstance(row, dict)
             ]
             self._repo.sync_setor_filiais(sf_rows, auto_commit=False)
+            self._sync_processo_instancias_from_payload(payload)
 
             self._repo._connection.commit()
         except Exception:
@@ -320,6 +334,30 @@ class JsonBackupService:
                 if "codigo_setor" not in out and raw_id is not None:
                     out["codigo_setor"] = normalize_codigo_setor(str(raw_id))
         return out
+
+    def _sync_processo_instancias_from_payload(self, payload: dict[str, Any]) -> None:
+        inst_repo = ProcessoInstanciaRepository(connection=self._repo._connection)
+        for row in payload.get("processos") or []:
+            if not isinstance(row, dict):
+                continue
+            processo_id = row.get("processo_id")
+            filial_id = row.get("filial_id")
+            setor_id = row.get("setor_id")
+            if not processo_id or not filial_id or not setor_id:
+                continue
+            try:
+                inst_repo.create(
+                    {
+                        "processo_id": str(processo_id),
+                        "filial_id": str(filial_id),
+                        "setor_id": str(setor_id),
+                    },
+                    auto_commit=False,
+                )
+            except Exception:
+                existing = inst_repo.get_by_processo(str(processo_id))
+                if existing is None:
+                    raise
 
 
 def _dedupe_errors(errors: list[str]) -> list[str]:

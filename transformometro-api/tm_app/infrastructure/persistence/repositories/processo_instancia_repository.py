@@ -58,35 +58,12 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
         if existing:
             return existing
 
-        processo = ProcessoRepository(connection=self._connection).get(processo_id)
-        if not processo:
-            raise ProcessoInstanciaDomainError("Processo não encontrado.")
-
-        filial_codigo = str(processo["filial_id"])
-        setor_codigo = str(processo["setor_id"])
-        if not SetorRepository(connection=self._connection).is_active_for_filial(
-            setor_codigo, filial_codigo
-        ):
-            validate_instancia_par(
-                setor_ativo_na_filial=False,
-                filial_codigo=filial_codigo,
-                setor_codigo=setor_codigo,
-            )
-
-        filial = FilialRepository(connection=self._connection).get(filial_codigo)
-        setor = SetorRepository(connection=self._connection).get(setor_codigo)
-        if not filial or not setor:
-            raise ProcessoInstanciaDomainError("Filial ou setor do processo não encontrado no catálogo.")
-
-        return self.create(
-            {
-                "processo_id": processo_id,
-                "filial_id": filial_codigo,
-                "setor_id": setor_codigo,
-            }
+        raise ProcessoInstanciaDomainError(
+            "Processo sem instância operacional. Informe filial e setor ao criar o processo "
+            "ou cadastre uma instância em POST /processos/{id}/instancias."
         )
 
-    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         processo_id = str(data["processo_id"])
         filial_codigo = str(data["filial_id"])
         setor_codigo = str(data["setor_id"])
@@ -140,10 +117,18 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
                 data.get("rotulo_instancia"),
                 data.get("status_instancia", "ativo"),
             ),
-            auto_commit=True,
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar instância operacional.")
+        if not auto_commit:
+            created = self.fetch_one(
+                f"{self._SELECT} AND pi.instancia_id = %s::uuid",
+                (str(row["instancia_id"]),),
+            )
+            if created is None:
+                raise RuntimeError("Falha ao carregar instância criada.")
+            return created
         created = self.get(str(row["instancia_id"]))
         if created is None:
             raise RuntimeError("Falha ao carregar instância criada.")

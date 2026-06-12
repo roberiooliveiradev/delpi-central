@@ -77,9 +77,14 @@ class FilialRepository(PluginBaseRepository):
     def count_processos(self, codigo_filial: str) -> int:
         row = self.fetch_one(
             """
-            SELECT COUNT(*)::int AS total
-            FROM transformometro.processos
-            WHERE filial_id = %s AND deletado = FALSE
+            SELECT COUNT(DISTINCT pi.processo_id)::int AS total
+            FROM transformometro.processo_instancias pi
+            JOIN transformometro.filiais f ON f.filial_id = pi.filial_id
+            JOIN transformometro.processos p ON p.processo_id = pi.processo_id
+            WHERE f.codigo_filial = %s
+              AND pi.deletado = FALSE
+              AND p.deletado = FALSE
+              AND f.deletado = FALSE
             """,
             (codigo_filial,),
         )

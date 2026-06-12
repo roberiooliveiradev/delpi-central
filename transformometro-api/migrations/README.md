@@ -21,6 +21,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V012 | `V012__setores_uuid.sql` | Setores com PK UUID + `codigo_setor`; `setor_filiais` com FKs UUID |
 | V013 | `V013__create_processo_instancias.sql` | Instâncias operacionais `(processo, filial, setor)` |
 | V014 | `V014__revisoes_instancia_id.sql` | `revisoes.instancia_id` + backfill a partir de processos legados |
+| V015 | `V015__processo_mestre.sql` | Remove `filial_id`/`setor_id` de `processos` (par em `processo_instancias`) |
 
 ## Comandos
 

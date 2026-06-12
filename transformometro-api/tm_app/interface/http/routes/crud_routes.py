@@ -229,11 +229,36 @@ def get_processo(processo_id: str):
     return ok(row_to_json(row))
 
 
+def _processo_master_payload(body: ProcessoCreateBody) -> dict:
+    return {
+        "nome_processo": body.nome_processo,
+        "descricao_processo": body.descricao_processo,
+        "gestor_responsavel": body.gestor_responsavel,
+        "objetivo_processo": body.objetivo_processo,
+        "status_processo": body.status_processo,
+        "codigo_processo": body.codigo_processo,
+        "familia_processo": body.familia_processo,
+        "agrupador_ferramenta": body.agrupador_ferramenta,
+    }
+
+
 @router.post("/processos")
 def create_processo(body: ProcessoCreateBody, request: Request):
     try:
         _validate_processo_body(body)
-        row = ProcessoRepository().create(body.model_dump())
+        repo = ProcessoRepository()
+        row = repo.create(_processo_master_payload(body))
+        pid = str(row["processo_id"])
+        instancia = ProcessoInstanciaRepository().create(
+            {
+                "processo_id": pid,
+                "filial_id": body.filial_id,
+                "setor_id": body.setor_id,
+            }
+        )
+        row = repo.get(pid) or {**row, **instancia}
+    except ProcessoInstanciaDomainError as exc:
+        return fail(str(exc), 400)
     except ValueError as exc:
         return fail(str(exc), 400)
     except Exception as exc:
@@ -241,10 +266,6 @@ def create_processo(body: ProcessoCreateBody, request: Request):
         return fail(format_api_error(exc), 500)
 
     pid = str(row["processo_id"])
-    try:
-        ProcessoInstanciaRepository().ensure_from_processo(pid)
-    except ProcessoInstanciaDomainError as exc:
-        logger.warning("create_processo_instancia_failed processo_id=%s err=%s", pid, exc)
     _audit(request, "processo", pid, "create", body.model_dump())
     _recalc_after_processo(pid)
     return ok(row_to_json(row), "Processo criado.", 201)
@@ -292,8 +313,8 @@ def get_instancia(instancia_id: str):
 @router.put("/processos/{processo_id}")
 def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request):
     try:
-        _validate_processo_body(body)
-        row = ProcessoRepository().update(processo_id, body.model_dump())
+        assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
+        row = ProcessoRepository().update(processo_id, _processo_master_payload(body))
     except ValueError as exc:
         return fail(str(exc), 400)
 

@@ -9,6 +9,7 @@ from tm_app.application.services.processo_duplicate_service import (
 
 
 @patch("tm_app.application.services.processo_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.processo_duplicate_service.ProcessoInstanciaRepository")
 @patch("tm_app.application.services.processo_duplicate_service.VinculoRepository")
 @patch("tm_app.application.services.processo_duplicate_service.InvestimentoRepository")
 @patch("tm_app.application.services.processo_duplicate_service.MedicaoRepository")
@@ -20,6 +21,7 @@ def test_duplicate_copies_process_tree(
     mock_med_cls,
     mock_inv_cls,
     mock_vin_cls,
+    mock_inst_cls,
     mock_conn_factory,
 ):
     conn = MagicMock()
@@ -30,14 +32,18 @@ def test_duplicate_copies_process_tree(
     med_repo = mock_med_cls.return_value
     inv_repo = mock_inv_cls.return_value
     vin_repo = mock_vin_cls.return_value
+    inst_repo = mock_inst_cls.return_value
 
     proc_repo.get.return_value = {
         "processo_id": "p-old",
         "nome_processo": "Processo A",
-        "filial_id": "01",
-        "setor_id": "engenharia",
         "status_processo": "ativo",
     }
+    inst_repo.get_by_processo.return_value = {
+        "codigo_filial": "01",
+        "codigo_setor": "engenharia",
+    }
+    inst_repo.create.return_value = {"instancia_id": "i-new"}
     proc_repo.create.return_value = {
         "processo_id": "p-new",
         "codigo_processo": "PROC-0099",

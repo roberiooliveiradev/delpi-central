@@ -9,6 +9,9 @@ from tm_app.infrastructure.persistence.repositories.investimento_repository impo
     InvestimentoRepository,
 )
 from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
+from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+    ProcessoInstanciaRepository,
+)
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
 from tm_app.infrastructure.persistence.repositories.recurso_repository import VinculoRepository
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
@@ -41,6 +44,12 @@ class ProcessoDuplicateService:
         if not source:
             raise ProcessoNotFoundError("Processo não encontrado.")
 
+        source_inst = ProcessoInstanciaRepository(connection=conn).get_by_processo(processo_id)
+        if not source_inst:
+            raise ValueError(
+                "Processo sem instância operacional. Cadastre filial × setor antes de duplicar."
+            )
+
         revisoes = rev_repo.list_by_processo(processo_id)
         stats = {
             "revisoes": 0,
@@ -55,8 +64,6 @@ class ProcessoDuplicateService:
                     "nome_processo": nome_processo
                     or f"{source['nome_processo']} (cópia)",
                     "descricao_processo": source.get("descricao_processo"),
-                    "filial_id": source["filial_id"],
-                    "setor_id": source["setor_id"],
                     "gestor_responsavel": source.get("gestor_responsavel"),
                     "objetivo_processo": source.get("objetivo_processo"),
                     "status_processo": source["status_processo"],
@@ -66,6 +73,14 @@ class ProcessoDuplicateService:
                 auto_commit=False,
             )
             new_processo_id = str(new_processo["processo_id"])
+            ProcessoInstanciaRepository(connection=conn).create(
+                {
+                    "processo_id": new_processo_id,
+                    "filial_id": source_inst["codigo_filial"],
+                    "setor_id": source_inst["codigo_setor"],
+                },
+                auto_commit=False,
+            )
 
             for revisao in revisoes:
                 old_rev_id = str(revisao["revisao_id"])

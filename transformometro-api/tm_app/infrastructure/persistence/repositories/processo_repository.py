@@ -6,6 +6,38 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
 
+_PROCESSO_SELECT = """
+    SELECT
+        p.processo_id,
+        p.codigo_processo,
+        p.nome_processo,
+        p.descricao_processo,
+        p.gestor_responsavel,
+        p.objetivo_processo,
+        p.status_processo,
+        p.familia_processo,
+        p.agrupador_ferramenta,
+        p.created_at,
+        p.updated_at,
+        p.deletado,
+        pi.instancia_id,
+        f.codigo_filial AS filial_id,
+        s.codigo_setor AS setor_id
+    FROM transformometro.processos p
+    LEFT JOIN LATERAL (
+        SELECT pi2.instancia_id, pi2.filial_id, pi2.setor_id
+        FROM transformometro.processo_instancias pi2
+        WHERE pi2.processo_id = p.processo_id
+          AND pi2.deletado = FALSE
+        ORDER BY pi2.created_at ASC
+        LIMIT 1
+    ) pi ON TRUE
+    LEFT JOIN transformometro.filiais f
+        ON f.filial_id = pi.filial_id AND f.deletado = FALSE
+    LEFT JOIN transformometro.setores s
+        ON s.setor_id = pi.setor_id AND s.deletado = FALSE
+"""
+
 
 class ProcessoRepository(PluginBaseRepository):
     def next_codigo(self) -> str:
@@ -35,10 +67,34 @@ class ProcessoRepository(PluginBaseRepository):
         params: list[Any] = []
 
         if filial_id:
-            clauses.append("p.filial_id = %s")
+            clauses.append(
+                """
+                EXISTS (
+                    SELECT 1
+                    FROM transformometro.processo_instancias pi_f
+                    JOIN transformometro.filiais f_f ON f_f.filial_id = pi_f.filial_id
+                    WHERE pi_f.processo_id = p.processo_id
+                      AND pi_f.deletado = FALSE
+                      AND f_f.codigo_filial = %s
+                      AND f_f.deletado = FALSE
+                )
+                """
+            )
             params.append(filial_id)
         if setor_id:
-            clauses.append("p.setor_id = %s")
+            clauses.append(
+                """
+                EXISTS (
+                    SELECT 1
+                    FROM transformometro.processo_instancias pi_s
+                    JOIN transformometro.setores s_s ON s_s.setor_id = pi_s.setor_id
+                    WHERE pi_s.processo_id = p.processo_id
+                      AND pi_s.deletado = FALSE
+                      AND s_s.codigo_setor = %s
+                      AND s_s.deletado = FALSE
+                )
+                """
+            )
             params.append(setor_id)
         if status_processo:
             clauses.append("p.status_processo = %s")
@@ -56,8 +112,7 @@ class ProcessoRepository(PluginBaseRepository):
         where_sql = " AND ".join(clauses)
         return self.fetch_all(
             f"""
-            SELECT p.*
-            FROM transformometro.processos p
+            {_PROCESSO_SELECT}
             WHERE {where_sql}
             ORDER BY p.updated_at DESC, p.nome_processo ASC
             """,
@@ -66,9 +121,9 @@ class ProcessoRepository(PluginBaseRepository):
 
     def get(self, processo_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
-            """
-            SELECT * FROM transformometro.processos
-            WHERE processo_id = %s AND deletado = FALSE
+            f"""
+            {_PROCESSO_SELECT}
+            WHERE p.processo_id = %s AND p.deletado = FALSE
             """,
             (processo_id,),
         )
@@ -79,17 +134,17 @@ class ProcessoRepository(PluginBaseRepository):
             """
             INSERT INTO transformometro.processos (
                 codigo_processo, nome_processo, descricao_processo,
-                filial_id, setor_id, gestor_responsavel, objetivo_processo,
+                gestor_responsavel, objetivo_processo,
                 status_processo, familia_processo, agrupador_ferramenta
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING *
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING processo_id, codigo_processo, nome_processo, descricao_processo,
+                      gestor_responsavel, objetivo_processo, status_processo,
+                      familia_processo, agrupador_ferramenta, created_at, updated_at, deletado
             """,
             (
                 codigo,
                 data["nome_processo"],
                 data.get("descricao_processo"),
-                data["filial_id"],
-                data["setor_id"],
                 data.get("gestor_responsavel"),
                 data.get("objetivo_processo"),
                 data["status_processo"],
@@ -103,13 +158,11 @@ class ProcessoRepository(PluginBaseRepository):
         return row
 
     def update(self, processo_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
-        return self.execute_returning_one(
+        row = self.execute_returning_one(
             """
             UPDATE transformometro.processos SET
                 nome_processo = %s,
                 descricao_processo = %s,
-                filial_id = %s,
-                setor_id = %s,
                 gestor_responsavel = %s,
                 objetivo_processo = %s,
                 status_processo = %s,
@@ -117,13 +170,11 @@ class ProcessoRepository(PluginBaseRepository):
                 agrupador_ferramenta = %s,
                 updated_at = NOW()
             WHERE processo_id = %s AND deletado = FALSE
-            RETURNING *
+            RETURNING processo_id
             """,
             (
                 data["nome_processo"],
                 data.get("descricao_processo"),
-                data["filial_id"],
-                data["setor_id"],
                 data.get("gestor_responsavel"),
                 data.get("objetivo_processo"),
                 data["status_processo"],
@@ -132,6 +183,9 @@ class ProcessoRepository(PluginBaseRepository):
                 processo_id,
             ),
         )
+        if row is None:
+            return None
+        return self.get(processo_id)
 
     def soft_delete(self, processo_id: str) -> bool:
         row = self.execute_returning_one(
