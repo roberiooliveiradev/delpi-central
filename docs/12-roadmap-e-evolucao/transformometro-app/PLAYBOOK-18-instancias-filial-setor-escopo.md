@@ -397,7 +397,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 | **S7 — Dashboard visões** | `DashboardViewScopeService`, toggle MFE, query alias I14, export I10 | ✅ API (MFE toggle pendente) |
 | **S8 — Duplicar instância** | Novo endpoint, deprecar duplicar processo | ✅ Rollout multi-unidade |
 | **S9 — Integração via api-delpi + backup** | Paridade TM S2S + gateway/DTO api-delpi; smoke; I11/I17; JSON I12 | ✅ Listagem por instância |
-| **S10 — RBAC filial** (opcional) | Filtro server-side por filial do usuário | Permissão escopada |
+| **S10 — RBAC filial** (opcional) | Filtro server-side por filial do usuário | ✅ Permissão escopada |
 
 **Dependências:** S1 → S2 → S3 bloqueia S4–S9; S5–S6 após S3; S7 após S5–S6.
 
@@ -458,7 +458,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 
 O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para **processo-mestre + instâncias operacionais** `(filial × departamento)`, cada uma com **timeline própria de revisões**. Filiais e setores passam a ser entidades com **PK UUID** e **`codigo_*` de negócio**; recursos compartilhados ganham **escopo híbrido**; o dashboard passa a ter **visões consolidado / filial / departamento** com cálculo coerente no live, cache, export e integrações.
 
-**Próximo passo:** Sprint **S4** (V015 — processo mestre sem `filial_id`/`setor_id` na tabela `processos`) · status: [`transformometro-api/docs/playbook-18-implementation-status.md`](../../../transformometro-api/docs/playbook-18-implementation-status.md).
+**Próximo passo:** checklist MFE §9 (toggle dashboard, tipos UUID, rotas instância) · status: [`transformometro-api/docs/playbook-18-implementation-status.md`](../../../transformometro-api/docs/playbook-18-implementation-status.md).
 
 ### Progresso API (jun/2026)
 
@@ -473,3 +473,4 @@ O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para 
 | S7 Visões dashboard | ✅ `DashboardViewScopeService`, query `view` |
 | S8 Duplicar instância | ✅ V018, `POST /instancias/{id}/duplicar` |
 | S9 Integração api-delpi | ✅ `id` = `instancia_id`, backup filiais/instancias |
+| S10 RBAC filial | ✅ `FilialAccessScopeService`, permissões escopadas |

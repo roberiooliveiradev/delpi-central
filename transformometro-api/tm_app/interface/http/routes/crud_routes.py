@@ -83,6 +83,14 @@ from tm_app.interface.http.schemas.crud_schemas import (
     VinculoBody,
     VinculoUpdateBody,
 )
+from tm_app.interface.http.filial_access_http import (
+    check_instancia_view_access,
+    check_manage_filial_access,
+    check_processo_view_access,
+    check_view_filial_access,
+    filter_rows_for_access,
+    require_unrestricted_catalog_admin,
+)
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
 logger = logging.getLogger(__name__)
@@ -195,12 +203,16 @@ def _validate_recurso_body(body: RecursoBody):
 
 @router.get("/processos")
 def list_processos(
+    request: Request,
     filial_id: str | None = None,
     setor_id: str | None = None,
     status: str | None = None,
     familia_processo: str | None = None,
     q: str | None = None,
 ):
+    if filial_id:
+        if err := check_view_filial_access(request, filial_id):
+            return err
     rows = ProcessoRepository().list(
         filial_id=filial_id,
         setor_id=setor_id,
@@ -208,20 +220,26 @@ def list_processos(
         familia_processo=familia_processo,
         q=q,
     )
+    rows = filter_rows_for_access(request, rows)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
 @router.get("/processos/calculados")
 def list_processos_calculados(
+    request: Request,
     filial_id: str | None = None,
     setor_id: str | None = None,
     familia_processo: str | None = None,
 ):
+    if filial_id:
+        if err := check_view_filial_access(request, filial_id):
+            return err
     items = DashboardLiveService().list_processos_calculados(
         filial_id=filial_id,
         setor_id=setor_id,
         familia_processo=familia_processo,
     )
+    items = filter_rows_for_access(request, items)
     return ok(
         {"total": len(items), "items": rows_to_json(items)},
         "Processos com indicadores calculados em tempo real.",
@@ -229,7 +247,9 @@ def list_processos_calculados(
 
 
 @router.get("/processos/{processo_id}")
-def get_processo(processo_id: str):
+def get_processo(processo_id: str, request: Request):
+    if err := check_processo_view_access(request, processo_id):
+        return err
     row = ProcessoRepository().get(processo_id)
     if not row:
         return fail("Processo não encontrado.", 404)
@@ -251,6 +271,8 @@ def _processo_master_payload(body: ProcessoCreateBody) -> dict:
 
 @router.post("/processos")
 def create_processo(body: ProcessoCreateBody, request: Request):
+    if err := check_manage_filial_access(request, body.filial_id):
+        return err
     try:
         _validate_processo_body(body)
         repo = ProcessoRepository()
@@ -279,15 +301,20 @@ def create_processo(body: ProcessoCreateBody, request: Request):
 
 
 @router.get("/processos/{processo_id}/instancias")
-def list_processo_instancias(processo_id: str):
+def list_processo_instancias(processo_id: str, request: Request):
+    if err := check_processo_view_access(request, processo_id):
+        return err
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
     rows = ProcessoInstanciaRepository().list_by_processo(processo_id)
+    rows = filter_rows_for_access(request, rows, codigo_key="codigo_filial")
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
 @router.post("/processos/{processo_id}/instancias")
 def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Request):
+    if err := check_manage_filial_access(request, body.filial_id):
+        return err
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
     try:
@@ -310,7 +337,9 @@ def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Re
 
 
 @router.get("/instancias/{instancia_id}")
-def get_instancia(instancia_id: str):
+def get_instancia(instancia_id: str, request: Request):
+    if err := check_instancia_view_access(request, instancia_id):
+        return err
     row = ProcessoInstanciaRepository().get(instancia_id)
     if not row:
         return fail("Instância não encontrada.", 404)
@@ -319,6 +348,10 @@ def get_instancia(instancia_id: str):
 
 @router.post("/instancias/{instancia_id}/duplicar")
 def duplicate_instancia(instancia_id: str, body: InstanciaDuplicateBody, request: Request):
+    if err := check_instancia_view_access(request, instancia_id):
+        return err
+    if err := check_manage_filial_access(request, body.filial_id):
+        return err
     try:
         result = InstanciaDuplicateService().duplicate(
             instancia_id,
@@ -585,13 +618,21 @@ def delete_investimento(investimento_id: str, request: Request):
 
 
 @router.get("/filiais")
-def list_filiais(include_inactive: bool = False):
+def list_filiais(request: Request, include_inactive: bool = False):
     rows = FilialRepository().list(include_inactive=include_inactive)
+    rows = filter_rows_for_access(
+        request,
+        rows,
+        codigo_key="codigo_filial",
+        alt_codigo_key=None,
+    )
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
 @router.get("/filiais/{filial_id}")
-def get_filial(filial_id: str):
+def get_filial(filial_id: str, request: Request):
+    if err := check_view_filial_access(request, filial_id):
+        return err
     row = FilialRepository().get(filial_id)
     if not row:
         return fail("Filial não encontrada.", 404)
@@ -600,6 +641,8 @@ def get_filial(filial_id: str):
 
 @router.post("/filiais")
 def create_filial(body: FilialBody, request: Request):
+    if err := require_unrestricted_catalog_admin(request):
+        return err
     try:
         _validate_filial_body(body, is_create=True)
         row = FilialRepository().create(body.model_dump())
@@ -616,6 +659,8 @@ def create_filial(body: FilialBody, request: Request):
 
 @router.put("/filiais/{filial_id}")
 def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
+    if err := require_unrestricted_catalog_admin(request):
+        return err
     try:
         _validate_filial_body(body, is_create=False)
         row = FilialRepository().update(filial_id, body.model_dump())
@@ -634,6 +679,8 @@ def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
 
 @router.delete("/filiais/{filial_id}")
 def delete_filial(filial_id: str, request: Request):
+    if err := require_unrestricted_catalog_admin(request):
+        return err
     existing = FilialRepository().get(filial_id)
     if not existing:
         return fail("Filial não encontrada.", 404)
@@ -651,7 +698,10 @@ def delete_filial(filial_id: str, request: Request):
 
 
 @router.get("/setores")
-def list_setores(filial_id: str | None = None):
+def list_setores(request: Request, filial_id: str | None = None):
+    if filial_id:
+        if err := check_view_filial_access(request, filial_id):
+            return err
     rows = SetorRepository().list(filial_id=filial_id)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 

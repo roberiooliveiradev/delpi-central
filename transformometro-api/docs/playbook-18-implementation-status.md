@@ -17,6 +17,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 | **S7 — Visões dashboard** | — | `DashboardViewScopeService`, query `view=consolidated\|filial\|department` |
 | **S8 — Duplicar instância** | V018 | `POST /instancias/{id}/duplicar`; depreca `POST /processos/{id}/duplicar` |
 | **S9 — Integração api-delpi** | — | Listagem por instância (`id` = `instancia_id`); backup `filiais` + `processo_instancias` |
+| **S10 — RBAC filial** | — | `FilialAccessScopeService`, permissões escopadas, filtro server-side |
 
 ## Migrations disponíveis
 
@@ -67,6 +68,24 @@ Inferência legada: só `filial_id` → filial; `filial_id` + `setor_id` → dep
 
 Módulo canônico: `tm_app/application/integrations/engineering_transforma_mais.py`.
 
+## RBAC por filial (S10)
+
+Permissões escopadas (manifesto `transformometro.manifest.json`):
+
+| Permissão | Efeito |
+|-----------|--------|
+| `transformometro.view.filial-01` / `filial-02` | Leitura server-side filtrada à filial |
+| `transformometro.view.consolidated` | Visão consolidada do dashboard (com escopo filial ativo) |
+| `transformometro.manage.filial-01` / `filial-02` | CRUD de instâncias/processos na filial |
+
+**Compatibilidade:** usuários só com permissões globais legadas (`transformometro.view`, `transformometro.processes.manage`, …) permanecem **sem restrição de filial** até receberem permissões escopadas no Keycloak.
+
+Módulo canônico: `tm_app/application/services/filial_access_scope_service.py` · helpers HTTP em `tm_app/interface/http/filial_access_http.py`.
+
+Rotas S2S (`/integrations/engineering/transforma-mais/*`) e service token **não** aplicam RBAC filial.
+
+`GET /options` expõe `access_scope` (`mode`, `allowed_filiais`, `can_view_consolidated`).
+
 ## Escopo de recurso (`escopo_recurso`)
 
 | Valor | Pool de rateio |
@@ -112,7 +131,7 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 
 | Sprint | Foco |
 |--------|------|
-| **S10** | RBAC filial (opcional) |
+| **MFE Playbook §9** | Toggle dashboard, tipos UUID, rotas instância |
 
 ## Testes
 
@@ -120,4 +139,4 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 ./scripts/ci-transformometro-api.sh
 ```
 
-Suíte inclui `test_dashboard_cache_denorm_service`, `test_shared_resource_scope_service`, `test_dashboard_calculator_escopo_recurso`.
+Suíte inclui `test_dashboard_cache_denorm_service`, `test_shared_resource_scope_service`, `test_dashboard_calculator_escopo_recurso`, `test_filial_access_scope_service`.

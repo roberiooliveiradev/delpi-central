@@ -52,6 +52,36 @@
       "module": "transformometro"
     },
     {
+      "code": "transformometro.view.consolidated",
+      "name": "Visão consolidada do dashboard",
+      "description": "Permite consultar o dashboard sem filtro de filial (visão consolidada).",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.view.filial-01",
+      "name": "Visualizar Transformômetro — Filial 01",
+      "description": "Acesso de leitura aos dados operacionais da filial 01.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.view.filial-02",
+      "name": "Visualizar Transformômetro — Filial 02",
+      "description": "Acesso de leitura aos dados operacionais da filial 02.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.manage.filial-01",
+      "name": "Gerenciar Transformômetro — Filial 01",
+      "description": "Criar e editar processos/instâncias/revisões da filial 01.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.manage.filial-02",
+      "name": "Gerenciar Transformômetro — Filial 02",
+      "description": "Criar e editar processos/instâncias/revisões da filial 02.",
+      "module": "transformometro"
+    },
+    {
       "code": "transformometro.data.transfer",
       "name": "Exportar e importar JSON",
       "description": "Permite backup e restauração do cadastro via JSON.",
