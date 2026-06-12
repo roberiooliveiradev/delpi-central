@@ -117,12 +117,13 @@ erDiagram
     datetime data_alteracao
   }
   motivos {
-    serial motivo_id PK
+    uuid motivo_id PK
     string descricao
+    bool excluir_preventiva
     bool excluido
   }
   status_peca {
-    serial status_id PK
+    uuid status_id PK
     string descricao
     string operador
     int percentual

@@ -102,36 +102,43 @@ def import_status(repo: PluginBaseRepository, path: Path) -> int:
     return count
 
 
-def _resolve_motivo_id(repo: PluginBaseRepository, motivo_raw: str | None) -> int:
-    if motivo_raw and str(motivo_raw).strip().isdigit():
+def _resolve_motivo_id(repo: PluginBaseRepository, motivo_raw: str | None) -> str:
+    raw = (motivo_raw or "").strip()
+    if raw:
         row = repo.fetch_one(
-            "SELECT motivo_id FROM maintenance.motivos WHERE motivo_id = %(id)s",
-            {"id": int(motivo_raw)},
+            """
+            SELECT motivo_id::text AS motivo_id
+            FROM maintenance.motivos
+            WHERE motivo_id = %(id)s::uuid
+            """,
+            {"id": raw},
         )
         if row:
-            return int(row["motivo_id"])
+            return str(row["motivo_id"])
 
-    descricao = (motivo_raw or "DESGASTE").strip() or "DESGASTE"
+    descricao = raw or "DESGASTE"
+    if not descricao or descricao.isdigit():
+        descricao = "DESGASTE"
     row = repo.fetch_one(
         """
-        SELECT motivo_id FROM maintenance.motivos
+        SELECT motivo_id::text AS motivo_id FROM maintenance.motivos
         WHERE upper(descricao) = upper(%(descricao)s)
         LIMIT 1
         """,
         {"descricao": descricao},
     )
     if row:
-        return int(row["motivo_id"])
+        return str(row["motivo_id"])
 
     row = repo.fetch_one(
         """
         INSERT INTO maintenance.motivos (descricao)
         VALUES (%(descricao)s)
-        RETURNING motivo_id
+        RETURNING motivo_id::text AS motivo_id
         """,
         {"descricao": descricao},
     )
-    return int(row["motivo_id"])
+    return str(row["motivo_id"])
 
 
 def import_reposicoes(

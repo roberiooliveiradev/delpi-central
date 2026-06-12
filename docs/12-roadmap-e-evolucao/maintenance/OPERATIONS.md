@@ -60,6 +60,10 @@ curl -s http://localhost/apps/maintenance-api/maintenance/health | python3 -m js
 
 **Migrations automáticas:** `MAINT_RUN_MIGRATIONS_ON_STARTUP=true` aplica pendentes no startup. Falha impede subida do serviço.
 
+**V006 (UUID):** converte `motivos.motivo_id` e `status_peca.status_id` de serial para UUID (reposições já usavam UUID). Em banco novo (V002 atualizado), V006 é no-op. Após upgrade, IDs numéricos deixam de existir na API — o MFE não exibe coluna ID.
+
+**V007 (views):** cria views `vw_motivos_ativos`, `vw_status_peca_ativos`, `vw_reposicoes_detalhe`, `vw_reposicoes_preventiva`, `vw_reposicoes_ultima_por_par` e índice parcial em `reposicoes`. Repositórios de leitura usam as views — recriar `maintenance-api` após deploy para aplicar a migration.
+
 ## Registro Core API e RBAC
 
 O manifesto registra o app; permissões são atribuídas na **Core API** (não Keycloak).

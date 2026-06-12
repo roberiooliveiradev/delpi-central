@@ -73,10 +73,25 @@ Variáveis: `DELPI_API_URL`, `DELPI_API_TIMEOUT`.
 |--------|------|
 | `schema_migrations` | V001 |
 | `motivos`, `reposicoes`, `status_peca`, `audit_logs` | V002 |
+| Views de leitura (`vw_*`) | V007 |
 
-Índices sugeridos:
+### Views (V007)
 
-- `(filial, codigo_ferramenta, codigo_peca, data_reposicao DESC)` em `reposicoes`
+Leituras paginadas e preventiva usam views em `maintenance` (constantes em `infrastructure/persistence/views.py`):
+
+| View | Uso |
+|------|-----|
+| `vw_motivos_ativos` | Listagem de motivos (sem `excluido`) |
+| `vw_status_peca_ativos` | Listagem de regras de status |
+| `vw_reposicoes_detalhe` | Histórico da ferramenta com `motivo_descricao` |
+| `vw_reposicoes_preventiva` | Reposições que entram no cálculo preventivo |
+| `vw_reposicoes_ultima_por_par` | Última reposição preventiva por par filial/ferramenta/peça |
+
+Escritas (`INSERT`/`UPDATE`/`soft_delete`) permanecem nas tabelas base.
+
+Índices:
+
+- `(filial, codigo_ferramenta, codigo_peca, data_reposicao DESC)` em `reposicoes` (parcial `excluido = FALSE`, V007)
 - `(excluido)` parcial onde aplicável
 
 ## Envelope HTTP

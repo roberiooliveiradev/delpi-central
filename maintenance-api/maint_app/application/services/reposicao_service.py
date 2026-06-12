@@ -44,7 +44,7 @@ class ReposicaoService:
         filial = str(payload.get("filial") or "").strip()
         codigo_ferramenta = str(payload.get("codigo_ferramenta") or "").strip()
         codigo_peca = str(payload.get("codigo_peca") or "").strip()
-        motivo_id = payload.get("motivo_id")
+        motivo_id = str(payload.get("motivo_id") or "").strip()
         golpes = payload.get("golpes")
         data_reposicao = payload.get("data_reposicao")
 
@@ -54,7 +54,7 @@ class ReposicaoService:
             raise ValueError("Código da ferramenta é obrigatório.")
         if not codigo_peca:
             raise ValueError("Código da peça é obrigatório.")
-        if motivo_id is None:
+        if not motivo_id:
             raise ValueError("Motivo é obrigatório.")
 
         try:
@@ -94,7 +94,7 @@ class ReposicaoService:
             "data_reposicao": data_reposicao_dt,
             "data_ultima_reposicao": data_ultima_reposicao_dt,
             "golpes": golpes_int,
-            "motivo_id": int(motivo_id),
+            "motivo_id": motivo_id,
             "observacao": (payload.get("observacao") or "").strip() or None,
         }
 

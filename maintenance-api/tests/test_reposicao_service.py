@@ -6,6 +6,8 @@ import pytest
 from maint_app.application.services.filial_access_scope_service import FilialAccessScope
 from maint_app.application.services.reposicao_service import ReposicaoService
 
+MOTIVO_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+
 
 def test_validate_payload_rejects_non_positive_golpes():
     service = ReposicaoService(reposicao_repo=MagicMock())
@@ -17,7 +19,7 @@ def test_validate_payload_rejects_non_positive_golpes():
                 "codigo_peca": "P001",
                 "data_reposicao": datetime.now(timezone.utc).isoformat(),
                 "golpes": 0,
-                "motivo_id": 1,
+                "motivo_id": MOTIVO_ID,
             }
         )
 
@@ -36,7 +38,7 @@ def test_validate_payload_requires_date_after_last_replacement():
                 "data_reposicao": "2026-06-01T10:00:00+00:00",
                 "data_ultima_reposicao": "2026-06-01T12:00:00+00:00",
                 "golpes": 10,
-                "motivo_id": 1,
+                "motivo_id": MOTIVO_ID,
             }
         )
 
@@ -54,12 +56,13 @@ def test_validate_payload_uses_form_last_replacement_not_db_max():
             "data_reposicao": "2019-06-12T16:44:00",
             "data_ultima_reposicao": "2000-06-12T10:51:00",
             "golpes": 50,
-            "motivo_id": 1,
+            "motivo_id": MOTIVO_ID,
         }
     )
 
     assert result["data_reposicao"].year == 2019
     assert result["data_ultima_reposicao"].year == 2000
+    assert result["motivo_id"] == MOTIVO_ID
 
 
 def test_sugerir_golpes_usa_intervalo_datetime_no_totvs():
@@ -101,7 +104,7 @@ def test_create_checks_manage_permission():
                 "codigo_peca": "P001",
                 "data_reposicao": "2026-06-12T10:00:00+00:00",
                 "golpes": 10,
-                "motivo_id": 1,
+                "motivo_id": MOTIVO_ID,
             },
             scope=scope,
             user=MagicMock(is_superadmin=False, permissions=[]),

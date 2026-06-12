@@ -60,7 +60,7 @@ class ReposicaoBody(BaseModel):
     data_reposicao: str
     data_ultima_reposicao: Optional[str] = None
     golpes: int = Field(gt=0)
-    motivo_id: int
+    motivo_id: str
     observacao: Optional[str] = None
 
 
@@ -102,7 +102,7 @@ def create_motivo(body: MotivoCreateBody, request: Request):
 
 
 @router.put("/motivos/{motivo_id}")
-def update_motivo(motivo_id: int, body: MotivoUpdateBody, request: Request):
+def update_motivo(motivo_id: str, body: MotivoUpdateBody, request: Request):
     user = resolve_user(request)
     scope = resolve_access_scope(request)
     try:
@@ -122,7 +122,7 @@ def update_motivo(motivo_id: int, body: MotivoUpdateBody, request: Request):
 
 @router.delete("/motivos/{motivo_id}")
 def delete_motivo(
-    motivo_id: int,
+    motivo_id: str,
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
 ):
@@ -176,7 +176,7 @@ def create_status_peca(body: StatusCreateBody, request: Request):
 
 @router.put("/status-peca/{status_id}")
 def update_status_peca(
-    status_id: int,
+    status_id: str,
     body: StatusUpdateBody,
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
@@ -201,7 +201,7 @@ def update_status_peca(
 
 @router.delete("/status-peca/{status_id}")
 def delete_status_peca(
-    status_id: int,
+    status_id: str,
     request: Request,
     filial: str = Query(..., min_length=2, max_length=2),
 ):
@@ -221,7 +221,7 @@ def list_reposicoes(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo_ferramenta: str = Query(...),
     codigo_peca: list[str] | None = Query(None),
-    motivo_id: list[int] | None = Query(None),
+    motivo_id: list[str] | None = Query(None),
     data_inicial: Optional[str] = Query(None),
     data_final: Optional[str] = Query(None),
     query: ListQuery = Depends(list_query_params),

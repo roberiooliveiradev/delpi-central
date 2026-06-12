@@ -1,7 +1,7 @@
 import type { ReposicaoItem } from "../data/api/maintenanceApi";
 
 export type MotivoIndicador = {
-  motivo_id: number;
+  motivo_id: string;
   descricao: string;
   quantidade: number;
 };
@@ -29,7 +29,7 @@ export function computeReposicaoIndicadores(reposicoes: ReposicaoItem[]): Reposi
 
   const pecas = new Set<string>();
   const pecaCounts = new Map<string, number>();
-  const motivoMap = new Map<number, { descricao: string; quantidade: number }>();
+  const motivoMap = new Map<string, { descricao: string; quantidade: number }>();
   let golpesSum = 0;
   let ultima: Date | null = null;
 

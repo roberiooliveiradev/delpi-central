@@ -32,7 +32,7 @@ export function validateReposicaoForm(input: {
   dataReposicao: string;
   dataUltimaReposicao: string;
   golpes: number;
-  motivoId: number | "";
+  motivoId: string | "";
   requireDataUltima?: boolean;
 }): ReposicaoFormErrors {
   const errors: ReposicaoFormErrors = {};

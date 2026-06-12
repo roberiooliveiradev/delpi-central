@@ -205,13 +205,13 @@ export function fetchPreventivaHistorico(
 }
 
 export type MotivoItem = {
-  motivo_id: number;
+  motivo_id: string;
   descricao: string;
   excluir_preventiva?: boolean;
 };
 
 export type StatusItem = {
-  status_id: number;
+  status_id: string;
   descricao: string;
   operador: string;
   percentual: number;
@@ -224,7 +224,7 @@ export type ReposicaoItem = {
   data_reposicao: string;
   data_ultima_reposicao?: string | null;
   golpes: number;
-  motivo_id: number;
+  motivo_id: string;
   motivo_descricao?: string;
   observacao?: string | null;
 };
@@ -258,7 +258,7 @@ export function fetchReposicoes(
     filial: string;
     codigo_ferramenta: string;
     codigo_peca?: string[];
-    motivo_id?: number[];
+    motivo_id?: string[];
     data_inicial?: string;
     data_final?: string;
   } & ListQueryParams,
@@ -296,7 +296,7 @@ export async function fetchAllReposicoes(
     filial: string;
     codigo_ferramenta: string;
     codigo_peca?: string[];
-    motivo_id?: number[];
+    motivo_id?: string[];
     data_inicial?: string;
     data_final?: string;
     sortKey?: string | null;
@@ -344,7 +344,7 @@ export function createReposicao(
     data_reposicao: string;
     data_ultima_reposicao?: string;
     golpes: number;
-    motivo_id: number;
+    motivo_id: string;
     observacao?: string;
   },
   getAccessToken?: () => string | undefined,
@@ -366,7 +366,7 @@ export function updateReposicao(
     data_reposicao: string;
     data_ultima_reposicao?: string;
     golpes: number;
-    motivo_id: number;
+    motivo_id: string;
     observacao?: string;
   },
   getAccessToken?: () => string | undefined,
@@ -401,12 +401,12 @@ export function createMotivo(
 }
 
 export function updateMotivo(
-  motivoId: number,
+  motivoId: string,
   filial: string,
   payload: { descricao: string; excluir_preventiva?: boolean },
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<MotivoItem>(`/motivos/${motivoId}`, {
+  return maintenanceFetch<MotivoItem>(`/motivos/${encodeURIComponent(motivoId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filial, ...payload }),
@@ -415,24 +415,24 @@ export function updateMotivo(
 }
 
 export function deleteMotivo(
-  motivoId: number,
+  motivoId: string,
   filial: string,
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<null>(`/motivos/${motivoId}?filial=${encodeURIComponent(filial)}`, {
+  return maintenanceFetch<null>(`/motivos/${encodeURIComponent(motivoId)}?filial=${encodeURIComponent(filial)}`, {
     method: "DELETE",
     getAccessToken,
   });
 }
 
 export function updateStatusPeca(
-  statusId: number,
+  statusId: string,
   filial: string,
   body: { descricao?: string; operador?: string; percentual?: number },
   getAccessToken?: () => string | undefined,
 ) {
   return maintenanceFetch<StatusItem>(
-    `/status-peca/${statusId}?filial=${encodeURIComponent(filial)}`,
+    `/status-peca/${encodeURIComponent(statusId)}?filial=${encodeURIComponent(filial)}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -460,11 +460,11 @@ export function createStatusPeca(
 }
 
 export function deleteStatusPeca(
-  statusId: number,
+  statusId: string,
   filial: string,
   getAccessToken?: () => string | undefined,
 ) {
-  return maintenanceFetch<null>(`/status-peca/${statusId}?filial=${encodeURIComponent(filial)}`, {
+  return maintenanceFetch<null>(`/status-peca/${encodeURIComponent(statusId)}?filial=${encodeURIComponent(filial)}`, {
     method: "DELETE",
     getAccessToken,
   });

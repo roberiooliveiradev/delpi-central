@@ -6,6 +6,11 @@ from fastapi.testclient import TestClient
 from maint_app.application.services.filial_access_scope_service import FilialAccessScope
 from maint_app.main import app
 
+STATUS_ID = "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+STATUS_ID_UPDATE = "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+STATUS_ID_DELETE = "d3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44"
+STATUS_ID_LIST = "e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a55"
+
 
 def _manage_user():
     return SimpleNamespace(
@@ -40,7 +45,7 @@ def test_create_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     mock_user.return_value = _manage_user()
     mock_scope.return_value = _scope()
     mock_repo_cls.return_value.create.return_value = {
-        "status_id": 10,
+        "status_id": STATUS_ID,
         "descricao": "CRÍTICO",
         "operador": ">=",
         "percentual": 95,
@@ -61,7 +66,7 @@ def test_create_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     assert response.status_code == 201
     payload = response.json()
     assert payload["success"] is True
-    assert payload["data"]["status_id"] == 10
+    assert payload["data"]["status_id"] == STATUS_ID
     mock_repo_cls.return_value.create.assert_called_once_with(
         filial="01",
         descricao="CRÍTICO",
@@ -78,7 +83,7 @@ def test_update_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     mock_user.return_value = _manage_user()
     mock_scope.return_value = _scope()
     mock_repo_cls.return_value.update.return_value = {
-        "status_id": 3,
+        "status_id": STATUS_ID_UPDATE,
         "descricao": "ATENÇÃO",
         "operador": ">=",
         "percentual": 85,
@@ -87,7 +92,7 @@ def test_update_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
 
     client = TestClient(app)
     response = client.put(
-        "/maintenance/status-peca/3?filial=01",
+        f"/maintenance/status-peca/{STATUS_ID_UPDATE}?filial=01",
         json={"descricao": "ATENÇÃO", "operador": ">=", "percentual": 85},
     )
 
@@ -104,11 +109,11 @@ def test_delete_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     mock_scope.return_value = _scope()
 
     client = TestClient(app)
-    response = client.delete("/maintenance/status-peca/2?filial=01")
+    response = client.delete(f"/maintenance/status-peca/{STATUS_ID_DELETE}?filial=01")
 
     assert response.status_code == 200
     assert response.json()["success"] is True
-    mock_repo_cls.return_value.soft_delete.assert_called_once_with(2, filial="01")
+    mock_repo_cls.return_value.soft_delete.assert_called_once_with(STATUS_ID_DELETE, filial="01")
 
 
 @patch("maint_app.interface.http.routes.operational_routes.resolve_access_scope")
@@ -120,7 +125,13 @@ def test_list_status_peca(mock_repo_cls, _public, mock_user, mock_scope):
     mock_scope.return_value = _scope()
     mock_repo_cls.return_value.list_active_paged.return_value = (
         [
-            {"status_id": 1, "descricao": "OK", "operador": "<", "percentual": 80, "filial": "01"},
+            {
+                "status_id": STATUS_ID_LIST,
+                "descricao": "OK",
+                "operador": "<",
+                "percentual": 80,
+                "filial": "01",
+            },
         ],
         1,
     )

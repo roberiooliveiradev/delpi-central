@@ -96,17 +96,17 @@ export function MiniAplicadoresPage({
   const [reposicoesTotal, setReposicoesTotal] = useState(0);
   const [codigoPeca, setCodigoPeca] = useState("");
   const [golpes, setGolpes] = useState(0);
-  const [motivoId, setMotivoId] = useState<number | "">("");
+  const [motivoId, setMotivoId] = useState<string | "">("");
   const [observacao, setObservacao] = useState("");
   const [dataReposicao, setDataReposicao] = useState(() => toDatetimeLocalValue(new Date()));
   const [dataUltimaReposicao, setDataUltimaReposicao] = useState("");
   const [editingReposicaoId, setEditingReposicaoId] = useState<string | null>(null);
   const [filtroHistoricoPeca, setFiltroHistoricoPeca] = useState<string[]>([]);
-  const [filtroHistoricoMotivo, setFiltroHistoricoMotivo] = useState<number[]>([]);
+  const [filtroHistoricoMotivo, setFiltroHistoricoMotivo] = useState<string[]>([]);
   const [filtroHistoricoDataInicial, setFiltroHistoricoDataInicial] = useState("");
   const [filtroHistoricoDataFinal, setFiltroHistoricoDataFinal] = useState("");
   const [filtroHistoricoPecaDraft, setFiltroHistoricoPecaDraft] = useState<string[]>([]);
-  const [filtroHistoricoMotivoDraft, setFiltroHistoricoMotivoDraft] = useState<number[]>([]);
+  const [filtroHistoricoMotivoDraft, setFiltroHistoricoMotivoDraft] = useState<string[]>([]);
   const [filtroHistoricoDataInicialDraft, setFiltroHistoricoDataInicialDraft] = useState("");
   const [filtroHistoricoDataFinalDraft, setFiltroHistoricoDataFinalDraft] = useState("");
   const [ferramentasLoading, setFerramentasLoading] = useState(false);
@@ -141,7 +141,7 @@ export function MiniAplicadoresPage({
 
   const motivosHistorico = useMemo(() => {
     const byId = new Map(motivos.map((item) => [item.motivo_id, item]));
-    const seen = new Set<number>();
+    const seen = new Set<string>();
     const options: MotivoItem[] = [];
     for (const item of allReposicoesChart) {
       if (seen.has(item.motivo_id)) continue;
@@ -681,7 +681,7 @@ export function MiniAplicadoresPage({
           ? fromDatetimeLocalValue(dataUltimaReposicao)
           : undefined,
       golpes,
-      motivo_id: Number(motivoId),
+      motivo_id: motivoId,
       observacao: observacao.trim() || undefined,
     };
     try {
@@ -1061,7 +1061,7 @@ export function MiniAplicadoresPage({
                     aria-invalid={Boolean(reposicaoFormErrors.motivoId)}
                     onChange={(event) => {
                       clearReposicaoFieldError("motivoId");
-                      setMotivoId(event.target.value ? Number(event.target.value) : "");
+                      setMotivoId(event.target.value);
                     }}
                   >
                     <option value="">Selecione…</option>
@@ -1152,10 +1152,8 @@ export function MiniAplicadoresPage({
                   className="dm-field--filter-motivo"
                   emptyLabel="Todos"
                   options={motivoHistoricoOptions}
-                  selectedValues={filtroHistoricoMotivoDraft.map(String)}
-                  onChange={(values) =>
-                    setFiltroHistoricoMotivoDraft(values.map((value) => Number(value)))
-                  }
+                  selectedValues={filtroHistoricoMotivoDraft}
+                  onChange={setFiltroHistoricoMotivoDraft}
                 />
                 <label className="dm-field dm-field--filter-date">
                   <span>De</span>

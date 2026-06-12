@@ -66,7 +66,7 @@ function toMotivoDraft(item: MotivoItem): MotivoDraft {
   };
 }
 
-function isMotivoDirty(item: MotivoItem, edits: Record<number, MotivoDraft>): boolean {
+function isMotivoDirty(item: MotivoItem, edits: Record<string, MotivoDraft>): boolean {
   const draft = edits[item.motivo_id];
   if (!draft) return false;
   return (
@@ -75,7 +75,7 @@ function isMotivoDirty(item: MotivoItem, edits: Record<number, MotivoDraft>): bo
   );
 }
 
-function isStatusDirty(item: StatusItem, edits: Record<number, StatusItem>): boolean {
+function isStatusDirty(item: StatusItem, edits: Record<string, StatusItem>): boolean {
   const draft = edits[item.status_id];
   if (!draft) return false;
   return (
@@ -108,8 +108,8 @@ export function ConfiguracaoPage({
   const [novoMotivo, setNovoMotivo] = useState("");
   const [novoMotivoExcluirPreventiva, setNovoMotivoExcluirPreventiva] = useState(false);
   const [novoStatus, setNovoStatus] = useState<NovoStatusDraft>(DEFAULT_NOVO_STATUS);
-  const [motivoEdits, setMotivoEdits] = useState<Record<number, MotivoDraft>>({});
-  const [statusEdits, setStatusEdits] = useState<Record<number, StatusItem>>({});
+  const [motivoEdits, setMotivoEdits] = useState<Record<string, MotivoDraft>>({});
+  const [statusEdits, setStatusEdits] = useState<Record<string, StatusItem>>({});
 
   const loadMotivos = useCallback(async () => {
     setMotivosLoading(true);
@@ -213,7 +213,7 @@ export function ConfiguracaoPage({
     }
   }
 
-  async function handleSaveMotivo(motivoId: number) {
+  async function handleSaveMotivo(motivoId: string) {
     const draft = motivoEdits[motivoId];
     const descricao = (draft?.descricao ?? "").trim();
     if (!descricao) return;
@@ -236,7 +236,7 @@ export function ConfiguracaoPage({
     }
   }
 
-  async function handleDeleteMotivo(motivoId: number, descricao: string) {
+  async function handleDeleteMotivo(motivoId: string, descricao: string) {
     if (!window.confirm(`Excluir motivo "${descricao}"?`)) return;
     setError(null);
     setSuccess(null);
@@ -273,7 +273,7 @@ export function ConfiguracaoPage({
     }
   }
 
-  async function handleSaveStatus(statusId: number) {
+  async function handleSaveStatus(statusId: string) {
     const draft = statusEdits[statusId];
     if (!draft) return;
     setError(null);
@@ -296,7 +296,7 @@ export function ConfiguracaoPage({
     }
   }
 
-  async function handleDeleteStatus(statusId: number, descricao: string) {
+  async function handleDeleteStatus(statusId: string, descricao: string) {
     if (!window.confirm(`Excluir regra de status "${descricao}"?`)) return;
     setError(null);
     setSuccess(null);
@@ -311,14 +311,6 @@ export function ConfiguracaoPage({
 
   const motivosColumns = useMemo<DataTableColumn<MotivoItem>[]>(() => {
     const columns: DataTableColumn<MotivoItem>[] = [
-      {
-        key: "id",
-        header: "ID",
-        sortable: true,
-        sortValue: (item) => item.motivo_id,
-        render: (item) => item.motivo_id,
-        align: "center",
-      },
       {
         key: "descricao",
         header: "Descrição",

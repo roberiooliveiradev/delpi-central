@@ -25,18 +25,18 @@ from maint_app.infrastructure.persistence.plugins.plugin_base_repository import 
 )
 
 
-def _motivo_id(repo: PluginBaseRepository) -> int:
+def _motivo_id(repo: PluginBaseRepository) -> str:
     row = repo.fetch_one(
         """
-        SELECT motivo_id FROM maintenance.motivos
+        SELECT motivo_id::text AS motivo_id FROM maintenance.motivos
         WHERE excluido = FALSE
-        ORDER BY motivo_id
+        ORDER BY descricao
         LIMIT 1
         """
     )
     if not row:
         raise RuntimeError("Nenhum motivo cadastrado — rode migrations V002.")
-    return int(row["motivo_id"])
+    return str(row["motivo_id"])
 
 
 def bootstrap(
