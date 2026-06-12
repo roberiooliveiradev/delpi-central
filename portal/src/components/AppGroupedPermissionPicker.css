@@ -1,0 +1,131 @@
+/* src/components/AppGroupedPermissionPicker.css */
+
+.app-grouped-permission-picker .app-grouped-permission-apps {
+  gap: 12px;
+}
+
+.app-grouped-permission-picker .app-grouped-permission-apps > .app-grouped-permission-app {
+  flex-shrink: 0;
+}
+
+.app-grouped-permission-app {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-2);
+  overflow: hidden;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.app-grouped-permission-app:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.app-grouped-permission-app-selected {
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+}
+
+.app-grouped-permission-app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
+}
+
+.app-grouped-permission-app-toggle {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
+.app-grouped-permission-app-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-grouped-permission-app-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  flex-shrink: 0;
+}
+
+.app-grouped-permission-app-selected .app-grouped-permission-app-icon {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.app-grouped-permission-app-title strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.app-grouped-permission-app-title span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.app-grouped-permission-app-chevron {
+  flex: 0 0 auto;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.app-grouped-permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px 12px;
+}
+
+.app-grouped-permission-list > .relationship-card {
+  flex-shrink: 0;
+}
+
+.app-grouped-permission-card {
+  background: var(--surface);
+}
+
+@media (max-width: 640px) {
+  .app-grouped-permission-app-header {
+    flex-direction: column;
+  }
+
+  .app-grouped-permission-app-header .relationship-mini-button {
+    width: 100%;
+  }
+}

@@ -7,8 +7,8 @@ import type {
   AdminUser,
 } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
+import { AppGroupedPermissionPicker } from "../../../components/AppGroupedPermissionPicker";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
-import { resolveIcon } from "../../../utils/iconResolver";
 import type { AppInfoByModule } from "../tabs/RolesTab";
 import "./RoleEditModal.css";
 
@@ -33,14 +33,6 @@ type Props = {
   onChangeRole: (patch: Partial<AdminRole>) => void;
   onChangeUserIds: (nextIds: string[]) => void;
   onChangePermissionIds: (nextIds: string[]) => void;
-};
-
-const normalizeModuleKey = (value: string | null | undefined) => {
-  return (value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/^\/+/, "")
-    .replace(/^apps\//, "");
 };
 
 export const RoleEditModal = ({
@@ -69,53 +61,6 @@ export const RoleEditModal = ({
   if (!open || !role) return null;
 
   const isEdit = !!role.id;
-
-  const getPermissionAppInfo = (permission: AdminPermission) => {
-    const moduleKey = normalizeModuleKey(permission.module);
-
-    if (!moduleKey) return null;
-
-    return appInfoByModule[moduleKey] ?? null;
-  };
-
-  const getPermissionAvatar = (permission: AdminPermission) => {
-    const appInfo = getPermissionAppInfo(permission);
-    const Icon = resolveIcon(appInfo?.icon);
-
-    if (!Icon) {
-      return permission.code?.[0]?.toUpperCase() ?? "•";
-    }
-
-    return <Icon size={18} />;
-  };
-
-  const getPermissionMeta = (permission: AdminPermission) => {
-    const appInfo = getPermissionAppInfo(permission);
-
-    const meta: {
-      label: string;
-      tone?: "default" | "success" | "warning" | "danger";
-    }[] = [];
-
-    if (appInfo?.name) {
-      meta.push({
-        label: appInfo.name,
-        tone: "default",
-      });
-    }
-
-    if (
-      permission.module &&
-      normalizeModuleKey(appInfo?.name) !== normalizeModuleKey(permission.module)
-    ) {
-      meta.push({
-        label: permission.module,
-        tone: "default",
-      });
-    }
-
-    return meta;
-  };
 
   return (
     <Modal
@@ -221,24 +166,17 @@ export const RoleEditModal = ({
         )}
 
         {activeTab === "permissions" && (
-          <RelationshipPicker<AdminPermission>
+          <AppGroupedPermissionPicker
             title="Permissões do Papel"
-            availableTitle="Permissões disponíveis"
-            selectedTitle="Permissões vinculadas ao papel"
+            availableTitle="Apps disponíveis"
+            selectedTitle="Apps vinculados ao papel"
             searchPlaceholder="Buscar por código, nome, app ou módulo..."
             emptyAvailableText="Nenhuma permissão disponível para adicionar."
             emptySelectedText="Nenhuma permissão vinculada a este papel."
-            items={allPerms}
+            permissions={allPerms}
             selectedIds={selectedPermIds}
+            appInfoByModule={appInfoByModule}
             disabled={saving}
-            getId={(permission) => permission.id}
-            getTitle={(permission) => permission.code}
-            getSubtitle={(permission) =>
-              permission.name ?? permission.module ?? ""
-            }
-            getDescription={(permission) => permission.description ?? null}
-            getMeta={getPermissionMeta}
-            getAvatar={getPermissionAvatar}
             onChange={onChangePermissionIds}
           />
         )}
