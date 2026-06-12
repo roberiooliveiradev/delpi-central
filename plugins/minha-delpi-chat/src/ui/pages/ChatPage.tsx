@@ -114,7 +114,7 @@ import {
 import {
   isAttachmentIndexPending,
   waitForSessionAttachmentIndexed,
-} from "../../data/chatAttachmentIndexPolling";
+} from "../../data/workspaceFileIngestPolling";
 import { mapApiAttachmentToComposerStatus } from "../chatAttachmentStatus";
 import {
   buildTypingCorrectionMetadata,

@@ -17,26 +17,10 @@ from app.domain.exceptions.chat_exceptions import (
 )
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+from app.domain.services.workspace_file_ingest_policy_service import (
+    WorkspaceFileIngestPolicyService,
+)
 from app.infrastructure.config.settings import Settings
-
-
-ALLOWED_EXTENSIONS = {
-    ".pdf",
-    ".txt",
-    ".md",
-    ".doc",
-    ".docx",
-    ".xls",
-    ".xlsx",
-    ".csv",
-    ".json",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".webp",
-}
-
-MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
 
 
 def _attachment_to_response(attachment) -> ChatAttachmentResponse:
@@ -79,7 +63,10 @@ class CreateChatAttachmentUseCase:
         safe_name = secure_filename(original_filename) or "arquivo"
         extension = Path(safe_name).suffix.lower()
 
-        if extension not in ALLOWED_EXTENSIONS:
+        if not WorkspaceFileIngestPolicyService.is_extension_allowed(
+            "session_attachment",
+            safe_name,
+        ):
             raise InvalidChatSessionInputError("File type is not allowed")
 
         storage_dir = self.storage_root / str(user_id) / str(session_id)
@@ -163,7 +150,7 @@ class CreateChatAttachmentUseCase:
         if value <= 0:
             raise InvalidChatSessionInputError("File is empty")
 
-        if value > MAX_ATTACHMENT_SIZE_BYTES:
+        if value > WorkspaceFileIngestPolicyService.max_size_bytes("session_attachment"):
             raise InvalidChatSessionInputError("File exceeds maximum size")
 
         return value

@@ -1650,7 +1650,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus("Indexando anexos para consulta...");
 
           const { waitForSessionAttachmentsIndexed } = await import(
-            "../../data/chatAttachmentIndexPolling"
+            "../../data/workspaceFileIngestPolling"
           );
 
           const settled = await waitForSessionAttachmentsIndexed(

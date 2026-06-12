@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   workspaceFileAgentIngestLabels,
   workspaceFileComposerAttachmentsHeader,
+  workspaceFileMessageEditAttachmentsHeader,
   workspaceFileContextBinaryLine,
   workspaceFileDropzoneContent,
   workspaceFileProjectFileKindLabel,
@@ -24,6 +25,10 @@ describe("workspaceFileIngestContent", () => {
 
   it("formata cabeçalho de anexos do composer", () => {
     expect(workspaceFileComposerAttachmentsHeader(2)).toBe("2 arquivo(s) anexado(s)");
+  });
+
+  it("formata cabeçalho de anexos na edição de mensagem", () => {
+    expect(workspaceFileMessageEditAttachmentsHeader(1)).toBe("1 arquivo(s) neste reenvio");
   });
 
   it("expõe labels de ingestão do agente", () => {

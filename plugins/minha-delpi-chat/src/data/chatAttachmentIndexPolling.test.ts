@@ -4,7 +4,7 @@ import {
   isAttachmentIndexPending,
   isTerminalAttachmentStatus,
   waitForSessionAttachmentIndexed,
-} from "./chatAttachmentIndexPolling";
+} from "./workspaceFileIngestPolling";
 
 vi.mock("./api/chatApi", () => ({
   fetchChatSessionAttachments: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock("./api/chatApi", () => ({
 
 import { fetchChatSessionAttachments } from "./api/chatApi";
 
-describe("chatAttachmentIndexPolling", () => {
+describe("workspaceFileIngestPolling", () => {
   it("detecta status pendente de indexação", () => {
     expect(isAttachmentIndexPending("indexing")).toBe(true);
     expect(isAttachmentIndexPending("uploaded")).toBe(true);

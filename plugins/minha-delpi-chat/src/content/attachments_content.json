@@ -104,6 +104,11 @@
       "clearAttachments": "Limpar",
       "attachMenuLabel": "Anexar arquivos"
     },
+    "messageEdit": {
+      "attachmentsHeader": "{count} arquivo(s) neste reenvio",
+      "addMoreLabel": "Anexar mais",
+      "emptyState": "Nenhum arquivo anexado. Você pode adicionar novos antes de reenviar."
+    },
     "agent": {
       "ariaAddFiles": "Adicionar arquivos de conhecimento",
       "listAriaLabel": "Arquivos do agente",

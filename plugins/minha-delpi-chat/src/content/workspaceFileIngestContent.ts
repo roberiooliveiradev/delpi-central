@@ -73,6 +73,14 @@ export function workspaceFileComposerAttachmentsHeader(count: number): string {
   return INGEST_UI.composer.attachmentsHeader.replace("{count}", String(count));
 }
 
+export function workspaceFileMessageEditAttachmentsHeader(count: number): string {
+  return INGEST_UI.messageEdit.attachmentsHeader.replace("{count}", String(count));
+}
+
+export function workspaceFileMessageEditLabels() {
+  return INGEST_UI.messageEdit;
+}
+
 export function workspaceFileComposerLabels() {
   return {
     clearAttachments: INGEST_UI.composer.clearAttachments,

@@ -164,8 +164,8 @@ queued → uploading → processing → indexed
 | C | `ChatProjectHome` sources | Row → `WorkspaceFileCard` variant `row` |
 | D | `KnowledgeIngestionPanel` | Usar `WorkspaceFileDropzone` |
 | D | `ChatAddContextDialog` | Variante `context_paste` (sem indexação) |
-| E | `ChatMessageEditAttachments` | Reusar kit + mesma API sessão |
-| E | Polling unificado | `workspaceFileIngestPolling` para agente/projeto se API expuser status |
+| E | `ChatMessageEditAttachments` | Reusar kit + mesma API sessão | ✅ |
+| E | Polling unificado (`session_attachment`) | `workspaceFileIngestPolling` — agente/projeto quando API expuser status | ✅ parcial |
 
 ---
 
@@ -238,7 +238,7 @@ A revisão UI cobriu as **superfícies principais**, mas faltaram **cinco áreas
 
 O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE e **sprints de migração** sem duplicar o Playbook 05 (inteligência pós-leitura).
 
-**Próximo passo:** Sprint E — `ChatMessageEditAttachments`, polling unificado (`workspaceFileIngestPolling`); API `WorkspaceFileIngestPolicyService` (accept único).
+**Próximo passo:** estender `WorkspaceFileIngestPolicyService` para rotas de fonte/admin + status poll `agent_source`/`project_source`; casos F1–F7 em fixtures.
 
 ### Progresso (jun/2026)
 
@@ -252,3 +252,6 @@ O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE
 | C | `ChatProjectHome` sources | ✅ |
 | D | `ChatAddContextDialog` dropzone | ✅ |
 | D | `KnowledgeIngestionPanel` (já usa `AdminFileDropzone`) | ✅ |
+| E | `ChatMessageEditAttachments` labels + `ChatAttachmentCard` | ✅ |
+| E | `workspaceFileIngestPolling` (sessão) | ✅ |
+| E | API `WorkspaceFileIngestPolicyService` (sessão) | ✅ parcial |

@@ -23,7 +23,7 @@ import { uploadChatAttachment } from "../../data/api/chatApi";
 import {
   isAttachmentIndexPending,
   waitForSessionAttachmentIndexed,
-} from "../../data/chatAttachmentIndexPolling";
+} from "../../data/workspaceFileIngestPolling";
 
 import type {
   ChatCanvasOpenPayload,

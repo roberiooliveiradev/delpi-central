@@ -1,9 +1,14 @@
 import { Paperclip } from "lucide-react";
 import { useId, useRef } from "react";
 
+import {
+  workspaceFileMessageEditAttachmentsHeader,
+  workspaceFileMessageEditLabels,
+} from "../../content/workspaceFileIngestContent";
 import type { ChatAttachmentCardModel } from "./ChatAttachmentCard";
 import { ChatAttachmentCard } from "./ChatAttachmentCard";
 import "./ChatAttachmentCard.css";
+import "./workspace-files/workspaceFileIngest.css";
 
 type ChatMessageEditAttachmentsProps = {
   attachments: ChatAttachmentCardModel[];
@@ -22,6 +27,7 @@ export function ChatMessageEditAttachments({
   onRemoveAttachment,
   onPreviewAttachment,
 }: ChatMessageEditAttachmentsProps) {
+  const messageEditLabels = workspaceFileMessageEditLabels();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -29,7 +35,8 @@ export function ChatMessageEditAttachments({
     <div className="mdc-chat-message-edit-attachments">
       <div className="mdc-chat-message-edit-attachments__header">
         <span>
-          <Paperclip size={14} aria-hidden="true" /> {attachments.length} arquivo(s) neste reenvio
+          <Paperclip size={14} aria-hidden="true" />{" "}
+          {workspaceFileMessageEditAttachmentsHeader(attachments.length)}
         </span>
 
         <label
@@ -37,7 +44,7 @@ export function ChatMessageEditAttachments({
           className="mdc-chat-message-edit-attachments__add"
           aria-disabled={disabled}
         >
-          Anexar mais
+          {messageEditLabels.addMoreLabel}
           <input
             id={inputId}
             ref={inputRef}
@@ -69,9 +76,7 @@ export function ChatMessageEditAttachments({
           ))}
         </div>
       ) : (
-        <p className="mdc-chat-message-edit-attachments__empty">
-          Nenhum arquivo anexado. Você pode adicionar novos antes de reenviar.
-        </p>
+        <p className="mdc-chat-message-edit-attachments__empty">{messageEditLabels.emptyState}</p>
       )}
     </div>
   );
