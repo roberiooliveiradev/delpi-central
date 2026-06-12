@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "maintenance",
   "name": "Manutenção",
-  "description": "Gestão de manutenção industrial. Filiais e nomes operacionais vêm do cadastro do módulo; submódulos têm permissões próprias por filial.",
+  "description": "Gestão de manutenção industrial. Tile único no menu do portal; submódulos e filiais navegam no MFE (rotas internas com showInMenu false, padrão strategic-indicators).",
   "icon": "wrench",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "type": "microfrontend",
   "basePath": "/apps/maintenance",
   "entry": "/apps/maintenance/assets/remoteEntry.js",
@@ -72,18 +72,36 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/maintenance/filial-01",
+      "label": "Manutenção — Filial 01",
+      "permission": "maintenance.view",
+      "icon": "wrench",
+      "entry": null,
+      "order": 12,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/filial-02",
+      "label": "Manutenção — Filial 02",
+      "permission": "maintenance.view",
+      "icon": "wrench",
+      "entry": null,
+      "order": 13,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/maintenance/filial-01/manutencao-geral",
       "label": "Manutenção geral",
       "permission": "maintenance.manutencao-geral.view.filial-01",
       "icon": "clipboard-list",
-      "entry": "https://script.google.com/macros/s/AKfycbwD5vJs0lraZEZbibUVM9tLc8kdW6T4h4c-QYEXEzKopVTNhhbLIwPUOGK41aX4WuJ0/exec",
+      "entry": null,
       "order": 20,
       "showInMenu": false
     },
     {
       "path": "/apps/maintenance/mini-aplicadores",
       "label": "Mini-aplicadores",
-      "permission": "maintenance.view",
+      "permission": "maintenance.mini-applicators.view.filial-01",
       "icon": "hammer",
       "entry": null,
       "order": 21,
@@ -92,7 +110,7 @@
     {
       "path": "/apps/maintenance/mini-aplicadores/relatorio",
       "label": "Relatório preventivo",
-      "permission": "maintenance.view",
+      "permission": "maintenance.mini-applicators.view.filial-01",
       "icon": "chart-line",
       "entry": null,
       "order": 22,
@@ -101,7 +119,7 @@
     {
       "path": "/apps/maintenance/mini-aplicadores/configuracao",
       "label": "Configuração",
-      "permission": "maintenance.view",
+      "permission": "maintenance.mini-applicators.manage.filial-01",
       "icon": "settings",
       "entry": null,
       "order": 23,
