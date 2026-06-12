@@ -56,6 +56,8 @@ export type DataTableSectionProps<T> = {
   getRowClassName?: (row: T) => string | undefined;
   footer?: ReactNode;
   interactive?: boolean;
+  /** Sem borda de card — uso dentro de outro `.ds-card` */
+  embedded?: boolean;
 };
 
 export function DataTableSection<T>({
@@ -79,6 +81,7 @@ export function DataTableSection<T>({
   getRowClassName,
   footer,
   interactive = Boolean(onRowClick),
+  embedded = false,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
@@ -190,22 +193,27 @@ export function DataTableSection<T>({
   );
 
   const sectionClass = [
-    "ds-card",
+    embedded ? "" : "ds-card",
     "ds-table-section",
+    embedded ? "ds-table-section--embedded" : "",
     interactive ? "ds-table-section--interactive" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
+  const showHeader = Boolean(title.trim() || hint);
+
   return (
     <section className={sectionClass} aria-busy={loading || refreshing}>
-      <div className="ds-table-section__header">
-        <h2 className="ds-section-title">{title}</h2>
-        <div className="ds-table-section__meta-group">
-          {hint ? <span className="ds-table-section__meta">{hint}</span> : null}
-          <span className="ds-table-section__meta">{total} registro(s)</span>
+      {showHeader ? (
+        <div className="ds-table-section__header">
+          {title.trim() ? <h2 className="ds-section-title">{title}</h2> : <span />}
+          <div className="ds-table-section__meta-group">
+            {hint ? <span className="ds-table-section__meta">{hint}</span> : null}
+            <span className="ds-table-section__meta">{total} registro(s)</span>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {footer ? <div className="ds-table-section__footer">{footer}</div> : null}
 

@@ -96,7 +96,7 @@ export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onS
               }
             />
           </label>
-          <label className="ds-filter-box ds-filter-box--checkbox">
+          <label className="ds-check-label">
             <input
               type="checkbox"
               checked={revisaoVigencia.revisao_ativa}
@@ -105,7 +105,7 @@ export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onS
                 onChange({ ...revisaoVigencia, revisao_ativa: e.target.checked })
               }
             />
-            Marcar como revisão ativa
+            <span>Marcar como revisão ativa</span>
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">

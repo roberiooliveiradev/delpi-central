@@ -576,14 +576,14 @@ export function ProcessoDetailPage({
                 />
               </div>
               <div className="ds-filter-box ds-filter-box--checkbox">
-                <label htmlFor="tm-rev-ativa">
+                <label htmlFor="tm-rev-ativa" className="ds-check-label">
                   <input
                     id="tm-rev-ativa"
                     type="checkbox"
                     checked={revForm.revisao_ativa}
                     onChange={(e) => setRevForm({ ...revForm, revisao_ativa: e.target.checked })}
                   />
-                  Marcar como revisão ativa
+                  <span>Marcar como revisão ativa</span>
                 </label>
               </div>
             </div>

@@ -86,7 +86,7 @@ print('total instancias:', d.get('total'), 'items:', len(d.get('items') or []))
 | Item | Responsável |
 |------|-------------|
 | Deploy produção com runbook acima | Ops |
-| Atribuir permissões escopadas no Keycloak (quem precisar) | Ops |
+| Atribuir permissões escopadas na Core API / Portal RBAC (quem precisar) | Ops |
 | Planilha somente leitura | Google Workspace |
 | Limpeza código morto Sheets na api-delpi (Fase 6) | Dev |
 

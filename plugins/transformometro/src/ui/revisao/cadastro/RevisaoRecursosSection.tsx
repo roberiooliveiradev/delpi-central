@@ -230,8 +230,7 @@ export function RevisaoRecursosSection({
                               }
                             />
                           </label>
-                          <label className="ds-filter-box ds-filter-box--checkbox">
-                            <span>Ativo</span>
+                          <label className="ds-check-label">
                             <input
                               type="checkbox"
                               checked={editVinculoForm.ativo}
@@ -242,6 +241,7 @@ export function RevisaoRecursosSection({
                                 })
                               }
                             />
+                            <span>Ativo</span>
                           </label>
                         </div>
                         <label className="ds-filter-box ds-filter-box--wide">
@@ -379,13 +379,13 @@ export function RevisaoRecursosSection({
               }
             />
           </label>
-          <label className="ds-filter-box ds-filter-box--checkbox">
-            <span>Vínculo ativo</span>
+          <label className="ds-check-label">
             <input
               type="checkbox"
               checked={vinculoForm.ativo}
               onChange={(e) => setVinculoForm({ ...vinculoForm, ativo: e.target.checked })}
             />
+            <span>Vínculo ativo</span>
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">

@@ -60,7 +60,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Dados em produção | Migração via backup JSON (`import_cadastro_json.py --apply --replace`) | ✅ |
 | Documentação | [OPERATIONS.md](./OPERATIONS.md), [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md), [status-atual.md](./status-atual.md) | ✅ |
 | Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
-| Registro RBAC no portal | Atribuir `transformometro.*` aos perfis | Pendente (manual) |
+| Registro RBAC no portal | Atribuir `transformometro.*` às roles/grupos na **Core API** | Pendente (manual) |
 | Desativar escrita na planilha | somente leitura ou desligada | Pendente (Google) |
 | SI/engineering → transformometro-api HTTP | `transformometro_client` + gateway + token interno | ✅ |
 | Testes integração engenharia | `tests/test_engineering_transforma_mais.py` | ✅ |

@@ -43,6 +43,8 @@ chmod +x scripts/register-manifest.sh
 ./scripts/register-manifest.sh
 ```
 
-Permissão do catálogo: `transformometro.shared-resources.manage`.
+Permissão do catálogo: `transformometro.shared-resources.manage` (atribuir na **Core API** RBAC, não no Keycloak).
+
+Documentação RBAC: [modelo-rbac.md](../../docs/09-banco-de-dados/modelo-rbac.md).
 
 Documentação: [docs/12-roadmap-e-evolucao/transformometro-app/](../../docs/12-roadmap-e-evolucao/transformometro-app/README.md)

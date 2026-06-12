@@ -226,6 +226,7 @@
   display: block;
   margin-bottom: 8px;
   font-size: var(--ds-font-sm);
+  font-weight: 600;
   color: var(--ds-text-muted);
 }
 
@@ -243,10 +244,13 @@
 
 .dashboard-transformometro .tm-inst-setor-option {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   font-size: var(--ds-font-sm);
+  font-weight: 500;
   color: var(--ds-text);
+  line-height: 1.35;
+  cursor: pointer;
 }
 
 .dashboard-transformometro .tm-inst-setor-option--used {
@@ -349,7 +353,7 @@
   color: var(--ds-text-muted);
 }
 
-.dashboard-transformometro .ds-filter-box input,
+.dashboard-transformometro .ds-filter-box input:not([type="checkbox"]):not([type="radio"]),
 .dashboard-transformometro .ds-filter-box select {
   min-height: var(--ds-control-height);
   border-radius: var(--ds-control-radius);
@@ -359,12 +363,81 @@
   color: var(--ds-text);
 }
 
+/* Checkbox / radio — label inline, controle compacto (não herdar input de texto) */
+.dashboard-transformometro .ds-check-label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--ds-font-sm);
+  font-weight: 500;
+  color: var(--ds-text);
+  line-height: 1.35;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dashboard-transformometro .ds-check-label span {
+  white-space: normal;
+}
+
+.dashboard-transformometro .ds-check-label input[type="checkbox"],
+.dashboard-transformometro .ds-check-label input[type="radio"],
+.dashboard-transformometro .tm-inst-setor-option input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--ds-card-border);
+  border-radius: 4px;
+  background: var(--ds-input-bg);
+  accent-color: var(--ds-accent);
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .tm-panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .tm-panel-stack > .ds-card {
+  margin-bottom: 0;
+}
+
 /* Cards */
 .dashboard-transformometro .ds-card {
   background: var(--ds-card-bg);
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-card-radius);
   padding: var(--ds-card-padding);
+  margin-bottom: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .ds-card:last-child,
+.dashboard-transformometro .tm-panel-stack > .ds-card:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-transformometro .ds-card .ds-table-section--embedded {
+  margin: 8px 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .dashboard-transformometro .ds-collapsible__trigger {
@@ -1685,7 +1758,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .ds-cadastro-form {
-  margin-bottom: var(--ds-section-gap);
+  margin-bottom: 0;
 }
 
 .dashboard-transformometro .ds-processo-summary {
@@ -1719,16 +1792,16 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   flex-wrap: wrap;
 }
 
-.dashboard-transformometro .ds-filter-box--checkbox label {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  margin-top: 28px;
+.dashboard-transformometro .ds-filter-box--checkbox {
+  justify-content: flex-start;
 }
 
-.dashboard-transformometro .ds-filter-box--checkbox input[type="checkbox"] {
-  width: auto;
-  height: auto;
+.dashboard-transformometro .ds-filter-box--checkbox .ds-check-label {
+  margin-top: 0;
+}
+
+.dashboard-transformometro .ds-table-toolbar__filters .ds-check-label {
+  min-height: var(--ds-control-height);
 }
 
 .dashboard-transformometro .ds-table--clickable tbody tr.ds-table__row--clickable {
@@ -1995,23 +2068,10 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   font-weight: 400;
 }
 
-.dashboard-transformometro .ds-filter-box--checkbox {
-  display: flex;
+.dashboard-transformometro label.ds-filter-box--checkbox,
+.dashboard-transformometro .ds-filter-box--checkbox.ds-check-label {
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  padding-top: 1.5rem;
-}
-
-.dashboard-transformometro .ds-filter-box--checkbox > span:first-child {
-  font-size: var(--ds-font-sm);
-  font-weight: 600;
-  color: var(--ds-text-muted);
-}
-
-.dashboard-transformometro .ds-filter-box--checkbox input {
-  width: auto;
-  accent-color: var(--ds-accent);
 }
 
 .dashboard-transformometro .ds-cadastro-panel__block {

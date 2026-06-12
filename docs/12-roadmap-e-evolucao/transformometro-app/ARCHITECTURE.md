@@ -320,7 +320,7 @@ Tabela `audit_logs`:
 - `entity_type`, `entity_id`, `action`, `user_id`, `payload_json`, `created_at`
 - Gravada em PUT/POST/DELETE e em `recalcular`
 
-Autenticação de usuários: **Keycloak** (sem tabela `usuarios` local, salvo cache de display name).
+Autenticação: **Keycloak** (JWT). Identidade local espelhada em `users` na Core API. **RBAC** (roles, grupos, `transformometro.*`) é mantido na **Core API** (`postgres-core`), não no console Keycloak.
 
 ## Segurança
 
@@ -328,4 +328,4 @@ Autenticação de usuários: **Keycloak** (sem tabela `usuarios` local, salvo ca
 - Permissões globais no manifesto (`transformometro.view`, `transformometro.processes.manage`, …)
 - **RBAC filial (S10):** permissões escopadas `transformometro.view.filial-01`, `transformometro.manage.filial-01`, `transformometro.view.consolidated`, … — filtro **server-side** via `FilialAccessScopeService`; `GET /options` → `access_scope`
 - Rotas S2S e service token **não** aplicam RBAC filial
-- Usuários só com permissões globais legadas permanecem sem restrição de filial até receberem escopos no Keycloak
+- Usuários só com permissões globais legadas permanecem sem restrição de filial até receberem escopos via **roles/grupos na Core API**

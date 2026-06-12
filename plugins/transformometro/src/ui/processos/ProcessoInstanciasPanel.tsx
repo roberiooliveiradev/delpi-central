@@ -334,7 +334,7 @@ export function ProcessoInstanciasPanel({
       : pendingSetorIds.length > 0 && (todasFiliais || Boolean(filialId));
 
   return (
-    <>
+    <div className="tm-panel-stack">
       <section className="ds-card">
         <div className="ds-table-section__header">
           <div>
@@ -350,6 +350,7 @@ export function ProcessoInstanciasPanel({
           </button>
         </div>
         <DataTableSection
+          embedded
           title=""
           columns={columns}
           rows={instancias}
@@ -377,8 +378,8 @@ export function ProcessoInstanciasPanel({
           <form onSubmit={handleSubmit}>
             <div className="ds-filters-row">
               {!duplicateSourceId && !editingInstanciaId ? (
-                <div className="ds-filter-box ds-filter-box--wide">
-                  <label className="tm-inst-setores-label">
+                <div className="ds-filter-box ds-filter-box--wide ds-filter-box--checkbox">
+                  <label className="ds-check-label">
                     <input
                       type="checkbox"
                       checked={todasFiliais}
@@ -389,8 +390,8 @@ export function ProcessoInstanciasPanel({
                           setSetorIds(defaultSetorIds(options.setores, filialId, instancias));
                         }
                       }}
-                    />{" "}
-                    Todas as filiais ativas
+                    />
+                    <span>Todas as filiais ativas</span>
                   </label>
                 </div>
               ) : null}
@@ -453,7 +454,7 @@ export function ProcessoInstanciasPanel({
                 </div>
               ) : (
                 <div className="ds-filter-box ds-filter-box--wide">
-                  <span className="tm-inst-setores-label">Setores *</span>
+                  <span className="ds-field-label">Setores *</span>
                   <div className="tm-inst-setores-grid" role="group" aria-label="Setores da instância">
                     {setoresDisponiveis.length === 0 ? (
                       <p className="ds-hint">Nenhum setor disponível para esta filial.</p>
@@ -510,6 +511,6 @@ export function ProcessoInstanciasPanel({
           </form>
         </section>
       ) : null}
-    </>
+    </div>
   );
 }

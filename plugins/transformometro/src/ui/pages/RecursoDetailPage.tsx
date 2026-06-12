@@ -336,8 +336,7 @@ export function RecursoDetailPage({
                                 }
                               />
                             </label>
-                            <label className="ds-filter-box ds-filter-box--checkbox">
-                              <span>Vínculo ativo</span>
+                            <label className="ds-check-label">
                               <input
                                 type="checkbox"
                                 checked={editForm.ativo}
@@ -345,6 +344,7 @@ export function RecursoDetailPage({
                                   setEditForm({ ...editForm, ativo: event.target.checked })
                                 }
                               />
+                              <span>Vínculo ativo</span>
                             </label>
                           </div>
                           <label className="ds-filter-box ds-filter-box--wide">

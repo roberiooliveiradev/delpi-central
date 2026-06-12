@@ -22,4 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua permissões transformometro.* aos perfis no RBAC."
+echo "[OK] Atribua permissões transformometro.* às roles/grupos na Core API (admin RBAC do portal)."

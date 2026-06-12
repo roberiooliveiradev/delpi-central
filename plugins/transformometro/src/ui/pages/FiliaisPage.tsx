@@ -275,18 +275,14 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       <DataTableSection
         title="Catálogo de filiais"
         filters={
-          <div className="ds-filters-row">
-            <div className="ds-filter-box ds-filter-box--wide">
-              <label className="ds-filter-box__label">
-                <input
-                  type="checkbox"
-                  checked={includeInactive}
-                  onChange={(e) => setIncludeInactive(e.target.checked)}
-                />{" "}
-                Incluir filiais inativas
-              </label>
-            </div>
-          </div>
+          <label className="ds-check-label">
+            <input
+              type="checkbox"
+              checked={includeInactive}
+              onChange={(e) => setIncludeInactive(e.target.checked)}
+            />
+            <span>Incluir filiais inativas</span>
+          </label>
         }
         columns={columns}
         rows={items}

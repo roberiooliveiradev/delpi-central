@@ -113,7 +113,7 @@ Permissões escopadas (manifesto `transformometro.manifest.json`):
 | `transformometro.view.consolidated` | Visão consolidada do dashboard (com escopo filial ativo) |
 | `transformometro.manage.filial-01` / `filial-02` | CRUD de instâncias/processos na filial |
 
-**Compatibilidade:** usuários só com permissões globais legadas (`transformometro.view`, `transformometro.processes.manage`, …) permanecem **sem restrição de filial** até receberem permissões escopadas no Keycloak.
+**Compatibilidade:** usuários só com permissões globais legadas (`transformometro.view`, `transformometro.processes.manage`, …) permanecem **sem restrição de filial** até receberem permissões escopadas nas **roles/grupos da Core API** (RBAC do portal — não Keycloak).
 
 Módulo canônico: `tm_app/application/services/filial_access_scope_service.py` · helpers HTTP em `tm_app/interface/http/filial_access_http.py`.
 
@@ -181,7 +181,7 @@ Consumidores ativos: `plugins/transformometro` (cadastro), `dashboard-engineerin
 | Item | Foco |
 |--------|------|
 | **Deploy produção** | Runbook em [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md) |
-| **RBAC Keycloak** | Atribuir permissões escopadas onde necessário |
+| **RBAC Core API** | Atribuir `transformometro.*` escopadas às roles/grupos no admin do portal |
 | **Limpeza Fase 6** | Remover código Sheets morto e env vars órfãs na api-delpi — [ROADMAP.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ROADMAP.md) |
 
 ## Documentação (índice)

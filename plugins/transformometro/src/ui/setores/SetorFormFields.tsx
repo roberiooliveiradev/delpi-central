@@ -58,16 +58,18 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         </select>
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <span className="ds-filter-box__label">Filiais vinculadas *</span>
-        <div className="ds-filters-row">
+        <span className="ds-field-label">Filiais vinculadas *</span>
+        <div className="tm-inst-setores-grid">
           {options.filiais.map((filial) => (
-            <label key={filial.id} className="ds-filter-box ds-filter-box--checkbox">
+            <label key={filial.id} className="tm-inst-setor-option ds-check-label">
               <input
                 type="checkbox"
                 checked={form.filiais.includes(filial.id)}
                 onChange={() => toggleFilial(filial.id)}
               />
-              {filial.id} — {filial.label}
+              <span>
+                {filial.id} — {filial.label}
+              </span>
             </label>
           ))}
         </div>

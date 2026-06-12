@@ -64,13 +64,15 @@ export TOKEN="..." BASE_URL="..."
 
 ## Registro Core API e RBAC
 
+O **manifesto** registra o app e declara os códigos `transformometro.*`. A **atribuição** de quem tem cada permissão é na **Core API** (roles, grupos, overrides) — Portal admin RBAC ou `/core-api/admin/rbac/*` — **não** no console Keycloak.
+
 ```bash
 export TOKEN="<jwt com apps.manage>"
 export BASE_URL="https://www.minhadelpi.com.br"
 ./plugins/transformometro/scripts/register-manifest.sh
 ```
 
-Atribuir ao perfil de engenharia/gestão, no mínimo:
+Atribuir às roles/grupos de engenharia/gestão, no mínimo:
 
 - `transformometro.view`
 - `transformometro.processes.manage`

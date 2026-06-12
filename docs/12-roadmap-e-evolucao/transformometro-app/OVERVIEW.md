@@ -12,7 +12,7 @@ Origem histórica: **Google Sheets + Apps Script**. Hoje a aplicação web na **
 
 - **API própria** (`transformometro-api`) — fonte de verdade no **PostgreSQL**
 - **Plugin MFE** (`plugins/transformometro`) — cadastro e dashboard oficiais
-- **Autenticação e permissões** via Core API / Keycloak (mesmo modelo do SI)
+- **Autenticação** via Keycloak (JWT); **RBAC** (papéis, grupos, permissões) via **Core API** — mesmo modelo do SI
 - Consumidores legados (SI, `dashboard-engineering`) leem o **mesmo Postgres** via rotas `transforma-mais` na api-delpi (proxy S2S)
 
 ## Componentes
@@ -89,7 +89,7 @@ Integração Transforma+: **`id` na listagem = `instancia_id`** (uma linha por i
 | `transformometro.view.consolidated` | Visão consolidada com escopo filial ativo |
 | `transformometro.manage.filial-01` / `filial-02` | CRUD na filial |
 
-Usuários só com permissões globais legadas **não** têm restrição de filial até receberem escopos no Keycloak. Ver manifesto `plugins/transformometro/transformometro.manifest.json`.
+Usuários só com permissões globais legadas **não** têm restrição de filial até receberem escopos nas **roles/grupos da Core API** (Portal → admin RBAC). Ver manifesto `plugins/transformometro/transformometro.manifest.json` e [modelo-rbac.md](../../09-banco-de-dados/modelo-rbac.md).
 
 ## Stack alinhada ao monorepo
 
