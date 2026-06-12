@@ -9,6 +9,8 @@ export type WorkspaceFileDropzoneContentVariant =
 
 type ReadingStatusKey = keyof typeof attachmentsContent.preview.readingStatus;
 
+export type WorkspaceFileStatusTone = "default" | "pending" | "success" | "error";
+
 const READING_STATUS = attachmentsContent.preview.readingStatus;
 const INGEST_UI = attachmentsContent.ingestUi;
 
@@ -55,6 +57,32 @@ export function workspaceFileReadingStatusLabel(
   }
 
   return readingStatusFromKey("default");
+}
+
+export function workspaceFileReadingStatusTone(
+  status?: string | null,
+  parsed?: boolean,
+): WorkspaceFileStatusTone {
+  const normalized = normalizeStatus(status);
+
+  if (parsed || normalized === "indexed") {
+    return "success";
+  }
+
+  if (
+    normalized === "indexing" ||
+    normalized === "uploading" ||
+    normalized === "uploaded" ||
+    normalized === "queued"
+  ) {
+    return "pending";
+  }
+
+  if (normalized === "unsupported" || normalized === "index_failed" || normalized === "failed") {
+    return "error";
+  }
+
+  return "default";
 }
 
 export function workspaceFileDropzoneContent(

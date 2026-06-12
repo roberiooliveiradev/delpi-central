@@ -20,16 +20,24 @@
 }
 
 .mdc-agent-knowledge__cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
 }
 
-.mdc-agent-knowledge__cards .mdc-workspace-file-card--card {
-  width: 100%;
+.mdc-agent-knowledge__cards > li:last-child .mdc-workspace-file-card--row {
+  border-bottom: 0;
+}
+
+.mdc-agent-knowledge__cards .mdc-workspace-file-card--row {
+  padding-inline: 0.65rem;
 }
 
 .mdc-agent-knowledge__note {

@@ -1,7 +1,11 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
-import { workspaceFileAgentIngestLabels } from "../../../content/workspaceFileIngestContent";
+import {
+  workspaceFileAgentIngestLabels,
+  workspaceFileReadingStatusLabel,
+  workspaceFileReadingStatusTone,
+} from "../../../content/workspaceFileIngestContent";
 import { getSourceContentHash, sha256HexFromFile } from "../../../utils/fileContentHash";
 import {
   buildWorkspaceSourcePreviewTarget,
@@ -50,6 +54,39 @@ function getSourceSize(source: ChatWorkspaceSource): string {
   const bytes = source.metadata?.sizeBytes;
 
   return formatFileSize(typeof bytes === "number" ? bytes : null);
+}
+
+function getSourceIndexStatus(source: ChatWorkspaceSource): {
+  label?: string;
+  tone: ReturnType<typeof workspaceFileReadingStatusTone>;
+} {
+  const chunkCount = source.chunk_count ?? 0;
+  const indexed = chunkCount > 0;
+
+  if (indexed) {
+    return {
+      label: workspaceFileReadingStatusLabel("indexed", true),
+      tone: workspaceFileReadingStatusTone("indexed", true),
+    };
+  }
+
+  const rawStatus =
+    typeof source.metadata?.readingStatus === "string"
+      ? source.metadata.readingStatus
+      : typeof source.metadata?.indexStatus === "string"
+        ? source.metadata.indexStatus
+        : null;
+
+  if (!rawStatus?.trim()) {
+    return { tone: "default" };
+  }
+
+  const normalized = rawStatus.trim().toLowerCase();
+
+  return {
+    label: workspaceFileReadingStatusLabel(normalized, false),
+    tone: workspaceFileReadingStatusTone(normalized, false),
+  };
 }
 
 export function AgentKnowledgeSourcesPanel({
@@ -164,13 +201,16 @@ export function AgentKnowledgeSourcesPanel({
           {sources.map((source) => {
             const label = getSourceLabel(source);
             const isDuplicateMarked = source.duplicate === true;
+            const indexStatus = getSourceIndexStatus(source);
 
             return (
               <li key={source.id}>
                 <WorkspaceFileCard
-                  variant="card"
+                  variant="row"
                   filename={label}
                   sizeLabel={getSourceSize(source) || undefined}
+                  statusLabel={indexStatus.label}
+                  statusTone={indexStatus.tone}
                   secondaryLabel={isDuplicateMarked ? ingestLabels.duplicateMarked : undefined}
                   previewKind="file"
                   editable

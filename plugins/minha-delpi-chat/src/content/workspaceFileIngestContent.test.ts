@@ -8,6 +8,7 @@ import {
   workspaceFileDropzoneContent,
   workspaceFileProjectFileKindLabel,
   workspaceFileReadingStatusLabel,
+  workspaceFileReadingStatusTone,
 } from "./workspaceFileIngestContent";
 
 describe("workspaceFileIngestContent", () => {
@@ -16,6 +17,12 @@ describe("workspaceFileIngestContent", () => {
     expect(workspaceFileReadingStatusLabel("indexing")).toBe("Indexando para consulta");
     expect(workspaceFileReadingStatusLabel("queued")).toBe("Aguardando envio");
     expect(workspaceFileReadingStatusLabel("index_failed")).toBe("Falha na leitura");
+  });
+
+  it("resolve tom visual do status de leitura", () => {
+    expect(workspaceFileReadingStatusTone("indexed", true)).toBe("success");
+    expect(workspaceFileReadingStatusTone("indexing")).toBe("pending");
+    expect(workspaceFileReadingStatusTone("index_failed")).toBe("error");
   });
 
   it("expõe copy do dropzone por variante", () => {

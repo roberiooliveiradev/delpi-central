@@ -6,6 +6,9 @@ import {
   resolveAttachmentPreviewKind,
   revokeAttachmentPreviewUrl,
 } from "../chatAttachmentPreview";
+import {
+  workspaceFileReadingStatusTone,
+} from "../../content/workspaceFileIngestContent";
 import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
 import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
 
@@ -50,6 +53,7 @@ export function ChatAttachmentCard({
   const statusLabel =
     attachment.readingStatus ||
     attachmentReadingStatusLabel(attachment.status, attachment.parsed);
+  const statusTone = workspaceFileReadingStatusTone(attachment.status, attachment.parsed);
   const sizeLabel = formatAttachmentSize(
     attachment.sizeBytes ?? attachment.localFile?.size,
   );
@@ -113,6 +117,7 @@ export function ChatAttachmentCard({
       filename={attachment.filename}
       sizeLabel={sizeLabel}
       statusLabel={statusLabel}
+      statusTone={statusTone}
       thumb={thumb}
       previewKind={previewKind === "image" ? "image" : "file"}
       editable={editable}

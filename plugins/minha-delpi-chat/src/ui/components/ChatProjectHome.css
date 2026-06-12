@@ -469,8 +469,21 @@
 }
 
 .mdc-chat-project-source-list {
-  display: grid;
-  gap: 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+}
+
+.mdc-chat-project-source-list .mdc-workspace-file-card--row:last-child {
+  border-bottom: 0;
+}
+
+.mdc-chat-project-source-list .mdc-workspace-file-card--row {
+  padding-inline: 0.65rem;
 }
 
 .mdc-chat-project-sources__note {

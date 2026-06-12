@@ -42,6 +42,7 @@ import type { MessageComposerTypingCorrectionContent } from "../../content/messa
 import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
+  workspaceFileReadingStatusTone,
 } from "../../content/workspaceFileIngestContent";
 import {
   buildWorkspaceLocalFilePreviewTarget,
@@ -525,6 +526,10 @@ export function ChatInput({
                   attachment.status ?? "queued",
                   attachment.readingStatus,
                 );
+                const statusTone = workspaceFileReadingStatusTone(
+                  attachment.status ?? "queued",
+                  attachment.status === "indexed",
+                );
 
                 return (
                   <WorkspaceFileCard
@@ -533,6 +538,7 @@ export function ChatInput({
                     filename={attachment.name}
                     sizeLabel={formatFileSize(attachment.size)}
                     statusLabel={statusLabel}
+                    statusTone={statusTone}
                     previewKind={isImage ? "image" : "file"}
                     editable
                     onPreview={() => {
