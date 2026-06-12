@@ -18,9 +18,9 @@ from app.application.use_cases.ingest_knowledge_document_use_case import (
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
-
-
-MAX_SOURCE_SIZE_BYTES = 25 * 1024 * 1024
+from app.domain.services.workspace_file_ingest_policy_service import (
+    WorkspaceFileIngestPolicyService,
+)
 
 
 def _source_response(document, chunk_count: int | None = None) -> ChatSourceResponse:
@@ -69,10 +69,16 @@ class ChatSourceFileStorage:
         if not content:
             raise ValueError("File is empty")
 
-        if len(content) > MAX_SOURCE_SIZE_BYTES:
+        family = WorkspaceFileIngestPolicyService.family_for_storage_scope(scope)
+
+        if len(content) > WorkspaceFileIngestPolicyService.max_size_bytes(family):
             raise ValueError("File exceeds maximum size")
 
         safe_name = secure_filename(original_filename) or "arquivo"
+
+        if not WorkspaceFileIngestPolicyService.is_extension_allowed(family, safe_name):
+            raise ValueError("File type is not allowed")
+
         extension = Path(safe_name).suffix.lower()
 
         storage_dir = self.storage_root / user_id / scope / owner_id

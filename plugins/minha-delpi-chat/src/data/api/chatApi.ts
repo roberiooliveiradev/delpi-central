@@ -46,6 +46,8 @@ import type {
   UpdateChatArtifactPayload,
   UpdateChatProjectPayload,
   UpsertChatAgentActionPayload,
+  WorkspaceFileIngestPolicyFamily,
+  WorkspaceFileIngestPolicyResponse,
 } from "./chatTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -1933,4 +1935,19 @@ export async function listChatAgentActionTestLogs(
   );
 
   return parseJsonResponse<ChatActionTestLog[]>(response);
+}
+
+export async function fetchWorkspaceFileIngestPolicy(
+  family: WorkspaceFileIngestPolicyFamily = "session_attachment",
+  options: ChatApiOptions = {},
+): Promise<WorkspaceFileIngestPolicyResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/ingest/policy?family=${encodeURIComponent(family)}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<WorkspaceFileIngestPolicyResponse>(response);
 }

@@ -172,8 +172,8 @@ queued → uploading → processing → indexed
 ## 6. Padronização visual (aceite)
 
 - [ ] Mesmo copy de dropzone: «Arraste arquivos aqui ou clique para selecionar»
-- [ ] Extensões exibidas vêm de `WorkspaceFileIngestPolicyService` (uma lista na API)
-- [ ] Status sempre de `attachments.json` — zero string em TS/Python para usuário
+- [x] Extensões exibidas vêm de `WorkspaceFileIngestPolicyService` (`GET /chat/ingest/policy`)
+- [x] Status sempre de `attachments.json` — zero string em TS/Python para usuário (superfícies migradas)
 - [ ] Card: ícone por MIME, nome truncado, tamanho humanizado, badge de status, ações à direita
 - [ ] Composer: lista horizontal de cards; agente: grid; projeto/admin: lista vertical
 - [ ] Erro de upload: toast + `error_handling.json` por código (`FILE_TOO_LARGE`, `UNSUPPORTED_TYPE`, …)
@@ -238,7 +238,7 @@ A revisão UI cobriu as **superfícies principais**, mas faltaram **cinco áreas
 
 O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE e **sprints de migração** sem duplicar o Playbook 05 (inteligência pós-leitura).
 
-**Próximo passo:** estender `WorkspaceFileIngestPolicyService` para rotas de fonte/admin + status poll `agent_source`/`project_source`; casos F1–F7 em fixtures.
+**Próximo passo:** MFE consumir `fetchWorkspaceFileIngestPolicy` (em `chatApi.ts`) nos dropzones; smoke F1–F5; poll async se fontes passarem a indexar em background.
 
 ### Progresso (jun/2026)
 
@@ -254,4 +254,5 @@ O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE
 | D | `KnowledgeIngestionPanel` (já usa `AdminFileDropzone`) | ✅ |
 | E | `ChatMessageEditAttachments` labels + `ChatAttachmentCard` | ✅ |
 | E | `workspaceFileIngestPolling` (sessão) | ✅ |
-| E | API `WorkspaceFileIngestPolicyService` (sessão) | ✅ parcial |
+| E | API `WorkspaceFileIngestPolicyService` + `GET /chat/ingest/policy` | ✅ |
+| E | Fixtures F6/F7 + `workspaceFileIngest.test.ts` | ✅ parcial |

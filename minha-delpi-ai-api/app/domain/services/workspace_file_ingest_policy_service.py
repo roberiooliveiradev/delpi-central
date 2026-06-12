@@ -56,8 +56,18 @@ _FAMILY_EXTENSIONS: dict[str, frozenset[str]] = {
 }
 
 
+_STORAGE_SCOPE_TO_FAMILY: dict[str, WorkspaceFileIngestFamily] = {
+    "project": "project_source",
+    "agent": "agent_source",
+}
+
+
 class WorkspaceFileIngestPolicyService:
     """Política canônica de extensão e tamanho por família de ingestão (Playbook 17)."""
+
+    @staticmethod
+    def family_for_storage_scope(scope: str) -> WorkspaceFileIngestFamily:
+        return _STORAGE_SCOPE_TO_FAMILY.get(str(scope or "").strip().lower(), "project_source")
 
     @staticmethod
     def allowed_extensions(family: WorkspaceFileIngestFamily | str) -> frozenset[str]:

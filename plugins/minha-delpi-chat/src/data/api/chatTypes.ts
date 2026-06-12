@@ -1224,3 +1224,17 @@ export type ChatCapabilities = {
   canUseTools: boolean;
   typingCorrectionEnabled?: boolean;
 };
+
+export type WorkspaceFileIngestPolicyFamily =
+  | "session_attachment"
+  | "agent_source"
+  | "project_source"
+  | "global_knowledge"
+  | "context_paste";
+
+export type WorkspaceFileIngestPolicyResponse = {
+  family: WorkspaceFileIngestPolicyFamily;
+  accept: string;
+  maxSizeBytes: number;
+  extensions: string[];
+};

@@ -34,3 +34,8 @@ def test_accept_attribute_lists_extensions():
 
     assert ".pdf" in accept
     assert ".png" in accept
+
+
+def test_storage_scope_maps_to_family():
+    assert WorkspaceFileIngestPolicyService.family_for_storage_scope("agent") == "agent_source"
+    assert WorkspaceFileIngestPolicyService.family_for_storage_scope("project") == "project_source"

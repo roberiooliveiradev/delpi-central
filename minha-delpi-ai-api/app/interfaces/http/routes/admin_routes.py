@@ -17,6 +17,9 @@ from flask import Blueprint, Response, g, jsonify, request
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentInputError
+from app.domain.services.workspace_file_ingest_policy_service import (
+    WorkspaceFileIngestPolicyService,
+)
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.application.services.knowledge_curatorial_metadata_service import (
     build_global_curatorial_metadata,
@@ -1788,6 +1791,36 @@ def preview_knowledge_ingestion():
             ), 400
 
         original_filename = Path(uploaded_file.filename).name
+
+        if not WorkspaceFileIngestPolicyService.is_extension_allowed(
+            "global_knowledge",
+            original_filename,
+        ):
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "knowledge.unsupported_file",
+                            "message": "file type is not allowed for knowledge ingestion",
+                            "path": "file",
+                        }
+                    ]
+                }
+            ), 400
+
+        if len(raw_bytes) > WorkspaceFileIngestPolicyService.max_size_bytes("global_knowledge"):
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "invalid_request",
+                            "message": "file exceeds maximum size",
+                            "path": "file",
+                        }
+                    ]
+                }
+            ), 400
+
         suffix = Path(original_filename).suffix
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -1883,6 +1916,36 @@ def upload_knowledge_document():
         return jsonify({"errors": [{"code": "invalid_request", "message": "empty files cannot be ingested", "path": "file"}]}), 400
 
     original_filename = Path(uploaded_file.filename).name
+
+    if not WorkspaceFileIngestPolicyService.is_extension_allowed(
+        "global_knowledge",
+        original_filename,
+    ):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "knowledge.unsupported_file",
+                        "message": "file type is not allowed for knowledge ingestion",
+                        "path": "file",
+                    }
+                ]
+            }
+        ), 400
+
+    if len(raw_bytes) > WorkspaceFileIngestPolicyService.max_size_bytes("global_knowledge"):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "file exceeds maximum size",
+                        "path": "file",
+                    }
+                ]
+            }
+        ), 400
+
     title = (request.form.get("title") or original_filename).strip()
     source_type = (request.form.get("sourceType") or "admin_upload").strip()
     source_ref = (request.form.get("sourceRef") or f"admin_upload:{original_filename}").strip()

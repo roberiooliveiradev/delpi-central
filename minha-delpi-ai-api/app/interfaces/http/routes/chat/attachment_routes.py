@@ -5,6 +5,9 @@ from flask import current_app
 from app.application.services.chat_attachment_index_scheduler_service import (
     ChatAttachmentIndexSchedulerService,
 )
+from app.domain.services.workspace_file_ingest_policy_service import (
+    WorkspaceFileIngestPolicyService,
+)
 from app.interfaces.http.routes.chat.deps import *  # noqa: F403
 
 
@@ -292,4 +295,29 @@ def delete_artifact(artifact_id: str):
         raise
 
     return "", 204
+
+
+@chat_bp.get("/ingest/policy")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def ingest_policy():
+    family = (request.args.get("family") or "session_attachment").strip()
+    allowed_families = (
+        "session_attachment",
+        "agent_source",
+        "project_source",
+        "global_knowledge",
+        "context_paste",
+    )
+
+    if family not in allowed_families:
+        return bad_request("Unknown ingest family")
+
+    return jsonify(
+        {
+            "family": family,
+            "accept": WorkspaceFileIngestPolicyService.accept_attribute(family),
+            "maxSizeBytes": WorkspaceFileIngestPolicyService.max_size_bytes(family),
+            "extensions": sorted(WorkspaceFileIngestPolicyService.allowed_extensions(family)),
+        }
+    ), 200
 
