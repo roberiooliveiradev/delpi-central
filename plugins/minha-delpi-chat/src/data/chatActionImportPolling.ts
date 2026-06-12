@@ -13,6 +13,12 @@ export function isTerminalImportJobStatus(status: string): boolean {
   return status === "completed" || status === "failed";
 }
 
+export function isBackgroundIndexingJob(
+  job: ChatExternalActionImportJob,
+): boolean {
+  return job.status === "running" && job.phase === "embed_actions";
+}
+
 export function shouldReloadRoutesForImportJob(
   job: ChatExternalActionImportJob,
   alreadyReloaded: boolean,

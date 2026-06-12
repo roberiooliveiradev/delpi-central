@@ -175,6 +175,15 @@ PRODUCTION_OPERATIONAL_SELECTION_CASES: list[dict[str, Any]] = [
         parameters=["reference_date", "branch", "limit"],
     ),
     _operational_route_case(
+        "PO15",
+        "liste produtos programados para produzir hoje na filial 01",
+        action_id="production-schedule-today",
+        path="/production/schedule/today",
+        operation_id="get_production_schedule_today",
+        summary="Programação de produção do dia",
+        parameters=["reference_date", "branch", "limit"],
+    ),
+    _operational_route_case(
         "PO02b",
         "Produtos mais comprados março 2026",
         action_id="purchases-top-products",

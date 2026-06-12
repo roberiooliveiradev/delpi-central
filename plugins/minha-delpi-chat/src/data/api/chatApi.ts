@@ -1811,6 +1811,26 @@ export async function getChatAgentActionProviderImportJob(
 }
 
 
+export async function getLatestChatAgentActionProviderImportJob(
+  providerKey: string,
+  options: ChatApiOptions = {},
+): Promise<ChatExternalActionImportJob | null> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/providers/${providerKey}/import/jobs/latest`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  return parseJsonResponse(response);
+}
+
+
 export async function getChatAgentActionProvider(
   agentId: string,
   providerKey: string,

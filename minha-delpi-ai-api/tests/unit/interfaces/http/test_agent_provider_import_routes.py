@@ -12,6 +12,18 @@ def test_agent_provider_import_route_supports_async_job():
     assert "return jsonify(job), 202" in source
 
 
+def test_provider_import_latest_job_route_exists():
+    source = Path(
+        "app/interfaces/http/routes/chat/agent_provider_routes.py"
+    ).read_text()
+
+    assert (
+        '@chat_bp.get("/providers/<provider_key>/import/jobs/latest")'
+        in source
+    )
+    assert "ExternalActionImportJobService.get_latest" in source
+
+
 def test_provider_import_job_status_route_exists():
     source = Path(
         "app/interfaces/http/routes/chat/agent_provider_routes.py"

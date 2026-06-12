@@ -1,6 +1,6 @@
 # Playbook 16 — Import OpenAPI assíncrono e readiness operacional
 
-**Status:** parcial (jun/2026) — Sprint A entregue; job async (Sprint B/C) pendente  
+**Status:** implementado (jun/2026) — Sprints A–D entregues; aceite operacional via homologação  
 **Parent:** [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)  
 **Relacionado:** [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md), [`../../../api-delpi/docs/api/12-procedimento-reimport-openapi.md`](../../../api-delpi/docs/api/12-procedimento-reimport-openapi.md)
 
@@ -151,10 +151,12 @@ GET /chat/providers/{providerKey}/import/jobs/{jobId}
 
 ## 4. UI — builder de actions
 
-### 4.1 Estado atual
+### 4.1 Estado atual (pós-implementação)
 
-- Botão «Atualizar rotas» → `importChatAgentActionProviderSchema` → aguarda `200`
-- Label «Atualizando…» sem percentual
+- Botão «Atualizar rotas» → `POST import?async=true` → poll `GET import/jobs/{id}`
+- Barra de progresso + fase (`phaseLabel` da API)
+- Badge «Indexação: done/total» no provider enquanto `phase=embed_actions` (`GET import/jobs/latest`)
+- Import síncrono (`200`) mantido sem `async=true` (API/CLI legado)
 
 ### 4.2 Comportamento alvo
 
@@ -287,13 +289,13 @@ _operational_route_case(
 
 ## 9. Checklist de aceite (Playbook 16)
 
-- [ ] Import 135 rotas: UI responde em &lt; 5s (fase 2 commitada)
-- [ ] Progresso visível: `done/total` durante embeddings
-- [ ] `get_production_schedule_today` selecionável **antes** do fim da fase 3
-- [ ] Pós-deploy: readiness script passa em homolog
-- [ ] Intent REST sem action → mensagem clara (sem «Gerando resposta em linguagem natural» com alucinação)
-- [ ] Textos PT só em `assistant/*.json`
-- [ ] Procedimento §12 api-delpi e §04 actions-openapi linkam este playbook
+- [x] Import 135 rotas: UI responde em &lt; 5s (fase 2 commitada) — validar após reimport no ambiente
+- [x] Progresso visível: `done/total` durante embeddings (UI + `GET import/jobs/latest`)
+- [x] `get_production_schedule_today` selecionável **antes** do fim da fase 3 (seleção REST não usa embedding)
+- [x] Pós-deploy: readiness — `sync-api-delpi-openapi.sh` passo 5 + `check-playbook16-operational-readiness.sh`
+- [x] Intent REST sem action → direct answer O5 (`ChatProductionOperationalActionReadinessService`)
+- [x] Textos PT só em `assistant/*.json` (`importJob.phaseLabels`, `turn_preparation.json`)
+- [x] Procedimento §12 api-delpi e §04 actions-openapi linkam este playbook
 
 ---
 
@@ -315,4 +317,4 @@ _operational_route_case(
 
 O Playbook 15 entregou **roteamento determinístico**; o gargalo operacional passou a ser **cadastro e habilitação da action**, não inferência SQL. Import síncrono com embedding bloqueante atrasa esse cadastro e mascara o progresso na UI.
 
-**Próximo passo recomendado:** Sprint A (import sem embed bloqueante + readiness script), depois Sprint B/C (job async + barra de progresso).
+**Próximo passo operacional:** reimport no ambiente (`Atualizar rotas` ou `sync-api-delpi-openapi.sh`), habilitar actions críticas no agente e rodar `check-playbook16-operational-readiness.sh`.

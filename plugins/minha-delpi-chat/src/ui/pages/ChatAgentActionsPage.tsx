@@ -20,6 +20,7 @@ import {
   deleteChatAgentAction,
   deleteChatAgentActionProvider,
   getChatAgentActionProvider,
+  getLatestChatAgentActionProviderImportJob,
   startChatAgentActionProviderImportJob,
   listActionProviders,
   listChatActions,
@@ -31,7 +32,10 @@ import {
   updateChatAgentActionProvider,
   upsertChatAgentAction,
 } from "../../data/api/chatApi";
-import { pollChatActionProviderImportJob } from "../../data/chatActionImportPolling";
+import {
+  isBackgroundIndexingJob,
+  pollChatActionProviderImportJob,
+} from "../../data/chatActionImportPolling";
 import type {
   ChatActionCatalogItem,
   ChatExternalActionImportJob,
@@ -181,6 +185,8 @@ export function ChatAgentActionsPage({
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
   const [importJob, setImportJob] = useState<ChatExternalActionImportJob | null>(null);
+  const [backgroundImportJob, setBackgroundImportJob] =
+    useState<ChatExternalActionImportJob | null>(null);
   const routesReloadedForImportRef = useRef(false);
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [testingActionId, setTestingActionId] = useState<string | null>(null);
@@ -349,6 +355,50 @@ export function ChatAgentActionsPage({
       mounted = false;
     };
   }, [agent.id, getAccessToken, providerKey]);
+
+  useEffect(() => {
+    if (!selectedProviderKey) {
+      setBackgroundImportJob(null);
+      return undefined;
+    }
+
+    let mounted = true;
+
+    async function refreshBackgroundImportJob() {
+      try {
+        const latest = await getLatestChatAgentActionProviderImportJob(
+          selectedProviderKey,
+          { getAccessToken },
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (latest && isBackgroundIndexingJob(latest)) {
+          setBackgroundImportJob(latest);
+          return;
+        }
+
+        setBackgroundImportJob(null);
+      } catch {
+        if (mounted) {
+          setBackgroundImportJob(null);
+        }
+      }
+    }
+
+    void refreshBackgroundImportJob();
+
+    const intervalId = window.setInterval(() => {
+      void refreshBackgroundImportJob();
+    }, 2000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [getAccessToken, selectedProviderKey]);
 
   useEffect(() => {
     if (!selectedProviderKey) {
@@ -602,7 +652,13 @@ export function ChatAgentActionsPage({
         started.jobId,
         {
           getAccessToken,
-          onJobUpdate: setImportJob,
+          onJobUpdate: (job) => {
+            setImportJob(job);
+
+            if (isBackgroundIndexingJob(job)) {
+              setBackgroundImportJob(job);
+            }
+          },
           onImportActionsReady: async () => {
             routesReloadedForImportRef.current = true;
             await reloadRoutes(selectedProviderKey);
@@ -1233,6 +1289,14 @@ export function ChatAgentActionsPage({
                 selectedProvider={selectedProvider}
                 selectedLink={selectedLink}
                 providerActions={providerActions}
+                backgroundImportJob={
+                  backgroundImportJob
+                    ? {
+                        phaseLabel: backgroundImportJob.phaseLabel,
+                        progress: backgroundImportJob.progress,
+                      }
+                    : null
+                }
                 isLoadingRoutes={isLoadingRoutes}
                 testingActionId={testingActionId}
                 testAction={testAction}

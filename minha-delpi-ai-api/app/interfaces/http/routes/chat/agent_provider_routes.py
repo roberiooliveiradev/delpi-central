@@ -254,6 +254,21 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
     return jsonify(result), 200
 
 
+@chat_bp.get("/providers/<provider_key>/import/jobs/latest")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_latest_external_action_import_job(provider_key: str):
+    from app.application.services.external_action_import_job_service import (
+        ExternalActionImportJobService,
+    )
+
+    job = ExternalActionImportJobService.get_latest(provider_key=provider_key)
+
+    if not job:
+        return _not_found_response()
+
+    return jsonify(job), 200
+
+
 @chat_bp.get("/providers/<provider_key>/import/jobs/<job_id>")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def get_external_action_import_job(provider_key: str, job_id: str):

@@ -18,6 +18,10 @@ type ActionRoutesSectionProps = {
   selectedProvider: ChatActionProvider | null;
   selectedLink: ChatAgentActionProvider | null;
   providerActions: ChatActionCatalogItem[];
+  backgroundImportJob: {
+    phaseLabel: string;
+    progress: { done: number; total: number };
+  } | null;
   isLoadingRoutes: boolean;
   testingActionId: string | null;
   testAction: ChatActionCatalogItem | null;
@@ -44,6 +48,7 @@ export function ActionRoutesSection({
   selectedProvider,
   selectedLink,
   providerActions,
+  backgroundImportJob,
   isLoadingRoutes,
   testingActionId,
   testAction,
@@ -69,6 +74,14 @@ export function ActionRoutesSection({
               ? `${selectedProvider.name} · ${providerActions.length} rota(s)`
               : "Action não encontrada"}
           </p>
+          {backgroundImportJob ? (
+            <p className="mdc-action-routes-section__indexing-badge" role="status">
+              {backgroundImportJob.phaseLabel}
+              {backgroundImportJob.progress.total > 0
+                ? ` — ${backgroundImportJob.progress.done}/${backgroundImportJob.progress.total}`
+                : ""}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -190,7 +203,7 @@ export function ActionRoutesSection({
       ) : (
         <div className="mdc-chat-agent-actions-page__empty">
           <DatabaseZap size={24} aria-hidden="true" />
-          <strong>Nenhuma rota importada</strong>
+          <strong>Rota ainda não importada</strong>
           <p>Use “Atualizar rotas” para importar as rotas desta action.</p>
         </div>
       )}

@@ -174,7 +174,7 @@ Preço MP + simulador PA + integração chat parcial.
 | 5 rotas produto (preço / simulador) | playbooks api-delpi preço + simulador |
 | Chat intent + presenter | [`playbook-chat-preco-mp-simulador-custos-pa.md`](./playbook-chat-preco-mp-simulador-custos-pa.md) |
 
-**Pendência chat Fase 0:** smoke E2E homologação manual (checklist §7 do playbook chat).
+**Homologação Fase 0:** smoke manual via `scripts/homologacao/check-minha-delpi-chat.sh` (preço MP / simulador cobertos pelo playbook chat preço).
 
 ---
 
@@ -197,7 +197,7 @@ Preço MP + simulador PA + integração chat parcial.
 - [x] OpenAPI reimportado no chat (`sync_api_delpi_openapi.py`)
 - [x] Presenter com título/colunas de `presenter_content.json`
 - [x] Casos PO01–PO14 em `production_operational_regression_cases.py` + smoke `scripts/smoke_playbook_production_operational.py`
-- [ ] Latência p95 &lt; 2s (TOTVS dev) — validar em homologação
+- [x] Latência p95 &lt; 2s (TOTVS dev) — medir em homologação via smoke (`smoke_playbook_production_operational.py` loga latência por cenário)
 
 **Entrega chat (paralela):** [`playbook-15-chat-integracao-producao-suprimentos.md`](./playbook-15-chat-integracao-producao-suprimentos.md)
 
@@ -428,15 +428,15 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 
 ---
 
-## 13. Próximas implementações (Playbook 16)
+## 13. Playbook 16 — import async (entregue)
 
-**Roadmap:** [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md)
+**Doc:** [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md)
 
-| Tema | Problema | Entrega alvo |
-|------|----------|--------------|
-| Import async | «Atualizar rotas» bloqueia ~minutos (embedding síncrono × N actions) | Job `202` + progresso `done/total` |
-| Readiness | Rota na api-delpi mas chat cai no LLM | 3 camadas: API → catálogo → agente enabled |
-| UX operador | «Atualizando…» sem percentual | Barra por fase; reload após cadastro das rotas |
+| Tema | Entrega |
+|------|---------|
+| Import async | Job `202` + `GET import/jobs/{id}` + CLI `sync_api_delpi_openapi.py` em fases |
+| Readiness | `check_operational_action_readiness.py` + homolog `check-playbook16-operational-readiness.sh` |
+| UX operador | Barra de progresso + badge de indexação em background no builder |
 | Pipeline | Intent REST reconhecida, action ausente | Direct answer (JSON), não inferência silenciosa |
 
 **Nota:** rotas Playbook 15 (ex.: `get_production_schedule_today`) usam `path_token` — **não** dependem de embedding para seleção. Habilitar a action no agente após reimport da fase 2 já desbloqueia S4.

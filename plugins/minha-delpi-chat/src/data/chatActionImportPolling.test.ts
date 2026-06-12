@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  isBackgroundIndexingJob,
   isTerminalImportJobStatus,
   pollChatActionProviderImportJob,
   shouldReloadRoutesForImportJob,
@@ -30,6 +31,17 @@ function makeJob(
 describe("chatActionImportPolling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("identifica job de indexação em background", () => {
+    expect(
+      isBackgroundIndexingJob(
+        makeJob({ status: "running", phase: "embed_actions" }),
+      ),
+    ).toBe(true);
+    expect(isBackgroundIndexingJob(makeJob({ status: "running", phase: "import_actions" }))).toBe(
+      false,
+    );
   });
 
   it("identifica status terminal do job", () => {

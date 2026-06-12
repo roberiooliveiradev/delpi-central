@@ -6,6 +6,8 @@ Uso (container minha-delpi-ai-api):
   PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py
   PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py --from-file /tmp/openapi.json
 
+O import usa o pipeline em fases do Playbook 16 (rotas primeiro, embeddings depois).
+
 Pós-deploy api-delpi (Onda 11.1.5): rode este script e reindexe o documento RAG
 `docs/knowledge/api-delpi-rotas-agente.md` na base de conhecimento do agente.
 """
@@ -15,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 from app.domain.services.api_delpi_openapi_catalog_service import (
@@ -54,6 +57,25 @@ def _latest_schema_from_provider(repository, provider_key: str) -> dict | None:
     return latest if isinstance(latest, dict) else None
 
 
+def _job_to_report(job: dict) -> dict:
+    result = job.get("result") if isinstance(job.get("result"), dict) else {}
+    progress = job.get("progress") if isinstance(job.get("progress"), dict) else {}
+
+    return {
+        "jobId": job.get("jobId"),
+        "status": job.get("status"),
+        "phase": job.get("phase"),
+        "found": job.get("status") != "failed",
+        "actionsImported": result.get("actionsImported"),
+        "schemaHash": result.get("schemaHash"),
+        "embeddingsUpdated": result.get("embeddingsUpdated"),
+        "embeddingsSkipped": result.get("embeddingsSkipped"),
+        "progressDone": progress.get("done"),
+        "progressTotal": progress.get("total"),
+        "error": job.get("error"),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -89,11 +111,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    from app.application.use_cases.admin_chat_intelligence_use_cases import (
-        ReindexExternalActionEmbeddingsUseCase,
-    )
-    from app.application.use_cases.import_external_actions_schema_use_case import (
-        ImportExternalActionsSchemaUseCase,
+    from app.application.services.external_action_import_job_service import (
+        ExternalActionImportJobService,
     )
     from app.composition.root_composer import create_application
     from app.extensions.db import db
@@ -106,29 +125,49 @@ def main() -> int:
 
     with app.app_context():
         repository = PostgresExternalActionRepository()
-        import_use_case = ImportExternalActionsSchemaUseCase(repository)
         schema: dict | None = None
 
         if not args.skip_import:
+            started = time.perf_counter()
+
             if args.from_file:
                 schema = _load_schema_from_file(args.from_file)
-                report["import"] = import_use_case.execute_from_json(
-                    args.provider_key,
-                    schema,
+                job = ExternalActionImportJobService.run_to_completion(
+                    app,
+                    provider_key=args.provider_key,
+                    schema_json=schema,
+                    source_type="inline",
+                    source_url=str(args.from_file),
+                    skip_embeddings=args.skip_reindex,
                 )
             else:
-                report["import"] = import_use_case.execute_from_url(args.provider_key)
+                job = ExternalActionImportJobService.run_to_completion(
+                    app,
+                    provider_key=args.provider_key,
+                    skip_embeddings=args.skip_reindex,
+                )
                 schema = _latest_schema_from_provider(repository, args.provider_key)
 
-            db.session.commit()
+            import_report = _job_to_report(job)
+            report["import"] = import_report
+            report["importDurationSeconds"] = round(time.perf_counter() - started, 2)
+            report["reindex"] = {
+                "updated": import_report.get("embeddingsUpdated"),
+                "skipped": import_report.get("embeddingsSkipped"),
+            }
+
+            if job.get("status") == "failed":
+                db.session.rollback()
+            else:
+                db.session.commit()
         else:
             schema = _latest_schema_from_provider(repository, args.provider_key)
 
-        if not args.skip_reindex:
-            report["reindex"] = ReindexExternalActionEmbeddingsUseCase(
-                repository
-            ).execute(provider_key=args.provider_key)
-            db.session.commit()
+            if not args.skip_reindex:
+                report["reindex"] = repository.backfill_action_embeddings(
+                    provider_key=args.provider_key,
+                )
+                db.session.commit()
 
         actions = repository.list_actions(provider_key=args.provider_key)
         report["actionsInDatabase"] = len(actions)
@@ -157,6 +196,9 @@ def _report_is_successful(report: dict, *, skip_import: bool) -> bool:
 
     import_result = report.get("import")
     if not isinstance(import_result, dict):
+        return False
+
+    if import_result.get("status") == "failed":
         return False
 
     if import_result.get("found") is False:

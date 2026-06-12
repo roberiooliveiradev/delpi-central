@@ -283,14 +283,34 @@ Atualiza configurações do provider/API.
 
 Atualiza/importa rotas a partir da URL OpenAPI configurada.
 
-**Comportamento atual:** requisição **síncrona** — bloqueia até import + embeddings (lento com ~135 rotas).  
-**Roadmap:** import assíncrono com progresso — [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
+### Modos
+
+| Query | Resposta | Comportamento |
+|-------|----------|---------------|
+| (padrão) | `200` | Import síncrono legado (import + embed conforme config) |
+| `?async=true` | `202` | Enfileira job; embeddings em fase separada |
+
+Playbook: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
 
 ### Permissão
 
 `minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
 
-### Resposta `200`
+### Resposta `202` (`async=true`)
+
+```json
+{
+  "jobId": "uuid",
+  "providerKey": "api-delpi",
+  "status": "queued",
+  "phase": "queued",
+  "phaseLabel": "Na fila",
+  "progress": { "done": 0, "total": 0, "unit": "actions" },
+  "pollUrl": "/chat/providers/api-delpi/import/jobs/uuid"
+}
+```
+
+### Resposta `200` (síncrono)
 
 ```json
 {
@@ -299,6 +319,34 @@ Atualiza/importa rotas a partir da URL OpenAPI configurada.
   "schemaHash": "..."
 }
 ```
+
+---
+
+## GET `/chat/providers/{providerKey}/import/jobs/{jobId}`
+
+Status do job de import (poll a cada 1–2s na UI).
+
+### Permissão
+
+`minha-delpi.chat.access`
+
+### Resposta `200`
+
+Mesmo formato do corpo `202` acima, com `progress.done` / `progress.total` atualizados por fase.
+
+---
+
+## GET `/chat/providers/{providerKey}/import/jobs/latest`
+
+Último job do provider (badge de indexação em background no builder).
+
+### Permissão
+
+`minha-delpi.chat.access`
+
+### Resposta
+
+`200` — último job; `404` — nenhum job registrado.
 
 ---
 

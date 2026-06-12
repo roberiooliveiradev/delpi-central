@@ -72,6 +72,63 @@ class ExternalActionImportJobService:
         return cls.to_dict(job)
 
     @classmethod
+    def get_latest(cls, *, provider_key: str) -> dict[str, Any] | None:
+        job = (
+            ExternalActionImportJobModel.query.filter_by(
+                provider_key=str(provider_key).strip(),
+            )
+            .order_by(ExternalActionImportJobModel.started_at.desc())
+            .first()
+        )
+
+        if not job:
+            return None
+
+        return cls.to_dict(job)
+
+    @classmethod
+    def run_to_completion(
+        cls,
+        app: Flask,
+        *,
+        provider_key: str,
+        schema_json: dict | None = None,
+        source_type: str = "url",
+        source_url: str | None = None,
+        skip_embeddings: bool = False,
+    ) -> dict[str, Any]:
+        job = ExternalActionImportJobModel(
+            provider_key=str(provider_key).strip(),
+            status="queued",
+            phase="queued",
+            progress_done=0,
+            progress_total=0,
+        )
+        db.session.add(job)
+        db.session.flush()
+
+        job_id = str(job.id)
+        db.session.commit()
+
+        with app.app_context():
+            cls._execute_job(
+                job_id=job_id,
+                provider_key=provider_key,
+                schema_json=schema_json,
+                source_type=source_type,
+                source_url=source_url,
+                skip_embeddings=skip_embeddings,
+            )
+            db.session.commit()
+
+        finished = cls._load_job(provider_key=provider_key, job_id=job_id)
+
+        if not finished:
+            raise RuntimeError(f"Import job not found after completion: {job_id}")
+
+        return cls.to_dict(finished)
+
+    @classmethod
     def to_dict(cls, job: ExternalActionImportJobModel) -> dict[str, Any]:
         phase = str(job.phase or "")
         status = str(job.status or "")
@@ -136,7 +193,16 @@ class ExternalActionImportJobService:
                 cls._mark_failed(job_id=job_id, provider_key=provider_key, error=str(exc))
 
     @classmethod
-    def _execute_job(cls, *, job_id: str, provider_key: str) -> None:
+    def _execute_job(
+        cls,
+        *,
+        job_id: str,
+        provider_key: str,
+        schema_json: dict | None = None,
+        source_type: str = "url",
+        source_url: str | None = None,
+        skip_embeddings: bool = False,
+    ) -> None:
         from app.composition.external_action_composer import (
             make_postgres_external_action_repository,
         )
@@ -152,33 +218,46 @@ class ExternalActionImportJobService:
         if not provider:
             raise ValueError(f"Provider not found: {provider_key}")
 
-        if not provider.openapi_url:
-            raise ValueError("openApiUrl is required")
+        resolved_schema = schema_json
+        resolved_source_type = source_type
+        resolved_source_url = source_url
+
+        if resolved_schema is None:
+            if not provider.openapi_url:
+                raise ValueError("openApiUrl is required")
+
+            cls._update_job(
+                job,
+                status="running",
+                phase="fetch_schema",
+                progress_done=0,
+                progress_total=0,
+            )
+            db.session.commit()
+
+            response = requests.get(provider.openapi_url, timeout=20)
+            response.raise_for_status()
+            resolved_schema = response.json()
+            resolved_source_type = "url"
+            resolved_source_url = provider.openapi_url
+
+        if not isinstance(resolved_schema, dict):
+            raise ValueError("OpenAPI response must be a JSON object")
 
         cls._update_job(
             job,
             status="running",
-            phase="fetch_schema",
+            phase="import_actions",
             progress_done=0,
             progress_total=0,
         )
         db.session.commit()
 
-        response = requests.get(provider.openapi_url, timeout=20)
-        response.raise_for_status()
-        schema_json = response.json()
-
-        if not isinstance(schema_json, dict):
-            raise ValueError("OpenAPI response must be a JSON object")
-
-        cls._update_job(job, phase="import_actions", progress_done=0, progress_total=0)
-        db.session.commit()
-
         import_result = repository.import_schema_from_json(
             provider_key=provider_key,
-            schema_json=schema_json,
-            source_type="url",
-            source_url=provider.openapi_url,
+            schema_json=resolved_schema,
+            source_type=resolved_source_type,
+            source_url=resolved_source_url,
             embed_on_import=False,
         )
 
@@ -197,7 +276,7 @@ class ExternalActionImportJobService:
         )
         db.session.commit()
 
-        if not repository.embedding_service:
+        if skip_embeddings or not repository.embedding_service:
             cls._update_job(
                 job,
                 status="completed",

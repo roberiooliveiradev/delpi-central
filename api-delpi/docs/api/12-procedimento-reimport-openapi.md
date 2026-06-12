@@ -36,10 +36,16 @@ Com arquivo exportado:
 docker exec delpi-minha-delpi-ai-api python3 scripts/sync_api_delpi_openapi.py --from-file /tmp/openapi.json
 ```
 
-O script atualiza o schema do provider, reindexa embeddings das actions e regenera  
+O script usa o pipeline em fases do Playbook 16: cadastra rotas sem embed bloqueante e reindexa embeddings em seguida. Regenera  
 `minha-delpi-ai-api/docs/knowledge/_generated/api-delpi-openapi-catalog.md`.
 
-**Import lento na UI?** O botão «Atualizar rotas» aguarda embedding síncrono por action (`EXTERNAL_ACTION_EMBEDDING_ON_IMPORT`). Roadmap async + progresso: [Playbook 16](../../../minha-delpi-ai-api/docs/roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
+**UI (builder):** «Atualizar rotas» dispara import assíncrono com barra de progresso — [Playbook 16](../../../minha-delpi-ai-api/docs/roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
+
+**Readiness pós-deploy:**
+
+```bash
+./scripts/homologacao/check-playbook16-operational-readiness.sh
+```
 
 **Rotas operacionais (Playbook 15):** após reimport, **habilitar** a action no agente — o catálogo global não basta. Ver §5 do Playbook 16.
 
