@@ -1,7 +1,6 @@
+/* Legado — mantido para bundles antigos; markup atual usa WorkspaceFileCard. */
 .mdc-chat-attachment-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.35rem;
+  display: flex;
   align-items: center;
   width: min(18rem, 100%);
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
@@ -11,12 +10,12 @@
 }
 
 .mdc-chat-attachment-card__preview-hit {
-  display: grid;
-  grid-template-columns: 3.1rem minmax(0, 1fr);
-  gap: 0.55rem;
+  display: flex;
   align-items: center;
+  gap: 0.55rem;
+  flex: 1;
   min-width: 0;
-  padding: 0.45rem 0.5rem;
+  padding: 0.45rem 0.55rem;
   border: 0;
   background: transparent;
   color: inherit;
@@ -63,12 +62,7 @@
 }
 
 .mdc-chat-attachment-card__actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  align-self: center;
-  gap: 0.2rem;
-  padding: 0.35rem 0.45rem 0.35rem 0;
+  display: none;
 }
 
 .mdc-chat-attachment-card__action {

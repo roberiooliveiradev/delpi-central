@@ -173,21 +173,12 @@ export function WorkspaceFileCard({
   onRemove,
   secondaryLabel,
 }: WorkspaceFileCardProps) {
-  const actionButtons =
-    showInlineActions || (editable && onRemove) ? (
-      <div className="mdc-workspace-file-card__actions">
-        {showInlineActions && onPreview ? (
-          <button
-            type="button"
-            className="mdc-workspace-file-card__action"
-            onClick={onPreview}
-            aria-label={`Abrir pré-visualização de ${filename}`}
-            title="Pré-visualizar"
-          >
-            <Eye size={14} aria-hidden="true" />
-          </button>
-        ) : null}
+  const bodyOpensPreview = Boolean(onPreview);
+  const hasSideActions =
+    (showInlineActions && onDownload) || (editable && onRemove);
 
+  const actionButtons = hasSideActions ? (
+      <div className="mdc-workspace-file-card__actions">
         {showInlineActions && onDownload ? (
           <button
             type="button"
@@ -217,6 +208,8 @@ export function WorkspaceFileCard({
         ) : null}
       </div>
     ) : null;
+
+  const previewAriaLabel = `Pré-visualizar ${filename}`;
 
   const meta = (
     <div className="mdc-workspace-file-card__meta">
@@ -308,17 +301,32 @@ export function WorkspaceFileCard({
     );
   }
 
+  if (bodyOpensPreview && !actionButtons) {
+    return (
+      <article className="mdc-workspace-file-card mdc-workspace-file-card--card mdc-workspace-file-card--card-unified">
+        <button
+          type="button"
+          className="mdc-workspace-file-card__surface mdc-workspace-file-card__surface--interactive"
+          onClick={onPreview}
+          aria-label={previewAriaLabel}
+        >
+          {body}
+        </button>
+      </article>
+    );
+  }
+
   return (
     <article
-      className={`mdc-workspace-file-card mdc-workspace-file-card--card ${showInlineActions ? "" : "mdc-workspace-file-card--card-compact"}`}
+      className={`mdc-workspace-file-card mdc-workspace-file-card--card ${actionButtons ? "" : "mdc-workspace-file-card--card-compact"}`}
     >
       <div className="mdc-workspace-file-card__surface">
-        {onPreview ? (
+        {bodyOpensPreview ? (
           <button
             type="button"
             className="mdc-workspace-file-card__body mdc-workspace-file-card__body--interactive"
             onClick={onPreview}
-            aria-label={`Pré-visualizar ${filename}`}
+            aria-label={previewAriaLabel}
           >
             {body}
           </button>
