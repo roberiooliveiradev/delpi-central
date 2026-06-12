@@ -1,5 +1,7 @@
 # Arquitetura — Transformômetro App
 
+**Última atualização:** jun/2026 (Playbook 18 — instâncias, UUID, visões, RBAC filial)
+
 ## Diagrama de contexto
 
 ```mermaid
@@ -32,6 +34,60 @@ flowchart TB
   REPO --> PG
   UC --> AUDIT
 ```
+
+## Modelo de domínio (Playbook 18)
+
+```mermaid
+erDiagram
+  processos ||--o{ processo_instancias : "1:N"
+  filiais ||--o{ processo_instancias : "filial_id"
+  setores ||--o{ processo_instancias : "setor_id"
+  processo_instancias ||--o{ revisoes : "timeline"
+  revisoes ||--o| medicoes : "1:1"
+  revisoes ||--o{ investimentos : "N"
+  revisoes ||--o{ revisao_recursos_compartilhados : "N"
+  recursos_compartilhados ||--o{ revisao_recursos_compartilhados : "N"
+  revisoes ||--o{ dashboard_calculos : "cache"
+  setores ||--o{ setor_filiais : "N"
+  filiais ||--o{ setor_filiais : "N"
+
+  processos {
+    uuid processo_id PK
+    string codigo_processo UK
+    string familia_processo
+  }
+  processo_instancias {
+    uuid instancia_id PK
+    uuid processo_id FK
+    uuid filial_id FK
+    uuid setor_id FK
+    string rotulo_instancia
+  }
+  revisoes {
+    uuid revisao_id PK
+    uuid instancia_id FK
+    uuid processo_id FK
+  }
+  recursos_compartilhados {
+    uuid recurso_compartilhado_id PK
+    string escopo_recurso
+  }
+```
+
+**Regra:** filial/setor **não** ficam em `processos` (V015). Toda revisão pertence a uma **instância**.
+
+## Serviços canônicos (pós–Playbook 18)
+
+| Serviço | Camada | Função |
+|---------|--------|--------|
+| `DashboardCalculatorService` | domain | Cálculo mensal por revisão/competência |
+| `SharedResourceScopeService` | domain | Pool de rateio por `escopo_recurso` |
+| `DashboardCacheDenormService` | domain | Denormaliza instância/filial/setor no cache |
+| `DashboardViewScopeService` | application | Filtro `view=consolidated\|filial\|department` |
+| `FilialAccessScopeService` | application | RBAC filial server-side + `access_scope` em `/options` |
+| `InstanciaDuplicateService` | application | Replica timeline entre instâncias |
+| `DashboardLiveService` | application | Dashboard em tempo real |
+| `DashboardRecalcService` | application | Materializa `dashboard_calculos` |
 
 ## Estrutura de pastas (proposta)
 
@@ -86,26 +142,32 @@ Sem regra de negócio em controllers; calculador **puro** (testável com fixture
 
 ## Modelo de dados (PostgreSQL)
 
-Schema sugerido: `transformometro`.
+Schema: **`transformometro`**. Migrations **V001–V018** (ver [migrations/README.md](../../../transformometro-api/migrations/README.md)).
 
-### Tabelas cadastrais
+### Catálogos e operacional
 
 | Tabela | PK | Observação |
 |--------|-----|------------|
-| `processos` | `processo_id` UUID | `filial_id`, `versao_revisao` como `VARCHAR` |
-| `revisoes` | `revisao_id` UUID | FK `processo_id`; V005: `status_aprovacao`, `motivo_rejeicao`, … |
-| `medicoes` | `medicao_id` UUID | FK `revisao_id`, 1:1 ou 1:N conforme evolução |
-| `investimentos` | `investimento_id` UUID | `valor_total` calculado no backend |
-| `recursos_compartilhados` | `recurso_compartilhado_id` UUID | |
-| `revisao_recursos_compartilhados` | `vinculo_id` UUID | |
+| `filiais` | `filial_id` UUID | `codigo_filial` UNIQUE (V011) |
+| `setores` | `setor_id` UUID | `codigo_setor` UNIQUE (V012) |
+| `setor_filiais` | — | FKs UUID filial ↔ setor |
+| `processos` | `processo_id` UUID | Mestre; sem filial/setor (V015) |
+| `processo_instancias` | `instancia_id` UUID | UNIQUE `(processo_id, filial_id, setor_id)` (V013) |
+| `revisoes` | `revisao_id` UUID | FK **`instancia_id`** NOT NULL (V014); unique `(instancia_id, versao_revisao)` (V018) |
+| `medicoes` | `medicao_id` UUID | FK `revisao_id` |
+| `investimentos` | `investimento_id` UUID | FK `revisao_id` |
+| `recursos_compartilhados` | `recurso_compartilhado_id` UUID | `escopo_recurso` DEFAULT `empresa` (V016) |
+| `revisao_recursos_compartilhados` | `vinculo_id` UUID | Rateio |
+| `recurso_custos` | — | Histórico de `valor_mensal` |
 
-Todas com `deletado BOOLEAN DEFAULT false`, `created_at`, `updated_at` TIMESTAMPTZ.
+Todas as cadastrais com `deletado`, `created_at`, `updated_at`.
 
-### Tabela derivada / cache do dashboard
+### Cache dashboard (V017)
 
-| Tabela | Chave lógica | Conteúdo |
-|--------|--------------|----------|
-| `dashboard_calculos` | `revisao_id` + `competencia` CHAR(7) | Cache/materialização das linhas calculadas pelo `DashboardCalculatorService` |
+| Tabela | Chave | Conteúdo |
+|--------|-------|----------|
+| `dashboard_calculos` | `dashboard_calculo_id` UUID PK; unique `(revisao_id, competencia)` | Linhas calculadas + denorm `instancia_id`, `filial_id`, `setor_id`, `codigo_filial`, `codigo_setor` |
+| `processo_competencia_snapshot` | view | Agregação processo × competência; alias `codigo_*` na resposta |
 
 A tabela `dashboard_calculos` **não é a fonte primária da regra de negócio**. Ela é um cache materializado auxiliar. As rotas atuais do dashboard calculam os dados em tempo real a partir das tabelas cadastrais, usando `DashboardLiveService` + `DashboardCalculatorService`. Portanto, toda alteração de regra de cálculo deve ser implementada primeiro no cálculo em tempo real e, depois, refletida no recálculo materializado.
 
@@ -153,17 +215,18 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 
 | Grupo | Endpoints |
 |-------|-----------|
+| Filiais | `GET/POST /filiais`, `GET/PUT/DELETE /filiais/{id}` (UUID ou `codigo_filial`) |
+| Setores | `GET/POST /setores`, `GET/PUT/DELETE /setores/{id}` |
 | Processos | `GET/POST /processos`, `GET/PUT/DELETE /processos/{id}` |
+| Instâncias | `GET/POST /processos/{id}/instancias`, `GET /instancias/{id}`, `POST /instancias/{id}/duplicar` |
 | Revisões | `GET/POST /revisoes`, `PUT /revisoes/{id}`, `GET /processos/{id}/revisoes`, `POST /revisoes/{id}/ativar` |
 | Medições | CRUD + `GET /revisoes/{id}/medicoes` |
 | Investimentos | CRUD + cálculo `valor_total` |
-| Recursos | `GET/POST /recursos-compartilhados`, `PUT/DELETE /recursos-compartilhados/{id}`; vínculos `revisao-recursos-compartilhados` |
-| Dashboard | `GET /dashboard/resumo`, `/evolucao`, `/processos`, `/alertas`, `/por-familia`, `/export.csv`, `/export.xls`, `POST /recalcular` |
-| Processos (Fase 4) | `GET /processos/{id}/comparativo`; filtros `familia_processo` na listagem |
-| Revisões (Fase 4) | `GET /revisoes/{id}/diagnostico-rateio` |
-| Catálogos | `GET /options/*` |
+| Recursos | CRUD + `escopo_recurso`; vínculos `revisao-recursos-compartilhados` |
+| Dashboard | `GET /dashboard/*` com query `view`, `filial_id`, `setor_id`; `POST /recalcular` |
+| Options | `GET /options` — catálogos + **`access_scope`** (RBAC filial) |
 | Sistema | `GET /health` |
-| Integrações (S2S interno) | `GET /integrations/engineering/transforma-mais/processes`, `.../summary` — consumidas **só** pela api-delpi |
+| Integrações S2S | `GET /integrations/engineering/transforma-mais/*` — **`id` = `instancia_id`** |
 
 **Contrato público Transforma+** (SI, dashboard-engineering): `GET /engineering/transforma-mais/*` na **api-delpi** — ver [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
 
@@ -221,14 +284,17 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 
 | Rota UI | Função |
 |---------|--------|
-| `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular (`/apps/transformometro` abre o mesmo conteúdo) |
-| `/apps/transformometro/processos` | Lista |
-| `/apps/transformometro/processos/{id}` | Detalhe + revisões |
-| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Mesma tela com revisão na URL |
-| `/apps/transformometro/recursos` | Catálogo global (CRUD) |
-| `/apps/transformometro/dados` | Exportar / importar backup JSON |
+| `/apps/transformometro/dashboard` | KPIs, toggle **Consolidado / Filial / Departamento**, alertas, export, recalcular |
+| `/apps/transformometro/processos` | Lista; create com primeira instância |
+| `/apps/transformometro/processos/{id}` | Mestre + painel **Instâncias operacionais** + revisões filtradas |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Instância selecionada |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL **canônica** da revisão |
+| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado → redirect para URL canônica |
+| `/apps/transformometro/setores` | Catálogo setores (`codigo_setor` na UI) |
+| `/apps/transformometro/recursos` | Catálogo global + campo **`escopo_recurso`** |
+| `/apps/transformometro/dados` | Export/import backup JSON 1.1 (`filiais`, `processo_instancias`) |
 
-Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; **Definir como ativa** sem etapa de aprovação. Roteamento por URL (`routeParser`, `useDelpiPortalBridge` para sincronizar URL com o portal).
+Módulos MFE: `routeParser.ts`, `dashboardViewScope.ts`, `ProcessoInstanciasPanel.tsx`.
 
 ## Integração infra
 
@@ -252,5 +318,7 @@ Autenticação de usuários: **Keycloak** (sem tabela `usuarios` local, salvo ca
 ## Segurança
 
 - JWT obrigatório em rotas de negócio
-- Permissões por rota no manifesto
-- `filial_id` opcional: filtrar dados por filial do usuário (fase posterior, igual SI `branch`)
+- Permissões globais no manifesto (`transformometro.view`, `transformometro.processes.manage`, …)
+- **RBAC filial (S10):** permissões escopadas `transformometro.view.filial-01`, `transformometro.manage.filial-01`, `transformometro.view.consolidated`, … — filtro **server-side** via `FilialAccessScopeService`; `GET /options` → `access_scope`
+- Rotas S2S e service token **não** aplicam RBAC filial
+- Usuários só com permissões globais legadas permanecem sem restrição de filial até receberem escopos no Keycloak

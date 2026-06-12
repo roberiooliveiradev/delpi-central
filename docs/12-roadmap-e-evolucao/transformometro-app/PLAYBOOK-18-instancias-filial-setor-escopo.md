@@ -412,9 +412,10 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 - [x] `transformometroApi.ts` — tipos `ProcessoInstancia`, `Filial`, `Setor` com UUID + `codigo_*`
 - [x] Rotas MFE e forms usam UUID; exibem `codigo_*` / `nome_*` na UI
 - [x] `setorCatalogForm` / `ProcessoFormFields` — parar de usar slug como id técnico
-- [ ] `PLAYBOOK-MODELAGEM.md` — § entidades atualizado (pós-S2)
-- [ ] `ARCHITECTURE.md` — diagrama com instâncias (pós-S3)
+- [x] `PLAYBOOK-MODELAGEM.md` — § entidades atualizado (pós-S2)
+- [x] `ARCHITECTURE.md` — diagrama com instâncias (pós-S3)
 - [x] `regras-de-calculo.md` — § escopo recurso (pós-S4)
+- [x] `status-atual.md`, `OPERATIONS.md`, `ROADMAP.md`, `OVERVIEW.md` — jun/2026
 
 ---
 
@@ -448,7 +449,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Camadas API/MFE |
 | [`regras-de-calculo.md`](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais |
 | `tm_app/domain/services/dashboard_calculator.py` | Calculador canônico |
-| `tm_app/core/catalogs.py` | Filiais hardcoded (remover em S1) |
+| `tm_app/core/catalogs.py` | Catálogos (`escopo_recurso`, …); filiais vêm do banco (S1) |
 | `migrations/V010__create_setores.sql` | Setores × filiais |
 | [`integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md) | **api-delpi** como fronteira pública; TM S2S interno |
 
@@ -458,7 +459,7 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 
 O Transformômetro evolui de **processo monolítico (1 filial + 1 setor)** para **processo-mestre + instâncias operacionais** `(filial × departamento)`, cada uma com **timeline própria de revisões**. Filiais e setores passam a ser entidades com **PK UUID** e **`codigo_*` de negócio**; recursos compartilhados ganham **escopo híbrido**; o dashboard passa a ter **visões consolidado / filial / departamento** com cálculo coerente no live, cache, export e integrações.
 
-**Próximo passo:** docs de modelo (`PLAYBOOK-MODELAGEM`, `ARCHITECTURE`, `regras-de-calculo`) · status: [`transformometro-api/docs/playbook-18-implementation-status.md`](../../../transformometro-api/docs/playbook-18-implementation-status.md).
+**Status:** ✅ API S1–S10 · ✅ MFE §9 · ✅ documentação — pronto para deploy com runbook em [status-atual.md](./status-atual.md).
 
 ### Progresso API (jun/2026)
 

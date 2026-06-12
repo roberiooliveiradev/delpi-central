@@ -102,18 +102,30 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Datas UTC | `DATE` no PG; API só `yyyy-MM-dd` |
 | Performance recálculo | Recalcular competências incrementais |
 
-## Fase 5 — Instâncias, filiais UUID e escopo híbrido (roadmap)
+## Fase 5 — Instâncias, filiais UUID e escopo híbrido ✅ entregue (jun/2026)
 
-**Objetivo:** processo-mestre + instâncias `(filial × setor)`, PK UUID, rateio híbrido, visões consolidado/filial/dept — sem quebrar contrato **api-delpi** Transforma+.
+**Objetivo:** processo-mestre + instâncias `(filial × setor)`, PK UUID, rateio híbrido, visões consolidado/filial/dept, RBAC filial — sem quebrar contrato **api-delpi** Transforma+.
 
-Plano completo: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · contratos: [`integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
+Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · status: [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md).
 
-**Pré-requisito operacional:** export JSON do cadastro atual (`transformometro-api/scripts/import_cadastro_json.py export`).
+| Sprint | Entrega | Status |
+|--------|---------|--------|
+| S1–S2 | Filiais/setores UUID (V011–V012) | ✅ |
+| S3–S4 | Instâncias + processo mestre (V013–V015) | ✅ |
+| S5 | `escopo_recurso` (V016) | ✅ |
+| S6 | Cache UUID (V017) | ✅ |
+| S7 | Visões `view` dashboard | ✅ |
+| S8 | Duplicar instância (V018) | ✅ |
+| S9 | Integração api-delpi por instância | ✅ |
+| S10 | RBAC filial server-side | ✅ |
+| MFE §9 | Instâncias, rotas, toggle dashboard, escopo recurso | ✅ |
+| Docs | MODELAGEM, ARCHITECTURE, regras-de-calculo | ✅ |
+
+**Deploy:** export JSON → migrations V011–V018 (auto) → bootstrap filiais → recalc dashboard → rebuild API + MFE → manifesto RBAC.
 
 ## Próximo passo imediato
 
-1. **Playbook 18:** exportar baseline cadastral antes das migrations de schema (ver Playbook 18 §3.2).
-2. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V010); registrar manifesto (rota `/recursos`)
-3. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
-4. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-5. Validar **ativar revisão** após deploy V006 (revisões antigas em `rascunho` passam a `aprovada`)
+1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md)
+2. **Registrar manifesto** na Core API + RBAC escopado (quem precisar)
+3. **Planilha somente leitura** (checklist Google)
+4. Validar smoke pós-deploy: 3 visões dashboard, instância → revisão canônica, Transforma+ por `instancia_id`

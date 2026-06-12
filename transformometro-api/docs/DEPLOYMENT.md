@@ -34,7 +34,7 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 | Variável | Default | Descrição |
 |----------|---------|-----------|
 | `TM_API_ROOT_PATH` | `/apps/transformometro-api` | Prefixo FastAPI |
-| `TM_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` em prod compose) | Aplica V001–V006 no boot |
+| `TM_RUN_MIGRATIONS_ON_STARTUP` | `false` no código; **`true` no compose** | Aplica **V001–V018** pendentes no boot |
 | `PLUGINS_DB_*` | — | Postgres schema `transformometro` |
 | `JWT_SECRET` / Keycloak | — | `delpi_auth` |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | — | Auth S2S nas rotas `/integrations/engineering/*` (mesmo valor em SI e api-delpi) |
@@ -52,7 +52,17 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 ```
 
-Versões: ver [migrations/README.md](../migrations/README.md) (V001–V005).
+Versões: ver [migrations/README.md](../migrations/README.md) (**V001–V018**).
+
+### Pós-migration Playbook 18
+
+1. Export JSON do cadastro (backup).
+2. Subir API com migrations automáticas.
+3. `bootstrap_filiais_from_cadastro.py` (V011 sem seed).
+4. Recalc full dashboard (V017 trunca `dashboard_calculos`).
+5. Rebuild MFE + registrar manifesto (RBAC filial).
+
+Ver [playbook-18-implementation-status.md](playbook-18-implementation-status.md) e [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md).
 
 ## Checklist produção
 

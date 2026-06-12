@@ -10,10 +10,12 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Camadas, domínio, cálculo, banco, integração portal |
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |
 | [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) | Refatoração: instâncias operacionais, filiais/setores UUID, escopo híbrido de recursos, visões consolidado/filial/dept |
-| [ROADMAP.md](./ROADMAP.md) | Fases de entrega, dependências, o que reaproveitar do legado |
-| [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional completa (origem: planilha + Apps Script) |
-| [OPERATIONS.md](./OPERATIONS.md) | Runbook: recalcular, cadastro, troubleshooting |
-| [status-atual.md](./status-atual.md) | Snapshot do que está em produção |
+| [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) | Status técnico S1–S10 + MFE §9 (API) |
+| [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |
+| [status-atual.md](./status-atual.md) | Snapshot do que está em produção / deploy |
+| [ROADMAP.md](./ROADMAP.md) | Fases de entrega e Playbook 18 |
+| [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
+| [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |
 | [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
 
 ## Legado hoje no monorepo

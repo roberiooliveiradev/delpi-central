@@ -1,46 +1,73 @@
 # Playbook de Modelagem — Transformômetro
 
-**Status:** playbook vivo de domínio  
+**Status:** playbook vivo de domínio (atualizado pós–Playbook 18, jun/2026)  
 **Escopo:** `transformometro-api`, `plugins/transformometro`, schema `transformometro`
 
 Este playbook define como modelar, calcular e evoluir o Transformômetro sem quebrar a coerência entre cadastro, API, dashboard, exportações e integrações.
 
+Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md)
+
 ## 1. Princípios
 
-1. O processo é o cadastro mestre, mas o cálculo acontece por revisão.
-2. A baseline é referência comparativa; não representa melhoria implementada.
-3. A primeira revisão não-baseline define a data de implementação do processo.
-4. A vigência da revisão define em quais competências ela pode gerar cálculo.
-5. Investimentos e recursos entram no cálculo somente quando pertencem à revisão calculada e estão vigentes na competência.
-6. `dashboard_calculos` é derivada; nunca é fonte de cadastro manual.
-7. Toda regra de cálculo deve viver no domínio (`DashboardCalculatorService`) e ser consumida por dashboard, export, alertas e integrações.
+1. O **processo-mestre** guarda identidade da iniciativa (`codigo_processo`, família, metadados); **não** carrega filial/setor operacional (Playbook 18).
+2. A **instância operacional** `(filial × setor)` possui timeline própria de revisões.
+3. O cálculo acontece por **revisão** (sempre vinculada a uma `instancia_id`).
+4. A baseline é referência comparativa; não representa melhoria implementada.
+5. A primeira revisão não-baseline **da instância** define a data de implementação operacional.
+6. A vigência da revisão define em quais competências ela pode gerar cálculo.
+7. Investimentos e recursos entram no cálculo somente quando pertencem à revisão calculada e estão vigentes na competência.
+8. `dashboard_calculos` é derivada; nunca é fonte de cadastro manual.
+9. Toda regra de cálculo deve viver no domínio (`DashboardCalculatorService`, `SharedResourceScopeService`) e ser consumida por dashboard, export, alertas e integrações.
+10. **PK técnica = UUID** (`filial_id`, `setor_id`, `instancia_id`); **código de negócio** = `codigo_*` (`01`, `engenharia`). Queries e MFE podem usar código; FKs internas usam UUID.
 
 ## 2. Entidades e Fonte de Verdade
 
-| Entidade | Tabela | Papel |
-|----------|--------|-------|
-| Processo | `processos` | Cadastro mestre, dimensões de filial/setor/família |
-| Revisão | `revisoes` | Cenário calculável e histórico de versão |
-| Medição | `medicoes` | Fotografia operacional da revisão |
-| Investimento | `investimentos` | Custo de implantação ou sustentação da revisão |
-| Recurso compartilhado | `recursos_compartilhados` | Catálogo de custo compartilhado |
-| Vínculo recurso/revisão | `revisao_recursos_compartilhados` | Uso e rateio do recurso por revisão |
-| Custo de recurso | `recurso_custos` | Histórico mensal do custo do recurso |
-| Dashboard | `dashboard_calculos` | Resultado materializado ou calculado em tempo real |
+### 2.1 Cadastro mestre e operacional
+
+| Entidade | Tabela | PK | Papel |
+|----------|--------|-----|-------|
+| Filial | `filiais` | `filial_id` UUID | Catálogo; `codigo_filial` único (`01`, `02`, …) |
+| Setor | `setores` | `setor_id` UUID | Catálogo; `codigo_setor` único (slug de negócio) |
+| Setor × filial | `setor_filiais` | — | FKs UUID; define setores elegíveis por filial |
+| Processo-mestre | `processos` | `processo_id` UUID | Iniciativa global; `codigo_processo` único |
+| Instância operacional | `processo_instancias` | `instancia_id` UUID | Par `(processo_id, filial_id, setor_id)`; unique por processo |
+| Revisão | `revisoes` | `revisao_id` UUID | Cenário calculável; FK **`instancia_id`** (+ `processo_id` denormalizado) |
+| Medição | `medicoes` | `medicao_id` UUID | Fotografia operacional da revisão |
+| Investimento | `investimentos` | `investimento_id` UUID | Custo de implantação ou sustentação da revisão |
+| Recurso compartilhado | `recursos_compartilhados` | `recurso_compartilhado_id` UUID | Catálogo + **`escopo_recurso`** (`empresa` \| `filial` \| `setor`) |
+| Vínculo recurso/revisão | `revisao_recursos_compartilhados` | `vinculo_id` UUID | Uso e rateio do recurso por revisão |
+| Custo de recurso | `recurso_custos` | — | Histórico mensal do custo do recurso |
+
+### 2.2 Derivadas
+
+| Entidade | Tabela | Chave | Papel |
+|----------|--------|-------|-------|
+| Dashboard (cache) | `dashboard_calculos` | `dashboard_calculo_id` UUID; unique `(revisao_id, competencia)` | Materialização; denorm `instancia_id`, `filial_id`, `setor_id`, `codigo_*` |
+| Snapshot agregado | view `processo_competencia_snapshot` | processo × competência | Leitura chat/integrações; expõe `codigo_*` como alias legado |
 
 Fonte de verdade de cadastro:
 
-- `processos`
-- `revisoes`
-- `medicoes`
-- `investimentos`
-- `recursos_compartilhados`
-- `revisao_recursos_compartilhados`
-- `recurso_custos`
+- `filiais`, `setores`, `setor_filiais`
+- `processos`, `processo_instancias`
+- `revisoes`, `medicoes`, `investimentos`
+- `recursos_compartilhados`, `revisao_recursos_compartilhados`, `recurso_custos`
 
 Fonte derivada:
 
-- `dashboard_calculos`
+- `dashboard_calculos`, `processo_competencia_snapshot`
+
+### 2.3 Hierarquia lógica
+
+```text
+processo-mestre (codigo_processo)
+  └── instancia (filial × setor) [instancia_id]
+        └── revisão [revisao_id]
+              ├── medição
+              ├── investimentos
+              └── vínculos → recursos compartilhados (rateio conforme escopo_recurso)
+```
+
+Um processo pode ter **N instâncias** (ex.: mesma melhoria em Matriz/Engenharia e Filial 02/Produção). Consolidado do processo = soma KPIs de todas as instâncias; ROI = totais líquidos / totais investimento (não média de percentuais).
 
 ## 3. Vocabulário do Domínio
 
@@ -51,12 +78,32 @@ Cenário original do processo. É usada para comparar custo operacional contra r
 Qualquer revisão com `cenario_tipo` diferente de `baseline`. Hoje os cenários comparáveis oficiais são `melhoria`, `automacao` e `correcao`.
 
 **Data de implementação do processo**  
-Data da primeira revisão não-baseline do processo:
+Data da primeira revisão não-baseline **da instância operacional** (escopo local):
 
 1. usar `data_implantacao`, quando preenchida;
 2. usar `data_inicio_vigencia`, como fallback.
 
-Essa data responde quando o processo começou a contar como solução implementada. Revisões posteriores não devem mudar essa data.
+No dashboard consolidado por processo-mestre, a data exibida segue a regra acima **por instância**; agregações somam linhas de cada instância.
+
+**Instância operacional**  
+Par único `(filial_id, setor_id)` dentro de um processo-mestre. Identificador canônico: `instancia_id` (UUID). Opcional: `rotulo_instancia` para UI.
+
+**Processo-mestre**  
+Cadastro sem `filial_id`/`setor_id` na tabela `processos` (V015). Create via API ainda aceita filial/setor no body → cria **primeira instância**.
+
+**Escopo de recurso (`escopo_recurso`)**  
+Define o pool de vínculos elegíveis ao rateio **antes** de aplicar `criterio_rateio`:
+
+| Valor | Pool |
+|-------|------|
+| `empresa` | Todos os vínculos vigentes (legado) |
+| `filial` | Vínculos cuja instância tem a mesma filial da revisão âncora |
+| `setor` | Vínculos cuja instância tem o mesmo par filial × setor |
+
+Módulo: `SharedResourceScopeService`. Detalhe numérico: [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md).
+
+**Visão analítica (`view`)**  
+Parâmetro de dashboard: `consolidated` (default) \| `filial` \| `department`. Filtra instâncias/revisões nos KPIs; não altera o pool global de recursos `empresa` — apenas a fatia exibida. Módulo: `DashboardViewScopeService`.
 
 **Processo ativo para cálculo**  
 Processo que possui pelo menos uma revisão não deletada com `revisao_ativa = true`.
@@ -69,16 +116,17 @@ Revisão cuja competência calculada cai entre:
 
 ## 4. Ciclo de Vida do Processo
 
-1. Criar processo.
-2. Criar baseline com medição.
-3. Criar primeira revisão não-baseline.
+1. Criar processo-mestre (+ primeira instância operacional com filial/setor).
+2. Criar baseline **na instância** com medição.
+3. Criar primeira revisão não-baseline **na mesma instância**.
 4. Informar `data_implantacao` ou, no mínimo, `data_inicio_vigencia`.
 5. Informar medição da revisão.
 6. Registrar investimentos únicos ou recorrentes da revisão.
-7. Vincular recursos compartilhados usados pela revisão.
-8. Ativar uma revisão operacional do processo.
-9. Encerrar revisões antigas por `data_fim_vigencia` quando houver troca real de cenário.
-10. Recalcular dashboard ou deixar o cálculo em tempo real refletir a alteração.
+7. Vincular recursos compartilhados (definir `escopo_recurso` no catálogo quando ≠ `empresa`).
+8. Ativar uma revisão operacional da instância.
+9. Para replicar a timeline em outro par filial × setor: `POST /instancias/{id}/duplicar` (não duplicar processo-mestre inteiro salvo legado deprecado).
+10. Encerrar revisões antigas por `data_fim_vigencia` quando houver troca real de cenário.
+11. Recalcular dashboard ou deixar o cálculo em tempo real refletir a alteração.
 
 ## 5. Regras de Atividade e Vigência
 
@@ -214,11 +262,13 @@ Resolver valor mensal nesta ordem:
 
 ### Rateio
 
-Critérios atuais:
+Critérios atuais (aplicados **dentro do pool** definido por `escopo_recurso`):
 
-- `igualitario`: divide pelo número de vínculos elegíveis;
-- `por_revisoes_ativas`: divide pelo número de revisões elegíveis;
-- `por_peso`: divide pelo peso relativo do vínculo.
+- `igualitario`: divide pelo número de vínculos elegíveis no pool;
+- `por_revisoes_ativas`: divide pelo número de revisões elegíveis no pool;
+- `por_peso`: divide pelo peso relativo do vínculo no pool.
+
+Pool canônico: `SharedResourceScopeService.filter_rateio_pool` · âncora = instância da revisão que recebe o custo.
 
 ### Uso no cálculo
 
@@ -303,19 +353,20 @@ horas_economizadas_mes =
 ## 10. Pipeline Oficial do Dashboard
 
 1. Carregar dados brutos via `DashboardDataRepository.load_raw`.
-2. Indexar processos, revisões, medições, investimentos, recursos, vínculos e custos.
-3. Determinar timeline mensal.
-4. Para cada competência:
-   - iterar processos;
-   - descartar processos sem revisão ativa;
-   - resolver baseline;
+2. Indexar processos, **instâncias**, revisões, medições, investimentos, recursos, vínculos e custos.
+3. Aplicar **`DashboardViewScopeService`** (filtro `view`, `filial_id`, `setor_id`).
+4. Determinar timeline mensal.
+5. Para cada competência:
+   - iterar instâncias/revisões no escopo;
+   - descartar processos sem revisão ativa na instância;
+   - resolver baseline da instância;
    - selecionar revisões não-baseline vigentes;
    - calcular custos operacionais;
    - calcular investimentos únicos e recorrentes da revisão;
-   - calcular recursos compartilhados da revisão;
-   - gerar linha de cálculo por revisão e competência.
-5. Consolidar mensalmente em evolução.
-6. Derivar resumo, ranking, alertas, família e exportações do mesmo conjunto de linhas.
+   - calcular recursos compartilhados (**pool** via `SharedResourceScopeService`);
+   - gerar linha de cálculo por revisão e competência (denorm instância/filial/setor no cache).
+6. Consolidar mensalmente em evolução.
+7. Derivar resumo, ranking, alertas, família e exportações do mesmo conjunto de linhas.
 
 ## 11. Contratos da API
 
@@ -334,11 +385,19 @@ Rotas principais:
 
 Parâmetros comuns:
 
-- `filial_id`
-- `setor_id`
+- `view` — `consolidated` \| `filial` \| `department` (Playbook 18)
+- `filial_id` — UUID ou `codigo_filial` (`01`)
+- `setor_id` — UUID ou `codigo_setor` (exige visão departamento ou filtro explícito)
 - `familia_processo`
-- `competencia_inicio`
-- `competencia_fim`
+- `competencia_inicio` / `competencia_fim`
+
+`GET /options` retorna `access_scope` quando RBAC filial está ativo (`FilialAccessScopeService`).
+
+Rotas de instância:
+
+- `GET/POST /processos/{id}/instancias`
+- `GET /instancias/{id}`
+- `POST /instancias/{id}/duplicar`
 
 ### Tabela de processos no recorte
 
@@ -398,12 +457,17 @@ Antes de mudar qualquer regra:
 ## 15. Arquivos de Referência
 
 - `transformometro-api/tm_app/domain/services/dashboard_calculator.py`
+- `transformometro-api/tm_app/domain/services/shared_resource_scope_service.py`
+- `transformometro-api/tm_app/domain/services/dashboard_cache_denorm_service.py`
+- `transformometro-api/tm_app/application/services/dashboard_view_scope_service.py`
+- `transformometro-api/tm_app/application/services/filial_access_scope_service.py`
 - `transformometro-api/tm_app/application/services/dashboard_live_service.py`
 - `transformometro-api/tm_app/application/services/dashboard_recalc_service.py`
-- `transformometro-api/tm_app/domain/services/recurso_custo_resolver.py`
-- `transformometro-api/migrations/V002__create_transformometro_tables.sql`
+- `transformometro-api/docs/regras-de-calculo.md`
+- `transformometro-api/migrations/V011__create_filiais.sql` … `V018__revisoes_unique_por_instancia.sql`
+- `plugins/transformometro/src/utils/dashboardViewScope.ts`
+- `plugins/transformometro/src/ui/processos/ProcessoInstanciasPanel.tsx`
 - `plugins/transformometro/src/data/api/transformometroApi.ts`
-- `plugins/transformometro/src/ui/pages/DashboardPage.tsx`
 
 ## 16. Decisões Pendentes
 

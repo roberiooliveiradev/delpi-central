@@ -1,6 +1,7 @@
 # Operações — Transformômetro
 
-Runbook para equipe após go-live (Postgres como fonte de verdade).
+Runbook para equipe após go-live (Postgres como fonte de verdade).  
+**Playbook 18 (jun/2026):** ver também [status-atual.md](./status-atual.md) e [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md).
 
 ## URLs
 
@@ -8,7 +9,8 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 |---------|-----|
 | Portal | `https://www.minhadelpi.com.br/apps/transformometro` |
 | Dashboard | `/apps/transformometro/dashboard` |
-| Processos | `/apps/transformometro/processos` |
+| Processos + instâncias | `/apps/transformometro/processos` → detalhe → painel instâncias |
+| Setores | `/apps/transformometro/setores` |
 | Recursos (catálogo) | `/apps/transformometro/recursos` |
 | Exportar / Importar JSON | `/apps/transformometro/dados` |
 | API health | `/apps/transformometro-api/transformometro/health` |
@@ -22,6 +24,42 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 5. **Recursos compartilhados:** cadastrar em **Recursos** (menu); vincular em Processos → revisão → aba Recursos.
 6. **Revisões:** cadastrar baseline/melhorias e **Definir como ativa** quando for usar no dashboard (sem aprovação).
 7. Cadastro oficial somente no portal (sem importação de planilha).
+8. **Instâncias:** replicar timeline entre filiais/setores pelo painel **Replicar instância** (canônico); evitar duplicar processo-mestre (legado deprecado).
+9. **Dashboard:** escolher visão Consolidado / Filial / Departamento; usuários com RBAC filial veem escopo em `/options` → `access_scope`.
+10. **Recursos:** definir **escopo de rateio** (`empresa` / `filial` / `setor`) no cadastro de Recursos.
+
+## Deploy / upgrade Playbook 18
+
+Ordem recomendada (local ou produção):
+
+```bash
+# 1. Backup cadastro
+cd transformometro-api
+set -a && source ../infra/.env && set +a
+python scripts/import_cadastro_json.py export -o fixtures/cadastro/transformometro-cadastro-$(date +%Y%m%d).json
+
+# 2. Rebuild containers (migrations V011–V018 no boot se TM_RUN_MIGRATIONS_ON_STARTUP=true)
+cd ..
+docker compose -f infra/docker-compose.dev.yml --env-file infra/.env build transformometro-api transformometro
+docker compose -f infra/docker-compose.dev.yml --env-file infra/.env up -d --force-recreate transformometro-api transformometro
+
+# 3. Conferir migrations
+docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner status
+
+# 4. Bootstrap filiais (V011 não faz seed)
+docker exec delpi-transformometro-api python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transformometro-cadastro-YYYYMMDD.json
+
+# 5. Recalc dashboard (V017 trunca cache)
+# UI: Dashboard → Recalcular  OU  POST /dashboard/recalcular com JWT admin
+
+# 6. Manifesto + RBAC
+export TOKEN="..." BASE_URL="..."
+./plugins/transformometro/scripts/register-manifest.sh
+```
+
+**Migrations automáticas:** `TM_RUN_MIGRATIONS_ON_STARTUP=true` aplica pendentes no startup da API. Falha impede subida do serviço.
+
+**Pós-V017:** cache vazio até recalc full. **Pós-V014:** revisões backfilladas para instâncias legadas.
 
 ## Registro Core API e RBAC
 
@@ -39,12 +77,17 @@ Atribuir ao perfil de engenharia/gestão, no mínimo:
 - `transformometro.dashboard.recalculate`
 - `transformometro.shared-resources.manage` (catálogo Recursos)
 - `transformometro.data.transfer` (exportar / importar JSON em `/dados`)
+- Opcional RBAC filial: `transformometro.view.filial-01`, `transformometro.manage.filial-01`, `transformometro.view.consolidated`, …
 
 ## Troubleshooting
 
 | Sintoma | Ação |
 |---------|------|
-| `db_ready: false` | `TM_RUN_MIGRATIONS_ON_STARTUP=true`, reiniciar API, ver logs `tm_migrations_*` |
+| `db_ready: false` | `TM_RUN_MIGRATIONS_ON_STARTUP=true`, reiniciar API, logs `tm_migrations_*`; `migrations_runner status` |
+| Migration falha no boot | Logs container; corrigir SQL/dados; **não** alterar migration já aplicada (checksum) |
+| Dashboard zerado pós-upgrade | Esperado após V017 — **Recalcular** full |
+| Visão consolidada bloqueada | RBAC: usuário precisa `transformometro.view.consolidated` ou só permissões globais |
+| Instância/revisão 404 | Usar URL canônica `/instancias/{uuid}/revisoes/{uuid}` |
 | POST processo 500 | Rebuild API (fix `SimpleNamespace` no audit); ver logs |
 | Dashboard zerado | Cadastrar revisões + medições → **Recalcular** |
 | Import `uq_processos_codigo` | Usar `--replace` ou `git pull` com reconcile por `codigo_processo` |

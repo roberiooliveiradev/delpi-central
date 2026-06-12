@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** 2026-05-27 (duplicar processo; URLs processo/revisão; ativar revisão sem workflow)
+**Última atualização:** jun/2026 (Playbook 18 — instâncias, visões dashboard, RBAC filial)
 
 ## O que é
 
@@ -29,11 +29,14 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 
 | Rota | Função |
 |------|--------|
-| `/apps/transformometro/dashboard` | KPIs, alertas, export CSV/Excel, recalcular |
-| `/apps/transformometro/processos` | Lista de processos (ação **Duplicar** na lista) |
-| `/apps/transformometro/processos/{id}` | Detalhe do processo |
-| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Detalhe com revisão selecionada |
-| `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
+| `/apps/transformometro/dashboard` | KPIs, toggle Consolidado/Filial/Departamento, alertas, export, recalcular |
+| `/apps/transformometro/processos` | Lista; create com primeira instância |
+| `/apps/transformometro/processos/{id}` | Mestre + painel instâncias + revisões |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão |
+| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado (redirect automático) |
+| `/apps/transformometro/setores` | Catálogo de setores |
+| `/apps/transformometro/recursos` | Catálogo global (`escopo_recurso`) |
+| `/apps/transformometro/dados` | Export/import backup JSON |
 
 No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e botão **Definir como ativa** (como na planilha legado — sem etapa de aprovação).
 
@@ -47,17 +50,20 @@ Portal MinhaDelpi
   → CRUD processos / revisões / medições / investimentos / recursos
   → POST /dashboard/recalcular (ou recálculo automático em background)
   → GET /dashboard, /dashboard/resumo, detalhe por processo
-  → UI: cadastro + dashboard com filtros (filial, setor, período)
+  → UI: cadastro + dashboard com filtros (visão, filial, setor, período)
 ```
 
 ## Unidade central de análise
 
-Tudo gira em torno de **`revisao_id`**:
+Tudo gira em torno de **`revisao_id`**, sempre vinculada a uma **`instancia_id`** (par filial × setor):
 
-- `processos` = cadastro mestre
-- `revisoes` = cenários (baseline, melhoria, automacao, correcao); uma pode estar **ativa** por processo
+- `processos` = cadastro **mestre** (sem filial/setor na tabela)
+- `processo_instancias` = par operacional `(filial × setor)` do mestre
+- `revisoes` = cenários por instância (baseline, melhoria, automacao, correcao)
 - `medicoes`, `investimentos`, vínculos de recurso = dados da revisão
 - `dashboard_calculos` = tabela **derivada** (nunca editada manualmente)
+
+Integração Transforma+: **`id` na listagem = `instancia_id`** (uma linha por instância operacional).
 
 ## O que não é
 
@@ -77,6 +83,11 @@ Tudo gira em torno de **`revisao_id`**:
 | `transformometro.shared-resources.manage` | Recursos e vínculos |
 | `transformometro.dashboard.recalculate` | Disparar recálculo mensal |
 | `transformometro.data.transfer` | Exportar / importar backup JSON |
+| `transformometro.view.filial-01` / `filial-02` | Leitura filtrada à filial (RBAC S10) |
+| `transformometro.view.consolidated` | Visão consolidada com escopo filial ativo |
+| `transformometro.manage.filial-01` / `filial-02` | CRUD na filial |
+
+Usuários só com permissões globais legadas **não** têm restrição de filial até receberem escopos no Keycloak. Ver manifesto `plugins/transformometro/transformometro.manifest.json`.
 
 ## Stack alinhada ao monorepo
 

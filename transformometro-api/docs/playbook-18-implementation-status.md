@@ -127,11 +127,23 @@ python scripts/bootstrap_filiais_from_cadastro.py -i fixtures/cadastro/transform
 # Após V017: recalcular cache dashboard (full)
 ```
 
-## Próximo (pós-Playbook 18 API)
+## Próximo (pós-Playbook 18)
 
 | Item | Foco |
 |--------|------|
-| **Docs modelo** | Atualizar `PLAYBOOK-MODELAGEM.md` e `ARCHITECTURE.md` conforme §9 do playbook |
+| **Deploy produção** | Runbook em [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md) |
+| **RBAC Keycloak** | Atribuir permissões escopadas onde necessário |
+
+## Documentação (índice)
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [PLAYBOOK-18](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md) | Plano e checklist §9 |
+| [PLAYBOOK-MODELAGEM](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-MODELAGEM.md) | Entidades, instâncias, escopo, pipeline |
+| [ARCHITECTURE](../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE.md) | Diagramas, rotas, RBAC, MFE |
+| [regras-de-calculo.md](regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões |
+| [OPERATIONS](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) | Runbook deploy e troubleshooting |
+| [migrations/README.md](../migrations/README.md) | V001–V018 |
 
 ## MFE Playbook §9 (jun/2026)
 

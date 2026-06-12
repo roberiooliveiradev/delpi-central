@@ -16,7 +16,7 @@ curl -s http://localhost/apps/transformometro-api/transformometro/health
 
 ## Migrations
 
-Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose dev), as migrations V001–V014 são aplicadas no boot (Playbook 18: V011–V014).
+Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose dev e prod), as migrations **V001–V018** são aplicadas no boot. Playbook 18: **V011–V018**.
 
 Manual:
 
