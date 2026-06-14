@@ -1,0 +1,102 @@
+export type PropostaComercialListItem = {
+  proposta_interna: string;
+  numero_ov: string;
+  oportunidade: string;
+  versao: string;
+  data: string | null;
+  cliente: string;
+  filial: string;
+  quantidade_itens: number;
+};
+
+export type PropostaComercialListData = {
+  items: PropostaComercialListItem[];
+  total: number;
+};
+
+export type PropostaComercialCabecalho = {
+  proposta_interna: string;
+  numero_ov: string;
+  oportunidade: string;
+  versao: string;
+  revisao_oportunidade: string;
+  data: string | null;
+  validade_dias: number | null;
+  filial: string;
+  status: string;
+  soma_valores_r_mil: string | null;
+  soma_valores_r_mil_numerico: number | null;
+};
+
+export type PropostaComercialEmpresa = {
+  nome: string;
+  cnpj: string | null;
+  endereco: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  cep: string | null;
+  telefone: string | null;
+  site: string;
+};
+
+export type PropostaComercialCliente = {
+  codigo: string;
+  loja: string;
+  nome: string;
+  cnpj: string | null;
+  endereco: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  cep: string | null;
+  telefone: string | null;
+};
+
+export type PropostaComercialContato = {
+  codigo: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  departamento: string;
+};
+
+export type PropostaComercialCondicoes = {
+  codigo: string;
+  descricao: string;
+};
+
+export type PropostaComercialVendedor = {
+  codigo: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  cargo: string;
+};
+
+export type PropostaComercialItem = {
+  item: string;
+  produto: string;
+  descricao: string;
+  referencia_cliente: string;
+  ncm: string | null;
+  quantidade: number;
+  unidade: string;
+  preco_unitario: string | null;
+  preco_unitario_numerico: number;
+  valor_total: string | null;
+  valor_total_numerico: number;
+  prazo_dias: number | null;
+  lote_minimo: number | null;
+};
+
+export type PropostaComercialDetail = {
+  cabecalho: PropostaComercialCabecalho;
+  empresa: PropostaComercialEmpresa;
+  cliente: PropostaComercialCliente;
+  contato: PropostaComercialContato;
+  condicoes: PropostaComercialCondicoes;
+  vendedor: PropostaComercialVendedor;
+  observacoes: string;
+  itens: PropostaComercialItem[];
+};

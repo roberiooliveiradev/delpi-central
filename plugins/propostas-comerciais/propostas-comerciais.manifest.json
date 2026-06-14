@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "propostas-comerciais",
+  "name": "Propostas Comerciais",
+  "description": "Consulta read-only de propostas comerciais ativas vindas do Protheus/TOTVS.",
+  "icon": "file-text",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "category": "comercial",
+  "basePath": "/apps/propostas-comerciais",
+  "entry": "/apps/propostas-comerciais/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "propostas-comerciais.view",
+      "name": "Visualizar Propostas Comerciais",
+      "description": "Permite consultar propostas comerciais ativas do Protheus.",
+      "module": "propostas-comerciais"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/propostas-comerciais",
+      "label": "Propostas Comerciais",
+      "permission": "propostas-comerciais.view",
+      "icon": "file-text",
+      "order": 16,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

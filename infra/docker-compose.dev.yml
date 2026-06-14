@@ -555,6 +555,21 @@ services:
     networks:
       - delpi-network
 
+  propostas-comerciais:
+    build:
+      context: ../plugins/propostas-comerciais
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-propostas-comerciais
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   auditoria-5s:
     build:
       context: ../plugins/auditoria-5s
