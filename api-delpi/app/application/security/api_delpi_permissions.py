@@ -35,6 +35,9 @@ CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC = "central-agendamento.manage.filial-sc"
 CULTURA_DELPI_VIEW = "cultura-delpi.view"
 CULTURA_DELPI_MANAGE = "cultura-delpi.manage"
 
+# --- propostas comerciais ---
+PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
+
 # --- pedidos de venda em aberto ---
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 
@@ -116,6 +119,12 @@ CULTURA_DELPI_READ_PERMISSIONS = [
 
 CULTURA_DELPI_WRITE_PERMISSIONS = [
     CULTURA_DELPI_MANAGE,
+]
+
+PROPOSTAS_COMERCIAIS_ACCESS = [
+    API_DELPI_ACCESS,
+    PROPOSTAS_COMERCIAIS_VIEW,
+    DASHBOARD_COMMERCIAL_VIEW,
 ]
 
 API_DELPI_CONSOLE_VIEW = "api-delpi-console.view"

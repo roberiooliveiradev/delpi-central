@@ -163,6 +163,15 @@ class Settings:
     SQL_TELEMETRY_MAX_ENTRIES: str = _get_env("SQL_TELEMETRY_MAX_ENTRIES", default="800")
 
     # ==========================
+    # Propostas comerciais (plugin)
+    # ==========================
+    PROPOSTAS_COMERCIAIS_EMPRESA_SITE: str = _get_env(
+        "PROPOSTAS_COMERCIAIS_EMPRESA_SITE",
+        "PROPOSTA_COMERCIAL_EMPRESA_SITE",
+        default="www.delpi.com.br",
+    )
+
+    # ==========================
     # Alertas do console (Fase 5)
     # ==========================
     CONSOLE_ALERT_WEBHOOK_URL: str | None = _get_env("CONSOLE_ALERT_WEBHOOK_URL")
