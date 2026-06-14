@@ -1,11 +1,13 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 
 import { InfoCard, InfoGrid } from "../components/InfoCard";
 import { ItensTable } from "../components/ItensTable";
 import { PageHeader } from "../components/PageHeader";
+import { PropostaComercialPdfExportModal } from "../components/PropostaComercialPdfExportModal";
 import { StateBox } from "../components/StateBox";
 import { StatusBadge } from "../components/StatusBadge";
 import { usePropostaComercialDetail } from "../hooks/usePropostaComercialDetail";
+import { usePropostaComercialPdf } from "../hooks/usePropostaComercialPdf";
 import { displayValue } from "../utils/format";
 import { navigatePropostasList } from "../utils/navigation";
 
@@ -15,6 +17,18 @@ type PropostaComercialDetailPageProps = {
 
 export function PropostaComercialDetailPage({ propostaInterna }: PropostaComercialDetailPageProps) {
   const { data, loading, error, reload } = usePropostaComercialDetail(propostaInterna);
+  const {
+    exportModalOpen,
+    loading: pdfLoading,
+    error: pdfError,
+    previewUrl,
+    openExportModal,
+    closeExportModal,
+    clearPreview,
+    previewPdf,
+    exportPdf,
+    clearError: clearPdfError,
+  } = usePropostaComercialPdf(propostaInterna);
 
   const cabecalho = data?.cabecalho;
 
@@ -30,12 +44,40 @@ export function PropostaComercialDetailPage({ propostaInterna }: PropostaComerci
         loading={loading}
         onRefresh={reload}
         actions={
-          <button type="button" className="pc-btn pc-btn--ghost" onClick={navigatePropostasList}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            Voltar
-          </button>
+          <>
+            <button
+              type="button"
+              className="pc-btn pc-btn--primary"
+              onClick={() => {
+                clearPdfError();
+                openExportModal();
+              }}
+              disabled={loading || !data}
+            >
+              <FileDown size={16} aria-hidden="true" />
+              Emitir PDF
+            </button>
+            <button type="button" className="pc-btn pc-btn--ghost" onClick={navigatePropostasList}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              Voltar
+            </button>
+          </>
         }
       />
+
+      {data ? (
+        <PropostaComercialPdfExportModal
+          open={exportModalOpen}
+          detail={data}
+          loading={pdfLoading}
+          error={pdfError}
+          onClose={closeExportModal}
+          onPreview={previewPdf}
+          onExport={exportPdf}
+          previewUrl={previewUrl}
+          onClearPreview={clearPreview}
+        />
+      ) : null}
 
       {loading ? (
         <StateBox variant="loading" title="Carregando proposta" message="Consultando detalhes no Protheus." />
@@ -102,6 +144,7 @@ export function PropostaComercialDetailPage({ propostaInterna }: PropostaComerci
                 items={[
                   { label: "Razão social", value: displayValue(data.empresa.nome), wide: true },
                   { label: "CNPJ", value: displayValue(data.empresa.cnpj) },
+                  { label: "IE", value: displayValue(data.empresa.inscricao_estadual) },
                   { label: "Site", value: displayValue(data.empresa.site) },
                   { label: "Telefone", value: displayValue(data.empresa.telefone) },
                   { label: "Endereço", value: displayValue(data.empresa.endereco), wide: true },
@@ -146,6 +189,10 @@ export function PropostaComercialDetailPage({ propostaInterna }: PropostaComerci
                 items={[
                   { label: "Código", value: displayValue(data.condicoes.codigo) },
                   { label: "Descrição", value: displayValue(data.condicoes.descricao), wide: true },
+                  { label: "ICMS", value: displayValue(data.condicoes.icms) },
+                  { label: "IPI", value: displayValue(data.condicoes.ipi) },
+                  { label: "Embalagem", value: displayValue(data.condicoes.embalagem) },
+                  { label: "Frete", value: displayValue(data.condicoes.frete) },
                 ]}
               />
             </InfoCard>

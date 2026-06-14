@@ -31,6 +31,7 @@ export type PropostaComercialCabecalho = {
 export type PropostaComercialEmpresa = {
   nome: string;
   cnpj: string | null;
+  inscricao_estadual: string | null;
   endereco: string;
   bairro: string;
   cidade: string;
@@ -64,6 +65,10 @@ export type PropostaComercialContato = {
 export type PropostaComercialCondicoes = {
   codigo: string;
   descricao: string;
+  icms: string | null;
+  ipi: string;
+  frete: string;
+  embalagem: string;
 };
 
 export type PropostaComercialVendedor = {
@@ -99,4 +104,13 @@ export type PropostaComercialDetail = {
   vendedor: PropostaComercialVendedor;
   observacoes: string;
   itens: PropostaComercialItem[];
+};
+
+export type PropostaComercialPdfExportOverrides = {
+  observacoes?: string;
+  contato?: Partial<Pick<PropostaComercialContato, "nome" | "departamento" | "email" | "telefone">>;
+  condicoes?: Partial<
+    Pick<PropostaComercialCondicoes, "descricao" | "icms" | "ipi" | "frete" | "embalagem">
+  >;
+  vendedor?: Partial<Pick<PropostaComercialVendedor, "nome" | "cargo" | "email" | "telefone">>;
 };

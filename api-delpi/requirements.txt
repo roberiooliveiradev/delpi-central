@@ -6,6 +6,8 @@ pyngrok
 PyJWT
 pandas
 openpyxl
+reportlab
+svglib==1.5.1
 python-jose[cryptography]
 requests
 httpx

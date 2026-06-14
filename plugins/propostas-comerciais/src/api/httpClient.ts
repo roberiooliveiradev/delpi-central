@@ -65,3 +65,101 @@ export async function httpGet<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function httpGetBlob(
+  url: string,
+  options: RequestOptions = {},
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const headers: Record<string, string> = {
+    Accept: "application/pdf",
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
+  };
+
+  const token = accessTokenGetter?.();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      message = formatApiDelpiErrorMessage(errorBody, message);
+    } catch {
+      // resposta pode ser binária/texto
+    }
+    throw new Error(message);
+  }
+
+  const contentDisposition = response.headers.get("Content-Disposition");
+  const filenameMatch = contentDisposition?.match(/filename=\"?([^\";]+)\"?/i);
+  const filename = filenameMatch?.[1]?.trim() ?? null;
+
+  return {
+    blob: await response.blob(),
+    filename,
+    contentType: response.headers.get("Content-Type"),
+  };
+}
+
+async function requestPdfBlob(
+  url: string,
+  method: "GET" | "POST",
+  options: RequestOptions & { body?: unknown } = {},
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  const headers: Record<string, string> = {
+    Accept: "application/pdf",
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
+  };
+
+  if (method === "POST") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const token = accessTokenGetter?.();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: method === "POST" ? JSON.stringify(options.body ?? {}) : undefined,
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      message = formatApiDelpiErrorMessage(errorBody, message);
+    } catch {
+      // resposta pode ser binária/texto
+    }
+    throw new Error(message);
+  }
+
+  const contentDisposition = response.headers.get("Content-Disposition");
+  const filenameMatch = contentDisposition?.match(/filename=\"?([^\";]+)\"?/i);
+  const filename = filenameMatch?.[1]?.trim() ?? null;
+
+  return {
+    blob: await response.blob(),
+    filename,
+    contentType: response.headers.get("Content-Type"),
+  };
+}
+
+export async function httpPostBlob(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<{ blob: Blob; filename: string | null; contentType: string | null }> {
+  return requestPdfBlob(url, "POST", { ...options, body });
+}

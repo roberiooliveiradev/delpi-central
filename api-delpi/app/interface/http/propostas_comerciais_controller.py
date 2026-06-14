@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Query
+from fastapi.responses import Response
 
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import PROPOSTAS_COMERCIAIS_ACCESS
 from app.composition.propostas_comerciais_composer import (
+    build_generate_proposta_comercial_pdf_use_case,
     build_get_proposta_comercial_use_case,
     build_list_propostas_comerciais_use_case,
 )
@@ -13,6 +17,9 @@ from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response, not_found_response
 from app.domain.propostas_comerciais.exceptions import PropostaComercialNotFoundError
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
+    PropostaComercialPdfExportRequest,
+)
 from app.utils.logger import log_error
 
 router = APIRouter(
@@ -50,6 +57,58 @@ def list_propostas_comerciais_route(
         log_error(f"Erro ao listar propostas comerciais: {exc}")
         return error_response(
             "Erro interno ao consultar propostas comerciais.",
+            status_code=500,
+        )
+
+
+@router.get("/{proposta_interna}/pdf")
+@require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
+def export_proposta_comercial_pdf_route(proposta_interna: str):
+    return _export_proposta_comercial_pdf(proposta_interna)
+
+
+@router.post("/{proposta_interna}/pdf")
+@require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
+def export_proposta_comercial_pdf_with_overrides_route(
+    proposta_interna: str,
+    body: Annotated[PropostaComercialPdfExportRequest, Body(...)],
+):
+    return _export_proposta_comercial_pdf(
+        proposta_interna,
+        overrides=body.to_overrides_dict(),
+    )
+
+
+def _export_proposta_comercial_pdf(
+    proposta_interna: str,
+    *,
+    overrides: dict | None = None,
+):
+    try:
+        use_case = build_generate_proposta_comercial_pdf_use_case()
+        pdf_bytes, filename = use_case.execute(proposta_interna, overrides=overrides)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        )
+    except PropostaComercialNotFoundError as exc:
+        return not_found_response(
+            str(exc),
+            code="PROPOSTA_COMERCIAL_NOT_FOUND",
+        )
+    except DatabaseConnectionError:
+        log_error(f"Erro de banco ao gerar PDF da proposta comercial {proposta_interna}.")
+        return error_response(
+            "Erro interno ao gerar PDF da proposta comercial.",
+            status_code=500,
+            code="DATABASE_ERROR",
+            recoverable=True,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao gerar PDF da proposta comercial {proposta_interna}: {exc}")
+        return error_response(
+            "Erro interno ao gerar PDF da proposta comercial.",
             status_code=500,
         )
 

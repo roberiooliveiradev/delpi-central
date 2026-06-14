@@ -40,12 +40,14 @@
 }
 
 .dashboard-propostas-comerciais button,
-.dashboard-propostas-comerciais input {
+.dashboard-propostas-comerciais input,
+.dashboard-propostas-comerciais textarea {
   font: inherit;
 }
 
 .dashboard-propostas-comerciais button:focus-visible,
-.dashboard-propostas-comerciais input:focus-visible {
+.dashboard-propostas-comerciais input:focus-visible,
+.dashboard-propostas-comerciais textarea:focus-visible {
   outline: 2px solid var(--pc-accent);
   outline-offset: 2px;
 }
@@ -338,6 +340,213 @@
 @keyframes pc-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+.pc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pc-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+}
+
+.pc-modal__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(980px, 100%);
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--pc-border);
+  border-radius: calc(var(--pc-radius) + 2px);
+  background: var(--pc-surface);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+}
+
+.pc-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--pc-border);
+}
+
+.pc-modal__header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.pc-modal__header p {
+  margin: 6px 0 0;
+  color: var(--pc-muted);
+  font-size: var(--pc-font-md);
+}
+
+.pc-modal__close {
+  flex-shrink: 0;
+}
+
+.pc-modal__body {
+  overflow: auto;
+  padding: 20px 24px;
+}
+
+.pc-modal__footer {
+  border-top: 1px solid var(--pc-border);
+  padding: 16px 24px 20px;
+  background: color-mix(in srgb, var(--pc-accent) 4%, var(--pc-surface));
+}
+
+.pc-modal__footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pc-modal__intro {
+  margin: 0 0 20px;
+  color: var(--pc-muted);
+  font-size: var(--pc-font-md);
+  line-height: 1.5;
+}
+
+.pc-modal__error {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--pc-danger) 30%, var(--pc-border));
+  border-radius: var(--pc-control-radius);
+  background: color-mix(in srgb, var(--pc-danger) 8%, var(--pc-surface));
+  color: var(--pc-danger);
+  font-size: var(--pc-font-md);
+}
+
+.pc-export-section + .pc-export-section {
+  margin-top: 24px;
+}
+
+.pc-export-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.pc-export-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.pc-export-summary div {
+  min-width: 0;
+}
+
+.pc-export-summary__wide {
+  grid-column: span 2;
+}
+
+.pc-export-summary dt {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--pc-muted);
+}
+
+.pc-export-summary dd {
+  margin: 0;
+  font-size: var(--pc-font-md);
+}
+
+.pc-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.pc-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pc-form-field--wide {
+  grid-column: 1 / -1;
+}
+
+.pc-form-field span {
+  font-size: 12px;
+  color: var(--pc-muted);
+}
+
+.pc-form-field input,
+.pc-form-field textarea {
+  width: 100%;
+  min-height: var(--pc-control-height);
+  padding: 10px 12px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-control-radius);
+  background: var(--pc-surface);
+  color: var(--pc-text);
+}
+
+.pc-form-field textarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.pc-export-preview__frame {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-control-radius);
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .pc-modal {
+    padding: 12px;
+  }
+
+  .pc-modal__panel {
+    max-height: calc(100vh - 24px);
+  }
+
+  .pc-modal__header,
+  .pc-modal__body,
+  .pc-modal__footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .pc-modal__footer-actions,
+  .pc-modal__footer-actions .pc-btn {
+    width: 100%;
+  }
+
+  .pc-export-summary,
+  .pc-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-export-summary__wide {
+    grid-column: auto;
+  }
+
+  .pc-export-preview__frame {
+    min-height: 360px;
   }
 }
 

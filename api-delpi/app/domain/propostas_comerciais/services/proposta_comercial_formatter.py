@@ -111,6 +111,42 @@ class PropostaComercialFormatter:
         return int(number)
 
     @staticmethod
+    def format_inscricao_estadual(value: Any) -> str | None:
+        raw = _as_str(value)
+        return raw or None
+
+    @staticmethod
+    def format_icms_rate(value: Any) -> str | None:
+        if value is None or value == "":
+            return None
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raw = _as_str(value)
+            return raw or None
+        if math.isnan(number):
+            return None
+        if float(number).is_integer():
+            return f"{int(number)}%"
+        return f"{number:g}%"
+
+    @staticmethod
+    def format_frete(value: Any) -> str:
+        code = _as_str(value).upper()
+        labels = {
+            "C": "CIF — frete por conta do vendedor",
+            "F": "FOB — frete por conta do comprador",
+        }
+        return labels.get(code, code or "—")
+
+    @staticmethod
+    def format_embalagem(value: Any) -> str:
+        code = _as_str(value)
+        if code == "1":
+            return "Embalagem padrão DELPI"
+        return code or "—"
+
+    @staticmethod
     def format_numero_ov(oportunidade: Any) -> str:
         code = _as_str(oportunidade)
         if not code:
@@ -158,6 +194,9 @@ class PropostaComercialFormatter:
             "empresa": {
                 "nome": cls.trim(header.get("empresa_nome")),
                 "cnpj": cls.format_cnpj(header.get("empresa_cnpj")),
+                "inscricao_estadual": cls.format_inscricao_estadual(
+                    header.get("empresa_inscricao_estadual")
+                ),
                 "endereco": cls.trim(header.get("empresa_endereco")),
                 "bairro": cls.trim(header.get("empresa_bairro")),
                 "cidade": cls.trim(header.get("empresa_cidade")),
@@ -188,6 +227,10 @@ class PropostaComercialFormatter:
             "condicoes": {
                 "codigo": cls.trim(header.get("condicao_codigo")),
                 "descricao": cls.trim(header.get("condicao_descricao")),
+                "icms": cls.format_icms_rate(header.get("icms")),
+                "ipi": cls.trim(header.get("ipi")),
+                "frete": cls.format_frete(header.get("frete")),
+                "embalagem": cls.format_embalagem(header.get("embalagem")),
             },
             "vendedor": {
                 "codigo": cls.trim(header.get("vendedor_codigo")),
