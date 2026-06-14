@@ -566,6 +566,24 @@ services:
     networks:
       - delpi-network
 
+  cultura-delpi:
+    build:
+      context: ../plugins/cultura-delpi
+      dockerfile: Dockerfile
+
+    container_name: delpi-cultura-delpi
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/cultura-delpi:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   pedidos-venda-abertos:
     build:
       context: ../plugins/pedidos-venda-abertos
@@ -1001,6 +1019,7 @@ services:
       - dashboard-commercial
       - dashboard-production
       - eficiencia-fabril
+      - cultura-delpi
       - pedidos-venda-abertos
       - auditoria-5s
       - central-agendamento

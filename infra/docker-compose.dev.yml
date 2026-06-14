@@ -525,6 +525,21 @@ services:
     networks:
       - delpi-network
 
+  cultura-delpi:
+    build:
+      context: ../plugins/cultura-delpi
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-cultura-delpi
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   pedidos-venda-abertos:
     build:
       context: ../plugins/pedidos-venda-abertos

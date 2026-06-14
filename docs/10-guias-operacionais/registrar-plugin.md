@@ -39,6 +39,7 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 | Eficiência Fabril | `plugins/eficiencia-fabril/eficiencia-fabril.manifest.json` |
 | Auditoria 5S | `plugins/auditoria-5s/auditoria-5s.manifest.json` |
 | Central de Agendamento | `plugins/central-agendamento/central-agendamento.manifest.json` |
+| Cultura DELPI | `plugins/cultura-delpi/cultura-delpi.manifest.json` |
 | API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
 
 Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  
@@ -63,6 +64,8 @@ Superadmin ignora checagem de permissão nos decorators.
 ---
 
 ## 5. Registrar (curl)
+
+**Dev local (token via `infra/.env.local`):** ver [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md).
 
 Na raiz do repositório, com token do Portal (DevTools → rede → header `Authorization`):
 
@@ -177,6 +180,7 @@ Deve retornar `200` e `Content-Type` JavaScript, não HTML do Portal.
 
 ## 13. Documentos relacionados
 
+- [registrar-plugin-dev-local.md](./registrar-plugin-dev-local.md) — token dev + script `register-manifest.sh`
 - [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md)
 - [../05-plugin-system/registro-de-plugin.md](../05-plugin-system/registro-de-plugin.md)
 - [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
