@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "cultura-delpi",
+  "name": "Cultura DELPI",
+  "description": "Painel de propósito, missão, visão e valores da DELPI",
+  "icon": "heart-handshake-icon",
+  "version": "0.2.0",
+  "type": "microfrontend",
+  "basePath": "/apps/cultura-delpi",
+  "entry": "/apps/cultura-delpi/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "cultura-delpi.view",
+      "name": "Visualizar Cultura DELPI",
+      "description": "Acesso ao Painel de Cultura",
+      "module": "cultura-delpi"
+    },
+    {
+      "code": "cultura-delpi.manage",
+      "name": "Administrar Cultura DELPI",
+      "description": "Editar propósito, missão, visão e valores institucionais",
+      "module": "cultura-delpi"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/cultura-delpi",
+      "label": "Painel de Cultura",
+      "permission": "cultura-delpi.view",
+      "icon": "heart-handshake-icon",
+      "order": 10,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/cultura-delpi/admin",
+      "label": "Administrar Cultura",
+      "permission": "cultura-delpi.manage",
+      "icon": "heart-handshake-icon",
+      "order": 11,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}
