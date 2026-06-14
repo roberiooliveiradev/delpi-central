@@ -88,11 +88,11 @@ SELECT TOP 1
     UM.UM_DESC AS vendedor_cargo,
     CO.M0_NOMECOM AS empresa_nome,
     CO.M0_CGC AS empresa_cnpj,
-    CO.M0_ENDCOB AS empresa_endereco,
-    CO.M0_BAIRCOB AS empresa_bairro,
-    CO.M0_CIDCOB AS empresa_cidade,
-    CO.M0_ESTCOB AS empresa_uf,
-    CO.M0_CEPCOB AS empresa_cep,
+    CO.M0_ENDENT AS empresa_endereco,
+    CO.M0_BAIRENT AS empresa_bairro,
+    CO.M0_CIDENT AS empresa_cidade,
+    CO.M0_ESTENT AS empresa_uf,
+    CO.M0_CEPENT AS empresa_cep,
     CO.M0_TEL AS empresa_telefone,
     (
         SELECT SUM(ADZ.ADZ_TOTAL)
