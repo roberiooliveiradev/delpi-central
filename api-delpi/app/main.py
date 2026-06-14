@@ -32,6 +32,7 @@ from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.scheduling import scheduling_router
+from app.interface.http.routes.cultura_delpi import cultura_delpi_router
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
 from app.core.responses import error_response, not_found_response
 from app.middleware.auth_middleware import jwt_middleware
@@ -189,6 +190,11 @@ app.include_router(engineering_router.router)
 app.include_router(quality_router.router)
 app.include_router(hr_router.router)
 app.include_router(scheduling_router.router, prefix="/scheduling", tags=["Agendamento"])
+app.include_router(
+    cultura_delpi_router.router,
+    prefix="/cultura-delpi",
+    tags=["Cultura DELPI"],
+)
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])

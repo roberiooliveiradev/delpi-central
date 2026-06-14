@@ -31,6 +31,10 @@ CENTRAL_AGENDAMENTO_VIEW_FILIAL_SC = "central-agendamento.view.filial-sc"
 CENTRAL_AGENDAMENTO_MANAGE_FILIAL_ES = "central-agendamento.manage.filial-es"
 CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC = "central-agendamento.manage.filial-sc"
 
+# --- cultura DELPI ---
+CULTURA_DELPI_VIEW = "cultura-delpi.view"
+CULTURA_DELPI_MANAGE = "cultura-delpi.manage"
+
 # --- pedidos de venda em aberto ---
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 
@@ -103,6 +107,15 @@ EFICIENCIA_FABRIL_ACCESS = [
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
+]
+
+CULTURA_DELPI_READ_PERMISSIONS = [
+    CULTURA_DELPI_VIEW,
+    CULTURA_DELPI_MANAGE,
+]
+
+CULTURA_DELPI_WRITE_PERMISSIONS = [
+    CULTURA_DELPI_MANAGE,
 ]
 
 API_DELPI_CONSOLE_VIEW = "api-delpi-console.view"
