@@ -124,6 +124,8 @@ export const LMPS_HELP_TOOLTIPS = {
     historyFilterOpen: "Mostra apenas eventos sem data de encerramento no AIJ010.",
     historyFilterCurrentRevision:
       "Mostra só a revisão do evento atual (último em aberto ou último da sequência).",
+    historyGantt:
+      "Faixa proporcional dentro da revisão: barra = início até encerramento (ou hoje se em aberto); traço = data limite.",
     structureCode: "Código do componente na estrutura analítica (SB1).",
     structureDescription: "Descrição comercial do item na BOM.",
     structureType: "Tipo do material: PA, PI, MP, etc.",

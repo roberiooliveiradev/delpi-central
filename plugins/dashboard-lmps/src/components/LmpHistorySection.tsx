@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { History, Table2 } from "lucide-react";
 
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -18,8 +18,13 @@ import {
   summarizeHistoryEvents,
   type HistoryEventFilter,
 } from "../utils/historyFormatting";
-
-type HistoryViewMode = "timeline" | "table";
+import {
+  readHistoryEventFilter,
+  readHistoryViewMode,
+  writeHistoryEventFilter,
+  writeHistoryViewMode,
+  type HistoryViewMode,
+} from "../utils/historyPreferences";
 
 type LmpHistorySectionProps = {
   events: LmpHistoryEvent[];
@@ -141,8 +146,18 @@ const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
 ];
 
 export function LmpHistorySection({ events }: LmpHistorySectionProps) {
-  const [viewMode, setViewMode] = useState<HistoryViewMode>("timeline");
-  const [eventFilter, setEventFilter] = useState<HistoryEventFilter>("all");
+  const [viewMode, setViewMode] = useState<HistoryViewMode>(() => readHistoryViewMode());
+  const [eventFilter, setEventFilter] = useState<HistoryEventFilter>(() =>
+    readHistoryEventFilter(),
+  );
+
+  useEffect(() => {
+    writeHistoryViewMode(viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    writeHistoryEventFilter(eventFilter);
+  }, [eventFilter]);
 
   const filteredEvents = useMemo(
     () => filterHistoryEvents(events, eventFilter),

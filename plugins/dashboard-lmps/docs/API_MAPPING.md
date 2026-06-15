@@ -84,8 +84,9 @@ Enriquecimento: `api-delpi/app/domain/services/lmp_history_event_enrichment.py`.
 
 ### UI do histórico (MFE)
 
-- Toggle **Linha do tempo** (padrão) / **Tabela**
+- Toggle **Linha do tempo** (padrão) / **Tabela** — preferência salva em `localStorage`
 - Filtros client-side: Todos, Engenharia, Em aberto, Revisão atual
+- Mini-Gantt por evento na timeline (barra + marcador de limite)
 - Tooltips por coluna e filtros em `src/content/helpTooltips.ts`
 
 ### `meta.relatedRoutes`

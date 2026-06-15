@@ -714,9 +714,13 @@ Filtros disponíveis (somente UI; não alteram a API):
 
 Visualização padrão: **linha do tempo**. A tabela mantém todas as colunas com tooltips (ⓘ).
 
+Cada evento na timeline inclui **mini-Gantt** proporcional à revisão (barra início→fim/agora; traço = limite).
+
+Preferências de visualização e filtro persistem em `localStorage` (`dashboard-lmps:history-view`, `dashboard-lmps:history-filter`).
+
 Textos de ajuda: `src/content/helpTooltips.ts`.
 
-**Fora de escopo atual:** mini-Gantt horizontal; persistência da preferência timeline/tabela.
+**Fora de escopo atual:** Gantt consolidado multi-revisão em uma única escala global.
 
 ---
 

@@ -27,13 +27,13 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e renderi
 
 - KPIs da proposta, cards Proposta / Engenharia / Cliente
 - Tabela de produtos + BOM por item (`ProductStructureTree`)
-- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros (Todos, Engenharia, Em aberto, Revisão atual) e tooltips em colunas
+- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros, mini-Gantt e tooltips em colunas
 
 ### Fora de escopo deste plugin
 
 - Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — painel em **`dashboard-engineering`**
 - Cadastro ou edição de LMPs no Protheus
-- Mini-Gantt do histórico (evolução futura)
+- Gantt global multi-revisão em escala única
 
 ### Legado na plataforma
 
@@ -248,6 +248,5 @@ Melhorias ainda não implementadas:
 - Sincronizar filtros do dashboard na URL e entre sessões
 - Filiais dinâmicas via API
 - Impressão / PDF (`@media print`)
-- Mini-Gantt do histórico da OV
-- Persistir preferência timeline vs tabela (localStorage)
+- Gantt global do histórico (todas as revisões na mesma escala)
 - Script `register-manifest.sh` e CI dedicado no monorepo

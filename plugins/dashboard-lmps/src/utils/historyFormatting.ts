@@ -158,3 +158,90 @@ export function summarizeHistoryEvents(
 
   return parts.join(" · ");
 }
+
+export type HistoryGanttLayout = {
+  rangeStartMs: number;
+  rangeEndMs: number;
+  startPercent: number;
+  endPercent: number;
+  limitPercent: number | null;
+};
+
+function parseTotvsToTimestamp(
+  date?: string | null,
+  time?: string | null,
+): number | null {
+  const normalizedDate = date?.trim();
+  if (!normalizedDate || normalizedDate.length !== 8) {
+    return null;
+  }
+
+  const normalizedTime = time?.trim() || "00:00";
+  const hhmm =
+    normalizedTime.length === 4 && /^\d+$/.test(normalizedTime)
+      ? `${normalizedTime.slice(0, 2)}:${normalizedTime.slice(2)}`
+      : normalizedTime;
+
+  const parsed = Date.parse(
+    `${normalizedDate.slice(0, 4)}-${normalizedDate.slice(4, 6)}-${normalizedDate.slice(6, 8)}T${hhmm}:00`,
+  );
+
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function collectRevisionTimestamps(events: LmpHistoryEvent[]): number[] {
+  const values: number[] = [];
+
+  for (const event of events) {
+    const start = parseTotvsToTimestamp(event.start_date, event.start_time);
+    const end = event.is_open
+      ? Date.now()
+      : parseTotvsToTimestamp(event.end_date, event.end_time);
+    const limit = parseTotvsToTimestamp(event.limit_date, event.limit_time);
+
+    if (start != null) values.push(start);
+    if (end != null) values.push(end);
+    if (limit != null) values.push(limit);
+  }
+
+  return values;
+}
+
+function toPercent(value: number, rangeStartMs: number, rangeEndMs: number): number {
+  const span = rangeEndMs - rangeStartMs;
+  if (span <= 0) return 0;
+
+  return Math.min(100, Math.max(0, ((value - rangeStartMs) / span) * 100));
+}
+
+export function buildHistoryGanttLayout(
+  event: LmpHistoryEvent,
+  revisionEvents: LmpHistoryEvent[],
+): HistoryGanttLayout | null {
+  const revisionTimestamps = collectRevisionTimestamps(revisionEvents);
+  const eventStart = parseTotvsToTimestamp(event.start_date, event.start_time);
+
+  if (revisionTimestamps.length === 0 || eventStart == null) {
+    return null;
+  }
+
+  const rangeStartMs = Math.min(...revisionTimestamps);
+  const rangeEndMs = Math.max(...revisionTimestamps);
+  if (rangeEndMs <= rangeStartMs) {
+    return null;
+  }
+
+  const eventEnd = event.is_open
+    ? Date.now()
+    : parseTotvsToTimestamp(event.end_date, event.end_time) ?? eventStart;
+  const limit = parseTotvsToTimestamp(event.limit_date, event.limit_time);
+
+  return {
+    rangeStartMs,
+    rangeEndMs,
+    startPercent: toPercent(eventStart, rangeStartMs, rangeEndMs),
+    endPercent: toPercent(eventEnd, rangeStartMs, rangeEndMs),
+    limitPercent:
+      limit == null ? null : toPercent(limit, rangeStartMs, rangeEndMs),
+  };
+}

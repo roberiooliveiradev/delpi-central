@@ -1,6 +1,8 @@
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { HistoryEventGantt } from "./HistoryEventGantt";
 import type { LmpHistoryEvent } from "../types/lmp";
 import {
+  buildHistoryGanttLayout,
   formatHistoryDateTime,
   formatProcessStageLabel,
   groupHistoryByRevision,
@@ -90,6 +92,7 @@ export function LmpHistoryTimeline({
                 event.limit_time,
               );
               const statusLabel = resolveHistoryStatus(event);
+              const ganttLayout = buildHistoryGanttLayout(event, group.events);
 
               return (
                 <li
@@ -115,6 +118,14 @@ export function LmpHistoryTimeline({
                     <p className="lmps-history-timeline__process">
                       Processo: {processTitle}
                     </p>
+
+                    {ganttLayout ? (
+                      <HistoryEventGantt
+                        layout={ganttLayout}
+                        isOpen={Boolean(event.is_open)}
+                        isLate={Boolean(event.is_late)}
+                      />
+                    ) : null}
 
                     <dl className="lmps-history-timeline__meta">
                       <div>
