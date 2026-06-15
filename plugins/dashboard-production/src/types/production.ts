@@ -158,6 +158,7 @@ export type ProductionOeeData = {
 
 export type ProductionListParams = ProductionFilterParams & {
   status?: string;
+  efficiency_bands?: string;
   work_center?: string;
   production_order?: string;
   product_type?: ProductionOrderProductType | "";

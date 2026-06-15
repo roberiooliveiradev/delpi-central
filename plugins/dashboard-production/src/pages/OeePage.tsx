@@ -10,24 +10,30 @@ import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { MultiSelectField } from "../components/MultiSelectField";
 import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
 import {
+  EFFICIENCY_BAND_FILTER_OPTIONS,
+  formatEfficiencyBandsQuery,
+  type ProductionEfficiencyBand,
+} from "../constants/efficiencyBands";
+import {
+  PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
   PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
-  isOeeAppointmentOutlier,
 } from "../constants/businessRules";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
 import { useProductionResource } from "../hooks/useProductionResource";
 import { useServerTable } from "../hooks/useServerTable";
+import { resolveOeeAppointmentStatus } from "../utils/oeeAppointmentStatus";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 import type {
   ProductionOeeAppointmentItem,
-  ProductionOeeAppointmentStatus,
   ProductionOrderProductType,
 } from "../types/production";
 import type { ChartGranularity } from "../types/chart";
@@ -47,7 +53,6 @@ type OeePageProps = {
   pathname?: string;
 };
 
-type StatusFilter = ProductionOeeAppointmentStatus | "";
 type ProductTypeFilter = ProductionOrderProductType | "";
 
 function formatOeePercent(value: number | null | undefined): string {
@@ -59,8 +64,14 @@ function formatOeePercent(value: number | null | undefined): string {
 }
 
 function OeeAppointmentStatusCell({ row }: { row: ProductionOeeAppointmentItem }) {
-  if (isOeeAppointmentOutlier(row.status, row.oee_pct)) {
+  const status = resolveOeeAppointmentStatus(row);
+  if (status === "verify") {
     return <span className="dp-appointment-badge dp-appointment-badge--danger">Verificar</span>;
+  }
+  if (status === "low") {
+    return (
+      <span className="dp-appointment-badge dp-appointment-badge--warning">Eficiência baixa</span>
+    );
   }
   return <span className="dp-appointment-badge">OK</span>;
 }
@@ -78,7 +89,7 @@ export function OeePage({ pathname }: OeePageProps) {
   } = useProductionFilters();
 
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
+  const [efficiencyBandFilter, setEfficiencyBandFilter] = useState<ProductionEfficiencyBand[]>([]);
   const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -87,14 +98,14 @@ export function OeePage({ pathname }: OeePageProps) {
   const oeeParams = useMemo(
     () => ({
       ...apiParams,
-      status: statusFilter || undefined,
+      efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
       product_type: productTypeFilter || undefined,
       page: serverTable.query.page,
       page_size: serverTable.query.pageSize,
       sort_by: serverTable.query.sortKey ?? undefined,
       sort_dir: serverTable.query.sortDirection,
     }),
-    [apiParams, statusFilter, serverTable.query]
+    [apiParams, efficiencyBandFilter, productTypeFilter, serverTable.query]
   );
 
   const { data, loading, error, reload } = useProductionResource(
@@ -103,7 +114,7 @@ export function OeePage({ pathname }: OeePageProps) {
       oeeParams.start_date,
       oeeParams.end_date,
       oeeParams.branch,
-      oeeParams.status,
+      oeeParams.efficiency_bands,
       oeeParams.product_type,
       oeeParams.page,
       oeeParams.sort_by,
@@ -122,7 +133,7 @@ export function OeePage({ pathname }: OeePageProps) {
 
   useEffect(() => {
     serverTable.resetPage();
-  }, [apiParams.start_date, apiParams.end_date, apiParams.branch, statusFilter, productTypeFilter, serverTable.resetPage]);
+  }, [apiParams.start_date, apiParams.end_date, apiParams.branch, efficiencyBandFilter, productTypeFilter, serverTable.resetPage]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -156,7 +167,7 @@ export function OeePage({ pathname }: OeePageProps) {
     try {
       const result = await getProductionOee({
         ...apiParams,
-        status: statusFilter || undefined,
+        efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
         product_type: productTypeFilter || undefined,
         page: 1,
         page_size: 1000,
@@ -170,7 +181,7 @@ export function OeePage({ pathname }: OeePageProps) {
     } finally {
       setExporting(false);
     }
-  }, [apiParams, statusFilter, productTypeFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
+  }, [apiParams, efficiencyBandFilter, productTypeFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
 
   const appointmentColumns = useMemo<DataTableColumn<ProductionOeeAppointmentItem>[]>(
     () => [
@@ -402,30 +413,23 @@ export function OeePage({ pathname }: OeePageProps) {
           ))}
         </div>
 
-        <div className="dp-ppm-toggle" role="group" aria-label="Status do apontamento">
-          {[
-            { value: "", label: "Todos" },
-            { value: "valid", label: "Válidos" },
-            { value: "outlier", label: "Fora da faixa" },
-          ].map((option) => (
-            <button
-              key={option.value || "all"}
-              type="button"
-              className={`dp-ppm-toggle__btn${
-                statusFilter === option.value ? " dp-ppm-toggle__btn--active" : ""
-              }`}
-              onClick={() => setStatusFilter(option.value as StatusFilter)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <MultiSelectField
+          label="Faixa de eficiência"
+          options={EFFICIENCY_BAND_FILTER_OPTIONS}
+          selectedValues={efficiencyBandFilter}
+          onChange={(values) => setEfficiencyBandFilter(values as ProductionEfficiencyBand[])}
+          emptyLabel="Todas as faixas"
+          searchable
+          className="dp-ppm-toolbar__field"
+        />
       </div>
 
       <p className="dp-efficiency-legend dp-efficiency-legend--warning">
         Atenção: apontamentos com eficiência fora da faixa {PRODUCTION_EFFICIENCY_VALID_MIN_PCT}–
         {PRODUCTION_EFFICIENCY_VALID_MAX_PCT}% são desconsiderados no indicador de OEE (KPIs e gráficos)
-        e aparecem na tabela como &quot;Verificar&quot;.
+        e aparecem na tabela como &quot;Verificar&quot;. Apontamentos na faixa válida com eficiência abaixo
+        de {PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD}% aparecem como &quot;Eficiência baixa&quot; — abra o
+        detalhe para verificar o motivo.
       </p>
 
       <DataTableSection
@@ -435,9 +439,12 @@ export function OeePage({ pathname }: OeePageProps) {
         rows={data?.appointments.items ?? []}
         rowKey={(row) => String(row.appointment_id)}
         onRowClick={handleAppointmentRowClick}
-        getRowClassName={(row) =>
-          isOeeAppointmentOutlier(row.status, row.oee_pct) ? "dp-row dp-row--verify" : undefined
-        }
+        getRowClassName={(row) => {
+          const status = resolveOeeAppointmentStatus(row);
+          if (status === "verify") return "dp-row dp-row--verify";
+          if (status === "low") return "dp-row dp-row--low-efficiency";
+          return undefined;
+        }}
         loading={loading && !(data?.appointments.items?.length)}
         refreshing={loading && Boolean(data?.appointments.items?.length)}
         emptyMessage="Nenhum apontamento no período."

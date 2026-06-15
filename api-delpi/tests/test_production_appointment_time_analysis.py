@@ -47,6 +47,32 @@ def test_build_findings_uses_h6_tempo_source() -> None:
     assert "real_hours_from_h6_tempo" in codes
 
 
+def test_build_findings_flags_low_efficiency() -> None:
+    findings = build_appointment_time_findings(
+        {
+            "status": "valid",
+            "oee_pct": 35.0,
+            "efficiency_from_times_pct": 32.0,
+            "planned_hours": 2.0,
+            "real_hours": 5.5,
+            "time_variance_hours": -3.5,
+            "start_date": "20260529",
+            "end_date": "20260529",
+            "standard_time_factor": 0.02,
+            "setup_hours": 0.08,
+            "produced_qty": 10,
+            "order_planned_qty": 100,
+        }
+    )
+
+    codes = {item.code for item in findings}
+    assert "low_efficiency_reported" in codes
+    assert "low_efficiency_from_times" in codes
+    low_finding = next(item for item in findings if item.code == "low_efficiency_reported")
+    assert "50%" in low_finding.message
+    assert "verifique" in low_finding.message.lower()
+
+
 def test_build_time_analysis_includes_findings_payload() -> None:
     payload = build_appointment_time_analysis(
         {

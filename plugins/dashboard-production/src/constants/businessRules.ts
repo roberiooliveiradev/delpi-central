@@ -1,6 +1,7 @@
 /** Faixa válida alinhada à API (`production_efficiency_valid_range`). */
 export const PRODUCTION_EFFICIENCY_VALID_MIN_PCT = 0;
 export const PRODUCTION_EFFICIENCY_VALID_MAX_PCT = 199;
+export const PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD = 50;
 
 export function isProductionEfficiencyOutlier(
   pct: number | null | undefined
@@ -12,6 +13,15 @@ export function isProductionEfficiencyOutlier(
     pct < PRODUCTION_EFFICIENCY_VALID_MIN_PCT ||
     pct > PRODUCTION_EFFICIENCY_VALID_MAX_PCT
   );
+}
+
+export function isProductionEfficiencyLow(
+  pct: number | null | undefined
+): boolean {
+  if (pct == null || Number.isNaN(pct) || isProductionEfficiencyOutlier(pct)) {
+    return false;
+  }
+  return pct < PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD;
 }
 
 export function isOeeAppointmentOutlier(

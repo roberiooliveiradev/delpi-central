@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, FileSpreadsheet } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { isProductionEfficiencyOutlier } from "../constants/businessRules";
+import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
@@ -171,11 +171,12 @@ export function AppointmentsTable({
               </tr>
             ) : (
               items.map((item, index) => {
-                const isOutlier = isProductionEfficiencyOutlier(item.eficiencia_percentual);
+                const statusKind = resolveEficienciaFabrilAppointmentStatus(item);
                 const isClickable = Boolean(item.appointment_id) && Boolean(onRowClick);
                 const rowClassName = [
                   "ef-row",
-                  isOutlier ? "ef-row--verify" : "",
+                  statusKind === "verify" ? "ef-row--verify" : "",
+                  statusKind === "low" ? "ef-row--low-efficiency" : "",
                   isClickable ? "ef-row--clickable" : "",
                 ]
                   .filter(Boolean)
@@ -220,8 +221,10 @@ export function AppointmentsTable({
                     <td data-label="Eficiência">{formatPercent(item.eficiencia_percentual)}</td>
                     <td data-label="Resultado MOD">{formatCurrency(item.resultado_mod)}</td>
                     <td data-label="Status">
-                      {isProductionEfficiencyOutlier(item.eficiencia_percentual) ? (
+                      {statusKind === "verify" ? (
                         <span className="ef-badge ef-badge--danger">Verificar</span>
+                      ) : statusKind === "low" ? (
+                        <span className="ef-badge ef-badge--warning">Eficiência baixa</span>
                       ) : (
                         <span className="ef-badge">{item.status_registro ?? "—"}</span>
                       )}

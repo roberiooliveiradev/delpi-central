@@ -906,12 +906,27 @@
   border: 1px solid color-mix(in srgb, var(--ef-danger) 35%, var(--ef-border));
 }
 
+.ef-badge--warning {
+  color: #fcd34d;
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 40%, transparent);
+}
+
 .ef-row--verify,
 .ef-row--verify td {
   color: var(--ef-danger);
 }
 
 .ef-row--verify td {
+  font-weight: 600;
+}
+
+.ef-row--low-efficiency,
+.ef-row--low-efficiency td {
+  color: color-mix(in srgb, #f59e0b 88%, var(--ef-text));
+}
+
+.ef-row--low-efficiency td {
   font-weight: 600;
 }
 

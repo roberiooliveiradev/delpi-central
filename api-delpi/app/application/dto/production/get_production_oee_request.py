@@ -8,6 +8,7 @@ class GetProductionOeeRequest:
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     status: Optional[str] = None
+    efficiency_bands: Optional[str] = None
     work_center: Optional[str] = None
     production_order: Optional[str] = None
     product_type: Optional[str] = None

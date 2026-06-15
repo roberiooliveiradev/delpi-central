@@ -15,6 +15,7 @@ import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import {
+  PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
   PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
 } from "../constants/businessRules";
@@ -34,6 +35,7 @@ import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatPeriodLabel } from "../utils/dates";
 import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
 import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
+import { EFFICIENCY_BAND_FILTER_OPTIONS } from "../constants/efficiencyBands";
 import {
   buildEmployeeFilterOptions,
   buildOpFilterOptions,
@@ -93,6 +95,7 @@ function DashboardEficienciaFabrilContent({
     employees,
     workCenters,
     shifts,
+    efficiencyBands,
     sortBy,
     sortDir,
     page,
@@ -102,6 +105,7 @@ function DashboardEficienciaFabrilContent({
     setEmployees,
     setWorkCenters,
     setShifts,
+    setEfficiencyBands,
     setPage,
     toggleSortColumn,
     apiParams,
@@ -130,6 +134,7 @@ function DashboardEficienciaFabrilContent({
     useEficienciaFabrilDashboard(apiParams);
 
   const shiftOptions = useMemo(() => buildShiftFilterOptions(), []);
+  const efficiencyBandOptions = useMemo(() => EFFICIENCY_BAND_FILTER_OPTIONS, []);
   const opOptions = useMemo(() => buildOpFilterOptions(loadedItems), [loadedItems]);
   const employeeOptions = useMemo(
     () => buildEmployeeFilterOptions(loadedItems),
@@ -185,23 +190,28 @@ function DashboardEficienciaFabrilContent({
         employees={employees}
         workCenters={workCenters}
         shifts={shifts}
+        efficiencyBands={efficiencyBands}
         opOptions={opOptions}
         employeeOptions={employeeOptions}
         workCenterOptions={workCenterOptions}
         shiftOptions={shiftOptions}
+        efficiencyBandOptions={efficiencyBandOptions}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onOpsChange={setOps}
         onEmployeesChange={setEmployees}
         onWorkCentersChange={setWorkCenters}
         onShiftsChange={setShifts}
+        onEfficiencyBandsChange={setEfficiencyBands}
         disabled={loading}
       />
 
       <p className="ef-efficiency-legend ef-efficiency-legend--warning">
         Atenção: apontamentos com eficiência fora da faixa {PRODUCTION_EFFICIENCY_VALID_MIN_PCT}–
         {PRODUCTION_EFFICIENCY_VALID_MAX_PCT}% são desconsiderados no indicador de eficiência (KPIs e
-        gráficos) e aparecem na tabela como &quot;Verificar&quot;.
+        gráficos) e aparecem na tabela como &quot;Verificar&quot;. Apontamentos na faixa válida com
+        eficiência abaixo de {PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD}% aparecem como
+        &quot;Eficiência baixa&quot; — abra o detalhe para verificar o motivo.
       </p>
 
       {error || exportError ? (
@@ -251,7 +261,7 @@ function DashboardEficienciaFabrilContent({
             <KpiCard
               label="Apontamentos"
               value={summary.table_appointment_count.toLocaleString("pt-BR")}
-              hint={`${summary.verify_appointment_count.toLocaleString("pt-BR")} a avaliar (Verificar)`}
+              hint={`${summary.verify_appointment_count.toLocaleString("pt-BR")} fora da faixa · ${summary.low_efficiency_appointment_count.toLocaleString("pt-BR")} eficiência baixa`}
               icon={<Factory size={22} />}
             />
             <KpiCard

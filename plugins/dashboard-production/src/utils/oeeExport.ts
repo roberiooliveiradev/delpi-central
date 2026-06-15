@@ -1,12 +1,9 @@
+import { formatOeeAppointmentStatusLabel } from "./oeeAppointmentStatus";
 import type { ProductionOeeAppointmentItem } from "../types/production";
-import { isOeeAppointmentOutlier } from "../constants/businessRules";
 import { downloadCsv } from "./csv";
 
 function displayStatus(item: ProductionOeeAppointmentItem): string {
-  if (isOeeAppointmentOutlier(item.status, item.oee_pct)) {
-    return "Verificar";
-  }
-  return "OK";
+  return formatOeeAppointmentStatusLabel(item);
 }
 
 export function downloadOeeAppointmentsCsv(

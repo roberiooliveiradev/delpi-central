@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { EficienciaFabrilShift } from "../constants/shifts";
+import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { EficienciaFabrilFilterParams } from "../types/eficienciaFabril";
 import {
   DEFAULT_APPOINTMENTS_SORT,
@@ -23,6 +24,7 @@ export type EficienciaFabrilFilterState = {
   employees: string[];
   workCenters: string[];
   shifts: EficienciaFabrilShift[];
+  efficiencyBands: EficienciaFabrilEfficiencyBand[];
   statusOkOnly: boolean;
   sortBy: AppointmentsSortColumn;
   sortDir: SortDirection;
@@ -37,6 +39,7 @@ function createInitialFilters(fixedBranch: string): EficienciaFabrilFilterState 
     employees: [],
     workCenters: [],
     shifts: [],
+    efficiencyBands: [],
     statusOkOnly: true,
     ...DEFAULT_APPOINTMENTS_SORT,
   };
@@ -54,6 +57,8 @@ function toApiFilters(
     employees: filters.employees.length > 0 ? filters.employees : undefined,
     work_centers: filters.workCenters.length > 0 ? filters.workCenters : undefined,
     shifts: filters.shifts.length > 0 ? filters.shifts : undefined,
+    efficiency_bands:
+      filters.efficiencyBands.length > 0 ? filters.efficiencyBands : undefined,
     status_ok_only: filters.statusOkOnly,
     sort_by: filters.sortBy,
     sort_dir: filters.sortDir,
@@ -92,6 +97,7 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
       employees: [],
       workCenters: [],
       shifts: [],
+      efficiencyBands: [],
     });
   }, [patchFilters]);
 
@@ -102,6 +108,7 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
     employees: filters.employees,
     workCenters: filters.workCenters,
     shifts: filters.shifts,
+    efficiencyBands: filters.efficiencyBands,
     sortBy: filters.sortBy,
     sortDir: filters.sortDir,
     page,
@@ -111,6 +118,8 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
     setEmployees: (value: string[]) => patchFilters({ employees: value }),
     setWorkCenters: (value: string[]) => patchFilters({ workCenters: value }),
     setShifts: (value: EficienciaFabrilShift[]) => patchFilters({ shifts: value }),
+    setEfficiencyBands: (value: EficienciaFabrilEfficiencyBand[]) =>
+      patchFilters({ efficiencyBands: value }),
     setPage,
     toggleSortColumn,
     clearSecondaryFilters,

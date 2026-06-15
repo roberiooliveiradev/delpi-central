@@ -8,7 +8,7 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS } from "../constants/branches";
-import { isProductionEfficiencyOutlier } from "../constants/businessRules";
+import { isProductionEfficiencyLow, isProductionEfficiencyOutlier } from "../constants/businessRules";
 import { buildEficienciaFabrilDashboardPath } from "../constants/routes";
 import { useProductionOeeAppointmentDetail } from "../hooks/useProductionOeeAppointmentDetail";
 import {
@@ -59,6 +59,8 @@ export function EficienciaFabrilAppointmentDetailPage({
               label: "Status",
               value: isProductionEfficiencyOutlier(appointment.oee_pct) ? (
                 <span className="ef-badge ef-badge--danger">Verificar</span>
+              ) : isProductionEfficiencyLow(appointment.oee_pct) ? (
+                <span className="ef-badge ef-badge--warning">Eficiência baixa</span>
               ) : (
                 <span className="ef-badge">OK</span>
               ),

@@ -31,6 +31,8 @@ A faixa **não** vem de documentação formal do Protheus — é convenção ope
 | `PRODUCTION_EFFICIENCY_VALID_MIN_PCT` | `app/domain/production/production_efficiency_valid_range.py` | `0` |
 | `PRODUCTION_EFFICIENCY_VALID_MAX_PCT` | idem | `199` |
 | `is_valid_production_efficiency_pct()` | idem | helper Python |
+| `PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD` | idem | `50` — alerta operacional de baixa eficiência |
+| `is_low_production_efficiency_pct()` | idem | `true` se na faixa válida e `< 50%` |
 
 Consumidores:
 
@@ -80,7 +82,8 @@ Consumidores:
 - **Dashboard** (`/dashboard`): summary e charts aplicam cap 0–199 via repositório.
 - **Appointments** (`/appointments`): retorna todos os registros do período; o MFE filtra localmente para KPIs.
 - Tabela: linha vermelha + badge **Verificar** se `isProductionEfficiencyOutlier(eficiencia_percentual)`.
-- Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{id}`; API de detalhe: `GET /production/oee/appointments/{id}` com `time_analysis.findings`.
+- Tabela: linha âmbar + badge **Eficiência baixa** se eficiência na faixa válida e `< 50%` (`isProductionEfficiencyLow`).
+- Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{id}`; API de detalhe: `GET /production/oee/appointments/{id}` com `time_analysis.findings` (inclui `low_efficiency_reported` e diagnóstico de motivo).
 
 ## Testes
 

@@ -10,7 +10,10 @@ from app.domain.ports.production.overall_equipment_effectiveness_repository_port
     OverallEquipmentEffectivenessRepositoryPort,
 )
 from app.domain.production.production_efficiency_valid_range import (
+    EFFICIENCY_BAND_VERIFY,
     PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+    parse_efficiency_bands,
+    resolve_production_list_status_filter_clause,
 )
 from app.domain.production.production_fabril_appointment_scope import (
     EFICIENCIA_FABRIL_VIEW,
@@ -79,13 +82,11 @@ class OverallEquipmentEffectivenessRepository(
         return where_clause, list(where_params)
 
     @staticmethod
-    def _status_filter_clause(status: str | None) -> str:
-        normalized = (status or "").strip().lower()
-        if normalized == "valid":
-            return "WHERE status = 'valid'"
-        if normalized == "outlier":
-            return "WHERE status = 'outlier'"
-        return ""
+    def _list_filter_clause(request: GetProductionOeeRequest) -> str:
+        return resolve_production_list_status_filter_clause(
+            request.status,
+            request.efficiency_bands,
+        )
 
     @staticmethod
     def _list_order_clause(request: GetProductionOeeRequest) -> str:
@@ -121,7 +122,8 @@ class OverallEquipmentEffectivenessRepository(
             """
 
         normalized = (request.status or "").strip().lower()
-        if normalized == "outlier":
+        bands = parse_efficiency_bands(request.efficiency_bands)
+        if normalized == "outlier" or bands == [EFFICIENCY_BAND_VERIFY]:
             return """
                 ORDER BY oee_pct DESC,
                          production_date DESC,
@@ -204,7 +206,7 @@ class OverallEquipmentEffectivenessRepository(
         request: GetProductionOeeRequest,
     ) -> dict:
         where_clause, where_params = self._build_appointment_filters(request)
-        status_clause = self._status_filter_clause(request.status)
+        status_clause = self._list_filter_clause(request)
 
         sql = f"""
             WITH APONTAMENTOS_OEE AS (
@@ -234,7 +236,7 @@ class OverallEquipmentEffectivenessRepository(
     ) -> Page[dict]:
         paging = paginate(request.page, request.page_size)
         where_clause, where_params = self._build_appointment_filters(request)
-        status_clause = self._status_filter_clause(request.status)
+        status_clause = self._list_filter_clause(request)
         order_clause = self._list_order_clause(request)
 
         count_sql = f"""

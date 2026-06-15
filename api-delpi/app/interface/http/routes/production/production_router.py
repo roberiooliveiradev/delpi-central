@@ -343,6 +343,10 @@ def get_production_oee(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    efficiency_bands: str | None = Query(
+        default=None,
+        description="Faixas de eficiência (csv): ok, low, verify",
+    ),
     work_center: str | None = Query(default=None),
     production_order: str | None = Query(default=None),
     product_type: str | None = Query(default=None, pattern="^(PA|PI)$"),
@@ -359,6 +363,7 @@ def get_production_oee(
             start_date=start_date,
             end_date=end_date,
             status=status,
+            efficiency_bands=efficiency_bands,
             work_center=work_center,
             production_order=production_order,
             product_type=product_type,

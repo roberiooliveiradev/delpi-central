@@ -6,8 +6,11 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from app.domain.production.production_efficiency_valid_range import (
+    PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
     PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
     PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
+    is_low_production_efficiency_pct,
+    is_valid_production_efficiency_pct,
 )
 
 FindingSeverity = Literal["info", "warning", "error"]
@@ -60,6 +63,22 @@ def build_appointment_time_findings(
                 detail=_format_pct_detail(oee_pct),
             )
         )
+    elif is_low_production_efficiency_pct(oee_pct):
+        findings.append(
+            AppointmentTimeFinding(
+                code="low_efficiency_reported",
+                severity="warning",
+                message=(
+                    f"Eficiência abaixo de {PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD}% "
+                    "— verifique o motivo da baixa performance."
+                ),
+                detail=_build_low_efficiency_detail(
+                    appointment,
+                    metric_label="H6_ZEFICI",
+                    efficiency_pct=oee_pct,
+                ),
+            )
+        )
 
     if _is_out_of_range(efficiency_from_times_pct):
         findings.append(
@@ -68,6 +87,22 @@ def build_appointment_time_findings(
                 severity="warning",
                 message="Eficiência calculada pelos tempos está fora da faixa 0–199%.",
                 detail=_format_pct_detail(efficiency_from_times_pct),
+            )
+        )
+    elif is_low_production_efficiency_pct(efficiency_from_times_pct):
+        findings.append(
+            AppointmentTimeFinding(
+                code="low_efficiency_from_times",
+                severity="warning",
+                message=(
+                    f"Eficiência por tempos abaixo de "
+                    f"{PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD}% — confira horários e roteiro."
+                ),
+                detail=_build_low_efficiency_detail(
+                    appointment,
+                    metric_label="tempos",
+                    efficiency_pct=efficiency_from_times_pct,
+                ),
             )
         )
 
@@ -258,3 +293,43 @@ def _format_hours(value: float | None) -> str:
     if value is None:
         return "—"
     return f"{value:.2f} h".replace(".", ",")
+
+
+def _build_low_efficiency_detail(
+    appointment: dict[str, Any],
+    *,
+    metric_label: str,
+    efficiency_pct: float | None,
+) -> str:
+    planned_hours = _float(appointment.get("planned_hours"))
+    real_hours = _float(appointment.get("real_hours"))
+    time_variance_hours = _float(appointment.get("time_variance_hours"))
+    produced_qty = _float(appointment.get("produced_qty"))
+
+    hints: list[str] = [
+        f"{metric_label}: {_format_pct(efficiency_pct)}.",
+    ]
+
+    if (
+        real_hours is not None
+        and planned_hours is not None
+        and real_hours > planned_hours
+    ):
+        hints.append(
+            f"Tempo real ({_format_hours(real_hours)}) maior que o previsto "
+            f"({_format_hours(planned_hours)})."
+        )
+
+    if time_variance_hours is not None and time_variance_hours < -0.01:
+        hints.append(
+            f"Variação de tempo negativa ({_format_hours(time_variance_hours)})."
+        )
+
+    if produced_qty is not None and produced_qty <= 0:
+        hints.append("Quantidade apontada zerada ou ausente.")
+
+    hints.append(
+        "Verifique horários de início/fim, quantidade apontada, roteiro SG2/SHY010 "
+        "e paradas não registradas no apontamento."
+    )
+    return " ".join(hints)

@@ -1,3 +1,4 @@
+import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 
@@ -9,6 +10,7 @@ export type EficienciaFabrilFilterParams = {
   employees?: string[];
   work_centers?: string[];
   shifts?: EficienciaFabrilShift[];
+  efficiency_bands?: EficienciaFabrilEfficiencyBand[];
   status_ok_only?: boolean;
   sort_by?: AppointmentsSortColumn;
   sort_dir?: SortDirection;
@@ -26,6 +28,8 @@ export type EficienciaFabrilSummary = {
   table_appointment_count: number;
   /** Apontamentos com eficiência acima do limite (status Verificar na tabela). */
   verify_appointment_count: number;
+  /** Apontamentos na faixa válida com eficiência abaixo de 50%. */
+  low_efficiency_appointment_count: number;
 };
 
 export type EfficiencyByDay = {

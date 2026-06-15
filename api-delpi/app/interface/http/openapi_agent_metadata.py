@@ -406,6 +406,8 @@ PRODUCTION_OEE = agent_route(
         "Resumo e listagem usam EFICIENCIA_PERCENTUAL; detalhe mantém SH6010 (H6_ZEFICI, roteiro, tempos). "
         "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "status=valid|outlier filtra apontamentos dentro ou fora da faixa 0–199%. "
+        "efficiency_bands=ok,low,verify (csv) filtra por faixa: na faixa (≥50%), eficiência baixa (<50%) "
+        "ou fora da faixa (outlier); tem precedência sobre status quando informado. "
         "product_type=PA|PI filtra pelo tipo do produto (SB1010.B1_TIPO). "
         "Para detalhe (roteiro SG2, estrutura BOM, tempos), use GET /production/oee/appointments/{appointment_id}. "
         "Para série temporal, use GET /production/oee/series. "

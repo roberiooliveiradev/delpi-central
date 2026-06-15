@@ -110,7 +110,7 @@ export function OeeAppointmentDetailPage({
         ? [
             {
               label: "Status OEE",
-              value: <OeeStatusBadge status={appointment.status} />,
+              value: <OeeStatusBadge status={appointment.status} oeePct={appointment.oee_pct} />,
             },
             {
               label: "Tipo produto",

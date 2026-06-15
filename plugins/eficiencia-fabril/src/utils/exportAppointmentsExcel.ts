@@ -1,4 +1,4 @@
-import { isProductionEfficiencyOutlier } from "../constants/businessRules";
+import { formatEficienciaFabrilAppointmentStatusLabel } from "./appointmentStatus";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "./dates";
 
@@ -18,10 +18,7 @@ const HEADERS = [
 ] as const;
 
 function displayStatus(item: EficienciaFabrilItem): string {
-  if (isProductionEfficiencyOutlier(item.eficiencia_percentual)) {
-    return "Verificar";
-  }
-  return item.status_registro ?? "";
+  return formatEficienciaFabrilAppointmentStatusLabel(item);
 }
 
 function itemToRow(item: EficienciaFabrilItem): (string | number)[] {

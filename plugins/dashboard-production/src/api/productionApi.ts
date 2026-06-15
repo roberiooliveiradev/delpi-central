@@ -36,6 +36,9 @@ function buildQuery(
   if ("status" in params && params.status) {
     searchParams.set("status", params.status);
   }
+  if ("efficiency_bands" in params && params.efficiency_bands) {
+    searchParams.set("efficiency_bands", params.efficiency_bands);
+  }
   if ("work_center" in params && params.work_center) {
     searchParams.set("work_center", params.work_center);
   }

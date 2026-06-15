@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchAllEficienciaFabrilItems } from "../api/fetchAllEficienciaFabrilItems";
-import { isProductionEfficiencyOutlier } from "../constants/businessRules";
+import {
+  isProductionEfficiencyLow,
+  isProductionEfficiencyOutlier,
+} from "../constants/businessRules";
+import { matchesEfficiencyBandFilter } from "../constants/efficiencyBands";
 import { matchesShiftFilter } from "../constants/shifts";
 import type {
   EficienciaFabrilDashboardData,
@@ -57,7 +61,8 @@ function applyScopeFilters(
       const employeeValue = buildEmployeeOptionValue(item);
       return employeeValue ? params.employees.includes(employeeValue) : false;
     })
-    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts));
+    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts))
+    .filter((item) => matchesEfficiencyBandFilter(item, params.efficiency_bands));
 }
 
 function computeDashboardFromItems(
@@ -93,6 +98,9 @@ function computeDashboardFromItems(
   const table_appointment_count = visibleItems.length;
   const verify_appointment_count = visibleItems.filter((item) =>
     isProductionEfficiencyOutlier(item.eficiencia_percentual)
+  ).length;
+  const low_efficiency_appointment_count = visibleItems.filter((item) =>
+    isProductionEfficiencyLow(item.eficiencia_percentual)
   ).length;
 
   const efficiencyByDayMap = new Map<string, { sum: number; count: number }>();
@@ -258,6 +266,7 @@ function computeDashboardFromItems(
       total_hours_gained_lost,
       table_appointment_count,
       verify_appointment_count,
+      low_efficiency_appointment_count,
     },
     charts: {
       efficiency_by_day,

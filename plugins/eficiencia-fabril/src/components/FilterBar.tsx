@@ -1,4 +1,5 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
+import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
 import { MultiSelectField } from "./MultiSelectField";
 
@@ -9,16 +10,19 @@ type FilterBarProps = {
   employees: string[];
   workCenters: string[];
   shifts: EficienciaFabrilShift[];
+  efficiencyBands: EficienciaFabrilEfficiencyBand[];
   opOptions: MultiSelectOption[];
   employeeOptions: MultiSelectOption[];
   workCenterOptions: MultiSelectOption[];
   shiftOptions: MultiSelectOption[];
+  efficiencyBandOptions: MultiSelectOption[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onOpsChange: (value: string[]) => void;
   onEmployeesChange: (value: string[]) => void;
   onWorkCentersChange: (value: string[]) => void;
   onShiftsChange: (value: EficienciaFabrilShift[]) => void;
+  onEfficiencyBandsChange: (value: EficienciaFabrilEfficiencyBand[]) => void;
   disabled?: boolean;
 };
 
@@ -29,16 +33,19 @@ export function FilterBar({
   employees,
   workCenters,
   shifts,
+  efficiencyBands,
   opOptions,
   employeeOptions,
   workCenterOptions,
   shiftOptions,
+  efficiencyBandOptions,
   onDateStartChange,
   onDateEndChange,
   onOpsChange,
   onEmployeesChange,
   onWorkCentersChange,
   onShiftsChange,
+  onEfficiencyBandsChange,
   disabled = false,
 }: FilterBarProps) {
   return (
@@ -100,6 +107,17 @@ export function FilterBar({
           options={shiftOptions}
           selectedValues={shifts}
           onChange={(values) => onShiftsChange(values as EficienciaFabrilShift[])}
+          disabled={disabled}
+        />
+
+        <MultiSelectField
+          label="Faixa de eficiência"
+          emptyLabel="Todas"
+          options={efficiencyBandOptions}
+          selectedValues={efficiencyBands}
+          onChange={(values) =>
+            onEfficiencyBandsChange(values as EficienciaFabrilEfficiencyBand[])
+          }
           disabled={disabled}
         />
       </div>
