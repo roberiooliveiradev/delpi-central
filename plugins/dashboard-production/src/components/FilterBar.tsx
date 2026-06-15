@@ -1,7 +1,13 @@
 import { ProductionFilters } from "./ProductionFilters";
 import { ProductionPageHeader } from "./ProductionPageHeader";
+import { PRODUCTION_ROUTES } from "../constants/routes";
+import type { ProductionFilterUrlState } from "../utils/filterUrl";
 
 type FilterBarProps = {
+  title?: string;
+  subtitle?: string;
+  currentPath?: string;
+  filterState?: ProductionFilterUrlState;
   dateStart: string;
   dateEnd: string;
   branch: string;
@@ -13,6 +19,10 @@ type FilterBarProps = {
 };
 
 export function FilterBar({
+  title,
+  subtitle,
+  currentPath,
+  filterState,
   dateStart,
   dateEnd,
   branch,
@@ -24,7 +34,14 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <>
-      <ProductionPageHeader onRefresh={onRefresh} refreshing={refreshing} />
+      <ProductionPageHeader
+        title={title}
+        subtitle={subtitle}
+        currentPath={currentPath ?? PRODUCTION_ROUTES.home}
+        filterState={filterState}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+      />
       <ProductionFilters
         dateStart={dateStart}
         dateEnd={dateEnd}

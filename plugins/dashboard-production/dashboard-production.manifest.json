@@ -27,6 +27,14 @@
       "icon": "factory-icon",
       "order": 16,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-production/otd",
+      "label": "OTD produção",
+      "permission": "dashboard-production.view",
+      "icon": "factory-icon",
+      "order": 17,
+      "showInMenu": false
     }
   ],
 

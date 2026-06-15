@@ -146,7 +146,9 @@ Legado `/finacial/*`: mesmo router; preferir `/financial` no catálogo.
 
 | Rota | Frases teste | Status |
 |------|--------------|--------|
-| `GET /on_time_delivery_pct` | otd de produção | OK |
+| `GET /on_time_delivery_pct` | otd de produção (%) | OK |
+| `GET /production/otd` | otd produção — resumo + listagem OPs | OK (jun/2026) |
+| `GET /production/otd/series` | série OTD produção | OK |
 | `GET /overall_equipment_effectiveness_pct` | oee | OK |
 | `GET /direct_labor_cost_pct` | mão de obra direta | OK |
 | `GET /production_cost_pct` | custo de produção | OK |

@@ -858,6 +858,16 @@
       ]
     },
     {
+      "token": "/production/otd",
+      "category": "OTD produção — listagem de ordens",
+      "examples": [
+        "otd de producao com ordens",
+        "ops atrasadas na producao",
+        "listar ordens de producao no prazo",
+        "entrega no prazo das ops"
+      ]
+    },
+    {
       "token": "/eficiencia-fabril",
       "category": "Eficiência fabril",
       "examples": [

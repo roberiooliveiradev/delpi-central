@@ -323,9 +323,9 @@ Testes: `test_chat_utility_direct_answer_service.py`, `test_chat_utility_stream.
 
 ### Rótulos PT-BR das rotas api-delpi (maio/2026)
 
-Actions OpenAPI do provider **api-delpi** exibem rótulos humanizados via `ChatActionLabelService` + `labels/api_paths.json` (~84 rotas alinhadas ao código em `api-delpi/app/main.py`):
+Actions OpenAPI do provider **api-delpi** exibem rótulos humanizados via `ChatActionLabelService` + `labels/api_paths.json` (~85 rotas alinhadas ao código em `api-delpi/app/main.py`):
 
-- Inclui: `/commercial/proposals`, `/production/oee/series`, `/production/otd/series`, `/production/eficiencia-fabril/*`, `/system/tables/{tablename}/schema|indexes|relations`
+- Inclui: `/commercial/proposals`, `/production/otd` (resumo + OPs SC2010), `/production/oee/series`, `/production/otd/series`, `/production/eficiencia-fabril/*`, `/system/tables/{tablename}/schema|indexes|relations`
 - Removidas rotas fantasma (`/commercial/billing`, `/chat/*`, subrotas inexistentes de produto)
 
 `capabilities.json` (`pathRules`, `commonExamples`) reflete o mesmo catálogo. Regenerar OpenAPI opcional: `scripts/sync_api_delpi_openapi.py`.

@@ -113,3 +113,15 @@ export function writeFiltersToUrl(state: ProductionFilterUrlState): void {
 
   window.history.replaceState(window.history.state, "", nextUrl);
 }
+
+export function appendFiltersToPath(
+  path: string,
+  state?: ProductionFilterUrlState
+): string {
+  const filters = state ?? readProductionFilters();
+  return `${path}${buildFilterSearchParams(filters)}`;
+}
+
+export function readFiltersFromUrl(search: string): ProductionFilterUrlState {
+  return parseFilterParams(new URLSearchParams(search)) ?? defaultFilterState();
+}

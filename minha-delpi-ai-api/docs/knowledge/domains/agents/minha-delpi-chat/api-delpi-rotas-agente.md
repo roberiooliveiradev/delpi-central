@@ -84,6 +84,18 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 
 ---
 
+### Produção — indicadores (`/production`)
+
+| O usuário quer | Rota | operationId |
+|----------------|------|-------------|
+| OTD produção (%) | `GET /production/on_time_delivery_pct` | `get_on_time_delivery_pct` |
+| OTD produção — ordens no/atraso | `GET /production/otd` | `get_production_otd` |
+| Série OTD produção | `GET /production/otd/series` | `get_production_otd_series` |
+
+**`GET /production/otd`:** `branch`, `start_date`, `end_date`, `status` (`on_time` / `late`), `page`, `page_size`. Resposta: `summary` + `orders` (SC2010).
+
+---
+
 ### Suprimentos — indicadores (`/supplies`)
 
 | O usuário quer | Rota | operationId |

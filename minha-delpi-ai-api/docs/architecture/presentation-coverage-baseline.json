@@ -564,6 +564,19 @@
     },
     {
       "method": "GET",
+      "path": "/production/otd",
+      "operation_id": "get_production_otd",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_otd_detail",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path",
+      "profile_key": "kpi_dashboard"
+    },
+    {
+      "method": "GET",
       "path": "/production/otd/series",
       "operation_id": "get_production_otd_series_production_otd_series_get",
       "tags": [

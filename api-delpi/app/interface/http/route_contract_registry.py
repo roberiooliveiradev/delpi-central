@@ -128,6 +128,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "overall_equipment_effectiveness", "scalar"
     ),
     "get_on_time_delivery_pct": RouteContract("production_otd", "scalar"),
+    "get_production_otd": RouteContract("production_otd", "paged_list"),
     "get_production_consumption_top_items": RouteContract(
         "production_consumption_top_items", "playbook_report"
     ),

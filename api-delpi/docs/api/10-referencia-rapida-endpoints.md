@@ -133,6 +133,8 @@ Legenda de permissões:
 | GET | `/production/depreciation_pct` | A |
 | GET | `/production/overall_equipment_effectiveness_pct` | A |
 | GET | `/production/on_time_delivery_pct` | A |
+| GET | `/production/otd` | A |
+| GET | `/production/otd/series` | A |
 
 ---
 

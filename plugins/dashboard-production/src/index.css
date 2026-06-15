@@ -259,6 +259,61 @@
   color: var(--dp-text-muted);
 }
 
+.dashboard-production .dp-table-section {
+  margin-bottom: var(--dp-section-gap);
+}
+
+.dashboard-production .dp-table-section__meta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.dashboard-production .dp-table-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dashboard-production .dp-table-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 420px);
+  min-height: var(--dp-control-height);
+  height: var(--dp-control-height);
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: var(--dp-control-radius);
+  border: 1px solid var(--dp-card-border);
+  background: var(--surface, #fff);
+}
+
+.dashboard-production .dp-table-search__icon {
+  flex-shrink: 0;
+  display: block;
+  color: var(--dp-text-muted);
+}
+
+.dashboard-production .dp-table-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dp-text);
+  font: inherit;
+}
+
+.dashboard-production .dp-table-search__input::placeholder {
+  color: var(--dp-text-muted);
+}
+
 .dashboard-production .dp-filter-box {
   display: flex;
   flex-direction: column;
@@ -374,6 +429,12 @@
   border: 1px solid color-mix(in srgb, #f97316 32%, transparent);
 }
 
+.dashboard-production .dp-kpi-badge--danger {
+  color: #991b1b;
+  background: color-mix(in srgb, #ef4444 16%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 32%, transparent);
+}
+
 .dashboard-production .dp-kpi-badge--direction {
   color: var(--dp-text-muted);
   font-weight: 600;
@@ -415,6 +476,12 @@
   color: #fdba74;
   background: color-mix(in srgb, #f97316 24%, transparent);
   border-color: color-mix(in srgb, #f97316 42%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-production .dp-kpi-badge--danger {
+  color: #fca5a5;
+  background: color-mix(in srgb, #ef4444 24%, transparent);
+  border-color: color-mix(in srgb, #ef4444 42%, transparent);
 }
 
 .dashboard-production .dp-kpi-icon {

@@ -59,3 +59,47 @@ export type ProductionOtdSeriesData = {
   branch: string | null;
   points: ProductionOtdSeriesPoint[];
 };
+
+export type ProductionOtdOrderStatus = "on_time" | "late";
+
+export type ProductionOtdOrderItem = {
+  branch: string;
+  order_number: string;
+  order_item: string;
+  product_code: string;
+  product_description: string;
+  due_date: string;
+  finish_date: string;
+  days_diff: number;
+  status: ProductionOtdOrderStatus;
+};
+
+export type ProductionOtdOrdersPage = {
+  items: ProductionOtdOrderItem[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+export type ProductionOtdSummary = DashboardGoalFields & {
+  total_ops_finished: number;
+  on_time_ops: number;
+  late_ops: number;
+  on_time_delivery_pct: number | null;
+  late_percentage: number;
+};
+
+export type ProductionOtdData = {
+  branch: string;
+  start_date: string;
+  end_date: string;
+  summary: ProductionOtdSummary;
+  orders: ProductionOtdOrdersPage;
+};
+
+export type ProductionOtdParams = ProductionFilterParams & {
+  status?: ProductionOtdOrderStatus | "";
+  page?: number;
+  page_size?: number;
+};

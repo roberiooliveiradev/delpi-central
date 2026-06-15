@@ -20,7 +20,11 @@ class Page(Generic[T]):
     def to_dict(self):
         return {
             "items": [
-                i.to_dict() if hasattr(i, "to_dict") else vars(i)
+                i.to_dict()
+                if hasattr(i, "to_dict")
+                else i
+                if isinstance(i, dict)
+                else vars(i)
                 for i in self.items
             ],
             "page": self.page,

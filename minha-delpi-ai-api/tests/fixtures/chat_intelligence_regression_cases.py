@@ -207,6 +207,28 @@ SELECTION_CASES = [
         "expected_action_id": "otd",
     },
     {
+        "message": "listar ops atrasadas na producao",
+        "actions": [
+            {
+                "actionId": "production-otd-detail",
+                "method": "GET",
+                "path": "/production/otd",
+                "operationId": "get_production_otd",
+                "summary": "OTD produção — ordens",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "production-otd",
+                "method": "GET",
+                "path": "/production/on_time_delivery_pct",
+                "operationId": "get_on_time_delivery_pct",
+                "summary": "OTD produção percentual",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-otd-detail",
+    },
+    {
         "message": "histórico de compras do produto 10080047",
         "actions": [
             {

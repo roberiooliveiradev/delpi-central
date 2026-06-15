@@ -74,6 +74,23 @@
       "suprimento"
     ],
     "suppliesOtdPathPrefix": "/supplies/",
+    "productionOtdDetailTerms": [
+      "listar",
+      "listagem",
+      "tabela",
+      "ordens",
+      "ordem de producao",
+      "ordem de produção",
+      "ops",
+      "op ",
+      "atrasad",
+      "no prazo",
+      "detalhe",
+      "detalhar",
+      "sc2010"
+    ],
+    "productionOtdDetailPath": "/production/otd",
+    "productionOtdDetailOperationId": "get_production_otd",
     "refinementFallbackMessages": {
       "pagination": "paginação",
       "depth": "profundidade"
@@ -531,6 +548,7 @@
     "productStockBranchRefinement": "A mensagem refina o estoque do produto {product_code} para a filial {branch_code}.",
     "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",
     "kpiOtd": "A pergunta solicita o indicador OTD de suprimentos.",
+    "kpiProductionOtdDetail": "A pergunta solicita OTD de produção com resumo e listagem de ordens finalizadas (SC2010).",
     "kpiIdd": "A pergunta solicita giro de estoque (IDD) em suprimentos.",
     "kpiStockValue": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
     "kpiMetricRefinementDefault": "Refino de indicador de suprimentos.",

@@ -95,3 +95,45 @@ def test_select_supplies_metric_prefers_supplies_otd_when_terms_present():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "api_delpi.supplies_otd"
+
+
+def test_select_production_otd_detail_when_list_terms_present():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.production_otd_detail",
+                "method": "GET",
+                "path": "/production/otd",
+                "operationId": "get_production_otd",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "api_delpi.production_otd_pct",
+                "method": "GET",
+                "path": "/production/on_time_delivery_pct",
+                "operationId": "get_on_time_delivery_pct",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionRouteSelectionService(repository)
+    spec = OperationalApiRouteSpec(
+        domain="department_kpi",
+        reason="OTD produção",
+        path_tokens=("otd",),
+        path_prefixes=("/production/",),
+        operation_tokens=("production_otd",),
+        parameter_strategy="date_branch",
+    )
+
+    selected = service.select(
+        spec,
+        message="Listar OPs atrasadas na produção",
+        allowed_action_ids=[
+            "api_delpi.production_otd_detail",
+            "api_delpi.production_otd_pct",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.production_otd_detail"

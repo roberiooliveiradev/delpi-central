@@ -246,7 +246,9 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 
 | O usuário quer | Rota | operationId (referência) |
 |----------------|------|--------------------------|
-| OTD produção | `GET /production/on_time_delivery_pct` | `get_on_time_delivery_pct` |
+| OTD produção (%) | `GET /production/on_time_delivery_pct` | `get_on_time_delivery_pct` |
+| **OTD produção — resumo e ordens** | `GET /production/otd` | `get_production_otd` |
+| **Série temporal OTD produção** | `GET /production/otd/series` | `get_production_otd_series` |
 | OEE (eficiência equipamentos) | `GET /production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` |
 | **Série temporal OEE** | `GET /production/oee/series` | path `oee/series` — buckets por período |
 | **Eficiência fabril — dashboard** | `GET /production/eficiencia-fabril/dashboard` | path `eficiencia-fabril/dashboard` |
@@ -254,6 +256,14 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 | Custo direto mão de obra | `GET /production/direct_labor_cost_pct` | `get_direct_labor_cost_pct` |
 | Custo de produção | `GET /production/production_cost_pct` | `get_production_cost_pct` |
 | Depreciação % ROL | `GET /production/depreciation_pct` | `get_depreciation_pct` |
+
+**Parâmetros (`GET /production/otd`)**
+
+- `branch`, `start_date`, `end_date` — filtro de período (data prevista `C2_DATPRF`, formato ISO `YYYY-MM-DD`; API converte para Protheus `YYYYMMDD`).
+- `status` — opcional: `on_time` (no prazo) ou `late` (atrasado).
+- `page` (default `1`), `page_size` (default `20`, máx. `1000`).
+
+**Resposta:** `summary` (total OPs, no prazo, atrasadas, % OTD) + `orders` (listagem paginada com `status`, datas e produto).
 
 #### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
 
@@ -404,7 +414,7 @@ Não pergunte se o usuário "tem permissão"; a API já valida com o token dele.
 | KPI estoque | valor total de estoque, valor em estoque, indicador suprimentos, stock-value |
 | KPI comercial | closing rate, conversão, ROL, OTD pedido, novos clientes, novos negócios |
 | KPI financeiro | EBITDA, PMR, custo fixo, ROL |
-| KPI produção | OTD produção, OEE, custo de produção, mão de obra, depreciação |
+| KPI produção | OTD produção, OTD produção (listagem OPs), série OTD, OEE, custo de produção, mão de obra, depreciação |
 | Qualidade | não conformidade, NC, PPM, kaizen, 5S, auditoria |
 
 ---

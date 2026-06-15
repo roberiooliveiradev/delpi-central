@@ -1,6 +1,11 @@
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.pagination import paginate
+from app.application.dto.production.get_production_otd_request import (
+    GetProductionOtdRequest,
+)
 from app.application.dto.production.production_request import ProductionRequest
+from app.application.models.page import Page
 from app.domain.entities.production.on_time_delivery import OnTimeDelivery
 from app.domain.ports.production.on_time_delivery_repository_port import OnTimeDeliveryRepositoryPort
 
@@ -115,3 +120,95 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             rows = self.execute_query(sql, where_params)
 
         return rows or []
+
+    def _build_orders_where(
+        self,
+        request: GetProductionOtdRequest,
+    ) -> tuple[str, tuple]:
+        qb = QueryBuilder()
+        qb.raw("OP.D_E_L_E_T_ = ''")
+
+        if request.branch:
+            qb.eq("OP.C2_FILIAL", request.branch)
+
+        qb.raw("OP.C2_DATPRF IS NOT NULL")
+        qb.raw("OP.C2_DATRF IS NOT NULL")
+        qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)
+
+        status = (request.status or "").strip().lower()
+        if status == "on_time":
+            qb.raw("OP.C2_DATRF <= OP.C2_DATPRF")
+        elif status == "late":
+            qb.raw("OP.C2_DATRF > OP.C2_DATPRF")
+
+        return qb.build()
+
+    def list_production_orders_otd(
+        self,
+        request: GetProductionOtdRequest,
+    ) -> Page[dict]:
+        paging = paginate(request.page, request.page_size)
+        where_clause, where_params = self._build_orders_where(request)
+
+        count_sql = f"""
+            WITH OPS_FINALIZADAS AS (
+                SELECT DISTINCT
+                    OP.C2_FILIAL,
+                    OP.C2_NUM,
+                    OP.C2_ITEM
+                FROM SC2010 OP
+                WHERE {where_clause}
+            )
+            SELECT COUNT(*) AS total
+            FROM OPS_FINALIZADAS
+        """
+
+        list_sql = f"""
+            WITH OPS_FINALIZADAS AS (
+                SELECT DISTINCT
+                    OP.C2_FILIAL AS branch,
+                    RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
+                    RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
+                    RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
+                    RTRIM(LTRIM(P.B1_DESC)) AS product_description,
+                    CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRF, 112), 23) AS due_date,
+                    CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATRF, 112), 23) AS finish_date,
+                    DATEDIFF(
+                        DAY,
+                        CONVERT(DATE, OP.C2_DATPRF, 112),
+                        CONVERT(DATE, OP.C2_DATRF, 112)
+                    ) AS days_diff,
+                    CASE
+                        WHEN CONVERT(DATE, OP.C2_DATRF, 112) <= CONVERT(DATE, OP.C2_DATPRF, 112)
+                        THEN 'on_time'
+                        ELSE 'late'
+                    END AS status
+                FROM SC2010 OP
+                LEFT JOIN SB1010 P
+                    ON P.B1_COD = OP.C2_PRODUTO
+                   AND P.D_E_L_E_T_ = ''
+                WHERE {where_clause}
+            )
+            SELECT *
+            FROM OPS_FINALIZADAS
+            ORDER BY
+                CASE WHEN status = 'late' THEN 0 ELSE 1 END,
+                days_diff DESC,
+                finish_date DESC,
+                order_number ASC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+
+        list_params = where_params + (paging["offset"], paging["page_size"])
+
+        with self:
+            total_row = self.execute_one(count_sql, where_params)
+            total = int(total_row.get("total") or 0) if total_row else 0
+            rows = self.execute_query(list_sql, list_params) or []
+
+        return Page(
+            items=rows,
+            total=total,
+            page=paging["page"],
+            page_size=paging["page_size"],
+        )

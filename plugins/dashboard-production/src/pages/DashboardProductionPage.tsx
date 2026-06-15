@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { PRODUCTION_ROUTES } from "../constants/routes";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -41,7 +42,7 @@ import { formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 300;
 
-export function DashboardProductionPage() {
+export function DashboardProductionPage({ pathname }: { pathname?: string }) {
   const {
     dateStart,
     dateEnd,
@@ -50,6 +51,7 @@ export function DashboardProductionPage() {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useProductionFilters();
 
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
@@ -170,6 +172,8 @@ export function DashboardProductionPage() {
   return (
     <div className="dashboard-production dashboard-page">
       <FilterBar
+        currentPath={pathname ?? PRODUCTION_ROUTES.home}
+        filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}

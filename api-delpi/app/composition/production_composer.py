@@ -9,6 +9,9 @@ from app.application.use_cases.production.get_direct_labor_cost_pct_use_case imp
 from app.application.use_cases.production.get_on_time_delivery_pct_use_case import (
     GetOnTimeDeliveryPctUseCase,
 )
+from app.application.use_cases.production.get_production_otd_use_case import (
+    GetProductionOtdUseCase,
+)
 from app.application.use_cases.production.get_overall_equipment_effectiveness_pct_use_case import (
     GetOverallEquipmentEffectivenessPctUseCase,
 )
@@ -131,6 +134,12 @@ def build_get_production_otd_series_use_case() -> GetProductionOtdSeriesUseCase:
 
 def build_get_on_time_delivery_pct_use_case() -> GetOnTimeDeliveryPctUseCase:
     return GetOnTimeDeliveryPctUseCase(
+        on_time_delivery_repository=OnTimeDeliveryRepository()
+    )
+
+
+def build_get_production_otd_use_case() -> GetProductionOtdUseCase:
+    return GetProductionOtdUseCase(
         on_time_delivery_repository=OnTimeDeliveryRepository()
     )
 

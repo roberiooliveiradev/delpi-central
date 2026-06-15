@@ -7,6 +7,9 @@ from app.application.security.api_delpi_permissions import (
     KPI_PRODUCTION_ACCESS,
 )
 from app.core.responses import error_response
+from app.interface.http.openapi_agent_metadata import (
+    PRODUCTION_OTD,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -15,6 +18,9 @@ from app.application.dto.production.production_oee_series_request import (
 )
 from app.application.dto.production.production_otd_series_request import (
     ProductionOtdSeriesRequest,
+)
+from app.application.dto.production.get_production_otd_request import (
+    GetProductionOtdRequest,
 )
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.dto.financial.get_rol_request import GetRolRequest
@@ -28,6 +34,7 @@ from app.composition.production_composer import (
     build_get_production_oee_series_use_case,
     build_get_production_otd_series_use_case,
     build_get_on_time_delivery_pct_use_case,
+    build_get_production_otd_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
 )
@@ -259,6 +266,56 @@ def get_production_otd_series(
         log_error(f"Erro ao carregar série de OTD: {exc}")
         return error_response(
             "Erro interno ao carregar série temporal de OTD.",
+            status_code=500,
+        )
+
+
+@router.get("/otd", **PRODUCTION_OTD)
+@require_any_permission(KPI_PRODUCTION_ACCESS)
+def get_production_otd(
+    branch: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=1000),
+):
+    try:
+        use_case = build_get_production_otd_use_case()
+
+        request = GetProductionOtdRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.PRODUCTION_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_production_otd",
+            message="OTD de produção carregado com sucesso.",
+            fields=kpi_fields(PRODUCTION_OTD_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar OTD de produção: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar OTD de produção: {exc}")
+        return error_response(
+            "Erro interno ao buscar OTD de produção.",
             status_code=500,
         )
 

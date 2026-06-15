@@ -158,6 +158,10 @@ PRODUCTION_OTD_FIELD_LABELS: dict[str, str] = {
     "on_time_delivery_pct": "OTD produção (%)",
     "otd_filial_01": "OTD filial 01",
     "otd_filial_02": "OTD filial 02",
+    "late_percentage": "% atrasos",
+    "total_ops_finished": "OPs finalizadas",
+    "on_time_ops": "OPs no prazo",
+    "late_ops": "OPs em atraso",
 }
 
 PRODUCTION_COST_FIELD_LABELS: dict[str, str] = {

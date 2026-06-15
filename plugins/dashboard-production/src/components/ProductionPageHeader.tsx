@@ -1,13 +1,28 @@
+import type { ReactNode } from "react";
 import { Factory, ListFilter } from "lucide-react";
 
+import { PRODUCTION_ROUTES } from "../constants/routes";
+import type { ProductionFilterUrlState } from "../utils/filterUrl";
+import { ProductionNav } from "./ProductionNav";
+
 type ProductionPageHeaderProps = {
+  title?: string;
+  subtitle?: string;
+  currentPath?: string;
+  filterState?: ProductionFilterUrlState;
   onRefresh: () => void;
   refreshing?: boolean;
+  actions?: ReactNode;
 };
 
 export function ProductionPageHeader({
+  title = "Dashboard Produção",
+  subtitle = "Custos sobre ROL, OEE e entrega no prazo",
+  currentPath,
+  filterState,
   onRefresh,
   refreshing = false,
+  actions,
 }: ProductionPageHeaderProps) {
   return (
     <header className="dp-page-header">
@@ -17,14 +32,17 @@ export function ProductionPageHeader({
         </div>
         <div>
           <p className="dp-eyebrow">DELPI • Produção</p>
-          <h1>Dashboard Produção</h1>
-          <span className="dp-page-subtitle">
-            Custos sobre ROL, OEE e entrega no prazo
-          </span>
+          <h1>{title}</h1>
+          <span className="dp-page-subtitle">{subtitle}</span>
+          <ProductionNav
+            currentPath={currentPath ?? PRODUCTION_ROUTES.home}
+            filterState={filterState}
+          />
         </div>
       </div>
 
       <div className="dp-header-actions">
+        {actions}
         <button
           className="dp-primary-btn"
           type="button"

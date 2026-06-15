@@ -384,6 +384,19 @@ SUPPLIES_OTD = agent_route(
     operation_id="get_supplies_otd",
 )
 
+PRODUCTION_OTD = agent_route(
+    summary="OTD produção — resumo e ordens (SC2010)",
+    description=(
+        "Painel de OTD de produção: resumo (OPs no prazo/atrasadas, % OTD) e listagem paginada "
+        "de ordens finalizadas (SC2010: C2_DATPRF × C2_DATRF). "
+        "Use para listar OPs atrasadas ou no prazo, detalhar entrega de produção ou exportar ordens. "
+        "Para apenas o percentual agregado sem listagem, prefira GET /production/on_time_delivery_pct. "
+        "Para série temporal, use GET /production/otd/series. "
+        "Não confundir com OTD de compras (/supplies/otd) nem OTD comercial de pedidos de venda."
+    ),
+    operation_id="get_production_otd",
+)
+
 SUPPLIES_INVENTORY_TURNOVER = agent_route(
     summary="Giro de estoque / IDD (suprimentos)",
     description=(

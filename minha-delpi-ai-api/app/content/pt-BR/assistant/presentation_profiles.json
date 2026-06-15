@@ -72,6 +72,7 @@
     "production_otd_series": "kpi_series",
     "overall_equipment_effectiveness": "kpi_series",
     "production_otd": "kpi_series",
+    "production_otd_detail": "kpi_dashboard",
     "eficiencia_fabril_dashboard": "kpi_dashboard",
     "eficiencia_fabril_appointment": "table_list",
     "hr_branch": "table_list",
@@ -223,11 +224,15 @@
       "profile": "system"
     },
     {
-      "contains": "/production/oee",
+      "contains": "/production/otd/series",
       "profile": "kpi_series"
     },
     {
       "contains": "/production/otd",
+      "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/production/oee",
       "profile": "kpi_series"
     },
     {

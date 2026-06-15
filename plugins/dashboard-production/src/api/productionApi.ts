@@ -10,11 +10,15 @@ import type {
   ProductionFilterParams,
   ProductionOeeSeriesData,
   ProductionOtdSeriesData,
+  ProductionOtdData,
+  ProductionOtdParams,
 } from "../types/production";
 
 export const PRODUCTION_API_BASE = "/apps/api-delpi/production";
 
-function buildQuery(params: ProductionFilterParams = {}): string {
+function buildQuery(
+  params: ProductionFilterParams | ProductionOtdParams = {}
+): string {
   const searchParams = new URLSearchParams();
 
   if (params.start_date) searchParams.set("start_date", params.start_date);
@@ -22,13 +26,23 @@ function buildQuery(params: ProductionFilterParams = {}): string {
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.granularity) searchParams.set("granularity", params.granularity);
 
+  if ("status" in params && params.status) {
+    searchParams.set("status", params.status);
+  }
+  if ("page" in params && params.page) {
+    searchParams.set("page", String(params.page));
+  }
+  if ("page_size" in params && params.page_size) {
+    searchParams.set("page_size", String(params.page_size));
+  }
+
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
 
 async function fetchProductionData<T>(
   path: string,
-  params: ProductionFilterParams = {},
+  params: ProductionFilterParams | ProductionOtdParams = {},
   signal?: AbortSignal
 ): Promise<T> {
   const response = await httpGet<ApiSuccessResponse<T>>(
@@ -114,4 +128,11 @@ export function getProductionOtdSeries(
     params,
     signal
   );
+}
+
+export function getProductionOtd(
+  params: ProductionOtdParams,
+  signal?: AbortSignal
+) {
+  return fetchProductionData<ProductionOtdData>("/otd", params, signal);
 }

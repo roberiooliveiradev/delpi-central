@@ -117,6 +117,8 @@ class ExternalActionRouteSelectionService:
         if spec.prioritize == "supplies_otd":
             candidates = self._prioritize_supplies_otd_candidates(message, candidates)
 
+        candidates = self._prioritize_production_otd_detail_candidates(message, candidates)
+
         for action in candidates:
             if str(action.get("method") or "").upper() != method.upper():
                 continue
@@ -533,3 +535,43 @@ class ExternalActionRouteSelectionService:
                 return commercial
 
         return candidates
+
+    def _prioritize_production_otd_detail_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        detail_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOtdDetailTerms",
+        )
+        production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
+
+        if not any(term in normalized for term in detail_terms):
+            return candidates
+        if not any(term in normalized for term in production_terms):
+            return candidates
+
+        detail_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOtdDetailPath",
+            default="/production/otd",
+        ).lower()
+        detail_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOtdDetailOperationId",
+            default="get_production_otd",
+        ).lower()
+
+        detail_actions = [
+            action
+            for action in candidates
+            if (
+                str(action.get("path") or "").lower().rstrip("/") == detail_path.rstrip("/")
+                or detail_operation in str(action.get("operationId") or "").lower()
+            )
+        ]
+
+        return detail_actions or candidates
