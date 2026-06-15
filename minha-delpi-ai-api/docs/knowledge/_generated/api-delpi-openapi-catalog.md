@@ -163,7 +163,8 @@
 | `POST` | `/quality/audit-5s/nonconformities/{nc_id}/complete-action` | `complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post` | Complete Nc Action |
 | `GET` | `/quality/audit-5s/summary` | `get_audit_5s_summary_quality_audit_5s_summary_get` | Get Audit 5S Summary |
 | `GET` | `/quality/branches` | `list_quality_branches_quality_branches_get` | List Quality Branches |
-| `GET` | `/quality/kaizens/summary` | `get_kaizen_summary_quality_kaizens_summary_get` | Get Kaizen Summary |
+| `GET` | `/quality/kaizens/summary` | `get_kaizen_summary` | Kaizens — resumo e listagem (Google Sheets) |
+| `GET` | `/quality/kaizens/{kaizen_id}` | `get_kaizen_by_id` | Detalhe do kaizen (Google Sheets) |
 | `GET` | `/quality/nonconformities` | `list_nonconformity_route_quality_nonconformities_get` | List Nonconformity Route |
 | `GET` | `/quality/nonconformities/series` | `get_nonconformity_series_quality_nonconformities_series_get` | Get Nonconformity Series |
 | `GET` | `/quality/ppm/external` | `list_ppm_external` | List External Ppm |

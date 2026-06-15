@@ -223,6 +223,48 @@ def test_select_production_oee_appointment_when_detail_terms_present():
     assert selected["arguments"]["actionId"] == "api_delpi.production_oee_appointment"
 
 
+def test_select_quality_kaizen_detail_when_detail_terms_present():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.quality_kaizen_detail",
+                "method": "GET",
+                "path": "/quality/kaizens/{kaizen_id}",
+                "operationId": "get_kaizen_by_id",
+                "parametersSchema": [{"name": "kaizen_id"}],
+            },
+            {
+                "actionId": "api_delpi.kaizen_summary",
+                "method": "GET",
+                "path": "/quality/kaizens/summary",
+                "operationId": "get_kaizen_summary",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionRouteSelectionService(repository)
+    spec = OperationalApiRouteSpec(
+        domain="department_kpi",
+        reason="Detalhe kaizen",
+        path_tokens=("kaizen",),
+        path_prefixes=("/quality/",),
+        operation_tokens=("kaizen",),
+        parameter_strategy="date_branch",
+    )
+
+    selected = service.select(
+        spec,
+        message="Detalhe do kaizen com economia projetada e investimento",
+        allowed_action_ids=[
+            "api_delpi.quality_kaizen_detail",
+            "api_delpi.kaizen_summary",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.quality_kaizen_detail"
+
+
 def test_select_eficiencia_fabril_dashboard_when_fabril_terms_present():
     repository = _FakeRepository(
         [

@@ -119,6 +119,7 @@ class ExternalActionRouteSelectionService:
 
         candidates = self._prioritize_production_otd_detail_candidates(message, candidates)
         candidates = self._prioritize_production_oee_appointment_candidates(message, candidates)
+        candidates = self._prioritize_quality_kaizen_detail_candidates(message, candidates)
         candidates = self._prioritize_production_eficiencia_fabril_candidates(message, candidates)
         candidates = self._prioritize_production_oee_detail_candidates(message, candidates)
 
@@ -622,6 +623,47 @@ class ExternalActionRouteSelectionService:
         ]
 
         return appointment_actions or candidates
+
+    def _prioritize_quality_kaizen_detail_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        detail_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "qualityKaizenDetailTerms",
+        )
+        kaizen_context_terms = ("kaizen", "kaizens", "melhoria", "melhorias")
+
+        if not any(term in normalized for term in detail_terms):
+            return candidates
+        if not any(term in normalized for term in kaizen_context_terms):
+            return candidates
+
+        detail_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "qualityKaizenDetailPath",
+            default="/quality/kaizens/",
+        ).lower()
+        detail_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "qualityKaizenDetailOperationId",
+            default="get_kaizen_by_id",
+        ).lower()
+
+        detail_actions = [
+            action
+            for action in candidates
+            if (
+                detail_path.rstrip("/")
+                in str(action.get("path") or "").lower().rstrip("/")
+                or detail_operation in str(action.get("operationId") or "").lower()
+            )
+        ]
+
+        return detail_actions or candidates
 
     def _prioritize_production_eficiencia_fabril_candidates(
         self,

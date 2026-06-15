@@ -156,7 +156,7 @@ Legenda: **D** = HTTP direto no browser/serviço; **I** = indireto (via outro ba
 | Commercial | `get_new_business_rol_pct`, `get_sales_conversion_rate`, `get_sales_order_otd` | `/commercial/new-business-rol-pct`, `closing-rate`, `sales-order-otd` |
 | Production | `get_overall_equipment_effectiveness`, `get_on_time_delivery`, custos % | `/production/overall_equipment_effectiveness_pct`, `on_time_delivery_pct`, … |
 | Supplies | `get_cpv`, `get_supplies_otd`, `get_stock_value`, `get_inventory_turnover`, `get_supplies_negotiation_savings_summary` | `/supplies/*` |
-| Quality | `get_ppm_summary`, `get_kaizen_summary`, `get_audit_5s_summary` | `/quality/ppm/{type}/summary`, `kaizens/summary`, `audit-5s/summary` |
+| Quality | `get_ppm_summary`, `get_kaizen_summary`, `get_kaizen_by_id`, `get_audit_5s_summary` | `/quality/ppm/{type}/summary`, `kaizens/summary`, `kaizens/{id}`, `audit-5s/summary` |
 | Engineering | `get_lmp`, `get_lmp_dashboard_summary`, `list_lmps` | `/engineering/lmps/*` |
 
 ---

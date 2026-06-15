@@ -1315,6 +1315,19 @@
     },
     {
       "method": "GET",
+      "path": "/quality/kaizens/{kaizen_id}",
+      "operation_id": "get_kaizen_by_id",
+      "tags": [
+        "Qualidade"
+      ],
+      "entity": "kaizen",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path",
+      "profile_key": "kpi_dashboard"
+    },
+    {
+      "method": "GET",
       "path": "/quality/nonconformities",
       "operation_id": "list_nonconformity_route_quality_nonconformities_get",
       "tags": [

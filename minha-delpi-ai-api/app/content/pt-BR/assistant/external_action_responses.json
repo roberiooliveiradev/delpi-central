@@ -131,6 +131,19 @@
     ],
     "productionOeeAppointmentPath": "/production/oee/appointments/",
     "productionOeeAppointmentOperationId": "get_production_oee_appointment_by_id",
+    "qualityKaizenDetailTerms": [
+      "detalhe do kaizen",
+      "detalhe kaizen",
+      "ficha do kaizen",
+      "economia do kaizen",
+      "economia projetada",
+      "cálculo do kaizen",
+      "calculo do kaizen",
+      "investimento do kaizen",
+      "kaizen id"
+    ],
+    "qualityKaizenDetailPath": "/quality/kaizens/",
+    "qualityKaizenDetailOperationId": "get_kaizen_by_id",
     "productionEficienciaFabrilTerms": [
       "eficiencia fabril",
       "eficiência fabril",

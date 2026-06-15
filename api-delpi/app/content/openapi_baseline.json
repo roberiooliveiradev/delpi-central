@@ -1312,7 +1312,17 @@
       "method": "GET",
       "path": "/quality/kaizens/summary",
       "operationId": "get_kaizen_summary_quality_kaizens_summary_get",
-      "summary": "Get Kaizen Summary",
+      "summary": "Kaizens — resumo e listagem (Google Sheets)",
+      "tags": [
+        "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/{kaizen_id}",
+      "operationId": "get_kaizen_by_id",
+      "summary": "Detalhe do kaizen (Google Sheets)",
       "tags": [
         "Qualidade"
       ],

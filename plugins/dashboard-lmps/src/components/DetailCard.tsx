@@ -26,7 +26,7 @@ export function DetailCard({
           {hint ? <p>{hint}</p> : null}
         </div>
       </header>
-      {children}
+      <div className="lmps-detail-card__body">{children}</div>
     </section>
   );
 }

@@ -380,7 +380,14 @@ Consultas analíticas no Protheus; **não** confundir com módulo NC em PostgreS
 | Série PPM interno | `GET /quality/ppm/internal/series` | path `ppm/internal/series` |
 | Série PPM externo | `GET /quality/ppm/external/series` | path `ppm/external/series` |
 | Auditoria 5S — resumo | `GET /quality/audit-5s/summary` | path `audit-5s/summary` |
-| Kaizens — resumo | `GET /quality/kaizens/summary` | path `kaizens/summary` |
+| Kaizens — resumo | `GET /quality/kaizens/summary` | `get_kaizen_summary` |
+| Kaizen — detalhe | `GET /quality/kaizens/{kaizen_id}` | `get_kaizen_by_id` |
+
+**Kaizen — resumo vs. detalhe**
+
+- Resumo do período (KPIs, `total_savings`, `list_kaizen` filtrada por data): `GET /quality/kaizens/summary` com `date_start`/`date_end`.
+- Catálogo completo (sem filtro de data na listagem): mesma rota **sem** `date_start`/`date_end`.
+- Ficha de um kaizen (investimento, economia/dia, economia/ano, parâmetros do cálculo): `GET /quality/kaizens/{kaizen_id}` — `kaizen_id` = campo `id` de `list_kaizen[]` (ex.: `01-16/01/2026-App resina CT-16`).
 
 **Parâmetros (`/quality/nonconformities`)**
 

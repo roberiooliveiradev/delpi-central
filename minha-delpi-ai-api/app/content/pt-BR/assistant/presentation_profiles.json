@@ -84,6 +84,7 @@
     "quality_branch": "table_list",
     "nonconformity_series": "kpi_series",
     "kaizen_summary": "kpi_snapshot",
+    "kaizen": "kpi_dashboard",
     "audit_5s_summary": "kpi_snapshot",
     "ppm_internal_summary": "kpi_snapshot",
     "ppm_external_summary": "kpi_snapshot",

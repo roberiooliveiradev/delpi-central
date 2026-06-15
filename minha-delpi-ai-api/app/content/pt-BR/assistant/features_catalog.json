@@ -163,7 +163,8 @@
       "examples": [
         "Não conformidades do mês",
         "PPM interno e externo",
-        "Resumo de kaizens"
+        "Resumo de kaizens",
+        "Detalhe de kaizen"
       ],
       "relatedFeatures": [
         "chart"
