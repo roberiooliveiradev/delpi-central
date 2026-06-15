@@ -184,21 +184,68 @@ SELECT
     ADZ.ADZ_QTDVEN AS quantidade,
     ADZ.ADZ_UM AS unidade,
     ADZ.ADZ_PRCVEN AS preco_unitario,
+    ADZ.ADZ_PRCVEN AS valor_bruto_r_mil,
     ADZ.ADZ_TOTAL AS valor_total,
     ADZ.ADZ_PRAZO AS prazo_dias,
-    ADZ.ADZ_LTEMIN AS lote_minimo
+    ADZ.ADZ_LTEMIN AS lote_minimo,
+    SZ8_PRECO.Z8_ID AS id_formacao_preco,
+    ICMS.aliquota_icms,
+    PISCOFINS.aliquota_pis_cofins
 FROM ADZ010 ADZ WITH (NOLOCK)
+INNER JOIN ADY010 ADY WITH (NOLOCK)
+  ON ADY.D_E_L_E_T_ <> '*'
+ AND ADY.ADY_PROPOS = ADZ.ADZ_PROPOS
+ AND ADY.ADY_PREVIS = ADZ.ADZ_REVISA
+ AND ADY.ADY_STATUS = 'A'
 LEFT JOIN SB1010 B1 WITH (NOLOCK)
   ON B1.D_E_L_E_T_ <> '*'
  AND B1.B1_COD = ADZ.ADZ_PRODUT
+OUTER APPLY (
+    SELECT TOP 1
+        SZ8.R_E_C_N_O_ AS sz8_recno,
+        SZ8.Z8_ID,
+        SZ8.Z8_NROPOR,
+        SZ8.Z8_COD,
+        SZ8.Z8_DTEMISS,
+        SZ8.Z8_PVSUGER,
+        SZ8.Z8_MARGEM,
+        SZ8.Z8_SITUA
+    FROM dbo.SZ8010 SZ8 WITH (NOLOCK)
+    WHERE ISNULL(SZ8.D_E_L_E_T_, '') <> '*'
+      AND LTRIM(RTRIM(SZ8.Z8_NROPOR)) = LTRIM(RTRIM(ADY.ADY_OPORTU))
+      AND LTRIM(RTRIM(SZ8.Z8_COD)) = LTRIM(RTRIM(ADZ.ADZ_PRODUT))
+    ORDER BY
+        SZ8.Z8_DTEMISS DESC,
+        SZ8.R_E_C_N_O_ DESC
+) SZ8_PRECO
+OUTER APPLY (
+    SELECT TOP 1
+        SZ9.Z9_ALIQ AS aliquota_icms
+    FROM dbo.SZ9010 SZ9 WITH (NOLOCK)
+    WHERE ISNULL(SZ9.D_E_L_E_T_, '') <> '*'
+      AND LTRIM(RTRIM(SZ9.Z9_IDZ8)) = LTRIM(RTRIM(SZ8_PRECO.Z8_ID))
+      AND SZ9.Z9_IDFLD LIKE '3IMP%'
+      AND UPPER(SZ9.Z9_DESC) LIKE '%ICMS%'
+    ORDER BY
+        SZ9.Z9_ITEM,
+        SZ9.R_E_C_N_O_
+) ICMS
+OUTER APPLY (
+    SELECT TOP 1
+        SZ9.Z9_ALIQ AS aliquota_pis_cofins
+    FROM dbo.SZ9010 SZ9 WITH (NOLOCK)
+    WHERE ISNULL(SZ9.D_E_L_E_T_, '') <> '*'
+      AND LTRIM(RTRIM(SZ9.Z9_IDZ8)) = LTRIM(RTRIM(SZ8_PRECO.Z8_ID))
+      AND SZ9.Z9_IDFLD LIKE '3IMP%'
+      AND (
+          UPPER(SZ9.Z9_DESC) LIKE '%PIS%'
+          OR UPPER(SZ9.Z9_DESC) LIKE '%COFINS%'
+      )
+    ORDER BY
+        SZ9.Z9_ITEM,
+        SZ9.R_E_C_N_O_
+) PISCOFINS
 WHERE ADZ.D_E_L_E_T_ <> '*'
   AND ADZ.ADZ_PROPOS = ?
-  AND ADZ.ADZ_REVISA = (
-      SELECT TOP 1 ADY.ADY_PREVIS
-      FROM ADY010 ADY WITH (NOLOCK)
-      WHERE ADY.D_E_L_E_T_ <> '*'
-        AND ADY.ADY_STATUS = 'A'
-        AND ADY.ADY_PROPOS = ?
-  )
 ORDER BY ADZ.ADZ_ITEM
 """

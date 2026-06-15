@@ -166,6 +166,86 @@ class PropostaComercialFormatter:
             "quantidade_itens": cls.format_integer_days(row.get("quantidade_itens")) or 0,
         }
 
+    @staticmethod
+    def _optional_float(value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        if math.isnan(number):
+            return None
+        return number
+
+    FONTE_VALOR_LIQUIDO = "calculo_formacao_preco_icms_pis_cofins"
+
+    @classmethod
+    def _resolve_status_calculo_valor_liquido(
+        cls,
+        *,
+        id_formacao_preco: str | None,
+        aliquota_icms: float | None,
+        aliquota_icms_raw: Any,
+        aliquota_pis_cofins: float | None,
+        aliquota_pis_cofins_raw: Any,
+    ) -> str:
+        if not id_formacao_preco:
+            return "SEM_FORMACAO_PRECO"
+        if aliquota_icms_raw in (None, "") or aliquota_icms is None:
+            return "SEM_ICMS"
+        if aliquota_pis_cofins_raw in (None, "") or aliquota_pis_cofins is None:
+            return "SEM_PIS_COFINS"
+        return "OK"
+
+    @classmethod
+    def _compute_valor_liquido_comercial(
+        cls,
+        *,
+        valor_bruto_r_mil: float | None,
+        id_formacao_preco: str | None,
+        aliquota_icms_raw: Any,
+        aliquota_pis_cofins_raw: Any,
+    ) -> dict[str, Any]:
+        id_formacao = cls.trim(id_formacao_preco) or None
+        aliquota_icms = cls._optional_float(aliquota_icms_raw)
+        aliquota_pis_cofins = cls._optional_float(aliquota_pis_cofins_raw)
+        status = cls._resolve_status_calculo_valor_liquido(
+            id_formacao_preco=id_formacao,
+            aliquota_icms=aliquota_icms,
+            aliquota_icms_raw=aliquota_icms_raw,
+            aliquota_pis_cofins=aliquota_pis_cofins,
+            aliquota_pis_cofins_raw=aliquota_pis_cofins_raw,
+        )
+
+        if valor_bruto_r_mil is None or status == "SEM_FORMACAO_PRECO":
+            return {
+                "aliquota_icms": aliquota_icms,
+                "aliquota_pis_cofins": aliquota_pis_cofins,
+                "valor_apos_icms_r_mil": None,
+                "valor_apos_icms_r_mil_formatado": None,
+                "valor_liquido_r_mil": None,
+                "valor_liquido_r_mil_formatado": None,
+                "status_calculo_valor_liquido": status,
+                "fonte_valor_liquido": None,
+            }
+
+        icms_rate = aliquota_icms if aliquota_icms is not None else 0.0
+        pis_cofins_rate = aliquota_pis_cofins if aliquota_pis_cofins is not None else 0.0
+        valor_apos_icms = valor_bruto_r_mil * (1 - icms_rate / 100.0)
+        valor_liquido = valor_apos_icms * (1 - pis_cofins_rate / 100.0)
+
+        return {
+            "aliquota_icms": aliquota_icms,
+            "aliquota_pis_cofins": aliquota_pis_cofins,
+            "valor_apos_icms_r_mil": valor_apos_icms,
+            "valor_apos_icms_r_mil_formatado": cls.format_currency(valor_apos_icms),
+            "valor_liquido_r_mil": valor_liquido,
+            "valor_liquido_r_mil_formatado": cls.format_currency(valor_liquido),
+            "status_calculo_valor_liquido": status,
+            "fonte_valor_liquido": cls.FONTE_VALOR_LIQUIDO,
+        }
+
     @classmethod
     def format_detail(
         cls,
@@ -175,6 +255,13 @@ class PropostaComercialFormatter:
         empresa_site: str,
     ) -> dict:
         soma_valores_r_mil = header.get("soma_valores_r_mil")
+        formatted_items = [cls.format_item(item) for item in items]
+        liquido_values = [
+            item["valor_liquido_r_mil"]
+            for item in formatted_items
+            if item.get("valor_liquido_r_mil") is not None
+        ]
+        total_liquido_r_mil = sum(liquido_values) if liquido_values else None
         return {
             "cabecalho": {
                 "proposta_interna": cls.trim(header.get("proposta_interna")),
@@ -190,6 +277,8 @@ class PropostaComercialFormatter:
                 "soma_valores_r_mil_numerico": (
                     float(soma_valores_r_mil) if soma_valores_r_mil not in (None, "") else None
                 ),
+                "total_liquido_r_mil": total_liquido_r_mil,
+                "total_liquido_r_mil_formatado": cls.format_currency(total_liquido_r_mil),
             },
             "empresa": {
                 "nome": cls.trim(header.get("empresa_nome")),
@@ -229,7 +318,7 @@ class PropostaComercialFormatter:
                 "cargo": cls.trim(header.get("vendedor_cargo")),
             },
             "observacoes": cls.trim(header.get("observacoes")),
-            "itens": [cls.format_item(item) for item in items],
+            "itens": formatted_items,
         }
 
     @classmethod
@@ -256,6 +345,15 @@ class PropostaComercialFormatter:
 
     @classmethod
     def format_item(cls, row: dict) -> dict:
+        valor_bruto_r_mil = cls._optional_float(
+            row.get("valor_bruto_r_mil", row.get("preco_unitario"))
+        )
+        liquido = cls._compute_valor_liquido_comercial(
+            valor_bruto_r_mil=valor_bruto_r_mil,
+            id_formacao_preco=row.get("id_formacao_preco"),
+            aliquota_icms_raw=row.get("aliquota_icms"),
+            aliquota_pis_cofins_raw=row.get("aliquota_pis_cofins"),
+        )
         return {
             "item": cls.trim(row.get("item")),
             "produto": cls.trim(row.get("produto")),
@@ -266,6 +364,17 @@ class PropostaComercialFormatter:
             "unidade": cls.trim(row.get("unidade")),
             "preco_unitario": cls.format_currency(row.get("preco_unitario")),
             "preco_unitario_numerico": float(row.get("preco_unitario") or 0),
+            "valor_bruto_r_mil": valor_bruto_r_mil,
+            "valor_bruto_r_mil_formatado": cls.format_currency(valor_bruto_r_mil),
+            "aliquota_icms": liquido["aliquota_icms"],
+            "aliquota_pis_cofins": liquido["aliquota_pis_cofins"],
+            "valor_apos_icms_r_mil": liquido["valor_apos_icms_r_mil"],
+            "valor_apos_icms_r_mil_formatado": liquido["valor_apos_icms_r_mil_formatado"],
+            "valor_liquido_r_mil": liquido["valor_liquido_r_mil"],
+            "valor_liquido_r_mil_formatado": liquido["valor_liquido_r_mil_formatado"],
+            "id_formacao_preco": cls.trim(row.get("id_formacao_preco")) or None,
+            "status_calculo_valor_liquido": liquido["status_calculo_valor_liquido"],
+            "fonte_valor_liquido": liquido["fonte_valor_liquido"],
             "valor_total": cls.format_currency(row.get("valor_total")),
             "valor_total_numerico": float(row.get("valor_total") or 0),
             "prazo_dias": cls.format_integer_days(row.get("prazo_dias")),

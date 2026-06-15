@@ -26,6 +26,8 @@ export type PropostaComercialCabecalho = {
   status: string;
   soma_valores_r_mil: string | null;
   soma_valores_r_mil_numerico: number | null;
+  total_liquido_r_mil?: number | null;
+  total_liquido_r_mil_formatado?: string | null;
 };
 
 export type PropostaComercialEmpresa = {
@@ -94,6 +96,17 @@ export type PropostaComercialItem = {
   unidade: string;
   preco_unitario: string | null;
   preco_unitario_numerico: number;
+  valor_bruto_r_mil?: number | null;
+  valor_bruto_r_mil_formatado?: string | null;
+  aliquota_icms?: number | null;
+  aliquota_pis_cofins?: number | null;
+  valor_apos_icms_r_mil?: number | null;
+  valor_apos_icms_r_mil_formatado?: string | null;
+  valor_liquido_r_mil?: number | null;
+  valor_liquido_r_mil_formatado?: string | null;
+  id_formacao_preco?: string | null;
+  status_calculo_valor_liquido?: string | null;
+  fonte_valor_liquido?: string | null;
   valor_total: string | null;
   valor_total_numerico: number;
   prazo_dias: number | null;

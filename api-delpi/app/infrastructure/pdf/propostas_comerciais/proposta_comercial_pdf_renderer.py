@@ -326,11 +326,12 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             "Ref. Cliente",
             "NCM",
             "Descrição",
-            "Valor R$/mil",
+            "Bruto R$/mil",
+            "Líquido R$/mil",
             "Prazo",
             "Lote mín.",
         ]
-        widths = [11 * mm, 17 * mm, 17 * mm, 20 * mm, 67 * mm, 27 * mm, 14 * mm, 13 * mm]
+        widths = [10 * mm, 15 * mm, 15 * mm, 18 * mm, 50 * mm, 24 * mm, 24 * mm, 12 * mm, 12 * mm]
 
         rows: list[list[Flowable | str]] = [
             [_table_header_cell(label, styles) for label in headers]
@@ -348,15 +349,24 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                     Paragraph(_escape(_display(item.get("referencia_cliente"))), styles["tableCell"]),
                     Paragraph(_escape(_display(item.get("ncm"))), styles["tableCellNcm"]),
                     Paragraph(_escape_multiline(_display(item.get("descricao"))), styles["tableCell"]),
-                    Paragraph(_escape(_display(item.get("valor_total"))), styles["tableCellMoney"]),
+                    Paragraph(
+                        _escape(_display(item.get("valor_bruto_r_mil_formatado") or item.get("preco_unitario"))),
+                        styles["tableCellMoney"],
+                    ),
+                    Paragraph(
+                        _escape(_display(item.get("valor_liquido_r_mil_formatado"))),
+                        styles["tableCellMoney"],
+                    ),
                     Paragraph(_escape(prazo_text), styles["tableCellCenter"]),
                     Paragraph(_escape(lote_text), styles["tableCellCenter"]),
                 ]
             )
 
         soma = cabecalho.get("soma_valores_r_mil")
+        total_liquido = cabecalho.get("total_liquido_r_mil_formatado")
         has_total = bool(soma and soma != "—")
-        if has_total:
+        has_total_liquido = bool(total_liquido and total_liquido != "—")
+        if has_total or has_total_liquido:
             rows.append(
                 [
                     "",
@@ -364,20 +374,28 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                     "",
                     "",
                     Paragraph("<b>Total da proposta</b>", styles["tableCell"]),
-                    Paragraph(f"<b>{_escape(_display(soma))}</b>", styles["tableCellMoneyBold"]),
+                    Paragraph(
+                        f"<b>{_escape(_display(soma))}</b>" if has_total else "",
+                        styles["tableCellMoneyBold"],
+                    ),
+                    Paragraph(
+                        f"<b>{_escape(_display(total_liquido))}</b>" if has_total_liquido else "",
+                        styles["tableCellMoneyBold"],
+                    ),
                     "",
                     "",
                 ]
             )
 
+        has_total_row = has_total or has_total_liquido
         table = Table(rows, colWidths=widths, repeatRows=1)
         style_commands = [
             ("BACKGROUND", (0, 0), (-1, 0), SURFACE_MUTED),
             ("TEXTCOLOR", (0, 0), (-1, 0), DELPI_BLUE),
             ("LINEBELOW", (0, 0), (-1, 0), 0.8, DELPI_BLUE),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -2 if has_total else -1), [WHITE, SURFACE_SOFT]),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -2 if has_total_row else -1), [WHITE, SURFACE_SOFT]),
             ("BOX", (0, 0), (-1, -1), 0.35, LINE),
-            ("INNERGRID", (0, 0), (-1, -2 if has_total else -1), 0.25, LINE),
+            ("INNERGRID", (0, 0), (-1, -2 if has_total_row else -1), 0.25, LINE),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 3),
             ("RIGHTPADDING", (0, 0), (-1, -1), 3),
@@ -386,7 +404,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             ("LEFTPADDING", (3, 0), (3, -1), 2),
             ("RIGHTPADDING", (3, 0), (3, -1), 2),
         ]
-        if has_total:
+        if has_total_row:
             style_commands.extend(
                 [
                     ("LINEABOVE", (0, -1), (-1, -1), 0.6, LINE),

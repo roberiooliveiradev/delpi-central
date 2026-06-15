@@ -52,6 +52,8 @@ def _sample_detail() -> dict:
             "status": "A",
             "soma_valores_r_mil": "R$ 1.507.588,55",
             "soma_valores_r_mil_numerico": 1507588.55,
+            "total_liquido_r_mil": 31977.189816,
+            "total_liquido_r_mil_formatado": "R$ 31.977,19",
         },
         "empresa": {
             "nome": "DELPI COMPONENTES LTDA",
@@ -116,6 +118,16 @@ def _sample_detail() -> dict:
                 "unidade": "MI",
                 "preco_unitario": "R$ 40.041,56",
                 "preco_unitario_numerico": 40041.56,
+                "valor_bruto_r_mil": 40041.56,
+                "valor_bruto_r_mil_formatado": "R$ 40.041,56",
+                "aliquota_icms": 12.0,
+                "aliquota_pis_cofins": 9.25,
+                "valor_apos_icms_r_mil": 35236.5728,
+                "valor_liquido_r_mil": 31977.189816,
+                "valor_liquido_r_mil_formatado": "R$ 31.977,19",
+                "id_formacao_preco": "008583",
+                "status_calculo_valor_liquido": "OK",
+                "fonte_valor_liquido": "calculo_formacao_preco_icms_pis_cofins",
                 "valor_total": "R$ 40.041,56",
                 "valor_total_numerico": 40041.56,
                 "prazo_dias": 45,
@@ -219,6 +231,10 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
                 "quantidade": 1.0,
                 "unidade": "MI",
                 "preco_unitario": 40041.56,
+                "valor_bruto_r_mil": 40041.56,
+                "aliquota_icms": 12.0,
+                "aliquota_pis_cofins": 9.25,
+                "id_formacao_preco": "008583",
                 "valor_total": 40041.56,
                 "prazo_dias": 45.0,
                 "lote_minimo": 0.0,
@@ -240,9 +256,202 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
     assert result["cliente"]["cnpj"] == "08.774.764/0003-08"
     assert result["cliente"]["tipo_cadastro"] == "cliente"
     assert result["cliente"]["is_prospect"] is False
+    assert result["cabecalho"]["total_liquido_r_mil"] == pytest.approx(31977.189816)
+    assert result["itens"][0]["valor_liquido_r_mil"] == pytest.approx(31977.189816)
+    assert result["itens"][0]["valor_apos_icms_r_mil"] == pytest.approx(35236.5728)
+    assert result["itens"][0]["id_formacao_preco"] == "008583"
+    assert result["itens"][0]["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+    assert result["itens"][0]["status_calculo_valor_liquido"] == "OK"
+    assert result["itens"][0]["valor_liquido_r_mil"] != pytest.approx(21264.8312907)
     assert result["itens"][0]["ncm"] == "8544.42.00"
     assert result["itens"][0]["prazo_dias"] == 45
     assert result["observacoes"] == "Observacao teste"
+
+
+def test_formatter_item_calculates_valor_liquido_from_icms_and_pis_cofins() -> None:
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "80016349",
+            "descricao": "PRODUTO TESTE",
+            "referencia_cliente": "123",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": 9728.78,
+            "valor_bruto_r_mil": 9728.78,
+            "aliquota_icms": 12.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "006394",
+            "valor_total": 9728.78,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+    )
+
+    assert item["valor_bruto_r_mil"] == 9728.78
+    assert item["aliquota_icms"] == 12.0
+    assert item["aliquota_pis_cofins"] == 9.25
+    assert item["valor_apos_icms_r_mil"] == pytest.approx(8561.3264)
+    assert item["valor_liquido_r_mil"] == pytest.approx(7769.403708)
+    assert item["valor_liquido_r_mil"] != pytest.approx(4781.4936783)
+    assert item["id_formacao_preco"] == "006394"
+    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+    assert item["status_calculo_valor_liquido"] == "OK"
+    assert item["preco_unitario_numerico"] == 9728.78
+
+
+def test_formatter_item_without_formacao_preco_keeps_null_liquido() -> None:
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "80000000",
+            "descricao": "SEM FORMACAO",
+            "referencia_cliente": "",
+            "ncm": "",
+            "quantidade": 1.0,
+            "unidade": "UN",
+            "preco_unitario": 100.0,
+            "valor_bruto_r_mil": 100.0,
+            "aliquota_icms": None,
+            "aliquota_pis_cofins": None,
+            "id_formacao_preco": None,
+            "valor_total": 100.0,
+            "prazo_dias": None,
+            "lote_minimo": None,
+        }
+    )
+
+    assert item["valor_bruto_r_mil"] == 100.0
+    assert item["valor_liquido_r_mil"] is None
+    assert item["valor_liquido_r_mil_formatado"] is None
+    assert item["id_formacao_preco"] is None
+    assert item["fonte_valor_liquido"] is None
+    assert item["status_calculo_valor_liquido"] == "SEM_FORMACAO_PRECO"
+
+
+def test_formatter_item_without_icms_uses_zero_and_flags_status() -> None:
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "80000000",
+            "descricao": "SEM ICMS",
+            "referencia_cliente": "",
+            "ncm": "",
+            "quantidade": 1.0,
+            "unidade": "UN",
+            "preco_unitario": 100.0,
+            "valor_bruto_r_mil": 100.0,
+            "aliquota_icms": None,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "123",
+            "valor_total": 100.0,
+            "prazo_dias": None,
+            "lote_minimo": None,
+        }
+    )
+
+    assert item["valor_apos_icms_r_mil"] == pytest.approx(100.0)
+    assert item["valor_liquido_r_mil"] == pytest.approx(90.75)
+    assert item["status_calculo_valor_liquido"] == "SEM_ICMS"
+    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+
+
+def test_formatter_detail_sums_total_liquido_from_items() -> None:
+    header = {
+        "proposta_interna": "004836",
+        "oportunidade": "003590",
+        "versao": "01",
+        "revisao_oportunidade": "01",
+        "data_proposta": "20260612",
+        "validade_dias": 30,
+        "status": "A",
+        "filial": "01",
+        "cliente_codigo": "000091",
+        "cliente_loja": "01",
+        "cliente_nome": "KRAH-ICE-BRASIL LTDA",
+        "cliente_tipo_cadastro": "prospect",
+        "soma_valores_r_mil": 56758.55,
+    }
+    items = [
+        {
+            "item": "01",
+            "produto": "80016350",
+            "descricao": "ITEM KRAH",
+            "referencia_cliente": "",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": 56758.55,
+            "valor_bruto_r_mil": 56758.55,
+            "aliquota_icms": 12.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "008609",
+            "valor_total": 56758.55,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+    ]
+
+    detail = PropostaComercialFormatter.format_detail(header, items, empresa_site="www.delpi.com.br")
+
+    assert detail["cliente"]["tipo_cadastro"] == "prospect"
+    assert detail["cabecalho"]["total_liquido_r_mil"] == pytest.approx(45327.37803)
+    assert detail["itens"][0]["valor_apos_icms_r_mil"] == pytest.approx(49947.524)
+    assert detail["itens"][0]["valor_liquido_r_mil"] == pytest.approx(45327.37803)
+    assert detail["itens"][0]["valor_liquido_r_mil"] != pytest.approx(33995.535601)
+    assert detail["itens"][0]["id_formacao_preco"] == "008609"
+
+
+def test_formatter_detail_multiple_items_preserves_one_row_per_item() -> None:
+    header = {
+        "proposta_interna": "004845",
+        "oportunidade": "003581",
+        "versao": "01",
+        "revisao_oportunidade": "08",
+        "data_proposta": "20260612",
+        "validade_dias": 30,
+        "status": "A",
+        "filial": "01",
+        "cliente_codigo": "000204",
+        "cliente_loja": "01",
+        "cliente_nome": "AHT COOLING",
+        "cliente_tipo_cadastro": "cliente",
+        "soma_valores_r_mil": 500.0,
+    }
+    items = [
+        {
+            "item": f"0{i}",
+            "produto": f"8001633{i}",
+            "descricao": f"ITEM {i}",
+            "referencia_cliente": "",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": 100.0 * i,
+            "valor_bruto_r_mil": 100.0 * i,
+            "aliquota_icms": 12.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": f"ID{i}",
+            "valor_total": 100.0 * i,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+        for i in range(1, 6)
+    ]
+
+    detail = PropostaComercialFormatter.format_detail(header, items, empresa_site="www.delpi.com.br")
+
+    assert len(detail["itens"]) == 5
+    assert [item["item"] for item in detail["itens"]] == ["01", "02", "03", "04", "05"]
+    assert detail["cabecalho"]["total_liquido_r_mil"] == pytest.approx(1197.9)
+    assert {item["id_formacao_preco"] for item in detail["itens"]} == {
+        "ID1",
+        "ID2",
+        "ID3",
+        "ID4",
+        "ID5",
+    }
 
 
 def test_formatter_formats_prospect_cliente_from_sus010() -> None:
