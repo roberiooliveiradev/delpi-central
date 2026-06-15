@@ -274,7 +274,7 @@ export function OeePage({ pathname }: OeePageProps) {
     <div className="dashboard-production dashboard-page">
       <FilterBar
         title="OEE — Eficiência geral dos equipamentos"
-        subtitle="Apontamentos de produção SH6010 (H6_ZEFICI) — média dos registros na faixa 0–199%"
+        subtitle="Apontamentos OK da view fabril (EFICIENCIA_PERCENTUAL) — média na faixa 0–199%, mesmo escopo da eficiência fabril"
         currentPath={pathname ?? PRODUCTION_ROUTES.oee}
         filterState={filterState}
         dateStart={dateStart}
@@ -326,16 +326,16 @@ export function OeePage({ pathname }: OeePageProps) {
           loading={isBusy && !data}
         />
         <KpiCard
-          title="Apontamentos válidos"
-          value={formatInteger(data?.summary.valid_appointments)}
-          subtitle={`De ${formatInteger(data?.summary.total_appointments)} apontamentos`}
+          title="Apontamentos"
+          value={formatInteger(data?.summary.total_appointments)}
+          subtitle={`${formatInteger(data?.summary.outlier_appointments)} a avaliar (Verificar)`}
           icon={<Factory size={22} />}
           loading={isBusy && !data}
         />
         <KpiCard
-          title="Fora da faixa"
-          value={formatInteger(data?.summary.outlier_appointments)}
-          subtitle={formatPercent(data?.summary.outlier_percentage)}
+          title="Na faixa (indicador)"
+          value={formatInteger(data?.summary.valid_appointments)}
+          subtitle={formatPercent(data?.summary.oee_pct)}
           icon={<Activity size={22} />}
           loading={isBusy && !data}
         />

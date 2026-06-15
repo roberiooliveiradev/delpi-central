@@ -399,19 +399,17 @@ PRODUCTION_OTD = agent_route(
 )
 
 PRODUCTION_OEE = agent_route(
-    summary="OEE produção — resumo e apontamentos (SH6010)",
+    summary="OEE produção — resumo e apontamentos (view fabril)",
     description=(
-        "Painel de OEE de produção: resumo (% OEE médio, apontamentos válidos e fora da faixa) "
-        "e listagem paginada de apontamentos SH6010 (H6_ZEFICI, OP, CT, operação, recurso, operador). "
+        "Painel de eficiência de produção alinhado à eficiência fabril: mesma view "
+        "(vw_Apontamentos_Eficiencia), STATUS_REGISTRO=OK, CTs excluídos e faixa 0–199%. "
+        "Resumo e listagem usam EFICIENCIA_PERCENTUAL; detalhe mantém SH6010 (H6_ZEFICI, roteiro, tempos). "
         "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "status=valid|outlier filtra apontamentos dentro ou fora da faixa 0–199%. "
         "product_type=PA|PI filtra pelo tipo do produto (SB1010.B1_TIPO). "
-        "Use para listar apontamentos com OEE, conferir outliers ou filtrar PA/PI. "
-        "Para detalhe de um apontamento (roteiro SG2, estrutura BOM, tempos previsto × realizado), "
-        "use GET /production/oee/appointments/{appointment_id}. "
-        "Para apenas o percentual agregado sem listagem, prefira GET /production/overall_equipment_effectiveness_pct. "
+        "Para detalhe (roteiro SG2, estrutura BOM, tempos), use GET /production/oee/appointments/{appointment_id}. "
         "Para série temporal, use GET /production/oee/series. "
-        "Não confundir com eficiência fabril (/production/eficiencia-fabril), que usa outra métrica (MOD/view)."
+        "Listagem dedicada MOD/gráficos: GET /production/eficiencia-fabril/*."
     ),
     operation_id="get_production_oee",
 )

@@ -9,12 +9,22 @@ from app.domain.entities.production.overall_equipment_effectiveness import (
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
+from app.domain.production.production_efficiency_valid_range import (
+    PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+)
+from app.domain.production.production_fabril_appointment_scope import (
+    EFICIENCIA_FABRIL_VIEW,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
+    build_fabril_view_filters,
+)
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
+    OEE_FABRIL_APPOINTMENTS_SELECT,
+)
 from app.infrastructure.persistence.totvs.production_repositories.production_oee_sql import (
     OEE_APPOINTMENT_DETAIL_SELECT,
-    OEE_APPOINTMENTS_SELECT,
-    OEE_VALID_PCT_EXPR_PLAIN,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -24,27 +34,49 @@ class OverallEquipmentEffectivenessRepository(
 ):
     @staticmethod
     def _build_appointment_filters(request: GetProductionOeeRequest) -> tuple[str, list]:
-        qb = QueryBuilder()
-        qb.raw("H6.D_E_L_E_T_ = ''")
-        qb.raw("H6.H6_OP <> ''")
+        if not request.start_date or not request.end_date:
+            return "1=0", []
 
-        if request.branch:
-            qb.eq("H6.H6_FILIAL", request.branch)
+        where_clause, where_params = build_fabril_view_filters(
+            date_start=request.start_date,
+            date_end=request.end_date,
+            branch=request.branch,
+            op=request.production_order,
+            work_center=request.work_center,
+            status_ok_only=True,
+            efficiency_cap_pct=None,
+            column_prefix="EF",
+        )
 
-        qb.date_range("H6.H6_DTPROD", request.start_date, request.end_date)
-
-        if request.work_center:
-            qb.eq("SH1.H1_CTRAB", request.work_center)
-
-        if request.production_order:
-            qb.eq("H6.H6_OP", request.production_order)
+        extra_clauses: list[str] = []
+        extra_params: list = []
 
         if request.product_type:
             normalized_type = str(request.product_type).strip().upper()
             if normalized_type in {"PA", "PI"}:
-                qb.eq("SB1.B1_TIPO", normalized_type)
+                extra_clauses.append("SB1.B1_TIPO = ?")
+                extra_params.append(normalized_type)
 
-        return qb.build()
+        if extra_clauses:
+            where_clause = f"{where_clause} AND {' AND '.join(extra_clauses)}"
+            where_params = tuple(list(where_params) + extra_params)
+
+        return where_clause, list(where_params)
+
+    @staticmethod
+    def _build_kpi_filters(request: ProductionRequest) -> tuple[str, list]:
+        if not request.start_date or not request.end_date:
+            return "1=0", []
+
+        where_clause, where_params = build_fabril_view_filters(
+            date_start=request.start_date,
+            date_end=request.end_date,
+            branch=request.branch,
+            status_ok_only=True,
+            efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+            column_prefix=None,
+        )
+        return where_clause, list(where_params)
 
     @staticmethod
     def _status_filter_clause(status: str | None) -> str:
@@ -69,7 +101,6 @@ class OverallEquipmentEffectivenessRepository(
             "work_center": "work_center",
             "operation": "operation",
             "resource_code": "resource_code",
-            "resource_name": "resource_name",
             "production_date": "production_date",
             "start_time": "start_time",
             "end_time": "end_time",
@@ -108,20 +139,12 @@ class OverallEquipmentEffectivenessRepository(
         self,
         request: ProductionRequest,
     ) -> OverallEquipmentEffectiveness:
-        qb = QueryBuilder()
-        qb.raw("D_E_L_E_T_ = ''")
-
-        if request.branch:
-            qb.eq("H6_FILIAL", request.branch)
-
-        qb.date_range("H6_DTPROD", request.start_date, request.end_date)
-
-        where_clause, where_params = qb.build()
+        where_clause, where_params = self._build_kpi_filters(request)
 
         sql = f"""
             SELECT
-                AVG({OEE_VALID_PCT_EXPR_PLAIN}) AS oee_pct
-            FROM SH6010
+                ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS oee_pct
+            FROM {EFICIENCIA_FABRIL_VIEW} EF
             WHERE {where_clause}
         """
 
@@ -148,26 +171,27 @@ class OverallEquipmentEffectivenessRepository(
         self,
         request: ProductionRequest,
     ) -> list[dict]:
-        qb = QueryBuilder()
-        qb.raw("D_E_L_E_T_ = ''")
+        if not request.start_date or not request.end_date:
+            return []
 
-        if request.branch:
-            qb.eq("H6_FILIAL", request.branch)
-
-        qb.date_range("H6_DTPROD", request.start_date, request.end_date)
-
-        where_clause, where_params = qb.build()
+        where_clause, where_params = build_fabril_view_filters(
+            date_start=request.start_date,
+            date_end=request.end_date,
+            branch=request.branch,
+            status_ok_only=True,
+            efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+            column_prefix=None,
+        )
 
         sql = f"""
             SELECT
-                H6_FILIAL AS branch,
-                AVG({OEE_VALID_PCT_EXPR_PLAIN}) AS oee_pct
-            FROM SH6010
+                RTRIM(LTRIM(EF.FILIAL)) AS branch,
+                ROUND(AVG(EF.EFICIENCIA_PERCENTUAL), 2) AS oee_pct
+            FROM {EFICIENCIA_FABRIL_VIEW} EF
             WHERE {where_clause}
-              AND H6_FILIAL IS NOT NULL
-              AND LTRIM(RTRIM(H6_FILIAL)) <> ''
-            GROUP BY H6_FILIAL
-            ORDER BY H6_FILIAL
+              AND RTRIM(LTRIM(EF.FILIAL)) <> ''
+            GROUP BY RTRIM(LTRIM(EF.FILIAL))
+            ORDER BY branch
         """
 
         with self:
@@ -184,7 +208,7 @@ class OverallEquipmentEffectivenessRepository(
 
         sql = f"""
             WITH APONTAMENTOS_OEE AS (
-                {OEE_APPOINTMENTS_SELECT}
+                {OEE_FABRIL_APPOINTMENTS_SELECT}
                 WHERE {where_clause}
             )
             SELECT
@@ -215,7 +239,7 @@ class OverallEquipmentEffectivenessRepository(
 
         count_sql = f"""
             WITH APONTAMENTOS_OEE AS (
-                {OEE_APPOINTMENTS_SELECT}
+                {OEE_FABRIL_APPOINTMENTS_SELECT}
                 WHERE {where_clause}
             )
             SELECT COUNT(*) AS total
@@ -225,7 +249,7 @@ class OverallEquipmentEffectivenessRepository(
 
         list_sql = f"""
             WITH APONTAMENTOS_OEE AS (
-                {OEE_APPOINTMENTS_SELECT}
+                {OEE_FABRIL_APPOINTMENTS_SELECT}
                 WHERE {where_clause}
             )
             SELECT *
@@ -235,7 +259,7 @@ class OverallEquipmentEffectivenessRepository(
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 
-        list_params = where_params + (paging["offset"], paging["page_size"])
+        list_params = where_params + [paging["offset"], paging["page_size"]]
 
         with self:
             total_row = self.execute_one(count_sql, where_params)

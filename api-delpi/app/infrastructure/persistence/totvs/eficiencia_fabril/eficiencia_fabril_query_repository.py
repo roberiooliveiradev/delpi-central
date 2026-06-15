@@ -20,7 +20,9 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_settings import (
     EficienciaFabrilQuerySettings,
 )
-from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
+    build_fabril_view_filters,
+)
 
 
 class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepositoryPort):
@@ -251,59 +253,19 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
         status_ok_only: bool | None,
         efficiency_cap_pct: int | None = None,
     ) -> Tuple[str, tuple]:
-        qb = QueryBuilder()
-        qb.gte("DATA_PRODUCAO", request.date_start.isoformat())
-        qb.lte("DATA_PRODUCAO", request.date_end.isoformat())
-
-        if request.branch:
-            qb.eq("FILIAL", request.branch)
-        else:
-            qb.in_list("FILIAL", self.settings.branches)
-
-        qb.raw("LTRIM(RTRIM(ISNULL(FILIAL, ''))) <> ''")
-
-        excluded_work_centers = ("CT-00", "CT-70", "CT-16A", "CT-99")
-
-        if request.op:
-            # Busca parcial (contains) por número de OP.
-            # Ex.: "24546" deve retornar "24546401001", "24546401005", ...
-            qb.like("OP", request.op)
-
-        if request.work_center:
-            work_center = request.work_center.strip()
-            if work_center in excluded_work_centers:
-                qb.raw("1=0")
-            else:
-                qb.eq("CENTRO_TRABALHO", work_center)
-        else:
-            # TOTVS pode retornar CENTRO_TRABALHO com espaços à direita
-            for wc in excluded_work_centers:
-                qb.raw("LTRIM(RTRIM(CENTRO_TRABALHO)) <> ?")
-                qb._params.append(wc)
-
-        if request.employee:
-            # Busca por nome do operador (contains)
-            qb.like("NOME_OPERADOR", request.employee, case_insensitive=True)
-
-        if efficiency_cap_pct is not None:
-            # Sanidade: fora da faixa 0–199% é outlier (erro de apontamento).
-            # O cap afeta apenas agregações (summary/charts); a tabela lista todos.
-            min_pct = self.settings.min_efficiency_indicator_pct
-            max_pct = efficiency_cap_pct
-            qb.raw(
-                "(EFICIENCIA_PERCENTUAL IS NULL OR "
-                "(EFICIENCIA_PERCENTUAL >= ? AND EFICIENCIA_PERCENTUAL <= ?))"
-            )
-            qb._params.append(min_pct)
-            qb._params.append(max_pct)
-
-        effective_status_ok = (
-            request.status_ok_only if status_ok_only is None else status_ok_only
+        return build_fabril_view_filters(
+            date_start=request.date_start,
+            date_end=request.date_end,
+            branch=request.branch,
+            branches=tuple(self.settings.branches),
+            op=request.op,
+            work_center=request.work_center,
+            employee=request.employee,
+            status_ok_only=(
+                request.status_ok_only if status_ok_only is None else status_ok_only
+            ),
+            efficiency_cap_pct=efficiency_cap_pct,
         )
-        if effective_status_ok:
-            qb.eq("STATUS_REGISTRO", self.settings.status_registro_ok)
-
-        return qb.build()
 
     @staticmethod
     def _map_summary(

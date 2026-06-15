@@ -24,6 +24,18 @@ class GetProductionOeeUseCase:
             end_date=request.end_date,
         )
 
+        appointment_summary = self._repository.get_oee_appointment_summary(request)
+        total_appointments = int(appointment_summary.get("total_appointments") or 0)
+        valid_appointments = int(appointment_summary.get("valid_appointments") or 0)
+        outlier_appointments = int(
+            appointment_summary.get("outlier_appointments") or 0
+        )
+        outlier_percentage = (
+            round(outlier_appointments * 100.0 / total_appointments, 2)
+            if total_appointments > 0
+            else 0.0
+        )
+
         if request.branch:
             summary_entity = self._repository.get_overall_equipment_effectiveness(
                 production_request
@@ -46,18 +58,6 @@ class GetProductionOeeUseCase:
                 )
             else:
                 oee_pct = None
-
-        appointment_summary = self._repository.get_oee_appointment_summary(request)
-        total_appointments = int(appointment_summary.get("total_appointments") or 0)
-        valid_appointments = int(appointment_summary.get("valid_appointments") or 0)
-        outlier_appointments = int(
-            appointment_summary.get("outlier_appointments") or 0
-        )
-        outlier_percentage = (
-            round(outlier_appointments * 100.0 / total_appointments, 2)
-            if total_appointments > 0
-            else 0.0
-        )
 
         appointments_page = self._repository.list_oee_appointments(request)
 

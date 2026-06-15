@@ -22,7 +22,8 @@ Rotas no Portal: `/apps/dashboard-production/oee`, `/apps/dashboard-production/o
 Layout alinhado ao plugin [eficiência fabril](../eficiencia-fabril/README.md):
 
 - Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, Descrição produto, CT, Operador, Eficiência, Status
-- Faixa válida **0–199%** (ver [regras-faixa-eficiencia-producao.md](../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md))
+- Faixa válida **0–199%** via módulo compartilhado `production_efficiency_valid_range` / `build_fabril_view_filters`
+- Mesma métrica e escopo da eficiência fabril (`EFICIENCIA_PERCENTUAL`, view fabril)
 - Outliers: linha vermelha + badge **Verificar**; válidos: **OK**
 - Clique na linha → detalhe (`OeeAppointmentDetailPage`)
 

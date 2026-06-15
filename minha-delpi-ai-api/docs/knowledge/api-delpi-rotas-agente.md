@@ -286,7 +286,7 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 
 **Resposta:** `appointment` (cadastro do apontamento), `time_analysis` (setup, fator padrão, horas previstas/reais, eficiência por tempos, fórmulas), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
 
-**Não confundir:** `GET /production/oee` (OEE `H6_ZEFICI`) ≠ `GET /production/eficiencia-fabril/*` (eficiência MOD/view).
+**Não confundir rotas:** `GET /production/oee` (painel + listagem, view fabril) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham `EFICIENCIA_PERCENTUAL` e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa.
 
 **Faixa válida (OEE e eficiência fabril):** KPIs e gráficos consideram apenas eficiência entre **0% e 199%** (outliers permanecem listáveis). Ver `api-delpi/docs/api/regras-faixa-eficiencia-producao.md`.
 

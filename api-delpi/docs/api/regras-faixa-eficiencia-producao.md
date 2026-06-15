@@ -36,9 +36,10 @@ Consumidores:
 
 | Módulo | Uso |
 |--------|-----|
-| `production_oee_sql.py` | `OEE_VALID_PCT_EXPR`, `OEE_STATUS_EXPR` (`valid` / `outlier`) |
-| `eficiencia_fabril_query_settings.py` | `min_efficiency_indicator_pct`, `max_efficiency_indicator_pct` |
-| `eficiencia_fabril_query_repository.py` | Filtro SQL em agregações: `EFICIENCIA_PERCENTUAL >= 0 AND <= 199` |
+| `production_fabril_appointment_scope.py` | View, CTs excluídos, `STATUS_REGISTRO_OK` |
+| `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
+| `production_fabril_efficiency_sql.py` | `status` valid/outlier em `EFICIENCIA_PERCENTUAL` |
+| `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010) |
 
 ### MFE Eficiência Fabril
 
@@ -64,9 +65,9 @@ Consumidores:
 
 ### OEE — `GET /production/oee`
 
-- Resumo: média apenas de apontamentos na faixa.
-- Query param `status=valid` | `status=outlier`.
-- Detalhe: `GET /production/oee/appointments/{id}` — exibe valor bruto e `time_analysis` mesmo para outlier.
+- **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
+- **Métrica do painel:** `EFICIENCIA_PERCENTUAL` (média simples na faixa 0–199%).
+- Detalhe: `GET /production/oee/appointments/{id}` — ainda SH6010 (`H6_ZEFICI`, roteiro, tempos).
 
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 

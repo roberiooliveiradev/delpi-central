@@ -96,5 +96,3 @@ class GetProductionOeeSeriesUseCase:
 
         return round(parsed, 2)
 
-
-from app.application.shared.numeric_parsing import to_optional_float
