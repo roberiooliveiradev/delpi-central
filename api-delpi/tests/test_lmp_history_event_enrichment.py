@@ -7,6 +7,9 @@ from app.domain.services.lmp_history_event_enrichment import (
     is_engineering_flow,
     is_event_open,
     label_for_history_status,
+    resolve_history_status_label,
+    resolve_process_label,
+    resolve_stage_label,
 )
 
 
@@ -85,3 +88,49 @@ def test_enrich_history_events_marks_last_open_as_current():
     assert is_event_open(events[0]) is False
     assert events[1]["is_current"] is True
     assert events[0]["is_current"] is False
+
+
+def test_resolve_labels_prefers_ac1010_and_ac2010_descriptions():
+    event = {
+        "process_code": "000001",
+        "stage_code": "000005",
+        "process_description": "Abertura comercial",
+        "stage_description": "Follow-up pós-venda",
+    }
+
+    assert resolve_process_label(event) == "Abertura comercial"
+    assert resolve_stage_label(event) == "Follow-up pós-venda"
+
+
+def test_resolve_history_status_label_uses_encerrado_when_dtence_filled():
+    event = {
+        "status": "1",
+        "end_date": "20241125",
+        "end_time": "10:00",
+    }
+
+    assert resolve_history_status_label(event, is_open=False) == "Encerrado"
+
+
+def test_enrich_history_event_uses_totvs_descriptions_and_closed_status():
+    event = enrich_history_event(
+        {
+            "revision": "01",
+            "process_code": "000001",
+            "stage_code": "000002",
+            "process_description": "Abertura comercial",
+            "stage_description": "Qualificação da oportunidade",
+            "start_date": "20241125",
+            "start_time": "08:00",
+            "end_date": "20241125",
+            "end_time": "08:05",
+            "status": "1",
+            "duration_minutes": 5,
+        }
+    )
+
+    assert event["process_label"] == "Abertura comercial"
+    assert event["stage_label"] == "Qualificação da oportunidade"
+    assert event["status_label"] == "Encerrado"
+    assert "process_description" not in event
+    assert "stage_description" not in event

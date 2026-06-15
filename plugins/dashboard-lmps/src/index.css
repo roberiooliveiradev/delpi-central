@@ -1476,6 +1476,12 @@
   background: color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
+.dashboard-lmps .lmps-history-timeline__badge--last {
+  color: color-mix(in srgb, var(--primary) 72%, var(--text-muted));
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
 .dashboard-lmps .lmps-history-timeline__badge--open {
   color: color-mix(in srgb, var(--primary) 88%, white);
   background: color-mix(in srgb, var(--primary) 10%, transparent);

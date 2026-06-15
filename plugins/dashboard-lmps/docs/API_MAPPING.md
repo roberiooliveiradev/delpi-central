@@ -69,7 +69,7 @@ Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `dat
 | Campo | Descrição |
 |-------|-----------|
 | `revision`, `process_code`, `stage_code` | Chaves do AIJ010 |
-| `process_label`, `stage_label` | Rótulos PT (serviço `lmp_process_stage_labels`) |
+| `process_label`, `stage_label` | Rótulos PT (AC1010/AC2010; fallback estático) |
 | `start_date`, `start_time`, `limit_date`, `limit_time`, `end_date`, `end_time` | Datas/horas TOTVS (`YYYYMMDD`, `HH:MM`) |
 | `duration_minutes` | Minutos calculados no SQL |
 | `duration_display` | Texto legível (ex.: `Em andamento · 12 dia(s)`) |

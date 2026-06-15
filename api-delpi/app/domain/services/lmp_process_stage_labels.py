@@ -1,3 +1,5 @@
+"""Fallback estático quando AC1010/AC2010 não retornam descrição."""
+
 LMP_PROCESS_LABELS: dict[str, str] = {
     "000001": "Abertura",
     "000002": "Oportunidade",

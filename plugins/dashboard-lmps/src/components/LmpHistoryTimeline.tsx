@@ -26,7 +26,14 @@ function renderEventBadges(event: LmpHistoryEvent) {
   const badges = [];
 
   if (event.is_current) {
-    badges.push(renderTimelineBadge("Atual", "lmps-history-timeline__badge--current"));
+    badges.push(
+      renderTimelineBadge(
+        event.is_open ? "Atual" : "Último evento",
+        event.is_open
+          ? "lmps-history-timeline__badge--current"
+          : "lmps-history-timeline__badge--last",
+      ),
+    );
   }
 
   if (event.is_open) {

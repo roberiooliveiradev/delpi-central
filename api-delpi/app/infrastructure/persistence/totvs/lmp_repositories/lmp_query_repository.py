@@ -2271,6 +2271,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         sql = f"""
             WITH EventosOV AS (
                 SELECT
+                    A.AIJ_FILIAL,
                     A.AIJ_REVISA,
                     A.AIJ_PROVEN,
                     A.AIJ_STAGE,
@@ -2293,6 +2294,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 E.AIJ_REVISA AS revision,
                 E.AIJ_PROVEN AS process_code,
                 E.AIJ_STAGE AS stage_code,
+                LTRIM(RTRIM(PRC.process_description)) AS process_description,
+                LTRIM(RTRIM(STG.stage_description)) AS stage_description,
                 E.AIJ_DTINIC AS start_date,
                 E.AIJ_HRINIC AS start_time,
                 E.AIJ_DTLIMI AS limit_date,
@@ -2304,6 +2307,41 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 E.AIJ_HISTOR AS history_flag,
                 CASE WHEN {where_eng} THEN 1 ELSE 0 END AS is_engineering
             FROM EventosOV E
+            OUTER APPLY (
+                SELECT TOP 1
+                    AC1.AC1_DESCRI AS process_description
+                FROM AC1010 AC1
+                WHERE AC1.D_E_L_E_T_ = '{self.settings.active_delete_flag}'
+                  AND AC1.AC1_PROVEN = E.AIJ_PROVEN
+                  AND (
+                      RTRIM(ISNULL(AC1.AC1_FILIAL, '')) = ''
+                      OR AC1.AC1_FILIAL = E.AIJ_FILIAL
+                  )
+                ORDER BY
+                    CASE
+                        WHEN AC1.AC1_FILIAL = E.AIJ_FILIAL THEN 0
+                        WHEN RTRIM(ISNULL(AC1.AC1_FILIAL, '')) = '' THEN 1
+                        ELSE 2
+                    END
+            ) PRC
+            OUTER APPLY (
+                SELECT TOP 1
+                    AC2.AC2_DESCRI AS stage_description
+                FROM AC2010 AC2
+                WHERE AC2.D_E_L_E_T_ = '{self.settings.active_delete_flag}'
+                  AND AC2.AC2_PROVEN = E.AIJ_PROVEN
+                  AND AC2.AC2_STAGE = E.AIJ_STAGE
+                  AND (
+                      RTRIM(ISNULL(AC2.AC2_FILIAL, '')) = ''
+                      OR AC2.AC2_FILIAL = E.AIJ_FILIAL
+                  )
+                ORDER BY
+                    CASE
+                        WHEN AC2.AC2_FILIAL = E.AIJ_FILIAL THEN 0
+                        WHEN RTRIM(ISNULL(AC2.AC2_FILIAL, '')) = '' THEN 1
+                        ELSE 2
+                    END
+            ) STG
             ORDER BY
                 E.AIJ_REVISA,
                 E.AIJ_DTINIC,
@@ -2670,6 +2708,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 revision=row["revision"],
                 process_code=row["process_code"],
                 stage_code=row["stage_code"],
+                process_description=row.get("process_description") or None,
+                stage_description=row.get("stage_description") or None,
                 start_date=row.get("start_date") or None,
                 start_time=row.get("start_time") or None,
                 limit_date=row.get("limit_date") or None,

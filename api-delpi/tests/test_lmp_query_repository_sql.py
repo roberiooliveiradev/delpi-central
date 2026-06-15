@@ -62,6 +62,10 @@ def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
     sql, params = repo._sql_history_events_lmp(requested_branch="01")
 
     assert "FROM AIJ010 A" in sql
+    assert "FROM AC1010 AC1" in sql
+    assert "FROM AC2010 AC2" in sql
+    assert "process_description" in sql
+    assert "stage_description" in sql
     assert "A.AIJ_NROPOR = ?" in sql
     assert "PROXIMO_DTINIC_GLOBAL" in sql
     assert "duration_minutes" in sql

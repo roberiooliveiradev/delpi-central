@@ -20,6 +20,7 @@ AIJ_STATUS_LABELS: dict[str, str] = {
     "9": "Concluído",
 }
 
+CLOSED_STATUS_CODES = frozenset({"2", "3", "6", "8", "9"})
 ENGINEERING_FLOW_STAGE_CODES = frozenset({"000003", "000008", "000012"})
 
 
@@ -28,6 +29,35 @@ def label_for_history_status(status_code: str | None) -> str | None:
     if not normalized:
         return None
     return AIJ_STATUS_LABELS.get(normalized, f"Status {normalized}")
+
+
+def resolve_process_label(event: dict[str, Any]) -> str | None:
+    description = str(event.get("process_description") or "").strip()
+    if description:
+        return description
+    return label_for_process(event.get("process_code"))
+
+
+def resolve_stage_label(event: dict[str, Any]) -> str | None:
+    description = str(event.get("stage_description") or "").strip()
+    if description:
+        return description
+    return label_for_stage(event.get("stage_code"))
+
+
+def resolve_history_status_label(
+    event: dict[str, Any],
+    *,
+    is_open: bool,
+) -> str | None:
+    status_code = str(event.get("status") or "").strip()
+
+    if not is_open:
+        if status_code in CLOSED_STATUS_CODES:
+            return label_for_history_status(status_code)
+        return "Encerrado"
+
+    return label_for_history_status(status_code) or "Em andamento"
 
 
 def _parse_totvs_datetime(
@@ -143,12 +173,17 @@ def enrich_history_event(
     now: datetime | None = None,
 ) -> dict[str, Any]:
     is_open = is_event_open(event)
+    enriched = {
+        key: value
+        for key, value in event.items()
+        if key not in {"process_description", "stage_description"}
+    }
 
     return {
-        **event,
-        "process_label": label_for_process(event.get("process_code")),
-        "stage_label": label_for_stage(event.get("stage_code")),
-        "status_label": label_for_history_status(event.get("status")),
+        **enriched,
+        "process_label": resolve_process_label(event),
+        "stage_label": resolve_stage_label(event),
+        "status_label": resolve_history_status_label(event, is_open=is_open),
         "is_open": is_open,
         "is_late": is_event_late(event, now=now),
         "is_engineering_flow": is_engineering_flow(event),
