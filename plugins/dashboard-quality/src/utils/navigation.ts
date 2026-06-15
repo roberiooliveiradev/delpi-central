@@ -1,30 +1,38 @@
 import type { QualityFilterUrlState } from "./filterUrl";
-import {
-  buildFilterSearchParams,
-  readFiltersFromUrl,
-  readQualityFilters,
-} from "./filterUrl";
+import { appendFiltersToPath } from "./filterUrl";
 
-/** Navegação client-side dentro do portal (evita reload completo do MFE). */
-export function navigateQuality(
-  path: string,
-  filters?: QualityFilterUrlState
-) {
-  const [rawPath, rawSearch] = path.split("?");
-  const basePath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  const resolvedFilters =
-    filters ??
-    (rawSearch ? readFiltersFromUrl(`?${rawSearch}`) : readQualityFilters());
-  const query = buildFilterSearchParams(resolvedFilters);
-  const target = `${basePath}${query}`;
+let qualityNavStackDepth = 0;
+let suppressPopstateDepthChange = false;
 
-  if (
-    window.location.pathname === basePath &&
-    window.location.search === query
-  ) {
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", () => {
+    if (suppressPopstateDepthChange) return;
+    qualityNavStackDepth = Math.max(0, qualityNavStackDepth - 1);
+  });
+}
+
+export function navigateQuality(path: string, filterState?: QualityFilterUrlState) {
+  const basePath = path.startsWith("/") ? path : `/${path}`;
+  const target = filterState ? appendFiltersToPath(basePath, filterState) : basePath;
+
+  if (window.location.pathname + window.location.search === target) {
     return;
   }
 
   window.history.pushState(null, "", target);
+  qualityNavStackDepth += 1;
+  suppressPopstateDepthChange = true;
   window.dispatchEvent(new PopStateEvent("popstate"));
+  suppressPopstateDepthChange = false;
+}
+
+export function navigateQualityBack(fallbackPath: string) {
+  if (typeof window === "undefined") return;
+
+  if (qualityNavStackDepth > 0) {
+    window.history.back();
+    return;
+  }
+
+  navigateQuality(fallbackPath);
 }

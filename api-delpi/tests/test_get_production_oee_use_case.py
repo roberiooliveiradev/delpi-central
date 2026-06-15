@@ -59,3 +59,34 @@ def test_get_production_oee_use_case_returns_summary_and_appointments():
     assert result["summary"]["outlier_percentage"] == 5.0
     assert result["appointments"]["total"] == 1
     assert result["appointments"]["items"][0]["status"] == "valid"
+
+
+def test_get_production_oee_use_case_uses_filtered_average_when_scope_filters():
+    repository = MagicMock()
+    repository.get_oee_appointment_summary.return_value = {
+        "total_appointments": 3,
+        "valid_appointments": 2,
+        "outlier_appointments": 1,
+        "avg_oee_pct": 61.25,
+    }
+    repository.list_oee_appointments.return_value = Page(
+        items=[],
+        total=0,
+        page=1,
+        page_size=20,
+    )
+
+    use_case = GetProductionOeeUseCase(repository)
+    result = use_case.execute(
+        GetProductionOeeRequest(
+            branch="01",
+            start_date="2024-01-01",
+            end_date="2024-01-31",
+            production_order="24319401002",
+            page=1,
+            page_size=20,
+        )
+    )
+
+    assert result["summary"]["oee_pct"] == 61.25
+    repository.get_overall_equipment_effectiveness.assert_not_called()

@@ -358,8 +358,12 @@ MINI_APPLICATORS_COMPONENTES_LIST = agent_route(
 LMP_BY_SALE = agent_route(
     summary="Detalhe da LMP por ordem de venda",
     description=(
-        "Carrega uma LMP específica pelo número da ordem de venda (OV). "
-        "Use quando houver número de OV, ordem de venda ou referência explícita a uma LMP individual."
+        "Carrega uma LMP específica pelo número da ordem de venda (OV/proposta), "
+        "com produtos, cliente, vendedor, resumo de engenharia e classificação "
+        "(nível, SLA, lead time útil, status). "
+        "Use quando houver número de OV, ordem de venda ou referência explícita a uma LMP individual. "
+        "Parâmetros opcionais `date_start`, `date_end` e `branch` alinham o escopo ao dashboard/MFE. "
+        "Não confundir OV com código de produto."
     ),
     operation_id="get_lmp_by_sale_number",
 )
@@ -690,4 +694,32 @@ DATA_SQL = agent_route(
         "Requer permissão api-delpi.data ou api-delpi.access.full."
     ),
     operation_id="execute_readonly_sql",
+)
+
+QUALITY_KAIZEN_SUMMARY = agent_route(
+    summary="Kaizens — resumo e listagem (Google Sheets)",
+    description=(
+        "Resumo de melhorias kaizen da planilha de qualidade: total no período, "
+        "economia acumulada (daily_savings × dias ativos) e list_kaizen. "
+        "Parâmetros: title, status, branch, date_start, date_end. "
+        "Sem date_start/date_end na listagem retorna todos os kaizens implantados "
+        "(útil para catálogo completo no dashboard). "
+        "Campos calculados: daily_savings, annual_savings (daily_savings × 365). "
+        "Para detalhe de um kaizen (parâmetros do cálculo, investimento, responsável), "
+        "use GET /quality/kaizens/{kaizen_id} com o id retornado em list_kaizen[].id."
+    ),
+    operation_id="get_kaizen_summary",
+)
+
+QUALITY_KAIZEN_BY_ID = agent_route(
+    summary="Detalhe do kaizen (Google Sheets)",
+    description=(
+        "Retorna ficha completa de um kaizen pelo id composto "
+        "(filial-data-título, como em list_kaizen[].id): título, status, setor, filial, "
+        "responsável, investimento, daily_savings, annual_savings e entradas do cálculo "
+        "(segundos_por_ocorrencia, ocorrencias_por_dia, custo_hora, hours_saved_per_day). "
+        "Use quando o usuário pedir detalhe, ficha ou economia projetada de um kaizen específico — "
+        "não para resumo agregado do período (prefira GET /quality/kaizens/summary)."
+    ),
+    operation_id="get_kaizen_by_id",
 )

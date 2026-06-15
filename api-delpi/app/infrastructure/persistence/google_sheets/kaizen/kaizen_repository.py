@@ -3,7 +3,7 @@ from typing import Optional
 
 from app.infrastructure.providers.google_sheets.google_sheets_client import GoogleSheetsClient
 from app.domain.ports.kaizen.kaizen_query_port import KaizenQueryRepositoryPort
-from app.domain.entities.kaizen.kaizen import Kaizen
+from app.domain.entities.kaizen.kaizen import Kaizen, KaizenDetail
 from app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryRequest
 from app.application.dto.kaizen.kaizen_summary_response import KaizenSummaryResponse
 from app.infrastructure.persistence.google_sheets.utils import Utils
@@ -36,12 +36,9 @@ class KaizenRepository(KaizenQueryRepositoryPort):
                 return value
         return None
 
-    def _calculate_daily_savings(self, row: dict) -> Optional[float]:
-        """
-        Ganho diário derivado da planilha:
-        horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
-        ganho_diario = horas_poupadas_dia × custo_hora
-        """
+    def _savings_inputs(
+        self, row: dict
+    ) -> tuple[Optional[float], Optional[float], Optional[float]]:
         seconds_per_occurrence = self._first_float(
             row,
             ["segundos_por_ocorrencia", "segudos_por_ocorrecia"],
@@ -51,6 +48,17 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             ["ocorrencias_por_dia", "ocorrecias_por_dia"],
         )
         hourly_cost = self._first_float(row, ["custo_hora"])
+        return seconds_per_occurrence, occurrences_per_day, hourly_cost
+
+    def _calculate_daily_savings(self, row: dict) -> Optional[float]:
+        """
+        Ganho diário derivado da planilha:
+        horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
+        ganho_diario = horas_poupadas_dia × custo_hora
+        """
+        seconds_per_occurrence, occurrences_per_day, hourly_cost = self._savings_inputs(
+            row
+        )
 
         if (
             seconds_per_occurrence is None
@@ -62,6 +70,41 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         hours_saved_per_day = (seconds_per_occurrence * occurrences_per_day) / 3600
         return round(hours_saved_per_day * hourly_cost, 2)
 
+    def _annual_savings(self, daily_savings: Optional[float]) -> Optional[float]:
+        if daily_savings is None:
+            return None
+        return round(daily_savings * 365, 2)
+
+    def _hours_saved_per_day(self, row: dict) -> Optional[float]:
+        seconds_per_occurrence, occurrences_per_day, _ = self._savings_inputs(row)
+        if seconds_per_occurrence is None or occurrences_per_day is None:
+            return None
+        return round((seconds_per_occurrence * occurrences_per_day) / 3600, 4)
+
+    def _iter_active_rows(self):
+        rows = self.client.read_csv_rows(
+            sheet_id=self.sheet_id,
+            gid=self.gid,
+        )
+        for row in rows:
+            if self._is_deleted(row.get("deleted")):
+                continue
+            yield row
+
+    def _row_to_kaizen(self, row: dict) -> Kaizen:
+        return Kaizen(
+            id=row["id"],
+            title=row["title"],
+            date_implemented=row["date_implemented"],
+            status=row["status"],
+            accountable=row["accountable"],
+            sector=row["sector"],
+            investment=row["investment"],
+            daily_savings=row["daily_savings"],
+            annual_savings=row["annual_savings"],
+            branch=row.get("branch"),
+        )
+
     def _map_row_to_summary_model(self, row: dict) -> Optional[dict]:
         title = self.utils.empty_to_none(row.get("descricao"))
         implemented_date = self.utils.empty_to_none(row.get("data"))
@@ -70,6 +113,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             return None
 
         branch = self.utils.empty_to_none(row.get("filial"))
+        daily_savings = self._calculate_daily_savings(row)
 
         return {
             "id": f"{branch or ''}-{implemented_date or ''}-{title or ''}".strip("-"),
@@ -79,9 +123,36 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             "accountable": self.utils.empty_to_none(row.get("responsavel")),
             "sector": self.utils.empty_to_none(row.get("area_setor")),
             "investment": self.utils.to_float(row.get("custo_investimento")),
-            "daily_savings": self._calculate_daily_savings(row),
+            "daily_savings": daily_savings,
+            "annual_savings": self._annual_savings(daily_savings),
             "branch": branch,
         }
+
+    def _map_row_to_detail_model(self, row: dict) -> Optional[KaizenDetail]:
+        summary = self._map_row_to_summary_model(row)
+        if summary is None:
+            return None
+
+        seconds_per_occurrence, occurrences_per_day, hourly_cost = self._savings_inputs(
+            row
+        )
+
+        return KaizenDetail(
+            id=summary["id"],
+            title=summary["title"],
+            date_implemented=summary["date_implemented"],
+            status=summary["status"],
+            accountable=summary["accountable"],
+            sector=summary["sector"],
+            investment=summary["investment"],
+            daily_savings=summary["daily_savings"],
+            annual_savings=summary["annual_savings"],
+            branch=summary.get("branch"),
+            seconds_per_occurrence=seconds_per_occurrence,
+            occurrences_per_day=occurrences_per_day,
+            hourly_cost=hourly_cost,
+            hours_saved_per_day=self._hours_saved_per_day(row),
+        )
 
     def _is_implemented(self, status: Optional[str]) -> bool:
         if not status:
@@ -190,16 +261,8 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             end_date_str=request.date_end,
         )
 
-        rows = self.client.read_csv_rows(
-            sheet_id=self.sheet_id,
-            gid=self.gid,
-        )
-
         normalized_rows = []
-        for row in rows:
-            if self._is_deleted(row.get("deleted")):
-                continue
-
+        for row in self._iter_active_rows():
             item = self._map_row_to_summary_model(row)
             if item is not None:
                 normalized_rows.append(item)
@@ -242,20 +305,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             ):
                 savings_rows.append(row)
 
-        kaizens = [
-            Kaizen(
-                id=row["id"],
-                title=row["title"],
-                date_implemented=row["date_implemented"],
-                status=row["status"],
-                accountable=row["accountable"],
-                sector=row["sector"],
-                investment=row["investment"],
-                daily_savings=row["daily_savings"],
-                branch=row.get("branch"),
-            )
-            for row in count_rows
-        ]
+        kaizens = [self._row_to_kaizen(row) for row in count_rows]
 
         total_savings = sum(
             self._calculate_kaizen_total_savings(
@@ -273,3 +323,15 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             total_savings=round(total_savings, 2),
             list_kaizen=kaizens,
         )
+
+    def get_kaizen_by_id(self, kaizen_id: str) -> Optional[KaizenDetail]:
+        normalized_id = (kaizen_id or "").strip()
+        if not normalized_id:
+            return None
+
+        for row in self._iter_active_rows():
+            detail = self._map_row_to_detail_model(row)
+            if detail is not None and detail.id == normalized_id:
+                return detail
+
+        return None

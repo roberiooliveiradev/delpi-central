@@ -13,6 +13,7 @@ type DataTableProps<T> = {
   rowKey: (row: T) => string;
   emptyMessage?: string;
   loading?: boolean;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTable<T>({
@@ -21,6 +22,7 @@ export function DataTable<T>({
   rowKey,
   emptyMessage = "Nenhum registro encontrado.",
   loading = false,
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <div className="dq-table-wrap">
@@ -48,15 +50,34 @@ export function DataTable<T>({
               </td>
             </tr>
           ) : (
-            rows.map((row) => (
-              <tr key={rowKey(row)}>
-                {columns.map((column) => (
-                  <td key={column.key} className={column.className}>
-                    {column.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))
+            rows.map((row) => {
+              const isClickable = Boolean(onRowClick);
+
+              return (
+                <tr
+                  key={rowKey(row)}
+                  className={isClickable ? "dq-row--clickable" : undefined}
+                  tabIndex={isClickable ? 0 : undefined}
+                  onClick={isClickable ? () => onRowClick?.(row) : undefined}
+                  onKeyDown={
+                    isClickable
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onRowClick?.(row);
+                          }
+                        }
+                      : undefined
+                  }
+                >
+                  {columns.map((column) => (
+                    <td key={column.key} className={column.className}>
+                      {column.render(row)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

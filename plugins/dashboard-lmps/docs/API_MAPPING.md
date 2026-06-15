@@ -13,7 +13,7 @@ Prefixo de engenharia:
 ```
 
 **Permissões:** `dashboard-lmps.view` ou `api-delpi.access`  
-**Envelope:** `{ "success": true, "message": "...", "data": { ... } }`
+**Envelope:** `{ "success": true, "message": "...", "data": { ... }, "meta": { ... } }`
 
 Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_router.py`
 
@@ -23,46 +23,67 @@ Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_rou
 
 | Função (`lmpApi.ts`) | Método | Rota | Uso na UI |
 |----------------------|--------|------|-----------|
-| `getLmpsDashboard` | GET | `/engineering/lmps/dashboard` | Tela principal (KPIs, gráficos, tabela) |
-| `listLmps` | GET | `/engineering/lmps` | Disponível no cliente; não usado na página atual |
+| `getLmpsDashboardSummary` | GET | `/engineering/lmps/dashboard/summary` | KPIs |
+| `getLmpsDashboardCharts` | GET | `/engineering/lmps/dashboard/charts` | Gráficos |
+| `getLmpsDashboardItems` | GET | `/engineering/lmps/dashboard/items` | Tabela |
+| `getLmpBySaleNumber` | GET | `/engineering/lmps/{sale_number}` | Detalhe da OV (clique na linha) |
+| `getLmpsDashboard` | GET | `/engineering/lmps/dashboard` | Legado (fallback monolítico) |
+| `listLmps` | GET | `/engineering/lmps` | Listagem paginada (não usada na página atual) |
+
+**Rota de detalhe:** não há endpoint duplicado — o MFE usa **`GET /engineering/lmps/{sale_number}`** (`operationId`: `get_lmp_by_sale_number`).
 
 ---
 
-## GET /engineering/lmps/dashboard
+## GET /engineering/lmps/dashboard/items
 
 ### Query parameters
 
 | Parâmetro | Tipo | Default | Descrição |
 |-----------|------|---------|-----------|
-| `date_start` | string | — | Início do período (formato aceito pelo backend) |
+| `date_start` | string | — | Início do período |
 | `date_end` | string | — | Fim do período |
-| `branch` | string | — | Filial (ex.: `01`, `02`) |
-| `status` | string | `Todos` | Filtro de classificação |
-| `page` | int | — | Paginação (opcional) |
-| `page_size` | int | — | Tamanho da página (opcional) |
+| `branch` | string | — | Filial (`01`, `02`) |
+| `listing_type` | string | — | `Todos`, `LMP`, `Amostra`, `Outro` |
+| `status` | string | `Todos` | Classificação (`Pontual`, `Atrasado`, …) |
+| `page` | int | `1` | Paginação |
+| `page_size` | int | `50` | Tamanho da página (máx. 500) |
 
-### Resposta `data` (resumo)
+---
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `items` | `LmpDashboardItem[]` | Linhas da tabela |
-| `total` | number | Total de registros |
-| `page`, `page_size` | number | Paginação |
-| `summary.total_lmps` | number | Total de propostas |
-| `summary.percent_dentro_prazo` | number | % dentro do prazo |
-| `summary.avg_lead_time` | number | Lead time médio útil (dias) |
-| `charts.levelData` | `{ name, value }[]` | Pizza por nível |
-| `charts.statusData` | `{ name, value }[]` | Pizza por status |
-| `charts.leadByLevel` | `{ nivel, valor }[]` | Barras — média lead por nível |
-| `charts.evolutionData` | `{ periodo, mediaLead, propostas }[]` | Linha — evolução temporal |
+## GET /engineering/lmps/{sale_number}
 
-### Item `LmpDashboardItem` (campos principais)
+Detalhe de uma OV/proposta para a tela `/apps/dashboard-lmps/ov/{sale_number}`.
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `sale_number` | Path — número da proposta/OV |
+| `date_start`, `date_end` | Opcional — mesmo escopo de período do dashboard |
+| `branch` | Opcional — filial (`01`/`02`) |
+
+### Resposta `data` (campos principais)
+
+Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `data_limite`, `lead_time_util`, `status`, `sla_minutos`) + `list_products[]`.
+
+### `meta.relatedRoutes`
+
+| Chave | Destino |
+|-------|---------|
+| `detail` | Esta OV |
+| `dashboardItems` | `/engineering/lmps/dashboard/items` |
+| `dashboardSummary` | `/engineering/lmps/dashboard/summary` |
+| `dashboardCharts` | `/engineering/lmps/dashboard/charts` |
+| `list` | `/engineering/lmps` |
+
+---
+
+## Item `LmpDashboardItem` (tabela)
 
 | Campo | Descrição |
 |-------|-----------|
 | `branch` | Filial |
 | `sale_number` | Nº da proposta/ordem |
 | `sale_description` | Descrição |
+| `listing_kind` | `LMP` \| `AMOSTRA` \| `OUTRO` |
 | `start_date`, `end_date` | Datas (`YYYYMMDD`) |
 | `engineering_status` | Status na engenharia |
 | `qtd_pi` | Quantidade PI |
@@ -76,39 +97,19 @@ Tipos TypeScript: `src/types/lmp.ts`.
 
 ---
 
-## GET /engineering/lmps
-
-Listagem paginada de LMPs (sem agregados de dashboard).
-
-| Query | Descrição |
-|-------|-----------|
-| `date_start`, `date_end`, `branch` | Filtros de período/filial |
-| `page`, `page_size` | Paginação |
-
-Retorno: `Page<LmpItem>` em `data`.
-
----
-
 ## Exemplos de URL completas
 
 ```text
-GET /apps/api-delpi/engineering/lmps/dashboard?date_start=2025-01-01&date_end=2026-05-18&status=Todos
-GET /apps/api-delpi/engineering/lmps/dashboard?branch=01&status=Pontual
+GET /apps/api-delpi/engineering/lmps/dashboard/items?date_start=20260501&date_end=20260531&status=Todos
+GET /apps/api-delpi/engineering/lmps/003578?date_start=20260501&date_end=20260531&branch=01
 GET /apps/api-delpi/engineering/lmps?date_start=2026-01-01&page=1&page_size=20
 ```
 
 ---
 
-## Não consumir neste plugin
-
-| Rota | Motivo |
-|------|--------|
-| `GET /engineering/lmps/{sale_number}` | Sem tela de detalhe |
-| `GET /engineering/transforma-mais/*` | Outro produto / futuro MFE |
-
----
-
 ## Implementação de referência
 
+- Helpers HTTP (sem duplicar DTO): `api-delpi/app/interface/http/routes/engineering/lmp_route_helpers.py`
 - Use cases: `api-delpi/app/composition/engineering_composer.py`
 - DTOs: `api-delpi/app/application/dto/lmp/`
+- Doc API: `api-delpi/docs/api/06-modulos-departamentais.md` (Engenharia — LMP)

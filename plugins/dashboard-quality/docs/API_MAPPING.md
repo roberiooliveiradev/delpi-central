@@ -35,6 +35,7 @@ Documentação oficial: `api-delpi/docs/api/06-modulos-departamentais.md` (seç�
 |---|---|---|---|
 | `listNonconformities` | GET | `/quality/nonconformities` | `type`, `branch`, `date_start`, `date_end`, `status`, `item_code`, `description`, `page`, `page_size` |
 | `getKaizenSummary` | GET | `/quality/kaizens/summary` | `title`, `status`, `branch`, `date_start`, `date_end` |
+| `getKaizenById` | GET | `/quality/kaizens/{kaizen_id}` | — |
 | `getAudit5sSummary` | GET | `/quality/audit-5s/summary` | `start_date`, `end_date`, `branch` |
 | `getPpmInternalSummary` | GET | `/quality/ppm/internal/summary` | `branch`, `date_start`, `date_end` |
 | `getPpmExternalSummary` | GET | `/quality/ppm/external/summary` | `branch`, `date_start`, `date_end` |
@@ -91,6 +92,8 @@ Fonte: Google Sheets via `GET /quality/kaizens/summary` (sem TOTVS).
 daily_savings = (segundos_por_ocorrencia × ocorrencias_por_dia / 3600) × custo_hora
 ```
 
-**Campo no frontend:** `list_kaizen[].daily_savings` e `total_savings` (soma ponderada por dias ativos no período filtrado).
+**Campo no frontend:** `list_kaizen[].daily_savings`, `list_kaizen[].annual_savings` (`daily_savings × 365`) e `total_savings` (soma ponderada por dias ativos no período filtrado).
+
+**Listagem completa (tabela do dashboard):** chamar `/kaizens/summary` **sem** `date_start`/`date_end` para todos os kaizens implantados; KPIs e gráficos continuam usando o período filtrado.
 
 Documentação completa: `api-delpi/docs/api/06-modulos-departamentais.md` (§ Kaizen).

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Lightbulb, Wallet } from "lucide-react";
 import {
   Bar,
@@ -25,7 +25,7 @@ import { QualityStatusAlerts } from "../components/QualityStatusAlerts";
 import { KpiCard } from "../components/KpiCard";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
-import { QUALITY_ROUTES } from "../constants/routes";
+import { buildKaizenDetailPath, QUALITY_ROUTES } from "../constants/routes";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
@@ -42,6 +42,7 @@ import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatCurrency, formatDecimal } from "../utils/format";
+import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
 
@@ -92,10 +93,26 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     [apiParams, debouncedTitle, debouncedStatus]
   );
 
+  const listParams = useMemo(
+    () => ({
+      branch: apiParams.branch,
+      title: debouncedTitle || undefined,
+      status: debouncedStatus || undefined,
+    }),
+    [apiParams.branch, debouncedTitle, debouncedStatus]
+  );
+
   const { data, loading, requestProgress, error, reload } =
     useKaizenSummary(summaryParams);
+  const {
+    data: listData,
+    loading: listLoading,
+    error: listError,
+    reload: reloadList,
+  } = useKaizenSummary(listParams);
   const isRefreshing = loading && Boolean(data);
   const items = data?.list_kaizen ?? [];
+  const listItems = listData?.list_kaizen ?? [];
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -159,12 +176,28 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         className: "dq-table__col--numeric",
         render: (row) => formatCurrency(row.daily_savings),
       },
+      {
+        key: "annual_savings",
+        header: "Economia/ano",
+        className: "dq-table__col--numeric",
+        render: (row) => formatCurrency(row.annual_savings),
+      },
     ],
     []
   );
 
+  const handleKaizenRowClick = useCallback((row: Kaizen) => {
+    if (!row.id) return;
+    navigateQuality(buildKaizenDetailPath(row.id));
+  }, []);
+
+  const handleReload = useCallback(() => {
+    reload();
+    reloadList();
+  }, [reload, reloadList]);
+
   const handleExportCsv = () => {
-    if (items.length === 0) return;
+    if (listItems.length === 0) return;
 
     downloadCsv(
       "kaizens.csv",
@@ -177,8 +210,9 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         "Responsável",
         "Investimento",
         "Economia/dia",
+        "Economia/ano",
       ],
-      items.map((row) => [
+      listItems.map((row) => [
         row.title,
         row.status ?? "",
         row.sector ?? "",
@@ -187,6 +221,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         row.accountable ?? "",
         String(row.investment ?? ""),
         String(row.daily_savings ?? ""),
+        String(row.annual_savings ?? ""),
       ])
     );
   };
@@ -216,14 +251,14 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         currentPath={pathname ?? QUALITY_ROUTES.kaizen}
         filterState={filterState}
         printDisabled={loading && !data}
-        onRefresh={reload}
+        onRefresh={handleReload}
         refreshing={loading && Boolean(data)}
         actions={
           <button
             type="button"
             className="dq-ghost-btn dq-no-print"
             onClick={handleExportCsv}
-            disabled={items.length === 0}
+            disabled={listItems.length === 0}
           >
             <Download size={16} />
             Exportar CSV
@@ -249,12 +284,12 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       </div>
 
       <QualityStatusAlerts
-        error={error}
-        loading={loading}
+        error={error ?? listError}
+        loading={loading || listLoading}
         refreshing={isRefreshing}
         hasData={Boolean(data)}
         requestProgress={requestProgress}
-        onRetry={reload}
+        onRetry={handleReload}
         refreshTitle="Atualizando kaizens"
         initialTitle="Carregando kaizens"
         initialDescription="Buscando melhorias cadastradas para o período."
@@ -394,15 +429,17 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
       <DataTableSection
         title="Lista de kaizens"
+        hint="Todos os kaizens implantados, independente do período filtrado."
         columns={columns}
-        rows={items}
+        rows={listItems}
         rowKey={(row) => row.id}
-        loading={loading && !data}
+        loading={listLoading && !listData}
         emptyMessage="Nenhum kaizen encontrado para os filtros."
         searchPlaceholder="Buscar título, setor, status…"
         getSearchText={(row) =>
           [row.title, row.sector, row.status, row.branch].filter(Boolean).join(" ")
         }
+        onRowClick={handleKaizenRowClick}
       />
     </div>
   );

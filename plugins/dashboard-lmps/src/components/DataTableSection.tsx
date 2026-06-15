@@ -9,6 +9,7 @@ import {
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
+import { sortTableRows } from "../utils/sortTableRows";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -17,6 +18,12 @@ export type ServerPaginationConfig = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+};
+
+export type ClientSortConfig = {
+  sortKey: string | null;
+  sortDirection: "asc" | "desc";
+  onSortChange: (columnKey: string) => void;
 };
 
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
@@ -47,6 +54,9 @@ export type DataTableSectionProps<T> = {
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
+  clientSort?: ClientSortConfig;
+  onRowClick?: (row: T) => void;
+  getRowClassName?: (row: T) => string | undefined;
 };
 
 export function DataTableSection<T>({
@@ -63,6 +73,9 @@ export function DataTableSection<T>({
   getSearchText,
   hideSearch = false,
   serverPagination,
+  clientSort,
+  onRowClick,
+  getRowClassName,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -78,8 +91,19 @@ export function DataTableSection<T>({
     });
   }, [rows, search, columns, getSearchText]);
 
+  const sortedRows = useMemo(() => {
+    if (!clientSort) return filteredRows;
+
+    return sortTableRows(
+      filteredRows,
+      columns,
+      clientSort.sortKey,
+      clientSort.sortDirection
+    );
+  }, [filteredRows, columns, clientSort]);
+
   const { page, setPage, slice, total } = useClientPagination(
-    filteredRows,
+    sortedRows,
     pageSize
   );
 
@@ -89,7 +113,7 @@ export function DataTableSection<T>({
     }
   }, [search, serverPagination]);
 
-  const displayRows = serverPagination ? filteredRows : slice;
+  const displayRows = serverPagination ? sortedRows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
   const paginationSize = serverPagination?.pageSize ?? pageSize;
@@ -162,6 +186,11 @@ export function DataTableSection<T>({
             rows={displayRows}
             rowKey={rowKey}
             emptyMessage={emptyMessage}
+            onRowClick={onRowClick}
+            getRowClassName={getRowClassName}
+            sortKey={clientSort?.sortKey}
+            sortDirection={clientSort?.sortDirection}
+            onSortChange={clientSort?.onSortChange}
           />
 
           <Pagination

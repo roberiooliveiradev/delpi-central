@@ -25,7 +25,7 @@ export const DP_HELP_TOOLTIPS = {
   },
   oee: {
     kpiOee:
-      "Média simples da eficiência (EFICIENCIA_PERCENTUAL) dos apontamentos na faixa 0–199%. Outliers não entram no cálculo.",
+      "Média simples da eficiência (EFICIENCIA_PERCENTUAL) dos apontamentos na faixa 0–199%. Com filtros de OP, operador, CT, tipo ou faixa, reflete o subconjunto filtrado.",
     kpiAppointments:
       "Total de apontamentos listáveis no período, incluindo registros fora da faixa (Verificar) e eficiência baixa.",
     kpiValid:
@@ -33,8 +33,14 @@ export const DP_HELP_TOOLTIPS = {
     chartEvolution:
       "Evolução do OEE no tempo conforme a granularidade escolhida (dia, semana ou mês).",
     filters: {
+      productionOrder:
+        "Filtra por ordem de produção (OP). Permite múltipla seleção.",
+      operator:
+        "Filtra por código do operador. Permite múltipla seleção.",
+      workCenter:
+        "Filtra por centro de trabalho (CT). Permite múltipla seleção.",
       productType:
-        "PA = produto acabado; PI = produto intermediário. Filtra a listagem de apontamentos, não altera KPIs do resumo.",
+        "PA = produto acabado; PI = produto intermediário. Restringe apontamentos e recalcula KPIs do resumo quando aplicado.",
       efficiencyBands:
         "Filtra apontamentos por faixa: na faixa (≥ 50%), eficiência baixa (< 50%) ou fora da faixa (0–199%).",
     },

@@ -3,6 +3,9 @@ from app.config import settings
 from app.application.use_cases.audit_5s.get_audit_5s_summary_use_case import (
     GetAudit5SSummaryUseCase,
 )
+from app.application.use_cases.kaizen.get_kaizen_by_id_use_case import (
+    GetKaizenByIdUseCase,
+)
 from app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
     GetKaizenSummaryUseCase,
 )
@@ -79,6 +82,10 @@ def _build_nonconformity_repository() -> NonconformityQueryRepository:
 
 def build_get_kaizen_summary_use_case() -> GetKaizenSummaryUseCase:
     return GetKaizenSummaryUseCase(repository=_build_kaizen_repository())
+
+
+def build_get_kaizen_by_id_use_case() -> GetKaizenByIdUseCase:
+    return GetKaizenByIdUseCase(repository=_build_kaizen_repository())
 
 
 def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:

@@ -15,7 +15,9 @@ Escolha mentalmente a rota antes de responder (o backend já executa a action ad
 **Engenharia**
 - Listar LMPs: `GET /engineering/lmps`
 - KPIs painel: `GET /engineering/lmps/dashboard/summary`
-- Detalhe por OV: `GET /engineering/lmps/{sale_number}` — OV não é código de produto
+- Itens paginados do painel: `GET /engineering/lmps/dashboard/items`
+- Gráficos do painel: `GET /engineering/lmps/dashboard/charts`
+- Detalhe por OV: `GET /engineering/lmps/{sale_number}` — OV não é código de produto; use `date_start`, `date_end`, `branch` quando o escopo importar
 
 **Suprimentos (KPI empresa)**
 - Valor total de estoque: `GET /supplies/stock-value` — não confundir com estoque de produto

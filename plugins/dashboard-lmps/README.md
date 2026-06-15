@@ -23,9 +23,14 @@ Microfrontend (Module Federation) para **acompanhamento de LMPs** (engenharia), 
 ## API
 
 ```text
-GET /apps/api-delpi/engineering/lmps/dashboard
+GET /apps/api-delpi/engineering/lmps/dashboard/summary
+GET /apps/api-delpi/engineering/lmps/dashboard/charts
+GET /apps/api-delpi/engineering/lmps/dashboard/items
+GET /apps/api-delpi/engineering/lmps/{sale_number}
 GET /apps/api-delpi/engineering/lmps
 ```
+
+Detalhe da OV: rota única `get_lmp_by_sale_number` — ver [docs/API_MAPPING.md](./docs/API_MAPPING.md).
 
 ## Início rápido
 
@@ -47,7 +52,7 @@ Testes e registro na Core API: [docs/TESTING.md](./docs/TESTING.md).
 
 - KPIs: % dentro do prazo, lead time médio, total de propostas
 - Gráficos: nível, status, lead por nível, evolução temporal
-- Tabela detalhada das LMPs filtradas
+- Tabela detalhada das LMPs filtradas (clique na linha → detalhe da OV)
 - Atualização automática a cada 2 minutos (aba visível)
 - Fallback de agregação no cliente se `charts` não vier da API
 

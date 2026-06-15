@@ -553,15 +553,16 @@
       "examples": [
         "listar lmps",
         "lmps da filial 01",
-        "detalhe da lmp ov 12345"
+        "detalhe da lmp ov 003578"
       ]
     },
     {
       "token": "/lmps/",
-      "category": "Detalhe de LMP",
+      "category": "Detalhe de LMP por OV",
       "examples": [
-        "lmp ov 12345",
-        "detalhes da ov 12345"
+        "lmp ov 003578",
+        "detalhes da ov 003578",
+        "proposta 003578 engenharia"
       ]
     },
     {

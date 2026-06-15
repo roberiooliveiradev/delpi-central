@@ -46,6 +46,7 @@ class OverallEquipmentEffectivenessRepository(
             branch=request.branch,
             op=request.production_order,
             work_center=request.work_center,
+            operator_code=request.operator_code,
             status_ok_only=True,
             efficiency_cap_pct=None,
             column_prefix="EF",
@@ -216,7 +217,8 @@ class OverallEquipmentEffectivenessRepository(
             SELECT
                 COUNT(*) AS total_appointments,
                 SUM(CASE WHEN status = 'valid' THEN 1 ELSE 0 END) AS valid_appointments,
-                SUM(CASE WHEN status = 'outlier' THEN 1 ELSE 0 END) AS outlier_appointments
+                SUM(CASE WHEN status = 'outlier' THEN 1 ELSE 0 END) AS outlier_appointments,
+                ROUND(AVG(CASE WHEN status = 'valid' THEN oee_pct END), 2) AS avg_oee_pct
             FROM APONTAMENTOS_OEE
             {status_clause}
         """

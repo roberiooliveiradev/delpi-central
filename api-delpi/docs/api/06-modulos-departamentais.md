@@ -121,9 +121,22 @@ Parâmetros adicionais:
 | GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (`total_lmps`, `total_items`, `percent_dentro_prazo`, `avg_lead_time`). Query leve (`eng_resumo_lite`, sem `ORDER BY`). Fase 1 do carregamento progressivo. |
 | GET | `/engineering/lmps/dashboard/items` | Itens paginados do dashboard (tabela). |
 | GET | `/engineering/lmps/dashboard/charts` | Dados de gráficos (levelData, statusData, leadByLevel, evolutionData). Fase 2 do carregamento progressivo. |
-| GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem. |
+| GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem (OV). Mesmo escopo de classificação do dashboard quando informados `date_start`, `date_end` e `branch`. |
 
-> **Carregamento progressivo:** o frontend chama `/summary` → `/charts` → `/dashboard` em sequência. A página renderiza após receber charts (fase 2), enquanto os items da tabela carregam em background (fase 3).
+**MFE `dashboard-lmps`:** tabela via `/dashboard/items` (ou carregamento progressivo legado `/dashboard`); clique na linha abre `/apps/dashboard-lmps/ov/{sale_number}` no frontend, que consome **`GET /engineering/lmps/{sale_number}`** (não há rota duplicada de detalhe).
+
+| Query (detalhe `/lmps/{sale_number}`) | Descrição |
+|---|---|
+| `date_start`, `date_end` | Período — alinha candidatos ao dashboard. |
+| `branch` | Filial — recomendado quando a OV existe em mais de uma filial. |
+
+| Resposta `meta.relatedRoutes` (detalhe) | Descrição |
+|---|---|
+| `detail` | Esta OV (`/engineering/lmps/{sale_number}`). |
+| `dashboardItems`, `dashboardSummary`, `dashboardCharts` | Rotas agregadas do painel. |
+| `list` | Listagem paginada `/engineering/lmps`. |
+
+> **Carregamento progressivo:** o frontend chama `/summary` → `/charts` → `/items` (ou `/dashboard` legado). A página renderiza KPIs/gráficos antes da tabela; detalhe da OV é rota separada acima.
 
 | Query (listagem) | Descrição |
 |---|---|
@@ -163,6 +176,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/nonconformities` | Lista NC do Protheus. |
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
 | GET | `/quality/kaizens/summary` | Resumo de kaizens. |
+| GET | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen. |
 | GET | `/quality/audit-5s/summary` | Resumo auditorias 5S. |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
 | GET | `/quality/ppm/external/summary` | PPM externo (resumo). |
@@ -189,11 +203,13 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | `title` | Filtro parcial no título (`descricao`). |
 | `status` | Filtro exato de status (ex.: `implantado`). |
 | `branch` | Filial (`filial`). |
-| `date_start`, `date_end` | Intervalo de datas (`DD-MM-YYYY`, `YYYY-MM-DD` ou `DD/MM/YYYY`). |
+| `date_start`, `date_end` | Intervalo de datas (`DD-MM-YYYY`, `YYYY-MM-DD` ou `DD/MM/YYYY`). Opcionais — omitidos, `list_kaizen` traz todos os implantados. |
 
-**Contagem (`total_kaizens`):** kaizens com status *implantado* cuja data de implantação (`data`) cai no intervalo.
+**Contagem (`total_kaizens`):** kaizens com status *implantado* cuja data de implantação (`data`) cai no intervalo (quando `date_start`/`date_end` informados).
 
 **Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
+
+**Listagem (`list_kaizen`):** itens com `id`, `annual_savings` (`daily_savings × 365`) e demais campos cadastrais. O dashboard de qualidade usa chamada sem datas para catálogo completo na tabela.
 
 #### Planilha — colunas lidas
 
@@ -213,16 +229,15 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 
 **Não ler da planilha:** `horas_poupadas_dia` e `ganho_diario` — removidas da planilha; a API calcula o ganho diário.
 
-#### Cálculo do ganho diário (`daily_savings`)
-
-Implementado em `KaizenRepository._calculate_daily_savings`:
+#### Cálculo
 
 ```
 horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
 daily_savings      = horas_poupadas_dia × custo_hora   # arredondado em 2 casas
+annual_savings     = daily_savings × 365               # arredondado em 2 casas
 ```
 
-Se alguma das três entradas estiver ausente, `daily_savings` é `null` e o kaizen não contribui para `total_savings`.
+Se alguma das três entradas estiver ausente, `daily_savings` e `annual_savings` são `null` e o kaizen não contribui para `total_savings`.
 
 #### Exemplo de resposta (`data`)
 
@@ -242,80 +257,19 @@ Se alguma das três entradas estiver ausente, `daily_savings` é `null` e o kaiz
       "sector": "Produção",
       "investment": 620.0,
       "daily_savings": 7.54,
+      "annual_savings": 2752.10,
       "branch": "01"
     }
   ]
 }
 ```
 
-Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).
+### GET /quality/kaizens/{kaizen_id}
 
-### GET /quality/kaizens/summary
+**Fonte:** mesma planilha. Path: `kaizen_id` = `list_kaizen[].id` (ex.: `01-16/01/2026-App resina CT-16`).
 
-**Fonte:** Google Sheets (`QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID`). Não usa TOTVS.
+Retorna ficha completa com entradas do cálculo: `seconds_per_occurrence`, `occurrences_per_day`, `hourly_cost`, `hours_saved_per_day`, além dos campos do resumo.
 
-| Query | Descrição |
-|---|---|
-| `title` | Filtro parcial no título (`descricao`). |
-| `status` | Filtro exato de status (ex.: `implantado`). |
-| `branch` | Filial (`filial`). |
-| `date_start`, `date_end` | Intervalo de datas (`DD-MM-YYYY`, `YYYY-MM-DD` ou `DD/MM/YYYY`). |
-
-**Contagem (`total_kaizens`):** kaizens com status *implantado* cuja data de implantação (`data`) cai no intervalo.
-
-**Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
-
-#### Planilha — colunas lidas
-
-| Coluna (header) | Campo API | Observação |
-|---|---|---|
-| `filial` | `branch` | |
-| `descricao` | `title` | |
-| `responsavel` | `accountable` | |
-| `area_setor` | `sector` | |
-| `custo_investimento` | `investment` | |
-| `segudos_por_ocorrecia` / `segundos_por_ocorrencia` | — | Entrada do cálculo (aliases aceitos). |
-| `ocorrecias_por_dia` / `ocorrencias_por_dia` | — | Entrada do cálculo (aliases aceitos). |
-| `custo_hora` | — | Entrada do cálculo. |
-| `status` | `status` | |
-| `data` | `date_implemented` | Data de implantação. |
-| `deleted` | — | Linhas marcadas são ignoradas. |
-
-**Não ler da planilha:** `horas_poupadas_dia` e `ganho_diario` — removidas da planilha; a API calcula o ganho diário.
-
-#### Cálculo do ganho diário (`daily_savings`)
-
-Implementado em `KaizenRepository._calculate_daily_savings`:
-
-```
-horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
-daily_savings      = horas_poupadas_dia × custo_hora   # arredondado em 2 casas
-```
-
-Se alguma das três entradas estiver ausente, `daily_savings` é `null` e o kaizen não contribui para `total_savings`.
-
-#### Exemplo de resposta (`data`)
-
-```json
-{
-  "date_start": "01-01-2026",
-  "date_end": "31-01-2026",
-  "total_kaizens": 1,
-  "total_savings": 22.62,
-  "list_kaizen": [
-    {
-      "id": "01-16/01/2026-App resina CT-16",
-      "title": "App resina CT-16",
-      "date_implemented": "16/01/2026",
-      "status": "implantado",
-      "accountable": "Ossamu",
-      "sector": "Produção",
-      "investment": 620.0,
-      "daily_savings": 7.54,
-      "branch": "01"
-    }
-  ]
-}
-```
+**operationId:** `get_kaizen_by_id` · **meta.entity:** `kaizen` · **meta.shape:** `scalar`
 
 Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).

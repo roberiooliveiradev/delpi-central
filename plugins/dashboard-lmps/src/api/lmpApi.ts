@@ -6,6 +6,7 @@ import {
   type ListLmpsParams,
   type LmpItem,
   type LmpDashboardItem,
+  type LmpDetailData,
   type Page,
 } from "../types/lmp";
 
@@ -152,6 +153,36 @@ export type LmpsDashboardItemsResponse = {
   page: number;
   page_size: number;
 };
+
+export type GetLmpBySaleNumberParams = {
+  date_start?: string;
+  date_end?: string;
+  branch?: string;
+};
+
+export async function getLmpBySaleNumber(
+  saleNumber: string,
+  params: GetLmpBySaleNumberParams = {},
+  signal?: AbortSignal
+): Promise<LmpDetailData> {
+  const searchParams = new URLSearchParams();
+  const dateStart = toApiDate(params.date_start);
+  const dateEnd = toApiDate(params.date_end);
+
+  if (dateStart) searchParams.set("date_start", dateStart);
+  if (dateEnd) searchParams.set("date_end", dateEnd);
+  if (params.branch) searchParams.set("branch", params.branch);
+
+  const query = searchParams.toString();
+  const encoded = encodeURIComponent(String(saleNumber).trim());
+
+  const response = await httpGet<ApiSuccessResponse<LmpDetailData>>(
+    `/apps/api-delpi/engineering/lmps/${encoded}${query ? `?${query}` : ""}`,
+    { signal }
+  );
+
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar detalhe da OV");
+}
 
 export async function getLmpsDashboardItems(
   params: LmpsDashboardParams,

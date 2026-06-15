@@ -10,8 +10,6 @@ from app.application.security.api_delpi_permissions import (
     MINI_APPLICATORS_ACCESS,
 )
 
-from app.application.dto.lmp.get_lmp_request import GetLMPRequest
-from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.application.dto.transforma_mais.process_request import ProcessRequest
 from app.application.dto.transforma_mais.process_summary_request import (
     ProcessSummaryRequest,
@@ -20,6 +18,7 @@ from app.application.dto.mini_applicators.list_ferramentas_request import (
     ListMiniApplicatorsFerramentasRequest,
 )
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.application.services.response_meta_builder import ResponseMetaBuilder
 from app.composition.engineering_composer import (
     build_engineering_get_lmp_use_case,
     build_engineering_get_transforma_mais_summary_use_case,
@@ -34,11 +33,16 @@ from app.composition.engineering_composer import (
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
+    ENGINEERING_LMP_DETAIL_FIELD_LABELS,
     ENGINEERING_LMP_FIELD_LABELS,
     ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.routes.engineering.lmp_route_helpers import (
+    build_get_lmp_request,
+    build_list_lmp_request,
+)
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
     LMP_DASHBOARD,
@@ -78,7 +82,7 @@ def list_lmps_route(
     ),
 ):
     try:
-        dto = ListLMPRequest(
+        dto = build_list_lmp_request(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -121,7 +125,7 @@ def list_lmps_dashboard_route(
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
     try:
-        dto = ListLMPRequest(
+        dto = build_list_lmp_request(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -175,7 +179,7 @@ def lmps_dashboard_summary_route(
     listing_type: Optional[str] = Query(None),
 ):
     try:
-        dto = ListLMPRequest(
+        dto = build_list_lmp_request(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -223,7 +227,7 @@ def lmps_dashboard_items_route(
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
     try:
-        dto = ListLMPRequest(
+        dto = build_list_lmp_request(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -263,7 +267,7 @@ def lmps_dashboard_charts_route(
     listing_type: Optional[str] = Query(None),
 ):
     try:
-        dto = ListLMPRequest(
+        dto = build_list_lmp_request(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -295,13 +299,22 @@ def lmps_dashboard_charts_route(
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_route(
     sale_number: str,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
-    branch: Optional[str] = None,
+    date_start: Optional[str] = Query(
+        default=None,
+        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    date_end: Optional[str] = Query(
+        default=None,
+        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    branch: Optional[str] = Query(
+        default=None,
+        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
+    ),
 ):
     try:
-        dto = GetLMPRequest(
-            sale_number=sale_number,
+        dto = build_get_lmp_request(
+            sale_number,
             date_start=date_start,
             date_end=date_end,
             branch=branch,
@@ -309,11 +322,17 @@ def get_lmp_route(
 
         use_case = build_engineering_get_lmp_use_case()
         result = use_case.execute(dto)
+        resolved_branch = result.get("branch") or branch
 
         return api_delpi_success(
             result,
             operation_id="get_lmp_by_sale_number",
             message=f"LMP da ordem de venda {sale_number} carregada com sucesso.",
+            fields=kpi_fields(ENGINEERING_LMP_DETAIL_FIELD_LABELS),
+            related_routes=ResponseMetaBuilder.lmp_related_routes(
+                sale_number,
+                branch=resolved_branch,
+            ),
         )
 
     except ValueError as exc:

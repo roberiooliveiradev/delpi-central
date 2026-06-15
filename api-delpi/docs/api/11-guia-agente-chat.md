@@ -92,7 +92,7 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
 | Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Dashboard legado (tudo) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
-| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
+| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` — use `date_start`, `date_end`, `branch` para o mesmo escopo do dashboard |
 | Transforma Mais (lista) | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
 | Transforma Mais (resumo) | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |
 
@@ -170,7 +170,8 @@ Métricas TOTVS e Google Sheets (PPM, NC Protheus, kaizen, 5S resumo).
 | `/quality/nonconformities` (+ `/series`) | NC Protheus |
 | `/quality/ppm/internal|external/summary` | PPM resumo |
 | `/quality/ppm/internal|external` | PPM detalhado (+ `/series`) |
-| `/quality/audit-5s/summary`, `/quality/kaizens/summary` | 5S e kaizens |
+| `/quality/audit-5s/summary`, `/quality/kaizens/summary` | 5S e kaizens (resumo) |
+| `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen (ficha + cálculo da economia) |
 
 Permissão: `api-delpi.quality.access` ou `dashboard-quality.view`.
 

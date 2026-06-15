@@ -347,8 +347,18 @@ def get_production_oee(
         default=None,
         description="Faixas de eficiência (csv): ok, low, verify",
     ),
-    work_center: str | None = Query(default=None),
-    production_order: str | None = Query(default=None),
+    work_center: str | None = Query(
+        default=None,
+        description="Centro(s) de trabalho (csv)",
+    ),
+    production_order: str | None = Query(
+        default=None,
+        description="Ordem(ns) de produção (csv)",
+    ),
+    operator_code: str | None = Query(
+        default=None,
+        description="Código(s) do operador (csv)",
+    ),
     product_type: str | None = Query(default=None, pattern="^(PA|PI)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
@@ -366,6 +376,7 @@ def get_production_oee(
             efficiency_bands=efficiency_bands,
             work_center=work_center,
             production_order=production_order,
+            operator_code=operator_code,
             product_type=product_type,
             page=page,
             page_size=page_size,

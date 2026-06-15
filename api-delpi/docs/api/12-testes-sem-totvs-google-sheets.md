@@ -23,6 +23,7 @@ Rotas que dependem **só** de **Google Sheets** continuam funcionando. Rotas que
 | Método | Path | Fonte de dados | Permissão |
 |--------|------|----------------|-----------|
 | GET | `/quality/kaizens/summary` | Google Sheets (`QUALITY_*`) | `dashboard-quality.view` ou `api-delpi.quality.access` |
+| GET | `/quality/kaizens/{kaizen_id}` | Google Sheets (`QUALITY_*`) | idem |
 | GET | `/quality/audit-5s/summary` | Google Sheets | idem |
 | GET | `/quality/kaizens/summary?date_start=01-01-2026&date_end=31-12-2026` | Sheets + filtro | idem |
 

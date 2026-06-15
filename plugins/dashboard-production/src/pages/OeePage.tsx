@@ -11,15 +11,13 @@ import { ExportActions } from "../components/ExportActions";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
-import { MultiSelectField } from "../components/MultiSelectField";
+import { OeeAppointmentToolbar } from "../components/OeeAppointmentToolbar";
 import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
 import {
-  EFFICIENCY_BAND_FILTER_OPTIONS,
   formatEfficiencyBandsQuery,
   type ProductionEfficiencyBand,
 } from "../constants/efficiencyBands";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel } from "../components/HelpTooltip";
 import {
   PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
@@ -43,6 +41,12 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
 import { formatDisplayDate, formatDisplayTime, formatPeriodLabel } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
+import { formatCsvFilterValues } from "../utils/csvFilters";
+import {
+  buildOpFilterOptions,
+  buildOperatorFilterOptions,
+  buildWorkCenterFilterOptions,
+} from "../utils/filterOptions";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
 import {
@@ -97,6 +101,10 @@ export function OeePage({ pathname }: OeePageProps) {
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
   const [efficiencyBandFilter, setEfficiencyBandFilter] = useState<ProductionEfficiencyBand[]>([]);
   const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>("");
+  const [selectedOps, setSelectedOps] = useState<string[]>([]);
+  const [selectedOperators, setSelectedOperators] = useState<string[]>([]);
+  const [selectedWorkCenters, setSelectedWorkCenters] = useState<string[]>([]);
+  const [facetItems, setFacetItems] = useState<ProductionOeeAppointmentItem[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const serverTable = useServerTable({ pageSize: PAGE_SIZE });
@@ -104,6 +112,9 @@ export function OeePage({ pathname }: OeePageProps) {
   const oeeParams = useMemo(
     () => ({
       ...apiParams,
+      production_order: formatCsvFilterValues(selectedOps),
+      operator_code: formatCsvFilterValues(selectedOperators),
+      work_center: formatCsvFilterValues(selectedWorkCenters),
       efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
       product_type: productTypeFilter || undefined,
       page: serverTable.query.page,
@@ -111,7 +122,15 @@ export function OeePage({ pathname }: OeePageProps) {
       sort_by: serverTable.query.sortKey ?? undefined,
       sort_dir: serverTable.query.sortDirection,
     }),
-    [apiParams, efficiencyBandFilter, productTypeFilter, serverTable.query]
+    [
+      apiParams,
+      selectedOps,
+      selectedOperators,
+      selectedWorkCenters,
+      efficiencyBandFilter,
+      productTypeFilter,
+      serverTable.query,
+    ]
   );
 
   const { data, loading, error, reload } = useProductionResource(
@@ -120,12 +139,49 @@ export function OeePage({ pathname }: OeePageProps) {
       oeeParams.start_date,
       oeeParams.end_date,
       oeeParams.branch,
+      oeeParams.production_order,
+      oeeParams.operator_code,
+      oeeParams.work_center,
       oeeParams.efficiency_bands,
       oeeParams.product_type,
       oeeParams.page,
       oeeParams.sort_by,
       oeeParams.sort_dir,
     ]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getProductionOee({
+      ...apiParams,
+      page: 1,
+      page_size: 1000,
+    })
+      .then((result) => {
+        if (!cancelled) {
+          setFacetItems(result.appointments.items);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFacetItems([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiParams.start_date, apiParams.end_date, apiParams.branch]);
+
+  const opOptions = useMemo(() => buildOpFilterOptions(facetItems), [facetItems]);
+  const operatorOptions = useMemo(
+    () => buildOperatorFilterOptions(facetItems),
+    [facetItems]
+  );
+  const workCenterOptions = useMemo(
+    () => buildWorkCenterFilterOptions(facetItems),
+    [facetItems]
   );
 
   const oeeSeries = useProductionOeeSeries({
@@ -139,7 +195,17 @@ export function OeePage({ pathname }: OeePageProps) {
 
   useEffect(() => {
     serverTable.resetPage();
-  }, [apiParams.start_date, apiParams.end_date, apiParams.branch, efficiencyBandFilter, productTypeFilter, serverTable.resetPage]);
+  }, [
+    apiParams.start_date,
+    apiParams.end_date,
+    apiParams.branch,
+    selectedOps,
+    selectedOperators,
+    selectedWorkCenters,
+    efficiencyBandFilter,
+    productTypeFilter,
+    serverTable.resetPage,
+  ]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -169,6 +235,9 @@ export function OeePage({ pathname }: OeePageProps) {
   const fetchAppointmentsForExport = useCallback(async () => {
     const result = await getProductionOee({
       ...apiParams,
+      production_order: formatCsvFilterValues(selectedOps),
+      operator_code: formatCsvFilterValues(selectedOperators),
+      work_center: formatCsvFilterValues(selectedWorkCenters),
       efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
       product_type: productTypeFilter || undefined,
       page: 1,
@@ -179,6 +248,9 @@ export function OeePage({ pathname }: OeePageProps) {
     return result.appointments.items;
   }, [
     apiParams,
+    selectedOps,
+    selectedOperators,
+    selectedWorkCenters,
     efficiencyBandFilter,
     productTypeFilter,
     serverTable.query.sortKey,
@@ -440,43 +512,22 @@ export function OeePage({ pathname }: OeePageProps) {
         </ChartCard>
       </section>
 
-      <div className="dp-ppm-toolbar" role="toolbar" aria-label="Filtros de apontamento">
-        <div className="dp-ppm-toolbar__group">
-          <FieldLabel
-            label="Tipo de produto"
-            hint={DP_HELP_TOOLTIPS.oee.filters.productType}
-          />
-          <div className="dp-ppm-toggle" role="group" aria-label="Tipo de produto">
-          {[
-            { value: "", label: "PA e PI" },
-            { value: "PA", label: "PA" },
-            { value: "PI", label: "PI" },
-          ].map((option) => (
-            <button
-              key={option.value || "all-types"}
-              type="button"
-              className={`dp-ppm-toggle__btn${
-                productTypeFilter === option.value ? " dp-ppm-toggle__btn--active" : ""
-              }`}
-              onClick={() => setProductTypeFilter(option.value as ProductTypeFilter)}
-            >
-              {option.label}
-            </button>
-          ))}
-          </div>
-        </div>
-
-        <MultiSelectField
-          label="Faixa de eficiência"
-          labelHint={DP_HELP_TOOLTIPS.oee.filters.efficiencyBands}
-          options={EFFICIENCY_BAND_FILTER_OPTIONS}
-          selectedValues={efficiencyBandFilter}
-          onChange={(values) => setEfficiencyBandFilter(values as ProductionEfficiencyBand[])}
-          emptyLabel="Todas as faixas"
-          searchable
-          className="dp-ppm-toolbar__field"
-        />
-      </div>
+      <OeeAppointmentToolbar
+        productTypeFilter={productTypeFilter}
+        efficiencyBandFilter={efficiencyBandFilter}
+        selectedOps={selectedOps}
+        selectedOperators={selectedOperators}
+        selectedWorkCenters={selectedWorkCenters}
+        opOptions={opOptions}
+        operatorOptions={operatorOptions}
+        workCenterOptions={workCenterOptions}
+        onProductTypeFilterChange={setProductTypeFilter}
+        onEfficiencyBandFilterChange={setEfficiencyBandFilter}
+        onSelectedOpsChange={setSelectedOps}
+        onSelectedOperatorsChange={setSelectedOperators}
+        onSelectedWorkCentersChange={setSelectedWorkCenters}
+        disabled={loading && !hasData}
+      />
 
       <p className="dp-efficiency-legend dp-efficiency-legend--warning">
         Atenção: apontamentos com eficiência fora da faixa {PRODUCTION_EFFICIENCY_VALID_MIN_PCT}–

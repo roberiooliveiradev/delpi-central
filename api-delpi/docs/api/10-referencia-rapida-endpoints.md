@@ -207,6 +207,7 @@ Legenda de permissões:
 | GET | `/quality/nonconformities` | Q |
 | GET | `/quality/nonconformities/series` | Q |
 | GET | `/quality/kaizens/summary` | Q |
+| GET | `/quality/kaizens/{kaizen_id}` | Q |
 | GET | `/quality/audit-5s/summary` | Q |
 | GET | `/quality/ppm/internal/summary` | Q |
 | GET | `/quality/ppm/external/summary` | Q |

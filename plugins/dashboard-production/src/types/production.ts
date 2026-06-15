@@ -162,6 +162,7 @@ export type ProductionListParams = ProductionFilterParams & {
   efficiency_bands?: string;
   work_center?: string;
   production_order?: string;
+  operator_code?: string;
   product_type?: ProductionOrderProductType | "";
   page?: number;
   page_size?: number;

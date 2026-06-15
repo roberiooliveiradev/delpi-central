@@ -9,6 +9,7 @@ from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_qu
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
+    parse_csv_filter_values,
 )
 
 
@@ -40,6 +41,37 @@ def test_build_fabril_view_filters_caps_efficiency_for_kpi() -> None:
 
     assert "EF.EFICIENCIA_PERCENTUAL" in where
     assert settings.max_efficiency_indicator_pct in params
+
+
+def test_parse_csv_filter_values() -> None:
+    assert parse_csv_filter_values(None) is None
+    assert parse_csv_filter_values("") is None
+    assert parse_csv_filter_values("24319401002") == ["24319401002"]
+    assert parse_csv_filter_values("24319401002,24406601001") == [
+        "24319401002",
+        "24406601001",
+    ]
+
+
+def test_build_fabril_view_filters_supports_csv_op_work_center_and_operator() -> None:
+    where, params = build_fabril_view_filters(
+        date_start=date(2026, 5, 1),
+        date_end=date(2026, 5, 31),
+        branch="01",
+        op="24319401002,24406601001",
+        work_center="CT01,CT02",
+        operator_code="000001,000002",
+        status_ok_only=True,
+        column_prefix="EF",
+    )
+
+    assert "EF.OP IN (?,?" in where
+    assert "EF.CENTRO_TRABALHO IN (?,?" in where
+    assert "EF.COD_OPERADOR IN (?,?" in where
+    assert "24319401002" in params
+    assert "24406601001" in params
+    assert "CT01" in params
+    assert "000001" in params
 
 
 def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:

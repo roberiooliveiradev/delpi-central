@@ -48,6 +48,7 @@ def test_kaizen_daily_savings_calculated_from_sheet_inputs() -> None:
 
     assert summary.total_kaizens == 1
     assert summary.list_kaizen[0].daily_savings == 7.54
+    assert summary.list_kaizen[0].annual_savings == round(7.54 * 365, 2)
 
 
 def test_kaizen_daily_savings_supports_correct_column_names() -> None:
@@ -98,4 +99,25 @@ def test_kaizen_daily_savings_none_when_inputs_missing() -> None:
     )
 
     assert summary.list_kaizen[0].daily_savings is None
+    assert summary.list_kaizen[0].annual_savings is None
     assert summary.total_savings == 0.0
+
+
+def test_kaizen_get_by_id_returns_detail() -> None:
+    repository = _repository([_kaizen_row()])
+
+    detail = repository.get_kaizen_by_id("01-16/01/2026-App resina CT-16")
+
+    assert detail is not None
+    assert detail.title == "App resina CT-16"
+    assert detail.daily_savings == 7.54
+    assert detail.annual_savings == round(7.54 * 365, 2)
+    assert detail.seconds_per_occurrence == 1015.96
+    assert detail.occurrences_per_day == 0.21
+    assert detail.hourly_cost == 127.16
+
+
+def test_kaizen_get_by_id_returns_none_when_missing() -> None:
+    repository = _repository([_kaizen_row()])
+
+    assert repository.get_kaizen_by_id("inexistente") is None

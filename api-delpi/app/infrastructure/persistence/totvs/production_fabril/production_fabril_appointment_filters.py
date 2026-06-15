@@ -15,6 +15,32 @@ from app.domain.production.production_fabril_appointment_scope import (
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
+def parse_csv_filter_values(raw: str | None) -> list[str] | None:
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text:
+        return None
+    if "," not in text:
+        return [text]
+    values = [part.strip() for part in text.split(",") if part.strip()]
+    return values or None
+
+
+def _apply_exact_multi_filter(
+    qb: QueryBuilder,
+    column: str,
+    raw: str | None,
+) -> None:
+    values = parse_csv_filter_values(raw)
+    if not values:
+        return
+    if len(values) == 1:
+        qb.eq(column, values[0])
+    else:
+        qb.in_list(column, values)
+
+
 def _column(name: str, *, prefix: str | None) -> str:
     if prefix:
         return f"{prefix}.{name}"
@@ -29,6 +55,7 @@ def build_fabril_view_filters(
     branches: tuple[str, ...] = DEFAULT_PRODUCTION_BRANCHES,
     op: str | None = None,
     work_center: str | None = None,
+    operator_code: str | None = None,
     employee: str | None = None,
     status_ok_only: bool = True,
     efficiency_cap_pct: int | None = None,
@@ -42,6 +69,7 @@ def build_fabril_view_filters(
     op_col = _column("OP", prefix=column_prefix)
     ct_col = _column("CENTRO_TRABALHO", prefix=column_prefix)
     operador_col = _column("NOME_OPERADOR", prefix=column_prefix)
+    cod_operador_col = _column("COD_OPERADOR", prefix=column_prefix)
     status_col = _column("STATUS_REGISTRO", prefix=column_prefix)
     eficiencia_col = _column("EFICIENCIA_PERCENTUAL", prefix=column_prefix)
 
@@ -59,18 +87,24 @@ def build_fabril_view_filters(
     qb.raw(f"LTRIM(RTRIM(ISNULL({filial_col}, ''))) <> ''")
 
     if op:
-        qb.like(op_col, op)
+        _apply_exact_multi_filter(qb, op_col, op)
 
     if work_center:
-        normalized = work_center.strip()
-        if normalized in EXCLUDED_WORK_CENTERS:
+        selected = parse_csv_filter_values(work_center) or []
+        allowed = [value for value in selected if value not in EXCLUDED_WORK_CENTERS]
+        if not allowed:
             qb.raw("1=0")
+        elif len(allowed) == 1:
+            qb.eq(ct_col, allowed[0])
         else:
-            qb.eq(ct_col, normalized)
+            qb.in_list(ct_col, allowed)
     else:
         for excluded in EXCLUDED_WORK_CENTERS:
             qb.raw(f"LTRIM(RTRIM({ct_col})) <> ?")
             qb._params.append(excluded)
+
+    if operator_code:
+        _apply_exact_multi_filter(qb, cod_operador_col, operator_code)
 
     if employee:
         qb.like(operador_col, employee, case_insensitive=True)

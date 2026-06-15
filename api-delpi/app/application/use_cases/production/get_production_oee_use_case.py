@@ -17,6 +17,22 @@ class GetProductionOeeUseCase:
     ):
         self._repository = overall_equipment_effectiveness_repository
 
+    @staticmethod
+    def _has_appointment_scope_filters(request: GetProductionOeeRequest) -> bool:
+        def has_value(value: str | None) -> bool:
+            return bool(value and str(value).strip())
+
+        return any(
+            [
+                has_value(request.production_order),
+                has_value(request.work_center),
+                has_value(request.operator_code),
+                has_value(request.product_type),
+                has_value(request.efficiency_bands),
+                has_value(request.status),
+            ]
+        )
+
     def execute(self, request: GetProductionOeeRequest) -> dict:
         production_request = ProductionRequest(
             branch=request.branch,
@@ -36,7 +52,9 @@ class GetProductionOeeUseCase:
             else 0.0
         )
 
-        if request.branch:
+        if self._has_appointment_scope_filters(request):
+            oee_pct = to_optional_float(appointment_summary.get("avg_oee_pct"))
+        elif request.branch:
             summary_entity = self._repository.get_overall_equipment_effectiveness(
                 production_request
             )

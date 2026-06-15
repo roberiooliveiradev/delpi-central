@@ -86,3 +86,19 @@ class ResponseMetaBuilder:
             "analyser": f"/products/{code}/analyser",
             "factoryStatus": f"/products/{code}/factory-status",
         }
+
+    @staticmethod
+    def lmp_related_routes(
+        sale_number: str,
+        *,
+        branch: str | None = None,
+    ) -> dict[str, str]:
+        normalized = str(sale_number).strip()
+        branch_suffix = f"?branch={branch}" if branch else ""
+        return {
+            "detail": f"/engineering/lmps/{normalized}{branch_suffix}",
+            "dashboardItems": "/engineering/lmps/dashboard/items",
+            "dashboardSummary": "/engineering/lmps/dashboard/summary",
+            "dashboardCharts": "/engineering/lmps/dashboard/charts",
+            "list": "/engineering/lmps",
+        }

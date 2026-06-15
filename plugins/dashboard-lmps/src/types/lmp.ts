@@ -42,6 +42,10 @@ export type LmpDashboardItem = LmpItem & {
   status: LmpStatus;
 };
 
+export type LmpDetailData = LmpDashboardItem & {
+  sla_minutos?: number | null;
+};
+
 export type LmpsEvolutionDatum = {
   periodo: string;
   mediaLead: number;

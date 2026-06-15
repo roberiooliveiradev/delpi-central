@@ -24,7 +24,9 @@ import { DataTableSection } from "../components/DataTableSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { buildLmpDetailPath } from "../constants/routes";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { ChartGranularity } from "../types/chart";
@@ -32,13 +34,13 @@ import type { LmpDashboardItem } from "../types/lmp";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
 import {
   formatPeriodLabel,
-  getFirstDayOfMonthInputValue,
-  getTodayInputValue,
 } from "../utils/dates";
 import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
+import { navigateLmps } from "../utils/navigation";
 
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
@@ -82,13 +84,37 @@ function renderPieLabel({
   return `${name} ${(percent * 100).toFixed(0)}%`;
 }
 
-export function DashboardLmpsPage() {
-  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
-  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
-  const [branch, setBranch] = useState("");
-  const [listingType, setListingType] = useState("Todos");
-  const [status, setStatus] = useState("Todos");
+export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
+  const initialFilters = useMemo(() => readLmpsFilters(), [pathname]);
+  const [dateStart, setDateStart] = useState(initialFilters.dateStart);
+  const [dateEnd, setDateEnd] = useState(initialFilters.dateEnd);
+  const [branch, setBranch] = useState(initialFilters.branch);
+  const [listingType, setListingType] = useState(initialFilters.listingType);
+  const [status, setStatus] = useState(initialFilters.status);
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
+  const filterState = useMemo<LmpsFilterUrlState>(
+    () => ({
+      dateStart,
+      dateEnd,
+      branch,
+      listingType,
+      status,
+    }),
+    [dateStart, dateEnd, branch, listingType, status]
+  );
+
+  const handleRowClick = useCallback(
+    (row: LmpDashboardItem) => {
+      navigateLmps(
+        buildLmpDetailPath(row.sale_number, {
+          ...filterState,
+          branch: row.branch || filterState.branch,
+        })
+      );
+    },
+    [filterState]
+  );
 
   const debouncedDateStart = useDebouncedValue(dateStart, FILTER_DEBOUNCE_MS);
   const debouncedDateEnd = useDebouncedValue(dateEnd, FILTER_DEBOUNCE_MS);
@@ -112,12 +138,16 @@ export function DashboardLmpsPage() {
   });
 
   const dashboardItems = items as LmpDashboardItem[];
+  const tableSort = useClientTableSort({
+    defaultSortKey: "start",
+    defaultSortDirection: "desc",
+  });
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
 
-  const sortedItems = useMemo(
+  const chartItems = useMemo(
     () =>
       [...dashboardItems].sort(
         (a, b) => parseLmpDateNumber(b.start_date) - parseLmpDateNumber(a.start_date)
@@ -125,14 +155,14 @@ export function DashboardLmpsPage() {
     [dashboardItems]
   );
 
-  const hasData = sortedItems.length > 0 || summary !== null;
+  const hasData = chartItems.length > 0 || summary !== null;
   const isBusy = loading || refreshing;
   const initialLoadingProgress = useLoadingProgress(loading, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing, requestProgress);
 
   const fallbackCharts = useMemo(
-    () => buildLmpFallbackCharts(sortedItems),
-    [sortedItems]
+    () => buildLmpFallbackCharts(chartItems),
+    [chartItems]
   );
 
   const resolvedCharts = useMemo(
@@ -156,79 +186,121 @@ export function DashboardLmpsPage() {
   const evolutionChartData = useMemo(
     () =>
       aggregateLmpEvolutionSeries(
-        sortedItems,
+        chartItems,
         dateStart || undefined,
         dateEnd || undefined,
         granularity
       ),
-    [sortedItems, dateStart, dateEnd, granularity]
+    [chartItems, dateStart, dateEnd, granularity]
   );
 
   const tableColumns = useMemo<DataTableColumn<LmpDashboardItem>[]>(
     () => [
-      { key: "branch", header: "Filial", render: (row) => row.branch ?? "-" },
+      {
+        key: "branch",
+        header: "Filial",
+        sortable: true,
+        sortValue: (row) => row.branch ?? "",
+        render: (row) => row.branch ?? "-",
+      },
       {
         key: "kind",
         header: "Tipo",
+        sortable: true,
+        sortValue: (row) => row.listing_kind ?? "",
         render: (row) => formatListingKind(row.listing_kind),
       },
-      { key: "sale", header: "Nº Proposta", render: (row) => row.sale_number },
+      {
+        key: "sale",
+        header: "Nº Proposta",
+        sortable: true,
+        sortValue: (row) => row.sale_number,
+        render: (row) => row.sale_number,
+      },
       {
         key: "desc",
         header: "Descrição",
         className: "lmps-table__col--wide",
+        sortable: true,
+        sortValue: (row) => row.sale_description,
         render: (row) => row.sale_description,
       },
       {
         key: "start",
         header: "Data Início",
+        sortable: true,
+        sortValue: (row) => parseLmpDateNumber(row.start_date),
         render: (row) => formatDate(row.start_date),
       },
       {
         key: "end",
         header: "Data Fim",
+        sortable: true,
+        sortValue: (row) => parseLmpDateNumber(row.end_date),
         render: (row) => formatDate(row.end_date),
       },
       {
         key: "eng",
         header: "Status Engenharia",
+        sortable: true,
+        sortValue: (row) => row.engineering_status ?? "",
         render: (row) => row.engineering_status ?? "-",
       },
       {
         key: "pi",
         header: "Qtd PI",
+        sortable: true,
+        sortValue: (row) => row.qtd_pi ?? 0,
         render: (row) => String(row.qtd_pi ?? 0),
       },
-      { key: "nivel", header: "Nível", render: (row) => row.nivel },
+      {
+        key: "nivel",
+        header: "Nível",
+        sortable: true,
+        sortValue: (row) => Number.parseInt(row.nivel.replace(/\D/g, ""), 10) || 0,
+        render: (row) => row.nivel,
+      },
       {
         key: "sla",
         header: "Dias úteis",
+        sortable: true,
+        sortValue: (row) => row.dias_uteis_sla,
         render: (row) => String(row.dias_uteis_sla),
       },
       {
         key: "limit",
         header: "Data Limite",
+        sortable: true,
+        sortValue: (row) => parseLmpDateNumber(row.data_limite),
         render: (row) => formatDate(row.data_limite),
       },
       {
         key: "lead",
         header: "Lead Time Útil",
+        sortable: true,
+        sortValue: (row) => row.lead_time_util,
         render: (row) => String(row.lead_time_util ?? "-"),
       },
-      { key: "status", header: "Status Classificação", render: (row) => row.status },
+      {
+        key: "status",
+        header: "Status Classificação",
+        sortable: true,
+        sortValue: (row) => row.status,
+        render: (row) => row.status,
+      },
     ],
     []
   );
 
   const totalPropostas =
-    summary?.total_items ?? summary?.total_lmps ?? (itemsTotal || sortedItems.length);
+    summary?.total_items ?? summary?.total_lmps ?? (itemsTotal || dashboardItems.length);
 
   const handleExportCsv = useCallback(() => {
-    exportLmpsDashboardCsv(sortedItems, {
+    exportLmpsDashboardCsv(chartItems, {
       dateStart: dateStart || undefined,
       dateEnd: dateEnd || undefined,
     });
-  }, [sortedItems, dateStart, dateEnd]);
+  }, [chartItems, dateStart, dateEnd]);
 
   return (
     <main className="dashboard-lmps dashboard-page">
@@ -245,7 +317,7 @@ export function DashboardLmpsPage() {
         onStatusChange={setStatus}
         onRefresh={reload}
         onExport={handleExportCsv}
-        exportDisabled={sortedItems.length === 0 || loading}
+        exportDisabled={dashboardItems.length === 0 || loading}
       />
 
       {refreshing && hasData ? (
@@ -454,12 +526,17 @@ export function DashboardLmpsPage() {
         title="Registros filtrados"
         hint={periodLabel}
         columns={tableColumns}
-        rows={sortedItems}
+        rows={dashboardItems}
         rowKey={(row) =>
           `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
         }
-        loading={loading && sortedItems.length === 0}
+        loading={loading && dashboardItems.length === 0}
         refreshing={refreshing}
+        clientSort={{
+          sortKey: tableSort.sortKey,
+          sortDirection: tableSort.sortDirection,
+          onSortChange: tableSort.handleSortChange,
+        }}
         emptyMessage={
           loading
             ? "Carregando registros…"
@@ -479,6 +556,8 @@ export function DashboardLmpsPage() {
             .filter(Boolean)
             .join(" ")
         }
+        onRowClick={handleRowClick}
+        getRowClassName={() => "lmps-table__row--clickable"}
       />
     </main>
   );

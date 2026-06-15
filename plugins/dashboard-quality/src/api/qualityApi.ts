@@ -15,6 +15,7 @@ import type {
 import type {
   KaizenSummary,
   KaizenSummaryParams,
+  KaizenDetail,
 } from "../types/kaizen";
 import type {
   ListNonconformitiesParams,
@@ -96,6 +97,14 @@ export async function getKaizenSummary(
   signal?: AbortSignal
 ): Promise<KaizenSummary> {
   return fetchQualityData<KaizenSummary>("/kaizens/summary", params, signal);
+}
+
+export async function getKaizenById(
+  kaizenId: string,
+  signal?: AbortSignal
+): Promise<KaizenDetail> {
+  const encoded = encodeURIComponent(kaizenId.trim());
+  return fetchQualityData<KaizenDetail>(`/kaizens/${encoded}`, {}, signal);
 }
 
 export async function getAudit5sSummary(

@@ -21,7 +21,7 @@ def test_select_lmp_prefers_detail_route_for_sale_number():
             "actionId": "lmp-detail",
             "method": "GET",
             "path": "/engineering/lmps/{sale_number}",
-            "operationId": "get_lmp_detail",
+            "operationId": "get_lmp_by_sale_number",
             "parametersSchema": [{"name": "sale_number", "in": "path", "required": True}],
         },
     ]

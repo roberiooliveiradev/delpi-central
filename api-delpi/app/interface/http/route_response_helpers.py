@@ -21,6 +21,7 @@ def api_delpi_success(
     fields: dict[str, str] | None = None,
     field_formats: dict[str, str] | None = None,
     sections: list[dict[str, Any]] | None = None,
+    related_routes: dict[str, str] | None = None,
 ):
     resolved_entity, resolved_shape = resolve_contract(
         operation_id,
@@ -30,7 +31,9 @@ def api_delpi_success(
     if shape is None and resolved_shape == "scalar":
         resolved_shape = ResponseMetaBuilder.infer_shape(data)
 
-    related = ResponseMetaBuilder.product_related_routes(code) if code else None
+    resolved_related = related_routes or (
+        ResponseMetaBuilder.product_related_routes(code) if code else None
+    )
     resolved_field_formats = field_formats or infer_scalar_field_formats(fields)
     meta = ResponseMetaBuilder.build(
         operation_id=operation_id,
@@ -39,7 +42,7 @@ def api_delpi_success(
         pagination=ResponseMetaBuilder.pagination_from_data(data),
         fields=fields,
         field_formats=resolved_field_formats or None,
-        related_routes=related,
+        related_routes=resolved_related,
         sections=sections,
     )
     return success_response(data=data, message=message, meta=meta)

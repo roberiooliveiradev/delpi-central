@@ -5,7 +5,7 @@ from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import KPI_QUALITY_ACCESS
 
-from app.core.responses import error_response
+from app.core.responses import error_response, not_found_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -25,6 +25,7 @@ from app.application.dto.nonconformity.nonconformity_series_request import (
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.quality_composer import (
     build_get_audit_5s_summary_use_case,
+    build_get_kaizen_by_id_use_case,
     build_get_kaizen_summary_use_case,
     build_get_nonconformity_series_use_case,
     build_list_nonconformity_use_case,
@@ -33,7 +34,12 @@ from app.composition.quality_composer import (
 from app.interface.http.kpi_field_labels import (
     QUALITY_AUDIT_5S_FIELD_LABELS,
     QUALITY_KAIZEN_FIELD_LABELS,
+    QUALITY_KAIZEN_DETAIL_FIELD_LABELS,
     kpi_fields,
+)
+from app.interface.http.openapi_agent_metadata import (
+    QUALITY_KAIZEN_BY_ID,
+    QUALITY_KAIZEN_SUMMARY,
 )
 from app.interface.http.routes.quality.audit_5s_operational_router import (
     router as audit_5s_operational_router,
@@ -160,7 +166,7 @@ def list_nonconformity_route(
         )
 
 
-@router.get("/kaizens/summary")
+@router.get("/kaizens/summary", **QUALITY_KAIZEN_SUMMARY)
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
@@ -202,6 +208,30 @@ def get_kaizen_summary(
         log_error(f"Erro ao gerar resumo de kaizens: {exc}")
         return error_response(
             "Erro interno ao gerar resumo de kaizens.",
+            status_code=500,
+        )
+
+
+@router.get("/kaizens/{kaizen_id}", **QUALITY_KAIZEN_BY_ID)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_kaizen_by_id(kaizen_id: str):
+    try:
+        use_case = build_get_kaizen_by_id_use_case()
+        detail = use_case.execute(kaizen_id)
+
+        if detail is None:
+            return not_found_response("Kaizen não encontrado.")
+
+        return api_delpi_success(
+            detail.to_dict(),
+            operation_id="get_kaizen_by_id",
+            fields=kpi_fields(QUALITY_KAIZEN_DETAIL_FIELD_LABELS),
+        )
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar detalhe do kaizen: {exc}")
+        return error_response(
+            "Erro interno ao buscar detalhe do kaizen.",
             status_code=500,
         )
 

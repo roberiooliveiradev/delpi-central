@@ -66,13 +66,16 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 |----------------|------|-------------|
 | Listar / filtrar LMPs ou amostras | `GET /engineering/lmps` | `list_lmps` |
 | Painel / dashboard / resumo de LMPs | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
+| KPIs do painel | `GET /engineering/lmps/dashboard/summary` | `get_lmps_dashboard_summary` |
+| Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
+| Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Detalhe de uma LMP por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
 
 **Parâmetros úteis**
 
 - `list_lmps` / dashboard: `date_start`, `date_end`, `branch`, `listing_type` (`LMP`, `Amostra`, `Outro`), `page`, `page_size`
 - dashboard: `status` (ex.: `Todos`)
-- detalhe: `sale_number` = número da ordem de venda (OV)
+- detalhe: `sale_number` = número da ordem de venda (OV); opcional `date_start`, `date_end`, `branch` (escopo do dashboard/MFE)
 
 **Exemplos**
 

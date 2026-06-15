@@ -7,3 +7,7 @@ export const QUALITY_ROUTES = {
   kaizen: `${QUALITY_BASE_PATH}/kaizen`,
   audit5s: `${QUALITY_BASE_PATH}/audit-5s`,
 } as const;
+
+export function buildKaizenDetailPath(kaizenId: string): string {
+  return `${QUALITY_ROUTES.kaizen}/${encodeURIComponent(kaizenId)}`;
+}

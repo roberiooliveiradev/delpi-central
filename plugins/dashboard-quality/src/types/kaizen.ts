@@ -17,7 +17,15 @@ export type Kaizen = {
   sector: string | null;
   investment: number | null;
   daily_savings: number | null;
+  annual_savings: number | null;
   branch: string | null;
+};
+
+export type KaizenDetail = Kaizen & {
+  seconds_per_occurrence: number | null;
+  occurrences_per_day: number | null;
+  hourly_cost: number | null;
+  hours_saved_per_day: number | null;
 };
 
 export type KaizenSummary = DashboardGoalFields & {

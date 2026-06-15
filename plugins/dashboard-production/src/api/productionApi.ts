@@ -45,6 +45,9 @@ function buildQuery(
   if ("production_order" in params && params.production_order) {
     searchParams.set("production_order", params.production_order);
   }
+  if ("operator_code" in params && params.operator_code) {
+    searchParams.set("operator_code", params.operator_code);
+  }
   if ("product_type" in params && params.product_type) {
     searchParams.set("product_type", params.product_type);
   }

@@ -1,10 +1,13 @@
 import { configureHttpClient } from "./api/httpClient";
 import { QUALITY_ROUTES } from "./constants/routes";
-import { DashboardQualityPage } from "./pages/DashboardQualityPage";
+import { useQualityRouterPath } from "./hooks/useQualityRouterPath";
 import { Audit5sPage } from "./pages/Audit5sPage";
+import { DashboardQualityPage } from "./pages/DashboardQualityPage";
+import { KaizenDetailPage } from "./pages/KaizenDetailPage";
 import { KaizenPage } from "./pages/KaizenPage";
 import { NonconformitiesPage } from "./pages/NonconformitiesPage";
 import { PpmPage } from "./pages/PpmPage";
+import { parseQualityPath } from "./utils/routeParser";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -20,6 +23,12 @@ function normalizePath(pathname?: string): string {
 }
 
 function renderPage(path: string, pathname?: string) {
+  const route = parseQualityPath(path);
+
+  if (route.view === "kaizen-detail") {
+    return <KaizenDetailPage kaizenId={route.kaizenId} pathname={path} />;
+  }
+
   if (path === QUALITY_ROUTES.ppm || path.startsWith(`${QUALITY_ROUTES.ppm}/`)) {
     return <PpmPage pathname={path} />;
   }
@@ -31,7 +40,7 @@ function renderPage(path: string, pathname?: string) {
     return <NonconformitiesPage pathname={path} />;
   }
 
-  if (path === QUALITY_ROUTES.kaizen || path.startsWith(`${QUALITY_ROUTES.kaizen}/`)) {
+  if (path === QUALITY_ROUTES.kaizen) {
     return <KaizenPage pathname={path} />;
   }
 
@@ -42,9 +51,10 @@ function renderPage(path: string, pathname?: string) {
   return <DashboardQualityPage pathname={pathname ?? path} />;
 }
 
-export default function App({ getAccessToken, pathname }: AppProps) {
+export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
+  const pathname = useQualityRouterPath(pathnameFromHost);
   const path = normalizePath(pathname);
 
   return (

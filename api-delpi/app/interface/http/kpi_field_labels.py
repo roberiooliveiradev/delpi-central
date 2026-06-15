@@ -206,6 +206,23 @@ QUALITY_PRODUCED_QUANTITY_FIELD_LABELS: dict[str, str] = {
 QUALITY_KAIZEN_FIELD_LABELS: dict[str, str] = {
     "total_kaizens": "Total kaizens",
     "average_score": "Nota média",
+    "annual_savings": "Economia projetada por ano",
+}
+
+QUALITY_KAIZEN_DETAIL_FIELD_LABELS: dict[str, str] = {
+    **COMMON_SCALAR_FIELD_LABELS,
+    "title": "Título",
+    "date_implemented": "Data de implementação",
+    "status": "Status",
+    "accountable": "Responsável",
+    "sector": "Setor",
+    "investment": "Investimento",
+    "daily_savings": "Economia por dia",
+    "annual_savings": "Economia projetada por ano",
+    "seconds_per_occurrence": "Segundos por ocorrência",
+    "occurrences_per_day": "Ocorrências por dia",
+    "hourly_cost": "Custo hora",
+    "hours_saved_per_day": "Horas poupadas por dia",
 }
 
 QUALITY_AUDIT_5S_FIELD_LABELS: dict[str, str] = {
@@ -267,6 +284,31 @@ def merge_kpi_field_labels(*bundles: dict[str, str] | None) -> dict[str, str]:
             merged.update(bundle)
 
     return merged
+
+
+ENGINEERING_LMP_DETAIL_FIELD_LABELS: dict[str, str] = merge_kpi_field_labels(
+    COMMON_SCALAR_FIELD_LABELS,
+    ENGINEERING_LMP_FIELD_LABELS,
+    {
+        "sale_number": "Nº proposta",
+        "sale_description": "Descrição",
+        "listing_kind": "Tipo listagem",
+        "status": "Status classificação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "branch": "Filial",
+        "costumer_code": "Código cliente",
+        "costumer_store": "Loja cliente",
+        "costumer_name": "Cliente",
+        "seller_code": "Código vendedor",
+        "seller_name": "Vendedor",
+        "qtd_engineering_entries": "Entradas engenharia",
+        "qtd_engineering_closed": "Encerramentos engenharia",
+        "qtd_advanced_from_engineering": "Avanços engenharia",
+        "qtd_returned_from_engineering": "Retornos engenharia",
+        "list_products": "Produtos",
+    },
+)
 
 
 def kpi_fields(*bundles: dict[str, str] | None) -> dict[str, str]:

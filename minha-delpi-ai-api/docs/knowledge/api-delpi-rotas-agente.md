@@ -134,17 +134,17 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 **Parâmetros úteis**
 
 - Listagem / dashboard: `date_start`, `date_end`, `branch`, `listing_type` (`LMP`, `Amostra`, `Outro`), `status` (ex.: `Todos`), `page`, `page_size` (itens)
-- Detalhe: `sale_number` = número da **ordem de venda (OV)** — não é código de produto
+- Detalhe: `sale_number` = número da **ordem de venda (OV)** — não é código de produto; opcionalmente `date_start`, `date_end`, `branch` para alinhar ao painel/MFE `dashboard-lmps`
 - Transforma Mais: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`
 
 **Exemplos**
 
 - "Lista as LMPs da semana" → `GET /engineering/lmps`
 - "KPIs do painel de LMP" → `GET /engineering/lmps/dashboard/summary`
-- "Detalhe da LMP da OV 123456" → `GET /engineering/lmps/{sale_number}`
+- "Detalhe da LMP da OV 123456" → `GET /engineering/lmps/{sale_number}` (com `date_start`/`date_end`/`branch` se o usuário citou período ou filial)
 - "Processos do Transforma Mais" → `GET /engineering/transforma-mais/processes`
 
-**Atenção:** número de OV **não** é código de produto. Para dashboard LMP no chat, prefira `list_lmps` ou detalhe por OV; rotas `/dashboard/*` são otimizadas para o MFE de engenharia.
+**Atenção:** número de OV **não** é código de produto. Para dashboard LMP no chat, prefira `list_lmps` ou detalhe por OV; rotas `/dashboard/*` são otimizadas para o MFE `dashboard-lmps`. O MFE abre detalhe em `/apps/dashboard-lmps/ov/{sale_number}` consumindo a mesma rota `get_lmp_by_sale_number`.
 
 ---
 

@@ -722,6 +722,82 @@
   padding: 24px;
 }
 
+.dashboard-quality .dq-row--clickable {
+  cursor: pointer;
+}
+
+.dashboard-quality .dq-row--clickable:hover td,
+.dashboard-quality .dq-row--clickable:focus-visible td {
+  background: color-mix(in srgb, var(--dq-accent) 8%, transparent);
+}
+
+.dashboard-quality .dq-page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-quality .dq-detail-header p {
+  margin: 6px 0 0;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-md);
+}
+
+.dashboard-quality .dq-kpi-grid--detail {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-quality .dq-detail-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dq-grid-gap);
+  margin-bottom: var(--dq-section-gap);
+}
+
+.dashboard-quality .dq-detail-card__hint {
+  margin: 0 0 14px;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-sm);
+}
+
+.dashboard-quality .dq-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.dashboard-quality .dq-detail-grid__item {
+  min-width: 0;
+}
+
+.dashboard-quality .dq-detail-grid__item--wide {
+  grid-column: 1 / -1;
+}
+
+.dashboard-quality .dq-detail-grid dt {
+  margin: 0 0 4px;
+  font-size: var(--dq-font-xs);
+  font-weight: 600;
+  color: var(--dq-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-quality .dq-detail-grid dd {
+  margin: 0;
+  font-size: var(--dq-font-md);
+  color: var(--dq-title);
+  word-break: break-word;
+}
+
+.dashboard-quality .dq-detail__empty {
+  margin: 0;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-sm);
+}
+
 .dashboard-quality .dq-table-section__meta-group {
   display: flex;
   flex-wrap: wrap;
@@ -999,8 +1075,19 @@
 
   .dashboard-quality .dq-kpi-grid,
   .dashboard-quality .dq-summary-grid,
-  .dashboard-quality .dq-charts-grid {
+  .dashboard-quality .dq-charts-grid,
+  .dashboard-quality .dq-kpi-grid--detail,
+  .dashboard-quality .dq-detail-layout,
+  .dashboard-quality .dq-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality .dq-page-header__actions {
+    width: 100%;
+  }
+
+  .dashboard-quality .dq-page-header__actions .dq-ghost-btn {
+    flex: 1;
   }
 
   .dashboard-quality .dq-filter-box--wide {

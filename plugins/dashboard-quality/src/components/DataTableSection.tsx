@@ -47,6 +47,7 @@ export type DataTableSectionProps<T> = {
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTableSection<T>({
@@ -63,6 +64,7 @@ export function DataTableSection<T>({
   getSearchText,
   hideSearch = false,
   serverPagination,
+  onRowClick,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -163,6 +165,7 @@ export function DataTableSection<T>({
             rowKey={rowKey}
             loading={false}
             emptyMessage={emptyMessage}
+            onRowClick={onRowClick}
           />
 
           <Pagination

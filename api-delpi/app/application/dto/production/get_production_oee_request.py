@@ -11,6 +11,7 @@ class GetProductionOeeRequest:
     efficiency_bands: Optional[str] = None
     work_center: Optional[str] = None
     production_order: Optional[str] = None
+    operator_code: Optional[str] = None
     product_type: Optional[str] = None
     page: int = 1
     page_size: int = 20
