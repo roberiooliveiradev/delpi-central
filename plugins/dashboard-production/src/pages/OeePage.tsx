@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, CircleGauge, Download, Factory } from "lucide-react";
+import { Activity, CircleGauge, Factory } from "lucide-react";
 
 import { getProductionOee } from "../api/productionApi";
 import { ChartCard } from "../components/ChartCard";
@@ -7,6 +7,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
+import { ExportActions } from "../components/ExportActions";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -44,7 +45,10 @@ import { formatDisplayDate, formatDisplayTime, formatPeriodLabel } from "../util
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
-import { downloadOeeAppointmentsCsv } from "../utils/oeeExport";
+import {
+  exportOeeAppointmentsExcel,
+  exportOeeAppointmentsPdf,
+} from "../utils/oeeExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -162,28 +166,50 @@ export function OeePage({ pathname }: OeePageProps) {
     downloadOeeSeriesCsv("oee-evolucao.csv", oeeSeries.points);
   }, [oeeSeries.points]);
 
-  const handleExportAppointmentsCsv = useCallback(async () => {
+  const fetchAppointmentsForExport = useCallback(async () => {
+    const result = await getProductionOee({
+      ...apiParams,
+      efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
+      product_type: productTypeFilter || undefined,
+      page: 1,
+      page_size: 1000,
+      sort_by: serverTable.query.sortKey ?? undefined,
+      sort_dir: serverTable.query.sortDirection,
+    });
+    return result.appointments.items;
+  }, [
+    apiParams,
+    efficiencyBandFilter,
+    productTypeFilter,
+    serverTable.query.sortKey,
+    serverTable.query.sortDirection,
+  ]);
+
+  const handleExportAppointmentsExcel = useCallback(async () => {
     setExportError(null);
     setExporting(true);
-
     try {
-      const result = await getProductionOee({
-        ...apiParams,
-        efficiency_bands: formatEfficiencyBandsQuery(efficiencyBandFilter),
-        product_type: productTypeFilter || undefined,
-        page: 1,
-        page_size: 1000,
-        sort_by: serverTable.query.sortKey ?? undefined,
-        sort_dir: serverTable.query.sortDirection,
-      });
-
-      downloadOeeAppointmentsCsv("oee-apontamentos.csv", result.appointments.items);
+      const items = await fetchAppointmentsForExport();
+      await exportOeeAppointmentsExcel("oee-apontamentos", items);
     } catch (reason) {
       setExportError(formatProductionApiError(reason));
     } finally {
       setExporting(false);
     }
-  }, [apiParams, efficiencyBandFilter, productTypeFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
+  }, [fetchAppointmentsForExport]);
+
+  const handleExportAppointmentsPdf = useCallback(async () => {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const items = await fetchAppointmentsForExport();
+      await exportOeeAppointmentsPdf("oee-apontamentos", items);
+    } catch (reason) {
+      setExportError(formatProductionApiError(reason));
+    } finally {
+      setExporting(false);
+    }
+  }, [fetchAppointmentsForExport]);
 
   const appointmentColumns = useMemo<DataTableColumn<ProductionOeeAppointmentItem>[]>(
     () => [
@@ -505,15 +531,12 @@ export function OeePage({ pathname }: OeePageProps) {
           onSortChange: serverTable.handleSortChange,
         }}
         headerActions={
-          <button
-            type="button"
-            className="dp-ghost-btn"
-            onClick={() => void handleExportAppointmentsCsv()}
-            disabled={exporting || (data?.appointments.total ?? 0) === 0}
-          >
-            <Download size={16} aria-hidden="true" />
-            {exporting ? "Exportando…" : "Exportar CSV"}
-          </button>
+          <ExportActions
+            exporting={exporting}
+            disabled={(data?.appointments.total ?? 0) === 0}
+            onExportExcel={handleExportAppointmentsExcel}
+            onExportPdf={handleExportAppointmentsPdf}
+          />
         }
       />
     </div>

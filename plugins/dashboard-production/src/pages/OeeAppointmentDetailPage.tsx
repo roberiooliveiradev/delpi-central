@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   Boxes,
@@ -14,6 +14,17 @@ import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
+import { ExportActions } from "../components/ExportActions";
+import {
+  DetailDateTimeValue,
+  DetailDateValue,
+  DetailFormulaValue,
+  DetailHoursValue,
+  DetailIntegerValue,
+  DetailNumericValue,
+  DetailPercentValue,
+  DetailQuantityValue,
+} from "../components/DetailValue";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -31,9 +42,12 @@ import type {
   ProductionOeeRoutingOperation,
   ProductionOrderProductType,
 } from "../types/production";
-import { formatDisplayDate } from "../utils/dates";
-import { formatDecimal, formatHours, formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
+import { formatHours, formatInteger, formatPercent } from "../utils/format";
 import { appendFiltersToPath, readProductionFilters } from "../utils/filterUrl";
+import {
+  exportAppointmentDetailExcel,
+  exportAppointmentDetailPdf,
+} from "../utils/appointmentDetailExport";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 
@@ -53,14 +67,6 @@ function resolveProductType(
   return undefined;
 }
 
-function formatDateTime(date?: string | null, time?: string | null): string {
-  const dateLabel = formatDisplayDate(date);
-  const timeLabel = time?.trim();
-  if (dateLabel === "—" && !timeLabel) return "—";
-  if (!timeLabel) return dateLabel;
-  return `${dateLabel} ${timeLabel}`;
-}
-
 function formatRealHoursSource(source?: string | null): string {
   if (source === "interval") return "Início/fim do apontamento";
   if (source === "h6_tempo") return "H6_TEMPO (fallback)";
@@ -74,6 +80,8 @@ export function OeeAppointmentDetailPage({
 }: OeeAppointmentDetailPageProps) {
   const filterState = readProductionFilters();
   const detail = useProductionOeeAppointmentDetail(appointmentId, { branch });
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const appointment = detail.appointment;
   const timeAnalysis = detail.timeAnalysis;
@@ -104,6 +112,36 @@ export function OeeAppointmentDetailPage({
     );
   };
 
+  const handleExportExcel = async () => {
+    if (!detail.data || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    try {
+      await exportAppointmentDetailExcel(detail.data);
+    } catch (reason) {
+      setExportError(
+        reason instanceof Error ? reason.message : "Não foi possível exportar o Excel."
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!detail.data || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    try {
+      await exportAppointmentDetailPdf(detail.data);
+    } catch (reason) {
+      setExportError(
+        reason instanceof Error ? reason.message : "Não foi possível exportar o PDF."
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const appointmentFields = useMemo(
     () =>
       appointment
@@ -117,7 +155,7 @@ export function OeeAppointmentDetailPage({
               value: <ProductTypeBadge productType={appointment.product_type} />,
             },
             { label: "Filial", value: appointment.branch },
-            { label: "Apontamento", value: formatInteger(appointment.appointment_id) },
+            { label: "Apontamento", value: <DetailIntegerValue value={appointment.appointment_id} /> },
             { label: "OP", value: appointment.production_order || "—" },
             { label: "Nº OP", value: appointment.order_number || "—" },
             { label: "Item", value: appointment.order_item || "—" },
@@ -140,35 +178,59 @@ export function OeeAppointmentDetailPage({
             { label: "Roteiro", value: appointment.route_code || "—" },
             {
               label: "Data produção",
-              value: formatDisplayDate(appointment.production_date),
+              value: <DetailDateValue value={appointment.production_date} />,
             },
             {
               label: "Data apontamento",
-              value: formatDisplayDate(appointment.appointment_date),
+              value: <DetailDateValue value={appointment.appointment_date} />,
             },
             {
               label: "Início",
-              value: formatDateTime(appointment.start_date, appointment.start_time),
+              value: (
+                <DetailDateTimeValue
+                  date={appointment.start_date}
+                  time={appointment.start_time}
+                />
+              ),
             },
             {
               label: "Fim",
-              value: formatDateTime(appointment.end_date, appointment.end_time),
+              value: (
+                <DetailDateTimeValue date={appointment.end_date} time={appointment.end_time} />
+              ),
             },
             {
               label: "Qtd. apontada",
-              value: formatProductionQuantity(appointment.produced_qty, appointment.unit),
+              value: (
+                <DetailQuantityValue
+                  value={appointment.produced_qty}
+                  unit={appointment.unit}
+                />
+              ),
             },
             {
               label: "Qtd. perdida",
-              value: formatProductionQuantity(appointment.lost_qty, appointment.unit),
+              value: (
+                <DetailQuantityValue value={appointment.lost_qty} unit={appointment.unit} />
+              ),
             },
             {
               label: "Qtd. OP",
-              value: formatProductionQuantity(appointment.order_planned_qty, appointment.unit),
+              value: (
+                <DetailQuantityValue
+                  value={appointment.order_planned_qty}
+                  unit={appointment.unit}
+                />
+              ),
             },
             {
               label: "Produzido OP",
-              value: formatProductionQuantity(appointment.order_produced_qty, appointment.unit),
+              value: (
+                <DetailQuantityValue
+                  value={appointment.order_produced_qty}
+                  unit={appointment.unit}
+                />
+              ),
             },
             {
               label: "Tipo apontamento",
@@ -187,29 +249,36 @@ export function OeeAppointmentDetailPage({
     () =>
       timeAnalysis
         ? [
-            { label: "Setup (h)", value: formatHours(timeAnalysis.setup_hours) },
+            { label: "Setup (h)", value: <DetailHoursValue value={timeAnalysis.setup_hours} /> },
             {
               label: "Fator padrão",
-              value: formatDecimal(timeAnalysis.standard_time_factor, 6),
+              value: <DetailNumericValue value={timeAnalysis.standard_time_factor} fractionDigits={6} />,
             },
             {
               label: "Qtd. OP",
-              value: formatProductionQuantity(
-                timeAnalysis.order_planned_qty,
-                appointment?.unit
+              value: (
+                <DetailQuantityValue
+                  value={timeAnalysis.order_planned_qty}
+                  unit={appointment?.unit}
+                />
               ),
             },
             {
               label: "Qtd. apontada",
-              value: formatProductionQuantity(timeAnalysis.produced_qty, appointment?.unit),
+              value: (
+                <DetailQuantityValue
+                  value={timeAnalysis.produced_qty}
+                  unit={appointment?.unit}
+                />
+              ),
             },
             {
               label: "Tempo previsto",
-              value: formatHours(timeAnalysis.planned_hours),
+              value: <DetailHoursValue value={timeAnalysis.planned_hours} />,
             },
             {
               label: "Tempo real",
-              value: formatHours(timeAnalysis.real_hours),
+              value: <DetailHoursValue value={timeAnalysis.real_hours} />,
             },
             {
               label: "Fonte tempo real",
@@ -217,33 +286,33 @@ export function OeeAppointmentDetailPage({
             },
             {
               label: "Variação (real − previsto)",
-              value: formatHours(timeAnalysis.time_variance_hours),
+              value: <DetailHoursValue value={timeAnalysis.time_variance_hours} />,
             },
             {
               label: "Ganho/perda de tempo",
-              value: formatHours(timeAnalysis.time_gained_lost_hours),
+              value: <DetailHoursValue value={timeAnalysis.time_gained_lost_hours} />,
             },
             {
               label: "Eficiência (tempos)",
-              value: formatPercent(timeAnalysis.efficiency_from_times_pct),
+              value: <DetailPercentValue value={timeAnalysis.efficiency_from_times_pct} />,
             },
             {
               label: "OEE registrado",
-              value: formatPercent(timeAnalysis.oee_pct),
+              value: <DetailPercentValue value={timeAnalysis.oee_pct} />,
             },
             {
               label: "Fórmula previsto",
-              value: timeAnalysis.formula_planned,
+              value: <DetailFormulaValue value={timeAnalysis.formula_planned} />,
               wide: true,
             },
             {
               label: "Fórmula real",
-              value: timeAnalysis.formula_real,
+              value: <DetailFormulaValue value={timeAnalysis.formula_real} />,
               wide: true,
             },
             {
               label: "Fórmula eficiência",
-              value: timeAnalysis.formula_efficiency,
+              value: <DetailFormulaValue value={timeAnalysis.formula_efficiency} />,
               wide: true,
             },
           ]
@@ -327,6 +396,13 @@ export function OeeAppointmentDetailPage({
         refreshing={detail.loading && Boolean(appointment)}
         actions={
           <>
+            {appointment ? (
+              <ExportActions
+                exporting={exporting}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+              />
+            ) : null}
             {appointment?.production_order ? (
               <button
                 type="button"
@@ -346,6 +422,12 @@ export function OeeAppointmentDetailPage({
       />
 
       <DataSourceBanner />
+
+      {exportError ? (
+        <div className="dp-state dp-state--warning" role="status">
+          <p>{exportError}</p>
+        </div>
+      ) : null}
 
       {detail.error ? (
         <div className="dp-state dp-state--error" role="alert">

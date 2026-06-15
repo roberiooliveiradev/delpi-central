@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, FileSpreadsheet } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
@@ -7,7 +7,8 @@ import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { HelpTooltip } from "./HelpTooltip";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
-import { exportAppointmentsExcel } from "../utils/exportAppointmentsExcel";
+import { exportAppointmentsExcel, exportAppointmentsPdf } from "../utils/exportAppointments";
+import { ExportActions } from "./ExportActions";
 import { formatCurrency, formatPercent, formatProductionQuantity } from "../utils/format";
 
 type SortableColumn = {
@@ -105,6 +106,21 @@ export function AppointmentsTable({
     }
   }, [exportDateEnd, exportDateStart, exportItems, exporting, onExportError, total]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (exporting || total <= 0) return;
+
+    setExporting(true);
+    try {
+      await exportAppointmentsPdf(exportItems, exportDateStart, exportDateEnd);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Não foi possível exportar o PDF.";
+      onExportError?.(message);
+    } finally {
+      setExporting(false);
+    }
+  }, [exportDateEnd, exportDateStart, exportItems, exporting, onExportError, total]);
+
   return (
     <section className="ef-table-card" aria-label="Apontamentos">
       <header className="ef-table-card__header">
@@ -120,16 +136,13 @@ export function AppointmentsTable({
           <p>{total.toLocaleString("pt-BR")} registro(s) no período</p>
         </div>
         <div className="ef-table-card__actions">
-          <button
-            type="button"
-            className="ef-btn ef-btn--ghost"
-            disabled={disabled || exporting || total <= 0}
-            onClick={() => void handleExportExcel()}
-            aria-busy={exporting}
-          >
-            <FileSpreadsheet size={16} aria-hidden />
-            {exporting ? "Exportando…" : "Exportar Excel"}
-          </button>
+          <ExportActions
+            disabled={disabled || total <= 0}
+            exporting={exporting}
+            onExportExcel={handleExportExcel}
+            onExportPdf={handleExportPdf}
+            excelLabel="Excel"
+          />
           <div className="ef-pagination">
             <button
               type="button"

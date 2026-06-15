@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleGauge, Download, Truck } from "lucide-react";
+import { CircleGauge, Truck } from "lucide-react";
 
 import { getProductionOtd } from "../api/productionApi";
 import { ChartCard } from "../components/ChartCard";
@@ -7,6 +7,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
+import { ExportActions } from "../components/ExportActions";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -33,7 +34,10 @@ import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
-import { downloadOtdOrdersCsv } from "../utils/otdExport";
+import {
+  exportOtdOrdersExcel,
+  exportOtdOrdersPdf,
+} from "../utils/otdExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -127,27 +131,43 @@ export function OtdPage({ pathname }: OtdPageProps) {
     downloadOtdSeriesCsv("otd-evolucao.csv", otdSeries.points);
   }, [otdSeries.points]);
 
-  const handleExportOrdersCsv = useCallback(async () => {
+  const fetchOrdersForExport = useCallback(async () => {
+    const result = await getProductionOtd({
+      ...apiParams,
+      status: statusFilter || undefined,
+      page: 1,
+      page_size: 1000,
+      sort_by: serverTable.query.sortKey ?? undefined,
+      sort_dir: serverTable.query.sortDirection,
+    });
+    return result.orders.items;
+  }, [apiParams, statusFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
+
+  const handleExportOrdersExcel = useCallback(async () => {
     setExportError(null);
     setExporting(true);
-
     try {
-      const result = await getProductionOtd({
-        ...apiParams,
-        status: statusFilter || undefined,
-        page: 1,
-        page_size: 1000,
-        sort_by: serverTable.query.sortKey ?? undefined,
-        sort_dir: serverTable.query.sortDirection,
-      });
-
-      downloadOtdOrdersCsv("otd-ordens-producao.csv", result.orders.items);
+      const items = await fetchOrdersForExport();
+      await exportOtdOrdersExcel("otd-ordens-producao", items);
     } catch (reason) {
       setExportError(formatProductionApiError(reason));
     } finally {
       setExporting(false);
     }
-  }, [apiParams, statusFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
+  }, [fetchOrdersForExport]);
+
+  const handleExportOrdersPdf = useCallback(async () => {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const items = await fetchOrdersForExport();
+      await exportOtdOrdersPdf("otd-ordens-producao", items);
+    } catch (reason) {
+      setExportError(formatProductionApiError(reason));
+    } finally {
+      setExporting(false);
+    }
+  }, [fetchOrdersForExport]);
 
   const orderColumns = useMemo<DataTableColumn<ProductionOtdOrderItem>[]>(
     () => [
@@ -390,15 +410,12 @@ export function OtdPage({ pathname }: OtdPageProps) {
           onSortChange: serverTable.handleSortChange,
         }}
         headerActions={
-          <button
-            type="button"
-            className="dp-ghost-btn"
-            onClick={() => void handleExportOrdersCsv()}
-            disabled={exporting || (data?.orders.total ?? 0) === 0}
-          >
-            <Download size={16} aria-hidden="true" />
-            {exporting ? "Exportando…" : "Exportar CSV"}
-          </button>
+          <ExportActions
+            exporting={exporting}
+            disabled={(data?.orders.total ?? 0) === 0}
+            onExportExcel={handleExportOrdersExcel}
+            onExportPdf={handleExportOrdersPdf}
+          />
         }
       />
     </div>
