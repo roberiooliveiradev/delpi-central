@@ -972,11 +972,11 @@
 }
 
 .dashboard-production .dp-row--verify,
-.dashboard-production .dp-row--verify td {
+.dashboard-production .dp-table tbody tr.dp-row--verify td {
   color: var(--danger, #b42318);
 }
 
-.dashboard-production .dp-row--verify td {
+.dashboard-production .dp-table tbody tr.dp-row--verify td {
   font-weight: 600;
 }
 

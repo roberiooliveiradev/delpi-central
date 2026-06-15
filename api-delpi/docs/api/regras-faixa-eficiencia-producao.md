@@ -57,7 +57,7 @@ Consumidores:
 | `isProductionEfficiencyOutlier()` | idem | faixa 0–199 |
 | `isOeeAppointmentOutlier()` | idem | usa `status` da API ou `oee_pct` |
 
-- Listagem: `OeeAppointmentsTable.tsx` (layout igual ao eficiência fabril — linha vermelha, badge **Verificar**).
+- Listagem: `DataTableSection` em `OeePage.tsx` — colunas no padrão eficiência fabril, com busca, ordenação server-side e badges **Verificar** / **OK**.
 - KPIs e aviso na página: `OeePage.tsx`.
 
 ## Comportamento por superfície

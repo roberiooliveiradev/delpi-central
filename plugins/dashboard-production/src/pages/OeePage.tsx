@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, CircleGauge, Factory } from "lucide-react";
+import { Activity, CircleGauge, Download, Factory } from "lucide-react";
 
 import { getProductionOee } from "../api/productionApi";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { OeeAppointmentsTable } from "../components/OeeAppointmentsTable";
-import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
+import {
+  PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+  PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
+  isOeeAppointmentOutlier,
+} from "../constants/businessRules";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
@@ -26,10 +32,10 @@ import type {
 } from "../types/production";
 import type { ChartGranularity } from "../types/chart";
 import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
-import { formatPeriodLabel } from "../utils/dates";
+import { formatDisplayDate, formatDisplayTime, formatPeriodLabel } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
-import { formatInteger, formatPercent } from "../utils/format";
+import { formatInteger, formatNumber, formatPercent } from "../utils/format";
 import { downloadOeeAppointmentsCsv } from "../utils/oeeExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
@@ -43,6 +49,21 @@ type OeePageProps = {
 
 type StatusFilter = ProductionOeeAppointmentStatus | "";
 type ProductTypeFilter = ProductionOrderProductType | "";
+
+function formatOeePercent(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
+function OeeAppointmentStatusCell({ row }: { row: ProductionOeeAppointmentItem }) {
+  if (isOeeAppointmentOutlier(row.status, row.oee_pct)) {
+    return <span className="dp-appointment-badge dp-appointment-badge--danger">Verificar</span>;
+  }
+  return <span className="dp-appointment-badge">OK</span>;
+}
 
 export function OeePage({ pathname }: OeePageProps) {
   const {
@@ -150,6 +171,81 @@ export function OeePage({ pathname }: OeePageProps) {
       setExporting(false);
     }
   }, [apiParams, statusFilter, productTypeFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
+
+  const appointmentColumns = useMemo<DataTableColumn<ProductionOeeAppointmentItem>[]>(
+    () => [
+      {
+        key: "production_date",
+        header: "Data",
+        sortable: true,
+        render: (row) => formatDisplayDate(row.production_date),
+      },
+      {
+        key: "start_time",
+        header: "Início",
+        sortable: true,
+        render: (row) => formatDisplayTime(row.start_time),
+      },
+      {
+        key: "end_time",
+        header: "Fim",
+        sortable: true,
+        render: (row) => formatDisplayTime(row.end_time),
+      },
+      {
+        key: "produced_qty",
+        header: "Qtd. apontada",
+        className: "dp-table__col--numeric",
+        sortable: true,
+        render: (row) => formatNumber(row.produced_qty, 3),
+      },
+      {
+        key: "branch",
+        header: "Filial",
+        sortable: true,
+        render: (row) => row.branch ?? "—",
+      },
+      {
+        key: "production_order",
+        header: "OP",
+        sortable: true,
+        render: (row) => row.production_order ?? "—",
+      },
+      {
+        key: "product_description",
+        header: "Descrição produto",
+        className: "dp-table__col--wide",
+        sortable: true,
+        render: (row) => row.product_description?.trim() || row.product_code || "—",
+      },
+      {
+        key: "work_center",
+        header: "CT",
+        sortable: true,
+        render: (row) => row.work_center ?? "—",
+      },
+      {
+        key: "operator_code",
+        header: "Operador",
+        sortable: true,
+        render: (row) => row.operator_code ?? "—",
+      },
+      {
+        key: "oee_pct",
+        header: "Eficiência",
+        className: "dp-table__col--numeric",
+        sortable: true,
+        render: (row) => formatOeePercent(row.oee_pct),
+      },
+      {
+        key: "status",
+        header: "Status",
+        sortable: true,
+        render: (row) => <OeeAppointmentStatusCell row={row} />,
+      },
+    ],
+    []
+  );
 
   const isBusy = loading;
   const hasData = data !== null;
@@ -326,17 +422,63 @@ export function OeePage({ pathname }: OeePageProps) {
         </div>
       </div>
 
-      <OeeAppointmentsTable
-        items={data?.appointments.items ?? []}
-        total={data?.appointments.total ?? 0}
-        page={data?.appointments.page ?? serverTable.query.page}
-        totalPages={data?.appointments.total_pages ?? 1}
-        onPageChange={serverTable.setPage}
+      <p className="dp-efficiency-legend dp-efficiency-legend--warning">
+        Atenção: apontamentos com eficiência fora da faixa {PRODUCTION_EFFICIENCY_VALID_MIN_PCT}–
+        {PRODUCTION_EFFICIENCY_VALID_MAX_PCT}% são desconsiderados no indicador de OEE (KPIs e gráficos)
+        e aparecem na tabela como &quot;Verificar&quot;.
+      </p>
+
+      <DataTableSection
+        title="Apontamentos de produção"
+        hint="Clique em uma linha para abrir roteiro, estrutura e análise de tempos."
+        columns={appointmentColumns}
+        rows={data?.appointments.items ?? []}
+        rowKey={(row) => String(row.appointment_id)}
         onRowClick={handleAppointmentRowClick}
-        onExportCsv={() => void handleExportAppointmentsCsv()}
-        exporting={exporting}
-        disabled={loading}
+        getRowClassName={(row) =>
+          isOeeAppointmentOutlier(row.status, row.oee_pct) ? "dp-row dp-row--verify" : undefined
+        }
         loading={loading && !(data?.appointments.items?.length)}
+        refreshing={loading && Boolean(data?.appointments.items?.length)}
+        emptyMessage="Nenhum apontamento no período."
+        searchPlaceholder="Buscar OP, produto, CT, operador…"
+        getSearchText={(row) =>
+          [
+            row.branch,
+            row.production_order,
+            row.product_code,
+            row.product_description,
+            row.work_center,
+            row.operator_code,
+            row.start_time,
+            row.end_time,
+            row.status,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
+        serverPagination={{
+          page: data?.appointments.page ?? serverTable.query.page,
+          pageSize: data?.appointments.page_size ?? PAGE_SIZE,
+          total: data?.appointments.total ?? 0,
+          onPageChange: serverTable.setPage,
+        }}
+        serverSort={{
+          sortKey: serverTable.query.sortKey,
+          sortDirection: serverTable.query.sortDirection,
+          onSortChange: serverTable.handleSortChange,
+        }}
+        headerActions={
+          <button
+            type="button"
+            className="dp-ghost-btn"
+            onClick={() => void handleExportAppointmentsCsv()}
+            disabled={exporting || (data?.appointments.total ?? 0) === 0}
+          >
+            <Download size={16} aria-hidden="true" />
+            {exporting ? "Exportando…" : "Exportar CSV"}
+          </button>
+        }
       />
     </div>
   );

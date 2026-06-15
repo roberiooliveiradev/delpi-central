@@ -71,6 +71,8 @@ class OverallEquipmentEffectivenessRepository(
             "resource_code": "resource_code",
             "resource_name": "resource_name",
             "production_date": "production_date",
+            "start_time": "start_time",
+            "end_time": "end_time",
             "oee_pct": "oee_pct",
             "produced_qty": "produced_qty",
         }

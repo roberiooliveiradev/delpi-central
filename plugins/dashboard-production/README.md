@@ -26,7 +26,7 @@ Layout alinhado ao plugin [eficiência fabril](../eficiencia-fabril/README.md):
 - Outliers: linha vermelha + badge **Verificar**; válidos: **OK**
 - Clique na linha → detalhe (`OeeAppointmentDetailPage`)
 
-Componentes: `OeeAppointmentsTable.tsx`, `constants/businessRules.ts`.
+Componentes: `DataTableSection` (colunas no padrão eficiência fabril), `constants/businessRules.ts`.
 
 ## Registro
 

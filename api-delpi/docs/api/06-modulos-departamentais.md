@@ -78,7 +78,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).
 
-**Listagem OEE (`GET /production/oee`):** cada item inclui `start_time`, `end_time`, `oee_pct`, `status` (`valid` / `outlier`). No MFE (`OeeAppointmentsTable`), layout alinhado ao plugin eficiência fabril — linha vermelha e badge **Verificar** para outliers; clique abre detalhe com roteiro e tempos.
+**Listagem OEE (`GET /production/oee`):** cada item inclui `start_time`, `end_time`, `oee_pct`, `status` (`valid` / `outlier`). No MFE, `DataTableSection` com colunas no padrão eficiência fabril (badge **Verificar** / **OK**, linha vermelha para outliers); mantém busca local, ordenação server-side e paginação.
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  
 **Compras ranking:** `GET /purchases/top-products` — mesma doc.
