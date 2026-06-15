@@ -13,7 +13,12 @@ from app.domain.services.lmp_history_event_enrichment import (
 def test_label_for_history_status_maps_known_codes():
     assert label_for_history_status("1") == "Em andamento"
     assert label_for_history_status("2") == "Encerrado"
-    assert label_for_history_status("9") == "Status 9"
+    assert label_for_history_status("9") == "Concluído"
+
+
+def test_label_for_history_status_maps_extended_codes():
+    assert label_for_history_status("5") == "Aguardando"
+    assert label_for_history_status("8") == "Finalizado"
 
 
 def test_is_engineering_flow_when_stage_is_engineering_even_if_process_differs():

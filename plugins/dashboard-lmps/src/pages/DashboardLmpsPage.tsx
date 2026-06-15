@@ -40,7 +40,7 @@ import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
+import { readLmpsFilters, syncLmpsFiltersToUrl, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmps } from "../utils/navigation";
 import {
   computeLmpsSummaryFromItems,
@@ -217,6 +217,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
     if (!dateStart || !dateEnd) return;
     setGranularity(suggestGranularity(dateStart, dateEnd));
   }, [dateStart, dateEnd]);
+
+  useEffect(() => {
+    syncLmpsFiltersToUrl(filterState);
+  }, [filterState]);
 
   const evolutionChartData = useMemo(
     () =>

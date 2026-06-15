@@ -521,6 +521,11 @@ Mapa de status (`AIJ_STATUS`):
 | `2` | Encerrado |
 | `3` | Cancelado |
 | `4` | Suspenso |
+| `5` | Aguardando |
+| `6` | Reprovado |
+| `7` | Aprovado |
+| `8` | Finalizado |
+| `9` | Concluído |
 | outro | `Status {código}` |
 
 ### `lmp_process_stage_labels.py`
@@ -532,6 +537,7 @@ Rótulos consolidados para processo/estágio (complementar ao AC2010):
 | `000001` | Abertura |
 | `000002` | Oportunidade |
 | `000003` | Engenharia |
+| `000013` | Acompanhamento |
 | `000008` | Amostra engenharia |
 | `000012` | Lançamento / homologação |
 | `000013` | Acompanhamento |
@@ -718,9 +724,13 @@ Cada evento na timeline inclui **mini-Gantt** proporcional à revisão (barra in
 
 Preferências de visualização e filtro persistem em `localStorage` (`dashboard-lmps:history-view`, `dashboard-lmps:history-filter`).
 
-Textos de ajuda: `src/content/helpTooltips.ts`.
+**Visão global:** faixa única no topo da timeline com todos os eventos na mesma escala temporal.
 
-**Fora de escopo atual:** Gantt consolidado multi-revisão em uma única escala global.
+Filtros do dashboard principal sincronizam com a URL via `syncLmpsFiltersToUrl()`.
+
+Textos de ajuda: `src/content/helpTooltips.ts` (inclui ações, paginação e árvore BOM).
+
+Impressão: `@media print` oculta filtros/toolbars e expande tabelas.
 
 ---
 

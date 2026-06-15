@@ -125,11 +125,42 @@
   font-size: var(--lmps-font-md);
 }
 
+.dashboard-lmps .lmps-page-subtitle--with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dashboard-lmps .lmps-page-subtitle__help {
+  flex-shrink: 0;
+}
+
 .dashboard-lmps .lmps-header-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.dashboard-lmps .lmps-header-action,
+.dashboard-lmps .lmps-pagination__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-lmps .lmps-header-action__help,
+.dashboard-lmps .lmps-pagination__help,
+.dashboard-lmps .lmps-pagination__action-help {
+  flex-shrink: 0;
+}
+
+.dashboard-lmps .lmps-pagination__info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 /* =========================================
@@ -1562,6 +1593,72 @@
   flex-shrink: 0;
 }
 
+.dashboard-lmps .lmps-history-global-gantt {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+}
+
+.dashboard-lmps .lmps-history-global-gantt__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-lmps .lmps-history-global-gantt__header h3 {
+  margin: 0;
+  font-size: var(--lmps-font-md);
+  color: var(--text);
+}
+
+.dashboard-lmps .lmps-history-global-gantt__track {
+  position: relative;
+  height: 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2) 80%, var(--border));
+  overflow: hidden;
+}
+
+.dashboard-lmps .lmps-history-global-gantt__segment {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 55%, white);
+  opacity: 0.85;
+}
+
+.dashboard-lmps .lmps-history-global-gantt__segment--engineering {
+  background: color-mix(in srgb, var(--primary) 70%, white);
+}
+
+.dashboard-lmps .lmps-history-global-gantt__segment--open {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 70%, white),
+    color-mix(in srgb, var(--primary) 40%, white)
+  );
+}
+
+.dashboard-lmps .lmps-history-global-gantt__segment--late {
+  background: color-mix(in srgb, #c0392b 75%, white);
+}
+
+.dashboard-lmps .lmps-history-global-gantt__segment--current {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 55%, white);
+}
+
+.dashboard-lmps .lmps-history-global-gantt__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--text-muted);
+  font-size: var(--lmps-font-xs);
+}
+
 .dashboard-lmps .lmps-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2039,5 +2136,71 @@
     --lmps-chart-tick-font-size: 16px;
     --lmps-chart-tooltip-font-size: 16px;
     --lmps-chart-legend-font-size: 16px;
+  }
+}
+
+@media print {
+  .dashboard-lmps .lmps-filters-row,
+  .dashboard-lmps .lmps-header-actions,
+  .dashboard-lmps .lmps-history-section__toggle,
+  .dashboard-lmps .lmps-history-section__filters,
+  .dashboard-lmps .lmps-table-toolbar,
+  .dashboard-lmps .lmps-pagination,
+  .dashboard-lmps .lmps-help-tooltip__trigger {
+    display: none !important;
+  }
+
+  .dashboard-lmps .lmps-table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-lmps .lmps-card,
+  .dashboard-lmps .lmps-history-timeline__content {
+    break-inside: avoid;
+  }
+}
+
+@media print {
+  .dashboard-lmps .lmps-filters-row,
+  .dashboard-lmps .lmps-header-actions,
+  .dashboard-lmps .lmps-history-section__toggle,
+  .dashboard-lmps .lmps-history-section__filters,
+  .dashboard-lmps .lmps-table-toolbar,
+  .dashboard-lmps .lmps-pagination,
+  .dashboard-lmps .lmps-help-tooltip__trigger {
+    display: none !important;
+  }
+
+  .dashboard-lmps .lmps-table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-lmps .lmps-card,
+  .dashboard-lmps .lmps-history-timeline__content {
+    break-inside: avoid;
+  }
+}
+
+@media print {
+  .dashboard-lmps .lmps-filters-row,
+  .dashboard-lmps .lmps-header-actions,
+  .dashboard-lmps .lmps-history-section__toggle,
+  .dashboard-lmps .lmps-history-section__filters,
+  .dashboard-lmps .lmps-table-toolbar,
+  .dashboard-lmps .lmps-pagination,
+  .dashboard-lmps .lmps-help-tooltip__trigger {
+    display: none !important;
+  }
+
+  .dashboard-lmps .lmps-table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-lmps .lmps-card,
+  .dashboard-lmps .lmps-history-timeline__content {
+    break-inside: avoid;
   }
 }

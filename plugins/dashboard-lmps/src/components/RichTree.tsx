@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RichTreeNode } from "../types/richTree";
 import { countRichTreeNodes } from "../utils/productStructureTree";
 
@@ -7,6 +8,15 @@ const BADGE_CLASS_BY_TYPE: Record<string, string> = {
   PA: "lmps-rich-tree__badge--pa",
   PI: "lmps-rich-tree__badge--pi",
   MP: "lmps-rich-tree__badge--mp",
+};
+
+const BADGE_HINTS: Record<string, string> = {
+  PA: "Produto acabado (PA) na estrutura.",
+  PI: "Produto intermediário (PI) na estrutura.",
+  MP: "Matéria-prima (MP) na estrutura.",
+  ME: "Mercadoria (ME) na estrutura.",
+  BN: "Beneficiamento (BN) na estrutura.",
+  AI: "Ativo imobilizado (AI) na estrutura.",
 };
 
 function TreeChevronIcon({ expanded }: { expanded: boolean }) {
@@ -59,6 +69,9 @@ function RichTreeNodeRow({
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
   const badgeClass =
     BADGE_CLASS_BY_TYPE[String(node.badge ?? "").trim().toUpperCase()] ?? "";
+  const badgeHint =
+    BADGE_HINTS[String(node.badge ?? "").trim().toUpperCase()] ??
+    LMPS_HELP_TOOLTIPS.detail.structureType;
 
   return (
     <li className="lmps-rich-tree__item">
@@ -89,18 +102,36 @@ function RichTreeNodeRow({
 
         <div className="lmps-rich-tree__content">
           <div className="lmps-rich-tree__primary">
-            <span className="lmps-rich-tree__label">{node.label}</span>
+            <span
+              className="lmps-rich-tree__label"
+              title={`${LMPS_HELP_TOOLTIPS.detail.structureTreeCode}: ${node.label}`}
+            >
+              {node.label}
+            </span>
             {node.badge ? (
-              <span className={`lmps-rich-tree__badge ${badgeClass}`.trim()}>
+              <span
+                className={`lmps-rich-tree__badge ${badgeClass}`.trim()}
+                title={badgeHint}
+              >
                 {node.badge}
               </span>
             ) : null}
             {node.metaCaption ? (
-              <span className="lmps-rich-tree__meta">{node.metaCaption}</span>
+              <span
+                className="lmps-rich-tree__meta"
+                title={LMPS_HELP_TOOLTIPS.detail.structureTreeQuantity}
+              >
+                {node.metaCaption}
+              </span>
             ) : null}
           </div>
           {node.subtitle ? (
-            <div className="lmps-rich-tree__subtitle">{node.subtitle}</div>
+            <div
+              className="lmps-rich-tree__subtitle"
+              title={LMPS_HELP_TOOLTIPS.detail.structureTreeDescription}
+            >
+              {node.subtitle}
+            </div>
           ) : null}
         </div>
       </div>

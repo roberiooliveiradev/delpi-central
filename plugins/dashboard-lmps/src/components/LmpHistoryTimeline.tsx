@@ -10,6 +10,8 @@ import {
   resolveHistoryDuration,
   resolveHistoryStatus,
 } from "../utils/historyFormatting";
+import { buildHistoryGlobalGanttLayout } from "../utils/historyGlobalGantt";
+import { HistoryGlobalGantt } from "./HistoryGlobalGantt";
 
 type LmpHistoryTimelineProps = {
   events: LmpHistoryEvent[];
@@ -53,9 +55,12 @@ export function LmpHistoryTimeline({
   }
 
   const groups = groupHistoryByRevision(events);
+  const globalGantt = buildHistoryGlobalGanttLayout(events);
 
   return (
     <div className="lmps-history-timeline" aria-label="Linha do tempo da OV">
+      {globalGantt ? <HistoryGlobalGantt layout={globalGantt} /> : null}
+
       {groups.map((group) => (
         <section
           key={group.revision}

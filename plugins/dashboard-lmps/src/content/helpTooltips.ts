@@ -11,6 +11,23 @@ export const LMPS_HELP_TOOLTIPS = {
     status:
       "Status de classificação de prazo (Pontual, Atrasado, Andamento, Retornada). Permite múltipla seleção.",
   },
+  actions: {
+    pageSubtitle:
+      "Resumo do escopo analítico: prazo, nível de SLA, status de classificação e lead time útil das LMPs.",
+    refresh:
+      "Recarrega KPIs, gráficos e tabela com os filtros atuais (período, filial, tipo e status).",
+    exportCsv:
+      "Exporta os registros visíveis na tabela para CSV, respeitando filtros e busca local.",
+    back:
+      "Retorna ao dashboard de LMPs preservando os filtros de período e filial na URL.",
+    detailRefresh:
+      "Atualiza proposta, produtos, estrutura e histórico da OV no TOTVS.",
+  },
+  pagination: {
+    info: "Paginação client-side dos registros já carregados ou filtrados localmente.",
+    previous: "Volta uma página mantendo ordenação e busca.",
+    next: "Avança uma página mantendo ordenação e busca.",
+  },
   kpis: {
     percentOnTime:
       "Percentual de propostas classificadas como Pontual no período e filtros aplicados.",
@@ -126,6 +143,11 @@ export const LMPS_HELP_TOOLTIPS = {
       "Mostra só a revisão do evento atual (último em aberto ou último da sequência).",
     historyGantt:
       "Faixa proporcional dentro da revisão: barra = início até encerramento (ou hoje se em aberto); traço = data limite.",
+    historyGlobalGantt:
+      "Escala única com todos os eventos da OV. Cores destacam engenharia, atraso, evento atual e estágios em aberto.",
+    structureTreeCode: "Código do componente na estrutura (SB1).",
+    structureTreeDescription: "Descrição comercial cadastrada para o item.",
+    structureTreeQuantity: "Quantidade na estrutura com unidade de medida TOTVS.",
     structureCode: "Código do componente na estrutura analítica (SB1).",
     structureDescription: "Descrição comercial do item na BOM.",
     structureType: "Tipo do material: PA, PI, MP, etc.",

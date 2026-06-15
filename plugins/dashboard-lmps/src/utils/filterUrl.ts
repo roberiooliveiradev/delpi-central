@@ -89,6 +89,20 @@ export function buildFilterSearchParams(filters: LmpsFilterUrlState): string {
   return query ? `?${query}` : "";
 }
 
+/** Atualiza a query string da URL atual sem empilhar histórico (filtros do dashboard). */
+export function syncLmpsFiltersToUrl(filters: LmpsFilterUrlState): void {
+  if (typeof window === "undefined") return;
+
+  const query = buildFilterSearchParams(filters);
+  const target = `${window.location.pathname}${query}`;
+
+  if (`${window.location.pathname}${window.location.search}` === target) {
+    return;
+  }
+
+  window.history.replaceState(window.history.state, "", target);
+}
+
 export function appendFiltersToPath(
   path: string,
   filters?: LmpsFilterUrlState

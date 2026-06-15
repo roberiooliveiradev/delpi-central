@@ -6,7 +6,7 @@ import {
   LMPS_LISTING_TYPE_OPTIONS,
   LMPS_STATUS_OPTIONS,
 } from "../constants/filterOptions";
-import { FieldLabel } from "./HelpTooltip";
+import { FieldLabel, HelpTooltip } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type FilterBarProps = {
@@ -48,27 +48,46 @@ export function FilterBar({
         <div>
           <p className="lmps-eyebrow">DELPI • Analytics</p>
           <h1>Acompanhamento de LMPs</h1>
-          <span className="lmps-page-subtitle">
+          <span className="lmps-page-subtitle lmps-page-subtitle--with-help">
             Indicadores de prazo, nível, status e lead time útil
+            <HelpTooltip
+              content={LMPS_HELP_TOOLTIPS.actions.pageSubtitle}
+              ariaLabel="Ajuda: escopo do dashboard"
+              className="lmps-page-subtitle__help"
+            />
           </span>
         </div>
 
         <div className="lmps-header-actions">
           {onExport ? (
-            <button
-              className="lmps-ghost-btn"
-              type="button"
-              onClick={onExport}
-              disabled={exportDisabled}
-            >
-              <Download size={16} />
-              Exportar CSV
-            </button>
+            <div className="lmps-header-action">
+              <button
+                className="lmps-ghost-btn"
+                type="button"
+                onClick={onExport}
+                disabled={exportDisabled}
+              >
+                <Download size={16} />
+                Exportar CSV
+              </button>
+              <HelpTooltip
+                content={LMPS_HELP_TOOLTIPS.actions.exportCsv}
+                ariaLabel="Ajuda: exportar CSV"
+                className="lmps-header-action__help"
+              />
+            </div>
           ) : null}
-          <button className="lmps-primary-btn" type="button" onClick={onRefresh}>
-            <ListFilter size={16} />
-            Atualizar
-          </button>
+          <div className="lmps-header-action">
+            <button className="lmps-primary-btn" type="button" onClick={onRefresh}>
+              <ListFilter size={16} />
+              Atualizar
+            </button>
+            <HelpTooltip
+              content={LMPS_HELP_TOOLTIPS.actions.refresh}
+              ariaLabel="Ajuda: atualizar dashboard"
+              className="lmps-header-action__help"
+            />
+          </div>
         </div>
       </header>
 

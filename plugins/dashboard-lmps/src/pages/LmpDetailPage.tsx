@@ -15,6 +15,7 @@ import {
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
+import { HelpTooltip } from "../components/HelpTooltip";
 import { LmpHistorySection } from "../components/LmpHistorySection";
 import { LmpProductStructuresSection } from "../components/LmpProductStructuresSection";
 import type { DataTableColumn } from "../components/DataTable";
@@ -355,23 +356,37 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
         </div>
 
         <div className="lmps-header-actions">
-          <button
-            type="button"
-            className="lmps-ghost-btn"
-            onClick={detail.reload}
-            disabled={detail.loading}
-          >
-            <RefreshCw size={16} aria-hidden />
-            Atualizar
-          </button>
-          <button
-            type="button"
-            className="lmps-ghost-btn"
-            onClick={() => navigateLmpsBack(LMPS_ROUTES.home, filters)}
-          >
-            <ArrowLeft size={16} aria-hidden />
-            Voltar
-          </button>
+          <div className="lmps-header-action">
+            <button
+              type="button"
+              className="lmps-ghost-btn"
+              onClick={detail.reload}
+              disabled={detail.loading}
+            >
+              <RefreshCw size={16} aria-hidden />
+              Atualizar
+            </button>
+            <HelpTooltip
+              content={LMPS_HELP_TOOLTIPS.actions.detailRefresh}
+              ariaLabel="Ajuda: atualizar detalhe"
+              className="lmps-header-action__help"
+            />
+          </div>
+          <div className="lmps-header-action">
+            <button
+              type="button"
+              className="lmps-ghost-btn"
+              onClick={() => navigateLmpsBack(LMPS_ROUTES.home, filters)}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Voltar
+            </button>
+            <HelpTooltip
+              content={LMPS_HELP_TOOLTIPS.actions.back}
+              ariaLabel="Ajuda: voltar ao dashboard"
+              className="lmps-header-action__help"
+            />
+          </div>
         </div>
       </header>
 

@@ -53,7 +53,9 @@ Testes e registro na Core API: [docs/TESTING.md](./docs/TESTING.md).
 - KPIs: % dentro do prazo, lead time médio, total de propostas
 - Gráficos: nível, status, lead por nível, evolução temporal
 - Tabela detalhada das LMPs filtradas (clique na linha → detalhe da OV)
-- **Detalhe:** produtos, BOM, histórico AIJ010 com **linha do tempo**, mini-Gantt, toggle tabela, filtros e preferências salvas no navegador
+- **Detalhe:** produtos, BOM, histórico AIJ010 com timeline, Gantt (por evento + global), filtros, preferências e tooltips completos
+- Filtros do dashboard **sincronizados na URL** (compartilhável)
+- Impressão básica (`Ctrl+P`) via `@media print`
 - Tooltips (ⓘ) em filtros, KPIs, gráficos, colunas de tabela e campos do detalhe
 - Atualização automática a cada 2 minutos (aba visível)
 - Fallback de agregação no cliente se `charts` não vier da API

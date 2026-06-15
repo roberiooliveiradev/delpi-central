@@ -13,6 +13,11 @@ AIJ_STATUS_LABELS: dict[str, str] = {
     "2": "Encerrado",
     "3": "Cancelado",
     "4": "Suspenso",
+    "5": "Aguardando",
+    "6": "Reprovado",
+    "7": "Aprovado",
+    "8": "Finalizado",
+    "9": "Concluído",
 }
 
 ENGINEERING_FLOW_STAGE_CODES = frozenset({"000003", "000008", "000012"})

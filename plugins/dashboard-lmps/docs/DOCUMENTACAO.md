@@ -78,14 +78,17 @@ Registro: `POST /core-api/admin/apps/register` com o JSON do manifesto (ver [TES
 
 ## 4. Filtros
 
-Filtros são **estado local React** (não sincronizam com a URL nem `sessionStorage`).
+Filtros são **estado React** sincronizado com a **URL** (`date_start`, `date_end`, `branch`, `listing_type`, `status`).
 
-| Campo | UI | Query API | Observação |
-|-------|-----|-----------|------------|
-| Data inicial | `input[type=date]` | `date_start` (YYYY-MM-DD) | Preenchida automaticamente com a **data de início mais antiga** da primeira carga |
+| Campo | UI | Query API / URL | Observação |
+|-------|-----|-----------------|------------|
+| Data inicial | `input[type=date]` | `date_start` (YYYY-MM-DD) | Default: primeiro dia do mês |
 | Data final | `input[type=date]` | `date_end` | Default: hoje |
-| Filial | `select` | `branch` | Opções fixas: Todas, `01`, `02` |
-| Status | `select` | `status` | `Todos`, `Pontual`, `Atrasado`, `Andamento`, `Retornada` |
+| Filial | multi-select | `branch` (CSV) | Vazio = todas |
+| Tipo | multi-select | `listing_type` (CSV) | LMP, Amostra, Outro |
+| Status | multi-select | `status` (CSV) | Pontual, Atrasado, … |
+
+`syncLmpsFiltersToUrl()` atualiza a query via `history.replaceState` ao alterar filtros — links compartilháveis e retorno do detalhe preservam o recorte.
 
 Botão **Atualizar** dispara `reload()` no hook (nova requisição ao dashboard).
 
@@ -245,8 +248,7 @@ Ver [STRUCTURE.md](./STRUCTURE.md).
 
 Melhorias ainda não implementadas:
 
-- Sincronizar filtros do dashboard na URL e entre sessões
-- Filiais dinâmicas via API
-- Impressão / PDF (`@media print`)
-- Gantt global do histórico (todas as revisões na mesma escala)
+- Filiais dinâmicas via API (hoje opções fixas `01`/`02`)
 - Script `register-manifest.sh` e CI dedicado no monorepo
+
+**Já entregue (jun/2026):** detalhe OV, timeline, filtros do histórico, mini-Gantt por evento, Gantt global, preferências `localStorage`, filtros na URL, tooltips em ações/paginação/BOM, impressão básica (`@media print`).
