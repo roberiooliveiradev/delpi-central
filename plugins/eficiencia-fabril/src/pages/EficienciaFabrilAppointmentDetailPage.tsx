@@ -284,13 +284,13 @@ export function EficienciaFabrilAppointmentDetailPage({
                 <table className="ef-table ef-table--routing">
                   <thead>
                     <tr>
-                      <th>Operação</th>
+                      <th className="ef-table__col--compact">Operação</th>
                       <th className="ef-table__col--wide">Descrição</th>
-                      <th>CT</th>
-                      <th>Recurso</th>
+                      <th className="ef-table__col--compact">CT</th>
+                      <th className="ef-table__col--compact">Recurso</th>
                       <th className="ef-table__col--numeric">Setup (h)</th>
                       <th className="ef-table__col--numeric">Tempo padrão (h/peça)</th>
-                      <th>Apontamento</th>
+                      <th className="ef-table__col--badge">Apontamento</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -302,27 +302,26 @@ export function EficienciaFabrilAppointmentDetailPage({
                       </tr>
                     ) : (
                       detail.routingOperations.map((row, index) => (
-                        <tr
-                          key={`${row.operation_code ?? "op"}-${index}`}
-                          className={
-                            row.is_appointment_operation
-                              ? "ef-row ef-row--routing-current"
-                              : "ef-row"
-                          }
-                        >
-                          <td data-label="Operação">{row.operation_code ?? "—"}</td>
+                        <tr key={`${row.operation_code ?? "op"}-${index}`} className="ef-row">
+                          <td className="ef-table__col--compact" data-label="Operação">
+                            {row.operation_code ?? "—"}
+                          </td>
                           <td className="ef-table__col--wide" data-label="Descrição">
                             {row.operation_description ?? "—"}
                           </td>
-                          <td data-label="CT">{row.work_center ?? "—"}</td>
-                          <td data-label="Recurso">{row.resource_code ?? "—"}</td>
+                          <td className="ef-table__col--compact" data-label="CT">
+                            {row.work_center ?? "—"}
+                          </td>
+                          <td className="ef-table__col--compact" data-label="Recurso">
+                            {row.resource_code ?? "—"}
+                          </td>
                           <td className="ef-table__col--numeric" data-label="Setup (h)">
                             {formatHours(row.setup_hours ?? null)}
                           </td>
                           <td className="ef-table__col--numeric" data-label="Tempo padrão (h/peça)">
                             {formatHours(row.standard_time_hours_piece ?? null, 4)}
                           </td>
-                          <td data-label="Apontamento">
+                          <td className="ef-table__col--badge" data-label="Apontamento">
                             {row.is_appointment_operation ? (
                               <span className="ef-badge ef-badge--success">Operação atual</span>
                             ) : (
