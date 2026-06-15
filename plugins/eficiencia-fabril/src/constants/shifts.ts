@@ -70,10 +70,12 @@ export function getShiftForStartTime(
 
 export function matchesShiftFilter(
   horaInicio: string | null | undefined,
-  shift: EficienciaFabrilShift | undefined
+  shifts: EficienciaFabrilShift[] | undefined
 ): boolean {
-  if (!shift) return true;
+  if (!shifts || shifts.length === 0) return true;
 
   const itemShift = getShiftForStartTime(horaInicio);
-  return itemShift === shift;
+  if (!itemShift) return false;
+
+  return shifts.includes(itemShift);
 }

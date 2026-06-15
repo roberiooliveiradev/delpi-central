@@ -298,7 +298,9 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `branch`, `op`, `employee`, `work_center` — filtros opcionais.
 - Dashboard: `page`, `page_size`, `status_ok_only` (default `true`).
 
-**Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados com **`appointment_id`** (vínculo SH6010). Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**. Clique na linha → detalhe via `GET /production/oee/appointments/{appointment_id}` (mesmo contrato do painel OEE, incluindo `time_analysis.findings`).
+**Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados com **`appointment_id`** (vínculo SH6010). Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**. Clique na linha → detalhe via `GET /production/oee/appointments/{appointment_id}` (mesmo contrato do painel OEE, incluindo `time_analysis.findings` e estrutura em árvore).
+
+**UI do MFE (eficiência fabril):** filtros automáticos (período preservado, debounce em OP/operador/CT), turno com multiseleção, tabela com ordenação por coluna e exportação Excel dos dados filtrados/ordenados em memória.
 
 #### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
 

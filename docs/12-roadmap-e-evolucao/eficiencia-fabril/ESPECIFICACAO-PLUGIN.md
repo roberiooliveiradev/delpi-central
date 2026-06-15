@@ -1,7 +1,7 @@
 # Especificação funcional — Plugin Eficiência Fabril (estado atual)
 
 > **Versão do plugin:** `0.1.0` (manifesto)  
-> **Última revisão:** 2026-05-28  
+> **Última revisão:** 2026-06-15  
 > **Escopo:** comportamento implementado em `plugins/eficiencia-fabril` + rotas `api-delpi` de Produção.
 
 ---
@@ -12,8 +12,9 @@ Tela única no Portal (**Minha DELPI**) para líderes de produção acompanharem
 
 - KPIs de eficiência, apontamentos, resultado MOD e horas ganhas/perdidas;
 - cinco gráficos analíticos (layout 3 + 2);
-- tabela paginada de apontamentos com exportação Excel;
-- filtros com aplicação **local** (sem nova busca na API), exceto mudança de período ou botão **Atualizar**.
+- tabela paginada de apontamentos com **ordenação por coluna** e exportação Excel;
+- filtros com aplicação **automática e local** (sem botão «Aplicar»), exceto mudança de período fora do cache ou botão **Atualizar**;
+- detalhe do apontamento (clique na linha) com estrutura do produto em **árvore** e análise de tempos (`time_analysis.findings`).
 
 **URL:** `/apps/eficiencia-fabril`  
 **Permissão:** `eficiencia-fabril.view` (e legado `api-delpi.access` / `dashboard-production.view` na API).
@@ -27,9 +28,10 @@ Abertura / Atualizar / período novo
   → GET .../eficiencia-fabril/appointments?date_start&date_end&status_ok_only=false
   → lista completa do período em memória
 
-Aplicar filtros (filial, OP, operador, CT)
-  → recálculo local de KPIs, gráficos, tabela e paginação
-  → sem nova chamada HTTP
+Aplicar filtros (filial, OP, operador, CT, turno)
+  → recálculo local imediato (debounce 350 ms em OP/operador/CT)
+  → KPIs, gráficos, tabela (ordenada), paginação e exportação
+  → sem nova chamada HTTP enquanto o período permanece no cache
 
 Período aplicado fora do intervalo já carregado
   → nova busca em /appointments
@@ -112,13 +114,15 @@ Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_P
 
 | Campo | Comportamento |
 |-------|----------------|
-| Data início / fim | Draft até clicar **Aplicar filtros** |
-| Filial | `01`, `02` ou todas |
-| Operador | Texto — busca parcial no **nome** |
-| OP | Texto — busca parcial (ex.: `24546` encontra OPs que contêm o trecho) |
-| Centro de trabalho | Texto — filtro local parcial |
+| Data início / fim | Aplicação imediata; **preservadas** ao alterar demais filtros |
+| Filial | Fixa pela rota SC (`01`) ou ES (`02`) |
+| Operador | Texto — busca parcial no **nome** (debounce 350 ms) |
+| OP | Texto — busca parcial (debounce 350 ms) |
+| Centro de trabalho | Texto — filtro local parcial (debounce 350 ms) |
+| Turno | **Multiseleção** (1º, 2º, 3º); vazio = todos; classificação pelo horário de início |
 | ~~Centro de custo~~ | Removido |
 | ~~Somente OK~~ | Oculto (sempre OK na tabela) |
+| ~~Aplicar filtros~~ | Removido — filtros automáticos |
 
 **Atualizar** (cabeçalho): recarrega dados do período atual da API.
 
@@ -147,11 +151,20 @@ Todos sem linhas de grade de fundo. Modal expandido: **1320px** × gráfico **70
 
 ## 7. Tabela de apontamentos
 
-Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, CT, Operador, Eficiência, Resultado MOD, Status.
+Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, Descrição produto, CT, Operador, Eficiência, Resultado MOD, Status.
 
+- **Ordenação:** todas as colunas clicáveis (asc/desc); padrão Data descendente.
 - Paginação local (50 por página).
-- **Exportar Excel:** usa dados já filtrados em memória (sem nova API).
+- **Exportar Excel:** usa dados filtrados e **ordenados** em memória (sem nova API).
 - Linha vermelha + badge **Verificar** quando eficiência fora da faixa 0–199%.
+- Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{appointment_id}` (detalhe via `GET /production/oee/appointments/{id}`).
+
+---
+
+## 7.1 Detalhe do apontamento
+
+- Roteiro, tempos, KPIs e **`time_analysis.findings`** (mesmo contrato do OEE).
+- Estrutura do produto exibida em **árvore** (`ProductStructureTree` / `RichTree`), não tabela plana.
 
 ---
 
@@ -181,4 +194,4 @@ Ver também: [plugins/eficiencia-fabril/README.md](../../../plugins/eficiencia-f
 - RBAC operacional (role dedicada além de superadmin).
 - Documentação OpenAPI dedicada em `api-delpi/docs/api/`.
 - Deploy produção e validação com usuários finais.
-- Evoluções: cache, drill-down, incluir registros não-OK na tabela via UI.
+- Evoluções: cache server-side, drill-down adicional, incluir registros não-OK na tabela via UI.

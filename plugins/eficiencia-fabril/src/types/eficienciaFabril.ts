@@ -1,4 +1,5 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
+import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 
 export type EficienciaFabrilFilterParams = {
   date_start: string;
@@ -7,8 +8,10 @@ export type EficienciaFabrilFilterParams = {
   op?: string;
   employee?: string;
   work_center?: string;
-  shift?: EficienciaFabrilShift;
+  shifts?: EficienciaFabrilShift[];
   status_ok_only?: boolean;
+  sort_by?: AppointmentsSortColumn;
+  sort_dir?: SortDirection;
   page?: number;
   page_size?: number;
 };

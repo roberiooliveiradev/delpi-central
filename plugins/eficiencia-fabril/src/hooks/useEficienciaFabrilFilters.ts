@@ -1,11 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 
-import type { EficienciaFabrilFilterParams } from "../types/eficienciaFabril";
 import type { EficienciaFabrilShift } from "../constants/shifts";
+import type { EficienciaFabrilFilterParams } from "../types/eficienciaFabril";
+import {
+  DEFAULT_APPOINTMENTS_SORT,
+  type AppointmentsSortColumn,
+  type SortDirection,
+  toggleSort,
+} from "../utils/appointmentsTableSort";
 import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "../utils/dates";
+import { useDebouncedValue } from "./useDebouncedValue";
 
 const PAGE_SIZE = 50;
 
@@ -16,8 +23,10 @@ export type EficienciaFabrilFilterState = {
   op: string;
   employee: string;
   workCenter: string;
-  shift: EficienciaFabrilShift | "";
+  shifts: EficienciaFabrilShift[];
   statusOkOnly: boolean;
+  sortBy: AppointmentsSortColumn;
+  sortDir: SortDirection;
 };
 
 function createInitialFilters(fixedBranch: string): EficienciaFabrilFilterState {
@@ -28,8 +37,9 @@ function createInitialFilters(fixedBranch: string): EficienciaFabrilFilterState 
     op: "",
     employee: "",
     workCenter: "",
-    shift: "",
+    shifts: [],
     statusOkOnly: true,
+    ...DEFAULT_APPOINTMENTS_SORT,
   };
 }
 
@@ -44,62 +54,86 @@ function toApiFilters(
     op: filters.op.trim() || undefined,
     employee: filters.employee.trim() || undefined,
     work_center: filters.workCenter.trim() || undefined,
-    shift: filters.shift || undefined,
+    shifts: filters.shifts.length > 0 ? filters.shifts : undefined,
     status_ok_only: filters.statusOkOnly,
+    sort_by: filters.sortBy,
+    sort_dir: filters.sortDir,
     page,
     page_size: PAGE_SIZE,
   };
 }
 
 export function useEficienciaFabrilFilters(fixedBranch: string) {
-  const [draft, setDraft] = useState(() => createInitialFilters(fixedBranch));
-  const [committed, setCommitted] = useState(() => createInitialFilters(fixedBranch));
+  const [filters, setFilters] = useState(() => createInitialFilters(fixedBranch));
   const [page, setPage] = useState(1);
 
+  const debouncedOp = useDebouncedValue(filters.op, 350);
+  const debouncedEmployee = useDebouncedValue(filters.employee, 350);
+  const debouncedWorkCenter = useDebouncedValue(filters.workCenter, 350);
+
+  const effectiveFilters = useMemo(
+    () => ({
+      ...filters,
+      op: debouncedOp,
+      employee: debouncedEmployee,
+      workCenter: debouncedWorkCenter,
+    }),
+    [debouncedEmployee, debouncedOp, debouncedWorkCenter, filters]
+  );
+
   const apiParams = useMemo(
-    () => toApiFilters(committed, page),
-    [committed, page]
+    () => toApiFilters(effectiveFilters, page),
+    [effectiveFilters, page]
   );
 
-  const hasPendingChanges = useMemo(
-    () => JSON.stringify(draft) !== JSON.stringify(committed),
-    [committed, draft]
-  );
-
-  const applyFilters = useCallback(() => {
-    setCommitted({ ...draft, branch: fixedBranch });
-    setPage(1);
-  }, [draft, fixedBranch]);
-
-  const resetPage = useCallback(() => setPage(1), []);
-
-  const patchDraft = useCallback(
-    (patch: Partial<EficienciaFabrilFilterState>) => {
-      setDraft((current) => ({ ...current, ...patch, branch: fixedBranch }));
+  const patchFilters = useCallback(
+    (patch: Partial<EficienciaFabrilFilterState>, resetPage = true) => {
+      setFilters((current) => ({ ...current, ...patch, branch: fixedBranch }));
+      if (resetPage) {
+        setPage(1);
+      }
     },
     [fixedBranch]
   );
 
+  const toggleSortColumn = useCallback((column: AppointmentsSortColumn) => {
+    setFilters((current) => {
+      const next = toggleSort(current.sortBy, current.sortDir, column);
+      return { ...current, ...next, branch: fixedBranch };
+    });
+    setPage(1);
+  }, [fixedBranch]);
+
+  const clearSecondaryFilters = useCallback(() => {
+    patchFilters({
+      op: "",
+      employee: "",
+      workCenter: "",
+      shifts: [],
+    });
+  }, [patchFilters]);
+
   return {
-    dateStart: draft.dateStart,
-    dateEnd: draft.dateEnd,
-    op: draft.op,
-    employee: draft.employee,
-    workCenter: draft.workCenter,
-    shift: draft.shift,
-    statusOkOnly: draft.statusOkOnly,
-    hasPendingChanges,
+    dateStart: filters.dateStart,
+    dateEnd: filters.dateEnd,
+    op: filters.op,
+    employee: filters.employee,
+    workCenter: filters.workCenter,
+    shifts: filters.shifts,
+    sortBy: filters.sortBy,
+    sortDir: filters.sortDir,
     page,
-    setDateStart: (value: string) => patchDraft({ dateStart: value }),
-    setDateEnd: (value: string) => patchDraft({ dateEnd: value }),
-    setOp: (value: string) => patchDraft({ op: value }),
-    setEmployee: (value: string) => patchDraft({ employee: value }),
-    setWorkCenter: (value: string) => patchDraft({ workCenter: value }),
-    setShift: (value: EficienciaFabrilShift | "") => patchDraft({ shift: value }),
-    setStatusOkOnly: (value: boolean) => patchDraft({ statusOkOnly: value }),
+    setDateStart: (value: string) => patchFilters({ dateStart: value }),
+    setDateEnd: (value: string) => patchFilters({ dateEnd: value }),
+    setOp: (value: string) => patchFilters({ op: value }),
+    setEmployee: (value: string) => patchFilters({ employee: value }),
+    setWorkCenter: (value: string) => patchFilters({ workCenter: value }),
+    setShifts: (value: EficienciaFabrilShift[]) => patchFilters({ shifts: value }),
     setPage,
-    resetPage,
-    applyFilters,
+    toggleSortColumn,
+    clearSecondaryFilters,
     apiParams,
+    appliedDateStart: effectiveFilters.dateStart,
+    appliedDateEnd: effectiveFilters.dateEnd,
   };
 }

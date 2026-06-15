@@ -2,7 +2,7 @@
 
 Dashboard gerencial de apontamentos de produção (eficiência operacional e resultado MOD), consumindo a view TOTVS `dbo.vw_Apontamentos_Eficiencia` via **api-delpi**.
 
-**Status (2026-05-28):** MVP funcional em desenvolvimento — plugin deployável, UI completa, filtros locais e exportação Excel.
+**Status (2026-06-15):** MVP funcional — dashboard com filtros automáticos, ordenação por coluna, multiseleção de turno, detalhe com árvore de estrutura e exportação Excel.
 
 ---
 

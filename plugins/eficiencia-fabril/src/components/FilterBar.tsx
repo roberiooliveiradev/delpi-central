@@ -1,7 +1,5 @@
-import { Search } from "lucide-react";
-
 import type { EficienciaFabrilShift } from "../constants/shifts";
-import { FACTORY_SHIFTS } from "../constants/shifts";
+import { ShiftMultiSelect } from "./ShiftMultiSelect";
 
 type FilterBarProps = {
   dateStart: string;
@@ -9,16 +7,14 @@ type FilterBarProps = {
   op: string;
   employee: string;
   workCenter: string;
-  shift: EficienciaFabrilShift | "";
-  hasPendingChanges?: boolean;
+  shifts: EficienciaFabrilShift[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onOpChange: (value: string) => void;
   onEmployeeChange: (value: string) => void;
   onWorkCenterChange: (value: string) => void;
-  onShiftChange: (value: EficienciaFabrilShift | "") => void;
-  onApply: () => void;
-  loading?: boolean;
+  onShiftsChange: (value: EficienciaFabrilShift[]) => void;
+  disabled?: boolean;
 };
 
 export function FilterBar({
@@ -27,16 +23,14 @@ export function FilterBar({
   op,
   employee,
   workCenter,
-  shift,
-  hasPendingChanges = false,
+  shifts,
   onDateStartChange,
   onDateEndChange,
   onOpChange,
   onEmployeeChange,
   onWorkCenterChange,
-  onShiftChange,
-  onApply,
-  loading = false,
+  onShiftsChange,
+  disabled = false,
 }: FilterBarProps) {
   return (
     <section className="ef-filter-bar" aria-label="Filtros do dashboard">
@@ -46,6 +40,7 @@ export function FilterBar({
           <input
             type="date"
             value={dateStart}
+            disabled={disabled}
             onChange={(event) => onDateStartChange(event.target.value)}
           />
         </label>
@@ -55,6 +50,7 @@ export function FilterBar({
           <input
             type="date"
             value={dateEnd}
+            disabled={disabled}
             onChange={(event) => onDateEndChange(event.target.value)}
           />
         </label>
@@ -65,6 +61,7 @@ export function FilterBar({
             type="text"
             value={employee}
             placeholder="Ex.: CRISTIANE"
+            disabled={disabled}
             onChange={(event) => onEmployeeChange(event.target.value)}
           />
         </label>
@@ -75,6 +72,7 @@ export function FilterBar({
             type="text"
             value={op}
             placeholder="Ex.: 24549301007"
+            disabled={disabled}
             onChange={(event) => onOpChange(event.target.value)}
           />
         </label>
@@ -85,42 +83,16 @@ export function FilterBar({
             type="text"
             value={workCenter}
             placeholder="Ex.: CT-01A"
+            disabled={disabled}
             onChange={(event) => onWorkCenterChange(event.target.value)}
           />
         </label>
 
         <label className="ef-field">
           <span>Turno</span>
-          <select
-            value={shift}
-            onChange={(event) =>
-              onShiftChange(event.target.value as EficienciaFabrilShift | "")
-            }
-          >
-            <option value="">Todos</option>
-            {FACTORY_SHIFTS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label} ({item.start} – {item.end})
-              </option>
-            ))}
-          </select>
+          <ShiftMultiSelect value={shifts} onChange={onShiftsChange} disabled={disabled} />
         </label>
-
       </div>
-
-      <button
-        type="button"
-        className="ef-btn ef-btn--primary"
-        onClick={onApply}
-        disabled={loading}
-      >
-        <Search size={16} aria-hidden />
-        {loading
-          ? "Carregando…"
-          : hasPendingChanges
-            ? "Aplicar filtros *"
-            : "Aplicar filtros"}
-      </button>
     </section>
   );
 }

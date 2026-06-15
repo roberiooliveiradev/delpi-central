@@ -76,20 +76,23 @@ function DashboardEficienciaFabrilContent({
   const {
     dateStart,
     dateEnd,
+    appliedDateStart,
+    appliedDateEnd,
     op,
     employee,
     workCenter,
-    shift,
-    hasPendingChanges,
+    shifts,
+    sortBy,
+    sortDir,
     page,
     setDateStart,
     setDateEnd,
     setOp,
     setEmployee,
     setWorkCenter,
-    setShift,
+    setShifts,
     setPage,
-    applyFilters,
+    toggleSortColumn,
     apiParams,
   } = useEficienciaFabrilFilters(totvsBranch);
 
@@ -131,7 +134,8 @@ function DashboardEficienciaFabrilContent({
           <div>
             <h1>Eficiência Fabril — {branchRoute}</h1>
             <p>
-              {BRANCH_ROUTE_LABELS[branchRoute]} · {formatPeriodLabel(dateStart, dateEnd)}
+              {BRANCH_ROUTE_LABELS[branchRoute]} ·{" "}
+              {formatPeriodLabel(appliedDateStart, appliedDateEnd)}
             </p>
           </div>
         </div>
@@ -152,19 +156,14 @@ function DashboardEficienciaFabrilContent({
         op={op}
         employee={employee}
         workCenter={workCenter}
-        shift={shift}
-        hasPendingChanges={hasPendingChanges}
+        shifts={shifts}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onOpChange={setOp}
         onEmployeeChange={setEmployee}
         onWorkCenterChange={setWorkCenter}
-        onShiftChange={setShift}
-        onApply={() => {
-          setExportError(null);
-          applyFilters();
-        }}
-        loading={loading}
+        onShiftsChange={setShifts}
+        disabled={loading}
       />
 
       <p className="ef-efficiency-legend ef-efficiency-legend--warning">
@@ -250,11 +249,14 @@ function DashboardEficienciaFabrilContent({
           <AppointmentsTable
             items={data.items}
             exportItems={allItems}
-            exportDateStart={apiParams.date_start}
-            exportDateEnd={apiParams.date_end}
+            exportDateStart={appliedDateStart}
+            exportDateEnd={appliedDateEnd}
             page={pagination?.page ?? page}
             totalPages={pagination?.total_pages ?? 1}
             total={pagination?.total ?? 0}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortChange={toggleSortColumn}
             onPageChange={setPage}
             onRowClick={handleAppointmentRowClick}
             onExportError={handleExportError}

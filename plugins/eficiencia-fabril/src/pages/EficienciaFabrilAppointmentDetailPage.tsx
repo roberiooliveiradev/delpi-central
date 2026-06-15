@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { ArrowLeft, Boxes, CircleGauge, Clock3, Factory, RefreshCw } from "lucide-react";
 
+import { ProductStructureTree } from "../components/ProductStructureTree";
 import { AppointmentTimeFindings } from "../components/AppointmentTimeFindings";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
 import { KpiCard } from "../components/KpiCard";
@@ -9,7 +10,6 @@ import { BRANCH_ROUTE_LABELS } from "../constants/branches";
 import { isProductionEfficiencyOutlier } from "../constants/businessRules";
 import { buildEficienciaFabrilDashboardPath } from "../constants/routes";
 import { useProductionOeeAppointmentDetail } from "../hooks/useProductionOeeAppointmentDetail";
-import type { ProductStructureNode } from "../types/productionOeeDetail";
 import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal, formatHours, formatInteger, formatPercent } from "../utils/format";
 import { navigateEficienciaFabrilBack } from "../utils/navigation";
@@ -26,26 +26,6 @@ function formatDateTime(date?: string | null, time?: string | null): string {
   if (dateLabel === "—" && !timeLabel) return "—";
   if (!timeLabel) return dateLabel;
   return `${dateLabel} ${timeLabel}`;
-}
-
-function flattenStructureNodes(
-  nodes: ProductStructureNode[] | undefined,
-  depth = 0
-): Array<{ depth: number; code: string; description: string; type: string; quantity: string }> {
-  if (!nodes?.length) return [];
-
-  return nodes.flatMap((node) => {
-    const code = node.code ?? node.product_code ?? "—";
-    const children = node.components ?? node.items ?? [];
-    const row = {
-      depth,
-      code,
-      description: node.description ?? "—",
-      type: node.type ?? "—",
-      quantity: node.quantity == null ? "—" : formatDecimal(node.quantity),
-    };
-    return [row, ...flattenStructureNodes(children, depth + 1)];
-  });
 }
 
 function formatRealHoursSource(source?: string | null): string {
@@ -186,22 +166,6 @@ export function EficienciaFabrilAppointmentDetailPage({
         : [],
     [timeAnalysis]
   );
-
-  const structureRows = useMemo(() => {
-    const rootItems = detail.structure?.items ?? [];
-    const root = detail.structure?.root;
-    const rows = flattenStructureNodes(rootItems);
-    if (root) {
-      rows.unshift({
-        depth: 0,
-        code: root.code ?? root.product_code ?? "—",
-        description: root.description ?? "—",
-        type: root.type ?? "—",
-        quantity: root.quantity == null ? "—" : formatDecimal(root.quantity),
-      });
-    }
-    return rows;
-  }, [detail.structure]);
 
   const pageTitle = appointment
     ? `Apontamento ${appointment.appointment_id}`
@@ -368,35 +332,10 @@ export function EficienciaFabrilAppointmentDetailPage({
                 <Boxes size={20} aria-hidden />
                 <div>
                   <h2>Estrutura do produto</h2>
-                  <p>BOM / estrutura analítica</p>
+                  <p>BOM / estrutura analítica com níveis aninhados</p>
                 </div>
               </header>
-              {structureRows.length === 0 ? (
-                <p className="ef-detail__empty">Estrutura não disponível para este produto.</p>
-              ) : (
-                <div className="ef-table-wrap">
-                  <table className="ef-table ef-table--structure">
-                    <thead>
-                      <tr>
-                        <th>Componente</th>
-                        <th>Descrição</th>
-                        <th>Tipo</th>
-                        <th>Quantidade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {structureRows.map((row, index) => (
-                        <tr key={`${row.code}-${index}`}>
-                          <td style={{ paddingLeft: `${12 + row.depth * 16}px` }}>{row.code}</td>
-                          <td>{row.description}</td>
-                          <td>{row.type}</td>
-                          <td>{row.quantity}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <ProductStructureTree structure={detail.structure} />
             </article>
           </>
         ) : null}

@@ -8,6 +8,10 @@ import type {
   EficienciaFabrilFilterParams,
   EficienciaFabrilItem,
 } from "../types/eficienciaFabril";
+import {
+  DEFAULT_APPOINTMENTS_SORT,
+  sortAppointments,
+} from "../utils/appointmentsTableSort";
 
 const FALLBACK_PAGE_SIZE = 50;
 
@@ -52,7 +56,7 @@ function applyScopeFilters(
           includesInsensitive(item.cod_operador, params.employee)
         : true
     )
-    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shift));
+    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts));
 }
 
 function computeDashboardFromItems(
@@ -349,9 +353,15 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
         ? scopedItems.filter((item) => item.status_registro === "OK")
         : scopedItems;
 
+    const sortedVisibleItems = sortAppointments(
+      visibleItems,
+      params.sort_by ?? DEFAULT_APPOINTMENTS_SORT.sortBy,
+      params.sort_dir ?? DEFAULT_APPOINTMENTS_SORT.sortDir
+    );
+
     return {
-      data: computeDashboardFromItems(scopedItems, visibleItems, page, pageSize),
-      exportItems: visibleItems,
+      data: computeDashboardFromItems(scopedItems, sortedVisibleItems, page, pageSize),
+      exportItems: sortedVisibleItems,
     };
   }, [allItems, loadedRange, params]);
 

@@ -12,9 +12,10 @@ Faixa válida de eficiência (alinhada ao OEE): [regras-faixa-eficiencia-produca
 - Duas entradas no menu: **SC** (filial 01) e **ES** (filial 02)
 - KPIs: eficiência (média simples), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
-- Tabela paginada + exportação Excel (dados em memória)
-- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos, estrutura)
-- Filtros com aplicação local (sem refetch), exceto período novo ou **Atualizar**
+- Tabela paginada com **ordenação por coluna** + exportação Excel (dados filtrados e ordenados em memória)
+- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos, estrutura em **árvore**, `time_analysis.findings`)
+- Filtros **automáticos** (sem botão aplicar): período, OP, operador, CT e **turno (multiseleção)**; debounce em campos de texto
+- Refetch da API só quando o período sai do intervalo já carregado ou ao clicar **Atualizar**
 - Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência fora da faixa **0–199%** fora dos indicadores (status **Verificar** na tabela)
 
 ---
@@ -84,9 +85,9 @@ TOKEN="<jwt>" ../../scripts/homologacao/check-eficiencia-fabril.sh
 ```text
 src/
   api/              # HTTP + fetch bulk appointments
-  components/       # FilterBar, KPIs, gráficos, tabela, modal
-  hooks/            # filtros + dashboard (cache + agregação local)
-  pages/            # DashboardEficienciaFabrilPage
-  constants/        # regras (faixa 0–199%, 95%, cores de gráfico)
-  utils/            # formatação e export Excel
+  components/       # FilterBar, ShiftMultiSelect, KPIs, gráficos, tabela, árvore de estrutura
+  hooks/            # filtros (auto-aplicação + debounce) + dashboard (cache + agregação local)
+  pages/            # Dashboard + detalhe do apontamento
+  constants/        # regras (faixa 0–199%, turnos, cores de gráfico)
+  utils/            # formatação, ordenação da tabela e export Excel
 ```
