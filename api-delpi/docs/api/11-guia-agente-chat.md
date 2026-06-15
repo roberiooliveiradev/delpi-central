@@ -92,7 +92,7 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
 | Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Dashboard legado (tudo) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
-| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` — use `date_start`, `date_end`, `branch` para o mesmo escopo do dashboard |
+| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` — use `date_start`, `date_end`, `branch` para o mesmo escopo do dashboard; resposta inclui `list_products[]` e `list_history[]` (AIJ010 enriquecido: `process_label`, `status_label`, `duration_display`, `is_open`, `is_engineering_flow`, …) |
 | Transforma Mais (lista) | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
 | Transforma Mais (resumo) | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |
 

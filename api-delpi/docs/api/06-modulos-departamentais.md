@@ -136,6 +136,18 @@ Parâmetros adicionais:
 | `dashboardItems`, `dashboardSummary`, `dashboardCharts` | Rotas agregadas do painel. |
 | `list` | Listagem paginada `/engineering/lmps`. |
 
+**Resposta `data` (detalhe):** além dos campos de classificação da listagem (`nivel`, `status`, `lead_time_util`, …), inclui `list_products[]` (itens da proposta) e **`list_history[]`** — eventos do AIJ010 ordenados por revisão/data/hora.
+
+**Enriquecimento de `list_history[]`:** aplicado em `GetLMPUseCase` via `enrich_history_events()` (`lmp_history_event_enrichment.py`), sem alterar o SQL base:
+
+| Campo derivado | Descrição |
+|---|---|
+| `process_label`, `stage_label` | Rótulos PT (`lmp_process_stage_labels`) |
+| `status_label` | Mapeamento `AIJ_STATUS` 1–9 |
+| `duration_display` | Texto legível (ex.: «Em andamento · N dia(s)») |
+| `is_open`, `is_late`, `is_current` | Situação do evento |
+| `is_engineering_flow` | Badge Engenharia na UI (estágios técnicos além de `is_engineering`) |
+
 > **Carregamento progressivo:** o frontend chama `/summary` → `/charts` → `/items` (ou `/dashboard` legado). A página renderiza KPIs/gráficos antes da tabela; detalhe da OV é rota separada acima.
 
 | Query (listagem) | Descrição |

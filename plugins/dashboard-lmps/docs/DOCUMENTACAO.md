@@ -15,7 +15,7 @@ Plugin **microfrontend** (Module Federation) da Minha DELPI para acompanhamento 
 | Federation name | `dashboard-lmps` |
 | `remoteEntry` | `/apps/dashboard-lmps/assets/remoteEntry.js` |
 
-O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e renderiza uma **única página** analítica (`DashboardLmpsPage`).
+O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e roteia entre a **lista analítica** (`DashboardLmpsPage`) e o **detalhe da OV** (`LmpDetailPage` em `/ov/{sale_number}`).
 
 ### O que o dashboard exibe
 
@@ -27,13 +27,15 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e renderi
 
 - KPIs da proposta, cards Proposta / Engenharia / Cliente
 - Tabela de produtos + BOM por item (`ProductStructureTree`)
-- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros, mini-Gantt e tooltips em colunas
+- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros (Todos / Engenharia / Em aberto / Revisão atual), mini-Gantt por evento, **Gantt global** multi-revisão, preferências em `localStorage` e tooltips em colunas
+- **Filtros na URL:** período, filial, status, tipo de listagem e paginação sincronizados para links compartilháveis (`filterUrl.ts`)
+- **Impressão:** layout simplificado via `@media print` (Ctrl+P)
 
 ### Fora de escopo deste plugin
 
 - Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — painel em **`dashboard-engineering`**
 - Cadastro ou edição de LMPs no Protheus
-- Gantt global multi-revisão em escala única
+- Exportação PDF dedicada (além da impressão nativa do navegador)
 
 ### Legado na plataforma
 
@@ -239,7 +241,8 @@ Ver [STRUCTURE.md](./STRUCTURE.md).
 | [API_MAPPING.md](./API_MAPPING.md) | Endpoints e tipos |
 | [TESTING.md](./TESTING.md) | Checklist e curl |
 | [STRUCTURE.md](./STRUCTURE.md) | Pastas e convenções |
-| `api-delpi/docs/api/06-modulos-departamentais.md` | Engenharia / LMP no backend |
+| `api-delpi/docs/api/06-modulos-departamentais.md` | Engenharia / LMP no backend (incl. `list_history[]`) |
+| `documentos/Routes/documentacao_completa_da_rota_lmp.md` | Contrato detalhado da rota LMP |
 | `plugins/dashboard-quality/docs/DOCUMENTACAO.md` | Plugin irmão (referência de padrão MFE) |
 
 ---

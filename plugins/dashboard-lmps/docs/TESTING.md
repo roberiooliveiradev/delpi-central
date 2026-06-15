@@ -70,17 +70,44 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ## 6. Checklist manual na UI
 
+### Lista (`/apps/dashboard-lmps`)
+
 | Área | O que validar |
 |------|----------------|
 | Carga inicial | KPIs e gráficos após login com permissão |
 | Data inicial | Após primeira carga com dados, data inicial ajusta para a proposta mais antiga |
 | Filtros | Alterar filial, status e período → dados e tabela atualizam |
+| URL | Alterar filtros atualiza query string; recarregar a página mantém filtros |
 | Atualizar | Botão recarrega sem perder filtros |
 | Auto-refresh | Após ~2 min com aba visível, banner "Atualizando dados..." |
 | Erro parcial | Simular falha de rede com dados já carregados → mantém última carga + aviso |
-| Tabela | Colunas filial, proposta, nível, lead time, status classificação |
-| Gráficos | Pizzas (nível/status), barras (lead por nível), linha (evolução) |
+| Tabela | Colunas filial, proposta, nível, lead time, status classificação; ⓘ em todos os cabeçalhos |
+| Gráficos | Pizzas (nível/status), barras (lead por nível), linha (evolução); multi-select nos filtros |
 | Vazio | Período sem LMPs → mensagem na tabela e gráficos zerados |
+| Exportar CSV | Download com filtros atuais |
+
+### Detalhe OV (`/apps/dashboard-lmps/ov/{sale_number}`)
+
+| Área | O que validar |
+|------|----------------|
+| Navegação | Clique na linha da tabela abre detalhe; voltar retorna à lista com filtros |
+| Cards / KPIs | Proposta, Engenharia, Cliente; tooltips nos campos |
+| Produtos + BOM | Tabela de produtos; árvore de estrutura expandível; legenda e tooltips nos nós |
+| Histórico | Toggle Linha do tempo / Tabela; filtros Todos / Engenharia / Em aberto / Revisão atual |
+| Gantt | Mini-Gantt por evento na timeline; Gantt global no topo |
+| Preferências | View e filtro do histórico persistem após F5 (`localStorage`) |
+| Tooltips tabela | ⓘ em todas as colunas do histórico (incl. Situação); balões não cortados em scroll horizontal |
+| Impressão | Ctrl+P oculta chrome desnecessário (`@media print`) |
+
+### API (detalhe)
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BASE/lmps/000123?date_start=2025-01-01&date_end=2026-12-31&branch=01" \
+  | jq '.data.list_history[0] | {process_label, status_label, is_open, duration_display}'
+```
+
+Esperado: campos enriquecidos presentes quando a OV tem histórico AIJ010.
 
 ## 7. URLs úteis
 
@@ -90,6 +117,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | remoteEntry | `http://localhost/apps/dashboard-lmps/assets/remoteEntry.js` |
 | API dashboard | `http://localhost/apps/api-delpi/engineering/lmps/dashboard` |
 | API listagem | `http://localhost/apps/api-delpi/engineering/lmps` |
+| Detalhe OV (ex.) | `http://localhost/apps/dashboard-lmps/ov/000123` |
+| API detalhe OV | `http://localhost/apps/api-delpi/engineering/lmps/{sale_number}` |
 
 ## 8. Troubleshooting
 
