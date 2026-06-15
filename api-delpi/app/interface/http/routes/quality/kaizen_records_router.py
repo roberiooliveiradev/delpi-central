@@ -113,7 +113,7 @@ def list_kaizen_records(
         return api_delpi_success(
             data,
             operation_id="list_kaizen_records",
-            pagination=data.get("pagination"),
+            shape="paged_list",
         )
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao listar kaizens cadastrados: {exc}")

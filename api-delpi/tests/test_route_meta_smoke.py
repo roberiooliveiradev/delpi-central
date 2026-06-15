@@ -139,6 +139,52 @@ def test_quality_kaizen_by_id_returns_meta(mock_build) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
+def test_quality_kaizen_records_list_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import list_kaizen_records
+
+    mock_repo = MagicMock()
+    mock_repo.list_records.return_value = {
+        "items": [],
+        "pagination": {"page": 1, "page_size": 50, "total": 0, "total_pages": 1},
+    }
+    mock_build.return_value = mock_repo
+
+    response = list_kaizen_records()
+    _assert_meta(
+        _body(response),
+        operation_id="list_kaizen_records",
+        shape="paged_list",
+    )
+
+
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
+def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        KaizenRecordBody,
+        create_kaizen_record,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.create_record.return_value = {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "branch_code": "01",
+        "title": "Kaizen teste",
+        "savings_type": "qualitativo",
+        "status": "em_andamento",
+    }
+    mock_build.return_value = mock_repo
+
+    response = create_kaizen_record(
+        body=KaizenRecordBody(branch_code="01", title="Kaizen teste"),
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="create_kaizen_record",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.quality.ppm_routes.build_get_produced_quantity_use_case")
 def test_quality_produced_quantity_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import get_produced_quantity

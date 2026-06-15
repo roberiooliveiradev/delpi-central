@@ -1,8 +1,16 @@
 """Fixtures compartilhadas para testes da api-delpi."""
 
+from __future__ import annotations
+
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+try:
+    import pyodbc  # noqa: F401
+except (ImportError, OSError):
+    sys.modules.setdefault("pyodbc", MagicMock())
 
 
 @pytest.fixture(autouse=True)
