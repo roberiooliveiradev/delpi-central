@@ -183,20 +183,41 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 
 ---
 
-## Fase 6 — Unificar leitura analítica (summary → Postgres) 📋
+## Fase 6 — Revisões temporais + summary Postgres 📋
 
-**Objetivo:** `GET /quality/kaizens/summary` e `get_kaizen_by_id` passam a ler Postgres (ou fonte híbrida documentada).
+**Objetivo:** versionar alterações de kaizen (status, economia, datas) e fazer `GET /quality/kaizens/summary` calcular o passado de forma confiável a partir do Postgres.
 
-**Entregáveis**
+**Especificação:** [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md)
 
-- [ ] Novo repositório ou adaptador `PostgresKaizenQueryRepository` implementando `KaizenQueryRepositoryPort`
-- [ ] Paridade de campos com resposta atual da planilha (`list_kaizen`, `total_savings`, filtros por data)
-- [ ] Feature flag ou config `KAIZEN_SUMMARY_SOURCE=postgres|sheets|dual` para cutover gradual
-- [ ] Testes de regressão comparando amostra Sheets vs Postgres (fixture ou ambiente com ambos)
-- [ ] Atualizar `strategic-indicators-api` se consumir kaizen summary indiretamente
-- [ ] Documentar em `06-modulos-departamentais.md` e `strategic-indicators-api/docs/QUALITY_INDICATORS.md`
+> **Pré-requisito de design:** não migrar `summary` para Postgres **sem** revisões — sobrescrever a cabeça invalida ganhos e contagens históricas.
 
-**Critério de pronto:** dashboard-quality exibe mesmos totais (± tolerância) com `summary` apontando para Postgres após importação completa.
+### Fase 6a — Schema e revisão automática
+
+- [ ] Migration `V028__create_kaizen_revisions.sql`
+- [ ] `KaizenRevisionRepository` + `KaizenRevisionService` (POST/PUT criam revisão; fecham `effective_until`)
+- [ ] Backfill: revisão `1` para kaizens já importados
+- [ ] `GET /records/{id}/revisions`, `GET /records/{id}/at?date=`
+- [ ] Testes unitários de vigência e diff de campos gatilho
+
+### Fase 6b — Cálculo temporal
+
+- [ ] `KaizenTemporalSavingsCalculator` (ganhos por segmento de vigência no intervalo)
+- [ ] Fixtures `kaizen_revision_regression_cases.py` (implantado jan → descontinuado mar; correção economia em jun)
+- [ ] Paridade documentada com `_days_active_in_range` da planilha
+
+### Fase 6c — Summary → Postgres
+
+- [ ] `PostgresKaizenQueryRepository` implementando `KaizenQueryRepositoryPort` **usando revisões**
+- [ ] Feature flag `KAIZEN_SUMMARY_SOURCE=postgres|sheets|dual`
+- [ ] Testes comparando amostra Sheets vs Postgres (tolerância documentada)
+- [ ] Atualizar `strategic-indicators-api/docs/QUALITY_INDICATORS.md`
+
+### Fase 6d — UI histórico
+
+- [ ] Campo «Vigente a partir de» no formulário quando status/economia mudam
+- [ ] Timeline `KaizenRevisionTimeline` na edição
+
+**Critério de pronto:** dashboard-quality exibe totais coerentes para meses passados após mudança de status/economia; `summary` com `postgres` não depende da planilha.
 
 **Dependências:** Fase 4 (dados em prod); validação de negócio dos 21+ registros.
 
@@ -259,7 +280,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | Item | Descrição |
 |------|-----------|
 | Export CSV/Excel | Listagem exportável para auditoria |
-| Histórico de alterações | Tabela audit ou `updated_by` + timeline na UI |
+| Histórico de alterações | Coberto pela Fase 6 (revisões) — evoluir com `change_reason` e export |
 | Anexos | Fotos/evidências do kaizen (padrão auditoria-5s NC) |
 | Validação filial 02 | Dados reais filial SC na planilha |
 | Paginação server-side | Substituir paginação client quando `total` > 200 |

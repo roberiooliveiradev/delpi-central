@@ -12,6 +12,7 @@
 | Dados piloto (dev) | ✅ 21 registros via API |
 | Core API register + RBAC prod | ⏳ Pendente |
 | Dashboard `summary` (Sheets) | ⚠️ Legado — não lê Postgres ainda |
+| Revisões temporais | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) |
 
 ## O que já funciona
 
@@ -27,7 +28,9 @@
 2. Perfis sem permissão `cadastro-kaizen.*`
 3. Ausência de scripts de homologação automatizada (`check-cadastro-kaizen.sh`)
 4. Dashboard de qualidade ainda consome Google Sheets — usuários podem ver divergência até Fase 6 do roadmap
+5. Alterações de status/economia sobrescrevem o registro — **sem histórico** até implementar revisões (Fase 6a)
 
 ## Próximo passo
 
-**Fase 4** do [ROADMAP.md](./ROADMAP.md): registro no portal, RBAC e importação validada em staging.
+1. **Fase 4** do [ROADMAP.md](./ROADMAP.md): registro no portal, RBAC e importação validada em staging.
+2. **Fase 6a** (após prod): migration `kaizen_revisions` conforme [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md).

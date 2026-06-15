@@ -148,7 +148,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Console API DELPI | [Plugin README](../../plugins/api-delpi-console/README.md) · [Playbook](../../api-delpi/docs/roadmaps/playbook-api-delpi-console.md) |
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
-| Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
+| Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
 
 ---
 

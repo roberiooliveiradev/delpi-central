@@ -157,9 +157,22 @@ Resumo dos próximos passos:
 
 1. **Fase 4** — Registro Core API, RBAC, go-live staging/prod
 2. **Fase 5** — Scripts CI/homologação (`check-cadastro-kaizen.sh`)
-3. **Fase 6** — Migrar `GET /quality/kaizens/summary` para Postgres
+3. **Fase 6** — Revisões temporais (`quality.kaizen_revisions`) + `summary` Postgres — ver [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
 4. **Fases 7–9** — Dashboard, agente chat, cutover planilha
-5. **Fase 10** — Export, auditoria, anexos (backlog)
+5. **Fase 10** — Export, anexos (backlog)
+
+### 7.1 Revisões temporais (proposta)
+
+Cada alteração relevante (status, economia, datas de implantação/descontinuação) gera um **snapshot imutável** com `effective_from` / `effective_until`. O dashboard calcula ganhos e contagens por competência usando a revisão vigente em cada dia — não o estado atual sobrescrito.
+
+| Conceito | Detalhe |
+|----------|---------|
+| Tabela | `quality.kaizen_revisions` (migration `V028` planejada) |
+| API futura | `GET /records/{id}/revisions`, `GET /records/{id}/at?date=` |
+| PUT estendido | `effective_from`, `change_reason` quando campos de cálculo mudam |
+| UI futura | Timeline de histórico + campo «Vigente a partir de» |
+
+Especificação completa: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
 
 ## 8. Testes automatizados
 

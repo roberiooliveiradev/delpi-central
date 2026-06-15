@@ -207,6 +207,7 @@ curl -sf -H "Authorization: Bearer $TOKEN" \
 ## Referências
 
 - **Roadmap completo:** [docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md)
+- **Revisões temporais (design):** [ESPECIFICACAO-REVISOES.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
 - **Status atual:** [docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md)
 - Doc técnica: [docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md)
 - Inventário de plugins: [docs/08-plugins/README.md](../../docs/08-plugins/README.md)
