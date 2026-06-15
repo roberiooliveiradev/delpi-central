@@ -293,9 +293,7 @@ export function MiniAplicadoresPage({
         if (!editingReposicaoRef.current && data.data_ultima_reposicao && !options.dataUltimaValue) {
           setDataUltimaReposicao(toDatetimeLocalValue(data.data_ultima_reposicao));
         }
-        if (!editingReposicaoRef.current) {
-          setGolpes(data.total_golpes ?? 0);
-        }
+        setGolpes(data.total_golpes ?? 0);
       } catch {
         if (requestId !== golpesRequestRef.current) return;
         if (!editingReposicaoRef.current) setGolpes(0);
@@ -613,7 +611,7 @@ export function MiniAplicadoresPage({
   }
 
   async function handleSuggestGolpes() {
-    if (!codigoFerramenta || !codigoPeca || editingReposicaoId) return;
+    if (!codigoFerramenta || !codigoPeca) return;
     await refreshSuggestGolpes({
       codigoPecaValue: codigoPeca,
       dataReposicaoValue: dataReposicao,
@@ -1070,19 +1068,17 @@ export function MiniAplicadoresPage({
                   ) : null}
                 </div>
 
-                {!editingReposicaoId ? (
-                  <button
-                    type="button"
-                    className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
-                    disabled={golpesLoading || !codigoPeca}
-                    onClick={() => void handleSuggestGolpes()}
-                  >
-                    {golpesLoading ? (
-                      <Loader2 size={16} className="dm-spin" aria-hidden="true" />
-                    ) : null}
-                    {golpesLoading ? "Calculando…" : "Sugerir golpes"}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
+                  disabled={golpesLoading || !codigoPeca}
+                  onClick={() => void handleSuggestGolpes()}
+                >
+                  {golpesLoading ? (
+                    <Loader2 size={16} className="dm-spin" aria-hidden="true" />
+                  ) : null}
+                  {golpesLoading ? "Calculando…" : "Sugerir golpes"}
+                </button>
 
                 <label
                   className={`dm-field dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
