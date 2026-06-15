@@ -30,6 +30,7 @@ class EficienciaFabrilDashboardItem:
     centro_trabalho: Optional[str] = None
     operacao: Optional[str] = None
     descricao_produto: Optional[str] = None
+    unidade: Optional[str] = None
     cod_operador: Optional[str] = None
     login_operador: Optional[str] = None
     nome_operador: Optional[str] = None

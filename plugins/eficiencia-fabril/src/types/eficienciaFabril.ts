@@ -97,6 +97,7 @@ export type EficienciaFabrilItem = {
   hora_inicio: string | null;
   hora_final: string | null;
   qtd_apontada: number | null;
+  unidade: string | null;
   tempo_real_horas: number | null;
   tempo_previsto_horas: number | null;
   eficiencia_percentual: number | null;

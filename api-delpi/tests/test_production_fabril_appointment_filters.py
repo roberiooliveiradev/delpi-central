@@ -53,4 +53,5 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
 
     assert "appointment_id" in EF_FABRIL_ITEMS_SELECT
     assert "EF.FILIAL" in EF_FABRIL_ITEMS_SELECT
+    assert "B1_UM" in EF_FABRIL_ITEMS_SELECT
     assert FABRIL_SH6010_OUTER_APPLY.strip() in EF_FABRIL_ITEMS_FROM

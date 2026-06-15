@@ -119,6 +119,7 @@ export type ProductionOeeAppointmentItem = {
   product_code: string;
   product_description: string;
   product_type: string;
+  unit: string;
   work_center: string;
   operation: string;
   operator_code: string;

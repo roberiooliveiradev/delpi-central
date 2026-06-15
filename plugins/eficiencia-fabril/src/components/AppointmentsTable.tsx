@@ -8,7 +8,7 @@ import { HelpTooltip } from "./HelpTooltip";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel } from "../utils/exportAppointmentsExcel";
-import { formatCurrency, formatNumber, formatPercent } from "../utils/format";
+import { formatCurrency, formatPercent, formatProductionQuantity } from "../utils/format";
 
 type SortableColumn = {
   id: AppointmentsSortColumn;
@@ -230,7 +230,9 @@ export function AppointmentsTable({
                     <td data-label="Data">{formatDisplayDate(item.data_producao)}</td>
                     <td data-label="Início">{item.hora_inicio ?? "—"}</td>
                     <td data-label="Fim">{item.hora_final ?? "—"}</td>
-                    <td data-label="Qtd. apontada">{formatNumber(item.qtd_apontada, 3)}</td>
+                    <td data-label="Qtd. apontada">
+                      {formatProductionQuantity(item.qtd_apontada, item.unidade)}
+                    </td>
                     <td data-label="Filial">{item.filial ?? "—"}</td>
                     <td data-label="OP">{item.op ?? "—"}</td>
                     <td data-label="Descrição produto">

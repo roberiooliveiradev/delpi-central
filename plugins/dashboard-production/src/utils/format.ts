@@ -23,6 +23,24 @@ export function formatPercent(
   })}%`;
 }
 
+/** Casas decimais para quantidades de produção (H6_QTDPROD / QTD_APONTADA). */
+export const PRODUCTION_QUANTITY_FRACTION_DIGITS = 6;
+
+export function formatProductionQuantity(
+  value: number | null | undefined,
+  unit?: string | null,
+  fractionDigits = PRODUCTION_QUANTITY_FRACTION_DIGITS
+): string {
+  if (value == null || Number.isNaN(value)) return "—";
+
+  const qty = value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: fractionDigits,
+  });
+  const normalizedUnit = unit?.trim();
+  return normalizedUnit ? `${qty} ${normalizedUnit}` : qty;
+}
+
 export function formatDecimal(
   value: number | null | undefined,
   fractionDigits = 2

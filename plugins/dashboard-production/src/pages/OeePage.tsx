@@ -43,7 +43,7 @@ import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
 import { formatDisplayDate, formatDisplayTime, formatPeriodLabel } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
-import { formatInteger, formatNumber, formatPercent } from "../utils/format";
+import { formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
 import { downloadOeeAppointmentsCsv } from "../utils/oeeExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
@@ -214,7 +214,7 @@ export function OeePage({ pathname }: OeePageProps) {
         headerHint: DP_HELP_TOOLTIPS.oee.table.producedQty,
         className: "dp-table__col--numeric",
         sortable: true,
-        render: (row) => formatNumber(row.produced_qty, 3),
+        render: (row) => formatProductionQuantity(row.produced_qty, row.unit),
       },
       {
         key: "branch",

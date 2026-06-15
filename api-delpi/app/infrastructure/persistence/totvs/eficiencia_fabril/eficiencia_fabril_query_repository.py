@@ -277,6 +277,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             op=row.get("OP"),
             produto=row.get("PRODUTO"),
             descricao_produto=row.get("DESCRICAO_PRODUTO") or None,
+            unidade=row.get("UNIDADE") or None,
             centro_trabalho=row.get("CENTRO_TRABALHO"),
             operacao=row.get("OPERACAO"),
             cod_operador=row.get("COD_OPERADOR"),

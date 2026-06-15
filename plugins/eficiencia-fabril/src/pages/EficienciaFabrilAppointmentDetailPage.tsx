@@ -16,7 +16,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 import { formatDisplayDate } from "../utils/dates";
-import { formatDecimal, formatHours, formatInteger, formatPercent } from "../utils/format";
+import { formatDecimal, formatHours, formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
 import { navigateEficienciaFabrilBack } from "../utils/navigation";
 
 type EficienciaFabrilAppointmentDetailPageProps = {
@@ -74,6 +74,7 @@ export function EficienciaFabrilAppointmentDetailPage({
               value: appointment.product_description || "—",
               wide: true,
             },
+            { label: "Unidade", value: appointment.unit || "—" },
             { label: "CT", value: appointment.work_center || "—" },
             { label: "Operação", value: appointment.operation || "—" },
             {
@@ -100,7 +101,7 @@ export function EficienciaFabrilAppointmentDetailPage({
             },
             {
               label: "Qtd. apontada",
-              value: formatDecimal(appointment.produced_qty),
+              value: formatProductionQuantity(appointment.produced_qty, appointment.unit),
             },
             {
               label: "Eficiência (view)",
@@ -122,11 +123,14 @@ export function EficienciaFabrilAppointmentDetailPage({
             },
             {
               label: "Qtd. OP",
-              value: formatDecimal(timeAnalysis.order_planned_qty),
+              value: formatProductionQuantity(
+                timeAnalysis.order_planned_qty,
+                appointment?.unit
+              ),
             },
             {
               label: "Qtd. apontada",
-              value: formatDecimal(timeAnalysis.produced_qty),
+              value: formatProductionQuantity(timeAnalysis.produced_qty, appointment?.unit),
             },
             {
               label: "Tempo previsto",
@@ -173,7 +177,7 @@ export function EficienciaFabrilAppointmentDetailPage({
             },
           ]
         : [],
-    [timeAnalysis]
+    [timeAnalysis, appointment?.unit]
   );
 
   const pageTitle = appointment

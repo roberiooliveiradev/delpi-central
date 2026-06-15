@@ -1,3 +1,4 @@
+import { formatProductionQuantity } from "./format";
 import { formatEficienciaFabrilAppointmentStatusLabel } from "./appointmentStatus";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "./dates";
@@ -26,7 +27,7 @@ function itemToRow(item: EficienciaFabrilItem): (string | number)[] {
     formatDisplayDate(item.data_producao),
     item.hora_inicio ?? "",
     item.hora_final ?? "",
-    item.qtd_apontada ?? "",
+    formatProductionQuantity(item.qtd_apontada, item.unidade),
     item.filial ?? "",
     item.op ?? "",
     item.descricao_produto?.trim() || item.produto || "",

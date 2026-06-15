@@ -32,7 +32,7 @@ import type {
   ProductionOrderProductType,
 } from "../types/production";
 import { formatDisplayDate } from "../utils/dates";
-import { formatDecimal, formatHours, formatInteger, formatPercent } from "../utils/format";
+import { formatDecimal, formatHours, formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
 import { appendFiltersToPath, readProductionFilters } from "../utils/filterUrl";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
@@ -156,19 +156,19 @@ export function OeeAppointmentDetailPage({
             },
             {
               label: "Qtd. apontada",
-              value: formatDecimal(appointment.produced_qty),
+              value: formatProductionQuantity(appointment.produced_qty, appointment.unit),
             },
             {
               label: "Qtd. perdida",
-              value: formatDecimal(appointment.lost_qty),
+              value: formatProductionQuantity(appointment.lost_qty, appointment.unit),
             },
             {
               label: "Qtd. OP",
-              value: formatDecimal(appointment.order_planned_qty),
+              value: formatProductionQuantity(appointment.order_planned_qty, appointment.unit),
             },
             {
               label: "Produzido OP",
-              value: formatDecimal(appointment.order_produced_qty),
+              value: formatProductionQuantity(appointment.order_produced_qty, appointment.unit),
             },
             {
               label: "Tipo apontamento",
@@ -194,11 +194,14 @@ export function OeeAppointmentDetailPage({
             },
             {
               label: "Qtd. OP",
-              value: formatDecimal(timeAnalysis.order_planned_qty),
+              value: formatProductionQuantity(
+                timeAnalysis.order_planned_qty,
+                appointment?.unit
+              ),
             },
             {
               label: "Qtd. apontada",
-              value: formatDecimal(timeAnalysis.produced_qty),
+              value: formatProductionQuantity(timeAnalysis.produced_qty, appointment?.unit),
             },
             {
               label: "Tempo previsto",
@@ -245,7 +248,7 @@ export function OeeAppointmentDetailPage({
             },
           ]
         : [],
-    [timeAnalysis]
+    [timeAnalysis, appointment?.unit]
   );
 
   const routingColumns = useMemo<DataTableColumn<ProductionOeeRoutingOperation>[]>(

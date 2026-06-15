@@ -25,6 +25,7 @@ SELECT
     RTRIM(LTRIM(EF.OP)) AS production_order,
     RTRIM(LTRIM(EF.PRODUTO)) AS product_code,
     RTRIM(LTRIM(EF.DESCRICAO_PRODUTO)) AS product_description,
+    RTRIM(LTRIM(SB1.B1_UM)) AS unit,
     RTRIM(LTRIM(SB1.B1_TIPO)) AS product_type,
     RTRIM(LTRIM(EF.CENTRO_TRABALHO)) AS work_center,
     RTRIM(LTRIM(EF.OPERACAO)) AS operation,

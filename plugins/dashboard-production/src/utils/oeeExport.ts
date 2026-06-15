@@ -1,3 +1,4 @@
+import { formatProductionQuantity } from "./format";
 import { formatOeeAppointmentStatusLabel } from "./oeeAppointmentStatus";
 import type { ProductionOeeAppointmentItem } from "../types/production";
 import { downloadCsv } from "./csv";
@@ -29,7 +30,7 @@ export function downloadOeeAppointmentsCsv(
       row.production_date ?? "",
       row.start_time ?? "",
       row.end_time ?? "",
-      row.produced_qty != null ? String(row.produced_qty) : "",
+      formatProductionQuantity(row.produced_qty, row.unit),
       row.branch ?? "",
       row.production_order ?? "",
       row.product_description ?? "",
