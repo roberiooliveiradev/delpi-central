@@ -41,7 +41,7 @@ Autenticação: `Authorization: Bearer <JWT>` via `delpi_auth` (mesmo Keycloak d
 | `/data` | SQL somente leitura controlado |
 | *(movido)* | Indicadores Estratégicos → `/apps/strategic-indicators-api/strategic-indicators` ([doc](../../strategic-indicators-api/docs/README.md)) |
 | `/engineering` | LMPs, Transforma Mais |
-| `/quality` | Métricas qualidade — **Kaizen e Audit 5S via Google Sheets**; PPM/NC via TOTVS |
+| `/quality` | Métricas qualidade — **Kaizen summary/5S via Google Sheets**; **cadastro kaizen em PostgreSQL** (`/quality/kaizens/records`); PPM/NC via TOTVS |
 | `/commercial`, `/production`, `/supplies`, `/hr` | KPIs departamentais (mix TOTVS + Sheets) |
 | `/financial` e `/finacial` | Financeiro — Sheets + ROL TOTVS (montagem dupla em `main.py`; preferir `/financial/*`) |
 

@@ -142,7 +142,7 @@ Parâmetros adicionais:
 
 | Campo derivado | Descrição |
 |---|---|
-| `process_label`, `stage_label` | Rótulos PT (`lmp_process_stage_labels`) |
+| `process_label`, `stage_label` | Descrições do **AC1010** (`AC1_DESCRI`) e **AC2010** (`AC2_DESCRI` por processo+estágio); fallback em `lmp_process_stage_labels.py` |
 | `status_label` | Mapeamento `AIJ_STATUS` 1–9 |
 | `duration_display` | Texto legível (ex.: «Em andamento · N dia(s)») |
 | `is_open`, `is_late`, `is_current` | Situação do evento |
@@ -187,8 +187,14 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/branches` | Filiais disponíveis para filtros. |
 | GET | `/quality/nonconformities` | Lista NC do Protheus. |
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
-| GET | `/quality/kaizens/summary` | Resumo de kaizens. |
-| GET | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen. |
+| GET | `/quality/kaizens/summary` | Resumo de kaizens (Google Sheets). |
+| GET | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen na planilha (`{kaizen_id:path}`). |
+| GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |
+| POST | `/quality/kaizens/records` | Cria kaizen no PostgreSQL. |
+| GET | `/quality/kaizens/records/{id}` | Detalhe cadastro (UUID). |
+| PUT | `/quality/kaizens/records/{id}` | Atualiza cadastro. |
+| DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |
+| POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha para PostgreSQL. |
 | GET | `/quality/audit-5s/summary` | Resumo auditorias 5S. |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
 | GET | `/quality/ppm/external/summary` | PPM externo (resumo). |
@@ -278,10 +284,54 @@ Se alguma das três entradas estiver ausente, `daily_savings` e `annual_savings`
 
 ### GET /quality/kaizens/{kaizen_id}
 
-**Fonte:** mesma planilha. Path: `kaizen_id` = `list_kaizen[].id` (ex.: `01-16/01/2026-App resina CT-16`).
+**Fonte:** mesma planilha. Path: `kaizen_id` = `list_kaizen[].id` (ex.: `01-16/01/2026-App resina CT-16`). O segmento usa `{kaizen_id:path}` no FastAPI para aceitar barras no identificador.
 
 Retorna ficha completa com entradas do cálculo: `seconds_per_occurrence`, `occurrences_per_day`, `hourly_cost`, `hours_saved_per_day`, além dos campos do resumo.
 
 **operationId:** `get_kaizen_by_id` · **meta.entity:** `kaizen` · **meta.shape:** `scalar`
 
 Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).
+
+### Cadastro operacional — `/quality/kaizens/records`
+
+**Fonte:** PostgreSQL (`quality.kaizens`, migrations `V026`/`V027`). Plugin MFE: `cadastro-kaizen`. Documentação: [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md).
+
+**Permissões:**
+
+| Operação | Permissões aceitas |
+|----------|-------------------|
+| Leitura (GET) | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
+| Escrita (POST/PUT/DELETE/import) | `cadastro-kaizen.manage`, `api-delpi.quality.access`, `api-delpi.access` |
+
+#### GET /quality/kaizens/records
+
+| Query | Descrição |
+|-------|-----------|
+| `branch` | `01` ou `02` |
+| `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` |
+| `savings_type` | `tempo`, `material`, `financeiro`, `qualitativo`, `misto` |
+| `title` | Filtro parcial no título |
+| `date_start`, `date_end` | Intervalo em `date_implemented` (ISO) |
+| `page`, `page_size` | Paginação (máx. 200) |
+
+**operationId:** `list_kaizen_records` · **meta.shape:** `paged_list`
+
+#### POST /quality/kaizens/records
+
+Body JSON com `branch_code`, `title` (obrigatórios), campos cadastrais e entradas de economia. A API infere `savings_type` quando omitido e calcula `daily_savings` / `annual_savings` via `KaizenSavingsCalculator`.
+
+**operationId:** `create_kaizen_record` · **meta.shape:** `scalar`
+
+#### POST /quality/kaizens/records/import-from-sheet
+
+Importa todas as linhas **ativas** da planilha kaizen (`deleted` ignorado) para o PostgreSQL. Ignora duplicatas (filial + título + data de implantação).
+
+Body opcional: `{ "dry_run": true }` — simula sem gravar.
+
+**operationId:** `import_kaizens_from_sheet` · **meta.shape:** `scalar`
+
+Resposta `data`: `{ "created", "skipped", "errors", "items": [...] }`.
+
+Código: `ImportKaizensFromSheetUseCase`, `kaizen_sheet_import_mapper.py`, `kaizen_records_router.py`.
+
+Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.

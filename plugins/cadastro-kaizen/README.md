@@ -1,44 +1,214 @@
-# Cadastro de Kaizens
+# Cadastro de Kaizens — plugin Minha DELPI
 
-Microfrontend para cadastro operacional de kaizens no módulo qualidade.
+Microfrontend federado para **cadastro operacional** de melhorias contínuas (kaizen) no módulo qualidade. Os dados ficam em **PostgreSQL** (`quality.kaizens`); o **dashboard de qualidade** continua lendo KPIs da **planilha Google Sheets** até migração futura da leitura analítica.
 
-## API (api-delpi)
+## Visão geral
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/quality/kaizens/records` | Lista paginada |
+| Camada | Responsabilidade |
+|--------|------------------|
+| **MFE** `cadastro-kaizen` | Listagem, formulário, filtros, importação da planilha |
+| **api-delpi** `/quality/kaizens/records` | CRUD + importação Sheets → Postgres |
+| **api-delpi** `/quality/kaizens/summary` | Leitura analítica (Sheets) — dashboard |
+| **PostgreSQL** `quality.kaizens` | Fonte de verdade do cadastro operacional |
+
+```text
+Portal → /apps/cadastro-kaizen
+           ↓ Module Federation (remoteEntry.js)
+         MFE cadastro-kaizen
+           ↓ JWT + X-Delpi-Caller-App
+Gateway → /apps/api-delpi/quality/kaizens/records
+           ↓
+         api-delpi → Postgres (quality.kaizens)
+
+Dashboard qualidade → /apps/api-delpi/quality/kaizens/summary (Google Sheets)
+```
+
+## Rotas da UI
+
+| Path | Tela |
+|------|------|
+| `/apps/cadastro-kaizen` | Listagem com filtros e tabela paginada |
+| `/apps/cadastro-kaizen/novo` | Formulário de criação |
+| `/apps/cadastro-kaizen/editar/{uuid}` | Formulário de edição |
+
+Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o plugin em `basePath` do manifesto.
+
+## API (gateway)
+
+Base HTTP: **`/apps/api-delpi/quality/kaizens/records`**
+
+| Método | Rota (relativa à api-delpi) | Descrição |
+|--------|----------------------------|-----------|
+| GET | `/quality/kaizens/records` | Lista paginada (`meta.shape`: `paged_list`) |
 | POST | `/quality/kaizens/records` | Cria registro |
-| GET | `/quality/kaizens/records/{id}` | Detalhe |
+| GET | `/quality/kaizens/records/{id}` | Detalhe (UUID Postgres) |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza |
-| DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica |
-| POST | `/quality/kaizens/records/import-from-sheet` | Importa kaizens ativos da planilha para PostgreSQL |
+| DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica (`deleted_at`) |
+| POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha |
 
-As rotas de leitura do dashboard (`/quality/kaizens/summary` e `/quality/kaizens/{kaizen_id}`) continuam na planilha Google Sheets até integração futura com PostgreSQL.
+**Leitura analítica (Sheets, dashboard):**
+
+| Método | Rota | Fonte |
+|--------|------|-------|
+| GET | `/quality/kaizens/summary` | Google Sheets |
+| GET | `/quality/kaizens/{kaizen_id}` | Google Sheets (`{kaizen_id:path}` — aceita `/` no ID) |
+
+Documentação detalhada da API: [api-delpi/docs/api/06-modulos-departamentais.md](../../api-delpi/docs/api/06-modulos-departamentais.md) (§ Cadastro operacional).
+
+### Exemplo — listar
+
+```bash
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+
+curl -s -H "Authorization: Bearer $TOKEN" \
+     -H "X-Delpi-Caller-App: cadastro-kaizen" \
+     "http://localhost/apps/api-delpi/quality/kaizens/records?page_size=50" \
+  | jq '.success, .data.pagination'
+```
+
+### Exemplo — importar da planilha
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Delpi-Caller-App: cadastro-kaizen" \
+  -H "Content-Type: application/json" \
+  -d '{"dry_run": false}' \
+  "http://localhost/apps/api-delpi/quality/kaizens/records/import-from-sheet" \
+  | jq '.data | {created, skipped, errors}'
+```
+
+A importação é **idempotente**: ignora duplicatas (mesma filial + título + data de implantação). Use `dry_run: true` para simular.
 
 ## Permissões
 
-- `cadastro-kaizen.view` — consulta
-- `cadastro-kaizen.manage` — criar/editar/excluir
+| Código | Uso |
+|--------|-----|
+| `cadastro-kaizen.view` | Listar e consultar registros |
+| `cadastro-kaizen.manage` | Criar, editar, excluir e importar |
 
-## Desenvolvimento
+Na api-delpi, rotas de leitura aceitam também `api-delpi.quality.access` e `dashboard-quality.view`; escrita exige `cadastro-kaizen.manage` (ou `api-delpi.access` / `api-delpi.quality.access`).
+
+## Modelo de dados
+
+Tabela: `quality.kaizens` (migration `V027__create_kaizens.sql`).
+
+| Campo | Tipo / valores | Observação |
+|-------|----------------|------------|
+| `branch_code` | `01`, `02` | Obrigatório |
+| `title` | string | Obrigatório |
+| `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` | Default `em_andamento` |
+| `savings_type` | `tempo`, `material`, `financeiro`, `qualitativo`, `misto` | Inferido se omitido no POST |
+| `seconds_per_occurrence`, `occurrences_per_day`, `hourly_cost` | numérico | Tipo **tempo** |
+| `quantity_saved_per_day`, `unit_material_cost` | numérico | Tipo **material** |
+| `fixed_daily_savings` | numérico | Tipo **financeiro** |
+| `daily_savings`, `annual_savings` | calculados | `KaizenSavingsCalculator` na API |
+
+Cálculo de economia (domínio): `api-delpi/app/domain/services/kaizen/kaizen_savings_calculator.py`.
+
+## Estrutura do código (MFE)
+
+```text
+src/
+  api/kaizenApi.ts          # Cliente REST (base /apps/api-delpi/...)
+  api/httpClient.ts         # JWT + X-Delpi-Caller-App
+  pages/
+    CadastroKaizenPage.tsx  # Roteamento list | new | edit
+    KaizenListPage.tsx      # Tabela + importar planilha
+    KaizenFormPage.tsx      # Criar / editar
+  components/form/          # KaizenFormFields
+  constants/kaizen.ts       # Status, filiais, payload do formulário
+```
+
+## Desenvolvimento local
 
 ```bash
+cd plugins/cadastro-kaizen
 npm install
-npm run dev
+npm run dev          # Vite (porta padrão do plugin)
+npm run ci           # lint + build
 ```
+
+## Docker (compose dev)
+
+Serviço `cadastro-kaizen` → container `delpi-cadastro-kaizen`.
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml --env-file .env up -d --build \
+  cadastro-kaizen api-delpi gateway
+```
+
+Assets: `http://localhost/apps/cadastro-kaizen/assets/remoteEntry.js`
 
 ## Build e registro no portal
 
 ```bash
+cd plugins/cadastro-kaizen
 npm run build
-TOKEN=<jwt> ./scripts/register-manifest.sh
+
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+./scripts/register-manifest.sh
 ```
+
+Manifesto: `cadastro-kaizen.manifest.json` (`schemaVersion` 1.0.0, `renderMode: federated`).
+
+Após o registro, atribua `cadastro-kaizen.view` e `cadastro-kaizen.manage` aos perfis de qualidade na Core API.
 
 ## Migrations
 
-As tabelas ficam em `api-delpi/migrations/plugins/quality/` (V026 submodules, V027 kaizens).
+Pasta: `api-delpi/migrations/plugins/quality/` (`V026` submodules, `V027` kaizens).
 
 ```bash
+# Status (container)
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin quality
+
+# Local
 cd api-delpi
 python scripts/run_plugins_migrations.py --plugin quality
 ```
+
+Com `RUN_PLUGINS_MIGRATIONS_ON_STARTUP=true` (default no compose), migrations rodam no boot da api-delpi.
+
+## Backend (api-delpi)
+
+| Módulo | Arquivo |
+|--------|---------|
+| Rotas CRUD + import | `app/interface/http/routes/quality/kaizen_records_router.py` |
+| Repositório Postgres | `app/infrastructure/persistence/plugins/repositories/kaizen/postgres_kaizen_repository.py` |
+| Importação Sheets | `app/application/use_cases/kaizen/import_kaizens_from_sheet_use_case.py` |
+| Mapper planilha → POST | `app/domain/services/kaizen/kaizen_sheet_import_mapper.py` |
+| Composer | `app/composition/kaizen_composer.py` |
+
+Testes: `tests/unit/test_kaizen_savings_calculator.py`, `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke em `tests/test_route_meta_smoke.py` (filtro `kaizen`).
+
+## Relação com o dashboard de qualidade
+
+- **Cadastro** (`cadastro-kaizen`): Postgres, CRUD completo, importação one-shot da planilha.
+- **Dashboard** (`dashboard-quality`): KPIs e tabela via `/quality/kaizens/summary` (Sheets).
+
+Até unificar a leitura analítica no Postgres, alterações no cadastro **não** refletem automaticamente no dashboard — planeje sincronização ou migração da rota `summary`.
+
+## Homologação rápida
+
+```bash
+# MFE no ar
+curl -sf -o /dev/null -w "%{http_code}\n" \
+  http://localhost/apps/cadastro-kaizen/assets/remoteEntry.js
+
+# API com token
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+curl -sf -H "Authorization: Bearer $TOKEN" \
+     -H "X-Delpi-Caller-App: cadastro-kaizen" \
+     "http://localhost/apps/api-delpi/quality/kaizens/records" \
+  | jq '.success'
+```
+
+## Referências
+
+- **Roadmap completo:** [docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md)
+- **Status atual:** [docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md)
+- Doc técnica: [docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md)
+- Inventário de plugins: [docs/08-plugins/README.md](../../docs/08-plugins/README.md)
+- Registro de plugin: [docs/10-guias-operacionais/registrar-plugin-dev-local.md](../../docs/10-guias-operacionais/registrar-plugin-dev-local.md)
+- Kaizen Sheets (testes sem TOTVS): [api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md)

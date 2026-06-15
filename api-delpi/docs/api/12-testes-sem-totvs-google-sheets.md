@@ -27,6 +27,13 @@ Rotas que dependem **só** de **Google Sheets** continuam funcionando. Rotas que
 | GET | `/quality/audit-5s/summary` | Google Sheets | idem |
 | GET | `/quality/kaizens/summary?date_start=01-01-2026&date_end=31-12-2026` | Sheets + filtro | idem |
 
+**Cadastro operacional (PostgreSQL + importação da planilha):** requer `postgres-plugins` em execução e migrations `quality` aplicadas. Ver [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md).
+
+| Método | Path | Fonte | Permissão |
+|--------|------|-------|-----------|
+| GET | `/quality/kaizens/records` | PostgreSQL | `cadastro-kaizen.view` ou equivalentes |
+| POST | `/quality/kaizens/records/import-from-sheet` | Sheets → Postgres | `cadastro-kaizen.manage` |
+
 **Leitura direta das planilhas** (sem passar pelos use cases HTTP):
 
 | Planilha | Env |
