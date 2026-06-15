@@ -909,7 +909,7 @@ export function MiniAplicadoresPage({
               <input
                 value={codigo}
                 onChange={(event) => setCodigo(event.target.value)}
-                placeholder="Ex.: 23-026"
+                placeholder="Ex.: 23 ou 23-026"
               />
             </label>
             <label className="dm-field">

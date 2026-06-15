@@ -10,6 +10,10 @@ from app.domain.ports.mini_applicators.mini_applicators_repository_port import (
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_query_parts import (
+    codigo_filter_sql,
+    codigo_prefix_pattern,
+)
 from app.infrastructure.persistence.totvs.protheus_datetime import (
     parse_protheus_period_end,
     parse_protheus_period_start,
@@ -32,8 +36,9 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
         params: list = list(self._GROUP_CODES)
 
         if request.codigo:
-            where_clauses.append("SB1.B1_COD LIKE ?")
-            params.append(f"{request.codigo.strip()}%")
+            pattern = codigo_prefix_pattern(request.codigo)
+            where_clauses.append(codigo_filter_sql())
+            params.extend([pattern, pattern])
 
         if request.descricao:
             desc_clean = request.descricao.strip()
@@ -46,7 +51,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
 
         where_sql = " AND ".join(where_clauses)
         sort_columns = {
-            "codigo": "SB1.B1_COD",
+            "codigo": "RTRIM(LTRIM(SB1.B1_COD))",
             "descricao": "SB1.B1_DESC",
         }
         sort_key = (request.sort_by or "codigo").strip().lower()

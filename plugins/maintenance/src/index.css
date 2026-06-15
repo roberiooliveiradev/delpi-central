@@ -1509,6 +1509,34 @@
   margin-bottom: 12px;
 }
 
+.dashboard-maintenance .dm-revisao-ferramenta__feito-date {
+  flex: 0 1 200px;
+  min-width: 176px;
+  margin: 0;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form .dm-field input:not([type="checkbox"]),
+.dashboard-maintenance .dm-revisao-ferramenta__edit .dm-field input:not([type="checkbox"]),
+.dashboard-maintenance .dm-revisao-ferramenta__form .dm-editable-cell,
+.dashboard-maintenance .dm-revisao-ferramenta__edit .dm-editable-cell {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form .dm-editable-cell,
+.dashboard-maintenance .dm-revisao-ferramenta__edit .dm-editable-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-maintenance .dm-revisao-ferramenta__form .dm-editable-cell > :first-child,
+.dashboard-maintenance .dm-revisao-ferramenta__edit .dm-editable-cell > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .dashboard-maintenance .dm-revisao-ferramenta__historico {
   margin-bottom: 16px;
 }
@@ -1608,8 +1636,6 @@
 
 .dashboard-maintenance .dm-revisao-ferramenta__form,
 .dashboard-maintenance .dm-revisao-ferramenta__edit {
-  display: grid;
-  gap: 12px;
   margin-top: 12px;
 }
 

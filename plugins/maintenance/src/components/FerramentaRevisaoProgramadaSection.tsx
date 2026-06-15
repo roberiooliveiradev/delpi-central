@@ -16,7 +16,7 @@ import {
   type RevisaoProgramadaItem,
   type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
-import { FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
+import { BrDateInput, FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
 import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
 
 type FerramentaRevisaoProgramadaSectionProps = {
@@ -394,13 +394,9 @@ export function FerramentaRevisaoProgramadaSection({
 
       {!loading && canManage && schedule ? (
         <div className="dm-revisao-ferramenta__feito">
-          <label className="dm-field">
+          <label className="dm-field dm-revisao-ferramenta__feito-date">
             <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar} />
-            <input
-              type="date"
-              value={feitoDate}
-              onChange={(event) => setFeitoDate(event.target.value)}
-            />
+            <BrDateInput value={feitoDate} onChange={setFeitoDate} />
           </label>
           <button
             type="button"
@@ -550,7 +546,7 @@ export function FerramentaRevisaoProgramadaSection({
 
           {formExpanded && !schedule ? (
             <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
-              <label className="dm-field">
+              <label className="dm-field dm-field--span-3">
                 <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
                 <input
                   type="number"
@@ -565,13 +561,12 @@ export function FerramentaRevisaoProgramadaSection({
                   }
                 />
               </label>
-              <label className="dm-field">
+              <label className="dm-field dm-field--span-4">
                 <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
-                <input
-                  type="date"
+                <BrDateInput
                   value={createDraft.data_referencia}
-                  onChange={(event) =>
-                    setCreateDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
+                  onChange={(value) =>
+                    setCreateDraft((prev) => ({ ...prev, data_referencia: value }))
                   }
                 />
               </label>
@@ -594,8 +589,8 @@ export function FerramentaRevisaoProgramadaSection({
           ) : null}
 
           {formExpanded && schedule ? (
-            <div className="dm-revisao-ferramenta__edit">
-              <label className="dm-field">
+            <div className="dm-form-grid dm-revisao-ferramenta__edit">
+              <label className="dm-field dm-field--span-3">
                 <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo} />
                 <div className="dm-editable-cell">
                   <input
@@ -610,24 +605,13 @@ export function FerramentaRevisaoProgramadaSection({
                   <PendingChangeBadge visible={isDirty(schedule, draft)} />
                 </div>
               </label>
-              <label className="dm-field">
-                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
-                <input
-                  value={draft.observacao}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, observacao: event.target.value }))
-                  }
-                  placeholder="Opcional"
-                />
-              </label>
-              <label className="dm-field">
+              <label className="dm-field dm-field--span-4">
                 <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia} />
                 <div className="dm-editable-cell">
-                  <input
-                    type="date"
+                  <BrDateInput
                     value={draft.data_referencia}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, data_referencia: event.target.value }))
+                    onChange={(value) =>
+                      setDraft((prev) => ({ ...prev, data_referencia: value }))
                     }
                   />
                   <PendingChangeBadge
@@ -641,7 +625,17 @@ export function FerramentaRevisaoProgramadaSection({
                   </span>
                 ) : null}
               </label>
-              <div className="dm-revisao-ferramenta__actions">
+              <label className="dm-field dm-field--span-full">
+                <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
+                <input
+                  value={draft.observacao}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, observacao: event.target.value }))
+                  }
+                  placeholder="Opcional"
+                />
+              </label>
+              <div className="dm-revisao-ferramenta__actions dm-field--span-full">
                 <button
                   type="button"
                   className="dm-ghost-btn"
