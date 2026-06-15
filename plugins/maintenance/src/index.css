@@ -890,11 +890,44 @@
   min-width: 0;
 }
 
-.dashboard-maintenance .dm-filter-bar__checkbox {
-  flex: 0 1 auto;
+.dashboard-maintenance .dm-filter-bar--search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.dashboard-maintenance .dm-filter-bar--search > .dm-field {
+  flex: unset;
   min-width: 0;
-  align-self: center;
-  padding-bottom: 10px;
+  width: auto;
+}
+
+.dashboard-maintenance .dm-filter-bar--search .dm-filter-bar__actions {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  align-self: end;
+  justify-self: end;
+}
+
+.dashboard-maintenance .dm-filter-bar--search .dm-checkbox-field {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: var(--dm-control-height);
+  white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-filter-bar--search .dm-checkbox-field > span {
+  display: inline;
+  line-height: 1.35;
+}
+
+.dashboard-maintenance .dm-filter-bar--search .dm-primary-btn {
+  width: auto;
+  white-space: nowrap;
 }
 
 .dashboard-maintenance .dm-filter-bar__actions {
@@ -952,12 +985,19 @@
 
 .dashboard-maintenance .dm-checkbox-field {
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   min-height: 40px;
   font-size: var(--dm-font-sm);
   color: var(--dm-text-muted);
   white-space: nowrap;
+}
+
+.dashboard-maintenance .dm-checkbox-field > span {
+  display: inline;
+  line-height: 1.35;
 }
 
 .dashboard-maintenance .dm-checkbox-field .dm-help-tooltip--wrap {
@@ -2290,8 +2330,26 @@
     white-space: normal;
   }
 
-  .dashboard-maintenance .dm-filter-bar--search > .dm-primary-btn {
+  .dashboard-maintenance .dm-filter-bar--search {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--search .dm-filter-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--search .dm-filter-bar__actions .dm-primary-btn {
+    flex: 1 1 8rem;
+    justify-content: center;
+  }
+
+  .dashboard-maintenance .dm-filter-bar--search .dm-checkbox-field {
+    min-height: 0;
+    white-space: normal;
   }
 
   .dashboard-maintenance .dm-checkbox-field {

@@ -927,20 +927,22 @@ export function MiniAplicadoresPage({
                 placeholder="Ex.: 23-"
               />
             </label>
-            <label className="dm-checkbox-field dm-filter-bar__checkbox">
-              <input
-                type="checkbox"
-                checked={incluirBloqueados}
-                onChange={(event) => {
-                  setIncluirBloqueados(event.target.checked);
-                  ferramentasTable.resetPage();
-                }}
-              />
-              <span>Mostrar bloqueadas</span>
-            </label>
-            <button type="submit" className="dm-primary-btn">
-              Buscar
-            </button>
+            <div className="dm-filter-bar__actions">
+              <label className="dm-checkbox-field">
+                <input
+                  type="checkbox"
+                  checked={incluirBloqueados}
+                  onChange={(event) => {
+                    setIncluirBloqueados(event.target.checked);
+                    ferramentasTable.resetPage();
+                  }}
+                />
+                <span>Mostrar bloqueadas</span>
+              </label>
+              <button type="submit" className="dm-primary-btn">
+                Buscar
+              </button>
+            </div>
           </FilterBar>
 
           {error ? (
