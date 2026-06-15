@@ -11,7 +11,7 @@ Microfrontend com indicadores de produção via **api-delpi** (`/production`).
 | Depreciação / ROL | `GET /production/depreciation_pct` | Google Sheets + ROL |
 | OEE (%) | `GET /production/overall_equipment_effectiveness_pct` | TOTVS SH6010 |
 | **OEE — painel** | `GET /production/oee` | Resumo, evolução e listagem de apontamentos |
-| **OEE — detalhe** | `GET /production/oee/appointments/{id}` | Roteiro, estrutura e tempos |
+| **OEE — detalhe** | `GET /production/oee/appointments/{id}` | Roteiro, estrutura, tempos e alertas (`time_analysis.findings`) |
 | OTD (%) | `GET /production/on_time_delivery_pct` | TOTVS SC2010 |
 | **OTD — painel** | `GET /production/otd` | Resumo e listagem de OPs PA |
 
@@ -25,7 +25,7 @@ Layout alinhado ao plugin [eficiência fabril](../eficiencia-fabril/README.md):
 - Faixa válida **0–199%** via módulo compartilhado `production_efficiency_valid_range` / `build_fabril_view_filters`
 - Mesma métrica e escopo da eficiência fabril (`EFICIENCIA_PERCENTUAL`, view fabril)
 - Outliers: linha vermelha + badge **Verificar**; válidos: **OK**
-- Clique na linha → detalhe (`OeeAppointmentDetailPage`)
+- Clique na linha → detalhe (`OeeAppointmentDetailPage`) com **análise de tempos** e alertas automáticos (`findings`: faixa, divergência, intervalo curto, roteiro incompleto, etc.)
 
 Componentes: `DataTableSection` (colunas no padrão eficiência fabril), `constants/businessRules.ts`.
 
@@ -42,8 +42,8 @@ Atribuir permissão `dashboard-production.view` no RBAC.
 
 ```bash
 cd infra
-docker compose -f docker-compose.dev.yml build dashboard-production api-delpi eficiencia-fabril --no-cache
-docker compose -f docker-compose.dev.yml up -d dashboard-production api-delpi eficiencia-fabril gateway
+docker compose -f docker-compose.dev.yml build api-delpi dashboard-production eficiencia-fabril
+docker compose -f docker-compose.dev.yml up -d --force-recreate api-delpi dashboard-production eficiencia-fabril gateway
 ```
 
 Após mudanças só no backend:

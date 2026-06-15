@@ -76,6 +76,7 @@ export type EficienciaFabrilCharts = {
 };
 
 export type EficienciaFabrilItem = {
+  appointment_id?: number | null;
   filial: string | null;
   op: string | null;
   produto: string | null;

@@ -103,6 +103,15 @@ export type ProductionOtdData = {
 
 export type ProductionOeeAppointmentStatus = "valid" | "outlier";
 
+export type AppointmentTimeFindingSeverity = "info" | "warning" | "error";
+
+export type AppointmentTimeFinding = {
+  code: string;
+  severity: AppointmentTimeFindingSeverity;
+  message: string;
+  detail?: string | null;
+};
+
 export type ProductionOeeAppointmentItem = {
   appointment_id: number;
   branch: string;
@@ -214,6 +223,7 @@ export type ProductionOeeTimeAnalysis = {
   produced_qty: number | null;
   planned_hours: number | null;
   real_hours: number | null;
+  real_hours_source?: "interval" | "h6_tempo";
   time_variance_hours: number | null;
   time_gained_lost_hours: number | null;
   efficiency_from_times_pct: number | null;
@@ -221,6 +231,8 @@ export type ProductionOeeTimeAnalysis = {
   formula_planned: string;
   formula_real: string;
   formula_efficiency: string;
+  findings?: AppointmentTimeFinding[];
+  has_findings?: boolean;
 };
 
 export type ProductionOeeRoutingOperation = {

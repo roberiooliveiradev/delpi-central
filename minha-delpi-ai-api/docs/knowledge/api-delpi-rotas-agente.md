@@ -277,16 +277,18 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `page` (default `1`), `page_size` (default `20`, máx. `1000`).
 - `sort_by`, `sort_dir` — ordenação server-side da listagem.
 
-**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (SH6010: data, início/fim, OP, produto PA/PI, CT, operador, `oee_pct`, `status`, `appointment_id`). Na UI do dashboard produção, listagem no padrão eficiência fabril (badge **Verificar** / **OK**).
+**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (view fabril: data, início/fim, OP, produto PA/PI, CT, operador, `oee_pct` = `EFICIENCIA_PERCENTUAL`, `status`, `appointment_id` via SH6010). Na UI do dashboard produção, listagem no padrão eficiência fabril (badge **Verificar** / **OK**).
 
 **Parâmetros (`GET /production/oee/appointments/{appointment_id}`)**
 
 - `appointment_id` (path) — `R_E_C_N_O_` do SH6010.
 - `branch` — opcional; restringe a filial do apontamento.
 
-**Resposta:** `appointment` (cadastro do apontamento), `time_analysis` (setup, fator padrão, horas previstas/reais, eficiência por tempos, fórmulas), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
+**Resposta:** `appointment` (cadastro SH6010), `time_analysis` (setup, fator padrão, horas previstas/reais, `real_hours_source` = `interval` ou `h6_tempo`, eficiência por tempos, fórmulas, **`findings`** com alertas automáticos de motivos/erros), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
 
-**Não confundir rotas:** `GET /production/oee` (painel + listagem, view fabril) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham `EFICIENCIA_PERCENTUAL` e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa.
+**`time_analysis.findings` (diagnóstico canônico):** serviço `production_appointment_time_analysis` — exemplos: eficiência/OEE fora da faixa 0–199%, divergência H6_ZEFICI × tempos, tempo previsto/real ausente, intervalo muito curto, roteiro sem fator padrão, fallback em H6_TEMPO. Severidade: `error` | `warning` | `info`.
+
+**Não confundir rotas:** `GET /production/oee` (painel + listagem, view fabril) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham `EFICIENCIA_PERCENTUAL` e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa. **Detalhe de apontamento** (roteiro, tempos, alertas): sempre `GET /production/oee/appointments/{appointment_id}` — usado pelo OEE e pela eficiência fabril ao clicar na linha.
 
 **Faixa válida (OEE e eficiência fabril):** KPIs e gráficos consideram apenas eficiência entre **0% e 199%** (outliers permanecem listáveis). Ver `api-delpi/docs/api/regras-faixa-eficiencia-producao.md`.
 
@@ -296,7 +298,7 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `branch`, `op`, `employee`, `work_center` — filtros opcionais.
 - Dashboard: `page`, `page_size`, `status_ok_only` (default `true`).
 
-**Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados. Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**.
+**Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados com **`appointment_id`** (vínculo SH6010). Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**. Clique na linha → detalhe via `GET /production/oee/appointments/{appointment_id}` (mesmo contrato do painel OEE, incluindo `time_analysis.findings`).
 
 #### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
 

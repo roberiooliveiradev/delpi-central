@@ -419,7 +419,8 @@ PRODUCTION_OEE_APPOINTMENT = agent_route(
     description=(
         "Retorna análise composta de um apontamento SH6010 (R_E_C_N_O_ / appointment_id): "
         "cadastro do apontamento (OP, produto PA/PI, CT, operação, operador, recurso, quantidades), "
-        "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, OEE H6_ZEFICI), "
+        "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, OEE H6_ZEFICI, "
+        "findings com motivos/alertas automáticos), "
         "routing_operations (roteiro SG2010 com operação do apontamento destacada) e "
         "structure (BOM do produto). Parâmetro branch opcional restringe a filial. "
         "Use quando o usuário pedir detalhe do apontamento, roteiro, estrutura ou cálculo de tempos "

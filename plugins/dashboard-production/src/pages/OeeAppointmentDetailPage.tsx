@@ -9,6 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { AppointmentTimeFindings } from "../components/AppointmentTimeFindings";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DetailCard } from "../components/DetailCard";
@@ -58,6 +59,12 @@ function formatDateTime(date?: string | null, time?: string | null): string {
   if (dateLabel === "—" && !timeLabel) return "—";
   if (!timeLabel) return dateLabel;
   return `${dateLabel} ${timeLabel}`;
+}
+
+function formatRealHoursSource(source?: string | null): string {
+  if (source === "interval") return "Início/fim do apontamento";
+  if (source === "h6_tempo") return "H6_TEMPO (fallback)";
+  return "—";
 }
 
 export function OeeAppointmentDetailPage({
@@ -200,6 +207,10 @@ export function OeeAppointmentDetailPage({
             {
               label: "Tempo real",
               value: formatHours(timeAnalysis.real_hours),
+            },
+            {
+              label: "Fonte tempo real",
+              value: formatRealHoursSource(timeAnalysis.real_hours_source),
             },
             {
               label: "Variação (real − previsto)",
@@ -397,6 +408,7 @@ export function OeeAppointmentDetailPage({
               hint="Previsto (SHY010/SG2) × realizado (início/fim ou H6_TEMPO)"
               icon={<Clock3 size={20} />}
             >
+              <AppointmentTimeFindings findings={timeAnalysis?.findings ?? []} />
               <DetailFieldGrid fields={timeFields} />
             </DetailCard>
           </section>

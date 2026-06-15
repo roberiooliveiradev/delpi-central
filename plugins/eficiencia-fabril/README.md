@@ -13,6 +13,7 @@ Faixa válida de eficiência (alinhada ao OEE): [regras-faixa-eficiencia-produca
 - KPIs: eficiência (média simples), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
 - Tabela paginada + exportação Excel (dados em memória)
+- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos, estrutura)
 - Filtros com aplicação local (sem refetch), exceto período novo ou **Atualizar**
 - Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência fora da faixa **0–199%** fora dos indicadores (status **Verificar** na tabela)
 
@@ -31,6 +32,7 @@ Rotas no Portal:
 
 - `/apps/eficiencia-fabril/sc` — Filial SC (TOTVS `01`)
 - `/apps/eficiencia-fabril/es` — Filial ES (TOTVS `02`)
+- `/apps/eficiencia-fabril/sc/appointment/{appointment_id}` — Detalhe (consome `GET /production/oee/appointments/{id}`)
 
 ---
 

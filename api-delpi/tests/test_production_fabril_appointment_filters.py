@@ -40,3 +40,17 @@ def test_build_fabril_view_filters_caps_efficiency_for_kpi() -> None:
 
     assert "EF.EFICIENCIA_PERCENTUAL" in where
     assert settings.max_efficiency_indicator_pct in params
+
+
+def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
+    from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ef_items_sql import (
+        EF_FABRIL_ITEMS_FROM,
+        EF_FABRIL_ITEMS_SELECT,
+    )
+    from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh6010_apply import (
+        FABRIL_SH6010_OUTER_APPLY,
+    )
+
+    assert "appointment_id" in EF_FABRIL_ITEMS_SELECT
+    assert "EF.FILIAL" in EF_FABRIL_ITEMS_SELECT
+    assert FABRIL_SH6010_OUTER_APPLY.strip() in EF_FABRIL_ITEMS_FROM

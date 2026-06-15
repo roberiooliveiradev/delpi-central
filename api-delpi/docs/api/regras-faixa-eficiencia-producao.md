@@ -40,6 +40,9 @@ Consumidores:
 | `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
 | `production_fabril_efficiency_sql.py` | `status` valid/outlier em `EFICIENCIA_PERCENTUAL` |
 | `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010) |
+| `production_fabril_ef_items_sql.py` | Listagem eficiência fabril com `appointment_id` |
+| `production_fabril_sh6010_apply.py` | `OUTER APPLY` view → SH6010 (compartilhado OEE + EF) |
+| `production_appointment_time_analysis.py` | Diagnóstico `time_analysis.findings` no detalhe do apontamento |
 
 ### MFE Eficiência Fabril
 
@@ -71,15 +74,19 @@ Consumidores:
 
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 
+- Listagem inclui `appointment_id` (vínculo SH6010 via `production_fabril_sh6010_apply`) para abrir detalhe.
+- Detalhe na UI: `GET /production/oee/appointments/{appointment_id}` (roteiro SG2, estrutura BOM, tempos, `findings` de alertas).
+
 - **Dashboard** (`/dashboard`): summary e charts aplicam cap 0–199 via repositório.
 - **Appointments** (`/appointments`): retorna todos os registros do período; o MFE filtra localmente para KPIs.
 - Tabela: linha vermelha + badge **Verificar** se `isProductionEfficiencyOutlier(eficiencia_percentual)`.
+- Clique na linha → `/apps/eficiencia-fabril/{sc|es}/appointment/{id}`; API de detalhe: `GET /production/oee/appointments/{id}` com `time_analysis.findings`.
 
 ## Testes
 
 ```bash
 cd api-delpi
-pytest tests/test_production_efficiency_valid_range.py -q
+pytest tests/test_production_efficiency_valid_range.py tests/test_production_fabril_appointment_filters.py tests/test_production_appointment_time_analysis.py -q
 pytest tests/test_get_eficiencia_fabril_dashboard_use_case.py -q
 ```
 

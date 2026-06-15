@@ -17,6 +17,7 @@ import {
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
   PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
 } from "../constants/businessRules";
+import { buildEficienciaFabrilAppointmentPath } from "../constants/routes";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
 import {
@@ -24,9 +25,11 @@ import {
   branchRouteFromPathname,
   totvsBranchFromRoute,
 } from "../constants/branches";
+import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatPeriodLabel } from "../utils/dates";
 import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
 import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
+import { navigateEficienciaFabril } from "../utils/navigation";
 
 type DashboardEficienciaFabrilPageProps = {
   pathname?: string;
@@ -94,6 +97,20 @@ function DashboardEficienciaFabrilContent({
   const handleExportError = useCallback((message: string) => {
     setExportError(message);
   }, []);
+
+  const handleAppointmentRowClick = useCallback(
+    (item: EficienciaFabrilItem) => {
+      if (!item.appointment_id) return;
+      navigateEficienciaFabril(
+        buildEficienciaFabrilAppointmentPath(
+          branchRoute,
+          item.appointment_id,
+          item.filial ?? totvsBranch
+        )
+      );
+    },
+    [branchRoute, totvsBranch]
+  );
 
   const { data, allItems, loading, error, reload } = useEficienciaFabrilDashboard(apiParams);
 
@@ -239,6 +256,7 @@ function DashboardEficienciaFabrilContent({
             totalPages={pagination?.total_pages ?? 1}
             total={pagination?.total ?? 0}
             onPageChange={setPage}
+            onRowClick={handleAppointmentRowClick}
             onExportError={handleExportError}
             disabled={loading}
           />

@@ -6,23 +6,13 @@ from app.domain.production.production_fabril_appointment_scope import (
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_efficiency_sql import (
     fabril_efficiency_status_expr,
 )
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh6010_apply import (
+    FABRIL_SH6010_OUTER_APPLY,
+)
 
 OEE_FABRIL_APPOINTMENTS_FROM = f"""
 FROM {EFICIENCIA_FABRIL_VIEW} EF WITH (NOLOCK)
-OUTER APPLY (
-    SELECT TOP 1
-        CAST(H6.R_E_C_N_O_ AS BIGINT) AS appointment_id,
-        RTRIM(LTRIM(H6.H6_RECURSO)) AS resource_code
-    FROM SH6010 H6 WITH (NOLOCK)
-    WHERE H6.D_E_L_E_T_ = ''
-      AND RTRIM(LTRIM(H6.H6_FILIAL)) = RTRIM(LTRIM(EF.FILIAL))
-      AND RTRIM(LTRIM(H6.H6_OP)) = RTRIM(LTRIM(EF.OP))
-      AND CONVERT(DATE, H6.H6_DTPROD, 112) = EF.DATA_PRODUCAO
-      AND RTRIM(LTRIM(ISNULL(H6.H6_HORAINI, ''))) = RTRIM(LTRIM(ISNULL(EF.HORA_INICIO, '')))
-      AND RTRIM(LTRIM(ISNULL(H6.H6_HORAFIN, ''))) = RTRIM(LTRIM(ISNULL(EF.HORA_FINAL, '')))
-      AND RTRIM(LTRIM(H6.H6_OPERAC)) = RTRIM(LTRIM(EF.OPERACAO))
-    ORDER BY H6.R_E_C_N_O_ DESC
-) H6
+{FABRIL_SH6010_OUTER_APPLY}
 LEFT JOIN SB1010 SB1 WITH (NOLOCK)
     ON SB1.D_E_L_E_T_ = ''
    AND SB1.B1_COD = EF.PRODUTO

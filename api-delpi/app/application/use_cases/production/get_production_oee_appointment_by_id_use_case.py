@@ -15,6 +15,9 @@ from app.application.use_cases.product.list_product_guide_use_case import (
 from app.application.use_cases.product.list_product_structure_use_case import (
     ListProductStructureUseCase,
 )
+from app.domain.production.production_appointment_time_analysis import (
+    build_appointment_time_analysis,
+)
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
@@ -78,7 +81,7 @@ class GetProductionOeeAppointmentByIdUseCase:
 
         return {
             "appointment": appointment,
-            "time_analysis": self._build_time_analysis(appointment),
+            "time_analysis": build_appointment_time_analysis(appointment),
             "routing_operations": routing_operations,
             "structure": structure,
             "related_routes": {
@@ -130,25 +133,3 @@ class GetProductionOeeAppointmentByIdUseCase:
         )
         return operations
 
-    @staticmethod
-    def _build_time_analysis(appointment: dict) -> dict:
-        return {
-            "setup_hours": appointment.get("setup_hours"),
-            "standard_time_factor": appointment.get("standard_time_factor"),
-            "order_planned_qty": appointment.get("order_planned_qty"),
-            "produced_qty": appointment.get("produced_qty"),
-            "planned_hours": appointment.get("planned_hours"),
-            "real_hours": appointment.get("real_hours"),
-            "time_variance_hours": appointment.get("time_variance_hours"),
-            "time_gained_lost_hours": appointment.get("time_gained_lost_hours"),
-            "efficiency_from_times_pct": appointment.get("efficiency_from_times_pct"),
-            "oee_pct": appointment.get("oee_pct"),
-            "formula_planned": (
-                "setup + fator_padrão × (qtd_apontada / qtd_OP) — SHY010/roteiro SG2"
-            ),
-            "formula_real": (
-                "início/fim do apontamento (H6_DATAINI/HORAINI → H6_DATAFIN/HORAFIN), "
-                "com fallback em H6_TEMPO"
-            ),
-            "formula_efficiency": "(tempo_previsto / tempo_real) × 100",
-        }

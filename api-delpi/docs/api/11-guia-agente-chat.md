@@ -105,7 +105,7 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | Ordens de venda (lista) | `GET /sales/` — não confundir com `/products/{code}/sales` |
 | KPI comercial | `/commercial/closing-rate`, `/commercial/rol/series`, metas ROL, OTD, novos clientes/negócios |
 | Financeiro | `GET /financial/rol`, `/financial/ebitda_pct`, `/financial/pmr`, `/financial/fixed_cost_pct` (também legado `/finacial/*`) |
-| Produção (KPI) | `/production/on_time_delivery_pct`, `/production/otd` (resumo + OPs), `/production/otd/series`, `/production/oee` (resumo + apontamentos), `/production/oee/appointments/{appointment_id}` (roteiro, estrutura, tempos), `/production/oee/series`, `/production/overall_equipment_effectiveness_pct`, custos, `depreciation_pct` |
+| Produção (KPI) | `/production/on_time_delivery_pct`, `/production/otd` (resumo + OPs), `/production/otd/series`, `/production/oee` (resumo + apontamentos), `/production/oee/appointments/{appointment_id}` (roteiro, estrutura, tempos, `findings`), `/production/eficiencia-fabril/*` (MOD; detalhe via `oee/appointments/{id}`), `/production/oee/series`, `/production/overall_equipment_effectiveness_pct`, custos, `depreciation_pct` |
 | RH | `/hr/branches`, `/hr/snapshot`, PDIs, avaliações |
 
 ---

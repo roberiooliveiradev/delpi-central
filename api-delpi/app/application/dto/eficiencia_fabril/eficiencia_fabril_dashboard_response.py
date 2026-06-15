@@ -23,6 +23,7 @@ class EficienciaFabrilCharts:
 
 @dataclass
 class EficienciaFabrilDashboardItem:
+    appointment_id: Optional[int] = None
     filial: Optional[str] = None
     op: Optional[str] = None
     produto: Optional[str] = None

@@ -16,6 +16,7 @@ type AppointmentsTableProps = {
   totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
+  onRowClick?: (item: EficienciaFabrilItem) => void;
   onExportError?: (message: string) => void;
   disabled?: boolean;
 };
@@ -29,6 +30,7 @@ export function AppointmentsTable({
   totalPages,
   total,
   onPageChange,
+  onRowClick,
   onExportError,
   disabled = false,
 }: AppointmentsTableProps) {
@@ -117,13 +119,42 @@ export function AppointmentsTable({
                 </td>
               </tr>
             ) : (
-              items.map((item, index) => (
+              items.map((item, index) => {
+                const isOutlier = isProductionEfficiencyOutlier(item.eficiencia_percentual);
+                const isClickable = Boolean(item.appointment_id) && Boolean(onRowClick);
+                const rowClassName = [
+                  "ef-row",
+                  isOutlier ? "ef-row--verify" : "",
+                  isClickable ? "ef-row--clickable" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
                 <tr
-                  key={`${item.op}-${item.data_producao}-${index}`}
-                  className={
-                    isProductionEfficiencyOutlier(item.eficiencia_percentual)
-                      ? "ef-row ef-row--verify"
-                      : "ef-row"
+                  key={`${item.appointment_id ?? item.op}-${item.data_producao}-${index}`}
+                  className={rowClassName}
+                  onClick={
+                    isClickable
+                      ? () => onRowClick?.(item)
+                      : undefined
+                  }
+                  onKeyDown={
+                    isClickable
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onRowClick?.(item);
+                          }
+                        }
+                      : undefined
+                  }
+                  tabIndex={isClickable ? 0 : undefined}
+                  role={isClickable ? "button" : undefined}
+                  aria-label={
+                    isClickable
+                      ? `Ver detalhe do apontamento ${item.appointment_id}`
+                      : undefined
                   }
                 >
                   <td data-label="Data">{formatDisplayDate(item.data_producao)}</td>
@@ -149,7 +180,8 @@ export function AppointmentsTable({
                     )}
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

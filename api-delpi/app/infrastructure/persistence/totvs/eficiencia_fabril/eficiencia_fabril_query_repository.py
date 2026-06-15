@@ -23,35 +23,13 @@ from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_qu
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
 )
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ef_items_sql import (
+    EF_FABRIL_ITEMS_FROM,
+    EF_FABRIL_ITEMS_SELECT,
+)
 
 
 class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepositoryPort):
-
-    _ITEMS_SELECT = """
-                    FILIAL,
-                    OP,
-                    PRODUTO,
-                    DESCRICAO_PRODUTO,
-                    CENTRO_TRABALHO,
-                    OPERACAO,
-                    COD_OPERADOR,
-                    LOGIN_OPERADOR,
-                    NOME_OPERADOR,
-                    DATA_PRODUCAO,
-                    HORA_INICIO,
-                    HORA_FINAL,
-                    QTD_APONTADA,
-                    TEMPO_REAL_HORAS,
-                    TEMPO_PREVISTO_HORAS,
-                    EFICIENCIA_PERCENTUAL,
-                    VALOR_MOD_HORA,
-                    TEMPO_GANHO_PERDIDO_HORAS,
-                    RESULTADO_MOD,
-                    LUCRO_MOD,
-                    PREJUIZO_MOD,
-                    STATUS_RESULTADO_MOD,
-                    STATUS_REGISTRO
-    """
 
     def __init__(self, settings: EficienciaFabrilQuerySettings | None = None):
         super().__init__()
@@ -73,6 +51,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             request,
             status_ok_only=request.status_ok_only,
             efficiency_cap_pct=None,
+            column_prefix="EF",
         )
 
         view = self.settings.view_name
@@ -174,7 +153,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 self.execute_scalar(
                     f"""
                     SELECT COUNT(*)
-                    FROM {view}
+                    {EF_FABRIL_ITEMS_FROM}
                     WHERE {items_where}
                     """,
                     items_params,
@@ -185,13 +164,13 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             item_rows = self.execute_query(
                 f"""
                 SELECT
-                    {self._ITEMS_SELECT}
-                FROM {view}
+                    {EF_FABRIL_ITEMS_SELECT}
+                {EF_FABRIL_ITEMS_FROM}
                 WHERE {items_where}
                 ORDER BY
-                    DATA_PRODUCAO DESC,
-                    HORA_INICIO DESC,
-                    HORA_FINAL DESC
+                    EF.DATA_PRODUCAO DESC,
+                    EF.HORA_INICIO DESC,
+                    EF.HORA_FINAL DESC
                 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
                 """,
                 items_params + (offset, request.page_size),
@@ -226,20 +205,20 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             request,
             status_ok_only=status_ok_only,
             efficiency_cap_pct=None,
+            column_prefix="EF",
         )
 
-        view = self.settings.view_name
         with self:
             rows = self.execute_query(
                 f"""
                 SELECT
-                    {self._ITEMS_SELECT}
-                FROM {view}
+                    {EF_FABRIL_ITEMS_SELECT}
+                {EF_FABRIL_ITEMS_FROM}
                 WHERE {where}
                 ORDER BY
-                    DATA_PRODUCAO DESC,
-                    HORA_INICIO DESC,
-                    HORA_FINAL DESC
+                    EF.DATA_PRODUCAO DESC,
+                    EF.HORA_INICIO DESC,
+                    EF.HORA_FINAL DESC
                 """,
                 params,
             )
@@ -252,6 +231,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
         *,
         status_ok_only: bool | None,
         efficiency_cap_pct: int | None = None,
+        column_prefix: str | None = None,
     ) -> Tuple[str, tuple]:
         return build_fabril_view_filters(
             date_start=request.date_start,
@@ -265,6 +245,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 request.status_ok_only if status_ok_only is None else status_ok_only
             ),
             efficiency_cap_pct=efficiency_cap_pct,
+            column_prefix=column_prefix,
         )
 
     @staticmethod
@@ -291,6 +272,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             data_producao = data_producao.isoformat()
 
         return EficienciaFabrilDashboardItem(
+            appointment_id=_to_int(row.get("appointment_id")),
             filial=row.get("FILIAL"),
             op=row.get("OP"),
             produto=row.get("PRODUTO"),
@@ -328,6 +310,16 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                     item[key] = value
             serialized.append(item)
         return serialized
+
+
+def _to_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
 
 
 def _to_float(value: Any) -> float | None:
