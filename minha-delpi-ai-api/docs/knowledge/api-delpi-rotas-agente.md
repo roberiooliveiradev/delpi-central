@@ -277,7 +277,7 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `page` (default `1`), `page_size` (default `20`, máx. `1000`).
 - `sort_by`, `sort_dir` — ordenação server-side da listagem.
 
-**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (SH6010: OP, produto PA/PI, CT, operação, recurso, operador, `oee_pct`, `appointment_id`).
+**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (SH6010: data, início/fim, OP, produto PA/PI, CT, operador, `oee_pct`, `status`, `appointment_id`). Na UI do dashboard produção, listagem no padrão eficiência fabril (badge **Verificar** / **OK**).
 
 **Parâmetros (`GET /production/oee/appointments/{appointment_id}`)**
 
@@ -287,6 +287,16 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 **Resposta:** `appointment` (cadastro do apontamento), `time_analysis` (setup, fator padrão, horas previstas/reais, eficiência por tempos, fórmulas), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
 
 **Não confundir:** `GET /production/oee` (OEE `H6_ZEFICI`) ≠ `GET /production/eficiencia-fabril/*` (eficiência MOD/view).
+
+**Faixa válida (OEE e eficiência fabril):** KPIs e gráficos consideram apenas eficiência entre **0% e 199%** (outliers permanecem listáveis). Ver `api-delpi/docs/api/regras-faixa-eficiencia-producao.md`.
+
+**Parâmetros (`GET /production/eficiencia-fabril/*`)**
+
+- `date_start`, `date_end` — período obrigatório (`YYYY-MM-DD`).
+- `branch`, `op`, `employee`, `work_center` — filtros opcionais.
+- Dashboard: `page`, `page_size`, `status_ok_only` (default `true`).
+
+**Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados. Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**.
 
 #### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
 

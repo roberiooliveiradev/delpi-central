@@ -1,7 +1,7 @@
 import { FileSpreadsheet } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
+import { isProductionEfficiencyOutlier } from "../constants/businessRules";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel } from "../utils/exportAppointmentsExcel";
@@ -121,7 +121,7 @@ export function AppointmentsTable({
                 <tr
                   key={`${item.op}-${item.data_producao}-${index}`}
                   className={
-                    (item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT
+                    isProductionEfficiencyOutlier(item.eficiencia_percentual)
                       ? "ef-row ef-row--verify"
                       : "ef-row"
                   }
@@ -142,7 +142,7 @@ export function AppointmentsTable({
                   <td data-label="Eficiência">{formatPercent(item.eficiencia_percentual)}</td>
                   <td data-label="Resultado MOD">{formatCurrency(item.resultado_mod)}</td>
                   <td data-label="Status">
-                    {(item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT ? (
+                    {isProductionEfficiencyOutlier(item.eficiencia_percentual) ? (
                       <span className="ef-badge ef-badge--danger">Verificar</span>
                     ) : (
                       <span className="ef-badge">{item.status_registro ?? "—"}</span>

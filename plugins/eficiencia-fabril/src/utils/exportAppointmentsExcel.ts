@@ -1,4 +1,4 @@
-import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
+import { isProductionEfficiencyOutlier } from "../constants/businessRules";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "./dates";
 
@@ -18,7 +18,7 @@ const HEADERS = [
 ] as const;
 
 function displayStatus(item: EficienciaFabrilItem): string {
-  if ((item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT) {
+  if (isProductionEfficiencyOutlier(item.eficiencia_percentual)) {
     return "Verificar";
   }
   return item.status_registro ?? "";

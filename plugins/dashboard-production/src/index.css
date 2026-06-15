@@ -878,6 +878,116 @@
   padding: 8px 10px;
 }
 
+.dashboard-production .dp-appointments-table-card {
+  padding: var(--dp-card-padding);
+  border-radius: var(--dp-card-radius);
+  border: 1px solid var(--dp-card-border);
+  background: var(--dp-card-bg);
+  margin-bottom: var(--dp-section-gap);
+}
+
+.dashboard-production .dp-appointments-table-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.dashboard-production .dp-appointments-table-card__header p {
+  margin: 4px 0 0;
+  color: var(--dp-text-muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-production .dp-appointments-table-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dashboard-production .dp-appointments-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--dp-text-muted);
+}
+
+.dashboard-production .dp-efficiency-legend {
+  margin: 0 0 16px;
+  color: var(--dp-text-muted);
+  font-size: 0.88rem;
+}
+
+.dashboard-production .dp-efficiency-legend--warning {
+  color: color-mix(in srgb, var(--danger, #b42318) 75%, var(--dp-text-muted));
+}
+
+.dashboard-production .dp-appointments-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-production .dp-appointments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.dashboard-production .dp-appointments-table th,
+.dashboard-production .dp-appointments-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dp-card-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dashboard-production .dp-appointments-table th {
+  color: var(--dp-text-muted);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--dp-card-bg) 92%, var(--dp-accent) 8%);
+}
+
+.dashboard-production .dp-appointments-table__empty {
+  text-align: center;
+  color: var(--dp-text-muted);
+  padding: 24px;
+}
+
+.dashboard-production .dp-appointment-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dp-accent) 12%, var(--dp-card-bg));
+  color: var(--dp-title, var(--secundary, #003866));
+  font-size: 0.75rem;
+}
+
+.dashboard-production .dp-appointment-badge--danger {
+  background: color-mix(in srgb, var(--danger, #b42318) 12%, var(--dp-card-bg));
+  color: var(--danger, #b42318);
+  border: 1px solid color-mix(in srgb, var(--danger, #b42318) 35%, var(--dp-card-border));
+}
+
+.dashboard-production .dp-row--verify,
+.dashboard-production .dp-row--verify td {
+  color: var(--danger, #b42318);
+}
+
+.dashboard-production .dp-row--verify td {
+  font-weight: 600;
+}
+
+.dashboard-production .dp-appointments-table--clickable tbody tr.is-clickable {
+  cursor: pointer;
+}
+
+.dashboard-production .dp-appointments-table--clickable tbody tr.is-clickable:hover {
+  background: color-mix(in srgb, var(--dp-accent) 8%, var(--dp-card-bg));
+}
+
 .dashboard-production .dp-detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

@@ -58,7 +58,7 @@ RESULTADO_MOD = TEMPO_GANHO_PERDIDO_HORAS × VALOR_MOD_HORA
 **Agregação no dashboard (implementado no MFE):**
 
 ```text
-AVG(EFICIENCIA_PERCENTUAL)   -- média simples, registros OK, eficiência ≤ 250%
+AVG(EFICIENCIA_PERCENTUAL)   -- média simples, registros OK, eficiência na faixa 0–199%
 ```
 
 *(A ponderação por `SUM(TEMPO_PREVISTO)/SUM(TEMPO_REAL)` permanece válida como referência analítica, mas não é o KPI exibido.)*
@@ -133,8 +133,8 @@ AVG(EFICIENCIA_PERCENTUAL)   -- média simples, registros OK, eficiência ≤ 25
 
 ## Regras de negócio para a aplicação
 
-1. **Indicadores (KPIs/gráficos):** apenas `STATUS_REGISTRO = 'OK'` e `EFICIENCIA_PERCENTUAL ≤ 250%`.
-2. **Tabela:** registros OK; eficiência &gt; 250% exibidos como **Verificar** (fora dos indicadores).
+1. **Indicadores (KPIs/gráficos):** apenas `STATUS_REGISTRO = 'OK'` e `EFICIENCIA_PERCENTUAL` entre **0% e 199%** (inclusive).
+2. **Tabela:** registros OK; eficiência fora da faixa exibidos como **Verificar** (fora dos indicadores).
 3. **Eficiência agregada:** média simples de `EFICIENCIA_PERCENTUAL` (ver [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)).
 4. **CTs excluídos no repository:** `CT-00`, `CT-70`, `CT-16A`, `CT-99` (`LTRIM` em `CENTRO_TRABALHO`).
 5. **Filiais:** `01` e `02` quando não há filtro de filial.

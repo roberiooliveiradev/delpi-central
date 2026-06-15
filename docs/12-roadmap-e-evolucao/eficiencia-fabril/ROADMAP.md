@@ -71,9 +71,9 @@ EFICIENCIA_PERCENTUAL = (TEMPO_PREVISTO_HORAS / TEMPO_REAL_HORAS) × 100
 | = 100% | No previsto |
 | < 100% | Mais lento que o previsto |
 
-**Agregação implementada (KPI e gráficos):** média simples de `EFICIENCIA_PERCENTUAL` nos registros OK com eficiência ≤ 250%.
+**Agregação implementada (KPI e gráficos):** média simples de `EFICIENCIA_PERCENTUAL` nos registros OK com eficiência na faixa **0–199%**.
 
-**Tabela:** registros OK; eficiência &gt; 250% com status **Verificar** (fora dos indicadores).
+**Tabela:** registros OK; eficiência fora da faixa com status **Verificar** (fora dos indicadores).
 
 ---
 
@@ -126,7 +126,7 @@ Registro: `POST /core-api/admin/apps/register` com permissão `apps.manage` ou s
 | Permissões | `eficiencia-fabril.view`, `api-delpi.access`, `dashboard-production.view` | ✅ |
 | Testes unitários | `tests/test_get_eficiencia_fabril_dashboard_use_case.py` | ✅ |
 | CTs excluídos | `CT-00`, `CT-70`, `CT-16A`, `CT-99` | ✅ |
-| Teto indicadores | eficiência &gt; 250% (`max_efficiency_indicator_pct`) | ✅ |
+| Teto indicadores | faixa 0–199% (`production_efficiency_valid_range` / `max_efficiency_indicator_pct`) | ✅ |
 
 **Query params:**
 
@@ -206,7 +206,7 @@ page, page_size          (somente /dashboard)
 | Modal expandido | tamanho padrão 1320×700px; labels CT no expandido | ✅ |
 | Tabela | início/fim, qtd apontada; paginação local; linha Verificar | ✅ |
 | Export Excel | dados filtrados em memória | ✅ |
-| UX | aviso 250%; sem grade nos gráficos; layout 3+2 | ✅ |
+| UX | aviso faixa 0–199%; sem grade nos gráficos; layout 3+2 | ✅ |
 
 Detalhe funcional: [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
 
@@ -273,11 +273,11 @@ Detalhe funcional: [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
 
 | Risco | Mitigação |
 |-------|-----------|
-| Outliers de eficiência (ex.: &gt; 250%) | excluídos dos indicadores; tabela com status &quot;Verificar&quot; |
+| Outliers de eficiência (fora de 0–199%) | excluídos dos indicadores; tabela com status &quot;Verificar&quot; |
 | `TEMPO_REAL_HORAS = 0` | respeitar `STATUS_REGISTRO`; excluir na agregação |
 | `STATUS_MOD` incompleto | aviso no summary; excluir MOD do total ou flag |
 | Performance | índices na view (DBA); cache fase 6 |
-| Confusão UX eficiência \> 100% | aviso 250% + status Verificar na tabela |
+| Confusão UX eficiência \> 100% | aviso faixa 0–199% + status Verificar na tabela |
 
 ---
 
@@ -324,4 +324,4 @@ Detalhe funcional: [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
 | Data | Autor | Nota |
 |------|-------|------|
 | 2026-05-27 | Planejamento inicial | Roadmap criado a partir da view `vw_Apontamentos_Eficiencia` e alinhamento com padrão dashboard-lmps |
-| 2026-05-28 | Revisão MVP | ESPECIFICACAO-PLUGIN.md; fases 1–3 alinhadas ao código (filtros locais, CT-99, 250%, export Excel) |
+| 2026-05-28 | Revisão MVP | ESPECIFICACAO-PLUGIN.md; fases 1–3 alinhadas ao código (filtros locais, CT-99, faixa 0–199%, export Excel) |

@@ -2,7 +2,8 @@
 
 Microfrontend (Module Federation) para dashboard de eficiência operacional e resultado MOD dos apontamentos de produção (view TOTVS `dbo.vw_Apontamentos_Eficiencia`).
 
-Documentação completa: [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/) — em especial [ESPECIFICACAO-PLUGIN.md](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/ESPECIFICACAO-PLUGIN.md).
+Documentação completa: [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/) — em especial [ESPECIFICACAO-PLUGIN.md](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/ESPECIFICACAO-PLUGIN.md).  
+Faixa válida de eficiência (alinhada ao OEE): [regras-faixa-eficiencia-producao.md](../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md).
 
 ---
 
@@ -13,7 +14,7 @@ Documentação completa: [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../d
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
 - Tabela paginada + exportação Excel (dados em memória)
 - Filtros com aplicação local (sem refetch), exceto período novo ou **Atualizar**
-- Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência &gt; 250% fora dos indicadores
+- Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência fora da faixa **0–199%** fora dos indicadores (status **Verificar** na tabela)
 
 ---
 
@@ -84,6 +85,6 @@ src/
   components/       # FilterBar, KPIs, gráficos, tabela, modal
   hooks/            # filtros + dashboard (cache + agregação local)
   pages/            # DashboardEficienciaFabrilPage
-  constants/        # regras (250%, 95%, cores de gráfico)
+  constants/        # regras (faixa 0–199%, 95%, cores de gráfico)
   utils/            # formatação e export Excel
 ```

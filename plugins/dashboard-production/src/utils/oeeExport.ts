@@ -1,10 +1,12 @@
 import type { ProductionOeeAppointmentItem } from "../types/production";
+import { isOeeAppointmentOutlier } from "../constants/businessRules";
 import { downloadCsv } from "./csv";
 
-function statusLabel(status: string): string {
-  if (status === "valid") return "Válido";
-  if (status === "outlier") return "Fora da faixa";
-  return status;
+function displayStatus(item: ProductionOeeAppointmentItem): string {
+  if (isOeeAppointmentOutlier(item.status, item.oee_pct)) {
+    return "Verificar";
+  }
+  return "OK";
 }
 
 export function downloadOeeAppointmentsCsv(
@@ -14,34 +16,30 @@ export function downloadOeeAppointmentsCsv(
   downloadCsv(
     filename,
     [
+      "Data",
+      "Início",
+      "Fim",
+      "Qtd. apontada",
       "Filial",
       "OP",
-      "Produto",
-      "Descrição",
-      "Tipo",
-      "Centro de trabalho",
-      "Operação",
-      "Recurso",
-      "Nome recurso",
-      "Data produção",
-      "OEE (%)",
-      "Qtd produzida",
+      "Descrição produto",
+      "CT",
+      "Operador",
+      "Eficiência (%)",
       "Status",
     ],
     appointments.map((row) => [
+      row.production_date ?? "",
+      row.start_time ?? "",
+      row.end_time ?? "",
+      row.produced_qty != null ? String(row.produced_qty) : "",
       row.branch ?? "",
       row.production_order ?? "",
-      row.product_code ?? "",
       row.product_description ?? "",
-      row.product_type ?? "",
       row.work_center ?? "",
-      row.operation ?? "",
-      row.resource_code ?? "",
-      row.resource_name ?? "",
-      row.production_date ?? "",
+      row.operator_code ?? "",
       row.oee_pct != null ? String(row.oee_pct) : "",
-      row.produced_qty != null ? String(row.produced_qty) : "",
-      statusLabel(row.status),
+      displayStatus(row),
     ])
   );
 }

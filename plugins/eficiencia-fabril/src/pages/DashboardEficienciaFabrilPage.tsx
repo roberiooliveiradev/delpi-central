@@ -13,6 +13,10 @@ import { AppointmentsTable } from "../components/AppointmentsTable";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import {
+  PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
+  PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
+} from "../constants/businessRules";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
 import {
@@ -147,8 +151,9 @@ function DashboardEficienciaFabrilContent({
       />
 
       <p className="ef-efficiency-legend ef-efficiency-legend--warning">
-        Atenção: apontamentos com eficiência acima de 250% são desconsiderados no indicador de
-        eficiência (KPIs e gráficos) e aparecem na tabela como &quot;Verificar&quot;.
+        Atenção: apontamentos com eficiência fora da faixa {PRODUCTION_EFFICIENCY_VALID_MIN_PCT}–
+        {PRODUCTION_EFFICIENCY_VALID_MAX_PCT}% são desconsiderados no indicador de eficiência (KPIs e
+        gráficos) e aparecem na tabela como &quot;Verificar&quot;.
       </p>
 
       {error || exportError ? (

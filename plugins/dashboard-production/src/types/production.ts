@@ -116,6 +116,8 @@ export type ProductionOeeAppointmentItem = {
   resource_code: string;
   resource_name: string;
   production_date: string;
+  start_time: string | null;
+  end_time: string | null;
   oee_pct: number | null;
   produced_qty: number | null;
   status: ProductionOeeAppointmentStatus;

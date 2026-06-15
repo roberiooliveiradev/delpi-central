@@ -286,11 +286,16 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             qb.like("NOME_OPERADOR", request.employee, case_insensitive=True)
 
         if efficiency_cap_pct is not None:
-            # Sanidade: eficiência muito alta é erro de apontamento.
-            # Importante: esse cap deve afetar apenas agregações (summary/charts),
-            # mantendo esses registros visíveis na tabela para conferência.
-            qb.raw("(EFICIENCIA_PERCENTUAL IS NULL OR EFICIENCIA_PERCENTUAL <= ?)")
-            qb._params.append(efficiency_cap_pct)
+            # Sanidade: fora da faixa 0–199% é outlier (erro de apontamento).
+            # O cap afeta apenas agregações (summary/charts); a tabela lista todos.
+            min_pct = self.settings.min_efficiency_indicator_pct
+            max_pct = efficiency_cap_pct
+            qb.raw(
+                "(EFICIENCIA_PERCENTUAL IS NULL OR "
+                "(EFICIENCIA_PERCENTUAL >= ? AND EFICIENCIA_PERCENTUAL <= ?))"
+            )
+            qb._params.append(min_pct)
+            qb._params.append(max_pct)
 
         effective_status_ok = (
             request.status_ok_only if status_ok_only is None else status_ok_only

@@ -14,6 +14,7 @@ Dashboard gerencial de apontamentos de produção (eficiência operacional e res
 | [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md) | **Funcionalidades implementadas** (UI, KPIs, gráficos, regras) |
 | [ESPECIFICACAO-VIEW.md](./ESPECIFICACAO-VIEW.md) | Contrato da view TOTVS, fórmulas e literais |
 | [FASE0-VALIDACAO.md](./FASE0-VALIDACAO.md) | Relatório da validação TOTVS (Fase 0) |
+| [regras-faixa-eficiencia-producao.md](../../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md) | Faixa válida **0–199%** (alinhada ao OEE) |
 
 ---
 

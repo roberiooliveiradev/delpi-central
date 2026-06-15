@@ -81,10 +81,10 @@ Se o usuário filtrar explicitamente por um CT excluído, a API retorna conjunto
 |-------|---------|
 | Base | Apenas `STATUS_REGISTRO = 'OK'` |
 | Agregação | **Média simples** de `EFICIENCIA_PERCENTUAL` (não ponderada por tempo) |
-| Teto | Registros com eficiência **> 250%** **não** entram em KPIs/gráficos |
-| Tabela | Registros > 250% **permanecem** na tabela com status **Verificar** (linha em vermelho) |
+| Faixa | Apenas eficiência na faixa **0–199%** entra em KPIs/gráficos (alinhado ao OEE) |
+| Tabela | Registros fora da faixa **permanecem** na tabela com status **Verificar** (linha em vermelho) |
 
-Constante no código: `VERIFY_EFFICIENCY_THRESHOLD_PCT = 250`, `max_efficiency_indicator_pct` no backend.
+Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_PCT` no MFE; `production_efficiency_valid_range.py` e `max_efficiency_indicator_pct` no backend. Ver [regras-faixa-eficiencia-producao.md](../../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md).
 
 ### 4.3 Filtro de registros na tabela
 
@@ -99,7 +99,7 @@ Constante no código: `VERIFY_EFFICIENCY_THRESHOLD_PCT = 250`, `max_efficiency_i
 ### 4.5 KPI — card Apontamentos
 
 - Valor: quantidade de linhas na **tabela** (filtros aplicados).
-- Legenda: quantos precisam **avaliar (Verificar)** — eficiência > 250%, não “com problema”.
+- Legenda: quantos precisam **avaliar (Verificar)** — eficiência fora da faixa 0–199%, não “com problema”.
 
 ### 4.6 KPI — Horas ganhas/perdidas
 
@@ -151,14 +151,13 @@ Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, CT, Operador, Eficiênci
 
 - Paginação local (50 por página).
 - **Exportar Excel:** usa dados já filtrados em memória (sem nova API).
-- Linha vermelha + badge **Verificar** quando eficiência > 250%.
+- Linha vermelha + badge **Verificar** quando eficiência fora da faixa 0–199%.
 
 ---
 
 ## 8. Mensagens na tela
 
-- Aviso: eficiência **> 250%** desconsiderada nos indicadores; na tabela como **Verificar**.
-- Legenda “eficiência &gt; 100%” removida (só permanece o aviso de 250%).
+- Aviso: eficiência fora da faixa **0–199%** desconsiderada nos indicadores; na tabela como **Verificar**.
 
 ---
 

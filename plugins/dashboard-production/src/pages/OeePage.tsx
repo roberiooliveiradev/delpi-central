@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, CircleGauge, Download, Factory } from "lucide-react";
+import { Activity, CircleGauge, Factory } from "lucide-react";
 
 import { getProductionOee } from "../api/productionApi";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import type { DataTableColumn } from "../components/DataTable";
-import { DataTableSection } from "../components/DataTableSection";
+import { OeeAppointmentsTable } from "../components/OeeAppointmentsTable";
+import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
-import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
-import { OeeStatusBadge } from "../components/OeeStatusBadge";
-import { ProductTypeBadge } from "../components/ProductTypeBadge";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
@@ -29,7 +26,7 @@ import type {
 } from "../types/production";
 import type { ChartGranularity } from "../types/chart";
 import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
-import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
+import { formatPeriodLabel } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
@@ -153,93 +150,6 @@ export function OeePage({ pathname }: OeePageProps) {
       setExporting(false);
     }
   }, [apiParams, statusFilter, productTypeFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
-
-  const appointmentColumns = useMemo<DataTableColumn<ProductionOeeAppointmentItem>[]>(
-    () => [
-      {
-        key: "status",
-        header: "Status",
-        sortable: true,
-        render: (row) => <OeeStatusBadge status={row.status} />,
-      },
-      {
-        key: "branch",
-        header: "Filial",
-        sortable: true,
-        render: (row) => row.branch ?? "—",
-      },
-      {
-        key: "production_date",
-        header: "Data",
-        sortable: true,
-        render: (row) => formatDisplayDate(row.production_date),
-      },
-      {
-        key: "production_order",
-        header: "OP",
-        sortable: true,
-        render: (row) => row.production_order ?? "—",
-      },
-      {
-        key: "product_code",
-        header: "Produto",
-        sortable: true,
-        render: (row) => row.product_code ?? "—",
-      },
-      {
-        key: "product_description",
-        header: "Descrição",
-        className: "dp-table__col--wide",
-        sortable: true,
-        render: (row) => row.product_description ?? "—",
-      },
-      {
-        key: "product_type",
-        header: "Tipo",
-        sortable: true,
-        render: (row) => <ProductTypeBadge productType={row.product_type} />,
-      },
-      {
-        key: "operator_code",
-        header: "Operador",
-        sortable: true,
-        render: (row) => row.operator_code ?? "—",
-      },
-      {
-        key: "work_center",
-        header: "CT",
-        sortable: true,
-        render: (row) => row.work_center ?? "—",
-      },
-      {
-        key: "operation",
-        header: "Operação",
-        sortable: true,
-        render: (row) => row.operation ?? "—",
-      },
-      {
-        key: "resource_name",
-        header: "Recurso",
-        sortable: true,
-        render: (row) => row.resource_name || row.resource_code || "—",
-      },
-      {
-        key: "oee_pct",
-        header: "OEE (%)",
-        className: "dp-table__col--numeric",
-        sortable: true,
-        render: (row) => formatPercent(row.oee_pct),
-      },
-      {
-        key: "produced_qty",
-        header: "Qtd",
-        className: "dp-table__col--numeric",
-        sortable: true,
-        render: (row) => formatInteger(row.produced_qty),
-      },
-    ],
-    []
-  );
 
   const isBusy = loading;
   const hasData = data !== null;
@@ -416,56 +326,17 @@ export function OeePage({ pathname }: OeePageProps) {
         </div>
       </div>
 
-      <DataTableSection
-        title="Apontamentos de produção"
-        hint="Clique em uma linha para abrir roteiro, estrutura e análise de tempos."
-        columns={appointmentColumns}
-        rows={data?.appointments.items ?? []}
-        rowKey={(row) => String(row.appointment_id)}
+      <OeeAppointmentsTable
+        items={data?.appointments.items ?? []}
+        total={data?.appointments.total ?? 0}
+        page={data?.appointments.page ?? serverTable.query.page}
+        totalPages={data?.appointments.total_pages ?? 1}
+        onPageChange={serverTable.setPage}
         onRowClick={handleAppointmentRowClick}
+        onExportCsv={() => void handleExportAppointmentsCsv()}
+        exporting={exporting}
+        disabled={loading}
         loading={loading && !(data?.appointments.items?.length)}
-        refreshing={loading && Boolean(data?.appointments.items?.length)}
-        emptyMessage="Nenhum apontamento no período."
-        searchPlaceholder="Buscar OP, produto, CT, recurso…"
-        getSearchText={(row) =>
-          [
-            row.branch,
-            row.production_order,
-            row.product_code,
-            row.product_description,
-            row.work_center,
-            row.operation,
-            row.operator_code,
-            row.product_type,
-            row.resource_code,
-            row.resource_name,
-            row.status,
-          ]
-            .filter(Boolean)
-            .join(" ")
-        }
-        serverPagination={{
-          page: data?.appointments.page ?? serverTable.query.page,
-          pageSize: data?.appointments.page_size ?? PAGE_SIZE,
-          total: data?.appointments.total ?? 0,
-          onPageChange: serverTable.setPage,
-        }}
-        serverSort={{
-          sortKey: serverTable.query.sortKey,
-          sortDirection: serverTable.query.sortDirection,
-          onSortChange: serverTable.handleSortChange,
-        }}
-        headerActions={
-          <button
-            type="button"
-            className="dp-ghost-btn"
-            onClick={() => void handleExportAppointmentsCsv()}
-            disabled={exporting || (data?.appointments.total ?? 0) === 0}
-          >
-            <Download size={16} aria-hidden="true" />
-            {exporting ? "Exportando…" : "Exportar CSV"}
-          </button>
-        }
       />
     </div>
   );

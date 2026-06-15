@@ -24,6 +24,13 @@ export function formatDisplayDate(value: string | null | undefined): string {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+export function formatDisplayTime(value: string | null | undefined): string {
+  if (!value?.trim()) return "—";
+  const trimmed = value.trim();
+  const match = trimmed.match(/(\d{1,2}:\d{2})/);
+  return match ? match[1] : trimmed;
+}
+
 export function monthKeyToLabel(monthKey: string): string {
   const match = monthKey.match(/^(\d{4})-(\d{2})$/);
   if (!match) return monthKey;

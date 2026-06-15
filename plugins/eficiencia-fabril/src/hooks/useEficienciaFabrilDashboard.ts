@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchAllEficienciaFabrilItems } from "../api/fetchAllEficienciaFabrilItems";
-import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
+import { isProductionEfficiencyOutlier } from "../constants/businessRules";
 import { matchesShiftFilter } from "../constants/shifts";
 import type {
   EficienciaFabrilDashboardData,
@@ -63,7 +63,7 @@ function computeDashboardFromItems(
 ): EficienciaFabrilDashboardData {
   const okItems = scopedItems.filter((item) => item.status_registro === "OK");
   const indicatorItems = okItems.filter(
-    (item) => (item.eficiencia_percentual ?? 0) <= VERIFY_EFFICIENCY_THRESHOLD_PCT
+    (item) => !isProductionEfficiencyOutlier(item.eficiencia_percentual)
   );
 
   const efficiencyValues = indicatorItems
@@ -86,8 +86,8 @@ function computeDashboardFromItems(
   );
 
   const table_appointment_count = visibleItems.length;
-  const verify_appointment_count = visibleItems.filter(
-    (item) => (item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT
+  const verify_appointment_count = visibleItems.filter((item) =>
+    isProductionEfficiencyOutlier(item.eficiencia_percentual)
   ).length;
 
   const efficiencyByDayMap = new Map<string, { sum: number; count: number }>();

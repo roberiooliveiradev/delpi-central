@@ -70,9 +70,15 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos SH6010, filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento OEE — roteiro (SG2), estrutura (BOM) e análise de tempos previsto × realizado. |
 | GET | `/production/oee/series` | Série temporal de OEE por filial. |
+| GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação). |
+| GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk do período). |
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — apenas OPs de PA (`SB1010.B1_TIPO = 'PA'`). |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
+
+**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).
+
+**Listagem OEE (`GET /production/oee`):** cada item inclui `start_time`, `end_time`, `oee_pct`, `status` (`valid` / `outlier`). No MFE (`OeeAppointmentsTable`), layout alinhado ao plugin eficiência fabril — linha vermelha e badge **Verificar** para outliers; clique abre detalhe com roteiro e tempos.
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  
 **Compras ranking:** `GET /purchases/top-products` — mesma doc.
