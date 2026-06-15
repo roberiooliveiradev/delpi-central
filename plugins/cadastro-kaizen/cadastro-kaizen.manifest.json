@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "cadastro-kaizen",
+  "name": "Cadastro de Kaizens",
+  "description": "Cadastro operacional de melhorias contínuas (kaizen) — qualidade",
+  "icon": "sparkles-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/cadastro-kaizen",
+  "entry": "/apps/cadastro-kaizen/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "cadastro-kaizen.view",
+      "name": "Visualizar cadastro de Kaizens",
+      "description": "Consultar kaizens cadastrados no módulo qualidade",
+      "module": "cadastro-kaizen"
+    },
+    {
+      "code": "cadastro-kaizen.manage",
+      "name": "Gerenciar cadastro de Kaizens",
+      "description": "Criar, editar e excluir kaizens",
+      "module": "cadastro-kaizen"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/cadastro-kaizen",
+      "label": "Cadastro de Kaizens",
+      "permission": "cadastro-kaizen.view",
+      "icon": "sparkles-icon",
+      "order": 17,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -113,6 +113,32 @@ def test_quality_kaizen_summary_returns_meta(mock_build, _mock_enrich) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.quality_router.build_get_kaizen_by_id_use_case")
+def test_quality_kaizen_by_id_returns_meta(mock_build) -> None:
+    from app.domain.entities.kaizen.kaizen import KaizenDetail
+    from app.interface.http.routes.quality.quality_router import get_kaizen_by_id
+
+    mock_build.return_value.execute.return_value = KaizenDetail(
+        id="01-16/01/2026-App resina CT-16",
+        title="App resina CT-16",
+        date_implemented="16/01/2026",
+        status="implantado",
+        accountable="Ossamu",
+        sector="Producao",
+        investment=620.0,
+        daily_savings=7.54,
+        annual_savings=2752.10,
+        branch="01",
+    )
+
+    response = get_kaizen_by_id("01-16/01/2026-App resina CT-16")
+    _assert_meta(
+        _body(response),
+        operation_id="get_kaizen_by_id",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.quality.ppm_routes.build_get_produced_quantity_use_case")
 def test_quality_produced_quantity_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import get_produced_quantity

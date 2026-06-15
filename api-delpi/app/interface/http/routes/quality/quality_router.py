@@ -44,11 +44,15 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.routes.quality.audit_5s_operational_router import (
     router as audit_5s_operational_router,
 )
+from app.interface.http.routes.quality.kaizen_records_router import (
+    router as kaizen_records_router,
+)
 from app.interface.http.routes.quality.ppm_routes import router as ppm_router
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
 router.include_router(audit_5s_operational_router)
+router.include_router(kaizen_records_router)
 router.include_router(ppm_router)
 
 

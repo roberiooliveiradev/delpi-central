@@ -585,6 +585,21 @@ services:
     networks:
       - delpi-network
 
+  cadastro-kaizen:
+    build:
+      context: ../plugins/cadastro-kaizen
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-cadastro-kaizen
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   central-agendamento:
     build:
       context: ../plugins/central-agendamento
