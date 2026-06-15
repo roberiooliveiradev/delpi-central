@@ -1,3 +1,6 @@
+import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FieldLabel } from "./HelpTooltip";
+
 type ProductionFiltersProps = {
   dateStart: string;
   dateEnd: string;
@@ -19,26 +22,26 @@ export function ProductionFilters({
 }: ProductionFiltersProps) {
   return (
     <section className={`dp-filters-row ${className}`.trim()}>
-      <div className="dp-filter-box">
-        <label htmlFor="dp-date-start">Data inicial</label>
+      <label className="dp-filter-box" htmlFor="dp-date-start">
+        <FieldLabel label="Data inicial" hint={DP_HELP_TOOLTIPS.filters.dateStart} />
         <input
           id="dp-date-start"
           type="date"
           value={dateStart}
           onChange={(e) => onDateStartChange(e.target.value)}
         />
-      </div>
-      <div className="dp-filter-box">
-        <label htmlFor="dp-date-end">Data final</label>
+      </label>
+      <label className="dp-filter-box" htmlFor="dp-date-end">
+        <FieldLabel label="Data final" hint={DP_HELP_TOOLTIPS.filters.dateEnd} />
         <input
           id="dp-date-end"
           type="date"
           value={dateEnd}
           onChange={(e) => onDateEndChange(e.target.value)}
         />
-      </div>
-      <div className="dp-filter-box">
-        <label htmlFor="dp-branch">Filial</label>
+      </label>
+      <label className="dp-filter-box" htmlFor="dp-branch">
+        <FieldLabel label="Filial" hint={DP_HELP_TOOLTIPS.filters.branch} />
         <select
           id="dp-branch"
           value={branch}
@@ -48,7 +51,7 @@ export function ProductionFilters({
           <option value="01">01 — Matriz</option>
           <option value="02">02 — Filial</option>
         </select>
-      </div>
+      </label>
     </section>
   );
 }

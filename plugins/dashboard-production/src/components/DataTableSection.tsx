@@ -8,6 +8,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 import { DataTable, type DataTableColumn } from "./DataTable";
+import { HelpTooltip } from "./HelpTooltip";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
 
@@ -43,6 +44,7 @@ function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
 export type DataTableSectionProps<T> = {
   title: string;
   hint?: string;
+  titleHint?: string;
   columns: DataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -63,6 +65,7 @@ export type DataTableSectionProps<T> = {
 export function DataTableSection<T>({
   title,
   hint,
+  titleHint,
   columns,
   rows,
   rowKey,
@@ -129,7 +132,16 @@ export function DataTableSection<T>({
       aria-busy={loading || refreshing}
     >
       <div className="dp-table-section__header">
-        <h2 className="dp-section-title">{title}</h2>
+        <h2 className="dp-section-title">
+          {title}
+          {titleHint ? (
+            <HelpTooltip
+              content={titleHint}
+              ariaLabel={`Ajuda: ${title}`}
+              className="dp-section-title__help"
+            />
+          ) : null}
+        </h2>
         <div className="dp-table-section__meta-group">
           {hint ? <span className="dp-table-section__meta">{hint}</span> : null}
           <span className="dp-table-section__meta">

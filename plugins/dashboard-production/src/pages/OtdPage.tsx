@@ -12,6 +12,8 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { OtdStatusBadge } from "../components/OtdStatusBadge";
+import { FieldLabel } from "../components/HelpTooltip";
+import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { useProductionOtdSeries } from "../hooks/useProductionOtdSeries";
@@ -152,61 +154,29 @@ export function OtdPage({ pathname }: OtdPageProps) {
       {
         key: "status",
         header: "Status",
+        headerHint: DP_HELP_TOOLTIPS.otd.table.status,
         sortable: true,
         render: (row) => <OtdStatusBadge status={row.status} />,
       },
-      {
-        key: "branch",
-        header: "Filial",
-        sortable: true,
-        render: (row) => row.branch ?? "—",
-      },
-      {
-        key: "production_order",
-        header: "OP",
-        sortable: true,
-        render: (row) => row.production_order ?? "—",
-      },
-      {
-        key: "order_number",
-        header: "Nº OP",
-        sortable: true,
-        render: (row) => row.order_number ?? "—",
-      },
-      {
-        key: "order_item",
-        header: "Item",
-        sortable: true,
-        render: (row) => row.order_item ?? "—",
-      },
-      {
-        key: "product_code",
-        header: "Código",
-        sortable: true,
-        render: (row) => row.product_code ?? "—",
-      },
+      { key: "branch", header: "Filial", headerHint: DP_HELP_TOOLTIPS.otd.table.branch, sortable: true, render: (row) => row.branch ?? "—" },
+      { key: "production_order", header: "OP", headerHint: DP_HELP_TOOLTIPS.otd.table.productionOrder, sortable: true, render: (row) => row.production_order ?? "—" },
+      { key: "order_number", header: "Nº OP", headerHint: DP_HELP_TOOLTIPS.otd.table.orderNumber, sortable: true, render: (row) => row.order_number ?? "—" },
+      { key: "order_item", header: "Item", headerHint: DP_HELP_TOOLTIPS.otd.table.orderItem, sortable: true, render: (row) => row.order_item ?? "—" },
+      { key: "product_code", header: "Código", headerHint: DP_HELP_TOOLTIPS.otd.table.productCode, sortable: true, render: (row) => row.product_code ?? "—" },
       {
         key: "product_description",
         header: "Descrição",
+        headerHint: DP_HELP_TOOLTIPS.otd.table.productDescription,
         className: "dp-table__col--wide",
         sortable: true,
         render: (row) => row.product_description ?? "—",
       },
-      {
-        key: "due_date",
-        header: "Previsto",
-        sortable: true,
-        render: (row) => formatDisplayDate(row.due_date),
-      },
-      {
-        key: "finish_date",
-        header: "Finalização",
-        sortable: true,
-        render: (row) => formatDisplayDate(row.finish_date),
-      },
+      { key: "due_date", header: "Previsto", headerHint: DP_HELP_TOOLTIPS.otd.table.dueDate, sortable: true, render: (row) => formatDisplayDate(row.due_date) },
+      { key: "finish_date", header: "Finalização", headerHint: DP_HELP_TOOLTIPS.otd.table.finishDate, sortable: true, render: (row) => formatDisplayDate(row.finish_date) },
       {
         key: "days_diff",
         header: "Dias",
+        headerHint: DP_HELP_TOOLTIPS.otd.table.daysDiff,
         className: "dp-table__col--numeric",
         sortable: true,
         render: (row) => formatInteger(row.days_diff),
@@ -283,6 +253,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       <section className="dp-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="OTD"
+          titleHint={DP_HELP_TOOLTIPS.otd.kpiOtd}
           value={formatPercent(data?.summary.on_time_delivery_pct)}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
@@ -295,6 +266,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         />
         <KpiCard
           title="OPs no prazo"
+          titleHint={DP_HELP_TOOLTIPS.otd.kpiOnTime}
           value={formatInteger(data?.summary.on_time_ops)}
           subtitle={`De ${formatInteger(data?.summary.total_ops_finished)} OPs finalizadas`}
           icon={<Truck size={22} />}
@@ -302,6 +274,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         />
         <KpiCard
           title="OPs em atraso"
+          titleHint={DP_HELP_TOOLTIPS.otd.kpiLate}
           value={formatInteger(data?.summary.late_ops)}
           subtitle={formatPercent(data?.summary.late_percentage)}
           icon={<Truck size={22} />}
@@ -312,6 +285,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       <section className="dp-chart-section" aria-busy={otdSeries.loading}>
         <ChartCard
           title="Evolução do OTD (%)"
+          titleHint={DP_HELP_TOOLTIPS.otd.chartEvolution}
           hint={temporalChartHint}
         >
             <ChartToolbar
@@ -354,7 +328,9 @@ export function OtdPage({ pathname }: OtdPageProps) {
       </section>
 
       <div className="dp-ppm-toolbar" role="toolbar" aria-label="Filtro de status">
-        <div className="dp-ppm-toggle" role="group" aria-label="Status da OP">
+        <div className="dp-ppm-toolbar__group">
+          <FieldLabel label="Status da OP" hint={DP_HELP_TOOLTIPS.otd.filters.status} />
+          <div className="dp-ppm-toggle" role="group" aria-label="Status da OP">
           {[
             { value: "", label: "Todas" },
             { value: "on_time", label: "No prazo" },
@@ -371,11 +347,13 @@ export function OtdPage({ pathname }: OtdPageProps) {
               {option.label}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
       <DataTableSection
         title="Ordens de produção"
+        titleHint={DP_HELP_TOOLTIPS.otd.table.section}
         hint="Clique em uma linha para abrir o detalhe da OP e do produto."
         columns={orderColumns}
         rows={data?.orders.items ?? []}

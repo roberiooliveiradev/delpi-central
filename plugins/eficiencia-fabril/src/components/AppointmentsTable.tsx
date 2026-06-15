@@ -2,7 +2,9 @@ import { ArrowDown, ArrowUp, ArrowUpDown, FileSpreadsheet } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
+import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
+import { HelpTooltip } from "./HelpTooltip";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel } from "../utils/exportAppointmentsExcel";
@@ -11,21 +13,26 @@ import { formatCurrency, formatNumber, formatPercent } from "../utils/format";
 type SortableColumn = {
   id: AppointmentsSortColumn;
   label: string;
+  hint?: string;
 };
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
-  { id: "data_producao", label: "Data" },
-  { id: "hora_inicio", label: "Início" },
-  { id: "hora_final", label: "Fim" },
-  { id: "qtd_apontada", label: "Qtd. apontada" },
-  { id: "filial", label: "Filial" },
-  { id: "op", label: "OP" },
-  { id: "descricao_produto", label: "Descrição produto" },
-  { id: "centro_trabalho", label: "CT" },
-  { id: "operador", label: "Operador" },
-  { id: "eficiencia_percentual", label: "Eficiência" },
-  { id: "resultado_mod", label: "Resultado MOD" },
-  { id: "status", label: "Status" },
+  { id: "data_producao", label: "Data", hint: EF_HELP_TOOLTIPS.table.dataProducao },
+  { id: "hora_inicio", label: "Início", hint: EF_HELP_TOOLTIPS.table.horaInicio },
+  { id: "hora_final", label: "Fim", hint: EF_HELP_TOOLTIPS.table.horaFinal },
+  { id: "qtd_apontada", label: "Qtd. apontada", hint: EF_HELP_TOOLTIPS.table.qtdApontada },
+  { id: "filial", label: "Filial", hint: EF_HELP_TOOLTIPS.table.filial },
+  { id: "op", label: "OP", hint: EF_HELP_TOOLTIPS.table.op },
+  { id: "descricao_produto", label: "Descrição produto", hint: EF_HELP_TOOLTIPS.table.descricaoProduto },
+  { id: "centro_trabalho", label: "CT", hint: EF_HELP_TOOLTIPS.table.centroTrabalho },
+  { id: "operador", label: "Operador", hint: EF_HELP_TOOLTIPS.table.operador },
+  {
+    id: "eficiencia_percentual",
+    label: "Eficiência",
+    hint: EF_HELP_TOOLTIPS.table.eficienciaPercentual,
+  },
+  { id: "resultado_mod", label: "Resultado MOD", hint: EF_HELP_TOOLTIPS.table.resultadoMod },
+  { id: "status", label: "Status", hint: EF_HELP_TOOLTIPS.table.status },
 ];
 
 type AppointmentsTableProps = {
@@ -102,7 +109,14 @@ export function AppointmentsTable({
     <section className="ef-table-card" aria-label="Apontamentos">
       <header className="ef-table-card__header">
         <div>
-          <h2>Apontamentos</h2>
+          <h2>
+            Apontamentos
+            <HelpTooltip
+              content={EF_HELP_TOOLTIPS.table.section}
+              ariaLabel="Ajuda: Apontamentos"
+              className="ef-table-card__title-help"
+            />
+          </h2>
           <p>{total.toLocaleString("pt-BR")} registro(s) no período</p>
         </div>
         <div className="ef-table-card__actions">
@@ -154,7 +168,15 @@ export function AppointmentsTable({
                       disabled={disabled}
                       onClick={() => onSortChange(column.id)}
                     >
-                      <span>{column.label}</span>
+                      <span className="ef-sortable-th__label">
+                        <span>{column.label}</span>
+                        {column.hint ? (
+                          <HelpTooltip
+                            content={column.hint}
+                            ariaLabel={`Ajuda: ${column.label}`}
+                          />
+                        ) : null}
+                      </span>
                       <SortIndicator column={column.id} sortBy={sortBy} sortDir={sortDir} />
                     </button>
                   </th>

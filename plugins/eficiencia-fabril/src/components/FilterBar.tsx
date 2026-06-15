@@ -1,7 +1,9 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { EficienciaFabrilEfficiencyBand } from "../constants/efficiencyBands";
 import type { MultiSelectOption } from "./MultiSelectField";
+import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type FilterBarProps = {
   dateStart: string;
@@ -52,7 +54,7 @@ export function FilterBar({
     <section className="ef-filter-bar" aria-label="Filtros do dashboard">
       <div className="ef-filter-bar__grid">
         <label className="ef-field">
-          <span>Data início</span>
+          <FieldLabel label="Data início" hint={EF_HELP_TOOLTIPS.filters.dateStart} />
           <input
             type="date"
             value={dateStart}
@@ -62,7 +64,7 @@ export function FilterBar({
         </label>
 
         <label className="ef-field">
-          <span>Data fim</span>
+          <FieldLabel label="Data fim" hint={EF_HELP_TOOLTIPS.filters.dateEnd} />
           <input
             type="date"
             value={dateEnd}
@@ -73,6 +75,7 @@ export function FilterBar({
 
         <MultiSelectField
           label="Operador (nome)"
+          labelHint={EF_HELP_TOOLTIPS.filters.operator}
           emptyLabel="Todos"
           searchable
           options={employeeOptions}
@@ -83,6 +86,7 @@ export function FilterBar({
 
         <MultiSelectField
           label="OP"
+          labelHint={EF_HELP_TOOLTIPS.filters.op}
           emptyLabel="Todas"
           searchable
           options={opOptions}
@@ -93,6 +97,7 @@ export function FilterBar({
 
         <MultiSelectField
           label="Centro de trabalho"
+          labelHint={EF_HELP_TOOLTIPS.filters.workCenter}
           emptyLabel="Todos"
           searchable
           options={workCenterOptions}
@@ -103,6 +108,7 @@ export function FilterBar({
 
         <MultiSelectField
           label="Turno"
+          labelHint={EF_HELP_TOOLTIPS.filters.shift}
           emptyLabel="Todos"
           options={shiftOptions}
           selectedValues={shifts}
@@ -112,6 +118,7 @@ export function FilterBar({
 
         <MultiSelectField
           label="Faixa de eficiência"
+          labelHint={EF_HELP_TOOLTIPS.filters.efficiencyBands}
           emptyLabel="Todas"
           options={efficiencyBandOptions}
           selectedValues={efficiencyBands}

@@ -36,6 +36,7 @@ import {
 } from "../utils/format";
 import { ChartCard } from "./ChartCard";
 import { ChartModal } from "./ChartModal";
+import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type DashboardChartsProps = {
   charts: EficienciaFabrilCharts;
@@ -410,6 +411,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
       <div className="ef-charts-grid__row ef-charts-grid__row--3">
         <ChartCard
           title="Eficiência por dia"
+          titleHint={EF_HELP_TOOLTIPS.charts.efficiencyByDay}
           subtitle="Média diária (%)"
           actions={
             <button
@@ -427,6 +429,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
 
         <ChartCard
           title="Lucro vs prejuízo MOD por dia"
+          titleHint={EF_HELP_TOOLTIPS.charts.modByDay}
           subtitle="Valores agregados por data de produção"
           actions={
             <button
@@ -444,6 +447,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
 
         <ChartCard
           title="Top operadores (eficiência)"
+          titleHint={EF_HELP_TOOLTIPS.charts.topOperators}
           subtitle="10 maiores eficiências no período"
           actions={
             <button
@@ -463,6 +467,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
       <div className="ef-charts-grid__row ef-charts-grid__row--3">
         <ChartCard
           title="Eficiência por CT"
+          titleHint={EF_HELP_TOOLTIPS.charts.efficiencyByCt}
           subtitle="Média da eficiência (%) por centro de trabalho"
           actions={
             <button
@@ -480,6 +485,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
 
         <ChartCard
           title="Resultado MOD por CT"
+          titleHint={EF_HELP_TOOLTIPS.charts.modByCt}
           subtitle="Soma do resultado MOD por centro de trabalho"
           actions={
             <button
@@ -497,6 +503,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
 
         <ChartCard
           title="Horas por centro de trabalho"
+          titleHint={EF_HELP_TOOLTIPS.charts.hoursByCt}
           subtitle="Tempo real vs previsto (top 12 centros)"
           actions={
             <button

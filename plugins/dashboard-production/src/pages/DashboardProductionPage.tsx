@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { PRODUCTION_ROUTES } from "../constants/routes";
+import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -228,6 +229,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
       <section className="dp-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="MO direta / ROL"
+          titleHint={DP_HELP_TOOLTIPS.home.directLabor}
           value={formatPercent(directLabor?.direct_labor_cost_pct)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
@@ -240,6 +242,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         />
         <KpiCard
           title="Custo de produção / ROL"
+          titleHint={DP_HELP_TOOLTIPS.home.productionCost}
           value={formatPercent(productionCost?.production_cost_pct)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
@@ -252,6 +255,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         />
         <KpiCard
           title="Depreciação / ROL"
+          titleHint={DP_HELP_TOOLTIPS.home.depreciation}
           value={formatPercent(depreciation?.depreciation_pct)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
@@ -264,6 +268,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         />
         <KpiCard
           title="OEE"
+          titleHint={DP_HELP_TOOLTIPS.home.oee}
           value={formatPercent(oee?.overall_equipment_effectiveness_pct)}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
@@ -276,6 +281,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         />
         <KpiCard
           title="OTD — entrega no prazo"
+          titleHint={DP_HELP_TOOLTIPS.home.otd}
           value={formatPercent(otd?.on_time_delivery_pct)}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
@@ -290,7 +296,11 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
 
       <section className="dp-charts-grid">
         <div className="dp-chart-section" aria-busy={isOeeChartBusy}>
-          <ChartCard title="Evolução do OEE (%)" hint={temporalChartHint}>
+          <ChartCard
+            title="Evolução do OEE (%)"
+            titleHint={DP_HELP_TOOLTIPS.home.oeeEvolution}
+            hint={temporalChartHint}
+          >
             <ChartToolbar
               idPrefix="oee"
               granularity={granularity}
@@ -348,6 +358,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <div className="dp-chart-section" aria-busy={isOtdChartBusy}>
           <ChartCard
             title="Evolução do OTD (%)"
+            titleHint={DP_HELP_TOOLTIPS.home.otdEvolution}
             hint="OPs de PA finalizadas no prazo (C2_DATRF ≤ C2_DATPRF). Clique em um ponto para filtrar o período."
           >
             <ChartToolbar
@@ -408,6 +419,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
       <section className="dp-chart-section">
         <ChartCard
           title="Comparativo dos indicadores (%)"
+          titleHint={DP_HELP_TOOLTIPS.home.comparisonChart}
           hint="Custos sobre ROL e percentuais operacionais no mesmo período."
         >
           {hasChartValues ? (

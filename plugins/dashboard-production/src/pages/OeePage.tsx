@@ -17,6 +17,8 @@ import {
   formatEfficiencyBandsQuery,
   type ProductionEfficiencyBand,
 } from "../constants/efficiencyBands";
+import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FieldLabel } from "../components/HelpTooltip";
 import {
   PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
@@ -188,24 +190,28 @@ export function OeePage({ pathname }: OeePageProps) {
       {
         key: "production_date",
         header: "Data",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.productionDate,
         sortable: true,
         render: (row) => formatDisplayDate(row.production_date),
       },
       {
         key: "start_time",
         header: "Início",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.startTime,
         sortable: true,
         render: (row) => formatDisplayTime(row.start_time),
       },
       {
         key: "end_time",
         header: "Fim",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.endTime,
         sortable: true,
         render: (row) => formatDisplayTime(row.end_time),
       },
       {
         key: "produced_qty",
         header: "Qtd. apontada",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.producedQty,
         className: "dp-table__col--numeric",
         sortable: true,
         render: (row) => formatNumber(row.produced_qty, 3),
@@ -213,18 +219,21 @@ export function OeePage({ pathname }: OeePageProps) {
       {
         key: "branch",
         header: "Filial",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.branch,
         sortable: true,
         render: (row) => row.branch ?? "—",
       },
       {
         key: "production_order",
         header: "OP",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.productionOrder,
         sortable: true,
         render: (row) => row.production_order ?? "—",
       },
       {
         key: "product_description",
         header: "Descrição produto",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.productDescription,
         className: "dp-table__col--wide",
         sortable: true,
         render: (row) => row.product_description?.trim() || row.product_code || "—",
@@ -232,18 +241,21 @@ export function OeePage({ pathname }: OeePageProps) {
       {
         key: "work_center",
         header: "CT",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.workCenter,
         sortable: true,
         render: (row) => row.work_center ?? "—",
       },
       {
         key: "operator_code",
         header: "Operador",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.operatorCode,
         sortable: true,
         render: (row) => row.operator_code ?? "—",
       },
       {
         key: "oee_pct",
         header: "Eficiência",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.oeePct,
         className: "dp-table__col--numeric",
         sortable: true,
         render: (row) => formatOeePercent(row.oee_pct),
@@ -251,6 +263,7 @@ export function OeePage({ pathname }: OeePageProps) {
       {
         key: "status",
         header: "Status",
+        headerHint: DP_HELP_TOOLTIPS.oee.table.status,
         sortable: true,
         render: (row) => <OeeAppointmentStatusCell row={row} />,
       },
@@ -326,6 +339,7 @@ export function OeePage({ pathname }: OeePageProps) {
       <section className="dp-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="OEE"
+          titleHint={DP_HELP_TOOLTIPS.oee.kpiOee}
           value={formatPercent(data?.summary.oee_pct)}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
@@ -338,6 +352,7 @@ export function OeePage({ pathname }: OeePageProps) {
         />
         <KpiCard
           title="Apontamentos"
+          titleHint={DP_HELP_TOOLTIPS.oee.kpiAppointments}
           value={formatInteger(data?.summary.total_appointments)}
           subtitle={`${formatInteger(data?.summary.outlier_appointments)} a avaliar (Verificar)`}
           icon={<Factory size={22} />}
@@ -345,6 +360,7 @@ export function OeePage({ pathname }: OeePageProps) {
         />
         <KpiCard
           title="Na faixa (indicador)"
+          titleHint={DP_HELP_TOOLTIPS.oee.kpiValid}
           value={formatInteger(data?.summary.valid_appointments)}
           subtitle={formatPercent(data?.summary.oee_pct)}
           icon={<Activity size={22} />}
@@ -353,7 +369,11 @@ export function OeePage({ pathname }: OeePageProps) {
       </section>
 
       <section className="dp-chart-section" aria-busy={oeeSeries.loading}>
-        <ChartCard title="Evolução do OEE (%)" hint={temporalChartHint}>
+        <ChartCard
+          title="Evolução do OEE (%)"
+          titleHint={DP_HELP_TOOLTIPS.oee.chartEvolution}
+          hint={temporalChartHint}
+        >
           <ChartToolbar
             idPrefix="oee-detail"
             granularity={granularity}
@@ -394,7 +414,12 @@ export function OeePage({ pathname }: OeePageProps) {
       </section>
 
       <div className="dp-ppm-toolbar" role="toolbar" aria-label="Filtros de apontamento">
-        <div className="dp-ppm-toggle" role="group" aria-label="Tipo de produto">
+        <div className="dp-ppm-toolbar__group">
+          <FieldLabel
+            label="Tipo de produto"
+            hint={DP_HELP_TOOLTIPS.oee.filters.productType}
+          />
+          <div className="dp-ppm-toggle" role="group" aria-label="Tipo de produto">
           {[
             { value: "", label: "PA e PI" },
             { value: "PA", label: "PA" },
@@ -411,10 +436,12 @@ export function OeePage({ pathname }: OeePageProps) {
               {option.label}
             </button>
           ))}
+          </div>
         </div>
 
         <MultiSelectField
           label="Faixa de eficiência"
+          labelHint={DP_HELP_TOOLTIPS.oee.filters.efficiencyBands}
           options={EFFICIENCY_BAND_FILTER_OPTIONS}
           selectedValues={efficiencyBandFilter}
           onChange={(values) => setEfficiencyBandFilter(values as ProductionEfficiencyBand[])}
@@ -434,6 +461,7 @@ export function OeePage({ pathname }: OeePageProps) {
 
       <DataTableSection
         title="Apontamentos de produção"
+        titleHint={DP_HELP_TOOLTIPS.oee.table.section}
         hint="Clique em uma linha para abrir roteiro, estrutura e análise de tempos."
         columns={appointmentColumns}
         rows={data?.appointments.items ?? []}

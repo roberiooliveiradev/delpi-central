@@ -36,6 +36,7 @@ import { formatPeriodLabel } from "../utils/dates";
 import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
 import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
 import { EFFICIENCY_BAND_FILTER_OPTIONS } from "../constants/efficiencyBands";
+import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   buildEmployeeFilterOptions,
   buildOpFilterOptions,
@@ -248,6 +249,7 @@ function DashboardEficienciaFabrilContent({
           <section className="ef-kpi-grid" aria-label="Indicadores">
             <KpiCard
               label="Eficiência"
+              titleHint={EF_HELP_TOOLTIPS.kpis.efficiency}
               value={formatPercent(summary.weighted_efficiency_pct)}
               hint="Média da eficiência (%)"
               tone={
@@ -260,18 +262,21 @@ function DashboardEficienciaFabrilContent({
             />
             <KpiCard
               label="Apontamentos"
+              titleHint={EF_HELP_TOOLTIPS.kpis.appointments}
               value={summary.table_appointment_count.toLocaleString("pt-BR")}
               hint={`${summary.verify_appointment_count.toLocaleString("pt-BR")} fora da faixa · ${summary.low_efficiency_appointment_count.toLocaleString("pt-BR")} eficiência baixa`}
               icon={<Factory size={22} />}
             />
             <KpiCard
               label="Resultado MOD"
+              titleHint={EF_HELP_TOOLTIPS.kpis.modResult}
               value={formatCurrency(summary.total_mod_result)}
               tone={(summary.total_mod_result ?? 0) >= 0 ? "positive" : "negative"}
               icon={<TrendingUp size={22} />}
             />
             <KpiCard
               label="Horas ganhas/perdidas"
+              titleHint={EF_HELP_TOOLTIPS.kpis.hoursGainedLost}
               value={formatHoursKpi(summary.total_hours_gained_lost, 2)}
               hint="Positivo = economia de tempo"
               icon={<Clock3 size={22} />}
