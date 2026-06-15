@@ -7,26 +7,117 @@ from app.application.dto.production.get_production_otd_request import (
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
 from app.domain.entities.production.on_time_delivery import OnTimeDelivery
-from app.domain.ports.production.on_time_delivery_repository_port import OnTimeDeliveryRepositoryPort
+from app.domain.ports.production.on_time_delivery_repository_port import (
+    OnTimeDeliveryRepositoryPort,
+)
+
+_SC2_PA_JOIN = """
+    INNER JOIN SB1010 P_PA
+        ON P_PA.B1_COD = OP.C2_PRODUTO
+       AND P_PA.D_E_L_E_T_ = ''
+       AND P_PA.B1_TIPO = 'PA'
+"""
+
+_LIST_OPS_CTE = f"""
+    OPS_KEYS AS (
+        SELECT
+            OP.C2_FILIAL AS branch,
+            RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
+            RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
+            OP.C2_DATPRF,
+            OP.C2_DATRF,
+            MIN(RTRIM(LTRIM(OP.C2_PRODUTO))) AS product_code
+        FROM SC2010 OP
+        {{pa_join}}
+        WHERE {{where_clause}}
+        GROUP BY
+            OP.C2_FILIAL,
+            OP.C2_NUM,
+            OP.C2_ITEM,
+            OP.C2_DATPRF,
+            OP.C2_DATRF
+    ),
+    OPS_FINALIZADAS AS (
+        SELECT
+            k.branch,
+            k.order_number,
+            k.order_item,
+            k.product_code,
+            RTRIM(LTRIM(P_PA.B1_DESC)) AS product_description,
+            CONVERT(VARCHAR(10), CONVERT(DATE, k.C2_DATPRF, 112), 23) AS due_date,
+            CONVERT(VARCHAR(10), CONVERT(DATE, k.C2_DATRF, 112), 23) AS finish_date,
+            DATEDIFF(
+                DAY,
+                CONVERT(DATE, k.C2_DATPRF, 112),
+                CONVERT(DATE, k.C2_DATRF, 112)
+            ) AS days_diff,
+            CASE
+                WHEN CONVERT(DATE, k.C2_DATRF, 112) <= CONVERT(DATE, k.C2_DATPRF, 112)
+                THEN 'on_time'
+                ELSE 'late'
+            END AS status
+        FROM OPS_KEYS k
+        LEFT JOIN SB1010 P_PA
+            ON P_PA.B1_COD = k.product_code
+           AND P_PA.D_E_L_E_T_ = ''
+    )
+"""
 
 
 class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
 
-    def get_on_time_delivery(
+    def _build_base_where(
         self,
-        request: ProductionRequest
-    ) -> OnTimeDelivery:
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> tuple[str, tuple]:
         qb = QueryBuilder()
         qb.raw("OP.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("OP.C2_FILIAL", request.branch)
+        if branch:
+            qb.eq("OP.C2_FILIAL", branch)
 
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
-        qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)
+        qb.date_range("OP.C2_DATPRF", start_date, end_date)
 
-        where_clause, where_params = qb.build()
+        return qb.build()
+
+    @staticmethod
+    def _status_filter_clause(status: str | None) -> str:
+        normalized = (status or "").strip().lower()
+        if normalized == "on_time":
+            return "WHERE status = 'on_time'"
+        if normalized == "late":
+            return "WHERE status = 'late'"
+        return ""
+
+    @staticmethod
+    def _list_order_clause(status: str | None) -> str:
+        normalized = (status or "").strip().lower()
+        if normalized == "late":
+            return """
+                ORDER BY days_diff DESC, finish_date DESC, order_number ASC
+            """
+        if normalized == "on_time":
+            return """
+                ORDER BY finish_date DESC, order_number ASC, order_item ASC
+            """
+        return """
+            ORDER BY due_date DESC, order_number ASC, order_item ASC
+        """
+
+    def get_on_time_delivery(
+        self,
+        request: ProductionRequest,
+    ) -> OnTimeDelivery:
+        where_clause, where_params = self._build_base_where(
+            branch=request.branch,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
 
         sql = f"""
             WITH OPS_FINALIZADAS AS (
@@ -35,6 +126,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_DATPRF,
                     OP.C2_DATRF
                 FROM SC2010 OP
+                {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )
             SELECT
@@ -75,19 +167,13 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
 
     def list_on_time_delivery_by_branch(
         self,
-        request: ProductionRequest
+        request: ProductionRequest,
     ) -> list[dict]:
-        qb = QueryBuilder()
-        qb.raw("OP.D_E_L_E_T_ = ''")
-
-        if request.branch:
-            qb.eq("OP.C2_FILIAL", request.branch)
-
-        qb.raw("OP.C2_DATPRF IS NOT NULL")
-        qb.raw("OP.C2_DATRF IS NOT NULL")
-        qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)
-
-        where_clause, where_params = qb.build()
+        where_clause, where_params = self._build_base_where(
+            branch=request.branch,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
 
         sql = f"""
             WITH OPS_FINALIZADAS AS (
@@ -97,6 +183,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_DATPRF,
                     OP.C2_DATRF
                 FROM SC2010 OP
+                {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )
             SELECT
@@ -121,81 +208,36 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
 
         return rows or []
 
-    def _build_orders_where(
-        self,
-        request: GetProductionOtdRequest,
-    ) -> tuple[str, tuple]:
-        qb = QueryBuilder()
-        qb.raw("OP.D_E_L_E_T_ = ''")
-
-        if request.branch:
-            qb.eq("OP.C2_FILIAL", request.branch)
-
-        qb.raw("OP.C2_DATPRF IS NOT NULL")
-        qb.raw("OP.C2_DATRF IS NOT NULL")
-        qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)
-
-        status = (request.status or "").strip().lower()
-        if status == "on_time":
-            qb.raw("OP.C2_DATRF <= OP.C2_DATPRF")
-        elif status == "late":
-            qb.raw("OP.C2_DATRF > OP.C2_DATPRF")
-
-        return qb.build()
-
     def list_production_orders_otd(
         self,
         request: GetProductionOtdRequest,
     ) -> Page[dict]:
         paging = paginate(request.page, request.page_size)
-        where_clause, where_params = self._build_orders_where(request)
+        where_clause, where_params = self._build_base_where(
+            branch=request.branch,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+        status_clause = self._status_filter_clause(request.status)
+        order_clause = self._list_order_clause(request.status)
+        list_cte = _LIST_OPS_CTE.format(
+            pa_join=_SC2_PA_JOIN,
+            where_clause=where_clause,
+        )
 
         count_sql = f"""
-            WITH OPS_FINALIZADAS AS (
-                SELECT DISTINCT
-                    OP.C2_FILIAL,
-                    OP.C2_NUM,
-                    OP.C2_ITEM
-                FROM SC2010 OP
-                WHERE {where_clause}
-            )
+            WITH {list_cte}
             SELECT COUNT(*) AS total
             FROM OPS_FINALIZADAS
+            {status_clause}
         """
 
         list_sql = f"""
-            WITH OPS_FINALIZADAS AS (
-                SELECT DISTINCT
-                    OP.C2_FILIAL AS branch,
-                    RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
-                    RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
-                    RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
-                    RTRIM(LTRIM(P.B1_DESC)) AS product_description,
-                    CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRF, 112), 23) AS due_date,
-                    CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATRF, 112), 23) AS finish_date,
-                    DATEDIFF(
-                        DAY,
-                        CONVERT(DATE, OP.C2_DATPRF, 112),
-                        CONVERT(DATE, OP.C2_DATRF, 112)
-                    ) AS days_diff,
-                    CASE
-                        WHEN CONVERT(DATE, OP.C2_DATRF, 112) <= CONVERT(DATE, OP.C2_DATPRF, 112)
-                        THEN 'on_time'
-                        ELSE 'late'
-                    END AS status
-                FROM SC2010 OP
-                LEFT JOIN SB1010 P
-                    ON P.B1_COD = OP.C2_PRODUTO
-                   AND P.D_E_L_E_T_ = ''
-                WHERE {where_clause}
-            )
+            WITH {list_cte}
             SELECT *
             FROM OPS_FINALIZADAS
-            ORDER BY
-                CASE WHEN status = 'late' THEN 0 ELSE 1 END,
-                days_diff DESC,
-                finish_date DESC,
-                order_number ASC
+            {status_clause}
+            {order_clause}
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 

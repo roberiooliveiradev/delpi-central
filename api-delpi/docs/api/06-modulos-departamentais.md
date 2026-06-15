@@ -67,8 +67,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/production_cost_pct` | Custo de produção % ROL. |
 | GET | `/production/depreciation_pct` | Depreciação % ROL. |
 | GET | `/production/overall_equipment_effectiveness_pct` | OEE. |
-| GET | `/production/on_time_delivery_pct` | On-Time Delivery (OTD produção) — percentual agregado. |
-| GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs e filtro `status` (`on_time` / `late`). |
+| GET | `/production/on_time_delivery_pct` | OTD produção (%) — apenas OPs de PA (`SB1010.B1_TIPO = 'PA'`). |
+| GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  

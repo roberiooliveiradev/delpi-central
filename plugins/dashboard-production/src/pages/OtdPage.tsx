@@ -161,12 +161,15 @@ export function OtdPage({ pathname }: OtdPageProps) {
         render: (row) => row.order_item ?? "—",
       },
       {
-        key: "product",
-        header: "Produto",
+        key: "product_code",
+        header: "Código",
+        render: (row) => row.product_code ?? "—",
+      },
+      {
+        key: "product_description",
+        header: "Descrição",
         className: "dp-table__col--wide",
-        render: (row) =>
-          `${row.product_code ?? ""} ${row.product_description ?? ""}`.trim() ||
-          "—",
+        render: (row) => row.product_description ?? "—",
       },
       {
         key: "due",
@@ -205,7 +208,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
     <div className="dashboard-production dashboard-page">
       <FilterBar
         title="OTD — Entrega no prazo"
-        subtitle="Ordens de produção finalizadas no prazo (SC2010)"
+        subtitle="OPs de produto acabado (PA) finalizadas no prazo — SC2010 × SB1010"
         currentPath={pathname ?? PRODUCTION_ROUTES.otd}
         filterState={filterState}
         dateStart={dateStart}
@@ -341,7 +344,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
       <DataTableSection
         title="Ordens de produção"
-        hint="OPs finalizadas com data prevista e data de encerramento (C2_DATPRF / C2_DATRF)."
+        hint="OPs de PA (uma linha por filial + OP + item). Ordenação por data prevista."
         columns={orderColumns}
         rows={data?.orders.items ?? []}
         rowKey={(row) =>

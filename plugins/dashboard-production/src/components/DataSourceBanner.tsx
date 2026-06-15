@@ -17,7 +17,7 @@ export function DataSourceBanner() {
         <div>
           <strong>TOTVS Protheus</strong>
           <p>
-            OEE (apontamentos SH6010) e OTD (ordens SC2010) no intervalo
+            OEE (apontamentos SH6010) e OTD de PA (SC2010 + SB1010) no intervalo
             filtrado.
           </p>
         </div>

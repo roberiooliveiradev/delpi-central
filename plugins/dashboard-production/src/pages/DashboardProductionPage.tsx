@@ -348,7 +348,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <div className="dp-chart-section" aria-busy={isOtdChartBusy}>
           <ChartCard
             title="Evolução do OTD (%)"
-            hint="Ordens finalizadas no prazo (C2_DATRF ≤ C2_DATPRF). Clique em um ponto para filtrar o período."
+            hint="OPs de PA finalizadas no prazo (C2_DATRF ≤ C2_DATPRF). Clique em um ponto para filtrar o período."
           >
             <ChartToolbar
               idPrefix="otd"
