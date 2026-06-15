@@ -35,6 +35,7 @@ def test_is_valid_production_efficiency_pct(value, expected) -> None:
         (49.9, True),
         (50, False),
         (0, True),
+        (-1, False),
         (199, False),
         (250, False),
         (None, False),

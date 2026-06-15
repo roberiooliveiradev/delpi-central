@@ -28,7 +28,8 @@ export function isOeeAppointmentOutlier(
   status: string | null | undefined,
   oeePct: number | null | undefined
 ): boolean {
-  if (status === "outlier") return true;
-  if (status === "valid") return false;
-  return isProductionEfficiencyOutlier(oeePct);
+  if (oeePct != null && !Number.isNaN(oeePct)) {
+    return isProductionEfficiencyOutlier(oeePct);
+  }
+  return status === "outlier";
 }

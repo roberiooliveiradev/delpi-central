@@ -1135,6 +1135,11 @@
   white-space: nowrap;
 }
 
+.dashboard-production .dp-table__col--status {
+  min-width: 8.5rem;
+  white-space: nowrap;
+}
+
 .dashboard-production .dp-table__empty {
   text-align: center;
   color: var(--dp-text-muted);
@@ -1243,6 +1248,8 @@
   background: color-mix(in srgb, var(--dp-accent) 12%, var(--dp-card-bg));
   color: var(--dp-title, var(--secundary, #003866));
   font-size: 0.75rem;
+  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .dashboard-production .dp-appointment-badge--danger {

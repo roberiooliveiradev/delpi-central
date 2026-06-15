@@ -264,6 +264,7 @@ export function OeePage({ pathname }: OeePageProps) {
         key: "status",
         header: "Status",
         headerHint: DP_HELP_TOOLTIPS.oee.table.status,
+        className: "dp-table__col--status",
         sortable: true,
         render: (row) => <OeeAppointmentStatusCell row={row} />,
       },
