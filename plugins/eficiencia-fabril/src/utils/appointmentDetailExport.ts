@@ -89,7 +89,7 @@ export function buildAppointmentDetailExportDocument(
         ["Tempo previsto", formatHours(timeAnalysis.planned_hours)],
         ["Tempo real", formatHours(timeAnalysis.real_hours)],
         ["Fonte tempo real", formatRealHoursSource(timeAnalysis.real_hours_source)],
-        ["Variação (real − previsto)", formatHours(timeAnalysis.time_variance_hours)],
+        ["Variação (real - previsto)", formatHours(timeAnalysis.time_variance_hours)],
         ["Ganho/perda de tempo", formatHours(timeAnalysis.time_gained_lost_hours)],
         ["Eficiência (tempos)", formatPercent(timeAnalysis.efficiency_from_times_pct)],
         ["OEE registrado", formatPercent(timeAnalysis.oee_pct)],
