@@ -76,7 +76,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
 
-**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).
+**Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 
 **Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` na listagem = `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real); `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
 
@@ -335,3 +335,14 @@ Resposta `data`: `{ "created", "skipped", "errors", "items": [...] }`.
 Código: `ImportKaizensFromSheetUseCase`, `kaizen_sheet_import_mapper.py`, `kaizen_records_router.py`.
 
 Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.
+
+#### Revisões temporais (planejado — Fase 6)
+
+> Especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
+
+O cadastro atual guarda só o **estado corrente** em `quality.kaizens`. A evolução prevê `quality.kaizen_revisions` com snapshots por alteração (`effective_from` / `effective_until`), para:
+
+- Calcular `total_savings` e `total_kaizens` em `GET /quality/kaizens/summary` com fidelidade histórica
+- Auditar mudanças de status e economia na UI
+
+Rotas planejadas: `GET /quality/kaizens/records/{id}/revisions`, `GET .../at?date=YYYY-MM-DD`. O `PUT` passará a aceitar `effective_from` e `change_reason` quando campos de cálculo mudarem.

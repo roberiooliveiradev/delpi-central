@@ -13,7 +13,7 @@ Tela única no Portal (**Minha DELPI**) para líderes de produção acompanharem
 - KPIs de eficiência, apontamentos, resultado MOD e horas ganhas/perdidas;
 - cinco gráficos analíticos (layout 3 + 2);
 - tabela paginada de apontamentos com **ordenação por coluna** e exportação Excel;
-- filtros com aplicação **automática e local** (sem botão «Aplicar»), exceto mudança de período fora do cache ou botão **Atualizar**;
+- filtros com aplicação **automática e local** (sem botão «Aplicar»), exceto mudança de período fora do cache, botão **Atualizar** ou **auto-refresh a cada 5 min** com aba visível;
 - detalhe do apontamento (clique na linha) com estrutura do produto em **árvore** e análise de tempos (`time_analysis.findings`).
 
 **URL:** `/apps/eficiencia-fabril`  
@@ -124,7 +124,7 @@ Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_P
 | ~~Somente OK~~ | Oculto (sempre OK na tabela) |
 | ~~Aplicar filtros~~ | Removido — filtros automáticos |
 
-**Atualizar** (cabeçalho): recarrega dados do período atual da API.
+**Atualizar** (cabeçalho): recarrega dados do período atual da API. Com a aba visível, o mesmo refresh ocorre **automaticamente a cada 5 minutos** (`useAutoRefresh`).
 
 ---
 
@@ -164,6 +164,7 @@ Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, Descrição produto, CT,
 ## 7.1 Detalhe do apontamento
 
 - Roteiro, tempos, KPIs e **`time_analysis.findings`** (mesmo contrato do OEE).
+- Campos `formula_planned`, `formula_real`, `formula_efficiency`: textos em linguagem operacional (sem `H6_*` / códigos de tabela).
 - Estrutura do produto exibida em **árvore** (`ProductStructureTree` / `RichTree`), não tabela plana.
 
 ---

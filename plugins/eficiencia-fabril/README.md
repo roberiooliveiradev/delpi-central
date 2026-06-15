@@ -3,7 +3,7 @@
 Microfrontend (Module Federation) para dashboard de eficiência operacional e resultado MOD dos apontamentos de produção (view TOTVS `dbo.vw_Apontamentos_Eficiencia`).
 
 Documentação completa: [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/) — em especial [ESPECIFICACAO-PLUGIN.md](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/ESPECIFICACAO-PLUGIN.md).  
-Faixa válida de eficiência (alinhada ao OEE): [regras-faixa-eficiencia-producao.md](../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md).
+Faixa válida e changelog jun/2026: [regras-faixa-eficiencia-producao.md](../../api-delpi/docs/api/regras-faixa-eficiencia-producao.md), [producao-eficiencia-changelog-jun2026.md](../../api-delpi/docs/api/producao-eficiencia-changelog-jun2026.md).
 
 ---
 
@@ -13,9 +13,9 @@ Faixa válida de eficiência (alinhada ao OEE): [regras-faixa-eficiencia-produca
 - KPIs: eficiência (média simples), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
 - Tabela paginada com **ordenação por coluna** + exportação Excel (dados filtrados e ordenados em memória)
-- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos, estrutura em **árvore**, `time_analysis.findings`)
+- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos com **textos de cálculo legíveis**, estrutura em **árvore**, `time_analysis.findings`)
 - Filtros **automáticos** (sem botão aplicar): período, OP, operador, CT e **turno (multiseleção)**; debounce em campos de texto
-- Refetch da API só quando o período sai do intervalo já carregado ou ao clicar **Atualizar**
+- Refetch da API quando o período sai do intervalo já carregado, ao clicar **Atualizar** ou **automaticamente a cada 5 min** com a aba visível (`useAutoRefresh`)
 - Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência fora da faixa **0–199%** fora dos indicadores (status **Verificar** na tabela)
 
 ---
@@ -86,7 +86,7 @@ TOKEN="<jwt>" ../../scripts/homologacao/check-eficiencia-fabril.sh
 src/
   api/              # HTTP + fetch bulk appointments
   components/       # FilterBar, ShiftMultiSelect, KPIs, gráficos, tabela, árvore de estrutura
-  hooks/            # filtros (auto-aplicação + debounce) + dashboard (cache + agregação local)
+  hooks/            # filtros (auto-aplicação + debounce) + dashboard (cache + agregação local) + useAutoRefresh (5 min)
   pages/            # Dashboard + detalhe do apontamento
   constants/        # regras (faixa 0–199%, turnos, cores de gráfico)
   utils/            # formatação, ordenação da tabela e export Excel

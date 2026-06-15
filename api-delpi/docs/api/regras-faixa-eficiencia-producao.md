@@ -21,6 +21,7 @@ A faixa **não** vem de documentação formal do Protheus — é convenção ope
 | Abr/2026 | OEE alterado para **0–199%** (commit `30cb0c36`). |
 | Mai/2026 | Eficiência Fabril MVP usava teto **250%** (`max_efficiency_indicator_pct`). |
 | Jun/2026 | Faixa unificada em **0–199%** para OEE e Eficiência Fabril; constante compartilhada na API. |
+| Jun/2026 | Eficiência passa a ser **só por tempos** (fim de `H6_ZEFICI`); fórmulas legíveis em `time_analysis`; auto-refresh 5 min nos dashboards — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md). |
 
 ## Constantes (fonte de verdade)
 
@@ -73,6 +74,7 @@ Consumidores:
 - **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
 - **Métrica do painel:** `EFICIENCIA_PERCENTUAL` — média simples na faixa 0–199% (tempo previsto ÷ tempo real).
 - Detalhe: `GET /production/oee/appointments/{id}` — SH6010 com roteiro, tempos e eficiência calculada pelos mesmos critérios.
+- Campos `time_analysis.formula_*`: textos em linguagem operacional (sem códigos Protheus) — ver changelog jun/2026.
 
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 
@@ -96,6 +98,7 @@ pytest tests/test_get_eficiencia_fabril_dashboard_use_case.py -q
 ## Documentação relacionada
 
 - [06-modulos-departamentais.md](./06-modulos-departamentais.md) — rotas `/production/oee` e eficiência fabril
+- [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh
 - [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/)
 - `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md` — filtro `status` do OEE
 
