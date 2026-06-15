@@ -53,6 +53,7 @@ export type DataTableSectionProps<T> = {
   emptyMessage?: string;
   pageSize?: number;
   searchPlaceholder?: string;
+  searchHint?: string;
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
@@ -73,6 +74,7 @@ export function DataTableSection<T>({
   emptyMessage = "Nenhum registro encontrado.",
   pageSize = DEFAULT_PAGE_SIZE,
   searchPlaceholder = "Buscar na tabela…",
+  searchHint,
   getSearchText,
   hideSearch = false,
   serverPagination,
@@ -190,6 +192,13 @@ export function DataTableSection<T>({
                   aria-label="Filtrar registros da tabela"
                 />
               </div>
+              {searchHint ? (
+                <HelpTooltip
+                  content={searchHint}
+                  ariaLabel="Ajuda: busca na tabela"
+                  className="lmps-table-search__help"
+                />
+              ) : null}
             </div>
           ) : null}
 

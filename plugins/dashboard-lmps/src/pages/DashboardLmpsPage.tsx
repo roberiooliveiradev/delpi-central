@@ -622,6 +622,7 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
             : "Nenhum registro encontrado para os filtros informados."
         }
         searchPlaceholder="Buscar proposta, descrição, status…"
+        searchHint={LMPS_HELP_TOOLTIPS.tableSearch}
         getSearchText={(row) =>
           [
             row.branch,

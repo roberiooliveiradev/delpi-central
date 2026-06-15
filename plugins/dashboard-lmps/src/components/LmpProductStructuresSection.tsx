@@ -1,6 +1,7 @@
 import { Boxes } from "lucide-react";
 
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { StructureLegend } from "./StructureLegend";
 import { DetailCard } from "./DetailCard";
 import { ProductStructureTree } from "./ProductStructureTree";
 import type { LmpProductStructureEntry } from "../hooks/useLmpProductStructures";
@@ -37,6 +38,8 @@ export function LmpProductStructuresSection({
       icon={<Boxes size={20} aria-hidden />}
       className="lmps-detail-card--full"
     >
+      <StructureLegend />
+
       {loading && entries.length === 0 ? (
         <p className="lmps-detail__empty">Carregando estruturas dos produtos…</p>
       ) : null}

@@ -34,7 +34,8 @@ function renderColumnHeader<T>(column: DataTableColumn<T>) {
         <HelpTooltip
           content={column.headerHint}
           ariaLabel={`Ajuda: ${column.header}`}
-          placement="bottom"
+          fixed
+          className="lmps-table__header-help"
         />
       ) : null}
     </span>

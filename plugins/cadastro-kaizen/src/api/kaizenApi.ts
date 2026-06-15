@@ -8,7 +8,7 @@ import {
 } from "./httpClient";
 import type { KaizenListResponse, KaizenRecord } from "../types/kaizen";
 
-const API_BASE = "/api-delpi/quality/kaizens/records";
+const API_BASE = "/apps/api-delpi/quality/kaizens/records";
 
 type ListParams = {
   branch?: string;

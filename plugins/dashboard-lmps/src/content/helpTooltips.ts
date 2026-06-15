@@ -109,5 +109,11 @@ export const LMPS_HELP_TOOLTIPS = {
       "Tempo em minutos entre início e encerramento (ou próximo evento / agora, se ainda aberto).",
     historyStatus: "Status do evento no workflow TOTVS.",
     historyEngineering: "Indica eventos contabilizados no fluxo de engenharia.",
+    structureCode: "Código do componente na estrutura analítica (SB1).",
+    structureDescription: "Descrição comercial do item na BOM.",
+    structureType: "Tipo do material: PA, PI, MP, etc.",
+    structureQuantity: "Quantidade necessária na estrutura, com unidade de medida.",
   },
+  tableSearch:
+    "Filtra os registros da tabela pelo texto digitado (proposta, descrição, status, etc.).",
 } as const;

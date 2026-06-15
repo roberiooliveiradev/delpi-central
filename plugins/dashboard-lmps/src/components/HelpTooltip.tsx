@@ -16,6 +16,8 @@ type HelpTooltipProps = {
   className?: string;
   wrap?: boolean;
   placement?: "top" | "bottom";
+  /** Exibe balão via portal + position fixed (ideal em tabelas com overflow). */
+  fixed?: boolean;
   children?: ReactNode;
 };
 
@@ -31,21 +33,23 @@ export function HelpTooltip({
   className,
   wrap = false,
   placement = "top",
+  fixed = false,
   children,
 }: HelpTooltipProps) {
   const tooltipId = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
   const [fixedPosition, setFixedPosition] = useState<{ top: number; left: number } | null>(
     null,
   );
-  const useFixedBubble = placement === "bottom";
+  const useFixedBubble = fixed;
 
   const rootClass = [
     "lmps-help-tooltip",
     wrap ? "lmps-help-tooltip--wrap" : "",
-    placement === "bottom" ? "lmps-help-tooltip--bottom" : "",
+    placement === "bottom" && !fixed ? "lmps-help-tooltip--bottom" : "",
     visible && useFixedBubble ? "lmps-help-tooltip--open" : "",
     className,
   ]
@@ -53,7 +57,7 @@ export function HelpTooltip({
     .join(" ");
 
   const updateFixedPosition = useCallback(() => {
-    const anchor = rootRef.current;
+    const anchor = triggerRef.current ?? rootRef.current;
     if (!anchor) return;
 
     const rect = anchor.getBoundingClientRect();
@@ -121,21 +125,27 @@ export function HelpTooltip({
       tabIndex={wrap ? 0 : undefined}
       aria-label={wrap ? ariaLabel : undefined}
       aria-describedby={wrap ? tooltipId : undefined}
-      onMouseEnter={useFixedBubble ? showTooltip : undefined}
-      onMouseLeave={useFixedBubble ? hideTooltip : undefined}
-      onFocus={useFixedBubble ? showTooltip : undefined}
-      onBlur={useFixedBubble ? hideTooltip : undefined}
+      onMouseEnter={wrap && useFixedBubble ? showTooltip : undefined}
+      onMouseLeave={wrap && useFixedBubble ? hideTooltip : undefined}
+      onFocus={wrap && useFixedBubble ? showTooltip : undefined}
+      onBlur={wrap && useFixedBubble ? hideTooltip : undefined}
     >
       {wrap ? (
         children
       ) : (
         <button
+          ref={triggerRef}
           type="button"
           className="lmps-help-tooltip__trigger"
           aria-label={ariaLabel}
           aria-describedby={tooltipId}
+          title={content}
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
+          onMouseEnter={useFixedBubble ? showTooltip : undefined}
+          onMouseLeave={useFixedBubble ? hideTooltip : undefined}
+          onFocus={useFixedBubble ? showTooltip : undefined}
+          onBlur={useFixedBubble ? hideTooltip : undefined}
         >
           <HelpCircle size={14} aria-hidden="true" />
         </button>
