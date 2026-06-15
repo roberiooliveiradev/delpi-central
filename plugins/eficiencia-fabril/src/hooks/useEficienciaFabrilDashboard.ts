@@ -12,6 +12,7 @@ import {
   DEFAULT_APPOINTMENTS_SORT,
   sortAppointments,
 } from "../utils/appointmentsTableSort";
+import { buildEmployeeOptionValue } from "../utils/filterOptions";
 
 const FALLBACK_PAGE_SIZE = 50;
 
@@ -31,10 +32,14 @@ function isWithinRange(date: string, dateStart: string, dateEnd: string): boolea
   return date >= dateStart && date <= dateEnd;
 }
 
-function includesInsensitive(value: string | null | undefined, query: string): boolean {
-  if (!query.trim()) return true;
-  if (!value) return false;
-  return value.toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR"));
+function includesSelectedValue(
+  value: string | null | undefined,
+  selected: string[] | undefined
+): boolean {
+  if (!selected || selected.length === 0) return true;
+  const normalized = value?.trim();
+  if (!normalized) return false;
+  return selected.includes(normalized);
 }
 
 function applyScopeFilters(
@@ -45,17 +50,13 @@ function applyScopeFilters(
     .filter(hasDateRange)
     .filter((item) => isWithinRange(item.data_producao, params.date_start, params.date_end))
     .filter((item) => (params.branch ? item.filial === params.branch : true))
-    .filter((item) => (params.op ? includesInsensitive(item.op, params.op) : true))
-    .filter((item) =>
-      params.work_center ? includesInsensitive(item.centro_trabalho, params.work_center) : true
-    )
-    .filter((item) =>
-      params.employee
-        ? includesInsensitive(item.nome_operador, params.employee) ||
-          includesInsensitive(item.login_operador, params.employee) ||
-          includesInsensitive(item.cod_operador, params.employee)
-        : true
-    )
+    .filter((item) => includesSelectedValue(item.op, params.ops))
+    .filter((item) => includesSelectedValue(item.centro_trabalho, params.work_centers))
+    .filter((item) => {
+      if (!params.employees || params.employees.length === 0) return true;
+      const employeeValue = buildEmployeeOptionValue(item);
+      return employeeValue ? params.employees.includes(employeeValue) : false;
+    })
     .filter((item) => matchesShiftFilter(item.hora_inicio, params.shifts));
 }
 
@@ -370,6 +371,7 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
   return {
     data,
     allItems: derived?.exportItems ?? [],
+    loadedItems: allItems,
     loading,
     error,
     reload,

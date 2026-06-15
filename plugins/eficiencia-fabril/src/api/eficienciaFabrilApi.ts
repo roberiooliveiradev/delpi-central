@@ -15,9 +15,6 @@ function buildQuery(params: EficienciaFabrilFilterParams): string {
   searchParams.set("date_end", params.date_end);
 
   if (params.branch) searchParams.set("branch", params.branch);
-  if (params.op) searchParams.set("op", params.op);
-  if (params.employee) searchParams.set("employee", params.employee);
-  if (params.work_center) searchParams.set("work_center", params.work_center);
   if (params.status_ok_only !== undefined) {
     searchParams.set("status_ok_only", String(params.status_ok_only));
   }

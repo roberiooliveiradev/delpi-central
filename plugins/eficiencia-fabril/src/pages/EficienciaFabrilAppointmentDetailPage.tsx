@@ -5,11 +5,16 @@ import { ProductStructureTree } from "../components/ProductStructureTree";
 import { AppointmentTimeFindings } from "../components/AppointmentTimeFindings";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
 import { KpiCard } from "../components/KpiCard";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS } from "../constants/branches";
 import { isProductionEfficiencyOutlier } from "../constants/businessRules";
 import { buildEficienciaFabrilDashboardPath } from "../constants/routes";
 import { useProductionOeeAppointmentDetail } from "../hooks/useProductionOeeAppointmentDetail";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../hooks/useSimulatedLoadingProgress";
 import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal, formatHours, formatInteger, formatPercent } from "../utils/format";
 import { navigateEficienciaFabrilBack } from "../utils/navigation";
@@ -43,6 +48,8 @@ export function EficienciaFabrilAppointmentDetailPage({
   const appointment = detail.appointment;
   const timeAnalysis = detail.timeAnalysis;
   const backPath = buildEficienciaFabrilDashboardPath(branchRoute);
+  const initialFetchProgress = useTrackedSingleFetchProgress(detail.loading);
+  const initialLoadingProgress = useLoadingProgress(detail.loading, initialFetchProgress);
 
   const appointmentFields = useMemo(
     () =>
@@ -214,9 +221,11 @@ export function EficienciaFabrilAppointmentDetailPage({
         ) : null}
 
         {detail.loading && !appointment ? (
-          <div className="ef-loading-card" role="status">
-            <p>Carregando apontamento, roteiro, estrutura e análise de tempos…</p>
-          </div>
+          <LoadingActivityCard
+            title="Carregando apontamento"
+            description="Consultando apontamento, roteiro, estrutura e análise de tempos."
+            progressPercent={initialLoadingProgress}
+          />
         ) : null}
 
         {appointment ? (

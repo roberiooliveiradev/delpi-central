@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Clock3,
@@ -13,6 +13,7 @@ import { AppointmentsTable } from "../components/AppointmentsTable";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import {
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
   PRODUCTION_EFFICIENCY_VALID_MIN_PCT,
@@ -20,6 +21,10 @@ import {
 import { buildEficienciaFabrilAppointmentPath } from "../constants/routes";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../hooks/useSimulatedLoadingProgress";
 import {
   BRANCH_ROUTE_LABELS,
   branchRouteFromPathname,
@@ -29,6 +34,12 @@ import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatPeriodLabel } from "../utils/dates";
 import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
 import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
+import {
+  buildEmployeeFilterOptions,
+  buildOpFilterOptions,
+  buildShiftFilterOptions,
+  buildWorkCenterFilterOptions,
+} from "../utils/filterOptions";
 import { navigateEficienciaFabril } from "../utils/navigation";
 
 type DashboardEficienciaFabrilPageProps = {
@@ -78,18 +89,18 @@ function DashboardEficienciaFabrilContent({
     dateEnd,
     appliedDateStart,
     appliedDateEnd,
-    op,
-    employee,
-    workCenter,
+    ops,
+    employees,
+    workCenters,
     shifts,
     sortBy,
     sortDir,
     page,
     setDateStart,
     setDateEnd,
-    setOp,
-    setEmployee,
-    setWorkCenter,
+    setOps,
+    setEmployees,
+    setWorkCenters,
     setShifts,
     setPage,
     toggleSortColumn,
@@ -115,13 +126,30 @@ function DashboardEficienciaFabrilContent({
     [branchRoute, totvsBranch]
   );
 
-  const { data, allItems, loading, error, reload } = useEficienciaFabrilDashboard(apiParams);
+  const { data, allItems, loadedItems, loading, error, reload } =
+    useEficienciaFabrilDashboard(apiParams);
+
+  const shiftOptions = useMemo(() => buildShiftFilterOptions(), []);
+  const opOptions = useMemo(() => buildOpFilterOptions(loadedItems), [loadedItems]);
+  const employeeOptions = useMemo(
+    () => buildEmployeeFilterOptions(loadedItems),
+    [loadedItems]
+  );
+  const workCenterOptions = useMemo(
+    () => buildWorkCenterFilterOptions(loadedItems),
+    [loadedItems]
+  );
 
   const summary = data?.summary;
   const pagination = data?.pagination;
   const charts = data?.charts;
-  const refreshing = loading && Boolean(data);
-  const isEmpty = Boolean(data) && (summary?.table_appointment_count ?? 0) === 0;
+  const hasData = data !== null;
+  const refreshing = loading && hasData;
+  const isEmpty = hasData && (summary?.table_appointment_count ?? 0) === 0;
+  const initialFetchProgress = useTrackedSingleFetchProgress(loading && !hasData);
+  const refreshFetchProgress = useTrackedSingleFetchProgress(refreshing);
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, initialFetchProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing, refreshFetchProgress);
 
   return (
     <div className="dashboard-eficiencia-fabril dashboard-page">
@@ -153,15 +181,19 @@ function DashboardEficienciaFabrilContent({
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
-        op={op}
-        employee={employee}
-        workCenter={workCenter}
+        ops={ops}
+        employees={employees}
+        workCenters={workCenters}
         shifts={shifts}
+        opOptions={opOptions}
+        employeeOptions={employeeOptions}
+        workCenterOptions={workCenterOptions}
+        shiftOptions={shiftOptions}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onOpChange={setOp}
-        onEmployeeChange={setEmployee}
-        onWorkCenterChange={setWorkCenter}
+        onOpsChange={setOps}
+        onEmployeesChange={setEmployees}
+        onWorkCentersChange={setWorkCenters}
         onShiftsChange={setShifts}
         disabled={loading}
       />
@@ -179,18 +211,22 @@ function DashboardEficienciaFabrilContent({
         </div>
       ) : null}
 
-      {loading && !data ? (
-        <div className="ef-loading-card">Carregando dashboard…</div>
+      {loading && !hasData ? (
+        <LoadingActivityCard
+          title="Carregando eficiência fabril"
+          description="Buscando indicadores, gráficos e apontamentos no período."
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       {refreshing ? (
-        <div className="ef-loading-card ef-loading-card--refresh" role="status" aria-live="polite">
-          <span className="ef-loading-card__spinner" aria-hidden />
-          <div>
-            <strong>Atualizando dashboard</strong>
-            <p>Recalculando eficiência e apontamentos com os filtros selecionados.</p>
-          </div>
-        </div>
+        <LoadingActivityCard
+          title="Atualizando dashboard"
+          description="Recalculando eficiência e apontamentos com os filtros selecionados."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
       ) : null}
 
       <div

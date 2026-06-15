@@ -1,18 +1,23 @@
 import type { EficienciaFabrilShift } from "../constants/shifts";
-import { ShiftMultiSelect } from "./ShiftMultiSelect";
+import type { MultiSelectOption } from "./MultiSelectField";
+import { MultiSelectField } from "./MultiSelectField";
 
 type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
-  op: string;
-  employee: string;
-  workCenter: string;
+  ops: string[];
+  employees: string[];
+  workCenters: string[];
   shifts: EficienciaFabrilShift[];
+  opOptions: MultiSelectOption[];
+  employeeOptions: MultiSelectOption[];
+  workCenterOptions: MultiSelectOption[];
+  shiftOptions: MultiSelectOption[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onOpChange: (value: string) => void;
-  onEmployeeChange: (value: string) => void;
-  onWorkCenterChange: (value: string) => void;
+  onOpsChange: (value: string[]) => void;
+  onEmployeesChange: (value: string[]) => void;
+  onWorkCentersChange: (value: string[]) => void;
   onShiftsChange: (value: EficienciaFabrilShift[]) => void;
   disabled?: boolean;
 };
@@ -20,15 +25,19 @@ type FilterBarProps = {
 export function FilterBar({
   dateStart,
   dateEnd,
-  op,
-  employee,
-  workCenter,
+  ops,
+  employees,
+  workCenters,
   shifts,
+  opOptions,
+  employeeOptions,
+  workCenterOptions,
+  shiftOptions,
   onDateStartChange,
   onDateEndChange,
-  onOpChange,
-  onEmployeeChange,
-  onWorkCenterChange,
+  onOpsChange,
+  onEmployeesChange,
+  onWorkCentersChange,
   onShiftsChange,
   disabled = false,
 }: FilterBarProps) {
@@ -55,43 +64,44 @@ export function FilterBar({
           />
         </label>
 
-        <label className="ef-field">
-          <span>Operador (nome)</span>
-          <input
-            type="text"
-            value={employee}
-            placeholder="Ex.: CRISTIANE"
-            disabled={disabled}
-            onChange={(event) => onEmployeeChange(event.target.value)}
-          />
-        </label>
+        <MultiSelectField
+          label="Operador (nome)"
+          emptyLabel="Todos"
+          searchable
+          options={employeeOptions}
+          selectedValues={employees}
+          onChange={onEmployeesChange}
+          disabled={disabled}
+        />
 
-        <label className="ef-field">
-          <span>OP</span>
-          <input
-            type="text"
-            value={op}
-            placeholder="Ex.: 24549301007"
-            disabled={disabled}
-            onChange={(event) => onOpChange(event.target.value)}
-          />
-        </label>
+        <MultiSelectField
+          label="OP"
+          emptyLabel="Todas"
+          searchable
+          options={opOptions}
+          selectedValues={ops}
+          onChange={onOpsChange}
+          disabled={disabled}
+        />
 
-        <label className="ef-field">
-          <span>Centro de trabalho</span>
-          <input
-            type="text"
-            value={workCenter}
-            placeholder="Ex.: CT-01A"
-            disabled={disabled}
-            onChange={(event) => onWorkCenterChange(event.target.value)}
-          />
-        </label>
+        <MultiSelectField
+          label="Centro de trabalho"
+          emptyLabel="Todos"
+          searchable
+          options={workCenterOptions}
+          selectedValues={workCenters}
+          onChange={onWorkCentersChange}
+          disabled={disabled}
+        />
 
-        <label className="ef-field">
-          <span>Turno</span>
-          <ShiftMultiSelect value={shifts} onChange={onShiftsChange} disabled={disabled} />
-        </label>
+        <MultiSelectField
+          label="Turno"
+          emptyLabel="Todos"
+          options={shiftOptions}
+          selectedValues={shifts}
+          onChange={(values) => onShiftsChange(values as EficienciaFabrilShift[])}
+          disabled={disabled}
+        />
       </div>
     </section>
   );

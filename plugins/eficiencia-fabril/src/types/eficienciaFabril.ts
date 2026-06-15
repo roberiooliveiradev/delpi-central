@@ -5,9 +5,9 @@ export type EficienciaFabrilFilterParams = {
   date_start: string;
   date_end: string;
   branch?: string;
-  op?: string;
-  employee?: string;
-  work_center?: string;
+  ops?: string[];
+  employees?: string[];
+  work_centers?: string[];
   shifts?: EficienciaFabrilShift[];
   status_ok_only?: boolean;
   sort_by?: AppointmentsSortColumn;
