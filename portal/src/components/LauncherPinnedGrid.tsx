@@ -36,7 +36,7 @@ export function LauncherPinnedGrid({
           <motion.div
             key={itemId}
             className="launcher-pinned-grid-item"
-            layout
+            layout={false}
             initial={{ opacity: 0, scale: 0.94, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -6 }}

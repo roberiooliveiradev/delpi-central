@@ -73,6 +73,11 @@
   box-shadow: var(--shadow);
 }
 
+.launcher-app-tile:not(.sidebar-variant).expanded {
+  z-index: 26;
+  align-items: stretch;
+}
+
 /* HOME VARIANT */
 .launcher-app-tile.home-variant {
   min-height: auto;
@@ -366,6 +371,7 @@
 .launcher-inline-routes-panel__inner {
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
 }
 
 .launcher-inline-routes-panel:not(.is-expanded) .sidebar-inline-route,
@@ -375,46 +381,70 @@
 
 .launcher-inline-routes-panel--launcher {
   margin-top: 6px;
-  align-self: center;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-/* Grid / modal — submenu mais largo que o tile para rótulos legíveis */
+/* Grid / modal — tile expandido acima dos vizinhos; submenu pode ultrapassar a largura */
 .launcher-pinned-grid-item:has(.launcher-app-tile:not(.sidebar-variant).expanded) {
   z-index: 25;
   overflow: visible;
 }
 
-.launcher-app-tile:not(.sidebar-variant).expanded {
-  z-index: 26;
-}
-
 .launcher-inline-routes-panel--launcher.is-expanded {
-  width: fit-content;
-  min-width: 100%;
-  max-width: min(220px, 92vw);
-  margin-inline: auto;
+  width: 100%;
 }
 
 .launcher-inline-routes-panel--launcher.is-expanded
   .launcher-inline-routes-panel__inner {
   overflow: visible;
+  width: 100%;
+  max-width: 100%;
+}
+
+.launcher-inline-routes-center {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .launcher-inline-routes-panel--launcher.is-expanded .launcher-inline-routes {
-  width: max(100%, 140px);
-  min-width: 100%;
-  animation: dropdownFade 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  width: max-content;
+  min-width: 140px;
+  max-width: min(220px, 92vw);
+  margin-inline: 0;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  animation: launcherRoutesRevealLauncher 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Grid / modal — rótulos curtos centralizados; painel pode crescer para textos longos */
+@keyframes launcherRoutesRevealLauncher {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Grid / modal — painel centralizado no tile; conteúdo alinhado à esquerda */
 .launcher-inline-routes-panel--launcher .launcher-inline-route {
-  justify-content: center;
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .launcher-inline-routes-panel--launcher .launcher-inline-route span {
-  flex: 0 1 auto;
-  text-align: center;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .launcher-inline-routes-panel--sidebar.is-expanded .sidebar-inline-routes {
@@ -1008,6 +1038,11 @@ body.app-launcher-reorder-dragging .launcher-app-tile.reorderable .launcher-app-
 
 .launcher-inline-routes--expand {
   animation: launcherRoutesExpand 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.launcher-inline-routes-panel--launcher.is-expanded
+  .launcher-inline-routes.launcher-inline-routes--expand {
+  animation: launcherRoutesRevealLauncher 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .launcher-inline-route.active,

@@ -344,6 +344,39 @@ export const AppLauncherCard = ({
     </>
   );
 
+  const renderInlineRouteLinks = () =>
+    visibleRoutes.map((route) => {
+      const Icon = resolveIcon(route.icon) || Package;
+      const routePath = normalizePath(route.path);
+      const isActive = isLauncherRouteSelected(
+        currentPath,
+        route.path,
+        visibleRoutes,
+      );
+      const isNavigated = routeNavigation.activatedRoutePath === routePath;
+
+      return (
+        <a
+          key={route.path}
+          href={route.path}
+          className={[
+            isSidebar ? "sidebar-inline-route" : "launcher-inline-route",
+            isActive ? "active" : "",
+            !isSidebar && isNavigated ? "launcher-inline-route--navigated" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onClick={(event) => handleRouteClick(event, route.path)}
+          onPointerDown={handleRoutePointerDown}
+          aria-current={isActive ? "page" : undefined}
+          tabIndex={routesPanelExpanded ? undefined : -1}
+        >
+          <Icon size={isSidebar ? 16 : 14} />
+          <span>{prettifyLabel(route)}</span>
+        </a>
+      );
+    });
+
   return (
     <div
       data-app-id={isReorderable ? app.id : undefined}
@@ -420,52 +453,23 @@ export const AppLauncherCard = ({
           aria-hidden={!routesPanelExpanded}
         >
           <div className="launcher-inline-routes-panel__inner">
-            <div
-              className={[
-                isSidebar ? "sidebar-inline-routes" : "launcher-inline-routes",
-                !isSidebar ? appearance.routesClass : "",
-                !isSidebar ? routeNavigation.routesPanelClass : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {visibleRoutes.map((route) => {
-                const Icon = resolveIcon(route.icon) || Package;
-                const routePath = normalizePath(route.path);
-                const isActive = isLauncherRouteSelected(
-                  currentPath,
-                  route.path,
-                  visibleRoutes,
-                );
-                const isNavigated =
-                  routeNavigation.activatedRoutePath === routePath;
-
-                return (
-                  <a
-                    key={route.path}
-                    href={route.path}
-                    className={[
-                      isSidebar
-                        ? "sidebar-inline-route"
-                        : "launcher-inline-route",
-                      isActive ? "active" : "",
-                      !isSidebar && isNavigated
-                        ? "launcher-inline-route--navigated"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={(event) => handleRouteClick(event, route.path)}
-                    onPointerDown={handleRoutePointerDown}
-                    aria-current={isActive ? "page" : undefined}
-                    tabIndex={routesPanelExpanded ? undefined : -1}
-                  >
-                    <Icon size={isSidebar ? 16 : 14} />
-                    <span>{prettifyLabel(route)}</span>
-                  </a>
-                );
-              })}
-            </div>
+            {isSidebar ? (
+              <div className="sidebar-inline-routes">{renderInlineRouteLinks()}</div>
+            ) : (
+              <div className="launcher-inline-routes-center">
+                <div
+                  className={[
+                    "launcher-inline-routes",
+                    appearance.routesClass,
+                    routeNavigation.routesPanelClass,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {renderInlineRouteLinks()}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
