@@ -570,9 +570,10 @@ export function FerramentaRevisaoProgramadaSection({
                   }
                 />
               </label>
-              <label className="dm-field dm-field--span-full">
+              <label className="dm-field dm-field--span-full dm-field--textarea">
                 <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
-                <input
+                <textarea
+                  rows={4}
                   value={createDraft.observacao}
                   onChange={(event) =>
                     setCreateDraft((prev) => ({ ...prev, observacao: event.target.value }))
@@ -625,14 +626,15 @@ export function FerramentaRevisaoProgramadaSection({
                   </span>
                 ) : null}
               </label>
-              <label className="dm-field dm-field--span-full">
+              <label className="dm-field dm-field--span-full dm-field--textarea">
                 <FieldLabel label="Observação" hint={CONFIG_TOOLTIPS.revisaoObservacao} />
-                <input
+                <textarea
+                  rows={4}
                   value={draft.observacao}
                   onChange={(event) =>
                     setDraft((prev) => ({ ...prev, observacao: event.target.value }))
                   }
-                  placeholder="Opcional"
+                  placeholder="Opcional — checklist ou pontos a verificar"
                 />
               </label>
               <div className="dm-revisao-ferramenta__actions dm-field--span-full">

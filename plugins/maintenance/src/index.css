@@ -1517,6 +1517,8 @@
 
 .dashboard-maintenance .dm-revisao-ferramenta__form .dm-field input:not([type="checkbox"]),
 .dashboard-maintenance .dm-revisao-ferramenta__edit .dm-field input:not([type="checkbox"]),
+.dashboard-maintenance .dm-revisao-ferramenta__form .dm-field textarea,
+.dashboard-maintenance .dm-revisao-ferramenta__edit .dm-field textarea,
 .dashboard-maintenance .dm-revisao-ferramenta__form .dm-editable-cell,
 .dashboard-maintenance .dm-revisao-ferramenta__edit .dm-editable-cell {
   width: 100%;
