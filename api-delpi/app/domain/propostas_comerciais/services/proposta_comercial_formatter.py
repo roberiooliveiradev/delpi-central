@@ -178,7 +178,26 @@ class PropostaComercialFormatter:
             return None
         return number
 
-    FONTE_VALOR_LIQUIDO = "calculo_formacao_preco_icms_pis_cofins"
+    FONTE_VALOR_LIQUIDO = "calculo_formacao_preco_icms_efetivo_pis_cofins"
+    CODIGO_PLANILHA_REDUCAO_ICMS = "000007"
+    PERCENTUAL_REDUCAO_ICMS = 90.0
+    FATOR_ICMS_APOS_REDUCAO = 0.10
+
+    @classmethod
+    def _aplica_reducao_icms_planilha(cls, codigo_planilha_formacao: Any) -> bool:
+        return cls.trim(codigo_planilha_formacao) == cls.CODIGO_PLANILHA_REDUCAO_ICMS
+
+    @classmethod
+    def _resolve_aliquota_icms_efetiva(
+        cls,
+        *,
+        aliquota_icms_original: float | None,
+        codigo_planilha_formacao: Any,
+    ) -> float:
+        original = aliquota_icms_original if aliquota_icms_original is not None else 0.0
+        if cls._aplica_reducao_icms_planilha(codigo_planilha_formacao):
+            return original * cls.FATOR_ICMS_APOS_REDUCAO
+        return original
 
     @classmethod
     def _resolve_status_calculo_valor_liquido(
@@ -206,13 +225,22 @@ class PropostaComercialFormatter:
         id_formacao_preco: str | None,
         aliquota_icms_raw: Any,
         aliquota_pis_cofins_raw: Any,
+        codigo_planilha_formacao: Any = None,
+        aliquota_icms_efetiva_raw: Any = None,
+        valor_apos_icms_raw: Any = None,
+        valor_liquido_raw: Any = None,
     ) -> dict[str, Any]:
         id_formacao = cls.trim(id_formacao_preco) or None
-        aliquota_icms = cls._optional_float(aliquota_icms_raw)
+        aliquota_icms_original = cls._optional_float(
+            aliquota_icms_raw if aliquota_icms_raw not in (None, "") else None
+        )
         aliquota_pis_cofins = cls._optional_float(aliquota_pis_cofins_raw)
+        codigo_planilha = cls.trim(codigo_planilha_formacao) or None
+        aplica_reducao = cls._aplica_reducao_icms_planilha(codigo_planilha)
+        percentual_reducao = cls.PERCENTUAL_REDUCAO_ICMS if aplica_reducao else 0.0
         status = cls._resolve_status_calculo_valor_liquido(
             id_formacao_preco=id_formacao,
-            aliquota_icms=aliquota_icms,
+            aliquota_icms=aliquota_icms_original,
             aliquota_icms_raw=aliquota_icms_raw,
             aliquota_pis_cofins=aliquota_pis_cofins,
             aliquota_pis_cofins_raw=aliquota_pis_cofins_raw,
@@ -220,7 +248,12 @@ class PropostaComercialFormatter:
 
         if valor_bruto_r_mil is None or status == "SEM_FORMACAO_PRECO":
             return {
-                "aliquota_icms": aliquota_icms,
+                "codigo_planilha_formacao": codigo_planilha,
+                "aliquota_icms_original": aliquota_icms_original,
+                "aliquota_icms": aliquota_icms_original,
+                "aplica_reducao_icms": aplica_reducao,
+                "percentual_reducao_icms": percentual_reducao,
+                "aliquota_icms_efetiva": None,
                 "aliquota_pis_cofins": aliquota_pis_cofins,
                 "valor_apos_icms_r_mil": None,
                 "valor_apos_icms_r_mil_formatado": None,
@@ -230,13 +263,29 @@ class PropostaComercialFormatter:
                 "fonte_valor_liquido": None,
             }
 
-        icms_rate = aliquota_icms if aliquota_icms is not None else 0.0
+        aliquota_icms_efetiva = cls._optional_float(aliquota_icms_efetiva_raw)
+        if aliquota_icms_efetiva is None:
+            aliquota_icms_efetiva = cls._resolve_aliquota_icms_efetiva(
+                aliquota_icms_original=aliquota_icms_original,
+                codigo_planilha_formacao=codigo_planilha,
+            )
+
+        valor_apos_icms = cls._optional_float(valor_apos_icms_raw)
+        if valor_apos_icms is None:
+            valor_apos_icms = valor_bruto_r_mil * (1 - aliquota_icms_efetiva / 100.0)
+
         pis_cofins_rate = aliquota_pis_cofins if aliquota_pis_cofins is not None else 0.0
-        valor_apos_icms = valor_bruto_r_mil * (1 - icms_rate / 100.0)
-        valor_liquido = valor_apos_icms * (1 - pis_cofins_rate / 100.0)
+        valor_liquido = cls._optional_float(valor_liquido_raw)
+        if valor_liquido is None:
+            valor_liquido = valor_apos_icms * (1 - pis_cofins_rate / 100.0)
 
         return {
-            "aliquota_icms": aliquota_icms,
+            "codigo_planilha_formacao": codigo_planilha,
+            "aliquota_icms_original": aliquota_icms_original,
+            "aliquota_icms": aliquota_icms_original,
+            "aplica_reducao_icms": aplica_reducao,
+            "percentual_reducao_icms": percentual_reducao,
+            "aliquota_icms_efetiva": aliquota_icms_efetiva,
             "aliquota_pis_cofins": aliquota_pis_cofins,
             "valor_apos_icms_r_mil": valor_apos_icms,
             "valor_apos_icms_r_mil_formatado": cls.format_currency(valor_apos_icms),
@@ -351,8 +400,12 @@ class PropostaComercialFormatter:
         liquido = cls._compute_valor_liquido_comercial(
             valor_bruto_r_mil=valor_bruto_r_mil,
             id_formacao_preco=row.get("id_formacao_preco"),
-            aliquota_icms_raw=row.get("aliquota_icms"),
+            aliquota_icms_raw=row.get("aliquota_icms_original", row.get("aliquota_icms")),
             aliquota_pis_cofins_raw=row.get("aliquota_pis_cofins"),
+            codigo_planilha_formacao=row.get("codigo_planilha_formacao"),
+            aliquota_icms_efetiva_raw=row.get("aliquota_icms_efetiva"),
+            valor_apos_icms_raw=row.get("valor_apos_icms_r_mil"),
+            valor_liquido_raw=row.get("valor_liquido_r_mil"),
         )
         return {
             "item": cls.trim(row.get("item")),
@@ -366,7 +419,12 @@ class PropostaComercialFormatter:
             "preco_unitario_numerico": float(row.get("preco_unitario") or 0),
             "valor_bruto_r_mil": valor_bruto_r_mil,
             "valor_bruto_r_mil_formatado": cls.format_currency(valor_bruto_r_mil),
+            "codigo_planilha_formacao": liquido["codigo_planilha_formacao"],
+            "aliquota_icms_original": liquido["aliquota_icms_original"],
             "aliquota_icms": liquido["aliquota_icms"],
+            "aplica_reducao_icms": liquido["aplica_reducao_icms"],
+            "percentual_reducao_icms": liquido["percentual_reducao_icms"],
+            "aliquota_icms_efetiva": liquido["aliquota_icms_efetiva"],
             "aliquota_pis_cofins": liquido["aliquota_pis_cofins"],
             "valor_apos_icms_r_mil": liquido["valor_apos_icms_r_mil"],
             "valor_apos_icms_r_mil_formatado": liquido["valor_apos_icms_r_mil_formatado"],

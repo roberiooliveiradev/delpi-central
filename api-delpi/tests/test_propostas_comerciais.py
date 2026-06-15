@@ -21,6 +21,154 @@ from app.domain.propostas_comerciais.services.proposta_comercial_pdf_export_over
 from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
     PropostaComercialPdfRenderer,
 )
+from app.infrastructure.totvs.propostas_comerciais.queries import DETAIL_ITEMS_SQL
+
+
+def test_detail_items_sql_sz9010_joins_filter_by_sz8010_filial() -> None:
+    """SZ9010 deve amarrar Z9_FILIAL e Z9_FILMOV à filial da SZ8010 (SZ8_PRECO)."""
+    assert DETAIL_ITEMS_SQL.count("LTRIM(RTRIM(SZ9.Z9_FILIAL)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))") == 2
+    assert DETAIL_ITEMS_SQL.count("LTRIM(RTRIM(SZ9.Z9_FILMOV)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))") == 2
+    assert "SZ8.Z8_FILIAL" in DETAIL_ITEMS_SQL
+    assert "SZ8.Z8_IDSZ7" in DETAIL_ITEMS_SQL
+    assert "Z9_IDZ8)) = LTRIM(RTRIM(SZ8_PRECO.Z8_ID))" in DETAIL_ITEMS_SQL
+    assert "Z9_IDZ8)) = LTRIM(RTRIM(ADY.ADY_OPORTU))" not in DETAIL_ITEMS_SQL
+    assert "Z9_IDZ8)) = LTRIM(RTRIM(ADY.ADY_PROPOS))" not in DETAIL_ITEMS_SQL
+
+
+def test_detail_items_sql_aplica_reducao_icms_para_planilha_000007() -> None:
+    assert "LTRIM(RTRIM(SZ8_PRECO.Z8_IDSZ7)) = '000007'" in DETAIL_ITEMS_SQL
+    assert "aliquota_icms_original" in DETAIL_ITEMS_SQL
+    assert "aliquota_icms_efetiva" in DETAIL_ITEMS_SQL
+    assert "calculo_formacao_preco_icms_efetivo_pis_cofins" in DETAIL_ITEMS_SQL
+
+
+def test_formatter_item_proposta_004852_planilha_000007_reduz_icms() -> None:
+    """Proposta 004852 / OV003377 — planilha 000007 reduz ICMS 17% para 1,7%."""
+    bruto = 4404.81
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "90264242",
+            "descricao": "PRODUTO TESTE 004852",
+            "referencia_cliente": "",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": bruto,
+            "valor_bruto_r_mil": bruto,
+            "codigo_planilha_formacao": "000007",
+            "aliquota_icms_original": 17.0,
+            "aliquota_icms": 17.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "006403",
+            "valor_total": bruto,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+    )
+
+    assert item["codigo_planilha_formacao"] == "000007"
+    assert item["aliquota_icms_original"] == 17.0
+    assert item["aliquota_icms"] == 17.0
+    assert item["aplica_reducao_icms"] is True
+    assert item["percentual_reducao_icms"] == 90.0
+    assert item["aliquota_icms_efetiva"] == pytest.approx(1.7)
+    assert item["valor_apos_icms_r_mil"] == pytest.approx(bruto * (1 - 1.7 / 100.0))
+    assert item["valor_liquido_r_mil"] == pytest.approx(3929.41, rel=1e-4)
+    assert item["valor_liquido_r_mil"] == pytest.approx(
+        bruto * (1 - 1.7 / 100.0) * (1 - 9.25 / 100.0)
+    )
+    assert item["valor_liquido_r_mil"] != pytest.approx(3317.81, rel=1e-4)
+    assert item["valor_liquido_r_mil"] != pytest.approx(3717.55, rel=1e-4)
+    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_efetivo_pis_cofins"
+    assert item["status_calculo_valor_liquido"] == "OK"
+
+
+def test_formatter_item_planilha_diferente_de_000007_sem_reducao_icms() -> None:
+    bruto = 4404.81
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "90264242",
+            "descricao": "SEM REDUCAO",
+            "referencia_cliente": "",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": bruto,
+            "valor_bruto_r_mil": bruto,
+            "codigo_planilha_formacao": "000001",
+            "aliquota_icms_original": 17.0,
+            "aliquota_icms": 17.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "006403",
+            "valor_total": bruto,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+    )
+
+    assert item["aplica_reducao_icms"] is False
+    assert item["percentual_reducao_icms"] == 0.0
+    assert item["aliquota_icms_efetiva"] == pytest.approx(17.0)
+    assert item["valor_liquido_r_mil"] == pytest.approx(3317.81, rel=1e-4)
+
+
+def test_formatter_item_usa_aliquota_icms_efetiva_no_calculo() -> None:
+    bruto = 100.0
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "TESTE",
+            "descricao": "EFETIVA",
+            "referencia_cliente": "",
+            "ncm": "",
+            "quantidade": 1.0,
+            "unidade": "UN",
+            "preco_unitario": bruto,
+            "valor_bruto_r_mil": bruto,
+            "codigo_planilha_formacao": "000007",
+            "aliquota_icms_original": 17.0,
+            "aliquota_icms": 17.0,
+            "aliquota_pis_cofins": 10.0,
+            "id_formacao_preco": "123",
+            "valor_total": bruto,
+            "prazo_dias": None,
+            "lote_minimo": None,
+        }
+    )
+
+    assert item["aliquota_icms_efetiva"] == pytest.approx(1.7)
+    assert item["valor_apos_icms_r_mil"] == pytest.approx(98.3)
+    assert item["valor_liquido_r_mil"] == pytest.approx(88.47)
+    assert item["valor_liquido_r_mil"] != pytest.approx(73.89)
+
+
+def test_formatter_item_proposta_004852_wrong_icms_7_reproduces_bug() -> None:
+    """Regressão: ICMS 7% (filial errada) produz ~3717.55 — valor que a query antiga retornava."""
+    bruto = 4404.81
+    item = PropostaComercialFormatter.format_item(
+        {
+            "item": "01",
+            "produto": "90264242",
+            "descricao": "PRODUTO TESTE 004852",
+            "referencia_cliente": "",
+            "ncm": "85444200",
+            "quantidade": 1.0,
+            "unidade": "MI",
+            "preco_unitario": bruto,
+            "valor_bruto_r_mil": bruto,
+            "aliquota_icms": 7.0,
+            "aliquota_pis_cofins": 9.25,
+            "id_formacao_preco": "006403",
+            "valor_total": bruto,
+            "prazo_dias": 45.0,
+            "lote_minimo": 0.0,
+        }
+    )
+
+    assert item["valor_liquido_r_mil"] == pytest.approx(3717.55, rel=1e-4)
+    assert item["valor_liquido_r_mil"] != pytest.approx(3317.81, rel=1e-4)
 
 
 def test_formatter_formats_document_fields() -> None:
@@ -127,7 +275,7 @@ def _sample_detail() -> dict:
                 "valor_liquido_r_mil_formatado": "R$ 31.977,19",
                 "id_formacao_preco": "008583",
                 "status_calculo_valor_liquido": "OK",
-                "fonte_valor_liquido": "calculo_formacao_preco_icms_pis_cofins",
+                "fonte_valor_liquido": "calculo_formacao_preco_icms_efetivo_pis_cofins",
                 "valor_total": "R$ 40.041,56",
                 "valor_total_numerico": 40041.56,
                 "prazo_dias": 45,
@@ -260,7 +408,7 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
     assert result["itens"][0]["valor_liquido_r_mil"] == pytest.approx(31977.189816)
     assert result["itens"][0]["valor_apos_icms_r_mil"] == pytest.approx(35236.5728)
     assert result["itens"][0]["id_formacao_preco"] == "008583"
-    assert result["itens"][0]["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+    assert result["itens"][0]["fonte_valor_liquido"] == "calculo_formacao_preco_icms_efetivo_pis_cofins"
     assert result["itens"][0]["status_calculo_valor_liquido"] == "OK"
     assert result["itens"][0]["valor_liquido_r_mil"] != pytest.approx(21264.8312907)
     assert result["itens"][0]["ncm"] == "8544.42.00"
@@ -296,7 +444,7 @@ def test_formatter_item_calculates_valor_liquido_from_icms_and_pis_cofins() -> N
     assert item["valor_liquido_r_mil"] == pytest.approx(7769.403708)
     assert item["valor_liquido_r_mil"] != pytest.approx(4781.4936783)
     assert item["id_formacao_preco"] == "006394"
-    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_efetivo_pis_cofins"
     assert item["status_calculo_valor_liquido"] == "OK"
     assert item["preco_unitario_numerico"] == 9728.78
 
@@ -354,7 +502,7 @@ def test_formatter_item_without_icms_uses_zero_and_flags_status() -> None:
     assert item["valor_apos_icms_r_mil"] == pytest.approx(100.0)
     assert item["valor_liquido_r_mil"] == pytest.approx(90.75)
     assert item["status_calculo_valor_liquido"] == "SEM_ICMS"
-    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_pis_cofins"
+    assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_efetivo_pis_cofins"
 
 
 def test_formatter_detail_sums_total_liquido_from_items() -> None:
