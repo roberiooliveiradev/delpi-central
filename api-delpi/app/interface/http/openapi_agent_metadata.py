@@ -407,7 +407,8 @@ PRODUCTION_OEE = agent_route(
     description=(
         "Painel de eficiência de produção alinhado à eficiência fabril: mesma view "
         "(vw_Apontamentos_Eficiencia), STATUS_REGISTRO=OK, CTs excluídos e faixa 0–199%. "
-        "Resumo e listagem usam EFICIENCIA_PERCENTUAL; detalhe mantém SH6010 (H6_ZEFICI, roteiro, tempos). "
+        "Resumo e listagem usam EFICIENCIA_PERCENTUAL (tempo previsto ÷ tempo real); "
+        "detalhe SH6010 calcula a mesma métrica a partir de roteiro e horários. "
         "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "status=valid|outlier filtra apontamentos dentro ou fora da faixa 0–199%. "
         "efficiency_bands=ok,low,verify (csv) filtra por faixa: na faixa (≥50%), eficiência baixa (<50%) "
@@ -425,7 +426,7 @@ PRODUCTION_OEE_APPOINTMENT = agent_route(
     description=(
         "Retorna análise composta de um apontamento SH6010 (R_E_C_N_O_ / appointment_id): "
         "cadastro do apontamento (OP, produto PA/PI, CT, operação, operador, recurso, quantidades), "
-        "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, OEE H6_ZEFICI, "
+        "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, "
         "findings com motivos/alertas automáticos), "
         "routing_operations (roteiro SG2010 com operação do apontamento destacada) e "
         "structure (BOM do produto em árvore). Parâmetro branch opcional restringe a filial. "

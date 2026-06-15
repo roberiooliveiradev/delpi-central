@@ -6,22 +6,33 @@ import {
 export type LmpsFilterUrlState = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
-  listingType: string;
-  status: string;
+  branches: string[];
+  listingTypes: string[];
+  statuses: string[];
 };
 
 function isValidIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
+function parseCsvParam(value: string): string[] {
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function serializeCsvParam(values: string[]): string {
+  return values.map((value) => value.trim()).filter(Boolean).join(",");
+}
+
 export function defaultLmpsFilterState(): LmpsFilterUrlState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
-    listingType: "Todos",
-    status: "Todos",
+    branches: [],
+    listingTypes: [],
+    statuses: [],
   };
 }
 
@@ -47,9 +58,9 @@ function parseFilterParams(params: URLSearchParams): LmpsFilterUrlState | null {
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
-    branch: branchParam,
-    listingType: listingTypeParam || defaults.listingType,
-    status: statusParam || defaults.status,
+    branches: parseCsvParam(branchParam),
+    listingTypes: parseCsvParam(listingTypeParam),
+    statuses: parseCsvParam(statusParam),
   };
 }
 
@@ -64,13 +75,15 @@ export function buildFilterSearchParams(filters: LmpsFilterUrlState): string {
 
   if (filters.dateStart) params.set("date_start", filters.dateStart);
   if (filters.dateEnd) params.set("date_end", filters.dateEnd);
-  if (filters.branch) params.set("branch", filters.branch);
-  if (filters.listingType && filters.listingType !== "Todos") {
-    params.set("listing_type", filters.listingType);
-  }
-  if (filters.status && filters.status !== "Todos") {
-    params.set("status", filters.status);
-  }
+
+  const branch = serializeCsvParam(filters.branches);
+  if (branch) params.set("branch", branch);
+
+  const listingType = serializeCsvParam(filters.listingTypes);
+  if (listingType) params.set("listing_type", listingType);
+
+  const status = serializeCsvParam(filters.statuses);
+  if (status) params.set("status", status);
 
   const query = params.toString();
   return query ? `?${query}` : "";
@@ -81,7 +94,8 @@ export function appendFiltersToPath(
   filters?: LmpsFilterUrlState
 ): string {
   if (!filters) return path;
-  return `${path}${buildFilterSearchParams(filters)}`;
+  const query = buildFilterSearchParams(filters);
+  return `${path}${query}`;
 }
 
 export function toLmpApiDate(value?: string): string | undefined {
@@ -92,4 +106,9 @@ export function toLmpApiDate(value?: string): string | undefined {
     return normalized.replaceAll("-", "");
   }
   return normalized;
+}
+
+/** Primeira filial selecionada (compatível com detalhe da OV). */
+export function resolveLmpsBranchFilter(filters: LmpsFilterUrlState): string | undefined {
+  return filters.branches[0] || undefined;
 }

@@ -1,0 +1,113 @@
+export const LMPS_HELP_TOOLTIPS = {
+  filters: {
+    dateStart:
+      "Início do período. KPIs, gráficos e tabela consideram propostas com data de início a partir desta data.",
+    dateEnd:
+      "Fim do período. Deve ser igual ou posterior à data inicial.",
+    branch:
+      "Filial TOTVS da proposta. Permite selecionar várias; vazio = todas as filiais.",
+    listingType:
+      "Classificação da listagem (LMP, Amostra ou Outro). Permite múltipla seleção.",
+    status:
+      "Status de classificação de prazo (Pontual, Atrasado, Andamento, Retornada). Permite múltipla seleção.",
+  },
+  kpis: {
+    percentOnTime:
+      "Percentual de propostas classificadas como Pontual no período e filtros aplicados.",
+    avgLeadTime:
+      "Média de lead time útil (dias) das propostas no recorte filtrado.",
+    totalProposals:
+      "Quantidade de propostas/OVs no período após filtros. Meta exibida quando configurada na API.",
+  },
+  charts: {
+    countByLevel:
+      "Distribuição das propostas por nível de SLA (Nível 1, 2 ou 3) no período filtrado.",
+    countByStatus:
+      "Distribuição por status de classificação de prazo (Pontual, Atrasado, etc.).",
+    avgLeadByLevel:
+      "Média de lead time útil em dias para cada nível de SLA.",
+    evolution:
+      "Evolução temporal da média de lead time útil e da quantidade de propostas. Use o agrupamento para mudar a granularidade (dia, semana, mês).",
+    evolutionGranularity:
+      "Agrupa os pontos do gráfico de evolução por dia, semana ou mês conforme o intervalo selecionado.",
+  },
+  table: {
+    section:
+      "Propostas do período após filtros. Clique na linha para abrir o detalhe da OV com produtos e estrutura.",
+    branch: "Filial TOTVS vinculada à proposta.",
+    kind: "Tipo de listagem: LMP, Amostra ou Outro.",
+    sale: "Número da proposta / ordem de venda (OV).",
+    description: "Descrição comercial resumida da proposta.",
+    startDate: "Data de início da proposta no TOTVS.",
+    endDate: "Data de encerramento ou previsão de fim.",
+    engineeringStatus: "Situação atual no fluxo de engenharia.",
+    qtdPi: "Quantidade de produtos intermediários (PI) vinculados.",
+    nivel: "Nível de SLA aplicado à proposta (1, 2 ou 3).",
+    slaDays: "Quantidade de dias úteis previstos no SLA do nível.",
+    limitDate: "Data limite calculada com base no SLA.",
+    leadTime: "Lead time útil consumido (dias úteis).",
+    status: "Classificação de prazo: Pontual, Atrasado, Andamento ou Retornada.",
+  },
+  detail: {
+    statusKpi:
+      "Status de classificação de prazo da proposta e situação resumida da engenharia.",
+    leadTimeKpi:
+      "Lead time útil consumido, nível de SLA e dias úteis previstos para a OV.",
+    engineeringTimeKpi:
+      "Tempo total em engenharia e quantidade de PI vinculados à proposta.",
+    proposalSection:
+      "Dados cadastrais da OV, classificação de prazo e indicadores de SLA calculados para o período filtrado.",
+    engineeringSection:
+      "Resumo quantitativo do fluxo de engenharia: entradas, encerramentos, avanços, retornos e tempo acumulado.",
+    customerSection:
+      "Identificação comercial do cliente e do vendedor responsável pela proposta no TOTVS.",
+    productsSection:
+      "Produtos vinculados à OV no TOTVS, com tipo, grupo e quantidade de PI por item.",
+    productStructureSection:
+      "Estrutura analítica (BOM) de cada produto da proposta, com níveis aninhados como no cadastro TOTVS.",
+    proposalBranch: "Filial TOTVS em que a proposta está registrada.",
+    proposalKind: "Classificação da listagem: LMP, Amostra ou Outro.",
+    proposalNumber: "Número da proposta / ordem de venda (OV).",
+    proposalDescription: "Descrição comercial resumida cadastrada na proposta.",
+    proposalStartDate: "Data de início da proposta no TOTVS.",
+    proposalEndDate: "Data de encerramento ou previsão de fim da proposta.",
+    proposalStatus:
+      "Classificação de prazo calculada: Pontual, Atrasado, Andamento ou Retornada.",
+    proposalNivel: "Nível de SLA aplicado (1, 2 ou 3) conforme regras de negócio.",
+    proposalSlaDays: "Quantidade de dias úteis previstos no SLA do nível.",
+    proposalLimitDate: "Data limite de entrega calculada a partir do início e do SLA.",
+    proposalLeadTime: "Lead time útil já consumido, em dias úteis.",
+    proposalQtdPi: "Total de produtos intermediários (PI) vinculados à proposta.",
+    engineeringStatus: "Situação consolidada da proposta no fluxo de engenharia.",
+    engineeringEntries:
+      "Quantidade de eventos de entrada no fluxo de engenharia (última revisão medida).",
+    engineeringClosed: "Eventos de engenharia encerrados no TOTVS.",
+    engineeringAdvanced: "Avanços de estágio saindo do fluxo de engenharia.",
+    engineeringReturned: "Retornos da proposta ao fluxo de engenharia.",
+    engineeringTotalTime:
+      "Soma do tempo em minutos nos eventos de engenharia da revisão medida.",
+    engineeringSlaMinutes: "SLA convertido em minutos conforme o nível da proposta.",
+    customerName: "Razão social ou nome do cliente vinculado à OV.",
+    customerCode: "Código do cliente no cadastro TOTVS (SA1).",
+    customerStore: "Loja do cliente no cadastro TOTVS.",
+    sellerName: "Nome do vendedor responsável pela proposta.",
+    sellerCode: "Código do vendedor no cadastro TOTVS (SA3).",
+    productCode: "Código do produto no cadastro TOTVS (SB1).",
+    productDescription: "Descrição comercial; referência entre parênteses quando informada.",
+    productGroup: "Grupo de produtos (B1_GRUPO).",
+    productType: "Tipo do item: PA, PI, MP, etc.",
+    productQtdPi: "Quantidade de PI associada a este produto na proposta.",
+    historySection:
+      "Linha do tempo completa da OV no TOTVS (AIJ010): revisões, processos, estágios, prazos e duração de cada evento.",
+    historyRevision: "Revisão da proposta vinculada ao evento.",
+    historyProcess: "Processo do fluxo comercial/engenharia (código TOTVS e rótulo).",
+    historyStage: "Estágio dentro do processo (ex.: engenharia, amostra, homologação).",
+    historyStart: "Data e hora de início registradas para o evento.",
+    historyLimit: "Data e hora limite previstas para conclusão do estágio.",
+    historyEnd: "Data e hora de encerramento, quando informadas.",
+    historyDuration:
+      "Tempo em minutos entre início e encerramento (ou próximo evento / agora, se ainda aberto).",
+    historyStatus: "Status do evento no workflow TOTVS.",
+    historyEngineering: "Indica eventos contabilizados no fluxo de engenharia.",
+  },
+} as const;

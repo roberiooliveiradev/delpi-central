@@ -397,7 +397,7 @@ export function OeePage({ pathname }: OeePageProps) {
     <div className="dashboard-production dashboard-page">
       <FilterBar
         title="OEE — Eficiência geral dos equipamentos"
-        subtitle="Apontamentos OK da view fabril (EFICIENCIA_PERCENTUAL) — média na faixa 0–199%, mesmo escopo da eficiência fabril"
+        subtitle="Apontamentos OK da view fabril — eficiência por tempos (previsto ÷ real), média na faixa 0–199%"
         currentPath={pathname ?? PRODUCTION_ROUTES.oee}
         filterState={filterState}
         dateStart={dateStart}

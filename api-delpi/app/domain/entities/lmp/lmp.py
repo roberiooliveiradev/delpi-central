@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List
 from .lmp_product import LMPProduct
+from .lmp_history_event import LMPHistoryEvent
 
 
 @dataclass
@@ -35,6 +36,9 @@ class LMP:
 
     # Products
     list_products: Optional[List[LMPProduct]] = field(default_factory=list)
+
+    # Engineering / workflow history (AIJ010)
+    list_history: Optional[List[LMPHistoryEvent]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)

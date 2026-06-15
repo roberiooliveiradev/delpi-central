@@ -25,7 +25,7 @@ export const DP_HELP_TOOLTIPS = {
   },
   oee: {
     kpiOee:
-      "Média simples da eficiência (EFICIENCIA_PERCENTUAL) dos apontamentos na faixa 0–199%. Com filtros de OP, operador, CT, tipo ou faixa, reflete o subconjunto filtrado.",
+      "Média simples da eficiência (tempo previsto ÷ tempo real) dos apontamentos na faixa 0–199%. Com filtros de OP, operador, CT, tipo ou faixa, reflete o subconjunto filtrado.",
     kpiAppointments:
       "Total de apontamentos listáveis no período, incluindo registros fora da faixa (Verificar) e eficiência baixa.",
     kpiValid:

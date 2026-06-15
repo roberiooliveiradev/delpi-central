@@ -66,8 +66,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/direct_labor_cost_pct` | Custo de mão de obra direta % ROL. |
 | GET | `/production/production_cost_pct` | Custo de produção % ROL. |
 | GET | `/production/depreciation_pct` | Depreciação % ROL. |
-| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `H6_ZEFICI` (SH6010). |
-| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos SH6010, filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
+| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real). |
+| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento — roteiro (SG2), estrutura (BOM), análise de tempos e **`time_analysis.findings`** (alertas automáticos). |
 | GET | `/production/oee/series` | Série temporal de OEE por filial. |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
@@ -78,9 +78,9 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md).
 
-**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` na listagem = `EFICIENCIA_PERCENTUAL`; `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
+**Listagem OEE (`GET /production/oee`):** mesma view e filtros da eficiência fabril (`build_fabril_view_filters`); `oee_pct` na listagem = `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real); `appointment_id` via `production_fabril_sh6010_apply` para detalhe.
 
-**Detalhe (`GET /production/oee/appointments/{id}`):** diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis` (faixa 0–199%, tempos, roteiro, divergências).
+**Detalhe (`GET /production/oee/appointments/{id}`):** `oee_pct` e `time_analysis.efficiency_from_times_pct` calculados por tempos (roteiro SG2/SHY + horários); diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis`.
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  
 **Compras ranking:** `GET /purchases/top-products` — mesma doc.

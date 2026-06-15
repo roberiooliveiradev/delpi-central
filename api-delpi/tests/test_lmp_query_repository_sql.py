@@ -56,6 +56,19 @@ def test_header_lmp_uses_period_measurement_when_dates_provided() -> None:
     assert request.sale_number in params
 
 
+def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
+    repo = _repository()
+
+    sql, params = repo._sql_history_events_lmp(requested_branch="01")
+
+    assert "FROM AIJ010 A" in sql
+    assert "A.AIJ_NROPOR = ?" in sql
+    assert "PROXIMO_DTINIC_GLOBAL" in sql
+    assert "duration_minutes" in sql
+    assert "is_engineering" in sql
+    assert "01" in params
+
+
 def test_historico_uses_period_revision_measurement_when_listing() -> None:
     repo = _repository()
 

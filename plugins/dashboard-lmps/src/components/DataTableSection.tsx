@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
+import { HelpTooltip } from "./HelpTooltip";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,
@@ -42,6 +43,7 @@ function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
 
 export type DataTableSectionProps<T> = {
   title: string;
+  titleHint?: string;
   hint?: string;
   columns: DataTableColumn<T>[];
   rows: T[];
@@ -61,6 +63,7 @@ export type DataTableSectionProps<T> = {
 
 export function DataTableSection<T>({
   title,
+  titleHint,
   hint,
   columns,
   rows,
@@ -138,7 +141,16 @@ export function DataTableSection<T>({
       aria-busy={loading || refreshing}
     >
       <div className="lmps-table-section__header">
-        <h2 className="lmps-section-title">{title}</h2>
+        <h2 className="lmps-section-title">
+          {title}
+          {titleHint ? (
+            <HelpTooltip
+              content={titleHint}
+              ariaLabel={`Ajuda: ${title}`}
+              className="lmps-table-section__title-help"
+            />
+          ) : null}
+        </h2>
         <div className="lmps-table-section__meta-group">
           {hint ? <span className="lmps-table-section__meta">{hint}</span> : null}
           <span className="lmps-table-section__meta">
@@ -191,6 +203,7 @@ export function DataTableSection<T>({
             sortKey={clientSort?.sortKey}
             sortDirection={clientSort?.sortDirection}
             onSortChange={clientSort?.onSortChange}
+            layout="section"
           />
 
           <Pagination

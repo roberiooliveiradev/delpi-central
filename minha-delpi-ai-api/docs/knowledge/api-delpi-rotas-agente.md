@@ -286,7 +286,7 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 
 **Resposta:** `appointment` (cadastro SH6010), `time_analysis` (setup, fator padrão, horas previstas/reais, `real_hours_source` = `interval` ou `h6_tempo`, eficiência por tempos, fórmulas, **`findings`** com alertas automáticos de motivos/erros), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
 
-**`time_analysis.findings` (diagnóstico canônico):** serviço `production_appointment_time_analysis` — exemplos: eficiência/OEE fora da faixa 0–199%, divergência H6_ZEFICI × tempos, tempo previsto/real ausente, intervalo muito curto, roteiro sem fator padrão, fallback em H6_TEMPO. Severidade: `error` | `warning` | `info`.
+**`time_analysis.findings` (diagnóstico canônico):** serviço `production_appointment_time_analysis` — exemplos: eficiência fora da faixa 0–199%, tempo previsto/real ausente, intervalo muito curto, roteiro sem fator padrão, fallback em H6_TEMPO. Severidade: `error` | `warning` | `info`.
 
 **Não confundir rotas:** `GET /production/oee` (painel + listagem, view fabril) e `GET /production/eficiencia-fabril/*` (dashboard MOD/gráficos no MFE) compartilham `EFICIENCIA_PERCENTUAL` e `build_fabril_view_filters` — não duplicar regras de CT/status/faixa. **Detalhe de apontamento** (roteiro, tempos, alertas): sempre `GET /production/oee/appointments/{appointment_id}` — usado pelo OEE e pela eficiência fabril ao clicar na linha.
 

@@ -42,8 +42,9 @@ def build_appointment_time_findings(
 ) -> list[AppointmentTimeFinding]:
     findings: list[AppointmentTimeFinding] = []
 
-    oee_pct = _float(appointment.get("oee_pct"))
-    efficiency_from_times_pct = _float(appointment.get("efficiency_from_times_pct"))
+    efficiency_pct = _float(appointment.get("efficiency_from_times_pct")) or _float(
+        appointment.get("oee_pct")
+    )
     planned_hours = _float(appointment.get("planned_hours"))
     real_hours = _float(appointment.get("real_hours"))
     setup_hours = _float(appointment.get("setup_hours"))
@@ -54,16 +55,16 @@ def build_appointment_time_findings(
     status = _text(appointment.get("status")).lower()
     source = real_hours_source or resolve_real_hours_source(appointment)
 
-    if status == "outlier" or _is_out_of_range(oee_pct):
+    if status == "outlier" or _is_out_of_range(efficiency_pct):
         findings.append(
             AppointmentTimeFinding(
                 code="oee_out_of_range",
                 severity="warning",
-                message="OEE registrado (H6_ZEFICI) fora da faixa 0–199%.",
-                detail=_format_pct_detail(oee_pct),
+                message="Eficiência calculada (tempo previsto ÷ tempo real) fora da faixa 0–199%.",
+                detail=_format_pct_detail(efficiency_pct),
             )
         )
-    elif is_low_production_efficiency_pct(oee_pct):
+    elif is_low_production_efficiency_pct(efficiency_pct):
         findings.append(
             AppointmentTimeFinding(
                 code="low_efficiency_reported",
@@ -74,51 +75,8 @@ def build_appointment_time_findings(
                 ),
                 detail=_build_low_efficiency_detail(
                     appointment,
-                    metric_label="H6_ZEFICI",
-                    efficiency_pct=oee_pct,
-                ),
-            )
-        )
-
-    if _is_out_of_range(efficiency_from_times_pct):
-        findings.append(
-            AppointmentTimeFinding(
-                code="efficiency_times_out_of_range",
-                severity="warning",
-                message="Eficiência calculada pelos tempos está fora da faixa 0–199%.",
-                detail=_format_pct_detail(efficiency_from_times_pct),
-            )
-        )
-    elif is_low_production_efficiency_pct(efficiency_from_times_pct):
-        findings.append(
-            AppointmentTimeFinding(
-                code="low_efficiency_from_times",
-                severity="warning",
-                message=(
-                    f"Eficiência por tempos abaixo de "
-                    f"{PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD}% — confira horários e roteiro."
-                ),
-                detail=_build_low_efficiency_detail(
-                    appointment,
                     metric_label="tempos",
-                    efficiency_pct=efficiency_from_times_pct,
-                ),
-            )
-        )
-
-    if (
-        oee_pct is not None
-        and efficiency_from_times_pct is not None
-        and abs(oee_pct - efficiency_from_times_pct) >= 20
-    ):
-        findings.append(
-            AppointmentTimeFinding(
-                code="efficiency_divergence",
-                severity="warning",
-                message="OEE registrado e eficiência por tempos divergem significativamente.",
-                detail=(
-                    f"H6_ZEFICI: {_format_pct(oee_pct)} · "
-                    f"tempos: {_format_pct(efficiency_from_times_pct)}"
+                    efficiency_pct=efficiency_pct,
                 ),
             )
         )

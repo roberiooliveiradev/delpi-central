@@ -23,7 +23,7 @@ Layout alinhado ao plugin [eficiência fabril](../eficiencia-fabril/README.md):
 
 - Colunas: Data, Início, Fim, Qtd. apontada, Filial, OP, Descrição produto, CT, Operador, Eficiência, Status
 - Faixa válida **0–199%** via módulo compartilhado `production_efficiency_valid_range` / `build_fabril_view_filters`
-- Mesma métrica e escopo da eficiência fabril (`EFICIENCIA_PERCENTUAL`, view fabril)
+- Mesma métrica e escopo da eficiência fabril (eficiência por tempos, view fabril)
 - Outliers: linha vermelha + badge **Verificar**; válidos: **OK**
 - Clique na linha → detalhe (`OeeAppointmentDetailPage`) com **análise de tempos** e alertas automáticos (`findings`: faixa, divergência, intervalo curto, roteiro incompleto, etc.)
 

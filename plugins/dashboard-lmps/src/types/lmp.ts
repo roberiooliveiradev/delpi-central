@@ -9,6 +9,24 @@ export type LmpProduct = {
   qtd_pi?: number | null;
 };
 
+export type LmpHistoryEvent = {
+  revision: string;
+  process_code: string;
+  stage_code: string;
+  process_label?: string | null;
+  stage_label?: string | null;
+  start_date?: string | null;
+  start_time?: string | null;
+  limit_date?: string | null;
+  limit_time?: string | null;
+  end_date?: string | null;
+  end_time?: string | null;
+  duration_minutes?: number | null;
+  status?: string | null;
+  history_flag?: string | null;
+  is_engineering?: boolean;
+};
+
 export type LmpListingKind = "LMP" | "AMOSTRA" | "OUTRO";
 
 export type LmpItem = {
@@ -32,6 +50,7 @@ export type LmpItem = {
   seller_code?: string | null;
   seller_name?: string | null;
   list_products?: LmpProduct[];
+  list_history?: LmpHistoryEvent[];
 };
 
 export type LmpDashboardItem = LmpItem & {

@@ -1,4 +1,4 @@
-/** Faixa válida alinhada a OEE (H6_ZEFICI) e API (`production_efficiency_valid_range`). */
+/** Faixa válida alinhada à API (`production_efficiency_valid_range`) — eficiência por tempos. */
 export const PRODUCTION_EFFICIENCY_VALID_MIN_PCT = 0;
 export const PRODUCTION_EFFICIENCY_VALID_MAX_PCT = 199;
 

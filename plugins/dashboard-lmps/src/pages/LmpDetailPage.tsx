@@ -6,24 +6,28 @@ import {
   CircleGauge,
   Clock3,
   FileText,
+  History,
   RefreshCw,
   UserRound,
   Wrench,
 } from "lucide-react";
 
+import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
+import { LmpProductStructuresSection } from "../components/LmpProductStructuresSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTable } from "../components/DataTable";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { LMPS_ROUTES } from "../constants/routes";
 import { useLmpDetail } from "../hooks/useLmpDetail";
+import { useLmpProductStructures } from "../hooks/useLmpProductStructures";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import type { LmpProduct } from "../types/lmp";
+import type { LmpHistoryEvent, LmpProduct } from "../types/lmp";
 import { formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
@@ -41,6 +45,38 @@ function formatDate(value?: string | null): string {
   const day = value.slice(6, 8);
 
   return `${day}/${month}/${year}`;
+}
+
+function formatDateTime(date?: string | null, time?: string | null): string {
+  const formattedDate = formatDate(date);
+  const normalizedTime = time?.trim();
+
+  if (formattedDate === "—" && !normalizedTime) return "—";
+  if (formattedDate === "—") return normalizedTime ?? "—";
+  if (!normalizedTime) return formattedDate;
+
+  return `${formattedDate} ${normalizedTime}`;
+}
+
+function formatProcessStage(
+  code?: string | null,
+  label?: string | null,
+): string {
+  const normalizedCode = code?.trim();
+  const normalizedLabel = label?.trim();
+
+  if (!normalizedCode && !normalizedLabel) return "—";
+  if (normalizedLabel && normalizedCode && normalizedLabel !== normalizedCode) {
+    return `${normalizedLabel} (${normalizedCode})`;
+  }
+
+  return normalizedLabel || normalizedCode || "—";
+}
+
+function renderEngineeringFlag(isEngineering?: boolean) {
+  if (!isEngineering) return "—";
+
+  return <span className="lmps-history-badge">Engenharia</span>;
 }
 
 function formatListingKind(kind?: string | null): string {
@@ -140,27 +176,95 @@ function renderProductQuantity(value?: number | null) {
 }
 
 const productColumns: DataTableColumn<LmpProduct>[] = [
-  { key: "code", header: "Código", render: (row) => row.code || "—" },
+  {
+    key: "code",
+    header: "Código",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.productCode,
+    render: (row) => row.code || "—",
+  },
   {
     key: "description",
     header: "Descrição",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.productDescription,
     className: "lmps-table__col--wide",
     render: (row) => renderProductDescription(row.description),
   },
   {
     key: "group",
     header: "Grupo",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.productGroup,
     render: (row) => row.group_code || "—",
   },
   {
     key: "type",
     header: "Tipo",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.productType,
     render: (row) => renderProductType(row.type),
   },
   {
     key: "qtd_pi",
     header: "Qtd PI",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.productQtdPi,
     render: (row) => renderProductQuantity(row.qtd_pi),
+  },
+];
+
+const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
+  {
+    key: "revision",
+    header: "Revisão",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyRevision,
+    render: (row) => row.revision || "—",
+  },
+  {
+    key: "process",
+    header: "Processo",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyProcess,
+    className: "lmps-table__col--wide",
+    render: (row) => formatProcessStage(row.process_code, row.process_label),
+  },
+  {
+    key: "stage",
+    header: "Estágio",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStage,
+    className: "lmps-table__col--wide",
+    render: (row) => formatProcessStage(row.stage_code, row.stage_label),
+  },
+  {
+    key: "start",
+    header: "Início",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStart,
+    render: (row) => formatDateTime(row.start_date, row.start_time),
+  },
+  {
+    key: "limit",
+    header: "Limite",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyLimit,
+    render: (row) => formatDateTime(row.limit_date, row.limit_time),
+  },
+  {
+    key: "end",
+    header: "Encerramento",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyEnd,
+    render: (row) => formatDateTime(row.end_date, row.end_time),
+  },
+  {
+    key: "duration",
+    header: "Duração",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyDuration,
+    render: (row) => formatMinutes(row.duration_minutes),
+  },
+  {
+    key: "status",
+    header: "Status",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStatus,
+    render: (row) => row.status?.trim() || "—",
+  },
+  {
+    key: "engineering",
+    header: "Fluxo",
+    headerHint: LMPS_HELP_TOOLTIPS.detail.historyEngineering,
+    render: (row) => renderEngineeringFlag(row.is_engineering),
   },
 ];
 
@@ -168,6 +272,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
   const filters = readLmpsFilters();
   const detail = useLmpDetail(saleNumber, filters, { branch });
   const item = detail.item;
+  const productStructures = useLmpProductStructures(item?.list_products);
   const initialFetchProgress = useTrackedSingleFetchProgress(detail.loading);
   const initialLoadingProgress = useLoadingProgress(detail.loading, initialFetchProgress);
 
@@ -177,26 +282,68 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
     () =>
       item
         ? [
-            { label: "Filial", value: item.branch ?? "—" },
-            { label: "Tipo", value: formatListingKind(item.listing_kind) },
-            { label: "Nº Proposta", value: item.sale_number },
+            {
+              label: "Filial",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalBranch,
+              value: item.branch ?? "—",
+            },
+            {
+              label: "Tipo",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalKind,
+              value: formatListingKind(item.listing_kind),
+            },
+            {
+              label: "Nº Proposta",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalNumber,
+              value: item.sale_number,
+            },
             {
               label: "Descrição",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalDescription,
               value: item.sale_description || "—",
               wide: true,
             },
-            { label: "Data início", value: formatDate(item.start_date) },
-            { label: "Data fim", value: formatDate(item.end_date) },
-            { label: "Status classificação", value: renderStatusBadge(item.status) },
-            { label: "Nível", value: item.nivel },
-            { label: "Dias úteis (SLA)", value: String(item.dias_uteis_sla) },
-            { label: "Data limite", value: formatDate(item.data_limite) },
+            {
+              label: "Data início",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalStartDate,
+              value: formatDate(item.start_date),
+            },
+            {
+              label: "Data fim",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalEndDate,
+              value: formatDate(item.end_date),
+            },
+            {
+              label: "Status classificação",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalStatus,
+              value: renderStatusBadge(item.status),
+            },
+            {
+              label: "Nível",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalNivel,
+              value: item.nivel,
+            },
+            {
+              label: "Dias úteis (SLA)",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalSlaDays,
+              value: String(item.dias_uteis_sla),
+            },
+            {
+              label: "Data limite",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalLimitDate,
+              value: formatDate(item.data_limite),
+            },
             {
               label: "Lead time útil",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalLeadTime,
               value:
                 item.lead_time_util == null ? "—" : String(item.lead_time_util),
             },
-            { label: "Qtd PI", value: String(item.qtd_pi ?? 0) },
+            {
+              label: "Qtd PI",
+              hint: LMPS_HELP_TOOLTIPS.detail.proposalQtdPi,
+              value: String(item.qtd_pi ?? 0),
+            },
           ]
         : [],
     [item]
@@ -206,29 +353,39 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
     () =>
       item
         ? [
-            { label: "Status engenharia", value: item.engineering_status ?? "—" },
+            {
+              label: "Status engenharia",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringStatus,
+              value: item.engineering_status ?? "—",
+            },
             {
               label: "Entradas engenharia",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringEntries,
               value: String(item.qtd_engineering_entries ?? 0),
             },
             {
               label: "Encerramentos",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringClosed,
               value: String(item.qtd_engineering_closed ?? 0),
             },
             {
               label: "Avanços",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringAdvanced,
               value: String(item.qtd_advanced_from_engineering ?? 0),
             },
             {
               label: "Retornos",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringReturned,
               value: String(item.qtd_returned_from_engineering ?? 0),
             },
             {
               label: "Tempo total",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringTotalTime,
               value: formatMinutes(item.engineering_total_minutes),
             },
             {
               label: "SLA (minutos)",
+              hint: LMPS_HELP_TOOLTIPS.detail.engineeringSlaMinutes,
               value: formatMinutes(item.sla_minutos),
             },
           ]
@@ -240,11 +397,31 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
     () =>
       item
         ? [
-            { label: "Cliente", value: item.costumer_name ?? "—" },
-            { label: "Código cliente", value: item.costumer_code ?? "—" },
-            { label: "Loja", value: item.costumer_store ?? "—" },
-            { label: "Vendedor", value: item.seller_name ?? "—" },
-            { label: "Código vendedor", value: item.seller_code ?? "—" },
+            {
+              label: "Cliente",
+              hint: LMPS_HELP_TOOLTIPS.detail.customerName,
+              value: item.costumer_name ?? "—",
+            },
+            {
+              label: "Código cliente",
+              hint: LMPS_HELP_TOOLTIPS.detail.customerCode,
+              value: item.costumer_code ?? "—",
+            },
+            {
+              label: "Loja",
+              hint: LMPS_HELP_TOOLTIPS.detail.customerStore,
+              value: item.costumer_store ?? "—",
+            },
+            {
+              label: "Vendedor",
+              hint: LMPS_HELP_TOOLTIPS.detail.sellerName,
+              value: item.seller_name ?? "—",
+            },
+            {
+              label: "Código vendedor",
+              hint: LMPS_HELP_TOOLTIPS.detail.sellerCode,
+              value: item.seller_code ?? "—",
+            },
           ]
         : [],
     [item]
@@ -310,18 +487,21 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
           <section className="lmps-kpi-grid" aria-busy={detail.loading}>
             <KpiCard
               title="Status"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.statusKpi}
               value={item.status}
               subtitle={item.engineering_status ?? "Engenharia"}
               icon={<CircleGauge size={22} />}
             />
             <KpiCard
               title="Lead time útil"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.leadTimeKpi}
               value={item.lead_time_util == null ? "—" : String(item.lead_time_util)}
               subtitle={`${item.nivel} · ${item.dias_uteis_sla} dias úteis`}
               icon={<Clock3 size={22} />}
             />
             <KpiCard
               title="Tempo engenharia"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.engineeringTimeKpi}
               value={formatMinutes(item.engineering_total_minutes)}
               subtitle={`${item.qtd_pi ?? 0} PI · ${periodLabel}`}
               icon={<BarChart3 size={22} />}
@@ -331,6 +511,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
           <section className="lmps-detail-layout">
             <DetailCard
               title="Proposta"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.proposalSection}
               hint="Dados da OV e classificação de prazo"
               icon={<FileText size={20} aria-hidden />}
             >
@@ -339,6 +520,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
 
             <DetailCard
               title="Engenharia"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.engineeringSection}
               hint="Resumo de entradas, encerramentos e tempo"
               icon={<Wrench size={20} aria-hidden />}
             >
@@ -347,6 +529,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
 
             <DetailCard
               title="Cliente e vendedor"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.customerSection}
               hint="Identificação comercial da proposta"
               icon={<UserRound size={20} aria-hidden />}
             >
@@ -355,6 +538,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
 
             <DetailCard
               title="Produtos"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.productsSection}
               hint={`${item.list_products?.length ?? 0} item(ns) vinculado(s)`}
               icon={<Building2 size={20} aria-hidden />}
               className="lmps-detail-card--full"
@@ -364,6 +548,38 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
                 rows={item.list_products ?? []}
                 rowKey={(row) => row.code || row.description}
                 emptyMessage="Nenhum produto vinculado."
+              />
+            </DetailCard>
+
+            {productStructures.shouldRender ? (
+              <LmpProductStructuresSection
+                entries={productStructures.entries}
+                loading={productStructures.loading}
+              />
+            ) : null}
+
+            <DetailCard
+              title="Histórico da OV"
+              titleHint={LMPS_HELP_TOOLTIPS.detail.historySection}
+              hint="Linha do tempo de eventos no TOTVS (AIJ010)"
+              icon={<History size={20} aria-hidden />}
+              className="lmps-detail-card--full"
+            >
+              <DataTable
+                columns={historyColumns}
+                rows={item.list_history ?? []}
+                rowKey={(row) =>
+                  [
+                    row.revision,
+                    row.process_code,
+                    row.stage_code,
+                    row.start_date,
+                    row.start_time,
+                    row.end_date,
+                    row.end_time,
+                  ].join("-")
+                }
+                emptyMessage="Nenhum evento registrado no histórico da OV."
               />
             </DetailCard>
           </section>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getLmpBySaleNumber } from "../api/lmpApi";
 import type { LmpDetailData } from "../types/lmp";
 import type { LmpsFilterUrlState } from "../utils/filterUrl";
-import { toLmpApiDate } from "../utils/filterUrl";
+import { resolveLmpsBranchFilter, toLmpApiDate } from "../utils/filterUrl";
 
 type UseLmpDetailOptions = {
   branch?: string;
@@ -33,7 +33,7 @@ export function useLmpDetail(
       const result = await getLmpBySaleNumber(saleNumber, {
         date_start: toLmpApiDate(filters.dateStart),
         date_end: toLmpApiDate(filters.dateEnd),
-        branch: options.branch || filters.branch || undefined,
+        branch: options.branch || resolveLmpsBranchFilter(filters) || undefined,
       });
       setData(result);
     } catch (reason) {
@@ -46,7 +46,7 @@ export function useLmpDetail(
     } finally {
       setLoading(false);
     }
-  }, [saleNumber, filters.dateStart, filters.dateEnd, filters.branch, options.branch]);
+  }, [saleNumber, filters.dateStart, filters.dateEnd, filters.branches, options.branch]);
 
   useEffect(() => {
     void reload();

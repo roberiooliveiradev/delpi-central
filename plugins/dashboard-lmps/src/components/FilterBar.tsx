@@ -1,35 +1,46 @@
 import { Download, ListFilter } from "lucide-react";
 
+import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  LMPS_BRANCH_OPTIONS,
+  LMPS_LISTING_TYPE_OPTIONS,
+  LMPS_STATUS_OPTIONS,
+} from "../constants/filterOptions";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
+
 type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
-  listingType: string;
-  status: string;
+  branches: string[];
+  listingTypes: string[];
+  statuses: string[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
-  onListingTypeChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  onBranchesChange: (value: string[]) => void;
+  onListingTypesChange: (value: string[]) => void;
+  onStatusesChange: (value: string[]) => void;
   onRefresh: () => void;
   onExport?: () => void;
   exportDisabled?: boolean;
+  disabled?: boolean;
 };
 
 export function FilterBar({
   dateStart,
   dateEnd,
-  branch,
-  listingType,
-  status,
+  branches,
+  listingTypes,
+  statuses,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
-  onListingTypeChange,
-  onStatusChange,
+  onBranchesChange,
+  onListingTypesChange,
+  onStatusesChange,
   onRefresh,
   onExport,
   exportDisabled = false,
+  disabled = false,
 }: FilterBarProps) {
   return (
     <>
@@ -61,65 +72,59 @@ export function FilterBar({
         </div>
       </header>
 
-      <section className="lmps-filters-row">
-        <div className="lmps-filter-box">
-          <label>Data inicial</label>
+      <section className="lmps-filters-row" aria-label="Filtros do dashboard">
+        <label className="lmps-filter-box lmps-field">
+          <FieldLabel label="Data inicial" hint={LMPS_HELP_TOOLTIPS.filters.dateStart} />
           <input
             type="date"
-            alt="Data inicial"
             value={dateStart}
-            onChange={(e) => onDateStartChange(e.target.value)}
+            disabled={disabled}
+            onChange={(event) => onDateStartChange(event.target.value)}
           />
-        </div>
+        </label>
 
-        <div className="lmps-filter-box">
-          <label>Data final</label>
+        <label className="lmps-filter-box lmps-field">
+          <FieldLabel label="Data final" hint={LMPS_HELP_TOOLTIPS.filters.dateEnd} />
           <input
             type="date"
-            alt="Data final"
             value={dateEnd}
-            onChange={(e) => onDateEndChange(e.target.value)}
+            disabled={disabled}
+            onChange={(event) => onDateEndChange(event.target.value)}
           />
-        </div>
+        </label>
 
-        <div className="lmps-filter-box">
-          <label>Filial</label>
-          <select
-            value={branch}
-            onChange={(e) => onBranchChange(e.target.value)}
-          >
-            <option value="">Todas</option>
-            <option value="01">01</option>
-            <option value="02">02</option>
-          </select>
-        </div>
+        <MultiSelectField
+          label="Filial"
+          labelHint={LMPS_HELP_TOOLTIPS.filters.branch}
+          emptyLabel="Todas"
+          searchable
+          options={LMPS_BRANCH_OPTIONS}
+          selectedValues={branches}
+          onChange={onBranchesChange}
+          disabled={disabled}
+        />
 
-        <div className="lmps-filter-box">
-          <label>Tipo</label>
-          <select
-            value={listingType}
-            onChange={(e) => onListingTypeChange(e.target.value)}
-          >
-            <option value="Todos">Todos</option>
-            <option value="LMP">LMP</option>
-            <option value="Amostra">Amostra</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </div>
+        <MultiSelectField
+          label="Tipo"
+          labelHint={LMPS_HELP_TOOLTIPS.filters.listingType}
+          emptyLabel="Todos"
+          searchable
+          options={LMPS_LISTING_TYPE_OPTIONS}
+          selectedValues={listingTypes}
+          onChange={onListingTypesChange}
+          disabled={disabled}
+        />
 
-        <div className="lmps-filter-box">
-          <label>Status</label>
-          <select
-            value={status}
-            onChange={(e) => onStatusChange(e.target.value)}
-          >
-            <option value="Todos">Todos</option>
-            <option value="Pontual">Pontual</option>
-            <option value="Atrasado">Atrasado</option>
-            <option value="Andamento">Andamento</option>
-            <option value="Retornada">Retornada</option>
-          </select>
-        </div>
+        <MultiSelectField
+          label="Status"
+          labelHint={LMPS_HELP_TOOLTIPS.filters.status}
+          emptyLabel="Todos"
+          searchable
+          options={LMPS_STATUS_OPTIONS}
+          selectedValues={statuses}
+          onChange={onStatusesChange}
+          disabled={disabled}
+        />
       </section>
     </>
   );

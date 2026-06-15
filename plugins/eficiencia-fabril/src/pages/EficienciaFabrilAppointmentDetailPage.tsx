@@ -370,16 +370,10 @@ export function EficienciaFabrilAppointmentDetailPage({
           <>
             <section className="ef-kpi-grid" aria-busy={detail.loading}>
               <KpiCard
-                label="Eficiência (view)"
+                label="Eficiência"
                 value={formatPercent(appointment.oee_pct)}
-                hint="EFICIENCIA_PERCENTUAL"
+                hint={timeAnalysis?.formula_efficiency ?? "Tempo previsto ÷ tempo real"}
                 icon={<CircleGauge size={22} aria-hidden />}
-              />
-              <KpiCard
-                label="Eficiência (tempos)"
-                value={formatPercent(timeAnalysis?.efficiency_from_times_pct)}
-                hint={timeAnalysis?.formula_efficiency ?? "Previsto ÷ real"}
-                icon={<Factory size={22} aria-hidden />}
               />
               <KpiCard
                 label="Tempo previsto"

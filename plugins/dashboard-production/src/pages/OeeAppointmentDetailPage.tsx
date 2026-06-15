@@ -450,17 +450,10 @@ export function OeeAppointmentDetailPage({
         <>
           <section className="dp-kpi-grid" aria-busy={detail.loading}>
             <KpiCard
-              title="OEE"
+              title="Eficiência"
               value={formatPercent(appointment.oee_pct)}
-              subtitle="H6_ZEFICI no apontamento"
+              subtitle={timeAnalysis?.formula_efficiency ?? "Tempo previsto ÷ tempo real"}
               icon={<CircleGauge size={22} />}
-              loading={detail.loading}
-            />
-            <KpiCard
-              title="Eficiência (tempos)"
-              value={formatPercent(timeAnalysis?.efficiency_from_times_pct)}
-              subtitle={timeAnalysis?.formula_efficiency ?? "Previsto ÷ real"}
-              icon={<Factory size={22} />}
               loading={detail.loading}
             />
             <KpiCard

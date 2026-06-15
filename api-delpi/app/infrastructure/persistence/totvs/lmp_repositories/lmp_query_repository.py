@@ -10,6 +10,7 @@ from app.application.dto.lmp.list_lmp_request import (
 )
 from app.application.models.page import Page
 from app.domain.entities.lmp.lmp import LMP
+from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
 from app.domain.entities.lmp.lmp_product import LMPProduct
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
@@ -2243,6 +2244,76 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
         return sql, (*params_prod, *params_pi)
 
+    def _sql_history_events_lmp(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_aij, params_aij = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "A.D_E_L_E_T_"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
+            )
+        )
+        where_eng, params_eng = self._sql_engineering_support_process_stage_condition(
+            "E.AIJ_PROVEN",
+            "E.AIJ_STAGE",
+        )
+        eng_minutes_expr = self._sql_event_engineering_minutes_expr("E")
+
+        win = """PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
+                        ORDER BY
+                            A.AIJ_REVISA,
+                            A.AIJ_DTINIC,
+                            A.AIJ_HRINIC,
+                            A.AIJ_STAGE,
+                            A.R_E_C_N_O_"""
+
+        sql = f"""
+            WITH EventosOV AS (
+                SELECT
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
+                    A.AIJ_DTLIMI,
+                    A.AIJ_HRLIMI,
+                    A.AIJ_DTENCE,
+                    A.AIJ_HRENCE,
+                    A.AIJ_HISTOR,
+                    A.AIJ_STATUS,
+                    A.R_E_C_N_O_,
+                    LEAD(A.AIJ_DTINIC) OVER ({win}) AS PROXIMO_DTINIC_GLOBAL,
+                    LEAD(A.AIJ_HRINIC) OVER ({win}) AS PROXIMO_HRINIC_GLOBAL
+                FROM AIJ010 A
+                WHERE {where_aij}
+                  AND A.AIJ_NROPOR = ?
+            )
+            SELECT
+                E.AIJ_REVISA AS revision,
+                E.AIJ_PROVEN AS process_code,
+                E.AIJ_STAGE AS stage_code,
+                E.AIJ_DTINIC AS start_date,
+                E.AIJ_HRINIC AS start_time,
+                E.AIJ_DTLIMI AS limit_date,
+                E.AIJ_HRLIMI AS limit_time,
+                E.AIJ_DTENCE AS end_date,
+                E.AIJ_HRENCE AS end_time,
+                {eng_minutes_expr.strip()} AS duration_minutes,
+                E.AIJ_STATUS AS status,
+                E.AIJ_HISTOR AS history_flag,
+                CASE WHEN {where_eng} THEN 1 ELSE 0 END AS is_engineering
+            FROM EventosOV E
+            ORDER BY
+                E.AIJ_REVISA,
+                E.AIJ_DTINIC,
+                E.AIJ_HRINIC,
+                E.AIJ_STAGE,
+                E.R_E_C_N_O_
+        """
+
+        return sql, (*params_aij, *params_eng)
+
     # =========================
     # STAGED EXECUTION (single batch com temp tables)
     # =========================
@@ -2563,6 +2634,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         sql_header, params_header = self._sql_header_lmp(request)
         sql_products, params_products = self._sql_products_lmp(requested_branch=requested_branch)
         sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total(requested_branch=requested_branch)
+        sql_history, params_history = self._sql_history_events_lmp(
+            requested_branch=requested_branch,
+        )
 
         with self as repo:
             header_row = repo.execute_one(
@@ -2585,7 +2659,32 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 (*params_qtd_pi, request.sale_number),
             )
 
+            history_rows = repo.execute_query(
+                sql_history,
+                (*params_history, request.sale_number),
+            )
+
         products = [LMPProduct(**row) for row in product_rows]
+        history = [
+            LMPHistoryEvent(
+                revision=row["revision"],
+                process_code=row["process_code"],
+                stage_code=row["stage_code"],
+                start_date=row.get("start_date") or None,
+                start_time=row.get("start_time") or None,
+                limit_date=row.get("limit_date") or None,
+                limit_time=row.get("limit_time") or None,
+                end_date=row.get("end_date") or None,
+                end_time=row.get("end_time") or None,
+                duration_minutes=int(row["duration_minutes"] or 0)
+                if row.get("duration_minutes") not in (None, "")
+                else None,
+                status=row.get("status") or None,
+                history_flag=row.get("history_flag") or None,
+                is_engineering=bool(row.get("is_engineering")),
+            )
+            for row in history_rows
+        ]
 
         return LMP(
             branch=header_row.get("branch"),
@@ -2607,6 +2706,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             seller_code=header_row.get("seller_code"),
             seller_name=header_row.get("seller_name"),
             list_products=products,
+            list_history=history,
         )
 
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:

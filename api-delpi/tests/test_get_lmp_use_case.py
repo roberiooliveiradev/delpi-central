@@ -4,6 +4,7 @@ from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.services.response_meta_builder import ResponseMetaBuilder
 from app.application.use_cases.lmp.get_lmp_use_case import GetLMPUseCase
 from app.domain.entities.lmp.lmp import LMP
+from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
 from app.domain.entities.lmp.lmp_product import LMPProduct
 
 
@@ -27,6 +28,17 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
         list_products=[
             LMPProduct(code="10080001", description="ITEM TESTE", qtd_pi=0),
         ],
+        list_history=[
+            LMPHistoryEvent(
+                revision="001",
+                process_code="000003",
+                stage_code="000003",
+                start_date="20260520",
+                start_time="08:30",
+                duration_minutes=45,
+                is_engineering=True,
+            ),
+        ],
     )
 
     use_case = GetLMPUseCase(repository)
@@ -45,6 +57,9 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
     assert "status" in result
     assert "lead_time_util" in result
     assert len(result["list_products"]) == 1
+    assert len(result["list_history"]) == 1
+    assert result["list_history"][0]["process_label"] == "Engenharia"
+    assert result["list_history"][0]["stage_label"] == "Engenharia"
 
 
 def test_lmp_related_routes_includes_dashboard_links():

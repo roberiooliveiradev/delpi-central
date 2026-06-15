@@ -23,7 +23,7 @@ def test_build_findings_flags_out_of_range_efficiency() -> None:
 
     codes = {item.code for item in findings}
     assert "oee_out_of_range" in codes
-    assert "efficiency_times_out_of_range" in codes
+    assert "efficiency_times_out_of_range" not in codes
     assert "very_short_real_interval" in codes
 
 
@@ -67,7 +67,7 @@ def test_build_findings_flags_low_efficiency() -> None:
 
     codes = {item.code for item in findings}
     assert "low_efficiency_reported" in codes
-    assert "low_efficiency_from_times" in codes
+    assert "low_efficiency_from_times" not in codes
     low_finding = next(item for item in findings if item.code == "low_efficiency_reported")
     assert "50%" in low_finding.message
     assert "verifique" in low_finding.message.lower()

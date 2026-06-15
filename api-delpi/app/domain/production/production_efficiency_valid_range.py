@@ -1,6 +1,7 @@
 """Faixa válida de eficiência (%) para indicadores de produção.
 
-Usada por OEE (H6_ZEFICI / SH6010) e Eficiência Fabril (EFICIENCIA_PERCENTUAL / view).
+Usada por OEE e Eficiência Fabril — eficiência calculada como
+(tempo_previsto / tempo_real) × 100 (view fabril ou SH6010 no detalhe).
 Valores fora da faixa permanecem listáveis, mas não entram em médias/KPIs/gráficos.
 """
 

@@ -24,6 +24,7 @@ import { DataTableSection } from "../components/DataTableSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildLmpDetailPath } from "../constants/routes";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClientTableSort } from "../hooks/useClientTableSort";
@@ -41,6 +42,13 @@ import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmps } from "../utils/navigation";
+import {
+  computeLmpsSummaryFromItems,
+  filterLmpsDashboardItems,
+  hasActiveLmpsFilters,
+  needsClientSideFilter,
+  resolveLmpsApiFilters,
+} from "../utils/lmpsClientFilters";
 
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
@@ -88,20 +96,35 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
   const initialFilters = useMemo(() => readLmpsFilters(), [pathname]);
   const [dateStart, setDateStart] = useState(initialFilters.dateStart);
   const [dateEnd, setDateEnd] = useState(initialFilters.dateEnd);
-  const [branch, setBranch] = useState(initialFilters.branch);
-  const [listingType, setListingType] = useState(initialFilters.listingType);
-  const [status, setStatus] = useState(initialFilters.status);
+  const [branches, setBranches] = useState(initialFilters.branches);
+  const [listingTypes, setListingTypes] = useState(initialFilters.listingTypes);
+  const [statuses, setStatuses] = useState(initialFilters.statuses);
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
+  const multiFilters = useMemo(
+    () => ({ branches, listingTypes, statuses }),
+    [branches, listingTypes, statuses]
+  );
+
+  const apiFilters = useMemo(
+    () => resolveLmpsApiFilters(multiFilters),
+    [multiFilters]
+  );
+
+  const usesClientFilter = useMemo(
+    () => needsClientSideFilter(multiFilters),
+    [multiFilters]
+  );
 
   const filterState = useMemo<LmpsFilterUrlState>(
     () => ({
       dateStart,
       dateEnd,
-      branch,
-      listingType,
-      status,
+      branches,
+      listingTypes,
+      statuses,
     }),
-    [dateStart, dateEnd, branch, listingType, status]
+    [dateStart, dateEnd, branches, listingTypes, statuses]
   );
 
   const handleRowClick = useCallback(
@@ -109,7 +132,7 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       navigateLmps(
         buildLmpDetailPath(row.sale_number, {
           ...filterState,
-          branch: row.branch || filterState.branch,
+          branches: row.branch ? [row.branch] : filterState.branches,
         })
       );
     },
@@ -132,12 +155,21 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
   } = useLmpsDashboard({
     date_start: debouncedDateStart || undefined,
     date_end: debouncedDateEnd || undefined,
-    branch: branch || undefined,
-    listing_type: listingType,
-    status,
+    branch: apiFilters.branch,
+    listing_type: apiFilters.listing_type,
+    status: apiFilters.status,
   });
 
   const dashboardItems = items as LmpDashboardItem[];
+  const filteredItems = useMemo(() => {
+    if (!usesClientFilter) return dashboardItems;
+    return filterLmpsDashboardItems(dashboardItems, multiFilters);
+  }, [dashboardItems, multiFilters, usesClientFilter]);
+
+  const displaySummary = useMemo(() => {
+    if (!usesClientFilter) return summary;
+    return computeLmpsSummaryFromItems(filteredItems, summary);
+  }, [usesClientFilter, summary, filteredItems]);
   const tableSort = useClientTableSort({
     defaultSortKey: "start",
     defaultSortDirection: "desc",
@@ -149,13 +181,13 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
 
   const chartItems = useMemo(
     () =>
-      [...dashboardItems].sort(
+      [...filteredItems].sort(
         (a, b) => parseLmpDateNumber(b.start_date) - parseLmpDateNumber(a.start_date)
       ),
-    [dashboardItems]
+    [filteredItems]
   );
 
-  const hasData = chartItems.length > 0 || summary !== null;
+  const hasData = chartItems.length > 0 || displaySummary !== null;
   const isBusy = loading || refreshing;
   const initialLoadingProgress = useLoadingProgress(loading, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing, requestProgress);
@@ -165,14 +197,17 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
     [chartItems]
   );
 
-  const resolvedCharts = useMemo(
-    () => ({
+  const resolvedCharts = useMemo(() => {
+    if (usesClientFilter) {
+      return buildLmpFallbackCharts(chartItems);
+    }
+
+    return {
       levelData: charts?.levelData ?? fallbackCharts.levelData,
       statusData: charts?.statusData ?? fallbackCharts.statusData,
       leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-    }),
-    [charts, fallbackCharts]
-  );
+    };
+  }, [usesClientFilter, charts, fallbackCharts, chartItems]);
 
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
@@ -199,6 +234,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "branch",
         header: "Filial",
+        headerHint: LMPS_HELP_TOOLTIPS.table.branch,
+        className: "lmps-table__col--compact",
         sortable: true,
         sortValue: (row) => row.branch ?? "",
         render: (row) => row.branch ?? "-",
@@ -206,6 +243,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "kind",
         header: "Tipo",
+        headerHint: LMPS_HELP_TOOLTIPS.table.kind,
+        className: "lmps-table__col--compact",
         sortable: true,
         sortValue: (row) => row.listing_kind ?? "",
         render: (row) => formatListingKind(row.listing_kind),
@@ -213,6 +252,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "sale",
         header: "Nº Proposta",
+        headerHint: LMPS_HELP_TOOLTIPS.table.sale,
+        className: "lmps-table__col--compact",
         sortable: true,
         sortValue: (row) => row.sale_number,
         render: (row) => row.sale_number,
@@ -220,6 +261,7 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "desc",
         header: "Descrição",
+        headerHint: LMPS_HELP_TOOLTIPS.table.description,
         className: "lmps-table__col--wide",
         sortable: true,
         sortValue: (row) => row.sale_description,
@@ -228,6 +270,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "start",
         header: "Data Início",
+        headerHint: LMPS_HELP_TOOLTIPS.table.startDate,
+        className: "lmps-table__col--date",
         sortable: true,
         sortValue: (row) => parseLmpDateNumber(row.start_date),
         render: (row) => formatDate(row.start_date),
@@ -235,6 +279,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "end",
         header: "Data Fim",
+        headerHint: LMPS_HELP_TOOLTIPS.table.endDate,
+        className: "lmps-table__col--date",
         sortable: true,
         sortValue: (row) => parseLmpDateNumber(row.end_date),
         render: (row) => formatDate(row.end_date),
@@ -242,6 +288,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "eng",
         header: "Status Engenharia",
+        headerHint: LMPS_HELP_TOOLTIPS.table.engineeringStatus,
+        className: "lmps-table__col--status",
         sortable: true,
         sortValue: (row) => row.engineering_status ?? "",
         render: (row) => row.engineering_status ?? "-",
@@ -249,6 +297,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "pi",
         header: "Qtd PI",
+        headerHint: LMPS_HELP_TOOLTIPS.table.qtdPi,
+        className: "lmps-table__col--numeric",
         sortable: true,
         sortValue: (row) => row.qtd_pi ?? 0,
         render: (row) => String(row.qtd_pi ?? 0),
@@ -256,6 +306,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "nivel",
         header: "Nível",
+        headerHint: LMPS_HELP_TOOLTIPS.table.nivel,
+        className: "lmps-table__col--compact",
         sortable: true,
         sortValue: (row) => Number.parseInt(row.nivel.replace(/\D/g, ""), 10) || 0,
         render: (row) => row.nivel,
@@ -263,6 +315,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "sla",
         header: "Dias úteis",
+        headerHint: LMPS_HELP_TOOLTIPS.table.slaDays,
+        className: "lmps-table__col--numeric",
         sortable: true,
         sortValue: (row) => row.dias_uteis_sla,
         render: (row) => String(row.dias_uteis_sla),
@@ -270,6 +324,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "limit",
         header: "Data Limite",
+        headerHint: LMPS_HELP_TOOLTIPS.table.limitDate,
+        className: "lmps-table__col--date",
         sortable: true,
         sortValue: (row) => parseLmpDateNumber(row.data_limite),
         render: (row) => formatDate(row.data_limite),
@@ -277,6 +333,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "lead",
         header: "Lead Time Útil",
+        headerHint: LMPS_HELP_TOOLTIPS.table.leadTime,
+        className: "lmps-table__col--numeric",
         sortable: true,
         sortValue: (row) => row.lead_time_util,
         render: (row) => String(row.lead_time_util ?? "-"),
@@ -284,6 +342,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {
         key: "status",
         header: "Status Classificação",
+        headerHint: LMPS_HELP_TOOLTIPS.table.status,
+        className: "lmps-table__col--status",
         sortable: true,
         sortValue: (row) => row.status,
         render: (row) => row.status,
@@ -293,31 +353,34 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
   );
 
   const totalPropostas =
-    summary?.total_items ?? summary?.total_lmps ?? (itemsTotal || dashboardItems.length);
+    displaySummary?.total_items ??
+    displaySummary?.total_lmps ??
+    (usesClientFilter ? filteredItems.length : itemsTotal || dashboardItems.length);
 
   const handleExportCsv = useCallback(() => {
-    exportLmpsDashboardCsv(chartItems, {
+    exportLmpsDashboardCsv(filteredItems, {
       dateStart: dateStart || undefined,
       dateEnd: dateEnd || undefined,
     });
-  }, [chartItems, dateStart, dateEnd]);
+  }, [filteredItems, dateStart, dateEnd]);
 
   return (
     <main className="dashboard-lmps dashboard-page">
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        listingType={listingType}
-        status={status}
+        branches={branches}
+        listingTypes={listingTypes}
+        statuses={statuses}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
-        onListingTypeChange={setListingType}
-        onStatusChange={setStatus}
+        onBranchesChange={setBranches}
+        onListingTypesChange={setListingTypes}
+        onStatusesChange={setStatuses}
         onRefresh={reload}
         onExport={handleExportCsv}
-        exportDisabled={dashboardItems.length === 0 || loading}
+        exportDisabled={filteredItems.length === 0 || loading}
+        disabled={loading}
       />
 
       {refreshing && hasData ? (
@@ -333,14 +396,15 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       <section className="lmps-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP Dentro do Prazo"
-          value={`${(summary?.percent_dentro_prazo ?? 0).toLocaleString(
+          titleHint={LMPS_HELP_TOOLTIPS.kpis.percentOnTime}
+          value={`${(displaySummary?.percent_dentro_prazo ?? 0).toLocaleString(
             "pt-BR",
             {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }
           )}%`}
-          subtitle={formatGoalSubtitle(periodLabel, summary, (v) =>
+          subtitle={formatGoalSubtitle(periodLabel, displaySummary, (v) =>
             `${v.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -350,7 +414,8 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
         />
         <KpiCard
           title="Lead Time Médio Útil"
-          value={`${(summary?.avg_lead_time ?? 0).toLocaleString("pt-BR", {
+          titleHint={LMPS_HELP_TOOLTIPS.kpis.avgLeadTime}
+          value={`${(displaySummary?.avg_lead_time ?? 0).toLocaleString("pt-BR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })} dias`}
@@ -359,9 +424,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
         />
         <KpiCard
           title="Total de Propostas"
+          titleHint={LMPS_HELP_TOOLTIPS.kpis.totalProposals}
           value={String(totalPropostas)}
           subtitle={
-            status !== "Todos" || listingType !== "Todos"
+            hasActiveLmpsFilters(multiFilters)
               ? "Registros no filtro atual"
               : periodLabel
           }
@@ -403,7 +469,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
       {hasCharts ? (
         <>
           <section className="lmps-charts-grid lmps-charts-grid-top">
-                <ChartCard title="Contagem por Nível">
+                <ChartCard
+                  title="Contagem por Nível"
+                  titleHint={LMPS_HELP_TOOLTIPS.charts.countByLevel}
+                >
                   <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
                     <PieChart>
                       <Pie
@@ -428,7 +497,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
                   </ResponsiveContainer>
                 </ChartCard>
 
-                <ChartCard title="Contagem por Status">
+                <ChartCard
+                  title="Contagem por Status"
+                  titleHint={LMPS_HELP_TOOLTIPS.charts.countByStatus}
+                >
                   <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
                     <PieChart>
                       <Pie
@@ -453,7 +525,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
                   </ResponsiveContainer>
                 </ChartCard>
 
-                <ChartCard title="Média de Lead Time Útil por Nível">
+                <ChartCard
+                  title="Média de Lead Time Útil por Nível"
+                  titleHint={LMPS_HELP_TOOLTIPS.charts.avgLeadByLevel}
+                >
                   <ResponsiveContainer width="100%" height={BAR_CHART_HEIGHT}>
                     <BarChart data={resolvedCharts.leadByLevel}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -471,7 +546,10 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
               </section>
 
               <section className="lmps-charts-grid">
-                <ChartCard title="Evolução de Lead Time Útil e Quantidade de Propostas">
+                <ChartCard
+                  title="Evolução de Lead Time Útil e Quantidade de Propostas"
+                  titleHint={LMPS_HELP_TOOLTIPS.charts.evolution}
+                >
                   <ChartToolbar
                     idPrefix="lmps-evolution"
                     granularity={granularity}
@@ -524,13 +602,14 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
 
       <DataTableSection
         title="Registros filtrados"
+        titleHint={LMPS_HELP_TOOLTIPS.table.section}
         hint={periodLabel}
         columns={tableColumns}
-        rows={dashboardItems}
+        rows={filteredItems}
         rowKey={(row) =>
           `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
         }
-        loading={loading && dashboardItems.length === 0}
+        loading={loading && filteredItems.length === 0}
         refreshing={refreshing}
         clientSort={{
           sortKey: tableSort.sortKey,

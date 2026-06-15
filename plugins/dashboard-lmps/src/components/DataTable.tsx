@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 export type DataTableColumn<T> = {
   key: string;
   header: string;
+  headerHint?: string;
   render: (row: T) => ReactNode;
   className?: string;
   sortable?: boolean;
@@ -20,7 +23,23 @@ type DataTableProps<T> = {
   sortKey?: string | null;
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
+  layout?: "section" | "embedded";
 };
+
+function renderColumnHeader<T>(column: DataTableColumn<T>) {
+  return (
+    <span className="lmps-table__header-label">
+      <span className="lmps-table__header-text">{column.header}</span>
+      {column.headerHint ? (
+        <HelpTooltip
+          content={column.headerHint}
+          ariaLabel={`Ajuda: ${column.header}`}
+          placement="bottom"
+        />
+      ) : null}
+    </span>
+  );
+}
 
 export function DataTable<T>({
   columns,
@@ -33,27 +52,30 @@ export function DataTable<T>({
   sortKey = null,
   sortDirection = "asc",
   onSortChange,
+  layout = "embedded",
 }: DataTableProps<T>) {
-  const tableClass = onRowClick ? "lmps-table lmps-table--clickable" : "lmps-table";
-
-  return (
-    <div className="lmps-table-wrapper">
+  const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
+  const tableClass = [
+    "lmps-table",
+    layout === "section" ? "lmps-table--section" : "",
+    isSortable ? "lmps-table--sortable" : "",
+    onRowClick ? "lmps-table--clickable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const table = (
       <table className={tableClass}>
         <thead>
           <tr>
             {columns.map((column) => {
               const isSorted = sortKey === column.key;
-              const headerClass = [
-                column.className,
-                column.sortable ? "lmps-table__col--sortable" : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
+              const headerClass = column.className || undefined;
 
               return (
                 <th
                   key={column.key}
-                  className={headerClass || undefined}
+                  scope="col"
+                  className={headerClass}
                   aria-sort={
                     column.sortable
                       ? isSorted
@@ -67,17 +89,19 @@ export function DataTable<T>({
                   {column.sortable && onSortChange ? (
                     <button
                       type="button"
-                      className="lmps-table__sort-button"
+                      className={`lmps-table__sort-button${
+                        isSorted ? " lmps-table__sort-button--active" : ""
+                      }`}
                       onClick={() => onSortChange(column.key)}
                       aria-label={`Ordenar por ${column.header}`}
                     >
-                      <span>{column.header}</span>
+                      {renderColumnHeader(column)}
                       <span className="lmps-table__sort-indicator" aria-hidden="true">
                         {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                       </span>
                     </button>
                   ) : (
-                    column.header
+                    renderColumnHeader(column)
                   )}
                 </th>
               );
@@ -125,6 +149,12 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-    </div>
   );
+
+  const wrapClass =
+    layout === "section"
+      ? "lmps-table-wrap lmps-table-wrap--section"
+      : "lmps-table-wrap lmps-table-wrap--embedded";
+
+  return <div className={wrapClass}>{table}</div>;
 }

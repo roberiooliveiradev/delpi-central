@@ -317,30 +317,28 @@ Retornar a **eficiência geral dos equipamentos (OEE)** no período filtrado.
 
 ### Fonte de dados
 
-Tabela TOTVS/Protheus relacionada à produção, com base na coluna:
-
-- `H6_ZEFICI`
+View `vw_Apontamentos_Eficiencia` — coluna `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real × 100).
 
 ### Fluxo de cálculo
 
 1. Receber filtros da rota
 2. Criar `ProductionRequest`
 3. Executar o use case de OEE
-4. O repositório monta o `WHERE` com `QueryBuilder`
-5. A consulta lê os registros da tabela de produção
-6. O SQL calcula a média de `H6_ZEFICI`
+4. O repositório monta o `WHERE` com `build_fabril_view_filters`
+5. A consulta lê os registros da view fabril
+6. O SQL calcula a média de `EFICIENCIA_PERCENTUAL` na faixa 0–199%
 7. O valor é retornado como percentual de OEE
 
 ### Observações técnicas importantes
 
 #### Conversão segura de valores
 
-O cálculo do OEE foi ajustado para tolerar valores inválidos em `H6_ZEFICI`.
+O cálculo do OEE considera apenas eficiência na faixa operacional **0–199%** (outliers excluídos de médias/KPIs).
 
-A estratégia recomendada no SQL é:
+A estratégia no SQL é:
 
 ```sql
-AVG(TRY_CAST(NULLIF(LTRIM(RTRIM(H6_ZEFICI)), '') AS DECIMAL(18, 4)))
+ROUND(AVG(EFICIENCIA_PERCENTUAL), 2)
 ```
 
 Isso garante que:
@@ -555,7 +553,7 @@ Adicionar cobertura para:
 - cenários sem dados
 - cenários com divisão por zero
 - normalização de `Decimal`
-- OEE com valores inválidos em `H6_ZEFICI`
+- OEE com eficiência fora da faixa 0–199% (outliers excluídos de médias)
 
 ---
 

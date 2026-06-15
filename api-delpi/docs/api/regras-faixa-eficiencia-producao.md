@@ -1,6 +1,6 @@
 # Faixa válida de eficiência na produção (0–199%)
 
-Regra única para **OEE** (`H6_ZEFICI` / SH6010) e **Eficiência Fabril** (`EFICIENCIA_PERCENTUAL` / view `vw_Apontamentos_Eficiencia`).
+Regra única para **OEE** e **Eficiência Fabril** — eficiência calculada como **(tempo previsto ÷ tempo real) × 100** (`EFICIENCIA_PERCENTUAL` na view `vw_Apontamentos_Eficiencia`; no detalhe SH6010, via roteiro e horários do apontamento).
 
 ## Objetivo
 
@@ -71,8 +71,8 @@ Consumidores:
 ### OEE — `GET /production/oee`
 
 - **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
-- **Métrica do painel:** `EFICIENCIA_PERCENTUAL` (média simples na faixa 0–199%).
-- Detalhe: `GET /production/oee/appointments/{id}` — ainda SH6010 (`H6_ZEFICI`, roteiro, tempos).
+- **Métrica do painel:** `EFICIENCIA_PERCENTUAL` — média simples na faixa 0–199% (tempo previsto ÷ tempo real).
+- Detalhe: `GET /production/oee/appointments/{id}` — SH6010 com roteiro, tempos e eficiência calculada pelos mesmos critérios.
 
 ### Eficiência Fabril — `GET /production/eficiencia-fabril/*`
 
