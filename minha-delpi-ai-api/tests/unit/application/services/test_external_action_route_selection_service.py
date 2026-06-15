@@ -137,3 +137,87 @@ def test_select_production_otd_detail_when_list_terms_present():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "api_delpi.production_otd_detail"
+
+
+def test_select_production_oee_detail_when_list_terms_present():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.production_oee_detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "api_delpi.overall_equipment_effectiveness",
+                "method": "GET",
+                "path": "/production/overall_equipment_effectiveness_pct",
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionRouteSelectionService(repository)
+    spec = OperationalApiRouteSpec(
+        domain="department_kpi",
+        reason="OEE produção",
+        path_tokens=("oee",),
+        path_prefixes=("/production/",),
+        operation_tokens=("production_oee",),
+        parameter_strategy="date_branch",
+    )
+
+    selected = service.select(
+        spec,
+        message="Listar apontamentos OEE fora da faixa",
+        allowed_action_ids=[
+            "api_delpi.production_oee_detail",
+            "api_delpi.overall_equipment_effectiveness",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.production_oee_detail"
+
+
+def test_select_production_oee_appointment_when_detail_terms_present():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.production_oee_appointment",
+                "method": "GET",
+                "path": "/production/oee/appointments/{appointment_id}",
+                "operationId": "get_production_oee_appointment_by_id",
+                "parametersSchema": [{"name": "appointment_id"}],
+            },
+            {
+                "actionId": "api_delpi.production_oee_detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionRouteSelectionService(repository)
+    spec = OperationalApiRouteSpec(
+        domain="department_kpi",
+        reason="Detalhe apontamento OEE",
+        path_tokens=("oee",),
+        path_prefixes=("/production/",),
+        operation_tokens=("production_oee",),
+        parameter_strategy="date_branch",
+    )
+
+    selected = service.select(
+        spec,
+        message="Detalhe do apontamento OEE com roteiro e tempos previsto x realizado",
+        allowed_action_ids=[
+            "api_delpi.production_oee_appointment",
+            "api_delpi.production_oee_detail",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.production_oee_appointment"

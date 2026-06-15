@@ -91,8 +91,16 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | OTD produção (%) | `GET /production/on_time_delivery_pct` | `get_on_time_delivery_pct` |
 | OTD produção — ordens no/atraso | `GET /production/otd` | `get_production_otd` |
 | Série OTD produção | `GET /production/otd/series` | `get_production_otd_series` |
+| OEE produção (%) | `GET /production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` |
+| OEE produção — apontamentos | `GET /production/oee` | `get_production_oee` |
+| Detalhe apontamento OEE | `GET /production/oee/appointments/{appointment_id}` | `get_production_oee_appointment_by_id` |
+| Série OEE produção | `GET /production/oee/series` | `get_production_oee_series` |
 
-**`GET /production/otd`:** `branch`, `start_date`, `end_date`, `status` (`on_time` / `late`), `page`, `page_size`. Resposta: `summary` + `orders` (SC2010).
+**`GET /production/otd`:** `branch`, `start_date`, `end_date`, `status` (`on_time` / `late`), `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `orders` (SC2010).
+
+**`GET /production/oee`:** `branch`, `start_date`, `end_date`, `status` (`valid` / `outlier`), `product_type` (`PA` / `PI`), `work_center`, `production_order`, `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `appointments` (SH6010, `H6_ZEFICI`, `appointment_id`). Não confundir com `/production/eficiencia-fabril/*` (métrica MOD/view).
+
+**`GET /production/oee/appointments/{appointment_id}`:** `appointment_id` (path), `branch` opcional. Resposta composta: `appointment`, `time_analysis` (previsto/real/eficiência), `routing_operations` (SG2), `structure` (BOM).
 
 ---
 

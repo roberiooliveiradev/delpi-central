@@ -36,6 +36,19 @@ def test_action_selection_heuristic_terms_exist():
         "kpiQuestions",
         "cpvTerms",
     )
+    assert ExternalActionResponseContentService.get(
+        "actionSelection",
+        "productionOeeAppointmentPath",
+    )
+    assert ExternalActionResponseContentService.get(
+        "actionSelection",
+        "productionOeeAppointmentOperationId",
+    )
+    appointment_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOeeAppointmentTerms",
+    )
+    assert "roteiro do apontamento" in appointment_terms
 
 
 def test_selection_reasons_keys_exist():

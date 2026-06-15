@@ -149,11 +149,13 @@ Legado `/finacial/*`: mesmo router; preferir `/financial` no catálogo.
 | `GET /on_time_delivery_pct` | otd de produção (%) | OK |
 | `GET /production/otd` | otd produção — resumo + listagem OPs | OK (jun/2026) |
 | `GET /production/otd/series` | série OTD produção | OK |
-| `GET /overall_equipment_effectiveness_pct` | oee | OK |
+| `GET /overall_equipment_effectiveness_pct` | oee (%) | OK |
+| `GET /production/oee` | oee produção — resumo + apontamentos SH6010 | OK (jun/2026) |
+| `GET /production/oee/appointments/{appointment_id}` | detalhe apontamento — roteiro, estrutura, tempos | OK (jun/2026) |
 | `GET /direct_labor_cost_pct` | mão de obra direta | OK |
 | `GET /production_cost_pct` | custo de produção | OK |
 | `GET /depreciation_pct` | depreciação | OK |
-| `GET /oee/series` | série histórica oee | oee | OK |
+| `GET /oee/series` | série histórica oee | OK |
 | `GET /otd/series` | série histórica otd | | OK |
 | `GET /eficiencia-fabril/dashboard` | painel eficiência fabril | eficiencia | OK |
 | `GET /eficiencia-fabril/appointments` | apontamentos eficiência | | OK |

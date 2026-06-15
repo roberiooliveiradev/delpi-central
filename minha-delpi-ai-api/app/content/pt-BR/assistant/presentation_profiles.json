@@ -69,6 +69,8 @@
     "production_cost_pct": "kpi_series",
     "depreciation_pct": "kpi_series",
     "production_oee_series": "kpi_series",
+    "production_oee_detail": "kpi_dashboard",
+    "production_oee_appointment": "kpi_dashboard",
     "production_otd_series": "kpi_series",
     "overall_equipment_effectiveness": "kpi_series",
     "production_otd": "kpi_series",
@@ -232,8 +234,16 @@
       "profile": "kpi_dashboard"
     },
     {
-      "contains": "/production/oee",
+      "contains": "/production/oee/series",
       "profile": "kpi_series"
+    },
+    {
+      "contains": "/production/oee/appointments/",
+      "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/production/oee",
+      "profile": "kpi_dashboard"
     },
     {
       "contains": "/production/eficiencia-fabril",

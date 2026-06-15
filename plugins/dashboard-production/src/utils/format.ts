@@ -39,6 +39,14 @@ export function formatInteger(value: number | null | undefined): string {
   return value.toLocaleString("pt-BR");
 }
 
+export function formatHours(
+  value: number | null | undefined,
+  fractionDigits = 2
+): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${formatDecimal(value, fractionDigits)} h`;
+}
+
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return currencyFormatter.format(value);

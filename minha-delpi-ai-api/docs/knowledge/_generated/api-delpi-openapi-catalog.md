@@ -62,6 +62,8 @@
 | `GET` | `/production/direct_labor_cost_pct` | `get_direct_labor_cost_pct_production_direct_labor_cost_pct_get` | Get Direct Labor Cost Pct |
 | `GET` | `/production/eficiencia-fabril/appointments` | `get_eficiencia_fabril_appointments_production_eficiencia_fabril_appointments_get` | Get Eficiencia Fabril Appointments |
 | `GET` | `/production/eficiencia-fabril/dashboard` | `get_eficiencia_fabril_dashboard_production_eficiencia_fabril_dashboard_get` | Get Eficiencia Fabril Dashboard |
+| `GET` | `/production/oee` | `get_production_oee` | OEE produção — resumo e apontamentos (SH6010) |
+| `GET` | `/production/oee/appointments/{appointment_id}` | `get_production_oee_appointment_by_id` | Detalhe apontamento OEE — roteiro, estrutura e tempos |
 | `GET` | `/production/oee/series` | `get_production_oee_series_production_oee_series_get` | Get Production Oee Series |
 | `GET` | `/production/on_time_delivery_pct` | `get_on_time_delivery_pct_production_on_time_delivery_pct_get` | Get On Time Delivery Pct |
 | `GET` | `/production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct_production_overall_equipment_effectiveness_pct_get` | Get Overall Equipment Effectiveness Pct |

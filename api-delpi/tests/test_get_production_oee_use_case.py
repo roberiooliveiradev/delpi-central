@@ -1,0 +1,61 @@
+from unittest.mock import MagicMock
+
+from app.application.dto.production.get_production_oee_request import (
+    GetProductionOeeRequest,
+)
+from app.application.models.page import Page
+from app.application.use_cases.production.get_production_oee_use_case import (
+    GetProductionOeeUseCase,
+)
+from app.domain.entities.production.overall_equipment_effectiveness import (
+    OverallEquipmentEffectiveness,
+)
+
+
+def test_get_production_oee_use_case_returns_summary_and_appointments():
+    repository = MagicMock()
+    repository.get_overall_equipment_effectiveness.return_value = (
+        OverallEquipmentEffectiveness(
+            branch="01",
+            start_date="2024-01-01",
+            end_date="2024-01-31",
+            oee_pct=72.5,
+        )
+    )
+    repository.get_oee_appointment_summary.return_value = {
+        "total_appointments": 100,
+        "valid_appointments": 95,
+        "outlier_appointments": 5,
+    }
+    repository.list_oee_appointments.return_value = Page(
+        items=[
+            {
+                "branch": "01",
+                "production_order": "000123",
+                "status": "valid",
+                "oee_pct": 80.0,
+            }
+        ],
+        total=1,
+        page=1,
+        page_size=20,
+    )
+
+    use_case = GetProductionOeeUseCase(repository)
+    result = use_case.execute(
+        GetProductionOeeRequest(
+            branch="01",
+            start_date="2024-01-01",
+            end_date="2024-01-31",
+            page=1,
+            page_size=20,
+        )
+    )
+
+    assert result["summary"]["oee_pct"] == 72.5
+    assert result["summary"]["total_appointments"] == 100
+    assert result["summary"]["valid_appointments"] == 95
+    assert result["summary"]["outlier_appointments"] == 5
+    assert result["summary"]["outlier_percentage"] == 5.0
+    assert result["appointments"]["total"] == 1
+    assert result["appointments"]["items"][0]["status"] == "valid"

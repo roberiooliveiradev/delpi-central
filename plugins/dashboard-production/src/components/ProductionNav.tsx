@@ -10,6 +10,7 @@ type ProductionNavProps = {
 
 const NAV_ITEMS = [
   { path: PRODUCTION_ROUTES.home, label: "Visão geral" },
+  { path: PRODUCTION_ROUTES.oee, label: "OEE produção" },
   { path: PRODUCTION_ROUTES.otd, label: "OTD produção" },
 ] as const;
 

@@ -398,6 +398,38 @@ PRODUCTION_OTD = agent_route(
     operation_id="get_production_otd",
 )
 
+PRODUCTION_OEE = agent_route(
+    summary="OEE produção — resumo e apontamentos (SH6010)",
+    description=(
+        "Painel de OEE de produção: resumo (% OEE médio, apontamentos válidos e fora da faixa) "
+        "e listagem paginada de apontamentos SH6010 (H6_ZEFICI, OP, CT, operação, recurso, operador). "
+        "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
+        "status=valid|outlier filtra apontamentos dentro ou fora da faixa 0–199%. "
+        "product_type=PA|PI filtra pelo tipo do produto (SB1010.B1_TIPO). "
+        "Use para listar apontamentos com OEE, conferir outliers ou filtrar PA/PI. "
+        "Para detalhe de um apontamento (roteiro SG2, estrutura BOM, tempos previsto × realizado), "
+        "use GET /production/oee/appointments/{appointment_id}. "
+        "Para apenas o percentual agregado sem listagem, prefira GET /production/overall_equipment_effectiveness_pct. "
+        "Para série temporal, use GET /production/oee/series. "
+        "Não confundir com eficiência fabril (/production/eficiencia-fabril), que usa outra métrica (MOD/view)."
+    ),
+    operation_id="get_production_oee",
+)
+
+PRODUCTION_OEE_APPOINTMENT = agent_route(
+    summary="Detalhe do apontamento OEE (roteiro, estrutura e tempos)",
+    description=(
+        "Retorna análise composta de um apontamento SH6010 (R_E_C_N_O_ / appointment_id): "
+        "cadastro do apontamento (OP, produto PA/PI, CT, operação, operador, recurso, quantidades), "
+        "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, OEE H6_ZEFICI), "
+        "routing_operations (roteiro SG2010 com operação do apontamento destacada) e "
+        "structure (BOM do produto). Parâmetro branch opcional restringe a filial. "
+        "Use quando o usuário pedir detalhe do apontamento, roteiro, estrutura ou cálculo de tempos "
+        "previsto × realizado de um registro OEE — não para listagem paginada do período."
+    ),
+    operation_id="get_production_oee_appointment_by_id",
+)
+
 SUPPLIES_INVENTORY_TURNOVER = agent_route(
     summary="Giro de estoque / IDD (suprimentos)",
     description=(

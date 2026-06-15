@@ -250,7 +250,9 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 | **OTD produção — resumo e ordens** | `GET /production/otd` | `get_production_otd` |
 | **Série temporal OTD produção** | `GET /production/otd/series` | `get_production_otd_series` |
 | OEE (eficiência equipamentos) | `GET /production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` |
-| **Série temporal OEE** | `GET /production/oee/series` | path `oee/series` — buckets por período |
+| **OEE produção — resumo e apontamentos** | `GET /production/oee` | `get_production_oee` |
+| **Detalhe apontamento OEE** | `GET /production/oee/appointments/{appointment_id}` | `get_production_oee_appointment_by_id` |
+| **Série temporal OEE** | `GET /production/oee/series` | `get_production_oee_series` |
 | **Eficiência fabril — dashboard** | `GET /production/eficiencia-fabril/dashboard` | path `eficiencia-fabril/dashboard` |
 | **Eficiência fabril — apontamentos** | `GET /production/eficiencia-fabril/appointments` | path `eficiencia-fabril/appointments` |
 | Custo direto mão de obra | `GET /production/direct_labor_cost_pct` | `get_direct_labor_cost_pct` |
@@ -262,8 +264,29 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 - `branch`, `start_date`, `end_date` — filtro de período (data prevista `C2_DATPRF`, formato ISO `YYYY-MM-DD`; API converte para Protheus `YYYYMMDD`).
 - `status` — opcional: `on_time` (no prazo) ou `late` (atrasado).
 - `page` (default `1`), `page_size` (default `20`, máx. `1000`).
+- `sort_by`, `sort_dir` — ordenação server-side da listagem.
 
 **Resposta:** `summary` (total OPs, no prazo, atrasadas, % OTD) + `orders` (listagem paginada com `status`, datas e produto).
+
+**Parâmetros (`GET /production/oee`)**
+
+- `branch`, `start_date`, `end_date` — filtro de período (`H6_DTPROD`, formato ISO `YYYY-MM-DD`).
+- `status` — opcional: `valid` (OEE na faixa 0–199%) ou `outlier` (fora da faixa).
+- `product_type` — opcional: `PA` ou `PI` (filtro `SB1010.B1_TIPO`).
+- `work_center`, `production_order` — filtros opcionais.
+- `page` (default `1`), `page_size` (default `20`, máx. `1000`).
+- `sort_by`, `sort_dir` — ordenação server-side da listagem.
+
+**Resposta:** `summary` (`oee_pct`, apontamentos válidos/fora da faixa) + `appointments` (SH6010: OP, produto PA/PI, CT, operação, recurso, operador, `oee_pct`, `appointment_id`).
+
+**Parâmetros (`GET /production/oee/appointments/{appointment_id}`)**
+
+- `appointment_id` (path) — `R_E_C_N_O_` do SH6010.
+- `branch` — opcional; restringe a filial do apontamento.
+
+**Resposta:** `appointment` (cadastro do apontamento), `time_analysis` (setup, fator padrão, horas previstas/reais, eficiência por tempos, fórmulas), `routing_operations` (roteiro SG2) e `structure` (BOM). Inclui `related_routes` para OP e produto.
+
+**Não confundir:** `GET /production/oee` (OEE `H6_ZEFICI`) ≠ `GET /production/eficiencia-fabril/*` (eficiência MOD/view).
 
 #### Playbook 15 — operacional sem SQL (consumo, OPs, perdas, suprimentos)
 
@@ -414,7 +437,7 @@ Não pergunte se o usuário "tem permissão"; a API já valida com o token dele.
 | KPI estoque | valor total de estoque, valor em estoque, indicador suprimentos, stock-value |
 | KPI comercial | closing rate, conversão, ROL, OTD pedido, novos clientes, novos negócios |
 | KPI financeiro | EBITDA, PMR, custo fixo, ROL |
-| KPI produção | OTD produção, OTD produção (listagem OPs), série OTD, OEE, custo de produção, mão de obra, depreciação |
+| KPI produção | OTD produção, OTD produção (listagem OPs), série OTD, OEE (%), OEE produção (listagem apontamentos), série OEE, custo de produção, mão de obra, depreciação |
 | Qualidade | não conformidade, NC, PPM, kaizen, 5S, auditoria |
 
 ---

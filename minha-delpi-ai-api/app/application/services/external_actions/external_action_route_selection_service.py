@@ -118,6 +118,8 @@ class ExternalActionRouteSelectionService:
             candidates = self._prioritize_supplies_otd_candidates(message, candidates)
 
         candidates = self._prioritize_production_otd_detail_candidates(message, candidates)
+        candidates = self._prioritize_production_oee_appointment_candidates(message, candidates)
+        candidates = self._prioritize_production_oee_detail_candidates(message, candidates)
 
         for action in candidates:
             if str(action.get("method") or "").upper() != method.upper():
@@ -563,6 +565,90 @@ class ExternalActionRouteSelectionService:
             "actionSelection",
             "productionOtdDetailOperationId",
             default="get_production_otd",
+        ).lower()
+
+        detail_actions = [
+            action
+            for action in candidates
+            if (
+                str(action.get("path") or "").lower().rstrip("/") == detail_path.rstrip("/")
+                or detail_operation in str(action.get("operationId") or "").lower()
+            )
+        ]
+
+        return detail_actions or candidates
+
+    def _prioritize_production_oee_appointment_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        appointment_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeAppointmentTerms",
+        )
+        oee_terms = ("oee", "eficiencia", "eficiência", "equipamento", "equipamentos", "zefici")
+        appointment_context_terms = ("apontamento", "apontamentos", "sh6010", "h6_zefici")
+
+        if not any(term in normalized for term in appointment_terms):
+            return candidates
+        if not any(term in normalized for term in oee_terms):
+            if not any(term in normalized for term in appointment_context_terms):
+                return candidates
+
+        appointment_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOeeAppointmentPath",
+            default="/production/oee/appointments/",
+        ).lower()
+        appointment_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOeeAppointmentOperationId",
+            default="get_production_oee_appointment_by_id",
+        ).lower()
+
+        appointment_actions = [
+            action
+            for action in candidates
+            if (
+                appointment_path.rstrip("/")
+                in str(action.get("path") or "").lower().rstrip("/")
+                or appointment_operation
+                in str(action.get("operationId") or "").lower()
+            )
+        ]
+
+        return appointment_actions or candidates
+
+    def _prioritize_production_oee_detail_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        detail_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeDetailTerms",
+        )
+        oee_terms = ("oee", "eficiencia", "eficiência", "equipamento", "equipamentos", "zefici")
+
+        if not any(term in normalized for term in detail_terms):
+            return candidates
+        if not any(term in normalized for term in oee_terms):
+            return candidates
+
+        detail_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOeeDetailPath",
+            default="/production/oee",
+        ).lower()
+        detail_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionOeeDetailOperationId",
+            default="get_production_oee",
         ).lower()
 
         detail_actions = [

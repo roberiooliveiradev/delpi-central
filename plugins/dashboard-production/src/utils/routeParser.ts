@@ -3,11 +3,17 @@ import type { ProductionOrderProductType } from "../types/production";
 import type { ProductionFilterUrlState } from "./filterUrl";
 import { appendFiltersToPath, readProductionFilters } from "./filterUrl";
 
-export type ProductionView = "home" | "otd" | "otd-detail";
+export type ProductionView =
+  | "home"
+  | "oee"
+  | "oee-detail"
+  | "otd"
+  | "otd-detail";
 
 export type ParsedProductionRoute = {
   view: ProductionView;
   productionOrder?: string;
+  appointmentId?: string;
 };
 
 export function normalizeProductionPath(pathname: string): string {
@@ -21,6 +27,18 @@ export function normalizeProductionPath(pathname: string): string {
 export function parseProductionPath(pathname: string): ParsedProductionRoute {
   const path = normalizeProductionPath(pathname);
 
+  const appointmentMatch = path.match(
+    new RegExp(
+      `^${PRODUCTION_BASE_PATH.replace(/\//g, "\\/")}/oee/appointment/([^/]+)$`
+    )
+  );
+  if (appointmentMatch) {
+    return {
+      view: "oee-detail",
+      appointmentId: decodeURIComponent(appointmentMatch[1]),
+    };
+  }
+
   const orderMatch = path.match(
     new RegExp(
       `^${PRODUCTION_BASE_PATH.replace(/\//g, "\\/")}/otd/op/([^/]+)$`
@@ -31,6 +49,10 @@ export function parseProductionPath(pathname: string): ParsedProductionRoute {
       view: "otd-detail",
       productionOrder: decodeURIComponent(orderMatch[1]),
     };
+  }
+
+  if (path === PRODUCTION_ROUTES.oee || path.startsWith(`${PRODUCTION_ROUTES.oee}/`)) {
+    return { view: "oee" };
   }
 
   if (path === PRODUCTION_ROUTES.otd || path.startsWith(`${PRODUCTION_ROUTES.otd}/`)) {
@@ -75,6 +97,12 @@ export function readOrderProductTypeFromUrl(
   }
 
   return undefined;
+}
+
+export function readAppointmentBranchFromUrl(
+  search = typeof window !== "undefined" ? window.location.search : ""
+): string {
+  return new URLSearchParams(search).get("branch")?.trim() ?? "";
 }
 
 export function readOrderBranchFromUrl(

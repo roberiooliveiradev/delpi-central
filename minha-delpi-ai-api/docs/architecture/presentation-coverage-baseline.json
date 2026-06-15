@@ -538,6 +538,32 @@
     },
     {
       "method": "GET",
+      "path": "/production/oee",
+      "operation_id": "get_production_oee",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_oee_detail",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path",
+      "profile_key": "kpi_dashboard"
+    },
+    {
+      "method": "GET",
+      "path": "/production/oee/appointments/{appointment_id}",
+      "operation_id": "get_production_oee_appointment_by_id",
+      "tags": [
+        "Produção"
+      ],
+      "entity": "production_oee_appointment",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "entity",
+      "profile_key": "kpi_dashboard"
+    },
+    {
+      "method": "GET",
       "path": "/production/oee/series",
       "operation_id": "get_production_oee_series_production_oee_series_get",
       "tags": [

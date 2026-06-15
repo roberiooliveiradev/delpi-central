@@ -12,6 +12,11 @@ import type {
   ProductionOtdSeriesData,
   ProductionOtdData,
   ProductionOtdParams,
+  ProductionOeeData,
+  ProductionOeeParams,
+  ProductionOeeAppointmentDetailData,
+  ProductionOeeAppointmentDetailParams,
+  ProductionListParams,
   ProductionOrderByOpData,
   ProductionOrderByOpParams,
 } from "../types/production";
@@ -19,7 +24,7 @@ import type {
 export const PRODUCTION_API_BASE = "/apps/api-delpi/production";
 
 function buildQuery(
-  params: ProductionFilterParams | ProductionOtdParams = {}
+  params: ProductionFilterParams | ProductionListParams = {}
 ): string {
   const searchParams = new URLSearchParams();
 
@@ -30,6 +35,15 @@ function buildQuery(
 
   if ("status" in params && params.status) {
     searchParams.set("status", params.status);
+  }
+  if ("work_center" in params && params.work_center) {
+    searchParams.set("work_center", params.work_center);
+  }
+  if ("production_order" in params && params.production_order) {
+    searchParams.set("production_order", params.production_order);
+  }
+  if ("product_type" in params && params.product_type) {
+    searchParams.set("product_type", params.product_type);
   }
   if ("page" in params && params.page) {
     searchParams.set("page", String(params.page));
@@ -50,7 +64,7 @@ function buildQuery(
 
 async function fetchProductionData<T>(
   path: string,
-  params: ProductionFilterParams | ProductionOtdParams = {},
+  params: ProductionFilterParams | ProductionListParams = {},
   signal?: AbortSignal
 ): Promise<T> {
   const response = await httpGet<ApiSuccessResponse<T>>(
@@ -143,6 +157,32 @@ export function getProductionOtd(
   signal?: AbortSignal
 ) {
   return fetchProductionData<ProductionOtdData>("/otd", params, signal);
+}
+
+export function getProductionOee(
+  params: ProductionOeeParams,
+  signal?: AbortSignal
+) {
+  return fetchProductionData<ProductionOeeData>("/oee", params, signal);
+}
+
+export function getProductionOeeAppointmentById(
+  appointmentId: number | string,
+  options: ProductionOeeAppointmentDetailParams = {},
+  signal?: AbortSignal
+) {
+  const searchParams = new URLSearchParams();
+  if (options.branch) searchParams.set("branch", options.branch);
+
+  const encoded = encodeURIComponent(String(appointmentId).trim());
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : "";
+
+  return fetchProductionData<ProductionOeeAppointmentDetailData>(
+    `/oee/appointments/${encoded}${suffix}`,
+    {},
+    signal
+  );
 }
 
 export function getProductionOrderByOp(

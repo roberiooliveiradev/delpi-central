@@ -35,6 +35,14 @@
       "icon": "factory-icon",
       "order": 17,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-production/oee",
+      "label": "OEE produção",
+      "permission": "dashboard-production.view",
+      "icon": "factory-icon",
+      "order": 18,
+      "showInMenu": false
     }
   ],
 

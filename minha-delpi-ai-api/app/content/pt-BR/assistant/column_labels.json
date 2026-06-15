@@ -379,6 +379,26 @@
     "monthly_average": "Média mensal",
     "qtd_months": "Qtd. meses",
     "overall_equipment_effectiveness_pct": "OEE (%)",
+    "oee_pct": "OEE (%)",
+    "total_appointments": "Apontamentos",
+    "valid_appointments": "Apontamentos válidos",
+    "outlier_appointments": "Fora da faixa",
+    "outlier_percentage": "% fora da faixa",
+    "efficiency_from_times_pct": "Eficiência (tempos) (%)",
+    "time_variance_hours": "Variação de tempo (h)",
+    "time_gained_lost_hours": "Ganho/perda de tempo (h)",
+    "standard_time_factor": "Fator tempo padrão",
+    "appointment_date": "Data apontamento",
+    "operation_description": "Descrição operação",
+    "order_planned_qty": "Qtd. planejada OP",
+    "order_produced_qty": "Qtd. produzida OP",
+    "lost_qty": "Qtd. perdida",
+    "production_date": "Data de produção",
+    "produced_qty": "Qtd produzida",
+    "resource_code": "Código do recurso",
+    "resource_name": "Recurso",
+    "work_center": "Centro de trabalho",
+    "operation": "Operação",
     "on_time_delivery_pct": "OTD produção (%)",
     "total_ops_finished": "OPs finalizadas",
     "on_time_ops": "OPs no prazo",
@@ -3109,6 +3129,46 @@
         ["real_hours", "Horas reais"],
         ["variance_hours", "Desvio (h)"],
         ["status", "Status"]
+      ]
+    },
+    "playbookProductionOeeDetail": {
+      "detect": {
+        "anyKeys": ["oee_pct", "appointment_id", "outlier_appointments"],
+        "pathContains": ["/production/oee"]
+      },
+      "preferredColumns": [
+        ["status", "Status"],
+        ["branch", "Filial"],
+        ["production_date", "Data"],
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["product_description", "Descrição"],
+        ["product_type", "Tipo"],
+        ["work_center", "CT"],
+        ["operation", "Operação"],
+        ["operator_code", "Operador"],
+        ["resource_name", "Recurso"],
+        ["oee_pct", "OEE (%)"],
+        ["produced_qty", "Qtd."]
+      ]
+    },
+    "playbookProductionOeeAppointment": {
+      "detect": {
+        "anyKeys": ["time_analysis", "routing_operations", "efficiency_from_times_pct"],
+        "pathContains": ["/production/oee/appointments/"]
+      },
+      "preferredColumns": [
+        ["appointment_id", "ID apontamento"],
+        ["production_order", "OP"],
+        ["product_code", "Produto"],
+        ["product_type", "Tipo"],
+        ["work_center", "CT"],
+        ["operation", "Operação"],
+        ["operator_code", "Operador"],
+        ["planned_hours", "Horas previstas"],
+        ["real_hours", "Horas reais"],
+        ["efficiency_from_times_pct", "Eficiência (tempos) (%)"],
+        ["oee_pct", "OEE (%)"]
       ]
     }
   },

@@ -20,6 +20,9 @@ from app.domain.services.chat_presentation_stack_order_service import (
         ("/products/90260144/guide", "table_list"),
         ("/supplies/cpv", "kpi_series"),
         ("/supplies/stock-value", "kpi_series"),
+        ("/production/oee/series", "kpi_series"),
+        ("/production/oee", "kpi_dashboard"),
+        ("/production/otd", "kpi_dashboard"),
         ("/system/tables/search", "system"),
         ("/data/sql", "sql"),
     ],
@@ -35,6 +38,24 @@ def test_entity_profile_precedes_path_rules() -> None:
     )
 
     assert key == "stock"
+
+
+def test_production_oee_detail_entity_maps_to_dashboard() -> None:
+    key = ChatPresentationProfileService.resolve_profile_key(
+        "/production/oee",
+        "production_oee_detail",
+    )
+
+    assert key == "kpi_dashboard"
+
+
+def test_production_oee_appointment_entity_maps_to_dashboard() -> None:
+    key = ChatPresentationProfileService.resolve_profile_key(
+        "/production/oee/appointments/12345",
+        "production_oee_appointment",
+    )
+
+    assert key == "kpi_dashboard"
 
 
 def test_humanized_narrative_mode_from_profile() -> None:

@@ -55,6 +55,24 @@ def test_humanize_production_oee_series():
     assert label == "Série histórica de OEE (produção)"
 
 
+def test_humanize_production_oee_detail():
+    label = ChatActionLabelService.humanize(
+        path="/production/oee",
+        method="GET",
+        summary="OEE production appointments",
+    )
+    assert label == "OEE produção — resumo e apontamentos (SH6010)"
+
+
+def test_humanize_production_oee_appointment():
+    label = ChatActionLabelService.humanize(
+        path="/production/oee/appointments/12345",
+        method="GET",
+        summary="OEE appointment detail",
+    )
+    assert label == "Detalhe do apontamento OEE — roteiro, estrutura e tempos"
+
+
 def test_humanize_system_table_schema():
     label = ChatActionLabelService.humanize(
         path="/system/tables/SB1/schema",

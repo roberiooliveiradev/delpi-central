@@ -858,6 +858,27 @@
       ]
     },
     {
+      "token": "/production/oee/appointments/",
+      "category": "Detalhe do apontamento OEE",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro e estrutura do apontamento",
+        "tempos previsto e realizado do apontamento",
+        "analise de tempos do apontamento sh6010"
+      ]
+    },
+    {
+      "token": "/production/oee",
+      "category": "OEE produção — listagem de apontamentos",
+      "examples": [
+        "oee de producao com apontamentos",
+        "listar apontamentos oee",
+        "apontamentos fora da faixa oee",
+        "oee por centro de trabalho",
+        "apontamentos oee pa e pi"
+      ]
+    },
+    {
       "token": "/production/otd",
       "category": "OTD produção — listagem de ordens",
       "examples": [

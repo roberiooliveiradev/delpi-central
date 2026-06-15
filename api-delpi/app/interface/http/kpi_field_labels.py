@@ -150,8 +150,13 @@ COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
 
 PRODUCTION_OEE_FIELD_LABELS: dict[str, str] = {
     "overall_equipment_effectiveness_pct": "OEE (%)",
+    "oee_pct": "OEE (%)",
     "oee_filial_01": "OEE filial 01",
     "oee_filial_02": "OEE filial 02",
+    "total_appointments": "Apontamentos",
+    "valid_appointments": "Apontamentos válidos",
+    "outlier_appointments": "Apontamentos fora da faixa",
+    "outlier_percentage": "% fora da faixa",
 }
 
 PRODUCTION_OTD_FIELD_LABELS: dict[str, str] = {

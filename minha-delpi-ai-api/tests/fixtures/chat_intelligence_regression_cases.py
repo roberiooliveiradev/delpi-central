@@ -229,6 +229,50 @@ SELECTION_CASES = [
         "expected_action_id": "production-otd-detail",
     },
     {
+        "message": "listar apontamentos oee fora da faixa",
+        "actions": [
+            {
+                "actionId": "production-oee-detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "summary": "OEE produção — apontamentos",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "production-oee",
+                "method": "GET",
+                "path": "/production/overall_equipment_effectiveness_pct",
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "summary": "OEE produção percentual",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-oee-detail",
+    },
+    {
+        "message": "detalhe do apontamento oee com roteiro e tempos previsto x realizado",
+        "actions": [
+            {
+                "actionId": "production-oee-appointment",
+                "method": "GET",
+                "path": "/production/oee/appointments/{appointment_id}",
+                "operationId": "get_production_oee_appointment_by_id",
+                "summary": "Detalhe apontamento OEE",
+                "parametersSchema": [{"name": "appointment_id"}],
+            },
+            {
+                "actionId": "production-oee-detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "summary": "OEE produção — apontamentos",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-oee-appointment",
+    },
+    {
         "message": "histórico de compras do produto 10080047",
         "actions": [
             {

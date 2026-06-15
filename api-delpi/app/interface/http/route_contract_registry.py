@@ -123,6 +123,11 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_cost_pct": RouteContract("production_cost_pct", "scalar"),
     "get_depreciation_pct": RouteContract("depreciation_pct", "scalar"),
     "get_production_oee_series": RouteContract("production_oee_series", "scalar"),
+    "get_production_oee": RouteContract("production_oee_detail", "paged_list"),
+    "get_production_oee_appointment_by_id": RouteContract(
+        "production_oee_appointment",
+        "composite_analysis",
+    ),
     "get_production_otd_series": RouteContract("production_otd_series", "scalar"),
     "get_overall_equipment_effectiveness_pct": RouteContract(
         "overall_equipment_effectiveness", "scalar"

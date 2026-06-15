@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
 from delpi_auth.authorization import require_any_permission
 
@@ -8,6 +8,8 @@ from app.application.security.api_delpi_permissions import (
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata import (
+    PRODUCTION_OEE,
+    PRODUCTION_OEE_APPOINTMENT,
     PRODUCTION_OTD,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -18,6 +20,12 @@ from app.application.dto.production.production_oee_series_request import (
 )
 from app.application.dto.production.production_otd_series_request import (
     ProductionOtdSeriesRequest,
+)
+from app.application.dto.production.get_production_oee_appointment_by_id_request import (
+    GetProductionOeeAppointmentByIdRequest,
+)
+from app.application.dto.production.get_production_oee_request import (
+    GetProductionOeeRequest,
 )
 from app.application.dto.production.get_production_otd_request import (
     GetProductionOtdRequest,
@@ -34,6 +42,8 @@ from app.composition.production_composer import (
     build_get_production_oee_series_use_case,
     build_get_production_otd_series_use_case,
     build_get_on_time_delivery_pct_use_case,
+    build_get_production_oee_appointment_by_id_use_case,
+    build_get_production_oee_use_case,
     build_get_production_otd_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
@@ -320,6 +330,107 @@ def get_production_otd(
         log_error(f"Erro ao buscar OTD de produção: {exc}")
         return error_response(
             "Erro interno ao buscar OTD de produção.",
+            status_code=500,
+        )
+
+
+@router.get("/oee", **PRODUCTION_OEE)
+@require_any_permission(KPI_PRODUCTION_ACCESS)
+def get_production_oee(
+    branch: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    work_center: str | None = Query(default=None),
+    production_order: str | None = Query(default=None),
+    product_type: str | None = Query(default=None, pattern="^(PA|PI)$"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=1000),
+    sort_by: str | None = Query(default=None),
+    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+):
+    try:
+        use_case = build_get_production_oee_use_case()
+
+        request = GetProductionOeeRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            work_center=work_center,
+            production_order=production_order,
+            product_type=product_type,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.PRODUCTION_OEE,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_production_oee",
+            message="OEE de produção carregado com sucesso.",
+            fields=kpi_fields(PRODUCTION_OEE_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar OEE de produção: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar OEE de produção: {exc}")
+        return error_response(
+            "Erro interno ao buscar OEE de produção.",
+            status_code=500,
+        )
+
+
+@router.get("/oee/appointments/{appointment_id}", **PRODUCTION_OEE_APPOINTMENT)
+@require_any_permission(KPI_PRODUCTION_ACCESS)
+def get_production_oee_appointment_by_id(
+    appointment_id: int = Path(..., ge=1),
+    branch: str | None = Query(default=None),
+):
+    try:
+        use_case = build_get_production_oee_appointment_by_id_use_case()
+        result = use_case.execute(
+            GetProductionOeeAppointmentByIdRequest(
+                appointment_id=appointment_id,
+                branch=branch,
+            )
+        )
+
+        if not result:
+            return error_response(
+                "Apontamento de OEE não encontrado.",
+                status_code=404,
+            )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_production_oee_appointment_by_id",
+            message="Detalhe do apontamento OEE carregado com sucesso.",
+            entity="production_oee_appointment",
+            shape="composite_analysis",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar apontamento OEE: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar apontamento OEE: {exc}")
+        return error_response(
+            "Erro interno ao buscar detalhe do apontamento OEE.",
             status_code=500,
         )
 

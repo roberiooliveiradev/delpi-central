@@ -309,12 +309,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
         />
       </section>
 
-      <section className="dp-charts-grid">
-        <div className="dp-chart-section" aria-busy={otdSeries.loading}>
-          <ChartCard
-            title="Evolução do OTD (%)"
-            hint={temporalChartHint}
-          >
+      <section className="dp-chart-section" aria-busy={otdSeries.loading}>
+        <ChartCard
+          title="Evolução do OTD (%)"
+          hint={temporalChartHint}
+        >
             <ChartToolbar
               idPrefix="otd-detail"
               granularity={granularity}
@@ -352,7 +351,6 @@ export function OtdPage({ pathname }: OtdPageProps) {
               <div className="dp-state-box">Sem dados para o gráfico no período.</div>
             ) : null}
           </ChartCard>
-        </div>
       </section>
 
       <div className="dp-ppm-toolbar" role="toolbar" aria-label="Filtro de status">

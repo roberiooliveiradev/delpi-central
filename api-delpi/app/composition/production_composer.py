@@ -9,6 +9,12 @@ from app.application.use_cases.production.get_direct_labor_cost_pct_use_case imp
 from app.application.use_cases.production.get_on_time_delivery_pct_use_case import (
     GetOnTimeDeliveryPctUseCase,
 )
+from app.application.use_cases.production.get_production_oee_appointment_by_id_use_case import (
+    GetProductionOeeAppointmentByIdUseCase,
+)
+from app.application.use_cases.production.get_production_oee_use_case import (
+    GetProductionOeeUseCase,
+)
 from app.application.use_cases.production.get_production_otd_use_case import (
     GetProductionOtdUseCase,
 )
@@ -29,6 +35,10 @@ from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_dashboard
 )
 from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_appointments_use_case import (
     GetEficienciaFabrilAppointmentsUseCase,
+)
+from app.composition.product_composer import (
+    build_list_product_guide_use_case,
+    build_list_structure_use_case,
 )
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_repository import (
     EficienciaFabrilQueryRepository,
@@ -141,6 +151,22 @@ def build_get_on_time_delivery_pct_use_case() -> GetOnTimeDeliveryPctUseCase:
 def build_get_production_otd_use_case() -> GetProductionOtdUseCase:
     return GetProductionOtdUseCase(
         on_time_delivery_repository=OnTimeDeliveryRepository()
+    )
+
+
+def build_get_production_oee_use_case() -> GetProductionOeeUseCase:
+    return GetProductionOeeUseCase(
+        overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository()
+    )
+
+
+def build_get_production_oee_appointment_by_id_use_case() -> (
+    GetProductionOeeAppointmentByIdUseCase
+):
+    return GetProductionOeeAppointmentByIdUseCase(
+        overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository(),
+        list_product_guide_use_case=build_list_product_guide_use_case(),
+        list_product_structure_use_case=build_list_structure_use_case(),
     )
 
 

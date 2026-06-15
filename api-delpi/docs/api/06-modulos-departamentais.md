@@ -66,7 +66,10 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/direct_labor_cost_pct` | Custo de mão de obra direta % ROL. |
 | GET | `/production/production_cost_pct` | Custo de produção % ROL. |
 | GET | `/production/depreciation_pct` | Depreciação % ROL. |
-| GET | `/production/overall_equipment_effectiveness_pct` | OEE. |
+| GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `H6_ZEFICI` (SH6010). |
+| GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos SH6010, filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
+| GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento OEE — roteiro (SG2), estrutura (BOM) e análise de tempos previsto × realizado. |
+| GET | `/production/oee/series` | Série temporal de OEE por filial. |
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — apenas OPs de PA (`SB1010.B1_TIPO = 'PA'`). |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
