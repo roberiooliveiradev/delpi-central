@@ -375,6 +375,7 @@
 
 .launcher-inline-routes-panel--launcher {
   margin-top: 6px;
+  align-self: center;
 }
 
 /* Grid / modal — submenu mais largo que o tile para rótulos legíveis */
@@ -388,9 +389,10 @@
 }
 
 .launcher-inline-routes-panel--launcher.is-expanded {
-  width: max-content;
+  width: fit-content;
   min-width: 100%;
   max-width: min(220px, 92vw);
+  margin-inline: auto;
 }
 
 .launcher-inline-routes-panel--launcher.is-expanded
@@ -399,9 +401,20 @@
 }
 
 .launcher-inline-routes-panel--launcher.is-expanded .launcher-inline-routes {
-  width: 100%;
-  min-width: max(100%, 140px);
+  width: max(100%, 140px);
+  min-width: 100%;
   animation: dropdownFade 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Grid / modal — rótulos curtos centralizados; painel pode crescer para textos longos */
+.launcher-inline-routes-panel--launcher .launcher-inline-route {
+  justify-content: center;
+  text-align: center;
+}
+
+.launcher-inline-routes-panel--launcher .launcher-inline-route span {
+  flex: 0 1 auto;
+  text-align: center;
 }
 
 .launcher-inline-routes-panel--sidebar.is-expanded .sidebar-inline-routes {
