@@ -45,12 +45,30 @@ export function KaizenPageHeader({
 type ListHeaderActionsProps = {
   onNew: () => void;
   onRefresh: () => void;
+  onImport?: () => void;
   loading?: boolean;
+  importing?: boolean;
 };
 
-export function KaizenListHeaderActions({ onNew, onRefresh, loading }: ListHeaderActionsProps) {
+export function KaizenListHeaderActions({
+  onNew,
+  onRefresh,
+  onImport,
+  loading,
+  importing,
+}: ListHeaderActionsProps) {
   return (
     <>
+      {onImport ? (
+        <button
+          type="button"
+          className="kz-ghost-btn"
+          onClick={onImport}
+          disabled={loading || importing}
+        >
+          {importing ? "Importando…" : "Importar planilha"}
+        </button>
+      ) : null}
       <button type="button" className="kz-primary-btn" onClick={onNew}>
         Novo kaizen
       </button>

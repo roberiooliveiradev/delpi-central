@@ -185,6 +185,31 @@ def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_from_sheet_use_case")
+def test_quality_kaizen_import_from_sheet_returns_meta(mock_build) -> None:
+    from app.application.use_cases.kaizen.import_kaizens_from_sheet_use_case import (
+        ImportKaizensFromSheetResult,
+    )
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        ImportKaizensFromSheetBody,
+        import_kaizens_from_sheet,
+    )
+
+    mock_build.return_value.execute.return_value = ImportKaizensFromSheetResult(
+        created=1,
+        skipped=0,
+        errors=0,
+        items=[],
+    )
+
+    response = import_kaizens_from_sheet(body=ImportKaizensFromSheetBody())
+    _assert_meta(
+        _body(response),
+        operation_id="import_kaizens_from_sheet",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.quality.ppm_routes.build_get_produced_quantity_use_case")
 def test_quality_produced_quantity_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import get_produced_quantity

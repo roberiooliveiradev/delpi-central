@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { deleteKaizenRecord, fetchKaizenRecords } from "../api/kaizenApi";
+import { deleteKaizenRecord, fetchKaizenRecords, importKaizensFromSheet } from "../api/kaizenApi";
 import type { DataTableColumn } from "../components/data/DataTable";
 import { DataTableSection } from "../components/data/DataTableSection";
 import {
@@ -34,7 +34,9 @@ function statusLabel(value: string): string {
 export function KaizenListPage({ onNavigate }: Props) {
   const [items, setItems] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [branch, setBranch] = useState("");
   const [status, setStatus] = useState("");
   const [savingsType, setSavingsType] = useState("");
@@ -61,6 +63,28 @@ export function KaizenListPage({ onNavigate }: Props) {
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  const handleImport = useCallback(async () => {
+    const confirmed = window.confirm(
+      "Importar kaizens ativos da planilha Google Sheets para o PostgreSQL?",
+    );
+    if (!confirmed) return;
+
+    setImporting(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const result = await importKaizensFromSheet();
+      setSuccess(
+        `Importação concluída: ${result.created} criado(s), ${result.skipped} ignorado(s), ${result.errors} erro(s).`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao importar kaizens da planilha.");
+    } finally {
+      setImporting(false);
+    }
   }, [load]);
 
   const handleDelete = useCallback(
@@ -146,7 +170,9 @@ export function KaizenListPage({ onNavigate }: Props) {
           <KaizenListHeaderActions
             onNew={() => onNavigate(newPath())}
             onRefresh={() => void load()}
+            onImport={() => void handleImport()}
             loading={loading}
+            importing={importing}
           />
         }
       />
@@ -163,6 +189,7 @@ export function KaizenListPage({ onNavigate }: Props) {
       />
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
+      {success ? <StateAlert variant="success">{success}</StateAlert> : null}
 
       <DataTableSection
         title="Kaizens cadastrados"

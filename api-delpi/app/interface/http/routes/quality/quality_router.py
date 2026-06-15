@@ -216,7 +216,7 @@ def get_kaizen_summary(
         )
 
 
-@router.get("/kaizens/{kaizen_id}", **QUALITY_KAIZEN_BY_ID)
+@router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID)
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_by_id(kaizen_id: str):
     try:

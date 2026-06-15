@@ -19,3 +19,7 @@ class KaizenQueryRepositoryPort(ABC):
     @abstractmethod
     def get_kaizen_by_id(self, kaizen_id: str) -> Optional[KaizenDetail]:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_active_kaizen_details(self) -> list[KaizenDetail]:
+        raise NotImplementedError

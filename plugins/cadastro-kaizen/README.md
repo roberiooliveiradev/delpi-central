@@ -11,6 +11,7 @@ Microfrontend para cadastro operacional de kaizens no módulo qualidade.
 | GET | `/quality/kaizens/records/{id}` | Detalhe |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza |
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica |
+| POST | `/quality/kaizens/records/import-from-sheet` | Importa kaizens ativos da planilha para PostgreSQL |
 
 As rotas de leitura do dashboard (`/quality/kaizens/summary` e `/quality/kaizens/{kaizen_id}`) continuam na planilha Google Sheets até integração futura com PostgreSQL.
 

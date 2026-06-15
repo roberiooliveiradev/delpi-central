@@ -335,3 +335,11 @@ class KaizenRepository(KaizenQueryRepositoryPort):
                 return detail
 
         return None
+
+    def list_active_kaizen_details(self) -> list[KaizenDetail]:
+        details: list[KaizenDetail] = []
+        for row in self._iter_active_rows():
+            detail = self._map_row_to_detail_model(row)
+            if detail is not None:
+                details.append(detail)
+        return details

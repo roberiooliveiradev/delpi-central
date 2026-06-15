@@ -62,3 +62,20 @@ export async function deleteKaizenRecord(id: string): Promise<void> {
   );
   unwrapApiDelpiEnvelope(envelope, "Erro ao excluir kaizen.");
 }
+
+export type ImportKaizensFromSheetResult = {
+  created: number;
+  skipped: number;
+  errors: number;
+  items: Array<Record<string, unknown>>;
+};
+
+export async function importKaizensFromSheet(
+  dryRun = false,
+): Promise<ImportKaizensFromSheetResult> {
+  const envelope = await httpPost<ApiEnvelope<ImportKaizensFromSheetResult>>(
+    `${API_BASE}/import-from-sheet`,
+    { dry_run: dryRun },
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao importar kaizens da planilha.");
+}

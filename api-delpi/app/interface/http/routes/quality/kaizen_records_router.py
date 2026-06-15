@@ -10,7 +10,10 @@ from app.application.security.api_delpi_permissions import (
     KAIZEN_RECORDS_READ_PERMISSIONS,
     KAIZEN_RECORDS_WRITE_PERMISSIONS,
 )
-from app.composition.kaizen_composer import build_kaizen_repository
+from app.composition.kaizen_composer import (
+    build_import_kaizens_from_sheet_use_case,
+    build_kaizen_repository,
+)
 from app.core.responses import error_response, not_found_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
@@ -42,6 +45,10 @@ class KaizenRecordBody(BaseModel):
     date_implemented: str | None = None
     date_discontinued: str | None = None
     notes: str | None = None
+
+
+class ImportKaizensFromSheetBody(BaseModel):
+    dry_run: bool = False
 
 
 class UpdateKaizenRecordBody(BaseModel):
@@ -139,6 +146,25 @@ def create_kaizen_record(body: KaizenRecordBody = Body(...)):
     except Exception as exc:
         log_error(f"Erro ao cadastrar kaizen: {exc}")
         return error_response("Erro interno ao cadastrar kaizen.", status_code=500)
+
+
+@router.post("/import-from-sheet")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def import_kaizens_from_sheet(body: ImportKaizensFromSheetBody = Body(default_factory=ImportKaizensFromSheetBody)):
+    try:
+        use_case = build_import_kaizens_from_sheet_use_case()
+        result = use_case.execute(
+            created_by_user_id=_current_user_id(),
+            dry_run=body.dry_run,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="import_kaizens_from_sheet",
+            shape="scalar",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao importar kaizens da planilha: {exc}")
+        return error_response("Erro interno ao importar kaizens da planilha.", status_code=500)
 
 
 @router.get("/{record_id}")
