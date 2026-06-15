@@ -189,8 +189,18 @@ SELECT
     ADZ.ADZ_PRAZO AS prazo_dias,
     ADZ.ADZ_LTEMIN AS lote_minimo,
     SZ8_PRECO.Z8_ID AS id_formacao_preco,
-    ICMS.aliquota_icms,
-    PISCOFINS.aliquota_pis_cofins
+    LTRIM(RTRIM(SZ8_PRECO.Z8_IDSZ7)) AS codigo_planilha_formacao,
+    ICMS.aliquota_icms_original,
+    ICMS.aliquota_icms_original AS aliquota_icms,
+    PISCOFINS.aliquota_pis_cofins,
+    CALC_ICMS.aplica_reducao_icms,
+    CALC_ICMS.percentual_reducao_icms,
+    CALC_ICMS.aliquota_icms_efetiva,
+    ADZ.ADZ_PRCVEN * (1 - CALC_ICMS.aliquota_icms_efetiva / 100.0) AS valor_apos_icms_r_mil,
+    ADZ.ADZ_PRCVEN
+        * (1 - CALC_ICMS.aliquota_icms_efetiva / 100.0)
+        * (1 - ISNULL(PISCOFINS.aliquota_pis_cofins, 0) / 100.0) AS valor_liquido_r_mil,
+    'calculo_formacao_preco_icms_efetivo_pis_cofins' AS fonte_valor_liquido
 FROM ADZ010 ADZ WITH (NOLOCK)
 INNER JOIN ADY010 ADY WITH (NOLOCK)
   ON ADY.D_E_L_E_T_ <> '*'
@@ -204,6 +214,8 @@ OUTER APPLY (
     SELECT TOP 1
         SZ8.R_E_C_N_O_ AS sz8_recno,
         SZ8.Z8_ID,
+        SZ8.Z8_FILIAL,
+        SZ8.Z8_IDSZ7,
         SZ8.Z8_NROPOR,
         SZ8.Z8_COD,
         SZ8.Z8_DTEMISS,
@@ -220,12 +232,14 @@ OUTER APPLY (
 ) SZ8_PRECO
 OUTER APPLY (
     SELECT TOP 1
-        SZ9.Z9_ALIQ AS aliquota_icms
+        SZ9.Z9_ALIQ AS aliquota_icms_original
     FROM dbo.SZ9010 SZ9 WITH (NOLOCK)
     WHERE ISNULL(SZ9.D_E_L_E_T_, '') <> '*'
       AND LTRIM(RTRIM(SZ9.Z9_IDZ8)) = LTRIM(RTRIM(SZ8_PRECO.Z8_ID))
-      AND SZ9.Z9_IDFLD LIKE '3IMP%'
-      AND UPPER(SZ9.Z9_DESC) LIKE '%ICMS%'
+      AND LTRIM(RTRIM(SZ9.Z9_FILIAL)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))
+      AND LTRIM(RTRIM(SZ9.Z9_FILMOV)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))
+      AND LTRIM(RTRIM(SZ9.Z9_IDFLD)) LIKE '3IMP%'
+      AND UPPER(LTRIM(RTRIM(SZ9.Z9_DESC))) LIKE '%ICMS%'
     ORDER BY
         SZ9.Z9_ITEM,
         SZ9.R_E_C_N_O_
@@ -236,15 +250,33 @@ OUTER APPLY (
     FROM dbo.SZ9010 SZ9 WITH (NOLOCK)
     WHERE ISNULL(SZ9.D_E_L_E_T_, '') <> '*'
       AND LTRIM(RTRIM(SZ9.Z9_IDZ8)) = LTRIM(RTRIM(SZ8_PRECO.Z8_ID))
-      AND SZ9.Z9_IDFLD LIKE '3IMP%'
+      AND LTRIM(RTRIM(SZ9.Z9_FILIAL)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))
+      AND LTRIM(RTRIM(SZ9.Z9_FILMOV)) = LTRIM(RTRIM(SZ8_PRECO.Z8_FILIAL))
+      AND LTRIM(RTRIM(SZ9.Z9_IDFLD)) LIKE '3IMP%'
       AND (
-          UPPER(SZ9.Z9_DESC) LIKE '%PIS%'
-          OR UPPER(SZ9.Z9_DESC) LIKE '%COFINS%'
+          UPPER(LTRIM(RTRIM(SZ9.Z9_DESC))) LIKE '%PIS%'
+          OR UPPER(LTRIM(RTRIM(SZ9.Z9_DESC))) LIKE '%COFINS%'
       )
     ORDER BY
         SZ9.Z9_ITEM,
         SZ9.R_E_C_N_O_
 ) PISCOFINS
+OUTER APPLY (
+    SELECT
+        CASE
+            WHEN LTRIM(RTRIM(SZ8_PRECO.Z8_IDSZ7)) = '000007' THEN 1
+            ELSE 0
+        END AS aplica_reducao_icms,
+        CASE
+            WHEN LTRIM(RTRIM(SZ8_PRECO.Z8_IDSZ7)) = '000007' THEN 90.0
+            ELSE 0.0
+        END AS percentual_reducao_icms,
+        CASE
+            WHEN LTRIM(RTRIM(SZ8_PRECO.Z8_IDSZ7)) = '000007'
+                THEN ISNULL(ICMS.aliquota_icms_original, 0) * 0.10
+            ELSE ISNULL(ICMS.aliquota_icms_original, 0)
+        END AS aliquota_icms_efetiva
+) CALC_ICMS
 WHERE ADZ.D_E_L_E_T_ <> '*'
   AND ADZ.ADZ_PROPOS = ?
 ORDER BY ADZ.ADZ_ITEM

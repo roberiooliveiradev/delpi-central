@@ -99,6 +99,11 @@ export type PropostaComercialItem = {
   valor_bruto_r_mil?: number | null;
   valor_bruto_r_mil_formatado?: string | null;
   aliquota_icms?: number | null;
+  aliquota_icms_original?: number | null;
+  aplica_reducao_icms?: boolean | null;
+  percentual_reducao_icms?: number | null;
+  aliquota_icms_efetiva?: number | null;
+  codigo_planilha_formacao?: string | null;
   aliquota_pis_cofins?: number | null;
   valor_apos_icms_r_mil?: number | null;
   valor_apos_icms_r_mil_formatado?: string | null;
