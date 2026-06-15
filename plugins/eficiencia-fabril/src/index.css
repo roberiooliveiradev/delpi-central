@@ -1199,15 +1199,15 @@
 
 .dashboard-eficiencia-fabril .detail-value--formula {
   display: block;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.8rem;
-  line-height: 1.5;
+  font-size: 0.875rem;
+  line-height: 1.55;
   padding: 8px 10px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--ef-muted) 8%, var(--ef-surface));
   border: 1px solid var(--ef-border);
   word-break: break-word;
   white-space: pre-wrap;
+  color: var(--ef-text);
 }
 
 .ef-detail__empty {

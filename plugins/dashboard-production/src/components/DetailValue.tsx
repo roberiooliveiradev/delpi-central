@@ -101,7 +101,7 @@ export function DetailDateTimeValue({
 
 export function DetailFormulaValue({ value }: { value: string }): ReactNode {
   if (!value.trim()) return "—";
-  return <code className="detail-value detail-value--formula">{value}</code>;
+  return <span className="detail-value detail-value--formula">{value}</span>;
 }
 
 export function DetailIntegerValue({

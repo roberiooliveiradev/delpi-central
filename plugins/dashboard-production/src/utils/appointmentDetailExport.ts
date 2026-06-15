@@ -10,8 +10,8 @@ import { formatDecimal, formatHours, formatPercent, formatProductionQuantity } f
 import { formatOeeAppointmentStatusLabel } from "./oeeAppointmentStatus";
 
 function formatRealHoursSource(source?: string | null): string {
-  if (source === "interval") return "Início/fim do apontamento";
-  if (source === "h6_tempo") return "H6_TEMPO (fallback)";
+  if (source === "interval") return "Horário de início e término do apontamento";
+  if (source === "h6_tempo") return "Tempo informado no apontamento";
   return "—";
 }
 
@@ -82,9 +82,9 @@ export function buildAppointmentDetailExportDocument(
         ["Ganho/perda de tempo", formatHours(timeAnalysis.time_gained_lost_hours)],
         ["Eficiência (tempos)", formatPercent(timeAnalysis.efficiency_from_times_pct)],
         ["OEE registrado", formatPercent(timeAnalysis.oee_pct)],
-        ["Fórmula previsto", timeAnalysis.formula_planned],
-        ["Fórmula real", timeAnalysis.formula_real],
-        ["Fórmula eficiência", timeAnalysis.formula_efficiency],
+        ["Cálculo do tempo previsto", timeAnalysis.formula_planned],
+        ["Cálculo do tempo real", timeAnalysis.formula_real],
+        ["Cálculo da eficiência", timeAnalysis.formula_efficiency],
         ...(timeAnalysis.findings ?? []).map(
           (finding) =>
             [`Alerta: ${finding.message}`, finding.detail ?? ""] as [string, string]

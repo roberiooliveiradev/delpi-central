@@ -68,8 +68,8 @@ function resolveProductType(
 }
 
 function formatRealHoursSource(source?: string | null): string {
-  if (source === "interval") return "Início/fim do apontamento";
-  if (source === "h6_tempo") return "H6_TEMPO (fallback)";
+  if (source === "interval") return "Horário de início e término do apontamento";
+  if (source === "h6_tempo") return "Tempo informado no apontamento";
   return "—";
 }
 
@@ -301,17 +301,17 @@ export function OeeAppointmentDetailPage({
               value: <DetailPercentValue value={timeAnalysis.oee_pct} />,
             },
             {
-              label: "Fórmula previsto",
+              label: "Cálculo do tempo previsto",
               value: <DetailFormulaValue value={timeAnalysis.formula_planned} />,
               wide: true,
             },
             {
-              label: "Fórmula real",
+              label: "Cálculo do tempo real",
               value: <DetailFormulaValue value={timeAnalysis.formula_real} />,
               wide: true,
             },
             {
-              label: "Fórmula eficiência",
+              label: "Cálculo da eficiência",
               value: <DetailFormulaValue value={timeAnalysis.formula_efficiency} />,
               wide: true,
             },
@@ -452,7 +452,7 @@ export function OeeAppointmentDetailPage({
             <KpiCard
               title="Eficiência"
               value={formatPercent(appointment.oee_pct)}
-              subtitle={timeAnalysis?.formula_efficiency ?? "Tempo previsto ÷ tempo real"}
+              subtitle={timeAnalysis?.formula_efficiency ?? "Previsto ÷ real × 100"}
               icon={<CircleGauge size={22} />}
               loading={detail.loading}
             />

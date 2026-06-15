@@ -21,6 +21,7 @@ import {
 } from "../constants/businessRules";
 import { buildEficienciaFabrilAppointmentPath } from "../constants/routes";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
 import {
   useLoadingProgress,
@@ -133,6 +134,8 @@ function DashboardEficienciaFabrilContent({
 
   const { data, allItems, loadedItems, loading, error, reload } =
     useEficienciaFabrilDashboard(apiParams);
+
+  useAutoRefresh(reload);
 
   const shiftOptions = useMemo(() => buildShiftFilterOptions(), []);
   const efficiencyBandOptions = useMemo(() => EFFICIENCY_BAND_FILTER_OPTIONS, []);

@@ -30,6 +30,7 @@ import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
 import { useProductionOtdSeries } from "../hooks/useProductionOtdSeries";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -103,6 +104,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     otd !== null;
   const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
+
+  const refreshAll = useCallback(() => {
+    reload();
+    oeeSeries.reload();
+    otdSeries.reload();
+  }, [reload, oeeSeries, otdSeries]);
+
+  useAutoRefresh(refreshAll);
 
   const comparisonChartData = useMemo(
     () => [
@@ -181,11 +190,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
-        onRefresh={() => {
-          reload();
-          oeeSeries.reload();
-          otdSeries.reload();
-        }}
+        onRefresh={refreshAll}
         refreshing={refreshing}
       />
 

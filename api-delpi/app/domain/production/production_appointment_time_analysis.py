@@ -204,13 +204,17 @@ def build_appointment_time_analysis(appointment: dict[str, Any]) -> dict[str, An
         "efficiency_from_times_pct": appointment.get("efficiency_from_times_pct"),
         "oee_pct": appointment.get("oee_pct"),
         "formula_planned": (
-            "setup + fator_padrão × (qtd_apontada / qtd_OP) — SHY010/roteiro SG2"
+            "Tempo de preparação (setup) + tempo padrão da operação "
+            "× (quantidade apontada ÷ quantidade planejada da OP)"
         ),
         "formula_real": (
-            "início/fim do apontamento (H6_DATAINI/HORAINI → H6_DATAFIN/HORAFIN), "
-            "com fallback em H6_TEMPO"
+            "Diferença entre horário de término e início do apontamento; "
+            "se início/fim não estiverem informados, usa o tempo registrado no apontamento"
         ),
-        "formula_efficiency": "(tempo_previsto / tempo_real) × 100",
+        "formula_efficiency": (
+            "Tempo previsto ÷ tempo real × 100 — acima de 100% indica produção "
+            "mais rápida que o previsto"
+        ),
         "findings": [finding.to_dict() for finding in findings],
         "has_findings": bool(findings),
     }
