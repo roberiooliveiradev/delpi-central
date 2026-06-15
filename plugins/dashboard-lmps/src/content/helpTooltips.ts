@@ -106,9 +106,18 @@ export const LMPS_HELP_TOOLTIPS = {
     historyLimit: "Data e hora limite previstas para conclusão do estágio.",
     historyEnd: "Data e hora de encerramento, quando informadas.",
     historyDuration:
-      "Tempo em minutos entre início e encerramento (ou próximo evento / agora, se ainda aberto).",
-    historyStatus: "Status do evento no workflow TOTVS.",
-    historyEngineering: "Indica eventos contabilizados no fluxo de engenharia.",
+      "Tempo entre início e encerramento. Eventos em aberto exibem duração acumulada até hoje.",
+    historyStatus: "Status do evento no workflow TOTVS (AIJ_STATUS).",
+    historyEngineering:
+      "Estágios de engenharia, amostra ou homologação — inclui eventos fora dos processos 000002/000003 quando o estágio pertence ao fluxo técnico.",
+    historyState:
+      "Situação derivada do evento: concluído, em andamento ou atrasado em relação ao limite.",
+    historyTimelineView:
+      "Visualização cronológica agrupada por revisão, com destaque para o evento atual e badges de situação.",
+    historyTableView:
+      "Visualização tabular completa com todas as colunas do AIJ010 para consulta detalhada.",
+    historyTimelineFootnote:
+      "Eventos ordenados conforme o TOTVS (revisão, data/hora de início e estágio). Duração em aberto considera o momento atual.",
     structureCode: "Código do componente na estrutura analítica (SB1).",
     structureDescription: "Descrição comercial do item na BOM.",
     structureType: "Tipo do material: PA, PI, MP, etc.",

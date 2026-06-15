@@ -22,9 +22,15 @@ export type LmpHistoryEvent = {
   end_date?: string | null;
   end_time?: string | null;
   duration_minutes?: number | null;
+  duration_display?: string | null;
   status?: string | null;
+  status_label?: string | null;
   history_flag?: string | null;
   is_engineering?: boolean;
+  is_engineering_flow?: boolean;
+  is_open?: boolean;
+  is_late?: boolean;
+  is_current?: boolean;
 };
 
 export type LmpListingKind = "LMP" | "AMOSTRA" | "OUTRO";

@@ -36,6 +36,7 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
                 start_date="20260520",
                 start_time="08:30",
                 duration_minutes=45,
+                status="1",
                 is_engineering=True,
             ),
         ],
@@ -60,6 +61,8 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
     assert len(result["list_history"]) == 1
     assert result["list_history"][0]["process_label"] == "Engenharia"
     assert result["list_history"][0]["stage_label"] == "Engenharia"
+    assert result["list_history"][0]["status_label"] == "Em andamento"
+    assert result["list_history"][0]["is_engineering_flow"] is True
 
 
 def test_lmp_related_routes_includes_dashboard_links():

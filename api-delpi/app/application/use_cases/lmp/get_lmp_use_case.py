@@ -2,10 +2,7 @@
 from app.application.services.lmp_business_rules import LMPBusinessRules
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
-from app.domain.services.lmp_process_stage_labels import (
-    label_for_process,
-    label_for_stage,
-)
+from app.domain.services.lmp_history_event_enrichment import enrich_history_events
 
 
 class GetLMPUseCase:
@@ -33,13 +30,6 @@ class GetLMPUseCase:
         payload["data_limite"] = data_limite
         payload["lead_time_util"] = lead_time_util
         payload["status"] = status
-        payload["list_history"] = [
-            {
-                **event,
-                "process_label": label_for_process(event.get("process_code")),
-                "stage_label": label_for_stage(event.get("stage_code")),
-            }
-            for event in payload.get("list_history") or []
-        ]
+        payload["list_history"] = enrich_history_events(payload.get("list_history"))
 
         return payload

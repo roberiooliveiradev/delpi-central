@@ -15,6 +15,7 @@ import {
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
+import { LmpHistorySection } from "../components/LmpHistorySection";
 import { LmpProductStructuresSection } from "../components/LmpProductStructuresSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTable } from "../components/DataTable";
@@ -27,7 +28,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import type { LmpHistoryEvent, LmpProduct } from "../types/lmp";
+import type { LmpProduct } from "../types/lmp";
 import { formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
@@ -47,36 +48,9 @@ function formatDate(value?: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
-function formatDateTime(date?: string | null, time?: string | null): string {
-  const formattedDate = formatDate(date);
-  const normalizedTime = time?.trim();
-
-  if (formattedDate === "—" && !normalizedTime) return "—";
-  if (formattedDate === "—") return normalizedTime ?? "—";
-  if (!normalizedTime) return formattedDate;
-
-  return `${formattedDate} ${normalizedTime}`;
-}
-
-function formatProcessStage(
-  code?: string | null,
-  label?: string | null,
-): string {
-  const normalizedCode = code?.trim();
-  const normalizedLabel = label?.trim();
-
-  if (!normalizedCode && !normalizedLabel) return "—";
-  if (normalizedLabel && normalizedCode && normalizedLabel !== normalizedCode) {
-    return `${normalizedLabel} (${normalizedCode})`;
-  }
-
-  return normalizedLabel || normalizedCode || "—";
-}
-
-function renderEngineeringFlag(isEngineering?: boolean) {
-  if (!isEngineering) return "—";
-
-  return <span className="lmps-history-badge">Engenharia</span>;
+function formatMinutes(value?: number | null): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toLocaleString("pt-BR")} min`;
 }
 
 function formatListingKind(kind?: string | null): string {
@@ -84,11 +58,6 @@ function formatListingKind(kind?: string | null): string {
   if (kind === "OUTRO") return "Outro";
   if (kind === "LMP") return "LMP";
   return kind ?? "—";
-}
-
-function formatMinutes(value?: number | null): string {
-  if (value == null || Number.isNaN(value)) return "—";
-  return `${value.toLocaleString("pt-BR")} min`;
 }
 
 function renderStatusBadge(status?: string | null) {
@@ -206,65 +175,6 @@ const productColumns: DataTableColumn<LmpProduct>[] = [
     header: "Qtd PI",
     headerHint: LMPS_HELP_TOOLTIPS.detail.productQtdPi,
     render: (row) => renderProductQuantity(row.qtd_pi),
-  },
-];
-
-const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
-  {
-    key: "revision",
-    header: "Revisão",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyRevision,
-    render: (row) => row.revision || "—",
-  },
-  {
-    key: "process",
-    header: "Processo",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyProcess,
-    className: "lmps-table__col--wide",
-    render: (row) => formatProcessStage(row.process_code, row.process_label),
-  },
-  {
-    key: "stage",
-    header: "Estágio",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStage,
-    className: "lmps-table__col--wide",
-    render: (row) => formatProcessStage(row.stage_code, row.stage_label),
-  },
-  {
-    key: "start",
-    header: "Início",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStart,
-    render: (row) => formatDateTime(row.start_date, row.start_time),
-  },
-  {
-    key: "limit",
-    header: "Limite",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyLimit,
-    render: (row) => formatDateTime(row.limit_date, row.limit_time),
-  },
-  {
-    key: "end",
-    header: "Encerramento",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyEnd,
-    render: (row) => formatDateTime(row.end_date, row.end_time),
-  },
-  {
-    key: "duration",
-    header: "Duração",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyDuration,
-    render: (row) => formatMinutes(row.duration_minutes),
-  },
-  {
-    key: "status",
-    header: "Status",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyStatus,
-    render: (row) => row.status?.trim() || "—",
-  },
-  {
-    key: "engineering",
-    header: "Fluxo",
-    headerHint: LMPS_HELP_TOOLTIPS.detail.historyEngineering,
-    render: (row) => renderEngineeringFlag(row.is_engineering),
   },
 ];
 
@@ -565,22 +475,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               icon={<History size={20} aria-hidden />}
               className="lmps-detail-card--full"
             >
-              <DataTable
-                columns={historyColumns}
-                rows={item.list_history ?? []}
-                rowKey={(row) =>
-                  [
-                    row.revision,
-                    row.process_code,
-                    row.stage_code,
-                    row.start_date,
-                    row.start_time,
-                    row.end_date,
-                    row.end_time,
-                  ].join("-")
-                }
-                emptyMessage="Nenhum evento registrado no histórico da OV."
-              />
+              <LmpHistorySection events={item.list_history ?? []} />
             </DetailCard>
           </section>
         </>

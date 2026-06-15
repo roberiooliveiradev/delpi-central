@@ -1,9 +1,11 @@
 LMP_PROCESS_LABELS: dict[str, str] = {
+    "000001": "Abertura",
     "000002": "Oportunidade",
     "000003": "Engenharia",
 }
 
 LMP_STAGE_LABELS: dict[str, str] = {
+    "000001": "Abertura",
     "000002": "Oportunidade",
     "000003": "Engenharia",
     "000008": "Amostra engenharia",
