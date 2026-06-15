@@ -124,6 +124,88 @@ def test_engineering_residence_filter_sql_allows_sample_and_other_without_minute
     assert "ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in sql
 
 
+def test_effective_listing_kind_skips_reclass_when_lmp_finalized() -> None:
+    repo = _repository()
+
+    sql = repo._effective_listing_kind_expr()
+
+    assert "C.HAS_LMP_FINALIZED = 0" in sql
+    assert sql.count("C.HAS_LMP_FINALIZED = 0") == 2
+
+
+def test_candidate_lmps_exposes_has_lmp_finalized_from_finalized_anchor() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260601", date_end="20260630")
+
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
+        request,
+        lmp_only=False,
+    )
+
+    assert "HAS_LMP_FINALIZED" in candidate_sql
+    assert "LmpFinalizedAnchorChosen LF" in candidate_sql
+
+
+def test_get_lmp_candidate_scope_exposes_has_lmp_finalized() -> None:
+    repo = _repository()
+
+    sql = repo._sql_get_lmp_candidate_scope_cte(where_ad1="AD1.D_E_L_E_T_ = ''")
+
+    assert "HAS_LMP_FINALIZED" in sql
+    assert "LmpFinalizedAnchorChosen LF" in sql
+
+
+def test_listing_period_omits_anchor_marker_date_filter() -> None:
+    repo = _repository()
+
+    start, end = repo._listing_anchor_period_dates("20260501", "20260531")
+
+    assert start is None
+    assert end is None
+    assert repo._has_listing_period_filter("20260501", "20260531")
+
+
+def test_candidate_period_filter_or_first_engineering_arrival() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    where_sql, _params = repo._sql_candidate_period_where_clause(
+        request,
+        anchor_date_sql="L.ANCHOR_START_DATE",
+    )
+
+    assert "L.ANCHOR_START_DATE" in where_sql
+    assert "F.FIRST_ENG_DATE" in where_sql
+    assert " OR " in where_sql
+
+
+def test_candidate_lmps_includes_first_engineering_arrival_cte() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
+        request,
+        lmp_only=False,
+    )
+
+    assert "OvFirstEngineeringArrival AS" in candidate_sql
+    assert "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE)" in candidate_sql
+
+
+def test_header_lmp_uses_first_engineering_start_date_with_period() -> None:
+    repo = _repository()
+    request = GetLMPRequest(
+        sale_number="003578",
+        date_start="20260501",
+        date_end="20260531",
+    )
+
+    sql, _params = repo._sql_header_lmp(request)
+
+    assert "OvFirstEngineeringArrival AS" in sql
+    assert "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE, R.ANCHOR_START_DATE)" in sql
+
+
 def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:
     repo = _repository()
     request = ListLMPRequest(

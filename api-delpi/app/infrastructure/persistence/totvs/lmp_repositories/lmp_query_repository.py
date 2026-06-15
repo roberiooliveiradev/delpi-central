@@ -108,16 +108,19 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         listing_kind_field: str = "C.LISTING_KIND",
         has_sample_field: str = "C.HAS_SAMPLE_ANCHOR",
+        has_lmp_finalized_field: str = "C.HAS_LMP_FINALIZED",
     ) -> str:
         return f"""
             CASE
                 WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
                  AND {has_sample_field} = 1
                  AND ISNULL(H.TEMPO_MINUTOS_AMOSTRA_ENG, 0) > 0
+                 AND {has_lmp_finalized_field} = 0
                 THEN '{LISTING_KIND_SAMPLE}'
                 WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
                  AND {has_sample_field} = 1
                  AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
+                 AND {has_lmp_finalized_field} = 0
                 THEN '{LISTING_KIND_OTHER}'
                 ELSE {listing_kind_field}
             END
@@ -143,6 +146,102 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         date_end: str | None,
     ) -> bool:
         return bool(scope_cte_name and date_start and date_end)
+
+    def _has_listing_period_filter(
+        self,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> bool:
+        return bool(date_start and date_end)
+
+    def _listing_anchor_period_dates(
+        self,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> Tuple[str | None, str | None]:
+        """Com período informado, âncoras usam revisão atual; filtro fica nos candidatos."""
+        if self._has_listing_period_filter(date_start, date_end):
+            return None, None
+        return date_start, date_end
+
+    def _sql_candidate_period_where_clause(
+        self,
+        request: ListLMPRequest,
+        *,
+        anchor_date_sql: str,
+        first_eng_date_sql: str = "F.FIRST_ENG_DATE",
+    ) -> Tuple[str, tuple]:
+        qb_anchor = QueryBuilder()
+        qb_anchor.date_range(
+            field=anchor_date_sql,
+            start=request.date_start,
+            end=request.date_end,
+        )
+        where_anchor, params_anchor = qb_anchor.build()
+
+        if not self._has_listing_period_filter(
+            request.date_start,
+            request.date_end,
+        ):
+            return where_anchor, params_anchor
+
+        qb_first = QueryBuilder()
+        qb_first.date_range(
+            field=first_eng_date_sql,
+            start=request.date_start,
+            end=request.date_end,
+        )
+        where_first, params_first = qb_first.build()
+
+        if not where_anchor and not where_first:
+            return "1=1", ()
+        if not where_anchor:
+            return where_first, params_first
+        if not where_first:
+            return where_anchor, params_anchor
+        return f"(({where_anchor}) OR ({where_first}))", (*params_anchor, *params_first)
+
+    def _sql_ov_first_engineering_arrival_cte(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_aij_base, params_aij_base = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "A.D_E_L_E_T_"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
+            )
+        )
+        where_eng_support, params_eng_support = (
+            self._sql_engineering_support_process_stage_condition(
+                "A.AIJ_PROVEN",
+                "A.AIJ_STAGE",
+            )
+        )
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch(
+            "AD1",
+            requested_branch,
+        )
+
+        sql = f"""
+            OvFirstEngineeringArrival AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    MIN(A.AIJ_DTINIC) AS FIRST_ENG_DATE
+                FROM AIJ010 A
+                INNER JOIN AD1010 AD1
+                    ON AD1.AD1_FILIAL = A.AIJ_FILIAL
+                   AND AD1.AD1_NROPOR = A.AIJ_NROPOR
+                WHERE {where_ad1}
+                  AND {where_aij_base}
+                  AND {where_eng_support}
+                  AND ISNULL(A.AIJ_DTINIC, '') <> ''
+                GROUP BY
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR
+            )
+        """
+        return sql, (*params_ad1, *params_aij_base, *params_eng_support)
 
     def _sql_event_engineering_minutes_expr(self, alias: str) -> str:
         return f"""
@@ -838,28 +937,46 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         lmp_only: bool = False,
     ) -> Tuple[str, tuple]:
-        cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
-            request.branch,
+        anchor_period_start, anchor_period_end = self._listing_anchor_period_dates(
             request.date_start,
             request.date_end,
         )
+        cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
+            request.branch,
+            anchor_period_start,
+            anchor_period_end,
+        )
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", request.branch)
 
-        qb_period_anchor = QueryBuilder()
-        qb_period_anchor.date_range(
-            field="L.ANCHOR_START_DATE",
-            start=request.date_start,
-            end=request.date_end,
+        where_period_anchor, params_period_anchor = self._sql_candidate_period_where_clause(
+            request,
+            anchor_date_sql="L.ANCHOR_START_DATE",
         )
-        where_period_anchor, params_period_anchor = qb_period_anchor.build()
+        where_period_other, params_period_other = self._sql_candidate_period_where_clause(
+            request,
+            anchor_date_sql="R.ANCHOR_START_DATE",
+        )
 
-        qb_period_other = QueryBuilder()
-        qb_period_other.date_range(
-            field="R.ANCHOR_START_DATE",
-            start=request.date_start,
-            end=request.date_end,
+        has_period = self._has_listing_period_filter(
+            request.date_start,
+            request.date_end,
         )
-        where_period_other, params_period_other = qb_period_other.build()
+        first_eng_cte = ""
+        first_eng_params: tuple = ()
+        first_eng_join = ""
+        anchor_start_expr = "L.ANCHOR_START_DATE"
+        other_start_expr = "R.ANCHOR_START_DATE"
+        if has_period:
+            first_eng_cte, first_eng_params = self._sql_ov_first_engineering_arrival_cte(
+                request.branch,
+            )
+            first_eng_join = """
+                LEFT JOIN OvFirstEngineeringArrival F
+                    ON F.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND F.AIJ_NROPOR = AD1.AD1_NROPOR
+            """
+            anchor_start_expr = "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE)"
+            other_start_expr = "COALESCE(F.FIRST_ENG_DATE, R.ANCHOR_START_DATE)"
 
         anchor_candidates_sql = f"""
                 SELECT DISTINCT
@@ -872,7 +989,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                         WHEN SA.AIJ_NROPOR IS NOT NULL THEN 1
                         ELSE 0
                     END AS HAS_SAMPLE_ANCHOR,
-                    L.ANCHOR_START_DATE AS LMP_START_DATE,
+                    CASE
+                        WHEN LF.AIJ_NROPOR IS NOT NULL THEN 1
+                        ELSE 0
+                    END AS HAS_LMP_FINALIZED,
+                    {anchor_start_expr} AS LMP_START_DATE,
                     L.ANCHOR_END_DATE AS LMP_END_DATE
                 FROM AD1010 AD1
                 INNER JOIN ListingAnchorEventos L
@@ -883,6 +1004,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON SA.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND SA.AIJ_NROPOR = AD1.AD1_NROPOR
                    AND SA.AIJ_REVISA = AD1.AD1_REVISA
+                LEFT JOIN LmpFinalizedAnchorChosen LF
+                    ON LF.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND LF.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND LF.AIJ_REVISA = AD1.AD1_REVISA
+                {first_eng_join}
                 WHERE {where_ad1}
                   AND {where_period_anchor}
         """
@@ -895,13 +1021,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     AD1.AD1_DESCRI,
                     ? AS LISTING_KIND,
                     0 AS HAS_SAMPLE_ANCHOR,
-                    R.ANCHOR_START_DATE AS LMP_START_DATE,
+                    0 AS HAS_LMP_FINALIZED,
+                    {other_start_expr} AS LMP_START_DATE,
                     R.ANCHOR_END_DATE AS LMP_END_DATE
                 FROM AD1010 AD1
                 INNER JOIN EngSupportOvRef R
                     ON R.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND R.AIJ_NROPOR = AD1.AD1_NROPOR
                    AND R.AIJ_REVISA = AD1.AD1_REVISA
+                {first_eng_join}
                 WHERE {where_ad1}
                   AND {where_period_other}
                   AND NOT EXISTS (
@@ -913,10 +1041,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   )
         """
 
+        candidate_body = anchor_candidates_sql
+        cte_prefix = cte_marker
+        if first_eng_cte:
+            cte_prefix = f"{cte_marker},\n            {first_eng_cte}"
+
         if lmp_only:
-            candidate_body = anchor_candidates_sql
             sql = f"""
-                {cte_marker},
+                {cte_prefix},
 
                 CandidateLMPs AS (
                     {candidate_body}
@@ -924,6 +1056,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             """
             params: list = [
                 *params_marker,
+                *first_eng_params,
                 *params_ad1,
                 *params_period_anchor,
             ]
@@ -931,8 +1064,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
             request.branch,
-            request.date_start,
-            request.date_end,
+            anchor_period_start,
+            anchor_period_end,
         )
 
         candidate_body = f"""
@@ -944,7 +1077,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             """
 
         sql = f"""
-            {cte_marker},
+            {cte_prefix},
             {cte_eng_ref},
 
             CandidateLMPs AS (
@@ -952,7 +1085,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         """
 
-        params = [*params_marker, *params_eng_ref]
+        params = [*params_marker, *first_eng_params, *params_eng_ref]
         params.extend(
             [
                 *params_ad1,
@@ -1863,7 +1996,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     CASE
                         WHEN SA.AIJ_NROPOR IS NOT NULL THEN 1
                         ELSE 0
-                    END AS HAS_SAMPLE_ANCHOR
+                    END AS HAS_SAMPLE_ANCHOR,
+                    CASE
+                        WHEN LF.AIJ_NROPOR IS NOT NULL THEN 1
+                        ELSE 0
+                    END AS HAS_LMP_FINALIZED
                 FROM AD1010 AD1
                 LEFT JOIN ListingAnchorEventos L
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
@@ -1873,6 +2010,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON SA.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND SA.AIJ_NROPOR = AD1.AD1_NROPOR
                    AND SA.AIJ_REVISA = AD1.AD1_REVISA
+                LEFT JOIN LmpFinalizedAnchorChosen LF
+                    ON LF.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND LF.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND LF.AIJ_REVISA = AD1.AD1_REVISA
                 WHERE {where_ad1}
                   AND AD1.AD1_NROPOR = ?
             ),
@@ -1886,16 +2027,36 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             date_end=request.date_end,
         )
 
+        first_eng_cte = ""
+        first_eng_params: tuple = ()
+        first_eng_join = ""
+        start_date_expr = "COALESCE(L.ANCHOR_START_DATE, R.ANCHOR_START_DATE)"
+
         if use_period:
-            cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
-                requested_branch,
+            anchor_period_start, anchor_period_end = self._listing_anchor_period_dates(
                 request.date_start,
                 request.date_end,
             )
+            cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
+                requested_branch,
+                anchor_period_start,
+                anchor_period_end,
+            )
             cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
                 requested_branch,
-                request.date_start,
-                request.date_end,
+                anchor_period_start,
+                anchor_period_end,
+            )
+            first_eng_cte, first_eng_params = self._sql_ov_first_engineering_arrival_cte(
+                requested_branch,
+            )
+            first_eng_join = """
+            LEFT JOIN OvFirstEngineeringArrival F
+                ON F.AIJ_FILIAL = AD1.AD1_FILIAL
+               AND F.AIJ_NROPOR = AD1.AD1_NROPOR
+            """
+            start_date_expr = (
+                "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE, R.ANCHOR_START_DATE)"
             )
         else:
             cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
@@ -1949,10 +2110,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             else "AND (L.AIJ_NROPOR IS NOT NULL OR R.AIJ_NROPOR IS NOT NULL)"
         )
 
+        first_eng_cte_block = f",\n            {first_eng_cte}" if first_eng_cte else ""
+
         sql = f"""
             WITH
             {cte_marker},
-            {cte_eng_ref},
+            {cte_eng_ref}{first_eng_cte_block},
             {scope_cte}
             {cte_hist}
             SELECT TOP 1
@@ -1960,7 +2123,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 AD1.AD1_NROPOR AS sale_number,
                 AD1.AD1_DESCRI AS sale_description,
                 {listing_kind_select},
-                COALESCE(L.ANCHOR_START_DATE, R.ANCHOR_START_DATE) AS start_date,
+                {start_date_expr} AS start_date,
                 COALESCE(L.ANCHOR_END_DATE, R.ANCHOR_END_DATE) AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
                 H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
@@ -1983,6 +2146,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON R.AIJ_FILIAL = AD1.AD1_FILIAL
                AND R.AIJ_NROPOR = AD1.AD1_NROPOR
                AND R.AIJ_REVISA = AD1.AD1_REVISA
+            {first_eng_join}
             LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_FILIAL = AD1.AD1_FILIAL
                AND H.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -2002,6 +2166,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         params: list = [
             *params_marker,
             *params_eng_ref,
+            *first_eng_params,
             *params_scope,
             *params_hist,
         ]
@@ -2191,6 +2356,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.AD1_DESCRI,
                     C.LISTING_KIND,
                     C.HAS_SAMPLE_ANCHOR,
+                    C.HAS_LMP_FINALIZED,
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
                     H.ENGINEERING_STATUS,
@@ -2227,6 +2393,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 C.AD1_DESCRI,
                 C.LISTING_KIND,
                 C.HAS_SAMPLE_ANCHOR,
+                C.HAS_LMP_FINALIZED,
                 C.LMP_START_DATE,
                 C.LMP_END_DATE,
                 H.ENGINEERING_STATUS,
@@ -2270,6 +2437,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.AD1_DESCRI,
                     C.LISTING_KIND,
                     C.HAS_SAMPLE_ANCHOR,
+                    C.HAS_LMP_FINALIZED,
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
                     H.ENGINEERING_STATUS,
