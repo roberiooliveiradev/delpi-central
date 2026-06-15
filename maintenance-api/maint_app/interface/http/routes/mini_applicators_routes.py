@@ -57,6 +57,7 @@ def list_ferramentas(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
+    incluir_bloqueados: bool = Query(False),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -76,6 +77,7 @@ def list_ferramentas(
             page_size=query.page_size,
             sort_by=query.sort_by,
             sort_dir=query.sort_dir,
+            incluir_bloqueados=incluir_bloqueados,
         )
         return ok(data, message="Ferramentas listadas.")
     except DelpiApiError as exc:

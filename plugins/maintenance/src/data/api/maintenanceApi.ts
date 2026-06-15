@@ -6,6 +6,7 @@ export type FerramentaItem = {
   codigo: string;
   descricao: string;
   grupo?: string;
+  bloqueado?: boolean;
 };
 
 export type FerramentasPage = {
@@ -66,6 +67,7 @@ export function fetchFerramentas(
     filial: string;
     codigo?: string;
     descricao?: string;
+    incluirBloqueados?: boolean;
   } & ListQueryParams,
   getAccessToken?: () => string | undefined,
 ) {
@@ -82,6 +84,7 @@ export function fetchFerramentas(
     {
       codigo: params.codigo,
       descricao: params.descricao,
+      incluir_bloqueados: params.incluirBloqueados ? true : undefined,
     },
   );
 

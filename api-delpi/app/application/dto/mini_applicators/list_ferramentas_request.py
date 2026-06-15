@@ -12,3 +12,4 @@ class ListMiniApplicatorsFerramentasRequest:
     page_size: int = 50
     sort_by: str | None = None
     sort_dir: str = "asc"
+    incluir_bloqueados: bool = False

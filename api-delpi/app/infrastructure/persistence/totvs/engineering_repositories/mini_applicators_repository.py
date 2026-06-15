@@ -11,8 +11,10 @@ from app.domain.ports.mini_applicators.mini_applicators_repository_port import (
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_query_parts import (
+    bloqueado_filter_sql,
     codigo_filter_sql,
     codigo_prefix_pattern,
+    is_protheus_product_blocked,
 )
 from app.infrastructure.persistence.totvs.protheus_datetime import (
     parse_protheus_period_end,
@@ -49,6 +51,9 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                 params.append(f"%{term}%")
             where_clauses.append("(" + " OR ".join(desc_where) + ")")
 
+        if not request.incluir_bloqueados:
+            where_clauses.append(bloqueado_filter_sql())
+
         where_sql = " AND ".join(where_clauses)
         sort_columns = {
             "codigo": "RTRIM(LTRIM(SB1.B1_COD))",
@@ -69,7 +74,8 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                 SB1.R_E_C_N_O_ AS id,
                 RTRIM(SB1.B1_COD) AS codigo,
                 RTRIM(SB1.B1_DESC) AS descricao,
-                RTRIM(SB1.B1_GRUPO) AS grupo
+                RTRIM(SB1.B1_GRUPO) AS grupo,
+                SB1.B1_MSBLQL AS bloqueado_raw
             FROM SB1010 SB1 WITH (NOLOCK)
             WHERE {where_sql}
             ORDER BY {sort_column} {sort_direction}
@@ -89,6 +95,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                 codigo=str(row["codigo"]),
                 descricao=str(row["descricao"]),
                 grupo=str(row.get("grupo") or ""),
+                bloqueado=is_protheus_product_blocked(row.get("bloqueado_raw")),
             )
             for row in rows
         ]

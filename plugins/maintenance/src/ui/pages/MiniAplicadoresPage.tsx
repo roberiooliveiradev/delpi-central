@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Hammer, Loader2, PlusCircle, RefreshCw } from "lucide-react";
+import { Hammer, Loader2, Lock, PlusCircle, RefreshCw } from "lucide-react";
 
 import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FieldLabel, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
@@ -77,6 +77,7 @@ export function MiniAplicadoresPage({
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const [descricao, setDescricao] = useState("");
   const [codigo, setCodigo] = useState("");
+  const [incluirBloqueados, setIncluirBloqueados] = useState(false);
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
   const ferramentasTable = useServerTable({ defaultSortKey: "codigo" });
@@ -314,6 +315,7 @@ export function MiniAplicadoresPage({
         {
           codigo: codigo.trim() || undefined,
           descricao: descricao.trim() || undefined,
+          incluirBloqueados,
           filial,
           page: ferramentasTable.query.page,
           pageSize: ferramentasTable.query.pageSize,
@@ -331,7 +333,7 @@ export function MiniAplicadoresPage({
     } finally {
       setFerramentasLoading(false);
     }
-  }, [codigo, descricao, filial, ferramentasTable.query, getAccessToken]);
+  }, [codigo, descricao, filial, incluirBloqueados, ferramentasTable.query, getAccessToken]);
 
   const loadHistoricoChart = useCallback(
     async (total: number) => {
@@ -729,7 +731,14 @@ export function MiniAplicadoresPage({
         header: "Código",
         sortable: true,
         sortValue: (item) => item.codigo,
-        render: (item) => item.codigo,
+        render: (item) => (
+          <span className="dm-ferramenta-codigo">
+            {item.bloqueado ? (
+              <Lock size={14} className="dm-ferramenta-codigo__lock" aria-hidden="true" />
+            ) : null}
+            <span>{item.codigo}</span>
+          </span>
+        ),
       },
       {
         key: "descricao",
@@ -918,6 +927,17 @@ export function MiniAplicadoresPage({
                 placeholder="Ex.: 23-"
               />
             </label>
+            <label className="dm-checkbox-field dm-filter-bar__checkbox">
+              <input
+                type="checkbox"
+                checked={incluirBloqueados}
+                onChange={(event) => {
+                  setIncluirBloqueados(event.target.checked);
+                  ferramentasTable.resetPage();
+                }}
+              />
+              <span>Mostrar bloqueadas</span>
+            </label>
             <button type="submit" className="dm-primary-btn">
               Buscar
             </button>
@@ -936,6 +956,7 @@ export function MiniAplicadoresPage({
             loading={ferramentasLoading}
             emptyMessage="Nenhuma ferramenta encontrada."
             getRowKey={(item) => item.codigo}
+            getRowClassName={(item) => (item.bloqueado ? "is-blocked" : undefined)}
             onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
             serverTable={{
               page: ferramentasTable.query.page,

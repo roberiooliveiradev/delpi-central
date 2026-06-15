@@ -14,6 +14,7 @@ class MiniApplicatorsTotvsPort(Protocol):
         page_size: int | None = None,
         sort_by: str | None = None,
         sort_dir: str | None = None,
+        incluir_bloqueados: bool | None = None,
     ) -> dict: ...
 
     def obter_ferramenta(self, codigo: str) -> dict: ...

@@ -9,6 +9,7 @@ class MiniApplicatorTool:
     codigo: str
     descricao: str
     grupo: str = ""
+    bloqueado: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -16,4 +17,5 @@ class MiniApplicatorTool:
             "codigo": self.codigo,
             "descricao": self.descricao,
             "grupo": self.grupo,
+            "bloqueado": self.bloqueado,
         }

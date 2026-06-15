@@ -19,6 +19,7 @@ class DelpiMiniAplicatorsGateway:
         page_size: int | None = None,
         sort_by: str | None = None,
         sort_dir: str | None = None,
+        incluir_bloqueados: bool | None = None,
     ) -> dict:
         return self._client.list_mini_applicators_ferramentas(
             params={
@@ -29,6 +30,7 @@ class DelpiMiniAplicatorsGateway:
                 "page_size": str(page_size) if page_size is not None else None,
                 "sort_by": sort_by,
                 "sort_dir": sort_dir,
+                "incluir_bloqueados": "true" if incluir_bloqueados else None,
             },
             authorization=bearer_authorization_from_context(),
         )

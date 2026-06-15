@@ -890,6 +890,13 @@
   min-width: 0;
 }
 
+.dashboard-maintenance .dm-filter-bar__checkbox {
+  flex: 0 1 auto;
+  min-width: 0;
+  align-self: center;
+  padding-bottom: 10px;
+}
+
 .dashboard-maintenance .dm-filter-bar__actions {
   display: flex;
   flex-wrap: wrap;

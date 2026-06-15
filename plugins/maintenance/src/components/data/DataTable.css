@@ -72,6 +72,32 @@
   background: color-mix(in srgb, var(--dm-accent) 10%, var(--dm-card-bg));
 }
 
+.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked {
+  background: color-mix(in srgb, var(--dm-text-muted) 7%, var(--dm-card-bg));
+}
+
+.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked td {
+  color: color-mix(in srgb, var(--dm-text-muted) 88%, var(--dm-text));
+}
+
+.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked:hover,
+.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked.is-clickable:hover {
+  background: color-mix(in srgb, var(--dm-text-muted) 11%, var(--dm-card-bg));
+}
+
+.dashboard-maintenance .dm-ferramenta-codigo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-maintenance .dm-ferramenta-codigo__lock {
+  flex: none;
+  color: var(--dm-text-muted);
+  opacity: 0.9;
+}
+
 .dashboard-maintenance .dm-datatable__col--revisao-feito {
   width: 8.75rem;
   max-width: 8.75rem;

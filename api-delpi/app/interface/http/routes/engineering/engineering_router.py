@@ -431,6 +431,7 @@ def list_mini_applicators_ferramentas_route(
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
     sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+    incluir_bloqueados: bool = Query(False),
 ):
     try:
         request = ListMiniApplicatorsFerramentasRequest(
@@ -441,6 +442,7 @@ def list_mini_applicators_ferramentas_route(
             page_size=page_size or 50,
             sort_by=sort_by,
             sort_dir=sort_dir or "asc",
+            incluir_bloqueados=incluir_bloqueados,
         )
         use_case = build_list_mini_applicators_ferramentas_use_case()
         result = use_case.execute(request)
