@@ -19,6 +19,13 @@ class LMPHistoryEvent:
     status: Optional[str] = None
     history_flag: Optional[str] = None
     is_engineering: bool = False
+    next_revision: Optional[str] = None
+    next_process_code: Optional[str] = None
+    next_stage_code: Optional[str] = None
+    next_start_date: Optional[str] = None
+    previous_revision: Optional[str] = None
+    previous_process_code: Optional[str] = None
+    previous_stage_code: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -2,7 +2,6 @@
 from app.application.services.lmp_business_rules import LMPBusinessRules
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
-from app.domain.services.lmp_history_event_enrichment import enrich_history_events
 
 
 class GetLMPUseCase:
@@ -30,13 +29,6 @@ class GetLMPUseCase:
         payload["data_limite"] = data_limite
         payload["lead_time_util"] = lead_time_util
         payload["status"] = status
-        history_revision = (
-            payload.get("measurement_revision")
-            or payload.get("reference_revision")
-        )
-        payload["list_history"] = enrich_history_events(
-            payload.get("list_history"),
-            reference_revision=history_revision,
-        )
+        payload["list_history"] = []
 
         return payload

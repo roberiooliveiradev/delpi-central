@@ -99,15 +99,26 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | Tooltips tabela | ⓘ em todas as colunas do histórico (incl. Situação); balões não cortados em scroll horizontal |
 | Impressão | Ctrl+P oculta chrome desnecessário (`@media print`) |
 
-### API (detalhe)
+### API (detalhe + histórico)
 
 ```bash
+# Cabeçalho e produtos (sem histórico)
 curl -s -H "Authorization: Bearer $TOKEN" \
   "$BASE/lmps/000123?date_start=2025-01-01&date_end=2026-12-31&branch=01" \
-  | jq '.data.list_history[0] | {process_label, status_label, is_open, duration_display}'
+  | jq '.data | {sale_number, reference_revision, list_history}'
+
+# Eventos AIJ010
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BASE/lmps/000123/history/events?date_start=2025-01-01&date_end=2026-12-31&branch=01" \
+  | jq '.data.items[0] | {process_label, status_label, is_open, duration_display, is_current}'
+
+# Fluxo engenharia (idas/voltas)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BASE/lmps/000123/history/flow?branch=01" \
+  | jq '.data.items[0] | {flow_transition, flow_transition_label, is_engineering_entry}'
 ```
 
-Esperado: campos enriquecidos presentes quando a OV tem histórico AIJ010.
+Esperado: detalhe com `list_history: []`; eventos e fluxo enriquecidos quando a OV tem histórico AIJ010.
 
 ## 7. URLs úteis
 
@@ -119,6 +130,8 @@ Esperado: campos enriquecidos presentes quando a OV tem histórico AIJ010.
 | API listagem | `http://localhost/apps/api-delpi/engineering/lmps` |
 | Detalhe OV (ex.) | `http://localhost/apps/dashboard-lmps/ov/000123` |
 | API detalhe OV | `http://localhost/apps/api-delpi/engineering/lmps/{sale_number}` |
+| API histórico eventos | `http://localhost/apps/api-delpi/engineering/lmps/{sale_number}/history/events` |
+| API histórico fluxo | `http://localhost/apps/api-delpi/engineering/lmps/{sale_number}/history/flow` |
 
 ## 8. Troubleshooting
 

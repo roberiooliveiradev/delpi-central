@@ -135,12 +135,14 @@ export const LMPS_HELP_TOOLTIPS = {
       "Visualização tabular completa com todas as colunas do AIJ010 para consulta detalhada.",
     historyTimelineFootnote:
       "Eventos ordenados conforme o TOTVS (revisão, data/hora de início e estágio). Duração em aberto considera o momento atual.",
-    historyFilterAll: "Exibe todos os eventos da OV, em todas as revisões.",
+    historyFilterAll:
+      "Histórico completo da OV em todas as revisões (inclui ciclos anteriores, ex.: 2019).",
     historyFilterEngineering:
-      "Restringe a estágios do fluxo técnico (engenharia, amostra, homologação), inclusive quando o processo TOTVS não é 000002/000003.",
-    historyFilterOpen: "Mostra apenas eventos sem data de encerramento no AIJ010.",
+      "Estágios técnicos do fluxo, limitados à revisão e data de início exibidas no painel LMP.",
+    historyFilterOpen:
+      "Eventos em aberto no AIJ010, limitados ao escopo do painel LMP (revisão/data de início).",
     historyFilterCurrentRevision:
-      "Mostra a revisão usada pelo painel LMP (medição de engenharia / AD1010), alinhada à linha da tabela.",
+      "Eventos da revisão AD1010 usada na linha do painel LMP, a partir da data de início exibida.",
     historyGantt:
       "Faixa proporcional dentro da revisão: barra = início até encerramento (ou hoje se em aberto); traço = data limite.",
     historyGlobalGantt:

@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getLmpBySaleNumber } from "../api/lmpApi";
+import {
+  getLmpBySaleNumber,
+  getLmpHistoryEvents,
+  getLmpHistoryFlow,
+} from "../api/lmpApi";
 import type { LmpDetailData } from "../types/lmp";
 import type { LmpsFilterUrlState } from "../utils/filterUrl";
+import { mergeHistoryFlowIntoEvents } from "../utils/historyFormatting";
 import { resolveLmpsBranchFilter, toLmpApiDate } from "../utils/filterUrl";
 
 type UseLmpDetailOptions = {
@@ -30,12 +35,27 @@ export function useLmpDetail(
     setError(null);
 
     try {
-      const result = await getLmpBySaleNumber(saleNumber, {
+      const requestParams = {
         date_start: toLmpApiDate(filters.dateStart),
         date_end: toLmpApiDate(filters.dateEnd),
         branch: options.branch || resolveLmpsBranchFilter(filters) || undefined,
+      };
+
+      const [detail, historyResponse, flowResponse] = await Promise.all([
+        getLmpBySaleNumber(saleNumber, requestParams),
+        getLmpHistoryEvents(saleNumber, requestParams),
+        getLmpHistoryFlow(saleNumber, requestParams),
+      ]);
+
+      setData({
+        ...detail,
+        reference_revision:
+          detail.reference_revision ?? historyResponse.reference_revision,
+        list_history: mergeHistoryFlowIntoEvents(
+          historyResponse.items ?? [],
+          flowResponse.items ?? [],
+        ),
       });
-      setData(result);
     } catch (reason) {
       setData(null);
       setError(

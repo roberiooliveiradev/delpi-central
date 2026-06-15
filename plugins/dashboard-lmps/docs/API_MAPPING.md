@@ -26,11 +26,13 @@ Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_rou
 | `getLmpsDashboardSummary` | GET | `/engineering/lmps/dashboard/summary` | KPIs |
 | `getLmpsDashboardCharts` | GET | `/engineering/lmps/dashboard/charts` | Gráficos |
 | `getLmpsDashboardItems` | GET | `/engineering/lmps/dashboard/items` | Tabela |
-| `getLmpBySaleNumber` | GET | `/engineering/lmps/{sale_number}` | Detalhe da OV (clique na linha) |
+| `getLmpBySaleNumber` | GET | `/engineering/lmps/{sale_number}` | Detalhe da OV — cabeçalho, produtos, KPIs (`list_history: []`) |
+| `getLmpHistoryEvents` | GET | `/engineering/lmps/{sale_number}/history/events` | Eventos AIJ010 (timeline/tabela) |
+| `getLmpHistoryFlow` | GET | `/engineering/lmps/{sale_number}/history/flow` | Transições engenharia (idas/voltas) |
 | `getLmpsDashboard` | GET | `/engineering/lmps/dashboard` | Legado (fallback monolítico) |
 | `listLmps` | GET | `/engineering/lmps` | Listagem paginada (não usada na página atual) |
 
-**Rota de detalhe:** não há endpoint duplicado — o MFE usa **`GET /engineering/lmps/{sale_number}`** (`operationId`: `get_lmp_by_sale_number`).
+**Detalhe da OV:** o MFE chama **`getLmpBySaleNumber`** + **`getLmpHistoryEvents`** + **`getLmpHistoryFlow`** em paralelo (`useLmpDetail`) e mescla fluxo nos eventos para badges na timeline.
 
 ---
 
@@ -52,7 +54,7 @@ Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_rou
 
 ## GET /engineering/lmps/{sale_number}
 
-Detalhe de uma OV/proposta para a tela `/apps/dashboard-lmps/ov/{sale_number}`.
+Detalhe de uma OV/proposta — **sem histórico** (performance).
 
 | Parâmetro | Descrição |
 |-----------|-----------|
@@ -62,9 +64,26 @@ Detalhe de uma OV/proposta para a tela `/apps/dashboard-lmps/ov/{sale_number}`.
 
 ### Resposta `data` (campos principais)
 
-Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `data_limite`, `lead_time_util`, `status`, `sla_minutos`) + `list_products[]` + **`list_history[]`**.
+Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `data_limite`, `lead_time_util`, `status`, `sla_minutos`) + `list_products[]` + **`list_history: []`**.
 
-### `list_history[]` — evento `LmpHistoryEvent`
+---
+
+## GET /engineering/lmps/{sale_number}/history/events
+
+Eventos AIJ010 para timeline/tabela. Query lite (sem LEAD/LAG por linha).
+
+Mesmos query params do detalhe + opcional `revision`.
+
+### Resposta `data`
+
+| Campo | Descrição |
+|-------|-----------|
+| `sale_number`, `branch` | Identificação |
+| `reference_revision`, `panel_start_date` | Contexto do painel (escopo de filtros na UI) |
+| `items[]` | Eventos enriquecidos (`LmpHistoryEvent`) |
+| `total` | Quantidade de itens |
+
+### `items[]` — evento `LmpHistoryEvent`
 
 | Campo | Descrição |
 |-------|-----------|
@@ -78,9 +97,25 @@ Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `dat
 | `history_flag` | `AIJ_HISTOR` |
 | `is_engineering` | Métrica SQL (par processo+estágio configurado) |
 | `is_engineering_flow` | Exibição badge Engenharia (inclui estágios técnicos) |
-| `is_open`, `is_late`, `is_current` | Flags derivadas no `GetLMPUseCase` |
+| `is_open`, `is_late`, `is_current` | Flags derivadas em `GetLmpHistoryEventsUseCase` |
 
 Enriquecimento: `api-delpi/app/domain/services/lmp_history_event_enrichment.py`.
+
+---
+
+## GET /engineering/lmps/{sale_number}/history/flow
+
+Somente eventos de engenharia com contexto anterior/próximo (LEAD/LAG) para idas, voltas e avanços.
+
+Resposta no mesmo formato de `/history/events`. Campos adicionais por item:
+
+| Campo | Descrição |
+|-------|-----------|
+| `is_engineering_entry` | Primeira entrada na engenharia na sequência |
+| `flow_transition` | `advanced_from_engineering`, `returned_from_engineering`, … |
+| `flow_transition_label`, `flow_transition_labels` | Rótulos PT para badges na timeline |
+
+Enriquecimento: `api-delpi/app/domain/services/lmp_history_flow_transition.py`. O MFE mescla estes campos nos eventos via `mergeHistoryFlowIntoEvents()`.
 
 ### UI do histórico (MFE)
 
@@ -96,6 +131,8 @@ Enriquecimento: `api-delpi/app/domain/services/lmp_history_event_enrichment.py`.
 | Chave | Destino |
 |-------|---------|
 | `detail` | Esta OV |
+| `historyEvents` | `/engineering/lmps/{sale_number}/history/events` |
+| `historyFlow` | `/engineering/lmps/{sale_number}/history/flow` |
 | `dashboardItems` | `/engineering/lmps/dashboard/items` |
 | `dashboardSummary` | `/engineering/lmps/dashboard/summary` |
 | `dashboardCharts` | `/engineering/lmps/dashboard/charts` |

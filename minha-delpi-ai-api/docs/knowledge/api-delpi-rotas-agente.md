@@ -128,6 +128,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | **Itens paginados** do dashboard | `GET /engineering/lmps/dashboard/items` | `list_lmps_dashboard_items` |
 | **Gráficos** do dashboard LMP | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Detalhe de uma LMP por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
+| Histórico AIJ010 (eventos) | `GET /engineering/lmps/{sale_number}/history/events` | `get_lmp_history_events` |
+| Fluxo engenharia (idas/voltas) | `GET /engineering/lmps/{sale_number}/history/flow` | `get_lmp_history_flow` |
 | Listar processos Transforma Mais | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
 | Resumo Transforma Mais | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |
 
@@ -135,7 +137,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 
 - Listagem / dashboard: `date_start`, `date_end`, `branch`, `listing_type` (`LMP`, `Amostra`, `Outro`), `status` (ex.: `Todos`), `page`, `page_size` (itens)
 - Detalhe: `sale_number` = número da **ordem de venda (OV)** — não é código de produto; opcionalmente `date_start`, `date_end`, `branch` para alinhar ao painel/MFE `dashboard-lmps`
-- Resposta do detalhe inclui `list_products[]` e **`list_history[]`** (eventos AIJ010 enriquecidos: `process_label`, `status_label`, `duration_display`, `is_open`, `is_engineering_flow`, …)
+- Resposta do detalhe: `list_products[]` e **`list_history: []`** (histórico em rotas `/history/events` e `/history/flow`)
+- Histórico: mesmos params do detalhe + opcional `revision`; `items[]` enriquecidos (`process_label`, `status_label`, `duration_display`, `is_open`, `is_current`, …); fluxo com `flow_transition*`
 - Transforma Mais: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`
 
 **Exemplos**

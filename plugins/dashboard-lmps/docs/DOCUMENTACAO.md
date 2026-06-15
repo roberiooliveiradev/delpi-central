@@ -27,7 +27,7 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e roteia 
 
 - KPIs da proposta, cards Proposta / Engenharia / Cliente
 - Tabela de produtos + BOM por item (`ProductStructureTree`)
-- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros (Todos / Engenharia / Em aberto / Revisão atual), mini-Gantt por evento, **Gantt global** multi-revisão, preferências em `localStorage` e tooltips em colunas
+- **Histórico da OV:** carregado via **`/history/events`** + **`/history/flow`** (paralelo ao detalhe); linha do tempo com badges de entrada/avanço/retorno, toggle tabela, filtros (Todos / Engenharia / Em aberto / Revisão atual), mini-Gantt, Gantt global, escopo alinhado à revisão do painel
 - **Filtros na URL:** período, filial, status, tipo de listagem e paginação sincronizados para links compartilháveis (`filterUrl.ts`)
 - **Impressão:** layout simplificado via `@media print` (Ctrl+P)
 
@@ -51,7 +51,7 @@ Portal (AppHost)
        └─ bootstrap.tsx → mount(App)
             ├─ DashboardLmpsPage (lista + KPIs + gráficos)
             └─ LmpDetailPage (/ov/{sale_number})
-                 ├─ useLmpDetail → GET .../lmps/{sale_number}
+                 ├─ useLmpDetail → GET .../lmps/{sale_number} + /history/events + /history/flow
                  ├─ LmpHistorySection (timeline + tabela + filtros)
                  └─ LmpProductStructuresSection (BOM)
 ```
@@ -59,7 +59,7 @@ Portal (AppHost)
 | Camada | Responsabilidade |
 |--------|------------------|
 | `src/api/httpClient.ts` | `fetch` com `Authorization: Bearer` |
-| `src/api/lmpApi.ts` | `getLmpsDashboard`, `listLmps` |
+| `src/api/lmpApi.ts` | `getLmpsDashboard`, `getLmpBySaleNumber`, `getLmpHistoryEvents`, `getLmpHistoryFlow` |
 | `src/hooks/useLmpsDashboard.ts` | Carga, erro, refresh automático |
 | `src/pages/DashboardLmpsPage.tsx` | UI, gráficos e fallback client-side |
 
@@ -241,7 +241,7 @@ Ver [STRUCTURE.md](./STRUCTURE.md).
 | [API_MAPPING.md](./API_MAPPING.md) | Endpoints e tipos |
 | [TESTING.md](./TESTING.md) | Checklist e curl |
 | [STRUCTURE.md](./STRUCTURE.md) | Pastas e convenções |
-| `api-delpi/docs/api/06-modulos-departamentais.md` | Engenharia / LMP no backend (incl. `list_history[]`) |
+| `api-delpi/docs/api/06-modulos-departamentais.md` | Engenharia / LMP no backend (detalhe + `/history/*`) |
 | `documentos/Routes/documentacao_completa_da_rota_lmp.md` | Contrato detalhado da rota LMP |
 | `plugins/dashboard-quality/docs/DOCUMENTACAO.md` | Plugin irmão (referência de padrão MFE) |
 

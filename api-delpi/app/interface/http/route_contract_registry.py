@@ -85,6 +85,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_lmps_dashboard_items": RouteContract("lmp_dashboard_items", "paged_list"),
     "get_lmps_dashboard_charts": RouteContract("lmp_dashboard_charts", "scalar"),
     "get_lmp_by_sale_number": RouteContract("lmp", "product_snapshot"),
+    "get_lmp_history_events": RouteContract("lmp_history", "paged_list"),
+    "get_lmp_history_flow": RouteContract("lmp_history_flow", "list"),
     "list_transforma_mais_processes": RouteContract(
         "transforma_mais_process", "paged_list"
     ),

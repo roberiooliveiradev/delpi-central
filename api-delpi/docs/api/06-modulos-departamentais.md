@@ -121,32 +121,42 @@ Parâmetros adicionais:
 | GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (`total_lmps`, `total_items`, `percent_dentro_prazo`, `avg_lead_time`). Query leve (`eng_resumo_lite`, sem `ORDER BY`). Fase 1 do carregamento progressivo. |
 | GET | `/engineering/lmps/dashboard/items` | Itens paginados do dashboard (tabela). |
 | GET | `/engineering/lmps/dashboard/charts` | Dados de gráficos (levelData, statusData, leadByLevel, evolutionData). Fase 2 do carregamento progressivo. |
-| GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem (OV). Mesmo escopo de classificação do dashboard quando informados `date_start`, `date_end` e `branch`. |
+| GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem (OV). Cabeçalho, produtos, KPIs — **sem** histórico AIJ010 (lista vazia). Mesmo escopo do dashboard com `date_start`, `date_end` e `branch`. |
+| GET | `/engineering/lmps/{sale_number}/history/events` | Eventos AIJ010 da OV (query lite). Timeline/tabela do MFE. |
+| GET | `/engineering/lmps/{sale_number}/history/flow` | Transições de engenharia (entradas, avanços, retornos) com LEAD/LAG apenas nos eventos técnicos. |
 
-**MFE `dashboard-lmps`:** tabela via `/dashboard/items` (ou carregamento progressivo legado `/dashboard`); clique na linha abre `/apps/dashboard-lmps/ov/{sale_number}` no frontend, que consome **`GET /engineering/lmps/{sale_number}`** (não há rota duplicada de detalhe).
+**MFE `dashboard-lmps`:** tabela via `/dashboard/items` (ou carregamento progressivo legado `/dashboard`); clique na linha abre `/apps/dashboard-lmps/ov/{sale_number}`, que consome **`GET /engineering/lmps/{sale_number}`** + **`/history/events`** + **`/history/flow`** em paralelo (histórico montado no hook `useLmpDetail`).
 
-| Query (detalhe `/lmps/{sale_number}`) | Descrição |
+| Query (detalhe e histórico) | Descrição |
 |---|---|
 | `date_start`, `date_end` | Período — alinha candidatos ao dashboard. |
 | `branch` | Filial — recomendado quando a OV existe em mais de uma filial. |
+| `revision` | *(apenas `/history/*`)* Filtra uma revisão específica da OV. |
 
-| Resposta `meta.relatedRoutes` (detalhe) | Descrição |
+| Resposta `meta.relatedRoutes` (detalhe e histórico) | Descrição |
 |---|---|
 | `detail` | Esta OV (`/engineering/lmps/{sale_number}`). |
+| `historyEvents` | Eventos AIJ010 (`/history/events`). |
+| `historyFlow` | Fluxo engenharia (`/history/flow`). |
 | `dashboardItems`, `dashboardSummary`, `dashboardCharts` | Rotas agregadas do painel. |
 | `list` | Listagem paginada `/engineering/lmps`. |
 
-**Resposta `data` (detalhe):** além dos campos de classificação da listagem (`nivel`, `status`, `lead_time_util`, …), inclui `list_products[]` (itens da proposta) e **`list_history[]`** — eventos do AIJ010 ordenados por revisão/data/hora.
+**Resposta `data` (detalhe):** campos de classificação da listagem (`nivel`, `status`, `lead_time_util`, …), `list_products[]` e **`list_history: []`** (histórico em rotas dedicadas).
 
-**Enriquecimento de `list_history[]`:** aplicado em `GetLMPUseCase` via `enrich_history_events()` (`lmp_history_event_enrichment.py`), sem alterar o SQL base:
+**Resposta `data` (`/history/events` e `/history/flow`):** `sale_number`, `branch`, `reference_revision`, `panel_start_date`, `items[]`, `total`. Contexto do painel vem de `get_lmp_panel_context` (mesmo escopo do cabeçalho).
 
-| Campo derivado | Descrição |
+**Enriquecimento de `items[]` em `/history/events`:** `GetLmpHistoryEventsUseCase` + `enrich_history_events()` (`lmp_history_event_enrichment.py`). SQL lite em AIJ010; rótulos AC1010/AC2010 via lookup em cache por par processo+estágio.
+
+**Enriquecimento de `items[]` em `/history/flow`:** `GetLmpHistoryFlowUseCase` + `enrich_flow_transition_fields()` (`lmp_history_flow_transition.py`) — `flow_transition`, `flow_transition_label`, `is_engineering_entry`, etc.
+
+| Campo derivado (eventos) | Descrição |
 |---|---|
-| `process_label`, `stage_label` | Descrições do **AC1010** (`AC1_DESCRI`) e **AC2010** (`AC2_DESCRI` por processo+estágio); fallback em `lmp_process_stage_labels.py` |
-| `status_label` | Mapeamento `AIJ_STATUS` 1–9 |
+| `process_label`, `stage_label` | AC1010/AC2010 (lookup) ou fallback em `lmp_process_stage_labels.py` |
+| `status_label` | Mapeamento `AIJ_STATUS` 1–9; encerrado quando `DTENCE` preenchido |
 | `duration_display` | Texto legível (ex.: «Em andamento · N dia(s)») |
-| `is_open`, `is_late`, `is_current` | Situação do evento |
-| `is_engineering_flow` | Badge Engenharia na UI (estágios técnicos além de `is_engineering`) |
+| `is_open`, `is_late`, `is_current` | Situação do evento (`is_current` vs. `reference_revision` do painel) |
+| `is_engineering_flow` | Badge Engenharia na UI |
+| `flow_transition*` | Apenas em `/history/flow` (idas/voltas/avanços) |
 
 > **Carregamento progressivo:** o frontend chama `/summary` → `/charts` → `/items` (ou `/dashboard` legado). A página renderiza KPIs/gráficos antes da tabela; detalhe da OV é rota separada acima.
 

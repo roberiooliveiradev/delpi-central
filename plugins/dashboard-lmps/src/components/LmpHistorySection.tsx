@@ -29,7 +29,7 @@ import {
 type LmpHistorySectionProps = {
   events: LmpHistoryEvent[];
   referenceRevision?: string | null;
-  measurementRevision?: string | null;
+  panelStartDate?: string | null;
 };
 
 const HISTORY_FILTERS: Array<{
@@ -150,10 +150,10 @@ const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
 export function LmpHistorySection({
   events,
   referenceRevision,
-  measurementRevision,
+  panelStartDate,
 }: LmpHistorySectionProps) {
-  const historyReferenceRevision =
-    measurementRevision?.trim() || referenceRevision?.trim() || null;
+  const historyReferenceRevision = referenceRevision?.trim() || null;
+  const historyPanelStartDate = panelStartDate?.trim() || null;
 
   const [viewMode, setViewMode] = useState<HistoryViewMode>(() => readHistoryViewMode());
   const [eventFilter, setEventFilter] = useState<HistoryEventFilter>(() =>
@@ -168,12 +168,17 @@ export function LmpHistorySection({
     writeHistoryEventFilter(eventFilter);
   }, [eventFilter]);
 
+  const panelScopeOptions = useMemo(
+    () => ({
+      referenceRevision: historyReferenceRevision,
+      panelStartDate: historyPanelStartDate,
+    }),
+    [historyReferenceRevision, historyPanelStartDate],
+  );
+
   const filteredEvents = useMemo(
-    () =>
-      filterHistoryEvents(events, eventFilter, {
-        referenceRevision: historyReferenceRevision,
-      }),
-    [events, eventFilter, historyReferenceRevision],
+    () => filterHistoryEvents(events, eventFilter, panelScopeOptions),
+    [events, eventFilter, panelScopeOptions],
   );
 
   const summary = useMemo(
@@ -181,23 +186,42 @@ export function LmpHistorySection({
     [filteredEvents, events.length],
   );
 
+  const usesPanelScope = eventFilter !== "all";
+
   const revisionContextMessage = useMemo(() => {
-    if (!historyReferenceRevision || eventFilter !== "current_revision") {
+    if (!usesPanelScope) {
       return null;
     }
 
+    const scopeParts: string[] = [];
+    if (historyReferenceRevision) {
+      scopeParts.push(`revisão ${historyReferenceRevision}`);
+    }
+    if (historyPanelStartDate && historyPanelStartDate.length === 8) {
+      scopeParts.push(
+        `a partir de ${historyPanelStartDate.slice(6, 8)}/${historyPanelStartDate.slice(4, 6)}/${historyPanelStartDate.slice(0, 4)}`,
+      );
+    }
+
+    if (scopeParts.length === 0) {
+      return null;
+    }
+
+    const scopeLabel = scopeParts.join(", ");
+
     if (filteredEvents.length > 0) {
-      return `Revisão alinhada ao painel LMP: ${historyReferenceRevision}.`;
+      return `Histórico alinhado ao painel LMP (${scopeLabel}). Use «Todos» para ver revisões anteriores.`;
     }
 
     if (events.length === 0) {
       return null;
     }
 
-    return `Revisão ${historyReferenceRevision} (referência do painel) ainda não possui eventos no AIJ010. Use «Todos» para ver revisões anteriores.`;
+    return `Nenhum evento AIJ010 no escopo do painel (${scopeLabel}). Use «Todos» para consultar o histórico completo da OV.`;
   }, [
+    usesPanelScope,
     historyReferenceRevision,
-    eventFilter,
+    historyPanelStartDate,
     filteredEvents.length,
     events.length,
   ]);
@@ -205,8 +229,8 @@ export function LmpHistorySection({
   const emptyMessage =
     events.length === 0
       ? "Nenhum evento registrado no histórico da OV."
-      : eventFilter === "current_revision" && historyReferenceRevision
-        ? `Nenhum evento na revisão ${historyReferenceRevision} (referência do painel).`
+      : usesPanelScope
+        ? "Nenhum evento no escopo do painel LMP para este filtro."
         : "Nenhum evento corresponde ao filtro selecionado.";
 
   return (

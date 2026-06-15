@@ -493,7 +493,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               <LmpHistorySection
                 events={item.list_history ?? []}
                 referenceRevision={item.reference_revision}
-                measurementRevision={item.measurement_revision}
+                panelStartDate={item.start_date}
               />
             </DetailCard>
           </section>

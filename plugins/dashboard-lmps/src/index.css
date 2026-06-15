@@ -1513,6 +1513,21 @@
   border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
 }
 
+.dashboard-lmps .lmps-history-timeline__badge--flow-entry {
+  color: #1f6feb;
+  background: color-mix(in srgb, #1f6feb 10%, transparent);
+}
+
+.dashboard-lmps .lmps-history-timeline__badge--flow-advance {
+  color: #0f766e;
+  background: color-mix(in srgb, #0f766e 10%, transparent);
+}
+
+.dashboard-lmps .lmps-history-timeline__badge--flow-return {
+  color: #b45309;
+  background: color-mix(in srgb, #b45309 12%, transparent);
+}
+
 .dashboard-lmps .lmps-history-timeline__process {
   margin: 8px 0 0;
   color: var(--text-muted);

@@ -1,6 +1,8 @@
+from app.application.dto.lmp.get_lmp_history_request import GetLmpHistoryRequest
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.interface.http.routes.engineering.lmp_route_helpers import (
+    build_get_lmp_history_request,
     build_get_lmp_request,
     build_list_lmp_request,
 )
@@ -39,3 +41,17 @@ def test_build_get_lmp_request_maps_sale_number_and_scope() -> None:
     assert request.date_start == "20260501"
     assert request.date_end == "20260531"
     assert request.branch == "01"
+
+
+def test_build_get_lmp_history_request_maps_revision_filter() -> None:
+    request = build_get_lmp_history_request(
+        "003578",
+        date_start="20260501",
+        date_end="20260531",
+        branch="01",
+        revision="03",
+    )
+
+    assert isinstance(request, GetLmpHistoryRequest)
+    assert request.sale_number == "003578"
+    assert request.revision == "03"

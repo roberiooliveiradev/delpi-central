@@ -1,5 +1,6 @@
 from typing import List, Tuple
 
+from app.application.dto.lmp.get_lmp_history_request import GetLmpHistoryRequest
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import (
     LISTING_KIND_LMP,
@@ -2249,6 +2250,303 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
         return sql, (*params_prod, *params_pi)
 
+    def _sql_history_events_lmp_lite(
+        self,
+        requested_branch: str | None = None,
+        revision: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_aij, params_aij = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "A.D_E_L_E_T_"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
+            )
+        )
+        where_eng, params_eng = self._sql_engineering_support_process_stage_condition(
+            "A.AIJ_PROVEN",
+            "A.AIJ_STAGE",
+        )
+        revision_filter = ""
+        revision_params: tuple = ()
+        normalized_revision = str(revision or "").strip()
+        if normalized_revision:
+            revision_filter = "AND A.AIJ_REVISA = ?"
+            revision_params = (normalized_revision,)
+
+        sql = f"""
+            SELECT
+                A.AIJ_REVISA AS revision,
+                A.AIJ_PROVEN AS process_code,
+                A.AIJ_STAGE AS stage_code,
+                A.AIJ_DTINIC AS start_date,
+                A.AIJ_HRINIC AS start_time,
+                A.AIJ_DTLIMI AS limit_date,
+                A.AIJ_HRLIMI AS limit_time,
+                A.AIJ_DTENCE AS end_date,
+                A.AIJ_HRENCE AS end_time,
+                CASE
+                    WHEN ISNULL(A.AIJ_DTINIC, '') <> ''
+                     AND ISNULL(A.AIJ_HRINIC, '') <> ''
+                     AND ISNULL(A.AIJ_DTENCE, '') <> ''
+                     AND ISNULL(A.AIJ_HRENCE, '') <> ''
+                    THEN DATEDIFF(
+                        MINUTE,
+                        CAST(
+                            CONCAT(
+                                SUBSTRING(A.AIJ_DTINIC, 1, 4), '-',
+                                SUBSTRING(A.AIJ_DTINIC, 5, 2), '-',
+                                SUBSTRING(A.AIJ_DTINIC, 7, 2), ' ',
+                                A.AIJ_HRINIC, ':00'
+                            ) AS DATETIME
+                        ),
+                        CAST(
+                            CONCAT(
+                                SUBSTRING(A.AIJ_DTENCE, 1, 4), '-',
+                                SUBSTRING(A.AIJ_DTENCE, 5, 2), '-',
+                                SUBSTRING(A.AIJ_DTENCE, 7, 2), ' ',
+                                A.AIJ_HRENCE, ':00'
+                            ) AS DATETIME
+                        )
+                    )
+                    ELSE NULL
+                END AS duration_minutes,
+                A.AIJ_STATUS AS status,
+                A.AIJ_HISTOR AS history_flag,
+                CASE WHEN {where_eng} THEN 1 ELSE 0 END AS is_engineering
+            FROM AIJ010 A
+            WHERE {where_aij}
+              AND A.AIJ_NROPOR = ?
+              {revision_filter}
+            ORDER BY
+                A.AIJ_REVISA,
+                A.AIJ_DTINIC,
+                A.AIJ_HRINIC,
+                A.AIJ_STAGE,
+                A.R_E_C_N_O_
+        """
+
+        return sql, params_eng, params_aij, revision_params
+
+    def _sql_history_flow_lmp(
+        self,
+        requested_branch: str | None = None,
+        revision: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_aij, params_aij = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "A.D_E_L_E_T_"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
+            )
+        )
+        where_eng, params_eng = self._sql_engineering_support_process_stage_condition(
+            "E.AIJ_PROVEN",
+            "E.AIJ_STAGE",
+        )
+        where_eng_next, _params_eng_next = self._sql_engineering_support_process_stage_condition(
+            "E.PROXIMO_PROVEN_GLOBAL",
+            "E.PROXIMO_STAGE_GLOBAL",
+        )
+        revision_filter = ""
+        revision_params: tuple = ()
+        normalized_revision = str(revision or "").strip()
+        if normalized_revision:
+            revision_filter = "AND A.AIJ_REVISA = ?"
+            revision_params = (normalized_revision,)
+
+        win = """PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
+                        ORDER BY
+                            A.AIJ_REVISA,
+                            A.AIJ_DTINIC,
+                            A.AIJ_HRINIC,
+                            A.AIJ_STAGE,
+                            A.R_E_C_N_O_"""
+
+        sql = f"""
+            WITH EventosOV AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
+                    A.AIJ_DTENCE,
+                    A.AIJ_HRENCE,
+                    LEAD(A.AIJ_REVISA) OVER ({win}) AS PROXIMA_REVISA_GLOBAL,
+                    LEAD(A.AIJ_PROVEN) OVER ({win}) AS PROXIMO_PROVEN_GLOBAL,
+                    LEAD(A.AIJ_STAGE) OVER ({win}) AS PROXIMO_STAGE_GLOBAL,
+                    LEAD(A.AIJ_DTINIC) OVER ({win}) AS PROXIMO_DTINIC_GLOBAL,
+                    LAG(A.AIJ_REVISA) OVER ({win}) AS REVISA_ANTERIOR,
+                    LAG(A.AIJ_PROVEN) OVER ({win}) AS PROVEN_ANTERIOR,
+                    LAG(A.AIJ_STAGE) OVER ({win}) AS STAGE_ANTERIOR
+                FROM AIJ010 A
+                WHERE {where_aij}
+                  AND A.AIJ_NROPOR = ?
+                  {revision_filter}
+            )
+            SELECT
+                E.AIJ_REVISA AS revision,
+                E.AIJ_PROVEN AS process_code,
+                E.AIJ_STAGE AS stage_code,
+                E.AIJ_DTINIC AS start_date,
+                E.AIJ_HRINIC AS start_time,
+                E.AIJ_DTENCE AS end_date,
+                E.AIJ_HRENCE AS end_time,
+                E.PROXIMA_REVISA_GLOBAL AS next_revision,
+                E.PROXIMO_PROVEN_GLOBAL AS next_process_code,
+                E.PROXIMO_STAGE_GLOBAL AS next_stage_code,
+                E.PROXIMO_DTINIC_GLOBAL AS next_start_date,
+                E.REVISA_ANTERIOR AS previous_revision,
+                E.PROVEN_ANTERIOR AS previous_process_code,
+                E.STAGE_ANTERIOR AS previous_stage_code,
+                CASE WHEN {where_eng} THEN 1 ELSE 0 END AS is_engineering,
+                CASE WHEN {where_eng_next} THEN 1 ELSE 0 END AS next_is_engineering
+            FROM EventosOV E
+            WHERE {where_eng}
+            ORDER BY
+                E.AIJ_REVISA,
+                E.AIJ_DTINIC,
+                E.AIJ_HRINIC,
+                E.AIJ_STAGE
+        """
+
+        return sql, params_aij, revision_params, params_eng, params_eng_next
+
+    def _sql_history_stage_labels_lmp(
+        self,
+        *,
+        requested_branch: str | None = None,
+        process_code: str,
+        stage_code: str,
+    ) -> Tuple[str, tuple]:
+        where_ac1, params_ac1 = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "AC1.D_E_L_E_T_"),
+            )
+        )
+        branch_clause = ""
+        branch_params: tuple = ()
+        if requested_branch:
+            branch_clause = "AND (RTRIM(ISNULL(AC2.AC2_FILIAL, '')) = '' OR AC2.AC2_FILIAL = ?)"
+            branch_params = (requested_branch,)
+
+        sql = f"""
+            SELECT TOP 1
+                LTRIM(RTRIM(AC1.AC1_DESCRI)) AS process_description,
+                LTRIM(RTRIM(AC2.AC2_DESCRI)) AS stage_description
+            FROM AC2010 AC2
+            LEFT JOIN AC1010 AC1
+                ON AC1.D_E_L_E_T_ = '{self.settings.active_delete_flag}'
+               AND AC1.AC1_PROVEN = AC2.AC2_PROVEN
+               AND (
+                   RTRIM(ISNULL(AC1.AC1_FILIAL, '')) = ''
+                   OR AC1.AC1_FILIAL = AC2.AC2_FILIAL
+               )
+            WHERE AC2.D_E_L_E_T_ = '{self.settings.active_delete_flag}'
+              AND AC2.AC2_PROVEN = ?
+              AND AC2.AC2_STAGE = ?
+              {branch_clause}
+              AND {where_ac1}
+            ORDER BY
+                CASE
+                    WHEN AC2.AC2_FILIAL = ? THEN 0
+                    WHEN RTRIM(ISNULL(AC2.AC2_FILIAL, '')) = '' THEN 1
+                    ELSE 2
+                END
+        """
+        branch_order = requested_branch or ""
+        return sql, (
+            process_code,
+            stage_code,
+            *branch_params,
+            *params_ac1,
+            branch_order,
+        )
+
+    def _history_event_from_row(self, row: dict) -> LMPHistoryEvent:
+        return LMPHistoryEvent(
+            revision=row["revision"],
+            process_code=row["process_code"],
+            stage_code=row["stage_code"],
+            process_description=row.get("process_description") or None,
+            stage_description=row.get("stage_description") or None,
+            start_date=row.get("start_date") or None,
+            start_time=row.get("start_time") or None,
+            limit_date=row.get("limit_date") or None,
+            limit_time=row.get("limit_time") or None,
+            end_date=row.get("end_date") or None,
+            end_time=row.get("end_time") or None,
+            duration_minutes=int(row["duration_minutes"] or 0)
+            if row.get("duration_minutes") not in (None, "")
+            else None,
+            status=row.get("status") or None,
+            history_flag=row.get("history_flag") or None,
+            is_engineering=bool(row.get("is_engineering")),
+            next_revision=row.get("next_revision") or None,
+            next_process_code=row.get("next_process_code") or None,
+            next_stage_code=row.get("next_stage_code") or None,
+            next_start_date=row.get("next_start_date") or None,
+            previous_revision=row.get("previous_revision") or None,
+            previous_process_code=row.get("previous_process_code") or None,
+            previous_stage_code=row.get("previous_stage_code") or None,
+        )
+
+    def _attach_history_labels(
+        self,
+        events: list[LMPHistoryEvent],
+        *,
+        requested_branch: str | None,
+    ) -> list[LMPHistoryEvent]:
+        if not events:
+            return events
+
+        cache: dict[tuple[str, str], tuple[str | None, str | None]] = {}
+        enriched: list[LMPHistoryEvent] = []
+
+        with self as repo:
+            for event in events:
+                key = (event.process_code, event.stage_code)
+                if key not in cache:
+                    sql, params = self._sql_history_stage_labels_lmp(
+                        requested_branch=requested_branch,
+                        process_code=event.process_code,
+                        stage_code=event.stage_code,
+                    )
+                    label_row = repo.execute_one(sql, params)
+                    cache[key] = (
+                        (label_row or {}).get("process_description"),
+                        (label_row or {}).get("stage_description"),
+                    )
+
+                process_description, stage_description = cache[key]
+                enriched.append(
+                    LMPHistoryEvent(
+                        revision=event.revision,
+                        process_code=event.process_code,
+                        stage_code=event.stage_code,
+                        process_description=process_description,
+                        stage_description=stage_description,
+                        start_date=event.start_date,
+                        start_time=event.start_time,
+                        limit_date=event.limit_date,
+                        limit_time=event.limit_time,
+                        end_date=event.end_date,
+                        end_time=event.end_time,
+                        duration_minutes=event.duration_minutes,
+                        status=event.status,
+                        history_flag=event.history_flag,
+                        is_engineering=event.is_engineering,
+                        next_revision=event.next_revision,
+                        next_process_code=event.next_process_code,
+                        next_stage_code=event.next_stage_code,
+                        next_start_date=event.next_start_date,
+                        previous_revision=event.previous_revision,
+                        previous_process_code=event.previous_process_code,
+                        previous_stage_code=event.previous_stage_code,
+                    )
+                )
+
+        return enriched
+
     def _sql_history_events_lmp(
         self,
         requested_branch: str | None = None,
@@ -2289,8 +2587,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_HISTOR,
                     A.AIJ_STATUS,
                     A.R_E_C_N_O_,
+                    LEAD(A.AIJ_REVISA) OVER ({win}) AS PROXIMA_REVISA_GLOBAL,
+                    LEAD(A.AIJ_PROVEN) OVER ({win}) AS PROXIMO_PROVEN_GLOBAL,
+                    LEAD(A.AIJ_STAGE) OVER ({win}) AS PROXIMO_STAGE_GLOBAL,
                     LEAD(A.AIJ_DTINIC) OVER ({win}) AS PROXIMO_DTINIC_GLOBAL,
-                    LEAD(A.AIJ_HRINIC) OVER ({win}) AS PROXIMO_HRINIC_GLOBAL
+                    LEAD(A.AIJ_HRINIC) OVER ({win}) AS PROXIMO_HRINIC_GLOBAL,
+                    LAG(A.AIJ_REVISA) OVER ({win}) AS REVISA_ANTERIOR,
+                    LAG(A.AIJ_PROVEN) OVER ({win}) AS PROVEN_ANTERIOR,
+                    LAG(A.AIJ_STAGE) OVER ({win}) AS STAGE_ANTERIOR
                 FROM AIJ010 A
                 WHERE {where_aij}
                   AND A.AIJ_NROPOR = ?
@@ -2310,6 +2614,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 {eng_minutes_expr.strip()} AS duration_minutes,
                 E.AIJ_STATUS AS status,
                 E.AIJ_HISTOR AS history_flag,
+                E.PROXIMA_REVISA_GLOBAL AS next_revision,
+                E.PROXIMO_PROVEN_GLOBAL AS next_process_code,
+                E.PROXIMO_STAGE_GLOBAL AS next_stage_code,
+                E.PROXIMO_DTINIC_GLOBAL AS next_start_date,
+                E.REVISA_ANTERIOR AS previous_revision,
+                E.PROVEN_ANTERIOR AS previous_process_code,
+                E.STAGE_ANTERIOR AS previous_stage_code,
                 CASE WHEN {where_eng} THEN 1 ELSE 0 END AS is_engineering
             FROM EventosOV E
             OUTER APPLY (
@@ -2677,9 +2988,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         sql_header, params_header = self._sql_header_lmp(request)
         sql_products, params_products = self._sql_products_lmp(requested_branch=requested_branch)
         sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total(requested_branch=requested_branch)
-        sql_history, params_history = self._sql_history_events_lmp(
-            requested_branch=requested_branch,
-        )
 
         with self as repo:
             header_row = repo.execute_one(
@@ -2702,34 +3010,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 (*params_qtd_pi, request.sale_number),
             )
 
-            history_rows = repo.execute_query(
-                sql_history,
-                (*params_history, request.sale_number),
-            )
-
         products = [LMPProduct(**row) for row in product_rows]
-        history = [
-            LMPHistoryEvent(
-                revision=row["revision"],
-                process_code=row["process_code"],
-                stage_code=row["stage_code"],
-                process_description=row.get("process_description") or None,
-                stage_description=row.get("stage_description") or None,
-                start_date=row.get("start_date") or None,
-                start_time=row.get("start_time") or None,
-                limit_date=row.get("limit_date") or None,
-                limit_time=row.get("limit_time") or None,
-                end_date=row.get("end_date") or None,
-                end_time=row.get("end_time") or None,
-                duration_minutes=int(row["duration_minutes"] or 0)
-                if row.get("duration_minutes") not in (None, "")
-                else None,
-                status=row.get("status") or None,
-                history_flag=row.get("history_flag") or None,
-                is_engineering=bool(row.get("is_engineering")),
-            )
-            for row in history_rows
-        ]
 
         return LMP(
             branch=header_row.get("branch"),
@@ -2753,7 +3034,87 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             seller_code=header_row.get("seller_code"),
             seller_name=header_row.get("seller_name"),
             list_products=products,
-            list_history=history,
+            list_history=[],
+        )
+
+    def get_lmp_panel_context(self, request: GetLMPRequest) -> dict:
+        sql_header, params_header = self._sql_header_lmp(request)
+
+        with self as repo:
+            header_row = repo.execute_one(
+                sql_header,
+                params_header,
+            )
+
+        if not header_row:
+            raise ValueError(
+                f"OV não encontrada na listagem de engenharia: {request.sale_number}"
+            )
+
+        return {
+            "branch": header_row.get("branch"),
+            "reference_revision": header_row.get("reference_revision"),
+            "panel_start_date": header_row.get("start_date"),
+        }
+
+    def get_lmp_history_events(
+        self,
+        request: GetLmpHistoryRequest,
+    ) -> list[LMPHistoryEvent]:
+        requested_branch = self._get_request_branch(request)
+        sql_history, params_eng, params_aij, revision_params = self._sql_history_events_lmp_lite(
+            requested_branch=requested_branch,
+            revision=request.revision,
+        )
+        query_params = (
+            *params_eng,
+            *params_aij,
+            request.sale_number,
+            *revision_params,
+        )
+
+        with self as repo:
+            history_rows = repo.execute_query(
+                sql_history,
+                query_params,
+            )
+
+        events = [self._history_event_from_row(row) for row in history_rows]
+        return self._attach_history_labels(
+            events,
+            requested_branch=requested_branch,
+        )
+
+    def get_lmp_history_flow(
+        self,
+        request: GetLmpHistoryRequest,
+    ) -> list[LMPHistoryEvent]:
+        requested_branch = self._get_request_branch(request)
+        sql_flow, params_aij, revision_params, params_eng, params_eng_next = (
+            self._sql_history_flow_lmp(
+                requested_branch=requested_branch,
+                revision=request.revision,
+            )
+        )
+        query_params = (
+            *params_aij,
+            request.sale_number,
+            *revision_params,
+            *params_eng,
+            *params_eng_next,
+            *params_eng,
+        )
+
+        with self as repo:
+            flow_rows = repo.execute_query(
+                sql_flow,
+                query_params,
+            )
+
+        events = [self._history_event_from_row(row) for row in flow_rows]
+        return self._attach_history_labels(
+            events,
+            requested_branch=requested_branch,
         )
 
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:

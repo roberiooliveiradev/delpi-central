@@ -30,7 +30,7 @@ GET /apps/api-delpi/engineering/lmps/{sale_number}
 GET /apps/api-delpi/engineering/lmps
 ```
 
-Detalhe da OV: rota única `get_lmp_by_sale_number` — ver [docs/API_MAPPING.md](./docs/API_MAPPING.md).
+Detalhe da OV: **`get_lmp_by_sale_number`** + **`get_lmp_history_events`** + **`get_lmp_history_flow`** — ver [docs/API_MAPPING.md](./docs/API_MAPPING.md).
 
 ## Início rápido
 

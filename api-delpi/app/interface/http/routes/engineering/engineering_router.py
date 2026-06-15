@@ -20,6 +20,8 @@ from app.application.dto.mini_applicators.list_ferramentas_request import (
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.application.services.response_meta_builder import ResponseMetaBuilder
 from app.composition.engineering_composer import (
+    build_engineering_get_lmp_history_events_use_case,
+    build_engineering_get_lmp_history_flow_use_case,
     build_engineering_get_lmp_use_case,
     build_engineering_get_transforma_mais_summary_use_case,
     build_engineering_list_lmps_dashboard_use_case,
@@ -40,11 +42,14 @@ from app.interface.http.kpi_field_labels import (
 )
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.engineering.lmp_route_helpers import (
+    build_get_lmp_history_request,
     build_get_lmp_request,
     build_list_lmp_request,
 )
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
+    LMP_HISTORY_EVENTS,
+    LMP_HISTORY_FLOW,
     LMP_DASHBOARD,
     LMP_DASHBOARD_CHARTS,
     LMP_DASHBOARD_ITEMS,
@@ -293,6 +298,112 @@ def lmps_dashboard_charts_route(
             "Erro interno ao carregar gráficos de LMPs.",
             status_code=500,
         )
+
+
+@router.get("/lmps/{sale_number}/history/events", **LMP_HISTORY_EVENTS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def get_lmp_history_events_route(
+    sale_number: str,
+    date_start: Optional[str] = Query(
+        default=None,
+        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    date_end: Optional[str] = Query(
+        default=None,
+        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    branch: Optional[str] = Query(
+        default=None,
+        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
+    ),
+    revision: Optional[str] = Query(
+        default=None,
+        description="Filtra eventos de uma revisão específica da OV.",
+    ),
+):
+    try:
+        dto = build_get_lmp_history_request(
+            sale_number,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            revision=revision,
+        )
+
+        use_case = build_engineering_get_lmp_history_events_use_case()
+        result = use_case.execute(dto)
+        resolved_branch = result.get("branch") or branch
+
+        return api_delpi_success(
+            result,
+            operation_id="get_lmp_history_events",
+            message=f"Histórico de eventos da OV {sale_number} carregado com sucesso.",
+            related_routes=ResponseMetaBuilder.lmp_related_routes(
+                sale_number,
+                branch=resolved_branch,
+            ),
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar histórico da OV {sale_number}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar histórico da OV {sale_number}: {exc}")
+        return error_response("Erro interno ao buscar histórico da OV.", status_code=500)
+
+
+@router.get("/lmps/{sale_number}/history/flow", **LMP_HISTORY_FLOW)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def get_lmp_history_flow_route(
+    sale_number: str,
+    date_start: Optional[str] = Query(
+        default=None,
+        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    date_end: Optional[str] = Query(
+        default=None,
+        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
+    ),
+    branch: Optional[str] = Query(
+        default=None,
+        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
+    ),
+    revision: Optional[str] = Query(
+        default=None,
+        description="Filtra transições de uma revisão específica da OV.",
+    ),
+):
+    try:
+        dto = build_get_lmp_history_request(
+            sale_number,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            revision=revision,
+        )
+
+        use_case = build_engineering_get_lmp_history_flow_use_case()
+        result = use_case.execute(dto)
+        resolved_branch = result.get("branch") or branch
+
+        return api_delpi_success(
+            result,
+            operation_id="get_lmp_history_flow",
+            message=f"Fluxo de engenharia da OV {sale_number} carregado com sucesso.",
+            related_routes=ResponseMetaBuilder.lmp_related_routes(
+                sale_number,
+                branch=resolved_branch,
+            ),
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar fluxo da OV {sale_number}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar fluxo da OV {sale_number}: {exc}")
+        return error_response("Erro interno ao buscar fluxo da OV.", status_code=500)
 
 
 @router.get("/lmps/{sale_number}", **LMP_BY_SALE)

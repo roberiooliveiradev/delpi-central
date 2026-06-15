@@ -8,6 +8,7 @@ import {
   groupHistoryByRevision,
   isHistoryEngineeringFlow,
   resolveHistoryDuration,
+  resolveHistoryFlowLabels,
   resolveHistoryStatus,
 } from "../utils/historyFormatting";
 import { buildHistoryGlobalGanttLayout } from "../utils/historyGlobalGantt";
@@ -48,6 +49,16 @@ function renderEventBadges(event: LmpHistoryEvent) {
 
   if (isHistoryEngineeringFlow(event)) {
     badges.push(renderTimelineBadge("Engenharia", "lmps-history-timeline__badge--engineering"));
+  }
+
+  for (const label of resolveHistoryFlowLabels(event)) {
+    const className =
+      label.includes("retorno") || label.includes("Retorno")
+        ? "lmps-history-timeline__badge--flow-return"
+        : label.includes("avanço") || label.includes("Saída")
+          ? "lmps-history-timeline__badge--flow-advance"
+          : "lmps-history-timeline__badge--flow-entry";
+    badges.push(renderTimelineBadge(label, className));
   }
 
   return badges;

@@ -97,6 +97,8 @@ class ResponseMetaBuilder:
         branch_suffix = f"?branch={branch}" if branch else ""
         return {
             "detail": f"/engineering/lmps/{normalized}{branch_suffix}",
+            "historyEvents": f"/engineering/lmps/{normalized}/history/events{branch_suffix}",
+            "historyFlow": f"/engineering/lmps/{normalized}/history/flow{branch_suffix}",
             "dashboardItems": "/engineering/lmps/dashboard/items",
             "dashboardSummary": "/engineering/lmps/dashboard/summary",
             "dashboardCharts": "/engineering/lmps/dashboard/charts",

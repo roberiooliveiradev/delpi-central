@@ -4,6 +4,7 @@ import {
   unwrapApiDelpiEnvelope,
   type ApiSuccessResponse,
   type ListLmpsParams,
+  type LmpHistoryEvent,
   type LmpItem,
   type LmpDashboardItem,
   type LmpDetailData,
@@ -160,11 +161,16 @@ export type GetLmpBySaleNumberParams = {
   branch?: string;
 };
 
-export async function getLmpBySaleNumber(
-  saleNumber: string,
-  params: GetLmpBySaleNumberParams = {},
-  signal?: AbortSignal
-): Promise<LmpDetailData> {
+export type LmpHistoryCollectionResponse = {
+  sale_number: string;
+  branch?: string | null;
+  reference_revision?: string | null;
+  panel_start_date?: string | null;
+  items: LmpHistoryEvent[];
+  total: number;
+};
+
+function buildLmpDetailQuery(params: GetLmpBySaleNumberParams = {}): string {
   const searchParams = new URLSearchParams();
   const dateStart = toApiDate(params.date_start);
   const dateEnd = toApiDate(params.date_end);
@@ -174,14 +180,55 @@ export async function getLmpBySaleNumber(
   if (params.branch) searchParams.set("branch", params.branch);
 
   const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
+export async function getLmpBySaleNumber(
+  saleNumber: string,
+  params: GetLmpBySaleNumberParams = {},
+  signal?: AbortSignal
+): Promise<LmpDetailData> {
+  const query = buildLmpDetailQuery(params);
   const encoded = encodeURIComponent(String(saleNumber).trim());
 
   const response = await httpGet<ApiSuccessResponse<LmpDetailData>>(
-    `/apps/api-delpi/engineering/lmps/${encoded}${query ? `?${query}` : ""}`,
+    `/apps/api-delpi/engineering/lmps/${encoded}${query}`,
     { signal }
   );
 
   return unwrapApiDelpiEnvelope(response, "Erro ao carregar detalhe da OV");
+}
+
+export async function getLmpHistoryEvents(
+  saleNumber: string,
+  params: GetLmpBySaleNumberParams = {},
+  signal?: AbortSignal,
+): Promise<LmpHistoryCollectionResponse> {
+  const query = buildLmpDetailQuery(params);
+  const encoded = encodeURIComponent(String(saleNumber).trim());
+
+  const response = await httpGet<ApiSuccessResponse<LmpHistoryCollectionResponse>>(
+    `/apps/api-delpi/engineering/lmps/${encoded}/history/events${query}`,
+    { signal },
+  );
+
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar histórico da OV");
+}
+
+export async function getLmpHistoryFlow(
+  saleNumber: string,
+  params: GetLmpBySaleNumberParams = {},
+  signal?: AbortSignal,
+): Promise<LmpHistoryCollectionResponse> {
+  const query = buildLmpDetailQuery(params);
+  const encoded = encodeURIComponent(String(saleNumber).trim());
+
+  const response = await httpGet<ApiSuccessResponse<LmpHistoryCollectionResponse>>(
+    `/apps/api-delpi/engineering/lmps/${encoded}/history/flow${query}`,
+    { signal },
+  );
+
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar fluxo da OV");
 }
 
 export async function getLmpsDashboardItems(

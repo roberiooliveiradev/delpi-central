@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from app.application.use_cases.lmp.get_lmp_history_events_use_case import (
+    GetLmpHistoryEventsUseCase,
+)
+from app.application.use_cases.lmp.get_lmp_history_flow_use_case import (
+    GetLmpHistoryFlowUseCase,
+)
 from app.application.use_cases.lmp.get_lmp_use_case import GetLMPUseCase
 from app.application.use_cases.lmp.list_lmp_dashboard_use_case import (
     ListLMPDashboardUseCase,
@@ -50,6 +56,14 @@ def build_engineering_list_lmps_dashboard_use_case() -> ListLMPDashboardUseCase:
 
 def build_engineering_get_lmp_use_case() -> GetLMPUseCase:
     return GetLMPUseCase(_build_lmp_repository())
+
+
+def build_engineering_get_lmp_history_events_use_case() -> GetLmpHistoryEventsUseCase:
+    return GetLmpHistoryEventsUseCase(_build_lmp_repository())
+
+
+def build_engineering_get_lmp_history_flow_use_case() -> GetLmpHistoryFlowUseCase:
+    return GetLmpHistoryFlowUseCase(_build_lmp_repository())
 
 
 def build_engineering_list_transforma_mais_processes_use_case() -> ListProcessUseCase:

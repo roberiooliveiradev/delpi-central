@@ -80,6 +80,8 @@ Perfis propostos para Fase 3 (`meta.shape`). `operationId` após Fase 1 em produ
 | `GET /lmps/dashboard/items` | *(auto)* | `paged_list` | dashboard-lmps |
 | `GET /lmps/dashboard/charts` | *(auto)* | `scalar` | dashboard-lmps |
 | `GET /lmps/{sale_number}` | `get_lmp_by_sale_number` | `product_snapshot` | chat |
+| `GET /lmps/{sale_number}/history/events` | `get_lmp_history_events` | `paged_list` | chat, MFE |
+| `GET /lmps/{sale_number}/history/flow` | `get_lmp_history_flow` | `list` | chat, MFE |
 | `GET /transforma-mais/processes` | *(auto)* | `paged_list` | dashboard-engineering |
 | `GET /transforma-mais/processes/summary` | *(auto)* | `scalar` | chat, engineering |
 

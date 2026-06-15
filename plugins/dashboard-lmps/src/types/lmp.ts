@@ -31,6 +31,11 @@ export type LmpHistoryEvent = {
   is_open?: boolean;
   is_late?: boolean;
   is_current?: boolean;
+  is_engineering_entry?: boolean;
+  flow_transition?: string | null;
+  flow_transition_label?: string | null;
+  flow_transitions?: string[];
+  flow_transition_labels?: string[];
 };
 
 export type LmpListingKind = "LMP" | "AMOSTRA" | "OUTRO";

@@ -58,17 +58,15 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
     assert "status" in result
     assert "lead_time_util" in result
     assert len(result["list_products"]) == 1
-    assert len(result["list_history"]) == 1
-    assert result["list_history"][0]["process_label"] == "Engenharia"
-    assert result["list_history"][0]["stage_label"] == "Engenharia"
-    assert result["list_history"][0]["status_label"] == "Em andamento"
-    assert result["list_history"][0]["is_engineering_flow"] is True
+    assert result["list_history"] == []
 
 
-def test_lmp_related_routes_includes_dashboard_links():
+def test_lmp_related_routes_includes_history_links():
     routes = ResponseMetaBuilder.lmp_related_routes("003578", branch="01")
 
     assert routes["detail"] == "/engineering/lmps/003578?branch=01"
+    assert routes["historyEvents"] == "/engineering/lmps/003578/history/events?branch=01"
+    assert routes["historyFlow"] == "/engineering/lmps/003578/history/flow?branch=01"
     assert routes["dashboardItems"] == "/engineering/lmps/dashboard/items"
     assert routes["dashboardSummary"] == "/engineering/lmps/dashboard/summary"
     assert routes["list"] == "/engineering/lmps"

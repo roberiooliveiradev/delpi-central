@@ -119,34 +119,63 @@ export function resolveCurrentRevision(
   return events[events.length - 1]?.revision?.trim() || null;
 }
 
+export function scopeHistoryToPanelContext(
+  events: LmpHistoryEvent[],
+  options?: {
+    referenceRevision?: string | null;
+    panelStartDate?: string | null;
+  },
+): LmpHistoryEvent[] {
+  const referenceRevision = options?.referenceRevision?.trim();
+  let scoped = events;
+
+  if (referenceRevision) {
+    scoped = scoped.filter((event) =>
+      revisionsMatch(event.revision, referenceRevision),
+    );
+  }
+
+  const panelStartDate = options?.panelStartDate?.trim();
+  if (panelStartDate && panelStartDate.length === 8) {
+    scoped = scoped.filter((event) => {
+      const eventStart = event.start_date?.trim();
+      if (!eventStart || eventStart.length !== 8) {
+        return false;
+      }
+      return eventStart >= panelStartDate;
+    });
+  }
+
+  return scoped;
+}
+
 export function filterHistoryEvents(
   events: LmpHistoryEvent[],
   filter: HistoryEventFilter,
-  options?: { referenceRevision?: string | null },
+  options?: {
+    referenceRevision?: string | null;
+    panelStartDate?: string | null;
+  },
 ): LmpHistoryEvent[] {
   if (filter === "all") {
     return events;
   }
 
+  const scoped = scopeHistoryToPanelContext(events, options);
+
+  if (filter === "current_revision") {
+    return scoped;
+  }
+
   if (filter === "engineering") {
-    return events.filter((event) => isHistoryEngineeringFlow(event));
+    return scoped.filter((event) => isHistoryEngineeringFlow(event));
   }
 
   if (filter === "open") {
-    return events.filter((event) => Boolean(event.is_open));
+    return scoped.filter((event) => Boolean(event.is_open));
   }
 
-  const currentRevision = resolveCurrentRevision(
-    events,
-    options?.referenceRevision,
-  );
-  if (!currentRevision) {
-    return events;
-  }
-
-  return events.filter((event) =>
-    revisionsMatch(event.revision, currentRevision),
-  );
+  return scoped;
 }
 
 export function groupHistoryByRevision(events: LmpHistoryEvent[]): HistoryRevisionGroup[] {
@@ -163,6 +192,82 @@ export function groupHistoryByRevision(events: LmpHistoryEvent[]): HistoryRevisi
     revision,
     events: revisionEvents,
   }));
+}
+
+export function summarizeHistoryFlowTransitions(events: LmpHistoryEvent[]): string | null {
+  const entries = events.filter((event) => event.is_engineering_entry).length;
+  const advanced = events.filter(
+    (event) => event.flow_transition === "advanced_from_engineering",
+  ).length;
+  const returned = events.filter(
+    (event) => event.flow_transition === "returned_from_engineering",
+  ).length;
+
+  if (entries === 0 && advanced === 0 && returned === 0) {
+    return null;
+  }
+
+  const parts: string[] = [];
+  if (entries > 0) parts.push(`${entries} entrada(s) na engenharia`);
+  if (advanced > 0) parts.push(`${advanced} avanço(s)`);
+  if (returned > 0) parts.push(`${returned} retorno(s)`);
+  return parts.join(" · ");
+}
+
+export function resolveHistoryFlowLabels(event: LmpHistoryEvent): string[] {
+  if (event.flow_transition_labels && event.flow_transition_labels.length > 0) {
+    return event.flow_transition_labels;
+  }
+
+  const labels: string[] = [];
+  if (event.is_engineering_entry) {
+    labels.push("Entrada na engenharia");
+  }
+  if (event.flow_transition_label) {
+    labels.push(event.flow_transition_label);
+  }
+  return labels;
+}
+
+export function historyEventMergeKey(event: LmpHistoryEvent): string {
+  return [
+    event.revision,
+    event.process_code,
+    event.stage_code,
+    event.start_date ?? "",
+    event.start_time ?? "",
+  ].join("|");
+}
+
+export function mergeHistoryFlowIntoEvents(
+  events: LmpHistoryEvent[],
+  flowItems: LmpHistoryEvent[],
+): LmpHistoryEvent[] {
+  if (flowItems.length === 0) {
+    return events;
+  }
+
+  const flowByKey = new Map(
+    flowItems.map((item) => [historyEventMergeKey(item), item]),
+  );
+
+  return events.map((event) => {
+    const flow = flowByKey.get(historyEventMergeKey(event));
+    if (!flow) {
+      return event;
+    }
+
+    return {
+      ...event,
+      is_engineering_entry: flow.is_engineering_entry ?? event.is_engineering_entry,
+      flow_transition: flow.flow_transition ?? event.flow_transition,
+      flow_transition_label:
+        flow.flow_transition_label ?? event.flow_transition_label,
+      flow_transitions: flow.flow_transitions ?? event.flow_transitions,
+      flow_transition_labels:
+        flow.flow_transition_labels ?? event.flow_transition_labels,
+    };
+  });
 }
 
 export function summarizeHistoryEvents(

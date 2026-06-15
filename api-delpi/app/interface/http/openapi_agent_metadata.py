@@ -361,11 +361,32 @@ LMP_BY_SALE = agent_route(
         "Carrega uma LMP específica pelo número da ordem de venda (OV/proposta), "
         "com produtos, cliente, vendedor, resumo de engenharia e classificação "
         "(nível, SLA, lead time útil, status). "
+        "O histórico AIJ010 fica em rotas dedicadas `/history/events` e `/history/flow`. "
         "Use quando houver número de OV, ordem de venda ou referência explícita a uma LMP individual. "
         "Parâmetros opcionais `date_start`, `date_end` e `branch` alinham o escopo ao dashboard/MFE. "
         "Não confundir OV com código de produto."
     ),
     operation_id="get_lmp_by_sale_number",
+)
+
+LMP_HISTORY_EVENTS = agent_route(
+    summary="Histórico de eventos da OV (AIJ010)",
+    description=(
+        "Lista eventos do histórico da ordem de venda sem joins pesados por linha. "
+        "Use para timeline/tabela do detalhe da LMP. "
+        "Parâmetros `date_start`, `date_end` e `branch` alinham o contexto do painel; "
+        "`revision` filtra uma revisão específica."
+    ),
+    operation_id="get_lmp_history_events",
+)
+
+LMP_HISTORY_FLOW = agent_route(
+    summary="Transições de fluxo da engenharia na OV",
+    description=(
+        "Retorna apenas eventos de engenharia com contexto anterior/próximo para "
+        "identificar entradas, avanços e retornos. Consulta leve e separada do histórico completo."
+    ),
+    operation_id="get_lmp_history_flow",
 )
 
 SUPPLIES_CPV = agent_route(
