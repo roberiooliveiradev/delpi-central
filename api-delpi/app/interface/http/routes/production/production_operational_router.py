@@ -3,6 +3,9 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Query
 from delpi_auth.authorization import require_permission
 
+from app.application.dto.production.get_production_order_by_op_request import (
+    GetProductionOrderByOpRequest,
+)
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
@@ -15,6 +18,7 @@ from app.composition.production_operational_composer import (
     build_get_production_consumption_top_items_validated_use_case,
     build_get_production_losses_records_use_case,
     build_get_production_losses_top_materials_use_case,
+    build_get_production_order_by_op_use_case,
     build_get_production_orders_finished_use_case,
     build_get_production_orders_finished_without_consumption_use_case,
     build_get_production_orders_open_use_case,
@@ -23,7 +27,7 @@ from app.composition.production_operational_composer import (
     build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
 )
-from app.core.responses import error_response
+from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_ALLOCATION_GAPS,
     PRODUCTION_CONSUMPTION_BY_ITEM,
@@ -32,6 +36,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED,
     PRODUCTION_LOSSES_RECORDS,
     PRODUCTION_LOSSES_TOP_MATERIALS,
+    PRODUCTION_ORDER_BY_OP,
     PRODUCTION_ORDERS_FINISHED,
     PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
     PRODUCTION_ORDERS_OPEN,
@@ -44,6 +49,47 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/production", tags=["Produção operacional"])
+
+
+@router.get("/orders/by-op/{production_order}", **PRODUCTION_ORDER_BY_OP)
+@require_permission(API_DELPI_ACCESS)
+def get_production_order_by_op(
+    production_order: str,
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    product_type: Optional[Literal["PA", "PI"]] = Query(default=None),
+    linked_sort_by: Optional[str] = Query(default=None),
+    linked_sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+):
+    try:
+        result = build_get_production_order_by_op_use_case().execute(
+            GetProductionOrderByOpRequest(
+                production_order=production_order,
+                branch=branch,
+                product_type=product_type,
+                linked_sort_by=linked_sort_by,
+                linked_sort_dir=linked_sort_dir,
+            )
+        )
+        if result is None:
+            return not_found_response(
+                f"Ordem de produção {production_order} não encontrada.",
+                code="PRODUCTION_ORDER_NOT_FOUND",
+            )
+
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ORDER_BY_OP["operation_id"],
+            message="Detalhe da ordem de produção carregado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/by-op: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/by-op: {exc}")
+        return error_response(
+            "Erro interno ao buscar detalhe da ordem de produção.",
+            status_code=500,
+        )
 
 
 @router.get("/consumption/top-items", **PRODUCTION_CONSUMPTION_TOP_ITEMS)

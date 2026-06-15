@@ -16,6 +16,7 @@ export function downloadOtdOrdersCsv(
     [
       "Filial",
       "OP",
+      "Nº OP",
       "Item",
       "Produto",
       "Descrição",
@@ -26,6 +27,7 @@ export function downloadOtdOrdersCsv(
     ],
     orders.map((row) => [
       row.branch ?? "",
+      row.production_order ?? "",
       row.order_number ?? "",
       row.order_item ?? "",
       row.product_code ?? "",

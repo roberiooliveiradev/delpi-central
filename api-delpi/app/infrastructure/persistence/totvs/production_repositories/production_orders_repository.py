@@ -2,6 +2,10 @@ from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
+    LINKED_PA_OR_PREFIX_FILTER_SQL,
+    SC2_PA_PRODUCT_CODE_PREFIX_SQL,
+)
 
 
 class ProductionOrdersRepository(
@@ -361,6 +365,211 @@ class ProductionOrdersRepository(
 
         with self as repo:
             return repo.execute_query(sql, tuple(params))
+
+    def fetch_order_by_production_order(
+        self,
+        *,
+        production_order: str,
+        branch: str | None,
+        product_type: str | None = None,
+    ) -> dict | None:
+        branch_filter = ""
+        product_type_filter = ""
+        pa_product_code_filter = ""
+        params: list = [production_order]
+
+        if branch:
+            branch_filter = "AND OP.C2_FILIAL = ?"
+            params.append(branch)
+
+        if product_type:
+            product_type_filter = "AND RTRIM(LTRIM(P.B1_TIPO)) = ?"
+            params.append(product_type)
+            if product_type == "PA":
+                pa_product_code_filter = f"AND {SC2_PA_PRODUCT_CODE_PREFIX_SQL}"
+
+        sql = f"""
+        SELECT TOP 1
+            OP.C2_FILIAL AS branch,
+            RTRIM(LTRIM(OP.C2_OP)) AS production_order,
+            RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
+            RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
+            RTRIM(LTRIM(OP.C2_SEQUEN)) AS order_sequence,
+            RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
+            RTRIM(LTRIM(P.B1_DESC)) AS product_description,
+            RTRIM(LTRIM(P.B1_TIPO)) AS product_type,
+            RTRIM(LTRIM(P.B1_UM)) AS unit,
+            RTRIM(LTRIM(P.B1_GRUPO)) AS product_group,
+            RTRIM(LTRIM(OP.C2_LOCAL)) AS warehouse,
+            CAST(OP.C2_QUANT AS FLOAT) AS planned_qty,
+            CAST(OP.C2_QUJE AS FLOAT) AS produced_qty,
+            RTRIM(LTRIM(OP.C2_PRIOR)) AS priority,
+            RTRIM(LTRIM(OP.C2_STATUS)) AS order_status,
+            RTRIM(LTRIM(OP.C2_OBS)) AS observation,
+            CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_EMISSAO, 112), 23) AS issue_date,
+            CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRI, 112), 23) AS planned_start_date,
+            CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRF, 112), 23) AS due_date,
+            CASE
+                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
+                THEN NULL
+                ELSE CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATRF, 112), 23)
+            END AS finish_date,
+            CASE
+                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
+                THEN NULL
+                ELSE DATEDIFF(
+                    DAY,
+                    CONVERT(DATE, OP.C2_DATPRF, 112),
+                    CONVERT(DATE, OP.C2_DATRF, 112)
+                )
+            END AS days_diff,
+            CASE
+                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
+                THEN 'open'
+                WHEN CONVERT(DATE, OP.C2_DATRF, 112) <= CONVERT(DATE, OP.C2_DATPRF, 112)
+                THEN 'on_time'
+                ELSE 'late'
+            END AS otd_status
+        FROM SC2010 OP WITH (NOLOCK)
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON P.B1_COD = OP.C2_PRODUTO
+           AND P.D_E_L_E_T_ = ''
+        WHERE OP.D_E_L_E_T_ = ''
+          AND RTRIM(LTRIM(OP.C2_OP)) = ?
+          {branch_filter}
+          {product_type_filter}
+          {pa_product_code_filter}
+        ORDER BY
+            CASE WHEN RTRIM(LTRIM(P.B1_TIPO)) = 'PA' AND RTRIM(LTRIM(OP.C2_SEQUEN)) = '001' THEN 0 ELSE 1 END,
+            OP.C2_SEQUEN ASC
+        """
+
+        with self as repo:
+            return repo.execute_one(sql, tuple(params))
+
+    def fetch_linked_pi_orders_by_production_order(
+        self,
+        *,
+        production_order: str,
+        branch: str | None,
+        sort_by: str | None = None,
+        sort_dir: str = "asc",
+    ) -> list[dict]:
+        branch_filter_parent = ""
+        branch_filter_linked = ""
+        params: list = [production_order]
+
+        if branch:
+            branch_filter_parent = "AND OP.C2_FILIAL = ?"
+            branch_filter_linked = "AND LINKED.C2_FILIAL = ?"
+            params.extend([branch, branch])
+
+        order_clause = self._linked_orders_order_clause(
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+
+        sql = f"""
+        WITH PARENT_OP AS (
+            SELECT TOP 1
+                OP.C2_FILIAL AS branch,
+                OP.C2_NUM AS order_number,
+                RTRIM(LTRIM(OP.C2_OP)) AS production_order
+            FROM SC2010 OP WITH (NOLOCK)
+            WHERE OP.D_E_L_E_T_ = ''
+              AND RTRIM(LTRIM(OP.C2_OP)) = ?
+              {branch_filter_parent}
+        )
+        SELECT
+            LINKED.C2_FILIAL AS branch,
+            RTRIM(LTRIM(LINKED.C2_OP)) AS production_order,
+            RTRIM(LTRIM(LINKED.C2_NUM)) AS order_number,
+            RTRIM(LTRIM(LINKED.C2_ITEM)) AS order_item,
+            RTRIM(LTRIM(LINKED.C2_SEQUEN)) AS order_sequence,
+            RTRIM(LTRIM(LINKED.C2_PRODUTO)) AS product_code,
+            RTRIM(LTRIM(P.B1_DESC)) AS product_description,
+            RTRIM(LTRIM(P.B1_TIPO)) AS product_type,
+            RTRIM(LTRIM(P.B1_UM)) AS unit,
+            RTRIM(LTRIM(P.B1_GRUPO)) AS product_group,
+            RTRIM(LTRIM(LINKED.C2_LOCAL)) AS warehouse,
+            CAST(LINKED.C2_QUANT AS FLOAT) AS planned_qty,
+            CAST(LINKED.C2_QUJE AS FLOAT) AS produced_qty,
+            RTRIM(LTRIM(LINKED.C2_PRIOR)) AS priority,
+            RTRIM(LTRIM(LINKED.C2_STATUS)) AS order_status,
+            RTRIM(LTRIM(LINKED.C2_OBS)) AS observation,
+            CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_EMISSAO, 112), 23) AS issue_date,
+            CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATPRI, 112), 23) AS planned_start_date,
+            CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATPRF, 112), 23) AS due_date,
+            CASE
+                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
+                THEN NULL
+                ELSE CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATRF, 112), 23)
+            END AS finish_date,
+            CASE
+                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
+                THEN NULL
+                ELSE DATEDIFF(
+                    DAY,
+                    CONVERT(DATE, LINKED.C2_DATPRF, 112),
+                    CONVERT(DATE, LINKED.C2_DATRF, 112)
+                )
+            END AS days_diff,
+            CASE
+                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
+                THEN 'open'
+                WHEN CONVERT(DATE, LINKED.C2_DATRF, 112) <= CONVERT(DATE, LINKED.C2_DATPRF, 112)
+                THEN 'on_time'
+                ELSE 'late'
+            END AS otd_status
+        FROM PARENT_OP PO
+        INNER JOIN SC2010 LINKED WITH (NOLOCK)
+            ON LINKED.C2_FILIAL = PO.branch
+           AND LINKED.C2_NUM = PO.order_number
+           AND LINKED.D_E_L_E_T_ = ''
+           AND RTRIM(LTRIM(LINKED.C2_OP)) <> PO.production_order
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON P.B1_COD = LINKED.C2_PRODUTO
+           AND P.D_E_L_E_T_ = ''
+        WHERE 1 = 1
+          AND {LINKED_PA_OR_PREFIX_FILTER_SQL}
+          {branch_filter_linked}
+        {order_clause}
+        """
+
+        with self as repo:
+            return repo.execute_query(sql, tuple(params))
+
+    @staticmethod
+    def _linked_orders_order_clause(
+        *,
+        sort_by: str | None,
+        sort_dir: str,
+    ) -> str:
+        sort_columns = {
+            "status": "otd_status",
+            "branch": "branch",
+            "production_order": "production_order",
+            "product_code": "product_code",
+            "description": "product_description",
+            "due": "due_date",
+            "finish": "finish_date",
+            "days": "days_diff",
+            "qty": "planned_qty",
+        }
+        sort_key = (sort_by or "").strip().lower()
+        sort_column = sort_columns.get(sort_key)
+        if sort_column:
+            direction = "DESC" if str(sort_dir or "asc").lower() == "desc" else "ASC"
+            return f"""
+        ORDER BY {sort_column} {direction}, production_order ASC, product_code ASC
+            """
+
+        return """
+        ORDER BY
+            LINKED.C2_ITEM ASC,
+            LINKED.C2_SEQUEN ASC,
+            LINKED.C2_OP ASC
+        """
 
     @staticmethod
     def _planned_time_filters(

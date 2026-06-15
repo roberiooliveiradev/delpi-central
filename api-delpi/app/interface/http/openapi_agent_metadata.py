@@ -389,6 +389,7 @@ PRODUCTION_OTD = agent_route(
     description=(
         "Painel de OTD de produção: resumo (OPs de PA no prazo/atrasadas, % OTD) e listagem paginada "
         "de ordens finalizadas (SC2010 com SB1010.B1_TIPO = 'PA'; C2_DATPRF × C2_DATRF). "
+        "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "Use para listar OPs atrasadas ou no prazo, detalhar entrega de produção ou exportar ordens. "
         "Para apenas o percentual agregado sem listagem, prefira GET /production/on_time_delivery_pct. "
         "Para série temporal, use GET /production/otd/series. "
@@ -525,6 +526,19 @@ PRODUCTION_ORDERS_OPEN = agent_route(
         "(C2_QUANT > C2_QUJE). Use para backlog do dia, OPs pendentes ou em execução."
     ),
     operation_id="get_production_orders_open",
+)
+
+PRODUCTION_ORDER_BY_OP = agent_route(
+    summary="Detalhe da OP por C2_OP",
+    description=(
+        "Retorna cadastro SC2010 da ordem de produção com datas, quantidades, status OTD "
+        "e metadados do produto. Use product_type=PA ou product_type=PI para filtrar pelo "
+        "tipo SB1010.B1_TIPO (PA exige C2_PRODUTO começando com 9; sequência 001 preferencial). "
+        "Inclui linked_orders: demais OPs com o mesmo C2_NUM (PA ou PI, exceto a consultada). "
+        "Use linked_sort_by e linked_sort_dir para ordenar linked_orders no servidor. "
+        "Inclui related_routes para /products/{code}, /summary, /guide e /stock."
+    ),
+    operation_id="get_production_order_by_op",
 )
 
 PRODUCTION_ORDERS_FINISHED = agent_route(

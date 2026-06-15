@@ -279,6 +279,8 @@ def get_production_otd(
     status: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
+    sort_by: str | None = Query(default=None),
+    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
 ):
     try:
         use_case = build_get_production_otd_use_case()
@@ -290,6 +292,8 @@ def get_production_otd(
             status=status,
             page=page,
             page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
         )
 
         result = enrich_dashboard_metric(

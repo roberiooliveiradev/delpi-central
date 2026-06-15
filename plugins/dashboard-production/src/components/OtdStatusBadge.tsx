@@ -7,12 +7,14 @@ type OtdStatusBadgeProps = {
 function statusLabel(status: OtdStatus): string {
   if (status === "on_time") return "No prazo";
   if (status === "late") return "Atrasado";
+  if (status === "open") return "Em aberto";
   return status;
 }
 
 function statusClass(status: OtdStatus): string {
   if (status === "on_time") return "dp-kpi-badge dp-kpi-badge--success";
   if (status === "late") return "dp-kpi-badge dp-kpi-badge--danger";
+  if (status === "open") return "dp-kpi-badge dp-kpi-badge--warning";
   return "dp-kpi-badge";
 }
 

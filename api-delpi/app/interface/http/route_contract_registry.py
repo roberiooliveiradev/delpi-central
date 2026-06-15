@@ -144,6 +144,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_orders_open": RouteContract(
         "production_orders_open", "playbook_report"
     ),
+    "get_production_order_by_op": RouteContract(
+        "production_order_detail", "playbook_report"
+    ),
     "get_production_orders_finished": RouteContract(
         "production_orders_finished", "playbook_report"
     ),

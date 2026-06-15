@@ -1,6 +1,9 @@
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
+    SC2_PA_PRODUCT_CODE_PREFIX_SQL,
+)
 from app.application.dto.production.get_production_otd_request import (
     GetProductionOtdRequest,
 )
@@ -24,6 +27,7 @@ _LIST_OPS_CTE = f"""
             OP.C2_FILIAL AS branch,
             RTRIM(LTRIM(OP.C2_NUM)) AS order_number,
             RTRIM(LTRIM(OP.C2_ITEM)) AS order_item,
+            MIN(RTRIM(LTRIM(OP.C2_OP))) AS production_order,
             OP.C2_DATPRF,
             OP.C2_DATRF,
             MIN(RTRIM(LTRIM(OP.C2_PRODUTO))) AS product_code
@@ -40,6 +44,7 @@ _LIST_OPS_CTE = f"""
     OPS_FINALIZADAS AS (
         SELECT
             k.branch,
+            k.production_order,
             k.order_number,
             k.order_item,
             k.product_code,
@@ -82,6 +87,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
         qb.date_range("OP.C2_DATPRF", start_date, end_date)
+        qb.raw(SC2_PA_PRODUCT_CODE_PREFIX_SQL)
 
         return qb.build()
 
@@ -95,8 +101,30 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         return ""
 
     @staticmethod
-    def _list_order_clause(status: str | None) -> str:
-        normalized = (status or "").strip().lower()
+    def _list_order_clause(request: GetProductionOtdRequest) -> str:
+        sort_columns = {
+            "status": "status",
+            "branch": "branch",
+            "production_order": "production_order",
+            "order_number": "order_number",
+            "order_item": "order_item",
+            "product_code": "product_code",
+            "product_description": "product_description",
+            "due_date": "due_date",
+            "finish_date": "finish_date",
+            "days_diff": "days_diff",
+        }
+        sort_key = (request.sort_by or "").strip().lower()
+        sort_column = sort_columns.get(sort_key)
+        if sort_column:
+            direction = (
+                "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
+            )
+            return f"""
+                ORDER BY {sort_column} {direction}, order_number ASC, order_item ASC
+            """
+
+        normalized = (request.status or "").strip().lower()
         if normalized == "late":
             return """
                 ORDER BY days_diff DESC, finish_date DESC, order_number ASC
@@ -219,7 +247,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             end_date=request.end_date,
         )
         status_clause = self._status_filter_clause(request.status)
-        order_clause = self._list_order_clause(request.status)
+        order_clause = self._list_order_clause(request)
         list_cte = _LIST_OPS_CTE.format(
             pa_join=_SC2_PA_JOIN,
             where_clause=where_clause,

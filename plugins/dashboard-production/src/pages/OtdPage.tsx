@@ -16,6 +16,7 @@ import { PRODUCTION_ROUTES } from "../constants/routes";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { useProductionOtdSeries } from "../hooks/useProductionOtdSeries";
 import { useProductionResource } from "../hooks/useProductionResource";
+import { useServerTable } from "../hooks/useServerTable";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
@@ -31,6 +32,8 @@ import { formatProductionApiError } from "../utils/formatProductionApiError";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 import { downloadOtdOrdersCsv } from "../utils/otdExport";
+import { navigateProduction } from "../utils/navigation";
+import { buildOtdOrderPath } from "../utils/routeParser";
 import { suggestGranularity } from "../utils/periodBuckets";
 
 const PAGE_SIZE = 20;
@@ -55,18 +58,20 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
-  const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const serverTable = useServerTable({ pageSize: PAGE_SIZE });
 
   const otdParams = useMemo(
     () => ({
       ...apiParams,
       status: statusFilter || undefined,
-      page,
-      page_size: PAGE_SIZE,
+      page: serverTable.query.page,
+      page_size: serverTable.query.pageSize,
+      sort_by: serverTable.query.sortKey ?? undefined,
+      sort_dir: serverTable.query.sortDirection,
     }),
-    [apiParams, statusFilter, page]
+    [apiParams, statusFilter, serverTable.query]
   );
 
   const { data, loading, error, reload } = useProductionResource(
@@ -77,6 +82,8 @@ export function OtdPage({ pathname }: OtdPageProps) {
       otdParams.branch,
       otdParams.status,
       otdParams.page,
+      otdParams.sort_by,
+      otdParams.sort_dir,
     ]
   );
 
@@ -90,8 +97,8 @@ export function OtdPage({ pathname }: OtdPageProps) {
   }, [dateStart, dateEnd]);
 
   useEffect(() => {
-    setPage(1);
-  }, [apiParams.start_date, apiParams.end_date, apiParams.branch, statusFilter]);
+    serverTable.resetPage();
+  }, [apiParams.start_date, apiParams.end_date, apiParams.branch, statusFilter, serverTable.resetPage]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -128,6 +135,8 @@ export function OtdPage({ pathname }: OtdPageProps) {
         status: statusFilter || undefined,
         page: 1,
         page_size: 1000,
+        sort_by: serverTable.query.sortKey ?? undefined,
+        sort_dir: serverTable.query.sortDirection,
       });
 
       downloadOtdOrdersCsv("otd-ordens-producao.csv", result.orders.items);
@@ -136,55 +145,70 @@ export function OtdPage({ pathname }: OtdPageProps) {
     } finally {
       setExporting(false);
     }
-  }, [apiParams, statusFilter]);
+  }, [apiParams, statusFilter, serverTable.query.sortKey, serverTable.query.sortDirection]);
 
   const orderColumns = useMemo<DataTableColumn<ProductionOtdOrderItem>[]>(
     () => [
       {
         key: "status",
         header: "Status",
+        sortable: true,
         render: (row) => <OtdStatusBadge status={row.status} />,
       },
       {
         key: "branch",
         header: "Filial",
+        sortable: true,
         render: (row) => row.branch ?? "—",
       },
       {
-        key: "order",
+        key: "production_order",
         header: "OP",
+        sortable: true,
+        render: (row) => row.production_order ?? "—",
+      },
+      {
+        key: "order_number",
+        header: "Nº OP",
+        sortable: true,
         render: (row) => row.order_number ?? "—",
       },
       {
-        key: "item",
+        key: "order_item",
         header: "Item",
+        sortable: true,
         render: (row) => row.order_item ?? "—",
       },
       {
         key: "product_code",
         header: "Código",
+        sortable: true,
         render: (row) => row.product_code ?? "—",
       },
       {
         key: "product_description",
         header: "Descrição",
         className: "dp-table__col--wide",
+        sortable: true,
         render: (row) => row.product_description ?? "—",
       },
       {
-        key: "due",
+        key: "due_date",
         header: "Previsto",
+        sortable: true,
         render: (row) => formatDisplayDate(row.due_date),
       },
       {
-        key: "finish",
+        key: "finish_date",
         header: "Finalização",
+        sortable: true,
         render: (row) => formatDisplayDate(row.finish_date),
       },
       {
-        key: "days",
+        key: "days_diff",
         header: "Dias",
         className: "dp-table__col--numeric",
+        sortable: true,
         render: (row) => formatInteger(row.days_diff),
       },
     ],
@@ -203,6 +227,16 @@ export function OtdPage({ pathname }: OtdPageProps) {
     reload();
     otdSeries.reload();
   }, [reload, otdSeries]);
+
+  const handleOrderRowClick = useCallback(
+    (row: ProductionOtdOrderItem) => {
+      navigateProduction(
+        buildOtdOrderPath(row.production_order, row.branch, filterState, "PA"),
+        filterState
+      );
+    },
+    [filterState]
+  );
 
   return (
     <div className="dashboard-production dashboard-page">
@@ -344,12 +378,13 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
       <DataTableSection
         title="Ordens de produção"
-        hint="OPs de PA (uma linha por filial + OP + item). Ordenação por data prevista."
+        hint="Clique em uma linha para abrir o detalhe da OP e do produto."
         columns={orderColumns}
         rows={data?.orders.items ?? []}
         rowKey={(row) =>
-          `${row.branch}-${row.order_number}-${row.order_item}-${row.finish_date}`
+          `${row.branch}-${row.production_order}-${row.order_item}-${row.finish_date}`
         }
+        onRowClick={handleOrderRowClick}
         loading={loading && !(data?.orders.items?.length)}
         refreshing={loading && Boolean(data?.orders.items?.length)}
         emptyMessage="Nenhuma OP finalizada no período."
@@ -357,6 +392,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         getSearchText={(row) =>
           [
             row.branch,
+            row.production_order,
             row.order_number,
             row.order_item,
             row.product_code,
@@ -367,10 +403,15 @@ export function OtdPage({ pathname }: OtdPageProps) {
             .join(" ")
         }
         serverPagination={{
-          page: data?.orders.page ?? page,
+          page: data?.orders.page ?? serverTable.query.page,
           pageSize: data?.orders.page_size ?? PAGE_SIZE,
           total: data?.orders.total ?? 0,
-          onPageChange: setPage,
+          onPageChange: serverTable.setPage,
+        }}
+        serverSort={{
+          sortKey: serverTable.query.sortKey,
+          sortDirection: serverTable.query.sortDirection,
+          onSortChange: serverTable.handleSortChange,
         }}
         headerActions={
           <button

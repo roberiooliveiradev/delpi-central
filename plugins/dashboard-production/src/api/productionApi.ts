@@ -12,6 +12,8 @@ import type {
   ProductionOtdSeriesData,
   ProductionOtdData,
   ProductionOtdParams,
+  ProductionOrderByOpData,
+  ProductionOrderByOpParams,
 } from "../types/production";
 
 export const PRODUCTION_API_BASE = "/apps/api-delpi/production";
@@ -34,6 +36,12 @@ function buildQuery(
   }
   if ("page_size" in params && params.page_size) {
     searchParams.set("page_size", String(params.page_size));
+  }
+  if ("sort_by" in params && params.sort_by) {
+    searchParams.set("sort_by", params.sort_by);
+  }
+  if ("sort_dir" in params && params.sort_dir) {
+    searchParams.set("sort_dir", params.sort_dir);
   }
 
   const query = searchParams.toString();
@@ -135,4 +143,26 @@ export function getProductionOtd(
   signal?: AbortSignal
 ) {
   return fetchProductionData<ProductionOtdData>("/otd", params, signal);
+}
+
+export function getProductionOrderByOp(
+  productionOrder: string,
+  options: ProductionOrderByOpParams = {},
+  signal?: AbortSignal
+) {
+  const searchParams = new URLSearchParams();
+  if (options.branch) searchParams.set("branch", options.branch);
+  if (options.productType) searchParams.set("product_type", options.productType);
+  if (options.linkedSortBy) searchParams.set("linked_sort_by", options.linkedSortBy);
+  if (options.linkedSortDir) searchParams.set("linked_sort_dir", options.linkedSortDir);
+
+  const encoded = encodeURIComponent(productionOrder.trim());
+  const query = searchParams.toString();
+  const suffix = query ? `?${query}` : "";
+
+  return fetchProductionData<ProductionOrderByOpData>(
+    `/orders/by-op/${encoded}${suffix}`,
+    {},
+    signal
+  );
 }

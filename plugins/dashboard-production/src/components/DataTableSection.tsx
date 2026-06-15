@@ -20,6 +20,12 @@ export type ServerPaginationConfig = {
   onPageChange: (page: number) => void;
 };
 
+export type ServerSortConfig = {
+  sortKey: string | null;
+  sortDirection: "asc" | "desc";
+  onSortChange: (columnKey: string) => void;
+};
+
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
   return columns
     .map((column) => {
@@ -48,7 +54,10 @@ export type DataTableSectionProps<T> = {
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
+  serverSort?: ServerSortConfig;
   headerActions?: ReactNode;
+  onRowClick?: (row: T) => void;
+  getRowClassName?: (row: T) => string | undefined;
 };
 
 export function DataTableSection<T>({
@@ -65,7 +74,10 @@ export function DataTableSection<T>({
   getSearchText,
   hideSearch = false,
   serverPagination,
+  serverSort,
   headerActions,
+  onRowClick,
+  getRowClassName,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -166,6 +178,11 @@ export function DataTableSection<T>({
             rows={displayRows}
             rowKey={rowKey}
             emptyMessage={emptyMessage}
+            onRowClick={onRowClick}
+            getRowClassName={getRowClassName}
+            sortKey={serverSort?.sortKey}
+            sortDirection={serverSort?.sortDirection}
+            onSortChange={serverSort?.onSortChange}
           />
 
           <Pagination

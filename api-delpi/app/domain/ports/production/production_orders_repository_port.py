@@ -46,3 +46,20 @@ class ProductionOrdersRepositoryPort(Protocol):
         work_center: str | None,
         limit: int,
     ) -> list[dict]: ...
+
+    def fetch_order_by_production_order(
+        self,
+        *,
+        production_order: str,
+        branch: str | None,
+        product_type: str | None = None,
+    ) -> dict | None: ...
+
+    def fetch_linked_pi_orders_by_production_order(
+        self,
+        *,
+        production_order: str,
+        branch: str | None,
+        sort_by: str | None = None,
+        sort_dir: str = "asc",
+    ) -> list[dict]: ...
