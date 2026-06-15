@@ -148,7 +148,7 @@ Enriquecimento: `api-delpi/app/domain/services/lmp_history_flow_transition.py`. 
 | `sale_number` | Nº da proposta/ordem |
 | `sale_description` | Descrição |
 | `listing_kind` | `LMP` \| `AMOSTRA` \| `OUTRO` |
-| `start_date`, `end_date` | Datas (`YYYYMMDD`) |
+| `start_date`, `end_date` | Datas (`YYYYMMDD`). Com filtro de período, `start_date` é o **início do ciclo âncora** no painel (`ANCHOR_START_DATE`), não a primeira entrada histórica na engenharia. `lead_time_util` = dias úteis entre essas duas datas. |
 | `engineering_status` | Status na engenharia |
 | `qtd_pi` | Quantidade PI |
 | `nivel` | `Nível 1` \| `Nível 2` \| `Nível 3` |

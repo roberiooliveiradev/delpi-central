@@ -82,6 +82,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | Auto-refresh | Após ~2 min com aba visível, banner "Atualizando dados..." |
 | Erro parcial | Simular falha de rede com dados já carregados → mantém última carga + aviso |
 | Tabela | Colunas filial, proposta, nível, lead time, status classificação; ⓘ em todos os cabeçalhos |
+| Lead time | Período curto (ex. 01–15/06/2026): `lead_time_util` coerente com `Data Início`/`Data Fim` da linha (dias úteis, tipicamente poucos dias — não centenas por OV antiga reentrante) |
+| KPI lead time | `avg_lead_time` próximo da média manual das linhas com `lead_time_util` preenchido |
 | Gráficos | Pizzas (nível/status), barras (lead por nível), linha (evolução); multi-select nos filtros |
 | Vazio | Período sem LMPs → mensagem na tabela e gráficos zerados |
 | Exportar CSV | Download com filtros atuais |
@@ -90,7 +92,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | Área | O que validar |
 |------|----------------|
-| Navegação | Clique na linha da tabela abre detalhe; voltar retorna à lista com filtros |
+| Navegação | Clique na linha abre detalhe; **Voltar** retorna à lista **sem** esvaziar tabela/KPIs e **sem** perder filtros da URL |
 | Cards / KPIs | Proposta, Engenharia, Cliente; tooltips nos campos |
 | Produtos + BOM | Tabela de produtos; árvore de estrutura expandível; legenda e tooltips nos nós |
 | Histórico | Toggle Linha do tempo / Tabela; filtros Todos / Engenharia / Em aberto / Revisão atual |

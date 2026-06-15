@@ -224,10 +224,11 @@ def test_candidate_lmps_includes_first_engineering_arrival_cte() -> None:
     )
 
     assert "OvFirstEngineeringArrival AS" in candidate_sql
-    assert "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE)" in candidate_sql
+    assert "L.ANCHOR_START_DATE AS LMP_START_DATE" in candidate_sql
+    assert "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE)" not in candidate_sql
 
 
-def test_header_lmp_uses_first_engineering_start_date_with_period() -> None:
+def test_header_lmp_uses_listing_anchor_start_with_period() -> None:
     repo = _repository()
     request = GetLMPRequest(
         sale_number="003578",
@@ -237,8 +238,9 @@ def test_header_lmp_uses_first_engineering_start_date_with_period() -> None:
 
     sql, _params = repo._sql_header_lmp(request)
 
-    assert "OvFirstEngineeringArrival AS" in sql
-    assert "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE, R.ANCHOR_START_DATE)" in sql
+    assert "COALESCE(L.ANCHOR_START_DATE, R.ANCHOR_START_DATE) AS start_date" in sql
+    assert "OvFirstEngineeringArrival AS" not in sql
+    assert "F.FIRST_ENG_DATE" not in sql
 
 
 def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:

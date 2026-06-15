@@ -143,6 +143,8 @@ Parâmetros adicionais:
 
 **Resposta `data` (detalhe):** campos de classificação da listagem (`nivel`, `status`, `lead_time_util`, …), `list_products[]` e **`list_history: []`** (histórico em rotas dedicadas).
 
+**`start_date` e lead time (dashboard com período):** `start_date`/`end_date` vêm do evento **âncora** da listagem (`ANCHOR_START_DATE`), não da primeira linha AIJ010 da OV. `lead_time_util` = dias úteis entre essas datas (`LMPBusinessRules`). `FIRST_ENG_DATE` (`OvFirstEngineeringArrival`) entra só no filtro OR de inclusão no período — usar como `start_date` inflava `avg_lead_time` em OVs reentrantes. Regressão SQL: `tests/test_lmp_query_repository_sql.py` (`test_header_lmp_uses_listing_anchor_start_with_period`, `test_candidate_period_filter_or_first_engineering_arrival`).
+
 **Resposta `data` (`/history/events` e `/history/flow`):** `sale_number`, `branch`, `reference_revision`, `panel_start_date`, `items[]`, `total`. Contexto do painel vem de `get_lmp_panel_context` (mesmo escopo do cabeçalho).
 
 **Enriquecimento de `items[]` em `/history/events`:** `GetLmpHistoryEventsUseCase` + `enrich_history_events()` (`lmp_history_event_enrichment.py`). SQL lite em AIJ010; rótulos AC1010/AC2010 via lookup em cache por par processo+estágio.

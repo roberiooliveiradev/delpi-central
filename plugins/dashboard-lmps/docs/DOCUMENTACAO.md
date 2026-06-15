@@ -15,7 +15,7 @@ Plugin **microfrontend** (Module Federation) da Minha DELPI para acompanhamento 
 | Federation name | `dashboard-lmps` |
 | `remoteEntry` | `/apps/dashboard-lmps/assets/remoteEntry.js` |
 
-O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e roteia entre a **lista analítica** (`DashboardLmpsPage`) e o **detalhe da OV** (`LmpDetailPage` em `/ov/{sale_number}`).
+O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e roteia entre a **lista analítica** (`DashboardLmpsPage`) e o **detalhe da OV** (`LmpDetailPage` em `/ov/{sale_number}`). A lista permanece montada (oculta) ao abrir o detalhe, para preservar estado e filtros ao voltar — `syncLmpsFiltersToUrl` só roda com a lista ativa.
 
 ### O que o dashboard exibe
 
@@ -153,6 +153,8 @@ Detalhamento: [API_MAPPING.md](./API_MAPPING.md).
 ### Formato de datas nos itens
 
 Campos como `start_date`, `end_date`, `data_limite` vêm da API em **`YYYYMMDD`**. O front formata para exibição `DD/MM/YYYY` e converte para `input[type=date]` quando necessário.
+
+**Semântica de `start_date` (painel com período):** data de início do **ciclo âncora** da OV no recorte filtrado — usada para `data_limite`, `lead_time_util` e KPI `avg_lead_time`. A primeira passagem histórica na engenharia (`FIRST_ENG_DATE`) só entra na query para **incluir** a OV no período, não para calcular lead time. Ver `documentos/Routes/documentacao_completa_da_rota_lmp.md` (seção «Data de início do painel vs. primeira entrada na engenharia»).
 
 ---
 

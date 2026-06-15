@@ -977,8 +977,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON F.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND F.AIJ_NROPOR = AD1.AD1_NROPOR
             """
-            anchor_start_expr = "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE)"
-            other_start_expr = "COALESCE(F.FIRST_ENG_DATE, R.ANCHOR_START_DATE)"
 
         anchor_candidates_sql = f"""
                 SELECT DISTINCT
@@ -2049,17 +2047,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 anchor_period_start,
                 anchor_period_end,
             )
-            first_eng_cte, first_eng_params = self._sql_ov_first_engineering_arrival_cte(
-                requested_branch,
-            )
-            first_eng_join = """
-            LEFT JOIN OvFirstEngineeringArrival F
-                ON F.AIJ_FILIAL = AD1.AD1_FILIAL
-               AND F.AIJ_NROPOR = AD1.AD1_NROPOR
-            """
-            start_date_expr = (
-                "COALESCE(F.FIRST_ENG_DATE, L.ANCHOR_START_DATE, R.ANCHOR_START_DATE)"
-            )
         else:
             cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
                 requested_branch,
@@ -2341,7 +2328,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             "E.AIJ_PROVEN",
             "E.AIJ_STAGE",
         )
-        where_eng_next, _params_eng_next = self._sql_engineering_support_process_stage_condition(
+        where_eng_next, params_eng_next = self._sql_engineering_support_process_stage_condition(
             "E.PROXIMO_PROVEN_GLOBAL",
             "E.PROXIMO_STAGE_GLOBAL",
         )

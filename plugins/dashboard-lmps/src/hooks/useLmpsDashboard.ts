@@ -21,6 +21,7 @@ type UseLmpsDashboardParams = {
   status?: string;
   page?: number;
   page_size?: number;
+  isActive?: boolean;
 };
 
 type UseLmpsDashboardResult = {
@@ -38,6 +39,7 @@ type UseLmpsDashboardResult = {
 export function useLmpsDashboard(
   params: UseLmpsDashboardParams
 ): UseLmpsDashboardResult {
+  const isActive = params.isActive ?? true;
   const [summary, setSummary] = useState<LmpsDashboardSummary | null>(null);
   const [charts, setCharts] = useState<LmpsDashboardCharts | null>(null);
   const [itemsData, setItemsData] = useState<LmpsDashboardItemsResponse | null>(null);
@@ -81,6 +83,8 @@ export function useLmpsDashboard(
   );
 
   useEffect(() => {
+    if (!isActive) return;
+
     const controller = new AbortController();
 
     async function run() {
@@ -140,9 +144,12 @@ export function useLmpsDashboard(
     filterParams.listing_type,
     filterParams.status,
     reloadKey,
+    isActive,
   ]);
 
   useEffect(() => {
+    if (!isActive) return;
+
     const controller = new AbortController();
 
     async function run() {
@@ -190,6 +197,7 @@ export function useLmpsDashboard(
     itemsParams.page,
     itemsParams.page_size,
     reloadKey,
+    isActive,
   ]);
 
   const reload = useCallback(() => {

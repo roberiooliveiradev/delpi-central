@@ -24,6 +24,7 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { LMPS_ROUTES } from "../constants/routes";
 import { useLmpDetail } from "../hooks/useLmpDetail";
+import { useLmpDetailRequestScope } from "../hooks/useLmpDetailRequestScope";
 import { useLmpProductStructures } from "../hooks/useLmpProductStructures";
 import {
   useLoadingProgress,
@@ -31,7 +32,7 @@ import {
 } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpProduct } from "../types/lmp";
 import { formatPeriodLabel } from "../utils/dates";
-import { readLmpsFilters } from "../utils/filterUrl";
+import type { LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
 
 type LmpDetailPageProps = {
@@ -180,14 +181,24 @@ const productColumns: DataTableColumn<LmpProduct>[] = [
 ];
 
 export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
-  const filters = readLmpsFilters();
-  const detail = useLmpDetail(saleNumber, filters, { branch });
+  const requestScope = useLmpDetailRequestScope(saleNumber, branch);
+  const detail = useLmpDetail(saleNumber, requestScope);
   const item = detail.item;
   const productStructures = useLmpProductStructures(item?.list_products);
   const initialFetchProgress = useTrackedSingleFetchProgress(detail.loading);
   const initialLoadingProgress = useLoadingProgress(detail.loading, initialFetchProgress);
 
-  const periodLabel = formatPeriodLabel(filters.dateStart, filters.dateEnd);
+  const periodLabel = formatPeriodLabel(requestScope.dateStart, requestScope.dateEnd);
+  const backFilters = useMemo<LmpsFilterUrlState>(
+    () => ({
+      dateStart: requestScope.dateStart,
+      dateEnd: requestScope.dateEnd,
+      branches: requestScope.branch ? [requestScope.branch] : [],
+      listingTypes: [],
+      statuses: [],
+    }),
+    [requestScope],
+  );
 
   const proposalFields = useMemo(
     () =>
@@ -376,7 +387,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
             <button
               type="button"
               className="lmps-ghost-btn"
-              onClick={() => navigateLmpsBack(LMPS_ROUTES.home, filters)}
+              onClick={() => navigateLmpsBack(LMPS_ROUTES.home, backFilters)}
             >
               <ArrowLeft size={16} aria-hidden />
               Voltar

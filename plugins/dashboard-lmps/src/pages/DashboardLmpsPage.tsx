@@ -92,7 +92,13 @@ function renderPieLabel({
   return `${name} ${(percent * 100).toFixed(0)}%`;
 }
 
-export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
+export function DashboardLmpsPage({
+  pathname,
+  isActive = true,
+}: {
+  pathname?: string;
+  isActive?: boolean;
+} = {}) {
   const initialFilters = useMemo(() => readLmpsFilters(), [pathname]);
   const [dateStart, setDateStart] = useState(initialFilters.dateStart);
   const [dateEnd, setDateEnd] = useState(initialFilters.dateEnd);
@@ -158,6 +164,7 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
     branch: apiFilters.branch,
     listing_type: apiFilters.listing_type,
     status: apiFilters.status,
+    isActive,
   });
 
   const dashboardItems = items as LmpDashboardItem[];
@@ -219,8 +226,26 @@ export function DashboardLmpsPage({ pathname }: { pathname?: string } = {}) {
   }, [dateStart, dateEnd]);
 
   useEffect(() => {
+    if (!isActive) return;
+
+    const fromUrl = readLmpsFilters();
+    setDateStart((current) => (current === fromUrl.dateStart ? current : fromUrl.dateStart));
+    setDateEnd((current) => (current === fromUrl.dateEnd ? current : fromUrl.dateEnd));
+    setBranches((current) =>
+      current.join(",") === fromUrl.branches.join(",") ? current : fromUrl.branches,
+    );
+    setListingTypes((current) =>
+      current.join(",") === fromUrl.listingTypes.join(",") ? current : fromUrl.listingTypes,
+    );
+    setStatuses((current) =>
+      current.join(",") === fromUrl.statuses.join(",") ? current : fromUrl.statuses,
+    );
+  }, [isActive, pathname]);
+
+  useEffect(() => {
+    if (!isActive) return;
     syncLmpsFiltersToUrl(filterState);
-  }, [filterState]);
+  }, [filterState, isActive]);
 
   const evolutionChartData = useMemo(
     () =>

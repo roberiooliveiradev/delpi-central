@@ -71,7 +71,8 @@ Função:
 
 - histórico completo da movimentação da oportunidade;
 - base principal para entender entrada, saída, reentrada e tempo efetivo em engenharia;
-- origem dos dados de `start_date`, `end_date`, `engineering_status` e `engineering_total_minutes`.
+- origem de `engineering_status` e `engineering_total_minutes` (e de eventos do histórico);
+- **`start_date` / `end_date` do painel** vêm do **evento âncora** da listagem (`ListingAnchorEventos` / `EngSupportOvRef`), não da primeira linha AIJ010 da OV.
 
 Campos relevantes:
 
@@ -829,7 +830,16 @@ Usado para leitura operacional e exibição.
 
 Representa:
 
-- quantidade de dias úteis entre `start_date` e `end_date`.
+- quantidade de **dias úteis** entre `start_date` e `end_date` (inclusive), calculada em `LMPBusinessRules.business_days_between`.
+
+**Origem de `start_date` no dashboard (com filtro de período):**
+
+| Campo | Fonte SQL | Uso |
+|-------|-----------|-----|
+| `start_date` | `L.ANCHOR_START_DATE` ou `R.ANCHOR_START_DATE` | Lead time, `data_limite`, KPI `avg_lead_time` |
+| `FIRST_ENG_DATE` | `MIN(AIJ_DTINIC)` da OV na engenharia | **Somente** inclusão no painel (cláusula OR do filtro de período) |
+
+> **Não** usar `COALESCE(FIRST_ENG_DATE, ANCHOR_START_DATE)` para `start_date`: OVs reentrantes no período tinham lead time inflado (ex.: 139 dias) porque a primeira entrada era meses antes do ciclo âncora de junho.
 
 ### `engineering_total_minutes`
 
@@ -901,7 +911,19 @@ Para a filial aparecer no payload final do dashboard, o fluxo completo precisa e
 
 Sem essa cadeia completa, a API pode filtrar corretamente, mas ainda assim devolver `branch` ausente no JSON do dashboard.
 
-### 6. Paginação SQL na rota base
+### 6. Data de início do painel vs. primeira entrada na engenharia
+
+**Problema (jun/2026):** com filtro de período, candidatos e cabeçalho usavam `COALESCE(FIRST_ENG_DATE, ANCHOR_START_DATE)` como `start_date`. O lead time passou a medir da **primeira** passagem histórica na engenharia até o encerramento no mês — valores como 139, 110 ou 73 dias para OVs cujo ciclo âncora durava 2–3 dias.
+
+**Correção:**
+
+- `LMP_START_DATE` / `start_date` = apenas `ANCHOR_START_DATE` (listagem LMP ou apoio engenharia);
+- `OvFirstEngineeringArrival` (`FIRST_ENG_DATE`) permanece no JOIN **somente** para o OR do filtro de período (`_sql_candidate_period_where_clause`), permitindo listar OVs cuja primeira engenharia cai no recorte mesmo quando a âncora é posterior;
+- header (`_sql_header_lmp`): `COALESCE(L.ANCHOR_START_DATE, R.ANCHOR_START_DATE) AS start_date` — sem CTE/join de `FIRST_ENG_DATE`.
+
+**Validação de referência (01/06–15/06/2026):** OV `003377` — antes `start=20251203`, `lead=139`; depois `start=20260611`, `lead=3`; `avg_lead_time` do summary ≈ 2,14 dias.
+
+### 7. Paginação SQL na rota base
 
 A listagem simples deixou de paginar em memória.
 

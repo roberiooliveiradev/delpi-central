@@ -6,71 +6,104 @@ import {
   getLmpHistoryFlow,
 } from "../api/lmpApi";
 import type { LmpDetailData } from "../types/lmp";
-import type { LmpsFilterUrlState } from "../utils/filterUrl";
+import type { LmpDetailRequestScope } from "./useLmpDetailRequestScope";
 import { mergeHistoryFlowIntoEvents } from "../utils/historyFormatting";
-import { resolveLmpsBranchFilter, toLmpApiDate } from "../utils/filterUrl";
+import { toLmpApiDate } from "../utils/filterUrl";
 
-type UseLmpDetailOptions = {
-  branch?: string;
-};
+function isAbortError(reason: unknown): boolean {
+  return (
+    reason instanceof DOMException && reason.name === "AbortError"
+  );
+}
 
 export function useLmpDetail(
   saleNumber: string,
-  filters: LmpsFilterUrlState,
-  options: UseLmpDetailOptions = {}
+  requestScope: LmpDetailRequestScope,
 ) {
   const [data, setData] = useState<LmpDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const reload = useCallback(async () => {
-    if (!saleNumber.trim()) {
-      setData(null);
-      setError("Número da proposta inválido.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const requestParams = {
-        date_start: toLmpApiDate(filters.dateStart),
-        date_end: toLmpApiDate(filters.dateEnd),
-        branch: options.branch || resolveLmpsBranchFilter(filters) || undefined,
-      };
-
-      const [detail, historyResponse, flowResponse] = await Promise.all([
-        getLmpBySaleNumber(saleNumber, requestParams),
-        getLmpHistoryEvents(saleNumber, requestParams),
-        getLmpHistoryFlow(saleNumber, requestParams),
-      ]);
-
-      setData({
-        ...detail,
-        reference_revision:
-          detail.reference_revision ?? historyResponse.reference_revision,
-        list_history: mergeHistoryFlowIntoEvents(
-          historyResponse.items ?? [],
-          flowResponse.items ?? [],
-        ),
-      });
-    } catch (reason) {
-      setData(null);
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : "Não foi possível carregar o detalhe da OV."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [saleNumber, filters.dateStart, filters.dateEnd, filters.branches, options.branch]);
+  const reload = useCallback(() => {
+    setReloadKey((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    const controller = new AbortController();
+
+    async function run() {
+      if (!saleNumber.trim()) {
+        setData(null);
+        setError("Número da proposta inválido.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const requestParams = {
+          date_start: toLmpApiDate(requestScope.dateStart),
+          date_end: toLmpApiDate(requestScope.dateEnd),
+          branch: requestScope.branch,
+        };
+
+        const [detailResult, historyResult, flowResult] = await Promise.allSettled([
+          getLmpBySaleNumber(saleNumber, requestParams, controller.signal),
+          getLmpHistoryEvents(saleNumber, requestParams, controller.signal),
+          getLmpHistoryFlow(saleNumber, requestParams, controller.signal),
+        ]);
+
+        if (controller.signal.aborted) return;
+
+        if (detailResult.status === "rejected") {
+          if (isAbortError(detailResult.reason)) return;
+          throw detailResult.reason;
+        }
+
+        const detail = detailResult.value;
+        const historyItems =
+          historyResult.status === "fulfilled" ? historyResult.value.items ?? [] : [];
+        const flowItems =
+          flowResult.status === "fulfilled" ? flowResult.value.items ?? [] : [];
+        const referenceRevision =
+          historyResult.status === "fulfilled"
+            ? historyResult.value.reference_revision
+            : detail.reference_revision;
+
+        setData({
+          ...detail,
+          reference_revision: detail.reference_revision ?? referenceRevision,
+          list_history: mergeHistoryFlowIntoEvents(historyItems, flowItems),
+        });
+      } catch (reason) {
+        if (controller.signal.aborted || isAbortError(reason)) return;
+
+        setData(null);
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : "Não foi possível carregar o detalhe da OV."
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void run();
+
+    return () => controller.abort();
+  }, [
+    saleNumber,
+    requestScope.dateStart,
+    requestScope.dateEnd,
+    requestScope.branch,
+    reloadKey,
+  ]);
 
   return {
     data,

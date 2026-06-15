@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 
-function readPathname(fallback?: string): string {
-  if (typeof window === "undefined") return fallback ?? "";
+function readPathname(): string {
+  if (typeof window === "undefined") return "";
   return window.location.pathname;
 }
 
 export function useLmpsRouterPath(pathnameFromHost?: string): string {
-  const [pathname, setPathname] = useState(pathnameFromHost ?? readPathname());
+  const [pathname, setPathname] = useState(
+    () => pathnameFromHost ?? readPathname(),
+  );
 
   useEffect(() => {
-    if (pathnameFromHost) {
+    if (!pathnameFromHost) return;
+
+    // Evita que o host (stale) sobrescreva a rota real após popstate/history.back().
+    if (pathnameFromHost === readPathname()) {
       setPathname(pathnameFromHost);
     }
   }, [pathnameFromHost]);
@@ -17,10 +22,13 @@ export function useLmpsRouterPath(pathnameFromHost?: string): string {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const sync = () => setPathname(readPathname(pathnameFromHost));
-    window.addEventListener("popstate", sync);
-    return () => window.removeEventListener("popstate", sync);
-  }, [pathnameFromHost]);
+    const syncFromBrowser = () => {
+      setPathname(readPathname());
+    };
+
+    window.addEventListener("popstate", syncFromBrowser);
+    return () => window.removeEventListener("popstate", syncFromBrowser);
+  }, []);
 
   return pathname;
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import { useLmpsRouterPath } from "./hooks/useLmpsRouterPath";
 import { DashboardLmpsPage } from "./pages/DashboardLmpsPage";
@@ -15,15 +16,31 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const pathname = useLmpsRouterPath(pathnameFromHost);
   const path = normalizeLmpsPath(pathname);
   const route = parseLmpsPath(path);
+  const showDashboard = route.view === "dashboard";
+  const showDetail = route.view === "ov-detail" && Boolean(route.saleNumber);
 
-  if (route.view === "ov-detail" && route.saleNumber) {
-    return (
-      <LmpDetailPage
-        saleNumber={route.saleNumber}
-        branch={readOvBranchFromUrl()}
-      />
-    );
-  }
+  const [dashboardMounted, setDashboardMounted] = useState(showDashboard);
 
-  return <DashboardLmpsPage pathname={path} />;
+  useEffect(() => {
+    if (showDashboard) {
+      setDashboardMounted(true);
+    }
+  }, [showDashboard]);
+
+  return (
+    <>
+      {dashboardMounted ? (
+        <div hidden={!showDashboard} aria-hidden={!showDashboard}>
+          <DashboardLmpsPage pathname={path} isActive={showDashboard} />
+        </div>
+      ) : null}
+
+      {showDetail && route.saleNumber ? (
+        <LmpDetailPage
+          saleNumber={route.saleNumber}
+          branch={readOvBranchFromUrl()}
+        />
+      ) : null}
+    </>
+  );
 }
