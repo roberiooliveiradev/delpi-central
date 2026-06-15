@@ -281,15 +281,15 @@ export function EficienciaFabrilAppointmentDetailPage({
                 </div>
               </header>
               <div className="ef-table-wrap">
-                <table className="ef-table">
+                <table className="ef-table ef-table--routing">
                   <thead>
                     <tr>
                       <th>Operação</th>
-                      <th>Descrição</th>
+                      <th className="ef-table__col--wide">Descrição</th>
                       <th>CT</th>
                       <th>Recurso</th>
-                      <th>Setup (h)</th>
-                      <th>Tempo padrão (h/peça)</th>
+                      <th className="ef-table__col--numeric">Setup (h)</th>
+                      <th className="ef-table__col--numeric">Tempo padrão (h/peça)</th>
                       <th>Apontamento</th>
                     </tr>
                   </thead>
@@ -304,17 +304,27 @@ export function EficienciaFabrilAppointmentDetailPage({
                       detail.routingOperations.map((row, index) => (
                         <tr
                           key={`${row.operation_code ?? "op"}-${index}`}
-                          className={row.is_appointment_operation ? "ef-row ef-row--highlight" : "ef-row"}
+                          className={
+                            row.is_appointment_operation
+                              ? "ef-row ef-row--routing-current"
+                              : "ef-row"
+                          }
                         >
-                          <td>{row.operation_code ?? "—"}</td>
-                          <td>{row.operation_description ?? "—"}</td>
-                          <td>{row.work_center ?? "—"}</td>
-                          <td>{row.resource_code ?? "—"}</td>
-                          <td>{formatHours(row.setup_hours ?? null)}</td>
-                          <td>{formatHours(row.standard_time_hours_piece ?? null, 4)}</td>
-                          <td>
+                          <td data-label="Operação">{row.operation_code ?? "—"}</td>
+                          <td className="ef-table__col--wide" data-label="Descrição">
+                            {row.operation_description ?? "—"}
+                          </td>
+                          <td data-label="CT">{row.work_center ?? "—"}</td>
+                          <td data-label="Recurso">{row.resource_code ?? "—"}</td>
+                          <td className="ef-table__col--numeric" data-label="Setup (h)">
+                            {formatHours(row.setup_hours ?? null)}
+                          </td>
+                          <td className="ef-table__col--numeric" data-label="Tempo padrão (h/peça)">
+                            {formatHours(row.standard_time_hours_piece ?? null, 4)}
+                          </td>
+                          <td data-label="Apontamento">
                             {row.is_appointment_operation ? (
-                              <span className="ef-badge">Operação atual</span>
+                              <span className="ef-badge ef-badge--success">Operação atual</span>
                             ) : (
                               "—"
                             )}

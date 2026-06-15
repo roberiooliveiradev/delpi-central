@@ -141,7 +141,7 @@ export function AppointmentsTable({
       </header>
 
       <div className="ef-table-wrap">
-        <table className="ef-table">
+        <table className="ef-table ef-table--sortable">
           <thead>
             <tr>
               {SORTABLE_COLUMNS.map((column) => {

@@ -627,6 +627,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--ef-border);
   text-align: left;
+  vertical-align: top;
   white-space: nowrap;
 }
 
@@ -634,7 +635,32 @@
   color: var(--ef-muted);
   font-weight: 700;
   background: color-mix(in srgb, var(--ef-surface) 92%, var(--ef-accent) 8%);
+}
+
+.ef-table--sortable th {
   padding: 0;
+}
+
+.ef-table__col--wide {
+  min-width: 200px;
+  max-width: 420px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ef-table__col--numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ef-table--routing {
+  min-width: 920px;
+}
+
+.ef-table--routing th.ef-table__col--numeric,
+.ef-table--routing td.ef-table__col--numeric {
+  text-align: right;
 }
 
 .ef-sortable-th {
@@ -678,12 +704,24 @@
 }
 
 .ef-badge {
-  display: inline-block;
-  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 3px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ef-accent) 12%, var(--ef-surface));
   color: var(--ef-title);
-  font-size: 0.75rem;
+  font-size: 0.69rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.ef-badge--success {
+  color: #86efac;
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  border: 1px solid color-mix(in srgb, #22c55e 40%, transparent);
 }
 
 .ef-badge--danger {
@@ -712,6 +750,10 @@
 
 .ef-row--highlight td {
   background: color-mix(in srgb, var(--ef-accent) 10%, var(--ef-surface));
+}
+
+.ef-table--routing .ef-row--routing-current td {
+  background: color-mix(in srgb, #22c55e 10%, var(--ef-surface));
 }
 
 .ef-page-header__actions {
@@ -1038,19 +1080,19 @@
     min-width: 100%;
   }
 
-  .ef-table thead {
+  .ef-table:not(.ef-table--routing) thead {
     display: none;
   }
 
-  .ef-table,
-  .ef-table tbody,
-  .ef-table tr,
-  .ef-table td {
+  .ef-table:not(.ef-table--routing),
+  .ef-table:not(.ef-table--routing) tbody,
+  .ef-table:not(.ef-table--routing) tr,
+  .ef-table:not(.ef-table--routing) td {
     display: block;
     width: 100%;
   }
 
-  .ef-table tr {
+  .ef-table:not(.ef-table--routing) tr {
     margin-bottom: 14px;
     border: 1px solid var(--ef-border);
     border-radius: 14px;
@@ -1058,7 +1100,7 @@
     background: var(--ef-surface);
   }
 
-  .ef-table td {
+  .ef-table:not(.ef-table--routing) td {
     display: flex;
     justify-content: space-between;
     gap: 12px;
@@ -1068,7 +1110,7 @@
     text-align: right;
   }
 
-  .ef-table td::before {
+  .ef-table:not(.ef-table--routing) td::before {
     content: attr(data-label);
     font-weight: 600;
     color: var(--ef-muted);
