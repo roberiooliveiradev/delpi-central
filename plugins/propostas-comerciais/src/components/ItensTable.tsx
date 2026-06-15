@@ -17,7 +17,8 @@ export function ItensTable({ items }: ItensTableProps) {
             <th>Ref. cliente</th>
             <th>NCM</th>
             <th>Qtd.</th>
-            <th>Preço R$/mil</th>
+            <th>Valor bruto R$/mil</th>
+            <th>Valor líquido R$/mil</th>
             <th>Total R$/mil</th>
             <th>Prazo</th>
             <th>Lote mín.</th>
@@ -34,7 +35,12 @@ export function ItensTable({ items }: ItensTableProps) {
               <td data-label="Qtd.">
                 {item.quantidade.toLocaleString("pt-BR")} {item.unidade}
               </td>
-              <td data-label="Preço R$/mil">{displayValue(item.preco_unitario)}</td>
+              <td data-label="Valor bruto R$/mil">
+                {displayValue(item.valor_bruto_r_mil_formatado ?? item.preco_unitario)}
+              </td>
+              <td data-label="Valor líquido R$/mil">
+                {displayValue(item.valor_liquido_r_mil_formatado)}
+              </td>
               <td data-label="Total R$/mil">{displayValue(item.valor_total)}</td>
               <td data-label="Prazo">{displayValue(item.prazo_dias)}</td>
               <td data-label="Lote mín.">{displayValue(item.lote_minimo)}</td>

@@ -26,5 +26,5 @@ class PropostaComercialRepository(BaseRepository, PropostaComercialRepositoryPor
             header = self.execute_one(DETAIL_HEADER_SQL, (code,))
             if not header:
                 return None, []
-            items = self.execute_query(DETAIL_ITEMS_SQL, (code, code))
+            items = self.execute_query(DETAIL_ITEMS_SQL, (code,))
         return header, items
