@@ -20,14 +20,20 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e renderi
 ### O que o dashboard exibe
 
 - **KPIs:** % LMP dentro do prazo, lead time médio útil, total de propostas no período
-- **Gráficos:** contagem por nível (1–3), por status (Pontual, Atrasado, Andamento, Retornada), média de lead time por nível, evolução mensal de lead time e quantidade de propostas
-- **Tabela:** listagem detalhada das LMPs filtradas (filial, proposta, datas, SLA, classificação)
+- **Gráficos:** contagem por nível (1–3), por status (Pontual, Atrasado, Andamento, Retornada), média de lead time por nível, evolução temporal de lead time e quantidade de propostas
+- **Tabela:** listagem detalhada das LMPs filtradas (filial, proposta, datas, SLA, classificação) — clique abre **detalhe da OV**
+
+### Detalhe da OV (`/apps/dashboard-lmps/ov/{sale_number}`)
+
+- KPIs da proposta, cards Proposta / Engenharia / Cliente
+- Tabela de produtos + BOM por item (`ProductStructureTree`)
+- **Histórico da OV** (`list_history`): linha do tempo vertical com toggle para tabela, filtros (Todos, Engenharia, Em aberto, Revisão atual) e tooltips em colunas
 
 ### Fora de escopo deste plugin
 
-- Detalhe individual `GET /engineering/lmps/{sale_number}` (não há tela de drill-down)
-- Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — painel em **`dashboard-engineering`** (`/apps/dashboard-engineering`); este MFE cobre apenas **LMPs**
+- Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — painel em **`dashboard-engineering`**
 - Cadastro ou edição de LMPs no Protheus
+- Mini-Gantt do histórico (evolução futura)
 
 ### Legado na plataforma
 
@@ -41,10 +47,11 @@ Documentos antigos citam `dash-lmps` como plugin **iframe**. No repositório atu
 Portal (AppHost)
   └─ import remoteEntry.js (dashboard-lmps)
        └─ bootstrap.tsx → mount(App)
-            └─ DashboardLmpsPage
-                 ├─ FilterBar (filtros locais)
-                 ├─ useLmpsDashboard → GET .../lmps/dashboard
-                 └─ Recharts (gráficos) + tabela HTML
+            ├─ DashboardLmpsPage (lista + KPIs + gráficos)
+            └─ LmpDetailPage (/ov/{sale_number})
+                 ├─ useLmpDetail → GET .../lmps/{sale_number}
+                 ├─ LmpHistorySection (timeline + tabela + filtros)
+                 └─ LmpProductStructuresSection (BOM)
 ```
 
 | Camada | Responsabilidade |
@@ -236,10 +243,11 @@ Ver [STRUCTURE.md](./STRUCTURE.md).
 
 ## 12. Evoluções sugeridas
 
-Melhorias alinhadas ao plugin Qualidade (não implementadas hoje):
+Melhorias ainda não implementadas:
 
-- Sincronizar filtros na URL e entre sessões
+- Sincronizar filtros do dashboard na URL e entre sessões
 - Filiais dinâmicas via API
 - Impressão / PDF (`@media print`)
-- Rota de detalhe por `sale_number`
+- Mini-Gantt do histórico da OV
+- Persistir preferência timeline vs tabela (localStorage)
 - Script `register-manifest.sh` e CI dedicado no monorepo

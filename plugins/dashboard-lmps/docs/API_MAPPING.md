@@ -62,7 +62,31 @@ Detalhe de uma OV/proposta para a tela `/apps/dashboard-lmps/ov/{sale_number}`.
 
 ### Resposta `data` (campos principais)
 
-Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `data_limite`, `lead_time_util`, `status`, `sla_minutos`) + `list_products[]`.
+Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `data_limite`, `lead_time_util`, `status`, `sla_minutos`) + `list_products[]` + **`list_history[]`**.
+
+### `list_history[]` — evento `LmpHistoryEvent`
+
+| Campo | Descrição |
+|-------|-----------|
+| `revision`, `process_code`, `stage_code` | Chaves do AIJ010 |
+| `process_label`, `stage_label` | Rótulos PT (serviço `lmp_process_stage_labels`) |
+| `start_date`, `start_time`, `limit_date`, `limit_time`, `end_date`, `end_time` | Datas/horas TOTVS (`YYYYMMDD`, `HH:MM`) |
+| `duration_minutes` | Minutos calculados no SQL |
+| `duration_display` | Texto legível (ex.: `Em andamento · 12 dia(s)`) |
+| `status` | Código `AIJ_STATUS` |
+| `status_label` | Rótulo (`Em andamento`, `Encerrado`, …) |
+| `history_flag` | `AIJ_HISTOR` |
+| `is_engineering` | Métrica SQL (par processo+estágio configurado) |
+| `is_engineering_flow` | Exibição badge Engenharia (inclui estágios técnicos) |
+| `is_open`, `is_late`, `is_current` | Flags derivadas no `GetLMPUseCase` |
+
+Enriquecimento: `api-delpi/app/domain/services/lmp_history_event_enrichment.py`.
+
+### UI do histórico (MFE)
+
+- Toggle **Linha do tempo** (padrão) / **Tabela**
+- Filtros client-side: Todos, Engenharia, Em aberto, Revisão atual
+- Tooltips por coluna e filtros em `src/content/helpTooltips.ts`
 
 ### `meta.relatedRoutes`
 

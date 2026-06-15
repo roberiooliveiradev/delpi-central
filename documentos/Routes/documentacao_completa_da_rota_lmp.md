@@ -483,7 +483,58 @@ Responsável por:
 
 - buscar uma OV específica;
 - devolver a entidade serializada;
-- preservar os campos vindos da entidade `LMP`, incluindo `branch`.
+- enriquecer `list_history[]` via `enrich_history_events()` (rótulos, status legível, flags de situação);
+- calcular campos de dashboard (`nivel`, `status`, `lead_time_util`, etc.) via `LMPBusinessRules`;
+- preservar os demais campos vindos da entidade `LMP`, incluindo `branch` e `list_products`.
+
+### `lmp_history_event_enrichment.py`
+
+Serviço de domínio que enriquece cada evento de `list_history` **sem alterar o SQL** do AIJ010.
+
+Entrada: lista de dicts vindos do repository (`LMPHistoryEvent.to_dict()`).
+
+Saída: mesmos eventos + campos derivados:
+
+| Campo | Descrição |
+|-------|-----------|
+| `process_label` | Rótulo do processo (`000001` → Abertura, `000002` → Oportunidade, …) |
+| `stage_label` | Rótulo do estágio conforme `lmp_process_stage_labels.py` |
+| `status_label` | Tradução de `AIJ_STATUS` (`1` → Em andamento, `2` → Encerrado, …) |
+| `is_open` | `true` quando `end_date` está vazio |
+| `is_late` | `true` quando limite ultrapassado (aberto ou encerrado após limite) |
+| `is_current` | `true` no último evento em aberto, ou no último da sequência |
+| `is_engineering` | Flag SQL (par processo+estágio em `engineering_support_process_stages`) |
+| `is_engineering_flow` | `true` se `is_engineering` **ou** estágio ∈ `{000003, 000008, 000012}` |
+| `duration_display` | Texto legível (`Em andamento · N dia(s)`, `2 h`, …) |
+
+Regras importantes:
+
+- **`is_engineering`** continua alinhada às métricas de engenharia no repository.
+- **`is_engineering_flow`** é a regra de **exibição** no MFE (badge Engenharia), cobrindo casos em que o processo TOTVS ≠ `000002`/`000003` mas o estágio é técnico.
+- Duração em aberto usa minutos corridos até `GETDATE()` quando não há encerramento nem próximo evento (mesma regra do SQL).
+
+Mapa de status (`AIJ_STATUS`):
+
+| Código | Rótulo |
+|--------|--------|
+| `1` | Em andamento |
+| `2` | Encerrado |
+| `3` | Cancelado |
+| `4` | Suspenso |
+| outro | `Status {código}` |
+
+### `lmp_process_stage_labels.py`
+
+Rótulos consolidados para processo/estágio (complementar ao AC2010):
+
+| Código | Processo / estágio |
+|--------|-------------------|
+| `000001` | Abertura |
+| `000002` | Oportunidade |
+| `000003` | Engenharia |
+| `000008` | Amostra engenharia |
+| `000012` | Lançamento / homologação |
+| `000013` | Acompanhamento |
 
 ### `list_lmp_use_case.py`
 
@@ -545,6 +596,28 @@ Campos atuais relevantes:
 - cliente
 - vendedor
 - lista de produtos
+- **`list_history`** — eventos completos do AIJ010 para a OV (detalhe)
+
+### `lmp_history_event.py`
+
+Entidade de um evento do histórico (`AIJ010`):
+
+| Campo | Origem TOTVS |
+|-------|----------------|
+| `revision` | `AIJ_REVISA` |
+| `process_code` | `AIJ_PROVEN` |
+| `stage_code` | `AIJ_STAGE` |
+| `start_date`, `start_time` | `AIJ_DTINIC`, `AIJ_HRINIC` |
+| `limit_date`, `limit_time` | `AIJ_DTLIMI`, `AIJ_HRLIMI` |
+| `end_date`, `end_time` | `AIJ_DTENCE`, `AIJ_HRENCE` |
+| `duration_minutes` | calculado no SQL (`DATEDIFF` até encerramento, próximo evento ou agora) |
+| `status` | `AIJ_STATUS` |
+| `history_flag` | `AIJ_HISTOR` |
+| `is_engineering` | `CASE` com `engineering_support_process_stages` |
+
+Campos enriquecidos (`process_label`, `status_label`, `is_open`, …) são adicionados no **`GetLMPUseCase`**, não persistidos na entidade.
+
+Consulta SQL: `LMPQueryRepository._sql_history_events_lmp()` — ordenação por revisão, data/hora de início, estágio e `R_E_C_N_O_`.
 
 ### `engineering_router.py`
 
@@ -605,6 +678,45 @@ Consequência arquitetural:
 - o `ListLMPDashboardUseCase` precisa copiar `item.branch` para o DTO final.
 
 Sem isso, a coluna de filial no frontend permanece vazia mesmo com o filtro funcionando no backend.
+
+### Detalhe da OV (`LmpDetailPage`)
+
+Rota MFE: `/apps/dashboard-lmps/ov/{sale_number}`.
+
+Consome **`GET /engineering/lmps/{sale_number}`** com os mesmos filtros de período/filial do dashboard.
+
+Seções da tela:
+
+| Seção | Fonte |
+|-------|--------|
+| KPIs (status, lead time, tempo engenharia) | campos enriquecidos do detalhe |
+| Proposta / Engenharia / Cliente | campos cadastrais + resumo engenharia |
+| Produtos | `list_products[]` |
+| Estrutura (BOM) | `GET /products/{code}/structure` por produto |
+| **Histórico da OV** | `list_history[]` |
+
+### Histórico da OV no frontend
+
+Componentes (`plugins/dashboard-lmps`):
+
+- `LmpHistorySection` — toolbar, filtros, toggle **Linha do tempo | Tabela**
+- `LmpHistoryTimeline` — stepper vertical agrupado por revisão
+- `historyFormatting.ts` — formatação e filtros client-side
+
+Filtros disponíveis (somente UI; não alteram a API):
+
+| Filtro | Critério |
+|--------|----------|
+| Todos | sem restrição |
+| Engenharia | `is_engineering_flow === true` |
+| Em aberto | `is_open === true` |
+| Revisão atual | mesma revisão do evento `is_current` |
+
+Visualização padrão: **linha do tempo**. A tabela mantém todas as colunas com tooltips (ⓘ).
+
+Textos de ajuda: `src/content/helpTooltips.ts`.
+
+**Fora de escopo atual:** mini-Gantt horizontal; persistência da preferência timeline/tabela.
 
 ---
 

@@ -9,12 +9,14 @@ import { LmpHistoryTimeline } from "./LmpHistoryTimeline";
 import type { LmpHistoryEvent } from "../types/lmp";
 import {
   buildHistoryEventKey,
+  filterHistoryEvents,
   formatHistoryDateTime,
   formatProcessStageLabel,
   isHistoryEngineeringFlow,
   resolveHistoryDuration,
   resolveHistoryStatus,
   summarizeHistoryEvents,
+  type HistoryEventFilter,
 } from "../utils/historyFormatting";
 
 type HistoryViewMode = "timeline" | "table";
@@ -22,6 +24,33 @@ type HistoryViewMode = "timeline" | "table";
 type LmpHistorySectionProps = {
   events: LmpHistoryEvent[];
 };
+
+const HISTORY_FILTERS: Array<{
+  id: HistoryEventFilter;
+  label: string;
+  hint: string;
+}> = [
+  {
+    id: "all",
+    label: "Todos",
+    hint: LMPS_HELP_TOOLTIPS.detail.historyFilterAll,
+  },
+  {
+    id: "engineering",
+    label: "Engenharia",
+    hint: LMPS_HELP_TOOLTIPS.detail.historyFilterEngineering,
+  },
+  {
+    id: "open",
+    label: "Em aberto",
+    hint: LMPS_HELP_TOOLTIPS.detail.historyFilterOpen,
+  },
+  {
+    id: "current_revision",
+    label: "Revisão atual",
+    hint: LMPS_HELP_TOOLTIPS.detail.historyFilterCurrentRevision,
+  },
+];
 
 function renderEngineeringBadge(event: LmpHistoryEvent) {
   if (!isHistoryEngineeringFlow(event)) return "—";
@@ -113,7 +142,22 @@ const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
 
 export function LmpHistorySection({ events }: LmpHistorySectionProps) {
   const [viewMode, setViewMode] = useState<HistoryViewMode>("timeline");
-  const summary = useMemo(() => summarizeHistoryEvents(events), [events]);
+  const [eventFilter, setEventFilter] = useState<HistoryEventFilter>("all");
+
+  const filteredEvents = useMemo(
+    () => filterHistoryEvents(events, eventFilter),
+    [events, eventFilter],
+  );
+
+  const summary = useMemo(
+    () => summarizeHistoryEvents(filteredEvents, { totalCount: events.length }),
+    [filteredEvents, events.length],
+  );
+
+  const emptyMessage =
+    events.length === 0
+      ? "Nenhum evento registrado no histórico da OV."
+      : "Nenhum evento corresponde ao filtro selecionado.";
 
   return (
     <section className="lmps-history-section">
@@ -162,14 +206,36 @@ export function LmpHistorySection({ events }: LmpHistorySectionProps) {
         </div>
       </div>
 
+      <div className="lmps-history-section__filters" role="group" aria-label="Filtros do histórico">
+        {HISTORY_FILTERS.map((filter) => (
+          <div key={filter.id} className="lmps-history-section__filter-item">
+            <button
+              type="button"
+              className={`lmps-history-section__filter-btn${
+                eventFilter === filter.id ? " lmps-history-section__filter-btn--active" : ""
+              }`}
+              aria-pressed={eventFilter === filter.id}
+              onClick={() => setEventFilter(filter.id)}
+            >
+              {filter.label}
+            </button>
+            <HelpTooltip
+              content={filter.hint}
+              ariaLabel={`Ajuda: filtro ${filter.label}`}
+              className="lmps-history-section__filter-help"
+            />
+          </div>
+        ))}
+      </div>
+
       {viewMode === "timeline" ? (
-        <LmpHistoryTimeline events={events} />
+        <LmpHistoryTimeline events={filteredEvents} emptyMessage={emptyMessage} />
       ) : (
         <DataTable
           columns={historyColumns}
-          rows={events}
+          rows={filteredEvents}
           rowKey={buildHistoryEventKey}
-          emptyMessage="Nenhum evento registrado no histórico da OV."
+          emptyMessage={emptyMessage}
           getRowClassName={(row) =>
             row.is_current ? "lmps-table__row--current" : undefined
           }

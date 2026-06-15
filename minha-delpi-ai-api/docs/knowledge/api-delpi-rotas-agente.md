@@ -135,6 +135,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 
 - Listagem / dashboard: `date_start`, `date_end`, `branch`, `listing_type` (`LMP`, `Amostra`, `Outro`), `status` (ex.: `Todos`), `page`, `page_size` (itens)
 - Detalhe: `sale_number` = número da **ordem de venda (OV)** — não é código de produto; opcionalmente `date_start`, `date_end`, `branch` para alinhar ao painel/MFE `dashboard-lmps`
+- Resposta do detalhe inclui `list_products[]` e **`list_history[]`** (eventos AIJ010 enriquecidos: `process_label`, `status_label`, `duration_display`, `is_open`, `is_engineering_flow`, …)
 - Transforma Mais: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`
 
 **Exemplos**

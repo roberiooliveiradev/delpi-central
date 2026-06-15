@@ -76,6 +76,45 @@ export type HistoryRevisionGroup = {
   events: LmpHistoryEvent[];
 };
 
+export type HistoryEventFilter = "all" | "engineering" | "open" | "current_revision";
+
+export function resolveCurrentRevision(events: LmpHistoryEvent[]): string | null {
+  const currentEvent = events.find((event) => event.is_current);
+  if (currentEvent?.revision?.trim()) {
+    return currentEvent.revision.trim();
+  }
+
+  if (events.length === 0) {
+    return null;
+  }
+
+  return events[events.length - 1]?.revision?.trim() || null;
+}
+
+export function filterHistoryEvents(
+  events: LmpHistoryEvent[],
+  filter: HistoryEventFilter,
+): LmpHistoryEvent[] {
+  if (filter === "all") {
+    return events;
+  }
+
+  if (filter === "engineering") {
+    return events.filter((event) => isHistoryEngineeringFlow(event));
+  }
+
+  if (filter === "open") {
+    return events.filter((event) => Boolean(event.is_open));
+  }
+
+  const currentRevision = resolveCurrentRevision(events);
+  if (!currentRevision) {
+    return events;
+  }
+
+  return events.filter((event) => (event.revision?.trim() || "—") === currentRevision);
+}
+
 export function groupHistoryByRevision(events: LmpHistoryEvent[]): HistoryRevisionGroup[] {
   const groups = new Map<string, LmpHistoryEvent[]>();
 
@@ -92,17 +131,25 @@ export function groupHistoryByRevision(events: LmpHistoryEvent[]): HistoryRevisi
   }));
 }
 
-export function summarizeHistoryEvents(events: LmpHistoryEvent[]): string {
+export function summarizeHistoryEvents(
+  events: LmpHistoryEvent[],
+  options?: { totalCount?: number },
+): string {
+  const totalCount = options?.totalCount ?? events.length;
   const openCount = events.filter((event) => event.is_open).length;
   const revisionCount = new Set(events.map((event) => event.revision)).size;
 
   if (events.length === 0) {
-    return "Nenhum evento registrado";
+    return totalCount > 0
+      ? `Nenhum evento no filtro (${totalCount} no total)`
+      : "Nenhum evento registrado";
   }
 
   const parts = [
+    totalCount !== events.length
+      ? `${events.length} de ${totalCount} evento(s)`
+      : `${events.length} evento(s)`,
     `${revisionCount} revisão(ões)`,
-    `${events.length} evento(s)`,
   ];
 
   if (openCount > 0) {

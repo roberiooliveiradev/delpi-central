@@ -11,6 +11,7 @@ import {
 
 type LmpHistoryTimelineProps = {
   events: LmpHistoryEvent[];
+  emptyMessage?: string;
 };
 
 function renderTimelineBadge(label: string, className: string) {
@@ -41,11 +42,12 @@ function renderEventBadges(event: LmpHistoryEvent) {
   return badges;
 }
 
-export function LmpHistoryTimeline({ events }: LmpHistoryTimelineProps) {
+export function LmpHistoryTimeline({
+  events,
+  emptyMessage = "Nenhum evento registrado no histórico da OV.",
+}: LmpHistoryTimelineProps) {
   if (events.length === 0) {
-    return (
-      <p className="lmps-detail__empty">Nenhum evento registrado no histórico da OV.</p>
-    );
+    return <p className="lmps-detail__empty">{emptyMessage}</p>;
   }
 
   const groups = groupHistoryByRevision(events);

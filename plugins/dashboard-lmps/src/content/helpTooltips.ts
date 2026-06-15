@@ -118,6 +118,12 @@ export const LMPS_HELP_TOOLTIPS = {
       "Visualização tabular completa com todas as colunas do AIJ010 para consulta detalhada.",
     historyTimelineFootnote:
       "Eventos ordenados conforme o TOTVS (revisão, data/hora de início e estágio). Duração em aberto considera o momento atual.",
+    historyFilterAll: "Exibe todos os eventos da OV, em todas as revisões.",
+    historyFilterEngineering:
+      "Restringe a estágios do fluxo técnico (engenharia, amostra, homologação), inclusive quando o processo TOTVS não é 000002/000003.",
+    historyFilterOpen: "Mostra apenas eventos sem data de encerramento no AIJ010.",
+    historyFilterCurrentRevision:
+      "Mostra só a revisão do evento atual (último em aberto ou último da sequência).",
     structureCode: "Código do componente na estrutura analítica (SB1).",
     structureDescription: "Descrição comercial do item na BOM.",
     structureType: "Tipo do material: PA, PI, MP, etc.",
