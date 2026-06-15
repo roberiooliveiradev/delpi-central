@@ -43,7 +43,7 @@ export function readHistoryEventFilter(): HistoryEventFilter {
     return value as HistoryEventFilter;
   }
 
-  return "all";
+  return "current_revision";
 }
 
 export function writeHistoryEventFilter(filter: HistoryEventFilter): void {

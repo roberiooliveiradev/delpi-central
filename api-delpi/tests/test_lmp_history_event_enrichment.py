@@ -7,9 +7,11 @@ from app.domain.services.lmp_history_event_enrichment import (
     is_engineering_flow,
     is_event_open,
     label_for_history_status,
+    resolve_history_reference_revision,
     resolve_history_status_label,
     resolve_process_label,
     resolve_stage_label,
+    revisions_match,
 )
 
 
@@ -110,6 +112,49 @@ def test_resolve_history_status_label_uses_encerrado_when_dtence_filled():
     }
 
     assert resolve_history_status_label(event, is_open=False) == "Encerrado"
+
+
+def test_enrich_history_events_scopes_current_event_to_reference_revision():
+    events = enrich_history_events(
+        [
+            {
+                "revision": "01",
+                "process_code": "000001",
+                "stage_code": "000001",
+                "end_date": "20191106",
+                "end_time": "08:33",
+            },
+            {
+                "revision": "02",
+                "process_code": "000001",
+                "stage_code": "000005",
+                "end_date": "20250714",
+                "end_time": "23:59",
+            },
+            {
+                "revision": "03",
+                "process_code": "000001",
+                "stage_code": "000001",
+                "start_date": "20260615",
+                "start_time": "08:00",
+            },
+        ],
+        reference_revision="03",
+    )
+
+    assert events[0]["is_current"] is False
+    assert events[1]["is_current"] is False
+    assert events[2]["is_current"] is True
+
+
+def test_revisions_match_ignores_leading_zeros():
+    assert revisions_match("01", "001") is True
+    assert revisions_match("02", "03") is False
+
+
+def test_resolve_history_reference_revision_prefers_measurement():
+    assert resolve_history_reference_revision("03", "02") == "03"
+    assert resolve_history_reference_revision(None, "02") == "02"
 
 
 def test_enrich_history_event_uses_totvs_descriptions_and_closed_status():

@@ -15,6 +15,8 @@ class LMP:
     # Engineering summary
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    reference_revision: Optional[str] = None
+    measurement_revision: Optional[str] = None
     engineering_status: Optional[str] = None
     qtd_engineering_entries: Optional[int] = None
     qtd_engineering_closed: Optional[int] = None

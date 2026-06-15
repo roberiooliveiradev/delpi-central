@@ -56,6 +56,22 @@ def test_header_lmp_uses_period_measurement_when_dates_provided() -> None:
     assert request.sale_number in params
 
 
+def test_header_lmp_exposes_reference_and_measurement_revision() -> None:
+    repo = _repository()
+    request = GetLMPRequest(
+        sale_number="003578",
+        date_start="20260601",
+        date_end="20260630",
+        branch="01",
+    )
+
+    sql, _params = repo._sql_header_lmp(request)
+
+    assert "AD1.AD1_REVISA AS reference_revision" in sql
+    assert "MREV.ULTIMA_REVISA_MEDICAO AS measurement_revision" in sql
+    assert "UltimaRevisaoMedicaoEngenharia MREV" in sql
+
+
 def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
     repo = _repository()
 
@@ -66,6 +82,8 @@ def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
     assert "FROM AC2010 AC2" in sql
     assert "process_description" in sql
     assert "stage_description" in sql
+    assert "reference_revision" not in sql
+    assert "AD1.AD1_REVISA AS reference_revision" not in sql
     assert "A.AIJ_NROPOR = ?" in sql
     assert "PROXIMO_DTINIC_GLOBAL" in sql
     assert "duration_minutes" in sql

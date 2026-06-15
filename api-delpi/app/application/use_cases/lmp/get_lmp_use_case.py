@@ -30,6 +30,13 @@ class GetLMPUseCase:
         payload["data_limite"] = data_limite
         payload["lead_time_util"] = lead_time_util
         payload["status"] = status
-        payload["list_history"] = enrich_history_events(payload.get("list_history"))
+        history_revision = (
+            payload.get("measurement_revision")
+            or payload.get("reference_revision")
+        )
+        payload["list_history"] = enrich_history_events(
+            payload.get("list_history"),
+            reference_revision=history_revision,
+        )
 
         return payload

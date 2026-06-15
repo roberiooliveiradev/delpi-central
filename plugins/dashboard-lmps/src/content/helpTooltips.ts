@@ -140,7 +140,7 @@ export const LMPS_HELP_TOOLTIPS = {
       "Restringe a estágios do fluxo técnico (engenharia, amostra, homologação), inclusive quando o processo TOTVS não é 000002/000003.",
     historyFilterOpen: "Mostra apenas eventos sem data de encerramento no AIJ010.",
     historyFilterCurrentRevision:
-      "Mostra só a revisão do evento atual (último em aberto ou último da sequência).",
+      "Mostra a revisão usada pelo painel LMP (medição de engenharia / AD1010), alinhada à linha da tabela.",
     historyGantt:
       "Faixa proporcional dentro da revisão: barra = início até encerramento (ou hoje se em aberto); traço = data limite.",
     historyGlobalGantt:

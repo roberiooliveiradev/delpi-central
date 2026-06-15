@@ -28,6 +28,8 @@ import {
 
 type LmpHistorySectionProps = {
   events: LmpHistoryEvent[];
+  referenceRevision?: string | null;
+  measurementRevision?: string | null;
 };
 
 const HISTORY_FILTERS: Array<{
@@ -145,7 +147,14 @@ const historyColumns: DataTableColumn<LmpHistoryEvent>[] = [
   },
 ];
 
-export function LmpHistorySection({ events }: LmpHistorySectionProps) {
+export function LmpHistorySection({
+  events,
+  referenceRevision,
+  measurementRevision,
+}: LmpHistorySectionProps) {
+  const historyReferenceRevision =
+    measurementRevision?.trim() || referenceRevision?.trim() || null;
+
   const [viewMode, setViewMode] = useState<HistoryViewMode>(() => readHistoryViewMode());
   const [eventFilter, setEventFilter] = useState<HistoryEventFilter>(() =>
     readHistoryEventFilter(),
@@ -160,8 +169,11 @@ export function LmpHistorySection({ events }: LmpHistorySectionProps) {
   }, [eventFilter]);
 
   const filteredEvents = useMemo(
-    () => filterHistoryEvents(events, eventFilter),
-    [events, eventFilter],
+    () =>
+      filterHistoryEvents(events, eventFilter, {
+        referenceRevision: historyReferenceRevision,
+      }),
+    [events, eventFilter, historyReferenceRevision],
   );
 
   const summary = useMemo(
@@ -169,10 +181,33 @@ export function LmpHistorySection({ events }: LmpHistorySectionProps) {
     [filteredEvents, events.length],
   );
 
+  const revisionContextMessage = useMemo(() => {
+    if (!historyReferenceRevision || eventFilter !== "current_revision") {
+      return null;
+    }
+
+    if (filteredEvents.length > 0) {
+      return `Revisão alinhada ao painel LMP: ${historyReferenceRevision}.`;
+    }
+
+    if (events.length === 0) {
+      return null;
+    }
+
+    return `Revisão ${historyReferenceRevision} (referência do painel) ainda não possui eventos no AIJ010. Use «Todos» para ver revisões anteriores.`;
+  }, [
+    historyReferenceRevision,
+    eventFilter,
+    filteredEvents.length,
+    events.length,
+  ]);
+
   const emptyMessage =
     events.length === 0
       ? "Nenhum evento registrado no histórico da OV."
-      : "Nenhum evento corresponde ao filtro selecionado.";
+      : eventFilter === "current_revision" && historyReferenceRevision
+        ? `Nenhum evento na revisão ${historyReferenceRevision} (referência do painel).`
+        : "Nenhum evento corresponde ao filtro selecionado.";
 
   return (
     <section className="lmps-history-section">
@@ -242,6 +277,10 @@ export function LmpHistorySection({ events }: LmpHistorySectionProps) {
           </div>
         ))}
       </div>
+
+      {revisionContextMessage ? (
+        <p className="lmps-history-section__context">{revisionContextMessage}</p>
+      ) : null}
 
       {viewMode === "timeline" ? (
         <LmpHistoryTimeline events={filteredEvents} emptyMessage={emptyMessage} />

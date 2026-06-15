@@ -2123,6 +2123,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 AD1.AD1_FILIAL AS branch,
                 AD1.AD1_NROPOR AS sale_number,
                 AD1.AD1_DESCRI AS sale_description,
+                AD1.AD1_REVISA AS reference_revision,
+                MREV.ULTIMA_REVISA_MEDICAO AS measurement_revision,
                 {listing_kind_select},
                 {start_date_expr} AS start_date,
                 COALESCE(L.ANCHOR_END_DATE, R.ANCHOR_END_DATE) AS end_date,
@@ -2151,6 +2153,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_FILIAL = AD1.AD1_FILIAL
                AND H.AIJ_NROPOR = AD1.AD1_NROPOR
+            LEFT JOIN UltimaRevisaoMedicaoEngenharia MREV
+                ON MREV.AIJ_FILIAL = AD1.AD1_FILIAL
+               AND MREV.AIJ_NROPOR = AD1.AD1_NROPOR
             LEFT JOIN SA1010 SA1
                 ON SA1.A1_COD = AD1.AD1_CODCLI
                AND SA1.A1_LOJA = AD1.AD1_LOJCLI
@@ -2733,6 +2738,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             listing_kind=header_row.get("listing_kind"),
             start_date=header_row.get("start_date"),
             end_date=header_row.get("end_date"),
+            reference_revision=header_row.get("reference_revision"),
+            measurement_revision=header_row.get("measurement_revision"),
             engineering_status=header_row.get("engineering_status"),
             qtd_engineering_entries=int(header_row.get("qtd_engineering_entries") or 0),
             qtd_engineering_closed=int(header_row.get("qtd_engineering_closed") or 0),

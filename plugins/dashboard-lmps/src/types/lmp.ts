@@ -42,6 +42,8 @@ export type LmpItem = {
   listing_kind?: LmpListingKind | null;
   start_date?: string | null;
   end_date?: string | null;
+  reference_revision?: string | null;
+  measurement_revision?: string | null;
   engineering_status?: string | null;
   qtd_engineering_entries?: number;
   qtd_engineering_closed?: number;

@@ -1270,6 +1270,16 @@
   font-size: var(--lmps-font-sm);
 }
 
+.dashboard-lmps .lmps-history-section__context {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: var(--lmps-font-sm);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
 .dashboard-lmps .lmps-history-section__toggle {
   display: inline-flex;
   gap: 8px;

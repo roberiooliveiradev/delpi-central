@@ -486,11 +486,15 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
             <DetailCard
               title="Histórico da OV"
               titleHint={LMPS_HELP_TOOLTIPS.detail.historySection}
-              hint="Linha do tempo de eventos no TOTVS (AIJ010)"
+              hint="Linha do tempo de eventos no TOTVS (AIJ010), alinhada à revisão do painel LMP"
               icon={<History size={20} aria-hidden />}
               className="lmps-detail-card--full"
             >
-              <LmpHistorySection events={item.list_history ?? []} />
+              <LmpHistorySection
+                events={item.list_history ?? []}
+                referenceRevision={item.reference_revision}
+                measurementRevision={item.measurement_revision}
+              />
             </DetailCard>
           </section>
         </>

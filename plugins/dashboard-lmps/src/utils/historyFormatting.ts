@@ -33,10 +33,30 @@ export function formatProcessStageLabel(
 
   if (!normalizedCode && !normalizedLabel) return "—";
   if (normalizedLabel && normalizedCode && normalizedLabel !== normalizedCode) {
+    if (!/^\d+$/.test(normalizedLabel)) {
+      return normalizedLabel;
+    }
     return `${normalizedLabel} (${normalizedCode})`;
   }
 
   return normalizedLabel || normalizedCode || "—";
+}
+
+export function revisionsMatch(
+  left?: string | null,
+  right?: string | null,
+): boolean {
+  const normalize = (value?: string | null) => {
+    const trimmed = value?.trim() || "";
+    if (!trimmed) return "";
+    const withoutLeadingZeros = trimmed.replace(/^0+/, "");
+    return withoutLeadingZeros || "0";
+  };
+
+  const leftNorm = normalize(left);
+  const rightNorm = normalize(right);
+  if (!leftNorm || !rightNorm) return false;
+  return leftNorm === rightNorm;
 }
 
 export function resolveHistoryDuration(event: LmpHistoryEvent): string {
@@ -78,7 +98,15 @@ export type HistoryRevisionGroup = {
 
 export type HistoryEventFilter = "all" | "engineering" | "open" | "current_revision";
 
-export function resolveCurrentRevision(events: LmpHistoryEvent[]): string | null {
+export function resolveCurrentRevision(
+  events: LmpHistoryEvent[],
+  referenceRevision?: string | null,
+): string | null {
+  const normalizedReference = referenceRevision?.trim();
+  if (normalizedReference) {
+    return normalizedReference;
+  }
+
   const currentEvent = events.find((event) => event.is_current);
   if (currentEvent?.revision?.trim()) {
     return currentEvent.revision.trim();
@@ -94,6 +122,7 @@ export function resolveCurrentRevision(events: LmpHistoryEvent[]): string | null
 export function filterHistoryEvents(
   events: LmpHistoryEvent[],
   filter: HistoryEventFilter,
+  options?: { referenceRevision?: string | null },
 ): LmpHistoryEvent[] {
   if (filter === "all") {
     return events;
@@ -107,12 +136,17 @@ export function filterHistoryEvents(
     return events.filter((event) => Boolean(event.is_open));
   }
 
-  const currentRevision = resolveCurrentRevision(events);
+  const currentRevision = resolveCurrentRevision(
+    events,
+    options?.referenceRevision,
+  );
   if (!currentRevision) {
     return events;
   }
 
-  return events.filter((event) => (event.revision?.trim() || "—") === currentRevision);
+  return events.filter((event) =>
+    revisionsMatch(event.revision, currentRevision),
+  );
 }
 
 export function groupHistoryByRevision(events: LmpHistoryEvent[]): HistoryRevisionGroup[] {

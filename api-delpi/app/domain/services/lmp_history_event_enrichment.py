@@ -24,6 +24,33 @@ CLOSED_STATUS_CODES = frozenset({"2", "3", "6", "8", "9"})
 ENGINEERING_FLOW_STAGE_CODES = frozenset({"000003", "000008", "000012"})
 
 
+def normalize_revision(value: str | None) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    stripped = normalized.lstrip("0")
+    return stripped or "0"
+
+
+def revisions_match(left: str | None, right: str | None) -> bool:
+    left_norm = normalize_revision(left)
+    right_norm = normalize_revision(right)
+    if not left_norm or not right_norm:
+        return False
+    return left_norm == right_norm
+
+
+def resolve_history_reference_revision(
+    measurement_revision: str | None,
+    reference_revision: str | None,
+) -> str | None:
+    for candidate in (measurement_revision, reference_revision):
+        normalized = str(candidate or "").strip()
+        if normalized:
+            return normalized
+    return None
+
+
 def label_for_history_status(status_code: str | None) -> str | None:
     normalized = str(status_code or "").strip()
     if not normalized:
@@ -155,15 +182,33 @@ def format_duration_display(
     return f"{days} dia(s)"
 
 
-def _resolve_current_event_index(events: list[dict[str, Any]]) -> int | None:
+def _resolve_current_event_index(
+    events: list[dict[str, Any]],
+    *,
+    reference_revision: str | None = None,
+) -> int | None:
     if not events:
         return None
 
-    open_indices = [index for index, event in enumerate(events) if is_event_open(event)]
+    candidate_indices = list(range(len(events)))
+    if reference_revision:
+        candidate_indices = [
+            index
+            for index, event in enumerate(events)
+            if revisions_match(event.get("revision"), reference_revision)
+        ]
+        if not candidate_indices:
+            return None
+
+    open_indices = [
+        index
+        for index in candidate_indices
+        if is_event_open(events[index])
+    ]
     if open_indices:
         return open_indices[-1]
 
-    return len(events) - 1
+    return candidate_indices[-1]
 
 
 def enrich_history_event(
@@ -198,10 +243,14 @@ def enrich_history_event(
 def enrich_history_events(
     events: list[dict[str, Any]] | None,
     *,
+    reference_revision: str | None = None,
     now: datetime | None = None,
 ) -> list[dict[str, Any]]:
     normalized = list(events or [])
-    current_index = _resolve_current_event_index(normalized)
+    current_index = _resolve_current_event_index(
+        normalized,
+        reference_revision=reference_revision,
+    )
 
     return [
         enrich_history_event(
