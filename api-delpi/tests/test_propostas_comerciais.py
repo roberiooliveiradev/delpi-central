@@ -69,13 +69,18 @@ def _sample_detail() -> dict:
             "codigo": "000204",
             "loja": "01",
             "nome": "AHT COOLING",
+            "nome_fantasia": None,
             "cnpj": "08.774.764/0003-08",
+            "ie": None,
             "endereco": "RUA TESTE",
             "bairro": "CENTRO",
             "cidade": "NAVEGANTES",
             "uf": "SC",
             "cep": "88373-180",
             "telefone": "(47) 3347-9117",
+            "email": None,
+            "tipo_cadastro": "cliente",
+            "is_prospect": False,
         },
         "contato": {
             "codigo": "00489",
@@ -179,6 +184,7 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
             "cliente_uf": "SC",
             "cliente_cep": "88373180",
             "cliente_telefone": "33479117",
+            "cliente_tipo_cadastro": "cliente",
             "contato_nome": "GUILHERME PERIN",
             "contato_email": "guilherme@example.com",
             "contato_telefone": "",
@@ -232,9 +238,93 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
     assert result["condicoes"]["icms"] == "12%"
     assert result["condicoes"]["frete"].startswith("FOB")
     assert result["cliente"]["cnpj"] == "08.774.764/0003-08"
+    assert result["cliente"]["tipo_cadastro"] == "cliente"
+    assert result["cliente"]["is_prospect"] is False
     assert result["itens"][0]["ncm"] == "8544.42.00"
     assert result["itens"][0]["prazo_dias"] == 45
     assert result["observacoes"] == "Observacao teste"
+
+
+def test_formatter_formats_prospect_cliente_from_sus010() -> None:
+    header = {
+        "cliente_codigo": "000091",
+        "cliente_loja": "01",
+        "cliente_nome": "KRAH-ICE-BRASIL LTDA",
+        "cliente_nome_fantasia": "KRAH",
+        "cliente_cnpj": "02894515000108",
+        "cliente_ie": "",
+        "cliente_endereco": "R. Santos Dumont, 270",
+        "cliente_bairro": "Fritz Lorenz",
+        "cliente_cidade": "TIMBÓ",
+        "cliente_uf": "SC",
+        "cliente_cep": "89120000",
+        "cliente_telefone": "4733820572",
+        "cliente_email": "d.bastelli@krah.com.br",
+        "cliente_tipo_cadastro": "prospect",
+    }
+
+    cliente = PropostaComercialFormatter._format_cliente(header)
+
+    assert cliente["nome"] == "KRAH-ICE-BRASIL LTDA"
+    assert cliente["nome_fantasia"] == "KRAH"
+    assert cliente["cnpj"] == "02.894.515/0001-08"
+    assert cliente["endereco"] == "R. Santos Dumont, 270"
+    assert cliente["bairro"] == "Fritz Lorenz"
+    assert cliente["cidade"] == "TIMBÓ"
+    assert cliente["uf"] == "SC"
+    assert cliente["cep"] == "89120-000"
+    assert cliente["telefone"] == "(47) 3382-0572"
+    assert cliente["email"] == "d.bastelli@krah.com.br"
+    assert cliente["tipo_cadastro"] == "prospect"
+    assert cliente["is_prospect"] is True
+
+
+def test_formatter_list_item_uses_coalesced_cliente_nome() -> None:
+    row = {
+        "proposta_interna": "004836",
+        "oportunidade": "003590",
+        "versao": "01",
+        "data_proposta": "20260612",
+        "cliente_nome": "KRAH-ICE-BRASIL LTDA",
+        "filial": "01",
+        "quantidade_itens": 3,
+    }
+
+    item = PropostaComercialFormatter.format_list_item(row)
+
+    assert item["cliente"] == "KRAH-ICE-BRASIL LTDA"
+    assert item["numero_ov"] == "OV003590"
+
+
+def test_proposta_comercial_pdf_renderer_includes_prospect_cliente() -> None:
+    detail = _sample_detail()
+    detail["cliente"] = {
+        "codigo": "000091",
+        "loja": "01",
+        "nome": "KRAH-ICE-BRASIL LTDA",
+        "nome_fantasia": "KRAH",
+        "cnpj": "02.894.515/0001-08",
+        "ie": None,
+        "endereco": "R. Santos Dumont, 270",
+        "bairro": "Fritz Lorenz",
+        "cidade": "TIMBÓ",
+        "uf": "SC",
+        "cep": "89120-000",
+        "telefone": "(47) 3382-0572",
+        "email": "d.bastelli@krah.com.br",
+        "tipo_cadastro": "prospect",
+        "is_prospect": True,
+    }
+    detail["cabecalho"]["proposta_interna"] = "004836"
+    detail["cabecalho"]["numero_ov"] = "OV003590"
+    detail["cabecalho"]["oportunidade"] = "003590"
+
+    renderer = PropostaComercialPdfRenderer()
+    pdf_bytes = renderer.render(detail)
+
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+    assert b"OV003590" in pdf_bytes
 
 
 def test_proposta_comercial_pdf_renderer_returns_pdf_bytes() -> None:

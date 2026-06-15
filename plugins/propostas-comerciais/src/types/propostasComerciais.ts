@@ -45,13 +45,18 @@ export type PropostaComercialCliente = {
   codigo: string;
   loja: string;
   nome: string;
+  nome_fantasia?: string | null;
   cnpj: string | null;
+  ie?: string | null;
   endereco: string;
   bairro: string;
   cidade: string;
   uf: string;
   cep: string | null;
   telefone: string | null;
+  email?: string | null;
+  tipo_cadastro?: "cliente" | "prospect" | null;
+  is_prospect?: boolean;
 };
 
 export type PropostaComercialContato = {

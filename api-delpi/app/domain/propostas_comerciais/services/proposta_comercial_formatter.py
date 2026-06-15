@@ -205,18 +205,7 @@ class PropostaComercialFormatter:
                 "telefone": cls.format_phone(header.get("empresa_telefone")),
                 "site": empresa_site,
             },
-            "cliente": {
-                "codigo": cls.trim(header.get("cliente_codigo")),
-                "loja": cls.trim(header.get("cliente_loja")),
-                "nome": cls.trim(header.get("cliente_nome")),
-                "cnpj": cls.format_cnpj(header.get("cliente_cnpj")),
-                "endereco": cls.trim(header.get("cliente_endereco")),
-                "bairro": cls.trim(header.get("cliente_bairro")),
-                "cidade": cls.trim(header.get("cliente_cidade")),
-                "uf": cls.trim(header.get("cliente_uf")),
-                "cep": cls.format_cep(header.get("cliente_cep")),
-                "telefone": cls.format_phone(header.get("cliente_telefone")),
-            },
+            "cliente": cls._format_cliente(header),
             "contato": {
                 "codigo": cls.trim(header.get("contato_codigo")),
                 "nome": cls.trim(header.get("contato_nome")),
@@ -241,6 +230,28 @@ class PropostaComercialFormatter:
             },
             "observacoes": cls.trim(header.get("observacoes")),
             "itens": [cls.format_item(item) for item in items],
+        }
+
+    @classmethod
+    def _format_cliente(cls, header: dict) -> dict:
+        tipo_cadastro = cls.trim(header.get("cliente_tipo_cadastro")) or None
+        is_prospect = tipo_cadastro == "prospect"
+        return {
+            "codigo": cls.trim(header.get("cliente_codigo")),
+            "loja": cls.trim(header.get("cliente_loja")),
+            "nome": cls.trim(header.get("cliente_nome")),
+            "nome_fantasia": cls.trim(header.get("cliente_nome_fantasia")) or None,
+            "cnpj": cls.format_cnpj(header.get("cliente_cnpj")),
+            "ie": cls.format_inscricao_estadual(header.get("cliente_ie")),
+            "endereco": cls.trim(header.get("cliente_endereco")),
+            "bairro": cls.trim(header.get("cliente_bairro")),
+            "cidade": cls.trim(header.get("cliente_cidade")),
+            "uf": cls.trim(header.get("cliente_uf")),
+            "cep": cls.format_cep(header.get("cliente_cep")),
+            "telefone": cls.format_phone(header.get("cliente_telefone")),
+            "email": cls.trim(header.get("cliente_email")) or None,
+            "tipo_cadastro": tipo_cadastro,
+            "is_prospect": is_prospect,
         }
 
     @classmethod

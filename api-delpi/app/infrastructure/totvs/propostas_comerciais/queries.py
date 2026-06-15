@@ -12,6 +12,10 @@ LEFT JOIN SA1010 A1 WITH (NOLOCK)
   ON A1.D_E_L_E_T_ <> '*'
  AND A1.A1_COD = ADY.ADY_CLIENT
  AND A1.A1_LOJA = ADY.ADY_LOJENT
+LEFT JOIN SUS010 SUS WITH (NOLOCK)
+  ON SUS.D_E_L_E_T_ <> '*'
+ AND SUS.US_COD = AD1.AD1_PROSPE
+ AND SUS.US_LOJA = AD1.AD1_LOJPRO
 LEFT JOIN SU5010 U5 WITH (NOLOCK)
   ON U5.D_E_L_E_T_ <> '*'
  AND U5.U5_CODCONT = COALESCE(NULLIF(RTRIM(ADY.ADY_CNTPRO), ''), AD1.AD1_CNTPRO)
@@ -38,7 +42,10 @@ SELECT TOP (?)
     ADY.ADY_OPORTU AS oportunidade,
     ADY.ADY_PREVIS AS versao,
     ADY.ADY_DATA AS data_proposta,
-    A1.A1_NOME AS cliente_nome,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_NOME)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_NOME)), '')
+    ) AS cliente_nome,
     RTRIM(COALESCE(NULLIF(RTRIM(ADY.ADY_FILIAL), ''), AD1.AD1_FILIAL)) AS filial,
     (
         SELECT COUNT(1)
@@ -64,8 +71,14 @@ SELECT TOP 1
     ADY.ADY_STATUS AS status,
     RTRIM(COALESCE(NULLIF(RTRIM(ADY.ADY_FILIAL), ''), AD1.AD1_FILIAL)) AS filial,
     COALESCE(NULLIF(RTRIM(ADY.ADY_CNTPRO), ''), AD1.AD1_CNTPRO) AS contato_codigo,
-    ADY.ADY_CLIENT AS cliente_codigo,
-    ADY.ADY_LOJENT AS cliente_loja,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_COD)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_COD)), '')
+    ) AS cliente_codigo,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_LOJA)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_LOJA)), '')
+    ) AS cliente_loja,
     ADY.ADY_VEND AS vendedor_codigo,
     ADY.ADY_CONDPG AS condicao_codigo,
     ADY.ADY_PICMS AS icms,
@@ -73,14 +86,63 @@ SELECT TOP 1
     ADY.ADY_FRETE AS frete,
     ADY.ADY_EMBALA AS embalagem,
     REPLACE(TRY_CONVERT(VARCHAR(MAX), ADY.ADY_OBS), CHAR(0), '') AS observacoes,
-    A1.A1_NOME AS cliente_nome,
-    A1.A1_CGC AS cliente_cnpj,
-    A1.A1_END AS cliente_endereco,
-    A1.A1_BAIRRO AS cliente_bairro,
-    A1.A1_MUN AS cliente_cidade,
-    A1.A1_EST AS cliente_uf,
-    A1.A1_CEP AS cliente_cep,
-    A1.A1_TEL AS cliente_telefone,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_NOME)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_NOME)), '')
+    ) AS cliente_nome,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_NREDUZ)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_NREDUZ)), '')
+    ) AS cliente_nome_fantasia,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_CGC)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_CGC)), '')
+    ) AS cliente_cnpj,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_INSCR)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_INSCR)), '')
+    ) AS cliente_ie,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_END)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_END)), '')
+    ) AS cliente_endereco,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_BAIRRO)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_BAIRRO)), '')
+    ) AS cliente_bairro,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_MUN)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_MUN)), '')
+    ) AS cliente_cidade,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_EST)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_EST)), '')
+    ) AS cliente_uf,
+    COALESCE(
+        NULLIF(LTRIM(RTRIM(A1.A1_CEP)), ''),
+        NULLIF(LTRIM(RTRIM(SUS.US_CEP)), '')
+    ) AS cliente_cep,
+    CASE
+        WHEN NULLIF(LTRIM(RTRIM(A1.A1_COD)), '') IS NOT NULL THEN A1.A1_TEL
+        WHEN NULLIF(LTRIM(RTRIM(SUS.US_COD)), '') IS NOT NULL THEN
+            LTRIM(RTRIM(
+                CONCAT(
+                    COALESCE(NULLIF(LTRIM(RTRIM(SUS.US_DDD)), ''), ''),
+                    COALESCE(NULLIF(LTRIM(RTRIM(SUS.US_TEL)), ''), '')
+                )
+            ))
+        ELSE NULL
+    END AS cliente_telefone,
+    CASE
+        WHEN NULLIF(LTRIM(RTRIM(SUS.US_COD)), '') IS NOT NULL
+         AND NULLIF(LTRIM(RTRIM(A1.A1_COD)), '') IS NULL THEN SUS.US_EMAIL
+        ELSE NULL
+    END AS cliente_email,
+    CASE
+        WHEN NULLIF(LTRIM(RTRIM(A1.A1_COD)), '') IS NOT NULL THEN 'cliente'
+        WHEN NULLIF(LTRIM(RTRIM(SUS.US_COD)), '') IS NOT NULL THEN 'prospect'
+        ELSE NULL
+    END AS cliente_tipo_cadastro,
     U5.U5_CONTAT AS contato_nome,
     U5.U5_EMAIL AS contato_email,
     U5.U5_FONE AS contato_telefone,
