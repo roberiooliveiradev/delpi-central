@@ -221,3 +221,45 @@ def test_select_production_oee_appointment_when_detail_terms_present():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "api_delpi.production_oee_appointment"
+
+
+def test_select_eficiencia_fabril_dashboard_when_fabril_terms_present():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.eficiencia_fabril_dashboard",
+                "method": "GET",
+                "path": "/production/eficiencia-fabril/dashboard",
+                "operationId": "get_eficiencia_fabril_dashboard",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "api_delpi.production_oee_detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionRouteSelectionService(repository)
+    spec = OperationalApiRouteSpec(
+        domain="department_kpi",
+        reason="Eficiência fabril",
+        path_tokens=("eficiencia-fabril",),
+        path_prefixes=("/production/",),
+        operation_tokens=("eficiencia_fabril",),
+        parameter_strategy="date_branch",
+    )
+
+    selected = service.select(
+        spec,
+        message="Dashboard eficiencia fabril com resultado MOD",
+        allowed_action_ids=[
+            "api_delpi.eficiencia_fabril_dashboard",
+            "api_delpi.production_oee_detail",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.eficiencia_fabril_dashboard"

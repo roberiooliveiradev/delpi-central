@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 138,
+  "operation_count": 168,
   "operations": [
     {
       "method": "GET",
@@ -96,6 +96,28 @@
       "deprecated": false
     },
     {
+      "method": "GET",
+      "path": "/cultura-delpi/content",
+      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "summary": "Get Cultura Delpi Content",
+      "tags": [
+        "Cultura DELPI",
+        "Cultura DELPI"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/cultura-delpi/content",
+      "operationId": "update_cultura_delpi_content_cultura_delpi_content_put",
+      "summary": "Update Cultura Delpi Content",
+      "tags": [
+        "Cultura DELPI",
+        "Cultura DELPI"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/data/sql",
       "operationId": "execute_readonly_sql",
@@ -160,6 +182,56 @@
       "path": "/engineering/lmps/{sale_number}",
       "operationId": "get_lmp_by_sale_number",
       "summary": "Detalhe da LMP por ordem de venda",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas",
+      "operationId": "list_mini_applicators_ferramentas",
+      "summary": "Listar ferramentas mini-aplicadores",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}",
+      "operationId": "get_mini_applicators_ferramenta",
+      "summary": "Detalhe de ferramenta mini-aplicador",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/componentes",
+      "operationId": "list_mini_applicators_componentes",
+      "summary": "Componentes do mini-aplicador",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/golpes",
+      "operationId": "get_mini_applicators_golpes",
+      "summary": "Golpes do mini-aplicador no período",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/pecas",
+      "operationId": "list_mini_applicators_pecas",
+      "summary": "Listar peças do mini-aplicador",
       "tags": [
         "Engenharia"
       ],
@@ -345,6 +417,56 @@
     },
     {
       "method": "GET",
+      "path": "/production/allocation-gaps",
+      "operationId": "get_production_allocation_gaps",
+      "summary": "Componentes sem empenho (travamento)",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/by-item/{code}",
+      "operationId": "get_production_consumption_by_item",
+      "summary": "Consumo real de item por produto",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items",
+      "operationId": "get_production_consumption_top_items",
+      "summary": "Itens mais consumidos na produção",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items-by-work-center",
+      "operationId": "get_production_consumption_top_items_by_work_center",
+      "summary": "Consumo por centro de trabalho",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items-validated",
+      "operationId": "get_production_consumption_top_items_validated",
+      "summary": "Consumo validado por apontamento real",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/production/depreciation_pct",
       "operationId": "get_depreciation_pct_production_depreciation_pct_get",
       "summary": "Get Depreciation Pct",
@@ -366,8 +488,8 @@
     {
       "method": "GET",
       "path": "/production/eficiencia-fabril/appointments",
-      "operationId": "get_eficiencia_fabril_appointments_production_eficiencia_fabril_appointments_get",
-      "summary": "Get Eficiencia Fabril Appointments",
+      "operationId": "list_eficiencia_fabril_appointments",
+      "summary": "Eficiência fabril — apontamentos (carga bulk)",
       "tags": [
         "Produção"
       ],
@@ -376,8 +498,48 @@
     {
       "method": "GET",
       "path": "/production/eficiencia-fabril/dashboard",
-      "operationId": "get_eficiencia_fabril_dashboard_production_eficiencia_fabril_dashboard_get",
-      "summary": "Get Eficiencia Fabril Dashboard",
+      "operationId": "get_eficiencia_fabril_dashboard",
+      "summary": "Eficiência fabril — dashboard MOD e gráficos",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/losses/records",
+      "operationId": "get_production_losses_records",
+      "summary": "Registros detalhados de refugo/scrap",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/losses/top-materials",
+      "operationId": "get_production_losses_top_materials",
+      "summary": "Matérias-primas com mais refugo/scrap no período",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/oee",
+      "operationId": "get_production_oee",
+      "summary": "OEE produção — resumo e apontamentos (view fabril)",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/oee/appointments/{appointment_id}",
+      "operationId": "get_production_oee_appointment_by_id",
+      "summary": "Detalhe do apontamento OEE (roteiro, estrutura e tempos)",
       "tags": [
         "Produção"
       ],
@@ -405,6 +567,56 @@
     },
     {
       "method": "GET",
+      "path": "/production/orders/by-op/{production_order}",
+      "operationId": "get_production_order_by_op",
+      "summary": "Detalhe da OP por C2_OP",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/finished",
+      "operationId": "get_production_orders_finished",
+      "summary": "OPs finalizadas na data",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/finished-without-consumption",
+      "operationId": "get_production_orders_finished_without_consumption",
+      "summary": "OPs finalizadas sem consumo de componentes",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/open",
+      "operationId": "get_production_orders_open",
+      "summary": "OPs em aberto na data",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/otd",
+      "operationId": "get_production_otd",
+      "summary": "OTD produção — resumo e ordens (SC2010)",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/production/otd/series",
       "operationId": "get_production_otd_series_production_otd_series_get",
       "summary": "Get Production Otd Series",
@@ -425,11 +637,51 @@
     },
     {
       "method": "GET",
+      "path": "/production/planned-vs-real-time",
+      "operationId": "get_production_planned_vs_real_time",
+      "summary": "Tempo planejado × tempo real por OP",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/production/production_cost_pct",
       "operationId": "get_production_cost_pct_production_production_cost_pct_get",
       "summary": "Get Production Cost Pct",
       "tags": [
         "Produção"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/schedule/today",
+      "operationId": "get_production_schedule_today",
+      "summary": "Produtos programados para produzir na data",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/work-centers/average-planned-time",
+      "operationId": "get_production_work_center_average_planned_time",
+      "summary": "Tempo médio planejado por centro de trabalho",
+      "tags": [
+        "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/production/work-centers/order-summary",
+      "operationId": "get_production_work_center_order_summary",
+      "summary": "Resumo de OPs por centro de trabalho",
+      "tags": [
+        "Produção operacional"
       ],
       "deprecated": false
     },
@@ -730,6 +982,56 @@
       "summary": "Fornecedores do produto",
       "tags": [
         "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/",
+      "operationId": "list_propostas_comerciais_route_propostas_comerciais__get",
+      "summary": "List Propostas Comerciais Route",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}",
+      "operationId": "get_proposta_comercial_route_propostas_comerciais__proposta_interna__get",
+      "summary": "Get Proposta Comercial Route",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "summary": "Export Proposta Comercial Pdf Route",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "operationId": "export_proposta_comercial_pdf_with_overrides_route_propostas_comerciais__proposta_interna__pdf_post",
+      "summary": "Export Proposta Comercial Pdf With Overrides Route",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/purchases/top-products",
+      "operationId": "get_purchases_top_products",
+      "summary": "Produtos mais comprados no período",
+      "tags": [
+        "Compras operacionais"
       ],
       "deprecated": false
     },

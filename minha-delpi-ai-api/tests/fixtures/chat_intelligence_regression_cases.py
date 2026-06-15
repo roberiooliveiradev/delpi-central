@@ -273,6 +273,28 @@ SELECTION_CASES = [
         "expected_action_id": "production-oee-appointment",
     },
     {
+        "message": "dashboard eficiencia fabril com resultado mod",
+        "actions": [
+            {
+                "actionId": "eficiencia-fabril-dashboard",
+                "method": "GET",
+                "path": "/production/eficiencia-fabril/dashboard",
+                "operationId": "get_eficiencia_fabril_dashboard",
+                "summary": "Eficiência fabril — dashboard",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "production-oee-detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "summary": "OEE produção — apontamentos",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "eficiencia-fabril-dashboard",
+    },
+    {
         "message": "histórico de compras do produto 10080047",
         "actions": [
             {
@@ -569,6 +591,14 @@ SELECTION_CASES = [
         "message": "oee da produção",
         "actions": [
             {
+                "actionId": "production-oee-detail",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "summary": "OEE produção — apontamentos",
+                "parametersSchema": [],
+            },
+            {
                 "actionId": "oee",
                 "method": "GET",
                 "path": "/production/overall_equipment_effectiveness_pct",
@@ -577,7 +607,7 @@ SELECTION_CASES = [
                 "parametersSchema": [],
             },
         ],
-        "expected_action_id": "oee",
+        "expected_action_id": "production-oee-detail",
     },
     {
         "message": "resumo do produto 10080047",

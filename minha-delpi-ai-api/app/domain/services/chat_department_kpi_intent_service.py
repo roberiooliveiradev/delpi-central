@@ -136,9 +136,42 @@ class ChatDepartmentKpiIntentService:
         # Produção
         (
             "/production/",
+            "eficiencia-fabril",
+            (
+                "eficiencia fabril",
+                "eficiência fabril",
+                "dashboard eficiencia fabril",
+                "dashboard eficiência fabril",
+                "painel eficiencia fabril",
+                "resultado mod",
+                "mod fabril",
+                "horas ganhas",
+                "horas perdidas",
+            ),
+            ("oee ", "equipamento global", "overall equipment"),
+            "painel de eficiência fabril (MOD e apontamentos)",
+        ),
+        (
+            "/production/",
+            "oee",
+            (
+                "apontamentos oee",
+                "listagem oee",
+                "painel oee",
+                "oee de producao",
+                "oee de produção",
+                "oee da producao",
+                "oee da produção",
+                "fora da faixa",
+            ),
+            ("fabril", "resultado mod", "mod fabril", "equipamento global"),
+            "OEE produção — resumo e apontamentos",
+        ),
+        (
+            "/production/",
             "overall_equipment",
             ("oee", "eficiencia de equipamento", "eficiência de equipamento"),
-            (),
+            ("apontamento", "apontamentos", "fabril", "producao", "produção"),
             "OEE (eficiência global dos equipamentos)",
         ),
         (

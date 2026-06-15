@@ -8,6 +8,8 @@ from app.application.security.api_delpi_permissions import (
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata import (
+    PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS,
+    PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD,
     PRODUCTION_OEE,
     PRODUCTION_OEE_APPOINTMENT,
     PRODUCTION_OTD,
@@ -521,7 +523,7 @@ def get_on_time_delivery_pct(
         )
 
 
-@router.get("/eficiencia-fabril/dashboard")
+@router.get("/eficiencia-fabril/dashboard", **PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD)
 @require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_dashboard(
     date_start: str | None = Query(default=None),
@@ -566,7 +568,7 @@ def get_eficiencia_fabril_dashboard(
         )
 
 
-@router.get("/eficiencia-fabril/appointments")
+@router.get("/eficiencia-fabril/appointments", **PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS)
 @require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_appointments(
     date_start: str | None = Query(default=None),

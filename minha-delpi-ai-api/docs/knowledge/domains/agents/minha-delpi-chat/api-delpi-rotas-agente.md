@@ -100,7 +100,11 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 
 **`GET /production/oee`:** `branch`, `start_date`, `end_date`, `status` (`valid` / `outlier`), `product_type` (`PA` / `PI`), `work_center`, `production_order`, `page`, `page_size`, `sort_by`, `sort_dir`. Resposta: `summary` + `appointments` (SH6010, `H6_ZEFICI`, `appointment_id`). Não confundir com `/production/eficiencia-fabril/*` (métrica MOD/view).
 
-**`GET /production/oee/appointments/{appointment_id}`:** `appointment_id` (path), `branch` opcional. Resposta composta: `appointment`, `time_analysis` (previsto/real/eficiência), `routing_operations` (SG2), `structure` (BOM).
+**`GET /production/oee/appointments/{appointment_id}`:** `appointment_id` (path), `branch` opcional. Resposta composta: `appointment`, `time_analysis` (previsto/real/eficiência, `findings`), `routing_operations` (SG2), `structure` (BOM em árvore). Usada pelo OEE e pela eficiência fabril.
+
+**`GET /production/eficiencia-fabril/dashboard`:** `date_start`, `date_end`, `branch`, `op`, `employee`, `work_center`, `page`, `page_size`. Resposta: `summary` + `charts` + `items` com `appointment_id`.
+
+**`GET /production/eficiencia-fabril/appointments`:** carga bulk do período (`list_eficiencia_fabril_appointments`).
 
 ---
 

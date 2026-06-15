@@ -422,11 +422,37 @@ PRODUCTION_OEE_APPOINTMENT = agent_route(
         "time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, OEE H6_ZEFICI, "
         "findings com motivos/alertas automáticos), "
         "routing_operations (roteiro SG2010 com operação do apontamento destacada) e "
-        "structure (BOM do produto). Parâmetro branch opcional restringe a filial. "
+        "structure (BOM do produto em árvore). Parâmetro branch opcional restringe a filial. "
         "Use quando o usuário pedir detalhe do apontamento, roteiro, estrutura ou cálculo de tempos "
-        "previsto × realizado de um registro OEE — não para listagem paginada do período."
+        "previsto × realizado de um registro OEE ou eficiência fabril — não para listagem paginada do período. "
+        "Rota compartilhada pelo painel OEE e pelo MFE de eficiência fabril."
     ),
     operation_id="get_production_oee_appointment_by_id",
+)
+
+PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD = agent_route(
+    summary="Eficiência fabril — dashboard MOD e gráficos",
+    description=(
+        "Painel de eficiência fabril: KPIs (eficiência média na faixa 0–199%, resultado MOD, "
+        "horas ganhas/perdidas), gráficos por dia/operador/centro de trabalho e listagem paginada "
+        "de apontamentos (view vw_Apontamentos_Eficiencia; `appointment_id` via SH6010). "
+        "Use para eficiência fabril, resultado MOD, dashboard gerencial de apontamentos ou análise por CT/operador. "
+        "Parâmetros: date_start, date_end (obrigatórios), branch, op, employee, work_center, page, page_size. "
+        "Não confundir com GET /production/oee (painel OEE com mesma view, foco SH6010) nem com "
+        "GET /production/overall_equipment_effectiveness_pct (percentual agregado). "
+        "Detalhe de um apontamento: GET /production/oee/appointments/{appointment_id}."
+    ),
+    operation_id="get_eficiencia_fabril_dashboard",
+)
+
+PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS = agent_route(
+    summary="Eficiência fabril — apontamentos (carga bulk)",
+    description=(
+        "Lista completa de apontamentos de eficiência fabril no período (sem paginação server-side). "
+        "Use para volume total de apontamentos no intervalo ou integrações que recalculam localmente. "
+        "Para KPIs, gráficos e paginação, prefira GET /production/eficiencia-fabril/dashboard."
+    ),
+    operation_id="list_eficiencia_fabril_appointments",
 )
 
 SUPPLIES_INVENTORY_TURNOVER = agent_route(

@@ -131,6 +131,33 @@
     ],
     "productionOeeAppointmentPath": "/production/oee/appointments/",
     "productionOeeAppointmentOperationId": "get_production_oee_appointment_by_id",
+    "productionEficienciaFabrilTerms": [
+      "eficiencia fabril",
+      "eficiência fabril",
+      "dashboard eficiencia fabril",
+      "dashboard eficiência fabril",
+      "painel eficiencia fabril",
+      "painel eficiência fabril",
+      "resultado mod",
+      "mod fabril",
+      "horas ganhas",
+      "horas perdidas",
+      "eficiencia operacional",
+      "eficiência operacional",
+      "eficiencia por ct",
+      "eficiência por ct",
+      "grafico eficiencia",
+      "gráfico eficiência"
+    ],
+    "productionEficienciaFabrilDashboardPath": "/production/eficiencia-fabril/dashboard",
+    "productionEficienciaFabrilDashboardOperationId": "get_eficiencia_fabril_dashboard",
+    "productionEficienciaFabrilAppointmentsTerms": [
+      "carga bulk eficiencia fabril",
+      "lista completa apontamentos fabril",
+      "todos apontamentos eficiencia fabril"
+    ],
+    "productionEficienciaFabrilAppointmentsPath": "/production/eficiencia-fabril/appointments",
+    "productionEficienciaFabrilAppointmentsOperationId": "list_eficiencia_fabril_appointments",
     "refinementFallbackMessages": {
       "pagination": "paginação",
       "depth": "profundidade"
@@ -589,6 +616,8 @@
     "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",
     "kpiOtd": "A pergunta solicita o indicador OTD de suprimentos.",
     "kpiProductionOtdDetail": "A pergunta solicita OTD de produção com resumo e listagem de ordens finalizadas (SC2010).",
+    "kpiProductionOeeDetail": "A pergunta solicita OEE de produção com resumo e listagem de apontamentos (view fabril).",
+    "kpiEficienciaFabrilDashboard": "A pergunta solicita o painel de eficiência fabril (MOD, gráficos e apontamentos).",
     "kpiIdd": "A pergunta solicita giro de estoque (IDD) em suprimentos.",
     "kpiStockValue": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
     "kpiMetricRefinementDefault": "Refino de indicador de suprimentos.",

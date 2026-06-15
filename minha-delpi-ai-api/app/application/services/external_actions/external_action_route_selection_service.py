@@ -119,6 +119,7 @@ class ExternalActionRouteSelectionService:
 
         candidates = self._prioritize_production_otd_detail_candidates(message, candidates)
         candidates = self._prioritize_production_oee_appointment_candidates(message, candidates)
+        candidates = self._prioritize_production_eficiencia_fabril_candidates(message, candidates)
         candidates = self._prioritize_production_oee_detail_candidates(message, candidates)
 
         for action in candidates:
@@ -622,6 +623,78 @@ class ExternalActionRouteSelectionService:
 
         return appointment_actions or candidates
 
+    def _prioritize_production_eficiencia_fabril_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        fabril_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionEficienciaFabrilTerms",
+        )
+        if not any(term in normalized for term in fabril_terms):
+            appointments_terms = ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productionEficienciaFabrilAppointmentsTerms",
+            )
+            if not any(term in normalized for term in appointments_terms):
+                return candidates
+
+        appointments_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionEficienciaFabrilAppointmentsPath",
+            default="/production/eficiencia-fabril/appointments",
+        ).lower()
+        appointments_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionEficienciaFabrilAppointmentsOperationId",
+            default="list_eficiencia_fabril_appointments",
+        ).lower()
+
+        if any(
+            term in normalized
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productionEficienciaFabrilAppointmentsTerms",
+            )
+        ):
+            appointment_actions = [
+                action
+                for action in candidates
+                if (
+                    str(action.get("path") or "").lower().rstrip("/")
+                    == appointments_path.rstrip("/")
+                    or appointments_operation
+                    in str(action.get("operationId") or "").lower()
+                )
+            ]
+            if appointment_actions:
+                return appointment_actions
+
+        dashboard_path = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionEficienciaFabrilDashboardPath",
+            default="/production/eficiencia-fabril/dashboard",
+        ).lower()
+        dashboard_operation = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "productionEficienciaFabrilDashboardOperationId",
+            default="get_eficiencia_fabril_dashboard",
+        ).lower()
+
+        dashboard_actions = [
+            action
+            for action in candidates
+            if (
+                str(action.get("path") or "").lower().rstrip("/") == dashboard_path.rstrip("/")
+                or dashboard_operation in str(action.get("operationId") or "").lower()
+            )
+        ]
+
+        return dashboard_actions or candidates
+
     def _prioritize_production_oee_detail_candidates(
         self,
         message: str,
@@ -634,6 +707,10 @@ class ExternalActionRouteSelectionService:
             "productionOeeDetailTerms",
         )
         oee_terms = ("oee", "eficiencia", "eficiência", "equipamento", "equipamentos", "zefici")
+        fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
+
+        if any(term in normalized for term in fabril_block_terms):
+            return candidates
 
         if not any(term in normalized for term in detail_terms):
             return candidates

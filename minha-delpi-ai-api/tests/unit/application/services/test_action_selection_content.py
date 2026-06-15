@@ -42,13 +42,22 @@ def test_action_selection_heuristic_terms_exist():
     )
     assert ExternalActionResponseContentService.get(
         "actionSelection",
-        "productionOeeAppointmentOperationId",
+        "productionEficienciaFabrilDashboardPath",
+    )
+    assert ExternalActionResponseContentService.get(
+        "actionSelection",
+        "productionEficienciaFabrilDashboardOperationId",
     )
     appointment_terms = ExternalActionResponseContentService.list(
         "actionSelection",
         "productionOeeAppointmentTerms",
     )
     assert "roteiro do apontamento" in appointment_terms
+    fabril_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionEficienciaFabrilTerms",
+    )
+    assert "eficiencia fabril" in fabril_terms
 
 
 def test_selection_reasons_keys_exist():
@@ -63,6 +72,8 @@ def test_selection_reasons_keys_exist():
         "lmpQuery",
         "kpiCpv",
         "kpiStockValue",
+        "kpiProductionOeeDetail",
+        "kpiEficienciaFabrilDashboard",
         "semanticRankReason",
     )
 

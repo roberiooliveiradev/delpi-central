@@ -513,7 +513,7 @@
     {
       "method": "GET",
       "path": "/production/eficiencia-fabril/appointments",
-      "operation_id": "get_eficiencia_fabril_appointments_production_eficiencia_fabril_appointments_get",
+      "operation_id": "list_eficiencia_fabril_appointments",
       "tags": [
         "Produção"
       ],
@@ -526,7 +526,7 @@
     {
       "method": "GET",
       "path": "/production/eficiencia-fabril/dashboard",
-      "operation_id": "get_eficiencia_fabril_dashboard_production_eficiencia_fabril_dashboard_get",
+      "operation_id": "get_eficiencia_fabril_dashboard",
       "tags": [
         "Produção"
       ],

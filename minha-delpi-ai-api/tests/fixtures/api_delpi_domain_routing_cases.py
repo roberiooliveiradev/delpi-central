@@ -37,6 +37,7 @@ AUDIT_DOMAIN_MESSAGES: dict[str, list[str]] = {
     ],
     "production": [
         "oee da produção",
+        "dashboard eficiencia fabril com resultado mod",
     ],
     "quality": [
         "resumo de kaizens do mês",

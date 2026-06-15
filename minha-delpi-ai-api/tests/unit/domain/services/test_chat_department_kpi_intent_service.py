@@ -75,3 +75,21 @@ def test_resolve_audit_5s_operational_audits():
     assert match is not None
     assert match.domain_prefix == "/quality/audit-5s/"
     assert match.path_token == "audits"
+
+
+def test_resolve_eficiencia_fabril_dashboard():
+    match = ChatDepartmentKpiIntentService.resolve(
+        "dashboard eficiencia fabril com resultado mod"
+    )
+
+    assert match is not None
+    assert match.path_token == "eficiencia-fabril"
+    assert match.domain_prefix == "/production/"
+
+
+def test_resolve_production_oee_apontamentos():
+    match = ChatDepartmentKpiIntentService.resolve("listar apontamentos oee fora da faixa")
+
+    assert match is not None
+    assert match.path_token == "oee"
+    assert match.domain_prefix == "/production/"

@@ -889,12 +889,31 @@
       ]
     },
     {
+      "token": "/production/oee",
+      "category": "OEE produção — apontamentos",
+      "examples": [
+        "listar apontamentos oee",
+        "apontamentos fora da faixa",
+        "painel oee producao"
+      ]
+    },
+    {
+      "token": "/production/oee/appointments/",
+      "category": "Detalhe do apontamento (roteiro e tempos)",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro do apontamento",
+        "analise de tempos previsto x realizado"
+      ]
+    },
+    {
       "token": "/eficiencia-fabril",
       "category": "Eficiência fabril",
       "examples": [
         "eficiencia fabril",
-        "apontamentos de producao",
-        "dashboard eficiencia fabril"
+        "dashboard eficiencia fabril",
+        "resultado mod fabril",
+        "apontamentos de producao"
       ]
     },
     {

@@ -253,8 +253,8 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 | **OEE produção — resumo e apontamentos** | `GET /production/oee` | `get_production_oee` |
 | **Detalhe apontamento OEE** | `GET /production/oee/appointments/{appointment_id}` | `get_production_oee_appointment_by_id` |
 | **Série temporal OEE** | `GET /production/oee/series` | `get_production_oee_series` |
-| **Eficiência fabril — dashboard** | `GET /production/eficiencia-fabril/dashboard` | path `eficiencia-fabril/dashboard` |
-| **Eficiência fabril — apontamentos** | `GET /production/eficiencia-fabril/appointments` | path `eficiencia-fabril/appointments` |
+| **Eficiência fabril — dashboard** | `GET /production/eficiencia-fabril/dashboard` | `get_eficiencia_fabril_dashboard` |
+| **Eficiência fabril — apontamentos** | `GET /production/eficiencia-fabril/appointments` | `list_eficiencia_fabril_appointments` |
 | Custo direto mão de obra | `GET /production/direct_labor_cost_pct` | `get_direct_labor_cost_pct` |
 | Custo de produção | `GET /production/production_cost_pct` | `get_production_cost_pct` |
 | Depreciação % ROL | `GET /production/depreciation_pct` | `get_depreciation_pct` |
@@ -296,7 +296,8 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 
 - `date_start`, `date_end` — período obrigatório (`YYYY-MM-DD`).
 - `branch`, `op`, `employee`, `work_center` — filtros opcionais.
-- Dashboard: `page`, `page_size`, `status_ok_only` (default `true`).
+- Dashboard (`get_eficiencia_fabril_dashboard`): `page`, `page_size`, `status_ok_only` (default `true`).
+- Appointments bulk (`list_eficiencia_fabril_appointments`): `status_ok_only` (default `false` na API; MFE usa `false` na carga).
 
 **Resposta (dashboard):** `summary` (eficiência média na faixa 0–199%, MOD, horas) + `charts` + `items` paginados com **`appointment_id`** (vínculo SH6010). Apontamentos fora da faixa aparecem na listagem do MFE como **Verificar**. Clique na linha → detalhe via `GET /production/oee/appointments/{appointment_id}` (mesmo contrato do painel OEE, incluindo `time_analysis.findings` e estrutura em árvore).
 
