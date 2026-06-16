@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–11 concluídas; **Fase 12 em curso** (jun/2026) — predicados produto 100% JSON (`routePredicates` + `playbookPredicates`); sub-intents clássicos + `_CUSTOM_PREDICATES` residual (~15 entradas KPI/LMP/sistema)  
+**Status:** Fases 0–13 concluídas (jun/2026) — predicados produto + domínio + sistema em JSON; `_CUSTOM_PREDICATES` residual **4 entradas** (busca produto + KPI departamental + normas técnicas); Fase 14 (apresentação) em backlog  
 **Data:** jun/2026  
 **Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -44,7 +44,7 @@ ExternalActionSelectionDispatchService (~250 linhas — preflight + loop registr
 | `vocabularyFastPaths` | **Removido** — migrado para `operationalRoutes` no registry |
 | `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `ChatProductRoutePredicateService` |
 | `routePredicates` / `playbookPredicates` | **JSON** em `product_query_intent.json` — rotas operacionais + playbook produto |
-| `_CUSTOM_PREDICATES` residual | **~15 entradas** — KPI detalhe, LMP, system metadata, helpers (`departmentKpiResolved`, …) |
+| `_CUSTOM_PREDICATES` residual | **4 entradas** — busca produto (guards compostos), KPI departamental, normas técnicas |
 | Ranking legado FULL | **Removido** — `ExternalActionProductRouteRankingService` deletado |
 | Provider bias `api_delpi`/`api_externa` | **Removido** — desempate por `allowed_action_ids` |
 | Continuação multi-turno | **`select_by_route_segment`** + `routeSegment` no registry |
@@ -64,7 +64,7 @@ flowchart TD
     G -->|None| H
 ```
 
-**Problema restante:** `_CUSTOM_PREDICATES` KPI/LMP/sistema; `detect()`/`refine()` em Python; apresentação ainda keyed por api-delpi (`ChatApiDelpiResponseProfileService`); homologação manual DoD §11 pendente.
+**Problema restante:** `_CUSTOM_PREDICATES` busca produto (guards compostos); `detect()`/`refine()` em Python; apresentação ainda keyed por api-delpi (`ChatApiDelpiResponseProfileService`); homologação manual DoD §11 pendente.
 
 ### 2.3 Estado legado (referência histórica pós `519f3834`)
 
@@ -522,7 +522,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Playbook produto (directives, factory/shipping, preço MP, exclusividade, …) 100% JSON
 - [x] Lint: allowlist unifica registry + `routePredicates` + `playbookPredicates`
 
-### Fase 12 — Sub-intents clássicos + fechamento DoD (em curso)
+### Fase 12 — Sub-intents clássicos + fechamento DoD (concluída)
 
 - [x] `subIntentPredicates` — stock, sales, structure, parents, description, stockScopeReset, productSubIntent
 - [x] Matcher: `pluralScopeLinked`, `hasProductEntityReference`, `regexPatternsFrom`
@@ -530,13 +530,13 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [ ] Homologação manual: `docs/testing/smoke-operacional-manual.md`
 - [x] Atualizar `inteligencia-chat-onda-8.md`, audit e catalog (este doc)
 
-### Fase 13 — Domínio transversal (KPI/LMP/sistema) — em curso
+### Fase 13 — Domínio transversal (KPI/LMP/sistema) — concluída
 
 - [x] `domainPredicates` em `external_action_responses.json` (saleOrders, transforma, KPI produção/suprimentos, LMP)
 - [x] Matcher: `hasLmpSaleNumber` / `lacksLmpSaleNumber`; padrões OV em JSON
-- [x] `_CUSTOM_PREDICATES` reduzido a busca produto + system metadata + helpers (~9 entradas)
-- [ ] Predicados system metadata declarativos (dependem de `ChatSystemMetadataIntentService`)
-- [ ] Predicados product search declarativos (guards compostos)
+- [x] `systemPredicates` — systemMetadataQuestion, systemWants*, systemHasTableName (`hasSystemTableName`)
+- [x] `_CUSTOM_PREDICATES` reduzido a busca produto + helpers (~4 entradas)
+- [ ] Predicados product search declarativos (guards compostos — dependem de múltiplos serviços de intenção)
 
 ### Fase 14 — Apresentação provider-agnóstica (backlog)
 
@@ -596,7 +596,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | # | Critério | Status jun/2026 |
 |---|----------|-----------------|
 | 1 | **Zero** path api-delpi em ranking legado (`ExternalActionProductRouteRankingService` removido) | ✅ |
-| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers/KPI/LMP/sistema | 🟡 ~15 entradas |
+| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers (busca produto, KPI dept., normas) | 🟡 4 entradas |
 | 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
 | 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
 | 5 | Documentação onda 8 / audit / catalog atualizadas | 🟡 em curso |

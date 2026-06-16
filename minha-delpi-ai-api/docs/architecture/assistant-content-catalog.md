@@ -29,7 +29,7 @@ Wrappers especializados (mantêm API estável):
 
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
-| `external_action_responses.json` | **`domainPredicates`** (KPI/LMP/OV/transforma) + `actionSelection` + `selectionReasons` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService` |
+| `external_action_responses.json` | **`domainPredicates`** + **`systemPredicates`** (KPI/LMP/OV/transforma/sistema) + `actionSelection` + `selectionReasons` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService` |
 | `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, ~78 rotas, predicados, intent binding) | `OperationalRouteRegistryService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
 | `product_query_intent.json` | Marcadores de intenção operacional; **`routePredicates`**, **`playbookPredicates`**, **`subIntentPredicates`** (DOCIE Fase 11–12); vocabulário em seções (`directives`, `purchases`, `factoryStatus`, …) | `ChatProductQueryIntentService`, `ChatProductRoutePredicateService`, `OperationalRouteMatcherService` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |

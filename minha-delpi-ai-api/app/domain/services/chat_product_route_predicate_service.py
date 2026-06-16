@@ -12,7 +12,7 @@ _PREDICATE_SOURCES: tuple[tuple[str, tuple[str, ...]], ...] = (
         "product_query_intent",
         ("routePredicates", "playbookPredicates", "subIntentPredicates"),
     ),
-    ("external_action_responses", ("domainPredicates",)),
+    ("external_action_responses", ("domainPredicates", "systemPredicates")),
 )
 
 

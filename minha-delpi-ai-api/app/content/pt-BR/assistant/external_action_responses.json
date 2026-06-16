@@ -355,6 +355,24 @@
         "relacionamento da tabela"
       ]
     },
+    "systemMetadataColumnTerms": [
+      "coluna"
+    ],
+    "systemMetadataRelationTerms": [
+      "relacion",
+      "relacionar",
+      "join",
+      "ligar",
+      "associar"
+    ],
+    "systemMetadataTableSearchPhrases": [
+      "buscar tabela",
+      "pesquisar tabela",
+      "qual tabela",
+      "qual a tabela",
+      "qual e a tabela",
+      "tabelas do"
+    ],
     "systemTableSearch": {
       "patterns": [
         "(?:buscar|pesquisar|procurar)\\s+tabelas?\\s+(.+?)(?:\\?|$)",
@@ -584,6 +602,28 @@
         { "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms" },
         { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms" }
       ]
+    }
+  },
+  "systemPredicates": {
+    "systemMetadataQuestion": {
+      "termsFrom": "external_action_responses.actionSelection.systemMetadata.terms"
+    },
+    "systemWantsColumns": {
+      "termsFrom": "external_action_responses.actionSelection.systemMetadataColumnTerms"
+    },
+    "systemWantsRelations": {
+      "termsFrom": "external_action_responses.actionSelection.systemMetadataRelationTerms"
+    },
+    "systemWantsTableSearch": {
+      "anyOf": [
+        {
+          "termsFrom": "external_action_responses.actionSelection.systemMetadataTableSearchPhrases"
+        },
+        { "regexPatterns": ["\\bqual\\s+(?:a\\s+)?tabela\\b"] }
+      ]
+    },
+    "systemHasTableName": {
+      "hasSystemTableName": true
     }
   },
   "selectionReasons": {

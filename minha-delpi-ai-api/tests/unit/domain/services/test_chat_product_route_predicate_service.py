@@ -136,3 +136,21 @@ def test_supplies_otd_domain_predicate():
     )
 
     assert ChatProductRoutePredicateService.matches("suppliesOtdRoute", normalized)
+
+
+def test_system_predicates_metadata_routes():
+    columns = ChatMessageNormalizationService.normalize_for_matching(
+        "colunas da tabela sb1"
+    )
+    relations = ChatMessageNormalizationService.normalize_for_matching(
+        "relacionamentos da tabela sb1"
+    )
+    table_search = ChatMessageNormalizationService.normalize_for_matching(
+        "qual tabela guarda clientes"
+    )
+
+    assert ChatProductRoutePredicateService.matches("systemMetadataQuestion", columns)
+    assert ChatProductRoutePredicateService.matches("systemWantsColumns", columns)
+    assert ChatProductRoutePredicateService.matches("systemHasTableName", columns)
+    assert ChatProductRoutePredicateService.matches("systemWantsRelations", relations)
+    assert ChatProductRoutePredicateService.matches("systemWantsTableSearch", table_search)

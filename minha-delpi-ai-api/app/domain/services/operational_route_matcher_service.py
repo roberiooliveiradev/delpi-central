@@ -38,26 +38,6 @@ def _extract_lmp_sale_number(text: str | None) -> str | None:
     return None
 
 
-def _looks_like_system_metadata_question(normalized: str) -> bool:
-    return ChatSystemMetadataIntentService.looks_like_question(normalized)
-
-
-def _system_has_table_name(normalized: str) -> bool:
-    return bool(ChatSystemMetadataIntentService.extract_table_name(normalized))
-
-
-def _system_wants_columns(normalized: str) -> bool:
-    return ChatSystemMetadataIntentService.wants_columns(normalized)
-
-
-def _system_wants_relations(normalized: str) -> bool:
-    return ChatSystemMetadataIntentService.wants_relations(normalized)
-
-
-def _system_wants_table_search(normalized: str) -> bool:
-    return ChatSystemMetadataIntentService.wants_table_search(normalized)
-
-
 def _looks_like_product_search_question(normalized: str) -> bool:
     from app.domain.services.chat_product_search_intent_service import (
         ChatProductSearchIntentService,
@@ -97,15 +77,10 @@ def _technical_normas_description_block(normalized: str) -> bool:
 
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "systemMetadataQuestion": _looks_like_system_metadata_question,
         "productSearchQuestion": _looks_like_product_search_question,
         "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
         "departmentKpiResolved": _department_kpi_resolved,
         "technicalNormasDescriptionBlock": _technical_normas_description_block,
-        "systemHasTableName": _system_has_table_name,
-        "systemWantsColumns": _system_wants_columns,
-        "systemWantsRelations": _system_wants_relations,
-        "systemWantsTableSearch": _system_wants_table_search,
     }
 
     @classmethod
@@ -249,6 +224,10 @@ class OperationalRouteMatcherService:
             if _extract_lmp_sale_number(message or normalized):
                 return False
 
+        if spec.get("hasSystemTableName"):
+            if not ChatSystemMetadataIntentService.extract_table_name(message or normalized):
+                return False
+
         if spec.get("hasProductIdentifier"):
             identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
@@ -269,6 +248,7 @@ class OperationalRouteMatcherService:
             and not spec.get("lacksProductIdentifier")
             and not spec.get("hasLmpSaleNumber")
             and not spec.get("lacksLmpSaleNumber")
+            and not spec.get("hasSystemTableName")
             and not plural_scope
             and not spec.get("hasProductEntityReference")
             and not regex_patterns_from
@@ -388,4 +368,11 @@ class OperationalRouteMatcherService:
 
     @classmethod
     def looks_like_system_metadata_question(cls, normalized: str) -> bool:
-        return _looks_like_system_metadata_question(normalized)
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        return ChatProductRoutePredicateService.matches(
+            "systemMetadataQuestion",
+            normalized,
+        )
