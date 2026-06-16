@@ -137,6 +137,12 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product",
         "shape": "product_snapshot",
     },
+    "product_directives_90260882.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_product_directives",
+        "entity": "product_directives",
+        "shape": "composite_analysis",
+    },
     "product_search.json": {
         "dataVersion": "2026-06",
         "operationId": "search_products",

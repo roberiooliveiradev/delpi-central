@@ -444,6 +444,66 @@ def test_render_plan_explicit_table_from_table_presentations_bundle():
     )
 
 
+def test_render_plan_explicit_table_emits_operational_tables_for_multi_table_bundle():
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    metadata = {
+        "explicitSessionFormat": "table",
+        "preferredFormat": "table",
+        "presentationDecision": {
+            "selected": "table",
+            "layoutMode": "stack",
+            "availableViews": ["text", "table"],
+        },
+        "presentation": {
+            "type": "table",
+            "title": "Fornecedores por matéria-prima",
+            "columns": [],
+            "rows": [{"supplier_code": "1"}],
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Estrutura do produto (BOM)",
+                "role": "structure",
+                "columns": [],
+                "rows": [{"component_code": "1"}],
+            },
+            {
+                "type": "table",
+                "title": "Fornecedores por matéria-prima",
+                "role": "list",
+                "columns": [],
+                "rows": [{"supplier_code": "1"}],
+            },
+            {
+                "type": "table",
+                "title": "Última compra por matéria-prima",
+                "role": "list",
+                "columns": [],
+                "rows": [{"invoice_number": "1"}],
+            },
+        ],
+        "textPresentation": {"markdown": "### Diretivas\n\nResumo."},
+    }
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+    table_segments = [segment for segment in segments if segment.get("kind") == "table"]
+
+    assert metadata["renderPlan"]["layoutMode"] == "single"
+    assert table_segments == [
+        {
+            "kind": "table",
+            "slot": "operationalTables",
+            "source": "tablePresentations",
+        },
+    ]
+
+
 def test_render_plan_explicit_text_mode_uses_stack_with_markdown():
     from app.domain.services.chat_presentation_render_pipeline_service import (
         ChatPresentationRenderPipelineService,

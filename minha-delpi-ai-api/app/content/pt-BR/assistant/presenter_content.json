@@ -3,6 +3,7 @@
     "eficiencia-fabril": "Eficiência fabril",
     "eficiencia_fabril": "Eficiência fabril",
     "/structure": "Estrutura do produto",
+    "/directives/": "Diretivas do produto",
     "/parents": "Produtos pai (onde é usado)",
     "/stock": "Estoque do produto",
     "/suppliers": "Fornecedores do produto",
@@ -745,6 +746,18 @@
       "dashboardTitle": "Painel do simulador — {code}",
       "dashboardTitleGeneric": "Painel do simulador de custos"
     },
+    "directives": {
+      "titleWithCode": "Diretivas do produto — {code}",
+      "titleGeneric": "Diretivas do produto",
+      "introWithDescription": "Diretivas do PA **{code}** ({description}): estrutura, fornecedores e última compra das MPs.",
+      "introCodeOnly": "Diretivas do produto **{code}** — estrutura, fornecedores e última compra das matérias-primas.",
+      "resolutionLine": "Identificador **{identifier}** → PA **{code}** (referência cliente **{customer_reference}**).",
+      "summaryLine": "**{raw_materials}** MP(s) na estrutura · **{suppliers}** vínculo(s) fornecedor · **{with_purchase}** com última compra · **{without_purchase}** sem NF recente.",
+      "structureTableTitle": "Estrutura do produto (BOM)",
+      "suppliersTableTitle": "Fornecedores por matéria-prima",
+      "lastPurchaseTableTitle": "Última compra por matéria-prima",
+      "rawMaterialsTableTitle": "Matérias-primas — fornecedores e última compra"
+    },
     "lastPurchase": {
       "titleWithCode": "Última compra — {code}",
       "titleGeneric": "Última compra da matéria-prima",
@@ -1344,6 +1357,15 @@
       "noMovement": "Sem movimento de inspeção final/expedição no intervalo consultado.",
       "attentionLossOnly": "Perda registrada sem expedição — validar reprovação ou retrabalho.",
       "attentionHighLoss": "Perda de inspeção elevada frente ao expedido — revisar CT/recurso."
+    },
+    "directives": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "introWithDescription": "Diretivas do PA **{code}** ({description}): estrutura, fornecedores e última compra das MPs.",
+      "introCodeOnly": "Diretivas do produto **{code}** — estrutura, fornecedores e última compra das matérias-primas.",
+      "summaryLine": "**{raw_materials}** MP(s) na estrutura · **{suppliers}** vínculo(s) fornecedor · **{with_purchase}** com última compra · **{without_purchase}** sem NF recente.",
+      "tableVisualizationHint": "Consulte as **tabelas** abaixo: estrutura (BOM), fornecedores por MP e última NF de compra.",
+      "attentionWithoutPurchase": "**{count}** MP(s) sem NF de compra recente — validar se o item é comprado ou transferido internamente."
     },
     "stock": {
       "highlightsHeader": "**Destaques**",

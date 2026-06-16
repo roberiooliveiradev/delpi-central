@@ -45,7 +45,11 @@
     "resumo de kaizen",
     "ficha completa",
     "analisador",
-    "analyzer"
+    "analyzer",
+    "diretiva",
+    "diretivas",
+    "directive",
+    "directives"
   ],
   "resumoOverviewMarkers": ["resumo do produto", "resumo sintetico"],
   "meFaleProductTokens": ["produto", "item", "material", "codigo", "código", "sku"]

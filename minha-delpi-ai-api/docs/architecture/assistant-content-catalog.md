@@ -29,12 +29,15 @@ Wrappers especializados (mantêm API estável):
 
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
-| `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions; **`selectionReasons`** (motivos de rota OpenAPI); **`actionSelection`** (termos OTD suprimentos/produção, listagem OPs) | `ExternalActionResponseContentService`, `external_action_*_route_selection_service` |
+| `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions; **`selectionReasons`** (motivos de rota OpenAPI); **`actionSelection`** (termos OTD suprimentos/produção, listagem OPs); **`actionSelection.vocabularyFastPaths`** (fast paths declarativos — transição para `operational_route_registry.json`; ver [DOCIE](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md)) | `ExternalActionResponseContentService`, `ExternalActionVocabularyRouteSelectionService`, `external_action_*_route_selection_service` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `product_query_intent.json` | Marcadores de intenção operacional de produto (incl. `directives` — BOM + fornecedores + última compra por referência/DELPI) | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
 | `api_route_domains.json` | Domínios de rota operacional (incl. `product_directives`) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
+| `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
+| `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
+| Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
 | `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `ExternalActionProductionOperationalRouteSelectionService` |
 | `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |

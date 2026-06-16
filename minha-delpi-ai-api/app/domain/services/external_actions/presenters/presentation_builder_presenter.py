@@ -96,6 +96,12 @@ class ExternalActionPresentationBuilderPresenter:
 
                 return self._host._build_playbook_report_table(root, path, entity=entity)
 
+            if entity == "product_directives":
+                tables = self._host.build_product_directives_table_presentations(root, path)
+
+                if tables:
+                    return tables[0]
+
             if entity == "product_raw_material_price_intelligence":
                 tables = self._host.build_raw_material_price_intelligence_table_presentations(
                     root,

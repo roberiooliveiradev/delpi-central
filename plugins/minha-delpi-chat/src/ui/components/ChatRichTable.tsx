@@ -9,6 +9,7 @@ import {
   buildCategoryFilterOptions,
 } from "./presentationCategoryFilter";
 import { formatChartColumnLabel } from "./chartAxisSelection";
+import { buildFieldLabelsFromTableColumns } from "./presentationFieldLabels";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { tablePresentationToMarkdown } from "./chatPresentation";
@@ -51,9 +52,19 @@ export function ChatRichTable({
     setCategoryFilterValue(null);
   }, [rows, title]);
 
+  const fieldLabels = useMemo(
+    () => buildFieldLabelsFromTableColumns(columns).fieldLabels,
+    [columns],
+  );
+
   const categoryFilterOptions = useMemo(
-    () => buildCategoryFilterOptions(rows, columns.map((column) => column.key)),
-    [columns, rows],
+    () =>
+      buildCategoryFilterOptions(
+        rows,
+        columns.map((column) => column.key),
+        fieldLabels,
+      ),
+    [columns, fieldLabels, rows],
   );
 
   const filteredRows = useMemo(
@@ -166,7 +177,7 @@ export function ChatRichTable({
                 </label>
                 {categoryFilterKey ? (
                   <label className="mdc-rich-chart__ux-field mdc-rich-table__filter">
-                    <span>{formatChartColumnLabel(categoryFilterKey)}</span>
+                    <span>{formatChartColumnLabel(categoryFilterKey, fieldLabels)}</span>
                     <select
                       value={categoryFilterValue ?? ""}
                       onChange={(event) => {

@@ -4,7 +4,10 @@ import {
   getPresentationDecisionFromToolCalls,
   getTextMarkdownFromToolCalls,
 } from "./chatPresentation";
-import { resolveRenderPlanForExecution } from "./renderPlanSegmentBuilder";
+import {
+  resolveRenderPlanForExecution,
+  resolveVisualSegmentsForRenderSpec,
+} from "./renderPlanSegmentBuilder";
 import {
   isNativeSingleViewSelection,
   orderVisualSegments,
@@ -45,17 +48,7 @@ export function buildNativeSingleViewSegments(
     }
 
     for (const spec of renderPlan.segments) {
-      const kind = String(spec.kind || "").trim().toLowerCase();
-
-      if (kind === "decision" || kind === "markdown") {
-        continue;
-      }
-
-      const match = visuals.find((visual) => visual.kind === kind);
-
-      if (match) {
-        segments.push(match);
-      }
+      segments.push(...resolveVisualSegmentsForRenderSpec(spec, visuals, toolCalls));
     }
 
     return segments.length ? segments : null;

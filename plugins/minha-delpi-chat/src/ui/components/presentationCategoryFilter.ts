@@ -1,4 +1,5 @@
 import { formatChartColumnLabel } from "./chartAxisSelection";
+import type { FieldLabels } from "./presentationFieldLabels";
 
 export type CategoryFilterOption = {
   key: string;
@@ -30,6 +31,7 @@ function scoreFilterKey(key: string): number {
 export function buildCategoryFilterOptions(
   rows: Record<string, unknown>[] | undefined | null,
   candidateKeys?: string[],
+  fieldLabels?: FieldLabels | null,
 ): CategoryFilterOption[] {
   if (!Array.isArray(rows) || !rows.length) {
     return [];
@@ -62,7 +64,7 @@ export function buildCategoryFilterOptions(
 
     options.push({
       key,
-      label: formatChartColumnLabel(key),
+      label: formatChartColumnLabel(key, fieldLabels),
       values,
     });
   }

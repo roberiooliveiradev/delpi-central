@@ -206,6 +206,13 @@ P6_EXTENDED_PIPELINE_CASES: tuple[dict[str, str], ...] = (
         "fixture": "product_production_status_90269002.json",
         "user_message": "",
     },
+    {
+        "id": "product_directives_auto",
+        "profile_key": "directives",
+        "path": "/products/directives/90260882",
+        "fixture": "product_directives_90260882.json",
+        "user_message": "diretivas 90260882",
+    },
 )
 
 

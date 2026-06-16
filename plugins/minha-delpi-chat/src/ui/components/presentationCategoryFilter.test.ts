@@ -30,4 +30,28 @@ describe("presentationCategoryFilter", () => {
     expect(buildCategoryFilterOptions(undefined)).toEqual([]);
     expect(applyCategoryFilter(undefined, "filial", "01")).toEqual([]);
   });
+
+  it("usa rótulos da apresentação quando fieldLabels informado", () => {
+    const rows = [
+      { parent_code: "90260882", description: "Item A" },
+      { parent_code: "50250258", description: "Item B" },
+    ];
+    const fieldLabels = {
+      parent_code: "Código pai",
+      description: "Descrição",
+    };
+
+    const options = buildCategoryFilterOptions(
+      rows,
+      ["parent_code", "description"],
+      fieldLabels,
+    );
+
+    expect(options.find((option) => option.key === "parent_code")?.label).toBe(
+      "Código pai",
+    );
+    expect(options.find((option) => option.key === "description")?.label).toBe(
+      "Descrição",
+    );
+  });
 });

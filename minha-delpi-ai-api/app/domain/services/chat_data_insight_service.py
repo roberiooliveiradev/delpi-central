@@ -378,6 +378,11 @@ class ChatDataInsightService:
         if isinstance(data.get("items"), list):
             return [row for row in data["items"] if isinstance(row, dict)]
 
+        raw_materials = data.get("raw_materials")
+
+        if isinstance(raw_materials, list) and raw_materials:
+            return [row for row in raw_materials if isinstance(row, dict)]
+
         nested = data.get("data")
 
         if isinstance(nested, dict) and isinstance(nested.get("items"), list):

@@ -33,6 +33,7 @@
     "product_raw_material_price_intelligence": "raw_material_price_intelligence",
     "product_cost_impact_simulation": "cost_impact_simulation",
     "product_last_purchase": "last_purchase",
+    "product_directives": "directives",
     "product_purchase_price_history": "purchase_price_history",
     "product_purchase_budget_history": "purchase_budget_history",
     "product_guide": "table_list",
@@ -738,6 +739,29 @@
       "humanizedNarrative": "skip",
       "compositeVisualSpec": "sale_pricing",
       "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
+    },
+    "directives": {
+      "defaultViewPolicy": "table_when_available",
+      "viewOrder": [
+        "text",
+        "table",
+        "canvas"
+      ],
+      "stackLayoutPolicy": "always",
+      "stackPlan": "directives",
+      "flags": [
+        "directives"
+      ],
+      "chartPolicy": "skip",
+      "tableAssembly": {
+        "builder": "build_product_directives_table_presentations",
+        "layout": "profile_primary",
+        "profileTableIndex": 0,
+        "primaryTableIndex": 1
+      },
+      "humanizedNarrative": "skip",
+      "commentaryProfileKey": "directives",
       "narrativePolicy": "generic_data_summary"
     },
     "last_purchase": {
@@ -1665,6 +1689,15 @@
       ],
       "profileFirst": true,
       "highlightsAfterProfile": true
+    },
+    "directives": {
+      "tableRoleOrder": [
+        "structure",
+        "list",
+        "other"
+      ],
+      "profileFirst": false,
+      "highlightsAfterProfile": false
     }
   }
 }

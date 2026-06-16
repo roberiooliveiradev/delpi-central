@@ -109,6 +109,9 @@ class ExternalActionEntityRoutePresenter:
             if entity == "product_structure_exclusivity" and isinstance(root, dict):
                 return self._host._present_product_structure_exclusivity(root, path)
 
+            if entity == "product_directives" and isinstance(root, dict):
+                return self._host._present_product_directives(root, path)
+
             if entity == "product_raw_material_price_intelligence" and isinstance(root, dict):
                 return self._host._present_product_raw_material_price_intelligence(root, path)
 

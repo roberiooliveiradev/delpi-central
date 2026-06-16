@@ -403,7 +403,41 @@ class ChatPresentationDecisionService:
             if presentation_type in {"table", "chart", "tree", "kpi", "dashboard"}:
                 return True
 
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            return any(
+                isinstance(item, dict) and item.get("type") == "table" and (item.get("rows") or [])
+                for item in bulk
+            )
+
         return False
+
+    @classmethod
+    def _rows_from_metadata_tables(cls, metadata: dict[str, Any] | None) -> list[dict[str, Any]]:
+        if not isinstance(metadata, dict):
+            return []
+
+        for key in ("tablePresentation", "presentation", "profileTablePresentation"):
+            rows = cls._rows_from_presentation(metadata.get(key))
+
+            if rows:
+                return rows
+
+        bulk = metadata.get("tablePresentations")
+
+        if not isinstance(bulk, list):
+            return []
+
+        combined: list[dict[str, Any]] = []
+
+        for table in bulk:
+            if not isinstance(table, dict) or table.get("type") != "table":
+                continue
+
+            combined.extend(cls._rows_from_presentation(table))
+
+        return combined
 
     @classmethod
     def _ensure_purpose(
@@ -630,7 +664,9 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        table_rows = rows or cls._rows_from_presentation(
+        table_rows = rows or cls._rows_from_metadata_tables(
+            metadata if isinstance(metadata, dict) else None,
+        ) or cls._rows_from_presentation(
             table_presentation or (
                 primary_presentation
                 if primary_presentation and primary_presentation.get("type") == "table"
@@ -893,8 +929,7 @@ class ChatPresentationDecisionService:
 
         decision = cls.decide(
             intent=intent,
-            rows=cls._rows_from_presentation(metadata.get("tablePresentation"))
-            or cls._rows_from_presentation(metadata.get("presentation")),
+            rows=cls._rows_from_metadata_tables(metadata),
             user_message=user_message,
             user_preference=effective_preference,
             primary_presentation=primary_presentation,
@@ -908,9 +943,7 @@ class ChatPresentationDecisionService:
             metadata=metadata,
         )
 
-        table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
-            metadata.get("presentation")
-        )
+        table_rows = cls._rows_from_metadata_tables(metadata)
         entity = None
         api_meta = metadata.get("apiDelpiResponseMeta")
 
@@ -1350,7 +1383,7 @@ class ChatPresentationDecisionService:
             user_preference=None,
             user_message=message,
         ):
-            table_rows = rows or cls._rows_from_presentation(
+            table_rows = rows or cls._rows_from_metadata_tables(rich_metadata) or cls._rows_from_presentation(
                 table_presentation
                 or (
                     primary_presentation
@@ -1388,7 +1421,7 @@ class ChatPresentationDecisionService:
             text_presentation=text_presentation,
             user_preference=None,
         ):
-            table_rows = rows or cls._rows_from_presentation(
+            table_rows = rows or cls._rows_from_metadata_tables(rich_metadata) or cls._rows_from_presentation(
                 table_presentation
                 or (
                     primary_presentation
@@ -1436,7 +1469,9 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        table_rows = rows or cls._rows_from_presentation(
+        table_rows = rows or cls._rows_from_metadata_tables(
+            metadata if isinstance(metadata, dict) else None,
+        ) or cls._rows_from_presentation(
             table_presentation
             or (
                 primary_presentation

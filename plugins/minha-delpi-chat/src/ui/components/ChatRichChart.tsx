@@ -173,14 +173,17 @@ export function ChatRichChart({
   } | null>(null);
   const isDark = useMdcDarkMode();
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const fieldLabels = config?.fieldLabels;
+  const fieldFormats = config?.fieldFormats;
 
   const categoryFilterOptions = useMemo(
     () =>
       buildCategoryFilterOptions(
         data,
         config?.categoryColumns?.length ? config.categoryColumns : undefined,
+        fieldLabels,
       ),
-    [config?.categoryColumns, data],
+    [config?.categoryColumns, data, fieldLabels],
   );
 
   const filteredData = useMemo(
@@ -254,9 +257,6 @@ export function ChatRichChart({
   const displayData = chartView.rows;
   const displayYAxes = chartView.axes;
   const displayXAxis = chartView.axisKey;
-
-  const fieldLabels = config?.fieldLabels;
-  const fieldFormats = config?.fieldFormats;
 
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
   const colors = useMemo(

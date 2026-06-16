@@ -45,6 +45,9 @@ from app.domain.services.external_actions.presenters.product_purchases_presenter
 from app.domain.services.external_actions.presenters.product_raw_material_price_presenter import (
     ExternalActionProductRawMaterialPricePresenter,
 )
+from app.domain.services.external_actions.presenters.product_directives_presenter import (
+    ExternalActionProductDirectivesPresenter,
+)
 from app.domain.services.external_actions.presenters.product_list_presenter import (
     ExternalActionProductListPresenter,
 )
@@ -129,6 +132,7 @@ class ExternalActionResultPresenter:
         self._route_line_presenter: ExternalActionRouteLinePresenter | None = None
         self._operational_response_presenter: ExternalActionOperationalResponsePresenter | None = None
         self._product_overview_presenter: ExternalActionProductOverviewPresenter | None = None
+        self._product_directives_presenter: ExternalActionProductDirectivesPresenter | None = None
         self._presenter_content_presenter: ExternalActionPresenterContentPresenter | None = None
         self._presentation_shape_presenter: ExternalActionPresentationShapePresenter | None = None
 
@@ -295,6 +299,12 @@ class ExternalActionResultPresenter:
             self._product_overview_presenter = ExternalActionProductOverviewPresenter(self)
 
         return self._product_overview_presenter
+
+    def _product_directives(self) -> ExternalActionProductDirectivesPresenter:
+        if self._product_directives_presenter is None:
+            self._product_directives_presenter = ExternalActionProductDirectivesPresenter(self)
+
+        return self._product_directives_presenter
 
     def _presenter_content(self) -> ExternalActionPresenterContentPresenter:
         if self._presenter_content_presenter is None:
@@ -478,6 +488,12 @@ class ExternalActionResultPresenter:
 
     def _present_product_structure_exclusivity(self, root: dict, path: str) -> dict:
         return self._structure_exclusivity()._present_structure_exclusivity(root, path)
+
+    def _present_product_directives(self, root: dict, path: str) -> dict:
+        return self._product_directives().present(root, path)
+
+    def build_product_directives_table_presentations(self, root: dict, path: str) -> list[dict]:
+        return self._product_directives().build_all_table_presentations(root, path=path)
 
     def _present_product_raw_material_price_intelligence(self, root: dict, path: str) -> dict:
         return self._raw_material_price()._present_raw_material_price_intelligence(root, path)

@@ -233,4 +233,82 @@ describe("renderPlanSegmentBuilder", () => {
     expect(segments?.some((segment) => segment.kind === "stackSection")).toBe(true);
     expect(segments?.some((segment) => segment.kind === "kpi")).toBe(true);
   });
+
+  it("renderiza todas as tabelas do bundle no modo Tabela explícito", () => {
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Estrutura do produto (BOM)",
+          role: "structure",
+          columns: [{ key: "component_code", label: "Componente" }],
+          rows: [{ component_code: "50250258" }],
+        },
+      },
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Fornecedores por matéria-prima",
+          role: "list",
+          columns: [{ key: "supplier_code", label: "Fornecedor" }],
+          rows: [{ supplier_code: "000052" }],
+        },
+      },
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Última compra por matéria-prima",
+          role: "list",
+          columns: [{ key: "invoice_number", label: "Nº nota" }],
+          rows: [{ invoice_number: "015277" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          explicitSessionFormat: "table",
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "single",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              {
+                kind: "table",
+                slot: "operationalTables",
+                source: "tablePresentations",
+              },
+            ],
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildSegmentsFromRenderPlan(
+      "",
+      visuals,
+      parseMarkdown,
+      (target, segment) => {
+        target.push(segment);
+      },
+      toolCalls,
+    );
+
+    const tableTitles = (segments ?? [])
+      .filter((segment) => segment.kind === "table")
+      .map((segment) => segment.presentation.title);
+
+    expect(tableTitles).toEqual([
+      "Estrutura do produto (BOM)",
+      "Fornecedores por matéria-prima",
+      "Última compra por matéria-prima",
+    ]);
+  });
 });

@@ -94,11 +94,18 @@ class ExternalActionVocabularyRouteSelectionService:
             if not identifier:
                 return None
 
-        candidates = self._product_route._load_candidates(
-            message,
+        candidates = self._product_route._find_allowed_actions_by_markers(
+            path_markers=path_markers,
+            operation_markers=operation_markers,
             allowed_action_ids=allowed_action_ids,
-            candidates_loader=candidates_loader,
         )
+
+        if not candidates:
+            candidates = self._product_route._load_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
 
         for action in candidates:
             if action.get("method") != "GET":

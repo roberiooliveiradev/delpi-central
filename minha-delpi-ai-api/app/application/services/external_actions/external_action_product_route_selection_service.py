@@ -26,6 +26,55 @@ class ExternalActionProductRouteSelectionService:
     def __init__(self, repository) -> None:
         self.repository = repository
 
+    def _find_allowed_actions_by_markers(
+        self,
+        *,
+        path_markers: list[str],
+        operation_markers: list[str],
+        allowed_action_ids: list[str],
+        method: str = "GET",
+    ) -> list[dict]:
+        """Resolve actions autorizadas pelo catálogo — não depende de ranking semântico."""
+        allowed = {str(item) for item in allowed_action_ids if str(item).strip()}
+
+        if not allowed or (not path_markers and not operation_markers):
+            return []
+
+        list_actions = getattr(self.repository, "list_actions", None)
+
+        if not callable(list_actions):
+            return []
+
+        matches: list[dict] = []
+
+        for action in list_actions():
+            if str(action.get("actionId") or "") not in allowed:
+                continue
+
+            if str(action.get("method") or "").upper() != method.upper():
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if path_markers and not any(marker in path for marker in path_markers):
+                continue
+
+            if operation_markers and not any(
+                marker in operation_id for marker in operation_markers
+            ):
+                if path_markers:
+                    continue
+
+            if not path_markers and operation_markers and not any(
+                marker in operation_id for marker in operation_markers
+            ):
+                continue
+
+            matches.append(action)
+
+        return matches
+
     def _load_candidates(
         self,
         message: str,
@@ -1136,11 +1185,18 @@ class ExternalActionProductRouteSelectionService:
         if not identifier:
             return None
 
-        candidates = self._load_candidates(
-            message,
+        candidates = self._find_allowed_actions_by_markers(
+            path_markers=["/directives/"],
+            operation_markers=["get_product_directives"],
             allowed_action_ids=allowed_action_ids,
-            candidates_loader=candidates_loader,
         )
+
+        if not candidates:
+            candidates = self._load_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
 
         for action in candidates:
             if action.get("method") != "GET":

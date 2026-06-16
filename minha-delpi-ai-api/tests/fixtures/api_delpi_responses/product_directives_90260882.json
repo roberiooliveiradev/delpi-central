@@ -1,0 +1,133 @@
+{
+  "success": true,
+  "message": "Diretivas do produto carregadas com sucesso.",
+  "data": {
+    "resolution": {
+      "identifier": "90260882",
+      "identifier_type": "delpi_code",
+      "delpi_code": "90260882",
+      "customer_reference": "10018137"
+    },
+    "product": {
+      "product_code": "90260882",
+      "description": "PROTETOR TERM CABO 145°C NF 7AM/CD79",
+      "product_type": "PA",
+      "unit": "MI",
+      "group_code": "9026",
+      "customer_reference": "10018137"
+    },
+    "structure": {
+      "items": [
+        {
+          "level": 1,
+          "parent_code": "90260882",
+          "parent_description": "PROTETOR TERM CABO 145°C NF 7AM/CD79",
+          "component_code": "50250258",
+          "component_description": "CONJUNTO TERMOSTATO 90260882",
+          "component_type": "PI",
+          "component_unit": "MI",
+          "quantity_per": "1",
+          "accumulated_quantity": "1"
+        },
+        {
+          "level": 2,
+          "parent_code": "50250258",
+          "parent_description": "CONJUNTO TERMOSTATO 90260882",
+          "component_code": "10080626",
+          "component_description": "PROTETOR TERMICO 145°C - CADFREE",
+          "component_type": "MP",
+          "component_unit": "PC",
+          "quantity_per": "1000",
+          "accumulated_quantity": "1000"
+        },
+        {
+          "level": 2,
+          "parent_code": "50250258",
+          "parent_description": "CONJUNTO TERMOSTATO 90260882",
+          "component_code": "10090482",
+          "component_description": "LUVA TERMO ENCOLHIVEL",
+          "component_type": "MP",
+          "component_unit": "PC",
+          "quantity_per": "1000",
+          "accumulated_quantity": "1000"
+        }
+      ],
+      "summary": {
+        "total_components": 3,
+        "total_intermediates": 1,
+        "total_raw_materials": 2,
+        "total_exclusive_raw_materials": 0
+      }
+    },
+    "raw_materials": [
+      {
+        "raw_material_code": "10080626",
+        "description": "PROTETOR TERMICO 145°C - CADFREE",
+        "unit": "PC",
+        "level": 2,
+        "accumulated_quantity": "1000",
+        "suppliers": [
+          {
+            "supplier_code": "000052",
+            "supplier_name": "DELPI COMPONENTES LTDA",
+            "supplier_part_number": "10080626",
+            "last_price": 0.58,
+            "last_price_date": "20190226",
+            "registered_lead_time_days": 0
+          },
+          {
+            "supplier_code": "000992",
+            "supplier_name": "SENSATA TECHNOLOGIES BAOYING CO LTDA",
+            "supplier_part_number": "7AM036A5",
+            "last_price": 0.69,
+            "last_price_date": "20250908",
+            "registered_lead_time_days": 0
+          }
+        ],
+        "last_purchase": {
+          "invoice_number": "015277",
+          "invoice_series": "02",
+          "issue_date": "20260525",
+          "supplier_name": "SENSATA TECHNOLOGIES BAOYING CO LTDA",
+          "quantity": 50000,
+          "unit_price": 0.69,
+          "total_value": 34581.84
+        }
+      },
+      {
+        "raw_material_code": "10090482",
+        "description": "LUVA TERMO ENCOLHIVEL",
+        "unit": "PC",
+        "level": 2,
+        "accumulated_quantity": "1000",
+        "suppliers": [
+          {
+            "supplier_code": "000006",
+            "supplier_name": "TRAMAR INDUSTRIAL LTDA",
+            "supplier_part_number": "0318006",
+            "last_price": 0.04,
+            "last_price_date": "20260611",
+            "registered_lead_time_days": 0
+          }
+        ],
+        "last_purchase": {
+          "invoice_number": "000176740",
+          "invoice_series": "1",
+          "issue_date": "20260211",
+          "supplier_name": "TRAMAR INDUSTRIAL LTDA",
+          "quantity": 460000,
+          "unit_price": 0.046,
+          "total_value": 21192.2
+        }
+      }
+    ],
+    "summary": {
+      "total_components": 3,
+      "total_intermediates": 1,
+      "total_raw_materials": 2,
+      "total_supplier_links": 3,
+      "raw_materials_with_last_purchase": 2,
+      "raw_materials_without_last_purchase": 0
+    }
+  }
+}

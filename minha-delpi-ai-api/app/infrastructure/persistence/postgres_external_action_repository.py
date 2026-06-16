@@ -310,6 +310,10 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
                 "nota de saída",
                 "notas de entrada",
                 "notas de saída",
+                "diretiva",
+                "diretivas",
+                "directive",
+                "directives",
             ]
         ):
             db_query = db_query.filter(

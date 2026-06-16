@@ -799,6 +799,10 @@
     "purchaseBudgetHistoryDetail",
     "purchaseOrderList",
     "lastPurchaseDetail",
+    "directivesRawMaterials",
+    "directivesStructure",
+    "directivesSuppliers",
+    "directivesLastPurchase",
     "salePricingDetail",
     "costImpactMaterials",
     "factoryRawMaterialStock",
@@ -1333,7 +1337,8 @@
           "supplier_code"
         ],
         "excludeIfAnyKeys": [
-          "invoice_number"
+          "invoice_number",
+          "raw_material_code"
         ]
       },
       "preferredColumns": [
@@ -2799,6 +2804,92 @@
           "status",
           "Status"
         ]
+      ]
+    },
+    "directivesRawMaterials": {
+      "detect": {
+        "pathContains": [
+          "/directives/"
+        ],
+        "allKeys": [
+          "raw_material_code",
+          "accumulated_quantity"
+        ],
+        "excludeIfAnyKeys": [
+          "supplier_code",
+          "invoice_number"
+        ]
+      },
+      "preferredColumns": [
+        ["raw_material_code", "Código MP"],
+        ["description", "Descrição"],
+        ["unit", "Unid."],
+        ["level", "Nível"],
+        ["quantity_per", "Qtde por"],
+        ["accumulated_quantity", "Qtd acum."]
+      ]
+    },
+    "directivesStructure": {
+      "preferredColumns": [
+        ["level", "Nível"],
+        ["parent_code", "Código pai"],
+        ["parent_description", "Descrição pai"],
+        ["component_code", "Componente"],
+        ["description", "Descrição"],
+        ["type", "Tipo"],
+        ["unit", "Unid."],
+        ["quantity_per", "Qtde por"],
+        ["accumulated_quantity", "Qtd acum."]
+      ]
+    },
+    "directivesSuppliers": {
+      "detect": {
+        "pathContains": [
+          "/directives/"
+        ],
+        "allKeys": [
+          "raw_material_code",
+          "supplier_code"
+        ],
+        "excludeIfAnyKeys": [
+          "invoice_number"
+        ]
+      },
+      "preferredColumns": [
+        ["raw_material_code", "Código MP"],
+        ["raw_material_description", "Descrição MP"],
+        ["supplier_code", "Cód. fornecedor"],
+        ["supplier_name", "Fornecedor"],
+        ["supplier_part_number", "Part number"],
+        ["last_price", "Últ. preço"],
+        ["last_price_date", "Data últ. preço"],
+        ["registered_lead_time_days", "Lead time cadastrado"]
+      ]
+    },
+    "directivesLastPurchase": {
+      "detect": {
+        "pathContains": [
+          "/directives/"
+        ],
+        "allKeys": [
+          "raw_material_code",
+          "invoice_number"
+        ]
+      },
+      "preferredColumns": [
+        ["raw_material_code", "Código MP"],
+        ["description", "Descrição MP"],
+        ["invoice_number", "Nº nota"],
+        ["invoice_series", "Série"],
+        ["supplier_name", "Fornecedor"],
+        ["issue_date", "Data emissão"],
+        ["quantity", "Quantidade"],
+        ["unit_price", "Preço unitário"],
+        ["total_value", "Valor total"],
+        ["entry_date", "Data entrada"],
+        ["supplier_part_number", "Part number"],
+        ["icms_rate", "ICMS %"],
+        ["purchase_order", "Pedido"]
       ]
     },
     "lastPurchaseDetail": {

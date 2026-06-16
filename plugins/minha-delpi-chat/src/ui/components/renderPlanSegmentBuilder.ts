@@ -237,6 +237,14 @@ function resolveVisualSource(metadata: Record<string, unknown>, token: string): 
     return source;
   }
 
+  if (normalized === "table") {
+    const bulk = metadata.tablePresentations;
+
+    if (Array.isArray(bulk) && bulk.length) {
+      return "tablePresentations";
+    }
+  }
+
   const generic = metadata.presentation;
 
   if (
@@ -270,7 +278,29 @@ function buildSingleViewRenderPlanSegments(
   const visualSource = selected ? resolveVisualSource(metadata, selected) : null;
 
   if (selected && visualSource) {
-    segments.push({ kind: selected, slot: "primary", source: visualSource });
+    if (selected === "table") {
+      const bulk = metadata.tablePresentations;
+      const tableCount = Array.isArray(bulk)
+        ? bulk.filter(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              (item as Record<string, unknown>).type === "table",
+          ).length
+        : 0;
+
+      if (tableCount >= 2) {
+        segments.push({
+          kind: "table",
+          slot: "operationalTables",
+          source: "tablePresentations",
+        });
+      } else {
+        segments.push({ kind: selected, slot: "primary", source: visualSource });
+      }
+    } else {
+      segments.push({ kind: selected, slot: "primary", source: visualSource });
+    }
   }
 
   if (!segments.length) {
@@ -467,6 +497,94 @@ function operationalTableRoles(plan: StackPresentationPlan): StackTableRole[] {
   }
 
   return plan.tableRoleOrder.filter((role) => role !== "profile");
+}
+
+function orderTableVisualSegments(
+  tables: AssistantContentSegment[],
+  roles: StackTableRole[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  if (!tables.length) {
+    return [];
+  }
+
+  if (!roles.length) {
+    return tables;
+  }
+
+  const buckets = bucketTableSegmentsByRole(
+    tables,
+    resolveTableRole,
+    metadataStructureDedupApplied(toolCalls),
+  );
+  const ordered: AssistantContentSegment[] = [];
+
+  for (const role of roles) {
+    ordered.push(...(buckets[role] ?? []));
+  }
+
+  for (const table of tables) {
+    if (!ordered.includes(table)) {
+      ordered.push(table);
+    }
+  }
+
+  return ordered;
+}
+
+function resolveTableSegmentsForRenderSpec(
+  spec: { source?: string; slot?: string },
+  tables: AssistantContentSegment[],
+  plan: StackPresentationPlan,
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  if (!tables.length) {
+    return [];
+  }
+
+  const source = String(spec.source || "").trim();
+  const slot = String(spec.slot || "").trim();
+  const multiTable =
+    source === "tablePresentations" ||
+    slot === "operationalTables" ||
+    slot === "profileTables";
+
+  if (!multiTable) {
+    return [tables[0]];
+  }
+
+  const roles =
+    slot === "profileTables"
+      ? plan.profileFirst
+        ? (["profile"] as StackTableRole[])
+        : (["profile"] as StackTableRole[])
+      : operationalTableRoles(plan);
+
+  return orderTableVisualSegments(tables, roles, toolCalls);
+}
+
+/** Resolve visuais de um segmento do renderPlan (modo single / native view). */
+export function resolveVisualSegmentsForRenderSpec(
+  spec: { kind?: string; source?: string; slot?: string },
+  visuals: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  const kind = String(spec.kind || "").trim().toLowerCase();
+
+  if (kind === "decision" || kind === "markdown") {
+    return [];
+  }
+
+  if (kind === "table") {
+    const plan = getStackPresentationPlanFromToolCalls(toolCalls);
+    const tables = visuals.filter((visual) => visual.kind === "table");
+
+    return resolveTableSegmentsForRenderSpec(spec, tables, plan, toolCalls);
+  }
+
+  const match = visuals.find((visual) => visual.kind === kind);
+
+  return match ? [match] : [];
 }
 
 function appendTablesForRoles(
@@ -688,6 +806,10 @@ export function buildSegmentsFromRenderPlan(
           toolCalls,
           { sectionPerRole: true },
         );
+      } else if (slot === "primary") {
+        for (const table of resolveTableSegmentsForRenderSpec(spec, tables, plan, toolCalls)) {
+          appendUnique(segments, table);
+        }
       }
 
       continue;

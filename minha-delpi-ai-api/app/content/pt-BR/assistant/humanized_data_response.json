@@ -35,7 +35,8 @@
     "factory_status": "Validar MPs com cobertura baixa e conferir se a OP já teve apontamento no chão de fábrica.",
     "stock": "Conferir posições com disponível negativo ou empenho acima do saldo e pedir a próxima página se a lista estiver truncada.",
     "production_status": "Confirmar no Protheus se a OP aberta já iniciou apontamento e comparar quantidade apontada com a ordem.",
-    "shipping_status": "Revisar perdas de inspeção frente ao expedido e validar CT/recurso dos registros com divergência."
+    "shipping_status": "Revisar perdas de inspeção frente ao expedido e validar CT/recurso dos registros com divergência.",
+    "directives": "Conferir part numbers e última NF na tabela; pedir detalhe de fornecedor ou estrutura completa se precisar aprofundar."
   },
   "recommendations": {
     "factory_status": [
@@ -57,6 +58,11 @@
       "Listar registros com perda de inspeção",
       "Comparar com o período anterior",
       "Ver status fabril do mesmo produto"
+    ],
+    "directives": [
+      "Ver estrutura completa do produto",
+      "Detalhar fornecedores de uma MP",
+      "Ver última compra de uma matéria-prima"
     ],
     "generic_list": [
       "Filtrar os registros por critério relevante",

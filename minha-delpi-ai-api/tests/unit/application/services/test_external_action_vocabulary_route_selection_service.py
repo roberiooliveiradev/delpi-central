@@ -24,6 +24,9 @@ class _FakeRepository:
 
         return matches
 
+    def list_actions(self, provider_key=None):
+        return list(self._actions)
+
 
 def test_select_product_full_without_scope_defers_to_semantic_ranking():
     repository = _FakeRepository(
@@ -89,3 +92,43 @@ def test_select_vocabulary_fast_path_directives():
     assert selected is not None
     assert selected["arguments"]["actionId"] == "directives-action"
     assert selected["arguments"]["parameters"]["identifier"] == "90260882"
+
+
+def test_select_vocabulary_fast_path_directives_uses_catalog_when_candidates_miss():
+    """Regressão: ranking semântico pode omitir /directives/ no top-N."""
+    filler = [
+        {
+            "actionId": f"filler-{index}",
+            "method": "GET",
+            "path": f"/z-domain/route-{index}",
+            "operationId": f"get_z_route_{index}",
+            "parametersSchema": [],
+        }
+        for index in range(80)
+    ]
+    directives = {
+        "actionId": "directives-action",
+        "method": "GET",
+        "path": "/products/directives/{identifier}",
+        "operationId": "get_product_directives",
+        "parametersSchema": [{"name": "identifier", "in": "path", "required": True}],
+    }
+    detail = {
+        "actionId": "detail-action",
+        "method": "GET",
+        "path": "/products/{code}",
+        "operationId": "get_product_detail",
+        "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+    }
+    repository = _FakeRepository([*filler, directives, detail])
+    product_route = ExternalActionProductRouteSelectionService(repository)
+    service = ExternalActionVocabularyRouteSelectionService(product_route)
+
+    selected = service.select(
+        "Diretivas 90260882",
+        "diretivas 90260882",
+        allowed_action_ids=["directives-action", "detail-action", *[f"filler-{i}" for i in range(80)]],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "directives-action"

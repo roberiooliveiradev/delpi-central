@@ -206,7 +206,16 @@ class ChatPresentationRenderPlanService:
                     selected = "kpi"
 
             if source:
-                segments.append({"kind": selected, "slot": "primary", "source": source})
+                if selected == "table" and cls._table_bundle_count(metadata) >= 2:
+                    segments.append(
+                        {
+                            "kind": "table",
+                            "slot": "operationalTables",
+                            "source": "tablePresentations",
+                        },
+                    )
+                else:
+                    segments.append({"kind": selected, "slot": "primary", "source": source})
 
         return segments
 
@@ -227,6 +236,19 @@ class ChatPresentationRenderPlanService:
             return False
 
         return bool(str(text_presentation.get("markdown") or "").strip())
+
+    @classmethod
+    def _table_bundle_count(cls, metadata: dict[str, Any]) -> int:
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            return sum(
+                1
+                for item in bulk
+                if isinstance(item, dict) and item.get("type") == "table"
+            )
+
+        return 0
 
     @classmethod
     def _has_table_bundle(cls, metadata: dict[str, Any]) -> bool:

@@ -27,6 +27,7 @@ _PROFILE_CONTENT_MAP = {
     "production_status": "productionStatus",
     "shipping_status": "shippingStatus",
     "stock": "stock",
+    "directives": "directives",
 }
 
 
@@ -87,6 +88,7 @@ class ChatOperationalDataCommentaryService:
             "stock": cls._build_stock_commentary,
             "production_status": cls._build_production_commentary,
             "shipping_status": cls._build_shipping_commentary,
+            "directives": cls._build_directives_commentary,
         }
         builder = builders.get(str(profile_key).strip())
 
@@ -494,6 +496,40 @@ class ChatOperationalDataCommentaryService:
             "attention": attention,
             "summaryLines": highlights[:4],
             "periodScoped": bool(period),
+        }
+
+    @classmethod
+    def _build_directives_commentary(
+        cls,
+        root: dict[str, Any],
+        *,
+        format_quantity: Callable[[Any, str | None], str] | None = None,
+    ) -> dict[str, Any]:
+        _ = format_quantity
+        profile = "directives"
+        summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}
+        raw_materials = root.get("raw_materials") if isinstance(root.get("raw_materials"), list) else []
+        highlights: list[str] = []
+        attention: list[str] = []
+
+        if raw_materials:
+            highlights.append(cls._text(profile, "tableVisualizationHint"))
+
+        without_purchase = int(summary.get("raw_materials_without_last_purchase") or 0)
+
+        if without_purchase > 0:
+            attention.append(
+                cls._text(profile, "attentionWithoutPurchase", count=str(without_purchase))
+            )
+
+        if not highlights and not attention:
+            return {}
+
+        return {
+            "highlights": highlights,
+            "attention": attention,
+            "summaryLines": highlights[:4],
+            "alertLevel": "attention" if attention else "ok",
         }
 
     @classmethod
