@@ -530,7 +530,15 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [ ] Homologação manual: `docs/testing/smoke-operacional-manual.md`
 - [x] Atualizar `inteligencia-chat-onda-8.md`, audit e catalog (este doc)
 
-### Fase 13 — Apresentação provider-agnóstica (backlog)
+### Fase 13 — Domínio transversal (KPI/LMP/sistema) — em curso
+
+- [x] `domainPredicates` em `external_action_responses.json` (saleOrders, transforma, KPI produção/suprimentos, LMP)
+- [x] Matcher: `hasLmpSaleNumber` / `lacksLmpSaleNumber`; padrões OV em JSON
+- [x] `_CUSTOM_PREDICATES` reduzido a busca produto + system metadata + helpers (~9 entradas)
+- [ ] Predicados system metadata declarativos (dependem de `ChatSystemMetadataIntentService`)
+- [ ] Predicados product search declarativos (guards compostos)
+
+### Fase 14 — Apresentação provider-agnóstica (backlog)
 
 - [ ] Renomear/generalizar `ChatApiDelpiResponseProfileService` → perfil operacional OpenAPI
 - [ ] Presenters keyed por `meta.entity`, não path api-delpi

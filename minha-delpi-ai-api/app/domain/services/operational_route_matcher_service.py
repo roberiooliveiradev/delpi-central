@@ -19,113 +19,23 @@ from app.domain.services.external_actions.external_action_response_content_servi
 )
 
 
-def _looks_like_sale_orders_list_question(normalized: str) -> bool:
-    exclude_terms = ExternalActionResponseContentService.list(
+def _lmp_sale_number_patterns() -> list[str]:
+    return ExternalActionResponseContentService.list(
         "actionSelection",
-        "saleOrdersList",
-        "excludeTerms",
+        "lmpSaleNumberPatterns",
     )
-
-    if any(term in normalized for term in exclude_terms):
-        return False
-
-    terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "saleOrdersList",
-        "terms",
-    )
-
-    return any(term in normalized for term in terms)
-
-
-def _looks_like_transforma_question(normalized: str) -> bool:
-    return "transforma" in normalized
 
 
 def _extract_lmp_sale_number(text: str | None) -> str | None:
-    import re
-
     raw = str(text or "")
 
-    patterns = [
-        r"\bov\s*[#:\-]?\s*(\d{4,})\b",
-        r"\bordem\s+de\s+venda\s*[#:\-]?\s*(\d{4,})\b",
-        r"\blmp\s+(\d{4,})\b",
-        r"\bamostra\s+(\d{4,})\b",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, raw, flags=re.IGNORECASE)
+    for pattern in _lmp_sale_number_patterns():
+        match = re.search(str(pattern), raw, flags=re.IGNORECASE)
 
         if match:
             return match.group(1)
 
     return None
-
-
-def _looks_like_lmp_question(normalized: str) -> bool:
-    if _looks_like_transforma_question(normalized):
-        return False
-
-    terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "lmpQuestion",
-        "terms",
-    )
-
-    if any(term in normalized for term in terms):
-        return True
-
-    sale_order_phrases = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "lmpQuestion",
-        "saleOrderPhrases",
-    )
-    sale_order_markers = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "lmpQuestion",
-        "saleOrderMarkers",
-    )
-
-    if any(phrase in normalized for phrase in sale_order_phrases):
-        return any(marker in normalized for marker in sale_order_markers) or bool(
-            _extract_lmp_sale_number(normalized)
-        )
-
-    return False
-
-
-def _lmp_has_ranking_terms(normalized: str, *keys: str) -> bool:
-    for key in keys:
-        terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "lmpRanking",
-            key,
-        )
-
-        if any(term in normalized for term in terms):
-            return True
-
-    return False
-
-
-def _looks_like_lmp_catch_all(normalized: str) -> bool:
-    if not _looks_like_lmp_question(normalized):
-        return False
-
-    if _extract_lmp_sale_number(normalized):
-        return False
-
-    if _lmp_has_ranking_terms(
-        normalized,
-        "dashboardSummaryTerms",
-        "dashboardItemsTerms",
-        "chartTerms",
-        "dashboardTerms",
-    ):
-        return False
-
-    return True
 
 
 def _looks_like_system_metadata_question(normalized: str) -> bool:
@@ -146,93 +56,6 @@ def _system_wants_relations(normalized: str) -> bool:
 
 def _system_wants_table_search(normalized: str) -> bool:
     return ChatSystemMetadataIntentService.wants_table_search(normalized)
-
-
-def _looks_like_supplies_otd_question(normalized: str) -> bool:
-    if not any(
-        term in normalized
-        for term in (
-            " otd",
-            "otd ",
-            "on-time delivery",
-            "entrega no prazo",
-            "entregas no prazo",
-        )
-    ) and not normalized.strip().startswith("otd"):
-        return False
-
-    supplies_markers = ("compra", "supriment", "fornecedor", "supplies")
-
-    return any(marker in normalized for marker in supplies_markers)
-
-
-def _looks_like_production_otd_detail_question(normalized: str) -> bool:
-    detail_terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "productionOtdDetailTerms",
-    )
-    production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
-
-    return any(term in normalized for term in detail_terms) and any(
-        term in normalized for term in production_terms
-    )
-
-
-def _looks_like_production_oee_detail_question(normalized: str) -> bool:
-    detail_terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "productionOeeDetailTerms",
-    )
-    oee_terms = (
-        "oee",
-        "eficiencia",
-        "eficiência",
-        "equipamento",
-        "equipamentos",
-        "zefici",
-    )
-    fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
-
-    return (
-        any(term in normalized for term in detail_terms)
-        and any(term in normalized for term in oee_terms)
-        and not any(term in normalized for term in fabril_block_terms)
-    )
-
-
-def _looks_like_production_oee_appointment_question(normalized: str) -> bool:
-    appointment_terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "productionOeeAppointmentTerms",
-    )
-    oee_terms = (
-        "oee",
-        "eficiencia",
-        "eficiência",
-        "equipamento",
-        "equipamentos",
-        "zefici",
-    )
-    appointment_context_terms = (
-        "apontamento",
-        "apontamentos",
-        "sh6010",
-        "h6_zefici",
-    )
-
-    return any(term in normalized for term in appointment_terms) and (
-        any(term in normalized for term in oee_terms)
-        or any(term in normalized for term in appointment_context_terms)
-    )
-
-
-def _looks_like_production_eficiencia_fabril_question(normalized: str) -> bool:
-    fabril_terms = ExternalActionResponseContentService.list(
-        "actionSelection",
-        "productionEficienciaFabrilTerms",
-    )
-
-    return any(term in normalized for term in fabril_terms)
 
 
 def _looks_like_product_search_question(normalized: str) -> bool:
@@ -274,17 +97,7 @@ def _technical_normas_description_block(normalized: str) -> bool:
 
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "saleOrdersList": _looks_like_sale_orders_list_question,
-        "transformaQuestion": _looks_like_transforma_question,
         "systemMetadataQuestion": _looks_like_system_metadata_question,
-        "suppliesOtdRoute": _looks_like_supplies_otd_question,
-        "productionOtdDetailRoute": _looks_like_production_otd_detail_question,
-        "productionOeeDetailRoute": _looks_like_production_oee_detail_question,
-        "productionOeeAppointmentRoute": _looks_like_production_oee_appointment_question,
-        "productionEficienciaFabrilRoute": _looks_like_production_eficiencia_fabril_question,
-        "lmpQuestion": _looks_like_lmp_question,
-        "lmpHasSaleNumber": lambda normalized: bool(_extract_lmp_sale_number(normalized)),
-        "lmpCatchAll": _looks_like_lmp_catch_all,
         "productSearchQuestion": _looks_like_product_search_question,
         "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
         "departmentKpiResolved": _department_kpi_resolved,
@@ -428,6 +241,14 @@ class OperationalRouteMatcherService:
             if ChatProductQueryIntentService.extract_product_code(message or ""):
                 return False
 
+        if spec.get("hasLmpSaleNumber"):
+            if not _extract_lmp_sale_number(message or normalized):
+                return False
+
+        if spec.get("lacksLmpSaleNumber"):
+            if _extract_lmp_sale_number(message or normalized):
+                return False
+
         if spec.get("hasProductIdentifier"):
             identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
@@ -446,6 +267,8 @@ class OperationalRouteMatcherService:
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
             and not spec.get("lacksProductIdentifier")
+            and not spec.get("hasLmpSaleNumber")
+            and not spec.get("lacksLmpSaleNumber")
             and not plural_scope
             and not spec.get("hasProductEntityReference")
             and not regex_patterns_from
@@ -513,11 +336,19 @@ class OperationalRouteMatcherService:
 
     @classmethod
     def looks_like_sale_orders_list_question(cls, normalized: str) -> bool:
-        return _looks_like_sale_orders_list_question(normalized)
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        return ChatProductRoutePredicateService.matches("saleOrdersList", normalized)
 
     @classmethod
     def looks_like_transforma_question(cls, normalized: str) -> bool:
-        return _looks_like_transforma_question(normalized)
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        return ChatProductRoutePredicateService.matches("transformaQuestion", normalized)
 
     @classmethod
     def _match_custom_predicate(

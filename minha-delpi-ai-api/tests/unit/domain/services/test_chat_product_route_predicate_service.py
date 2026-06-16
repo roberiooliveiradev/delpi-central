@@ -115,3 +115,24 @@ def test_parents_question_regex_from_json():
     )
 
     assert ChatProductRoutePredicateService.matches("parentsQuestion", normalized)
+
+
+def test_domain_predicates_sale_orders_and_lmp():
+    sale_orders = ChatMessageNormalizationService.normalize_for_matching(
+        "listar ov do periodo"
+    )
+    lmp = ChatMessageNormalizationService.normalize_for_matching(
+        "lmp da ordem de venda 123456"
+    )
+
+    assert ChatProductRoutePredicateService.matches("saleOrdersList", sale_orders)
+    assert ChatProductRoutePredicateService.matches("lmpQuestion", lmp)
+    assert ChatProductRoutePredicateService.matches("lmpHasSaleNumber", lmp)
+
+
+def test_supplies_otd_domain_predicate():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "otd de compras do fornecedor"
+    )
+
+    assert ChatProductRoutePredicateService.matches("suppliesOtdRoute", normalized)

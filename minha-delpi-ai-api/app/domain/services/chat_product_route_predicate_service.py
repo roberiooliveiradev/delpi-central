@@ -1,4 +1,4 @@
-"""Predicados declarativos de produto (routePredicates + playbookPredicates)."""
+"""Predicados declarativos de rota (produto + domínio) via JSON."""
 
 from __future__ import annotations
 
@@ -7,20 +7,26 @@ from app.domain.services.operational_route_matcher_service import (
     OperationalRouteMatcherService,
 )
 
+_PREDICATE_SOURCES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "product_query_intent",
+        ("routePredicates", "playbookPredicates", "subIntentPredicates"),
+    ),
+    ("external_action_responses", ("domainPredicates",)),
+)
+
 
 class ChatProductRoutePredicateService:
-    _BUNDLE = "product_query_intent"
-    _SECTIONS = ("routePredicates", "playbookPredicates", "subIntentPredicates")
-
     @classmethod
     def registered_predicates(cls) -> frozenset[str]:
         keys: set[str] = set()
 
-        for section in cls._SECTIONS:
-            node = ChatAssistantContentService.get_node(cls._BUNDLE, section) or {}
+        for bundle, sections in _PREDICATE_SOURCES:
+            for section in sections:
+                node = ChatAssistantContentService.get_node(bundle, section) or {}
 
-            if isinstance(node, dict):
-                keys.update(str(key) for key in node.keys())
+                if isinstance(node, dict):
+                    keys.update(str(key) for key in node.keys())
 
         return frozenset(keys)
 
@@ -31,11 +37,12 @@ class ChatProductRoutePredicateService:
         if not key:
             return None
 
-        for section in cls._SECTIONS:
-            spec = ChatAssistantContentService.get_node(cls._BUNDLE, section, key)
+        for bundle, sections in _PREDICATE_SOURCES:
+            for section in sections:
+                spec = ChatAssistantContentService.get_node(bundle, section, key)
 
-            if isinstance(spec, dict) and spec:
-                return spec
+                if isinstance(spec, dict) and spec:
+                    return spec
 
         return None
 

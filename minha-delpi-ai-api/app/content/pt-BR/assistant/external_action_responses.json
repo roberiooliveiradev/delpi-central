@@ -70,8 +70,16 @@
     "suppliesOtdSuppliesDomainTerms": [
       "compra",
       "suprimentos",
+      "suprimento",
       "fornecedor",
-      "suprimento"
+      "supplies"
+    ],
+    "suppliesOtdOtdTerms": [
+      " otd",
+      "otd ",
+      "on-time delivery",
+      "entrega no prazo",
+      "entregas no prazo"
     ],
     "suppliesOtdPathPrefix": "/supplies/",
     "candidatePathPrioritization": {
@@ -322,6 +330,15 @@
     "transformaSummary": {
       "terms": ["resumo", "summary", "indicadores", "kpis"]
     },
+    "transformaQuestionTerms": [
+      "transforma"
+    ],
+    "lmpSaleNumberPatterns": [
+      "\\bov\\s*[#:\\\\-]?\\s*(\\d{4,})\\b",
+      "\\bordem\\s+de\\s+venda\\s*[#:\\\\-]?\\s*(\\d{4,})\\b",
+      "\\blmp\\s+(\\d{4,})\\b",
+      "\\bamostra\\s+(\\d{4,})\\b"
+    ],
     "systemMetadata": {
       "terms": [
         "tabela",
@@ -481,6 +498,91 @@
         "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(?:existem?|tem|há)\\s+(?:com\\s+(?:descri[çc][ãa]o\\s+)?|d[eoa]\\s+(?:tipo\\s+)?|tipo\\s+)(.+?)$",
         "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(.+?)$",
         "(?:existe|tem)\\s+(?:algum|alguma)\\s+(.+?)(?:\\s+no\\s+sistema|\\s+cadastrado)?$"
+      ]
+    }
+  },
+  "domainPredicates": {
+    "saleOrdersList": {
+      "termsFrom": "external_action_responses.actionSelection.saleOrdersList.terms",
+      "excludeTermsFrom": "external_action_responses.actionSelection.saleOrdersList.excludeTerms"
+    },
+    "transformaQuestion": {
+      "termsFrom": "external_action_responses.actionSelection.transformaQuestionTerms"
+    },
+    "suppliesOtdRoute": {
+      "allOf": [
+        {
+          "anyOf": [
+            { "termsFrom": "external_action_responses.actionSelection.suppliesOtdOtdTerms" },
+            { "regexPatterns": ["^otd"] }
+          ]
+        },
+        { "termsFrom": "external_action_responses.actionSelection.suppliesOtdSuppliesDomainTerms" }
+      ]
+    },
+    "productionOtdDetailRoute": {
+      "allOf": [
+        { "termsFrom": "external_action_responses.actionSelection.productionOtdDetailTerms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionOtdDetailProductionContextTerms"
+        }
+      ]
+    },
+    "productionOeeDetailRoute": {
+      "allOf": [
+        { "termsFrom": "external_action_responses.actionSelection.productionOeeDetailTerms" },
+        { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" }
+      ],
+      "noneOf": [
+        { "termsFrom": "external_action_responses.actionSelection.productionOeeFabrilBlockTerms" }
+      ]
+    },
+    "productionOeeAppointmentRoute": {
+      "allOf": [
+        { "termsFrom": "external_action_responses.actionSelection.productionOeeAppointmentTerms" },
+        {
+          "anyOf": [
+            { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionOeeAppointmentShortcutTerms"
+            }
+          ]
+        }
+      ]
+    },
+    "productionEficienciaFabrilRoute": {
+      "termsFrom": "external_action_responses.actionSelection.productionEficienciaFabrilTerms"
+    },
+    "lmpQuestion": {
+      "noneOf": [{ "customPredicate": "transformaQuestion" }],
+      "anyOf": [
+        { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.terms" },
+        {
+          "allOf": [
+            { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderPhrases" },
+            {
+              "anyOf": [
+                { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderMarkers" },
+                { "hasLmpSaleNumber": true }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "lmpHasSaleNumber": {
+      "hasLmpSaleNumber": true
+    },
+    "lmpCatchAll": {
+      "allOf": [
+        { "customPredicate": "lmpQuestion" },
+        { "lacksLmpSaleNumber": true }
+      ],
+      "noneOf": [
+        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardSummaryTerms" },
+        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardItemsTerms" },
+        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms" },
+        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms" }
       ]
     }
   },
