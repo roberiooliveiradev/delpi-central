@@ -91,6 +91,49 @@ describe("resolveActionMenuPosition", () => {
     expect(layout.left).toBe(86);
     expect(layout.top).toBe(120);
   });
+
+  it("faz flip horizontal quando não há espaço à direita", () => {
+    const layout = resolveActionMenuPosition({
+      rect: { left: 700, top: 120, right: 732, bottom: 148, width: 32, height: 28 },
+      itemCount: 3,
+      menuWidth: 224,
+      viewport: { width: 800, height: 600 },
+    });
+
+    expect(layout.left).toBe(470);
+    expect(layout.top).toBe(120);
+  });
+});
+
+describe("composer mobile viewports", () => {
+  it("mantém menu + rolável em 390×844", () => {
+    const itemCount = estimateChatInputPlusMenuItemCount({
+      agentCount: 2,
+      projectCount: 4,
+    });
+
+    const layout = resolveComposerPanelMenuPosition({
+      rect: { left: 16, top: 780, right: 52, bottom: 816, width: 36, height: 36 },
+      itemCount,
+      viewport: { width: 390, height: 844 },
+    });
+
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.top).toBeGreaterThanOrEqual(8);
+    expect(layout.maxHeight).toBeGreaterThan(0);
+  });
+
+  it("mantém selector de formato acima do gatilho em 360×640", () => {
+    const layout = resolveComposerOptionMenuPosition({
+      rect: { left: 72, top: 592, right: 180, bottom: 628, width: 108, height: 36 },
+      itemCount: 6,
+      viewport: { width: 360, height: 640 },
+    });
+
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.top).toBeLessThan(592);
+    expect(layout.maxHeight).toBeLessThanOrEqual(640 - 8);
+  });
 });
 
 describe("estimateChatInputPlusMenuItemCount", () => {

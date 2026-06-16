@@ -30,4 +30,6 @@ export type { ComposerOptionMenuLayout, MenuAnchorRect } from "./overlay/menuPos
 export { ActionMenuPanel } from "./menus/ActionMenuPanel";
 export type { ActionMenuItem } from "./menus/ActionMenuPanel";
 
+export { DropdownMenuTrigger } from "./menus/DropdownMenuTrigger";
+
 export { IngestProgressIndicator } from "./IngestProgressIndicator";

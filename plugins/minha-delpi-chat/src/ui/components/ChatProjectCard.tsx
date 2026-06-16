@@ -1,16 +1,13 @@
 import {
   Folder,
-  MoreHorizontal,
   Pencil,
   Settings,
   Trash2,
 } from "lucide-react";
-import { useRef, useState } from "react";
 
 import type { ChatProject } from "../../data/api/chatTypes";
 import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
-import { AnchoredMenuPortal } from "./shared/overlay/AnchoredMenuPortal";
-import { ActionMenuPanel } from "./shared/menus/ActionMenuPanel";
+import { DropdownMenuTrigger } from "./shared/menus/DropdownMenuTrigger";
 
 import "./ChatProjectCard.css";
 
@@ -33,9 +30,6 @@ export function ChatProjectCard({
   onOpenSettings,
   onDelete,
 }: ChatProjectCardProps) {
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const menuItems = [
     {
       id: "rename",
@@ -105,32 +99,13 @@ export function ChatProjectCard({
         </button>
       )}
 
-      <button
-        ref={triggerRef}
-        type="button"
-        className="mdc-chat-project-card__options"
-        aria-label="Opções do projeto"
-        aria-expanded={isMenuOpen}
-        title="Opções"
-        onClick={(event) => {
-          event.stopPropagation();
-          setIsMenuOpen((current) => !current);
-        }}
-      >
-        <MoreHorizontal size={16} aria-hidden="true" />
-      </button>
-
-      <AnchoredMenuPortal
-        open={isMenuOpen}
-        triggerRef={triggerRef}
-        itemCount={menuItems.length}
-        placement="action-menu"
+      <DropdownMenuTrigger
+        items={menuItems}
         menuLabel="Opções do projeto"
-        menuRole="menu"
-        onClose={() => setIsMenuOpen(false)}
-      >
-        <ActionMenuPanel items={menuItems} onItemSelect={() => setIsMenuOpen(false)} />
-      </AnchoredMenuPortal>
+        ariaLabel="Opções do projeto"
+        iconSize={16}
+        triggerClassName="mdc-chat-project-card__options"
+      />
     </div>
   );
 }

@@ -84,7 +84,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | A4 | 2 | **`ChatAssistantMessageMenu`** idem | `ChatAssistantMessageMenu.tsx` | Baixo | S | ✅ via `ChatTableRowMenu` |
 | A5 | 2 | **`ChatContextBar`** chip menu | `ChatContextBar.tsx` | Baixo | S | Já usa `ChatTableRowMenu` — validar após A3 |
 | A6 | 3 | **`ChatOnboardingTour`** alinhar portal | `ChatOnboardingTour.tsx` (hoje `document.body`) | Médio | M | ✅ PR-8 jun/2026 — `ModalPortal` + coords contidas |
-| A7 | 3 | Extrair **`DropdownMenuTrigger`** opcional | `shared/menus/` | Baixo | S | Padrão botão ⋯ + `AnchoredMenuPortal` para cards/listas |
+| A7 | 3 | Extrair **`DropdownMenuTrigger`** opcional | `shared/menus/` | Baixo | S | ✅ PR-16 jun/2026 |
 
 ### Fase B — Modais e diálogos
 
@@ -123,7 +123,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | # | P | Tarefa | Escopo | Risco | Esforço |
 |---|---|--------|--------|-------|---------|
 | D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | ✅ jun/2026 |
-| D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S |
+| D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S | ✅ PR-16 jun/2026 |
 | D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | Só com re-exports para não quebrar imports |
 | D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M |
 | D5 | 4 | Documentar **quando criar primitivo** | Este doc + `admin/README.md` | Baixo | S |
@@ -132,9 +132,9 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 
 | # | P | Tarefa | Escopo | Critério de pronto |
 |---|---|--------|--------|-------------------|
-| E1 | 1 | Checklist composer (selectors, +, mention) | Viewport 390×844, 360×640 | Menus roláveis, sem corte superior |
-| E2 | 2 | Toolbar composer em **360px** | `ChatInput.css` `@media (max-width: 360px)` | wrap sem overflow horizontal |
-| E3 | 2 | Modais **sheet** no mobile | `ChatModal` + `modal-layer.css` | Painel full-width inferior ou centrado com padding safe-area |
+| E1 | 1 | Checklist composer (selectors, +, mention) | Viewport 390×844, 360×640 | ✅ testes menuPositionUtils jun/2026 |
+| E2 | 2 | Toolbar composer em **360px** | `ChatInput.css` `@media (max-width: 360px)` | ✅ wrap flex já presente |
+| E3 | 2 | Modais **sheet** no mobile | `ChatModal` + `modal-layer.css` | ✅ PR-15 `mobileLayout` |
 | E4 | 3 | Tabelas rich presentation | `ChatRichTable`, `DataTable` patterns | scroll horizontal intencional ou card mode |
 | E5 | 3 | Admin shell mobile | Já parcial em `workspace-responsive.css` | Validar abas e tabelas admin |
 
@@ -142,7 +142,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 
 | # | P | Tarefa | Escopo |
 |---|---|--------|--------|
-| F1 | 1 | Testes **`menuPositionUtils`** | Cobrir flip horizontal action menu + edge cases viewport |
+| F1 | 1 | Testes **`menuPositionUtils`** | Cobrir flip horizontal action menu + edge cases viewport | ✅ PR-16 jun/2026 |
 | F2 | 2 | Testes **`ComposerOptionSelector`** | Render, seleção, aria (vitest + RTL se adotado) | ✅ PR-15 jun/2026 |
 | F3 | 2 | **`npm run build`** no CI por PR | Regra `plugins-frontend-build.mdc` |
 | F4 | 3 | Snapshot visual manual | Checklist §7 após cada fase A/B |
@@ -171,7 +171,7 @@ Priorizar arquivos **fora** de `:root` (tokens de marca na raiz são aceitáveis
 | Selector pill + listbox | ~~2~~ → 1 | `ComposerOptionSelector` ✅ |
 | Portal + posição + Escape | 4+ menus | `AnchoredMenuPortal` ✅ (parcial) |
 | Menu ícone + label + danger | Conversation, ProjectCard, TableRow | `ActionMenuPanel` ✅ (parcial) |
-| Scrim + panel centrado | 14 modais | `ChatModal` (pendente) |
+| Scrim + panel centrado | 14 modais | `ChatModal` ✅ |
 | Sombra popover `#000 28%` | Input menu, mention, legado | `--mdc-popover-shadow` ✅ (parcial) |
 | `canUsePortal` + `useLayoutEffect` | Vários | `useAnchoredMenuLayout` ✅ |
 
@@ -207,7 +207,8 @@ PR-12 ✅  B4/B5 — Canvas, Expand, AttachmentPreview, WebSearch, ProjectHome s
 PR-13 ✅  B7/D1 — ModalPortal + modalPortalTarget em shared/overlay; backdrop genérico
 PR-14 ✅  C6 — remove aliases mdc-chat-response-mode__*; fix anchorAbove menus
 PR-15 ✅  B6/D1/F2 — modal-layer enxuto, menuPositionUtils em shared/overlay, testes ComposerOptionSelector
-PR-16    A7 DropdownMenuTrigger; E1 checklist mobile
+PR-16 ✅  A7/D2/E1/F1 — DropdownMenuTrigger, testes mobile composer, flip action menu
+PR-17    C5 rich-presentation-shared; D5 doc primitivos; E4 tabelas mobile
 ```
 
 ---
@@ -232,7 +233,7 @@ PR-16    A7 DropdownMenuTrigger; E1 checklist mobile
 | Overlay layer | `src/ui/styles/overlay.css` → `chat-overlay-layer.css`, `modal-layer.css` |
 | Modal layer | `src/ui/components/modal-layer.css` |
 | Posicionamento | `src/ui/components/shared/overlay/menuPositionUtils.ts` |
-| Shared barrel | `src/ui/components/shared/index.ts` |
+| Shared barrel | `src/ui/components/shared/index.ts` (+ `DropdownMenuTrigger`) |
 | Portal target | `src/ui/components/shared/overlay/modalPortalTarget.ts` |
 | Admin primitivos | `src/ui/components/admin/shared/` |
 | Regra design system | `.cursor/rules/plugins-visual-design-system.mdc` |
