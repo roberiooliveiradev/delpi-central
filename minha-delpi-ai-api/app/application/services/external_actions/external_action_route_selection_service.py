@@ -732,7 +732,10 @@ class ExternalActionRouteSelectionService:
             "actionSelection",
             "productionOtdDetailTerms",
         )
-        production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
+        production_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOtdDetailProductionContextTerms",
+        )
 
         if not any(term in normalized for term in detail_terms):
             return candidates
@@ -772,8 +775,14 @@ class ExternalActionRouteSelectionService:
             "actionSelection",
             "productionOeeAppointmentTerms",
         )
-        oee_terms = ("oee", "eficiencia", "eficiência", "equipamento", "equipamentos", "zefici")
-        appointment_context_terms = ("apontamento", "apontamentos", "sh6010", "h6_zefici")
+        oee_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeContextTerms",
+        )
+        appointment_context_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeAppointmentShortcutTerms",
+        )
 
         if not any(term in normalized for term in appointment_terms):
             return candidates
@@ -816,7 +825,10 @@ class ExternalActionRouteSelectionService:
             "actionSelection",
             "qualityKaizenDetailTerms",
         )
-        kaizen_context_terms = ("kaizen", "kaizens", "melhoria", "melhorias")
+        kaizen_context_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "qualityKaizenContextTerms",
+        )
 
         if not any(term in normalized for term in detail_terms):
             return candidates
@@ -929,8 +941,14 @@ class ExternalActionRouteSelectionService:
             "actionSelection",
             "productionOeeDetailTerms",
         )
-        oee_terms = ("oee", "eficiencia", "eficiência", "equipamento", "equipamentos", "zefici")
-        fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
+        oee_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeContextTerms",
+        )
+        fabril_block_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeFabrilBlockTerms",
+        )
 
         if any(term in normalized for term in fabril_block_terms):
             return candidates

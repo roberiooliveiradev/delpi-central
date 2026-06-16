@@ -59,6 +59,18 @@ def test_action_selection_heuristic_terms_exist():
         "productionEficienciaFabrilTerms",
     )
     assert "eficiencia fabril" in fabril_terms
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOtdDetailProductionContextTerms",
+    )
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOeeContextTerms",
+    )
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "qualityKaizenContextTerms",
+    )
 
 
 def test_operational_route_registry_reason_keys_exist() -> None:

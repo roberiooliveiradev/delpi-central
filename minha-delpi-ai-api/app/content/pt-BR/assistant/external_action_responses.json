@@ -95,6 +95,40 @@
     ],
     "productionOtdDetailPath": "/production/otd",
     "productionOtdDetailOperationId": "get_production_otd",
+    "productionOtdDetailProductionContextTerms": [
+      "producao",
+      "produção",
+      "fabril",
+      "manufatura",
+      "op ",
+      "ops"
+    ],
+    "productionOeeContextTerms": [
+      "oee",
+      "eficiencia",
+      "eficiência",
+      "equipamento",
+      "equipamentos",
+      "zefici"
+    ],
+    "productionOeeAppointmentShortcutTerms": [
+      "apontamento",
+      "apontamentos",
+      "sh6010",
+      "h6_zefici"
+    ],
+    "productionOeeFabrilBlockTerms": [
+      "fabril",
+      "resultado mod",
+      "mod fabril",
+      "dashboard eficiencia"
+    ],
+    "qualityKaizenContextTerms": [
+      "kaizen",
+      "kaizens",
+      "melhoria",
+      "melhorias"
+    ],
     "productionOeeDetailTerms": [
       "listar",
       "listagem",
