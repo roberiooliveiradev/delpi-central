@@ -3,11 +3,11 @@ import type { ReactNode } from "react";
 import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { ChatRichChart } from "./ChatRichChart";
-import { ChatRichDashboard } from "./ChatRichDashboard";
-import { ChatRichKpi } from "./ChatRichKpi";
-import { ChatRichTable } from "./ChatRichTable";
-import { ChatRichTree } from "./ChatRichTree";
+import { ChatRichChart } from "./presentation/ChatRichChart";
+import { ChatRichDashboard } from "./presentation/ChatRichDashboard";
+import { ChatRichKpi } from "./presentation/ChatRichKpi";
+import { ChatRichTable } from "./presentation/ChatRichTable";
+import { ChatRichTree } from "./presentation/ChatRichTree";
 import { AssistantStackSection } from "./AssistantStackSection";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatDecisionCard } from "./ChatDecisionCard";

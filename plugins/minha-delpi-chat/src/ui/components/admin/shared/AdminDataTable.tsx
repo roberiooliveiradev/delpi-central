@@ -54,7 +54,11 @@ export function AdminDataTable<T>({
                   onClick={onRowClick ? () => onRowClick(row, index) : undefined}
                 >
                   {columns.map((column) => (
-                    <td key={column.id} className={column.className}>
+                    <td
+                      key={column.id}
+                      className={column.className}
+                      data-label={column.header}
+                    >
                       {column.render(row, index)}
                     </td>
                   ))}

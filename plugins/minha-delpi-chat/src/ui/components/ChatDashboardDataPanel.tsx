@@ -7,8 +7,8 @@ import {
   type ViewFormat,
 } from "./chatPresentation";
 import { ChatMarkdown } from "./ChatMarkdown";
-import { ChatRichChart } from "./ChatRichChart";
-import { ChatRichTable } from "./ChatRichTable";
+import { ChatRichChart } from "./presentation/ChatRichChart";
+import { ChatRichTable } from "./presentation/ChatRichTable";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;

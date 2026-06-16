@@ -363,8 +363,27 @@
 
   .mdc-admin-table-wrap,
   .mdc-admin-audit__table-wrap {
-    overflow-x: auto;
+    overflow-x: visible;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .mdc-admin-summary-strip .mdc-admin-kpi-card {
+    min-width: 0;
+  }
+
+  .mdc-admin-tab-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .mdc-admin-tab-header__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .mdc-admin-tab-header__actions > * {
+    flex: 1 1 auto;
   }
 }
 

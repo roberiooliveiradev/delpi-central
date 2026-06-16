@@ -13,6 +13,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | **Refatoração frontend (roadmap)** | [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) |
+| CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Status da plataforma | [../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
@@ -52,6 +53,7 @@ src/
     pages/           # ChatPage, ChatAdminPage, ChatAgentsPage
     components/      # chat, admin (abas modulares)
     components/shared/  # primitivos overlay, composer, menus — ver docs/frontend-refactor-roadmap.md
+    components/presentation/  # ChatRich* (tabela, gráfico, KPI, árvore, dashboard)
 ```
 
 Ver roadmap de refatoração frontend: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md).

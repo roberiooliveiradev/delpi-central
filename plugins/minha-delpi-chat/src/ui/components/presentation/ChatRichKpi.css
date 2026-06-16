@@ -1,3 +1,5 @@
+@import "./rich-presentation-shared.css";
+
 .mdc-rich-kpi {
   margin: 0.75rem 0;
 }

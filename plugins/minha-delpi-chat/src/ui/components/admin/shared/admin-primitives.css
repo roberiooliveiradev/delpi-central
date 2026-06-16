@@ -221,3 +221,79 @@
   border-radius: var(--mdc-radius-md);
   font-size: 0.84rem;
 }
+
+@media (max-width: 768px) {
+  .mdc-admin-root .mdc-admin-metric-section__grid-2,
+  .mdc-admin-root .mdc-admin-metric-section__grid-3,
+  .mdc-admin-root .mdc-admin-metrics-tab__split {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-root .mdc-admin-metric-section__toolbar {
+    justify-content: stretch;
+  }
+
+  .mdc-admin-root .mdc-admin-metric-section__toolbar > * {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table__wrap {
+    overflow-x: visible;
+    border: none;
+    border-radius: 0;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table table {
+    min-width: 100%;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table thead {
+    display: none;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table table,
+  .mdc-admin-root .mdc-admin-data-table tbody,
+  .mdc-admin-root .mdc-admin-data-table tr,
+  .mdc-admin-root .mdc-admin-data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--mdc-card-border);
+    border-radius: var(--mdc-radius-md);
+    background: var(--mdc-card-bg);
+  }
+
+  .mdc-admin-root .mdc-admin-data-table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.4rem 0;
+    border-bottom: none;
+    text-align: left !important;
+  }
+
+  .mdc-admin-root .mdc-admin-data-table td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 42%;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--mdc-text-muted);
+  }
+
+  .mdc-admin-root .mdc-admin-data-table tbody tr:hover {
+    background: var(--mdc-card-bg);
+  }
+}

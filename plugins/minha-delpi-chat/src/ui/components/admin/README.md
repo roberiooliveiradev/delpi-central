@@ -87,3 +87,29 @@ Comando: `cd plugins/minha-delpi-chat && npm run build && npm test -- --run src/
 4. Contratos em `data/api/adminApi.ts` e `adminTypes.ts`.
 5. API documentada em `minha-delpi-ai-api/docs/api/08-admin.md`.
 6. Copy da UI em português; siglas técnicas (LLM, UUID, CSV) só quando inevitáveis.
+
+## Primitivos compartilhados (chat + admin)
+
+Dois namespaces de primitivos convivem no plugin:
+
+| Namespace | Caminho | Quando usar |
+|-----------|---------|-------------|
+| **Chat shared** | `ui/components/shared/` | Overlays, modais, menus e composer do chat principal |
+| **Admin shared** | `ui/components/admin/shared/` | KPIs, tabelas, headers e strip do admin |
+
+### Quando criar um primitivo em `shared/`
+
+Crie (ou estenda) um primitivo quando **todas** forem verdadeiras:
+
+1. **Repetição** — o mesmo padrão visual/comportamental aparece em **2+** features.
+2. **Contrato estável** — props claras (ex.: `open`, `onClose`, `items`, `anchorRef`) sem acoplar domínio de negócio.
+3. **Sem lógica de inteligência** — decisões de apresentação/intenção vêm da API (`metadata`); o MFE só renderiza.
+4. **Portal/tokens canônicos** — overlays usam `resolveOverlayPortalContainer()` e vars `--mdc-*`.
+
+**Não** extrair primitivo quando:
+
+- O `if` é específico de uma tela (ex.: filtro de categoria só em `ChatRichTable`).
+- A regra de negócio pertence à API (mover para serviço/pipeline, não duplicar no MFE).
+- Seria um wrapper de uma linha sem reuso real.
+
+Referências: [`docs/frontend-refactor-roadmap.md`](../../../../docs/frontend-refactor-roadmap.md) §12, [`docs/rich-presentation-css.md`](../../../../docs/rich-presentation-css.md).

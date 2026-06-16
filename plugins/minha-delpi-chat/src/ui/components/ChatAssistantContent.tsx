@@ -24,7 +24,7 @@ import { useAssistantContentChrome } from "./useAssistantContentChrome";
 import { useAssistantContentSegments } from "./useAssistantContentSegments";
 
 import "./ChatAssistantContent.css";
-import "./rich-presentation-shared.css";
+import "./presentation/rich-presentation-shared.css";
 
 type ChatAssistantContentProps = {
   content: string;

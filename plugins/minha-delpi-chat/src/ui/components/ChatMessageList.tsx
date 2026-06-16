@@ -107,8 +107,8 @@ import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
-import "./ChatRichTable.css";
-import "./ChatRichChart.css";
+import "./presentation/ChatRichTable.css";
+import "./presentation/ChatRichChart.css";
 
 const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
 const PIN_USER_MESSAGE_TOP_PADDING_PX = 12;

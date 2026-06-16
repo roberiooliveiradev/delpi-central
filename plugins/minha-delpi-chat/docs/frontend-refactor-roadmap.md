@@ -115,7 +115,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | C2 | 2 | Camada **`ui/styles/`** | `tokens.css`, `overlay.css`, `menu.css`, `composer.css` | Médio | M | ✅ PR-11 jun/2026 — barrel `ui/styles/index.css` |
 | C3 | 2 | Varredura **hex → tokens** (chat) | Ver tabela §5 | Baixo | M | ✅ PR-7 jun/2026 — inventário §5 migrado |
 | C4 | 3 | Alinhar **`ChatInput__menu`** ao `menu-popover.css` | `ChatInput.css` | Baixo | S | ✅ fundo/borda portaled + posição `composer-panel` |
-| C5 | 3 | **`rich-presentation-shared.css`** — revisar duplicação com `ChatRich*.css` | KPI, chart, table | Médio | L | Documentar o que é compartilhado vs específico |
+| C5 | 3 | **`rich-presentation-shared.css`** — revisar duplicação com `ChatRich*.css` | KPI, chart, table | Médio | L | ✅ PR-17 — [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | C6 | 4 | Remover aliases legados **`mdc-chat-response-mode__*`** | `composer-option-selector.css` | Baixo | S | ✅ PR-14 jun/2026 |
 
 ### Fase D — Estrutura de componentes
@@ -124,9 +124,9 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 |---|---|--------|--------|-------|---------|
 | D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | ✅ jun/2026 |
 | D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S | ✅ PR-16 jun/2026 |
-| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | Só com re-exports para não quebrar imports |
+| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | ✅ PR-18 — `presentation/` (ChatRich* + shared CSS) com re-exports |
 | D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M |
-| D5 | 4 | Documentar **quando criar primitivo** | Este doc + `admin/README.md` | Baixo | S |
+| D5 | 4 | Documentar **quando criar primitivo** | Este doc + `admin/README.md` | Baixo | S | ✅ PR-17 jun/2026 — §12 roadmap + admin/README |
 
 ### Fase E — Responsividade e mobile
 
@@ -135,8 +135,8 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | E1 | 1 | Checklist composer (selectors, +, mention) | Viewport 390×844, 360×640 | ✅ testes menuPositionUtils jun/2026 |
 | E2 | 2 | Toolbar composer em **360px** | `ChatInput.css` `@media (max-width: 360px)` | ✅ wrap flex já presente |
 | E3 | 2 | Modais **sheet** no mobile | `ChatModal` + `modal-layer.css` | ✅ PR-15 `mobileLayout` |
-| E4 | 3 | Tabelas rich presentation | `ChatRichTable`, `DataTable` patterns | scroll horizontal intencional ou card mode |
-| E5 | 3 | Admin shell mobile | Já parcial em `workspace-responsive.css` | Validar abas e tabelas admin |
+| E4 | 3 | Tabelas rich presentation | `ChatRichTable`, `DataTable` patterns | scroll horizontal intencional ou card mode | ✅ PR-17 — card mode ≤768px + `data-label` |
+| E5 | 3 | Admin shell mobile | Já parcial em `workspace-responsive.css` | Validar abas e tabelas admin | ✅ PR-18 — card mode AdminDataTable + tab header mobile |
 
 ### Fase F — Testes e qualidade
 
@@ -208,7 +208,9 @@ PR-13 ✅  B7/D1 — ModalPortal + modalPortalTarget em shared/overlay; backdrop
 PR-14 ✅  C6 — remove aliases mdc-chat-response-mode__*; fix anchorAbove menus
 PR-15 ✅  B6/D1/F2 — modal-layer enxuto, menuPositionUtils em shared/overlay, testes ComposerOptionSelector
 PR-16 ✅  A7/D2/E1/F1 — DropdownMenuTrigger, testes mobile composer, flip action menu
-PR-17    C5 rich-presentation-shared; D5 doc primitivos; E4 tabelas mobile
+PR-17 ✅  C5/D5/E4 — rich-presentation-shared consolidado, doc primitivos, tabelas mobile card mode
+PR-18 ✅  D3/E5 — pasta presentation/ + admin mobile (AdminDataTable card mode)
+PR-19    D3 message/workspace/composer; C3 hex restantes; D4 paridade admin
 ```
 
 ---
@@ -240,6 +242,7 @@ PR-17    C5 rich-presentation-shared; D5 doc primitivos; E4 tabelas mobile
 | Build obrigatório | `.cursor/rules/plugins-frontend-build.mdc` |
 | Prosa/markdown assistente | `assistantProseRendering.ts` (canônico MFE) |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
+| CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
 
 ---
 
@@ -247,11 +250,32 @@ PR-17    C5 rich-presentation-shared; D5 doc primitivos; E4 tabelas mobile
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| Componentes em `shared/` (excl. admin) | 6 arquivos | ≥15 (overlay + modal + menus) |
+| Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
-| Arquivos CSS com hex fora de token (chat) | ~10+ | 0 (superfície/texto) |
+| Arquivos CSS com hex fora de token (chat) | ~8 | 0 (superfície/texto) |
 | Duplicação selector composer | 0 | 0 ✅ |
+
+---
+
+## 12. Quando criar primitivo (`shared/`)
+
+Use este checklist antes de extrair ou adicionar componente em `ui/components/shared/`:
+
+| Critério | Pergunta |
+|----------|----------|
+| Repetição | O padrão aparece em **2+** features (menus, modais, selectors)? |
+| Contrato | Props genéricas (`open`, `items`, `anchorRef`) sem domínio de chat? |
+| Pipeline | A regra **não** deveria estar na API (`metadata`, pipeline)? |
+| Portal/tokens | Usa `resolveOverlayPortalContainer()` e `--mdc-*`? |
+
+**Extrair** quando todas forem sim. **Não extrair** para `if` de uma tela, wrapper de uma linha ou lógica que pertence ao pipeline da API.
+
+Namespaces:
+
+- **Chat:** `ui/components/shared/` — overlay, modal, composer, menus
+- **Admin:** `ui/components/admin/shared/` — KPI, tabela, header de aba
+- **Apresentação rica (CSS):** `rich-presentation-shared.css` — ver [`rich-presentation-css.md`](./rich-presentation-css.md)
 
 ---
 

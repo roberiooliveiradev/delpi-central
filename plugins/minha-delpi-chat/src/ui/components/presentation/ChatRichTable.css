@@ -1,0 +1,175 @@
+@import "./rich-presentation-shared.css";
+
+.mdc-rich-table__scroll {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.mdc-rich-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.mdc-rich-table__table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.mdc-rich-table__table th {
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--mdc-text-muted);
+  background: var(--mdc-bg-soft);
+  border-bottom: 1px solid var(--mdc-card-border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.mdc-rich-table__table th:hover {
+  color: var(--mdc-primary);
+}
+
+.mdc-rich-table__th--sorted-asc,
+.mdc-rich-table__th--sorted-desc {
+  color: var(--mdc-primary) !important;
+}
+
+.mdc-rich-table__sort-icon {
+  font-size: 0.65rem;
+  margin-left: 0.2rem;
+}
+
+.mdc-rich-table__table td {
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+  color: var(--mdc-text);
+  white-space: nowrap;
+}
+
+.mdc-rich-table__table tbody tr:hover {
+  background: var(--mdc-rich-hover);
+}
+
+.mdc-rich-table__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mdc-rich-table__footer {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  color: var(--mdc-text-muted);
+  border-top: 1px solid var(--mdc-card-border);
+  background: var(--mdc-bg-soft);
+}
+
+.mdc-rich-table__td--right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mdc-rich-table__tr--clickable {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.mdc-rich-table__tr--clickable:hover {
+  background: var(--mdc-rich-hover-strong) !important;
+}
+
+.mdc-rich-table__scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Card mode no mobile — padrão alinhado ao DataTable do portal */
+@media (max-width: 768px) {
+  .mdc-rich-table__header {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .mdc-rich-table__actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .mdc-rich-table__scroll {
+    overflow-x: visible;
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  .mdc-rich-table__table {
+    min-width: 100%;
+  }
+
+  .mdc-rich-table__table thead {
+    display: none;
+  }
+
+  .mdc-rich-table__table,
+  .mdc-rich-table__table tbody,
+  .mdc-rich-table__table tr,
+  .mdc-rich-table__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .mdc-rich-table__table tr {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--mdc-card-border);
+    border-radius: var(--mdc-radius-sm);
+    background: var(--mdc-card-bg);
+    box-shadow: var(--mdc-elevation-1);
+  }
+
+  .mdc-rich-table__table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .mdc-rich-table__table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.4rem 0;
+    white-space: normal;
+    word-break: break-word;
+    border-bottom: none;
+    text-align: left !important;
+  }
+
+  .mdc-rich-table__table td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    max-width: 42%;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--mdc-text-muted);
+  }
+
+  .mdc-rich-table__table tbody tr:hover {
+    background: var(--mdc-card-bg);
+  }
+
+  .mdc-rich-table__tr--clickable:hover {
+    background: var(--mdc-rich-hover) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-rich-table__table td::before {
+    flex-basis: 46%;
+    max-width: 46%;
+  }
+}
