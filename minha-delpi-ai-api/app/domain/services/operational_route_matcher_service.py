@@ -282,43 +282,7 @@ class OperationalRouteMatcherService:
         "saleOrdersList": _looks_like_sale_orders_list_question,
         "transformaQuestion": _looks_like_transforma_question,
         "systemMetadataQuestion": _looks_like_system_metadata_question,
-        "guideRoute": lambda normalized: ChatProductQueryIntentService._looks_like_guide_route_question(
-            normalized
-        ),
-        "suppliersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_suppliers_route_question(
-            normalized
-        ),
-        "purchasesRoute": lambda normalized: ChatProductQueryIntentService._looks_like_purchases_route_question(
-            normalized
-        ),
-        "billingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_billing_question(
-            normalized
-        ),
-        "genericPricingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_generic_pricing_route_question(
-            normalized
-        ),
         "salePricingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_sale_pricing_question(
-            normalized
-        ),
-        "inspectionRoute": lambda normalized: ChatProductQueryIntentService._looks_like_inspection_route_question(
-            normalized
-        ),
-        "inboundInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_inbound_invoice_route_question(
-            normalized
-        ),
-        "outboundInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_outbound_invoice_route_question(
-            normalized
-        ),
-        "genericInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_generic_invoice_route_question(
-            normalized
-        ),
-        "customersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_customers_route_question(
-            normalized
-        ),
-        "internalMovementsRoute": lambda normalized: ChatProductQueryIntentService._looks_like_internal_movements_route_question(
-            normalized
-        ),
-        "openOrdersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_open_orders_route_question(
             normalized
         ),
         "suppliesOtdRoute": _looks_like_supplies_otd_question,
@@ -347,9 +311,6 @@ class OperationalRouteMatcherService:
             normalized
         ),
         "descriptionQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_description_question(
-            normalized
-        ),
-        "productSummaryRoute": lambda normalized: ChatProductQueryIntentService._looks_like_product_summary_route_question(
             normalized
         ),
         "productSubIntentRoute": lambda normalized: ChatProductQueryIntentService._looks_like_product_sub_intent(
@@ -397,9 +358,11 @@ class OperationalRouteMatcherService:
         custom_predicate = str(spec.get("customPredicate") or "").strip()
 
         if custom_predicate:
-            matcher = cls._CUSTOM_PREDICATES.get(custom_predicate)
-
-            if not matcher or not matcher(normalized):
+            if not cls._match_custom_predicate(
+                custom_predicate,
+                normalized,
+                message=message,
+            ):
                 return False
 
         all_of = spec.get("allOf")
@@ -421,6 +384,15 @@ class OperationalRouteMatcherService:
 
                 if cls._evaluate_node(node, message=message, normalized=normalized):
                     return False
+
+        any_of = spec.get("anyOf")
+
+        if isinstance(any_of, list) and any_of:
+            return any(
+                cls._evaluate_spec(branch, message=message, normalized=normalized)
+                for branch in any_of
+                if isinstance(branch, dict)
+            )
 
         terms_from = str(spec.get("termsFrom") or "").strip()
 
@@ -446,6 +418,7 @@ class OperationalRouteMatcherService:
             and not terms_from
             and not isinstance(all_of, list)
             and not isinstance(none_of, list)
+            and not isinstance(any_of, list)
         ):
             return False
 
@@ -469,9 +442,11 @@ class OperationalRouteMatcherService:
         custom_predicate = str(node.get("customPredicate") or "").strip()
 
         if custom_predicate:
-            matcher = cls._CUSTOM_PREDICATES.get(custom_predicate)
-
-            if not matcher or not matcher(normalized):
+            if not cls._match_custom_predicate(
+                custom_predicate,
+                normalized,
+                message=message,
+            ):
                 return False
 
         terms_from = str(node.get("termsFrom") or "").strip()
@@ -524,10 +499,36 @@ class OperationalRouteMatcherService:
         return _looks_like_transforma_question(normalized)
 
     @classmethod
-    def matches_custom_predicate(cls, predicate: str, normalized: str) -> bool:
-        matcher = cls._CUSTOM_PREDICATES.get(str(predicate or "").strip())
+    def _match_custom_predicate(
+        cls,
+        predicate: str,
+        normalized: str,
+        *,
+        message: str = "",
+    ) -> bool:
+        key = str(predicate or "").strip()
+
+        if not key:
+            return False
+
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        if key in ChatProductRoutePredicateService.registered_predicates():
+            return ChatProductRoutePredicateService.matches(
+                key,
+                normalized,
+                message=message or normalized,
+            )
+
+        matcher = cls._CUSTOM_PREDICATES.get(key)
 
         return bool(matcher and matcher(normalized))
+
+    @classmethod
+    def matches_custom_predicate(cls, predicate: str, normalized: str) -> bool:
+        return cls._match_custom_predicate(predicate, normalized, message=normalized)
 
     @staticmethod
     def extract_lmp_sale_number(text: str | None) -> str | None:

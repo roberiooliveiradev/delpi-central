@@ -62,6 +62,7 @@ _PLAYBOOK_NONE_OF_RULES: dict[str, list[str]] = {
         "lastPurchase",
         "purchasePriceHistory",
         "purchaseBudgetHistory",
+        "rawMaterialPriceIntelligence",
     ],
     "productFactoryStatus": ["productionStatus"],
     "productLastPurchase": ["directives"],
@@ -254,10 +255,20 @@ class OperationalRouteRegistryLintService:
         if not predicate:
             return
 
-        if predicate not in OperationalRouteMatcherService._CUSTOM_PREDICATES:
+        if predicate not in cls._allowed_custom_predicates():
             report.add_error(
                 f"routes.{context}.customPredicate {predicate!r} fora da allowlist"
             )
+
+    @classmethod
+    def _allowed_custom_predicates(cls) -> frozenset[str]:
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        return frozenset(OperationalRouteMatcherService._CUSTOM_PREDICATES).union(
+            ChatProductRoutePredicateService.registered_predicates()
+        )
 
     @classmethod
     def _lint_presentation(
@@ -283,7 +294,7 @@ class OperationalRouteRegistryLintService:
     @classmethod
     def _lint_actionable_predicates(cls, report: OperationalRouteRegistryLintReport) -> None:
         for predicate in OperationalRouteRegistryService.actionable_product_predicates():
-            if predicate not in OperationalRouteMatcherService._CUSTOM_PREDICATES:
+            if predicate not in cls._allowed_custom_predicates():
                 report.add_error(
                     f"actionableProductPredicates.{predicate!r} fora da allowlist"
                 )
@@ -294,7 +305,7 @@ class OperationalRouteRegistryLintService:
         report: OperationalRouteRegistryLintReport,
     ) -> None:
         for predicate in OperationalRouteRegistryService.playbook_product_predicates():
-            if predicate not in OperationalRouteMatcherService._CUSTOM_PREDICATES:
+            if predicate not in cls._allowed_custom_predicates():
                 report.add_error(
                     f"playbookProductPredicates.{predicate!r} fora da allowlist"
                 )

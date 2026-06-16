@@ -893,10 +893,11 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_billing_question(cls, normalized: str) -> bool:
-        if not any(term in normalized for term in cls._terms("billing", "terms")):
-            return False
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
 
-        return cls._has_product_scope_reference(normalized)
+        return ChatProductRoutePredicateService.matches("billingRoute", normalized)
 
     @classmethod
     def _looks_like_factory_status_question(cls, normalized: str) -> bool:
@@ -1353,39 +1354,28 @@ class ChatProductQueryIntentService:
         return False
 
     @classmethod
-    def _looks_like_purchases_route_question(cls, normalized: str) -> bool:
-        if not any(term in normalized for term in cls._terms("purchases", "terms")):
-            return False
-
-        return not (
-            cls._looks_like_last_purchase_question(normalized)
-            or cls._looks_like_purchase_price_history_question(normalized)
-            or cls._looks_like_purchase_budget_history_question(normalized)
-            or cls._looks_like_raw_material_price_intelligence_question(normalized)
+    def _matches_route_predicate(cls, predicate: str, normalized: str) -> bool:
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
         )
+
+        return ChatProductRoutePredicateService.matches(predicate, normalized)
+
+    @classmethod
+    def _looks_like_purchases_route_question(cls, normalized: str) -> bool:
+        return cls._matches_route_predicate("purchasesRoute", normalized)
 
     @classmethod
     def _looks_like_product_summary_route_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("analyser", "summaryExplicit")):
-            return True
-
-        return (
-            "resumo" in normalized
-            and "completo" not in normalized
-            and "ficha" not in normalized
-            and "kaizen" not in normalized
-        )
+        return cls._matches_route_predicate("productSummaryRoute", normalized)
 
     @classmethod
     def _looks_like_guide_route_question(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._terms("router", "guideTerms"))
+        return cls._matches_route_predicate("guideRoute", normalized)
 
     @classmethod
     def _looks_like_generic_pricing_route_question(cls, normalized: str) -> bool:
-        if cls._looks_like_sale_pricing_question(normalized):
-            return False
-
-        return any(term in normalized for term in cls._terms("router", "priceTerms"))
+        return cls._matches_route_predicate("genericPricingRoute", normalized)
 
     @classmethod
     def _looks_like_invoices_route_question(cls, normalized: str) -> bool:
@@ -1393,59 +1383,35 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_suppliers_route_question(cls, normalized: str) -> bool:
-        if not any(term in normalized for term in cls._terms("suppliers", "terms")):
-            return False
-
-        return bool(re.search(r"\bfornece\b", normalized)) or "fornecedor" in normalized
+        return cls._matches_route_predicate("suppliersRoute", normalized)
 
     @classmethod
     def _looks_like_inspection_route_question(cls, normalized: str) -> bool:
-        if not any(term in normalized for term in cls._terms("inspection", "terms")):
-            return False
-
-        return not cls._looks_like_shipping_status_question(normalized)
+        return cls._matches_route_predicate("inspectionRoute", normalized)
 
     @classmethod
     def _looks_like_inbound_invoice_route_question(cls, normalized: str) -> bool:
-        if not cls._looks_like_invoices_route_question(normalized):
-            return False
-
-        return any(
-            term in normalized for term in cls._terms("invoices", "inboundTerms")
-        )
+        return cls._matches_route_predicate("inboundInvoiceRoute", normalized)
 
     @classmethod
     def _looks_like_outbound_invoice_route_question(cls, normalized: str) -> bool:
-        if not cls._looks_like_invoices_route_question(normalized):
-            return False
-
-        return any(
-            term in normalized for term in cls._terms("invoices", "outboundTerms")
-        )
+        return cls._matches_route_predicate("outboundInvoiceRoute", normalized)
 
     @classmethod
     def _looks_like_generic_invoice_route_question(cls, normalized: str) -> bool:
-        if not cls._looks_like_invoices_route_question(normalized):
-            return False
-
-        return not (
-            cls._looks_like_inbound_invoice_route_question(normalized)
-            or cls._looks_like_outbound_invoice_route_question(normalized)
-        )
+        return cls._matches_route_predicate("genericInvoiceRoute", normalized)
 
     @classmethod
     def _looks_like_customers_route_question(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._terms("customers", "terms"))
+        return cls._matches_route_predicate("customersRoute", normalized)
 
     @classmethod
     def _looks_like_internal_movements_route_question(cls, normalized: str) -> bool:
-        return any(
-            term in normalized for term in cls._terms("internalMovements", "terms")
-        )
+        return cls._matches_route_predicate("internalMovementsRoute", normalized)
 
     @classmethod
     def _looks_like_open_orders_route_question(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._terms("openOrders", "terms"))
+        return cls._matches_route_predicate("openOrdersRoute", normalized)
 
     @classmethod
     def refine_operational_intent_from_full(

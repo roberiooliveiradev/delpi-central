@@ -349,7 +349,8 @@
         "noneOf": [
           { "customPredicate": "lastPurchase" },
           { "customPredicate": "purchasePriceHistory" },
-          { "customPredicate": "purchaseBudgetHistory" }
+          { "customPredicate": "purchaseBudgetHistory" },
+          { "customPredicate": "rawMaterialPriceIntelligence" }
         ]
       },
       "route": {

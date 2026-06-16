@@ -135,6 +135,76 @@
     "parentsQuestion",
     "productSubIntentRoute"
   ],
+  "summaryRoute": {
+    "resumoMarker": ["resumo"],
+    "excludeWhen": ["completo", "ficha", "kaizen"]
+  },
+  "routePredicates": {
+    "purchasesRoute": {
+      "termsFrom": "product_query_intent.purchases.terms",
+      "noneOf": [
+        { "customPredicate": "lastPurchase" },
+        { "customPredicate": "purchasePriceHistory" },
+        { "customPredicate": "purchaseBudgetHistory" },
+        { "customPredicate": "rawMaterialPriceIntelligence" }
+      ]
+    },
+    "productSummaryRoute": {
+      "anyOf": [
+        { "termsFrom": "product_query_intent.analyser.summaryExplicit" },
+        {
+          "termsFrom": "product_query_intent.summaryRoute.resumoMarker",
+          "excludeTermsFrom": "product_query_intent.summaryRoute.excludeWhen"
+        }
+      ]
+    },
+    "guideRoute": {
+      "termsFrom": "product_query_intent.router.guideTerms"
+    },
+    "genericPricingRoute": {
+      "termsFrom": "product_query_intent.router.priceTerms",
+      "noneOf": [{ "customPredicate": "salePricingRoute" }]
+    },
+    "billingRoute": {
+      "termsFrom": "product_query_intent.billing.terms",
+      "hasProductScope": true
+    },
+    "suppliersRoute": {
+      "termsFrom": "product_query_intent.suppliers.terms"
+    },
+    "inspectionRoute": {
+      "termsFrom": "product_query_intent.inspection.terms",
+      "noneOf": [{ "customPredicate": "shippingStatus" }]
+    },
+    "inboundInvoiceRoute": {
+      "allOf": [
+        { "termsFrom": "product_query_intent.invoices.terms" },
+        { "termsFrom": "product_query_intent.invoices.inboundTerms" }
+      ]
+    },
+    "outboundInvoiceRoute": {
+      "allOf": [
+        { "termsFrom": "product_query_intent.invoices.terms" },
+        { "termsFrom": "product_query_intent.invoices.outboundTerms" }
+      ]
+    },
+    "genericInvoiceRoute": {
+      "termsFrom": "product_query_intent.invoices.terms",
+      "noneOf": [
+        { "customPredicate": "inboundInvoiceRoute" },
+        { "customPredicate": "outboundInvoiceRoute" }
+      ]
+    },
+    "customersRoute": {
+      "termsFrom": "product_query_intent.customers.terms"
+    },
+    "internalMovementsRoute": {
+      "termsFrom": "product_query_intent.internalMovements.terms"
+    },
+    "openOrdersRoute": {
+      "termsFrom": "product_query_intent.openOrders.terms"
+    }
+  },
   "stock": {
     "lineTokens": [
       "filial",
