@@ -2,15 +2,6 @@
 
 from __future__ import annotations
 
-from app.application.services.chat_conversation_context_service import (
-    ChatConversationContextService,
-)
-from app.domain.services.operational_route_matcher_service import (
-    OperationalRouteMatcherService,
-)
-from app.application.services.external_actions.external_action_product_search_route_selection_service import (
-    ExternalActionProductSearchRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_registry_dispatch_phase_service import (
     ExternalActionRegistryDispatchPhaseService,
     RegistryDispatchCallbacks,
@@ -19,23 +10,18 @@ from app.application.services.external_actions.external_action_registry_dispatch
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_selection_preflight_service import (
+    ExternalActionSelectionPreflightService,
+)
 from app.application.services.external_actions.external_action_selection_support_service import (
     ExternalActionSelectionSupportService,
 )
-from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.domain.services.chat_operational_refinement_service import (
-    ChatOperationalRefinementService,
-)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
-    ChatProductQueryIntentService,
 )
-from app.domain.services.chat_route_context_service import ChatRouteContextService
-from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
 
 class ExternalActionSelectionDispatchService:
@@ -60,335 +46,50 @@ class ExternalActionSelectionDispatchService:
     ) -> dict | None:
         sql_source = str(raw_message or message).strip()
 
-        if ChatAnalysisIntentService.is_data_interpretation_request(
+        if ExternalActionSelectionPreflightService.blocks_selection(
             message,
-            previous_messages,
-        ) and ChatConversationContextService.has_recent_tool_data(previous_messages):
-            return None
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
-
-        if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
-            if not ChatProductionOperationalIntentService.matches_rest_route(message):
-                return None
-
-        if ChatCanvasIntentService.blocks_external_action_selection(message):
-            return None
-
-        from app.domain.services.chat_web_search_intent_service import (
-            ChatWebSearchIntentService,
-        )
-
-        if ChatWebSearchIntentService.blocks_external_action_selection(message):
-            return None
-
-        if ChatSqlIntentService.is_authoring_request(message):
-            normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-            if OperationalRouteMatcherService.looks_like_system_metadata_question(
-                normalized
-            ):
-                selected = self._route_selection.select_system_metadata(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    candidates_loader=self._list_allowed_candidates,
-                )
-
-                if selected:
-                    return selected
-
-            return None
-
-        from app.domain.services.chat_web_search_source_follow_up_service import (
-            ChatWebSearchSourceFollowUpService,
-        )
-
-        if ChatWebSearchSourceFollowUpService.blocks_external_action_selection(
-            message,
-            previous_messages,
+            previous_messages=previous_messages,
         ):
             return None
 
-        from app.domain.services.chat_sql_query_refinement_service import (
-            ChatSqlQueryRefinementService,
-        )
-        from app.application.services.external_actions.external_action_sql_fallback_policy_service import (
-            ExternalActionSqlFallbackPolicyService,
-        )
-        from app.domain.services.operational_route_registry_service import (
-            OperationalRouteRegistryService,
+        sql_authoring = ExternalActionSelectionPreflightService.try_sql_authoring_system_metadata(
+            message,
+            route_selection=self._route_selection,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=self._list_allowed_candidates,
         )
 
-        for policy in OperationalRouteRegistryService.preflight_sql_fallback_policies():
-            selected = ExternalActionSqlFallbackPolicyService.try_policy(
-                policy,
-                message=message,
-                sql_source=sql_source,
-                allowed_action_ids=allowed_action_ids,
-                select_sql=self._select_sql_or_data_action,
-            )
+        if sql_authoring != "skip":
+            return sql_authoring
 
-            if selected:
-                return selected
+        selected = ExternalActionSelectionPreflightService.try_preflight_sql_policies(
+            message,
+            sql_source=sql_source,
+            allowed_action_ids=allowed_action_ids,
+            select_sql=self._select_sql_or_data_action,
+        )
 
-        sql_refinement = ChatSqlQueryRefinementService.resolve(
+        if selected:
+            return selected
+
+        if ExternalActionSelectionPreflightService.blocks_sql_show_mode(
             message,
             previous_messages=previous_messages,
-        )
-
-        if sql_refinement and sql_refinement.mode == "show_sql":
+        ):
             return None
 
-        if sql_refinement and sql_refinement.mode == "execute":
-            selected = ExternalActionSqlFallbackPolicyService.try_sql_refinement(
-                message=message,
-                sql_source=sql_source,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                select_sql=self._select_sql_or_data_action,
-                policy=OperationalRouteRegistryService.sql_refinement_policy(),
-            )
-
-            if selected:
-                return selected
-
-        from app.domain.services.chat_drawing_intent_service import (
-            ChatDrawingIntentService,
-        )
-
-        if ChatDrawingIntentService.is_drawing_analysis_request(message):
-            product_code = ChatProductQueryIntentService.resolve_product_code(
-                message,
-                conversation_context,
-                previous_messages=previous_messages,
-                memory_snapshot=memory_snapshot,
-            )
-
-            if product_code:
-                selected = self._select_product_action(
-                    message,
-                    product_code,
-                    allowed_action_ids=allowed_action_ids,
-                    intent=ChatProductQueryIntent.ANALYSER,
-                )
-
-                if selected:
-                    return selected
-
-        from app.domain.services.chat_technical_description_intent_service import (
-            ChatTechnicalDescriptionIntentService,
-        )
-
-        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
-            return None
-
-        from app.domain.services.chat_presentation_detail_action_service import (
-            ChatPresentationDetailActionService,
-        )
-
-        detail_plan = ChatPresentationDetailActionService.detect_plan(
+        selected = ExternalActionSelectionPreflightService.try_sql_refinement_execute(
             message,
+            sql_source=sql_source,
+            allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
+            select_sql=self._select_sql_or_data_action,
         )
 
-        if detail_plan:
-            selected = self._route_selection.select_presentation_detail(
-                detail_plan,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        refinement = ChatOperationalRefinementService.detect(
-            message,
-            conversation_context=conversation_context,
-            previous_messages=previous_messages,
-        )
-
-        if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
-            from app.domain.services.operational_route_registry_service import (
-                OperationalRouteRegistryService,
-            )
-
-            stock_path_fragment = (
-                OperationalRouteRegistryService.route_path_marker_for_segment("stock")
-                or "/stock"
-            )
-            previous_stock_action_id = self._support.resolve_previous_external_action_id(
-                previous_messages,
-                path_fragment=stock_path_fragment,
-            )
-            selected = self._select_product_action(
-                message,
-                str(refinement.product_code or ""),
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.STOCK,
-                preferred_action_id=previous_stock_action_id,
-            )
-
-            if selected:
-                return selected
-
-        if refinement and refinement.kind in {"metric_refinement", "metric_reset"}:
-            selected = self._route_selection.select_metric_refinement(
-                message,
-                refinement,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        if refinement and refinement.kind == "pagination_refinement":
-            selected = self._route_selection.select_pagination_refinement(
-                refinement,
-                allowed_action_ids=allowed_action_ids,
-                message=message,
-                select_product=self._select_product_action,
-            )
-
-            if selected:
-                return selected
-
-        if refinement and refinement.kind == "depth_refinement":
-            selected = self._route_selection.select_depth_refinement(
-                refinement,
-                allowed_action_ids=allowed_action_ids,
-                message=message,
-                select_product=self._select_product_action,
-                clamp_max_depth=self._clamp_max_depth_for_path,
-            )
-
-            if selected:
-                return selected
+        if selected:
+            return selected
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
-
-        if (
-            OperationalRouteMatcherService.looks_like_system_metadata_question(
-                normalized
-            )
-            and not ChatProductQueryIntentService.extract_product_code(message)
-            and not ChatSqlQueryRefinementService.is_sql_follow_up(
-                message,
-                previous_messages=previous_messages,
-            )
-        ):
-            selected = self._route_selection.select_system_metadata(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        group_search_code = (
-            ExternalActionProductSearchRouteSelectionService.extract_search_group_code(
-                message,
-                normalized,
-            )
-        )
-
-        if (
-            group_search_code
-            and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
-                normalized
-            )
-            and not ChatProductionOperationalIntentService.matches_rest_route(message)
-        ):
-            selected = self._route_selection.select_product_search(
-                message,
-                normalized,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        from app.domain.services.chat_product_description_resolution_service import (
-            ChatProductDescriptionResolutionService,
-        )
-
-        description_lookup = ChatProductDescriptionResolutionService.extract_description_query(
-            message,
-        )
-
-        if description_lookup and not ChatProductDescriptionResolutionService.extract_code_from_drilldown_message(
-            message,
-        ):
-            resolved_from_history = ChatProductDescriptionResolutionService.resolve_code_from_history(
-                description_lookup,
-                previous_messages=previous_messages,
-            )
-
-            if not resolved_from_history and not ChatProductionOperationalIntentService.matches_rest_route(
-                message
-            ):
-                selected = self._route_selection.select_product_search(
-                    message,
-                    normalized,
-                    allowed_action_ids=allowed_action_ids,
-                    candidates_loader=self._list_allowed_candidates,
-                    description_override=description_lookup,
-                )
-
-                if selected:
-                    return selected
-
-        product_code = ChatProductQueryIntentService.resolve_product_code(
-            message,
-            conversation_context,
-            previous_messages=previous_messages,
-            memory_snapshot=memory_snapshot,
-        )
-        product_intent = ChatProductQueryIntentService.resolve_product_intent(
-            message,
-            previous_messages=previous_messages,
-        )
-        product_route_segment = ChatRouteContextService.resolve_product_route_segment(
-            message,
-            previous_messages=previous_messages,
-        )
-        bound_product_intent = product_intent
-
-        if (
-            product_intent == ChatProductQueryIntent.FULL
-            and ChatProductDescriptionResolutionService.looks_like_description_lookup(
-                message
-            )
-        ):
-            description_query = (
-                ChatProductDescriptionResolutionService.extract_description_query(
-                    message,
-                )
-            )
-            resolved_from_history = (
-                ChatProductDescriptionResolutionService.resolve_code_from_history(
-                    description_query,
-                    previous_messages=previous_messages,
-                )
-                if description_query
-                else None
-            )
-
-            if resolved_from_history and not ChatProductQueryIntentService.extract_product_code(
-                message
-            ):
-                bound_product_intent = ChatProductQueryIntent.ANALYSER
-            else:
-                bound_product_intent = ChatProductQueryIntent.DESCRIPTION
 
         return self._registry_phases.run(
             RegistryDispatchContext(
@@ -398,9 +99,10 @@ class ExternalActionSelectionDispatchService:
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
-                product_code=product_code,
-                bound_product_intent=bound_product_intent,
-                product_route_segment=product_route_segment,
+                product_code=None,
+                bound_product_intent=ChatProductQueryIntent.FULL,
+                product_route_segment=None,
+                memory_snapshot=memory_snapshot,
             ),
             callbacks=RegistryDispatchCallbacks(
                 candidates_loader=self._list_allowed_candidates,
@@ -412,6 +114,8 @@ class ExternalActionSelectionDispatchService:
                 select_product=self._select_product_action,
                 select_lmp=self._select_lmp_action,
                 select_sql=self._select_sql_or_data_action,
+                resolve_previous_external_action_id=self._support.resolve_previous_external_action_id,
+                clamp_max_depth_for_path=self._clamp_max_depth_for_path,
             ),
         )
 

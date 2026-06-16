@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable, Protocol
 
-from app.application.services.external_actions.external_action_product_search_route_selection_service import (
-    ExternalActionProductSearchRouteSelectionService,
+from app.application.services.external_actions.external_action_session_refinement_phase_service import (
+    ExternalActionSessionRefinementPhaseService,
 )
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
@@ -28,8 +28,12 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_route_context_service import ChatRouteContextService
 from app.domain.services.chat_production_operational_intent_service import (
     ChatProductionOperationalIntentService,
+)
+from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+    ExternalActionProductSearchRouteSelectionService,
 )
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
@@ -60,6 +64,7 @@ class RegistryDispatchContext:
     product_code: str | None
     bound_product_intent: str
     product_route_segment: str | None
+    memory_snapshot: dict | None = None
 
 
 class _ProductSelector(Protocol):
@@ -107,6 +112,8 @@ class RegistryDispatchCallbacks:
     select_product: _ProductSelector
     select_lmp: _LmpSelector
     select_sql: _SqlSelector
+    resolve_previous_external_action_id: Callable[..., str | None]
+    clamp_max_depth_for_path: Callable[[int, str], int]
 
 
 class ExternalActionRegistryDispatchPhaseService:
@@ -114,6 +121,9 @@ class ExternalActionRegistryDispatchPhaseService:
 
     def __init__(self, route_selection: ExternalActionRouteSelectionService) -> None:
         self._route_selection = route_selection
+        self._session_refinement = ExternalActionSessionRefinementPhaseService(
+            route_selection
+        )
 
     def run(
         self,
@@ -121,6 +131,24 @@ class ExternalActionRegistryDispatchPhaseService:
         *,
         callbacks: RegistryDispatchCallbacks,
     ) -> dict | None:
+        selected = self._session_refinement.run(
+            message=ctx.message,
+            normalized=ctx.normalized,
+            allowed_action_ids=ctx.allowed_action_ids,
+            conversation_context=ctx.conversation_context,
+            previous_messages=ctx.previous_messages,
+            memory_snapshot=ctx.memory_snapshot,
+            select_product=callbacks.select_product,
+            candidates_loader=callbacks.candidates_loader,
+            resolve_previous_external_action_id=callbacks.resolve_previous_external_action_id,
+            clamp_max_depth_for_path=callbacks.clamp_max_depth_for_path,
+        )
+
+        if selected:
+            return selected
+
+        ctx = self._enrich_product_context(ctx)
+
         handlers = {
             "productionOperational": lambda state: self._phase_production_operational(
                 ctx,
@@ -167,6 +195,58 @@ class ExternalActionRegistryDispatchPhaseService:
                 return None
 
         return None
+
+    @staticmethod
+    def _enrich_product_context(ctx: RegistryDispatchContext) -> RegistryDispatchContext:
+        product_code = ChatProductQueryIntentService.resolve_product_code(
+            ctx.message,
+            ctx.conversation_context,
+            previous_messages=ctx.previous_messages,
+            memory_snapshot=ctx.memory_snapshot,
+        )
+        product_intent = ChatProductQueryIntentService.resolve_product_intent(
+            ctx.message,
+            previous_messages=ctx.previous_messages,
+        )
+        product_route_segment = ChatRouteContextService.resolve_product_route_segment(
+            ctx.message,
+            previous_messages=ctx.previous_messages,
+        )
+        bound_product_intent = product_intent
+
+        if (
+            product_intent == ChatProductQueryIntent.FULL
+            and ChatProductDescriptionResolutionService.looks_like_description_lookup(
+                ctx.message
+            )
+        ):
+            description_query = (
+                ChatProductDescriptionResolutionService.extract_description_query(
+                    ctx.message,
+                )
+            )
+            resolved_from_history = (
+                ChatProductDescriptionResolutionService.resolve_code_from_history(
+                    description_query,
+                    previous_messages=ctx.previous_messages,
+                )
+                if description_query
+                else None
+            )
+
+            if resolved_from_history and not ChatProductQueryIntentService.extract_product_code(
+                ctx.message
+            ):
+                bound_product_intent = ChatProductQueryIntent.ANALYSER
+            else:
+                bound_product_intent = ChatProductQueryIntent.DESCRIPTION
+
+        return replace(
+            ctx,
+            product_code=product_code,
+            bound_product_intent=bound_product_intent,
+            product_route_segment=product_route_segment,
+        )
 
     def _phase_production_operational(
         self,

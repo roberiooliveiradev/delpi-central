@@ -506,6 +506,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Lint CI: termos só em JSON (`scripts/lint_operational_route_registry.py` + workflow DOCIE)
 - [x] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths` (fase renomeada `operationalRoutes`)
 - [x] Remover wrappers `ExternalActionProductRouteSelectionService` e `ExternalActionKpiRouteSelectionService` — lógica em `ExternalActionRouteSelectionService`
+- [x] Fase 11: `sessionRefinement` ativo — `ExternalActionSessionRefinementPhaseService` + `ExternalActionSelectionPreflightService`; dispatch enxuto (~220 linhas)
 
 ---
 
@@ -520,7 +521,9 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | `external_action_production_operational_route_selection_service.py` | **Removido** (registry) |
 | `external_action_domain_route_selection_service.py` | **Removido** (registry + matcher) |
 | `external_action_kpi_route_selection_service.py` | **Removido** — refinamentos KPI em `ExternalActionRouteSelectionService` |
-| `external_action_selection_dispatch_service.py` | **Enxugar** — loop registry + refinamentos |
+| `external_action_selection_dispatch_service.py` | **Enxugado** — preflight + loop registry |
+| `external_action_selection_preflight_service.py` | **Criado** — guards e SQL preflight |
+| `external_action_session_refinement_phase_service.py` | **Criado** — fase `sessionRefinement` |
 | `chat_product_query_intent_service.py` | **Manter** detect/refine; reduzir `_looks_like_*` compostos |
 | `api_route_domains.json` | **Estender** domínios faltantes |
 | `external_action_responses.json` | **Transição** → só `selectionReasons` |

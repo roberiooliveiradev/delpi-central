@@ -43,6 +43,8 @@ def _callbacks(**overrides) -> RegistryDispatchCallbacks:
         "select_product": MagicMock(return_value=None),
         "select_lmp": MagicMock(return_value=None),
         "select_sql": MagicMock(return_value=None),
+        "resolve_previous_external_action_id": MagicMock(return_value=None),
+        "clamp_max_depth_for_path": MagicMock(side_effect=lambda value, path: value),
     }
     base.update(overrides)
     return RegistryDispatchCallbacks(**base)
