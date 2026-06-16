@@ -516,6 +516,20 @@
         "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(?:existem?|tem|há)\\s+(?:com\\s+(?:descri[çc][ãa]o\\s+)?|d[eoa]\\s+(?:tipo\\s+)?|tipo\\s+)(.+?)$",
         "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(.+?)$",
         "(?:existe|tem)\\s+(?:algum|alguma)\\s+(.+?)(?:\\s+no\\s+sistema|\\s+cadastrado)?$"
+      ],
+      "groupCodePatterns": [
+        "\\bgrupo\\s+de\\s+produtos?\\s+([A-Za-z0-9]{1,12})\\b",
+        "\\bgrupo\\s+([A-Za-z0-9]{1,12})\\b",
+        "\\bgroup_code\\s+([A-Za-z0-9]{1,12})\\b",
+        "\\bdo\\s+grupo\\s+([A-Za-z0-9]{1,12})\\b",
+        "\\bpelo\\s+grupo\\s+([A-Za-z0-9]{1,12})\\b"
+      ],
+      "groupCodeExcludeTokens": [
+        "de",
+        "do",
+        "da",
+        "produto",
+        "produtos"
       ]
     }
   },
@@ -624,6 +638,51 @@
     },
     "systemHasTableName": {
       "hasSystemTableName": true
+    }
+  },
+  "productSearchPredicates": {
+    "productSearchQuestion": {
+      "noneOf": [
+        { "excludeIfSqlConversation": true },
+        { "excludeIfWebSearch": true },
+        { "customPredicate": "technicalNormasDescriptionBlock" },
+        { "excludeIfSqlOperational": true },
+        { "excludeIfProductionRestRoute": true },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productSearch.audit5sExcludeTerms"
+        }
+      ],
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "termsFrom": "external_action_responses.actionSelection.productSearch.searchTriggers"
+            },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productSearch.productContextTerms"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "termsFrom": "external_action_responses.actionSelection.productSearch.searchTriggers"
+            },
+            { "minWordCount": 3 }
+          ],
+          "noneOf": [
+            {
+              "termsFrom": "external_action_responses.actionSelection.productSearch.broadSearchExcludeTerms"
+            }
+          ]
+        }
+      ]
+    },
+    "productSearchWithGroupCode": {
+      "allOf": [
+        { "customPredicate": "productSearchQuestion" },
+        { "hasProductSearchGroupCode": true }
+      ]
     }
   },
   "selectionReasons": {

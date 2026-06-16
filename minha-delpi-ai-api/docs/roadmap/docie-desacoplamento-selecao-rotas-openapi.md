@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–13 concluídas (jun/2026) — predicados produto + domínio + sistema em JSON; `_CUSTOM_PREDICATES` residual **4 entradas** (busca produto + KPI departamental + normas técnicas); Fase 14 (apresentação) em backlog  
+**Status:** Fases 0–13 concluídas (jun/2026) — predicados produto + domínio + sistema + busca em JSON; `_CUSTOM_PREDICATES` residual **2 entradas** (KPI departamental, normas técnicas); Fase 14 (apresentação) em curso  
 **Data:** jun/2026  
 **Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -44,7 +44,7 @@ ExternalActionSelectionDispatchService (~250 linhas — preflight + loop registr
 | `vocabularyFastPaths` | **Removido** — migrado para `operationalRoutes` no registry |
 | `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `ChatProductRoutePredicateService` |
 | `routePredicates` / `playbookPredicates` | **JSON** em `product_query_intent.json` — rotas operacionais + playbook produto |
-| `_CUSTOM_PREDICATES` residual | **4 entradas** — busca produto (guards compostos), KPI departamental, normas técnicas |
+| `_CUSTOM_PREDICATES` residual | **2 entradas** — KPI departamental, normas técnicas |
 | Ranking legado FULL | **Removido** — `ExternalActionProductRouteRankingService` deletado |
 | Provider bias `api_delpi`/`api_externa` | **Removido** — desempate por `allowed_action_ids` |
 | Continuação multi-turno | **`select_by_route_segment`** + `routeSegment` no registry |
@@ -535,8 +535,9 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] `domainPredicates` em `external_action_responses.json` (saleOrders, transforma, KPI produção/suprimentos, LMP)
 - [x] Matcher: `hasLmpSaleNumber` / `lacksLmpSaleNumber`; padrões OV em JSON
 - [x] `systemPredicates` — systemMetadataQuestion, systemWants*, systemHasTableName (`hasSystemTableName`)
-- [x] `_CUSTOM_PREDICATES` reduzido a busca produto + helpers (~4 entradas)
-- [ ] Predicados product search declarativos (guards compostos — dependem de múltiplos serviços de intenção)
+- [x] `productSearchPredicates` — productSearchQuestion, productSearchWithGroupCode
+- [x] Matcher: guards `excludeIfSqlConversation`, `excludeIfWebSearch`, `excludeIfSqlOperational`, `excludeIfProductionRestRoute`, `minWordCount`, `hasProductSearchGroupCode`
+- [x] `_CUSTOM_PREDICATES` reduzido a KPI departamental + normas técnicas (**2 entradas**)
 
 ### Fase 14 — Apresentação provider-agnóstica (em curso)
 
@@ -599,7 +600,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | # | Critério | Status jun/2026 |
 |---|----------|-----------------|
 | 1 | **Zero** path api-delpi em ranking legado (`ExternalActionProductRouteRankingService` removido) | ✅ |
-| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers (busca produto, KPI dept., normas) | 🟡 4 entradas |
+| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers (KPI dept., normas) | 🟡 2 entradas |
 | 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
 | 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
 | 5 | Documentação onda 8 / audit / catalog atualizadas | 🟡 em curso |

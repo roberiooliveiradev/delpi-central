@@ -38,25 +38,12 @@ def _extract_lmp_sale_number(text: str | None) -> str | None:
     return None
 
 
-def _looks_like_product_search_question(normalized: str) -> bool:
+def _extract_product_search_group_code(message: str, normalized: str) -> str | None:
     from app.domain.services.chat_product_search_intent_service import (
         ChatProductSearchIntentService,
     )
 
-    return ChatProductSearchIntentService.looks_like_product_search(normalized)
-
-
-def _looks_like_product_search_with_group_code(normalized: str) -> bool:
-    from app.domain.services.chat_product_search_intent_service import (
-        ChatProductSearchIntentService,
-    )
-
-    if not ChatProductSearchIntentService.looks_like_product_search(normalized):
-        return False
-
-    return bool(
-        ChatProductSearchIntentService.extract_search_group_code(normalized, normalized)
-    )
+    return ChatProductSearchIntentService.extract_search_group_code(message, normalized)
 
 
 def _department_kpi_resolved(normalized: str) -> bool:
@@ -77,8 +64,6 @@ def _technical_normas_description_block(normalized: str) -> bool:
 
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "productSearchQuestion": _looks_like_product_search_question,
-        "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
         "departmentKpiResolved": _department_kpi_resolved,
         "technicalNormasDescriptionBlock": _technical_normas_description_block,
     }
@@ -228,6 +213,25 @@ class OperationalRouteMatcherService:
             if not ChatSystemMetadataIntentService.extract_table_name(message or normalized):
                 return False
 
+        if spec.get("hasProductSearchGroupCode"):
+            if not _extract_product_search_group_code(message or normalized, normalized):
+                return False
+
+        min_word_count = spec.get("minWordCount")
+
+        if min_word_count is not None:
+            if len(str(normalized or "").split()) < int(min_word_count):
+                return False
+
+        exclusion_probe = cls._matches_intent_exclusion_probe(
+            spec,
+            normalized=normalized,
+            message=message,
+        )
+
+        if exclusion_probe is not None:
+            return exclusion_probe
+
         if spec.get("hasProductIdentifier"):
             identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
@@ -249,6 +253,12 @@ class OperationalRouteMatcherService:
             and not spec.get("hasLmpSaleNumber")
             and not spec.get("lacksLmpSaleNumber")
             and not spec.get("hasSystemTableName")
+            and not spec.get("hasProductSearchGroupCode")
+            and min_word_count is None
+            and not spec.get("excludeIfSqlConversation")
+            and not spec.get("excludeIfWebSearch")
+            and not spec.get("excludeIfSqlOperational")
+            and not spec.get("excludeIfProductionRestRoute")
             and not plural_scope
             and not spec.get("hasProductEntityReference")
             and not regex_patterns_from
@@ -259,6 +269,57 @@ class OperationalRouteMatcherService:
             return False
 
         return True
+
+    @classmethod
+    def _matches_intent_exclusion_probe(
+        cls,
+        spec: dict[str, Any],
+        *,
+        normalized: str,
+        message: str,
+    ) -> bool | None:
+        probes = (
+            ("excludeIfSqlConversation", cls._is_sql_conversation_turn),
+            ("excludeIfWebSearch", cls._is_web_search_turn),
+            ("excludeIfSqlOperational", cls._requires_sql_operational_knowledge),
+            ("excludeIfProductionRestRoute", cls._matches_production_rest_route),
+        )
+
+        for key, checker in probes:
+            if spec.get(key):
+                return checker(normalized, message=message)
+
+        return None
+
+    @staticmethod
+    def _is_sql_conversation_turn(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        return ChatSqlIntentService.is_sql_conversation_turn(normalized)
+
+    @staticmethod
+    def _is_web_search_turn(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        return ChatWebSearchIntentService.matches(normalized)
+
+    @staticmethod
+    def _requires_sql_operational_knowledge(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_sql_operational_intent_service import (
+            ChatSqlOperationalIntentService,
+        )
+
+        return ChatSqlOperationalIntentService.requires_sql_knowledge(normalized)
+
+    @staticmethod
+    def _matches_production_rest_route(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+        )
+
+        return ChatProductionOperationalIntentService.matches_rest_route(normalized)
 
     @classmethod
     def _passes_exclude_terms_unless(

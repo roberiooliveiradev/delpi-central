@@ -154,3 +154,27 @@ def test_system_predicates_metadata_routes():
     assert ChatProductRoutePredicateService.matches("systemHasTableName", columns)
     assert ChatProductRoutePredicateService.matches("systemWantsRelations", relations)
     assert ChatProductRoutePredicateService.matches("systemWantsTableSearch", table_search)
+
+
+def test_product_search_predicates_description_and_group():
+    by_description = ChatMessageNormalizationService.normalize_for_matching(
+        "busque produtos parafuso sextavado"
+    )
+    by_group = ChatMessageNormalizationService.normalize_for_matching(
+        "busque produtos do grupo abc"
+    )
+    web_query = ChatMessageNormalizationService.normalize_for_matching(
+        "pesquise na web sobre delpi conexoes eletricas"
+    )
+    audit_5s = ChatMessageNormalizationService.normalize_for_matching(
+        "liste candidatas a nc 5s"
+    )
+
+    assert ChatProductRoutePredicateService.matches("productSearchQuestion", by_description)
+    assert ChatProductRoutePredicateService.matches("productSearchWithGroupCode", by_group)
+    assert not ChatProductRoutePredicateService.matches("productSearchQuestion", web_query)
+    assert not ChatProductRoutePredicateService.matches("productSearchQuestion", audit_5s)
+    assert not ChatProductRoutePredicateService.matches(
+        "productSearchWithGroupCode",
+        by_description,
+    )
