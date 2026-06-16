@@ -190,18 +190,21 @@
   border-radius: 14px;
   background: var(--surface-2);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.12s ease;
   flex-direction: row;
 }
 
-.consent-item:hover {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 5%, var(--surface-2));
+@media (hover: hover) and (pointer: fine) {
+  .consent-item:hover {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  }
 }
 
 .consent-item--required {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  cursor: default;
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface-2));
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .consent-item input[type="checkbox"] {
