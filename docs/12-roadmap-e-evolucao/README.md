@@ -23,6 +23,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [minha-delpi-chat/homologacao-mvp.md](./minha-delpi-chat/homologacao-mvp.md) | Homologação MVP |
 | [minha-delpi-chat/release-mvp-1.0.0.md](./minha-delpi-chat/release-mvp-1.0.0.md) | Release MVP |
 | [minha-delpi-chat/homologacao-vllm-producao.md](./minha-delpi-chat/homologacao-vllm-producao.md) | vLLM produção |
+| [minha-delpi-chat/gpu-l4-retomada-homologacao.md](./minha-delpi-chat/gpu-l4-retomada-homologacao.md) | Plano retomada GPU L4 + modelos (jun/2026) |
 
 ### Eficiência Fabril
 

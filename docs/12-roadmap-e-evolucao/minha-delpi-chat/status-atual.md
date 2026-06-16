@@ -100,7 +100,7 @@ Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deplo
 - Temperature: 0.4 (respostas mais fluidas em português)
 - Qualidade vem do modelo + pipeline (actions, RAG, fast paths, tool router, rerank)
 - Streaming em respostas diretas: 4 chars/chunk, 20ms delay (efeito de escrita natural)
-- vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
+- vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md` e plano de retomada [`gpu-l4-retomada-homologacao.md`](./gpu-l4-retomada-homologacao.md) (cotação L4 24GB, jun/2026)
 
 ## Endpoints de verificação rápida
 
