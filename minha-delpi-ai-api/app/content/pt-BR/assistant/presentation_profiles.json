@@ -349,7 +349,9 @@
       },
       "operationalRoot": {
         "itemsKey": "items",
-        "wrapperKeys": ["stock"]
+        "wrapperKeys": [
+          "stock"
+        ]
       },
       "visualBuilders": {
         "kpi": "build_stock_kpi",
@@ -1699,5 +1701,294 @@
       "profileFirst": false,
       "highlightsAfterProfile": false
     }
-  }
+  },
+  "entityPathHints": {
+    "product_pricing": "/products/0/pricing",
+    "product_purchases": "/products/0/purchases",
+    "product_suppliers": "/products/0/suppliers",
+    "product_customers": "/products/0/customers",
+    "product_internal_movements": "/products/0/internal-movements",
+    "product_inbound_invoice_items": "/products/0/inbound-invoice-items",
+    "product_outbound_invoice_items": "/products/0/outbound-invoice-items",
+    "product_sales": "/products/0/sales",
+    "product_open_orders": "/products/0/sales/open-orders",
+    "product_billing": "/products/0/sales/billing",
+    "supplies_cpv": "/supplies/cpv",
+    "supplies_otd": "/supplies/otd",
+    "supplies_stock_value": "/supplies/stock-value",
+    "supplies_inventory_turnover": "/supplies/inventory-turnover",
+    "supplies_negotiation_savings": "/supplies/negotiation-savings/summary",
+    "financial_rol": "/financial/rol",
+    "financial_ebitda_pct": "/financial/ebitda_pct",
+    "financial_fixed_cost_pct": "/financial/fixed_cost_pct",
+    "financial_pmr": "/financial/pmr",
+    "commercial_rol_target": "/commercial/head_office_rol_target_pct",
+    "commercial_rol_series": "/commercial/rol/series",
+    "sales_conversion_rate": "/commercial/closing-rate",
+    "new_clients_average": "/commercial/new-clients-average",
+    "sales_order_otd": "/commercial/sales-order-otd",
+    "new_business_rol_pct": "/commercial/new-business-rol-pct",
+    "new_clients_rol_pct": "/commercial/new-clients-rol-pct",
+    "commercial_proposal": "/commercial/proposals",
+    "direct_labor_cost_pct": "/production/direct_labor_cost_pct",
+    "production_cost_pct": "/production/production_cost_pct",
+    "depreciation_pct": "/production/depreciation_pct",
+    "production_oee_series": "/production/oee/series",
+    "production_oee_detail": "/production/oee",
+    "production_oee_appointment": "/production/oee/appointments/0",
+    "production_otd_series": "/production/otd/series",
+    "overall_equipment_effectiveness": "/production/overall_equipment_effectiveness_pct",
+    "production_otd": "/production/on_time_delivery_pct",
+    "production_otd_detail": "/production/otd",
+    "eficiencia_fabril_dashboard": "/production/eficiencia-fabril/dashboard",
+    "eficiencia_fabril_appointment": "/production/eficiencia-fabril/appointments",
+    "hr_branch": "/hr/branches",
+    "hr_snapshot": "/hr/snapshot",
+    "hr_active_pdi_count": "/hr/active-pdi-count",
+    "hr_performance_reviews_completion": "/hr/performance-reviews-completion",
+    "quality_branch": "/quality/branches",
+    "nonconformity_series": "/quality/nonconformities/series",
+    "kaizen_summary": "/quality/kaizens/summary",
+    "kaizen": "/quality/kaizens/0",
+    "audit_5s_summary": "/quality/audit-5s/summary",
+    "ppm_internal_summary": "/quality/ppm/internal/summary",
+    "ppm_external_summary": "/quality/ppm/external/summary",
+    "ppm_internal_series": "/quality/ppm/internal/series",
+    "ppm_external_series": "/quality/ppm/external/series",
+    "lmp": "/engineering/lmps",
+    "lmp_dashboard": "/engineering/lmps/dashboard",
+    "lmp_dashboard_summary": "/engineering/lmps/dashboard/summary",
+    "lmp_dashboard_items": "/engineering/lmps/dashboard/items",
+    "lmp_dashboard_charts": "/engineering/lmps/dashboard/charts",
+    "transforma_mais_process": "/engineering/transforma-mais/processes",
+    "transforma_mais_summary": "/engineering/transforma-mais/processes/summary",
+    "sale_order": "/sales/",
+    "sql_result": "/data/sql",
+    "protheus_table": "/system/tables/search",
+    "protheus_column": "/system/tables/SB1/columns",
+    "protheus_index": "/system/tables/SB1/indexes",
+    "protheus_relation": "/system/tables/SB1/relations",
+    "protheus_table_schema": "/system/tables/SB1/schema",
+    "production_consumption_top_items": "/production/consumption/top-items",
+    "production_consumption_top_items_by_work_center": "/production/consumption/top-items-by-work-center",
+    "production_consumption_top_items_validated": "/production/consumption/top-items-validated",
+    "production_consumption_by_item": "/production/consumption/by-item/0",
+    "production_losses_top_materials": "/production/losses/top-materials",
+    "production_losses_records": "/production/losses/records",
+    "production_schedule_today": "/production/schedule/today",
+    "production_orders_open": "/production/orders/open",
+    "production_orders_finished": "/production/orders/finished",
+    "production_orders_finished_without_consumption": "/production/orders/finished-without-consumption",
+    "production_work_center_order_summary": "/production/work-centers/order-summary",
+    "production_work_center_average_planned_time": "/production/work-centers/average-planned-time",
+    "production_allocation_gaps": "/production/allocation-gaps",
+    "production_planned_vs_real_time": "/production/planned-vs-real-time",
+    "purchases_top_products": "/purchases/top-products"
+  },
+  "pathEntityFallbacks": [
+    {
+      "contains": "/analyser",
+      "entity": "product_analyser"
+    },
+    {
+      "contains": "/factory-status",
+      "entity": "product_factory_status"
+    },
+    {
+      "contains": "/structure/exclusivity",
+      "entity": "product_structure_exclusivity"
+    },
+    {
+      "contains": "/exclusive-raw-materials/catalog",
+      "entity": "exclusive_raw_materials_catalog"
+    },
+    {
+      "contains": "/production/planned-vs-real-time",
+      "entity": "production_planned_vs_real_time"
+    },
+    {
+      "contains": "/production/allocation-gaps",
+      "entity": "production_allocation_gaps"
+    },
+    {
+      "contains": "/production/orders/finished-without-consumption",
+      "entity": "production_orders_finished_without_consumption"
+    },
+    {
+      "contains": "/production/work-centers/average-planned-time",
+      "entity": "production_work_center_average_planned_time"
+    },
+    {
+      "contains": "/production/consumption/by-item/",
+      "entity": "production_consumption_by_item"
+    },
+    {
+      "contains": "/production/consumption/top-items-by-work-center",
+      "entity": "production_consumption_top_items_by_work_center"
+    },
+    {
+      "contains": "/production/consumption/top-items-validated",
+      "entity": "production_consumption_top_items_validated"
+    },
+    {
+      "contains": "/production/consumption/top-items",
+      "entity": "production_consumption_top_items"
+    },
+    {
+      "contains": "/production/orders/open",
+      "entity": "production_orders_open"
+    },
+    {
+      "contains": "/production/orders/finished",
+      "entity": "production_orders_finished"
+    },
+    {
+      "contains": "/production/work-centers/order-summary",
+      "entity": "production_work_center_order_summary"
+    },
+    {
+      "contains": "/production/losses/top-materials",
+      "entity": "production_losses_top_materials"
+    },
+    {
+      "contains": "/production/losses/records",
+      "entity": "production_losses_records"
+    },
+    {
+      "contains": "/production/schedule/today",
+      "entity": "production_schedule_today"
+    },
+    {
+      "contains": "/purchases/top-products",
+      "entity": "purchases_top_products"
+    },
+    {
+      "contains": "/production-status",
+      "entity": "product_production_status"
+    },
+    {
+      "contains": "/shipping-status",
+      "entity": "product_shipping_status"
+    },
+    {
+      "contains": "/raw-material-price-intelligence",
+      "entity": "product_raw_material_price_intelligence"
+    },
+    {
+      "contains": "/cost-impact-simulation",
+      "entity": "product_cost_impact_simulation"
+    },
+    {
+      "contains": "/last-purchase",
+      "entity": "product_last_purchase"
+    },
+    {
+      "contains": "/purchase-price-history",
+      "entity": "product_purchase_price_history"
+    },
+    {
+      "contains": "/purchase-budget-history",
+      "entity": "product_purchase_budget_history"
+    },
+    {
+      "contains": "/directives/",
+      "entity": "product_directives"
+    },
+    {
+      "contains": "/structure",
+      "entity": "product_structure"
+    },
+    {
+      "contains": "/parents",
+      "entity": "product_parents"
+    },
+    {
+      "contains": "/stock",
+      "entity": "product_stock"
+    },
+    {
+      "contains": "/guide",
+      "entity": "product_guide"
+    },
+    {
+      "contains": "/inspection",
+      "entity": "product_inspection"
+    },
+    {
+      "contains": "/pricing",
+      "entity": "product_pricing"
+    },
+    {
+      "contains": "/purchases",
+      "entity": "product_purchases"
+    },
+    {
+      "contains": "/suppliers",
+      "entity": "product_suppliers"
+    },
+    {
+      "contains": "/customers",
+      "entity": "product_customers"
+    },
+    {
+      "contains": "/internal-movements",
+      "entity": "product_internal_movements"
+    },
+    {
+      "contains": "/inbound-invoice-items",
+      "entity": "product_inbound_invoice_items"
+    },
+    {
+      "contains": "/outbound-invoice-items",
+      "entity": "product_outbound_invoice_items"
+    },
+    {
+      "contains": "/open-orders",
+      "entity": "product_open_orders"
+    },
+    {
+      "contains": "/sales/billing",
+      "entity": "product_billing"
+    },
+    {
+      "contains": "/sales",
+      "entity": "product_sales"
+    },
+    {
+      "contains": "/summary",
+      "entity": "product"
+    },
+    {
+      "contains": "/search",
+      "entity": "product_search"
+    },
+    {
+      "contains": "/branch_rol_target_pct",
+      "entity": "commercial_rol_target"
+    },
+    {
+      "contains": "/finacial/rol",
+      "entity": "financial_rol"
+    },
+    {
+      "contains": "/finacial/ebitda_pct",
+      "entity": "financial_ebitda_pct"
+    },
+    {
+      "contains": "/finacial/fixed_cost_pct",
+      "entity": "financial_fixed_cost_pct"
+    },
+    {
+      "contains": "/finacial/pmr",
+      "entity": "financial_pmr"
+    },
+    {
+      "contains": "/engineering/lmps/",
+      "entity": "lmp"
+    },
+    {
+      "contains": "/quality/audit-5s/summary",
+      "entity": "audit_5s_summary"
+    }
+  ]
 }

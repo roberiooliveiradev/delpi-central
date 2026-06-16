@@ -1,4 +1,4 @@
-"""Roteamento de apresentação por meta.entity (Fase 7 — contrato api-delpi)."""
+"""Roteamento de apresentação por meta.entity (contrato OpenAPI operacional)."""
 
 from __future__ import annotations
 
@@ -212,98 +212,6 @@ SYSTEM_PRESENT_ENTITIES: frozenset[str] = frozenset(
 
 SALE_ORDER_PRESENT_ENTITIES: frozenset[str] = frozenset({"sale_order"})
 
-ENTITY_PATH_HINTS: dict[str, str] = {
-    "product_pricing": "/products/0/pricing",
-    "product_purchases": "/products/0/purchases",
-    "product_suppliers": "/products/0/suppliers",
-    "product_customers": "/products/0/customers",
-    "product_internal_movements": "/products/0/internal-movements",
-    "product_inbound_invoice_items": "/products/0/inbound-invoice-items",
-    "product_outbound_invoice_items": "/products/0/outbound-invoice-items",
-    "product_sales": "/products/0/sales",
-    "product_open_orders": "/products/0/sales/open-orders",
-    "product_billing": "/products/0/sales/billing",
-    "supplies_cpv": "/supplies/cpv",
-    "supplies_otd": "/supplies/otd",
-    "supplies_stock_value": "/supplies/stock-value",
-    "supplies_inventory_turnover": "/supplies/inventory-turnover",
-    "supplies_negotiation_savings": "/supplies/negotiation-savings/summary",
-    "financial_rol": "/financial/rol",
-    "financial_ebitda_pct": "/financial/ebitda_pct",
-    "financial_fixed_cost_pct": "/financial/fixed_cost_pct",
-    "financial_pmr": "/financial/pmr",
-    "commercial_rol_target": "/commercial/head_office_rol_target_pct",
-    "commercial_rol_series": "/commercial/rol/series",
-    "sales_conversion_rate": "/commercial/closing-rate",
-    "new_clients_average": "/commercial/new-clients-average",
-    "sales_order_otd": "/commercial/sales-order-otd",
-    "new_business_rol_pct": "/commercial/new-business-rol-pct",
-    "new_clients_rol_pct": "/commercial/new-clients-rol-pct",
-    "commercial_proposal": "/commercial/proposals",
-    "direct_labor_cost_pct": "/production/direct_labor_cost_pct",
-    "production_cost_pct": "/production/production_cost_pct",
-    "depreciation_pct": "/production/depreciation_pct",
-    "production_oee_series": "/production/oee/series",
-    "production_oee_detail": "/production/oee",
-    "production_oee_appointment": "/production/oee/appointments/0",
-    "production_otd_series": "/production/otd/series",
-    "overall_equipment_effectiveness": "/production/overall_equipment_effectiveness_pct",
-    "production_otd": "/production/on_time_delivery_pct",
-    "production_otd_detail": "/production/otd",
-    "eficiencia_fabril_dashboard": "/production/eficiencia-fabril/dashboard",
-    "eficiencia_fabril_appointment": "/production/eficiencia-fabril/appointments",
-    "hr_branch": "/hr/branches",
-    "hr_snapshot": "/hr/snapshot",
-    "hr_active_pdi_count": "/hr/active-pdi-count",
-    "hr_performance_reviews_completion": "/hr/performance-reviews-completion",
-    "quality_branch": "/quality/branches",
-    "nonconformity_series": "/quality/nonconformities/series",
-    "kaizen_summary": "/quality/kaizens/summary",
-    "kaizen": "/quality/kaizens/0",
-    "audit_5s_summary": "/quality/audit-5s/summary",
-    "ppm_internal_summary": "/quality/ppm/internal/summary",
-    "ppm_external_summary": "/quality/ppm/external/summary",
-    "ppm_internal_series": "/quality/ppm/internal/series",
-    "ppm_external_series": "/quality/ppm/external/series",
-    "lmp": "/engineering/lmps",
-    "lmp_dashboard": "/engineering/lmps/dashboard",
-    "lmp_dashboard_summary": "/engineering/lmps/dashboard/summary",
-    "lmp_dashboard_items": "/engineering/lmps/dashboard/items",
-    "lmp_dashboard_charts": "/engineering/lmps/dashboard/charts",
-    "transforma_mais_process": "/engineering/transforma-mais/processes",
-    "transforma_mais_summary": "/engineering/transforma-mais/processes/summary",
-    "sale_order": "/sales/",
-    "sql_result": "/data/sql",
-    "protheus_table": "/system/tables/search",
-    "protheus_column": "/system/tables/SB1/columns",
-    "protheus_index": "/system/tables/SB1/indexes",
-    "protheus_relation": "/system/tables/SB1/relations",
-    "protheus_table_schema": "/system/tables/SB1/schema",
-    "production_consumption_top_items": "/production/consumption/top-items",
-    "production_consumption_top_items_by_work_center": (
-        "/production/consumption/top-items-by-work-center"
-    ),
-    "production_consumption_top_items_validated": (
-        "/production/consumption/top-items-validated"
-    ),
-    "production_consumption_by_item": "/production/consumption/by-item/0",
-    "production_losses_top_materials": "/production/losses/top-materials",
-    "production_losses_records": "/production/losses/records",
-    "production_schedule_today": "/production/schedule/today",
-    "production_orders_open": "/production/orders/open",
-    "production_orders_finished": "/production/orders/finished",
-    "production_orders_finished_without_consumption": (
-        "/production/orders/finished-without-consumption"
-    ),
-    "production_work_center_order_summary": "/production/work-centers/order-summary",
-    "production_work_center_average_planned_time": (
-        "/production/work-centers/average-planned-time"
-    ),
-    "production_allocation_gaps": "/production/allocation-gaps",
-    "production_planned_vs_real_time": "/production/planned-vs-real-time",
-    "purchases_top_products": "/purchases/top-products",
-}
-
 ENTITY_ROUTED_FOR_PRESENT: frozenset[str] = (
     PROFILE_PRESENT_ENTITIES
     | KPI_PRESENT_ENTITIES
@@ -312,60 +220,6 @@ ENTITY_ROUTED_FOR_PRESENT: frozenset[str] = (
     | SYSTEM_PRESENT_ENTITIES
     | SALE_ORDER_PRESENT_ENTITIES
     | frozenset({"commercial_proposal", "eficiencia_fabril_appointment"})
-)
-
-PATH_ENTITY_FALLBACKS: tuple[tuple[str, str], ...] = (
-    ("/analyser", "product_analyser"),
-    ("/factory-status", "product_factory_status"),
-    ("/structure/exclusivity", "product_structure_exclusivity"),
-    ("/exclusive-raw-materials/catalog", "exclusive_raw_materials_catalog"),
-    ("/production/planned-vs-real-time", "production_planned_vs_real_time"),
-    ("/production/allocation-gaps", "production_allocation_gaps"),
-    ("/production/orders/finished-without-consumption", "production_orders_finished_without_consumption"),
-    ("/production/work-centers/average-planned-time", "production_work_center_average_planned_time"),
-    ("/production/consumption/by-item/", "production_consumption_by_item"),
-    ("/production/consumption/top-items-by-work-center", "production_consumption_top_items_by_work_center"),
-    ("/production/consumption/top-items-validated", "production_consumption_top_items_validated"),
-    ("/production/consumption/top-items", "production_consumption_top_items"),
-    ("/production/orders/open", "production_orders_open"),
-    ("/production/orders/finished", "production_orders_finished"),
-    ("/production/work-centers/order-summary", "production_work_center_order_summary"),
-    ("/production/losses/top-materials", "production_losses_top_materials"),
-    ("/production/losses/records", "production_losses_records"),
-    ("/production/schedule/today", "production_schedule_today"),
-    ("/purchases/top-products", "purchases_top_products"),
-    ("/production-status", "product_production_status"),
-    ("/shipping-status", "product_shipping_status"),
-    ("/raw-material-price-intelligence", "product_raw_material_price_intelligence"),
-    ("/cost-impact-simulation", "product_cost_impact_simulation"),
-    ("/last-purchase", "product_last_purchase"),
-    ("/purchase-price-history", "product_purchase_price_history"),
-    ("/purchase-budget-history", "product_purchase_budget_history"),
-    ("/directives/", "product_directives"),
-    ("/structure", "product_structure"),
-    ("/parents", "product_parents"),
-    ("/stock", "product_stock"),
-    ("/guide", "product_guide"),
-    ("/inspection", "product_inspection"),
-    ("/pricing", "product_pricing"),
-    ("/purchases", "product_purchases"),
-    ("/suppliers", "product_suppliers"),
-    ("/customers", "product_customers"),
-    ("/internal-movements", "product_internal_movements"),
-    ("/inbound-invoice-items", "product_inbound_invoice_items"),
-    ("/outbound-invoice-items", "product_outbound_invoice_items"),
-    ("/open-orders", "product_open_orders"),
-    ("/sales/billing", "product_billing"),
-    ("/sales", "product_sales"),
-    ("/summary", "product"),
-    ("/search", "product_search"),
-    ("/branch_rol_target_pct", "commercial_rol_target"),
-    ("/finacial/rol", "financial_rol"),
-    ("/finacial/ebitda_pct", "financial_ebitda_pct"),
-    ("/finacial/fixed_cost_pct", "financial_fixed_cost_pct"),
-    ("/finacial/pmr", "financial_pmr"),
-    ("/engineering/lmps/", "lmp"),
-    ("/quality/audit-5s/summary", "audit_5s_summary"),
 )
 
 
@@ -467,9 +321,11 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def entity_path_hint(cls, entity: str | None) -> str:
-        if not entity:
-            return ""
-        return ENTITY_PATH_HINTS.get(entity, "")
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.entity_path_hint(entity)
 
     @classmethod
     def presentation_path(cls, *, path: str = "", entity: str | None = None) -> str:
@@ -498,35 +354,8 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def _entity_from_path(cls, path: str) -> str | None:
-        lowered = str(path or "").lower().rstrip("/")
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
 
-        if not lowered:
-            return None
-
-        for entity, hint in ENTITY_PATH_HINTS.items():
-            hint_lower = str(hint or "").lower().rstrip("/")
-
-            if not hint_lower:
-                continue
-
-            if lowered == hint_lower or lowered.endswith(hint_lower):
-                return entity
-
-        for fragment, entity in sorted(
-            PATH_ENTITY_FALLBACKS,
-            key=lambda item: len(item[0]),
-            reverse=True,
-        ):
-            if fragment in lowered:
-                return entity
-
-        parts = lowered.rstrip("/").split("/")
-
-        if (
-            len(parts) == 3
-            and parts[1] == "products"
-            and (parts[2].isdigit() or parts[2] in {"{code}", "0"})
-        ):
-            return "product"
-
-        return None
+        return ChatPresentationProfileService.resolve_entity_from_path(path)

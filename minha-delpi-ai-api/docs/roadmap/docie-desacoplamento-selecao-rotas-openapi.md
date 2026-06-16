@@ -538,8 +538,11 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] `_CUSTOM_PREDICATES` reduzido a busca produto + helpers (~4 entradas)
 - [ ] Predicados product search declarativos (guards compostos — dependem de múltiplos serviços de intenção)
 
-### Fase 14 — Apresentação provider-agnóstica (backlog)
+### Fase 14 — Apresentação provider-agnóstica (em curso)
 
+- [x] `entityPathHints` + `pathEntityFallbacks` em `presentation_profiles.json`
+- [x] Resolução de entidade por path via `ChatPresentationProfileService.resolve_entity_from_path`
+- [ ] Migrar conjuntos de entidades (`CHAT_CRITICAL_ENTITIES`, …) para JSON
 - [ ] Renomear/generalizar `ChatApiDelpiResponseProfileService` → perfil operacional OpenAPI
 - [ ] Presenters keyed por `meta.entity`, não path api-delpi
 

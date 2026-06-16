@@ -40,6 +40,20 @@ def test_entity_profile_precedes_path_rules() -> None:
     assert key == "stock"
 
 
+def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path("/supplies/cpv")
+        == "supplies_cpv"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/products/90269001/structure"
+        )
+        == "product_structure"
+    )
+    assert ChatPresentationProfileService.entity_path_hint("supplies_cpv") == "/supplies/cpv"
+
+
 def test_production_oee_detail_entity_maps_to_dashboard() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/production/oee",

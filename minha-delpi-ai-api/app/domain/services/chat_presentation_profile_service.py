@@ -17,6 +17,76 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
     }
 
     @classmethod
+    def entity_path_hints(cls) -> dict[str, str]:
+        raw = cls.mapping("entityPathHints")
+
+        return {
+            str(entity): str(path)
+            for entity, path in raw.items()
+            if str(entity).strip() and str(path).strip()
+        }
+
+    @classmethod
+    def entity_path_hint(cls, entity: str | None) -> str:
+        token = str(entity or "").strip()
+
+        if not token:
+            return ""
+
+        return str(cls.entity_path_hints().get(token) or "")
+
+    @classmethod
+    def path_entity_fallbacks(cls) -> tuple[tuple[str, str], ...]:
+        rules = cls.node("pathEntityFallbacks") or []
+        pairs: list[tuple[str, str]] = []
+
+        if isinstance(rules, list):
+            for rule in rules:
+                if not isinstance(rule, dict):
+                    continue
+
+                fragment = str(rule.get("contains") or "").strip()
+                entity = str(rule.get("entity") or "").strip()
+
+                if fragment and entity:
+                    pairs.append((fragment, entity))
+
+        return tuple(
+            sorted(pairs, key=lambda item: len(item[0]), reverse=True),
+        )
+
+    @classmethod
+    def resolve_entity_from_path(cls, path: str | None) -> str | None:
+        lowered = cls.path_lowered(path).rstrip("/")
+
+        if not lowered:
+            return None
+
+        for entity, hint in cls.entity_path_hints().items():
+            hint_lower = str(hint or "").lower().rstrip("/")
+
+            if not hint_lower:
+                continue
+
+            if lowered == hint_lower or lowered.endswith(hint_lower):
+                return entity
+
+        for fragment, entity in cls.path_entity_fallbacks():
+            if fragment in lowered:
+                return entity
+
+        parts = lowered.rstrip("/").split("/")
+
+        if (
+            len(parts) == 3
+            and parts[1] == "products"
+            and (parts[2].isdigit() or parts[2] in {"{code}", "0"})
+        ):
+            return "product"
+
+        return None
+
+    @classmethod
     def path_lowered(cls, path: str | None) -> str:
         return str(path or "").strip().lower()
 

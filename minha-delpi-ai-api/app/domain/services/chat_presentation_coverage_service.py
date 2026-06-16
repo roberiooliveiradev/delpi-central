@@ -9,8 +9,6 @@ from typing import Any
 
 from app.domain.services.chat_api_delpi_response_profile_service import (
     ChatApiDelpiResponseProfileService,
-    ENTITY_PATH_HINTS,
-    PATH_ENTITY_FALLBACKS,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
@@ -375,8 +373,10 @@ class ChatPresentationCoverageService:
             "distinctEntities": len(entity_counts),
             "topTags": sorted(tag_counts.items(), key=lambda item: (-item[1], item[0]))[:12],
             "profileCoverageRatio": ChatApiDelpiResponseProfileService.profile_coverage_ratio(),
-            "entityPathHintCount": len(ENTITY_PATH_HINTS),
-            "pathEntityFallbackCount": len(PATH_ENTITY_FALLBACKS),
+            "entityPathHintCount": len(ChatPresentationProfileService.entity_path_hints()),
+            "pathEntityFallbackCount": len(
+                ChatPresentationProfileService.path_entity_fallbacks()
+            ),
             "metrics": metrics,
         }
 
@@ -388,7 +388,7 @@ class ChatPresentationCoverageService:
             if entity in _SKIP_PROFILE_CONTRACT_ENTITIES:
                 continue
 
-            path = ENTITY_PATH_HINTS.get(entity)
+            path = ChatPresentationProfileService.entity_path_hint(entity)
 
             if not path:
                 continue
