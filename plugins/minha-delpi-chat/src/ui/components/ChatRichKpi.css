@@ -2,6 +2,22 @@
   margin: 0.75rem 0;
 }
 
+.mdc-rich-kpi__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.mdc-rich-kpi__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .mdc-rich-kpi__title {
   font-weight: 600;
   font-size: 0.85rem;

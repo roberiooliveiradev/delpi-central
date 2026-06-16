@@ -58,6 +58,7 @@ src/
 - Mensagens com streaming, fontes, tool calls e anexos (cards na timeline com `readingStatus`; edição de anexos ao **reenviar** pergunta com preview em card/modal)
 - Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
 - Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`** — ver [Apresentação no chat](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md)
+- **Exportação de apresentações:** tabelas, gráficos, árvores, KPIs e dashboards expõem **CSV**, **Excel** e **PDF** na toolbar (`ChatPresentationExportButtons` + `exportUtils.ts`); gráficos mantêm **PNG**; PDF de gráfico usa rasterização SVG quando disponível
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor

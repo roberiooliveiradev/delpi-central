@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { LayoutPanelLeft } from "lucide-react";
 import type { ChatCanvasOpenPayload, ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
-import { downloadDashboardCsv } from "./dashboardExportCsv";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
@@ -139,14 +139,10 @@ export function ChatRichDashboard({
             </button>
           ) : null}
           {!isAdminVariant ? (
-            <button
-              type="button"
-              className="mdc-rich-chart__btn"
-              onClick={() => downloadDashboardCsv(presentation)}
-              title="Baixar dashboard em CSV"
-            >
-              ↓ CSV
-            </button>
+            <ChatPresentationExportButtons
+              presentation={presentation}
+              buttonClassName="mdc-rich-chart__btn"
+            />
           ) : null}
           {!isAdminVariant && onOpenCanvas ? (
             <button
@@ -192,6 +188,7 @@ export function ChatRichDashboard({
                         panel.title,
                         panel.presentation.title,
                       )}
+                      hideToolbar
                     />
                   </div>
                 </section>

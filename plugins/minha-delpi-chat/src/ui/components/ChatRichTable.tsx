@@ -12,6 +12,7 @@ import { formatChartColumnLabel } from "./chartAxisSelection";
 import { buildFieldLabelsFromTableColumns } from "./presentationFieldLabels";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { tablePresentationToMarkdown } from "./chatPresentation";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
@@ -108,35 +109,15 @@ export function ChatRichTable({
     });
   }
 
-  function exportCsv() {
-    const BOM = "\uFEFF";
-    const header = columns.map((c) => c.label).join(";");
-    const body = filteredRows
-      .map((row) =>
-        columns
-          .map((col) => {
-            const val = row[col.key];
-            if (val == null) return "";
-            const str = String(val);
-            return str.includes(";") || str.includes('"')
-              ? `"${str.replace(/"/g, '""')}"`
-              : str;
-          })
-          .join(";"),
-      )
-      .join("\n");
-
-    const csv = BOM + header + "\n" + body;
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title || "dados"}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   const sorted = sortedRows();
+  const filteredPresentation = useMemo(
+    () => ({
+      ...presentation,
+      columns,
+      rows: filteredRows,
+    }),
+    [columns, filteredRows, presentation],
+  );
 
   return (
     <div
@@ -219,13 +200,10 @@ export function ChatRichTable({
               copyAriaLabel="Copiar tabela"
               copiedAriaLabel="Tabela copiada"
             />
-            <button
-              className="mdc-rich-table__btn"
-              onClick={exportCsv}
-              title="Baixar CSV"
-            >
-              ↓ CSV
-            </button>
+            <ChatPresentationExportButtons
+              presentation={filteredPresentation}
+              tableRows={filteredRows}
+            />
             <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
           </div>
         </div>

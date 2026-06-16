@@ -45,6 +45,7 @@ import { aggregateChartRowsByCategory } from "./chartCategoryAggregation";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
 import { exportChartElementToPng } from "./chartPngExport";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatChartColumnLabel,
   inferDefaultChartAxes,
@@ -595,6 +596,11 @@ export function ChatRichChart({
               >
                 {downloadReady ? "✓ Salvo" : "↓ PNG"}
               </button>
+              <ChatPresentationExportButtons
+                presentation={normalizedPresentation}
+                buttonClassName="mdc-rich-chart__btn"
+                getChartRoot={() => chartContainerRef.current}
+              />
               {onOpenCanvas ? (
                 <button
                   type="button"

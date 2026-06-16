@@ -122,15 +122,11 @@ function inlineSvgComputedStyles(source: Element, clone: Element): void {
   });
 }
 
-export function exportChartElementToPng(
-  root: HTMLElement | null,
-  title: string,
-): void {
+export function rasterizeChartElement(root: HTMLElement | null): Promise<string | null> {
   const target = resolveChartExportTarget(root);
 
   if (!target) {
-    chatAlert("Não encontrei o gráfico para exportar como PNG.");
-    return;
+    return Promise.resolve(null);
   }
 
   const { svg, width, height } = target;
@@ -140,36 +136,50 @@ export function exportChartElementToPng(
   const objectUrl = URL.createObjectURL(blob);
   const scale = 2;
 
-  const img = new Image();
+  return new Promise((resolve) => {
+    const img = new Image();
 
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
 
-    const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d");
 
-    if (!ctx) {
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        resolve(null);
+        return;
+      }
+
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+export function exportChartElementToPng(
+  root: HTMLElement | null,
+  title: string,
+): void {
+  void rasterizeChartElement(root).then((dataUrl) => {
+    if (!dataUrl) {
+      chatAlert("Não encontrei o gráfico para exportar como PNG.");
       return;
     }
 
-    ctx.scale(scale, scale);
-    ctx.drawImage(img, 0, 0, width, height);
-
     const link = document.createElement("a");
     link.download = `${sanitizeFilename(title || "grafico")}.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = dataUrl;
     link.click();
-    URL.revokeObjectURL(objectUrl);
-  };
-
-  img.onerror = () => {
-    URL.revokeObjectURL(objectUrl);
-    chatAlert(
-      "Não foi possível gerar o PNG do gráfico. Tente expandir e exportar novamente.",
-    );
-  };
-
-  img.src = objectUrl;
+  });
 }

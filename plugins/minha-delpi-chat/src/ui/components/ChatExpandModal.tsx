@@ -1,4 +1,4 @@
-import { X, Maximize2, FileSpreadsheet, FileText, Image, Copy } from "lucide-react";
+import { X, Maximize2, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ChatRichTable } from "./ChatRichTable";
@@ -11,8 +11,7 @@ import "./chat-modal-surface.css";
 import "./ChatExpandModal.css";
 import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import type { ChartViewState } from "./chartViewState";
-import { exportChartElementToPng } from "./chartPngExport";
-import { exportToXlsx, exportToPdf, exportTreeToPdf, exportTreeToXlsx } from "./exportUtils";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { treePresentationToClipboardText } from "./treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
@@ -66,39 +65,20 @@ export function ChatExpandModal({
           <div className="mdc-expand-modal__header">
             <span className="mdc-expand-modal__title">{title}</span>
             <div className="mdc-expand-modal__toolbar">
-              {presentation.type === "table" && (
-                <>
-                  <button
-                    className="mdc-expand-modal__tool-btn"
-                    onClick={() => exportToXlsx(presentation)}
-                    title="Exportar XLSX"
-                  >
-                    <FileSpreadsheet size={15} /> XLSX
-                  </button>
-                  <button
-                    className="mdc-expand-modal__tool-btn"
-                    onClick={() => exportToPdf(presentation)}
-                    title="Exportar PDF"
-                  >
-                    <FileText size={15} /> PDF
-                  </button>
-                </>
-              )}
-              {presentation.type === "chart" && (
+              {presentation.type === "tree" ? (
                 <button
                   className="mdc-expand-modal__tool-btn"
                   onClick={() =>
-                    exportChartElementToPng(
-                      chartRef.current?.querySelector(".mdc-rich-chart__container"),
-                      title,
+                    navigator.clipboard?.writeText(
+                      treePresentationToClipboardText(presentation),
                     )
                   }
-                  title="Exportar PNG"
+                  title="Copiar árvore"
                 >
-                  <Image size={15} /> PNG
+                  <Copy size={15} /> Copiar
                 </button>
-              )}
-              {presentation.type === "kpi" && (
+              ) : null}
+              {presentation.type === "kpi" ? (
                 <button
                   className="mdc-expand-modal__tool-btn"
                   onClick={() => copyKpiToClipboard(presentation)}
@@ -106,36 +86,18 @@ export function ChatExpandModal({
                 >
                   <Copy size={15} /> Copiar
                 </button>
-              )}
-              {presentation.type === "tree" && (
-                <>
-                  <button
-                    className="mdc-expand-modal__tool-btn"
-                    onClick={() =>
-                      navigator.clipboard?.writeText(
-                        treePresentationToClipboardText(presentation),
-                      )
-                    }
-                    title="Copiar árvore"
-                  >
-                    <Copy size={15} /> Copiar
-                  </button>
-                  <button
-                    className="mdc-expand-modal__tool-btn"
-                    onClick={() => exportTreeToXlsx(presentation)}
-                    title="Exportar XLSX"
-                  >
-                    <FileSpreadsheet size={15} /> XLSX
-                  </button>
-                  <button
-                    className="mdc-expand-modal__tool-btn"
-                    onClick={() => exportTreeToPdf(presentation)}
-                    title="Exportar PDF"
-                  >
-                    <FileText size={15} /> PDF
-                  </button>
-                </>
-              )}
+              ) : null}
+              {presentation.type === "table" ||
+              presentation.type === "chart" ||
+              presentation.type === "tree" ||
+              presentation.type === "kpi" ||
+              presentation.type === "dashboard" ? (
+                <ChatPresentationExportButtons
+                  presentation={presentation}
+                  buttonClassName="mdc-expand-modal__tool-btn"
+                  getChartRoot={() => chartRef.current}
+                />
+              ) : null}
               <button
                 className="mdc-expand-modal__close"
                 onClick={onClose}
@@ -165,7 +127,7 @@ export function ChatExpandModal({
               />
             )}
             {presentation.type === "kpi" && (
-              <ChatRichKpi presentation={presentation} />
+              <ChatRichKpi presentation={presentation} hideToolbar />
             )}
             {presentation.type === "dashboard" && (
               <ChatRichDashboard

@@ -1,4 +1,6 @@
 import type { ChatKpiCard, ChatPresentation } from "../../data/api/chatTypes";
+import { ExpandButton } from "./ChatExpandModal";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatCellValue,
   inferColumnType,
@@ -17,17 +19,36 @@ const TREND_ICONS: Record<string, string> = {
 export function ChatRichKpi({
   presentation,
   suppressTitle = false,
+  hideToolbar = false,
 }: {
   presentation: KpiPresentation;
   /** Evita título duplicado quando o painel pai já exibe o mesmo rótulo. */
   suppressTitle?: boolean;
+  hideToolbar?: boolean;
 }) {
   const { title, cards: rawCards } = presentation;
   const cards = Array.isArray(rawCards) ? rawCards : [];
 
   return (
     <div className="mdc-rich-kpi">
-      {title && !suppressTitle ? <div className="mdc-rich-kpi__title">{title}</div> : null}
+      {!hideToolbar && (title || cards.length > 0) ? (
+        <div className="mdc-rich-kpi__header">
+          {title && !suppressTitle ? (
+            <div className="mdc-rich-kpi__title">{title}</div>
+          ) : (
+            <span />
+          )}
+          <div className="mdc-rich-kpi__actions">
+            <ChatPresentationExportButtons
+              presentation={presentation}
+              buttonClassName="mdc-rich-table__btn"
+            />
+            <ExpandButton presentation={presentation} />
+          </div>
+        </div>
+      ) : title && !suppressTitle ? (
+        <div className="mdc-rich-kpi__title">{title}</div>
+      ) : null}
       <div
         className="mdc-rich-kpi__grid"
         style={{ gridTemplateColumns: `repeat(${Math.min(cards.length, 4)}, 1fr)` }}

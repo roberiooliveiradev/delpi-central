@@ -4,8 +4,8 @@ import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillD
 import { ChatTableRowMenu, type TableRowMenuAnchor } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
-  exportTreeToCsv,
   formatTreeNodeMeta,
   treePresentationToClipboardText,
 } from "./treePresentationUtils";
@@ -247,14 +247,7 @@ export function ChatRichTree({
               copyAriaLabel="Copiar árvore"
               copiedAriaLabel="Árvore copiada"
             />
-            <button
-              type="button"
-              className="mdc-rich-table__btn"
-              onClick={() => exportTreeToCsv(presentation)}
-              title="Baixar CSV"
-            >
-              ↓ CSV
-            </button>
+            <ChatPresentationExportButtons presentation={presentation} />
             <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
           </div>
         </div>
