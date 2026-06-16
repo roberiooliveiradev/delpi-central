@@ -76,6 +76,13 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return str(route) if route else None
 
     @classmethod
+    def is_no_chart_entity(cls, entity: str | None) -> bool:
+        token = str(entity or "").strip()
+        entities = cls.entity_presentation_routing().get("noChartEntities") or []
+
+        return bool(token and token in entities)
+
+    @classmethod
     def entity_path_hints(cls) -> dict[str, str]:
         raw = cls.mapping("entityPathHints")
 

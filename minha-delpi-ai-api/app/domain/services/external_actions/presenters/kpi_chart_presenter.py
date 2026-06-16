@@ -275,15 +275,20 @@ class ExternalActionKpiChartPresenter:
         force: bool = False,
     ) -> dict | None:
         """Gera presentation tipo chart APENAS quando dados são naturalmente visuais."""
-        if not force:
-            lowered_path = (path or "").lower()
+        entity = ChatOperationalResponseProfileService.resolve_entity(data, path=path)
 
-            if any(token in lowered_path for token in self._NO_CHART_PATHS):
+        if not force:
+            if ChatOperationalResponseProfileService.is_no_chart_route(entity, path):
                 return None
 
         root = self._host._unwrap_data(data)
 
-        if isinstance(root, dict) and "/analyser" in str(path or "").lower():
+        if isinstance(root, dict) and ChatOperationalResponseProfileService.entity_or_path_matches(
+            entity,
+            path,
+            "product_analyser",
+            path_fragments=("/analyser",),
+        ):
             normalized = self._host._normalize_analyser_root(root)
             analyser_chart = self._build_analyser_structure_type_chart(normalized)
 

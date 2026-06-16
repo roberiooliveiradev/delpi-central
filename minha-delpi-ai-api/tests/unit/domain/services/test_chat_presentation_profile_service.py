@@ -71,6 +71,8 @@ def test_entity_presentation_routing_operational_empty() -> None:
     )
     assert ChatPresentationProfileService.is_product_operational_entity("product_guide")
     assert ChatPresentationProfileService.list_route_entity("product_inspection") == "inspection"
+    assert ChatPresentationProfileService.is_no_chart_entity("product_guide")
+    assert not ChatPresentationProfileService.is_no_chart_entity("supplies_cpv")
 
 
 def test_production_oee_detail_entity_maps_to_dashboard() -> None:

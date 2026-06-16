@@ -364,6 +364,8 @@ class ExternalActionPresentationBuilderPresenter:
             )
 
             root = self._host._unwrap_data(data)
+            entity = ChatOperationalResponseProfileService.resolve_entity(data, path=path)
+            matches = ChatOperationalResponseProfileService.entity_or_path_matches
 
             if isinstance(root, list) and root and isinstance(root[0], dict):
                 sql_title = ExternalActionResponseContentService.get("sql", "defaultTitle")
@@ -384,7 +386,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if detail_list:
                     return self._build_product_detail_table(product, detail_list, root)
 
-                if "/analyser" in str(path or "").lower():
+                if matches(entity, path, "product_analyser", path_fragments=("/analyser",)):
                     guide_table = self._host._build_product_analyser_guide_table(root)
 
                     if guide_table:
@@ -395,22 +397,28 @@ class ExternalActionPresentationBuilderPresenter:
                 return self._build_product_table(product, root, path=path)
 
             if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
-                lowered = str(path or "").lower()
+                if matches(
+                    entity,
+                    path,
+                    "product_structure",
+                    "product_parents",
+                    path_fragments=("/structure", "/parents"),
+                ):
+                    if matches(entity, path, "product_parents", path_fragments=("/parents",)):
+                        return None
 
-                if "/structure" in lowered or "/parents" in lowered:
-                    return None
+                    if not matches(entity, path, "product_parents", path_fragments=("/parents",)):
+                        structure_table = self._host._build_analyser_structure_components_table(root)
 
-                if "/parents" not in lowered:
-                    structure_table = self._host._build_analyser_structure_components_table(root)
-
-                    if structure_table:
-                        return structure_table
+                        if structure_table:
+                            return structure_table
 
             items = root.get("items")
             if isinstance(items, list) and items and isinstance(items[0], dict):
-                lowered_items = str(path or "").lower()
-
-                if "/inspection" in lowered_items or self._host._looks_like_inspection_item(items[0]):
+                if (
+                    matches(entity, path, "product_inspection", path_fragments=("/inspection",))
+                    or self._host._looks_like_inspection_item(items[0])
+                ):
                     inspection_table = self._host._build_inspection_items_table(items, path=path)
 
                     if inspection_table:
@@ -424,6 +432,9 @@ class ExternalActionPresentationBuilderPresenter:
                 if (
                     "order_number" in items[0]
                     and "/production/" not in lowered_items_path
+                    and not ChatOperationalResponseProfileService.is_playbook_operational_entity(
+                        entity
+                    )
                     and not ChatOperationalResponseProfileService.is_playbook_operational_path(path)
                 ):
                     return self._build_sale_orders_table(items, root)

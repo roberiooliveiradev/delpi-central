@@ -325,7 +325,24 @@
       "product_guide": "guide",
       "product_inspection": "inspection",
       "product_stock": "stock"
-    }
+    },
+    "noChartEntities": [
+      "product_suppliers",
+      "product_customers",
+      "product_structure",
+      "product_parents",
+      "product_guide",
+      "product_inspection",
+      "product_search",
+      "product_purchases",
+      "product_sales",
+      "product_internal_movements",
+      "product_inbound_invoice_items",
+      "product_outbound_invoice_items",
+      "product_pricing",
+      "product_billing",
+      "product_open_orders"
+    ]
   },
   "pathRules": [
     {

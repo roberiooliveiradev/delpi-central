@@ -243,3 +243,51 @@ class ChatOperationalResponseProfileService:
 
         return ChatPresentationProfileService.list_route_entity(entity)
 
+    @classmethod
+    def entity_or_path_matches(
+        cls,
+        entity: str | None,
+        path: str,
+        *expected_entities: str,
+        path_fragments: tuple[str, ...] = (),
+    ) -> bool:
+        if cls.matches_entity(entity, *expected_entities):
+            return True
+
+        if not path_fragments:
+            return False
+
+        lowered = str(path or "").lower()
+
+        return any(fragment in lowered for fragment in path_fragments)
+
+    @classmethod
+    def is_no_chart_route(cls, entity: str | None, path: str) -> bool:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        if ChatPresentationProfileService.is_no_chart_entity(entity):
+            return True
+
+        lowered = str(path or "").lower()
+
+        return any(
+            fragment in lowered
+            for fragment in (
+                "/suppliers",
+                "/customers",
+                "/structure",
+                "/parents",
+                "/guide",
+                "/inspection",
+                "/search",
+                "/purchases",
+                "/sales",
+                "/internal-movements",
+                "/inbound-invoice",
+                "/outbound-invoice",
+                "/prices",
+            )
+        )
+

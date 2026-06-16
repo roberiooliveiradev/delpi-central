@@ -546,7 +546,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Migrar conjuntos de entidades (`entitySets` em `presentation_profiles.json`)
 - [x] Renomear/generalizar → `ChatOperationalResponseProfileService` (alias legado mantido)
 - [x] `entityPresentationRouting` — empty/list routes por `meta.entity`
-- [ ] Presenters keyed por `meta.entity` (legacy + product list + operational empty migrados; demais builders em curso)
+- [ ] Presenters keyed por `meta.entity` (legacy, product list, operational empty, builder legacy, kpi chart migrados; analyser presenter em curso)
 - [ ] Homologação manual DoD §11 — **após refatoração completa**
 
 ---

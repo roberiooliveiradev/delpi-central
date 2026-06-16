@@ -113,3 +113,26 @@ def test_resolve_entity_and_product_operational_path() -> None:
         entity,
         "product_stock",
     )
+
+
+def test_entity_or_path_matches_and_no_chart_route() -> None:
+    assert ChatOperationalResponseProfileService.entity_or_path_matches(
+        "product_analyser",
+        "/any/path",
+        "product_analyser",
+        path_fragments=("/analyser",),
+    )
+    assert ChatOperationalResponseProfileService.entity_or_path_matches(
+        None,
+        "/products/1/analyser",
+        "product_analyser",
+        path_fragments=("/analyser",),
+    )
+    assert ChatOperationalResponseProfileService.is_no_chart_route(
+        "product_structure",
+        "/products/1/structure",
+    )
+    assert not ChatOperationalResponseProfileService.is_no_chart_route(
+        "supplies_cpv",
+        "/supplies/cpv",
+    )
