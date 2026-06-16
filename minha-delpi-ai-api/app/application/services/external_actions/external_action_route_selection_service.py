@@ -189,6 +189,30 @@ class ExternalActionRouteSelectionService:
         candidates_loader: Callable[..., list[dict]] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
     ) -> dict | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        selected = self._operational_route.select_lmp(
+            message,
+            normalized,
+            allowed_action_ids,
+            conversation_context=conversation_context,
+            candidates_loader=candidates_loader,
+            merge_date_parameters=merge_date_parameters,
+        )
+
+        if selected:
+            return selected
+
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        if not OperationalRouteMatcherService.matches_custom_predicate(
+            "lmpQuestion",
+            normalized,
+        ):
+            return None
+
         return self._lmp_route.select(
             message,
             allowed_action_ids,

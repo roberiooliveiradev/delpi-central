@@ -1,0 +1,527 @@
+{
+  "version": "2026.06.1",
+  "rules": [
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "closing-rate",
+      "keywords": [
+        "taxa de convers",
+        "closing rate",
+        "conversao de venda",
+        "fechamento de venda"
+      ],
+      "excludes": [
+        "suprimentos",
+        "compra"
+      ],
+      "label": "taxa de conversão comercial"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "sales-order-otd",
+      "keywords": [
+        "otd de pedido",
+        "otd de venda",
+        "otd comercial",
+        "pedido de venda no prazo"
+      ],
+      "excludes": [
+        "suprimentos",
+        "compra",
+        "producao"
+      ],
+      "label": "OTD de pedidos de venda (comercial)"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "rol/series",
+      "keywords": [
+        "serie de rol",
+        "série de rol",
+        "rol no tempo",
+        "evolucao do rol"
+      ],
+      "excludes": [],
+      "label": "série temporal de ROL comercial"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "new-clients-average",
+      "keywords": [
+        "media de novos clientes",
+        "média de novos clientes",
+        "novos clientes media"
+      ],
+      "excludes": [],
+      "label": "média de novos clientes"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "new-clients-rol-pct",
+      "keywords": [
+        "rol de clientes novos",
+        "clientes novos rol"
+      ],
+      "excludes": [
+        "novos negocios"
+      ],
+      "label": "percentual ROL de clientes novos"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "new-business-rol-pct",
+      "keywords": [
+        "rol de novos negocios",
+        "rol de novos negócios",
+        "novos negocios rol"
+      ],
+      "excludes": [],
+      "label": "percentual ROL de novos negócios"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "head_office_rol_target",
+      "keywords": [
+        "meta rol matriz",
+        "rol matriz",
+        "meta da matriz"
+      ],
+      "excludes": [
+        "filial"
+      ],
+      "label": "meta percentual ROL matriz"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "branch_rol_target",
+      "keywords": [
+        "meta rol filial",
+        "rol filial meta"
+      ],
+      "excludes": [
+        "matriz"
+      ],
+      "label": "meta percentual ROL da filial"
+    },
+    {
+      "domainPrefix": "/financial/",
+      "pathToken": "ebitda",
+      "keywords": [
+        "ebitda"
+      ],
+      "excludes": [
+        "comercial"
+      ],
+      "label": "EBITDA percentual"
+    },
+    {
+      "domainPrefix": "/financial/",
+      "pathToken": "fixed_cost",
+      "keywords": [
+        "custo fixo",
+        "custos fixos"
+      ],
+      "excludes": [],
+      "label": "custo fixo percentual"
+    },
+    {
+      "domainPrefix": "/financial/",
+      "pathToken": "pmr",
+      "keywords": [
+        "pmr",
+        "prazo medio de recebimento",
+        "prazo médio de recebimento"
+      ],
+      "excludes": [
+        "suprimentos"
+      ],
+      "label": "PMR (prazo médio de recebimento)"
+    },
+    {
+      "domainPrefix": "/financial/",
+      "pathToken": "/financial/rol",
+      "keywords": [
+        "rol financeiro",
+        "indicador rol financeiro",
+        "rol do mes",
+        "rol de ",
+        "qual o rol",
+        "qual foi o rol",
+        "quanto foi o rol",
+        " qual rol",
+        " o rol"
+      ],
+      "excludes": [
+        "serie",
+        "série",
+        "series",
+        "evolucao",
+        "evolução",
+        "clientes novos",
+        "conversao",
+        "conversão",
+        "novos negocios",
+        "novos negócios",
+        "meta rol",
+        "rol matriz",
+        "rol filial",
+        "rolamento"
+      ],
+      "label": "ROL (receita operacional líquida)"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "eficiencia-fabril",
+      "keywords": [
+        "eficiencia fabril",
+        "eficiência fabril",
+        "dashboard eficiencia fabril",
+        "dashboard eficiência fabril",
+        "painel eficiencia fabril",
+        "resultado mod",
+        "mod fabril",
+        "horas ganhas",
+        "horas perdidas"
+      ],
+      "excludes": [
+        "oee ",
+        "equipamento global",
+        "overall equipment"
+      ],
+      "label": "painel de eficiência fabril (MOD e apontamentos)"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "oee",
+      "keywords": [
+        "apontamentos oee",
+        "listagem oee",
+        "painel oee",
+        "oee de producao",
+        "oee de produção",
+        "oee da producao",
+        "oee da produção",
+        "fora da faixa"
+      ],
+      "excludes": [
+        "fabril",
+        "resultado mod",
+        "mod fabril",
+        "equipamento global"
+      ],
+      "label": "OEE produção — resumo e apontamentos"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "overall_equipment",
+      "keywords": [
+        "oee",
+        "eficiencia de equipamento",
+        "eficiência de equipamento"
+      ],
+      "excludes": [
+        "apontamento",
+        "apontamentos",
+        "fabril",
+        "producao",
+        "produção"
+      ],
+      "label": "OEE (eficiência global dos equipamentos)"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "direct_labor",
+      "keywords": [
+        "mao de obra direta",
+        "mão de obra direta",
+        "custo direto de mao",
+        "custo direto de mão"
+      ],
+      "excludes": [],
+      "label": "custo direto de mão de obra"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "production_cost",
+      "keywords": [
+        "custo de producao",
+        "custo de produção"
+      ],
+      "excludes": [
+        "mao de obra",
+        "mão de obra"
+      ],
+      "label": "custo de produção percentual"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "depreciation",
+      "keywords": [
+        "depreciacao",
+        "depreciação"
+      ],
+      "excludes": [],
+      "label": "depreciação percentual sobre ROL"
+    },
+    {
+      "domainPrefix": "/production/",
+      "pathToken": "on_time_delivery",
+      "keywords": [
+        "otd de producao",
+        "otd de produção",
+        "entrega no prazo producao",
+        "entrega no prazo produção"
+      ],
+      "excludes": [
+        "comercial",
+        "compra",
+        "suprimentos"
+      ],
+      "label": "OTD de produção"
+    },
+    {
+      "domainPrefix": "/hr/",
+      "pathToken": "branches",
+      "keywords": [
+        "filiais rh",
+        "filial rh",
+        "lista de filiais rh",
+        "filiais de rh"
+      ],
+      "excludes": [
+        "snapshot",
+        "pdi",
+        "avaliacao",
+        "avaliação"
+      ],
+      "label": "filiais de RH"
+    },
+    {
+      "domainPrefix": "/hr/",
+      "pathToken": "active-pdi",
+      "keywords": [
+        "pdi ativo",
+        "pdis ativos",
+        "plano de desenvolvimento"
+      ],
+      "excludes": [],
+      "label": "quantidade de PDIs ativos"
+    },
+    {
+      "domainPrefix": "/hr/",
+      "pathToken": "performance-reviews",
+      "keywords": [
+        "avaliacao de desempenho",
+        "avaliação de desempenho",
+        "avaliacoes rh",
+        "avaliações rh"
+      ],
+      "excludes": [],
+      "label": "conclusão de avaliações de desempenho"
+    },
+    {
+      "domainPrefix": "/hr/",
+      "pathToken": "snapshot",
+      "keywords": [
+        "snapshot rh",
+        "indicadores de rh",
+        "headcount",
+        "turnover rh",
+        "painel rh"
+      ],
+      "excludes": [
+        "pdi",
+        "avaliacao"
+      ],
+      "label": "snapshot de RH"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "branches",
+      "keywords": [
+        "filiais qualidade",
+        "filial qualidade",
+        "lista de filiais qualidade"
+      ],
+      "excludes": [
+        "kaizen",
+        "ppm",
+        "5s",
+        "nao conformidade",
+        "não conformidade"
+      ],
+      "label": "filiais de qualidade"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "kaizens",
+      "keywords": [
+        "kaizen"
+      ],
+      "excludes": [],
+      "label": "resumo de kaizens"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "audit-5s",
+      "keywords": [
+        "auditoria 5s",
+        "audit 5s",
+        "5s"
+      ],
+      "excludes": [
+        "nc ",
+        "nao conformidade",
+        "não conformidade",
+        "areas",
+        "áreas",
+        "candidatas",
+        "operacional",
+        "postgresql"
+      ],
+      "label": "resumo de auditoria 5S"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "ppm/internal",
+      "keywords": [
+        "ppm interno",
+        "ppm interna"
+      ],
+      "excludes": [
+        "externo",
+        "externa"
+      ],
+      "label": "PPM interno"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "ppm/external",
+      "keywords": [
+        "ppm externo",
+        "ppm externa"
+      ],
+      "excludes": [
+        "interno",
+        "interna"
+      ],
+      "label": "PPM externo"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "nonconformities/series",
+      "keywords": [
+        "serie de nao conformidade",
+        "série de não conformidade",
+        "evolucao de nc",
+        "evolução de nc"
+      ],
+      "excludes": [],
+      "label": "série temporal de não conformidades"
+    },
+    {
+      "domainPrefix": "/quality/",
+      "pathToken": "nonconformities",
+      "keywords": [
+        "nao conformidade",
+        "não conformidade",
+        "nao-conformidade",
+        "listar nc"
+      ],
+      "excludes": [
+        "serie",
+        "série",
+        "kaizen",
+        "ppm",
+        "5s",
+        "auditoria 5s",
+        "audit 5s"
+      ],
+      "label": "não conformidades"
+    },
+    {
+      "domainPrefix": "/quality/audit-5s/",
+      "pathToken": "audits",
+      "keywords": [
+        "auditorias 5s",
+        "auditoria 5s operacional",
+        "listar auditorias 5s"
+      ],
+      "excludes": [
+        "resumo",
+        "summary",
+        "nc totvs"
+      ],
+      "label": "auditorias operacionais 5S (PostgreSQL)"
+    },
+    {
+      "domainPrefix": "/quality/audit-5s/",
+      "pathToken": "nonconformities",
+      "keywords": [
+        "nc 5s",
+        "nao conformidade 5s",
+        "não conformidade 5s",
+        "nc da auditoria 5s",
+        "nc operacional 5s"
+      ],
+      "excludes": [
+        "totvs",
+        "protheus",
+        "serie",
+        "série",
+        "ppm",
+        "kaizen"
+      ],
+      "label": "NC operacionais da auditoria 5S (PostgreSQL)"
+    },
+    {
+      "domainPrefix": "/quality/audit-5s/",
+      "pathToken": "areas",
+      "keywords": [
+        "areas 5s",
+        "áreas 5s",
+        "areas da auditoria 5s"
+      ],
+      "excludes": [],
+      "label": "áreas da auditoria 5S"
+    },
+    {
+      "domainPrefix": "/quality/audit-5s/",
+      "pathToken": "nc-candidates",
+      "keywords": [
+        "candidatas a nc 5s",
+        "nc candidatas 5s",
+        "candidatas nao conformidade 5s"
+      ],
+      "excludes": [],
+      "label": "respostas candidatas a NC na auditoria 5S"
+    },
+    {
+      "domainPrefix": "/system/",
+      "pathToken": "tables/search",
+      "keywords": [
+        "buscar tabela",
+        "pesquisar tabela",
+        "qual tabela",
+        "qual a tabela",
+        "tabelas do protheus",
+        "metadado de tabela"
+      ],
+      "excludes": [
+        "coluna"
+      ],
+      "label": "busca de tabelas do Protheus"
+    },
+    {
+      "domainPrefix": "/system/",
+      "pathToken": "columns/search",
+      "keywords": [
+        "buscar coluna",
+        "pesquisar coluna",
+        "colunas da tabela"
+      ],
+      "excludes": [],
+      "label": "busca de colunas"
+    }
+  ]
+}

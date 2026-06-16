@@ -296,18 +296,16 @@ class ExternalActionRegistryDispatchPhaseService:
         if selected:
             return selected
 
-        if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
-            ctx.normalized,
-            extract_sale_number=callbacks.extract_sale_number,
-        ):
-            selected = callbacks.select_lmp(
-                ctx.message,
-                ctx.allowed_action_ids,
-                conversation_context=ctx.conversation_context,
-            )
+        selected = self._route_selection.select_lmp(
+            ctx.message,
+            ctx.allowed_action_ids,
+            conversation_context=ctx.conversation_context,
+            candidates_loader=callbacks.candidates_loader,
+            merge_date_parameters=callbacks.merge_date_parameters,
+        )
 
-            if selected:
-                return selected
+        if selected:
+            return selected
 
         if not ctx.product_code:
             selected = self._route_selection.select_kpi_without_product(

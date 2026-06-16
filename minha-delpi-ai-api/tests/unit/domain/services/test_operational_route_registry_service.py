@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.9"
+    assert OperationalRouteRegistryService.version() == "2026.06.10"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -135,3 +135,12 @@ def test_actionable_product_predicates_loaded_from_registry() -> None:
     assert "directives" in predicates
     assert "genericInvoiceRoute" in predicates
     assert "openOrdersRoute" in predicates
+
+
+def test_lmp_routes_loaded_from_registry() -> None:
+    lmp_ids = {
+        str(route.get("id") or "") for route in OperationalRouteRegistryService.lmp_routes()
+    }
+
+    assert "engineeringLmpDetailBySale" in lmp_ids
+    assert "engineeringLmpList" in lmp_ids

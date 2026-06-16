@@ -482,8 +482,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Vocabulary fast path com `build_date_branch_parameters` (parâmetros temporais KPI)
 - [x] `select_by_department_kpi` no motor operacional (ponte `ChatDepartmentKpiIntentService` → registry virtual)
 - [x] Dispatch chama KPI departamental via motor operacional; `ExternalActionKpiRouteSelectionService` reduzido a refinamentos
-- [ ] Exportar regras `_RULES` de `ChatDepartmentKpiIntentService` para JSON no registry
-- [ ] Deprecar `ChatDepartmentKpiIntentService._RULES` Python quando JSON cobrir 100%
+- [x] Exportar regras `_RULES` de `ChatDepartmentKpiIntentService` para JSON no registry
+- [x] Deprecar `ChatDepartmentKpiIntentService._RULES` Python quando JSON cobrir 100%
 
 ### Fase 8 — Dispatch declarativo
 
@@ -499,7 +499,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ### Fase 10 — Domínios restantes + DoD
 
-- [ ] LMP + product search no registry
+- [x] LMP no registry (`domainLmp` + `select_lmp` no motor operacional)
+- [ ] product search no registry
 - [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
 - [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)

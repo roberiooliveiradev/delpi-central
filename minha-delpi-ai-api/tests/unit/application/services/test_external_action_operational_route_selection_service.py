@@ -467,6 +467,39 @@ def test_operational_route_selection_picks_generic_invoice() -> None:
     }
 
 
+def test_operational_route_selection_lmp_detail_by_sale() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "list-lmps",
+                "method": "GET",
+                "path": "/engineering/lmps",
+                "operationId": "list_lmps",
+                "parametersSchema": [{"name": "page"}, {"name": "page_size"}],
+            },
+            {
+                "actionId": "get-lmp",
+                "method": "GET",
+                "path": "/engineering/lmps/{sale_number}",
+                "operationId": "get_lmp_by_sale_number",
+                "parametersSchema": [{"name": "sale_number", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_lmp(
+        "detalhe da LMP da OV 123456",
+        "detalhe da lmp da ov 123456",
+        allowed_action_ids=["list-lmps", "get-lmp"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "get-lmp"
+    assert selected["arguments"]["parameters"]["sale_number"] == "123456"
+
+
 def test_operational_route_selection_by_route_segment_continuation() -> None:
     repository = _FakeRepository(
         [

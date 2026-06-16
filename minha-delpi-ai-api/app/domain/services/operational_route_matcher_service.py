@@ -40,6 +40,92 @@ def _looks_like_transforma_question(normalized: str) -> bool:
     return "transforma" in normalized
 
 
+def _extract_lmp_sale_number(text: str | None) -> str | None:
+    import re
+
+    raw = str(text or "")
+
+    patterns = [
+        r"\bov\s*[#:\-]?\s*(\d{4,})\b",
+        r"\bordem\s+de\s+venda\s*[#:\-]?\s*(\d{4,})\b",
+        r"\blmp\s+(\d{4,})\b",
+        r"\bamostra\s+(\d{4,})\b",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, raw, flags=re.IGNORECASE)
+
+        if match:
+            return match.group(1)
+
+    return None
+
+
+def _looks_like_lmp_question(normalized: str) -> bool:
+    if _looks_like_transforma_question(normalized):
+        return False
+
+    terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "lmpQuestion",
+        "terms",
+    )
+
+    if any(term in normalized for term in terms):
+        return True
+
+    sale_order_phrases = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "lmpQuestion",
+        "saleOrderPhrases",
+    )
+    sale_order_markers = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "lmpQuestion",
+        "saleOrderMarkers",
+    )
+
+    if any(phrase in normalized for phrase in sale_order_phrases):
+        return any(marker in normalized for marker in sale_order_markers) or bool(
+            _extract_lmp_sale_number(normalized)
+        )
+
+    return False
+
+
+def _lmp_has_ranking_terms(normalized: str, *keys: str) -> bool:
+    for key in keys:
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "lmpRanking",
+            key,
+        )
+
+        if any(term in normalized for term in terms):
+            return True
+
+    return False
+
+
+def _looks_like_lmp_catch_all(normalized: str) -> bool:
+    if not _looks_like_lmp_question(normalized):
+        return False
+
+    if _extract_lmp_sale_number(normalized):
+        return False
+
+    if _lmp_has_ranking_terms(
+        normalized,
+        "dashboardSummaryTerms",
+        "dashboardItemsTerms",
+        "chartTerms",
+        "dashboardTerms",
+    ):
+        return False
+
+    return True
+
+
 def _looks_like_system_metadata_question(normalized: str) -> bool:
     return ChatSystemMetadataIntentService.looks_like_question(normalized)
 
@@ -219,6 +305,9 @@ class OperationalRouteMatcherService:
         "productionOeeDetailRoute": _looks_like_production_oee_detail_question,
         "productionOeeAppointmentRoute": _looks_like_production_oee_appointment_question,
         "productionEficienciaFabrilRoute": _looks_like_production_eficiencia_fabril_question,
+        "lmpQuestion": _looks_like_lmp_question,
+        "lmpHasSaleNumber": lambda normalized: bool(_extract_lmp_sale_number(normalized)),
+        "lmpCatchAll": _looks_like_lmp_catch_all,
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

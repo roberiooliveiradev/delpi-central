@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.9",
+  "version": "2026.06.10",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -972,6 +972,111 @@
       },
       "parameters": { "strategy": "date_branch" },
       "presentation": { "reasonKey": "transformaMais" }
+    },
+    {
+      "id": "engineeringLmpDetailBySale",
+      "domain": "domainLmp",
+      "priority": 145,
+      "match": {
+        "allOf": [
+          { "customPredicate": "lmpQuestion" },
+          { "customPredicate": "lmpHasSaleNumber" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/lmps/{sale_number}", "{sale_number}"],
+        "operationIdMarkers": ["get_lmp", "by_sale_number"],
+        "excludePathMarkers": ["transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "engineeringLmpDashboardSummary",
+      "domain": "domainLmp",
+      "priority": 135,
+      "match": {
+        "allOf": [
+          { "customPredicate": "lmpQuestion" },
+          { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardSummaryTerms" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/lmps", "/dashboard/summary"],
+        "excludePathMarkers": ["transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "engineeringLmpDashboardItems",
+      "domain": "domainLmp",
+      "priority": 134,
+      "match": {
+        "allOf": [
+          { "customPredicate": "lmpQuestion" },
+          { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardItemsTerms" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/lmps", "/dashboard/items"],
+        "excludePathMarkers": ["transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "engineeringLmpDashboardCharts",
+      "domain": "domainLmp",
+      "priority": 133,
+      "match": {
+        "allOf": [
+          { "customPredicate": "lmpQuestion" },
+          { "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/lmps", "/dashboard/charts"],
+        "excludePathMarkers": ["transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "engineeringLmpDashboard",
+      "domain": "domainLmp",
+      "priority": 132,
+      "match": {
+        "allOf": [
+          { "customPredicate": "lmpQuestion" },
+          { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/lmps", "dashboard"],
+        "excludePathMarkers": ["/summary", "/items", "/charts", "transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "engineeringLmpList",
+      "domain": "domainLmp",
+      "priority": 128,
+      "match": { "customPredicate": "lmpCatchAll" },
+      "route": {
+        "pathSuffix": "/lmps",
+        "operationIdMarkers": ["list_lmps"],
+        "excludePathMarkers": ["{", "dashboard", "transforma"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "lmp" },
+      "presentation": { "reasonKey": "lmpQuery" }
     },
     {
       "id": "systemTableRelations",

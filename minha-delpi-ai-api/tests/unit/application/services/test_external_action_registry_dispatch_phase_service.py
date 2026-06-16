@@ -106,6 +106,8 @@ def test_intent_bound_routes_run_after_domain_routes() -> None:
     route_selection = MagicMock()
     route_selection.select_vocabulary_fast_path.return_value = None
     route_selection.select_department_kpi.return_value = None
+    route_selection.select_lmp.return_value = None
+    route_selection.select_kpi_without_product.return_value = None
     route_selection.select_intent_bound_route.return_value = {
         "name": "execute_external_action",
         "arguments": {"actionId": "stock-action", "parameters": {}},

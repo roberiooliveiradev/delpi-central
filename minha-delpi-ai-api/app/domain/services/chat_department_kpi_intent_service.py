@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -18,335 +20,52 @@ class DepartmentKpiMatch:
     operation_hint: str = ""
 
 
+def invalidate_department_kpi_rules_cache() -> None:
+    _rules_content.cache_clear()
+
+
+@lru_cache(maxsize=1)
+def _rules_content() -> list[tuple[str, str, tuple[str, ...], tuple[str, ...], str]]:
+    bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
+    rules = bundle.get("rules")
+
+    if not isinstance(rules, list):
+        return ()
+
+    normalized_rules: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str]] = []
+
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+
+        domain_prefix = str(rule.get("domainPrefix") or "").strip()
+        path_token = str(rule.get("pathToken") or "").strip()
+        label = str(rule.get("label") or "").strip()
+        keywords = rule.get("keywords") or []
+        excludes = rule.get("excludes") or []
+
+        if not domain_prefix or not path_token or not label:
+            continue
+
+        normalized_rules.append(
+            (
+                domain_prefix,
+                path_token,
+                tuple(str(item).strip() for item in keywords if str(item).strip()),
+                tuple(str(item).strip() for item in excludes if str(item).strip()),
+                label,
+            )
+        )
+
+    return tuple(normalized_rules)
+
+
 class ChatDepartmentKpiIntentService:
     """Mapeia perguntas em português para tokens de path da api-delpi (sem código de produto)."""
 
-    _RULES: tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str], ...] = (
-        # Comercial
-        (
-            "/commercial/",
-            "closing-rate",
-            ("taxa de convers", "closing rate", "conversao de venda", "fechamento de venda"),
-            ("suprimentos", "compra"),
-            "taxa de conversão comercial",
-        ),
-        (
-            "/commercial/",
-            "sales-order-otd",
-            ("otd de pedido", "otd de venda", "otd comercial", "pedido de venda no prazo"),
-            ("suprimentos", "compra", "producao"),
-            "OTD de pedidos de venda (comercial)",
-        ),
-        (
-            "/commercial/",
-            "rol/series",
-            ("serie de rol", "série de rol", "rol no tempo", "evolucao do rol"),
-            (),
-            "série temporal de ROL comercial",
-        ),
-        (
-            "/commercial/",
-            "new-clients-average",
-            ("media de novos clientes", "média de novos clientes", "novos clientes media"),
-            (),
-            "média de novos clientes",
-        ),
-        (
-            "/commercial/",
-            "new-clients-rol-pct",
-            ("rol de clientes novos", "clientes novos rol"),
-            ("novos negocios",),
-            "percentual ROL de clientes novos",
-        ),
-        (
-            "/commercial/",
-            "new-business-rol-pct",
-            ("rol de novos negocios", "rol de novos negócios", "novos negocios rol"),
-            (),
-            "percentual ROL de novos negócios",
-        ),
-        (
-            "/commercial/",
-            "head_office_rol_target",
-            ("meta rol matriz", "rol matriz", "meta da matriz"),
-            ("filial",),
-            "meta percentual ROL matriz",
-        ),
-        (
-            "/commercial/",
-            "branch_rol_target",
-            ("meta rol filial", "rol filial meta"),
-            ("matriz",),
-            "meta percentual ROL da filial",
-        ),
-        # Financeiro
-        (
-            "/financial/",
-            "ebitda",
-            ("ebitda",),
-            ("comercial",),
-            "EBITDA percentual",
-        ),
-        (
-            "/financial/",
-            "fixed_cost",
-            ("custo fixo", "custos fixos"),
-            (),
-            "custo fixo percentual",
-        ),
-        (
-            "/financial/",
-            "pmr",
-            ("pmr", "prazo medio de recebimento", "prazo médio de recebimento"),
-            ("suprimentos",),
-            "PMR (prazo médio de recebimento)",
-        ),
-        (
-            "/financial/",
-            "/financial/rol",
-            (
-                "rol financeiro",
-                "indicador rol financeiro",
-                "rol do mes",
-                "rol de ",
-                "qual o rol",
-                "qual foi o rol",
-                "quanto foi o rol",
-                " qual rol",
-                " o rol",
-            ),
-            (
-                "serie",
-                "série",
-                "series",
-                "evolucao",
-                "evolução",
-                "clientes novos",
-                "conversao",
-                "conversão",
-                "novos negocios",
-                "novos negócios",
-                "meta rol",
-                "rol matriz",
-                "rol filial",
-                "rolamento",
-            ),
-            "ROL (receita operacional líquida)",
-        ),
-        # Produção
-        (
-            "/production/",
-            "eficiencia-fabril",
-            (
-                "eficiencia fabril",
-                "eficiência fabril",
-                "dashboard eficiencia fabril",
-                "dashboard eficiência fabril",
-                "painel eficiencia fabril",
-                "resultado mod",
-                "mod fabril",
-                "horas ganhas",
-                "horas perdidas",
-            ),
-            ("oee ", "equipamento global", "overall equipment"),
-            "painel de eficiência fabril (MOD e apontamentos)",
-        ),
-        (
-            "/production/",
-            "oee",
-            (
-                "apontamentos oee",
-                "listagem oee",
-                "painel oee",
-                "oee de producao",
-                "oee de produção",
-                "oee da producao",
-                "oee da produção",
-                "fora da faixa",
-            ),
-            ("fabril", "resultado mod", "mod fabril", "equipamento global"),
-            "OEE produção — resumo e apontamentos",
-        ),
-        (
-            "/production/",
-            "overall_equipment",
-            ("oee", "eficiencia de equipamento", "eficiência de equipamento"),
-            ("apontamento", "apontamentos", "fabril", "producao", "produção"),
-            "OEE (eficiência global dos equipamentos)",
-        ),
-        (
-            "/production/",
-            "direct_labor",
-            ("mao de obra direta", "mão de obra direta", "custo direto de mao", "custo direto de mão"),
-            (),
-            "custo direto de mão de obra",
-        ),
-        (
-            "/production/",
-            "production_cost",
-            ("custo de producao", "custo de produção"),
-            ("mao de obra", "mão de obra"),
-            "custo de produção percentual",
-        ),
-        (
-            "/production/",
-            "depreciation",
-            ("depreciacao", "depreciação"),
-            (),
-            "depreciação percentual sobre ROL",
-        ),
-        (
-            "/production/",
-            "on_time_delivery",
-            ("otd de producao", "otd de produção", "entrega no prazo producao", "entrega no prazo produção"),
-            ("comercial", "compra", "suprimentos"),
-            "OTD de produção",
-        ),
-        # RH
-        (
-            "/hr/",
-            "branches",
-            ("filiais rh", "filial rh", "lista de filiais rh", "filiais de rh"),
-            ("snapshot", "pdi", "avaliacao", "avaliação"),
-            "filiais de RH",
-        ),
-        (
-            "/hr/",
-            "active-pdi",
-            ("pdi ativo", "pdis ativos", "plano de desenvolvimento"),
-            (),
-            "quantidade de PDIs ativos",
-        ),
-        (
-            "/hr/",
-            "performance-reviews",
-            ("avaliacao de desempenho", "avaliação de desempenho", "avaliacoes rh", "avaliações rh"),
-            (),
-            "conclusão de avaliações de desempenho",
-        ),
-        (
-            "/hr/",
-            "snapshot",
-            ("snapshot rh", "indicadores de rh", "headcount", "turnover rh", "painel rh"),
-            ("pdi", "avaliacao"),
-            "snapshot de RH",
-        ),
-        # Qualidade
-        (
-            "/quality/",
-            "branches",
-            ("filiais qualidade", "filial qualidade", "lista de filiais qualidade"),
-            ("kaizen", "ppm", "5s", "nao conformidade", "não conformidade"),
-            "filiais de qualidade",
-        ),
-        (
-            "/quality/",
-            "kaizens",
-            ("kaizen",),
-            (),
-            "resumo de kaizens",
-        ),
-        (
-            "/quality/",
-            "audit-5s",
-            ("auditoria 5s", "audit 5s", "5s"),
-            (
-                "nc ",
-                "nao conformidade",
-                "não conformidade",
-                "areas",
-                "áreas",
-                "candidatas",
-                "operacional",
-                "postgresql",
-            ),
-            "resumo de auditoria 5S",
-        ),
-        (
-            "/quality/",
-            "ppm/internal",
-            ("ppm interno", "ppm interna"),
-            ("externo", "externa"),
-            "PPM interno",
-        ),
-        (
-            "/quality/",
-            "ppm/external",
-            ("ppm externo", "ppm externa"),
-            ("interno", "interna"),
-            "PPM externo",
-        ),
-        (
-            "/quality/",
-            "nonconformities/series",
-            ("serie de nao conformidade", "série de não conformidade", "evolucao de nc", "evolução de nc"),
-            (),
-            "série temporal de não conformidades",
-        ),
-        (
-            "/quality/",
-            "nonconformities",
-            ("nao conformidade", "não conformidade", "nao-conformidade", "listar nc"),
-            ("serie", "série", "kaizen", "ppm", "5s", "auditoria 5s", "audit 5s"),
-            "não conformidades",
-        ),
-        (
-            "/quality/audit-5s/",
-            "audits",
-            ("auditorias 5s", "auditoria 5s operacional", "listar auditorias 5s"),
-            ("resumo", "summary", "nc totvs"),
-            "auditorias operacionais 5S (PostgreSQL)",
-        ),
-        (
-            "/quality/audit-5s/",
-            "nonconformities",
-            (
-                "nc 5s",
-                "nao conformidade 5s",
-                "não conformidade 5s",
-                "nc da auditoria 5s",
-                "nc operacional 5s",
-            ),
-            ("totvs", "protheus", "serie", "série", "ppm", "kaizen"),
-            "NC operacionais da auditoria 5S (PostgreSQL)",
-        ),
-        (
-            "/quality/audit-5s/",
-            "areas",
-            ("areas 5s", "áreas 5s", "areas da auditoria 5s"),
-            (),
-            "áreas da auditoria 5S",
-        ),
-        (
-            "/quality/audit-5s/",
-            "nc-candidates",
-            ("candidatas a nc 5s", "nc candidatas 5s", "candidatas nao conformidade 5s"),
-            (),
-            "respostas candidatas a NC na auditoria 5S",
-        ),
-        # Sistema (metadados)
-        (
-            "/system/",
-            "tables/search",
-            (
-                "buscar tabela",
-                "pesquisar tabela",
-                "qual tabela",
-                "qual a tabela",
-                "tabelas do protheus",
-                "metadado de tabela",
-            ),
-            ("coluna",),
-            "busca de tabelas do Protheus",
-        ),
-        (
-            "/system/",
-            "columns/search",
-            ("buscar coluna", "pesquisar coluna", "colunas da tabela"),
-            (),
-            "busca de colunas",
-        ),
-    )
+    @classmethod
+    def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str], ...]:
+        return _rules_content()
 
     @classmethod
     def resolve(cls, message: str) -> DepartmentKpiMatch | None:
@@ -364,7 +83,7 @@ class ChatDepartmentKpiIntentService:
         best: DepartmentKpiMatch | None = None
         best_score = 0
 
-        for domain_prefix, path_token, keywords, excludes, label in cls._RULES:
+        for domain_prefix, path_token, keywords, excludes, label in cls._rules():
             if any(exclude in normalized for exclude in excludes):
                 continue
 

@@ -1,6 +1,15 @@
 from app.domain.services.chat_department_kpi_intent_service import (
     ChatDepartmentKpiIntentService,
 )
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
+
+def test_department_kpi_rules_loaded_from_json() -> None:
+    bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
+    rules = bundle.get("rules")
+
+    assert isinstance(rules, list)
+    assert len(rules) >= 30
 
 
 def test_resolve_ebitda_with_typo():

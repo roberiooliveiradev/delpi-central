@@ -349,6 +349,20 @@
         "itens do dashboard",
         "itens do painel",
         "lista do painel"
+      ],
+      "listTerms": [
+        "listar",
+        "liste",
+        "lista de",
+        "quais lmps",
+        "todas as lmp"
+      ],
+      "chartTerms": [
+        "grafico",
+        "gráfico",
+        "graficos",
+        "gráficos",
+        "charts"
       ]
     },
     "productSearch": {

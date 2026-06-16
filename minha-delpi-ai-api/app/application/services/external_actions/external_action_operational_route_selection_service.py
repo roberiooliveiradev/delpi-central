@@ -323,6 +323,32 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_lmp(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        conversation_context: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        for route in OperationalRouteRegistryService.lmp_routes():
+            selected = self._try_vocabulary_route(
+                route,
+                message,
+                normalized,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+                merge_date_parameters=merge_date_parameters,
+                conversation_context=conversation_context,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
     def select_system_metadata(
         self,
         message: str,
@@ -357,6 +383,7 @@ class ExternalActionOperationalRouteSelectionService:
         previous_messages: list | None = None,
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
+        conversation_context: str | None = None,
     ) -> dict | None:
         match_spec = route.get("match")
 
@@ -387,6 +414,7 @@ class ExternalActionOperationalRouteSelectionService:
             previous_messages=previous_messages,
             build_date_branch_parameters=build_date_branch_parameters,
             merge_date_parameters=merge_date_parameters,
+            conversation_context=conversation_context,
         )
 
     def _resolve_route_action(
@@ -402,6 +430,7 @@ class ExternalActionOperationalRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         production_kind: ProductionOperationalIntentKind | None = None,
+        conversation_context: str | None = None,
     ) -> dict | None:
         route_spec = route.get("route")
 
@@ -515,6 +544,7 @@ class ExternalActionOperationalRouteSelectionService:
                 build_date_branch_parameters=build_date_branch_parameters,
                 merge_date_parameters=merge_date_parameters,
                 production_kind=production_kind,
+                conversation_context=conversation_context,
             )
 
             if parameters is None:
@@ -551,9 +581,54 @@ class ExternalActionOperationalRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         production_kind: ProductionOperationalIntentKind | None = None,
+        conversation_context: str | None = None,
     ) -> dict | None:
         parameters_spec = route.get("parameters") or {}
         strategy = str(parameters_spec.get("strategy") or "").strip()
+
+        if strategy == "lmp":
+            from app.domain.services.operational_route_matcher_service import (
+                _extract_lmp_sale_number,
+            )
+
+            path = str(action.get("path") or "")
+            sale_number = _extract_lmp_sale_number(message) or _extract_lmp_sale_number(
+                conversation_context
+            )
+
+            if sale_number and "{sale_number}" in path:
+                for parameter in action.get("parametersSchema") or []:
+                    name = parameter.get("name")
+
+                    if name and name.lower() in {"sale_number", "ordem", "ov"}:
+                        return {name: sale_number}
+
+                return {"sale_number": sale_number}
+
+            parameters: dict = {}
+
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
+
+                if not name:
+                    continue
+
+                lowered = name.lower()
+
+                if lowered in {"page"}:
+                    parameters[name] = 1
+                elif lowered in {"page_size", "pagesize", "limit"}:
+                    parameters[name] = 50
+                elif lowered == "status" and "/dashboard" in path:
+                    parameters[name] = "Todos"
+
+            if not parameters:
+                parameters = {"page": 1, "page_size": 50}
+
+            if merge_date_parameters:
+                return merge_date_parameters(action, message, parameters)
+
+            return parameters
 
         if strategy == "product_code":
             if not identifier:
