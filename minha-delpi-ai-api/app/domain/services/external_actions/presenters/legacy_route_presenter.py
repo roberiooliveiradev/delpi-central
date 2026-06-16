@@ -24,6 +24,7 @@ class ExternalActionLegacyRoutePresenter:
                 return error
 
             root = self._host._unwrap_data(data)
+            entity = ChatOperationalResponseProfileService.resolve_entity(data, path=path)
 
             empty_operational = self._host._present_empty_operational_result(
                 path=path,
@@ -46,7 +47,10 @@ class ExternalActionLegacyRoutePresenter:
                     if playbook:
                         return playbook
 
-            if isinstance(root, dict) and "/analyser" in str(path or "").lower():
+            if isinstance(root, dict) and (
+                ChatOperationalResponseProfileService.matches_entity(entity, "product_analyser")
+                or "/analyser" in str(path or "").lower()
+            ):
                 root = self._host._normalize_analyser_root(root)
 
             product = root.get("product") if isinstance(root, dict) else None
@@ -54,7 +58,9 @@ class ExternalActionLegacyRoutePresenter:
             if isinstance(product, dict):
                 product = self._host._normalize_api_section(product)
 
-                if "/analyser" in str(path or "").lower():
+                if ChatOperationalResponseProfileService.matches_entity(
+                    entity, "product_analyser"
+                ) or "/analyser" in str(path or "").lower():
                     return self._host._present_product_analyser(root, product, path)
 
                 return self._host._present_product(root, product)
@@ -93,7 +99,12 @@ class ExternalActionLegacyRoutePresenter:
                 if sql_result:
                     return sql_result
 
-            if isinstance(root, dict) and "/structure" in str(path or "").lower():
+            if isinstance(root, dict) and (
+                ChatOperationalResponseProfileService.matches_entity(
+                    entity, "product_structure", "product_parents"
+                )
+                or "/structure" in str(path or "").lower()
+            ):
                 structure_result = self._host._present_product_structure(root, path)
 
                 if structure_result:
@@ -142,8 +153,13 @@ class ExternalActionLegacyRoutePresenter:
 
                 title = self._host._infer_items_title(items, path)
                 first_item = items[0] if items and isinstance(items[0], dict) else {}
+                list_route = ChatOperationalResponseProfileService.list_route_entity(entity)
 
-                if "/stock" in lowered_path or self._host._is_stock_data(first_item):
+                if (
+                    list_route == "stock"
+                    or "/stock" in lowered_path
+                    or self._host._is_stock_data(first_item)
+                ):
                     return self._host._present_product_stock(
                         items,
                         path=path,
@@ -151,7 +167,12 @@ class ExternalActionLegacyRoutePresenter:
                         root=root if isinstance(root, dict) else None,
                     )
 
-                if "/inspection" in lowered_path or self._host._looks_like_inspection_item(first_item):
+                if (
+                    ChatOperationalResponseProfileService.list_route_entity(entity)
+                    == "inspection"
+                    or "/inspection" in lowered_path
+                    or self._host._looks_like_inspection_item(first_item)
+                ):
                     return self._host._present_product_inspection(items, path=path, title=title)
 
                 if items and isinstance(items[0], dict) and "code" in items[0] and "description" in items[0]:

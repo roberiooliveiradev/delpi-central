@@ -201,3 +201,45 @@ class ChatOperationalResponseProfileService:
         )
 
         return ChatPresentationProfileService.resolve_entity_from_path(path)
+
+
+    @classmethod
+    def resolve_entity(cls, data: Any = None, *, path: str = "") -> str | None:
+        payload = data if isinstance(data, dict) else {}
+
+        return cls.resolve(payload, path=path).entity
+
+    @classmethod
+    def matches_entity(cls, entity: str | None, *expected: str) -> bool:
+        token = str(entity or "").strip()
+
+        return bool(token and token in expected)
+
+    @classmethod
+    def operational_empty_route_key(cls, entity: str | None) -> str | None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.operational_empty_route_key(entity)
+
+    @classmethod
+    def is_product_operational_entity(cls, entity: str | None) -> bool:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.is_product_operational_entity(entity)
+
+    @classmethod
+    def is_product_operational_path(cls, path: str) -> bool:
+        return cls.is_product_operational_entity(cls.resolve_entity(path=path))
+
+    @classmethod
+    def list_route_entity(cls, entity: str | None) -> str | None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.list_route_entity(entity)
+

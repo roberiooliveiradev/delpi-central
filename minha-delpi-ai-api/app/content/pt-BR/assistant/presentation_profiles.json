@@ -298,6 +298,35 @@
       "eficiencia_fabril_appointment"
     ]
   },
+  "entityPresentationRouting": {
+    "operationalEmptyKeys": {
+      "product_suppliers": "suppliers",
+      "product_customers": "customers",
+      "product_stock": "stock",
+      "product_structure": "structure",
+      "product_parents": "parents",
+      "product_guide": "guide",
+      "product_inspection": "inspection",
+      "product_sales": "salesPurchases",
+      "product_purchases": "salesPurchases"
+    },
+    "productOperationalEntities": [
+      "product_suppliers",
+      "product_customers",
+      "product_stock",
+      "product_structure",
+      "product_parents",
+      "product_guide",
+      "product_inspection",
+      "product_purchases",
+      "product_sales"
+    ],
+    "listRouteEntities": {
+      "product_guide": "guide",
+      "product_inspection": "inspection",
+      "product_stock": "stock"
+    }
+  },
   "pathRules": [
     {
       "contains": "/structure/exclusivity",

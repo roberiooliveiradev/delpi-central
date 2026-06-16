@@ -64,6 +64,15 @@ def test_entity_sets_loaded_from_json() -> None:
     assert "commercial_proposal" in routed
 
 
+def test_entity_presentation_routing_operational_empty() -> None:
+    assert (
+        ChatPresentationProfileService.operational_empty_route_key("product_stock")
+        == "stock"
+    )
+    assert ChatPresentationProfileService.is_product_operational_entity("product_guide")
+    assert ChatPresentationProfileService.list_route_entity("product_inspection") == "inspection"
+
+
 def test_production_oee_detail_entity_maps_to_dashboard() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/production/oee",

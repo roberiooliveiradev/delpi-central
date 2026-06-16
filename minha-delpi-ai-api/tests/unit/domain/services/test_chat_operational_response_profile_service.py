@@ -94,3 +94,22 @@ def test_enrich_humanized_does_not_append_meta_fields_glossary() -> None:
 
     assert enriched is not None
     assert enriched.get("linhas_detalhe") in (None, [])
+
+
+def test_resolve_entity_and_product_operational_path() -> None:
+    entity = ChatOperationalResponseProfileService.resolve_entity(
+        path="/products/90269001/stock",
+    )
+
+    assert entity == "product_stock"
+    assert ChatOperationalResponseProfileService.is_product_operational_path(
+        "/products/90269001/stock"
+    )
+    assert (
+        ChatOperationalResponseProfileService.operational_empty_route_key(entity)
+        == "stock"
+    )
+    assert ChatOperationalResponseProfileService.matches_entity(
+        entity,
+        "product_stock",
+    )

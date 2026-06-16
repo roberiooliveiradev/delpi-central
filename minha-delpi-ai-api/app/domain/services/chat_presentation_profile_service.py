@@ -47,6 +47,35 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return frozenset(merged)
 
     @classmethod
+    def entity_presentation_routing(cls) -> dict[str, Any]:
+        node = cls.node("entityPresentationRouting")
+
+        return dict(node) if isinstance(node, dict) else {}
+
+    @classmethod
+    def operational_empty_route_key(cls, entity: str | None) -> str | None:
+        mapping = cls.entity_presentation_routing().get("operationalEmptyKeys") or {}
+        token = str(entity or "").strip()
+        key = mapping.get(token) if token else None
+
+        return str(key) if key else None
+
+    @classmethod
+    def is_product_operational_entity(cls, entity: str | None) -> bool:
+        token = str(entity or "").strip()
+        entities = cls.entity_presentation_routing().get("productOperationalEntities") or []
+
+        return bool(token and token in entities)
+
+    @classmethod
+    def list_route_entity(cls, entity: str | None) -> str | None:
+        mapping = cls.entity_presentation_routing().get("listRouteEntities") or {}
+        token = str(entity or "").strip()
+        route = mapping.get(token) if token else None
+
+        return str(route) if route else None
+
+    @classmethod
     def entity_path_hints(cls) -> dict[str, str]:
         raw = cls.mapping("entityPathHints")
 

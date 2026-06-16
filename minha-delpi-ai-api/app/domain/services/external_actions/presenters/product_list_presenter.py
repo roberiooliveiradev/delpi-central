@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -63,17 +67,27 @@ class ExternalActionProductListPresenter:
         if not isinstance(items, list) or not items:
             return None
 
+        entity = ChatOperationalResponseProfileService.resolve_entity(path=path)
+        list_route = ChatOperationalResponseProfileService.list_route_entity(entity)
         lowered_path = str(path or "").lower()
         title = self._infer_items_title(items, path)
         first_item = items[0] if isinstance(items[0], dict) else {}
 
-        if "/guide" in lowered_path:
+        if list_route == "guide" or "/guide" in lowered_path:
             return self._present_product_guide(items, path=path, title=title)
 
-        if "/inspection" in lowered_path or self._host._looks_like_inspection_item(first_item):
+        if (
+            list_route == "inspection"
+            or "/inspection" in lowered_path
+            or self._host._looks_like_inspection_item(first_item)
+        ):
             return self._present_product_inspection(items, path=path, title=title)
 
-        if "/stock" in lowered_path or self._host._is_stock_data(first_item):
+        if (
+            list_route == "stock"
+            or "/stock" in lowered_path
+            or self._host._is_stock_data(first_item)
+        ):
             return self._present_product_stock(items, path=path, title=title, root=root)
 
         return None

@@ -545,7 +545,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Resolução de entidade por path via `ChatPresentationProfileService.resolve_entity_from_path`
 - [x] Migrar conjuntos de entidades (`entitySets` em `presentation_profiles.json`)
 - [x] Renomear/generalizar → `ChatOperationalResponseProfileService` (alias legado mantido)
-- [ ] Presenters keyed por `meta.entity`, não path api-delpi (em curso)
+- [x] `entityPresentationRouting` — empty/list routes por `meta.entity`
+- [ ] Presenters keyed por `meta.entity` (legacy + product list + operational empty migrados; demais builders em curso)
 - [ ] Homologação manual DoD §11 — **após refatoração completa**
 
 ---

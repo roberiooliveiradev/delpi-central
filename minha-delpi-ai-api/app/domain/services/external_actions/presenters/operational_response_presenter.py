@@ -5,6 +5,10 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
+)
+
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -101,33 +105,21 @@ class ExternalActionOperationalResponsePresenter:
         return ""
 
     def _present_empty_operational_result(self, *, path: str, root) -> dict | None:
-        if not self._is_product_operational_path(path):
+        entity = ChatOperationalResponseProfileService.resolve_entity(path=path)
+
+        if not (
+            ChatOperationalResponseProfileService.is_product_operational_entity(entity)
+            or self._legacy_is_product_operational_path(path)
+        ):
             return None
 
         if not self._is_empty_operational_payload(root):
             return None
 
-        lowered_path = str(path or "").lower()
         product_code = self._extract_product_code_from_path(path)
-
-        route_key = None
-
-        if "/suppliers" in lowered_path:
-            route_key = "suppliers"
-        elif "/customers" in lowered_path:
-            route_key = "customers"
-        elif "/stock" in lowered_path:
-            route_key = "stock"
-        elif "/structure" in lowered_path:
-            route_key = "structure"
-        elif "/parents" in lowered_path:
-            route_key = "parents"
-        elif "/guide" in lowered_path:
-            route_key = "guide"
-        elif "/inspection" in lowered_path:
-            route_key = "inspection"
-        elif "/sales" in lowered_path or "/purchases" in lowered_path:
-            route_key = "salesPurchases"
+        route_key = ChatOperationalResponseProfileService.operational_empty_route_key(
+            entity
+        ) or self._legacy_operational_empty_route_key(path)
 
         if route_key and product_code:
             linha = self._host._presenter_text(
@@ -184,7 +176,41 @@ class ExternalActionOperationalResponsePresenter:
         return False
 
     @staticmethod
+    def _legacy_operational_empty_route_key(path: str) -> str | None:
+        lowered_path = str(path or "").lower()
+
+        if "/suppliers" in lowered_path:
+            return "suppliers"
+
+        if "/customers" in lowered_path:
+            return "customers"
+
+        if "/stock" in lowered_path:
+            return "stock"
+
+        if "/structure" in lowered_path:
+            return "structure"
+
+        if "/parents" in lowered_path:
+            return "parents"
+
+        if "/guide" in lowered_path:
+            return "guide"
+
+        if "/inspection" in lowered_path:
+            return "inspection"
+
+        if "/sales" in lowered_path or "/purchases" in lowered_path:
+            return "salesPurchases"
+
+        return None
+
+    @staticmethod
     def _is_product_operational_path(path: str) -> bool:
+        return ChatOperationalResponseProfileService.is_product_operational_path(path)
+
+    @staticmethod
+    def _legacy_is_product_operational_path(path: str) -> bool:
         lowered = str(path or "").lower()
 
         return any(
