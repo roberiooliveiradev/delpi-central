@@ -52,4 +52,37 @@ def test_select_product_prefers_stock_route_for_stock_intent():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "stock-action"
-    assert selected["arguments"]["parameters"]["code"] == "10080055"
+
+
+def test_select_product_directives_prefers_directives_route():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "directives-action",
+                "method": "GET",
+                "path": "/products/directives/{identifier}",
+                "operationId": "get_product_directives",
+                "parametersSchema": [
+                    {"name": "identifier", "in": "path", "required": True}
+                ],
+            },
+            {
+                "actionId": "analyser-action",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    service = ExternalActionProductRouteSelectionService(repository)
+
+    selected = service.select_product_directives(
+        "Diretivas 90260882",
+        "diretivas 90260882",
+        allowed_action_ids=["directives-action", "analyser-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "directives-action"
+    assert selected["arguments"]["parameters"]["identifier"] == "90260882"

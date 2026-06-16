@@ -446,6 +446,17 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
+        if ChatProductQueryIntentService._looks_like_directives_question(normalized):
+            selected = self._route_selection.select_product_directives(
+                message,
+                normalized,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=self._list_allowed_candidates,
+            )
+
+            if selected:
+                return selected
+
         if ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
             normalized
         ):

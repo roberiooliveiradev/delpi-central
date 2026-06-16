@@ -474,6 +474,9 @@ class ExternalActionProductRouteSelectionService:
             if wants_directives and "/directives/" in path:
                 value += 165
 
+            if wants_directives and "analyser" in path:
+                value -= 150
+
             if wants_last_purchase and "last-purchase" in path:
                 value += 140
 
@@ -1110,6 +1113,59 @@ class ExternalActionProductRouteSelectionService:
                 "reason": ExternalActionResponseContentService.get(
                     "selectionReasons",
                     "exclusiveRawMaterialCatalog",
+                ),
+            }
+
+        return None
+
+    def select_product_directives(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        if not ChatProductQueryIntentService._looks_like_directives_question(normalized):
+            return None
+
+        identifier = ChatProductQueryIntentService.extract_product_code(message or "")
+
+        if not identifier:
+            return None
+
+        candidates = self._load_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+            if "/directives/" not in path:
+                continue
+
+            parameters = self._build_product_parameters(
+                action,
+                identifier,
+                message=message,
+            )
+
+            if not parameters:
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": parameters,
+                },
+                "reason": ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "productDirectives",
                 ),
             }
 

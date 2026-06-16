@@ -34,6 +34,7 @@ from app.application.dto.product.product_raw_material_price_request import (
 from app.application.dto.product.exclusive_raw_material_catalog_request import (
     ExclusiveRawMaterialCatalogRequest,
 )
+from app.application.dto.product.product_analyser_request import ProductAnalyserRequest
 from app.application.dto.product.product_directives_request import ProductDirectivesRequest
 
 from app.interface.http.openapi_agent_metadata import (

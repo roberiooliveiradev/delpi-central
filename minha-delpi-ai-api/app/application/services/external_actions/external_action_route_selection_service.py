@@ -349,6 +349,21 @@ class ExternalActionRouteSelectionService:
             candidates_loader=candidates_loader,
         )
 
+    def select_product_directives(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._product_route.select_product_directives(
+            message,
+            normalized,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
     def select_pagination_refinement(
         self,
         refinement,
