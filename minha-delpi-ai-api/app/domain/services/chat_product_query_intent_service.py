@@ -940,19 +940,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_production_status_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("productionStatus", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        if not cls._has_product_scope_reference(normalized):
-            return False
-
-        return cls._message_has_any_marker(
-            normalized,
-            "productionStatus",
-            "productionMarkers",
-        )
+        return cls._matches_product_predicate("productionStatus", normalized)
 
     @classmethod
     def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
@@ -1042,7 +1030,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_sale_pricing_question(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._terms("salePricing", "terms"))
+        return cls._matches_product_predicate("salePricingRoute", normalized)
 
     @classmethod
     def _looks_like_price_analysis_question(cls, normalized: str) -> bool:
@@ -1136,59 +1124,19 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_directives_question(cls, normalized: str) -> bool:
-        if not any(term in normalized for term in cls._terms("directives", "terms")):
-            return False
-
-        return cls.extract_product_code(normalized) is not None or cls._has_product_scope_reference(
-            normalized
-        )
+        return cls._matches_product_predicate("directives", normalized)
 
     @classmethod
     def _looks_like_last_purchase_question(cls, normalized: str) -> bool:
-        if cls._looks_like_directives_question(normalized):
-            return False
-
-        if cls._looks_like_raw_material_price_intelligence_question(normalized):
-            return False
-
-        if cls._looks_like_sale_pricing_question(normalized):
-            return False
-
-        if any(term in normalized for term in cls._terms("lastPurchase", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        if (
-            ("ultima compra" in normalized or "última compra" in normalized)
-            and any(marker in normalized for marker in ("icms", "fornecedor", " nf"))
-        ):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        return False
+        return cls._matches_product_predicate("lastPurchase", normalized)
 
     @classmethod
     def _looks_like_purchase_price_history_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("purchasePriceHistory", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        return False
+        return cls._matches_product_predicate("purchasePriceHistory", normalized)
 
     @classmethod
     def _looks_like_purchase_budget_history_question(cls, normalized: str) -> bool:
-        if cls._looks_like_raw_material_price_intelligence_question(normalized):
-            return False
-
-        if any(term in normalized for term in cls._terms("purchaseBudgetHistory", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        return False
+        return cls._matches_product_predicate("purchaseBudgetHistory", normalized)
 
     @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:
@@ -1354,12 +1302,16 @@ class ChatProductQueryIntentService:
         return False
 
     @classmethod
-    def _matches_route_predicate(cls, predicate: str, normalized: str) -> bool:
+    def _matches_product_predicate(cls, predicate: str, normalized: str) -> bool:
         from app.domain.services.chat_product_route_predicate_service import (
             ChatProductRoutePredicateService,
         )
 
         return ChatProductRoutePredicateService.matches(predicate, normalized)
+
+    @classmethod
+    def _matches_route_predicate(cls, predicate: str, normalized: str) -> bool:
+        return cls._matches_product_predicate(predicate, normalized)
 
     @classmethod
     def _looks_like_purchases_route_question(cls, normalized: str) -> bool:

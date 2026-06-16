@@ -256,12 +256,10 @@ def _looks_like_product_search_with_group_code(normalized: str) -> bool:
 
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "directives": ChatProductQueryIntentService._looks_like_directives_question,
         "exclusiveRawMaterialCatalog": (
             ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question
         ),
         "factoryStatus": ChatProductQueryIntentService._looks_like_factory_status_question,
-        "productionStatus": ChatProductQueryIntentService._looks_like_production_status_question,
         "shippingStatus": ChatProductQueryIntentService._looks_like_shipping_status_question,
         "structureExclusivity": (
             ChatProductQueryIntentService._looks_like_structure_exclusivity_question
@@ -272,19 +270,9 @@ class OperationalRouteMatcherService:
         "costImpactSimulation": (
             ChatProductQueryIntentService._looks_like_cost_impact_simulation_question
         ),
-        "lastPurchase": ChatProductQueryIntentService._looks_like_last_purchase_question,
-        "purchasePriceHistory": (
-            ChatProductQueryIntentService._looks_like_purchase_price_history_question
-        ),
-        "purchaseBudgetHistory": (
-            ChatProductQueryIntentService._looks_like_purchase_budget_history_question
-        ),
         "saleOrdersList": _looks_like_sale_orders_list_question,
         "transformaQuestion": _looks_like_transforma_question,
         "systemMetadataQuestion": _looks_like_system_metadata_question,
-        "salePricingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_sale_pricing_question(
-            normalized
-        ),
         "suppliesOtdRoute": _looks_like_supplies_otd_question,
         "productionOtdDetailRoute": _looks_like_production_otd_detail_question,
         "productionOeeDetailRoute": _looks_like_production_oee_detail_question,
@@ -388,11 +376,12 @@ class OperationalRouteMatcherService:
         any_of = spec.get("anyOf")
 
         if isinstance(any_of, list) and any_of:
-            return any(
+            if not any(
                 cls._evaluate_spec(branch, message=message, normalized=normalized)
                 for branch in any_of
                 if isinstance(branch, dict)
-            )
+            ):
+                return False
 
         terms_from = str(spec.get("termsFrom") or "").strip()
 
@@ -419,6 +408,8 @@ class OperationalRouteMatcherService:
             and not isinstance(all_of, list)
             and not isinstance(none_of, list)
             and not isinstance(any_of, list)
+            and not spec.get("hasProductIdentifier")
+            and not spec.get("hasProductScope")
         ):
             return False
 

@@ -203,6 +203,76 @@
     },
     "openOrdersRoute": {
       "termsFrom": "product_query_intent.openOrders.terms"
+    },
+    "salePricingRoute": {
+      "termsFrom": "product_query_intent.salePricing.terms"
+    }
+  },
+  "playbookPredicates": {
+    "directives": {
+      "termsFrom": "product_query_intent.directives.terms",
+      "anyOf": [
+        { "hasProductIdentifier": true },
+        { "hasProductScope": true }
+      ]
+    },
+    "lastPurchase": {
+      "noneOf": [
+        { "customPredicate": "directives" },
+        { "customPredicate": "rawMaterialPriceIntelligence" },
+        { "customPredicate": "salePricingRoute" }
+      ],
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.lastPurchase.terms",
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "termsFrom": "product_query_intent.lastPurchase.shorthandPhrase" },
+            { "termsFrom": "product_query_intent.lastPurchase.shorthandContext" }
+          ],
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        }
+      ]
+    },
+    "purchasePriceHistory": {
+      "termsFrom": "product_query_intent.purchasePriceHistory.terms",
+      "anyOf": [
+        { "hasProductScope": true },
+        { "hasProductIdentifier": true }
+      ]
+    },
+    "purchaseBudgetHistory": {
+      "termsFrom": "product_query_intent.purchaseBudgetHistory.terms",
+      "noneOf": [{ "customPredicate": "rawMaterialPriceIntelligence" }],
+      "anyOf": [
+        { "hasProductScope": true },
+        { "hasProductIdentifier": true }
+      ]
+    },
+    "productionStatus": {
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.productionStatus.terms",
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "hasProductScope": true },
+            { "termsFrom": "product_query_intent.productionStatus.productionMarkers" }
+          ]
+        }
+      ]
     }
   },
   "stock": {
@@ -695,6 +765,15 @@
       "preco da ultima compra",
       "preço da última compra",
       "last-purchase"
+    ],
+    "shorthandPhrase": [
+      "ultima compra",
+      "última compra"
+    ],
+    "shorthandContext": [
+      "icms",
+      "fornecedor",
+      " nf"
     ]
   },
   "purchasePriceHistory": {

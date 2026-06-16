@@ -55,3 +55,24 @@ def test_matcher_resolves_route_predicates_from_registry():
         "guideRoute",
         normalized,
     )
+
+
+def test_playbook_predicates_include_directives_and_production():
+    predicates = ChatProductRoutePredicateService.registered_predicates()
+
+    assert "directives" in predicates
+    assert "productionStatus" in predicates
+    assert "lastPurchase" in predicates
+
+
+def test_directives_playbook_predicate_requires_product_scope():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "diretivas do produto 90260142"
+    )
+
+    assert ChatProductRoutePredicateService.matches("directives", normalized)
+
+    assert not ChatProductRoutePredicateService.matches(
+        "directives",
+        ChatMessageNormalizationService.normalize_for_matching("diretivas em geral"),
+    )

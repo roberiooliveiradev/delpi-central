@@ -1,4 +1,4 @@
-"""Predicados declarativos de rota de produto (product_query_intent.routePredicates)."""
+"""Predicados declarativos de produto (routePredicates + playbookPredicates)."""
 
 from __future__ import annotations
 
@@ -10,16 +10,34 @@ from app.domain.services.operational_route_matcher_service import (
 
 class ChatProductRoutePredicateService:
     _BUNDLE = "product_query_intent"
-    _SECTION = "routePredicates"
+    _SECTIONS = ("routePredicates", "playbookPredicates")
 
     @classmethod
     def registered_predicates(cls) -> frozenset[str]:
-        node = ChatAssistantContentService.get_node(cls._BUNDLE, cls._SECTION) or {}
+        keys: set[str] = set()
 
-        if not isinstance(node, dict):
-            return frozenset()
+        for section in cls._SECTIONS:
+            node = ChatAssistantContentService.get_node(cls._BUNDLE, section) or {}
 
-        return frozenset(str(key) for key in node.keys())
+            if isinstance(node, dict):
+                keys.update(str(key) for key in node.keys())
+
+        return frozenset(keys)
+
+    @classmethod
+    def _resolve_spec(cls, predicate: str) -> dict | None:
+        key = str(predicate or "").strip()
+
+        if not key:
+            return None
+
+        for section in cls._SECTIONS:
+            spec = ChatAssistantContentService.get_node(cls._BUNDLE, section, key)
+
+            if isinstance(spec, dict) and spec:
+                return spec
+
+        return None
 
     @classmethod
     def matches(
@@ -29,13 +47,9 @@ class ChatProductRoutePredicateService:
         *,
         message: str = "",
     ) -> bool:
-        spec = ChatAssistantContentService.get_node(
-            cls._BUNDLE,
-            cls._SECTION,
-            str(predicate or "").strip(),
-        )
+        spec = cls._resolve_spec(predicate)
 
-        if not isinstance(spec, dict) or not spec:
+        if not spec:
             return False
 
         return OperationalRouteMatcherService._evaluate_spec(
