@@ -206,6 +206,19 @@
     },
     "salePricingRoute": {
       "termsFrom": "product_query_intent.salePricing.terms"
+    },
+    "priceAnalysisRoute": {
+      "regexPatterns": ["\\banalis"],
+      "termsFrom": "product_query_intent.priceAnalysis.terms",
+      "noneOf": [
+        { "termsFrom": "product_query_intent.analyser.genericAnalysisExclude" },
+        { "customPredicate": "productionStatus" },
+        { "customPredicate": "rawMaterialPriceIntelligence" }
+      ],
+      "anyOf": [
+        { "hasProductScope": true },
+        { "hasProductIdentifier": true }
+      ]
     }
   },
   "playbookPredicates": {
@@ -270,6 +283,167 @@
           "allOf": [
             { "hasProductScope": true },
             { "termsFrom": "product_query_intent.productionStatus.productionMarkers" }
+          ]
+        }
+      ]
+    },
+    "factoryStatus": {
+      "noneOf": [
+        {
+          "allOf": [
+            { "customPredicate": "productionStatus" },
+            {
+              "noneOf": [
+                { "termsFrom": "product_query_intent.factoryStatus.terms" },
+                { "termsFrom": "product_query_intent.factoryStatus.factoryOnlyMarkers" }
+              ]
+            }
+          ]
+        }
+      ],
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.factoryStatus.terms",
+          "excludeTermsUnless": {
+            "termsFrom": "product_query_intent.factoryStatus.excludeWhenProductionPlaybook",
+            "unlessTermsFrom": "product_query_intent.factoryStatus.scopeMarkers"
+          }
+        },
+        {
+          "termsFrom": "product_query_intent.factoryStatus.colloquialTerms",
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "hasProductScope": true },
+            { "termsFrom": "product_query_intent.factoryStatus.scopeMarkers" }
+          ]
+        }
+      ]
+    },
+    "shippingStatus": {
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.shippingStatus.terms",
+          "excludeTermsUnless": {
+            "termsFrom": "product_query_intent.shippingStatus.excludeWhenQualityInspection",
+            "unlessTermsFrom": "product_query_intent.shippingStatus.excludeShippingContextMarkers"
+          },
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "hasProductScope": true },
+            { "termsFrom": "product_query_intent.shippingStatus.shippingMarkers" }
+          ]
+        }
+      ]
+    },
+    "structureExclusivity": {
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.structureExclusivity.terms",
+          "noneOf": [
+            {
+              "allOf": [
+                { "lacksProductIdentifier": true },
+                {
+                  "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
+                }
+              ]
+            }
+          ],
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "hasProductScope": true },
+            {
+              "noneOf": [
+                {
+                  "allOf": [
+                    { "lacksProductIdentifier": true },
+                    {
+                      "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
+                    }
+                  ]
+                }
+              ]
+            },
+            { "termsFrom": "product_query_intent.structureExclusivity.exclusivityMarkers" }
+          ]
+        }
+      ]
+    },
+    "exclusiveRawMaterialCatalog": {
+      "noneOf": [
+        { "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.excludeTerms" },
+        { "customPredicate": "structureExclusivity" },
+        {
+          "allOf": [
+            { "hasProductIdentifier": true },
+            { "hasProductScope": true }
+          ]
+        }
+      ],
+      "anyOf": [
+        { "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.terms" },
+        {
+          "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.exclusivityFallbackMarkers"
+        }
+      ],
+      "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
+    },
+    "rawMaterialPriceIntelligence": {
+      "noneOf": [
+        { "customPredicate": "salePricingRoute" },
+        { "customPredicate": "costImpactSimulation" },
+        { "termsFrom": "product_query_intent.purchasePriceHistory.terms" },
+        { "termsFrom": "product_query_intent.purchaseBudgetHistory.terms" },
+        {
+          "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.excludeWhenSalePricing"
+        }
+      ],
+      "allOf": [
+        { "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.terms" },
+        {
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true },
+            { "regexPatterns": ["\\bmp\\b"] },
+            {
+              "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.scopeShorthandMarkers"
+            }
+          ]
+        }
+      ]
+    },
+    "costImpactSimulation": {
+      "anyOf": [
+        {
+          "termsFrom": "product_query_intent.costImpactSimulation.terms",
+          "excludeTermsUnless": {
+            "termsFrom": "product_query_intent.costImpactSimulation.excludeWhenFactoryStatus",
+            "unlessTermsFrom": "product_query_intent.costImpactSimulation.excludeFactoryContextMarkers"
+          },
+          "anyOf": [
+            { "hasProductScope": true },
+            { "hasProductIdentifier": true }
+          ]
+        },
+        {
+          "allOf": [
+            { "hasProductScope": true },
+            { "termsFrom": "product_query_intent.costImpactSimulation.costMarkers" }
           ]
         }
       ]
@@ -567,6 +741,13 @@
       "compare estruturas",
       "bom do",
       "componentes do"
+    ],
+    "exclusivityFallbackMarkers": [
+      "exclusiv",
+      "mp exclus",
+      "materia prima exclus",
+      "materia-prima exclus",
+      "materias-primas exclus"
     ]
   },
   "structureExclusivity": {

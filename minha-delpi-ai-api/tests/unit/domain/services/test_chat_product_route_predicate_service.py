@@ -76,3 +76,20 @@ def test_directives_playbook_predicate_requires_product_scope():
         "directives",
         ChatMessageNormalizationService.normalize_for_matching("diretivas em geral"),
     )
+
+
+def test_factory_status_excludes_production_apontamento():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "O produto 90269002 já tem apontamento na OP?"
+    )
+
+    assert not ChatProductRoutePredicateService.matches("factoryStatus", normalized)
+    assert ChatProductRoutePredicateService.matches("productionStatus", normalized)
+
+
+def test_shipping_status_matches_expedicao_with_product_scope():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quanto do produto 90269002 já foi liberado para expedição?"
+    )
+
+    assert ChatProductRoutePredicateService.matches("shippingStatus", normalized)

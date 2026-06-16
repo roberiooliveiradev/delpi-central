@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from collections.abc import Callable
 from typing import Any
 
@@ -256,20 +258,6 @@ def _looks_like_product_search_with_group_code(normalized: str) -> bool:
 
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "exclusiveRawMaterialCatalog": (
-            ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question
-        ),
-        "factoryStatus": ChatProductQueryIntentService._looks_like_factory_status_question,
-        "shippingStatus": ChatProductQueryIntentService._looks_like_shipping_status_question,
-        "structureExclusivity": (
-            ChatProductQueryIntentService._looks_like_structure_exclusivity_question
-        ),
-        "rawMaterialPriceIntelligence": (
-            ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question
-        ),
-        "costImpactSimulation": (
-            ChatProductQueryIntentService._looks_like_cost_impact_simulation_question
-        ),
         "saleOrdersList": _looks_like_sale_orders_list_question,
         "transformaQuestion": _looks_like_transforma_question,
         "systemMetadataQuestion": _looks_like_system_metadata_question,
@@ -283,9 +271,6 @@ class OperationalRouteMatcherService:
         "lmpCatchAll": _looks_like_lmp_catch_all,
         "productSearchQuestion": _looks_like_product_search_question,
         "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
-        "priceAnalysisRoute": lambda normalized: ChatProductQueryIntentService._looks_like_price_analysis_question(
-            normalized
-        ),
         "structureQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_structure_question(
             normalized
         ),
@@ -393,6 +378,26 @@ class OperationalRouteMatcherService:
         if exclude_terms_from and cls._message_has_terms(exclude_terms_from, normalized):
             return False
 
+        exclude_terms_unless = spec.get("excludeTermsUnless")
+
+        if isinstance(exclude_terms_unless, dict):
+            if not cls._passes_exclude_terms_unless(exclude_terms_unless, normalized):
+                return False
+
+        regex_patterns = spec.get("regexPatterns")
+
+        if isinstance(regex_patterns, list) and regex_patterns:
+            if not any(
+                re.search(str(pattern), normalized)
+                for pattern in regex_patterns
+                if str(pattern or "").strip()
+            ):
+                return False
+
+        if spec.get("lacksProductIdentifier"):
+            if ChatProductQueryIntentService.extract_product_code(message or ""):
+                return False
+
         if spec.get("hasProductIdentifier"):
             identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
@@ -410,10 +415,32 @@ class OperationalRouteMatcherService:
             and not isinstance(any_of, list)
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
+            and not spec.get("lacksProductIdentifier")
+            and not (
+                isinstance(regex_patterns, list) and regex_patterns
+            )
         ):
             return False
 
         return True
+
+    @classmethod
+    def _passes_exclude_terms_unless(
+        cls,
+        spec: dict[str, Any],
+        normalized: str,
+    ) -> bool:
+        terms_from = str(spec.get("termsFrom") or "").strip()
+
+        if not terms_from or not cls._message_has_terms(terms_from, normalized):
+            return True
+
+        unless_terms_from = str(spec.get("unlessTermsFrom") or "").strip()
+
+        if unless_terms_from and cls._message_has_terms(unless_terms_from, normalized):
+            return True
+
+        return False
 
     @classmethod
     def _evaluate_node(
@@ -423,40 +450,10 @@ class OperationalRouteMatcherService:
         message: str,
         normalized: str,
     ) -> bool:
-        if node.get("hasProductIdentifier"):
-            if not ChatProductQueryIntentService.extract_product_code(message or ""):
-                return False
-
-        if node.get("hasProductScope") and not cls._has_product_scope(normalized):
+        if not isinstance(node, dict):
             return False
 
-        custom_predicate = str(node.get("customPredicate") or "").strip()
-
-        if custom_predicate:
-            if not cls._match_custom_predicate(
-                custom_predicate,
-                normalized,
-                message=message,
-            ):
-                return False
-
-        terms_from = str(node.get("termsFrom") or "").strip()
-
-        if terms_from and not cls._message_has_terms(terms_from, normalized):
-            return False
-
-        exclude_terms_from = str(node.get("excludeTermsFrom") or "").strip()
-
-        if exclude_terms_from and cls._message_has_terms(exclude_terms_from, normalized):
-            return False
-
-        return bool(
-            custom_predicate
-            or terms_from
-            or exclude_terms_from
-            or node.get("hasProductIdentifier")
-            or node.get("hasProductScope")
-        )
+        return cls._evaluate_spec(node, message=message, normalized=normalized)
 
     @classmethod
     def _message_has_terms(cls, terms_from: str, normalized: str) -> bool:

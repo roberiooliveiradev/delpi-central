@@ -901,42 +901,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_factory_status_question(cls, normalized: str) -> bool:
-        if cls._looks_like_production_status_question(normalized):
-            factory_only = any(
-                term in normalized
-                for term in cls._terms("factoryStatus", "terms")
-            ) or cls._message_has_any_marker(
-                normalized,
-                "factoryStatus",
-                "factoryOnlyMarkers",
-            )
-
-            if not factory_only:
-                return False
-
-        if any(term in normalized for term in cls._terms("factoryStatus", "terms")):
-            if any(
-                term in normalized
-                for term in cls._terms("factoryStatus", "excludeWhenProductionPlaybook")
-            ) and not cls._message_has_any_marker(
-                normalized,
-                "factoryStatus",
-                "scopeMarkers",
-            ):
-                return False
-
-            return True
-
-        if any(term in normalized for term in cls._terms("factoryStatus", "colloquialTerms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        return cls._has_product_scope_reference(normalized) and cls._message_has_any_marker(
-            normalized,
-            "factoryStatus",
-            "scopeMarkers",
-        )
+        return cls._matches_product_predicate("factoryStatus", normalized)
 
     @classmethod
     def _looks_like_production_status_question(cls, normalized: str) -> bool:
@@ -944,89 +909,15 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("shippingStatus", "terms")):
-            if any(
-                term in normalized
-                for term in cls._terms("shippingStatus", "excludeWhenQualityInspection")
-            ) and not cls._message_has_any_marker(
-                normalized,
-                "shippingStatus",
-                "excludeShippingContextMarkers",
-            ):
-                return False
-
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        if not cls._has_product_scope_reference(normalized):
-            return False
-
-        return cls._message_has_any_marker(
-            normalized,
-            "shippingStatus",
-            "shippingMarkers",
-        )
+        return cls._matches_product_predicate("shippingStatus", normalized)
 
     @classmethod
     def _looks_like_exclusive_raw_material_catalog_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("exclusiveRawMaterialCatalog", "excludeTerms")):
-            return False
-
-        has_catalog_term = any(
-            term in normalized for term in cls._terms("exclusiveRawMaterialCatalog", "terms")
-        )
-        exclusivity_markers = (
-            "exclusiv",
-            "mp exclus",
-            "materia prima exclus",
-            "materia-prima exclus",
-            "materias-primas exclus",
-        )
-        has_exclusivity = has_catalog_term or any(
-            marker in normalized for marker in exclusivity_markers
-        )
-        if not has_exclusivity:
-            return False
-
-        if cls._looks_like_structure_exclusivity_question(normalized):
-            return False
-
-        if cls.extract_product_code(normalized) and cls._has_product_scope_reference(normalized):
-            return False
-
-        return any(
-            marker in normalized
-            for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
-        )
+        return cls._matches_product_predicate("exclusiveRawMaterialCatalog", normalized)
 
     @classmethod
     def _looks_like_structure_exclusivity_question(cls, normalized: str) -> bool:
-        if any(term in normalized for term in cls._terms("structureExclusivity", "terms")):
-            if not cls.extract_product_code(normalized) and any(
-                marker in normalized
-                for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
-            ):
-                return False
-
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        if not cls._has_product_scope_reference(normalized):
-            return False
-
-        if not cls.extract_product_code(normalized) and any(
-            marker in normalized
-            for marker in cls._terms("exclusiveRawMaterialCatalog", "globalMarkers")
-        ):
-            return False
-
-        return cls._message_has_any_marker(
-            normalized,
-            "structureExclusivity",
-            "exclusivityMarkers",
-        )
+        return cls._matches_product_predicate("structureExclusivity", normalized)
 
     @classmethod
     def _looks_like_sale_pricing_question(cls, normalized: str) -> bool:
@@ -1034,93 +925,15 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_price_analysis_question(cls, normalized: str) -> bool:
-        if not re.search(r"\banalis", normalized):
-            return False
-
-        if not any(term in normalized for term in cls._terms("priceAnalysis", "terms")):
-            return False
-
-        if any(
-            term in normalized
-            for term in cls._terms("analyser", "genericAnalysisExclude")
-        ):
-            return False
-
-        if cls._looks_like_production_status_question(normalized):
-            return False
-
-        if cls._looks_like_raw_material_price_intelligence_question(normalized):
-            return False
-
-        return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-            normalized
-        ) is not None
+        return cls._matches_product_predicate("priceAnalysisRoute", normalized)
 
     @classmethod
     def _looks_like_raw_material_price_intelligence_question(cls, normalized: str) -> bool:
-        if cls._looks_like_sale_pricing_question(normalized):
-            return False
-
-        if cls._looks_like_cost_impact_simulation_question(normalized):
-            return False
-
-        if any(term in normalized for term in cls._terms("purchasePriceHistory", "terms")):
-            return False
-
-        if any(term in normalized for term in cls._terms("purchaseBudgetHistory", "terms")):
-            return False
-
-        if any(
-            term in normalized
-            for term in cls._terms("rawMaterialPriceIntelligence", "excludeWhenSalePricing")
-        ):
-            return False
-
-        if any(term in normalized for term in cls._terms("rawMaterialPriceIntelligence", "terms")):
-            return (
-                cls._has_product_scope_reference(normalized)
-                or cls.extract_product_code(normalized) is not None
-                or cls._looks_like_raw_material_scope_shorthand(normalized)
-            )
-
-        return False
-
-    @classmethod
-    def _looks_like_raw_material_scope_shorthand(cls, normalized: str) -> bool:
-        if re.search(r"\bmp\b", normalized):
-            return True
-
-        return cls._message_has_any_marker(
-            normalized,
-            "rawMaterialPriceIntelligence",
-            "scopeShorthandMarkers",
-        )
+        return cls._matches_product_predicate("rawMaterialPriceIntelligence", normalized)
 
     @classmethod
     def _looks_like_cost_impact_simulation_question(cls, normalized: str) -> bool:
-        if any(
-            term in normalized
-            for term in cls._terms("costImpactSimulation", "excludeWhenFactoryStatus")
-        ) and not cls._message_has_any_marker(
-            normalized,
-            "costImpactSimulation",
-            "excludeFactoryContextMarkers",
-        ):
-            return False
-
-        if any(term in normalized for term in cls._terms("costImpactSimulation", "terms")):
-            return cls._has_product_scope_reference(normalized) or cls.extract_product_code(
-                normalized
-            ) is not None
-
-        if not cls._has_product_scope_reference(normalized):
-            return False
-
-        return cls._message_has_any_marker(
-            normalized,
-            "costImpactSimulation",
-            "costMarkers",
-        )
+        return cls._matches_product_predicate("costImpactSimulation", normalized)
 
     @classmethod
     def _looks_like_directives_question(cls, normalized: str) -> bool:
