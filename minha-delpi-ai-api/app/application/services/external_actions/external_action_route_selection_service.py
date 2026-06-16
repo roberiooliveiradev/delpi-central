@@ -32,9 +32,6 @@ from app.application.services.external_actions.external_action_product_route_cat
 from app.application.services.external_actions.external_action_kpi_route_selection_service import (
     ExternalActionKpiRouteSelectionService,
 )
-from app.application.services.external_actions.external_action_domain_route_selection_service import (
-    ExternalActionDomainRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_product_search_route_selection_service import (
     ExternalActionProductSearchRouteSelectionService,
 )
@@ -43,9 +40,6 @@ from app.application.services.external_actions.external_action_refinement_route_
 )
 from app.application.services.external_actions.external_action_generic_route_selection_service import (
     ExternalActionGenericRouteSelectionService,
-)
-from app.application.services.external_actions.external_action_production_operational_route_selection_service import (
-    ExternalActionProductionOperationalRouteSelectionService,
 )
 from app.application.services.external_actions.external_action_operational_route_selection_service import (
     ExternalActionOperationalRouteSelectionService,
@@ -70,11 +64,9 @@ class ExternalActionRouteSelectionService:
         lmp_route: ExternalActionLmpRouteSelectionService | None = None,
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
         kpi_route: ExternalActionKpiRouteSelectionService | None = None,
-        domain_route: ExternalActionDomainRouteSelectionService | None = None,
         product_search_route: ExternalActionProductSearchRouteSelectionService | None = None,
         refinement_route: ExternalActionRefinementRouteSelectionService | None = None,
         generic_route: ExternalActionGenericRouteSelectionService | None = None,
-        production_operational_route: ExternalActionProductionOperationalRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
@@ -86,9 +78,6 @@ class ExternalActionRouteSelectionService:
         self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
         self._kpi_route = kpi_route or ExternalActionKpiRouteSelectionService(self)
-        self._domain_route = domain_route or ExternalActionDomainRouteSelectionService(
-            repository
-        )
         self._product_search_route = (
             product_search_route or ExternalActionProductSearchRouteSelectionService()
         )
@@ -96,10 +85,6 @@ class ExternalActionRouteSelectionService:
             repository
         )
         self._generic_route = generic_route or ExternalActionGenericRouteSelectionService()
-        self._production_operational_route = (
-            production_operational_route
-            or ExternalActionProductionOperationalRouteSelectionService()
-        )
         self._operational_route = ExternalActionOperationalRouteSelectionService(
             self._product_catalog
         )
@@ -284,17 +269,7 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader or not merge_date_parameters:
             return None
 
-        selected = self._operational_route.select_sale_orders(
-            message,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-            merge_date_parameters=merge_date_parameters,
-        )
-
-        if selected:
-            return selected
-
-        return self._domain_route.select_sale_orders(
+        return self._operational_route.select_sale_orders(
             message,
             allowed_action_ids,
             candidates_loader=candidates_loader,
@@ -313,23 +288,12 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader or not build_date_branch_parameters:
             return None
 
-        selected = self._operational_route.select_transforma(
+        return self._operational_route.select_transforma(
             message,
             allowed_action_ids,
             previous_messages=previous_messages,
             candidates_loader=candidates_loader,
             build_date_branch_parameters=build_date_branch_parameters,
-        )
-
-        if selected:
-            return selected
-
-        return self._domain_route.select_transforma(
-            message,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-            build_date_branch_parameters=build_date_branch_parameters,
-            previous_messages=previous_messages,
         )
 
     def select_system_metadata(
@@ -342,16 +306,7 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader:
             return None
 
-        selected = self._operational_route.select_system_metadata(
-            message,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
-
-        if selected:
-            return selected
-
-        return self._domain_route.select_system_metadata(
+        return self._operational_route.select_system_metadata(
             message,
             allowed_action_ids,
             candidates_loader=candidates_loader,
@@ -387,19 +342,7 @@ class ExternalActionRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        selected = self._operational_route.select_production_operational(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            candidates_loader=candidates_loader,
-            build_date_branch_parameters=build_date_branch_parameters,
-            path_lookup_loader=path_lookup_loader,
-        )
-
-        if selected:
-            return selected
-
-        return self._production_operational_route.try_select(
+        return self._operational_route.select_production_operational(
             message,
             allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,

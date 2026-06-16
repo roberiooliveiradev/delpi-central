@@ -252,20 +252,6 @@ class ExternalActionProductRouteRankingService:
             or wants_full_analyser
             or wants_price_analysis
         )
-        suppress_api_externa_provider_bias = (
-            wants_factory_status
-            or wants_production_status
-            or wants_shipping_status
-            or wants_structure_exclusivity
-            or wants_raw_material_price_intelligence
-            or wants_cost_impact_simulation
-            or wants_last_purchase
-            or wants_purchase_price_history
-            or wants_purchase_budget_history
-            or wants_directives
-            or wants_sale_pricing
-            or wants_price_analysis
-        )
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -481,11 +467,6 @@ class ExternalActionProductRouteRankingService:
             if "structure" in haystack or "estrutura" in haystack:
                 value += 5
 
-            value += ExternalActionProductRouteRankingService.provider_preference_bonus(
-                action,
-                suppress_playbook_bias=suppress_api_externa_provider_bias,
-            )
-
             return value
 
         order = {
@@ -509,43 +490,4 @@ class ExternalActionProductRouteRankingService:
             return False
 
         return lowered.endswith("/sales") and "/products/" in lowered
-
-
-    @classmethod
-    def provider_preference_bonus(
-        cls,
-        action: dict,
-        *,
-        suppress_playbook_bias: bool = False,
-    ) -> int:
-        if suppress_playbook_bias:
-            return 0
-
-        try:
-            from app.application.services.chat_intelligence_runtime_access import (
-                resolve_chat_intelligence_runtime,
-            )
-
-            prefer_api_externa = (
-                resolve_chat_intelligence_runtime().prefer_api_externa_provider
-            )
-        except RuntimeError:
-            from app.infrastructure.config.settings import Settings
-
-            prefer_api_externa = bool(
-                getattr(Settings, "CHAT_PREFER_API_EXTERNA_PROVIDER", False)
-            )
-
-        if suppress_playbook_bias or not prefer_api_externa:
-            return 0
-
-        action_id = str(action.get("actionId") or "").lower()
-
-        if action_id.startswith("api_externa."):
-            return 95
-
-        if action_id.startswith("api_delpi."):
-            return -120
-
-        return 0
 

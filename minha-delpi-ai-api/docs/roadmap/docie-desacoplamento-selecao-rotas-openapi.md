@@ -438,13 +438,15 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Extrair `ExternalActionProductRouteCatalogService` + `ExternalActionProductRouteRankingService`
 - [x] Deletar `select_product_directives`, `select_exclusive_raw_material_catalog` (registry + vocabulary)
 - [x] Deletar `vocabularyFastPaths` (conteúdo migrado — array vazio)
-- [ ] Remover `_provider_preference_bonus` api_delpi/api_externa (Fase 5)
+- [x] Remover `_provider_preference_bonus` api_delpi/api_externa (Fase 5)
 - [ ] Remover duplicação `productRouteRanking.*` vs `product_query_intent.json`
 
 ### Fase 5 — Generalização multi-provider (1 PR)
 
-- [ ] Testes com FakeRepository simulando **dois providers** (mesmo path, actionIds diferentes)
-- [ ] Seleção por score semântico + ordem `allowed_action_ids`, sem prefixo hardcoded
+- [x] Desempate por ordem em `allowed_action_ids` (sem bias `api_delpi`/`api_externa`)
+- [x] Remover `_provider_preference_bonus` do ranking legado
+- [x] Remover fallbacks `ExternalActionDomainRouteSelectionService` / `ExternalActionProductionOperationalRouteSelectionService` em `ExternalActionRouteSelectionService`
+- [ ] Testes com FakeRepository simulando **dois providers** (casos adicionais além de tie-break)
 - [ ] Documentar «Como registrar nova API OpenAPI» em `docs/api/04-actions-openapi.md`
 
 ---

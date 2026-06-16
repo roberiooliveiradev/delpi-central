@@ -19,7 +19,7 @@ def setup_module() -> None:
     configure_domain_infrastructure_ports()
 
 
-def test_rank_product_actions_prefers_api_externa_when_configured():
+def test_rank_product_actions_tie_breaks_by_allowed_action_ids_order():
     ranking = ExternalActionProductRouteRankingService()
     candidates = [
         {
@@ -36,18 +36,15 @@ def test_rank_product_actions_prefers_api_externa_when_configured():
         },
     ]
 
-    from unittest.mock import patch
-
-    with patch(
-        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
-    ) as resolve_runtime:
-        resolve_runtime.return_value.prefer_api_externa_provider = True
-
-        ranked = ranking.rank_product_actions(
-            candidates,
-            intent=ChatProductQueryIntent.ANALYSER,
-            message="analise completa do produto 90260140",
-        )
+    ranked = ranking.rank_product_actions(
+        candidates,
+        intent=ChatProductQueryIntent.ANALYSER,
+        message="analise completa do produto 90260140",
+        allowed_action_ids=[
+            "api_externa.products.get_product_analyser",
+            "api_delpi.products.get_product_analyser",
+        ],
+    )
 
     assert ranked[0]["actionId"] == "api_externa.products.get_product_analyser"
 

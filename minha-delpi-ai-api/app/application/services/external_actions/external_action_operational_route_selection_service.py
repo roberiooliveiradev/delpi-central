@@ -338,6 +338,11 @@ class ExternalActionOperationalRouteSelectionService:
                     candidates_loader=candidates_loader,
                 )
 
+        candidates = self._catalog.stable_sort_by_allowed_action_ids(
+            candidates or [],
+            allowed_action_ids,
+        )
+
         expected_method = str(route_spec.get("method") or "GET").upper()
 
         for action in candidates:

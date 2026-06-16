@@ -1387,13 +1387,11 @@ def test_sales_intent_does_not_fall_back_to_product_search(monkeypatch):
     assert selected is None
 
 
-def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
+def test_select_suppliers_respects_allowed_action_ids_order(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,
     )
 
-    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
-    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
     monkeypatch.setattr(
         ChatWebSearchIntentService,
         "blocks_external_action_selection",
@@ -1428,8 +1426,8 @@ def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
     selected = service.select_action(
         "liste os fornecedores do produto 10080001",
         allowed_action_ids=[
-            "api_delpi.products.suppliers_products_code_suppliers_get",
             "api_externa.products.suppliers_products_code_suppliers_get",
+            "api_delpi.products.suppliers_products_code_suppliers_get",
         ],
     )
 
@@ -1484,13 +1482,11 @@ def test_select_system_table_search_with_article_qual_a_tabela(monkeypatch):
     assert selected["arguments"]["parameters"]["description"] == "produtos"
 
 
-def test_select_drawing_analysis_prefers_api_externa_analyser(monkeypatch):
+def test_select_drawing_analysis_respects_allowed_action_ids_order(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,
     )
 
-    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
-    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
     monkeypatch.setattr(
         ChatWebSearchIntentService,
         "blocks_external_action_selection",
@@ -1527,8 +1523,8 @@ def test_select_drawing_analysis_prefers_api_externa_analyser(monkeypatch):
     selected = service.select_action(
         "analise o desenho técnico 90260140",
         allowed_action_ids=[
-            "api_delpi.products.get_product_analyser",
             "api_externa.products.get_product_analyser",
+            "api_delpi.products.get_product_analyser",
         ],
     )
 
