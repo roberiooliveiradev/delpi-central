@@ -434,10 +434,11 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ### Fase 4 — Remoção de legado (1 PR)
 
-- [ ] Deletar `ExternalActionProductRouteSelectionService` (ou reduzir a wrapper fino)
-- [ ] Deletar `_MATCHERS`, `select_product_directives`, `select_exclusive_raw_material_catalog`
+- [x] Reduzir `ExternalActionProductRouteSelectionService` a wrapper fino (~213 linhas)
+- [x] Extrair `ExternalActionProductRouteCatalogService` + `ExternalActionProductRouteRankingService`
+- [x] Deletar `select_product_directives`, `select_exclusive_raw_material_catalog` (registry + vocabulary)
 - [x] Deletar `vocabularyFastPaths` (conteúdo migrado — array vazio)
-- [ ] Remover `_provider_preference_bonus` api_delpi/api_externa
+- [ ] Remover `_provider_preference_bonus` api_delpi/api_externa (Fase 5)
 - [ ] Remover duplicação `productRouteRanking.*` vs `product_query_intent.json`
 
 ### Fase 5 — Generalização multi-provider (1 PR)

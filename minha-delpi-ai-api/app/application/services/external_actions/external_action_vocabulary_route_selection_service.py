@@ -10,10 +10,8 @@ from app.application.services.external_actions.external_action_operational_route
 
 
 class ExternalActionVocabularyRouteSelectionService:
-    def __init__(self, product_route) -> None:
-        self._operational_route = ExternalActionOperationalRouteSelectionService(
-            product_route
-        )
+    def __init__(self, operational_route: ExternalActionOperationalRouteSelectionService) -> None:
+        self._operational_route = operational_route
 
     def select(
         self,

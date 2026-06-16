@@ -26,6 +26,9 @@ from app.application.services.external_actions.external_action_sql_route_selecti
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_product_route_catalog_service import (
+    ExternalActionProductRouteCatalogService,
+)
 from app.application.services.external_actions.external_action_kpi_route_selection_service import (
     ExternalActionKpiRouteSelectionService,
 )
@@ -75,8 +78,10 @@ class ExternalActionRouteSelectionService:
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
+        self._product_catalog = ExternalActionProductRouteCatalogService(repository)
         self._product_route = product_route or ExternalActionProductRouteSelectionService(
-            repository
+            repository,
+            catalog=self._product_catalog,
         )
         self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
@@ -95,11 +100,11 @@ class ExternalActionRouteSelectionService:
             production_operational_route
             or ExternalActionProductionOperationalRouteSelectionService()
         )
-        self._vocabulary_route = ExternalActionVocabularyRouteSelectionService(
-            self._product_route
-        )
         self._operational_route = ExternalActionOperationalRouteSelectionService(
-            self._product_route
+            self._product_catalog
+        )
+        self._vocabulary_route = ExternalActionVocabularyRouteSelectionService(
+            self._operational_route
         )
 
     def select(
@@ -178,6 +183,21 @@ class ExternalActionRouteSelectionService:
             route_segment=route_segment,
             preferred_action_id=preferred_action_id,
             candidates_loader=candidates_loader,
+            previous_messages=previous_messages,
+        )
+
+    def build_product_parameters(
+        self,
+        action: dict,
+        code: str,
+        *,
+        message: str | None = None,
+        previous_messages: list | None = None,
+    ) -> dict:
+        return self._product_catalog.build_product_parameters(
+            action,
+            code,
+            message=message,
             previous_messages=previous_messages,
         )
 
@@ -422,36 +442,6 @@ class ExternalActionRouteSelectionService:
             candidates_loader=candidates_loader,
         )
 
-    def select_exclusive_raw_material_catalog(
-        self,
-        message: str,
-        normalized: str,
-        allowed_action_ids: list[str],
-        *,
-        candidates_loader: Callable[..., list[dict]] | None = None,
-    ) -> dict | None:
-        return self._product_route.select_exclusive_raw_material_catalog(
-            message,
-            normalized,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
-
-    def select_product_directives(
-        self,
-        message: str,
-        normalized: str,
-        allowed_action_ids: list[str],
-        *,
-        candidates_loader: Callable[..., list[dict]] | None = None,
-    ) -> dict | None:
-        return self._product_route.select_product_directives(
-            message,
-            normalized,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
-
     def select_pagination_refinement(
         self,
         refinement,
@@ -518,7 +508,7 @@ class ExternalActionRouteSelectionService:
 
     @classmethod
     def clamp_max_depth_for_path(cls, value: int, path: str) -> int:
-        return ExternalActionProductRouteSelectionService._clamp_max_depth_for_path(
+        return ExternalActionProductRouteCatalogService.clamp_max_depth_for_path(
             value,
             path,
         )

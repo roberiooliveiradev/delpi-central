@@ -1,6 +1,3 @@
-from app.application.services.external_actions.external_action_product_route_selection_service import (
-    ExternalActionProductRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
 )
@@ -61,7 +58,7 @@ def test_select_product_prefers_stock_route_for_stock_intent():
     assert selected["arguments"]["actionId"] == "stock-action"
 
 
-def test_select_product_directives_prefers_directives_route():
+def test_select_vocabulary_fast_path_directives_via_route_selection():
     repository = _FakeRepository(
         [
             {
@@ -82,9 +79,9 @@ def test_select_product_directives_prefers_directives_route():
             },
         ]
     )
-    service = ExternalActionProductRouteSelectionService(repository)
+    route_selection = ExternalActionRouteSelectionService(repository)
 
-    selected = service.select_product_directives(
+    selected = route_selection.select_vocabulary_fast_path(
         "Diretivas 90260882",
         "diretivas 90260882",
         allowed_action_ids=["directives-action", "analyser-action"],

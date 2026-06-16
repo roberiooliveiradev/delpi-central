@@ -1,5 +1,11 @@
+from app.application.services.external_actions.external_action_product_route_catalog_service import (
+    ExternalActionProductRouteCatalogService,
+)
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
+)
+from app.application.services.external_actions.external_action_operational_route_selection_service import (
+    ExternalActionOperationalRouteSelectionService,
 )
 from app.application.services.external_actions.external_action_vocabulary_route_selection_service import (
     ExternalActionVocabularyRouteSelectionService,
@@ -52,9 +58,9 @@ def test_select_product_full_without_scope_defers_to_semantic_ranking():
             },
         ]
     )
-    service = ExternalActionProductRouteSelectionService(repository)
+    product_route = ExternalActionProductRouteSelectionService(repository)
 
-    selected = service.select(
+    selected = product_route.select(
         "10080055",
         "10080055",
         allowed_action_ids=["stock-action", "analyser-action"],
@@ -62,6 +68,12 @@ def test_select_product_full_without_scope_defers_to_semantic_ranking():
     )
 
     assert selected is None
+
+
+def _vocabulary_service(repository) -> ExternalActionVocabularyRouteSelectionService:
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    operational = ExternalActionOperationalRouteSelectionService(catalog)
+    return ExternalActionVocabularyRouteSelectionService(operational)
 
 
 def test_select_vocabulary_fast_path_directives():
@@ -85,8 +97,7 @@ def test_select_vocabulary_fast_path_directives():
             },
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionVocabularyRouteSelectionService(product_route)
+    service = _vocabulary_service(repository)
 
     selected = service.select(
         "Diretivas 90260882",
@@ -126,8 +137,7 @@ def test_select_vocabulary_fast_path_directives_uses_catalog_when_candidates_mis
         "parametersSchema": [{"name": "code", "in": "path", "required": True}],
     }
     repository = _FakeRepository([*filler, directives, detail])
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionVocabularyRouteSelectionService(product_route)
+    service = _vocabulary_service(repository)
 
     selected = service.select(
         "Diretivas 90260882",

@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 from app.application.services.external_actions.external_action_operational_route_selection_service import (
     ExternalActionOperationalRouteSelectionService,
 )
-from app.application.services.external_actions.external_action_product_route_selection_service import (
-    ExternalActionProductRouteSelectionService,
+from app.application.services.external_actions.external_action_product_route_catalog_service import (
+    ExternalActionProductRouteCatalogService,
 )
 from app.composition.content_composer import configure_domain_infrastructure_ports
 
@@ -46,9 +46,9 @@ def test_operational_route_selection_picks_exclusive_catalog_without_product_cod
             }
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    product_route._build_exclusive_catalog_parameters = MagicMock(return_value={"limit": 50})
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    catalog.build_exclusive_catalog_parameters = MagicMock(return_value={"limit": 50})
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select(
         "Quais produtos tem mp exclusiva?",
@@ -79,8 +79,8 @@ def test_operational_route_selection_picks_factory_status() -> None:
             },
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select(
         "Qual o status completo na fábrica do produto 90269002 hoje?",
@@ -111,8 +111,8 @@ def test_operational_route_selection_by_intent_stock() -> None:
             },
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select_by_intent(
         "estoque do produto 10080047",
@@ -142,8 +142,8 @@ def test_operational_route_selection_production_losses_top() -> None:
             }
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select_production_operational(
         "Refugos de matéria-prima março filial 02 top 10",
@@ -171,8 +171,8 @@ def test_operational_route_selection_sale_orders() -> None:
             }
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select_sale_orders(
         "Listar ordens de venda de março",
@@ -199,8 +199,8 @@ def test_operational_route_selection_system_tables_search() -> None:
             }
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
-    service = ExternalActionOperationalRouteSelectionService(product_route)
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select_system_metadata(
         "qual a tabela de produtos?",

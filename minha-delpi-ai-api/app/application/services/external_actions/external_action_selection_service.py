@@ -138,7 +138,7 @@ class ExternalActionSelectionService:
         message: str | None = None,
         previous_messages: list | None = None,
     ) -> dict:
-        return self._route_selection._product_route._build_product_parameters(
+        return self._route_selection.build_product_parameters(
             action,
             code,
             message=message,

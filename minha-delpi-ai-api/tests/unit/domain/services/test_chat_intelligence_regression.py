@@ -1,5 +1,7 @@
 import pytest
-
+import re
+from datetime import date
+from unittest.mock import patch
 from app.application.services.chat_intelligence_pipeline_service import (
     ChatIntelligencePipelineService,
 )
@@ -214,15 +216,46 @@ def test_action_selection_regression(case):
             assert params.get(key) == value
 
 
+_DATE_RANGE_REFERENCE = date(2026, 6, 9)
+
+
+def _message_uses_relative_date(message: str) -> bool:
+    normalized = message.lower()
+    if re.search(r"\d{2}/\d{2}/\d{4}", normalized):
+        return False
+
+    return any(
+        term in normalized
+        for term in (
+            "hoje",
+            "essa semana",
+            "nessa semana",
+            "semana passada",
+            "esse mes",
+            "esse mês",
+        )
+    )
+
+
 @pytest.mark.parametrize("case", DATE_RANGE_SELECTION_CASES)
 def test_date_range_selection_regression(case):
     service = ExternalActionSelectionService(FakeRepository(case["actions"]))
     allowed = [action["actionId"] for action in case["actions"]]
 
-    selected = service.select_action(
-        case["message"],
-        allowed_action_ids=allowed,
-    )
+    if _message_uses_relative_date(case["message"]):
+        with patch("app.domain.services.chat_date_range_intent_service.date") as mock_date:
+            mock_date.today.return_value = _DATE_RANGE_REFERENCE
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+
+            selected = service.select_action(
+                case["message"],
+                allowed_action_ids=allowed,
+            )
+    else:
+        selected = service.select_action(
+            case["message"],
+            allowed_action_ids=allowed,
+        )
 
     assert selected is not None
 

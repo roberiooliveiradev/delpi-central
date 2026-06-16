@@ -26,8 +26,8 @@ from app.domain.services.operational_route_registry_service import (
 
 
 class ExternalActionOperationalRouteSelectionService:
-    def __init__(self, product_route) -> None:
-        self._product_route = product_route
+    def __init__(self, catalog) -> None:
+        self._catalog = catalog
 
     def select(
         self,
@@ -117,7 +117,7 @@ class ExternalActionOperationalRouteSelectionService:
             return None
 
         candidate_sets: list[list[dict]] = [
-            self._product_route._load_candidates(
+            self._catalog.load_candidates(
                 message,
                 allowed_action_ids=allowed_action_ids,
                 candidates_loader=candidates_loader,
@@ -325,14 +325,14 @@ class ExternalActionOperationalRouteSelectionService:
             return None
 
         if candidates is None:
-            candidates = self._product_route._find_allowed_actions_by_markers(
+            candidates = self._catalog.find_allowed_actions_by_markers(
                 path_markers=path_markers or ([path_exact_end] if path_exact_end else []),
                 operation_markers=operation_markers,
                 allowed_action_ids=allowed_action_ids,
             )
 
             if not candidates:
-                candidates = self._product_route._load_candidates(
+                candidates = self._catalog.load_candidates(
                     message,
                     allowed_action_ids=allowed_action_ids,
                     candidates_loader=candidates_loader,
@@ -447,7 +447,7 @@ class ExternalActionOperationalRouteSelectionService:
             if not identifier:
                 return None
 
-            return self._product_route._build_product_parameters(
+            return self._catalog.build_product_parameters(
                 action,
                 identifier,
                 message=message,
@@ -456,7 +456,7 @@ class ExternalActionOperationalRouteSelectionService:
         if strategy == "exclusive_catalog":
             normalized = message.lower()
 
-            return self._product_route._build_exclusive_catalog_parameters(
+            return self._catalog.build_exclusive_catalog_parameters(
                 action,
                 message=message,
                 normalized=normalized,
