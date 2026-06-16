@@ -605,6 +605,20 @@
       "nota de saida",
       "notas de saída",
       "notas de saida"
+    ],
+    "inboundTerms": ["entrada", "inbound", "recebimento"],
+    "outboundTerms": ["saída", "saida", "outbound", "expedição", "expedicao"]
+  },
+  "customers": {
+    "terms": ["cliente", "customer"]
+  },
+  "internalMovements": {
+    "terms": [
+      "movimentaç",
+      "movimentac",
+      "internal-movement",
+      "movimentação interna",
+      "movimentacao interna"
     ]
   },
   "analyser": {

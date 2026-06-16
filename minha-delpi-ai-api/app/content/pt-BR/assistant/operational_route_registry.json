@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.5",
+  "version": "2026.06.6",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -312,6 +312,46 @@
       }
     },
     {
+      "id": "productCustomers",
+      "domain": "product",
+      "priority": 115,
+      "match": {
+        "customPredicate": "customersRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/customers"],
+        "operationIdMarkers": ["get_product_customers", "customers"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productInternalMovements",
+      "domain": "product",
+      "priority": 114,
+      "match": {
+        "customPredicate": "internalMovementsRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/internal-movements"],
+        "operationIdMarkers": ["get_product_internal_movements", "internal_movements"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
       "id": "productLastPurchase",
       "domain": "product",
       "priority": 110,
@@ -438,8 +478,13 @@
     {
       "id": "productInvoicesInbound",
       "domain": "product",
+      "priority": 113,
       "intentBinding": "full",
       "routeSegment": "inbound-invoice",
+      "match": {
+        "customPredicate": "inboundInvoiceRoute",
+        "requiresProductIdentifier": true
+      },
       "route": {
         "pathMarkers": ["/inbound-invoice"],
         "operationIdMarkers": ["get_product_inbound_invoice_items"],
@@ -455,8 +500,13 @@
     {
       "id": "productInvoicesOutbound",
       "domain": "product",
+      "priority": 112,
       "intentBinding": "full",
       "routeSegment": "outbound-invoice",
+      "match": {
+        "customPredicate": "outboundInvoiceRoute",
+        "requiresProductIdentifier": true
+      },
       "route": {
         "pathMarkers": ["/outbound-invoice"],
         "operationIdMarkers": ["get_product_outbound_invoice_items"],

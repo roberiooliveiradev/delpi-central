@@ -85,7 +85,14 @@ class OperationalRouteRegistryService:
         return [
             route
             for route in cls.routes()
-            if isinstance(route, dict) and not route.get("intentBinding")
+            if isinstance(route, dict)
+            and (
+                not route.get("intentBinding")
+                or (
+                    isinstance(route.get("match"), dict)
+                    and str(route["match"].get("customPredicate") or "").strip()
+                )
+            )
         ]
 
     @classmethod

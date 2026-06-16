@@ -109,6 +109,18 @@ class OperationalRouteMatcherService:
         "inspectionRoute": lambda normalized: ChatProductQueryIntentService._looks_like_inspection_route_question(
             normalized
         ),
+        "inboundInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_inbound_invoice_route_question(
+            normalized
+        ),
+        "outboundInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_outbound_invoice_route_question(
+            normalized
+        ),
+        "customersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_customers_route_question(
+            normalized
+        ),
+        "internalMovementsRoute": lambda normalized: ChatProductQueryIntentService._looks_like_internal_movements_route_question(
+            normalized
+        ),
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

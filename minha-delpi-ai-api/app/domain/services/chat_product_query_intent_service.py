@@ -1460,6 +1460,34 @@ class ChatProductQueryIntentService:
         return not cls._looks_like_shipping_status_question(normalized)
 
     @classmethod
+    def _looks_like_inbound_invoice_route_question(cls, normalized: str) -> bool:
+        if not cls._looks_like_invoices_route_question(normalized):
+            return False
+
+        return any(
+            term in normalized for term in cls._terms("invoices", "inboundTerms")
+        )
+
+    @classmethod
+    def _looks_like_outbound_invoice_route_question(cls, normalized: str) -> bool:
+        if not cls._looks_like_invoices_route_question(normalized):
+            return False
+
+        return any(
+            term in normalized for term in cls._terms("invoices", "outboundTerms")
+        )
+
+    @classmethod
+    def _looks_like_customers_route_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._terms("customers", "terms"))
+
+    @classmethod
+    def _looks_like_internal_movements_route_question(cls, normalized: str) -> bool:
+        return any(
+            term in normalized for term in cls._terms("internalMovements", "terms")
+        )
+
+    @classmethod
     def refine_operational_intent_from_full(
         cls,
         message: str,

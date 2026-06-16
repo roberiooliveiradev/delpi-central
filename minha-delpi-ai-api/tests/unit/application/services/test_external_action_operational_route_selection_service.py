@@ -252,6 +252,70 @@ def test_operational_route_selection_picks_product_inspection() -> None:
     assert selected["arguments"]["actionId"] == "inspection"
 
 
+def test_operational_route_selection_picks_product_customers() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "customers",
+                "method": "GET",
+                "path": "/products/{code}/customers",
+                "operationId": "get_product_customers",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "stock-action",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "clientes do produto 90260142",
+        "clientes do produto 90260142",
+        allowed_action_ids=["customers", "stock-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "customers"
+
+
+def test_operational_route_selection_picks_inbound_invoice() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "inbound-invoice",
+                "method": "GET",
+                "path": "/products/{code}/inbound-invoice",
+                "operationId": "get_product_inbound_invoice_items",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "outbound-invoice",
+                "method": "GET",
+                "path": "/products/{code}/outbound-invoice",
+                "operationId": "get_product_outbound_invoice_items",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "notas de entrada do produto 90260142",
+        "notas de entrada do produto 90260142",
+        allowed_action_ids=["inbound-invoice", "outbound-invoice"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "inbound-invoice"
+
+
 def test_operational_route_selection_system_tables_search() -> None:
     repository = _FakeRepository(
         [

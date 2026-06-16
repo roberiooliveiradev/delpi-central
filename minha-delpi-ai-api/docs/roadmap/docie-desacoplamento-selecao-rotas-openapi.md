@@ -148,9 +148,9 @@ Legenda de **severidade**:
 | `/parents` | +200 | parents intent | `productParents` (intentBinding) |
 | `/guide` | +110 | `router.guideTerms` | ✅ `productGuide` |
 | `/suppliers` | +110 | `suppliers.terms` | ✅ `productSuppliers` |
-| `/customers` | +110 | customer terms | `productCustomers` |
-| `/internal-movements` | +110 | movements terms | `productInternalMovements` |
-| `/inbound-invoice` / `/outbound-invoice` | +120–130 | invoices terms | `productInvoices` |
+| `/customers` | +110 | `customers.terms` | ✅ `productCustomers` |
+| `/internal-movements` | +110 | `internalMovements.terms` | ✅ `productInternalMovements` |
+| `/inbound-invoice` / `/outbound-invoice` | +120–130 | `invoices.*` + predicados entrada/saída | ✅ `productInvoicesInbound` / `productInvoicesOutbound` |
 | `/inspection` | +120 | `inspection.terms` | ✅ `productInspection` |
 | `/summary` | +260 | summary terms | `productSummary` (intentBinding) |
 | `/analyser` | +280 (intent ANALYSER) | full analyser terms | `productAnalyser` (explícito only) |
@@ -456,7 +456,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Consolidar vocabulário em `product_query_intent.json` (remover `productRouteRanking.*`)
 - [x] Predicados de rota em `ChatProductQueryIntentService` (guide, purchases, billing, pricing, invoices, suppliers, inspection)
 - [x] Registry v2026.06.5 — `productGuide`, `productSuppliers`, `productPurchases`, `productSalePricing`, `productBilling`, `productGenericPricing`, `productInspection`
-- [ ] Migrar `customers`, `internal-movements` e rotas de invoice inbound/outbound
+- [x] Registry v2026.06.6 — `productCustomers`, `productInternalMovements`, NF entrada/saída com `customPredicate` + continuação por `routeSegment`
 - [ ] Enxugar `ExternalActionProductRouteRankingService` conforme registry cobrir casos FULL restantes
 
 ---

@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.4"
+    assert OperationalRouteRegistryService.version() == "2026.06.6"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -106,3 +106,14 @@ def test_operational_route_matcher_factory_status_predicate() -> None:
         message="Qual o status completo na fábrica do produto 90269002 hoje?",
         normalized=normalized,
     )
+
+
+def test_vocabulary_routes_include_custom_predicate_intent_bound_entries() -> None:
+    vocabulary_ids = {
+        str(route.get("id") or "")
+        for route in OperationalRouteRegistryService.vocabulary_routes()
+    }
+
+    assert "productInvoicesInbound" in vocabulary_ids
+    assert "productInvoicesOutbound" in vocabulary_ids
+    assert "productCustomers" in vocabulary_ids
