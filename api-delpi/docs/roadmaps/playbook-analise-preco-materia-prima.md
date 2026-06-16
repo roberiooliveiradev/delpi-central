@@ -98,6 +98,7 @@ CASE WHEN D1_QUANT <> 0 THEN D1_TOTAL / D1_QUANT ELSE 0 END
 ```sql
 AND SD1.D1_FORNECE NOT IN ('000019', '001149')   -- fornecedores internos DELPI
 AND UPPER(SA2.A2_NOME) NOT LIKE '%TRANSP%'       -- excluir transportadoras
+AND SD1.D1_QUANT > 0                             -- excluir NF de frete (qty zero na MP)
 ```
 
 ---

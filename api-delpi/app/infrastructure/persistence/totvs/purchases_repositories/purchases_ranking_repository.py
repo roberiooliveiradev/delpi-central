@@ -45,7 +45,7 @@ class PurchasesRankingRepository(
         WHERE SD1.D_E_L_E_T_ = ''
           AND SD1.D1_EMISSAO >= ?
           AND SD1.D1_EMISSAO < ?
-          {PurchaseValidityFilterService.supplier_filter_sql()}
+          {PurchaseValidityFilterService.valid_purchase_filter_sql()}
           {branch_filter}
         GROUP BY
             SD1.D1_FILIAL,

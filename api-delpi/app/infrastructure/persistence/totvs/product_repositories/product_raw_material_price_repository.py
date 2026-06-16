@@ -80,8 +80,7 @@ class ProductRawMaterialPriceRepository(
                AND A5.D_E_L_E_T_ = ''
             WHERE SD1.D_E_L_E_T_ = ''
               AND SD1.D1_COD = ?
-              AND SD1.D1_FORNECE NOT IN (?, ?)
-              AND UPPER(SA2.A2_NOME) NOT LIKE '%TRANSP%'
+              {PurchaseValidityFilterService.valid_purchase_filter_sql()}
               {branch_filter}
         )
         SELECT
@@ -165,7 +164,7 @@ class ProductRawMaterialPriceRepository(
                AND A5.D_E_L_E_T_ = ''
             WHERE SD1.D_E_L_E_T_ = ''
               AND SD1.D1_COD IN ({placeholders})
-              {PurchaseValidityFilterService.supplier_filter_sql()}
+              {PurchaseValidityFilterService.valid_purchase_filter_sql()}
               {branch_filter}
         )
         SELECT
@@ -237,8 +236,7 @@ class ProductRawMaterialPriceRepository(
           AND SD1.D1_COD = ?
           AND SD1.D1_EMISSAO >= ?
           AND SD1.D1_EMISSAO < ?
-          AND SD1.D1_FORNECE NOT IN (?, ?)
-          AND UPPER(SA2.A2_NOME) NOT LIKE '%TRANSP%'
+          {PurchaseValidityFilterService.valid_purchase_filter_sql()}
           {branch_filter}
         ORDER BY
             SD1.D1_EMISSAO DESC,
