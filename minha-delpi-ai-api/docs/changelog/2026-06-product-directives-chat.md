@@ -183,7 +183,19 @@ print('tablePresentations:', len(meta.get('tablePresentations') or []))
 
 ---
 
-## 8. Arquivos tocados (resumo)
+## 8. Correção api-delpi — NF de frete na última compra (jun/2026)
+
+**Problema:** em alguns MPs, `last_purchase` nas diretivas (e em `GET /products/{code}/last-purchase`) apontava para transportadora ou empresa de logística — nota de **frete** alocada no código da MP (`SD1010.D1_QUANT = 0`), não compra de material.
+
+**Correção (api-delpi):** `PurchaseValidityFilterService` + `D1_QUANT > 0` em `ProductRawMaterialPriceRepository`. O chat **não** precisa de patch local: consome a rota `get_product_directives` / `get_product_last_purchase`.
+
+Documentação: `api-delpi/docs/api/compras-validas-frete-mp-changelog-jun2026.md`.
+
+**Exemplo homologado:** MP `10090481` — antes RODOLOG LOGISTICA (qty 0); depois DELPI COMPONENTES LTDA (qty 150).
+
+---
+
+## 9. Arquivos tocados (resumo)
 
 ```
 api-delpi/

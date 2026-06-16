@@ -1,5 +1,15 @@
 # CHANGELOG — api-delpi
 
+## 2026-06 — Compras válidas de MP (NF de frete)
+
+Última compra, diretivas e ranking de compras passam a excluir linhas de `SD1010` com `D1_QUANT = 0` (notas de frete alocadas no código da MP), além do filtro existente de transportadoras por nome.
+
+Detalhes: [compras-validas-frete-mp-changelog-jun2026.md](./api/compras-validas-frete-mp-changelog-jun2026.md).
+
+**Módulo canônico:** `PurchaseValidityFilterService.valid_purchase_filter_sql()`.
+
+---
+
 ## 2026-06 — Contrato de respostas (Fase 5)
 
 Normalização de campos Protheus na origem. Use `?legacy=true` para manter o formato antigo durante a transição.

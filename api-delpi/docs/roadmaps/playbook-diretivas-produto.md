@@ -39,7 +39,7 @@ Implementação: `ProductIdentifierResolutionService` + `ProductRepository.fetch
 | Fornecedores + part number | `ProductSuppliersRepository.list_suppliers_for_codes` | `SA5010`, `SA2010`, `SC7010` |
 | Última compra válida | `ProductRawMaterialPriceRepository.fetch_last_purchases_for_codes` | `SD1010`, `SA2010`, `SA5010` |
 
-Filtros de compra válida: `PurchaseValidityFilterService` (exclui transportadoras por nome `%TRANSP%`, fornecedores internos `000019`, `001149`, e **notas de frete** com `D1_QUANT = 0` alocadas no código da MP).
+Filtros de compra válida: `PurchaseValidityFilterService` (exclui transportadoras por nome `%TRANSP%`, fornecedores internos `000019`, `001149`, e **notas de frete** com `D1_QUANT = 0` alocadas no código da MP). Detalhes: [compras-validas-frete-mp-changelog-jun2026.md](../api/compras-validas-frete-mp-changelog-jun2026.md).
 
 ---
 

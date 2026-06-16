@@ -201,7 +201,8 @@ PRODUCT_LAST_PURCHASE = agent_route(
     summary="Última compra válida da matéria-prima",
     description=(
         "Retorna a última NF de entrada válida (SD1010) com fornecedor, preço unitário, ICMS e pedido vinculado. "
-        "Exclui transportadoras e fornecedores internos. Use para último fornecedor ou última aquisição de MP."
+        "Exclui transportadoras, fornecedores internos e NF de frete (D1_QUANT zero na MP). "
+        "Use para último fornecedor ou última aquisição de MP."
     ),
     operation_id="get_product_last_purchase",
 )
@@ -584,7 +585,7 @@ PURCHASES_TOP_PRODUCTS = agent_route(
     summary="Produtos mais comprados no período",
     description=(
         "Ranking agregado de produtos mais comprados (SD1010) por quantidade e valor, "
-        "excluindo transportadoras e fornecedores internos. "
+        "excluindo transportadoras, fornecedores internos e NF de frete (quantidade zero). "
         "Use para «produtos mais comprados» ou ranking de compras — não para última compra de um item."
     ),
     operation_id="get_purchases_top_products",

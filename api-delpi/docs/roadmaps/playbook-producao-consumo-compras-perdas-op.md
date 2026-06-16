@@ -205,7 +205,7 @@ Implementados em `app/domain/services/production/` (api-delpi):
 |---------|--------|
 | `ProtheusDateRangeService` | Converte `date_start`/`date_end`/`reference_date` → `AAAAMMDD`, intervalo fechado-aberto |
 | `ConsumptionRealQuantityService` | Fórmula `D4_QTDEORI - D4_QUANT` |
-| `PurchaseValidityFilterService` | Exclui transportadoras e fornecedores internos |
+| `PurchaseValidityFilterService` | Exclui transportadoras (`%TRANSP%`), fornecedores internos e NF de frete (`D1_QUANT = 0` na MP) — ver [compras-validas-frete-mp-changelog-jun2026.md](../api/compras-validas-frete-mp-changelog-jun2026.md) |
 | `ProductionLossTypeFilterService` | Mapeia `loss_type` → `BC_TIPO` |
 
 Evita duplicar SQL entre repositórios.
