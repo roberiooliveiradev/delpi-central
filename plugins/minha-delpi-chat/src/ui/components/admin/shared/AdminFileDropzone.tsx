@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { WorkspaceFileIngestPolicyFamily } from "../../../../data/api/chatTypes";
 import { WorkspaceFileDropzone } from "../../workspace-files/WorkspaceFileDropzone";
 
-import "./AdminFileDropzone.css";
+import "../../workspace-files/workspaceFileIngest.css";
 
 type TokenProvider = () => string | undefined | Promise<string | undefined>;
 

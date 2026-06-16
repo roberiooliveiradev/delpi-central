@@ -9,7 +9,7 @@ import {
 import "./ChatPage.css";
 import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
-import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
+import { ChatInput, type ChatInputAttachment } from "../components/composer/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatAddContextDialog } from "../components/ChatAddContextDialog";
 import { ChatContextBar, type ChatContextChip } from "../components/ChatContextBar";

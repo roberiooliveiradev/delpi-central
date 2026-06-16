@@ -205,8 +205,8 @@
 }
 
 .mdc-chat-help-panel__badge--warn {
-  background: color-mix(in srgb, #c97800 16%, transparent);
-  color: #b86b00;
+  background: color-mix(in srgb, var(--mdc-warning) 16%, transparent);
+  color: color-mix(in srgb, var(--mdc-warning) 88%, var(--mdc-text));
 }
 
 .mdc-chat-help-panel__examples {

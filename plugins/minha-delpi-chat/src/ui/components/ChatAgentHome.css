@@ -197,15 +197,15 @@
 }
 
 .mdc-chat-agent-home__icebreaker--product {
-  --icebreaker-accent: #3b82f6;
+  --icebreaker-accent: var(--mdc-chart-series-7);
 }
 
 .mdc-chat-agent-home__icebreaker--stock {
-  --icebreaker-accent: #f59e0b;
+  --icebreaker-accent: var(--mdc-chart-series-4);
 }
 
 .mdc-chat-agent-home__icebreaker--web {
-  --icebreaker-accent: #06b6d4;
+  --icebreaker-accent: var(--mdc-chart-series-2);
 }
 
 .mdc-chat-agent-home__icebreaker--capabilities {
@@ -213,7 +213,7 @@
 }
 
 .mdc-chat-agent-home__icebreaker--text {
-  --icebreaker-accent: #a855f7;
+  --icebreaker-accent: var(--mdc-chart-series-6);
 }
 
 .mdc-chat-agent-home__icebreaker--generic {

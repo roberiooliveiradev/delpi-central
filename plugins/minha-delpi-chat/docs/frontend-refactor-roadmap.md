@@ -113,7 +113,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 |---|---|--------|-------------------|-------|---------|-------------------|
 | C1 | 1 | **Deduplicar dark mode** em `index.css` | Blocos `:root[data-theme="dark"]` vs `@media (prefers-color-scheme: dark)` | Baixo | M | ✅ PR-5 jun/2026 — `ui/styles/_theme-dark.css` |
 | C2 | 2 | Camada **`ui/styles/`** | `tokens.css`, `overlay.css`, `menu.css`, `composer.css` | Médio | M | ✅ PR-11 jun/2026 — barrel `ui/styles/index.css` |
-| C3 | 2 | Varredura **hex → tokens** (chat) | Ver tabela §5 | Baixo | M | ✅ PR-7 jun/2026 — inventário §5 migrado |
+| C3 | 2 | Varredura **hex → tokens** (chat) | Ver tabela §5 | Baixo | M | ✅ PR-7 core · PR-19 help/tour/agent-home/preview |
 | C4 | 3 | Alinhar **`ChatInput__menu`** ao `menu-popover.css` | `ChatInput.css` | Baixo | S | ✅ fundo/borda portaled + posição `composer-panel` |
 | C5 | 3 | **`rich-presentation-shared.css`** — revisar duplicação com `ChatRich*.css` | KPI, chart, table | Médio | L | ✅ PR-17 — [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | C6 | 4 | Remover aliases legados **`mdc-chat-response-mode__*`** | `composer-option-selector.css` | Baixo | S | ✅ PR-14 jun/2026 |
@@ -124,8 +124,8 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 |---|---|--------|--------|-------|---------|
 | D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | ✅ jun/2026 |
 | D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S | ✅ PR-16 jun/2026 |
-| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | ✅ PR-18 — `presentation/` (ChatRich* + shared CSS) com re-exports |
-| D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M |
+| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | ✅ PR-18 `presentation/` · PR-19 `composer/` |
+| D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M | ✅ PR-19 — CSS de campo unificado em `workspaceFileIngest.css` |
 | D5 | 4 | Documentar **quando criar primitivo** | Este doc + `admin/README.md` | Baixo | S | ✅ PR-17 jun/2026 — §12 roadmap + admin/README |
 
 ### Fase E — Responsividade e mobile
@@ -210,7 +210,8 @@ PR-15 ✅  B6/D1/F2 — modal-layer enxuto, menuPositionUtils em shared/overlay,
 PR-16 ✅  A7/D2/E1/F1 — DropdownMenuTrigger, testes mobile composer, flip action menu
 PR-17 ✅  C5/D5/E4 — rich-presentation-shared consolidado, doc primitivos, tabelas mobile card mode
 PR-18 ✅  D3/E5 — pasta presentation/ + admin mobile (AdminDataTable card mode)
-PR-19    D3 message/workspace/composer; C3 hex restantes; D4 paridade admin
+PR-19 ✅  D3 composer/ + C3 hex + D4 dropzone paridade
+PR-20    D3 message/workspace; F3 CI build gate
 ```
 
 ---

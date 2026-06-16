@@ -54,6 +54,7 @@ src/
     components/      # chat, admin (abas modulares)
     components/shared/  # primitivos overlay, composer, menus — ver docs/frontend-refactor-roadmap.md
     components/presentation/  # ChatRich* (tabela, gráfico, KPI, árvore, dashboard)
+    components/composer/      # ChatInput, mention menu, selectors de formato/modo
 ```
 
 Ver roadmap de refatoração frontend: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md).

@@ -99,7 +99,7 @@
   min-height: min(72dvh, 72svh);
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-md);
-  background: #fff;
+  background: var(--mdc-card-bg);
 }
 
 .mdc-attachment-preview-modal__text {

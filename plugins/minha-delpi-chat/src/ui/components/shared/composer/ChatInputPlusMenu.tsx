@@ -6,7 +6,7 @@ import { workspaceFileComposerLabels } from "../../../../content/workspaceFileIn
 import { estimateChatInputPlusMenuItemCount } from "../overlay/menuPositionUtils";
 import { AnchoredMenuPortal } from "../overlay/AnchoredMenuPortal";
 
-import "../../ChatInput.css";
+import "../../composer/ChatInput.css";
 
 type ChatInputPlusMenuProps = {
   open: boolean;
