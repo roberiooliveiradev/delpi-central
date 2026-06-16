@@ -7,220 +7,58 @@ from dataclasses import dataclass
 from typing import Any
 
 
-CHAT_CRITICAL_ENTITIES: frozenset[str] = frozenset(
-    {
-        "product_search",
-        "product",
-        "product_stock",
-        "product_structure",
-        "product_structure_exclusivity",
-        "exclusive_raw_materials_catalog",
-        "production_consumption_top_items",
-        "production_losses_top_materials",
-        "production_losses_records",
-        "production_schedule_today",
-        "production_orders_open",
-        "production_orders_finished",
-        "production_work_center_order_summary",
-        "production_consumption_top_items_by_work_center",
-        "production_consumption_top_items_validated",
-        "production_allocation_gaps",
-        "production_orders_finished_without_consumption",
-        "production_work_center_average_planned_time",
-        "production_consumption_by_item",
-        "production_planned_vs_real_time",
-        "purchases_top_products",
-        "product_analyser",
-        "product_factory_status",
-        "product_production_status",
-        "product_shipping_status",
-        "product_raw_material_price_intelligence",
-        "product_cost_impact_simulation",
-        "product_last_purchase",
-        "product_purchase_price_history",
-        "product_purchase_budget_history",
-        "product_directives",
-        "product_parents",
-        "product_guide",
-        "product_inspection",
-        "product_pricing",
-        "product_purchases",
-        "product_sales",
-        "product_open_orders",
-        "product_billing",
-        "product_suppliers",
-        "product_customers",
-        "product_internal_movements",
-        "product_inbound_invoice_items",
-        "product_outbound_invoice_items",
-    }
-)
+class _EntitySetDescriptor:
+    def __init__(self, set_key: str) -> None:
+        self.set_key = set_key
 
-PLAYBOOK_OPERATIONAL_ENTITIES: frozenset[str] = frozenset(
-    {
-        "production_consumption_top_items",
-        "production_losses_top_materials",
-        "production_losses_records",
-        "production_schedule_today",
-        "production_orders_open",
-        "production_orders_finished",
-        "production_work_center_order_summary",
-        "production_consumption_top_items_by_work_center",
-        "production_consumption_top_items_validated",
-        "production_allocation_gaps",
-        "production_orders_finished_without_consumption",
-        "production_work_center_average_planned_time",
-        "production_consumption_by_item",
-        "production_planned_vs_real_time",
-        "purchases_top_products",
-    }
-)
+    def __get__(self, obj: object | None, owner: type) -> frozenset[str]:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
 
-PROFILE_PRESENT_ENTITIES: frozenset[str] = frozenset(
-    {
-        "product_search",
-        "product",
-        "product_stock",
-        "product_structure",
-        "product_structure_exclusivity",
-        "exclusive_raw_materials_catalog",
-        "production_consumption_top_items",
-        "production_losses_top_materials",
-        "production_losses_records",
-        "production_schedule_today",
-        "production_orders_open",
-        "production_orders_finished",
-        "production_work_center_order_summary",
-        "production_consumption_top_items_by_work_center",
-        "production_consumption_top_items_validated",
-        "production_allocation_gaps",
-        "production_orders_finished_without_consumption",
-        "production_work_center_average_planned_time",
-        "production_consumption_by_item",
-        "production_planned_vs_real_time",
-        "purchases_top_products",
-        "product_analyser",
-        "product_factory_status",
-        "product_production_status",
-        "product_shipping_status",
-        "product_raw_material_price_intelligence",
-        "product_cost_impact_simulation",
-        "product_last_purchase",
-        "product_purchase_price_history",
-        "product_purchase_budget_history",
-        "product_directives",
-        "product_parents",
-        "product_guide",
-        "product_inspection",
-        "product_pricing",
-        "product_purchases",
-        "product_suppliers",
-        "product_customers",
-        "product_internal_movements",
-        "product_inbound_invoice_items",
-        "product_outbound_invoice_items",
-        "product_sales",
-        "product_open_orders",
-        "product_billing",
-    }
-)
+        return ChatPresentationProfileService.entity_set(self.set_key)
 
-PRODUCT_LIST_PRESENT_ENTITIES: frozenset[str] = frozenset(
-    {
-        "product_purchases",
-        "product_suppliers",
-        "product_customers",
-        "product_internal_movements",
-        "product_inbound_invoice_items",
-        "product_outbound_invoice_items",
-        "product_open_orders",
-    }
-)
 
-KPI_PRESENT_ENTITIES: frozenset[str] = frozenset(
-    {
-        "supplies_cpv",
-        "supplies_otd",
-        "supplies_stock_value",
-        "supplies_inventory_turnover",
-        "supplies_negotiation_savings",
-        "financial_rol",
-        "financial_ebitda_pct",
-        "financial_fixed_cost_pct",
-        "financial_pmr",
-        "commercial_rol_target",
-        "commercial_rol_series",
-        "sales_conversion_rate",
-        "new_clients_average",
-        "sales_order_otd",
-        "new_business_rol_pct",
-        "new_clients_rol_pct",
-        "direct_labor_cost_pct",
-        "production_cost_pct",
-        "depreciation_pct",
-        "production_oee_series",
-        "production_oee_detail",
-        "production_oee_appointment",
-        "production_otd_series",
-        "overall_equipment_effectiveness",
-        "production_otd",
-        "production_otd_detail",
-        "eficiencia_fabril_dashboard",
-        "hr_snapshot",
-        "hr_active_pdi_count",
-        "hr_performance_reviews_completion",
-        "kaizen_summary",
-        "kaizen",
-        "audit_5s_summary",
-        "nonconformity_series",
-        "ppm_internal_summary",
-        "ppm_external_summary",
-        "ppm_internal_series",
-        "ppm_external_series",
-        "lmp_dashboard_summary",
-        "lmp_dashboard_charts",
-        "transforma_mais_summary",
-        "product_sales",
-        "quality_branch",
-        "hr_branch",
-    }
-)
+class _EntityRoutedForPresentDescriptor:
+    def __get__(self, obj: object | None, owner: type) -> frozenset[str]:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
 
-LMP_PRESENT_ENTITIES: frozenset[str] = frozenset(
-    {
-        "lmp",
-        "lmp_dashboard",
-        "lmp_dashboard_summary",
-        "lmp_dashboard_items",
-        "lmp_dashboard_charts",
-        "transforma_mais_process",
-        "transforma_mais_summary",
-    }
-)
+        return ChatPresentationProfileService.entity_routed_for_present()
 
-SQL_PRESENT_ENTITIES: frozenset[str] = frozenset({"sql_result"})
 
-SYSTEM_PRESENT_ENTITIES: frozenset[str] = frozenset(
-    {
-        "protheus_table",
-        "protheus_column",
-        "protheus_index",
-        "protheus_relation",
-        "protheus_table_schema",
-    }
-)
+_MODULE_ENTITY_SET_ALIASES = {
+    "CHAT_CRITICAL_ENTITIES": "chatCritical",
+    "PLAYBOOK_OPERATIONAL_ENTITIES": "playbookOperational",
+    "PROFILE_PRESENT_ENTITIES": "profilePresent",
+    "PRODUCT_LIST_PRESENT_ENTITIES": "productListPresent",
+    "KPI_PRESENT_ENTITIES": "kpiPresent",
+    "LMP_PRESENT_ENTITIES": "lmpPresent",
+    "SQL_PRESENT_ENTITIES": "sqlPresent",
+    "SYSTEM_PRESENT_ENTITIES": "systemPresent",
+    "SALE_ORDER_PRESENT_ENTITIES": "saleOrderPresent",
+}
 
-SALE_ORDER_PRESENT_ENTITIES: frozenset[str] = frozenset({"sale_order"})
 
-ENTITY_ROUTED_FOR_PRESENT: frozenset[str] = (
-    PROFILE_PRESENT_ENTITIES
-    | KPI_PRESENT_ENTITIES
-    | LMP_PRESENT_ENTITIES
-    | SQL_PRESENT_ENTITIES
-    | SYSTEM_PRESENT_ENTITIES
-    | SALE_ORDER_PRESENT_ENTITIES
-    | frozenset({"commercial_proposal", "eficiencia_fabril_appointment"})
-)
+def __getattr__(name: str) -> frozenset[str]:
+    if name == "ENTITY_ROUTED_FOR_PRESENT":
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.entity_routed_for_present()
+
+    set_key = _MODULE_ENTITY_SET_ALIASES.get(name)
+
+    if set_key:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        return ChatPresentationProfileService.entity_set(set_key)
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 @dataclass(frozen=True)
@@ -232,16 +70,16 @@ class ApiDelpiResponseProfile:
 
 
 class ChatApiDelpiResponseProfileService:
-    CHAT_CRITICAL_ENTITIES = CHAT_CRITICAL_ENTITIES
-    PLAYBOOK_OPERATIONAL_ENTITIES = PLAYBOOK_OPERATIONAL_ENTITIES
-    PROFILE_PRESENT_ENTITIES = PROFILE_PRESENT_ENTITIES
-    PRODUCT_LIST_PRESENT_ENTITIES = PRODUCT_LIST_PRESENT_ENTITIES
-    KPI_PRESENT_ENTITIES = KPI_PRESENT_ENTITIES
-    LMP_PRESENT_ENTITIES = LMP_PRESENT_ENTITIES
-    SQL_PRESENT_ENTITIES = SQL_PRESENT_ENTITIES
-    SYSTEM_PRESENT_ENTITIES = SYSTEM_PRESENT_ENTITIES
-    SALE_ORDER_PRESENT_ENTITIES = SALE_ORDER_PRESENT_ENTITIES
-    ENTITY_ROUTED_FOR_PRESENT = ENTITY_ROUTED_FOR_PRESENT
+    CHAT_CRITICAL_ENTITIES = _EntitySetDescriptor("chatCritical")
+    PLAYBOOK_OPERATIONAL_ENTITIES = _EntitySetDescriptor("playbookOperational")
+    PROFILE_PRESENT_ENTITIES = _EntitySetDescriptor("profilePresent")
+    PRODUCT_LIST_PRESENT_ENTITIES = _EntitySetDescriptor("productListPresent")
+    KPI_PRESENT_ENTITIES = _EntitySetDescriptor("kpiPresent")
+    LMP_PRESENT_ENTITIES = _EntitySetDescriptor("lmpPresent")
+    SQL_PRESENT_ENTITIES = _EntitySetDescriptor("sqlPresent")
+    SYSTEM_PRESENT_ENTITIES = _EntitySetDescriptor("systemPresent")
+    SALE_ORDER_PRESENT_ENTITIES = _EntitySetDescriptor("saleOrderPresent")
+    ENTITY_ROUTED_FOR_PRESENT = _EntityRoutedForPresentDescriptor()
 
     @classmethod
     def resolve(cls, data: Any, *, path: str = "") -> ApiDelpiResponseProfile:
@@ -292,23 +130,23 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def is_chat_critical(cls, entity: str | None) -> bool:
-        return bool(entity and entity in CHAT_CRITICAL_ENTITIES)
+        return bool(entity and entity in cls.CHAT_CRITICAL_ENTITIES)
 
     @classmethod
     def is_profile_present_entity(cls, entity: str | None) -> bool:
-        return bool(entity and entity in PROFILE_PRESENT_ENTITIES)
+        return bool(entity and entity in cls.PROFILE_PRESENT_ENTITIES)
 
     @classmethod
     def is_kpi_entity(cls, entity: str | None) -> bool:
-        return bool(entity and entity in KPI_PRESENT_ENTITIES)
+        return bool(entity and entity in cls.KPI_PRESENT_ENTITIES)
 
     @classmethod
     def is_entity_routed_for_present(cls, entity: str | None) -> bool:
-        return bool(entity and entity in ENTITY_ROUTED_FOR_PRESENT)
+        return bool(entity and entity in cls.ENTITY_ROUTED_FOR_PRESENT)
 
     @classmethod
     def is_playbook_operational_entity(cls, entity: str | None) -> bool:
-        return bool(entity and entity in PLAYBOOK_OPERATIONAL_ENTITIES)
+        return bool(entity and entity in cls.PLAYBOOK_OPERATIONAL_ENTITIES)
 
     @classmethod
     def resolve_entity_from_path(cls, path: str) -> str | None:
@@ -343,10 +181,14 @@ class ChatApiDelpiResponseProfileService:
 
     @classmethod
     def profile_coverage_ratio(cls) -> float:
-        if not CHAT_CRITICAL_ENTITIES:
+        critical = cls.CHAT_CRITICAL_ENTITIES
+        present = cls.PROFILE_PRESENT_ENTITIES
+
+        if not critical:
             return 0.0
-        covered = CHAT_CRITICAL_ENTITIES & PROFILE_PRESENT_ENTITIES
-        return len(covered) / len(CHAT_CRITICAL_ENTITIES)
+
+        covered = critical & present
+        return len(covered) / len(critical)
 
     @classmethod
     def enrich_humanized(cls, humanized: dict | None, data: Any) -> dict | None:

@@ -543,7 +543,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 - [x] `entityPathHints` + `pathEntityFallbacks` em `presentation_profiles.json`
 - [x] Resolução de entidade por path via `ChatPresentationProfileService.resolve_entity_from_path`
-- [ ] Migrar conjuntos de entidades (`CHAT_CRITICAL_ENTITIES`, …) para JSON
+- [x] Migrar conjuntos de entidades (`entitySets` em `presentation_profiles.json`)
 - [ ] Renomear/generalizar `ChatApiDelpiResponseProfileService` → perfil operacional OpenAPI
 - [ ] Presenters keyed por `meta.entity`, não path api-delpi
 

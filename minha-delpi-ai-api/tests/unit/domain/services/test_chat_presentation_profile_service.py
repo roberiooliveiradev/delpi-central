@@ -54,6 +54,16 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
     assert ChatPresentationProfileService.entity_path_hint("supplies_cpv") == "/supplies/cpv"
 
 
+def test_entity_sets_loaded_from_json() -> None:
+    critical = ChatPresentationProfileService.entity_set("chatCritical")
+    routed = ChatPresentationProfileService.entity_routed_for_present()
+
+    assert "product_stock" in critical
+    assert "supplies_cpv" in ChatPresentationProfileService.entity_set("kpiPresent")
+    assert "product_stock" in routed
+    assert "commercial_proposal" in routed
+
+
 def test_production_oee_detail_entity_maps_to_dashboard() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/production/oee",

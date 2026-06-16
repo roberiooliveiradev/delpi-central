@@ -17,6 +17,36 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
     }
 
     @classmethod
+    def entity_set(cls, set_key: str) -> frozenset[str]:
+        raw = cls.node("entitySets", str(set_key or "").strip())
+
+        if not isinstance(raw, list):
+            return frozenset()
+
+        return frozenset(
+            str(item).strip()
+            for item in raw
+            if str(item).strip()
+        )
+
+    @classmethod
+    def entity_routed_for_present(cls) -> frozenset[str]:
+        merged: set[str] = set()
+
+        for key in (
+            "profilePresent",
+            "kpiPresent",
+            "lmpPresent",
+            "sqlPresent",
+            "systemPresent",
+            "saleOrderPresent",
+            "entityRoutedExtra",
+        ):
+            merged.update(cls.entity_set(key))
+
+        return frozenset(merged)
+
+    @classmethod
     def entity_path_hints(cls) -> dict[str, str]:
         raw = cls.mapping("entityPathHints")
 
