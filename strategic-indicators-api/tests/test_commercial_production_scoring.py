@@ -141,6 +141,97 @@ def test_production_null_measurement_is_not_scored_as_zero() -> None:
     assert calculated[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
 
 
+def _production_rol_branch_goals() -> dict:
+    return {
+        "01": {
+            "goal_label": "10%",
+            "goal_value": 10.0,
+            "goal_periodicity": "monthly",
+            "goal_mode": "standard",
+            "monthly_targets": [],
+        },
+        "02": {
+            "goal_label": "10%",
+            "goal_value": 10.0,
+            "goal_periodicity": "monthly",
+            "goal_mode": "standard",
+            "monthly_targets": [],
+        },
+    }
+
+
+def test_production_rol_sheet_unfilled_scores_zero() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    rol_indicator_ids = [
+        "production-direct-labor",
+        "production-costs",
+        "production-depreciation",
+    ]
+    catalog = [
+        StrategicIndicatorCatalogItem(
+            indicator_id=indicator_id,
+            department_id="production",
+            indicator_name=indicator_id,
+            weight_pct=25,
+            goal_label="10%",
+            goal_value=10.0,
+            goal_periodicity="monthly",
+            goal_mode="standard",
+            scope_type="per_unit",
+            performance_direction="lower_is_better",
+            branch_goals=_production_rol_branch_goals(),
+            has_resolved_goal=True,
+        )
+        for indicator_id in rol_indicator_ids
+    ]
+    measurements = [
+        StrategicIndicatorMeasuredValue(
+            indicator_id=indicator_id,
+            department_id="production",
+            value=None,
+            source=indicator_id,
+            unit_values={"01": None, "02": None, "consolidated": None},
+        )
+        for indicator_id in rol_indicator_ids
+    ]
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-05",
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+    )
+
+    assert len(calculated) == 3
+    for item in calculated:
+        assert item.value is None
+        assert item.score == 0.0
+        assert item.gap is None
+        assert item.classification == calculator.classify_score(0.0)
+
+    departments = calculator.calculate_departments(
+        departments_catalog=[
+            StrategicDepartmentCatalogItem(
+                department_id="production",
+                department_name="Produção",
+                short_name="PROD",
+                weight_pct=17,
+                strategic_summary="",
+                aggregation_mode="average_of_units",
+            )
+        ],
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-05",
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+    )
+
+    assert len(departments) == 1
+    assert departments[0].score == 0.0
+
+
 def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicators = [

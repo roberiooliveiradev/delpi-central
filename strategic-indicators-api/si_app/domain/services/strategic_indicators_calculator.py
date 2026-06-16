@@ -28,6 +28,11 @@ from si_app.shared.goal_scope import (
 class StrategicIndicatorsCalculator:
     MISSING_VALUE_CLASSIFICATION = "Sem dados preenchidos"
     MISSING_GOAL_CLASSIFICATION = "Sem meta para esta visão"
+    PRODUCTION_ROL_SHEET_INDICATOR_IDS = frozenset({
+        "production-direct-labor",
+        "production-costs",
+        "production-depreciation",
+    })
 
     def build_period_snapshot(
         self,
@@ -636,6 +641,8 @@ class StrategicIndicatorsCalculator:
         for branch_code, branch_goal in branch_goals.items():
             branch_value = unit_values.get(branch_code)
             if branch_value is None:
+                if self._scores_zero_when_unfilled(indicator.indicator_id):
+                    branch_scores.append(0.0)
                 continue
 
             comparable_goal = self.calculate_comparable_goal(
@@ -716,6 +723,9 @@ class StrategicIndicatorsCalculator:
                 comparable_goal=comparable_goal,
                 value=float(branch_value),
             )
+
+        if self._scores_zero_when_unfilled(indicator.indicator_id):
+            return 0.0
 
         return None
 
@@ -826,7 +836,7 @@ class StrategicIndicatorsCalculator:
         scored_indicators = [
             item
             for item in indicators
-            if item.value is not None and item.score is not None
+            if item.score is not None
         ]
 
         if not scored_indicators:
@@ -1349,6 +1359,9 @@ class StrategicIndicatorsCalculator:
             value_decimals=indicator.value_decimals,
         )
 
+    def _scores_zero_when_unfilled(self, indicator_id: str) -> bool:
+        return indicator_id in self.PRODUCTION_ROL_SHEET_INDICATOR_IDS
+
     def _build_missing_indicator_value(
         self,
         *,
@@ -1356,6 +1369,37 @@ class StrategicIndicatorsCalculator:
         source: str,
         unit_values: dict[str, float | None] | None,
     ) -> StrategicIndicatorCalculatedValue:
+        if self._scores_zero_when_unfilled(indicator.indicator_id):
+            return StrategicIndicatorCalculatedValue(
+                indicator_id=indicator.indicator_id,
+                department_id=indicator.department_id,
+                indicator_name=indicator.indicator_name,
+                weight_pct=indicator.weight_pct,
+                goal_label=indicator.goal_label,
+                goal_value=indicator.goal_value,
+                goal_periodicity=indicator.goal_periodicity,
+                goal_mode=getattr(indicator, "goal_mode", "standard"),
+                monthly_targets=getattr(indicator, "monthly_targets", None),
+                scope_type=indicator.scope_type,
+                performance_direction=getattr(
+                    indicator,
+                    "performance_direction",
+                    "higher_is_better",
+                ),
+                strategic_description=indicator.strategic_description,
+                source=source,
+                value=None,
+                score=0.0,
+                gap=None,
+                trend="stable",
+                classification=self.classify_score(0.0),
+                unit_values=unit_values,
+                value_unit=indicator.value_unit,
+                value_prefix=indicator.value_prefix,
+                value_suffix=indicator.value_suffix,
+                value_decimals=indicator.value_decimals,
+            )
+
         return StrategicIndicatorCalculatedValue(
             indicator_id=indicator.indicator_id,
             department_id=indicator.department_id,
