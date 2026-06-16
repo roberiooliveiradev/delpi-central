@@ -4,8 +4,8 @@
     "sessionRefinement",
     "productionOperational",
     "vocabularyFastPaths",
-    "intentBoundRoutes",
     "domainRoutes",
+    "intentBoundRoutes",
     "semanticFallback"
   ],
   "actionableProductPredicates": [

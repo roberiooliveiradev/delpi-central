@@ -487,7 +487,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ### Fase 8 — Dispatch declarativo
 
-- [ ] Interpretar `dispatchOrder` do registry em loop único (substituir ~25 blocos `if`)
+- [x] Interpretar `dispatchOrder` do registry em loop único (`ExternalActionRegistryDispatchPhaseService`)
 - [x] Unificar `select_sale_orders` / `select_transforma` no motor vocabulary (`merge_date_parameters` no `select()`)
 - [x] Remover wrapper `ExternalActionVocabularyRouteSelectionService`
 

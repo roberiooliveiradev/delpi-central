@@ -11,11 +11,13 @@ from app.domain.services.operational_route_matcher_service import (
 from app.application.services.external_actions.external_action_product_search_route_selection_service import (
     ExternalActionProductSearchRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_registry_dispatch_phase_service import (
+    ExternalActionRegistryDispatchPhaseService,
+    RegistryDispatchCallbacks,
+    RegistryDispatchContext,
+)
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
-)
-from app.application.services.external_actions.external_action_selection_heuristics_service import (
-    ExternalActionSelectionHeuristicsService,
 )
 from app.application.services.external_actions.external_action_selection_support_service import (
     ExternalActionSelectionSupportService,
@@ -42,19 +44,6 @@ from app.domain.services.external_actions.external_action_response_content_servi
 )
 
 
-_INTENT_BOUND_PRODUCT_INTENTS = frozenset(
-    {
-        ChatProductQueryIntent.PARENTS,
-        ChatProductQueryIntent.STRUCTURE,
-        ChatProductQueryIntent.STOCK,
-        ChatProductQueryIntent.SALES,
-        ChatProductQueryIntent.SUMMARY,
-        ChatProductQueryIntent.ANALYSER,
-        ChatProductQueryIntent.DESCRIPTION,
-    }
-)
-
-
 class ExternalActionSelectionDispatchService:
     def __init__(
         self,
@@ -63,6 +52,7 @@ class ExternalActionSelectionDispatchService:
     ) -> None:
         self._route_selection = route_selection
         self._support = support
+        self._registry_phases = ExternalActionRegistryDispatchPhaseService(route_selection)
 
     def dispatch(
         self,
@@ -329,40 +319,6 @@ class ExternalActionSelectionDispatchService:
             ChatProductionOperationalIntentService,
         )
 
-        if ChatProductionOperationalIntentService.matches_rest_route(message):
-            selected = self._route_selection.select_production_operational(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                candidates_loader=self._list_allowed_candidates,
-                build_date_branch_parameters=self._build_date_branch_parameters,
-                path_lookup_loader=self._lookup_production_operational_actions,
-            )
-
-            if selected:
-                return selected
-
-            if (
-                not ChatSqlIntentService.is_authoring_request(message)
-            ):
-                from app.domain.services.chat_sql_production_query_service import (
-                    ChatSqlProductionQueryService,
-                )
-
-                production_resolution = ChatSqlProductionQueryService.resolve(message)
-
-                if production_resolution and production_resolution.mode == "execute":
-                    selected = self._select_sql_or_data_action(
-                        message,
-                        allowed_action_ids=allowed_action_ids,
-                        sql=production_resolution.sql,
-                        selection_reason_key="productionSqlFastPath",
-                        raw_message=sql_source,
-                    )
-
-                    if selected:
-                        return selected
-
         if (
             OperationalRouteMatcherService.looks_like_system_metadata_question(
                 normalized
@@ -479,150 +435,29 @@ class ExternalActionSelectionDispatchService:
             else:
                 bound_product_intent = ChatProductQueryIntent.DESCRIPTION
 
-        selected = self._route_selection.select_vocabulary_fast_path(
-            message,
-            normalized,
-            allowed_action_ids=allowed_action_ids,
-            candidates_loader=self._list_allowed_candidates,
-            build_date_branch_parameters=self._build_date_branch_parameters,
-            merge_date_parameters=self._merge_date_parameters,
-            previous_messages=previous_messages,
-        )
-
-        if selected:
-            return selected
-
-        selected = self._route_selection.select_department_kpi(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            candidates_loader=self._list_allowed_candidates,
-            build_date_branch_parameters=self._build_date_branch_parameters,
-            previous_messages=previous_messages,
-        )
-
-        if selected:
-            return selected
-
-        if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
-            normalized,
-            extract_sale_number=self._extract_sale_number,
-        ):
-            selected = self._select_lmp_action(
-                message,
+        return self._registry_phases.run(
+            RegistryDispatchContext(
+                message=message,
+                normalized=normalized,
+                sql_source=sql_source,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
-            )
-
-            if selected:
-                return selected
-
-        if not product_code:
-            selected = self._route_selection.select_kpi_without_product(
-                message,
-                normalized,
-                allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
+                product_code=product_code,
+                bound_product_intent=bound_product_intent,
+                product_route_segment=product_route_segment,
+            ),
+            callbacks=RegistryDispatchCallbacks(
                 candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        if product_code and bound_product_intent in _INTENT_BOUND_PRODUCT_INTENTS:
-            route_segment = product_route_segment
-            bound_intent = bound_product_intent
-
-            if bound_product_intent == ChatProductQueryIntent.SALES:
-                route_segment = product_route_segment or "sales"
-
-                if route_segment in ("outbound-invoice", "inbound-invoice"):
-                    bound_intent = ChatProductQueryIntent.FULL
-
-            selected = self._route_selection.select_intent_bound_route(
-                message,
-                product_code,
-                intent=bound_intent,
-                allowed_action_ids=allowed_action_ids,
-                route_segment=route_segment,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-            if (
-                bound_product_intent == ChatProductQueryIntent.SALES
-                and ChatProductQueryIntentService.extract_product_code(message)
-            ):
-                return None
-
-        if product_code and (
-            ExternalActionSelectionHeuristicsService.looks_like_product_question(
-                normalized
-            )
-            or ChatProductQueryIntentService.extract_product_code(message)
-            or product_route_segment
-            or ChatProductDescriptionResolutionService.looks_like_description_lookup(message)
-        ):
-            resolved_intent = (
-                bound_product_intent
-                if bound_product_intent != ChatProductQueryIntent.FULL
-                else ChatProductQueryIntent.FULL
-            )
-
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=resolved_intent,
-                route_segment=product_route_segment,
-            )
-
-            if selected:
-                return selected
-
-        if (
-            not product_code
-            and ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
-                normalized
-            )
-            and not ChatProductionOperationalIntentService.matches_rest_route(message)
-        ):
-            selected = self._route_selection.select_product_search(
-                message,
-                normalized,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
-
-        if ExternalActionSelectionHeuristicsService.looks_like_sql_or_data_query(message):
-            if ChatSqlIntentService.should_auto_execute_sql(message):
-                return self._select_sql_or_data_action(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    raw_message=sql_source,
-                )
-
-        from app.domain.services.chat_operational_parameter_service import (
-            ChatOperationalParameterService,
-        )
-
-        if ChatOperationalParameterService.should_block_semantic_action_fallback(
-            message,
-            conversation_context=conversation_context,
-        ):
-            return None
-
-        return self._route_selection.select_generic(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            candidates_loader=self._list_allowed_candidates,
-            rank_candidates=self._rank_candidates,
-            build_date_branch_parameters=self._build_date_branch_parameters,
+                build_date_branch_parameters=self._build_date_branch_parameters,
+                merge_date_parameters=self._merge_date_parameters,
+                path_lookup_loader=self._lookup_production_operational_actions,
+                rank_candidates=self._rank_candidates,
+                extract_sale_number=self._extract_sale_number,
+                select_product=self._select_product_action,
+                select_lmp=self._select_lmp_action,
+                select_sql=self._select_sql_or_data_action,
+            ),
         )
 
     def _build_date_branch_parameters(
