@@ -104,6 +104,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_fallback_policies(report)
         cls._lint_routes(report)
         cls._lint_actionable_predicates(report)
+        cls._lint_playbook_product_predicates(report)
         cls._lint_playbook_none_of_rules(report)
         cls._lint_python_route_selection_files(root, report)
         cls._lint_legacy_symbols(root, report)
@@ -285,6 +286,17 @@ class OperationalRouteRegistryLintService:
             if predicate not in OperationalRouteMatcherService._CUSTOM_PREDICATES:
                 report.add_error(
                     f"actionableProductPredicates.{predicate!r} fora da allowlist"
+                )
+
+    @classmethod
+    def _lint_playbook_product_predicates(
+        cls,
+        report: OperationalRouteRegistryLintReport,
+    ) -> None:
+        for predicate in OperationalRouteRegistryService.playbook_product_predicates():
+            if predicate not in OperationalRouteMatcherService._CUSTOM_PREDICATES:
+                report.add_error(
+                    f"playbookProductPredicates.{predicate!r} fora da allowlist"
                 )
 
     @classmethod

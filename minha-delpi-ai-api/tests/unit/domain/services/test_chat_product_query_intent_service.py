@@ -747,3 +747,22 @@ def test_suppliers_route_question_from_vocabulary():
     assert ChatProductQueryIntentService._looks_like_suppliers_route_question(
         normalized
     )
+
+
+def test_explicit_playbook_scope_uses_registry_predicates():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "status fabril do produto 90260142"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_explicit_playbook_product_scope(
+        normalized
+    )
+
+
+def test_refine_operational_intent_from_full_uses_json_predicate_map():
+    message = "estoque do produto 90260142"
+
+    assert (
+        ChatProductQueryIntentService.refine_operational_intent_from_full(message)
+        == ChatProductQueryIntent.STOCK
+    )

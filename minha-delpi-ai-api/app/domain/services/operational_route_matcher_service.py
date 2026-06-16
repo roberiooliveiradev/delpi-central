@@ -334,6 +334,30 @@ class OperationalRouteMatcherService:
         "priceAnalysisRoute": lambda normalized: ChatProductQueryIntentService._looks_like_price_analysis_question(
             normalized
         ),
+        "structureQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_structure_question(
+            normalized
+        ),
+        "stockQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_stock_question(
+            normalized
+        ),
+        "salesQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_sales_question(
+            normalized
+        ),
+        "parentsQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_parents_question(
+            normalized
+        ),
+        "descriptionQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_description_question(
+            normalized
+        ),
+        "productSummaryRoute": lambda normalized: ChatProductQueryIntentService._looks_like_product_summary_route_question(
+            normalized
+        ),
+        "productSubIntentRoute": lambda normalized: ChatProductQueryIntentService._looks_like_product_sub_intent(
+            normalized
+        ),
+        "stockScopeResetQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_stock_scope_reset_question(
+            normalized
+        ),
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

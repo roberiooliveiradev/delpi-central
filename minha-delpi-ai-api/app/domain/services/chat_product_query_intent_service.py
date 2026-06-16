@@ -38,6 +38,55 @@ class ChatProductQueryIntentService:
             default=default,
         )
 
+    _INTENT_BY_REFINEMENT_KEY = {
+        "structure": ChatProductQueryIntent.STRUCTURE,
+        "stock": ChatProductQueryIntent.STOCK,
+        "sales": ChatProductQueryIntent.SALES,
+        "parents": ChatProductQueryIntent.PARENTS,
+        "summary": ChatProductQueryIntent.SUMMARY,
+        "description": ChatProductQueryIntent.DESCRIPTION,
+    }
+
+    @classmethod
+    def _matches_predicate(cls, predicate: str, normalized: str) -> bool:
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        return OperationalRouteMatcherService.matches_custom_predicate(
+            predicate,
+            normalized,
+        )
+
+    @classmethod
+    def _matches_any_predicates(
+        cls,
+        predicates: list[str] | tuple[str, ...],
+        normalized: str,
+    ) -> bool:
+        return any(cls._matches_predicate(predicate, normalized) for predicate in predicates)
+
+    @classmethod
+    def _intent_refinement_predicates(cls) -> dict[str, str]:
+        node = ChatAssistantContentService.get_node(
+            _INTENT_CONTENT_BUNDLE,
+            "intentRefinementPredicates",
+        ) or {}
+
+        return {
+            str(key): str(value).strip()
+            for key, value in node.items()
+            if str(value).strip()
+        }
+
+    @classmethod
+    def _code_from_history_predicates(cls) -> tuple[str, ...]:
+        return cls._terms("codeFromHistoryPredicates")
+
+    @classmethod
+    def _message_has_any_marker(cls, normalized: str, *path: str) -> bool:
+        return any(term in normalized for term in cls._terms(*path))
+
     _ZERO_RECORDS_RE = re.compile(r":\s*0 registro\(s\)\.?$", re.IGNORECASE)
     _PRODUCT_CODE_RE = re.compile(
         r"\b(?:\d[\d.\-/]{2,}\d|\d{4,})\b",
@@ -73,40 +122,7 @@ class ChatProductQueryIntentService:
         if cls._looks_like_parents_question(normalized):
             return ChatProductQueryIntent.PARENTS
 
-        if cls._looks_like_sale_pricing_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_cost_impact_simulation_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_raw_material_price_intelligence_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_last_purchase_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_purchase_price_history_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_purchase_budget_history_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_directives_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_factory_status_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_production_status_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_shipping_status_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_structure_exclusivity_question(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_price_analysis_question(normalized):
+        if cls._looks_like_explicit_playbook_product_scope(normalized):
             return ChatProductQueryIntent.FULL
 
         from app.domain.services.chat_product_multi_scope_planning_service import (
@@ -475,18 +491,13 @@ class ChatProductQueryIntentService:
     @classmethod
     def _looks_like_explicit_playbook_product_scope(cls, normalized: str) -> bool:
         """Playbook fabril/MP/PA — não herdar intent de consulta anterior (ex.: estoque)."""
-        return (
-            cls._looks_like_factory_status_question(normalized)
-            or cls._looks_like_production_status_question(normalized)
-            or cls._looks_like_shipping_status_question(normalized)
-            or cls._looks_like_structure_exclusivity_question(normalized)
-            or cls._looks_like_cost_impact_simulation_question(normalized)
-            or cls._looks_like_raw_material_price_intelligence_question(normalized)
-            or cls._looks_like_last_purchase_question(normalized)
-            or cls._looks_like_purchase_price_history_question(normalized)
-            or cls._looks_like_purchase_budget_history_question(normalized)
-            or cls._looks_like_sale_pricing_question(normalized)
-            or cls._looks_like_price_analysis_question(normalized)
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+
+        return cls._matches_any_predicates(
+            OperationalRouteRegistryService.playbook_product_predicates(),
+            normalized,
         )
 
     @classmethod
@@ -622,14 +633,10 @@ class ChatProductQueryIntentService:
 
         if not (
             cls.references_previous_product(message)
-            or cls._looks_like_sales_question(normalized)
-            or cls._looks_like_stock_question(normalized)
-            or cls._looks_like_stock_scope_reset_question(normalized)
-            or cls._looks_like_description_question(normalized)
-            or cls._looks_like_product_summary_question(normalized)
-            or cls._looks_like_structure_question(normalized)
-            or cls._looks_like_parents_question(normalized)
-            or cls._looks_like_product_sub_intent(normalized)
+            or cls._matches_any_predicates(
+                cls._code_from_history_predicates(),
+                normalized,
+            )
             or ChatRouteContextService.segment_from_message(message)
             or ChatRouteContextService.resolve_product_route_segment(
                 message,
@@ -897,17 +904,10 @@ class ChatProductQueryIntentService:
             factory_only = any(
                 term in normalized
                 for term in cls._terms("factoryStatus", "terms")
-            ) or any(
-                marker in normalized
-                for marker in (
-                    "fabril",
-                    "fabrica",
-                    "fábrica",
-                    "completo na fabrica",
-                    "completo na fábrica",
-                    "factory-status",
-                    "factory status",
-                )
+            ) or cls._message_has_any_marker(
+                normalized,
+                "factoryStatus",
+                "factoryOnlyMarkers",
             )
 
             if not factory_only:
@@ -917,9 +917,10 @@ class ChatProductQueryIntentService:
             if any(
                 term in normalized
                 for term in cls._terms("factoryStatus", "excludeWhenProductionPlaybook")
-            ) and not any(
-                marker in normalized
-                for marker in ("fabril", "fabrica", "fábrica", "completo na")
+            ) and not cls._message_has_any_marker(
+                normalized,
+                "factoryStatus",
+                "scopeMarkers",
             ):
                 return False
 
@@ -930,11 +931,10 @@ class ChatProductQueryIntentService:
                 normalized
             ) is not None
 
-        lowered = normalized.lower()
-
-        return cls._has_product_scope_reference(normalized) and any(
-            marker in lowered
-            for marker in ("fabril", "fabrica", "fábrica")
+        return cls._has_product_scope_reference(normalized) and cls._message_has_any_marker(
+            normalized,
+            "factoryStatus",
+            "scopeMarkers",
         )
 
     @classmethod
@@ -944,22 +944,14 @@ class ChatProductQueryIntentService:
                 normalized
             ) is not None
 
-        lowered = normalized.lower()
-
         if not cls._has_product_scope_reference(normalized):
             return False
 
-        production_markers = (
-            "apontamento",
-            " sh6010",
-            "ordem de produc",
-            "ordem de produ",
-            " op ",
-            " ops ",
-            "playbook produtivo",
+        return cls._message_has_any_marker(
+            normalized,
+            "productionStatus",
+            "productionMarkers",
         )
-
-        return any(marker in lowered for marker in production_markers)
 
     @classmethod
     def _looks_like_shipping_status_question(cls, normalized: str) -> bool:
@@ -967,16 +959,10 @@ class ChatProductQueryIntentService:
             if any(
                 term in normalized
                 for term in cls._terms("shippingStatus", "excludeWhenQualityInspection")
-            ) and not any(
-                marker in normalized
-                for marker in (
-                    "expedicao",
-                    "expedição",
-                    "inspecao final",
-                    "inspeção final",
-                    "liberado para exped",
-                    "shipping-status",
-                )
+            ) and not cls._message_has_any_marker(
+                normalized,
+                "shippingStatus",
+                "excludeShippingContextMarkers",
             ):
                 return False
 
@@ -984,22 +970,14 @@ class ChatProductQueryIntentService:
                 normalized
             ) is not None
 
-        lowered = normalized.lower()
-
         if not cls._has_product_scope_reference(normalized):
             return False
 
-        shipping_markers = (
-            "inspecao final",
-            "inspeção final",
-            "liberado para exped",
-            "quantidade exped",
-            "quanto exped",
-            "pa finalizado",
-            "pa liberado",
+        return cls._message_has_any_marker(
+            normalized,
+            "shippingStatus",
+            "shippingMarkers",
         )
-
-        return any(marker in lowered for marker in shipping_markers)
 
     @classmethod
     def _looks_like_exclusive_raw_material_catalog_question(cls, normalized: str) -> bool:
@@ -1046,8 +1024,6 @@ class ChatProductQueryIntentService:
                 normalized
             ) is not None
 
-        lowered = normalized.lower()
-
         if not cls._has_product_scope_reference(normalized):
             return False
 
@@ -1057,15 +1033,11 @@ class ChatProductQueryIntentService:
         ):
             return False
 
-        exclusivity_markers = (
-            "exclusiv",
-            "mp exclus",
-            "materia prima exclus",
-            "matéria-prima exclus",
-            "matéria prima exclus",
+        return cls._message_has_any_marker(
+            normalized,
+            "structureExclusivity",
+            "exclusivityMarkers",
         )
-
-        return any(marker in lowered for marker in exclusivity_markers)
 
     @classmethod
     def _looks_like_sale_pricing_question(cls, normalized: str) -> bool:
@@ -1129,13 +1101,10 @@ class ChatProductQueryIntentService:
         if re.search(r"\bmp\b", normalized):
             return True
 
-        return any(
-            marker in normalized
-            for marker in (
-                "materia prima",
-                "materia-prima",
-                "mate prima",
-            )
+        return cls._message_has_any_marker(
+            normalized,
+            "rawMaterialPriceIntelligence",
+            "scopeShorthandMarkers",
         )
 
     @classmethod
@@ -1143,15 +1112,10 @@ class ChatProductQueryIntentService:
         if any(
             term in normalized
             for term in cls._terms("costImpactSimulation", "excludeWhenFactoryStatus")
-        ) and not any(
-            marker in normalized
-            for marker in (
-                "impacto",
-                "pareto",
-                "simul",
-                "reajuste",
-                "cost-impact",
-            )
+        ) and not cls._message_has_any_marker(
+            normalized,
+            "costImpactSimulation",
+            "excludeFactoryContextMarkers",
         ):
             return False
 
@@ -1160,24 +1124,14 @@ class ChatProductQueryIntentService:
                 normalized
             ) is not None
 
-        lowered = normalized.lower()
-
         if not cls._has_product_scope_reference(normalized):
             return False
 
-        cost_markers = (
-            "impacto de custo",
-            "impacto no custo",
-            "materiais que mais impactam",
-            "materiais que impactam",
-            "pareto",
-            "simular aumento",
-            "simule aumento",
-            "reajuste percentual",
-            "ranking custo",
+        return cls._message_has_any_marker(
+            normalized,
+            "costImpactSimulation",
+            "costMarkers",
         )
-
-        return any(marker in lowered for marker in cost_markers)
 
     @classmethod
     def _looks_like_directives_question(cls, normalized: str) -> bool:
@@ -1386,10 +1340,7 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        if (
-            cls._looks_like_price_analysis_question(normalized_text)
-            or cls._looks_like_full_analyser_question(normalized_text)
-        ):
+        if cls._looks_like_full_analyser_question(message):
             return True
 
         from app.domain.services.chat_product_overview_intent_service import (
@@ -1397,12 +1348,6 @@ class ChatProductQueryIntentService:
         )
 
         if ChatProductOverviewIntentService.is_product_overview_message(message):
-            return True
-
-        if cls._looks_like_product_sub_intent(normalized_text):
-            return True
-
-        if cls._looks_like_product_summary_route_question(normalized_text):
             return True
 
         return False
@@ -1517,25 +1462,14 @@ class ChatProductQueryIntentService:
         if cls._looks_like_explicit_playbook_product_scope(normalized_text):
             return ChatProductQueryIntent.FULL
 
-        if cls._looks_like_structure_question(normalized_text):
-            return ChatProductQueryIntent.STRUCTURE
+        for intent_key, predicate in cls._intent_refinement_predicates().items():
+            if cls._matches_predicate(predicate, normalized_text):
+                mapped = cls._INTENT_BY_REFINEMENT_KEY.get(intent_key)
 
-        if cls._looks_like_sales_question(normalized_text):
-            return ChatProductQueryIntent.SALES
+                if mapped:
+                    return mapped
 
-        if cls._looks_like_stock_question(normalized_text):
-            return ChatProductQueryIntent.STOCK
-
-        if cls._looks_like_parents_question(normalized_text):
-            return ChatProductQueryIntent.PARENTS
-
-        if cls._looks_like_product_summary_route_question(normalized_text):
-            return ChatProductQueryIntent.SUMMARY
-
-        if cls._looks_like_description_question(normalized_text):
-            return ChatProductQueryIntent.DESCRIPTION
-
-        if cls._looks_like_full_analyser_question(normalized_text):
+        if cls._looks_like_full_analyser_question(message):
             return ChatProductQueryIntent.ANALYSER
 
         from app.domain.services.chat_product_multi_scope_planning_service import (

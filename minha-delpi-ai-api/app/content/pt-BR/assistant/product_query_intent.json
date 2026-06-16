@@ -117,6 +117,24 @@
     " ov ",
     " ov#"
   ],
+  "intentRefinementPredicates": {
+    "structure": "structureQuestion",
+    "stock": "stockQuestion",
+    "sales": "salesQuestion",
+    "parents": "parentsQuestion",
+    "summary": "productSummaryRoute",
+    "description": "descriptionQuestion"
+  },
+  "codeFromHistoryPredicates": [
+    "salesQuestion",
+    "stockQuestion",
+    "stockScopeResetQuestion",
+    "descriptionQuestion",
+    "productSummaryRoute",
+    "structureQuestion",
+    "parentsQuestion",
+    "productSubIntentRoute"
+  ],
   "stock": {
     "lineTokens": [
       "filial",
@@ -255,6 +273,20 @@
       "como esta a fabrica deste",
       "como esta a fabrica do produto",
       "como esta a fabrica do item"
+    ],
+    "factoryOnlyMarkers": [
+      "fabril",
+      "fabrica",
+      "fábrica",
+      "completo na fabrica",
+      "completo na fábrica",
+      "factory-status",
+      "factory status"
+    ],
+    "scopeMarkers": [
+      "fabril",
+      "fabrica",
+      "fábrica"
     ]
   },
   "productionStatus": {
@@ -293,6 +325,15 @@
       "pi iniciou",
       "producao iniciada",
       "produção iniciada"
+    ],
+    "productionMarkers": [
+      "apontamento",
+      " sh6010",
+      "ordem de produc",
+      "ordem de produ",
+      " op ",
+      " ops ",
+      "playbook produtivo"
     ]
   },
   "shippingStatus": {
@@ -329,6 +370,23 @@
       "ensaio",
       "definicao de inspecao",
       "definição de inspeção"
+    ],
+    "shippingMarkers": [
+      "inspecao final",
+      "inspeção final",
+      "liberado para exped",
+      "quantidade exped",
+      "quanto exped",
+      "pa finalizado",
+      "pa liberado"
+    ],
+    "excludeShippingContextMarkers": [
+      "expedicao",
+      "expedição",
+      "inspecao final",
+      "inspeção final",
+      "liberado para exped",
+      "shipping-status"
     ]
   },
   "exclusiveRawMaterialCatalog": {
@@ -386,6 +444,13 @@
       "bom exclusiv",
       "estrutura exclusiv",
       "componentes exclusiv"
+    ],
+    "exclusivityMarkers": [
+      "exclusiv",
+      "mp exclus",
+      "materia prima exclus",
+      "matéria-prima exclus",
+      "matéria prima exclus"
     ]
   },
   "directives": {
@@ -483,6 +548,11 @@
       "simular aumento",
       "simule aumento",
       "reajuste percentual"
+    ],
+    "scopeShorthandMarkers": [
+      "materia prima",
+      "materia-prima",
+      "mate prima"
     ]
   },
   "costImpactSimulation": {
@@ -517,6 +587,24 @@
       "visao fabril",
       "visão fabril",
       "factory-status"
+    ],
+    "costMarkers": [
+      "impacto de custo",
+      "impacto no custo",
+      "materiais que mais impactam",
+      "materiais que impactam",
+      "pareto",
+      "simular aumento",
+      "simule aumento",
+      "reajuste percentual",
+      "ranking custo"
+    ],
+    "excludeFactoryContextMarkers": [
+      "impacto",
+      "pareto",
+      "simul",
+      "reajuste",
+      "cost-impact"
     ]
   },
   "lastPurchase": {

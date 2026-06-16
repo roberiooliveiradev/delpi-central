@@ -165,6 +165,15 @@ class OperationalRouteRegistryService:
         return [str(item).strip() for item in predicates if str(item).strip()]
 
     @classmethod
+    def playbook_product_predicates(cls) -> list[str]:
+        predicates = _registry_content().get("playbookProductPredicates")
+
+        if not isinstance(predicates, list):
+            return []
+
+        return [str(item).strip() for item in predicates if str(item).strip()]
+
+    @classmethod
     def fallback_policies(cls) -> list[dict[str, Any]]:
         policies = _registry_content().get("fallbackPolicies")
 

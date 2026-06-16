@@ -508,6 +508,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Remover wrappers `ExternalActionProductRouteSelectionService` e `ExternalActionKpiRouteSelectionService` — lógica em `ExternalActionRouteSelectionService`
 - [x] Fase 11: `sessionRefinement` ativo — `ExternalActionSessionRefinementPhaseService` + `ExternalActionSelectionPreflightService`; dispatch enxuto (~220 linhas)
 - [x] Extrair priorização KPI de candidatos → `ExternalActionCandidatePrioritizationService` (vocabulário `actionSelection` JSON)
+- [x] `chat_product_query_intent_service`: playbook/refinement/codeFromHistory via registry + `product_query_intent.json`; novos predicates no matcher
 
 ---
 

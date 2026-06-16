@@ -135,6 +135,16 @@ def test_actionable_product_predicates_loaded_from_registry() -> None:
     assert "directives" in predicates
     assert "genericInvoiceRoute" in predicates
     assert "openOrdersRoute" in predicates
+    assert "productSummaryRoute" in predicates
+    assert "productSubIntentRoute" in predicates
+
+
+def test_playbook_product_predicates_loaded_from_registry() -> None:
+    predicates = OperationalRouteRegistryService.playbook_product_predicates()
+
+    assert "factoryStatus" in predicates
+    assert "priceAnalysisRoute" in predicates
+    assert predicates.index("directives") < predicates.index("factoryStatus")
 
 
 def test_lmp_routes_loaded_from_registry() -> None:
