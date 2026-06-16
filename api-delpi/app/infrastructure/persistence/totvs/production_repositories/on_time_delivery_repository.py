@@ -2,6 +2,7 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
+    SC2_MOTHER_OP_SEQUENCE_SQL,
     SC2_PA_PRODUCT_CODE_PREFIX_SQL,
 )
 from app.application.dto.production.get_production_otd_request import (
@@ -88,6 +89,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         qb.raw("OP.C2_DATRF IS NOT NULL")
         qb.date_range("OP.C2_DATPRF", start_date, end_date)
         qb.raw(SC2_PA_PRODUCT_CODE_PREFIX_SQL)
+        qb.raw(SC2_MOTHER_OP_SEQUENCE_SQL)
 
         return qb.build()
 
