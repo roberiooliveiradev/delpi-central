@@ -1370,25 +1370,26 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        operational_markers = (
-            cls._looks_like_directives_question,
-            cls._looks_like_sale_pricing_question,
-            cls._looks_like_cost_impact_simulation_question,
-            cls._looks_like_raw_material_price_intelligence_question,
-            cls._looks_like_last_purchase_question,
-            cls._looks_like_purchase_price_history_question,
-            cls._looks_like_purchase_budget_history_question,
-            cls._looks_like_factory_status_question,
-            cls._looks_like_production_status_question,
-            cls._looks_like_shipping_status_question,
-            cls._looks_like_structure_exclusivity_question,
-            cls._looks_like_billing_question,
-            cls._looks_like_price_analysis_question,
-            cls._looks_like_full_analyser_question,
-            cls._looks_like_exclusive_raw_material_catalog_question,
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
         )
 
-        if any(marker(normalized_text) for marker in operational_markers):
+        if any(
+            OperationalRouteMatcherService.matches_custom_predicate(
+                predicate,
+                normalized_text,
+            )
+            for predicate in OperationalRouteRegistryService.actionable_product_predicates()
+        ):
+            return True
+
+        if (
+            cls._looks_like_price_analysis_question(normalized_text)
+            or cls._looks_like_full_analyser_question(normalized_text)
+        ):
             return True
 
         from app.domain.services.chat_product_overview_intent_service import (
@@ -1475,6 +1476,16 @@ class ChatProductQueryIntentService:
 
         return any(
             term in normalized for term in cls._terms("invoices", "outboundTerms")
+        )
+
+    @classmethod
+    def _looks_like_generic_invoice_route_question(cls, normalized: str) -> bool:
+        if not cls._looks_like_invoices_route_question(normalized):
+            return False
+
+        return not (
+            cls._looks_like_inbound_invoice_route_question(normalized)
+            or cls._looks_like_outbound_invoice_route_question(normalized)
         )
 
     @classmethod

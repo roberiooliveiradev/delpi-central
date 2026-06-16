@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.8",
+  "version": "2026.06.9",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -7,6 +7,32 @@
     "intentBoundRoutes",
     "domainRoutes",
     "semanticFallback"
+  ],
+  "actionableProductPredicates": [
+    "directives",
+    "exclusiveRawMaterialCatalog",
+    "rawMaterialPriceIntelligence",
+    "costImpactSimulation",
+    "lastPurchase",
+    "purchasePriceHistory",
+    "purchaseBudgetHistory",
+    "factoryStatus",
+    "productionStatus",
+    "shippingStatus",
+    "structureExclusivity",
+    "billingRoute",
+    "genericPricingRoute",
+    "salePricingRoute",
+    "guideRoute",
+    "suppliersRoute",
+    "purchasesRoute",
+    "inspectionRoute",
+    "openOrdersRoute",
+    "customersRoute",
+    "internalMovementsRoute",
+    "genericInvoiceRoute",
+    "inboundInvoiceRoute",
+    "outboundInvoiceRoute"
   ],
   "routes": [
     {
@@ -546,6 +572,25 @@
       "route": {
         "pathMarkers": ["/outbound-invoice"],
         "operationIdMarkers": ["get_product_outbound_invoice_items"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productInvoicesGeneric",
+      "domain": "product",
+      "priority": 111,
+      "match": {
+        "customPredicate": "genericInvoiceRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/inbound-invoice", "/outbound-invoice"],
         "method": "GET"
       },
       "parameters": {

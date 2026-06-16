@@ -174,8 +174,9 @@ def test_operational_route_selection_sale_orders() -> None:
     catalog = ExternalActionProductRouteCatalogService(repository)
     service = ExternalActionOperationalRouteSelectionService(catalog)
 
-    selected = service.select_sale_orders(
+    selected = service.select(
         "Listar ordens de venda de março",
+        "listar ordens de venda de marco",
         allowed_action_ids=["sale-orders"],
         merge_date_parameters=lambda action, message, params: {
             **params,
@@ -429,6 +430,41 @@ def test_operational_route_selection_picks_inbound_invoice() -> None:
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "inbound-invoice"
+
+
+def test_operational_route_selection_picks_generic_invoice() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "inbound-invoice",
+                "method": "GET",
+                "path": "/products/{code}/inbound-invoice",
+                "operationId": "get_product_inbound_invoice_items",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "outbound-invoice",
+                "method": "GET",
+                "path": "/products/{code}/outbound-invoice",
+                "operationId": "get_product_outbound_invoice_items",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "notas fiscais do produto 90260142",
+        "notas fiscais do produto 90260142",
+        allowed_action_ids=["inbound-invoice", "outbound-invoice"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] in {
+        "inbound-invoice",
+        "outbound-invoice",
+    }
 
 
 def test_operational_route_selection_by_route_segment_continuation() -> None:

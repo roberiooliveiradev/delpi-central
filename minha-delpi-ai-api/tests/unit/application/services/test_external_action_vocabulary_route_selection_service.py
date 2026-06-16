@@ -7,9 +7,6 @@ from app.application.services.external_actions.external_action_product_route_sel
 from app.application.services.external_actions.external_action_operational_route_selection_service import (
     ExternalActionOperationalRouteSelectionService,
 )
-from app.application.services.external_actions.external_action_vocabulary_route_selection_service import (
-    ExternalActionVocabularyRouteSelectionService,
-)
 from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 
@@ -70,10 +67,9 @@ def test_select_product_full_without_scope_defers_to_semantic_ranking():
     assert selected is None
 
 
-def _vocabulary_service(repository) -> ExternalActionVocabularyRouteSelectionService:
+def _operational_service(repository) -> ExternalActionOperationalRouteSelectionService:
     catalog = ExternalActionProductRouteCatalogService(repository)
-    operational = ExternalActionOperationalRouteSelectionService(catalog)
-    return ExternalActionVocabularyRouteSelectionService(operational)
+    return ExternalActionOperationalRouteSelectionService(catalog)
 
 
 def test_select_vocabulary_fast_path_directives():
@@ -97,7 +93,7 @@ def test_select_vocabulary_fast_path_directives():
             },
         ]
     )
-    service = _vocabulary_service(repository)
+    service = _operational_service(repository)
 
     selected = service.select(
         "Diretivas 90260882",
@@ -137,7 +133,7 @@ def test_select_vocabulary_fast_path_directives_uses_catalog_when_candidates_mis
         "parametersSchema": [{"name": "code", "in": "path", "required": True}],
     }
     repository = _FakeRepository([*filler, directives, detail])
-    service = _vocabulary_service(repository)
+    service = _operational_service(repository)
 
     selected = service.select(
         "Diretivas 90260882",

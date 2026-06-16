@@ -37,6 +37,7 @@ class ExternalActionOperationalRouteSelectionService:
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
         build_date_branch_parameters: Callable[..., dict] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
         for route in OperationalRouteRegistryService.vocabulary_routes():
@@ -47,6 +48,7 @@ class ExternalActionOperationalRouteSelectionService:
                 allowed_action_ids,
                 candidates_loader=candidates_loader,
                 build_date_branch_parameters=build_date_branch_parameters,
+                merge_date_parameters=merge_date_parameters,
                 previous_messages=previous_messages,
             )
 

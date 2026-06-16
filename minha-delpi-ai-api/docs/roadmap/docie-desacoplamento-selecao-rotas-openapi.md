@@ -488,12 +488,12 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 ### Fase 8 — Dispatch declarativo
 
 - [ ] Interpretar `dispatchOrder` do registry em loop único (substituir ~25 blocos `if`)
-- [ ] Unificar `select_sale_orders` / `select_transforma` / `select_production_operational` no motor
-- [ ] Remover wrapper `ExternalActionVocabularyRouteSelectionService`
+- [x] Unificar `select_sale_orders` / `select_transforma` no motor vocabulary (`merge_date_parameters` no `select()`)
+- [x] Remover wrapper `ExternalActionVocabularyRouteSelectionService`
 
 ### Fase 9 — Eliminar ranking legado
 
-- [ ] NF genérica sem direção entrada/saída → registry ou política explícita
+- [x] NF genérica sem direção entrada/saída → registry (`productInvoicesGeneric` + `genericInvoiceRoute`)
 - [ ] Conflitos playbook restantes → `noneOf` / prioridade registry
 - [ ] Deletar `ExternalActionProductRouteRankingService` + wrapper `ExternalActionProductRouteSelectionService`
 
@@ -502,7 +502,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [ ] LMP + product search no registry
 - [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
 - [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
-- [ ] `has_actionable_product_route_intent` derivado do registry
+- [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)
 - [ ] Lint CI: termos só em JSON
 - [ ] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths`
 

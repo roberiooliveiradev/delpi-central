@@ -128,3 +128,12 @@ class OperationalRouteRegistryService:
             for route in routes
             if isinstance(route, dict) and str(route.get("intentBinding") or "").strip()
         ]
+
+    @classmethod
+    def actionable_product_predicates(cls) -> list[str]:
+        predicates = _registry_content().get("actionableProductPredicates")
+
+        if not isinstance(predicates, list):
+            return []
+
+        return [str(item).strip() for item in predicates if str(item).strip()]

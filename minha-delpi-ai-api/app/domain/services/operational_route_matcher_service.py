@@ -202,6 +202,9 @@ class OperationalRouteMatcherService:
         "outboundInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_outbound_invoice_route_question(
             normalized
         ),
+        "genericInvoiceRoute": lambda normalized: ChatProductQueryIntentService._looks_like_generic_invoice_route_question(
+            normalized
+        ),
         "customersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_customers_route_question(
             normalized
         ),
@@ -380,6 +383,12 @@ class OperationalRouteMatcherService:
     @classmethod
     def looks_like_transforma_question(cls, normalized: str) -> bool:
         return _looks_like_transforma_question(normalized)
+
+    @classmethod
+    def matches_custom_predicate(cls, predicate: str, normalized: str) -> bool:
+        matcher = cls._CUSTOM_PREDICATES.get(str(predicate or "").strip())
+
+        return bool(matcher and matcher(normalized))
 
     @classmethod
     def looks_like_system_metadata_question(cls, normalized: str) -> bool:

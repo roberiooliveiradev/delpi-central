@@ -479,39 +479,13 @@ class ExternalActionSelectionDispatchService:
             else:
                 bound_product_intent = ChatProductQueryIntent.DESCRIPTION
 
-        if OperationalRouteMatcherService.looks_like_sale_orders_list_question(
-            normalized
-        ):
-            selected = self._route_selection.select_sale_orders(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-                merge_date_parameters=self._merge_date_parameters,
-            )
-
-            if selected:
-                return selected
-
-        if OperationalRouteMatcherService.looks_like_transforma_question(
-            normalized
-        ):
-            selected = self._route_selection.select_transforma(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                candidates_loader=self._list_allowed_candidates,
-                build_date_branch_parameters=self._build_date_branch_parameters,
-            )
-
-            if selected:
-                return selected
-
         selected = self._route_selection.select_vocabulary_fast_path(
             message,
             normalized,
             allowed_action_ids=allowed_action_ids,
             candidates_loader=self._list_allowed_candidates,
             build_date_branch_parameters=self._build_date_branch_parameters,
+            merge_date_parameters=self._merge_date_parameters,
             previous_messages=previous_messages,
         )
 
