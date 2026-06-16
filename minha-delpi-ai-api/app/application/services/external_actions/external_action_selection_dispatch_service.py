@@ -511,6 +511,8 @@ class ExternalActionSelectionDispatchService:
             normalized,
             allowed_action_ids=allowed_action_ids,
             candidates_loader=self._list_allowed_candidates,
+            build_date_branch_parameters=self._build_date_branch_parameters,
+            previous_messages=previous_messages,
         )
 
         if selected:

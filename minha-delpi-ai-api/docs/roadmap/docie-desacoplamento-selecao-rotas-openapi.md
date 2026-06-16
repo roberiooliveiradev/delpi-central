@@ -1,9 +1,9 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fase 0–5 implementada; Fase 6 parcial (jun/2026) — vocabulário consolidado em `product_query_intent.json`, registry v2026.06.5 com guide/suppliers/purchases/pricing/billing/inspection  
+**Status:** Fase 0–6 concluída; **Fase 7 em curso** (jun/2026) — registry v2026.06.8: open-orders, KPI suprimentos/produção no motor operacional; ranking residual ~280 linhas  
 **Data:** jun/2026  
-**Commit de referência:** `519f3834` (remove fallback analyser + `vocabularyFastPaths` inicial)  
+**Commit de referência:** `d598efcc` (routeSegment + enxugamento ranking) · `c30ccc80` (smoke alinhado)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
 **Regras Cursor:** `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`, `clean-architecture-chat-api.mdc`
 
@@ -23,34 +23,48 @@ Tornar o **chat base** um roteador **generalista de qualquer provider OpenAPI** 
 
 ---
 
-## 2. Estado atual (pós `519f3834`)
+## 2. Estado atual (jun/2026)
 
-### 2.1 O que já melhorou
+### 2.1 Arquitetura vigente
+
+```text
+ExternalActionSelectionDispatchService (~760 linhas — ordem fixa, transição)
+  └── ExternalActionRouteSelectionService
+        ├── ExternalActionOperationalRouteSelectionService  ← motor registry (v2026.06.8)
+        ├── ExternalActionProductRouteSelectionService      ← wrapper ranking residual
+        ├── ExternalActionKpiRouteSelectionService          ← KPI dept. + fallback dashboards
+        ├── ExternalActionLmpRouteSelectionService
+        ├── ExternalActionProductSearchRouteSelectionService
+        ├── ExternalActionSqlRouteSelectionService
+        └── ExternalActionGenericRouteSelectionService      ← semântico
+```
 
 | Item | Situação |
 |------|----------|
-| Fallback `/analyser` em intent `FULL` ambíguo | **Removido** |
-| Intent `FULL` sem escopo | **Defer** → `select_generic` (semântico) |
-| Dispatch bloqueando fallback semântico | **Corrigido** (`if selected: return`) |
-| `vocabularyFastPaths` | **2 entradas** (directives, exclusiveRawMaterialCatalog) |
-| `ExternalActionVocabularyRouteSelectionService` | **Existe** — ainda acoplado a `_MATCHERS` Python |
+| `operational_route_registry.json` | **~50 rotas** — produto P0/PB15, domínios comercial/engenharia/system, suprimentos KPI (Fase 7) |
+| `vocabularyFastPaths` | **Esvaziado** — migrado para registry |
+| `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `customPredicate` allowlist |
+| Provider bias `api_delpi`/`api_externa` | **Removido** — desempate por `allowed_action_ids` |
+| Ranking legado FULL | **~280 linhas** — só ambiguidade (NF genérica, conflitos playbook, intents não registry) |
+| Continuação multi-turno | **`select_by_route_segment`** + `routeSegment` no registry |
 
 ### 2.2 Fluxo de seleção hoje (simplificado)
 
 ```mermaid
 flowchart TD
     A[Mensagem] --> B[ExternalActionSelectionDispatchService]
-    B --> C{SQL / desenho / refinamento / produção PB15}
+    B --> C{SQL / refinamento / desenho}
     C -->|sim| D[Fast path especializado]
-    C -->|não| E[Domínios: system / sale / transforma / vocabulary]
+    C -->|não| E[Registry vocabulary + PB15 + domínios]
     E --> F{product_code?}
-    F -->|sim| G[Blocos por ChatProductQueryIntent]
-    G --> H[ExternalActionProductRouteSelectionService._rank_product_actions]
-    F -->|não| I[KPI / search / generic semântico]
-    H -->|None| I
+    F -->|sim| G[intent-bound registry / routeSegment / ranking residual]
+    F -->|não| H[KPI dept. / LMP / search / genérico]
+    G -->|None| H
 ```
 
-**Problema:** a coluna central (`_rank_product_actions` + dezenas de `select_*`) concentra **~800 linhas** de acoplamento api-delpi.
+**Problema restante:** dispatch ainda imperativo; KPI departamental, LMP, search e SQL fora do registry.
+
+### 2.3 Estado legado (referência histórica pós `519f3834`)
 
 ---
 
@@ -460,6 +474,36 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] `select_by_route_segment` + `routeSegment` no registry — continuação multi-turno sem boosts no ranking
 - [x] Enxugar `ExternalActionProductRouteRankingService` — só desempate ambíguo (intents clássicos, NF genérica, conflitos playbook)
 
+### Fase 7 — KPI suprimentos + dashboards produção (jun/2026, em curso)
+
+- [x] `productOpenOrders` + `routeSegment: open-orders` + `routeSegment: billing`
+- [x] Registry `domainSupplies`: CPV, OTD compras, giro estoque, valor total estoque
+- [x] Registry `domainProductionKpi`: OTD detalhe, OEE detalhe/apontamento, eficiência fabril
+- [x] Vocabulary fast path com `build_date_branch_parameters` (parâmetros temporais KPI)
+- [ ] Migrar KPI departamental (`ChatDepartmentKpiIntentService` → registry `domainDepartmentKpi`)
+- [ ] Deprecar blocos duplicados em `ExternalActionKpiRouteSelectionService`
+
+### Fase 8 — Dispatch declarativo
+
+- [ ] Interpretar `dispatchOrder` do registry em loop único (substituir ~25 blocos `if`)
+- [ ] Unificar `select_sale_orders` / `select_transforma` / `select_production_operational` no motor
+- [ ] Remover wrapper `ExternalActionVocabularyRouteSelectionService`
+
+### Fase 9 — Eliminar ranking legado
+
+- [ ] NF genérica sem direção entrada/saída → registry ou política explícita
+- [ ] Conflitos playbook restantes → `noneOf` / prioridade registry
+- [ ] Deletar `ExternalActionProductRouteRankingService` + wrapper `ExternalActionProductRouteSelectionService`
+
+### Fase 10 — Domínios restantes + DoD
+
+- [ ] LMP + product search no registry
+- [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
+- [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
+- [ ] `has_actionable_product_route_intent` derivado do registry
+- [ ] Lint CI: termos só em JSON
+- [ ] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths`
+
 ---
 
 ## 8. Matriz de arquivos — o que muda
@@ -471,7 +515,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | `external_action_product_route_selection_service.py` | **Deprecar → deletar** (Fase 4) |
 | `external_action_production_operational_route_selection_service.py` | **Removido** (registry) |
 | `external_action_domain_route_selection_service.py` | **Removido** (registry + matcher) |
-| `external_action_kpi_route_selection_service.py` | **Deprecar → deletar** (Fase 3) |
+| `external_action_kpi_route_selection_service.py` | **Deprecar → deletar** (Fase 7–8) |
 | `external_action_selection_dispatch_service.py` | **Enxugar** — loop registry + refinamentos |
 | `chat_product_query_intent_service.py` | **Manter** detect/refine; reduzir `_looks_like_*` compostos |
 | `api_route_domains.json` | **Estender** domínios faltantes |
@@ -531,16 +575,14 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ## Apêndice A — Contagem de acoplamentos
 
-| Camada | Itens mapeados | 🔴 Críticos |
-|--------|----------------|-------------|
-| A — Dispatch | 10 | 3 |
-| B — Ranking produto | 35+ paths/scores | 28 |
-| C — Intent | 5 | 0 |
-| D — Serviços paralelos | 8 serviços | 0 (consolidar) |
-| E — JSON duplicado | 4 | 2 |
-| F — Apresentação | 2 | 0 |
-| G — Docs | 3 | 3 |
-| **Total** | **~67** | **~36** |
+| Camada | Itens mapeados | 🔴 Críticos | ✅ Resolvidos (jun/2026) |
+|--------|----------------|-------------|-------------------------|
+| A — Dispatch | 10 | 1 (ordem fixa) | SQL/refinamento isolados |
+| B — Ranking produto | 35+ | 0 paths ativos | ~28 migrados registry |
+| C — Intent | 5 | 1 (`has_actionable_*`) | C5 vocabulário |
+| D — Serviços paralelos | 8 | 4 (KPI/LMP/search/SQL) | domain/production PB15 |
+| E — JSON duplicado | 4 | 0 | productRouteRanking removido |
+| **Total restante** | **~15** | **~6** | **~61** |
 
 ---
 

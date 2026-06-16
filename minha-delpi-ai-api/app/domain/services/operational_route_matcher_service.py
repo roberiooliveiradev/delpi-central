@@ -60,6 +60,93 @@ def _system_wants_table_search(normalized: str) -> bool:
     return ChatSystemMetadataIntentService.wants_table_search(normalized)
 
 
+def _looks_like_supplies_otd_question(normalized: str) -> bool:
+    if not any(
+        term in normalized
+        for term in (
+            " otd",
+            "otd ",
+            "on-time delivery",
+            "entrega no prazo",
+            "entregas no prazo",
+        )
+    ) and not normalized.strip().startswith("otd"):
+        return False
+
+    supplies_markers = ("compra", "supriment", "fornecedor", "supplies")
+
+    return any(marker in normalized for marker in supplies_markers)
+
+
+def _looks_like_production_otd_detail_question(normalized: str) -> bool:
+    detail_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOtdDetailTerms",
+    )
+    production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
+
+    return any(term in normalized for term in detail_terms) and any(
+        term in normalized for term in production_terms
+    )
+
+
+def _looks_like_production_oee_detail_question(normalized: str) -> bool:
+    detail_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOeeDetailTerms",
+    )
+    oee_terms = (
+        "oee",
+        "eficiencia",
+        "eficiência",
+        "equipamento",
+        "equipamentos",
+        "zefici",
+    )
+    fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
+
+    return (
+        any(term in normalized for term in detail_terms)
+        and any(term in normalized for term in oee_terms)
+        and not any(term in normalized for term in fabril_block_terms)
+    )
+
+
+def _looks_like_production_oee_appointment_question(normalized: str) -> bool:
+    appointment_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionOeeAppointmentTerms",
+    )
+    oee_terms = (
+        "oee",
+        "eficiencia",
+        "eficiência",
+        "equipamento",
+        "equipamentos",
+        "zefici",
+    )
+    appointment_context_terms = (
+        "apontamento",
+        "apontamentos",
+        "sh6010",
+        "h6_zefici",
+    )
+
+    return any(term in normalized for term in appointment_terms) and (
+        any(term in normalized for term in oee_terms)
+        or any(term in normalized for term in appointment_context_terms)
+    )
+
+
+def _looks_like_production_eficiencia_fabril_question(normalized: str) -> bool:
+    fabril_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productionEficienciaFabrilTerms",
+    )
+
+    return any(term in normalized for term in fabril_terms)
+
+
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
         "directives": ChatProductQueryIntentService._looks_like_directives_question,
@@ -121,6 +208,14 @@ class OperationalRouteMatcherService:
         "internalMovementsRoute": lambda normalized: ChatProductQueryIntentService._looks_like_internal_movements_route_question(
             normalized
         ),
+        "openOrdersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_open_orders_route_question(
+            normalized
+        ),
+        "suppliesOtdRoute": _looks_like_supplies_otd_question,
+        "productionOtdDetailRoute": _looks_like_production_otd_detail_question,
+        "productionOeeDetailRoute": _looks_like_production_oee_detail_question,
+        "productionOeeAppointmentRoute": _looks_like_production_oee_appointment_question,
+        "productionEficienciaFabrilRoute": _looks_like_production_eficiencia_fabril_question,
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

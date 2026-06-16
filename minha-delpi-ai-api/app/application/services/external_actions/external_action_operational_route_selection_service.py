@@ -36,6 +36,8 @@ class ExternalActionOperationalRouteSelectionService:
         allowed_action_ids: list[str],
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         for route in OperationalRouteRegistryService.vocabulary_routes():
             selected = self._try_vocabulary_route(
@@ -44,6 +46,8 @@ class ExternalActionOperationalRouteSelectionService:
                 normalized,
                 allowed_action_ids,
                 candidates_loader=candidates_loader,
+                build_date_branch_parameters=build_date_branch_parameters,
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -556,5 +560,21 @@ class ExternalActionOperationalRouteSelectionService:
             )
 
             return ChatSystemMetadataIntentService.build_parameters(message, action)
+
+        if strategy == "supplies_stock":
+            parameters: dict = {}
+
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
+
+                if not name:
+                    continue
+
+                lowered = name.lower()
+
+                if lowered in {"top_limit", "limit"}:
+                    parameters[name] = 10
+
+            return parameters
 
         return None

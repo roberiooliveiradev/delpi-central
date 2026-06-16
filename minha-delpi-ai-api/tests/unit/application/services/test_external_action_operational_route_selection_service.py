@@ -220,6 +220,64 @@ def test_operational_route_selection_picks_product_guide() -> None:
     assert selected["arguments"]["parameters"]["code"] == "90260142"
 
 
+def test_operational_route_selection_picks_open_orders() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "open-orders",
+                "method": "GET",
+                "path": "/products/{code}/sales/open-orders",
+                "operationId": "get_product_sales_open_orders",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "carteira de pedidos em aberto do produto 10080047",
+        "carteira de pedidos em aberto do produto 10080047",
+        allowed_action_ids=["open-orders", "sales-summary"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "open-orders"
+
+
+def test_operational_route_selection_picks_supplies_cpv() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "parametersSchema": [{"name": "branch"}],
+            }
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "qual o CPV da filial 01 no último mês",
+        "qual o cpv da filial 01 no ultimo mes",
+        allowed_action_ids=["cpv"],
+        build_date_branch_parameters=lambda action, message, **kwargs: {"branch": "01"},
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "cpv"
+
+
 def test_operational_route_selection_picks_product_inspection() -> None:
     repository = _FakeRepository(
         [

@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.7",
+  "version": "2026.06.8",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -259,9 +259,31 @@
       }
     },
     {
+      "id": "productOpenOrders",
+      "domain": "product",
+      "priority": 123,
+      "routeSegment": "open-orders",
+      "match": {
+        "customPredicate": "openOrdersRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["open-orders"],
+        "operationIdMarkers": ["open_orders", "get_product_sales_open_orders"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
       "id": "productBilling",
       "domain": "product",
       "priority": 118,
+      "routeSegment": "billing",
       "match": {
         "customPredicate": "billingRoute",
         "requiresProductIdentifier": true
@@ -747,6 +769,120 @@
       },
       "parameters": { "strategy": "date_branch" },
       "presentation": { "reasonKey": "productionPlannedVsRealTime" }
+    },
+    {
+      "id": "suppliesCpv",
+      "domain": "domainSupplies",
+      "priority": 132,
+      "match": {
+        "termsFrom": "external_action_responses.actionSelection.kpiQuestions.cpvTerms"
+      },
+      "route": {
+        "pathMarkers": ["/supplies/cpv"],
+        "operationIdMarkers": ["cpv", "get_supplies_cpv"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "kpiCpv" }
+    },
+    {
+      "id": "suppliesOtd",
+      "domain": "domainSupplies",
+      "priority": 131,
+      "match": { "customPredicate": "suppliesOtdRoute" },
+      "route": {
+        "pathMarkers": ["/supplies/otd"],
+        "operationIdMarkers": ["otd", "get_supplies_otd"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "kpiOtd" }
+    },
+    {
+      "id": "suppliesInventoryTurnover",
+      "domain": "domainSupplies",
+      "priority": 130,
+      "match": {
+        "termsFrom": "external_action_responses.actionSelection.kpiQuestions.inventoryTurnoverTerms"
+      },
+      "route": {
+        "pathMarkers": ["/supplies/inventory-turnover"],
+        "operationIdMarkers": ["inventory_turnover", "inventory-turnover"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "kpiIdd" }
+    },
+    {
+      "id": "suppliesStockValue",
+      "domain": "domainSupplies",
+      "priority": 129,
+      "match": {
+        "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
+      },
+      "route": {
+        "pathMarkers": ["/supplies/stock-value"],
+        "operationIdMarkers": ["stock_value", "stock-value", "get_supplies_stock_value"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "supplies_stock" },
+      "presentation": { "reasonKey": "kpiStockValue" }
+    },
+    {
+      "id": "productionOtdDetail",
+      "domain": "domainProductionKpi",
+      "priority": 128,
+      "match": { "customPredicate": "productionOtdDetailRoute" },
+      "route": {
+        "pathMarkers": ["/production/otd"],
+        "operationIdMarkers": ["production_otd", "get_production_otd"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "departmentKpi" }
+    },
+    {
+      "id": "productionOeeDetail",
+      "domain": "domainProductionKpi",
+      "priority": 127,
+      "match": { "customPredicate": "productionOeeDetailRoute" },
+      "route": {
+        "pathMarkers": ["/production/oee"],
+        "excludePathMarkers": ["/appointments"],
+        "operationIdMarkers": ["production_oee", "get_production_oee"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "departmentKpi" }
+    },
+    {
+      "id": "productionOeeAppointment",
+      "domain": "domainProductionKpi",
+      "priority": 129,
+      "match": { "customPredicate": "productionOeeAppointmentRoute" },
+      "route": {
+        "pathMarkers": ["/production/oee/appointments"],
+        "operationIdMarkers": ["production_oee_appointment", "get_production_oee_appointment"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "departmentKpi" }
+    },
+    {
+      "id": "productionEficienciaFabril",
+      "domain": "domainProductionKpi",
+      "priority": 125,
+      "match": { "customPredicate": "productionEficienciaFabrilRoute" },
+      "route": {
+        "pathMarkers": ["/production/eficiencia-fabril/"],
+        "operationIdMarkers": [
+          "eficiencia_fabril_dashboard",
+          "get_eficiencia_fabril_dashboard"
+        ],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "departmentKpi" }
     },
     {
       "id": "commercialSaleOrders",

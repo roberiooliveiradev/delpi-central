@@ -1488,6 +1488,10 @@ class ChatProductQueryIntentService:
         )
 
     @classmethod
+    def _looks_like_open_orders_route_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._terms("openOrders", "terms"))
+
+    @classmethod
     def refine_operational_intent_from_full(
         cls,
         message: str,

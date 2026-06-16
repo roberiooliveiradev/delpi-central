@@ -358,12 +358,16 @@ class ExternalActionRouteSelectionService:
         allowed_action_ids: list[str],
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         return self._vocabulary_route.select(
             message,
             normalized,
             allowed_action_ids,
             candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            previous_messages=previous_messages,
         )
 
     def select_intent_bound_route(

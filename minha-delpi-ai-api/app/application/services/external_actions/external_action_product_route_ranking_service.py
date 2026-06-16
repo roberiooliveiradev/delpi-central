@@ -77,13 +77,9 @@ class ExternalActionProductRouteRankingService:
                 normalized
             )
         )
-        wants_open_orders = any(
-            term in normalized
-            for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
-        )
         wants_sales = ChatProductQueryIntentService._looks_like_sales_question(
             normalized
-        ) and not wants_open_orders and not wants_sale_pricing
+        ) and not wants_sale_pricing
 
         wants_product_overview = ChatProductOverviewIntentService.is_product_overview_message(
             message
@@ -229,10 +225,7 @@ class ExternalActionProductRouteRankingService:
             if wants_structure_exclusivity and "analyser" in haystack and not wants_full_analyser:
                 value -= 60
 
-            if wants_open_orders and "open-orders" in path:
-                value += 115
-
-            elif wants_sales and ExternalActionProductRouteRankingService.is_product_sales_summary_path(path):
+            if wants_sales and ExternalActionProductRouteRankingService.is_product_sales_summary_path(path):
                 value += 220
 
             elif wants_sales and "/sales" in path and "open-orders" not in path and "billing" not in path:

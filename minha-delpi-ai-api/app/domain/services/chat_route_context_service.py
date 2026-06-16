@@ -57,6 +57,7 @@ class ChatRouteContextService:
             "inbound-invoice",
             "outbound-invoice",
             "customers",
+            "open-orders",
             "raw-material-price-intelligence",
             "cost-impact-simulation",
             "last-purchase",
@@ -104,6 +105,15 @@ class ChatRouteContextService:
             ),
         ),
         ("customers", ("cliente do produto", "clientes do produto", "customer")),
+        (
+            "open-orders",
+            (
+                "carteira",
+                "pedidos em aberto",
+                "pedido em aberto",
+                "open-orders",
+            ),
+        ),
         (
             "raw-material-price-intelligence",
             (

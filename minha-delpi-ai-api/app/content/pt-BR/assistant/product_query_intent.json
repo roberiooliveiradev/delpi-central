@@ -191,6 +191,14 @@
     ],
     "productSaleTerms": ["vendas", " venda ", " venda do", "venda do"]
   },
+  "openOrders": {
+    "terms": [
+      "carteira",
+      "pedidos em aberto",
+      "pedido em aberto",
+      "open-orders"
+    ]
+  },
   "billing": {
     "terms": [
       "faturado",

@@ -521,10 +521,10 @@ Motor canônico para fast paths operacionais:
 | Componente | Papel |
 |------------|-------|
 | `operational_route_registry.json` | Catálogo declarativo (`dispatchOrder`, rotas por `priority`, `intentBinding`, `customPredicate`) |
-| `ExternalActionOperationalRouteSelectionService` | Resolve action + parâmetros a partir do registry |
+| `ExternalActionOperationalRouteSelectionService` | Motor registry — produto, PB15, suprimentos KPI, dashboards produção (v2026.06.8+) |
 | `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
 | `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
-| `ExternalActionProductRouteRankingService` | Desempate ambíguo pós-registry (intents clássicos, NF genérica, conflitos playbook) |
+| `ExternalActionProductRouteRankingService` | Desempate ambíguo pós-registry (NF genérica, conflitos playbook) |
 
 Ordem no dispatch: refinamentos de sessão → **registry** (`select_vocabulary_fast_path` / `select_by_intent`) → ranking FULL legado → semântico genérico.
 

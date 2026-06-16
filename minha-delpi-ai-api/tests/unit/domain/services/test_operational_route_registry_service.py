@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.7"
+    assert OperationalRouteRegistryService.version() == "2026.06.8"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -124,3 +124,5 @@ def test_vocabulary_routes_include_custom_predicate_intent_bound_entries() -> No
     assert "productInvoicesInbound" in vocabulary_ids
     assert "productInvoicesOutbound" in vocabulary_ids
     assert "productCustomers" in vocabulary_ids
+    assert "suppliesCpv" in vocabulary_ids
+    assert "productOpenOrders" in vocabulary_ids
