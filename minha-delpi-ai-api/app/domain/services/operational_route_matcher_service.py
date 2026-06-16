@@ -256,6 +256,22 @@ def _looks_like_product_search_with_group_code(normalized: str) -> bool:
     )
 
 
+def _department_kpi_resolved(normalized: str) -> bool:
+    from app.domain.services.chat_department_kpi_intent_service import (
+        ChatDepartmentKpiIntentService,
+    )
+
+    return bool(ChatDepartmentKpiIntentService.resolve(normalized))
+
+
+def _technical_normas_description_block(normalized: str) -> bool:
+    from app.domain.services.chat_technical_description_intent_service import (
+        ChatTechnicalDescriptionIntentService,
+    )
+
+    return ChatTechnicalDescriptionIntentService.requires_normas_knowledge(normalized)
+
+
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
         "saleOrdersList": _looks_like_sale_orders_list_question,
@@ -271,27 +287,8 @@ class OperationalRouteMatcherService:
         "lmpCatchAll": _looks_like_lmp_catch_all,
         "productSearchQuestion": _looks_like_product_search_question,
         "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
-        "structureQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_structure_question(
-            normalized
-        ),
-        "stockQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_stock_question(
-            normalized
-        ),
-        "salesQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_sales_question(
-            normalized
-        ),
-        "parentsQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_parents_question(
-            normalized
-        ),
-        "descriptionQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_description_question(
-            normalized
-        ),
-        "productSubIntentRoute": lambda normalized: ChatProductQueryIntentService._looks_like_product_sub_intent(
-            normalized
-        ),
-        "stockScopeResetQuestion": lambda normalized: ChatProductQueryIntentService._looks_like_stock_scope_reset_question(
-            normalized
-        ),
+        "departmentKpiResolved": _department_kpi_resolved,
+        "technicalNormasDescriptionBlock": _technical_normas_description_block,
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,
@@ -394,6 +391,39 @@ class OperationalRouteMatcherService:
             ):
                 return False
 
+        regex_patterns_from = str(spec.get("regexPatternsFrom") or "").strip()
+
+        if regex_patterns_from:
+            patterns = cls._resolve_terms(regex_patterns_from)
+
+            if not patterns or not any(
+                re.search(str(pattern), normalized)
+                for pattern in patterns
+                if str(pattern or "").strip()
+            ):
+                return False
+
+        plural_scope = str(spec.get("pluralScopeLinked") or "").strip()
+
+        if plural_scope:
+            from app.domain.services.chat_product_plural_phrasing_service import (
+                ChatProductPluralPhrasingService,
+            )
+
+            if not ChatProductPluralPhrasingService.matches_scope_linked_to_products(
+                normalized,
+                scope=plural_scope,
+            ):
+                return False
+
+        if spec.get("hasProductEntityReference"):
+            from app.domain.services.chat_product_plural_phrasing_service import (
+                ChatProductPluralPhrasingService,
+            )
+
+            if not ChatProductPluralPhrasingService.has_product_entity_reference(normalized):
+                return False
+
         if spec.get("lacksProductIdentifier"):
             if ChatProductQueryIntentService.extract_product_code(message or ""):
                 return False
@@ -416,6 +446,9 @@ class OperationalRouteMatcherService:
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
             and not spec.get("lacksProductIdentifier")
+            and not plural_scope
+            and not spec.get("hasProductEntityReference")
+            and not regex_patterns_from
             and not (
                 isinstance(regex_patterns, list) and regex_patterns
             )

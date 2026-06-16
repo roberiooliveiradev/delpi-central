@@ -831,52 +831,15 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_stock_scope_reset_question(cls, normalized: str) -> bool:
-        return any(
-            term in normalized for term in cls._terms("stock", "scopeReset")
-        )
+        return cls._matches_product_predicate("stockScopeResetQuestion", normalized)
 
     @classmethod
     def _looks_like_sales_question(cls, normalized: str) -> bool:
-        if cls._looks_like_sale_pricing_question(normalized):
-            return False
+        return cls._matches_product_predicate("salesQuestion", normalized)
 
-        if cls._looks_like_stock_question(normalized):
-            return False
-
-        if any(
-            term in normalized for term in cls._terms("sales", "excludeBilling")
-        ):
-            return False
-
-        from app.domain.services.chat_department_kpi_intent_service import (
-            ChatDepartmentKpiIntentService,
-        )
-
-        if ChatDepartmentKpiIntentService.resolve(normalized):
-            return False
-
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
-        )
-
-        if any(
-            term in normalized for term in cls._terms("sales", "explicitPhrases")
-        ):
-            return True
-
-        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
-            normalized,
-            scope="sales",
-        ):
-            return True
-
-        has_product_ref = ChatProductPluralPhrasingService.has_product_entity_reference(
-            normalized
-        )
-
-        return has_product_ref and any(
-            term in normalized for term in cls._terms("sales", "productSaleTerms")
-        )
+    @classmethod
+    def _looks_like_stock_question(cls, normalized: str) -> bool:
+        return cls._matches_product_predicate("stockQuestion", normalized)
 
     @classmethod
     def _has_product_scope_reference(cls, normalized: str) -> bool:
@@ -952,26 +915,6 @@ class ChatProductQueryIntentService:
         return cls._matches_product_predicate("purchaseBudgetHistory", normalized)
 
     @classmethod
-    def _looks_like_stock_question(cls, normalized: str) -> bool:
-        if any(
-            term in normalized
-            for term in cls._terms("stock", "excludeAggregateWithoutCode")
-        ) and not cls.extract_product_code(normalized):
-            return False
-
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
-        )
-
-        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
-            normalized,
-            scope="stock",
-        ):
-            return True
-
-        return any(term in normalized for term in cls._terms("stock", "terms"))
-
-    @classmethod
     def _looks_like_generic_product_analysis_question(cls, normalized: str) -> bool:
         """«Analise produto …» sem escopo operacional explícito → analyser integrado."""
         if "produt" not in normalized:
@@ -1045,24 +988,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_description_question(cls, normalized: str) -> bool:
-        from app.domain.services.chat_technical_description_intent_service import (
-            ChatTechnicalDescriptionIntentService,
-        )
-
-        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(normalized):
-            return False
-
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
-        )
-
-        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
-            normalized,
-            scope="description",
-        ):
-            return True
-
-        return any(term in normalized for term in cls._terms("description", "terms"))
+        return cls._matches_product_predicate("descriptionQuestion", normalized)
 
     @classmethod
     def has_actionable_product_route_intent(
@@ -1226,44 +1152,12 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_parents_question(cls, normalized: str) -> bool:
-        if re.search(
-            r"\bonde\b(?:\s+(?:o|os|a|as|esse|este)\s+(?:produto|produtos|item|itens))?\s+.*?\b(?:e\s+)?usad[oa]s?\b",
-            normalized,
-        ):
-            return True
-
-        if re.search(r"\bonde\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b", normalized):
-            return True
-
-        if re.search(
-            r"\bem\s+quais\s+produtos\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b",
-            normalized,
-        ):
-            return True
-
-        if re.search(
-            r"\bem\s+quais\s+itens\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b",
-            normalized,
-        ):
-            return True
-
-        return any(term in normalized for term in cls._terms("parents", "terms"))
+        return cls._matches_product_predicate("parentsQuestion", normalized)
 
     @classmethod
     def _looks_like_structure_question(cls, normalized: str) -> bool:
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
-        )
-
-        return ChatProductPluralPhrasingService.matches_scope_linked_to_products(
-            normalized,
-            scope="structure",
-        )
+        return cls._matches_product_predicate("structureQuestion", normalized)
 
     @classmethod
     def _looks_like_product_sub_intent(cls, normalized: str) -> bool:
-        """Reconhece perguntas sobre aspectos específicos de um produto que
-        implicam necessidade de código (ex: 'qual o roteiro?', 'fornecedores?')."""
-        return any(
-            term in normalized for term in cls._terms("productSubIntent", "terms")
-        )
+        return cls._matches_product_predicate("productSubIntentRoute", normalized)

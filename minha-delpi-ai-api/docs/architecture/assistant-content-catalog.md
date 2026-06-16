@@ -30,12 +30,11 @@ Wrappers especializados (mantêm API estável):
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
 | `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions; **`selectionReasons`** (motivos de rota OpenAPI); **`actionSelection`** (termos OTD suprimentos/produção, listagem OPs, LMP ranking) | `ExternalActionResponseContentService`, `external_action_*_route_selection_service` |
-| `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, rotas, predicados, intent binding) | `OperationalRouteRegistryService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
-| `operational_route_registry.json` | **DOCIE Fase 0–1:** catálogo declarativo de fast paths OpenAPI (`routes`, `dispatchOrder`, `match.termsFrom` / `customPredicate`, `route.pathMarkers`, `parameters.strategy`) | `OperationalRouteRegistryService`, `OperationalRouteMatcherService`, `ExternalActionOperationalRouteSelectionService` |
+| `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, ~78 rotas, predicados, intent binding) | `OperationalRouteRegistryService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
+| `product_query_intent.json` | Marcadores de intenção operacional; **`routePredicates`**, **`playbookPredicates`**, **`subIntentPredicates`** (DOCIE Fase 11–12); vocabulário em seções (`directives`, `purchases`, `factoryStatus`, …) | `ChatProductQueryIntentService`, `ChatProductRoutePredicateService`, `OperationalRouteMatcherService` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `product_query_intent.json` | Marcadores de intenção operacional de produto (incl. `directives`, `purchases`, `invoices`, `suppliers`, `inspection`, roteiro/preço em `router.*`) | `ChatProductQueryIntentService`, `OperationalRouteMatcherService`, ranking legado FULL |
 | `api_route_domains.json` | Domínios de rota operacional (incl. `product_directives`) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
@@ -125,7 +124,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
 - KPI por fragmento de path → `presenter_content.kpiPathMatchers` + `kpiTitles`
 - Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`
-- Intenção de consulta de produto (estoque, vendas, pais, resumo, etc.) → `product_query_intent.json` (regex de código e pais permanecem no serviço)
+- Intenção de consulta de produto (estoque, vendas, pais, resumo, playbook) → `product_query_intent.json` (`routePredicates`, `playbookPredicates`, `subIntentPredicates`); regex de pais em `parents.regexPatterns`; plural via matcher `pluralScopeLinked`
 - Resumos de texto de parents/estrutura → `presenter_content.routeNarratives`
 - Visão geral do produto → `product_overview_intent.json`
 - Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`

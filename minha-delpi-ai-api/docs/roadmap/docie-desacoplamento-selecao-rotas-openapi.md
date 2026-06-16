@@ -1,9 +1,9 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fase 0–6 concluída; **Fase 7 em curso** (jun/2026) — registry v2026.06.8: open-orders, KPI suprimentos/produção no motor operacional; ranking residual ~280 linhas  
+**Status:** Fases 0–11 concluídas; **Fase 12 em curso** (jun/2026) — predicados produto 100% JSON (`routePredicates` + `playbookPredicates`); sub-intents clássicos + `_CUSTOM_PREDICATES` residual (~15 entradas KPI/LMP/sistema)  
 **Data:** jun/2026  
-**Commit de referência:** `d598efcc` (routeSegment + enxugamento ranking) · `c30ccc80` (smoke alinhado)  
+**Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
 **Regras Cursor:** `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`, `clean-architecture-chat-api.mdc`
 
@@ -28,24 +28,27 @@ Tornar o **chat base** um roteador **generalista de qualquer provider OpenAPI** 
 ### 2.1 Arquitetura vigente
 
 ```text
-ExternalActionSelectionDispatchService (~760 linhas — ordem fixa, transição)
-  └── ExternalActionRouteSelectionService
-        ├── ExternalActionOperationalRouteSelectionService  ← motor registry (v2026.06.8)
-        ├── ExternalActionProductRouteSelectionService      ← wrapper ranking residual
-        ├── ExternalActionKpiRouteSelectionService          ← KPI dept. + fallback dashboards
-        ├── ExternalActionProductSearchRouteSelectionService (helpers — sem select legado)
-        ├── ExternalActionSqlRouteSelectionService
-        └── ExternalActionGenericRouteSelectionService      ← semântico
+ExternalActionSelectionDispatchService (~250 linhas — preflight + loop registry)
+  └── ExternalActionSelectionPreflightService (SQL / authoring guards)
+  └── ExternalActionRegistryDispatchPhaseService (dispatchOrder declarativo)
+        └── ExternalActionRouteSelectionService
+              └── ExternalActionOperationalRouteSelectionService  ← motor registry (~78 rotas)
+              ├── ExternalActionGenericRouteSelectionService      ← fallback semântico
+              ├── ExternalActionSqlRouteSelectionService          ← sql_until_rest
+              └── ExternalActionRefinementRouteSelectionService   ← paginação/profundidade
 ```
 
 | Item | Situação |
 |------|----------|
-| `operational_route_registry.json` | **~50 rotas** — produto P0/PB15, domínios comercial/engenharia/system, suprimentos KPI (Fase 7) |
-| `vocabularyFastPaths` | **Esvaziado** — migrado para registry |
-| `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `customPredicate` allowlist |
+| `operational_route_registry.json` | **~78 rotas** — produto playbook, intents clássicos, PB15, domínios, KPI, LMP, search |
+| `vocabularyFastPaths` | **Removido** — migrado para `operationalRoutes` no registry |
+| `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `ChatProductRoutePredicateService` |
+| `routePredicates` / `playbookPredicates` | **JSON** em `product_query_intent.json` — rotas operacionais + playbook produto |
+| `_CUSTOM_PREDICATES` residual | **~15 entradas** — KPI detalhe, LMP, system metadata, helpers (`departmentKpiResolved`, …) |
+| Ranking legado FULL | **Removido** — `ExternalActionProductRouteRankingService` deletado |
 | Provider bias `api_delpi`/`api_externa` | **Removido** — desempate por `allowed_action_ids` |
-| Ranking legado FULL | **~280 linhas** — só ambiguidade (NF genérica, conflitos playbook, intents não registry) |
 | Continuação multi-turno | **`select_by_route_segment`** + `routeSegment` no registry |
+| `chat_product_query_intent_service` | Playbook/rota via JSON; `detect()`/`refine()` ainda orquestram em Python |
 
 ### 2.2 Fluxo de seleção hoje (simplificado)
 
@@ -61,7 +64,7 @@ flowchart TD
     G -->|None| H
 ```
 
-**Problema restante:** dispatch ainda imperativo; KPI departamental, LMP, search e SQL fora do registry.
+**Problema restante:** `_CUSTOM_PREDICATES` KPI/LMP/sistema; `detect()`/`refine()` em Python; apresentação ainda keyed por api-delpi (`ChatApiDelpiResponseProfileService`); homologação manual DoD §11 pendente.
 
 ### 2.3 Estado legado (referência histórica pós `519f3834`)
 
@@ -510,6 +513,28 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Extrair priorização KPI de candidatos → `ExternalActionCandidatePrioritizationService` (vocabulário `actionSelection` JSON)
 - [x] `chat_product_query_intent_service`: playbook/refinement/codeFromHistory via registry + `product_query_intent.json`; novos predicates no matcher
 
+### Fase 11 — Predicados declarativos produto (jun/2026)
+
+- [x] `routePredicates` + `playbookPredicates` em `product_query_intent.json`
+- [x] `ChatProductRoutePredicateService` — carrega specs e delega ao matcher
+- [x] Matcher: `anyOf` composicional, `excludeTermsUnless`, `regexPatterns`, `lacksProductIdentifier`
+- [x] Rotas operacionais (`purchasesRoute`, NF, guide, …) 100% JSON
+- [x] Playbook produto (directives, factory/shipping, preço MP, exclusividade, …) 100% JSON
+- [x] Lint: allowlist unifica registry + `routePredicates` + `playbookPredicates`
+
+### Fase 12 — Sub-intents clássicos + fechamento DoD (em curso)
+
+- [x] `subIntentPredicates` — stock, sales, structure, parents, description, stockScopeReset, productSubIntent
+- [x] Matcher: `pluralScopeLinked`, `hasProductEntityReference`, `regexPatternsFrom`
+- [x] Reduzir `_CUSTOM_PREDICATES` a KPI/LMP/sistema (~15 entradas)
+- [ ] Homologação manual: `docs/testing/smoke-operacional-manual.md`
+- [x] Atualizar `inteligencia-chat-onda-8.md`, audit e catalog (este doc)
+
+### Fase 13 — Apresentação provider-agnóstica (backlog)
+
+- [ ] Renomear/generalizar `ChatApiDelpiResponseProfileService` → perfil operacional OpenAPI
+- [ ] Presenters keyed por `meta.entity`, não path api-delpi
+
 ---
 
 ## 8. Matriz de arquivos — o que muda
@@ -560,12 +585,14 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ## 11. Definição de pronto (DoD)
 
-1. **Zero** path api-delpi em `_rank_product_actions` (arquivo removido).
-2. **Zero** entradas em `_MATCHERS` Python.
-3. **Zero** métodos `select_product_*` / `select_exclusive_*` no dispatch.
-4. Novo provider OpenAPI funciona **sem alterar Python** — só JSON + import OpenAPI + allowed actions do agente.
-5. Documentação onda 8 / audit / catalog atualizadas.
-6. Homologação manual: `docs/testing/smoke-operacional-manual.md` — seção produto + PB15.
+| # | Critério | Status jun/2026 |
+|---|----------|-----------------|
+| 1 | **Zero** path api-delpi em ranking legado (`ExternalActionProductRouteRankingService` removido) | ✅ |
+| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers/KPI/LMP/sistema | 🟡 ~15 entradas |
+| 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
+| 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
+| 5 | Documentação onda 8 / audit / catalog atualizadas | 🟡 em curso |
+| 6 | Homologação manual produto + PB15 | ⬜ pendente |
 
 ---
 
@@ -583,16 +610,18 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ---
 
-## Apêndice A — Contagem de acoplamentos
+## Apêndice A — Contagem de acoplamentos (jun/2026)
 
-| Camada | Itens mapeados | 🔴 Críticos | ✅ Resolvidos (jun/2026) |
-|--------|----------------|-------------|-------------------------|
-| A — Dispatch | 10 | 1 (ordem fixa) | SQL/refinamento isolados |
-| B — Ranking produto | 35+ | 0 paths ativos | ~28 migrados registry |
-| C — Intent | 5 | 1 (`has_actionable_*`) | C5 vocabulário |
-| D — Serviços paralelos | 8 | 4 (KPI/LMP/search/SQL) | domain/production PB15 |
-| E — JSON duplicado | 4 | 0 | productRouteRanking removido |
-| **Total restante** | **~15** | **~6** | **~61** |
+| Camada | Situação | Restante |
+|--------|----------|----------|
+| A — Dispatch | Loop `dispatchOrder` + preflight SQL | SQL template (`sql_until_rest`) — policy |
+| B — Ranking produto | Removido | — |
+| C — Intent produto | Playbook/rota JSON | sub-intents + `detect()` |
+| D — Serviços paralelos | Consolidados no motor operacional | refinamento + semântico (necessários) |
+| E — JSON duplicado | `productRouteRanking` removido | — |
+| F — Apresentação | Presenters api-delpi | Fase 13 |
+| **DOCIE seleção rotas** | **~88%** | Fase 12 + homologação |
+| **Stack chat provider-agnóstica** | **~72%** | + Fase 13 apresentação |
 
 ---
 

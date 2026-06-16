@@ -449,6 +449,62 @@
       ]
     }
   },
+  "subIntentPredicates": {
+    "stockScopeResetQuestion": {
+      "termsFrom": "product_query_intent.stock.scopeReset"
+    },
+    "stockQuestion": {
+      "noneOf": [
+        {
+          "allOf": [
+            { "termsFrom": "product_query_intent.stock.excludeAggregateWithoutCode" },
+            { "lacksProductIdentifier": true }
+          ]
+        }
+      ],
+      "anyOf": [
+        { "pluralScopeLinked": "stock" },
+        { "termsFrom": "product_query_intent.stock.terms" }
+      ]
+    },
+    "salesQuestion": {
+      "noneOf": [
+        { "customPredicate": "salePricingRoute" },
+        { "customPredicate": "stockQuestion" },
+        { "termsFrom": "product_query_intent.sales.excludeBilling" },
+        { "customPredicate": "departmentKpiResolved" }
+      ],
+      "anyOf": [
+        { "termsFrom": "product_query_intent.sales.explicitPhrases" },
+        { "pluralScopeLinked": "sales" },
+        {
+          "allOf": [
+            { "hasProductEntityReference": true },
+            { "termsFrom": "product_query_intent.sales.productSaleTerms" }
+          ]
+        }
+      ]
+    },
+    "structureQuestion": {
+      "pluralScopeLinked": "structure"
+    },
+    "parentsQuestion": {
+      "anyOf": [
+        { "regexPatternsFrom": "product_query_intent.parents.regexPatterns" },
+        { "termsFrom": "product_query_intent.parents.terms" }
+      ]
+    },
+    "descriptionQuestion": {
+      "noneOf": [{ "customPredicate": "technicalNormasDescriptionBlock" }],
+      "anyOf": [
+        { "pluralScopeLinked": "description" },
+        { "termsFrom": "product_query_intent.description.terms" }
+      ]
+    },
+    "productSubIntentRoute": {
+      "termsFrom": "product_query_intent.productSubIntent.terms"
+    }
+  },
   "stock": {
     "lineTokens": [
       "filial",
@@ -1158,6 +1214,12 @@
     ]
   },
   "parents": {
+    "regexPatterns": [
+      "\\bonde\\b(?:\\s+(?:o|os|a|as|esse|este)\\s+(?:produto|produtos|item|itens))?\\s+.*?\\b(?:e\\s+)?usad[oa]s?\\b",
+      "\\bonde\\s+(?:sao|e|estao|estão)\\s+usad[oa]s?\\b",
+      "\\bem\\s+quais\\s+produtos\\s+(?:sao|e|estao|estão)\\s+usad[oa]s?\\b",
+      "\\bem\\s+quais\\s+itens\\s+(?:sao|e|estao|estão)\\s+usad[oa]s?\\b"
+    ],
     "terms": [
       "onde sao usados",
       "onde são usados",

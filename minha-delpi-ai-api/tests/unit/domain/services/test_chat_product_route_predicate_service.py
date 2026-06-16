@@ -93,3 +93,25 @@ def test_shipping_status_matches_expedicao_with_product_scope():
     )
 
     assert ChatProductRoutePredicateService.matches("shippingStatus", normalized)
+
+
+def test_sub_intent_stock_and_sales_predicates():
+    stock = ChatMessageNormalizationService.normalize_for_matching(
+        "estoque do produto 10080001"
+    )
+    sale_price = ChatMessageNormalizationService.normalize_for_matching(
+        "Qual o preço de venda do produto 10080001?"
+    )
+
+    assert ChatProductRoutePredicateService.matches("stockQuestion", stock)
+    assert not ChatProductRoutePredicateService.matches("salesQuestion", stock)
+    assert ChatProductRoutePredicateService.matches("salePricingRoute", sale_price)
+    assert not ChatProductRoutePredicateService.matches("salesQuestion", sale_price)
+
+
+def test_parents_question_regex_from_json():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "onde o produto 90269002 e usado"
+    )
+
+    assert ChatProductRoutePredicateService.matches("parentsQuestion", normalized)

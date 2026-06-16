@@ -10,7 +10,7 @@ from app.domain.services.operational_route_matcher_service import (
 
 class ChatProductRoutePredicateService:
     _BUNDLE = "product_query_intent"
-    _SECTIONS = ("routePredicates", "playbookPredicates")
+    _SECTIONS = ("routePredicates", "playbookPredicates", "subIntentPredicates")
 
     @classmethod
     def registered_predicates(cls) -> frozenset[str]:
