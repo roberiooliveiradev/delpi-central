@@ -518,6 +518,17 @@ class ExternalActionSelectionDispatchService:
         if selected:
             return selected
 
+        selected = self._route_selection.select_department_kpi(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=self._list_allowed_candidates,
+            build_date_branch_parameters=self._build_date_branch_parameters,
+            previous_messages=previous_messages,
+        )
+
+        if selected:
+            return selected
+
         if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
             normalized,
             extract_sale_number=self._extract_sale_number,

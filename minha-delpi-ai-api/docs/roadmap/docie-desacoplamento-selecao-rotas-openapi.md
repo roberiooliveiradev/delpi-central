@@ -480,8 +480,10 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Registry `domainSupplies`: CPV, OTD compras, giro estoque, valor total estoque
 - [x] Registry `domainProductionKpi`: OTD detalhe, OEE detalhe/apontamento, eficiência fabril
 - [x] Vocabulary fast path com `build_date_branch_parameters` (parâmetros temporais KPI)
-- [ ] Migrar KPI departamental (`ChatDepartmentKpiIntentService` → registry `domainDepartmentKpi`)
-- [ ] Deprecar blocos duplicados em `ExternalActionKpiRouteSelectionService`
+- [x] `select_by_department_kpi` no motor operacional (ponte `ChatDepartmentKpiIntentService` → registry virtual)
+- [x] Dispatch chama KPI departamental via motor operacional; `ExternalActionKpiRouteSelectionService` reduzido a refinamentos
+- [ ] Exportar regras `_RULES` de `ChatDepartmentKpiIntentService` para JSON no registry
+- [ ] Deprecar `ChatDepartmentKpiIntentService._RULES` Python quando JSON cobrir 100%
 
 ### Fase 8 — Dispatch declarativo
 

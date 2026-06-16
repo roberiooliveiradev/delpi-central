@@ -1,13 +1,13 @@
-"""Seleção de KPIs departamentais e de suprimentos — Fase 3B lote 17."""
+"""Seleção de KPIs departamentais — refinamentos e fallback (DOCIE Fase 7).
+
+Fast paths de suprimentos, dashboards produção e KPI departamental migraram para
+``operational_route_registry`` + ``select_by_department_kpi`` no motor operacional.
+"""
 
 from __future__ import annotations
 
 from typing import Callable
 
-from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
-from app.domain.services.chat_department_kpi_intent_service import (
-    ChatDepartmentKpiIntentService,
-)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -26,238 +26,6 @@ class ExternalActionKpiRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        selected = self._try_select_production_dashboard_detail(
-            message,
-            normalized,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            candidates_loader=candidates_loader,
-        )
-
-        if selected:
-            return selected
-
-        if self.looks_like_cpv_question(normalized):
-            selected = self.select_supplies_metric(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token="cpv",
-                operation_token="cpv",
-                reason=ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "kpiCpv",
-                ),
-                previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
-            )
-
-            if selected:
-                return selected
-
-        if self.looks_like_otd_question(normalized):
-            department_otd = ChatDepartmentKpiIntentService.resolve(message)
-            path_token = str(getattr(department_otd, "path_token", "") or "").lower()
-
-            if department_otd and ("otd" in path_token or "on_time" in path_token):
-                selected = self.select_department_kpi(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    match=department_otd,
-                    previous_messages=previous_messages,
-                    candidates_loader=candidates_loader,
-                )
-
-                if selected:
-                    return selected
-
-            selected = self.select_supplies_metric(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token="otd",
-                operation_token="otd",
-                reason=ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "kpiOtd",
-                ),
-                previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
-            )
-
-            if selected:
-                return selected
-
-        if self.looks_like_inventory_turnover_question(normalized):
-            selected = self.select_supplies_metric(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                path_token="inventory-turnover",
-                operation_token="inventory_turnover",
-                reason=ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "kpiIdd",
-                ),
-                previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
-            )
-
-            if selected:
-                return selected
-
-        if self.looks_like_supplies_stock_kpi(normalized):
-            selected = self.select_supplies_stock_value(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=candidates_loader,
-            )
-
-            if selected:
-                return selected
-
-        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
-
-        if department_kpi:
-            return self.select_department_kpi(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                match=department_kpi,
-                previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
-            )
-
-        return None
-
-    def _try_select_production_dashboard_detail(
-        self,
-        message: str,
-        normalized: str,
-        *,
-        allowed_action_ids: list[str],
-        previous_messages: list | None = None,
-        candidates_loader: Callable[..., list[dict]] | None = None,
-    ) -> dict | None:
-        production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
-        oee_terms = (
-            "oee",
-            "eficiencia",
-            "eficiência",
-            "equipamento",
-            "equipamentos",
-            "zefici",
-        )
-        appointment_context_terms = (
-            "apontamento",
-            "apontamentos",
-            "sh6010",
-            "h6_zefici",
-        )
-        fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
-
-        dashboard_specs: list[OperationalApiRouteSpec] = []
-
-        detail_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productionOtdDetailTerms",
-        )
-
-        if any(term in normalized for term in detail_terms) and any(
-            term in normalized for term in production_terms
-        ):
-            dashboard_specs.append(
-                OperationalApiRouteSpec(
-                    domain="department_kpi",
-                    reason=ExternalActionResponseContentService.get(
-                        "selectionReasons",
-                        "departmentKpi",
-                        default="Indicador departamental reconhecido na pergunta.",
-                    ),
-                    path_tokens=("otd",),
-                    path_prefixes=("/production/",),
-                    operation_tokens=("production_otd",),
-                    parameter_strategy="date_branch",
-                )
-            )
-
-        oee_detail_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productionOeeDetailTerms",
-        )
-
-        if any(term in normalized for term in oee_detail_terms) and any(
-            term in normalized for term in oee_terms
-        ):
-            if not any(term in normalized for term in fabril_block_terms):
-                dashboard_specs.append(
-                    OperationalApiRouteSpec(
-                        domain="department_kpi",
-                        reason=ExternalActionResponseContentService.get(
-                            "selectionReasons",
-                            "departmentKpi",
-                            default="Indicador departamental reconhecido na pergunta.",
-                        ),
-                        path_tokens=("oee",),
-                        path_prefixes=("/production/",),
-                        operation_tokens=("production_oee",),
-                        parameter_strategy="date_branch",
-                    )
-                )
-
-        appointment_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productionOeeAppointmentTerms",
-        )
-
-        if any(term in normalized for term in appointment_terms) and (
-            any(term in normalized for term in oee_terms)
-            or any(term in normalized for term in appointment_context_terms)
-        ):
-            dashboard_specs.append(
-                OperationalApiRouteSpec(
-                    domain="department_kpi",
-                    reason=ExternalActionResponseContentService.get(
-                        "selectionReasons",
-                        "departmentKpi",
-                        default="Indicador departamental reconhecido na pergunta.",
-                    ),
-                    path_tokens=("oee", "appointments"),
-                    path_prefixes=("/production/",),
-                    operation_tokens=("production_oee_appointment",),
-                    parameter_strategy="date_branch",
-                )
-            )
-
-        fabril_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productionEficienciaFabrilTerms",
-        )
-
-        if any(term in normalized for term in fabril_terms):
-            dashboard_specs.append(
-                OperationalApiRouteSpec(
-                    domain="department_kpi",
-                    reason=ExternalActionResponseContentService.get(
-                        "selectionReasons",
-                        "departmentKpi",
-                        default="Indicador departamental reconhecido na pergunta.",
-                    ),
-                    path_tokens=("eficiencia-fabril", "dashboard"),
-                    path_prefixes=("/production/",),
-                    operation_tokens=("eficiencia_fabril_dashboard",),
-                    parameter_strategy="date_branch",
-                )
-            )
-
-        for spec in dashboard_specs:
-            selected = self._route_selection.select(
-                spec,
-                message=message,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                fallback_candidates_loader=candidates_loader,
-            )
-
-            if selected:
-                return selected
-
         return None
 
     def select_metric_refinement(
@@ -270,21 +38,25 @@ class ExternalActionKpiRouteSelectionService:
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
         if refinement.metric_kind == "supplies" and refinement.metric_path_token:
-            return self.select_supplies_metric(
-                message,
-                allowed_action_ids=allowed_action_ids,
+            spec = self._supplies_metric_spec(
                 path_token=str(refinement.metric_path_token),
-                operation_token=str(refinement.metric_path_token),
                 reason=refinement.reason
                 or ExternalActionResponseContentService.get(
                     "selectionReasons",
                     "kpiMetricRefinementDefault",
                 ),
+            )
+
+            return self._route_selection.select(
+                spec,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
+                fallback_candidates_loader=candidates_loader,
             )
 
         if refinement.metric_kind == "department_kpi" and refinement.metric_path_token:
+            from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
             from app.domain.services.chat_department_kpi_intent_service import (
                 DepartmentKpiMatch,
             )
@@ -299,12 +71,12 @@ class ExternalActionKpiRouteSelectionService:
                 ),
             )
 
-            return self.select_department_kpi(
-                message,
-                allowed_action_ids,
-                match=match,
+            return self._route_selection.select(
+                OperationalApiRouteSpec.from_department_kpi(match),
+                message=message,
+                allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
-                candidates_loader=candidates_loader,
+                fallback_candidates_loader=candidates_loader,
             )
 
         return None
@@ -318,158 +90,22 @@ class ExternalActionKpiRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        spec = OperationalApiRouteSpec.from_department_kpi(match)
+        from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
 
         return self._route_selection.select(
-            spec,
+            OperationalApiRouteSpec.from_department_kpi(match),
             message=message,
             allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
             fallback_candidates_loader=candidates_loader,
         )
 
-    def select_supplies_metric(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-        *,
-        path_token: str,
-        operation_token: str,
-        reason: str,
-        previous_messages: list | None = None,
-        candidates_loader: Callable[..., list[dict]] | None = None,
-    ) -> dict | None:
-        spec = OperationalApiRouteSpec.from_supplies_metric(
+    @staticmethod
+    def _supplies_metric_spec(*, path_token: str, reason: str):
+        from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
+
+        return OperationalApiRouteSpec.from_supplies_metric(
             path_token=path_token,
-            operation_token=operation_token,
+            operation_token=path_token,
             reason=reason,
         )
-
-        return self._route_selection.select(
-            spec,
-            message=message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            fallback_candidates_loader=candidates_loader,
-        )
-
-    def select_supplies_stock_value(
-        self,
-        message: str,
-        allowed_action_ids: list[str],
-        *,
-        candidates_loader: Callable[..., list[dict]],
-    ) -> dict | None:
-        candidates = candidates_loader(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=80,
-        )
-
-        for action in sorted(
-            candidates,
-            key=lambda item: self._score_supplies_stock_action(item),
-            reverse=True,
-        ):
-            if action.get("method") != "GET":
-                continue
-
-            path = str(action.get("path") or "").lower()
-
-            if "stock-value" not in path and "stock_value" not in str(
-                action.get("operationId") or ""
-            ).lower():
-                continue
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": self._build_supplies_stock_parameters(action),
-                },
-                "reason": ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "kpiStockValue",
-                ),
-            }
-
-        return None
-
-    @staticmethod
-    def looks_like_cpv_question(value: str) -> bool:
-        terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "kpiQuestions",
-            "cpvTerms",
-        )
-
-        return any(term in value for term in terms)
-
-    @staticmethod
-    def looks_like_otd_question(value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                " otd",
-                "otd ",
-                "on-time delivery",
-                "entrega no prazo",
-                "entregas no prazo",
-            )
-        ) or value.strip().startswith("otd")
-
-    @staticmethod
-    def looks_like_inventory_turnover_question(value: str) -> bool:
-        terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "kpiQuestions",
-            "inventoryTurnoverTerms",
-        )
-
-        return any(term in value for term in terms)
-
-    @staticmethod
-    def looks_like_supplies_stock_kpi(value: str) -> bool:
-        terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "kpiQuestions",
-            "suppliesStockTerms",
-        )
-
-        return any(term in value for term in terms)
-
-    @staticmethod
-    def _score_supplies_stock_action(action: dict) -> int:
-        haystack = " ".join(
-            str(action.get(key) or "")
-            for key in ["path", "summary", "description", "operationId"]
-        ).lower()
-        value = 0
-
-        if "stock-value" in haystack or "get_supplies_stock_value" in haystack:
-            value += 100
-
-        if "/supplies/" in haystack:
-            value += 20
-
-        if "/products/" in haystack:
-            value -= 80
-
-        return value
-
-    @staticmethod
-    def _build_supplies_stock_parameters(action: dict) -> dict:
-        parameters = {}
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if lowered in {"top_limit", "limit"}:
-                parameters[name] = 10
-
-        return parameters

@@ -351,6 +351,23 @@ class ExternalActionRouteSelectionService:
             path_lookup_loader=path_lookup_loader,
         )
 
+    def select_department_kpi(
+        self,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        return self._operational_route.select_by_department_kpi(
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            previous_messages=previous_messages,
+        )
+
     def select_vocabulary_fast_path(
         self,
         message: str,

@@ -55,6 +55,80 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_by_department_kpi(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
+        from app.domain.services.chat_department_kpi_intent_service import (
+            ChatDepartmentKpiIntentService,
+        )
+
+        match = ChatDepartmentKpiIntentService.resolve(message)
+
+        if not match:
+            return None
+
+        spec = OperationalApiRouteSpec.from_department_kpi(match)
+        route = self._virtual_department_kpi_route(spec)
+
+        selected = self._resolve_route_action(
+            route,
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            previous_messages=previous_messages,
+            build_date_branch_parameters=build_date_branch_parameters,
+        )
+
+        if selected and spec.reason:
+            selected["reason"] = spec.reason
+
+        return selected
+
+    @staticmethod
+    def _virtual_department_kpi_route(spec) -> dict:
+        path_markers: list[str] = []
+
+        for token in spec.path_tokens:
+            normalized_token = str(token or "").strip().lower()
+
+            if not normalized_token:
+                continue
+
+            if normalized_token.startswith("/"):
+                path_markers.append(normalized_token)
+                continue
+
+            for prefix in spec.path_prefixes:
+                path_markers.append(
+                    f"{str(prefix).rstrip('/').lower()}/{normalized_token}"
+                )
+
+            if not spec.path_prefixes:
+                path_markers.append(normalized_token)
+
+        for prefix in spec.path_prefixes:
+            normalized_prefix = str(prefix or "").strip().lower()
+
+            if normalized_prefix and normalized_prefix not in path_markers:
+                path_markers.append(normalized_prefix)
+
+        return {
+            "presentation": {"reasonKey": "departmentKpi"},
+            "parameters": {"strategy": spec.parameter_strategy},
+            "route": {
+                "pathMarkers": path_markers or list(spec.path_prefixes),
+                "operationIdMarkers": list(spec.operation_tokens),
+                "method": spec.method,
+            },
+        }
+
     def select_by_intent(
         self,
         message: str,

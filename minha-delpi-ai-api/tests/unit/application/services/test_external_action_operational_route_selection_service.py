@@ -278,6 +278,63 @@ def test_operational_route_selection_picks_supplies_cpv() -> None:
     assert selected["arguments"]["actionId"] == "cpv"
 
 
+def test_operational_route_selection_department_kpi_ebitda() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "ebitda",
+                "method": "GET",
+                "path": "/financial/ebitda_pct",
+                "operationId": "get_ebitda_pct",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "rol-fin",
+                "method": "GET",
+                "path": "/financial/rol",
+                "operationId": "get_rol",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_by_department_kpi(
+        "qual o ebitda do último trimestre",
+        allowed_action_ids=["ebitda", "rol-fin"],
+        build_date_branch_parameters=lambda action, message, **kwargs: {},
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "ebitda"
+
+
+def test_operational_route_selection_department_kpi_closing_rate() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "closing",
+                "method": "GET",
+                "path": "/commercial/closing-rate",
+                "operationId": "get_sales_conversion_rate",
+                "parametersSchema": [],
+            }
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_by_department_kpi(
+        "taxa de conversão de vendas",
+        allowed_action_ids=["closing"],
+        build_date_branch_parameters=lambda action, message, **kwargs: {},
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "closing"
+
+
 def test_operational_route_selection_picks_product_inspection() -> None:
     repository = _FakeRepository(
         [
