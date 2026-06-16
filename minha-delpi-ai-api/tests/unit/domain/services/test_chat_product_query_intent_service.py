@@ -189,6 +189,23 @@ def test_looks_like_structure_exclusivity_question():
     assert ChatProductQueryIntentService._looks_like_structure_exclusivity_question(normalized)
 
 
+def test_looks_like_directives_question_with_delpi_code():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Diretivas 90260882"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_directives_question(normalized)
+    assert not ChatProductQueryIntentService._looks_like_last_purchase_question(normalized)
+
+
+def test_looks_like_directives_question_with_customer_reference():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Diretivas 10018137"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_directives_question(normalized)
+
+
 def test_looks_like_exclusive_raw_material_catalog_question():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "Quais matérias-primas são exclusivas?"

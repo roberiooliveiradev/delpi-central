@@ -417,6 +417,16 @@
         "icms da última compra",
         "last-purchase"
       ],
+      "directivesTerms": [
+        "diretiva",
+        "diretivas",
+        "referencia do cliente",
+        "referência do cliente",
+        "codigo delpi",
+        "código delpi",
+        "products/directives",
+        "get_product_directives"
+      ],
       "purchasePriceHistoryTerms": [
         "historico de preco de compra",
         "histórico de preço de compra",
@@ -593,6 +603,7 @@
     "departmentKpi": "Indicador departamental reconhecido na pergunta.",
     "saleOrdersList": "A pergunta solicita listagem de ordens de venda.",
     "exclusiveRawMaterialCatalog": "A pergunta solicita o catálogo global de matérias-primas exclusivas via OpenAPI.",
+    "productDirectives": "A pergunta solicita diretivas do produto (referência do cliente ou código DELPI) com estrutura, fornecedores e última compra das MPs via OpenAPI.",
     "productionConsumptionTopItems": "A pergunta solicita ranking de itens mais consumidos na produção via OpenAPI.",
     "purchasesTopProducts": "A pergunta solicita ranking de produtos mais comprados via OpenAPI.",
     "productionLossesTopMaterials": "A pergunta solicita ranking de matérias-primas com mais refugo/scrap via OpenAPI.",

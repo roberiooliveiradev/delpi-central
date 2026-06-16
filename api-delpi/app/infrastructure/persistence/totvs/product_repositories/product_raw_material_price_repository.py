@@ -1,9 +1,10 @@
 from app.domain.ports.product.product_raw_material_price_repository_port import (
     ProductRawMaterialPriceRepositoryPort,
 )
+from app.domain.services.production.purchase_validity_filter_service import (
+    PurchaseValidityFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
-
-_INTERNAL_SUPPLIERS = ("000019", "001149")
 
 
 class ProductRawMaterialPriceRepository(
@@ -36,7 +37,7 @@ class ProductRawMaterialPriceRepository(
         branch: str | None = None,
     ) -> dict | None:
         branch_filter = "AND SD1.D1_FILIAL = ?" if branch else ""
-        params: list = [code, *_INTERNAL_SUPPLIERS]
+        params: list = [code, *PurchaseValidityFilterService.supplier_filter_params()]
         if branch:
             params.append(branch)
 
@@ -108,6 +109,90 @@ class ProductRawMaterialPriceRepository(
         with self as repo:
             return repo.execute_one(sql, tuple(params))
 
+    def fetch_last_purchases_for_codes(
+        self,
+        codes: list[str],
+        branch: str | None = None,
+    ) -> list[dict]:
+        cleaned_codes = [str(code).strip() for code in codes if str(code).strip()]
+
+        if not cleaned_codes:
+            return []
+
+        placeholders = ", ".join("?" for _ in cleaned_codes)
+        branch_filter = "AND SD1.D1_FILIAL = ?" if branch else ""
+        params: list = [
+            *cleaned_codes,
+            *PurchaseValidityFilterService.supplier_filter_params(),
+        ]
+        if branch:
+            params.append(branch)
+
+        sql = f"""
+        WITH ULTIMA_NF AS (
+            SELECT
+                SD1.D1_FILIAL AS branch,
+                SD1.D1_COD AS product_code,
+                SD1.D1_DOC AS invoice_number,
+                SD1.D1_SERIE AS invoice_series,
+                SD1.D1_EMISSAO AS issue_date,
+                SD1.D1_DTDIGIT AS entry_date,
+                SD1.D1_FORNECE AS supplier_code,
+                SD1.D1_LOJA AS supplier_store,
+                SD1.D1_QUANT AS quantity,
+                SD1.D1_VUNIT AS unit_price,
+                SD1.D1_TOTAL AS total_value,
+                SD1.D1_VALICM AS icms_value,
+                SD1.D1_PICM AS icms_rate,
+                SD1.D1_PEDIDO AS purchase_order,
+                SA2.A2_NOME AS supplier_name,
+                SA2.A2_CGC AS supplier_tax_id,
+                SA2.A2_EST AS supplier_state,
+                A5.A5_CODPRF AS supplier_part_number,
+                ROW_NUMBER() OVER (
+                    PARTITION BY SD1.D1_COD
+                    ORDER BY
+                        SD1.D1_EMISSAO DESC,
+                        SD1.D1_DTDIGIT DESC,
+                        SD1.D1_DOC DESC
+                ) AS rn
+            FROM SD1010 SD1 WITH (NOLOCK)
+            {PurchaseValidityFilterService.supplier_join_sql()}
+            LEFT JOIN SA5010 A5 WITH (NOLOCK)
+                ON A5.A5_PRODUTO = SD1.D1_COD
+               AND A5.A5_FORNECE = SD1.D1_FORNECE
+               AND A5.A5_LOJA = SD1.D1_LOJA
+               AND A5.D_E_L_E_T_ = ''
+            WHERE SD1.D_E_L_E_T_ = ''
+              AND SD1.D1_COD IN ({placeholders})
+              {PurchaseValidityFilterService.supplier_filter_sql()}
+              {branch_filter}
+        )
+        SELECT
+            branch,
+            product_code,
+            invoice_number,
+            invoice_series,
+            issue_date,
+            entry_date,
+            supplier_code,
+            supplier_store,
+            quantity,
+            unit_price,
+            total_value,
+            icms_value,
+            icms_rate,
+            purchase_order,
+            supplier_name,
+            supplier_tax_id,
+            supplier_state,
+            supplier_part_number
+        FROM ULTIMA_NF
+        WHERE rn = 1
+        """
+        with self as repo:
+            return repo.execute_batch_query(sql, tuple(params))
+
     def fetch_purchase_price_history(
         self,
         code: str,
@@ -117,7 +202,13 @@ class ProductRawMaterialPriceRepository(
         limit: int = 24,
     ) -> list[dict]:
         branch_filter = "AND SD1.D1_FILIAL = ?" if branch else ""
-        params: list = [limit, code, date_start, date_end_exclusive, *_INTERNAL_SUPPLIERS]
+        params: list = [
+            limit,
+            code,
+            date_start,
+            date_end_exclusive,
+            *PurchaseValidityFilterService.supplier_filter_params(),
+        ]
         if branch:
             params.append(branch)
 

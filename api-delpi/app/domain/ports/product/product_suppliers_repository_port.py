@@ -14,3 +14,7 @@ class ProductSuppliersRepositoryPort(ABC):
         page_size: int
     ) -> Page[Supplier]:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_suppliers_for_codes(self, codes: list[str]) -> list[dict]:
+        raise NotImplementedError

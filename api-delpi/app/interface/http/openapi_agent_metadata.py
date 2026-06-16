@@ -232,6 +232,18 @@ PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE = agent_route(
     operation_id="get_product_raw_material_price_intelligence",
 )
 
+PRODUCT_DIRECTIVES = agent_route(
+    summary="Diretivas do produto (referência cliente ou código DELPI)",
+    description=(
+        "Resolve um PA pelo código DELPI (9026xxxx) ou pela referência do cliente (SB1010.B1_REFEREN) "
+        "e retorna visão integrada: código DELPI, estrutura multinível, matérias-primas, "
+        "fornecedores com part number (SA5010) e última NF de compra válida de cada MP (SD1010). "
+        "Use para perguntas como «diretivas 90260882», «diretivas 10018137», "
+        "«referência do cliente», «BOM com fornecedores e última compra»."
+    ),
+    operation_id="get_product_directives",
+)
+
 PRODUCT_STOCK = agent_route(
     summary="Estoque do produto por filial e local",
     description=(

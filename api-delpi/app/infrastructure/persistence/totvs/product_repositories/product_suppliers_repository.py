@@ -176,3 +176,69 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
             page=paging["page"],
             page_size=paging["page_size"]
         )
+
+    def list_suppliers_for_codes(self, codes: list[str]) -> list[dict]:
+        cleaned_codes = [str(code).strip() for code in codes if str(code).strip()]
+
+        if not cleaned_codes:
+            return []
+
+        placeholders = ", ".join("?" for _ in cleaned_codes)
+        params = tuple(cleaned_codes * 2)
+
+        sql = f"""
+        WITH LAST_PURCHASE AS (
+            SELECT
+                C7.C7_PRODUTO   AS product_code,
+                C7.C7_FORNECE   AS supplier_code,
+                C7.C7_LOJA      AS supplier_store,
+                C7.C7_PRECO     AS last_price,
+                C7.C7_EMISSAO   AS last_price_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY
+                        C7.C7_PRODUTO,
+                        C7.C7_FORNECE,
+                        C7.C7_LOJA
+                    ORDER BY
+                        C7.C7_EMISSAO DESC
+                ) AS rn
+            FROM SC7010 C7 WITH (NOLOCK)
+            WHERE
+                C7.D_E_L_E_T_ = ''
+                AND C7.C7_PRODUTO IN ({placeholders})
+        )
+
+        SELECT
+            SB1.B1_COD      AS product_code,
+            SB1.B1_DESC     AS product_description,
+            SB1.B1_UM       AS unit,
+            SA5.A5_FORNECE  AS supplier_code,
+            SA5.A5_LOJA     AS supplier_store,
+            SA2.A2_NOME     AS supplier_name,
+            SA5.A5_CODPRF   AS supplier_part_number,
+            SA5.A5_CODPRCA  AS catalog_code,
+            SA5.A5_CODBAR   AS barcode,
+            SA5.A5_LEAD_T   AS registered_lead_time_days,
+            LP.last_price   AS last_price,
+            LP.last_price_date AS last_price_date
+        FROM SA5010 SA5 WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SA5.A5_PRODUTO
+           AND SB1.D_E_L_E_T_ = ''
+        LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+            ON SA2.A2_COD = SA5.A5_FORNECE
+           AND SA2.A2_LOJA = SA5.A5_LOJA
+           AND SA2.D_E_L_E_T_ = ''
+        LEFT JOIN LAST_PURCHASE LP
+            ON LP.product_code = SA5.A5_PRODUTO
+           AND LP.supplier_code = SA5.A5_FORNECE
+           AND LP.supplier_store = SA5.A5_LOJA
+           AND LP.rn = 1
+        WHERE
+            SA5.D_E_L_E_T_ = ''
+            AND SA5.A5_PRODUTO IN ({placeholders})
+        ORDER BY SA5.A5_PRODUTO, SA5.A5_FORNECE, SA5.A5_LOJA
+        """
+
+        with self as repo:
+            return repo.execute_batch_query(sql, params)

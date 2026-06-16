@@ -15,6 +15,7 @@ EXPECTED_CHAT_OPERATION_IDS = {
     "get_product_sales_billing",
     "search_products",
     "get_product_structure",
+    "get_product_directives",
     "get_product_stock",
     "get_product_analyser",
     "get_lmps_dashboard_summary",

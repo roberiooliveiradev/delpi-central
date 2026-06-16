@@ -155,10 +155,17 @@ class ExternalActionProductRouteSelectionService:
                 continue
 
             if parameters:
-                reason = ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "productOperational",
-                )
+                path = str(action.get("path") or "").lower()
+                if "/directives/" in path:
+                    reason = ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "productDirectives",
+                    )
+                else:
+                    reason = ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "productOperational",
+                    )
 
                 if branch_code := (
                     ChatOperationalRefinementService.extract_branch_code(
@@ -215,6 +222,9 @@ class ExternalActionProductRouteSelectionService:
             ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
                 normalized
             )
+        )
+        wants_directives = ChatProductQueryIntentService._looks_like_directives_question(
+            normalized
         )
         wants_sale_pricing = ChatProductQueryIntentService._looks_like_sale_pricing_question(
             normalized
@@ -390,6 +400,8 @@ class ExternalActionProductRouteSelectionService:
             wants_purchase_price_history = True
         elif inherited_segment == "purchase-budget-history":
             wants_purchase_budget_history = True
+        elif inherited_segment == "directives":
+            wants_directives = True
 
         has_specific_sub_intent = (
             wants_purchases or wants_sales or wants_open_orders or wants_structure
@@ -405,6 +417,7 @@ class ExternalActionProductRouteSelectionService:
             or wants_last_purchase
             or wants_purchase_price_history
             or wants_purchase_budget_history
+            or wants_directives
             or wants_product_summary
             or wants_product_overview
             or wants_full_analyser
@@ -420,6 +433,7 @@ class ExternalActionProductRouteSelectionService:
             or wants_last_purchase
             or wants_purchase_price_history
             or wants_purchase_budget_history
+            or wants_directives
             or wants_sale_pricing
             or wants_price_analysis
         )
@@ -456,6 +470,9 @@ class ExternalActionProductRouteSelectionService:
 
             if wants_cost_impact_simulation and "cost-impact-simulation" in path:
                 value += 150
+
+            if wants_directives and "/directives/" in path:
+                value += 165
 
             if wants_last_purchase and "last-purchase" in path:
                 value += 140
@@ -502,6 +519,15 @@ class ExternalActionProductRouteSelectionService:
                 or wants_purchase_budget_history
             ) and "/pricing" in path and not wants_sale_pricing:
                 value -= 90
+
+            if wants_directives and "/structure" in path and "/directives/" not in path:
+                value -= 120
+
+            if wants_directives and "last-purchase" in path and "/directives/" not in path:
+                value -= 120
+
+            if wants_directives and "/suppliers" in path and "/directives/" not in path:
+                value -= 120
 
             if wants_last_purchase and "/purchases" in path and "last-purchase" not in path:
                 value -= 80
@@ -902,6 +928,11 @@ class ExternalActionProductRouteSelectionService:
                 "produto",
                 "item",
                 "id",
+                "identifier",
+                "referencia",
+                "referência",
+                "customer_reference",
+                "delpi_code",
             }:
                 parameters[name] = code
 

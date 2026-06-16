@@ -931,6 +931,60 @@ SELECTION_CASES = [
         "expected_action_id": "last-purchase",
     },
     {
+        "message": "Diretivas 90260882",
+        "actions": [
+            {
+                "actionId": "directives",
+                "method": "GET",
+                "path": "/products/directives/{identifier}",
+                "operationId": "get_product_directives",
+                "summary": "Diretivas do produto (referência cliente ou código DELPI)",
+                "parametersSchema": [{"name": "identifier"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura (BOM) do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "suppliers",
+                "method": "GET",
+                "path": "/products/{code}/suppliers",
+                "operationId": "get_product_suppliers",
+                "summary": "Fornecedores do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "directives",
+        "expected_parameters": {"identifier": "90260882"},
+    },
+    {
+        "message": "Diretivas 10018137",
+        "actions": [
+            {
+                "actionId": "directives",
+                "method": "GET",
+                "path": "/products/directives/{identifier}",
+                "operationId": "get_product_directives",
+                "summary": "Diretivas do produto (referência cliente ou código DELPI)",
+                "parametersSchema": [{"name": "identifier"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura (BOM) do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "directives",
+        "expected_parameters": {"identifier": "10018137"},
+    },
+    {
         "message": "Histórico de orçamento de compra do produto 10080001",
         "actions": [
             {

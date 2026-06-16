@@ -268,3 +268,42 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             page=paging["page"],
             page_size=paging["page_size"]
         )
+
+    def fetch_product_by_code(self, code: str) -> dict | None:
+        sql = """
+        SELECT TOP 1
+            SB1.B1_COD AS product_code,
+            SB1.B1_DESC AS description,
+            SB1.B1_TIPO AS product_type,
+            SB1.B1_UM AS unit,
+            SB1.B1_GRUPO AS group_code,
+            SB1.B1_REFEREN AS customer_reference
+        FROM SB1010 SB1 WITH (NOLOCK)
+        WHERE SB1.D_E_L_E_T_ = ''
+          AND SB1.B1_COD = ?
+        """
+        with self as repo:
+            return repo.execute_one(sql, (code,))
+
+    def fetch_product_by_customer_reference(self, reference: str) -> dict | None:
+        sql = """
+        SELECT TOP 1
+            SB1.B1_COD AS product_code,
+            SB1.B1_DESC AS description,
+            SB1.B1_TIPO AS product_type,
+            SB1.B1_UM AS unit,
+            SB1.B1_GRUPO AS group_code,
+            SB1.B1_REFEREN AS customer_reference
+        FROM SB1010 SB1 WITH (NOLOCK)
+        WHERE SB1.D_E_L_E_T_ = ''
+          AND SB1.B1_REFEREN = ?
+        ORDER BY
+            CASE
+                WHEN SB1.B1_TIPO = 'PA' AND SB1.B1_COD LIKE '9026%' THEN 0
+                WHEN SB1.B1_TIPO = 'PA' THEN 1
+                ELSE 2
+            END,
+            SB1.B1_COD
+        """
+        with self as repo:
+            return repo.execute_one(sql, (reference,))

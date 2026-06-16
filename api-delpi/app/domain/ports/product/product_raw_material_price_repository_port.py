@@ -16,6 +16,14 @@ class ProductRawMaterialPriceRepositoryPort(ABC):
         ...
 
     @abstractmethod
+    def fetch_last_purchases_for_codes(
+        self,
+        codes: list[str],
+        branch: str | None = None,
+    ) -> list[dict]:
+        ...
+
+    @abstractmethod
     def fetch_purchase_price_history(
         self,
         code: str,

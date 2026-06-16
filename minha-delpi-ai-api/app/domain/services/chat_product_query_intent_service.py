@@ -91,6 +91,9 @@ class ChatProductQueryIntentService:
         if cls._looks_like_purchase_budget_history_question(normalized):
             return ChatProductQueryIntent.FULL
 
+        if cls._looks_like_directives_question(normalized):
+            return ChatProductQueryIntent.FULL
+
         if cls._looks_like_factory_status_question(normalized):
             return ChatProductQueryIntent.FULL
 
@@ -1177,7 +1180,19 @@ class ChatProductQueryIntentService:
         return any(marker in lowered for marker in cost_markers)
 
     @classmethod
+    def _looks_like_directives_question(cls, normalized: str) -> bool:
+        if not any(term in normalized for term in cls._terms("directives", "terms")):
+            return False
+
+        return cls.extract_product_code(normalized) is not None or cls._has_product_scope_reference(
+            normalized
+        )
+
+    @classmethod
     def _looks_like_last_purchase_question(cls, normalized: str) -> bool:
+        if cls._looks_like_directives_question(normalized):
+            return False
+
         if cls._looks_like_raw_material_price_intelligence_question(normalized):
             return False
 

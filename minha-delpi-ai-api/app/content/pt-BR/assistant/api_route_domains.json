@@ -4,7 +4,13 @@
     "product": {
       "label": "Produto",
       "pathMarkers": ["/products/{code}", "/products/"],
-      "excludePathMarkers": ["/products/search"],
+      "excludePathMarkers": ["/products/search", "/products/directives/"],
+      "parameterStrategy": "product_code",
+      "method": "GET"
+    },
+    "product_directives": {
+      "label": "Diretivas do produto",
+      "pathMarkers": ["/products/directives/"],
       "parameterStrategy": "product_code",
       "method": "GET"
     },

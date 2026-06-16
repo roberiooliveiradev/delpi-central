@@ -34,6 +34,7 @@ from app.application.dto.product.product_raw_material_price_request import (
 from app.application.dto.product.exclusive_raw_material_catalog_request import (
     ExclusiveRawMaterialCatalogRequest,
 )
+from app.application.dto.product.product_directives_request import ProductDirectivesRequest
 
 from app.interface.http.openapi_agent_metadata import (
     PRODUCT_ANALYSER,
@@ -63,6 +64,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_PURCHASE_BUDGET_HISTORY,
     PRODUCT_RAW_MATERIAL_PRICE_INTELLIGENCE,
     EXCLUSIVE_RAW_MATERIALS_CATALOG,
+    PRODUCT_DIRECTIVES,
     PRODUCT_SUMMARY,
     PRODUCT_SUPPLIERS,
 )
@@ -124,6 +126,7 @@ from app.composition.product_composer import (
     build_get_product_purchase_budget_history_use_case,
     build_get_product_raw_material_price_intelligence_use_case,
     build_list_exclusive_raw_materials_catalog_use_case,
+    build_get_product_directives_use_case,
     )
 
 
@@ -229,6 +232,54 @@ def list_exclusive_raw_materials_catalog(
 
     except Exception as e:
         log_error(f"Erro ao buscar catálogo de matérias-primas exclusivas: {e}")
+        return error_response(str(e), status_code=500)
+
+
+@router.get(
+    "/directives/{identifier}",
+    **PRODUCT_DIRECTIVES,
+    response_model=CompositeAnalysisResponse,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_product_directives(
+    identifier: str,
+    max_depth: Optional[int] = Query(default=None, ge=1, le=100),
+    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        dto = ProductDirectivesRequest(
+            identifier=identifier,
+            max_depth=max_depth,
+            branch=branch,
+        )
+        result = build_get_product_directives_use_case().execute(dto)
+
+        if not result.get("product"):
+            return not_found_response(
+                f"Diretiva ou produto '{identifier}' não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id=PRODUCT_DIRECTIVES["operation_id"],
+            entity="product_directives",
+            shape="composite_analysis",
+            code=result["product"]["product_code"],
+            sections=build_composite_sections(
+                result,
+                view="full",
+                section_keys=("product", "structure", "raw_materials", "summary"),
+            ),
+            message="Diretivas do produto carregadas com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação nas diretivas de {identifier}: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as e:
+        log_error(f"Erro ao buscar diretivas de {identifier}: {e}")
         return error_response(str(e), status_code=500)
 
 

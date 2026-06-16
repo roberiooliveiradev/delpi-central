@@ -6,6 +6,14 @@ from app.domain.entities.product.product import Product
 
 class ProductQueryRepositoryPort(ABC):
     @abstractmethod
+    def fetch_product_by_code(self, code: str) -> dict | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def fetch_product_by_customer_reference(self, reference: str) -> dict | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def search_products(
         self,
         code: Optional[str],

@@ -380,6 +380,34 @@
       "componentes exclusiv"
     ]
   },
+  "directives": {
+    "terms": [
+      "diretiva",
+      "diretivas",
+      "directive",
+      "directives",
+      "referencia do cliente",
+      "referência do cliente",
+      "referencia cliente",
+      "referência cliente",
+      "codigo delpi",
+      "código delpi",
+      "bom com fornecedor",
+      "bom com fornecedores",
+      "estrutura com fornecedor",
+      "estrutura com fornecedores",
+      "materias primas com fornecedor",
+      "matérias-primas com fornecedor",
+      "materias primas com ultima compra",
+      "matérias-primas com última compra",
+      "ultima compra das materias primas",
+      "última compra das matérias-primas",
+      "part number das materias primas",
+      "partnumber das materias primas",
+      "products/directives",
+      "get_product_directives"
+    ]
+  },
   "salePricing": {
     "terms": [
       "preço de venda",
