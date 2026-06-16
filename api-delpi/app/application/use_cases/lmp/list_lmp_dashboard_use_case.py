@@ -128,7 +128,7 @@ class ListLMPDashboardUseCase:
             return cached["all"], cached["lmp_only"], cached["filtered"]
 
         resolved_status = resolve_dashboard_status_filter(status_filter)
-        query_request = replace(request, include_qtd_pi=False)
+        query_request = replace(request, include_qtd_pi=True)
 
         rows: List[LMP] = self._repository.list_lmps(query_request)
         enriched_all = [self._enrich_item(row) for row in rows]
@@ -178,12 +178,12 @@ class ListLMPDashboardUseCase:
         request: ListLMPRequest,
     ) -> List[LMPDashboardItem]:
         """Carrega apenas os campos necessários para KPIs via query leve."""
-        cache_key = self._build_base_cache_key(request, "Todos") + "|summary-rows"
+        cache_key = self._build_base_cache_key(request, "Todos") + "|summary-rows|pi1"
         cached = get_cached_lmp_dashboard(cache_key)
         if cached is not None:
             return cached
 
-        query_request = replace(request, include_qtd_pi=False)
+        query_request = replace(request, include_qtd_pi=True)
         raw_rows = self._repository.get_lmp_dashboard_summary(query_request)
         items = []
         for row in raw_rows:

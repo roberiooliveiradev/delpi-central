@@ -552,6 +552,44 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             lambda qb: self._active_filter(qb, f"{alias}.D_E_L_E_T_")
         )
 
+    def _sql_lmp_resolved_product_sb1_apply(
+        self,
+        *,
+        adj_alias: str = "P",
+        sb_alias: str = "SB1",
+    ) -> Tuple[str, tuple]:
+        """
+        Resolve produto da OV para exibição: prioriza PA DELPI (9026…) cujo
+        B1_CODANT aponta para o código ainda ligado no ADJ010 (800…).
+        """
+        where_sb, params_sb = self._sql_filter_sb1_active(sb_alias)
+        sql = f"""
+            OUTER APPLY (
+                SELECT TOP 1
+                    {sb_alias}.B1_GRUPO,
+                    {sb_alias}.B1_COD,
+                    {sb_alias}.B1_DESC,
+                    {sb_alias}.B1_TIPO
+                FROM SB1010 {sb_alias}
+                WHERE {where_sb}
+                  AND (
+                      {sb_alias}.B1_COD = {adj_alias}.ADJ_PROD
+                      OR (
+                          {sb_alias}.B1_CODANT = {adj_alias}.ADJ_PROD
+                          AND {sb_alias}.B1_COD LIKE '9026%'
+                          AND {sb_alias}.B1_TIPO = 'PA'
+                      )
+                  )
+                ORDER BY
+                    CASE
+                        WHEN {sb_alias}.B1_COD LIKE '9026%' THEN 0
+                        ELSE 1
+                    END,
+                    {sb_alias}.B1_COD
+            ) {sb_alias}
+        """
+        return sql, params_sb
+
     def _sql_filter_sb_root_types(self, alias: str = "SB") -> Tuple[str, tuple]:
         return self._build_filter_sql(
             lambda qb: (
@@ -2185,7 +2223,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     ) -> Tuple[str, tuple]:
         cte_prod, params_prod = self._sql_produtos_lmp_cte(requested_branch=requested_branch)
         cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
-        where_sb1, params_sb1 = self._sql_filter_sb1_active("SB1")
+        resolved_sb1_apply, params_resolved_sb1 = self._sql_lmp_resolved_product_sb1_apply()
 
         sql = f"""
             WITH
@@ -2196,21 +2234,25 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 SB1.B1_COD AS code,
                 SB1.B1_DESC AS description,
                 SB1.B1_TIPO AS type,
-                ISNULL(PI.QTD_PI, 0) AS qtd_pi
+                ISNULL(SUM(PI.QTD_PI), 0) AS qtd_pi
             FROM ProdutosLMP P
-            INNER JOIN SB1010 SB1
-                ON SB1.B1_COD = P.ADJ_PROD
-               AND {where_sb1}
+            {resolved_sb1_apply}
             LEFT JOIN PI_COUNT_BY_PRODUCT PI
                 ON PI.ADJ_FILIAL = P.ADJ_FILIAL
                AND PI.ADJ_NROPOR = P.ADJ_NROPOR
                AND PI.ADJ_REVISA = P.ADJ_REVISA
                AND PI.ADJ_PROD = P.ADJ_PROD
             WHERE P.ADJ_NROPOR = ?
+              AND SB1.B1_COD IS NOT NULL
+            GROUP BY
+                SB1.B1_GRUPO,
+                SB1.B1_COD,
+                SB1.B1_DESC,
+                SB1.B1_TIPO
             ORDER BY SB1.B1_COD
         """
 
-        params = (*params_prod, *params_pi, *params_sb1)
+        params = (*params_prod, *params_pi, *params_resolved_sb1)
         return sql, params
 
     def _sql_qtd_pi_lmp_total(

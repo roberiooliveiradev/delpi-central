@@ -395,6 +395,19 @@ def test_staged_batch_uses_lmp_only_candidates_when_listing_type_is_lmp() -> Non
     assert "EngSupportOvRef" not in batch_sql
 
 
+def test_products_lmp_resolves_pa_by_previous_code() -> None:
+    repo = _repository()
+
+    sql, _params = repo._sql_products_lmp()
+
+    assert "B1_CODANT" in sql
+    assert "9026%" in sql
+    assert "OUTER APPLY" in sql
+    assert "GROUP BY" in sql
+    assert "ORDER BY" in sql.split("GROUP BY")[-1]
+    assert "WHEN SB1.B1_COD LIKE '9026%' THEN 0" in sql
+
+
 def test_full_staged_batch_keeps_eng_passagem_counts() -> None:
     repo = _repository()
     request = ListLMPRequest(date_start="20260401", date_end="20260501")
