@@ -416,7 +416,7 @@ Motor: `OperationalRouteMatcherService` — sem import de api-delpi.
 - [x] Criar `OperationalRouteRegistryService` + testes de carga do JSON
 - [x] Adicionar `OperationalRouteMatcherService` com `termsFrom` / `allOf` / `noneOf`
 - [x] Documentar em `assistant-content-catalog.md`
-- [ ] Atualizar `inteligencia-chat-onda-8.md` (remover linha analyser fallback)
+- [x] Atualizar `inteligencia-chat-onda-8.md` (scoring substituído por DOCIE; sem fallback analyser FULL)
 
 ### Fase 1 — Produto playbook P0 (1–2 PRs)
 
@@ -493,7 +493,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 ### Fase 9 — Eliminar ranking legado
 
 - [x] NF genérica sem direção entrada/saída → registry (`productInvoicesGeneric` + `genericInvoiceRoute`)
-- [ ] Conflitos playbook restantes → `noneOf` / prioridade registry
+- [x] Conflitos playbook restantes → `noneOf` / prioridade registry
 - [x] Deletar `ExternalActionProductRouteRankingService`; wrapper usa `select_product_with_code`
 
 ### Fase 10 — Domínios restantes + DoD
@@ -503,7 +503,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Refinamentos (paginação/profundidade/métrica) com `routeSegment` no registry (stock/structure/parents)
 - [x] SQL fast path com `fallbackPolicy: sql_until_rest` no registry (`sqlFallback` + `ExternalActionSqlFallbackPolicyService`)
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)
-- [ ] Lint CI: termos só em JSON
+- [x] Lint CI: termos só em JSON (`scripts/lint_operational_route_registry.py` + workflow DOCIE)
 - [x] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths` (fase renomeada `operationalRoutes`)
 
 ---

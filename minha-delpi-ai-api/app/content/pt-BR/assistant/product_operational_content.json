@@ -39,6 +39,20 @@
   "composite": {
     "informedProductFallback": "informado"
   },
+  "priceSourceDetection": {
+    "lastPurchaseTerms": [
+      "ultima compra",
+      "última compra",
+      "last_purchase",
+      "last purchase"
+    ],
+    "standardCostTerms": [
+      "custo padrao",
+      "custo padrão",
+      "standard_cost",
+      "standard cost"
+    ]
+  },
   "pluralPhrasing": {
     "productReferenceTerms": [
       "produtos",

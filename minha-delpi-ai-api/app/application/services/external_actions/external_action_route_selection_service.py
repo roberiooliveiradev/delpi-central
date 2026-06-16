@@ -559,8 +559,16 @@ class ExternalActionRouteSelectionService:
             if supplies:
                 return supplies
 
-        production_terms = ("producao", "produção", "fabril", "manufatura")
-        commercial_terms = ("comercial", "venda", "pedido de venda")
+        production_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "candidatePathPrioritization",
+            "productionTerms",
+        )
+        commercial_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "candidatePathPrioritization",
+            "commercialTerms",
+        )
 
         if any(term in normalized for term in production_terms):
             production = [

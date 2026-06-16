@@ -74,6 +74,10 @@
       "suprimento"
     ],
     "suppliesOtdPathPrefix": "/supplies/",
+    "candidatePathPrioritization": {
+      "productionTerms": ["producao", "produção", "fabril", "manufatura"],
+      "commercialTerms": ["comercial", "venda", "pedido de venda"]
+    },
     "productionOtdDetailTerms": [
       "listar",
       "listagem",

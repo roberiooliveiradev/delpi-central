@@ -63,17 +63,19 @@ Antes desta onda, apenas STRUCTURE, STOCK e DESCRIPTION tinham blocos explícito
 
 ---
 
-## 8.4 — Scoring por intent no `_rank_product_actions`
+## 8.4 — Despacho por intent (histórico maio/2026)
 
-Cada intent agora possui bloco `elif` dedicado que aplica boost forte à rota esperada e penaliza concorrentes:
+> **jun/2026 (DOCIE):** o scoring de `_rank_product_actions` foi **removido**. Intents clássicos e sub-rotas playbook passam por `operational_route_registry.json` (`intentBinding`, `customPredicate`, `routeSegment`, `noneOf`). `/analyser` só via intent `ANALYSER` explícito ou `priceAnalysisRoute` — **não** há fallback FULL genérico para analyser.
 
-| Intent | Rota preferida | Boost principal |
+Cada intent possuía bloco `elif` dedicado no ranking legado (referência histórica):
+
+| Intent | Rota preferida | Mecanismo atual |
 |--------|---------------|-----------------|
-| PARENTS | `/parents` | +200 |
-| STRUCTURE | `/structure` | +150 |
-| STOCK | `/stock` | +120 |
-| DESCRIPTION | `/analyser` | +70 |
-| FULL (sem sub-intent) | `/analyser` | +100 |
+| PARENTS | `/parents` | `intentBinding: parents` |
+| STRUCTURE | `/structure` | `intentBinding: structure` |
+| STOCK | `/stock` | `intentBinding: stock` |
+| DESCRIPTION | detalhe cadastral / analyser fallback | `intentBinding: description` + fallback ANALYSER |
+| FULL (sem sub-intent) | registry + `actionableProductPredicates` | sem boost analyser genérico |
 
 ---
 

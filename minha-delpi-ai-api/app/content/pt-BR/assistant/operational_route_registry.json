@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.14",
+  "version": "2026.06.15",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -264,7 +264,8 @@
       "domain": "product",
       "priority": 140,
       "match": {
-        "customPredicate": "factoryStatus"
+        "customPredicate": "factoryStatus",
+        "noneOf": [{ "customPredicate": "productionStatus" }]
       },
       "route": {
         "pathMarkers": ["factory-status"],
@@ -327,7 +328,12 @@
       "routeSegment": "purchases",
       "match": {
         "customPredicate": "purchasesRoute",
-        "requiresProductIdentifier": true
+        "requiresProductIdentifier": true,
+        "noneOf": [
+          { "customPredicate": "lastPurchase" },
+          { "customPredicate": "purchasePriceHistory" },
+          { "customPredicate": "purchaseBudgetHistory" }
+        ]
       },
       "route": {
         "pathMarkers": ["/purchases"],
@@ -417,7 +423,8 @@
       "routeSegment": "pricing",
       "match": {
         "customPredicate": "genericPricingRoute",
-        "requiresProductIdentifier": true
+        "requiresProductIdentifier": true,
+        "noneOf": [{ "customPredicate": "salePricingRoute" }]
       },
       "route": {
         "pathMarkers": ["/pricing"],
@@ -500,7 +507,8 @@
       "priority": 110,
       "routeSegment": "last-purchase",
       "match": {
-        "customPredicate": "lastPurchase"
+        "customPredicate": "lastPurchase",
+        "noneOf": [{ "customPredicate": "directives" }]
       },
       "route": {
         "pathMarkers": ["last-purchase"],
@@ -674,7 +682,11 @@
       "priority": 111,
       "match": {
         "customPredicate": "genericInvoiceRoute",
-        "requiresProductIdentifier": true
+        "requiresProductIdentifier": true,
+        "noneOf": [
+          { "customPredicate": "inboundInvoiceRoute" },
+          { "customPredicate": "outboundInvoiceRoute" }
+        ]
       },
       "route": {
         "pathMarkers": ["/inbound-invoice", "/outbound-invoice"],

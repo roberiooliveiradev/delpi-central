@@ -36,9 +36,10 @@ def test_action_selection_heuristic_terms_exist():
         "kpiQuestions",
         "cpvTerms",
     )
-    assert ExternalActionResponseContentService.get(
+    assert ExternalActionResponseContentService.list(
         "actionSelection",
-        "productionOeeAppointmentPath",
+        "candidatePathPrioritization",
+        "productionTerms",
     )
     assert ExternalActionResponseContentService.get(
         "actionSelection",

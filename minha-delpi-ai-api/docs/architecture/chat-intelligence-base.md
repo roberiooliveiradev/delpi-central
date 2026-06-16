@@ -530,6 +530,8 @@ Ordem no dispatch: refinamentos de sessão → **registry** (`dispatchOrder`: pr
 
 Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
 
+Lint CI: `scripts/lint_operational_route_registry.py --check` (workflow `.github/workflows/minha-delpi-ai-api-docie.yml`).
+
 O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fast path operacional está ativo. Ordem resumida:
 
 1. Pedidos de **comparação/insights** → sem action (modo análise).

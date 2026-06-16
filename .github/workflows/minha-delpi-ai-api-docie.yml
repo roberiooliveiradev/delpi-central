@@ -1,0 +1,43 @@
+name: minha-delpi-ai-api DOCIE
+
+on:
+  push:
+    paths:
+      - "minha-delpi-ai-api/**"
+      - ".github/workflows/minha-delpi-ai-api-docie.yml"
+  pull_request:
+    paths:
+      - "minha-delpi-ai-api/**"
+      - ".github/workflows/minha-delpi-ai-api-docie.yml"
+
+jobs:
+  docie-lint-and-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: minha-delpi-ai-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: minha-delpi-ai-api/requirements.txt
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Lint DOCIE — termos só em JSON + registry
+        run: PYTHONPATH=. python scripts/lint_operational_route_registry.py --check
+
+      - name: Testes registry, fallback SQL e seleção operacional
+        run: |
+          PYTHONPATH=. pytest \
+            tests/unit/scripts/test_lint_operational_route_registry.py \
+            tests/unit/domain/services/test_operational_route_registry_service.py \
+            tests/unit/application/services/test_external_action_sql_fallback_policy_service.py \
+            tests/unit/application/services/test_external_action_registry_dispatch_phase_service.py \
+            tests/unit/application/services/test_action_selection_content.py \
+            tests/unit/domain/services/test_chat_intelligence_regression.py \
+            -q

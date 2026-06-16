@@ -11,6 +11,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
+from app.domain.services.chat_product_operational_content_service import (
+    ChatProductOperationalContentService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -289,25 +292,18 @@ class ExternalActionProductRouteCatalogService:
                     parameters[name] = top_n
 
             elif lowered == "price_source":
-                if any(
-                    term in normalized
-                    for term in (
-                        "ultima compra",
-                        "última compra",
-                        "last_purchase",
-                        "last purchase",
-                    )
-                ):
+                last_purchase_terms = ChatProductOperationalContentService.list(
+                    "priceSourceDetection",
+                    "lastPurchaseTerms",
+                )
+                standard_cost_terms = ChatProductOperationalContentService.list(
+                    "priceSourceDetection",
+                    "standardCostTerms",
+                )
+
+                if any(term in normalized for term in last_purchase_terms):
                     parameters[name] = "last_purchase"
-                elif any(
-                    term in normalized
-                    for term in (
-                        "custo padrao",
-                        "custo padrão",
-                        "standard_cost",
-                        "standard cost",
-                    )
-                ):
+                elif any(term in normalized for term in standard_cost_terms):
                     parameters[name] = "standard_cost"
 
         from app.domain.services.chat_operational_date_parameter_service import (
