@@ -1,0 +1,5 @@
+/* Popovers e menus ancorados compartilhados. */
+
+@import "../components/shared/overlay/menu-popover.css";
+@import "../components/shared/overlay/action-menu.css";
+@import "../components/shared/modal/chat-modal.css";

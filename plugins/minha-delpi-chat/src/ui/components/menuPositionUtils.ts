@@ -8,6 +8,8 @@ const MENU_ITEM_HEIGHT = 36;
 const MENU_PADDING = 16;
 const VIEWPORT_MARGIN = 8;
 const ANCHOR_GAP = 6;
+/** Legado `.mdc-chat-input__menu { bottom: calc(100% + 0.55rem) }` */
+export const COMPOSER_PANEL_ANCHOR_GAP = 9;
 
 export const COMPOSER_OPTION_MENU_WIDTH = 260;
 export const COMPOSER_PANEL_MENU_WIDTH = 352;
@@ -117,13 +119,16 @@ type ComposerPopoverLayoutOptions = {
   naturalHeight: number;
   minHeight: number;
   viewport?: ViewportBounds;
+  anchorGap?: number;
+  /** `start` = borda esquerda do menu no gatilho (menu 「+」); default flip horizontal. */
+  horizontalAlign?: "start" | "flip";
 };
 
 function resolveComposerPopoverLayout(
   options: ComposerPopoverLayoutOptions,
 ): ComposerOptionMenuLayout {
   const margin = VIEWPORT_MARGIN;
-  const gap = ANCHOR_GAP;
+  const gap = options.anchorGap ?? ANCHOR_GAP;
   const { left, top, right, bottom } = options.rect;
   const viewport = readViewportBounds(options.viewport);
   const menuWidth = options.menuWidth;
@@ -139,10 +144,15 @@ function resolveComposerPopoverLayout(
 
   maxHeight = Math.max(maxHeight, Math.min(naturalHeight, options.minHeight));
 
-  let menuTop = openAbove ? top - maxHeight - gap : bottom + gap;
+  const placementHeight = Math.min(naturalHeight, maxHeight);
+  let menuTop = openAbove ? top - placementHeight - gap : bottom + gap;
   let menuLeft = left;
 
-  if (menuLeft + menuWidth > viewport.width - margin) {
+  if (options.horizontalAlign === "start") {
+    if (menuLeft + menuWidth > viewport.width - margin) {
+      menuLeft = Math.max(margin, viewport.width - margin - menuWidth);
+    }
+  } else if (menuLeft + menuWidth > viewport.width - margin) {
     menuLeft = Math.max(margin, right - menuWidth);
   }
 
@@ -205,6 +215,8 @@ export function resolveComposerPanelMenuPosition(options: {
     naturalHeight,
     minHeight: COMPOSER_PANEL_MENU_MIN_HEIGHT,
     viewport: viewport ?? options.viewport,
+    anchorGap: COMPOSER_PANEL_ANCHOR_GAP,
+    horizontalAlign: "start",
   });
 }
 

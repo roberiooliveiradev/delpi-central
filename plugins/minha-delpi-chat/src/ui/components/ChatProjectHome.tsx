@@ -34,8 +34,7 @@ import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navi
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
-
-import { ModalPortal } from "./ModalPortal";
+import { ChatModal } from "./shared/modal/ChatModal";
 import {
   workspaceFileKindLabel,
   workspaceFileProjectIngestLabels,
@@ -851,23 +850,14 @@ export function ChatProjectHome({
         </ChatAnimatedPanel>
       </div>
 
-      {settingsOpen ? (
-        <ModalPortal>
-        <div
-          className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-project-settings-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeSettings();
-            }
-          }}
-        >
-          <section
-            className="mdc-chat-overlay-panel mdc-chat-project-settings"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Configurações do projeto"
-          >
+      <ChatModal
+        open={settingsOpen}
+        onClose={closeSettings}
+        size="none"
+        panelClassName="mdc-chat-project-settings"
+        backdropClassName="mdc-chat-project-settings-backdrop"
+        ariaLabel="Configurações do projeto"
+      >
             <header>
               <h3>Configurações do projeto</h3>
               <button
@@ -1043,10 +1033,7 @@ export function ChatProjectHome({
                 <span>{isSaving ? "Salvando..." : "Salvar"}</span>
               </button>
             </footer>
-          </section>
-        </div>
-        </ModalPortal>
-      ) : null}
+      </ChatModal>
 
       {previewModal}
     </section>

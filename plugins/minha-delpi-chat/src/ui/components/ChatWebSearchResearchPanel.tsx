@@ -6,7 +6,7 @@ import type {
   ChatWebSearchResearchSite,
   ChatWebSearchResearchStep,
 } from "../../data/api/chatTypes";
-import { ModalPortal } from "./ModalPortal";
+import { ChatModal } from "./shared/modal/ChatModal";
 
 import "./ChatWebSearchResearchPanel.css";
 
@@ -90,126 +90,121 @@ export function ChatWebSearchResearchPanel({
   }
 
   return (
-    <ModalPortal>
-      <div
-        className="mdc-chat-overlay-scrim mdc-chat-web-research-backdrop"
-        onClick={onClose}
-      >
-        <aside
-          className="mdc-chat-overlay-panel mdc-chat-web-research-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="mdc-chat-web-research-title"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <header className="mdc-chat-web-research-panel__header">
-            <div>
-              <p className="mdc-chat-web-research-panel__eyebrow">Atividade</p>
-              <h2 id="mdc-chat-web-research-title">Pesquisa web</h2>
-              <p className="mdc-chat-web-research-panel__meta">
-                {sourceCount === 1 ? "1 fonte" : `${sourceCount} fontes`}
-                {research.searchMode === "deep"
-                  ? " · pesquisa profunda"
-                  : research.searchMode === "quick"
-                    ? " · pesquisa rápida"
+    <ChatModal
+      open
+      onClose={onClose}
+      size="none"
+      scrimLayout="drawer-end"
+      panelClassName="mdc-chat-web-research-panel"
+      backdropClassName="mdc-chat-web-research-backdrop"
+      ariaLabelledBy="mdc-chat-web-research-title"
+    >
+      <header className="mdc-chat-web-research-panel__header">
+        <div>
+          <p className="mdc-chat-web-research-panel__eyebrow">Atividade</p>
+          <h2 id="mdc-chat-web-research-title">Pesquisa web</h2>
+          <p className="mdc-chat-web-research-panel__meta">
+            {sourceCount === 1 ? "1 fonte" : `${sourceCount} fontes`}
+            {research.searchMode === "deep"
+              ? " · pesquisa profunda"
+              : research.searchMode === "quick"
+                ? " · pesquisa rápida"
+                : ""}
+            {research.preferOfficial ? " · fontes oficiais" : ""}
+            {research.integrationMode === "internal_product"
+              ? " · produto + web"
+              : research.integrationMode === "attachment_compare"
+                ? " · anexo + web"
+                : research.integrationMode === "source_compare"
+                  ? " · comparar fontes"
+                  : research.integrationMode === "technical_table"
+                    ? " · tabela técnica"
                     : ""}
-                {research.preferOfficial ? " · fontes oficiais" : ""}
-                {research.integrationMode === "internal_product"
-                  ? " · produto + web"
-                  : research.integrationMode === "attachment_compare"
-                    ? " · anexo + web"
-                    : research.integrationMode === "source_compare"
-                      ? " · comparar fontes"
-                      : research.integrationMode === "technical_table"
-                        ? " · tabela técnica"
-                        : ""}
-                {confidenceText ? ` · ${confidenceText}` : ""}
-                {research.provider ? ` · ${research.provider}` : ""}
-                {durationLabel ? ` · ${durationLabel}` : ""}
-              </p>
-            </div>
+            {confidenceText ? ` · ${confidenceText}` : ""}
+            {research.provider ? ` · ${research.provider}` : ""}
+            {durationLabel ? ` · ${durationLabel}` : ""}
+          </p>
+        </div>
 
-            <button
-              type="button"
-              className="mdc-chat-web-research-panel__close"
-              aria-label="Fechar atividade de pesquisa"
-              onClick={onClose}
-            >
-              <X size={18} />
-            </button>
-          </header>
+        <button
+          type="button"
+          className="mdc-chat-web-research-panel__close"
+          aria-label="Fechar atividade de pesquisa"
+          onClick={onClose}
+        >
+          <X size={18} />
+        </button>
+      </header>
 
-          <div className="mdc-chat-web-research-panel__body">
-            {warnings.length > 0 ? (
-              <section className="mdc-chat-web-research__warnings" role="note">
-                <h3>Observações sobre as fontes</h3>
-                <ul>
-                  {warnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+      <div className="mdc-chat-web-research-panel__body">
+        {warnings.length > 0 ? (
+          <section className="mdc-chat-web-research__warnings" role="note">
+            <h3>Observações sobre as fontes</h3>
+            <ul>
+              {warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
-            <ol className="mdc-chat-web-research__steps">
-              {steps.map((step) => {
-                const Icon = resolveStepIcon(step);
-                const sites = step.sites ?? [];
+        <ol className="mdc-chat-web-research__steps">
+          {steps.map((step) => {
+            const Icon = resolveStepIcon(step);
+            const sites = step.sites ?? [];
 
-                return (
-                  <li key={step.id} className="mdc-chat-web-research__step">
-                    <div className="mdc-chat-web-research__step-head">
-                      <span className="mdc-chat-web-research__step-icon" aria-hidden="true">
-                        <Icon size={14} />
-                      </span>
-                      <div>
-                        <p className="mdc-chat-web-research__step-message">{step.message}</p>
-                        {step.query && step.type === "search" ? (
-                          <p className="mdc-chat-web-research__step-query">{step.query}</p>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {sites.length > 0 ? (
-                      <div className="mdc-chat-web-research__sites">
-                        {sites.slice(0, 8).map((site) => (
-                          <ResearchSiteBadge key={site.url} site={site} />
-                        ))}
-                        {sites.length > 8 ? (
-                          <span className="mdc-chat-web-research__sites-more">
-                            Mais {sites.length - 8}
-                          </span>
-                        ) : null}
-                      </div>
+            return (
+              <li key={step.id} className="mdc-chat-web-research__step">
+                <div className="mdc-chat-web-research__step-head">
+                  <span className="mdc-chat-web-research__step-icon" aria-hidden="true">
+                    <Icon size={14} />
+                  </span>
+                  <div>
+                    <p className="mdc-chat-web-research__step-message">{step.message}</p>
+                    {step.query && step.type === "search" ? (
+                      <p className="mdc-chat-web-research__step-query">{step.query}</p>
                     ) : null}
-                  </li>
-                );
-              })}
-            </ol>
+                  </div>
+                </div>
 
-            {allSites.length > 0 ? (
-              <section className="mdc-chat-web-research__all-sources">
-                <h3>Todas as fontes consultadas</h3>
-                <ul>
-                  {allSites.map((site) => (
-                    <li key={site.url}>
-                      <a href={site.url} rel="noopener noreferrer" target="_blank">
-                        <strong>{site.hostname}</strong>
-                        <span>{site.title || site.url}</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-          </div>
+                {sites.length > 0 ? (
+                  <div className="mdc-chat-web-research__sites">
+                    {sites.slice(0, 8).map((site) => (
+                      <ResearchSiteBadge key={site.url} site={site} />
+                    ))}
+                    {sites.length > 8 ? (
+                      <span className="mdc-chat-web-research__sites-more">
+                        Mais {sites.length - 8}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
 
-          <footer className="mdc-chat-web-research-panel__footer">
-            {durationLabel ? <span>Pesquisou por {durationLabel}</span> : null}
-            <span>Pronto</span>
-          </footer>
-        </aside>
+        {allSites.length > 0 ? (
+          <section className="mdc-chat-web-research__all-sources">
+            <h3>Todas as fontes consultadas</h3>
+            <ul>
+              {allSites.map((site) => (
+                <li key={site.url}>
+                  <a href={site.url} rel="noopener noreferrer" target="_blank">
+                    <strong>{site.hostname}</strong>
+                    <span>{site.title || site.url}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
-    </ModalPortal>
+
+      <footer className="mdc-chat-web-research-panel__footer">
+        {durationLabel ? <span>Pesquisou por {durationLabel}</span> : null}
+        <span>Pronto</span>
+      </footer>
+    </ChatModal>
   );
 }

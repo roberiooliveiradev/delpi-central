@@ -79,9 +79,9 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | # | P | Tarefa | Arquivos / escopo | Risco | Esforço | Critério de pronto |
 |---|---|--------|-------------------|-------|---------|-------------------|
 | A1 | 1 | Menu **「+」** do composer em portal | `ChatInputPlusMenu`, `ChatInput.tsx` | Médio | M | ✅ PR-2 jun/2026 |
-| A2 | 1 | Unificar **mention menu** com tokens popover | `ChatComposerMentionMenu.tsx/css` | Baixo | S | Usa `--mdc-popover-shadow`; considerar portal se ainda cortar |
+| A2 | 1 | Unificar **mention menu** com tokens popover | `ChatComposerMentionMenu.tsx/css` | Baixo | S | ✅ tokens `--mdc-popover-*` |
 | A3 | 2 | **`ChatTableRowMenu`** sobre `AnchoredMenuPortal` | `ChatTableRowMenu.tsx` | Médio | M | ✅ PR-4 jun/2026 — placement `context-menu`, shell `overlay` |
-| A4 | 2 | **`ChatAssistantMessageMenu`** idem | `ChatAssistantMessageMenu.tsx` | Baixo | S | Consome `ActionMenuPanel` ou wrapper |
+| A4 | 2 | **`ChatAssistantMessageMenu`** idem | `ChatAssistantMessageMenu.tsx` | Baixo | S | ✅ via `ChatTableRowMenu` |
 | A5 | 2 | **`ChatContextBar`** chip menu | `ChatContextBar.tsx` | Baixo | S | Já usa `ChatTableRowMenu` — validar após A3 |
 | A6 | 3 | **`ChatOnboardingTour`** alinhar portal | `ChatOnboardingTour.tsx` (hoje `document.body`) | Médio | M | ✅ PR-8 jun/2026 — `ModalPortal` + coords contidas |
 | A7 | 3 | Extrair **`DropdownMenuTrigger`** opcional | `shared/menus/` | Baixo | S | Padrão botão ⋯ + `AnchoredMenuPortal` para cards/listas |
@@ -93,8 +93,8 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | B1 | 1 | Criar **`ChatModal`** compound | `shared/modal/ChatModal.tsx`, `chat-modal.css` | Médio | L | ✅ PR-3 jun/2026 |
 | B2 | 1 | Migrar diálogos simples | `ChatConfirmDialog`, `ChatAlertDialog`, `ChatPromptDialog` | Médio | M | ✅ PR-3 jun/2026 |
 | B3 | 2 | Migrar diálogos médios | `ChatShortcutPromptDialog`, `ChatSidebarArchivedDialog`, `ChatMemoryUsedDialog` | Médio | M | ✅ PR-6 jun/2026 |
-| B4 | 2 | Migrar painéis grandes | `ChatAddContextDialog`, `ChatHelpPanel`, `ChatCanvas`, `ChatExpandModal` | Alto | L | `ChatAddContextDialog` ✅ PR-9 · `ChatHelpPanel` ✅ jun/2026 |
-| B5 | 2 | Migrar modais workspace | `ChatProjectCreateModal`, `ChatAttachmentPreviewModal`, inline em `ChatProjectHome` | Médio | M | |
+| B4 | 2 | Migrar painéis grandes | `ChatAddContextDialog`, `ChatHelpPanel`, `ChatCanvas`, `ChatExpandModal` | Alto | L | ✅ PR-9/10 + `ChatCanvas`/`ChatExpandModal` jun/2026 |
+| B5 | 2 | Migrar modais workspace | `ChatProjectCreateModal`, `ChatAttachmentPreviewModal`, inline em `ChatProjectHome` | Médio | M | ✅ jun/2026 |
 | B6 | 3 | Reduzir **`modal-layer.css`** | Listas manuais de `-backdrop` | Médio | M | Usar `data-modal-size` ou classes genéricas `.mdc-chat-modal--*` |
 | B7 | 3 | Mover **`ModalPortal`** para `shared/overlay/` | `ModalPortal.tsx`, `modalPortalTarget.ts` | Baixo | S | Re-export na raiz até consumidores migrarem |
 
@@ -112,9 +112,9 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | # | P | Tarefa | Arquivos / escopo | Risco | Esforço | Critério de pronto |
 |---|---|--------|-------------------|-------|---------|-------------------|
 | C1 | 1 | **Deduplicar dark mode** em `index.css` | Blocos `:root[data-theme="dark"]` vs `@media (prefers-color-scheme: dark)` | Baixo | M | ✅ PR-5 jun/2026 — `ui/styles/_theme-dark.css` |
-| C2 | 2 | Camada **`ui/styles/`** | `tokens.css`, `overlay.css`, `menu.css`, `composer.css` | Médio | M | `index.css` só importa barrel; componentes importam feature CSS |
+| C2 | 2 | Camada **`ui/styles/`** | `tokens.css`, `overlay.css`, `menu.css`, `composer.css` | Médio | M | ✅ PR-11 jun/2026 — barrel `ui/styles/index.css` |
 | C3 | 2 | Varredura **hex → tokens** (chat) | Ver tabela §5 | Baixo | M | ✅ PR-7 jun/2026 — inventário §5 migrado |
-| C4 | 3 | Alinhar **`ChatInput__menu`** ao `menu-popover.css` | `ChatInput.css` | Baixo | S | Mesma sombra, radius, hover |
+| C4 | 3 | Alinhar **`ChatInput__menu`** ao `menu-popover.css` | `ChatInput.css` | Baixo | S | ✅ fundo/borda portaled + posição `composer-panel` |
 | C5 | 3 | **`rich-presentation-shared.css`** — revisar duplicação com `ChatRich*.css` | KPI, chart, table | Médio | L | Documentar o que é compartilhado vs específico |
 | C6 | 4 | Remover aliases legados **`mdc-chat-response-mode__*`** | `composer-option-selector.css` | Baixo | S | Só após grep zero referências |
 
@@ -202,7 +202,9 @@ PR-7 ✅  C3 — Varredura hex (chat core)
 PR-8 ✅  A6 — Onboarding tour portal
 PR-9 ✅  B4 — ChatAddContextDialog → ChatModal
 PR-10 ✅  B4 — ChatHelpPanel → ChatModal (drawer-end)
-PR-11    C2 — ui/styles/ barrel
+PR-11 ✅  C2 — ui/styles/ barrel + fix posição menu 「+」
+PR-12 ✅  B4/B5 — Canvas, Expand, AttachmentPreview, WebSearch, ProjectHome settings
+PR-13    B7 — ModalPortal → shared/overlay; B6 reduzir modal-layer.css
 ```
 
 ---
@@ -223,7 +225,8 @@ PR-11    C2 — ui/styles/ barrel
 | Recurso | Caminho |
 |---------|---------|
 | Tokens plugin | `src/index.css` |
-| Overlay layer | `src/ui/components/chat-overlay-layer.css` |
+| Styles barrel | `src/ui/styles/index.css` |
+| Overlay layer | `src/ui/styles/overlay.css` → `chat-overlay-layer.css`, `modal-layer.css` |
 | Modal layer | `src/ui/components/modal-layer.css` |
 | Posicionamento | `src/ui/components/menuPositionUtils.ts` |
 | Shared barrel | `src/ui/components/shared/index.ts` |
@@ -240,8 +243,8 @@ PR-11    C2 — ui/styles/ barrel
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
 | Componentes em `shared/` (excl. admin) | 6 arquivos | ≥15 (overlay + modal + menus) |
-| Modais usando `ChatModal` | 0 / ~14 | 14 / 14 |
-| Menus com portal canônico | ~4 / ~8 | 8 / 8 |
+| Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
+| Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
 | Arquivos CSS com hex fora de token (chat) | ~10+ | 0 (superfície/texto) |
 | Duplicação selector composer | 0 | 0 ✅ |
 

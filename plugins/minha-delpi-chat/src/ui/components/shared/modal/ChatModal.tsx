@@ -18,6 +18,8 @@ type ChatModalProps = {
   role?: "dialog" | "alertdialog";
   ariaLabelledBy?: string;
   ariaDescribedBy?: string;
+  /** Quando não há título com id (ex.: lousa, expand). */
+  ariaLabel?: string;
   panelClassName?: string;
   backdropClassName?: string;
   closeOnBackdrop?: boolean;
@@ -34,6 +36,7 @@ export function ChatModal({
   role = "dialog",
   ariaLabelledBy,
   ariaDescribedBy,
+  ariaLabel,
   panelClassName = "",
   backdropClassName = "",
   closeOnBackdrop = true,
@@ -98,6 +101,7 @@ export function ChatModal({
             .join(" ")}
           role={role}
           aria-modal="true"
+          aria-label={ariaLabel}
           aria-labelledby={ariaLabelledBy}
           aria-describedby={ariaDescribedBy}
           onMouseDown={onPanelMouseDown ?? ((event) => event.stopPropagation())}

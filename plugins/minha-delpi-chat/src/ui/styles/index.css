@@ -1,0 +1,5 @@
+/* Barrel de estilos transversais do MFE — tema, overlay, menus. */
+
+@import "./_theme-dark.css";
+@import "./overlay.css";
+@import "./menu.css";

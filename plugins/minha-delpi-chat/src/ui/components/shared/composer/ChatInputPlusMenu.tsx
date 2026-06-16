@@ -35,6 +35,7 @@ export function ChatInputPlusMenu({
   onToggleProject,
   onOpenAgentPage,
 }: ChatInputPlusMenuProps) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const internalTriggerRef = useRef<HTMLButtonElement | null>(null);
   const triggerRef = triggerRefProp ?? internalTriggerRef;
   const selectedAgentIdSet = useMemo(() => new Set(selectedAgentIds), [selectedAgentIds]);
@@ -50,7 +51,7 @@ export function ChatInputPlusMenu({
   );
 
   return (
-    <div className="mdc-chat-input__plus-wrap" data-tour="composer-plus">
+    <div ref={wrapRef} className="mdc-chat-input__plus-wrap" data-tour="composer-plus">
       <button
         ref={triggerRef}
         type="button"
@@ -65,7 +66,7 @@ export function ChatInputPlusMenu({
 
       <AnchoredMenuPortal
         open={open}
-        triggerRef={triggerRef}
+        triggerRef={wrapRef}
         itemCount={menuItemCount}
         placement="composer-panel"
         menuLabel="Mais opções do composer"

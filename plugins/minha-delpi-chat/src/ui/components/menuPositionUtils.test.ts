@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMPOSER_PANEL_ANCHOR_GAP,
   estimateChatInputPlusMenuItemCount,
   estimateComposerOptionMenuHeight,
+  estimateComposerPanelMenuHeight,
   resolveActionMenuPosition,
   resolveComposerOptionMenuPosition,
   resolveComposerPanelMenuPosition,
@@ -115,6 +117,21 @@ describe("resolveComposerPanelMenuPosition", () => {
 
     expect(layout.top).toBeLessThan(460);
     expect(layout.top + layout.maxHeight).toBeLessThanOrEqual(viewportHeight - 8);
+  });
+
+  it("ancora acima do + com gap legado e borda esquerda alinhada", () => {
+    const itemCount = 3;
+    const rect = { left: 48, top: 460, right: 84, bottom: 496, width: 36, height: 36 };
+    const naturalHeight = estimateComposerPanelMenuHeight(itemCount);
+
+    const layout = resolveComposerPanelMenuPosition({
+      rect,
+      itemCount,
+      viewport: { width: 800, height: 600 },
+    });
+
+    expect(layout.left).toBe(48);
+    expect(layout.top).toBe(rect.top - naturalHeight - COMPOSER_PANEL_ANCHOR_GAP);
   });
 });
 
