@@ -526,7 +526,7 @@ Motor canônico para fast paths operacionais:
 | `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
 | `ExternalActionOperationalRouteSelectionService.select_product_with_code` | Rotas de produto com código via registry (substitui ranking legado) |
 
-Ordem no dispatch: refinamentos de sessão → **registry** (`select_operational_registry` / `select_by_intent` / `select_product_with_code`) → semântico genérico.
+Ordem no dispatch: refinamentos de sessão → **registry** (`dispatchOrder`: produção operacional → rotas → domínios → intent-bound → **sqlFallback** → semântico).
 
 Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
 

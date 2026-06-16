@@ -500,8 +500,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 - [x] LMP no registry (`domainLmp` + `select_lmp` no motor operacional); fallback ranking Python removido
 - [x] product search no registry (`domainProductSearch` + strategy `product_search`); fallback `select()` removido
-- [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
-- [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
+- [x] Refinamentos (paginação/profundidade/métrica) com `routeSegment` no registry (stock/structure/parents)
+- [x] SQL fast path com `fallbackPolicy: sql_until_rest` no registry (`sqlFallback` + `ExternalActionSqlFallbackPolicyService`)
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)
 - [ ] Lint CI: termos só em JSON
 - [x] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths` (fase renomeada `operationalRoutes`)

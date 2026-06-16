@@ -14,6 +14,10 @@ from app.application.services.external_actions.external_action_route_selection_s
 from app.application.services.external_actions.external_action_selection_heuristics_service import (
     ExternalActionSelectionHeuristicsService,
 )
+from app.application.services.external_actions.external_action_sql_fallback_policy_service import (
+    ExternalActionSqlFallbackPolicyService,
+    SqlFallbackRunState,
+)
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
@@ -27,7 +31,6 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_production_operational_intent_service import (
     ChatProductionOperationalIntentService,
 )
-from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
 )
@@ -119,21 +122,32 @@ class ExternalActionRegistryDispatchPhaseService:
         callbacks: RegistryDispatchCallbacks,
     ) -> dict | None:
         handlers = {
-            "productionOperational": lambda: self._phase_production_operational(
+            "productionOperational": lambda state: self._phase_production_operational(
+                ctx,
+                callbacks,
+                state=state,
+            ),
+            "operationalRoutes": lambda state: self._phase_operational_routes(
                 ctx,
                 callbacks,
             ),
-            "operationalRoutes": lambda: self._phase_operational_routes(
+            "intentBoundRoutes": lambda state: self._phase_intent_bound_routes(
                 ctx,
                 callbacks,
             ),
-            "intentBoundRoutes": lambda: self._phase_intent_bound_routes(
+            "domainRoutes": lambda state: self._phase_domain_routes(ctx, callbacks),
+            "sqlFallback": lambda state: self._phase_sql_fallback(
+                ctx,
+                callbacks,
+                state=state,
+            ),
+            "semanticFallback": lambda state: self._phase_semantic_fallback(
                 ctx,
                 callbacks,
             ),
-            "domainRoutes": lambda: self._phase_domain_routes(ctx, callbacks),
-            "semanticFallback": lambda: self._phase_semantic_fallback(ctx, callbacks),
         }
+
+        state = SqlFallbackRunState()
 
         for phase in OperationalRouteRegistryService.dispatch_order():
             if phase == "sessionRefinement":
@@ -144,10 +158,13 @@ class ExternalActionRegistryDispatchPhaseService:
             if not handler:
                 continue
 
-            selected = handler()
+            selected = handler(state)
 
             if selected:
                 return selected
+
+            if state.abort_remaining:
+                return None
 
         return None
 
@@ -155,6 +172,8 @@ class ExternalActionRegistryDispatchPhaseService:
         self,
         ctx: RegistryDispatchContext,
         callbacks: RegistryDispatchCallbacks,
+        *,
+        state: SqlFallbackRunState,
     ) -> dict | None:
         if not ChatProductionOperationalIntentService.matches_rest_route(ctx.message):
             return None
@@ -171,23 +190,21 @@ class ExternalActionRegistryDispatchPhaseService:
         if selected:
             return selected
 
-        if ChatSqlIntentService.is_authoring_request(ctx.message):
-            return None
-
-        from app.domain.services.chat_sql_production_query_service import (
-            ChatSqlProductionQueryService,
-        )
-
-        production_resolution = ChatSqlProductionQueryService.resolve(ctx.message)
-
-        if production_resolution and production_resolution.mode == "execute":
-            return callbacks.select_sql(
-                ctx.message,
-                ctx.allowed_action_ids,
-                sql=production_resolution.sql,
-                selection_reason_key="productionSqlFastPath",
-                raw_message=ctx.sql_source,
+        for policy in OperationalRouteRegistryService.fallback_policies_for_phase(
+            "productionOperational"
+        ):
+            selected = ExternalActionSqlFallbackPolicyService.try_policy(
+                policy,
+                message=ctx.message,
+                sql_source=ctx.sql_source,
+                allowed_action_ids=ctx.allowed_action_ids,
+                select_sql=callbacks.select_sql,
+                after_rest_miss=True,
+                state=state,
             )
+
+            if selected:
+                return selected
 
         return None
 
@@ -321,6 +338,33 @@ class ExternalActionRegistryDispatchPhaseService:
 
         return None
 
+    def _phase_sql_fallback(
+        self,
+        ctx: RegistryDispatchContext,
+        callbacks: RegistryDispatchCallbacks,
+        *,
+        state: SqlFallbackRunState,
+    ) -> dict | None:
+        for policy in OperationalRouteRegistryService.fallback_policies_for_phase(
+            "sqlFallback"
+        ):
+            selected = ExternalActionSqlFallbackPolicyService.try_policy(
+                policy,
+                message=ctx.message,
+                sql_source=ctx.sql_source,
+                allowed_action_ids=ctx.allowed_action_ids,
+                select_sql=callbacks.select_sql,
+                state=state,
+            )
+
+            if selected:
+                return selected
+
+            if state.abort_remaining:
+                return None
+
+        return None
+
     def _phase_semantic_fallback(
         self,
         ctx: RegistryDispatchContext,
@@ -342,16 +386,6 @@ class ExternalActionRegistryDispatchPhaseService:
 
             if selected:
                 return selected
-
-        if ExternalActionSelectionHeuristicsService.looks_like_sql_or_data_query(
-            ctx.message
-        ):
-            if ChatSqlIntentService.should_auto_execute_sql(ctx.message):
-                return callbacks.select_sql(
-                    ctx.message,
-                    ctx.allowed_action_ids,
-                    raw_message=ctx.sql_source,
-                )
 
         if ChatOperationalParameterService.should_block_semantic_action_fallback(
             ctx.message,

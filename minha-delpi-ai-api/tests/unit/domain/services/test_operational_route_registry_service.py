@@ -15,8 +15,8 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.13"
-    assert "operationalRoutes" in OperationalRouteRegistryService.dispatch_order()
+    assert OperationalRouteRegistryService.version() == "2026.06.14"
+    assert "sqlFallback" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
 

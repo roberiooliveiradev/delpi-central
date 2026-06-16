@@ -1,13 +1,97 @@
 {
-  "version": "2026.06.13",
+  "version": "2026.06.14",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
     "operationalRoutes",
     "domainRoutes",
     "intentBoundRoutes",
+    "sqlFallback",
     "semanticFallback"
   ],
+  "fallbackPolicies": [
+    {
+      "id": "productionSqlPreflight",
+      "policy": "sql_until_rest",
+      "phase": "sqlFallback",
+      "order": 5,
+      "runBeforeSqlRefinement": true,
+      "reasonKey": "productionSqlFastPath",
+      "resolver": "production_query",
+      "when": {
+        "productionQueryExecute": true,
+        "notAuthoring": true
+      }
+    },
+    {
+      "id": "productionSqlNoRestRoute",
+      "policy": "sql_until_rest",
+      "phase": "sqlFallback",
+      "order": 10,
+      "reasonKey": "productionSqlFastPath",
+      "resolver": "production_query",
+      "when": {
+        "requiresProductionSqlKnowledge": true,
+        "notProductionRestRoute": true,
+        "notAuthoring": true
+      }
+    },
+    {
+      "id": "productionSqlRestMiss",
+      "policy": "sql_until_rest",
+      "phase": "productionOperational",
+      "order": 10,
+      "reasonKey": "productionSqlFastPath",
+      "resolver": "production_query",
+      "when": {
+        "productionRestRoute": true,
+        "notAuthoring": true,
+        "afterRestMiss": true
+      }
+    },
+    {
+      "id": "inventorySql",
+      "policy": "sql_until_rest",
+      "phase": "sqlFallback",
+      "order": 20,
+      "reasonKey": "inventorySqlFastPath",
+      "resolver": "inventory_query",
+      "when": {
+        "requiresSqlKnowledge": true,
+        "notAuthoring": true
+      }
+    },
+    {
+      "id": "genericAutoSql",
+      "policy": "auto_execute",
+      "phase": "sqlFallback",
+      "order": 30,
+      "reasonKey": "genericSql",
+      "resolver": "generic_auto_execute",
+      "when": {
+        "requiresSqlKnowledge": true,
+        "notAuthoring": true
+      },
+      "blockRemainingWhenRequiresSqlKnowledge": true
+    },
+    {
+      "id": "genericAutoSqlExplicit",
+      "policy": "auto_execute",
+      "phase": "sqlFallback",
+      "order": 40,
+      "reasonKey": "genericSql",
+      "resolver": "generic_auto_execute",
+      "when": {
+        "requiresAutoExecuteSql": true,
+        "notAuthoring": true
+      }
+    }
+  ],
+  "sqlRefinementPolicy": {
+    "id": "sqlRefinement",
+    "policy": "sql_refinement",
+    "reasonKey": "sqlRefinement"
+  },
   "actionableProductPredicates": [
     "directives",
     "exclusiveRawMaterialCatalog",
@@ -474,6 +558,7 @@
       "id": "productStock",
       "domain": "product",
       "intentBinding": "stock",
+      "routeSegment": "stock",
       "route": {
         "pathMarkers": ["/stock"],
         "operationIdMarkers": ["get_product_stock"],
@@ -491,6 +576,7 @@
       "id": "productStructure",
       "domain": "product",
       "intentBinding": "structure",
+      "routeSegment": "structure",
       "route": {
         "pathMarkers": ["/structure"],
         "operationIdMarkers": ["get_product_structure"],
@@ -508,6 +594,7 @@
       "id": "productParents",
       "domain": "product",
       "intentBinding": "parents",
+      "routeSegment": "parents",
       "route": {
         "pathMarkers": ["/parents"],
         "operationIdMarkers": ["get_product_parents"],
@@ -735,6 +822,11 @@
       "id": "productionScheduleToday",
       "domain": "productionOperational",
       "productionOperationalKind": "scheduleToday",
+      "fallbackPolicy": {
+        "kind": "sql_until_rest",
+        "resolver": "production_query",
+        "reasonKey": "productionSqlFastPath"
+      },
       "route": {
         "pathMarkers": ["/production/schedule/today"],
         "method": "GET"

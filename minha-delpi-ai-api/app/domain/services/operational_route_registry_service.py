@@ -163,3 +163,89 @@ class OperationalRouteRegistryService:
             return []
 
         return [str(item).strip() for item in predicates if str(item).strip()]
+
+    @classmethod
+    def fallback_policies(cls) -> list[dict[str, Any]]:
+        policies = _registry_content().get("fallbackPolicies")
+
+        if not isinstance(policies, list):
+            return []
+
+        normalized = [policy for policy in policies if isinstance(policy, dict)]
+
+        return sorted(
+            normalized,
+            key=lambda policy: int(policy.get("order") or 0),
+        )
+
+    @classmethod
+    def fallback_policies_for_phase(cls, phase: str) -> list[dict[str, Any]]:
+        target = str(phase or "").strip()
+
+        if not target:
+            return []
+
+        return [
+            policy
+            for policy in cls.fallback_policies()
+            if str(policy.get("phase") or "").strip() == target
+        ]
+
+    @classmethod
+    def sql_refinement_policy(cls) -> dict[str, Any]:
+        policy = _registry_content().get("sqlRefinementPolicy")
+
+        if isinstance(policy, dict):
+            return policy
+
+        return {}
+
+    @classmethod
+    def route_path_marker_for_segment(cls, segment: str) -> str | None:
+        normalized = str(segment or "").strip().lower()
+
+        if not normalized:
+            return None
+
+        for route in cls.routes():
+            if str(route.get("routeSegment") or "").strip().lower() != normalized:
+                continue
+
+            route_spec = route.get("route")
+
+            if not isinstance(route_spec, dict):
+                continue
+
+            markers = route_spec.get("pathMarkers")
+
+            if not isinstance(markers, list):
+                continue
+
+            for marker in markers:
+                value = str(marker or "").strip()
+
+                if value:
+                    return value
+
+        return None
+
+    @classmethod
+    def refinement_intent_by_route_segment(cls) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+
+        for route in cls.intent_bound_routes():
+            segment = str(route.get("routeSegment") or "").strip().lower()
+            intent = str(route.get("intentBinding") or "").strip().lower()
+
+            if segment and intent:
+                mapping[segment] = intent
+
+        return mapping
+
+    @classmethod
+    def preflight_sql_fallback_policies(cls) -> list[dict[str, Any]]:
+        return [
+            policy
+            for policy in cls.fallback_policies()
+            if policy.get("runBeforeSqlRefinement")
+        ]

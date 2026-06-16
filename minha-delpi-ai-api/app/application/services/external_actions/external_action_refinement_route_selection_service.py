@@ -8,6 +8,9 @@ from app.domain.services.chat_product_query_intent_service import ChatProductQue
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.operational_route_registry_service import (
+    OperationalRouteRegistryService,
+)
 
 
 class ExternalActionRefinementRouteSelectionService:
@@ -41,11 +44,7 @@ class ExternalActionRefinementRouteSelectionService:
         if not product_code or not route_segment or not select_product:
             return None
 
-        intent_by_segment = {
-            "parents": ChatProductQueryIntent.PARENTS,
-            "structure": ChatProductQueryIntent.STRUCTURE,
-            "stock": ChatProductQueryIntent.STOCK,
-        }
+        intent_by_segment = OperationalRouteRegistryService.refinement_intent_by_route_segment()
         intent = intent_by_segment.get(route_segment)
 
         if not intent:
@@ -110,17 +109,17 @@ class ExternalActionRefinementRouteSelectionService:
 
         product_code = str(refinement.product_code or "").strip()
         route_segment = str(refinement.route_segment or "").strip()
+        depth_segments = set(
+            OperationalRouteRegistryService.refinement_intent_by_route_segment().keys()
+        ) - {"stock"}
 
-        if not product_code or route_segment not in {"parents", "structure"}:
+        if not product_code or route_segment not in depth_segments:
             return None
 
         if not select_product:
             return None
 
-        intent_by_segment = {
-            "parents": ChatProductQueryIntent.PARENTS,
-            "structure": ChatProductQueryIntent.STRUCTURE,
-        }
+        intent_by_segment = OperationalRouteRegistryService.refinement_intent_by_route_segment()
         intent = intent_by_segment.get(route_segment)
 
         if not intent:

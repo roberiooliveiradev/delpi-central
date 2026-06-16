@@ -55,6 +55,7 @@ def test_dispatch_order_matches_registry() -> None:
         "operationalRoutes",
         "domainRoutes",
         "intentBoundRoutes",
+        "sqlFallback",
         "semanticFallback",
     ]
 

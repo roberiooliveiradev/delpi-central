@@ -56,9 +56,17 @@ class ExternalActionSelectionService:
         preferred_action_id = None
 
         if previous_messages and resolved_intent == ChatProductQueryIntent.STOCK:
+            from app.domain.services.operational_route_registry_service import (
+                OperationalRouteRegistryService,
+            )
+
+            stock_path_fragment = (
+                OperationalRouteRegistryService.route_path_marker_for_segment("stock")
+                or "/stock"
+            )
             preferred_action_id = self._support.resolve_previous_external_action_id(
                 previous_messages,
-                path_fragment="/stock",
+                path_fragment=stock_path_fragment,
             )
 
         return self._select_product_action(

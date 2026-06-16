@@ -148,6 +148,13 @@ class ExternalActionOperationalRouteSelectionService:
         if not normalized_intent or not str(product_code or "").strip():
             return None
 
+        segment_intent = OperationalRouteRegistryService.refinement_intent_by_route_segment().get(
+            normalized_segment
+        )
+
+        if segment_intent and segment_intent != normalized_intent:
+            normalized_segment = ""
+
         for route in OperationalRouteRegistryService.intent_bound_routes():
             binding = str(route.get("intentBinding") or "").strip().lower()
 
@@ -156,7 +163,7 @@ class ExternalActionOperationalRouteSelectionService:
 
             route_segment_spec = str(route.get("routeSegment") or "").strip().lower()
 
-            if route_segment_spec:
+            if normalized_segment and route_segment_spec:
                 if route_segment_spec != normalized_segment:
                     continue
             elif normalized_segment in ("inbound-invoice", "outbound-invoice"):

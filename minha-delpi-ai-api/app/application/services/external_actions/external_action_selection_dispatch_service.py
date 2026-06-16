@@ -36,12 +36,6 @@ from app.domain.services.chat_product_query_intent_service import (
 )
 from app.domain.services.chat_route_context_service import ChatRouteContextService
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
-from app.domain.services.chat_sql_operational_intent_service import (
-    ChatSqlOperationalIntentService,
-)
-from app.domain.services.external_actions.external_action_response_content_service import (
-    ExternalActionResponseContentService,
-)
 
 
 class ExternalActionSelectionDispatchService:
@@ -117,36 +111,27 @@ class ExternalActionSelectionDispatchService:
         ):
             return None
 
-        if (
-            ChatSqlOperationalIntentService.requires_production_sql_knowledge(message)
-            and not ChatSqlIntentService.is_authoring_request(message)
-        ):
-            from app.domain.services.chat_production_operational_intent_service import (
-                ChatProductionOperationalIntentService,
-            )
-
-            if not ChatProductionOperationalIntentService.matches_rest_route(message):
-                from app.domain.services.chat_sql_production_query_service import (
-                    ChatSqlProductionQueryService,
-                )
-
-                production_resolution = ChatSqlProductionQueryService.resolve(message)
-
-                if production_resolution and production_resolution.mode == "execute":
-                    selected = self._select_sql_or_data_action(
-                        message,
-                        allowed_action_ids=allowed_action_ids,
-                        sql=production_resolution.sql,
-                        selection_reason_key="productionSqlFastPath",
-                        raw_message=sql_source,
-                    )
-
-                    if selected:
-                        return selected
-
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
         )
+        from app.application.services.external_actions.external_action_sql_fallback_policy_service import (
+            ExternalActionSqlFallbackPolicyService,
+        )
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+
+        for policy in OperationalRouteRegistryService.preflight_sql_fallback_policies():
+            selected = ExternalActionSqlFallbackPolicyService.try_policy(
+                policy,
+                message=message,
+                sql_source=sql_source,
+                allowed_action_ids=allowed_action_ids,
+                select_sql=self._select_sql_or_data_action,
+            )
+
+            if selected:
+                return selected
 
         sql_refinement = ChatSqlQueryRefinementService.resolve(
             message,
@@ -157,19 +142,16 @@ class ExternalActionSelectionDispatchService:
             return None
 
         if sql_refinement and sql_refinement.mode == "execute":
-            selected = self._select_sql_or_data_action(
-                message,
+            selected = ExternalActionSqlFallbackPolicyService.try_sql_refinement(
+                message=message,
+                sql_source=sql_source,
                 allowed_action_ids=allowed_action_ids,
-                sql=sql_refinement.sql,
-                selection_reason_key="sqlRefinement",
-                raw_message=sql_source,
+                previous_messages=previous_messages,
+                select_sql=self._select_sql_or_data_action,
+                policy=OperationalRouteRegistryService.sql_refinement_policy(),
             )
 
             if selected:
-                selected["reason"] = ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "sqlRefinement",
-                )
                 return selected
 
         from app.domain.services.chat_drawing_intent_service import (
@@ -194,41 +176,6 @@ class ExternalActionSelectionDispatchService:
 
                 if selected:
                     return selected
-
-        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
-            from app.domain.services.chat_sql_inventory_query_service import (
-                ChatSqlInventoryQueryService,
-            )
-
-            if not ChatSqlIntentService.is_authoring_request(message):
-                for resolver, reason_key in (
-                    (ChatSqlInventoryQueryService, "inventorySqlFastPath"),
-                ):
-                    resolution = resolver.resolve(message)
-
-                    if resolution and resolution.mode == "execute":
-                        selected = self._select_sql_or_data_action(
-                            message,
-                            allowed_action_ids=allowed_action_ids,
-                            sql=resolution.sql,
-                            selection_reason_key=reason_key,
-                            raw_message=sql_source,
-                        )
-
-                        if selected:
-                            return selected
-
-            if ChatSqlIntentService.should_auto_execute_sql(message):
-                selected = self._select_sql_or_data_action(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    raw_message=sql_source,
-                )
-
-                if selected:
-                    return selected
-
-            return None
 
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
@@ -263,9 +210,17 @@ class ExternalActionSelectionDispatchService:
         )
 
         if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
+            from app.domain.services.operational_route_registry_service import (
+                OperationalRouteRegistryService,
+            )
+
+            stock_path_fragment = (
+                OperationalRouteRegistryService.route_path_marker_for_segment("stock")
+                or "/stock"
+            )
             previous_stock_action_id = self._support.resolve_previous_external_action_id(
                 previous_messages,
-                path_fragment="/stock",
+                path_fragment=stock_path_fragment,
             )
             selected = self._select_product_action(
                 message,
