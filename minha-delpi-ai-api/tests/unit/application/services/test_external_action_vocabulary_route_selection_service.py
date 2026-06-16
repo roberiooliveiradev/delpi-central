@@ -4,6 +4,7 @@ from app.application.services.external_actions.external_action_product_route_sel
 from app.application.services.external_actions.external_action_vocabulary_route_selection_service import (
     ExternalActionVocabularyRouteSelectionService,
 )
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 
 
@@ -26,6 +27,10 @@ class _FakeRepository:
 
     def list_actions(self, provider_key=None):
         return list(self._actions)
+
+
+def setup_module() -> None:
+    configure_domain_infrastructure_ports()
 
 
 def test_select_product_full_without_scope_defers_to_semantic_ranking():

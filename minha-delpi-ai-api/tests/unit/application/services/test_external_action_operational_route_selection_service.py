@@ -124,3 +124,64 @@ def test_operational_route_selection_by_intent_stock() -> None:
     assert selected is not None
     assert selected["arguments"]["actionId"] == "stock"
     assert selected["arguments"]["parameters"]["code"] == "10080047"
+
+
+def test_operational_route_selection_production_losses_top() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "production-losses-top-materials",
+                "method": "GET",
+                "path": "/production/losses/top-materials",
+                "operationId": "get_production_losses_top_materials",
+                "parametersSchema": [
+                    {"name": "date_start"},
+                    {"name": "date_end"},
+                    {"name": "limit"},
+                ],
+            }
+        ]
+    )
+    product_route = ExternalActionProductRouteSelectionService(repository)
+    service = ExternalActionOperationalRouteSelectionService(product_route)
+
+    selected = service.select_production_operational(
+        "Refugos de matéria-prima março filial 02 top 10",
+        allowed_action_ids=["production-losses-top-materials"],
+        build_date_branch_parameters=lambda action, message, **kwargs: {
+            "date_start": "2026-03-01",
+            "date_end": "2026-03-31",
+            "limit": 10,
+        },
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-losses-top-materials"
+
+
+def test_operational_route_selection_sale_orders() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "sale-orders",
+                "method": "GET",
+                "path": "/commercial/sales",
+                "operationId": "list_sale_orders",
+                "parametersSchema": [{"name": "page"}, {"name": "page_size"}],
+            }
+        ]
+    )
+    product_route = ExternalActionProductRouteSelectionService(repository)
+    service = ExternalActionOperationalRouteSelectionService(product_route)
+
+    selected = service.select_sale_orders(
+        "Listar ordens de venda de março",
+        allowed_action_ids=["sale-orders"],
+        merge_date_parameters=lambda action, message, params: {
+            **params,
+            "date_start": "2026-03-01",
+        },
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "sale-orders"

@@ -47,6 +47,19 @@ class OperationalRouteRegistryService:
         )
 
     @classmethod
+    def route_by_production_operational_kind(cls, kind: str) -> dict[str, Any] | None:
+        target = str(kind or "").strip()
+
+        if not target:
+            return None
+
+        for route in cls.routes():
+            if str(route.get("productionOperationalKind") or "").strip() == target:
+                return route
+
+        return None
+
+    @classmethod
     def route_by_id(cls, route_id: str) -> dict[str, Any] | None:
         target = str(route_id or "").strip()
 

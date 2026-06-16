@@ -342,7 +342,26 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
-            return None
+            if (
+                not ChatSqlIntentService.is_authoring_request(message)
+            ):
+                from app.domain.services.chat_sql_production_query_service import (
+                    ChatSqlProductionQueryService,
+                )
+
+                production_resolution = ChatSqlProductionQueryService.resolve(message)
+
+                if production_resolution and production_resolution.mode == "execute":
+                    selected = self._select_sql_or_data_action(
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                        sql=production_resolution.sql,
+                        selection_reason_key="productionSqlFastPath",
+                        raw_message=sql_source,
+                    )
+
+                    if selected:
+                        return selected
 
         if (
             ExternalActionDomainRouteSelectionService.looks_like_system_metadata_question(
@@ -431,6 +450,34 @@ class ExternalActionSelectionDispatchService:
             message,
             previous_messages=previous_messages,
         )
+        bound_product_intent = product_intent
+
+        if (
+            product_intent == ChatProductQueryIntent.FULL
+            and ChatProductDescriptionResolutionService.looks_like_description_lookup(
+                message
+            )
+        ):
+            description_query = (
+                ChatProductDescriptionResolutionService.extract_description_query(
+                    message,
+                )
+            )
+            resolved_from_history = (
+                ChatProductDescriptionResolutionService.resolve_code_from_history(
+                    description_query,
+                    previous_messages=previous_messages,
+                )
+                if description_query
+                else None
+            )
+
+            if resolved_from_history and not ChatProductQueryIntentService.extract_product_code(
+                message
+            ):
+                bound_product_intent = ChatProductQueryIntent.ANALYSER
+            else:
+                bound_product_intent = ChatProductQueryIntent.DESCRIPTION
 
         if ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
             normalized
@@ -494,11 +541,11 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
-        if product_code and product_intent in _INTENT_BOUND_PRODUCT_INTENTS:
+        if product_code and bound_product_intent in _INTENT_BOUND_PRODUCT_INTENTS:
             route_segment = product_route_segment
-            bound_intent = product_intent
+            bound_intent = bound_product_intent
 
-            if product_intent == ChatProductQueryIntent.SALES:
+            if bound_product_intent == ChatProductQueryIntent.SALES:
                 route_segment = product_route_segment or "sales"
 
                 if route_segment in ("outbound-invoice", "inbound-invoice"):
@@ -517,7 +564,7 @@ class ExternalActionSelectionDispatchService:
                 return selected
 
             if (
-                product_intent == ChatProductQueryIntent.SALES
+                bound_product_intent == ChatProductQueryIntent.SALES
                 and ChatProductQueryIntentService.extract_product_code(message)
             ):
                 return None
@@ -531,8 +578,8 @@ class ExternalActionSelectionDispatchService:
             or ChatProductDescriptionResolutionService.looks_like_description_lookup(message)
         ):
             resolved_intent = (
-                product_intent
-                if product_intent != ChatProductQueryIntent.FULL
+                bound_product_intent
+                if bound_product_intent != ChatProductQueryIntent.FULL
                 else ChatProductQueryIntent.FULL
             )
 

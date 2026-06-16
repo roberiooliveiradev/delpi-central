@@ -1,7 +1,10 @@
 from app.application.services.external_actions.external_action_product_route_selection_service import (
     ExternalActionProductRouteSelectionService,
 )
-from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+from app.application.services.external_actions.external_action_route_selection_service import (
+    ExternalActionRouteSelectionService,
+)
+from app.composition.content_composer import configure_domain_infrastructure_ports
 
 
 class _FakeRepository:
@@ -20,6 +23,10 @@ class _FakeRepository:
             ]
 
         return matches
+
+
+def setup_module() -> None:
+    configure_domain_infrastructure_ports()
 
 
 def test_select_product_prefers_stock_route_for_stock_intent():
@@ -41,13 +48,13 @@ def test_select_product_prefers_stock_route_for_stock_intent():
             },
         ]
     )
-    service = ExternalActionProductRouteSelectionService(repository)
+    route_selection = ExternalActionRouteSelectionService(repository)
 
-    selected = service.select(
+    selected = route_selection.select_intent_bound_route(
         "estoque do produto 10080055",
         "10080055",
+        intent="stock",
         allowed_action_ids=["stock-action", "analyser-action"],
-        intent=ChatProductQueryIntent.STOCK,
     )
 
     assert selected is not None

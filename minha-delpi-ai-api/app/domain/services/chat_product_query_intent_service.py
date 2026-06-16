@@ -1385,6 +1385,7 @@ class ChatProductQueryIntentService:
             cls._looks_like_production_status_question,
             cls._looks_like_shipping_status_question,
             cls._looks_like_structure_exclusivity_question,
+            cls._looks_like_billing_question,
             cls._looks_like_price_analysis_question,
             cls._looks_like_full_analyser_question,
             cls._looks_like_exclusive_raw_material_catalog_question,

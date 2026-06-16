@@ -348,6 +348,9 @@ class ChatAnalysisIntentService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return False
 
+        if cls._looks_like_production_kpi_dashboard_list_request(message):
+            return False
+
         if any(term in normalized for term in cls._comparison_terms()):
             return True
 
@@ -365,6 +368,53 @@ class ChatAnalysisIntentService:
             return True
 
         return False
+
+    @classmethod
+    def _looks_like_production_kpi_dashboard_list_request(cls, message: str) -> bool:
+        from app.domain.services.external_actions.external_action_response_content_service import (
+            ExternalActionResponseContentService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        production_terms = (
+            "producao",
+            "produção",
+            "fabril",
+            "manufatura",
+            "op ",
+            "ops",
+        )
+        oee_terms = (
+            "oee",
+            "eficiencia",
+            "eficiência",
+            "zefici",
+            "apontamento",
+            "apontamentos",
+        )
+
+        for key in (
+            "productionOtdDetailTerms",
+            "productionOeeDetailTerms",
+            "productionOeeAppointmentTerms",
+        ):
+            terms = ExternalActionResponseContentService.list("actionSelection", key)
+
+            if any(term in normalized for term in terms) and any(
+                term in normalized for term in (*production_terms, *oee_terms)
+            ):
+                return True
+
+        fabril_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionEficienciaFabrilTerms",
+        )
+
+        return any(term in normalized for term in fabril_terms)
 
     @classmethod
     def _looks_like_single_product_fetch(cls, normalized: str) -> bool:

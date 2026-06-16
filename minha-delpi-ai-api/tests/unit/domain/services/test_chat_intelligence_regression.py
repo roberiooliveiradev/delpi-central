@@ -3,6 +3,7 @@ import pytest
 from app.application.services.chat_intelligence_pipeline_service import (
     ChatIntelligencePipelineService,
 )
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.application.services.external_actions.external_action_selection_service import (
     ExternalActionSelectionService,
 )
@@ -64,6 +65,10 @@ class FakeRepository:
 
     def list_actions(self):
         return self.actions
+
+
+def setup_module() -> None:
+    configure_domain_infrastructure_ports()
 
 
 @pytest.mark.parametrize("message,expected_intent", INTENT_CASES)

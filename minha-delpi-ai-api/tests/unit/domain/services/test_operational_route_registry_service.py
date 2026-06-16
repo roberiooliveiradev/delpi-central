@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.2"
+    assert OperationalRouteRegistryService.version() == "2026.06.3"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -23,7 +23,18 @@ def test_operational_route_registry_loads_p0_routes() -> None:
     assert "productDirectives" in route_ids
     assert "productFactoryStatus" in route_ids
     assert "exclusiveRawMaterialCatalog" in route_ids
-    assert len(route_ids) >= 11
+    assert "productionConsumptionTopItems" in route_ids
+    assert "commercialSaleOrders" in route_ids
+    assert len(route_ids) >= 30
+
+
+def test_operational_route_registry_production_operational_kind_lookup() -> None:
+    route = OperationalRouteRegistryService.route_by_production_operational_kind(
+        "lossesTop"
+    )
+
+    assert route is not None
+    assert route["id"] == "productionLossesTopMaterials"
 
 
 def test_operational_route_registry_has_intent_bound_routes() -> None:

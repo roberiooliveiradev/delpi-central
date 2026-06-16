@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fase 0–2 implementada (jun/2026) — registry, matcher, P0 vocabulário e intents clássicos; Fases 3–5 pendentes  
+**Status:** Fase 0–3 implementada; Fase 4 parcial (jun/2026) — `vocabularyFastPaths` esvaziado, boosts P0/intent removidos de `_rank_product_actions`, fallback SQL quando REST PB15 indisponível  
 **Data:** jun/2026  
 **Commit de referência:** `519f3834` (remove fallback analyser + `vocabularyFastPaths` inicial)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -412,7 +412,7 @@ Migrar entradas §5.1 e §5.2 para registry; remover boosts correspondentes em `
 **Critério de aceite:** perguntas de homologação em `tests/fixtures/chat_intelligence_regression_cases.py` inalteradas.
 
 - [x] Registry P0 (directives, exclusive catalog, factory/production/shipping, structure exclusivity, preço/compra)
-- [ ] Remover boosts duplicados em `_rank_product_actions` (próximo PR)
+- [x] Remover boosts duplicados em `_rank_product_actions` (P0 vocabulário + intents clássicos)
 
 ### Fase 2 — Intents clássicos (1 PR)
 
@@ -422,17 +422,21 @@ Substituir blocos dispatch A8 por `intentBoundRoutes` no registry.
 
 - [x] `intentBinding` no registry (stock, structure, parents, sales, summary, analyser, description, NF)
 - [x] `select_by_intent` no motor operacional + dispatch unificado
-- [ ] Remover boosts duplicados em `_rank_product_actions` (próximo PR)
+- [x] Remover boosts duplicados em `_rank_product_actions` (intents clássicos)
 
 ### Fase 3 — Playbook 15 + domínios (1 PR)
 
 Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalActionDomainRouteSelectionService` no motor único.
 
+- [x] Registry v2026.06.3 (14 rotas PB15 + OV + Transforma)
+- [x] Motor operacional (`select_production_operational`, `select_sale_orders`, `select_transforma`)
+- [ ] Migrar `select_system_metadata` (scoring complexo — Fase 4)
+
 ### Fase 4 — Remoção de legado (1 PR)
 
 - [ ] Deletar `ExternalActionProductRouteSelectionService` (ou reduzir a wrapper fino)
 - [ ] Deletar `_MATCHERS`, `select_product_directives`, `select_exclusive_raw_material_catalog`
-- [ ] Deletar `vocabularyFastPaths` (conteúdo migrado)
+- [x] Deletar `vocabularyFastPaths` (conteúdo migrado — array vazio)
 - [ ] Remover `_provider_preference_bonus` api_delpi/api_externa
 - [ ] Remover duplicação `productRouteRanking.*` vs `product_query_intent.json`
 

@@ -264,6 +264,16 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader or not merge_date_parameters:
             return None
 
+        selected = self._operational_route.select_sale_orders(
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            merge_date_parameters=merge_date_parameters,
+        )
+
+        if selected:
+            return selected
+
         return self._domain_route.select_sale_orders(
             message,
             allowed_action_ids,
@@ -282,6 +292,17 @@ class ExternalActionRouteSelectionService:
     ) -> dict | None:
         if not candidates_loader or not build_date_branch_parameters:
             return None
+
+        selected = self._operational_route.select_transforma(
+            message,
+            allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+        )
+
+        if selected:
+            return selected
 
         return self._domain_route.select_transforma(
             message,
@@ -337,6 +358,18 @@ class ExternalActionRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
+        selected = self._operational_route.select_production_operational(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            path_lookup_loader=path_lookup_loader,
+        )
+
+        if selected:
+            return selected
+
         return self._production_operational_route.try_select(
             message,
             allowed_action_ids=allowed_action_ids,

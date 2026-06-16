@@ -9,6 +9,32 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
+
+
+def _looks_like_sale_orders_list_question(normalized: str) -> bool:
+    exclude_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "saleOrdersList",
+        "excludeTerms",
+    )
+
+    if any(term in normalized for term in exclude_terms):
+        return False
+
+    terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "saleOrdersList",
+        "terms",
+    )
+
+    return any(term in normalized for term in terms)
+
+
+def _looks_like_transforma_question(normalized: str) -> bool:
+    return "transforma" in normalized
 
 
 class OperationalRouteMatcherService:
@@ -36,6 +62,8 @@ class OperationalRouteMatcherService:
         "purchaseBudgetHistory": (
             ChatProductQueryIntentService._looks_like_purchase_budget_history_question
         ),
+        "saleOrdersList": _looks_like_sale_orders_list_question,
+        "transformaQuestion": _looks_like_transforma_question,
     }
 
     @classmethod

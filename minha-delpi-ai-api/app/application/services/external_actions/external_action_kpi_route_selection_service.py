@@ -26,6 +26,17 @@ class ExternalActionKpiRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
+        selected = self._try_select_production_dashboard_detail(
+            message,
+            normalized,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+        )
+
+        if selected:
+            return selected
+
         if self.looks_like_cpv_question(normalized):
             selected = self.select_supplies_metric(
                 message,
@@ -112,6 +123,140 @@ class ExternalActionKpiRouteSelectionService:
                 previous_messages=previous_messages,
                 candidates_loader=candidates_loader,
             )
+
+        return None
+
+    def _try_select_production_dashboard_detail(
+        self,
+        message: str,
+        normalized: str,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        production_terms = ("producao", "produção", "fabril", "manufatura", "op ", "ops")
+        oee_terms = (
+            "oee",
+            "eficiencia",
+            "eficiência",
+            "equipamento",
+            "equipamentos",
+            "zefici",
+        )
+        appointment_context_terms = (
+            "apontamento",
+            "apontamentos",
+            "sh6010",
+            "h6_zefici",
+        )
+        fabril_block_terms = ("fabril", "resultado mod", "mod fabril", "dashboard eficiencia")
+
+        dashboard_specs: list[OperationalApiRouteSpec] = []
+
+        detail_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOtdDetailTerms",
+        )
+
+        if any(term in normalized for term in detail_terms) and any(
+            term in normalized for term in production_terms
+        ):
+            dashboard_specs.append(
+                OperationalApiRouteSpec(
+                    domain="department_kpi",
+                    reason=ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "departmentKpi",
+                        default="Indicador departamental reconhecido na pergunta.",
+                    ),
+                    path_tokens=("otd",),
+                    path_prefixes=("/production/",),
+                    operation_tokens=("production_otd",),
+                    parameter_strategy="date_branch",
+                )
+            )
+
+        oee_detail_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeDetailTerms",
+        )
+
+        if any(term in normalized for term in oee_detail_terms) and any(
+            term in normalized for term in oee_terms
+        ):
+            if not any(term in normalized for term in fabril_block_terms):
+                dashboard_specs.append(
+                    OperationalApiRouteSpec(
+                        domain="department_kpi",
+                        reason=ExternalActionResponseContentService.get(
+                            "selectionReasons",
+                            "departmentKpi",
+                            default="Indicador departamental reconhecido na pergunta.",
+                        ),
+                        path_tokens=("oee",),
+                        path_prefixes=("/production/",),
+                        operation_tokens=("production_oee",),
+                        parameter_strategy="date_branch",
+                    )
+                )
+
+        appointment_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionOeeAppointmentTerms",
+        )
+
+        if any(term in normalized for term in appointment_terms) and (
+            any(term in normalized for term in oee_terms)
+            or any(term in normalized for term in appointment_context_terms)
+        ):
+            dashboard_specs.append(
+                OperationalApiRouteSpec(
+                    domain="department_kpi",
+                    reason=ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "departmentKpi",
+                        default="Indicador departamental reconhecido na pergunta.",
+                    ),
+                    path_tokens=("oee", "appointments"),
+                    path_prefixes=("/production/",),
+                    operation_tokens=("production_oee_appointment",),
+                    parameter_strategy="date_branch",
+                )
+            )
+
+        fabril_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionEficienciaFabrilTerms",
+        )
+
+        if any(term in normalized for term in fabril_terms):
+            dashboard_specs.append(
+                OperationalApiRouteSpec(
+                    domain="department_kpi",
+                    reason=ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "departmentKpi",
+                        default="Indicador departamental reconhecido na pergunta.",
+                    ),
+                    path_tokens=("eficiencia-fabril", "dashboard"),
+                    path_prefixes=("/production/",),
+                    operation_tokens=("eficiencia_fabril_dashboard",),
+                    parameter_strategy="date_branch",
+                )
+            )
+
+        for spec in dashboard_specs:
+            selected = self._route_selection.select(
+                spec,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                fallback_candidates_loader=candidates_loader,
+            )
+
+            if selected:
+                return selected
 
         return None
 

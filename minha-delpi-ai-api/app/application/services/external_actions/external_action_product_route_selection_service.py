@@ -511,39 +511,6 @@ class ExternalActionProductRouteSelectionService:
             if wants_billing and "/sales/billing" in path:
                 value += 125
 
-            if wants_factory_status and "factory-status" in path:
-                value += 140
-
-            if wants_production_status and "production-status" in path:
-                value += 145
-
-            if wants_shipping_status and "shipping-status" in path:
-                value += 145
-
-            if wants_structure_exclusivity and "/structure/exclusivity" in path:
-                value += 145
-
-            if wants_raw_material_price_intelligence and "raw-material-price-intelligence" in path:
-                value += 150
-
-            if wants_cost_impact_simulation and "cost-impact-simulation" in path:
-                value += 150
-
-            if wants_directives and "/directives/" in path:
-                value += 165
-
-            if wants_directives and "analyser" in path:
-                value -= 150
-
-            if wants_last_purchase and "last-purchase" in path:
-                value += 140
-
-            if wants_purchase_price_history and "purchase-price-history" in path:
-                value += 135
-
-            if wants_purchase_budget_history and "purchase-budget-history" in path:
-                value += 135
-
             if wants_sale_pricing and "/pricing" in path:
                 value += 130
 
@@ -726,123 +693,8 @@ class ExternalActionProductRouteSelectionService:
             if wants_inspection and wants_shipping_status and "/inspection" in path:
                 value -= 90
 
-            if intent == ChatProductQueryIntent.STRUCTURE:
-                if "/structure" in path:
-                    value += 150
-
-                if "structure" in haystack or "estrutura" in haystack or "bom" in haystack:
-                    value += 40
-
-                if "analyser" in haystack:
-                    value -= 40
-
-                if "search" in path:
-                    value -= 80
-
-            elif intent == ChatProductQueryIntent.STOCK:
-                if "/products/{code}/stock" in haystack or path.endswith("/stock"):
-                    value += 120
-
-                if "stock" in haystack or "estoque" in haystack:
-                    value += 40
-
-                if "analyser" in haystack:
-                    value -= 40
-
-            elif intent == ChatProductQueryIntent.SALES:
-                if self._is_product_sales_summary_path(path):
-                    value += 280
-
-                if "/sales" in path and "billing" not in path and "open-orders" not in path:
-                    value += 60
-
-                if "stock" in path or "structure" in path or "parents" in path:
-                    value -= 120
-
-                if "analyser" in haystack:
-                    value -= 40
-
-            elif intent == ChatProductQueryIntent.PARENTS:
-                if "/parents" in path:
-                    value += 200
-
-                if "parent" in haystack or "pai" in haystack:
-                    value += 40
-
-                if "analyser" in haystack:
-                    value -= 40
-
-                if "search" in path:
-                    value -= 80
-
-            elif intent == ChatProductQueryIntent.SUMMARY:
-                if "/products/{code}/summary" in path or path.endswith("/summary"):
-                    value += 260
-
-                if "summary" in haystack and "product" in haystack:
-                    value += 40
-
-                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
-                    value -= 120
-
-                if "analyser" in haystack or "analyzer" in haystack:
-                    value -= 80
-
-                if path == "/products/{code}":
-                    value += 30
-
-                if "stock" in path or "structure" in path or "parents" in path:
-                    value -= 90
-
-                if "search" in path:
-                    value -= 100
-
-            elif intent == ChatProductQueryIntent.ANALYSER:
-                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
-                    value += 280
-
-                if "analyser" in haystack or "analyzer" in haystack:
-                    value += 60
-
-                if "/summary" in path:
-                    value -= 100
-
-                if path == "/products/{code}":
-                    value += 40
-
-                if "stock" in path or "structure" in path or "parents" in path:
-                    value -= 90
-
-                if "search" in path:
-                    value -= 100
-
-            elif intent == ChatProductQueryIntent.DESCRIPTION:
-                if path == "/products/{code}":
-                    value += 200
-
-                if wants_product_summary and "/summary" in path:
-                    value += 80
-
-                if wants_full_analyser and "/products/{code}/analyser" in haystack:
-                    value += 180
-                elif not wants_product_summary and "/products/{code}/analyser" in haystack:
-                    value += 120
-
-                if "/description" in path:
-                    value += 150
-
-                if wants_product_summary and "analyser" in haystack:
-                    value -= 80
-
-                if "stock" in path or "structure" in path or "parents" in path:
-                    value -= 80
-
-                if "search" in path:
-                    value -= 100
-
-            else:
-                if "/products/{code}" in haystack:
-                    value += 25
+            if "/products/{code}" in haystack:
+                value += 25
 
             if "product" in haystack or "products" in haystack or "produto" in haystack:
                 value += 20
@@ -883,11 +735,25 @@ class ExternalActionProductRouteSelectionService:
         *,
         suppress_playbook_bias: bool = False,
     ) -> int:
-        from app.application.services.chat_intelligence_runtime_access import (
-            resolve_chat_intelligence_runtime,
-        )
+        if suppress_playbook_bias:
+            return 0
 
-        if suppress_playbook_bias or not resolve_chat_intelligence_runtime().prefer_api_externa_provider:
+        try:
+            from app.application.services.chat_intelligence_runtime_access import (
+                resolve_chat_intelligence_runtime,
+            )
+
+            prefer_api_externa = (
+                resolve_chat_intelligence_runtime().prefer_api_externa_provider
+            )
+        except RuntimeError:
+            from app.infrastructure.config.settings import Settings
+
+            prefer_api_externa = bool(
+                getattr(Settings, "CHAT_PREFER_API_EXTERNA_PROVIDER", False)
+            )
+
+        if suppress_playbook_bias or not prefer_api_externa:
             return 0
 
         action_id = str(action.get("actionId") or "").lower()

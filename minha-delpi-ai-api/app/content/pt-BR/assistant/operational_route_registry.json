@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.2",
+  "version": "2026.06.3",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -370,6 +370,217 @@
       "presentation": {
         "reasonKey": "productDescription"
       }
+    },
+    {
+      "id": "productionConsumptionTopItems",
+      "domain": "productionOperational",
+      "productionOperationalKind": "consumption",
+      "route": {
+        "pathMarkers": ["/production/consumption/top-items"],
+        "excludePathMarkers": ["by-work-center", "top-items-validated", "by-item/"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionConsumptionTopItems" }
+    },
+    {
+      "id": "productionConsumptionByWorkCenter",
+      "domain": "productionOperational",
+      "productionOperationalKind": "consumptionByWorkCenter",
+      "route": {
+        "pathMarkers": ["/production/consumption/top-items-by-work-center"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionConsumptionByWorkCenter" }
+    },
+    {
+      "id": "productionConsumptionValidated",
+      "domain": "productionOperational",
+      "productionOperationalKind": "consumptionValidated",
+      "route": {
+        "pathMarkers": ["/production/consumption/top-items-validated"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionConsumptionValidated" }
+    },
+    {
+      "id": "purchasesTopProducts",
+      "domain": "productionOperational",
+      "productionOperationalKind": "purchasesRanking",
+      "route": {
+        "pathMarkers": ["/purchases/top-products"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "purchasesTopProducts" }
+    },
+    {
+      "id": "productionLossesTopMaterials",
+      "domain": "productionOperational",
+      "productionOperationalKind": "lossesTop",
+      "route": {
+        "pathMarkers": ["/production/losses/top-materials"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionLossesTopMaterials" }
+    },
+    {
+      "id": "productionLossesRecords",
+      "domain": "productionOperational",
+      "productionOperationalKind": "lossesRecords",
+      "route": {
+        "pathMarkers": ["/production/losses/records"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionLossesRecords" }
+    },
+    {
+      "id": "productionScheduleToday",
+      "domain": "productionOperational",
+      "productionOperationalKind": "scheduleToday",
+      "route": {
+        "pathMarkers": ["/production/schedule/today"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionScheduleToday" }
+    },
+    {
+      "id": "productionOrdersOpen",
+      "domain": "productionOperational",
+      "productionOperationalKind": "ordersOpen",
+      "route": {
+        "pathMarkers": ["/production/orders/open"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionOrdersOpen" }
+    },
+    {
+      "id": "productionOrdersFinished",
+      "domain": "productionOperational",
+      "productionOperationalKind": "ordersFinished",
+      "route": {
+        "pathMarkers": ["/production/orders/finished"],
+        "excludePathMarkers": ["finished-without-consumption"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionOrdersFinished" }
+    },
+    {
+      "id": "productionWorkCenterOrderSummary",
+      "domain": "productionOperational",
+      "productionOperationalKind": "workCenterSummary",
+      "route": {
+        "pathMarkers": ["/production/work-centers/order-summary"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionWorkCenterOrderSummary" }
+    },
+    {
+      "id": "productionAllocationGaps",
+      "domain": "productionOperational",
+      "productionOperationalKind": "allocationGaps",
+      "route": {
+        "pathMarkers": ["/production/allocation-gaps"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionAllocationGaps" }
+    },
+    {
+      "id": "productionOrdersFinishedWithoutConsumption",
+      "domain": "productionOperational",
+      "productionOperationalKind": "finishedWithoutConsumption",
+      "route": {
+        "pathMarkers": ["/production/orders/finished-without-consumption"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionOrdersFinishedWithoutConsumption" }
+    },
+    {
+      "id": "productionWorkCenterAveragePlannedTime",
+      "domain": "productionOperational",
+      "productionOperationalKind": "averagePlannedTime",
+      "route": {
+        "pathMarkers": ["/production/work-centers/average-planned-time"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionWorkCenterAveragePlannedTime" }
+    },
+    {
+      "id": "productionConsumptionByItem",
+      "domain": "productionOperational",
+      "productionOperationalKind": "consumptionByItem",
+      "route": {
+        "pathMarkers": ["/production/consumption/by-item/"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionConsumptionByItem" }
+    },
+    {
+      "id": "productionPlannedVsRealTime",
+      "domain": "productionOperational",
+      "productionOperationalKind": "plannedVsRealTime",
+      "route": {
+        "pathMarkers": ["/production/planned-vs-real-time"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "productionPlannedVsRealTime" }
+    },
+    {
+      "id": "commercialSaleOrders",
+      "domain": "domainCommercial",
+      "priority": 130,
+      "match": { "customPredicate": "saleOrdersList" },
+      "route": {
+        "pathSuffix": "/sales",
+        "operationIdMarkers": ["list_sale_orders"],
+        "excludePathMarkers": ["/lmps", "/products/", "{code}", "/lmp"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "sale_orders" },
+      "presentation": { "reasonKey": "saleOrdersList" }
+    },
+    {
+      "id": "engineeringTransformaSummary",
+      "domain": "domainEngineering",
+      "priority": 125,
+      "match": {
+        "allOf": [
+          { "customPredicate": "transformaQuestion" },
+          { "termsFrom": "external_action_responses.actionSelection.transformaSummary.terms" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["transforma-mais", "/summary"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "transformaMais" }
+    },
+    {
+      "id": "engineeringTransformaProcesses",
+      "domain": "domainEngineering",
+      "priority": 120,
+      "match": { "customPredicate": "transformaQuestion" },
+      "route": {
+        "pathMarkers": ["transforma-mais", "/processes"],
+        "excludePathMarkers": ["/summary"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "date_branch" },
+      "presentation": { "reasonKey": "transformaMais" }
     }
   ]
 }

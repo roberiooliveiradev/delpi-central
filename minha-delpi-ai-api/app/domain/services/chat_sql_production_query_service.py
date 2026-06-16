@@ -57,7 +57,10 @@ class ChatSqlProductionQueryService:
 
     @classmethod
     def resolve(cls, message: str | None) -> SqlProductionResolution | None:
-        if not ChatSqlOperationalIntentService.requires_production_sql_knowledge(message):
+        if not (
+            ChatSqlOperationalIntentService.requires_production_sql_knowledge(message)
+            or cls._allows_sql_fallback_when_rest_unavailable(message)
+        ):
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -87,6 +90,21 @@ class ChatSqlProductionQueryService:
             return SqlProductionResolution(mode="authoring", sql=sql, title=title)
 
         return SqlProductionResolution(mode="execute", sql=sql, title=title)
+
+    @classmethod
+    def _allows_sql_fallback_when_rest_unavailable(cls, message: str | None) -> bool:
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+            ProductionOperationalIntentKind,
+        )
+
+        if not ChatProductionOperationalIntentService.matches_rest_route(message):
+            return False
+
+        return (
+            ChatProductionOperationalIntentService.resolve(message)
+            == ProductionOperationalIntentKind.SCHEDULE_TODAY
+        )
 
     @classmethod
     def _branch_breakdown_terms(cls) -> tuple[str, ...]:
