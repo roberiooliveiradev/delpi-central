@@ -239,9 +239,9 @@ def main() -> int:
             True,
         ),
         (
-            "última compra MP usa intelligence",
+            "última compra MP usa /last-purchase",
             f"última compra e ICMS do produto {_MP_PRODUCT}",
-            "/raw-material-price-intelligence",
+            "/last-purchase",
             True,
         ),
         (
