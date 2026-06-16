@@ -9,6 +9,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_system_metadata_intent_service import (
+    ChatSystemMetadataIntentService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -35,6 +38,26 @@ def _looks_like_sale_orders_list_question(normalized: str) -> bool:
 
 def _looks_like_transforma_question(normalized: str) -> bool:
     return "transforma" in normalized
+
+
+def _looks_like_system_metadata_question(normalized: str) -> bool:
+    return ChatSystemMetadataIntentService.looks_like_question(normalized)
+
+
+def _system_has_table_name(normalized: str) -> bool:
+    return bool(ChatSystemMetadataIntentService.extract_table_name(normalized))
+
+
+def _system_wants_columns(normalized: str) -> bool:
+    return ChatSystemMetadataIntentService.wants_columns(normalized)
+
+
+def _system_wants_relations(normalized: str) -> bool:
+    return ChatSystemMetadataIntentService.wants_relations(normalized)
+
+
+def _system_wants_table_search(normalized: str) -> bool:
+    return ChatSystemMetadataIntentService.wants_table_search(normalized)
 
 
 class OperationalRouteMatcherService:
@@ -64,6 +87,11 @@ class OperationalRouteMatcherService:
         ),
         "saleOrdersList": _looks_like_sale_orders_list_question,
         "transformaQuestion": _looks_like_transforma_question,
+        "systemMetadataQuestion": _looks_like_system_metadata_question,
+        "systemHasTableName": _system_has_table_name,
+        "systemWantsColumns": _system_wants_columns,
+        "systemWantsRelations": _system_wants_relations,
+        "systemWantsTableSearch": _system_wants_table_search,
     }
 
     @classmethod

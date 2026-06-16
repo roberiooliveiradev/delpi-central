@@ -430,7 +430,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 - [x] Registry v2026.06.3 (14 rotas PB15 + OV + Transforma)
 - [x] Motor operacional (`select_production_operational`, `select_sale_orders`, `select_transforma`)
-- [ ] Migrar `select_system_metadata` (scoring complexo — Fase 4)
+- [x] Migrar `select_system_metadata` (registry `domainSystem` + fallback scoring)
 
 ### Fase 4 — Remoção de legado (1 PR)
 

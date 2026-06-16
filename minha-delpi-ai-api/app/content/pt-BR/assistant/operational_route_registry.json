@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.3",
+  "version": "2026.06.4",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -581,6 +581,96 @@
       },
       "parameters": { "strategy": "date_branch" },
       "presentation": { "reasonKey": "transformaMais" }
+    },
+    {
+      "id": "systemTableRelations",
+      "domain": "domainSystem",
+      "priority": 145,
+      "match": {
+        "allOf": [
+          { "customPredicate": "systemMetadataQuestion" },
+          { "customPredicate": "systemHasTableName" },
+          { "customPredicate": "systemWantsRelations" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/system/tables/", "/relations"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "system_metadata" },
+      "presentation": { "reasonKey": "systemMetadata" }
+    },
+    {
+      "id": "systemTableColumns",
+      "domain": "domainSystem",
+      "priority": 140,
+      "match": {
+        "allOf": [
+          { "customPredicate": "systemMetadataQuestion" },
+          { "customPredicate": "systemHasTableName" },
+          { "customPredicate": "systemWantsColumns" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/system/tables/", "/columns"],
+        "excludePathMarkers": ["/columns/search"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "system_metadata" },
+      "presentation": { "reasonKey": "systemMetadata" }
+    },
+    {
+      "id": "systemColumnsSearch",
+      "domain": "domainSystem",
+      "priority": 135,
+      "match": {
+        "allOf": [
+          { "customPredicate": "systemMetadataQuestion" },
+          { "customPredicate": "systemWantsColumns" }
+        ],
+        "noneOf": [{ "customPredicate": "systemHasTableName" }]
+      },
+      "route": {
+        "pathMarkers": ["/system/columns/search"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "system_metadata" },
+      "presentation": { "reasonKey": "systemMetadata" }
+    },
+    {
+      "id": "systemTablesSearch",
+      "domain": "domainSystem",
+      "priority": 130,
+      "match": {
+        "allOf": [
+          { "customPredicate": "systemMetadataQuestion" },
+          { "customPredicate": "systemWantsTableSearch" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/system/tables/search"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "system_metadata" },
+      "presentation": { "reasonKey": "systemMetadata" }
+    },
+    {
+      "id": "systemTableDetail",
+      "domain": "domainSystem",
+      "priority": 125,
+      "match": {
+        "allOf": [
+          { "customPredicate": "systemMetadataQuestion" },
+          { "customPredicate": "systemHasTableName" }
+        ]
+      },
+      "route": {
+        "pathMarkers": ["/system/tables/"],
+        "excludePathMarkers": ["/search", "/columns", "/relations"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "system_metadata" },
+      "presentation": { "reasonKey": "systemMetadata" }
     }
   ]
 }

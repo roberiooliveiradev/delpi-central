@@ -185,3 +185,28 @@ def test_operational_route_selection_sale_orders() -> None:
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "sale-orders"
+
+
+def test_operational_route_selection_system_tables_search() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "tables-search",
+                "method": "GET",
+                "path": "/system/tables/search",
+                "operationId": "search_tables",
+                "parametersSchema": [{"name": "description", "in": "query"}],
+            }
+        ]
+    )
+    product_route = ExternalActionProductRouteSelectionService(repository)
+    service = ExternalActionOperationalRouteSelectionService(product_route)
+
+    selected = service.select_system_metadata(
+        "qual a tabela de produtos?",
+        allowed_action_ids=["tables-search"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "tables-search"
+    assert selected["arguments"]["parameters"]["description"] == "produtos"

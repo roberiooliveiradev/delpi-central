@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.3"
+    assert OperationalRouteRegistryService.version() == "2026.06.4"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -25,7 +25,8 @@ def test_operational_route_registry_loads_p0_routes() -> None:
     assert "exclusiveRawMaterialCatalog" in route_ids
     assert "productionConsumptionTopItems" in route_ids
     assert "commercialSaleOrders" in route_ids
-    assert len(route_ids) >= 30
+    assert "systemTablesSearch" in route_ids
+    assert len(route_ids) >= 35
 
 
 def test_operational_route_registry_production_operational_kind_lookup() -> None:

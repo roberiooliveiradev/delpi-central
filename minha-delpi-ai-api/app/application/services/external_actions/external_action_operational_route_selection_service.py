@@ -213,6 +213,29 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_system_metadata(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        for route in OperationalRouteRegistryService.system_metadata_routes():
+            selected = self._try_vocabulary_route(
+                route,
+                message,
+                normalized,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
     def _try_vocabulary_route(
         self,
         route: dict,
@@ -491,5 +514,12 @@ class ExternalActionOperationalRouteSelectionService:
                 return parameters or {"limit": 50}
 
             return merge_date_parameters(action, message, parameters)
+
+        if strategy == "system_metadata":
+            from app.domain.services.chat_system_metadata_intent_service import (
+                ChatSystemMetadataIntentService,
+            )
+
+            return ChatSystemMetadataIntentService.build_parameters(message, action)
 
         return None

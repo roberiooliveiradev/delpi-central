@@ -322,6 +322,15 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader:
             return None
 
+        selected = self._operational_route.select_system_metadata(
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
+        if selected:
+            return selected
+
         return self._domain_route.select_system_metadata(
             message,
             allowed_action_ids,
