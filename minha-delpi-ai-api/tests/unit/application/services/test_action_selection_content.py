@@ -60,6 +60,22 @@ def test_action_selection_heuristic_terms_exist():
     assert "eficiencia fabril" in fabril_terms
 
 
+def test_operational_route_registry_reason_keys_exist() -> None:
+    from app.domain.services.operational_route_registry_service import (
+        OperationalRouteRegistryService,
+    )
+
+    for route in OperationalRouteRegistryService.routes():
+        presentation = route.get("presentation") or {}
+        reason_key = str(presentation.get("reasonKey") or route.get("id") or "").strip()
+
+        if not reason_key:
+            continue
+
+        value = ExternalActionResponseContentService.get("selectionReasons", reason_key)
+        assert value, f"missing selectionReasons.{reason_key} for route {route.get('id')}"
+
+
 def test_selection_reasons_keys_exist():
     keys = (
         "saleOrdersList",

@@ -29,7 +29,8 @@ Wrappers especializados (mantêm API estável):
 
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
-| `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions; **`selectionReasons`** (motivos de rota OpenAPI); **`actionSelection`** (termos OTD suprimentos/produção, listagem OPs); **`actionSelection.vocabularyFastPaths`** (fast paths declarativos — transição para `operational_route_registry.json`; ver [DOCIE](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md)) | `ExternalActionResponseContentService`, `ExternalActionVocabularyRouteSelectionService`, `external_action_*_route_selection_service` |
+| `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions; **`selectionReasons`** (motivos de rota OpenAPI); **`actionSelection`** (termos OTD suprimentos/produção, listagem OPs); **`actionSelection.vocabularyFastPaths`** (legado — transição para registry) | `ExternalActionResponseContentService`, `ExternalActionVocabularyRouteSelectionService`, `external_action_*_route_selection_service` |
+| `operational_route_registry.json` | **DOCIE Fase 0–1:** catálogo declarativo de fast paths OpenAPI (`routes`, `dispatchOrder`, `match.termsFrom` / `customPredicate`, `route.pathMarkers`, `parameters.strategy`) | `OperationalRouteRegistryService`, `OperationalRouteMatcherService`, `ExternalActionOperationalRouteSelectionService` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |

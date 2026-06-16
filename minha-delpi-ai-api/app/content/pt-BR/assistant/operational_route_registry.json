@@ -1,0 +1,226 @@
+{
+  "version": "2026.06.1",
+  "dispatchOrder": [
+    "sessionRefinement",
+    "productionOperational",
+    "vocabularyFastPaths",
+    "intentBoundRoutes",
+    "domainRoutes",
+    "semanticFallback"
+  ],
+  "routes": [
+    {
+      "id": "productDirectives",
+      "domain": "product",
+      "priority": 165,
+      "match": {
+        "customPredicate": "directives",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/directives/"],
+        "operationIdMarkers": ["get_product_directives"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productDirectives"
+      }
+    },
+    {
+      "id": "exclusiveRawMaterialCatalog",
+      "domain": "product",
+      "priority": 160,
+      "match": {
+        "customPredicate": "exclusiveRawMaterialCatalog"
+      },
+      "route": {
+        "pathMarkers": [
+          "exclusive-raw-materials/catalog",
+          "/structure/exclusivity/catalog"
+        ],
+        "operationIdMarkers": ["get_exclusive_raw_material_catalog"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "exclusive_catalog"
+      },
+      "presentation": {
+        "reasonKey": "exclusiveRawMaterialCatalog"
+      }
+    },
+    {
+      "id": "productRawMaterialPriceIntelligence",
+      "domain": "product",
+      "priority": 150,
+      "match": {
+        "customPredicate": "rawMaterialPriceIntelligence"
+      },
+      "route": {
+        "pathMarkers": ["raw-material-price-intelligence"],
+        "operationIdMarkers": ["get_product_raw_material_price_intelligence"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productRawMaterialPriceIntelligence"
+      }
+    },
+    {
+      "id": "productCostImpactSimulation",
+      "domain": "product",
+      "priority": 150,
+      "match": {
+        "customPredicate": "costImpactSimulation"
+      },
+      "route": {
+        "pathMarkers": ["cost-impact-simulation"],
+        "operationIdMarkers": ["get_product_cost_impact_simulation"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productCostImpactSimulation"
+      }
+    },
+    {
+      "id": "productProductionStatus",
+      "domain": "product",
+      "priority": 145,
+      "match": {
+        "customPredicate": "productionStatus"
+      },
+      "route": {
+        "pathMarkers": ["production-status"],
+        "operationIdMarkers": ["get_product_production_status"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productProductionStatus"
+      }
+    },
+    {
+      "id": "productShippingStatus",
+      "domain": "product",
+      "priority": 145,
+      "match": {
+        "customPredicate": "shippingStatus"
+      },
+      "route": {
+        "pathMarkers": ["shipping-status"],
+        "operationIdMarkers": ["get_product_shipping_status"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productShippingStatus"
+      }
+    },
+    {
+      "id": "productStructureExclusivity",
+      "domain": "product",
+      "priority": 145,
+      "match": {
+        "customPredicate": "structureExclusivity"
+      },
+      "route": {
+        "pathMarkers": ["/structure/exclusivity"],
+        "operationIdMarkers": ["get_product_structure_exclusivity"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productStructureExclusivity"
+      }
+    },
+    {
+      "id": "productFactoryStatus",
+      "domain": "product",
+      "priority": 140,
+      "match": {
+        "customPredicate": "factoryStatus"
+      },
+      "route": {
+        "pathMarkers": ["factory-status"],
+        "operationIdMarkers": ["get_product_factory_status"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productFactoryStatus"
+      }
+    },
+    {
+      "id": "productLastPurchase",
+      "domain": "product",
+      "priority": 110,
+      "match": {
+        "customPredicate": "lastPurchase"
+      },
+      "route": {
+        "pathMarkers": ["last-purchase"],
+        "operationIdMarkers": ["get_product_last_purchase"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productLastPurchase"
+      }
+    },
+    {
+      "id": "productPurchasePriceHistory",
+      "domain": "product",
+      "priority": 110,
+      "match": {
+        "customPredicate": "purchasePriceHistory"
+      },
+      "route": {
+        "pathMarkers": ["purchase-price-history"],
+        "operationIdMarkers": ["get_product_purchase_price_history"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productPurchasePriceHistory"
+      }
+    },
+    {
+      "id": "productPurchaseBudgetHistory",
+      "domain": "product",
+      "priority": 110,
+      "match": {
+        "customPredicate": "purchaseBudgetHistory"
+      },
+      "route": {
+        "pathMarkers": ["purchase-budget-history"],
+        "operationIdMarkers": ["get_product_purchase_budget_history"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productPurchaseBudgetHistory"
+      }
+    }
+  ]
+}

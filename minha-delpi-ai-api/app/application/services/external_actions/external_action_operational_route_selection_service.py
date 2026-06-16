@@ -1,29 +1,26 @@
-"""Fast-path declarativo por vocabulário — rotas OpenAPI de qualquer provider."""
+"""Motor declarativo de fast paths — operational_route_registry (DOCIE Fase 0–1)."""
 
 from __future__ import annotations
 
 from typing import Callable
 
-from app.application.services.external_actions.external_action_operational_route_selection_service import (
-    ExternalActionOperationalRouteSelectionService,
-)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.operational_route_matcher_service import (
+    OperationalRouteMatcherService,
+)
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
 )
 
 
-class ExternalActionVocabularyRouteSelectionService:
+class ExternalActionOperationalRouteSelectionService:
     def __init__(self, product_route) -> None:
         self._product_route = product_route
-        self._operational_route = ExternalActionOperationalRouteSelectionService(
-            product_route
-        )
 
     def select(
         self,
@@ -33,42 +30,9 @@ class ExternalActionVocabularyRouteSelectionService:
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        selected = self._operational_route.select(
-            message,
-            normalized,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
-
-        if selected:
-            return selected
-
-        return self._select_legacy_vocabulary_fast_paths(
-            message,
-            normalized,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-        )
-
-    def _select_legacy_vocabulary_fast_paths(
-        self,
-        message: str,
-        normalized: str,
-        allowed_action_ids: list[str],
-        *,
-        candidates_loader: Callable[..., list[dict]] | None = None,
-    ) -> dict | None:
-        entries = ExternalActionResponseContentService.object_list(
-            "actionSelection",
-            "vocabularyFastPaths",
-        )
-
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-
-            selected = self._try_legacy_entry(
-                entry,
+        for route in OperationalRouteRegistryService.routes():
+            selected = self._try_route(
+                route,
                 message,
                 normalized,
                 allowed_action_ids,
@@ -80,44 +44,40 @@ class ExternalActionVocabularyRouteSelectionService:
 
         return None
 
-    def _try_legacy_entry(
+    def _try_route(
         self,
-        entry: dict,
+        route: dict,
         message: str,
         normalized: str,
         allowed_action_ids: list[str],
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        route_id = str(entry.get("id") or "").strip()
+        match_spec = route.get("match")
 
-        if route_id and route_id in set(OperationalRouteRegistryService.route_ids()):
+        if not isinstance(match_spec, dict):
             return None
-
-        matcher_key = str(entry.get("matcher") or "").strip()
-
-        if not matcher_key:
-            return None
-
-        from app.domain.services.operational_route_matcher_service import (
-            OperationalRouteMatcherService,
-        )
 
         if not OperationalRouteMatcherService.matches(
-            {"customPredicate": matcher_key},
+            match_spec,
             message=message,
             normalized=normalized,
         ):
             return None
 
+        route_spec = route.get("route")
+
+        if not isinstance(route_spec, dict):
+            return None
+
         path_markers = [
             str(marker).lower()
-            for marker in (entry.get("pathMarkers") or [])
+            for marker in (route_spec.get("pathMarkers") or [])
             if str(marker).strip()
         ]
         operation_markers = [
             str(marker).lower()
-            for marker in (entry.get("operationIdMarkers") or [])
+            for marker in (route_spec.get("operationIdMarkers") or [])
             if str(marker).strip()
         ]
 
@@ -125,8 +85,9 @@ class ExternalActionVocabularyRouteSelectionService:
             return None
 
         identifier = None
+        match_spec = route.get("match") or {}
 
-        if entry.get("requiresProductIdentifier"):
+        if match_spec.get("requiresProductIdentifier"):
             identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
             if not identifier:
@@ -145,8 +106,10 @@ class ExternalActionVocabularyRouteSelectionService:
                 candidates_loader=candidates_loader,
             )
 
+        expected_method = str(route_spec.get("method") or "GET").upper()
+
         for action in candidates:
-            if action.get("method") != "GET":
+            if str(action.get("method") or "GET").upper() != expected_method:
                 continue
 
             path = str(action.get("path") or "").lower()
@@ -167,7 +130,7 @@ class ExternalActionVocabularyRouteSelectionService:
                 continue
 
             parameters = self._build_parameters(
-                str(entry.get("parameterStrategy") or ""),
+                route,
                 action,
                 message=message,
                 normalized=normalized,
@@ -177,7 +140,8 @@ class ExternalActionVocabularyRouteSelectionService:
             if not parameters:
                 continue
 
-            reason_key = str(entry.get("reasonKey") or "").strip()
+            presentation = route.get("presentation") or {}
+            reason_key = str(presentation.get("reasonKey") or route.get("id") or "").strip()
 
             if not reason_key:
                 continue
@@ -198,14 +162,20 @@ class ExternalActionVocabularyRouteSelectionService:
 
     def _build_parameters(
         self,
-        strategy: str,
+        route: dict,
         action: dict,
         *,
         message: str,
         normalized: str,
         identifier: str | None,
     ) -> dict | None:
+        parameters_spec = route.get("parameters") or {}
+        strategy = str(parameters_spec.get("strategy") or "").strip()
+
         if strategy == "product_code":
+            if not identifier:
+                identifier = ChatProductQueryIntentService.extract_product_code(message or "")
+
             if not identifier:
                 return None
 

@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** proposta — aguardando implementação  
+**Status:** Fase 0–1 implementada (jun/2026) — registry + matcher + motor operacional P0 produto; Fases 2–5 pendentes  
 **Data:** jun/2026  
 **Commit de referência:** `519f3834` (remove fallback analyser + `vocabularyFastPaths` inicial)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -399,10 +399,10 @@ Motor: `OperationalRouteMatcherService` — sem import de api-delpi.
 
 ### Fase 0 — Preparação (1 PR)
 
-- [ ] Criar `operational_route_registry.json` com schema versionado
-- [ ] Criar `OperationalRouteRegistryService` + testes de carga do JSON
-- [ ] Adicionar `OperationalRouteMatcherService` com `termsFrom` / `allOf` / `noneOf`
-- [ ] Documentar em `assistant-content-catalog.md`
+- [x] Criar `operational_route_registry.json` com schema versionado
+- [x] Criar `OperationalRouteRegistryService` + testes de carga do JSON
+- [x] Adicionar `OperationalRouteMatcherService` com `termsFrom` / `allOf` / `noneOf`
+- [x] Documentar em `assistant-content-catalog.md`
 - [ ] Atualizar `inteligencia-chat-onda-8.md` (remover linha analyser fallback)
 
 ### Fase 1 — Produto playbook P0 (1–2 PRs)
@@ -410,6 +410,9 @@ Motor: `OperationalRouteMatcherService` — sem import de api-delpi.
 Migrar entradas §5.1 e §5.2 para registry; remover boosts correspondentes em `_rank_product_actions`.
 
 **Critério de aceite:** perguntas de homologação em `tests/fixtures/chat_intelligence_regression_cases.py` inalteradas.
+
+- [x] Registry P0 (directives, exclusive catalog, factory/production/shipping, structure exclusivity, preço/compra)
+- [ ] Remover boosts duplicados em `_rank_product_actions` (próximo PR)
 
 ### Fase 2 — Intents clássicos (1 PR)
 
