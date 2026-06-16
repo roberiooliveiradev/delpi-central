@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
@@ -291,7 +291,7 @@ class ExternalActionKpiChartPresenter:
                 return analyser_chart
 
         if not force and path:
-            entity = ChatApiDelpiResponseProfileService.resolve(
+            entity = ChatOperationalResponseProfileService.resolve(
                 root if isinstance(root, dict) else {},
                 path=path,
             ).entity
@@ -346,7 +346,7 @@ class ExternalActionKpiChartPresenter:
             ChatSchemaDrivenPresentationService,
         )
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
         rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(root)
 
         return ChatSchemaDrivenPresentationService.build_chart(
@@ -367,7 +367,7 @@ class ExternalActionKpiChartPresenter:
         if entity == "product_billing":
             return False
 
-        if entity and ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+        if entity and ChatOperationalResponseProfileService.is_kpi_entity(entity):
             return True
 
         lowered = str(path or "").lower()

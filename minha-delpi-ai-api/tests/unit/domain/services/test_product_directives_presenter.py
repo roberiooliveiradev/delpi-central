@@ -1,5 +1,5 @@
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
@@ -94,7 +94,7 @@ def _sample_root() -> dict:
 
 def test_entity_from_path_directives():
     assert (
-        ChatApiDelpiResponseProfileService._entity_from_path(
+        ChatOperationalResponseProfileService._entity_from_path(
             "/products/directives/90260882"
         )
         == "product_directives"

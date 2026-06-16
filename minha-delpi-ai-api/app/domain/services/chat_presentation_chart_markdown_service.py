@@ -7,8 +7,8 @@ import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
@@ -547,7 +547,7 @@ class ChatPresentationChartMarkdownService:
     @classmethod
     def _resolve_entity(cls, path: str) -> str | None:
         entity = str(
-            ChatApiDelpiResponseProfileService.resolve({}, path=path).entity or ""
+            ChatOperationalResponseProfileService.resolve({}, path=path).entity or ""
         ).strip()
 
         return entity or None

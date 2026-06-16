@@ -152,12 +152,12 @@ class ExternalActionTextPresentationPresenter:
         }
 
     def build_tree_hierarchy_text(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
 
         entity = str(
-            ChatApiDelpiResponseProfileService.resolve({}, path=path).entity or ""
+            ChatOperationalResponseProfileService.resolve({}, path=path).entity or ""
         ).strip()
 
         if entity == "product_parents":
@@ -185,8 +185,8 @@ class ExternalActionTextPresentationPresenter:
 
     def build_text_presentation(self, data, *, path: str = "") -> dict | None:
         """Markdown legível para a aba Texto do chat (complementa tabela/gráfico)."""
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
         from app.domain.services.chat_presentation_profile_text_builder_service import (
             ChatPresentationProfileTextBuilderService,
@@ -195,7 +195,7 @@ class ExternalActionTextPresentationPresenter:
             ChatPresentationProfileService,
         )
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
         built = ChatPresentationProfileTextBuilderService.build(
             self._host,
             data,
@@ -258,14 +258,14 @@ class ExternalActionTextPresentationPresenter:
         }
 
     def _schema_text_fallback(self, data, root, path: str) -> dict | None:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
         from app.domain.services.chat_schema_driven_presentation_service import (
             ChatSchemaDrivenPresentationService,
         )
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
 
         return ChatSchemaDrivenPresentationService.build_text(
             self._host,
@@ -275,8 +275,8 @@ class ExternalActionTextPresentationPresenter:
         )
 
     def build_tree_presentation(self, data, *, path: str = "") -> dict | None:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
         from app.domain.services.chat_product_structure_presentation_service import (
             ChatProductStructurePresentationService,
@@ -295,7 +295,7 @@ class ExternalActionTextPresentationPresenter:
             return structure_tree
 
         root = self._host._unwrap_data(data)
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
 
         if ChatSchemaDrivenPresentationService.should_apply(
             path=path,

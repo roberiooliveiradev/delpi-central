@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 
 if TYPE_CHECKING:
@@ -34,9 +34,9 @@ class ExternalActionLegacyRoutePresenter:
                 return empty_operational
 
             if isinstance(root, dict):
-                profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+                profile = ChatOperationalResponseProfileService.resolve(data, path=path)
 
-                if profile.entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
+                if profile.entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
                     playbook = self._host._present_playbook_report(
                         root,
                         path,
@@ -136,7 +136,7 @@ class ExternalActionLegacyRoutePresenter:
                     and isinstance(items[0], dict)
                     and "order_number" in items[0]
                     and "/production/" not in lowered_path
-                    and not ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+                    and not ChatOperationalResponseProfileService.is_playbook_operational_path(path)
                 ):
                     return self._host._present_sale_orders(root, items)
 

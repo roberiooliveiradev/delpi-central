@@ -7,8 +7,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
@@ -208,7 +208,7 @@ class ChatPresentationCoverageService:
 
     @classmethod
     def resolve_entity_for_path(cls, path: str) -> tuple[str | None, str]:
-        profile = ChatApiDelpiResponseProfileService.resolve({}, path=path)
+        profile = ChatOperationalResponseProfileService.resolve({}, path=path)
         return profile.entity, profile.routed_by
 
     @classmethod
@@ -228,13 +228,13 @@ class ChatPresentationCoverageService:
     def classify_tier(cls, *, entity: str | None, path: str) -> str:
         lowered = str(path or "").lower()
 
-        if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
+        if entity in ChatOperationalResponseProfileService.SQL_PRESENT_ENTITIES:
             return "D"
 
-        if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES:
+        if entity in ChatOperationalResponseProfileService.SYSTEM_PRESENT_ENTITIES:
             return "D"
 
-        if entity and entity in ChatApiDelpiResponseProfileService.PROFILE_PRESENT_ENTITIES:
+        if entity and entity in ChatOperationalResponseProfileService.PROFILE_PRESENT_ENTITIES:
             if any(token in lowered for token in _RICH_PRODUCT_PATH_TOKENS):
                 return "A"
 
@@ -247,12 +247,12 @@ class ChatPresentationCoverageService:
             return "A"
 
         if entity and (
-            entity in ChatApiDelpiResponseProfileService.KPI_PRESENT_ENTITIES
-            or entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES
+            entity in ChatOperationalResponseProfileService.KPI_PRESENT_ENTITIES
+            or entity in ChatOperationalResponseProfileService.LMP_PRESENT_ENTITIES
         ):
             return "B"
 
-        if entity and entity in ChatApiDelpiResponseProfileService.ENTITY_ROUTED_FOR_PRESENT:
+        if entity and entity in ChatOperationalResponseProfileService.ENTITY_ROUTED_FOR_PRESENT:
             return "B"
 
         if entity:
@@ -270,7 +270,7 @@ class ChatPresentationCoverageService:
 
         entity, routed_by = cls.resolve_entity_for_path(path)
         tier = cls.classify_tier(entity=entity, path=path)
-        entity_routed = ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity)
+        entity_routed = ChatOperationalResponseProfileService.is_entity_routed_for_present(entity)
         profile_key = cls.resolve_profile_key(path=path, entity=entity)
         profile = ChatPresentationProfileService.profile(profile_key)
         commentary_profile_key = ChatPresentationProfileService.commentary_profile_key(
@@ -372,7 +372,7 @@ class ChatPresentationCoverageService:
             "unmappedEntityCount": unmapped,
             "distinctEntities": len(entity_counts),
             "topTags": sorted(tag_counts.items(), key=lambda item: (-item[1], item[0]))[:12],
-            "profileCoverageRatio": ChatApiDelpiResponseProfileService.profile_coverage_ratio(),
+            "profileCoverageRatio": ChatOperationalResponseProfileService.profile_coverage_ratio(),
             "entityPathHintCount": len(ChatPresentationProfileService.entity_path_hints()),
             "pathEntityFallbackCount": len(
                 ChatPresentationProfileService.path_entity_fallbacks()
@@ -384,7 +384,7 @@ class ChatPresentationCoverageService:
     def build_entity_contract_cases(cls) -> tuple[dict[str, str], ...]:
         cases: list[dict[str, str]] = []
 
-        for entity in sorted(ChatApiDelpiResponseProfileService.ENTITY_ROUTED_FOR_PRESENT):
+        for entity in sorted(ChatOperationalResponseProfileService.ENTITY_ROUTED_FOR_PRESENT):
             if entity in _SKIP_PROFILE_CONTRACT_ENTITIES:
                 continue
 

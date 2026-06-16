@@ -10,9 +10,9 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ApiDelpiResponseProfile,
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    OperationalResponseProfile,
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.external_actions.presenters.kpi_chart_presenter import (
     ExternalActionKpiChartPresenter,
@@ -333,7 +333,7 @@ class ExternalActionResultPresenter:
         )
 
         try:
-            profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+            profile = ChatOperationalResponseProfileService.resolve(data, path=path)
             routed = self._entity_route()._present_entity_first(data, path=path, profile=profile)
 
             if routed is not None:
@@ -580,7 +580,7 @@ class ExternalActionResultPresenter:
         )
 
         try:
-            profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+            profile = ChatOperationalResponseProfileService.resolve(data, path=path)
             entity_first = self._presentation_builder()._build_presentation_by_entity(
                 data,
                 path=path,
@@ -754,10 +754,10 @@ class ExternalActionResultPresenter:
 
     # --- Presentation builder (delegação Fase 3A lote 11) ---
 
-    def _build_presentation_by_entity(self, data, *, path: str, profile: ApiDelpiResponseProfile) -> dict | None:
+    def _build_presentation_by_entity(self, data, *, path: str, profile: OperationalResponseProfile) -> dict | None:
         return self._presentation_builder()._build_presentation_by_entity(data, path=path, profile=profile)
 
-    def _build_presentation_entity_extensions(self, root: dict, *, path: str, profile: ApiDelpiResponseProfile) -> dict | None:
+    def _build_presentation_entity_extensions(self, root: dict, *, path: str, profile: OperationalResponseProfile) -> dict | None:
         return self._presentation_builder()._build_presentation_entity_extensions(root, path=path, profile=profile)
 
     def _build_factory_status_table(self, root: dict, path: str) -> dict:
@@ -1494,7 +1494,7 @@ class ExternalActionResultPresenter:
             ChatSchemaDrivenPresentationService,
         )
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
 
         if not ChatSchemaDrivenPresentationService.should_apply(
             path=path,

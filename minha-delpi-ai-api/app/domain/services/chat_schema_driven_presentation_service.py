@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_data_shape_analyzer import (
@@ -94,7 +94,7 @@ class ChatSchemaDrivenPresentationService:
         if profile_key in _RICH_PROFILE_KEYS:
             return False
 
-        if entity and ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+        if entity and ChatOperationalResponseProfileService.is_kpi_entity(entity):
             return True
 
         if profile_key in _KPI_PROFILE_KEYS:

@@ -553,8 +553,8 @@ class ChatRichPresentationTextService:
 
     @classmethod
     def _is_playbook_operational_tool_metadata(cls, metadata: dict[str, Any]) -> bool:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
 
         api_meta = metadata.get("apiDelpiResponseMeta")
@@ -562,14 +562,14 @@ class ChatRichPresentationTextService:
         if isinstance(api_meta, dict):
             entity = api_meta.get("entity")
 
-            if ChatApiDelpiResponseProfileService.is_playbook_operational_entity(
+            if ChatOperationalResponseProfileService.is_playbook_operational_entity(
                 str(entity or "").strip() or None
             ):
                 return True
 
         path = str(metadata.get("path") or "")
 
-        return ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+        return ChatOperationalResponseProfileService.is_playbook_operational_path(path)
 
     @classmethod
     def _should_prefer_playbook_operational_text_answer(cls, metadata: dict[str, Any]) -> bool:

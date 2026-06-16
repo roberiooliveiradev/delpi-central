@@ -259,8 +259,8 @@ class ChatPresentationProfileVisualBundleService:
         data: Any,
         entity: str | None = None,
     ) -> dict[str, Any] | None:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
         from app.domain.services.chat_presentation_operational_root_service import (
             ChatPresentationOperationalRootService,
@@ -349,11 +349,11 @@ class ChatPresentationProfileVisualBundleService:
 
     @classmethod
     def _resolve_entity(cls, data: Any, *, path: str) -> str | None:
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
         entity = str(profile.entity or "").strip()
 
         return entity or None

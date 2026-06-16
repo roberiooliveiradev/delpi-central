@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ApiDelpiResponseProfile,
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    OperationalResponseProfile,
+    ChatOperationalResponseProfileService,
 )
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class ExternalActionEntityRoutePresenter:
         if not isinstance(root, dict):
             return data
 
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
         normalized = self._normalize_root_for_entity(root, profile)
 
         if normalized is root:
@@ -34,7 +34,7 @@ class ExternalActionEntityRoutePresenter:
 
         return normalized
 
-    def _normalize_root_for_entity(self, root: dict, profile: ApiDelpiResponseProfile) -> dict:
+    def _normalize_root_for_entity(self, root: dict, profile: OperationalResponseProfile) -> dict:
         entity = profile.entity
 
         if entity == "product_analyser":
@@ -47,11 +47,11 @@ class ExternalActionEntityRoutePresenter:
             data,
             *,
             path: str,
-            profile: ApiDelpiResponseProfile,
+            profile: OperationalResponseProfile,
         ) -> dict | None:
             entity = profile.entity
 
-            if not ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity):
+            if not ChatOperationalResponseProfileService.is_entity_routed_for_present(entity):
                 return None
 
             error = self._host._detect_api_error(data, path=path)
@@ -70,10 +70,10 @@ class ExternalActionEntityRoutePresenter:
                 return empty_operational
 
             if (
-                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
                 and isinstance(root, dict)
             ):
-                effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+                effective_path = ChatOperationalResponseProfileService.presentation_path(
                     path=path,
                     entity=entity,
                 )
@@ -200,10 +200,10 @@ class ExternalActionEntityRoutePresenter:
             root,
             *,
             path: str,
-            profile: ApiDelpiResponseProfile,
+            profile: OperationalResponseProfile,
         ) -> dict | None:
             entity = profile.entity
-            effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+            effective_path = ChatOperationalResponseProfileService.presentation_path(
                 path=path,
                 entity=entity,
             )
@@ -218,7 +218,7 @@ class ExternalActionEntityRoutePresenter:
                 if billing:
                     return billing
 
-            if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
                 items = root.get("items") if isinstance(root, dict) else None
 
                 if isinstance(items, list):
@@ -250,7 +250,7 @@ class ExternalActionEntityRoutePresenter:
                 if kpi:
                     return kpi
 
-            if ChatApiDelpiResponseProfileService.is_kpi_entity(entity) and isinstance(root, dict):
+            if ChatOperationalResponseProfileService.is_kpi_entity(entity) and isinstance(root, dict):
                 specialized = (
                     self._host._present_stock_value_summary(root, effective_path, entity=entity)
                     or self._host._present_financial_pmr(root, effective_path, entity=entity)
@@ -264,7 +264,7 @@ class ExternalActionEntityRoutePresenter:
                 if kpi:
                     return kpi
 
-            if entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES and isinstance(
+            if entity in ChatOperationalResponseProfileService.LMP_PRESENT_ENTITIES and isinstance(
                 root, dict
             ):
                 lmp_page = self._host._present_lmp_page(root)
@@ -277,13 +277,13 @@ class ExternalActionEntityRoutePresenter:
                 if lmp_detail:
                     return lmp_detail
 
-            if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
                 items = root.get("items") if isinstance(root, dict) else None
 
                 if isinstance(items, list) and items:
                     return self._host._present_sale_orders(root, items)
 
-            if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.SQL_PRESENT_ENTITIES:
                 sql_resultsets = self._host._present_sql_resultsets(root, effective_path)
 
                 if sql_resultsets:
@@ -297,7 +297,7 @@ class ExternalActionEntityRoutePresenter:
                     if sql_rows:
                         return sql_rows
 
-            if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES and isinstance(
+            if entity in ChatOperationalResponseProfileService.SYSTEM_PRESENT_ENTITIES and isinstance(
                 root, dict
             ):
                 system = (
@@ -328,7 +328,7 @@ class ExternalActionEntityRoutePresenter:
                     return self._host._present_items(items, title=title)
 
             if (
-                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
                 and isinstance(root, dict)
             ):
                 return self._host._present_playbook_report(

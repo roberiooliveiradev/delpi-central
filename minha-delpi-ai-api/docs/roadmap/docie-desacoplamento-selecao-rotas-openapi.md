@@ -64,7 +64,7 @@ flowchart TD
     G -->|None| H
 ```
 
-**Problema restante:** `_CUSTOM_PREDICATES` busca produto (guards compostos); `detect()`/`refine()` em Python; apresentação ainda keyed por api-delpi (`ChatApiDelpiResponseProfileService`); homologação manual DoD §11 pendente.
+**Problema restante:** `_CUSTOM_PREDICATES` residual (2 entradas); `detect()`/`refine()` em Python; homologação manual DoD §11 **ao final da refatoração completa**.
 
 ### 2.3 Estado legado (referência histórica pós `519f3834`)
 
@@ -247,7 +247,7 @@ if action_id.startswith("api_externa."): return +95
 
 | Serviço | Acoplamento | Severidade |
 |---------|-------------|------------|
-| `ChatApiDelpiResponseProfileService` | Nome + profiles por entity api-delpi | 🟡 | Renomear para `ChatOperationalResponseProfileService`; profiles keyed por `meta.entity` OpenAPI |
+| `ChatOperationalResponseProfileService` | Perfil operacional OpenAPI por `meta.entity` | ✅ canônico · alias `ChatApiDelpiResponseProfileService` |
 | Presenters em `domain/services/external_actions/presenters/` | Paths específicos | 🟡 | OK se driven por `meta.entity`, não por path string |
 
 ---
@@ -544,8 +544,9 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] `entityPathHints` + `pathEntityFallbacks` em `presentation_profiles.json`
 - [x] Resolução de entidade por path via `ChatPresentationProfileService.resolve_entity_from_path`
 - [x] Migrar conjuntos de entidades (`entitySets` em `presentation_profiles.json`)
-- [ ] Renomear/generalizar `ChatApiDelpiResponseProfileService` → perfil operacional OpenAPI
-- [ ] Presenters keyed por `meta.entity`, não path api-delpi
+- [x] Renomear/generalizar → `ChatOperationalResponseProfileService` (alias legado mantido)
+- [ ] Presenters keyed por `meta.entity`, não path api-delpi (em curso)
+- [ ] Homologação manual DoD §11 — **após refatoração completa**
 
 ---
 

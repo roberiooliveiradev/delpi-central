@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
@@ -401,7 +401,7 @@ class ChatPresentationVisualBundleService:
 
     @classmethod
     def _resolve_entity(cls, data: Any, *, path: str) -> str | None:
-        profile = ChatApiDelpiResponseProfileService.resolve(data, path=path)
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
         entity = str(profile.entity or "").strip()
 
         return entity or None

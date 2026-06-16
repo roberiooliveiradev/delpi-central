@@ -176,14 +176,14 @@ class ChatPresentationMetadataPipelineService:
 
         root_payload = presenter._unwrap_data(presentation_data)
 
-        from app.domain.services.chat_api_delpi_response_profile_service import (
-            ChatApiDelpiResponseProfileService,
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
         )
         from app.domain.services.chat_presentation_table_assembly_service import (
             ChatPresentationTableAssemblyService,
         )
 
-        resolved_entity = ChatApiDelpiResponseProfileService.resolve(
+        resolved_entity = ChatOperationalResponseProfileService.resolve(
             sanitized_data,
             path=resolved_path,
         )

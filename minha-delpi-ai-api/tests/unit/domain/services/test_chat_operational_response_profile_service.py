@@ -1,0 +1,96 @@
+from app.domain.services.chat_operational_response_profile_service import (
+    CHAT_CRITICAL_ENTITIES,
+    ChatOperationalResponseProfileService,
+)
+
+
+def test_resolve_prefers_meta_entity_over_path() -> None:
+    profile = ChatOperationalResponseProfileService.resolve(
+        {
+            "success": True,
+            "data": {"items": []},
+            "meta": {
+                "entity": "product_stock",
+                "shape": "paged_list",
+                "operationId": "get_product_stock",
+            },
+        },
+        path="/products/90269001/analyser",
+    )
+
+    assert profile.entity == "product_stock"
+    assert profile.routed_by == "meta.entity"
+    assert profile.shape == "paged_list"
+
+
+def test_resolve_falls_back_to_path_when_meta_missing() -> None:
+    profile = ChatOperationalResponseProfileService.resolve(
+        {"success": True, "data": {"root": {}, "items": []}},
+        path="/products/90269001/structure",
+    )
+
+    assert profile.entity == "product_structure"
+    assert profile.routed_by == "path"
+
+
+def test_resolve_entity_path_hint_for_kpi_route() -> None:
+    profile = ChatOperationalResponseProfileService.resolve(
+        {"success": True, "data": {}},
+        path="/supplies/cpv",
+    )
+
+    assert profile.entity == "supplies_cpv"
+    assert profile.routed_by == "path"
+
+
+def test_profile_coverage_covers_all_chat_critical_entities() -> None:
+    ratio = ChatOperationalResponseProfileService.profile_coverage_ratio()
+
+    assert ratio == 1.0
+    assert len(CHAT_CRITICAL_ENTITIES) >= 20
+
+
+def test_entity_path_hint_for_kpi_without_http_path() -> None:
+    hint = ChatOperationalResponseProfileService.entity_path_hint("supplies_cpv")
+
+    assert hint == "/supplies/cpv"
+    assert ChatOperationalResponseProfileService.presentation_path(
+        path="",
+        entity="supplies_cpv",
+    ) == "/supplies/cpv"
+
+
+def test_class_exposes_presenter_entity_constants() -> None:
+    assert ChatOperationalResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES
+    assert (
+        "product_open_orders"
+        in ChatOperationalResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES
+    )
+    assert ChatOperationalResponseProfileService.LMP_PRESENT_ENTITIES
+    assert ChatOperationalResponseProfileService.SYSTEM_PRESENT_ENTITIES
+
+
+def test_is_entity_routed_for_present_includes_kpi_and_sql() -> None:
+    assert ChatOperationalResponseProfileService.is_entity_routed_for_present(
+        "financial_rol"
+    )
+    assert ChatOperationalResponseProfileService.is_entity_routed_for_present("sql_result")
+    assert ChatOperationalResponseProfileService.is_entity_routed_for_present(
+        "product_billing"
+    )
+
+
+def test_enrich_humanized_does_not_append_meta_fields_glossary() -> None:
+    enriched = ChatOperationalResponseProfileService.enrich_humanized(
+        {"titulo": "Estoque", "linhas": ["2 filiais"]},
+        {
+            "meta": {
+                "fields": {
+                    "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
+                }
+            }
+        },
+    )
+
+    assert enriched is not None
+    assert enriched.get("linhas_detalhe") in (None, [])

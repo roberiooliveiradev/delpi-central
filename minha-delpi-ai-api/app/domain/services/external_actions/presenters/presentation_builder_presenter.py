@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.domain.services.chat_api_delpi_response_profile_service import (
-    ApiDelpiResponseProfile,
-    ChatApiDelpiResponseProfileService,
+from app.domain.services.chat_operational_response_profile_service import (
+    OperationalResponseProfile,
+    ChatOperationalResponseProfileService,
 )
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
@@ -49,11 +49,11 @@ class ExternalActionPresentationBuilderPresenter:
             data,
             *,
             path: str,
-            profile: ApiDelpiResponseProfile,
+            profile: OperationalResponseProfile,
         ) -> dict | None:
             entity = profile.entity
 
-            if not ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity):
+            if not ChatOperationalResponseProfileService.is_entity_routed_for_present(entity):
                 return None
 
             root = self._host._unwrap_data(data)
@@ -61,7 +61,7 @@ class ExternalActionPresentationBuilderPresenter:
             if not isinstance(root, dict):
                 return None
 
-            if entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
                 return self._host._build_playbook_report_table(root, path, entity=entity)
 
             if entity == "product_factory_status":
@@ -229,10 +229,10 @@ class ExternalActionPresentationBuilderPresenter:
             root: dict,
             *,
             path: str,
-            profile: ApiDelpiResponseProfile,
+            profile: OperationalResponseProfile,
         ) -> dict | None:
             entity = profile.entity
-            effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+            effective_path = ChatOperationalResponseProfileService.presentation_path(
                 path=path,
                 entity=entity,
             )
@@ -247,7 +247,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if billing_table:
                     return billing_table
 
-            if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
                 items = root.get("items")
 
                 if isinstance(items, list) and items and isinstance(items[0], dict):
@@ -261,13 +261,13 @@ class ExternalActionPresentationBuilderPresenter:
                             entity=entity,
                         )
 
-            if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
                 items = root.get("items")
 
                 if isinstance(items, list) and items:
                     return self._build_sale_orders_table(items, root)
 
-            if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.SQL_PRESENT_ENTITIES:
                 rows = self._host._collect_sql_resultset_rows(root.get("resultsets") or [])
                 title = self._host._sql_result_title(root, effective_path)
 
@@ -280,7 +280,7 @@ class ExternalActionPresentationBuilderPresenter:
                         role="list",
                     )
 
-            if ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+            if ChatOperationalResponseProfileService.is_kpi_entity(entity):
                 stock_value_table = self._host._build_stock_value_branch_table(
                     root,
                     effective_path,
@@ -290,7 +290,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if stock_value_table:
                     return stock_value_table
 
-            if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.SYSTEM_PRESENT_ENTITIES:
                 columns_table = self._host._build_system_columns_table(
                     root,
                     effective_path,
@@ -300,7 +300,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if columns_table:
                     return columns_table
 
-            if entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES:
+            if entity in ChatOperationalResponseProfileService.LMP_PRESENT_ENTITIES:
                 items = root.get("items")
 
                 if isinstance(items, list) and items and isinstance(items[0], dict):
@@ -308,7 +308,7 @@ class ExternalActionPresentationBuilderPresenter:
                         return self._host._build_lmp_table(items, root)
 
             if (
-                entity in ChatApiDelpiResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
+                entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES
                 and isinstance(root, dict)
             ):
                 return self._host._build_playbook_report_table(
@@ -424,7 +424,7 @@ class ExternalActionPresentationBuilderPresenter:
                 if (
                     "order_number" in items[0]
                     and "/production/" not in lowered_items_path
-                    and not ChatApiDelpiResponseProfileService.is_playbook_operational_path(path)
+                    and not ChatOperationalResponseProfileService.is_playbook_operational_path(path)
                 ):
                     return self._build_sale_orders_table(items, root)
 
