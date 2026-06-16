@@ -66,7 +66,7 @@ src/ui/
 
 ### Aliases legados (migração gradual)
 
-Classes `mdc-chat-response-mode__*` ainda válidas via seletores duplicados em `composer-option-selector.css`. Remover quando não houver referências externas.
+Classes legadas `mdc-chat-response-mode__*` removidas (C6 jun/2026); usar só `mdc-composer-option-selector__*`.
 
 ---
 
@@ -95,7 +95,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | B3 | 2 | Migrar diálogos médios | `ChatShortcutPromptDialog`, `ChatSidebarArchivedDialog`, `ChatMemoryUsedDialog` | Médio | M | ✅ PR-6 jun/2026 |
 | B4 | 2 | Migrar painéis grandes | `ChatAddContextDialog`, `ChatHelpPanel`, `ChatCanvas`, `ChatExpandModal` | Alto | L | ✅ PR-9/10 + `ChatCanvas`/`ChatExpandModal` jun/2026 |
 | B5 | 2 | Migrar modais workspace | `ChatProjectCreateModal`, `ChatAttachmentPreviewModal`, inline em `ChatProjectHome` | Médio | M | ✅ jun/2026 |
-| B6 | 3 | Reduzir **`modal-layer.css`** | Listas manuais de `-backdrop` | Médio | M | Usar `data-modal-size` ou classes genéricas `.mdc-chat-modal--*` |
+| B6 | 3 | Reduzir **`modal-layer.css`** | Listas manuais de `-backdrop` | Médio | M | ✅ PR-15 jun/2026 — `mobileLayout` + scrim genérico |
 | B7 | 3 | Mover **`ModalPortal`** para `shared/overlay/` | `ModalPortal.tsx`, `modalPortalTarget.ts` | Baixo | S | ✅ PR-13 jun/2026 |
 
 **Inventário de modais (14+):**
@@ -116,13 +116,13 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | C3 | 2 | Varredura **hex → tokens** (chat) | Ver tabela §5 | Baixo | M | ✅ PR-7 jun/2026 — inventário §5 migrado |
 | C4 | 3 | Alinhar **`ChatInput__menu`** ao `menu-popover.css` | `ChatInput.css` | Baixo | S | ✅ fundo/borda portaled + posição `composer-panel` |
 | C5 | 3 | **`rich-presentation-shared.css`** — revisar duplicação com `ChatRich*.css` | KPI, chart, table | Médio | L | Documentar o que é compartilhado vs específico |
-| C6 | 4 | Remover aliases legados **`mdc-chat-response-mode__*`** | `composer-option-selector.css` | Baixo | S | Só após grep zero referências |
+| C6 | 4 | Remover aliases legados **`mdc-chat-response-mode__*`** | `composer-option-selector.css` | Baixo | S | ✅ PR-14 jun/2026 |
 
 ### Fase D — Estrutura de componentes
 
 | # | P | Tarefa | Escopo | Risco | Esforço |
 |---|---|--------|--------|-------|---------|
-| D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | `ModalPortal` + `modalPortalTarget` ✅ |
+| D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | ✅ jun/2026 |
 | D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S |
 | D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | Só com re-exports para não quebrar imports |
 | D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M |
@@ -143,7 +143,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 | # | P | Tarefa | Escopo |
 |---|---|--------|--------|
 | F1 | 1 | Testes **`menuPositionUtils`** | Cobrir flip horizontal action menu + edge cases viewport |
-| F2 | 2 | Testes **`ComposerOptionSelector`** | Render, seleção, aria (vitest + RTL se adotado) |
+| F2 | 2 | Testes **`ComposerOptionSelector`** | Render, seleção, aria (vitest + RTL se adotado) | ✅ PR-15 jun/2026 |
 | F3 | 2 | **`npm run build`** no CI por PR | Regra `plugins-frontend-build.mdc` |
 | F4 | 3 | Snapshot visual manual | Checklist §7 após cada fase A/B |
 
@@ -205,7 +205,9 @@ PR-10 ✅  B4 — ChatHelpPanel → ChatModal (drawer-end)
 PR-11 ✅  C2 — ui/styles/ barrel + fix posição menu 「+」
 PR-12 ✅  B4/B5 — Canvas, Expand, AttachmentPreview, WebSearch, ProjectHome settings
 PR-13 ✅  B7/D1 — ModalPortal + modalPortalTarget em shared/overlay; backdrop genérico
-PR-14    B6 — consolidar modal-layer.css; C6 aliases response-mode
+PR-14 ✅  C6 — remove aliases mdc-chat-response-mode__*; fix anchorAbove menus
+PR-15 ✅  B6/D1/F2 — modal-layer enxuto, menuPositionUtils em shared/overlay, testes ComposerOptionSelector
+PR-16    A7 DropdownMenuTrigger; E1 checklist mobile
 ```
 
 ---
@@ -229,7 +231,7 @@ PR-14    B6 — consolidar modal-layer.css; C6 aliases response-mode
 | Styles barrel | `src/ui/styles/index.css` |
 | Overlay layer | `src/ui/styles/overlay.css` → `chat-overlay-layer.css`, `modal-layer.css` |
 | Modal layer | `src/ui/components/modal-layer.css` |
-| Posicionamento | `src/ui/components/menuPositionUtils.ts` |
+| Posicionamento | `src/ui/components/shared/overlay/menuPositionUtils.ts` |
 | Shared barrel | `src/ui/components/shared/index.ts` |
 | Portal target | `src/ui/components/shared/overlay/modalPortalTarget.ts` |
 | Admin primitivos | `src/ui/components/admin/shared/` |

@@ -9,19 +9,23 @@ export type ChatModalSize = "sm" | "md" | "lg" | "none";
 
 export type ChatModalScrimLayout = "centered" | "drawer-end";
 
+/** Comportamento do scrim centrado em viewports estreitas. */
+export type ChatModalMobileLayout = "sheet" | "centered";
+
 type ChatModalProps = {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
   size?: ChatModalSize;
   scrimLayout?: ChatModalScrimLayout;
+  /** Só aplica quando `scrimLayout="centered"`. Padrão: sheet (painel inferior). */
+  mobileLayout?: ChatModalMobileLayout;
   role?: "dialog" | "alertdialog";
   ariaLabelledBy?: string;
   ariaDescribedBy?: string;
   /** Quando não há título com id (ex.: lousa, expand). */
   ariaLabel?: string;
   panelClassName?: string;
-  backdropClassName?: string;
   closeOnBackdrop?: boolean;
   lockScroll?: boolean;
   onPanelMouseDown?: (event: MouseEvent<HTMLElement>) => void;
@@ -33,12 +37,12 @@ export function ChatModal({
   children,
   size = "md",
   scrimLayout = "centered",
+  mobileLayout = "sheet",
   role = "dialog",
   ariaLabelledBy,
   ariaDescribedBy,
   ariaLabel,
   panelClassName = "",
-  backdropClassName = "",
   closeOnBackdrop = true,
   lockScroll = true,
   onPanelMouseDown,
@@ -70,6 +74,11 @@ export function ChatModal({
       ? "mdc-chat-overlay-scrim--drawer-end"
       : "mdc-chat-overlay-scrim--centered";
 
+  const mobileLayoutClass =
+    scrimLayout === "centered"
+      ? `mdc-chat-overlay-scrim--mobile-${mobileLayout}`
+      : "";
+
   const sizeClass = size === "none" ? "" : `mdc-chat-modal--${size}`;
 
   return (
@@ -78,8 +87,8 @@ export function ChatModal({
         className={[
           "mdc-chat-overlay-scrim",
           scrimLayoutClass,
+          mobileLayoutClass,
           "mdc-chat-modal__backdrop",
-          backdropClassName,
         ]
           .filter(Boolean)
           .join(" ")}

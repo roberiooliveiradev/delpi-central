@@ -1,10 +1,5 @@
 @import "../layout/chat-workspace-shared.css";
 
-.mdc-chat-project-create-backdrop {
-  display: grid;
-  place-items: center;
-}
-
 .mdc-chat-project-create-modal {
   display: grid;
   gap: 1rem;
@@ -162,11 +157,6 @@
 }
 
 @media (max-width: 767px) {
-  .mdc-chat-project-create-backdrop {
-    align-items: end;
-    padding: 0;
-  }
-
   .mdc-chat-project-create-modal {
     width: 100%;
     border-radius: 1.25rem 1.25rem 0 0;

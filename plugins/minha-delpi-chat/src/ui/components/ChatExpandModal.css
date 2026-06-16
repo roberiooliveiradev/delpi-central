@@ -1,7 +1,3 @@
-.mdc-expand-modal__backdrop {
-  animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
-}
-
 /* Superfície e elevação vêm de .mdc-chat-overlay-panel (mesma do menu de
    conversas e demais modais). Aqui só layout/dimensão do painel expandido. */
 .mdc-expand-modal {

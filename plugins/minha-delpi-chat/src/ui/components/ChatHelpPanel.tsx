@@ -155,7 +155,6 @@ export function ChatHelpPanel({
       scrimLayout="drawer-end"
       ariaLabelledBy="mdc-chat-help-title"
       panelClassName="mdc-chat-help-panel"
-      backdropClassName="mdc-chat-help-backdrop"
     >
       <header className="mdc-chat-help-panel__header">
         <div>

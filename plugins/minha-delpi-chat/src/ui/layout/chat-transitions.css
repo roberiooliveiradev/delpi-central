@@ -218,17 +218,8 @@
 }
 
 /* Modais */
-.mdc-chat-project-settings-backdrop,
-.mdc-chat-project-create-backdrop,
-.mdc-chat-agents-modal-backdrop,
-.mdc-chat-projects-modal-backdrop,
-.mdc-chat-confirm-dialog-backdrop,
-.mdc-chat-confirm-backdrop,
-.mdc-chat-archived-backdrop,
-.mdc-chat-add-context-backdrop,
-.mdc-chat-memory-used-backdrop,
-.mdc-expand-modal__backdrop,
-.mdc-chat-canvas-backdrop {
+.mdc-chat-overlay-scrim,
+.mdc-chat-modal__backdrop {
   animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
 }
 
@@ -301,15 +292,8 @@
   .mdc-rich-chart,
   .mdc-rich-kpi,
   .mdc-chat-action-result-card,
-  .mdc-chat-project-settings-backdrop,
-  .mdc-chat-project-create-backdrop,
-  .mdc-chat-agents-modal-backdrop,
-  .mdc-chat-projects-modal-backdrop,
-  .mdc-chat-confirm-dialog-backdrop,
-  .mdc-chat-confirm-backdrop,
-  .mdc-chat-archived-backdrop,
-  .mdc-expand-modal__backdrop,
-  .mdc-chat-canvas-backdrop,
+  .mdc-chat-overlay-scrim,
+  .mdc-chat-modal__backdrop,
   .mdc-chat-project-settings,
   .mdc-chat-project-create-modal,
   .mdc-chat-agents-modal,

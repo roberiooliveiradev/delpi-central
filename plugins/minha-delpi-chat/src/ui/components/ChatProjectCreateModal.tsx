@@ -63,7 +63,6 @@ export function ChatProjectCreateModal({
       onClose={onClose}
       size="none"
       panelClassName="mdc-chat-project-create-modal"
-      backdropClassName="mdc-chat-project-create-backdrop"
       ariaLabel="Criar projeto"
     >
       <header>

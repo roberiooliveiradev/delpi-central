@@ -1,9 +1,3 @@
-.mdc-chat-canvas-backdrop {
-  display: grid;
-  place-items: center;
-  padding: clamp(1rem, 3vw, 2rem);
-}
-
 .mdc-chat-canvas {
   display: flex;
   flex-direction: column;

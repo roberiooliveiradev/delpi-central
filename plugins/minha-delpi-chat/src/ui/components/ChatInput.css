@@ -65,7 +65,6 @@
 
 .mdc-chat-input__composer-toolbar .mdc-chat-input__plus-wrap,
 .mdc-chat-input__composer-toolbar .mdc-composer-option-selector,
-.mdc-chat-input__composer-toolbar .mdc-chat-response-mode,
 .mdc-chat-input__composer-toolbar .mdc-chat-input__send {
   flex-shrink: 0;
 }

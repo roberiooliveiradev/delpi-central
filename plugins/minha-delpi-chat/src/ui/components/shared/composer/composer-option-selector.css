@@ -1,15 +1,13 @@
 /* Seletor pill do composer — formato, modo de resposta, etc. */
 
-.mdc-composer-option-selector,
-.mdc-chat-response-mode {
+.mdc-composer-option-selector {
   position: relative;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
 }
 
-.mdc-composer-option-selector__trigger,
-.mdc-chat-response-mode__trigger {
+.mdc-composer-option-selector__trigger {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -31,33 +29,28 @@
     border-color 0.15s ease;
 }
 
-.mdc-composer-option-selector__trigger:hover:not(:disabled),
-.mdc-chat-response-mode__trigger:hover:not(:disabled) {
+.mdc-composer-option-selector__trigger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
   background: var(--mdc-menu-item-hover);
 }
 
-.mdc-composer-option-selector__trigger:disabled,
-.mdc-chat-response-mode__trigger:disabled {
+.mdc-composer-option-selector__trigger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.mdc-composer-option-selector__trigger svg,
-.mdc-chat-response-mode__trigger svg {
+.mdc-composer-option-selector__trigger svg {
   flex-shrink: 0;
   opacity: 0.92;
 }
 
-.mdc-composer-option-selector__trigger > span,
-.mdc-chat-response-mode__trigger > span {
+.mdc-composer-option-selector__trigger > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.mdc-composer-option-selector__option,
-.mdc-chat-response-mode__option {
+.mdc-composer-option-selector__option {
   display: grid;
   gap: 0.12rem;
   width: 100%;
@@ -71,56 +64,47 @@
   font: inherit;
 }
 
-.mdc-composer-option-selector__option strong,
-.mdc-chat-response-mode__option strong {
+.mdc-composer-option-selector__option strong {
   font-size: 0.84rem;
   color: var(--mdc-title);
 }
 
-.mdc-composer-option-selector__option small,
-.mdc-chat-response-mode__option small {
+.mdc-composer-option-selector__option small {
   font-size: 0.72rem;
   line-height: 1.35;
   color: var(--mdc-text-muted);
 }
 
 .mdc-composer-option-selector__option:hover,
-.mdc-composer-option-selector__option--active,
-.mdc-chat-response-mode__option:hover,
-.mdc-chat-response-mode__option--active {
+.mdc-composer-option-selector__option--active {
   background: var(--mdc-menu-item-active);
 }
 
-.mdc-composer-option-selector__option-label,
-.mdc-chat-response-mode__option-label {
+.mdc-composer-option-selector__option-label {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
 
 @media (max-width: 480px) {
-  .mdc-composer-option-selector__trigger,
-  .mdc-chat-response-mode__trigger {
+  .mdc-composer-option-selector__trigger {
     max-width: min(100%, 9.25rem);
     font-size: 0.78rem;
     padding-inline: 0.5rem 0.55rem;
   }
 
-  .mdc-composer-option-selector__option,
-  .mdc-chat-response-mode__option {
+  .mdc-composer-option-selector__option {
     padding: 0.52rem 0.6rem;
   }
 
-  .mdc-composer-option-selector__option small,
-  .mdc-chat-response-mode__option small {
+  .mdc-composer-option-selector__option small {
     font-size: 0.7rem;
     line-height: 1.3;
   }
 }
 
 @media (max-width: 360px) {
-  .mdc-composer-option-selector__trigger,
-  .mdc-chat-response-mode__trigger {
+  .mdc-composer-option-selector__trigger {
     max-width: min(100%, 7.5rem);
   }
 }

@@ -21,6 +21,7 @@ export function ChatAlertDialog({
       open={open}
       onClose={onClose}
       size="sm"
+      mobileLayout="centered"
       role="alertdialog"
       ariaLabelledBy="mdc-chat-alert-title"
       ariaDescribedBy="mdc-chat-alert-message"

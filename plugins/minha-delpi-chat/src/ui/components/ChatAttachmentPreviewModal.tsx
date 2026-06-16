@@ -158,7 +158,6 @@ export function ChatAttachmentPreviewModal({
       onClose={onClose}
       size="none"
       panelClassName="mdc-attachment-preview-modal"
-      backdropClassName="mdc-attachment-preview-modal__backdrop"
       ariaLabel={`Pré-visualização de ${target.filename}`}
     >
       <header className="mdc-attachment-preview-modal__header">

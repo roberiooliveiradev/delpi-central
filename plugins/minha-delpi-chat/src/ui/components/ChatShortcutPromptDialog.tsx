@@ -78,7 +78,6 @@ export function ChatShortcutPromptDialog({
       size="md"
       ariaLabelledBy={`${formId}-title`}
       panelClassName="mdc-chat-shortcut-prompt"
-      backdropClassName="mdc-chat-shortcut-prompt-backdrop"
     >
       <header className="mdc-chat-shortcut-prompt__header">
         <h2 id={`${formId}-title`}>{title}</h2>

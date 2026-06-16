@@ -47,7 +47,6 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
       size="md"
       ariaLabelledBy={titleId}
       panelClassName="mdc-chat-memory-used"
-      backdropClassName="mdc-chat-memory-used-backdrop"
     >
       <header className="mdc-chat-memory-used__header">
         <h2 id={titleId} className="mdc-chat-memory-used__title">

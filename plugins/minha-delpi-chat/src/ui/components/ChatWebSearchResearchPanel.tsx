@@ -96,7 +96,6 @@ export function ChatWebSearchResearchPanel({
       size="none"
       scrimLayout="drawer-end"
       panelClassName="mdc-chat-web-research-panel"
-      backdropClassName="mdc-chat-web-research-backdrop"
       ariaLabelledBy="mdc-chat-web-research-title"
     >
       <header className="mdc-chat-web-research-panel__header">

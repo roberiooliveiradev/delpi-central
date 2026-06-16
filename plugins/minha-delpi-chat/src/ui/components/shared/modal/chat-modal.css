@@ -29,8 +29,55 @@
   padding: 0;
 }
 
-.mdc-chat-modal__backdrop {
-  /* Posicionamento canônico via ChatModal — ver bloco em modal-layer.css. */
+/* Lousa — scrim centrado com respiro lateral. */
+.mdc-chat-overlay-scrim--centered:has(.mdc-chat-canvas) {
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-overlay-scrim--centered.mdc-chat-overlay-scrim--mobile-sheet {
+    display: flex;
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+
+  .mdc-chat-overlay-scrim--centered.mdc-chat-overlay-scrim--mobile-sheet:has(.mdc-expand-modal) {
+    display: grid;
+    place-items: end stretch;
+  }
+
+  .mdc-chat-overlay-scrim--centered.mdc-chat-overlay-scrim--mobile-centered {
+    display: grid;
+    place-items: center;
+    padding: var(--mdc-space-3);
+    box-sizing: border-box;
+  }
+
+  .mdc-chat-overlay-scrim--mobile-sheet > .mdc-chat-overlay-panel {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 1rem 1rem 0 0;
+  }
+
+  .mdc-chat-overlay-scrim--mobile-sheet > .mdc-chat-overlay-panel.mdc-expand-modal,
+  .mdc-chat-overlay-scrim--mobile-sheet > .mdc-chat-overlay-panel.mdc-chat-help-panel {
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
+  }
+
+  .mdc-chat-overlay-portal--contained
+    .mdc-chat-overlay-scrim--mobile-sheet
+    > .mdc-chat-overlay-panel.mdc-expand-modal,
+  .mdc-chat-overlay-portal--contained
+    .mdc-chat-overlay-scrim--mobile-sheet
+    > .mdc-chat-overlay-panel.mdc-chat-help-panel {
+    max-height: min(92%, calc(100% - env(safe-area-inset-top, 0px)));
+  }
 }
 
 @media (max-width: 480px) {

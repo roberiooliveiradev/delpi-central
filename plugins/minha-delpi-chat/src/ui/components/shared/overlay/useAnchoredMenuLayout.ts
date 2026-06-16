@@ -21,7 +21,7 @@ import {
   type ComposerOptionMenuLayout,
   type ContextMenuAnchor,
   type ContextMenuLayout,
-} from "../../menuPositionUtils";
+} from "./menuPositionUtils";
 
 export type AnchoredMenuPlacement =
   | "composer-option"
@@ -217,9 +217,12 @@ export function useAnchoredMenuLayout({
         top: layout.top,
         left: layout.left,
         ...(placement === "composer-option" || placement === "composer-panel"
-          ? "maxHeight" in layout
-            ? { maxHeight: layout.maxHeight }
-            : {}
+          ? {
+              ...("maxHeight" in layout ? { maxHeight: layout.maxHeight } : {}),
+              ...("anchorAbove" in layout && layout.anchorAbove
+                ? { transform: "translateY(-100%)" }
+                : {}),
+            }
           : {}),
       }
     : undefined;

@@ -68,7 +68,6 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
           ? "mdc-chat-canvas mdc-chat-canvas--expanded"
           : "mdc-chat-canvas"
       }
-      backdropClassName="mdc-chat-canvas-backdrop"
       ariaLabel="Lousa do Chat DELPI"
     >
       <header className="mdc-chat-canvas__header">

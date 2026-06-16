@@ -10,8 +10,7 @@ import {
 import type { ChatPresentationFormatId } from "../../data/api/chatTypes";
 import type { ChatPresentationFormatOption } from "../../state/hooks/useChatPresentationFormat";
 import { ComposerOptionSelector } from "./shared/composer/ComposerOptionSelector";
-
-import "./ChatResponseModeSelector.css";
+import "./shared/composer/composer-option-selector.css";
 
 type ChatPresentationFormatSelectorProps = {
   options: ChatPresentationFormatOption[];
@@ -59,7 +58,6 @@ export function ChatPresentationFormatSelector({
       renderIcon={formatIcon}
       menuLabel="Formato da resposta"
       tourId="composer-presentation-format"
-      className="mdc-composer-option-selector mdc-chat-response-mode"
     />
   );
 }

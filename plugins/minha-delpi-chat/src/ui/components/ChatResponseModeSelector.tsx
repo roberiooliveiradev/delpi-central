@@ -2,8 +2,7 @@ import { Gauge, Sparkles, Zap } from "lucide-react";
 
 import type { ChatResponseModeId, ChatResponseModeOption } from "../../data/api/chatTypes";
 import { ComposerOptionSelector } from "./shared/composer/ComposerOptionSelector";
-
-import "./ChatResponseModeSelector.css";
+import "./shared/composer/composer-option-selector.css";
 
 type ChatResponseModeSelectorProps = {
   modes: ChatResponseModeOption[];
@@ -39,7 +38,6 @@ export function ChatResponseModeSelector({
       renderIcon={modeIcon}
       menuLabel="Modo de resposta"
       tourId="composer-response-mode"
-      className="mdc-composer-option-selector mdc-chat-response-mode"
     />
   );
 }

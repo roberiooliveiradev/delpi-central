@@ -545,11 +545,6 @@
   padding: 0.55rem 0.8rem;
 }
 
-.mdc-chat-project-settings-backdrop {
-  display: grid;
-  place-items: center;
-}
-
 .mdc-chat-project-settings {
   display: grid;
   gap: 1rem;
@@ -802,11 +797,6 @@
 }
 
 @media (max-width: 767px) {
-  .mdc-chat-project-settings-backdrop {
-    align-items: end;
-    padding: 0;
-  }
-
   .mdc-chat-project-settings {
     width: 100%;
     max-height: 92dvh;

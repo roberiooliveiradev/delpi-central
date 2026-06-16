@@ -40,8 +40,8 @@
 /* Portal no MFE (#mdc-modal-root): scrim absoluto — não cobre sidebar nem viewport inteira. */
 .mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim,
 .mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim--centered,
-.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered,
-.mdc-chat-overlay-portal--contained [class*="-backdrop"] {
+.mdc-chat-overlay-portal--contained .mdc-chat-modal__backdrop,
+.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered {
   position: absolute;
   inset: 0;
   z-index: 1;

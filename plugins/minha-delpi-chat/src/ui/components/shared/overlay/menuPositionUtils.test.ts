@@ -116,13 +116,14 @@ describe("resolveComposerPanelMenuPosition", () => {
     });
 
     expect(layout.top).toBeLessThan(460);
-    expect(layout.top + layout.maxHeight).toBeLessThanOrEqual(viewportHeight - 8);
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.top).toBeLessThanOrEqual(496 - COMPOSER_PANEL_ANCHOR_GAP);
+    expect(layout.maxHeight).toBeLessThanOrEqual(viewportHeight - 8);
   });
 
   it("ancora acima do + com gap legado e borda esquerda alinhada", () => {
     const itemCount = 3;
     const rect = { left: 48, top: 460, right: 84, bottom: 496, width: 36, height: 36 };
-    const naturalHeight = estimateComposerPanelMenuHeight(itemCount);
 
     const layout = resolveComposerPanelMenuPosition({
       rect,
@@ -131,7 +132,8 @@ describe("resolveComposerPanelMenuPosition", () => {
     });
 
     expect(layout.left).toBe(48);
-    expect(layout.top).toBe(rect.top - naturalHeight - COMPOSER_PANEL_ANCHOR_GAP);
+    expect(layout.top).toBe(rect.top - COMPOSER_PANEL_ANCHOR_GAP);
+    expect(layout.anchorAbove).toBe(true);
   });
 });
 
@@ -147,8 +149,8 @@ describe("resolveComposerOptionMenuPosition", () => {
 
     expect(layout.top).toBeLessThan(420);
     expect(layout.top).toBeGreaterThanOrEqual(8);
+    expect(layout.anchorAbove).toBe(true);
     expect(layout.maxHeight).toBeLessThan(estimateComposerOptionMenuHeight(7));
-    expect(layout.top + layout.maxHeight).toBeLessThanOrEqual(viewportHeight - 8);
   });
 
   it("usa coordenadas relativas ao #mdc-modal-root quando contido", () => {
@@ -170,6 +172,7 @@ describe("resolveComposerOptionMenuPosition", () => {
 
     expect(layout.left).toBe(48);
     expect(layout.top).toBeLessThan(720 - containerRect.top);
-    expect(layout.top + layout.maxHeight).toBeLessThanOrEqual(containerRect.height - 8);
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.maxHeight).toBeLessThanOrEqual(containerRect.height - 8);
   });
 });

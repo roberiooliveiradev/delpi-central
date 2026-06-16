@@ -26,7 +26,6 @@ export function ChatSidebarArchivedDialog({
       size="lg"
       ariaLabelledBy="mdc-chat-archived-title"
       panelClassName="mdc-chat-archived-dialog"
-      backdropClassName="mdc-chat-archived-backdrop"
     >
       <header>
         <div>

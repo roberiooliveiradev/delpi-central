@@ -29,9 +29,9 @@ export function ChatConfirmDialog({
       open={open}
       onClose={onCancel}
       size="md"
+      mobileLayout="centered"
       ariaLabelledBy="mdc-chat-confirm-title"
       panelClassName="mdc-chat-confirm"
-      backdropClassName="mdc-chat-confirm-backdrop"
     >
       <header className="mdc-chat-confirm__header">
         <span

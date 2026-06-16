@@ -43,7 +43,6 @@ export function ChatExpandModal({
       onClose={onClose}
       size="none"
       panelClassName="mdc-expand-modal"
-      backdropClassName="mdc-expand-modal__backdrop"
       ariaLabelledBy="mdc-expand-modal-title"
     >
       <div className="mdc-expand-modal__header">

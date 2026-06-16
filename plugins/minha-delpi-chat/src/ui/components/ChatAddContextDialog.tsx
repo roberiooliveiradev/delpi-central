@@ -121,7 +121,6 @@ export function ChatAddContextDialog({
       size="lg"
       ariaLabelledBy={`${formId}-title`}
       panelClassName="mdc-chat-add-context"
-      backdropClassName="mdc-chat-add-context-backdrop"
     >
       <header className="mdc-chat-add-context__header">
         <h2 id={`${formId}-title`}>Adicionar ao contexto</h2>

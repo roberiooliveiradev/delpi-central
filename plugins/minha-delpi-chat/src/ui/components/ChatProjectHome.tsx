@@ -855,7 +855,6 @@ export function ChatProjectHome({
         onClose={closeSettings}
         size="none"
         panelClassName="mdc-chat-project-settings"
-        backdropClassName="mdc-chat-project-settings-backdrop"
         ariaLabel="Configurações do projeto"
       >
             <header>

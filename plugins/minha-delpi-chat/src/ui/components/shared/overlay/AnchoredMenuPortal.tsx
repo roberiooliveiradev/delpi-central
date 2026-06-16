@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 
-import type { ContextMenuAnchor } from "../../menuPositionUtils";
+import type { ContextMenuAnchor } from "./menuPositionUtils";
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,

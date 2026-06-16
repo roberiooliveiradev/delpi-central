@@ -1,7 +1,3 @@
-.mdc-attachment-preview-modal__backdrop {
-  z-index: 1200;
-}
-
 .mdc-attachment-preview-modal {
   display: flex;
   flex-direction: column;

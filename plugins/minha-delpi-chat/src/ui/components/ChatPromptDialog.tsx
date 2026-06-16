@@ -59,6 +59,7 @@ export function ChatPromptDialog({
       open={open}
       onClose={onCancel}
       size="md"
+      mobileLayout="centered"
       ariaLabelledBy={titleId}
       panelClassName="mdc-chat-prompt"
     >
