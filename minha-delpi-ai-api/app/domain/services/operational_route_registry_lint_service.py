@@ -26,6 +26,7 @@ _SCANNED_PYTHON_RELATIVE = (
     "app/application/services/external_actions/external_action_selection_dispatch_service.py",
     "app/application/services/external_actions/external_action_selection_preflight_service.py",
     "app/application/services/external_actions/external_action_session_refinement_phase_service.py",
+    "app/application/services/external_actions/external_action_candidate_prioritization_service.py",
     "app/application/services/external_actions/external_action_route_selection_service.py",
     "app/application/services/external_actions/external_action_product_route_catalog_service.py",
     "app/application/services/external_actions/external_action_generic_route_selection_service.py",

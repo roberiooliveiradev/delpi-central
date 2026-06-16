@@ -507,6 +507,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths` (fase renomeada `operationalRoutes`)
 - [x] Remover wrappers `ExternalActionProductRouteSelectionService` e `ExternalActionKpiRouteSelectionService` — lógica em `ExternalActionRouteSelectionService`
 - [x] Fase 11: `sessionRefinement` ativo — `ExternalActionSessionRefinementPhaseService` + `ExternalActionSelectionPreflightService`; dispatch enxuto (~220 linhas)
+- [x] Extrair priorização KPI de candidatos → `ExternalActionCandidatePrioritizationService` (vocabulário `actionSelection` JSON)
 
 ---
 
@@ -524,6 +525,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | `external_action_selection_dispatch_service.py` | **Enxugado** — preflight + loop registry |
 | `external_action_selection_preflight_service.py` | **Criado** — guards e SQL preflight |
 | `external_action_session_refinement_phase_service.py` | **Criado** — fase `sessionRefinement` |
+| `external_action_candidate_prioritization_service.py` | **Criado** — priorização KPI candidatos OpenAPI |
 | `chat_product_query_intent_service.py` | **Manter** detect/refine; reduzir `_looks_like_*` compostos |
 | `api_route_domains.json` | **Estender** domínios faltantes |
 | `external_action_responses.json` | **Transição** → só `selectionReasons` |
