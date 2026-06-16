@@ -1,0 +1,41 @@
+/* Gatilho ⋯ compartilhado — cards, listas e sidebar. */
+
+.mdc-dropdown-menu-trigger {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mdc-dropdown-menu-trigger__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.mdc-dropdown-menu-trigger__button:hover:not(:disabled),
+.mdc-dropdown-menu-trigger__button[aria-expanded="true"] {
+  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+}
+
+.mdc-dropdown-menu-trigger__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 480px) {
+  .mdc-dropdown-menu-trigger__button {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}

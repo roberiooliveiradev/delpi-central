@@ -1,15 +1,12 @@
 import {
   Archive,
-  MoreHorizontal,
   Pencil,
   Pin,
   Share2,
   Trash2,
 } from "lucide-react";
-import { useRef } from "react";
 
-import { AnchoredMenuPortal } from "./shared/overlay/AnchoredMenuPortal";
-import { ActionMenuPanel } from "./shared/menus/ActionMenuPanel";
+import { DropdownMenuTrigger } from "./shared/menus/DropdownMenuTrigger";
 
 import "./chat-overlay-layer.css";
 import "./ChatConversationMenu.css";
@@ -39,8 +36,6 @@ export function ChatConversationMenu({
   onArchive,
   onDelete,
 }: ChatConversationMenuProps) {
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-
   const menuItems = [
     ...(onShare
       ? [
@@ -83,36 +78,18 @@ export function ChatConversationMenu({
   ];
 
   return (
-    <div className="mdc-chat-conversation-menu">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="mdc-chat-conversation-menu__trigger"
-        disabled={disabled}
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenChange(!open);
-        }}
-        aria-label="Abrir opções da conversa"
-        aria-expanded={open}
-        title="Opções"
-      >
-        <MoreHorizontal size={17} aria-hidden="true" />
-      </button>
-
-      <AnchoredMenuPortal
-        open={open}
-        triggerRef={triggerRef}
-        itemCount={menuItems.length}
-        placement="action-menu"
-        menuLabel="Opções da conversa"
-        menuRole="menu"
-        scrim="backdrop"
-        panelClassName="mdc-chat-conversation-menu__panel"
-        onClose={() => onOpenChange(false)}
-      >
-        <ActionMenuPanel items={menuItems} onItemSelect={() => onOpenChange(false)} />
-      </AnchoredMenuPortal>
-    </div>
+    <DropdownMenuTrigger
+      open={open}
+      onOpenChange={onOpenChange}
+      disabled={disabled}
+      items={menuItems}
+      menuLabel="Opções da conversa"
+      ariaLabel="Abrir opções da conversa"
+      iconSize={17}
+      wrapClassName="mdc-chat-conversation-menu"
+      triggerClassName="mdc-chat-conversation-menu__trigger"
+      panelClassName="mdc-chat-conversation-menu__panel"
+      scrim="backdrop"
+    />
   );
 }
