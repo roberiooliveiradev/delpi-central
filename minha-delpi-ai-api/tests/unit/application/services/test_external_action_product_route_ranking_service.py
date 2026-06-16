@@ -6,8 +6,8 @@ from app.application.services.external_actions.external_action_operational_route
 from app.application.services.external_actions.external_action_product_route_catalog_service import (
     ExternalActionProductRouteCatalogService,
 )
-from app.application.services.external_actions.external_action_product_route_selection_service import (
-    ExternalActionProductRouteSelectionService,
+from app.application.services.external_actions.external_action_route_selection_service import (
+    ExternalActionRouteSelectionService,
 )
 from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
@@ -108,9 +108,9 @@ def test_product_route_selection_picks_summary_over_analyser_for_resumo():
             },
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
+    route_selection = ExternalActionRouteSelectionService(repository)
 
-    selected = product_route.select(
+    selected = route_selection.select_product(
         "resumo do produto 10080047",
         "10080047",
         allowed_action_ids=["summary", "analyser"],

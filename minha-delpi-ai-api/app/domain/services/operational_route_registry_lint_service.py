@@ -22,8 +22,11 @@ _API_DELPI_PATH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_PATH_LINT_RELATIVE = (
-    "app/application/services/external_actions/external_action_product_route_selection_service.py",
+_SCANNED_PYTHON_RELATIVE = (
+    "app/application/services/external_actions/external_action_selection_dispatch_service.py",
+    "app/application/services/external_actions/external_action_route_selection_service.py",
+    "app/application/services/external_actions/external_action_product_route_catalog_service.py",
+    "app/application/services/external_actions/external_action_generic_route_selection_service.py",
 )
 
 _INLINE_TERM_TUPLE_PATTERN = re.compile(
@@ -62,20 +65,13 @@ _PLAYBOOK_NONE_OF_RULES: dict[str, list[str]] = {
     "productGenericPricing": ["salePricingRoute"],
 }
 
-_SCANNED_PYTHON_RELATIVE = (
-    "app/application/services/external_actions/external_action_selection_dispatch_service.py",
-    "app/application/services/external_actions/external_action_route_selection_service.py",
-    "app/application/services/external_actions/external_action_product_route_selection_service.py",
-    "app/application/services/external_actions/external_action_product_route_catalog_service.py",
-    "app/application/services/external_actions/external_action_kpi_route_selection_service.py",
-    "app/application/services/external_actions/external_action_generic_route_selection_service.py",
-)
-
 _LEGACY_SYMBOLS = (
     "ExternalActionProductRouteRankingService",
     "_rank_product_actions",
     "productRouteRanking",
     "vocabularyFastPaths",
+    "ExternalActionProductRouteSelectionService",
+    "ExternalActionKpiRouteSelectionService",
 )
 
 
@@ -347,14 +343,6 @@ class OperationalRouteRegistryLintService:
 
             source = path.read_text(encoding="utf-8")
             cls._lint_python_source(relative, source, report)
-
-        for relative in _PATH_LINT_RELATIVE:
-            path = root / relative
-
-            if not path.is_file():
-                continue
-
-            source = path.read_text(encoding="utf-8")
 
             if _API_DELPI_PATH_PATTERN.search(source):
                 report.add_error(

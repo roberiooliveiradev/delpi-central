@@ -1,8 +1,8 @@
 from app.application.services.external_actions.external_action_product_route_catalog_service import (
     ExternalActionProductRouteCatalogService,
 )
-from app.application.services.external_actions.external_action_product_route_selection_service import (
-    ExternalActionProductRouteSelectionService,
+from app.application.services.external_actions.external_action_route_selection_service import (
+    ExternalActionRouteSelectionService,
 )
 from app.application.services.external_actions.external_action_operational_route_selection_service import (
     ExternalActionOperationalRouteSelectionService,
@@ -55,9 +55,9 @@ def test_select_product_full_without_scope_defers_to_semantic_ranking():
             },
         ]
     )
-    product_route = ExternalActionProductRouteSelectionService(repository)
+    route_selection = ExternalActionRouteSelectionService(repository)
 
-    selected = product_route.select(
+    selected = route_selection.select_product(
         "10080055",
         "10080055",
         allowed_action_ids=["stock-action", "analyser-action"],

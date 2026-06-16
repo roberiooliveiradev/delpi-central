@@ -568,7 +568,7 @@ Rotas cujo OpenAPI declara `reference_date`, `date_start`, `date_end` (ou equiva
 | Etapa | Comportamento |
 |-------|----------------|
 | `ChatOperationalDateParameterService.resolve_missing_date_answer` | Pergunta data/período (`missingDateByContext` em `operational_parameters.json`) |
-| `ExternalActionProductRouteSelectionService` | Não seleciona action se schema exige data e parâmetros temporais vazios |
+| `ExternalActionRouteSelectionService.select_product` | Não seleciona action se schema exige data e parâmetros temporais vazios |
 | Resposta curta | «hoje», «semana passada», `01/06/2026` → `ChatActivePendingService.try_resolve` monta `resumeMessage` |
 | `ChatActiveQuerySessionService.compose_selection_message` | Recompõe pergunta original + resposta (pending ou sessão ativa) |
 | `ChatExternalActionOrchestrationService` | Planeja actions com `selection_message` (não só a última linha do usuário) |

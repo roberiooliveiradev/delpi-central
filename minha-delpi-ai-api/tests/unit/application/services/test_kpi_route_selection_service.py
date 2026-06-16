@@ -1,6 +1,3 @@
-from app.application.services.external_actions.external_action_kpi_route_selection_service import (
-    ExternalActionKpiRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
 )
@@ -19,10 +16,9 @@ class _FakeRepository:
 
 def test_kpi_try_select_without_product_code_delegates_to_dispatch_registry():
     route_selection = ExternalActionRouteSelectionService(_FakeRepository([]))
-    kpi_route = ExternalActionKpiRouteSelectionService(route_selection)
 
     assert (
-        kpi_route.try_select_without_product_code(
+        route_selection.select_kpi_without_product(
             "qual o cpv do mês?",
             "qual o cpv do mes?",
             allowed_action_ids=["cpv"],
@@ -44,7 +40,6 @@ def test_kpi_metric_refinement_supplies():
         ]
     )
     route_selection = ExternalActionRouteSelectionService(repository)
-    kpi_route = ExternalActionKpiRouteSelectionService(route_selection)
     refinement = OperationalRefinement(
         kind="metric_refinement",
         metric_kind="supplies",
@@ -52,7 +47,7 @@ def test_kpi_metric_refinement_supplies():
         reason="Refinamento OTD suprimentos",
     )
 
-    selected = kpi_route.select_metric_refinement(
+    selected = route_selection.select_metric_refinement(
         "otd filial 01",
         refinement,
         allowed_action_ids=["supplies-otd"],

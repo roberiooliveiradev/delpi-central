@@ -8,6 +8,9 @@ from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_operational_refinement_service import (
+    ChatOperationalRefinementService,
+)
 from app.domain.services.chat_operational_api_domain_service import (
     ChatOperationalApiDomainService,
 )
@@ -20,14 +23,8 @@ from app.domain.services.operational_api_parameter_builder_service import (
 from app.application.services.external_actions.external_action_sql_route_selection_service import (
     ExternalActionSqlRouteSelectionService,
 )
-from app.application.services.external_actions.external_action_product_route_selection_service import (
-    ExternalActionProductRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_product_route_catalog_service import (
     ExternalActionProductRouteCatalogService,
-)
-from app.application.services.external_actions.external_action_kpi_route_selection_service import (
-    ExternalActionKpiRouteSelectionService,
 )
 from app.application.services.external_actions.external_action_refinement_route_selection_service import (
     ExternalActionRefinementRouteSelectionService,
@@ -51,21 +48,14 @@ class ExternalActionRouteSelectionService:
         repository,
         *,
         parameter_builder: OperationalApiParameterBuilderService | None = None,
-        product_route: ExternalActionProductRouteSelectionService | None = None,
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
-        kpi_route: ExternalActionKpiRouteSelectionService | None = None,
         refinement_route: ExternalActionRefinementRouteSelectionService | None = None,
         generic_route: ExternalActionGenericRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
         self._product_catalog = ExternalActionProductRouteCatalogService(repository)
-        self._product_route = product_route or ExternalActionProductRouteSelectionService(
-            repository,
-            catalog=self._product_catalog,
-        )
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
-        self._kpi_route = kpi_route or ExternalActionKpiRouteSelectionService(self)
         self._refinement_route = refinement_route or ExternalActionRefinementRouteSelectionService(
             repository
         )
@@ -142,16 +132,33 @@ class ExternalActionRouteSelectionService:
         candidates_loader: Callable[..., list[dict]] | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
-        return self._product_route.select(
+        if preferred_action_id:
+            preferred = self._select_preferred_product_action(
+                message,
+                product_code,
+                allowed_action_ids,
+                preferred_action_id=preferred_action_id,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if preferred:
+                return preferred
+
+        selected = self._operational_route.select_product_with_code(
             message,
             product_code,
-            allowed_action_ids=allowed_action_ids,
+            allowed_action_ids,
             intent=intent,
             route_segment=route_segment,
-            preferred_action_id=preferred_action_id,
             candidates_loader=candidates_loader,
             previous_messages=previous_messages,
         )
+
+        if not selected:
+            return None
+
+        return self._apply_product_branch_reason(message, product_code, selected)
 
     def build_product_parameters(
         self,
@@ -218,13 +225,7 @@ class ExternalActionRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        return self._kpi_route.try_select_without_product_code(
-            message,
-            normalized,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            candidates_loader=candidates_loader,
-        )
+        return None
 
     def select_metric_refinement(
         self,
@@ -235,13 +236,49 @@ class ExternalActionRouteSelectionService:
         previous_messages: list | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        return self._kpi_route.select_metric_refinement(
-            message,
-            refinement,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            candidates_loader=candidates_loader,
-        )
+        if refinement.metric_kind == "supplies" and refinement.metric_path_token:
+            spec = OperationalApiRouteSpec.from_supplies_metric(
+                path_token=str(refinement.metric_path_token),
+                operation_token=str(refinement.metric_path_token),
+                reason=refinement.reason
+                or ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "kpiMetricRefinementDefault",
+                ),
+            )
+
+            return self.select(
+                spec,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                fallback_candidates_loader=candidates_loader,
+            )
+
+        if refinement.metric_kind == "department_kpi" and refinement.metric_path_token:
+            from app.domain.services.chat_department_kpi_intent_service import (
+                DepartmentKpiMatch,
+            )
+
+            match = DepartmentKpiMatch(
+                path_token=str(refinement.metric_path_token),
+                domain_prefix=str(refinement.metric_domain_prefix or ""),
+                reason=refinement.reason
+                or ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "departmentKpiRefinement",
+                ),
+            )
+
+            return self.select(
+                OperationalApiRouteSpec.from_department_kpi(match),
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                fallback_candidates_loader=candidates_loader,
+            )
+
+        return None
 
     def select_sale_orders(
         self,
@@ -463,6 +500,98 @@ class ExternalActionRouteSelectionService:
             value,
             path,
         )
+
+    def _select_preferred_product_action(
+        self,
+        message: str,
+        product_code: str,
+        allowed_action_ids: list[str],
+        *,
+        preferred_action_id: str,
+        candidates_loader: Callable | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        candidates = self._product_catalog.load_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+        action = next(
+            (
+                item
+                for item in candidates
+                if str(item.get("actionId") or "") == preferred_action_id
+            ),
+            None,
+        )
+
+        if not action or str(action.get("method") or "GET").upper() != "GET":
+            return None
+
+        parameters = self._product_catalog.build_product_parameters(
+            action,
+            product_code,
+            message=message,
+            previous_messages=previous_messages,
+        )
+
+        if not parameters:
+            return None
+
+        from app.domain.services.chat_operational_date_parameter_service import (
+            ChatOperationalDateParameterService,
+        )
+
+        if (
+            ChatOperationalDateParameterService.action_requires_explicit_date(action)
+            and not ChatOperationalDateParameterService.parameters_have_date(
+                action,
+                parameters,
+            )
+        ):
+            return None
+
+        path = str(action.get("path") or "").lower()
+        reason_key = (
+            "productDirectives"
+            if "/directives/" in path
+            else "productOperational"
+        )
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "parameters": parameters,
+            },
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                reason_key,
+            ),
+        }
+
+    @staticmethod
+    def _apply_product_branch_reason(
+        message: str,
+        product_code: str,
+        selected: dict,
+    ) -> dict:
+        branch_code = ChatOperationalRefinementService.extract_branch_code(
+            ChatMessageNormalizationService.normalize_for_matching(message)
+        )
+
+        if not branch_code:
+            return selected
+
+        return {
+            **selected,
+            "reason": ExternalActionResponseContentService.format(
+                "selectionReasons",
+                "productStockBranchRefinement",
+                product_code=product_code,
+                branch_code=branch_code,
+            ),
+        }
 
     def _find_candidates(
         self,
