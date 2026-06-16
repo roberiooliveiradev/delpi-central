@@ -826,13 +826,13 @@ class ExternalActionOperationalRouteSelectionService:
 
         if strategy == "lmp":
             from app.domain.services.operational_route_matcher_service import (
-                _extract_lmp_sale_number,
+                OperationalRouteMatcherService,
             )
 
             path = str(action.get("path") or "")
-            sale_number = _extract_lmp_sale_number(message) or _extract_lmp_sale_number(
-                conversation_context
-            )
+            sale_number = OperationalRouteMatcherService.extract_lmp_sale_number(
+                message
+            ) or OperationalRouteMatcherService.extract_lmp_sale_number(conversation_context)
 
             if sale_number and "{sale_number}" in path:
                 for parameter in action.get("parametersSchema") or []:

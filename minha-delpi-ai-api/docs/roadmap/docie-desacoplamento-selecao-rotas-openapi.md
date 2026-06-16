@@ -33,8 +33,7 @@ ExternalActionSelectionDispatchService (~760 linhas — ordem fixa, transição)
         ├── ExternalActionOperationalRouteSelectionService  ← motor registry (v2026.06.8)
         ├── ExternalActionProductRouteSelectionService      ← wrapper ranking residual
         ├── ExternalActionKpiRouteSelectionService          ← KPI dept. + fallback dashboards
-        ├── ExternalActionLmpRouteSelectionService
-        ├── ExternalActionProductSearchRouteSelectionService
+        ├── ExternalActionProductSearchRouteSelectionService (helpers — sem select legado)
         ├── ExternalActionSqlRouteSelectionService
         └── ExternalActionGenericRouteSelectionService      ← semântico
 ```
@@ -222,8 +221,8 @@ if action_id.startswith("api_externa."): return +95
 | `ExternalActionProductionOperationalRouteSelectionService` | Playbook 15 | 14 `pathTokens` em JSON, `_REASON_KEYS` em Python | 🟡 | Mesclar `production_operational_intent.pathTokens` |
 | `ExternalActionDomainRouteSelectionService` | Comercial / Transforma / System | `/sales`, `transforma-mais`, `/system/` | 🟡 | 3 entradas registry |
 | `ExternalActionKpiRouteSelectionService` | KPI dept/supplies | `cpv`, `otd`, `inventory-turnover` | 🟡 | Entradas `kpi.*` |
-| `ExternalActionLmpRouteSelectionService` | LMP / OV | paths LMP | 🟡 | Entrada `lmp.*` |
-| `ExternalActionProductSearchRouteSelectionService` | Busca | `/products/search` | 🟢 | Manter — domínio `product_search` já no `api_route_domains.json` |
+| `ExternalActionLmpRouteSelectionService` | LMP / OV | paths LMP | ✅ | Removido — registry `domainLmp` |
+| `ExternalActionProductSearchRouteSelectionService` | Helpers busca (`build_search_parameters`, extractors) | `/products/search` | ✅ | Seleção via registry `domainProductSearch` |
 | `ExternalActionSqlRouteSelectionService` | POST /data/sql | SQL | 🟢 | Fallback controlado |
 | `ExternalActionRefinementRouteSelectionService` | Paginação/profundidade | `/products/{code}/…` | 🟡 | Generalizar `pathTemplate` |
 | `ExternalActionGenericRouteSelectionService` | Semântico | — | 🟢 | Fallback canônico |
@@ -499,8 +498,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ### Fase 10 — Domínios restantes + DoD
 
-- [x] LMP no registry (`domainLmp` + `select_lmp` no motor operacional)
-- [x] product search no registry (`domainProductSearch` + strategy `product_search`)
+- [x] LMP no registry (`domainLmp` + `select_lmp` no motor operacional); fallback ranking Python removido
+- [x] product search no registry (`domainProductSearch` + strategy `product_search`); fallback `select()` removido
 - [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
 - [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)

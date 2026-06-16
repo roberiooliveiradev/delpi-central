@@ -530,7 +530,11 @@ class ExternalActionSelectionDispatchService:
         )
 
     def _extract_sale_number(self, text: str | None) -> str | None:
-        return self._route_selection._lmp_route._extract_sale_number(text)
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        return OperationalRouteMatcherService.extract_lmp_sale_number(text)
 
     def _merge_date_parameters(
         self,

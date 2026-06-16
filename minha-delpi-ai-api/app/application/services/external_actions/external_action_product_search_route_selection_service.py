@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Callable
 
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
@@ -85,70 +84,6 @@ class ExternalActionProductSearchRouteSelectionService:
             "description": description_query,
             "page_size": page_size,
         }
-
-    def select(
-        self,
-        message: str,
-        normalized: str,
-        allowed_action_ids: list[str],
-        *,
-        candidates_loader: Callable[..., list[dict]],
-        description_override: str | None = None,
-    ) -> dict | None:
-        candidates = candidates_loader(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=80,
-        )
-
-        for action in candidates:
-            if action.get("method") != "GET":
-                continue
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if "search" not in path and "search" not in operation_id:
-                continue
-
-            parameters = self.build_search_parameters(
-                message,
-                normalized,
-                action,
-                description_override=description_override,
-            )
-
-            if not parameters:
-                continue
-
-            group_code = self.extract_search_group_code(message, normalized)
-            description_query = description_override or self.extract_search_description(
-                message
-            )
-
-            if group_code:
-                reason = ExternalActionResponseContentService.format(
-                    "selectionReasons",
-                    "productSearchByGroup",
-                    group_code=group_code,
-                )
-            else:
-                reason = ExternalActionResponseContentService.format(
-                    "selectionReasons",
-                    "productSearchByDescription",
-                    description_query=description_query,
-                )
-
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": parameters,
-                },
-                "reason": reason,
-            }
-
-        return None
 
     @staticmethod
     def extract_search_description(message: str) -> str:

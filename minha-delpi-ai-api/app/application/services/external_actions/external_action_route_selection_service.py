@@ -17,9 +17,6 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.operational_api_parameter_builder_service import (
     OperationalApiParameterBuilderService,
 )
-from app.application.services.external_actions.external_action_lmp_route_selection_service import (
-    ExternalActionLmpRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_sql_route_selection_service import (
     ExternalActionSqlRouteSelectionService,
 )
@@ -31,9 +28,6 @@ from app.application.services.external_actions.external_action_product_route_cat
 )
 from app.application.services.external_actions.external_action_kpi_route_selection_service import (
     ExternalActionKpiRouteSelectionService,
-)
-from app.application.services.external_actions.external_action_product_search_route_selection_service import (
-    ExternalActionProductSearchRouteSelectionService,
 )
 from app.application.services.external_actions.external_action_refinement_route_selection_service import (
     ExternalActionRefinementRouteSelectionService,
@@ -58,10 +52,8 @@ class ExternalActionRouteSelectionService:
         *,
         parameter_builder: OperationalApiParameterBuilderService | None = None,
         product_route: ExternalActionProductRouteSelectionService | None = None,
-        lmp_route: ExternalActionLmpRouteSelectionService | None = None,
         sql_route: ExternalActionSqlRouteSelectionService | None = None,
         kpi_route: ExternalActionKpiRouteSelectionService | None = None,
-        product_search_route: ExternalActionProductSearchRouteSelectionService | None = None,
         refinement_route: ExternalActionRefinementRouteSelectionService | None = None,
         generic_route: ExternalActionGenericRouteSelectionService | None = None,
     ):
@@ -72,12 +64,8 @@ class ExternalActionRouteSelectionService:
             repository,
             catalog=self._product_catalog,
         )
-        self._lmp_route = lmp_route or ExternalActionLmpRouteSelectionService(repository)
         self._sql_route = sql_route or ExternalActionSqlRouteSelectionService(repository)
         self._kpi_route = kpi_route or ExternalActionKpiRouteSelectionService(self)
-        self._product_search_route = (
-            product_search_route or ExternalActionProductSearchRouteSelectionService()
-        )
         self._refinement_route = refinement_route or ExternalActionRefinementRouteSelectionService(
             repository
         )
@@ -191,32 +179,11 @@ class ExternalActionRouteSelectionService:
     ) -> dict | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        selected = self._operational_route.select_lmp(
+        return self._operational_route.select_lmp(
             message,
             normalized,
             allowed_action_ids,
             conversation_context=conversation_context,
-            candidates_loader=candidates_loader,
-            merge_date_parameters=merge_date_parameters,
-        )
-
-        if selected:
-            return selected
-
-        from app.domain.services.operational_route_matcher_service import (
-            OperationalRouteMatcherService,
-        )
-
-        if not OperationalRouteMatcherService.matches_custom_predicate(
-            "lmpQuestion",
-            normalized,
-        ):
-            return None
-
-        return self._lmp_route.select(
-            message,
-            allowed_action_ids,
-            conversation_context,
             candidates_loader=candidates_loader,
             merge_date_parameters=merge_date_parameters,
         )
@@ -342,18 +309,7 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader:
             return None
 
-        selected = self._operational_route.select_product_search(
-            message,
-            normalized,
-            allowed_action_ids,
-            candidates_loader=candidates_loader,
-            description_override=description_override,
-        )
-
-        if selected:
-            return selected
-
-        return self._product_search_route.select(
+        return self._operational_route.select_product_search(
             message,
             normalized,
             allowed_action_ids,

@@ -505,6 +505,10 @@ class OperationalRouteMatcherService:
 
         return bool(matcher and matcher(normalized))
 
+    @staticmethod
+    def extract_lmp_sale_number(text: str | None) -> str | None:
+        return _extract_lmp_sale_number(text)
+
     @classmethod
     def looks_like_system_metadata_question(cls, normalized: str) -> bool:
         return _looks_like_system_metadata_question(normalized)
