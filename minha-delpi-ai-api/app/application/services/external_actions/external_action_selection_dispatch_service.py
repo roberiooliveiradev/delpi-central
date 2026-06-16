@@ -5,8 +5,8 @@ from __future__ import annotations
 from app.application.services.chat_conversation_context_service import (
     ChatConversationContextService,
 )
-from app.application.services.external_actions.external_action_domain_route_selection_service import (
-    ExternalActionDomainRouteSelectionService,
+from app.domain.services.operational_route_matcher_service import (
+    OperationalRouteMatcherService,
 )
 from app.application.services.external_actions.external_action_product_search_route_selection_service import (
     ExternalActionProductSearchRouteSelectionService,
@@ -103,7 +103,7 @@ class ExternalActionSelectionDispatchService:
         if ChatSqlIntentService.is_authoring_request(message):
             normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-            if ExternalActionDomainRouteSelectionService.looks_like_system_metadata_question(
+            if OperationalRouteMatcherService.looks_like_system_metadata_question(
                 normalized
             ):
                 selected = self._route_selection.select_system_metadata(
@@ -364,7 +364,7 @@ class ExternalActionSelectionDispatchService:
                         return selected
 
         if (
-            ExternalActionDomainRouteSelectionService.looks_like_system_metadata_question(
+            OperationalRouteMatcherService.looks_like_system_metadata_question(
                 normalized
             )
             and not ChatProductQueryIntentService.extract_product_code(message)
@@ -479,7 +479,7 @@ class ExternalActionSelectionDispatchService:
             else:
                 bound_product_intent = ChatProductQueryIntent.DESCRIPTION
 
-        if ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
+        if OperationalRouteMatcherService.looks_like_sale_orders_list_question(
             normalized
         ):
             selected = self._route_selection.select_sale_orders(
@@ -492,7 +492,7 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
-        if ExternalActionDomainRouteSelectionService.looks_like_transforma_question(
+        if OperationalRouteMatcherService.looks_like_transforma_question(
             normalized
         ):
             selected = self._route_selection.select_transforma(

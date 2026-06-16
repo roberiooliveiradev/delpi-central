@@ -446,8 +446,10 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Desempate por ordem em `allowed_action_ids` (sem bias `api_delpi`/`api_externa`)
 - [x] Remover `_provider_preference_bonus` do ranking legado
 - [x] Remover fallbacks `ExternalActionDomainRouteSelectionService` / `ExternalActionProductionOperationalRouteSelectionService` em `ExternalActionRouteSelectionService`
-- [ ] Testes com FakeRepository simulando **dois providers** (casos adicionais além de tie-break)
-- [ ] Documentar «Como registrar nova API OpenAPI» em `docs/api/04-actions-openapi.md`
+- [x] Deletar `external_action_production_operational_route_selection_service.py`
+- [x] Deletar `external_action_domain_route_selection_service.py` (heurísticas → `OperationalRouteMatcherService`)
+- [x] Documentar «Como registrar nova API OpenAPI» em `docs/api/04-actions-openapi.md`
+- [x] Testes multi-provider (tie-break `allowed_action_ids`)
 
 ---
 
@@ -458,8 +460,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | `operational_route_registry.json` | **Criar** |
 | `external_action_vocabulary_route_selection_service.py` | **Substituir** por `ExternalActionOperationalRouteSelectionService` |
 | `external_action_product_route_selection_service.py` | **Deprecar → deletar** (Fase 4) |
-| `external_action_production_operational_route_selection_service.py` | **Deprecar → deletar** (Fase 3) |
-| `external_action_domain_route_selection_service.py` | **Deprecar → deletar** (Fase 3) |
+| `external_action_production_operational_route_selection_service.py` | **Removido** (registry) |
+| `external_action_domain_route_selection_service.py` | **Removido** (registry + matcher) |
 | `external_action_kpi_route_selection_service.py` | **Deprecar → deletar** (Fase 3) |
 | `external_action_selection_dispatch_service.py` | **Enxugar** — loop registry + refinamentos |
 | `chat_product_query_intent_service.py` | **Manter** detect/refine; reduzir `_looks_like_*` compostos |

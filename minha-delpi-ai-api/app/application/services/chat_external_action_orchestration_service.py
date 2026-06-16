@@ -215,11 +215,11 @@ class ChatExternalActionOrchestrationService:
 
             return []
 
-        from app.application.services.external_actions.external_action_domain_route_selection_service import (
-            ExternalActionDomainRouteSelectionService,
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
         )
 
-        if ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
+        if OperationalRouteMatcherService.looks_like_sale_orders_list_question(
             normalized
         ):
             selected = selection_service.select_action(

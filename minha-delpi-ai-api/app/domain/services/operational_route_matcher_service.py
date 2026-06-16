@@ -244,3 +244,15 @@ class OperationalRouteMatcherService:
     @classmethod
     def _has_product_scope(cls, normalized: str) -> bool:
         return ChatProductQueryIntentService._has_product_scope_reference(normalized)
+
+    @classmethod
+    def looks_like_sale_orders_list_question(cls, normalized: str) -> bool:
+        return _looks_like_sale_orders_list_question(normalized)
+
+    @classmethod
+    def looks_like_transforma_question(cls, normalized: str) -> bool:
+        return _looks_like_transforma_question(normalized)
+
+    @classmethod
+    def looks_like_system_metadata_question(cls, normalized: str) -> bool:
+        return _looks_like_system_metadata_question(normalized)

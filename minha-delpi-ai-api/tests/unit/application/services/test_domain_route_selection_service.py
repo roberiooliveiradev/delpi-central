@@ -1,8 +1,9 @@
-from app.application.services.external_actions.external_action_domain_route_selection_service import (
-    ExternalActionDomainRouteSelectionService,
-)
 from app.application.services.external_actions.external_action_route_selection_service import (
     ExternalActionRouteSelectionService,
+)
+from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.operational_route_matcher_service import (
+    OperationalRouteMatcherService,
 )
 
 
@@ -14,7 +15,11 @@ class _FakeRepository:
         return list(self._actions)
 
 
-def test_domain_route_selects_system_table_search():
+def setup_module() -> None:
+    configure_domain_infrastructure_ports()
+
+
+def test_operational_route_selects_system_table_search():
     repository = _FakeRepository(
         [
             {
@@ -39,7 +44,7 @@ def test_domain_route_selects_system_table_search():
     assert selected["arguments"]["parameters"]["description"] == "produtos"
 
 
-def test_domain_route_selects_transforma_processes():
+def test_operational_route_selects_transforma_processes():
     repository = _FakeRepository(
         [
             {
@@ -72,10 +77,45 @@ def test_domain_route_selects_transforma_processes():
 
 
 def test_looks_like_sale_orders_excludes_lmp():
-    assert ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
+    assert OperationalRouteMatcherService.looks_like_sale_orders_list_question(
         "listar ov da lmp 123"
     ) is False
 
-    assert ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
+    assert OperationalRouteMatcherService.looks_like_sale_orders_list_question(
         "listar ordens de venda do periodo"
     ) is True
+
+
+def test_operational_route_by_intent_respects_allowed_action_ids_order():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "api_delpi.products.get_product_stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "api_externa.products.get_product_stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    route_selection = ExternalActionRouteSelectionService(repository)
+
+    selected = route_selection.select_intent_bound_route(
+        "estoque do produto 10080055",
+        "10080055",
+        intent="stock",
+        allowed_action_ids=[
+            "api_externa.products.get_product_stock",
+            "api_delpi.products.get_product_stock",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_externa.products.get_product_stock"

@@ -481,3 +481,28 @@ Lista logs de teste de uma rota/action.
   }
 ]
 ```
+
+## Rotas operacionais declarativas (DOCIE)
+
+Depois de importar o OpenAPI e vincular actions ao agente, rotas de **produto**, **produção**, **comercial** e **system** usam o catálogo declarativo `operational_route_registry.json` — não é necessário alterar Python para expor uma rota GET já presente no provider.
+
+### Checklist para nova rota GET
+
+1. **OpenAPI** — path, `operationId` e parâmetros estáveis no provider.
+2. **Agente** — provider habilitado; action aparece em `allowed_action_ids` do turno.
+3. **Registry** — nova entrada em `routes[]` com:
+   - `match` (`customPredicate`, `termsFrom`, `allOf`/`noneOf` — ver `OperationalRouteMatcherService`)
+   - `route.pathMarkers` / `operationIdMarkers`
+   - `parameters.strategy` (`product_code`, `date_branch`, `exclusive_catalog`, …)
+   - `presentation.reasonKey` existente em `external_action_responses.json` → `selectionReasons`
+4. **Teste** — caso em `test_external_action_operational_route_selection_service.py` ou `chat_intelligence_regression_cases.py`.
+
+### Multi-provider (mesmo path, actionIds diferentes)
+
+Quando dois providers expõem o mesmo path (ex.: `api_delpi.*` e `api_externa.*`), a seleção **não** usa bias por prefixo. Desempate pela **ordem das actions no agente** (`allowed_action_ids`). Configure a ordem dos providers/actions no agente conforme a preferência operacional.
+
+### Referências
+
+- Registry: `app/content/pt-BR/assistant/operational_route_registry.json`
+- Motor: `ExternalActionOperationalRouteSelectionService`
+- Roadmap: `docs/roadmap/docie-desacoplamento-selecao-rotas-openapi.md`

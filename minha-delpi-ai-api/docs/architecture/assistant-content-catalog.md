@@ -39,7 +39,7 @@ Wrappers especializados (mantêm API estável):
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
 | Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
-| `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `ExternalActionProductionOperationalRouteSelectionService` |
+| `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `operational_route_registry.json` |
 | `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |

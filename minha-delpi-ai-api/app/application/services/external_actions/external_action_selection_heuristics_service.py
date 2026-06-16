@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Callable
 
-from app.application.services.external_actions.external_action_domain_route_selection_service import (
-    ExternalActionDomainRouteSelectionService,
+from app.domain.services.operational_route_matcher_service import (
+    OperationalRouteMatcherService,
 )
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
@@ -31,7 +31,7 @@ class ExternalActionSelectionHeuristicsService:
         *,
         extract_sale_number: Callable[[str | None], str | None] | None = None,
     ) -> bool:
-        if ExternalActionDomainRouteSelectionService.looks_like_transforma_question(value):
+        if OperationalRouteMatcherService.looks_like_transforma_question(value):
             return False
 
         terms = ExternalActionResponseContentService.list(
