@@ -47,6 +47,22 @@ def _column(name: str, *, prefix: str | None) -> str:
     return name
 
 
+def _normalize_fabril_filter_date(value: date | str) -> str:
+    """Normaliza datas de query para comparação com coluna DATE da view fabril."""
+    if isinstance(value, date):
+        return value.isoformat()
+
+    text = str(value).strip()
+    if not text:
+        raise ValueError("Data do filtro fabril vazia.")
+
+    protheus = QueryBuilder().convert_date_to_protheus(text)
+    if not protheus:
+        raise ValueError(f"Data inválida para filtro fabril: {value!r}")
+
+    return f"{protheus[:4]}-{protheus[4:6]}-{protheus[6:8]}"
+
+
 def build_fabril_view_filters(
     *,
     date_start: date | str,
@@ -73,8 +89,8 @@ def build_fabril_view_filters(
     status_col = _column("STATUS_REGISTRO", prefix=column_prefix)
     eficiencia_col = _column("EFICIENCIA_PERCENTUAL", prefix=column_prefix)
 
-    start_value = date_start.isoformat() if isinstance(date_start, date) else date_start
-    end_value = date_end.isoformat() if isinstance(date_end, date) else date_end
+    start_value = _normalize_fabril_filter_date(date_start)
+    end_value = _normalize_fabril_filter_date(date_end)
 
     qb.gte(data_col, start_value)
     qb.lte(data_col, end_value)

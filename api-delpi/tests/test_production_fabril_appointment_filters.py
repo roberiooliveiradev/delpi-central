@@ -13,6 +13,20 @@ from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ap
 )
 
 
+def test_build_fabril_view_filters_normalizes_dd_mm_yyyy_dates() -> None:
+    where, params = build_fabril_view_filters(
+        date_start="01-06-2026",
+        date_end="30-06-2026",
+        branch="01",
+        status_ok_only=True,
+    )
+
+    assert "DATA_PRODUCAO >= ?" in where
+    assert "DATA_PRODUCAO <= ?" in where
+    assert "2026-06-01" in params
+    assert "2026-06-30" in params
+
+
 def test_build_fabril_view_filters_requires_ok_and_excludes_work_centers() -> None:
     where, params = build_fabril_view_filters(
         date_start=date(2026, 5, 1),
