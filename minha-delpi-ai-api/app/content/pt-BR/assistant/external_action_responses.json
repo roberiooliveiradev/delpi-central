@@ -587,7 +587,28 @@
         "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(.+?)$",
         "(?:existe|tem)\\s+(?:algum|alguma)\\s+(.+?)(?:\\s+no\\s+sistema|\\s+cadastrado)?$"
       ]
-    }
+    },
+    "vocabularyFastPaths": [
+      {
+        "id": "productDirectives",
+        "matcher": "directives",
+        "pathMarkers": ["/directives/"],
+        "operationIdMarkers": ["get_product_directives"],
+        "reasonKey": "productDirectives",
+        "requiresProductIdentifier": true,
+        "parameterStrategy": "product_code"
+      },
+      {
+        "id": "exclusiveRawMaterialCatalog",
+        "matcher": "exclusiveRawMaterialCatalog",
+        "pathMarkers": [
+          "exclusive-raw-materials/catalog",
+          "/structure/exclusivity/catalog"
+        ],
+        "reasonKey": "exclusiveRawMaterialCatalog",
+        "parameterStrategy": "exclusive_catalog"
+      }
+    ]
   },
   "selectionReasons": {
     "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",

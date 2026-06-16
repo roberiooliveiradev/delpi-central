@@ -44,6 +44,9 @@ from app.application.services.external_actions.external_action_generic_route_sel
 from app.application.services.external_actions.external_action_production_operational_route_selection_service import (
     ExternalActionProductionOperationalRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_vocabulary_route_selection_service import (
+    ExternalActionVocabularyRouteSelectionService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
@@ -88,6 +91,9 @@ class ExternalActionRouteSelectionService:
         self._production_operational_route = (
             production_operational_route
             or ExternalActionProductionOperationalRouteSelectionService()
+        )
+        self._vocabulary_route = ExternalActionVocabularyRouteSelectionService(
+            self._product_route
         )
 
     def select(
@@ -332,6 +338,21 @@ class ExternalActionRouteSelectionService:
             candidates_loader=candidates_loader,
             build_date_branch_parameters=build_date_branch_parameters,
             path_lookup_loader=path_lookup_loader,
+        )
+
+    def select_vocabulary_fast_path(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._vocabulary_route.select(
+            message,
+            normalized,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
         )
 
     def select_exclusive_raw_material_catalog(

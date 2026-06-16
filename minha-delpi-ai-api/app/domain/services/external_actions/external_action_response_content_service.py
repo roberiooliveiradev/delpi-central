@@ -83,6 +83,21 @@ class ExternalActionResponseContentService:
         return [str(item) for item in node if str(item).strip()]
 
     @classmethod
+    def object_list(cls, *path: str) -> list[dict]:
+        node: Any = _responses_content()
+
+        for key in path:
+            if not isinstance(node, dict):
+                return []
+
+            node = node.get(key)
+
+        if not isinstance(node, list):
+            return []
+
+        return [item for item in node if isinstance(item, dict)]
+
+    @classmethod
     def weekday_label(cls, weekday: int) -> str:
         labels = cls.list("temporal", "weekdays")
         if 0 <= weekday < len(labels):

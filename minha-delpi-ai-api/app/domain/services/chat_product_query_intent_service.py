@@ -6,6 +6,9 @@ from app.domain.services.chat_assistant_content_service import (
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 _INTENT_CONTENT_BUNDLE = "product_query_intent"
 
@@ -1347,6 +1350,69 @@ class ChatProductQueryIntentService:
             return True
 
         return any(term in normalized for term in cls._terms("description", "terms"))
+
+    @classmethod
+    def has_actionable_product_route_intent(
+        cls,
+        message: str,
+        *,
+        normalized: str | None = None,
+        route_segment: str | None = None,
+    ) -> bool:
+        """Indica se a mensagem tem escopo operacional explícito para ranking heurístico."""
+        if route_segment:
+            return True
+
+        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
+            message
+        )
+
+        if (
+            cls.refine_operational_intent_from_full(message, normalized=normalized_text)
+            != ChatProductQueryIntent.FULL
+        ):
+            return True
+
+        operational_markers = (
+            cls._looks_like_directives_question,
+            cls._looks_like_sale_pricing_question,
+            cls._looks_like_cost_impact_simulation_question,
+            cls._looks_like_raw_material_price_intelligence_question,
+            cls._looks_like_last_purchase_question,
+            cls._looks_like_purchase_price_history_question,
+            cls._looks_like_purchase_budget_history_question,
+            cls._looks_like_factory_status_question,
+            cls._looks_like_production_status_question,
+            cls._looks_like_shipping_status_question,
+            cls._looks_like_structure_exclusivity_question,
+            cls._looks_like_price_analysis_question,
+            cls._looks_like_full_analyser_question,
+            cls._looks_like_exclusive_raw_material_catalog_question,
+        )
+
+        if any(marker(normalized_text) for marker in operational_markers):
+            return True
+
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if ChatProductOverviewIntentService.is_product_overview_message(message):
+            return True
+
+        if cls._looks_like_product_sub_intent(normalized_text):
+            return True
+
+        summary_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productRouteRanking",
+            "summaryTerms",
+        )
+
+        if any(term in normalized_text for term in summary_terms):
+            return True
+
+        return False
 
     @classmethod
     def refine_operational_intent_from_full(

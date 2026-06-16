@@ -446,29 +446,15 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
-        if ChatProductQueryIntentService._looks_like_directives_question(normalized):
-            selected = self._route_selection.select_product_directives(
-                message,
-                normalized,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
+        selected = self._route_selection.select_vocabulary_fast_path(
+            message,
+            normalized,
+            allowed_action_ids=allowed_action_ids,
+            candidates_loader=self._list_allowed_candidates,
+        )
 
-            if selected:
-                return selected
-
-        if ChatProductQueryIntentService._looks_like_exclusive_raw_material_catalog_question(
-            normalized
-        ):
-            selected = self._route_selection.select_exclusive_raw_material_catalog(
-                message,
-                normalized,
-                allowed_action_ids=allowed_action_ids,
-                candidates_loader=self._list_allowed_candidates,
-            )
-
-            if selected:
-                return selected
+        if selected:
+            return selected
 
         if ExternalActionSelectionHeuristicsService.looks_like_lmp_question(
             normalized,
@@ -597,13 +583,16 @@ class ExternalActionSelectionDispatchService:
                 else ChatProductQueryIntent.FULL
             )
 
-            return self._select_product_action(
+            selected = self._select_product_action(
                 message,
                 product_code,
                 allowed_action_ids=allowed_action_ids,
                 intent=resolved_intent,
                 route_segment=product_route_segment,
             )
+
+            if selected:
+                return selected
 
         if (
             not product_code

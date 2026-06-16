@@ -70,6 +70,15 @@ class ExternalActionProductRouteSelectionService:
         if not candidates:
             return None
 
+        if intent == ChatProductQueryIntent.FULL and not route_segment:
+            normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
+
+            if not ChatProductQueryIntentService.has_actionable_product_route_intent(
+                message,
+                normalized=normalized,
+            ):
+                return None
+
         candidates = [
             action
             for action in candidates
@@ -783,13 +792,6 @@ class ExternalActionProductRouteSelectionService:
                     value -= 100
 
             else:
-                if not has_specific_sub_intent:
-                    if "/products/{code}/analyser" in haystack:
-                        value += 100
-
-                    if "analyser" in haystack or "analyzer" in haystack:
-                        value += 60
-
                 if "/products/{code}" in haystack:
                     value += 25
 
