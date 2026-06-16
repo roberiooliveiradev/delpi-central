@@ -1,4 +1,4 @@
-import type { ChatDepthState, ChatPaginationState } from "../../data/api/chatTypes";
+import type { ChatDepthState, ChatPaginationState } from "../../../data/api/chatTypes";
 
 type AssistantContentRouteCoverageProps = {
   message: string;

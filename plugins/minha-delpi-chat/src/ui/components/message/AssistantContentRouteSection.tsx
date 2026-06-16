@@ -12,18 +12,18 @@ import {
   type AssistantSegmentRenderContext,
 } from "./assistantContentRegistry";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 import { AssistantContentRouteCoverage } from "./AssistantContentRouteCoverage";
 import {
   getDepthStateFromToolCall,
   getPaginationStateFromToolCall,
-} from "./chatPresentation";
-import { resolveHumanizedCoverageNoticeFromToolCall } from "./humanizedCoverageNotice";
+} from "../chatPresentation";
+import { resolveHumanizedCoverageNoticeFromToolCall } from "../humanizedCoverageNotice";
 import {
   resolveRouteTextDetailMarkdown,
   routeKeyFromSectionId,
   type RouteSectionGroup,
-} from "./presentationMultiRoute";
+} from "../presentationMultiRoute";
 
 type AssistantContentRouteSectionProps = {
   group: RouteSectionGroup;

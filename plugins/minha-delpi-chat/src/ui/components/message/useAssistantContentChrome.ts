@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 
-import { getChartExplanationFromToolCalls } from "./chartExplain";
+import { getChartExplanationFromToolCalls } from "../chartExplain";
 import {
   getDepthStateFromToolCalls,
   getPaginationStateFromToolCalls,
   getPresentationInsightFromToolCalls,
   getPresentationRecommendationsFromToolCalls,
-} from "./chatPresentation";
-import { resolveHumanizedCoverageNotice } from "./humanizedCoverageNotice";
+} from "../chatPresentation";
+import { resolveHumanizedCoverageNotice } from "../humanizedCoverageNotice";
 
 type UseAssistantContentChromeArgs = {
   toolCalls: ChatToolCall[];

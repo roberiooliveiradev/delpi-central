@@ -8,7 +8,7 @@ import {
 import type { ChatAttachmentCardModel } from "./ChatAttachmentCard";
 import { ChatAttachmentCard } from "./ChatAttachmentCard";
 import "./ChatAttachmentCard.css";
-import "./workspace-files/workspaceFileIngest.css";
+import "./workspace/workspaceFileIngest.css";
 
 type ChatMessageEditAttachmentsProps = {
   attachments: ChatAttachmentCardModel[];

@@ -12,11 +12,11 @@ import {
   useWorkspaceFilePreviewModal,
 } from "../../hooks/useWorkspaceFilePreviewModal";
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
-import { WorkspaceFileCard } from "../workspace-files/WorkspaceFileCard";
-import { WorkspaceFileDropzone } from "../workspace-files/WorkspaceFileDropzone";
+import { WorkspaceFileCard } from "../workspace/WorkspaceFileCard";
+import { WorkspaceFileDropzone } from "../workspace/WorkspaceFileDropzone";
 
 import "./AgentKnowledgeSourcesPanel.css";
-import "../workspace-files/workspaceFileIngest.css";
+import "../workspace/workspaceFileIngest.css";
 
 type AgentKnowledgeSourcesPanelProps = {
   sources: ChatWorkspaceSource[];

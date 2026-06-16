@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { getPresentationInsightFromToolCalls } from "./chatPresentation";
-import { hasMarkdownSyntax, prepareMarkdownContent } from "./chatMarkdown";
+import { getPresentationInsightFromToolCalls } from "../chatPresentation";
+import { hasMarkdownSyntax, prepareMarkdownContent } from "../chatMarkdown";
 
 const FACTORY_INSIGHT =
   "Situação fabril: **PA PRODUZIDO / AGUARDANDO INSPEÇÃO FINAL** Produção **em andamento** — PA **Sim** · PI **Não**. Sem movimento de expedição/inspeção no intervalo consultado.";

@@ -124,7 +124,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 |---|---|--------|--------|-------|---------|
 | D1 | 2 | Mover primitivos overlay para `shared/` | `ModalPortal`, `menuPositionUtils`, `modalPortalTarget` | Baixo | S | ✅ jun/2026 |
 | D2 | 2 | **`shared/index.ts`** — exportar tudo que for público | Barrel único | Baixo | S | ✅ PR-16 jun/2026 |
-| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | ✅ PR-18 `presentation/` · PR-19 `composer/` |
+| D3 | 3 | Agrupar features em subpastas | `message/`, `presentation/`, `workspace/`, `composer/` | Alto | L | ✅ PR-18–20 — `presentation/`, `composer/`, `message/`, `workspace/` |
 | D4 | 3 | Paridade admin ↔ chat | Copiar padrão `AdminFileDropzone` → wrappers workspace | Médio | M | ✅ PR-19 — CSS de campo unificado em `workspaceFileIngest.css` |
 | D5 | 4 | Documentar **quando criar primitivo** | Este doc + `admin/README.md` | Baixo | S | ✅ PR-17 jun/2026 — §12 roadmap + admin/README |
 
@@ -144,7 +144,7 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 |---|---|--------|--------|
 | F1 | 1 | Testes **`menuPositionUtils`** | Cobrir flip horizontal action menu + edge cases viewport | ✅ PR-16 jun/2026 |
 | F2 | 2 | Testes **`ComposerOptionSelector`** | Render, seleção, aria (vitest + RTL se adotado) | ✅ PR-15 jun/2026 |
-| F3 | 2 | **`npm run build`** no CI por PR | Regra `plugins-frontend-build.mdc` |
+| F3 | 2 | **`npm run build`** no CI por PR | Regra `plugins-frontend-build.mdc` | ✅ PR-20 — workflow `minha-delpi-ai-api-presentation.yml` |
 | F4 | 3 | Snapshot visual manual | Checklist §7 após cada fase A/B |
 
 ---
@@ -211,7 +211,7 @@ PR-16 ✅  A7/D2/E1/F1 — DropdownMenuTrigger, testes mobile composer, flip act
 PR-17 ✅  C5/D5/E4 — rich-presentation-shared consolidado, doc primitivos, tabelas mobile card mode
 PR-18 ✅  D3/E5 — pasta presentation/ + admin mobile (AdminDataTable card mode)
 PR-19 ✅  D3 composer/ + C3 hex + D4 dropzone paridade
-PR-20    D3 message/workspace; F3 CI build gate
+PR-20 ✅  D3 message/workspace + F3 CI build gate
 ```
 
 ---

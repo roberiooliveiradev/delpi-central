@@ -9,7 +9,7 @@ import {
   shouldShowAllVisualSegments,
 } from "./assistantContentLayout";
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "../testFixtures";
 
 describe("assistantContentLayout", () => {
   it("empilha visuais quando layoutMode é stack na API", () => {

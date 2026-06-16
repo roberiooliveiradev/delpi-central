@@ -7,11 +7,11 @@ import {
   workspaceFileContextBinaryLine,
   workspaceFileContextIngestLabels,
 } from "../../content/workspaceFileIngestContent";
-import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
+import { WorkspaceFileDropzone } from "./workspace/WorkspaceFileDropzone";
 import { ChatModal } from "./shared/modal/ChatModal";
 
 import "./ChatAddContextDialog.css";
-import "./workspace-files/workspaceFileIngest.css";
+import "./workspace/workspaceFileIngest.css";
 
 export type UserContextPayload = ContextItemPayload;
 

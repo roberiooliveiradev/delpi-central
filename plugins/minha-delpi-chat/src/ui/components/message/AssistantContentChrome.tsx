@@ -1,6 +1,6 @@
-import type { ChatDepthState, ChatPaginationState } from "../../data/api/chatTypes";
+import type { ChatDepthState, ChatPaginationState } from "../../../data/api/chatTypes";
 
-import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatMarkdown } from "../ChatMarkdown";
 
 type AssistantContentChromeProps = {
   insight?: string | null;

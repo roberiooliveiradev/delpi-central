@@ -49,7 +49,7 @@ import {
   ChatHelpSelfHelpFeedback,
   type HelpSelfHelpFeedbackPayload,
 } from "./ChatHelpSelfHelpFeedback";
-import { ChatAssistantContent } from "./ChatAssistantContent";
+import { ChatAssistantContent } from "./message/ChatAssistantContent";
 import {
   resolveAssistantDisplayContent,
   toolCallsForDrawingAnalysisDisplay,

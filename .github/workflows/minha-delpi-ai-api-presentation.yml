@@ -32,6 +32,9 @@ jobs:
       - name: Instalar dependências MFE
         run: npm ci
 
+      - name: Build MFE (tsc + vite)
+        run: npm run build
+
       - name: Testes P6 render-only (vitest)
         run: |
           npm run test -- --run \
@@ -39,7 +42,7 @@ jobs:
             src/ui/components/visualSegmentCollector.test.ts \
             src/ui/components/presentationRenderHints.test.ts \
             src/ui/components/presentationStructureDedup.test.ts \
-            src/ui/components/assistantContentSegments.test.ts \
+            src/ui/components/message/assistantContentSegments.test.ts \
             src/ui/components/presentationStackPlan.humanized.test.ts
 
   presentation-coverage:

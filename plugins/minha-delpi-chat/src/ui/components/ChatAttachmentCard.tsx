@@ -10,10 +10,10 @@ import {
   workspaceFileAttachmentIndexPresentation,
   workspaceFileIconToneForAttachment,
 } from "../../content/workspaceFileIngestContent";
-import { WorkspaceFileCard } from "./workspace-files/WorkspaceFileCard";
+import { WorkspaceFileCard } from "./workspace/WorkspaceFileCard";
 
 import "./ChatAttachmentCard.css";
-import "./workspace-files/workspaceFileIngest.css";
+import "./workspace/workspaceFileIngest.css";
 
 export type ChatAttachmentCardModel = {
   key: string;

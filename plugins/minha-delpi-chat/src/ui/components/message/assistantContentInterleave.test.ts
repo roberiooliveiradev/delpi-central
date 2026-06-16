@@ -6,7 +6,7 @@ import {
   partitionCommentarySections,
 } from "./assistantContentInterleave";
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "../testFixtures";
 
 function appendUnique(
   segments: AssistantContentSegment[],

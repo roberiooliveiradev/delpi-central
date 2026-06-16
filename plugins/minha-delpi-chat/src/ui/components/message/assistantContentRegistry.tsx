@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
 
-import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatCanvasOpenPayload, ChatPresentation } from "../../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { ChatRichChart } from "./presentation/ChatRichChart";
-import { ChatRichDashboard } from "./presentation/ChatRichDashboard";
-import { ChatRichKpi } from "./presentation/ChatRichKpi";
-import { ChatRichTable } from "./presentation/ChatRichTable";
-import { ChatRichTree } from "./presentation/ChatRichTree";
-import { AssistantStackSection } from "./AssistantStackSection";
-import { ChatMarkdown } from "./ChatMarkdown";
-import { ChatDecisionCard } from "./ChatDecisionCard";
+import { ChatRichChart } from "../presentation/ChatRichChart";
+import { ChatRichDashboard } from "../presentation/ChatRichDashboard";
+import { ChatRichKpi } from "../presentation/ChatRichKpi";
+import { ChatRichTable } from "../presentation/ChatRichTable";
+import { ChatRichTree } from "../presentation/ChatRichTree";
+import { AssistantStackSection } from "../AssistantStackSection";
+import { ChatMarkdown } from "../ChatMarkdown";
+import { ChatDecisionCard } from "../ChatDecisionCard";
 
 export type AssistantSegmentRenderContext = {
   onDrillDown?: (query: string) => void;

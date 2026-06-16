@@ -1,6 +1,6 @@
 import type { ContentFormatKind } from "./assistantContentLayout";
 import type { VisualFormatOption } from "./assistantContentVisualFormats";
-import { recordPresentationTelemetry } from "./presentationTelemetry";
+import { recordPresentationTelemetry } from "../presentationTelemetry";
 
 type AssistantContentFormatToolbarProps = {
   options: VisualFormatOption[];

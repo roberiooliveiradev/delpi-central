@@ -7,7 +7,7 @@ import {
   resolveDefaultVisualKind,
   resolveInitialToolbarKind,
 } from "./assistantContentVisualFormats";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "../testFixtures";
 
 describe("assistantContentVisualFormats", () => {
   const toolCalls = fixtureToolCalls([

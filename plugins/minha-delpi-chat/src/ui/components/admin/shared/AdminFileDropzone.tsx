@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
 import type { WorkspaceFileIngestPolicyFamily } from "../../../../data/api/chatTypes";
-import { WorkspaceFileDropzone } from "../../workspace-files/WorkspaceFileDropzone";
+import { WorkspaceFileDropzone } from "../../workspace/WorkspaceFileDropzone";
 
-import "../../workspace-files/workspaceFileIngest.css";
+import "../../workspace/workspaceFileIngest.css";
 
 type TokenProvider = () => string | undefined | Promise<string | undefined>;
 

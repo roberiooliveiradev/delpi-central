@@ -46,10 +46,10 @@ import {
   useWorkspaceFilePreviewModal,
 } from "../../hooks/useWorkspaceFilePreviewModal";
 import { useWorkspaceFileIngestPolicy } from "../../hooks/useWorkspaceFileIngestPolicy";
-import { WorkspaceFileCard } from "../workspace-files/WorkspaceFileCard";
+import { WorkspaceFileCard } from "../workspace/WorkspaceFileCard";
 
 import "./ChatInput.css";
-import "../workspace-files/workspaceFileIngest.css";
+import "../workspace/workspaceFileIngest.css";
 
 export type ChatInputAttachment = {
   id: string;

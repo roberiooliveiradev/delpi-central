@@ -1,0 +1,385 @@
+/* Campo com rótulo — compartilhado admin (AdminFileDropzone) e workspace (WorkspaceFileDropzone). */
+
+.mdc-admin-file-dropzone-field,
+.mdc-workspace-file-dropzone-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mdc-admin-file-dropzone-field__label,
+.mdc-workspace-file-dropzone-field__label {
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mdc-admin-file-dropzone-field__meta,
+.mdc-workspace-file-dropzone-field__meta {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.mdc-workspace-file-dropzone {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 34%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
+  cursor: pointer;
+}
+
+.mdc-workspace-file-dropzone:hover:not(.mdc-workspace-file-dropzone--disabled),
+.mdc-workspace-file-dropzone--active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 5%, var(--mdc-card-bg));
+}
+
+.mdc-workspace-file-dropzone--busy,
+.mdc-workspace-file-dropzone--disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.mdc-workspace-file-dropzone__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-bg));
+  color: var(--mdc-primary);
+}
+
+.mdc-workspace-file-dropzone__copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mdc-workspace-file-dropzone__copy strong {
+  font-size: 0.9rem;
+}
+
+.mdc-workspace-file-dropzone__copy span {
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+}
+
+.mdc-workspace-file-card--card {
+  width: fit-content;
+  max-width: min(18rem, 100%);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 82%, transparent);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mdc-workspace-file-card--card-compact .mdc-workspace-file-card__surface {
+  padding-right: 0.65rem;
+}
+
+.mdc-workspace-file-card--card-unified {
+  cursor: pointer;
+}
+
+.mdc-workspace-file-card--card-unified:hover,
+.mdc-workspace-file-card--card-unified:focus-within {
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
+}
+
+.mdc-workspace-file-card--card:hover,
+.mdc-workspace-file-card--card:focus-within {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 92%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
+}
+
+.mdc-workspace-file-card__surface {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.55rem 0.6rem;
+}
+
+.mdc-workspace-file-card__surface--interactive {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.55rem 0.65rem;
+}
+
+.mdc-workspace-file-card__body {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+}
+
+.mdc-workspace-file-card__body--interactive {
+  cursor: pointer;
+}
+
+.mdc-workspace-file-card__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 0.62rem;
+  overflow: hidden;
+  color: var(--mdc-on-primary);
+}
+
+.mdc-workspace-file-card--row .mdc-workspace-file-card__icon {
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 0.68rem;
+}
+
+.mdc-workspace-file-card__icon--brand {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-primary) 82%, white) 0%,
+    var(--mdc-primary) 100%
+  );
+}
+
+.mdc-workspace-file-card__icon--pdf,
+.mdc-workspace-file-card__icon--pending,
+.mdc-workspace-file-card__icon--error {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-danger) 78%, white) 0%,
+    var(--mdc-danger) 100%
+  );
+}
+
+.mdc-workspace-file-card__icon--image {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-success) 78%, white) 0%,
+    var(--mdc-success) 100%
+  );
+}
+
+.mdc-workspace-file-card__icon-spinner {
+  animation: mdc-workspace-file-card-spin 0.9s linear infinite;
+}
+
+@keyframes mdc-workspace-file-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mdc-workspace-file-card__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mdc-workspace-file-card__meta {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.mdc-workspace-file-card__meta strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.86rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.mdc-workspace-file-card__subtitle {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.mdc-workspace-file-card__subtitle--error {
+  color: color-mix(in srgb, var(--mdc-danger) 88%, var(--mdc-text-muted));
+}
+
+.mdc-workspace-file-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.74rem;
+  font-weight: 450;
+  line-height: 1.3;
+}
+
+.mdc-workspace-file-card__details > .mdc-workspace-file-card__detail:not(:first-child)::before {
+  content: "·";
+  margin-right: 0.35rem;
+  opacity: 0.42;
+}
+
+.mdc-workspace-file-card__detail--pending {
+  color: color-mix(in srgb, var(--mdc-primary) 82%, var(--mdc-text-muted));
+}
+
+.mdc-workspace-file-card__detail--success {
+  color: color-mix(in srgb, var(--mdc-success) 70%, var(--mdc-text-muted));
+}
+
+.mdc-workspace-file-card__detail--error {
+  color: color-mix(in srgb, var(--mdc-danger) 82%, var(--mdc-text-muted));
+}
+
+.mdc-workspace-file-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 0.15rem;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+.mdc-workspace-file-card:hover .mdc-workspace-file-card__actions,
+.mdc-workspace-file-card:focus-within .mdc-workspace-file-card__actions {
+  opacity: 1;
+}
+
+.mdc-workspace-file-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.mdc-workspace-file-card__action:hover {
+  color: var(--mdc-text);
+  background: color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+}
+
+.mdc-workspace-file-card__action--danger:hover {
+  color: color-mix(in srgb, var(--mdc-danger) 88%, white);
+  background: color-mix(in srgb, var(--mdc-danger) 14%, transparent);
+}
+
+.mdc-workspace-file-card--chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.28rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 82%, transparent);
+  color: inherit;
+  font-size: 0.76rem;
+}
+
+.mdc-workspace-file-card--chip .mdc-workspace-file-card__icon {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.45rem;
+}
+
+.mdc-workspace-file-card--chip strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9rem;
+  font-weight: 650;
+}
+
+.mdc-workspace-file-card__chip-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+  margin-left: 0.1rem;
+}
+
+.mdc-workspace-file-card--chip .mdc-workspace-file-card__chip-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0.1rem;
+  border-radius: 0.35rem;
+}
+
+.mdc-workspace-file-card--chip .mdc-workspace-file-card__chip-action:hover {
+  color: var(--mdc-text);
+  background: color-mix(in srgb, var(--mdc-card-border) 40%, transparent);
+}
+
+.mdc-workspace-file-card--row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 35%, transparent);
+  padding: 0.4rem 0.05rem;
+}
+
+.mdc-workspace-file-card--row .mdc-workspace-file-card__meta strong {
+  font-size: 0.86rem;
+}
+
+.mdc-workspace-file-card--row .mdc-workspace-file-card__details {
+  font-size: 0.76rem;
+}
+
+.mdc-workspace-file-dropzone--compact {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  padding: 0.85rem;
+}
+
+.mdc-workspace-file-dropzone--compact .mdc-workspace-file-dropzone__icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.mdc-workspace-file-dropzone--compact .mdc-workspace-file-dropzone__action {
+  display: none;
+}
