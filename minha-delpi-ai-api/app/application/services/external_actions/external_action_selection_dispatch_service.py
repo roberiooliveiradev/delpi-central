@@ -42,6 +42,19 @@ from app.domain.services.external_actions.external_action_response_content_servi
 )
 
 
+_INTENT_BOUND_PRODUCT_INTENTS = frozenset(
+    {
+        ChatProductQueryIntent.PARENTS,
+        ChatProductQueryIntent.STRUCTURE,
+        ChatProductQueryIntent.STOCK,
+        ChatProductQueryIntent.SALES,
+        ChatProductQueryIntent.SUMMARY,
+        ChatProductQueryIntent.ANALYSER,
+        ChatProductQueryIntent.DESCRIPTION,
+    }
+)
+
+
 class ExternalActionSelectionDispatchService:
     def __init__(
         self,
@@ -481,93 +494,33 @@ class ExternalActionSelectionDispatchService:
             if selected:
                 return selected
 
-        if product_code and product_intent == ChatProductQueryIntent.PARENTS:
-            selected = self._select_product_action(
+        if product_code and product_intent in _INTENT_BOUND_PRODUCT_INTENTS:
+            route_segment = product_route_segment
+            bound_intent = product_intent
+
+            if product_intent == ChatProductQueryIntent.SALES:
+                route_segment = product_route_segment or "sales"
+
+                if route_segment in ("outbound-invoice", "inbound-invoice"):
+                    bound_intent = ChatProductQueryIntent.FULL
+
+            selected = self._route_selection.select_intent_bound_route(
                 message,
                 product_code,
+                intent=bound_intent,
                 allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.PARENTS,
+                route_segment=route_segment,
+                candidates_loader=self._list_allowed_candidates,
             )
 
             if selected:
                 return selected
 
-        if product_code and product_intent == ChatProductQueryIntent.STRUCTURE:
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.STRUCTURE,
-            )
-
-            if selected:
-                return selected
-
-        if product_code and product_intent == ChatProductQueryIntent.STOCK:
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.STOCK,
-            )
-
-            if selected:
-                return selected
-
-        if product_code and product_intent == ChatProductQueryIntent.SALES:
-            sales_route_segment = product_route_segment or "sales"
-            sales_intent = (
-                ChatProductQueryIntent.FULL
-                if sales_route_segment in ("outbound-invoice", "inbound-invoice")
-                else ChatProductQueryIntent.SALES
-            )
-
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=sales_intent,
-                route_segment=sales_route_segment,
-            )
-
-            if selected:
-                return selected
-
-            if ChatProductQueryIntentService.extract_product_code(message):
+            if (
+                product_intent == ChatProductQueryIntent.SALES
+                and ChatProductQueryIntentService.extract_product_code(message)
+            ):
                 return None
-
-        if product_code and product_intent == ChatProductQueryIntent.SUMMARY:
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.SUMMARY,
-            )
-
-            if selected:
-                return selected
-
-        if product_code and product_intent == ChatProductQueryIntent.ANALYSER:
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.ANALYSER,
-            )
-
-            if selected:
-                return selected
-
-        if product_code and product_intent == ChatProductQueryIntent.DESCRIPTION:
-            selected = self._select_product_action(
-                message,
-                product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.DESCRIPTION,
-            )
-
-            if selected:
-                return selected
 
         if product_code and (
             ExternalActionSelectionHeuristicsService.looks_like_product_question(

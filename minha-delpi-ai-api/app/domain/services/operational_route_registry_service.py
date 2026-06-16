@@ -66,3 +66,24 @@ class OperationalRouteRegistryService:
             for route in cls.routes()
             if str(route.get("id") or "").strip()
         ]
+
+    @classmethod
+    def vocabulary_routes(cls) -> list[dict[str, Any]]:
+        return [
+            route
+            for route in cls.routes()
+            if isinstance(route, dict) and not route.get("intentBinding")
+        ]
+
+    @classmethod
+    def intent_bound_routes(cls) -> list[dict[str, Any]]:
+        routes = _registry_content().get("routes")
+
+        if not isinstance(routes, list):
+            return []
+
+        return [
+            route
+            for route in routes
+            if isinstance(route, dict) and str(route.get("intentBinding") or "").strip()
+        ]

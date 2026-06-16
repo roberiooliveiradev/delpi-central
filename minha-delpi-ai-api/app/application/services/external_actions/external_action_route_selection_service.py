@@ -44,6 +44,9 @@ from app.application.services.external_actions.external_action_generic_route_sel
 from app.application.services.external_actions.external_action_production_operational_route_selection_service import (
     ExternalActionProductionOperationalRouteSelectionService,
 )
+from app.application.services.external_actions.external_action_operational_route_selection_service import (
+    ExternalActionOperationalRouteSelectionService,
+)
 from app.application.services.external_actions.external_action_vocabulary_route_selection_service import (
     ExternalActionVocabularyRouteSelectionService,
 )
@@ -93,6 +96,9 @@ class ExternalActionRouteSelectionService:
             or ExternalActionProductionOperationalRouteSelectionService()
         )
         self._vocabulary_route = ExternalActionVocabularyRouteSelectionService(
+            self._product_route
+        )
+        self._operational_route = ExternalActionOperationalRouteSelectionService(
             self._product_route
         )
 
@@ -352,6 +358,25 @@ class ExternalActionRouteSelectionService:
             message,
             normalized,
             allowed_action_ids,
+            candidates_loader=candidates_loader,
+        )
+
+    def select_intent_bound_route(
+        self,
+        message: str,
+        product_code: str,
+        *,
+        intent: str,
+        allowed_action_ids: list[str],
+        route_segment: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._operational_route.select_by_intent(
+            message,
+            product_code,
+            intent,
+            allowed_action_ids,
+            route_segment=route_segment,
             candidates_loader=candidates_loader,
         )
 

@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.1",
+  "version": "2026.06.2",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -220,6 +220,155 @@
       },
       "presentation": {
         "reasonKey": "productPurchaseBudgetHistory"
+      }
+    },
+    {
+      "id": "productStock",
+      "domain": "product",
+      "intentBinding": "stock",
+      "route": {
+        "pathMarkers": ["/stock"],
+        "operationIdMarkers": ["get_product_stock"],
+        "excludePathMarkers": ["/stock-value"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "stockFastPath"
+      }
+    },
+    {
+      "id": "productStructure",
+      "domain": "product",
+      "intentBinding": "structure",
+      "route": {
+        "pathMarkers": ["/structure"],
+        "operationIdMarkers": ["get_product_structure"],
+        "excludePathMarkers": ["/structure/exclusivity"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productStructure"
+      }
+    },
+    {
+      "id": "productParents",
+      "domain": "product",
+      "intentBinding": "parents",
+      "route": {
+        "pathMarkers": ["/parents"],
+        "operationIdMarkers": ["get_product_parents"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productParents"
+      }
+    },
+    {
+      "id": "productSales",
+      "domain": "product",
+      "intentBinding": "sales",
+      "route": {
+        "pathMarkers": ["/sales"],
+        "operationIdMarkers": ["get_product_sales_summary"],
+        "excludePathMarkers": ["/sales/billing", "/sales-order"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productSales"
+      }
+    },
+    {
+      "id": "productInvoicesInbound",
+      "domain": "product",
+      "intentBinding": "full",
+      "routeSegment": "inbound-invoice",
+      "route": {
+        "pathMarkers": ["/inbound-invoice"],
+        "operationIdMarkers": ["get_product_inbound_invoice_items"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productInvoicesOutbound",
+      "domain": "product",
+      "intentBinding": "full",
+      "routeSegment": "outbound-invoice",
+      "route": {
+        "pathMarkers": ["/outbound-invoice"],
+        "operationIdMarkers": ["get_product_outbound_invoice_items"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productSummary",
+      "domain": "product",
+      "intentBinding": "summary",
+      "route": {
+        "pathMarkers": ["/summary"],
+        "operationIdMarkers": ["get_product_summary"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productSummary"
+      }
+    },
+    {
+      "id": "productAnalyser",
+      "domain": "product",
+      "intentBinding": "analyser",
+      "route": {
+        "pathMarkers": ["/analyser"],
+        "operationIdMarkers": ["get_product_analyser"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productAnalyser"
+      }
+    },
+    {
+      "id": "productDescription",
+      "domain": "product",
+      "intentBinding": "description",
+      "route": {
+        "pathExactEnd": "/products/{code}",
+        "operationIdMarkers": ["get_product_detail"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productDescription"
       }
     }
   ]

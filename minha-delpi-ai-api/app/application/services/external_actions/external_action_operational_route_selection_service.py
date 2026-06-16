@@ -1,4 +1,4 @@
-"""Motor declarativo de fast paths — operational_route_registry (DOCIE Fase 0–1)."""
+"""Motor declarativo de fast paths — operational_route_registry (DOCIE Fase 0–2)."""
 
 from __future__ import annotations
 
@@ -30,8 +30,8 @@ class ExternalActionOperationalRouteSelectionService:
         *,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
-        for route in OperationalRouteRegistryService.routes():
-            selected = self._try_route(
+        for route in OperationalRouteRegistryService.vocabulary_routes():
+            selected = self._try_vocabulary_route(
                 route,
                 message,
                 normalized,
@@ -44,7 +44,50 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
-    def _try_route(
+    def select_by_intent(
+        self,
+        message: str,
+        product_code: str,
+        intent: str,
+        allowed_action_ids: list[str],
+        *,
+        route_segment: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        normalized_intent = str(intent or "").strip().lower()
+        normalized_segment = str(route_segment or "").strip().lower()
+
+        if not normalized_intent or not str(product_code or "").strip():
+            return None
+
+        for route in OperationalRouteRegistryService.intent_bound_routes():
+            binding = str(route.get("intentBinding") or "").strip().lower()
+
+            if binding != normalized_intent:
+                continue
+
+            route_segment_spec = str(route.get("routeSegment") or "").strip().lower()
+
+            if route_segment_spec:
+                if route_segment_spec != normalized_segment:
+                    continue
+            elif normalized_segment in ("inbound-invoice", "outbound-invoice"):
+                continue
+
+            selected = self._resolve_route_action(
+                route,
+                message,
+                allowed_action_ids,
+                identifier=product_code,
+                candidates_loader=candidates_loader,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
+    def _try_vocabulary_route(
         self,
         route: dict,
         message: str,
@@ -65,6 +108,31 @@ class ExternalActionOperationalRouteSelectionService:
         ):
             return None
 
+        identifier = None
+
+        if match_spec.get("requiresProductIdentifier"):
+            identifier = ChatProductQueryIntentService.extract_product_code(message or "")
+
+            if not identifier:
+                return None
+
+        return self._resolve_route_action(
+            route,
+            message,
+            allowed_action_ids,
+            identifier=identifier,
+            candidates_loader=candidates_loader,
+        )
+
+    def _resolve_route_action(
+        self,
+        route: dict,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        identifier: str | None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
         route_spec = route.get("route")
 
         if not isinstance(route_spec, dict):
@@ -80,21 +148,22 @@ class ExternalActionOperationalRouteSelectionService:
             for marker in (route_spec.get("operationIdMarkers") or [])
             if str(marker).strip()
         ]
+        exclude_path_markers = [
+            str(marker).lower()
+            for marker in (route_spec.get("excludePathMarkers") or [])
+            if str(marker).strip()
+        ]
+        path_exact_end = str(route_spec.get("pathExactEnd") or "").strip().lower()
 
-        if not path_markers and not operation_markers:
+        if (
+            not path_markers
+            and not operation_markers
+            and not path_exact_end
+        ):
             return None
 
-        identifier = None
-        match_spec = route.get("match") or {}
-
-        if match_spec.get("requiresProductIdentifier"):
-            identifier = ChatProductQueryIntentService.extract_product_code(message or "")
-
-            if not identifier:
-                return None
-
         candidates = self._product_route._find_allowed_actions_by_markers(
-            path_markers=path_markers,
+            path_markers=path_markers or ([path_exact_end] if path_exact_end else []),
             operation_markers=operation_markers,
             allowed_action_ids=allowed_action_ids,
         )
@@ -115,25 +184,36 @@ class ExternalActionOperationalRouteSelectionService:
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
 
+            if path_exact_end and not path.rstrip("/").endswith(path_exact_end.rstrip("/")):
+                continue
+
             if path_markers and not any(marker in path for marker in path_markers):
+                continue
+
+            if exclude_path_markers and any(marker in path for marker in exclude_path_markers):
                 continue
 
             if operation_markers and not any(
                 marker in operation_id for marker in operation_markers
             ):
-                if path_markers:
+                if path_markers or path_exact_end:
                     continue
 
-            if not path_markers and operation_markers and not any(
-                marker in operation_id for marker in operation_markers
+            if (
+                not path_markers
+                and not path_exact_end
+                and operation_markers
+                and not any(marker in operation_id for marker in operation_markers)
             ):
+                continue
+
+            if "search" in path and not path_markers and not path_exact_end:
                 continue
 
             parameters = self._build_parameters(
                 route,
                 action,
                 message=message,
-                normalized=normalized,
                 identifier=identifier,
             )
 
@@ -166,7 +246,6 @@ class ExternalActionOperationalRouteSelectionService:
         action: dict,
         *,
         message: str,
-        normalized: str,
         identifier: str | None,
     ) -> dict | None:
         parameters_spec = route.get("parameters") or {}
@@ -186,6 +265,8 @@ class ExternalActionOperationalRouteSelectionService:
             )
 
         if strategy == "exclusive_catalog":
+            normalized = message.lower()
+
             return self._product_route._build_exclusive_catalog_parameters(
                 action,
                 message=message,

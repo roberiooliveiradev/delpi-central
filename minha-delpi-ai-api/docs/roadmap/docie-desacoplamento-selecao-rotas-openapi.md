@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fase 0–1 implementada (jun/2026) — registry + matcher + motor operacional P0 produto; Fases 2–5 pendentes  
+**Status:** Fase 0–2 implementada (jun/2026) — registry, matcher, P0 vocabulário e intents clássicos; Fases 3–5 pendentes  
 **Data:** jun/2026  
 **Commit de referência:** `519f3834` (remove fallback analyser + `vocabularyFastPaths` inicial)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -419,6 +419,10 @@ Migrar entradas §5.1 e §5.2 para registry; remover boosts correspondentes em `
 Substituir blocos dispatch A8 por `intentBoundRoutes` no registry.
 
 **Critério:** `_rank_product_actions` reduz >50% linhas; intents STOCK/STRUCTURE/PARENTS passam só pelo registry.
+
+- [x] `intentBinding` no registry (stock, structure, parents, sales, summary, analyser, description, NF)
+- [x] `select_by_intent` no motor operacional + dispatch unificado
+- [ ] Remover boosts duplicados em `_rank_product_actions` (próximo PR)
 
 ### Fase 3 — Playbook 15 + domínios (1 PR)
 
