@@ -10,7 +10,7 @@ import {
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,
-} from "../../modalPortalTarget";
+} from "./modalPortalTarget";
 import {
   menuAnchorRectFromElement,
   resolveActionMenuPosition,

@@ -30,7 +30,7 @@
 }
 
 .mdc-chat-modal__backdrop {
-  /* Alias genérico — substitui *-backdrop específicos aos poucos. */
+  /* Posicionamento canônico via ChatModal — ver bloco em modal-layer.css. */
 }
 
 @media (max-width: 480px) {

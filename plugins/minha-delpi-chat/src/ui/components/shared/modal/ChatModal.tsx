@@ -1,6 +1,6 @@
 import { useEffect, type MouseEvent, type ReactNode } from "react";
 
-import { ModalPortal } from "../../ModalPortal";
+import { ModalPortal } from "../overlay/ModalPortal";
 
 import "../../chat-modal-surface.css";
 import "./chat-modal.css";

@@ -3,6 +3,14 @@ export { useAnchoredMenuLayout } from "./overlay/useAnchoredMenuLayout";
 export type { AnchoredMenuPlacement, MenuPortalSource } from "./overlay/useAnchoredMenuLayout";
 export type { AnchoredMenuPortalProps } from "./overlay/AnchoredMenuPortal";
 
+export { ModalPortal } from "./overlay/ModalPortal";
+export {
+  MDC_MODAL_ROOT_ID,
+  isOverlayPortalContained,
+  resolveModalPortalContainer,
+  resolveOverlayPortalContainer,
+} from "./overlay/modalPortalTarget";
+
 export { ComposerOptionSelector } from "./composer/ComposerOptionSelector";
 export type { ComposerOptionItem } from "./composer/ComposerOptionSelector";
 

@@ -14,11 +14,11 @@ import {
   type TourTooltipLayout,
 } from "../chatTourTooltipPosition";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
-import { ModalPortal } from "./ModalPortal";
+import { ModalPortal } from "./shared/overlay/ModalPortal";
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,
-} from "./modalPortalTarget";
+} from "./shared/overlay/modalPortalTarget";
 
 import "./ChatOnboardingTour.css";
 

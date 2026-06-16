@@ -1,5 +1,6 @@
 /* Layout de modais — viewport (body) ou contido no #mdc-modal-root do MFE. */
 
+.mdc-chat-overlay-portal .mdc-chat-modal__backdrop,
 .mdc-chat-overlay-portal .mdc-chat-project-create-backdrop,
 .mdc-chat-overlay-portal .mdc-chat-projects-modal-backdrop,
 .mdc-chat-overlay-portal .mdc-chat-agents-modal-backdrop,
@@ -13,6 +14,7 @@
 .mdc-chat-overlay-portal .mdc-chat-help-backdrop,
 .mdc-chat-overlay-portal .mdc-chat-web-research-backdrop,
 .mdc-chat-overlay-portal .mdc-expand-modal__backdrop,
+.mdc-modal-portal .mdc-chat-modal__backdrop,
 .mdc-modal-portal .mdc-chat-project-create-backdrop,
 .mdc-modal-portal .mdc-chat-projects-modal-backdrop,
 .mdc-modal-portal .mdc-chat-agents-modal-backdrop,
@@ -32,6 +34,7 @@
   backdrop-filter: none;
 }
 
+.mdc-chat-overlay-portal--contained .mdc-chat-modal__backdrop,
 .mdc-chat-overlay-portal--contained .mdc-chat-project-create-backdrop,
 .mdc-chat-overlay-portal--contained .mdc-chat-projects-modal-backdrop,
 .mdc-chat-overlay-portal--contained .mdc-chat-agents-modal-backdrop,

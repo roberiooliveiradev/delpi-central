@@ -5,7 +5,7 @@ import type { ContextMenuAnchor } from "../../menuPositionUtils";
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,
-} from "../../modalPortalTarget";
+} from "./modalPortalTarget";
 import {
   useAnchoredMenuLayout,
   type AnchoredMenuPlacement,
