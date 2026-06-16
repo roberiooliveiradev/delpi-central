@@ -32,6 +32,7 @@ Legenda de permissões:
 | GET | `/products/{code}/structure` | A |
 | GET | `/products/{code}/structure/exclusivity` | A |
 | GET | `/products/exclusive-raw-materials/catalog` | A |
+| GET | `/products/directives/{identifier}` | A |
 | GET | `/products/{code}/structure/excel` | A |
 | GET | `/products/{code}/production-status` | A |
 | GET | `/products/{code}/shipping-status` | A |

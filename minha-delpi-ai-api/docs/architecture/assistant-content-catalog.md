@@ -33,7 +33,8 @@ Wrappers especializados (mantêm API estável):
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
+| `product_query_intent.json` | Marcadores de intenção operacional de produto (incl. `directives` — BOM + fornecedores + última compra por referência/DELPI) | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
+| `api_route_domains.json` | Domínios de rota operacional (incl. `product_directives`) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `ExternalActionProductionOperationalRouteSelectionService` |
 | `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |

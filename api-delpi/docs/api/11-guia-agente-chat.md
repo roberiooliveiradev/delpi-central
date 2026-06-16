@@ -42,6 +42,7 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Estoque/saldo **do item** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM | `GET /products/{code}/structure` | `get_product_structure` |
 | Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
+| **Diretivas** (DELPI ou referência cliente → BOM + MPs + fornecedores + última compra) | `GET /products/directives/{identifier}` | `get_product_directives` |
 | Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo do produto | `GET /products/{code}/factory-status` | `get_product_factory_status` |
@@ -63,6 +64,7 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Inspeção de qualidade (QP) | `/inspection` | `/shipping-status` |
 | Cadastro + amostra estoque/preços | `/summary` | `/analyser` full |
 | Visão fabril integrada (OP, MPs, expedição) | `/factory-status` | várias rotas separadas |
+| Diretivas por código DELPI ou referência do cliente (BOM + fornecedores + última compra das MPs) | `/directives/{identifier}` | `/structure` + `/suppliers` + `/last-purchase` em loop |
 | Ficha multi-dimensão explícita | `/analyser?view=full` | — |
 | Visão leve multi-dimensão (chat) | `/analyser?view=summary` | `view=full` sem necessidade |
 
@@ -78,6 +80,8 @@ Respostas `composite_analysis` incluem `meta.sections[]` com `{ key, label, item
 | Visão integrada na fábrica | `/factory-status` | `reference_date`, `date_start`, `date_end`, `branch`, `max_depth` |
 
 Preferir `/factory-status` quando o usuário pedir status completo do produto na fábrica.
+
+**Playbook diretivas** (jun/2026): [`playbook-diretivas-produto.md`](../roadmaps/playbook-diretivas-produto.md) — SQL e resolução `B1_REFEREN` × `9026xxxx`.
 
 Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** produto”) usa contexto da conversa.
 

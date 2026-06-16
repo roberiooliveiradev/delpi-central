@@ -45,6 +45,8 @@ Perfis propostos para Fase 3 (`meta.shape`). `operationId` após Fase 1 em produ
 | `GET /{code}/stock` | `get_product_stock` | `paged_list` | `product_stock` | Page em `data` |
 | `GET /{code}/structure` | `get_product_structure` | `hierarchy` | `product_structure` | `root` + `items[]` recursivos |
 | `GET /{code}/structure/exclusivity` | `get_product_structure_exclusivity` | `playbook_report` | `product_structure_exclusivity` | items + summary |
+| `GET /exclusive-raw-materials/catalog` | `list_exclusive_raw_materials_catalog` | `playbook_report` | `exclusive_raw_materials_catalog` | catálogo global MP exclusiva |
+| `GET /directives/{identifier}` | `get_product_directives` | `composite_analysis` | `product_directives` | PA por DELPI ou referência + BOM + MPs + fornecedores + última compra |
 | `GET /{code}/production-status` | `get_product_production_status` | `playbook_report` | `product_production_status` | items + summary |
 | `GET /{code}/shipping-status` | `get_product_shipping_status` | `playbook_report` | `product_shipping_status` | items + summary |
 | `GET /{code}/factory-status` | `get_product_factory_status` | `composite_analysis` | `product_factory_status` | seções structure/production/shipping |

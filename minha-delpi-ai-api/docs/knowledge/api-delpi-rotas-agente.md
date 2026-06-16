@@ -60,6 +60,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
 | Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
+| **Diretivas** (DELPI ou referência cliente) | `GET /products/directives/{identifier}` | `get_product_directives` |
 | Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo | `GET /products/{code}/factory-status` | `get_product_factory_status` |
@@ -92,6 +93,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - `production-status`: `code` (path), `reference_date`, `branch`, `max_depth`
 - `shipping-status`: `code` (path), `reference_date` ou `date_start`+`date_end`, `branch`
 - `factory-status`: `code` (path), `reference_date`, `date_start`, `date_end`, `branch`, `max_depth`
+- `directives`: `identifier` (path — código DELPI `9026xxxx` ou referência cliente `B1_REFEREN`); `max_depth`, `branch` opcionais
 - `raw-material-price-intelligence`, `last-purchase`, `purchase-price-history`, `purchase-budget-history`: `code` (path); `date_start`/`date_end` **opcionais** no chat (API default 12 meses); `branch`, `history_limit` quando aplicável
 - `cost-impact-simulation`: `code` (path, **PA only**); `adjustment_percent` (ex.: 10 = +10%), `price_source` (`standard_cost` | `last_purchase`), `top_n`, `max_depth`
 - `analyser`, `summary`, `pricing`: `code` (path)
@@ -114,6 +116,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - "Histórico de orçamento de compra do 10080001" → `GET /products/{code}/purchase-budget-history`
 - "Quais materiais mais impactam o custo do PA 90261255?" → `GET /products/{code}/cost-impact-simulation`
 - "Simule aumento de 10% nos materiais do 90261255" → `GET /products/{code}/cost-impact-simulation?adjustment_percent=10`
+- "Diretivas 90260882" / "Diretivas 10018137" → `GET /products/directives/{identifier}`
 - "Qual o preço de venda do 10080001?" → `GET /products/{code}/pricing` (**não** usar rotas de compra MP)
 
 ---
