@@ -2220,39 +2220,96 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _sql_products_lmp(
         self,
         requested_branch: str | None = None,
+        *,
+        sale_number: str | None = None,
     ) -> Tuple[str, tuple]:
         cte_prod, params_prod = self._sql_produtos_lmp_cte(requested_branch=requested_branch)
         cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
-        resolved_sb1_apply, params_resolved_sb1 = self._sql_lmp_resolved_product_sb1_apply()
+        resolved_sb1_apply, params_resolved_sb1 = self._sql_lmp_resolved_product_sb1_apply(
+            adj_alias="P",
+            sb_alias="SB1",
+        )
+        where_sb_adj, params_sb_adj = self._sql_filter_sb1_active("SB0")
+        sale_filter = "AND P.ADJ_NROPOR = ?" if sale_number is not None else ""
 
         sql = f"""
             WITH
             {cte_prod},
-            {cte_pi}
+            {cte_pi},
+            ResolvedProducts AS (
+                SELECT
+                    P.ADJ_FILIAL,
+                    P.ADJ_NROPOR,
+                    P.ADJ_REVISA,
+                    P.ADJ_PROD,
+                    SB1.B1_GRUPO AS group_code,
+                    SB1.B1_COD AS code,
+                    SB1.B1_DESC AS description,
+                    SB1.B1_TIPO AS type
+                FROM ProdutosLMP P
+                {resolved_sb1_apply}
+                WHERE SB1.B1_COD IS NOT NULL
+                  {sale_filter}
+            ),
+            ProductsForDisplay AS (
+                SELECT
+                    R.group_code,
+                    R.code,
+                    R.description,
+                    R.type,
+                    R.ADJ_FILIAL,
+                    R.ADJ_NROPOR,
+                    R.ADJ_REVISA,
+                    R.ADJ_PROD
+                FROM ResolvedProducts R
+
+                UNION ALL
+
+                SELECT
+                    SB0.B1_GRUPO,
+                    SB0.B1_COD,
+                    SB0.B1_DESC,
+                    SB0.B1_TIPO,
+                    R.ADJ_FILIAL,
+                    R.ADJ_NROPOR,
+                    R.ADJ_REVISA,
+                    R.ADJ_PROD
+                FROM ResolvedProducts R
+                INNER JOIN SB1010 SB0
+                    ON SB0.B1_COD = R.ADJ_PROD
+                   AND {where_sb_adj}
+                WHERE R.code LIKE '9026%'
+                  AND RTRIM(LTRIM(SB0.B1_COD)) <> RTRIM(LTRIM(R.code))
+            )
             SELECT
-                SB1.B1_GRUPO AS group_code,
-                SB1.B1_COD AS code,
-                SB1.B1_DESC AS description,
-                SB1.B1_TIPO AS type,
+                PU.group_code,
+                PU.code,
+                PU.description,
+                PU.type,
                 ISNULL(SUM(PI.QTD_PI), 0) AS qtd_pi
-            FROM ProdutosLMP P
-            {resolved_sb1_apply}
+            FROM ProductsForDisplay PU
             LEFT JOIN PI_COUNT_BY_PRODUCT PI
-                ON PI.ADJ_FILIAL = P.ADJ_FILIAL
-               AND PI.ADJ_NROPOR = P.ADJ_NROPOR
-               AND PI.ADJ_REVISA = P.ADJ_REVISA
-               AND PI.ADJ_PROD = P.ADJ_PROD
-            WHERE P.ADJ_NROPOR = ?
-              AND SB1.B1_COD IS NOT NULL
+                ON PI.ADJ_FILIAL = PU.ADJ_FILIAL
+               AND PI.ADJ_NROPOR = PU.ADJ_NROPOR
+               AND PI.ADJ_REVISA = PU.ADJ_REVISA
+               AND PI.ADJ_PROD = PU.ADJ_PROD
             GROUP BY
-                SB1.B1_GRUPO,
-                SB1.B1_COD,
-                SB1.B1_DESC,
-                SB1.B1_TIPO
-            ORDER BY SB1.B1_COD
+                PU.group_code,
+                PU.code,
+                PU.description,
+                PU.type
+            ORDER BY
+                CASE
+                    WHEN PU.code LIKE '9026%' THEN 0
+                    ELSE 1
+                END,
+                PU.code
         """
 
-        params = (*params_prod, *params_pi, *params_resolved_sb1)
+        params: tuple = (*params_prod, *params_pi, *params_resolved_sb1)
+        if sale_number is not None:
+            params = (*params, sale_number)
+        params = (*params, *params_sb_adj)
         return sql, params
 
     def _sql_qtd_pi_lmp_total(
@@ -3015,7 +3072,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         requested_branch = self._get_request_branch(request)
 
         sql_header, params_header = self._sql_header_lmp(request)
-        sql_products, params_products = self._sql_products_lmp(requested_branch=requested_branch)
+        sql_products, params_products = self._sql_products_lmp(
+            requested_branch=requested_branch,
+            sale_number=request.sale_number,
+        )
         sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total(requested_branch=requested_branch)
 
         with self as repo:
@@ -3031,7 +3091,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             product_rows = repo.execute_query(
                 sql_products,
-                (*params_products, request.sale_number),
+                params_products,
             )
 
             qtd_pi = repo.execute_scalar(

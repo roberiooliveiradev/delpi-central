@@ -403,9 +403,13 @@ def test_products_lmp_resolves_pa_by_previous_code() -> None:
     assert "B1_CODANT" in sql
     assert "9026%" in sql
     assert "OUTER APPLY" in sql
+    assert "ResolvedProducts AS" in sql
+    assert "ProductsForDisplay AS" in sql
+    assert "UNION ALL" in sql
+    assert "SB0.B1_COD = R.ADJ_PROD" in sql
     assert "GROUP BY" in sql
     assert "ORDER BY" in sql.split("GROUP BY")[-1]
-    assert "WHEN SB1.B1_COD LIKE '9026%' THEN 0" in sql
+    assert "WHEN PU.code LIKE '9026%' THEN 0" in sql
 
 
 def test_full_staged_batch_keeps_eng_passagem_counts() -> None:
