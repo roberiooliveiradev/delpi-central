@@ -34,7 +34,7 @@ Wrappers especializados (mantêm API estável):
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `product_query_intent.json` | Marcadores de intenção operacional de produto (incl. `directives` — BOM + fornecedores + última compra por referência/DELPI) | `ChatProductQueryIntentService`, `ChatIntentRouterService` |
+| `product_query_intent.json` | Marcadores de intenção operacional de produto (incl. `directives`, `purchases`, `invoices`, `suppliers`, `inspection`, roteiro/preço em `router.*`) | `ChatProductQueryIntentService`, `OperationalRouteMatcherService`, ranking legado FULL |
 | `api_route_domains.json` | Domínios de rota operacional (incl. `product_directives`) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |

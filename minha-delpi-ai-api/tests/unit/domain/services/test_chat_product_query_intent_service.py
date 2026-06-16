@@ -689,3 +689,61 @@ def test_purchase_price_history_not_raw_material_intelligence():
     assert not ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
         normalized
     )
+
+
+def test_purchases_route_question_excludes_last_purchase_playbook():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "ultima compra do produto 10080001"
+    )
+
+    assert not ChatProductQueryIntentService._looks_like_purchases_route_question(
+        normalized
+    )
+    assert ChatProductQueryIntentService._looks_like_purchases_route_question(
+        ChatMessageNormalizationService.normalize_for_matching(
+            "historico de compras do produto 10080001"
+        )
+    )
+
+
+def test_product_summary_route_question_from_analyser_bundle():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "resumo do produto 10080001"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_product_summary_route_question(
+        normalized
+    )
+
+
+def test_guide_route_question_from_router_terms():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "roteiro do produto 90260142"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_guide_route_question(normalized)
+
+
+def test_inspection_route_question_excludes_shipping_status():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "inspeção do produto 90260142"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_inspection_route_question(
+        normalized
+    )
+    assert not ChatProductQueryIntentService._looks_like_inspection_route_question(
+        ChatMessageNormalizationService.normalize_for_matching(
+            "status de expedição do produto 90260142"
+        )
+    )
+
+
+def test_suppliers_route_question_from_vocabulary():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "fornecedores do produto 10080001"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_suppliers_route_question(
+        normalized
+    )

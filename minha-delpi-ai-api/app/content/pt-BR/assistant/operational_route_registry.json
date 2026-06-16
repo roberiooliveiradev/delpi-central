@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.4",
+  "version": "2026.06.5",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -163,6 +163,152 @@
       },
       "presentation": {
         "reasonKey": "productFactoryStatus"
+      }
+    },
+    {
+      "id": "productGuide",
+      "domain": "product",
+      "priority": 122,
+      "match": {
+        "customPredicate": "guideRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/guide"],
+        "operationIdMarkers": ["guide", "get_product_guide"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productSuppliers",
+      "domain": "product",
+      "priority": 121,
+      "match": {
+        "customPredicate": "suppliersRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/suppliers"],
+        "operationIdMarkers": ["get_product_suppliers", "suppliers"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productPurchases",
+      "domain": "product",
+      "priority": 120,
+      "match": {
+        "customPredicate": "purchasesRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/purchases"],
+        "operationIdMarkers": ["get_product_purchases", "purchases"],
+        "excludePathMarkers": [
+          "last-purchase",
+          "purchase-price-history",
+          "purchase-budget-history",
+          "top-products"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productSalePricing",
+      "domain": "product",
+      "priority": 119,
+      "match": {
+        "customPredicate": "salePricingRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/pricing"],
+        "operationIdMarkers": ["get_product_pricing", "pricing"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productBilling",
+      "domain": "product",
+      "priority": 118,
+      "match": {
+        "customPredicate": "billingRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/sales/billing"],
+        "operationIdMarkers": ["billing", "get_product_sales_billing"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productGenericPricing",
+      "domain": "product",
+      "priority": 117,
+      "match": {
+        "customPredicate": "genericPricingRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/pricing"],
+        "operationIdMarkers": ["get_product_pricing", "pricing"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
+      }
+    },
+    {
+      "id": "productInspection",
+      "domain": "product",
+      "priority": 116,
+      "match": {
+        "customPredicate": "inspectionRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/inspection"],
+        "operationIdMarkers": ["list_product_inspection", "inspection"],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productOperational"
       }
     },
     {

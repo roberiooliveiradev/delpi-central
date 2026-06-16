@@ -88,6 +88,27 @@ class OperationalRouteMatcherService:
         "saleOrdersList": _looks_like_sale_orders_list_question,
         "transformaQuestion": _looks_like_transforma_question,
         "systemMetadataQuestion": _looks_like_system_metadata_question,
+        "guideRoute": lambda normalized: ChatProductQueryIntentService._looks_like_guide_route_question(
+            normalized
+        ),
+        "suppliersRoute": lambda normalized: ChatProductQueryIntentService._looks_like_suppliers_route_question(
+            normalized
+        ),
+        "purchasesRoute": lambda normalized: ChatProductQueryIntentService._looks_like_purchases_route_question(
+            normalized
+        ),
+        "billingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_billing_question(
+            normalized
+        ),
+        "genericPricingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_generic_pricing_route_question(
+            normalized
+        ),
+        "salePricingRoute": lambda normalized: ChatProductQueryIntentService._looks_like_sale_pricing_question(
+            normalized
+        ),
+        "inspectionRoute": lambda normalized: ChatProductQueryIntentService._looks_like_inspection_route_question(
+            normalized
+        ),
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

@@ -187,6 +187,71 @@ def test_operational_route_selection_sale_orders() -> None:
     assert selected["arguments"]["actionId"] == "sale-orders"
 
 
+def test_operational_route_selection_picks_product_guide() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "get_product_guide",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "stock-action",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "roteiro do produto 90260142",
+        "roteiro do produto 90260142",
+        allowed_action_ids=["guide", "stock-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "guide"
+    assert selected["arguments"]["parameters"]["code"] == "90260142"
+
+
+def test_operational_route_selection_picks_product_inspection() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "inspection",
+                "method": "GET",
+                "path": "/products/{code}/inspection",
+                "operationId": "list_product_inspection",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "get_product_guide",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select(
+        "inspeção do produto 90260142",
+        "inspecao do produto 90260142",
+        allowed_action_ids=["inspection", "guide"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "inspection"
+
+
 def test_operational_route_selection_system_tables_search() -> None:
     repository = _FakeRepository(
         [

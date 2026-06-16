@@ -564,6 +564,49 @@
       "purchase-budget-history"
     ]
   },
+  "purchases": {
+    "terms": [
+      "compra",
+      "compras",
+      "ultimas compras",
+      "últimas compras",
+      "ultima compra",
+      "última compra",
+      "fornecedor comprou",
+      "histórico de compra",
+      "historico de compra"
+    ]
+  },
+  "suppliers": {
+    "terms": [
+      "fornecedor",
+      "fornecedore",
+      "fornece",
+      "supplier"
+    ]
+  },
+  "inspection": {
+    "terms": [
+      "inspeção",
+      "inspecao",
+      "inspection",
+      "qualidade"
+    ]
+  },
+  "invoices": {
+    "terms": [
+      "nota fiscal",
+      "notas fiscai",
+      "nfe",
+      "invoice",
+      "nota de entrada",
+      "notas de entrada",
+      "nota de saída",
+      "nota de saida",
+      "notas de saída",
+      "notas de saida"
+    ]
+  },
   "analyser": {
     "fullQuestion": [
       "ficha completa",
@@ -863,11 +906,17 @@
     "priceTerms": [
       "preço",
       "preco",
-      "pricing"
+      "pricing",
+      "tabela de preço",
+      "tabela de preco",
+      "quanto custa",
+      "custo do"
     ],
     "guideTerms": [
       "roteiro",
-      "guide"
+      "guide",
+      "rota de fabricação",
+      "rota de fabricacao"
     ],
     "inspectionTerms": [
       "inspeção",

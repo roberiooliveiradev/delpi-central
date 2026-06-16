@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fase 0–3 implementada; Fase 4 parcial (jun/2026) — `vocabularyFastPaths` esvaziado, boosts P0/intent removidos de `_rank_product_actions`, fallback SQL quando REST PB15 indisponível  
+**Status:** Fase 0–5 implementada; Fase 6 parcial (jun/2026) — vocabulário consolidado em `product_query_intent.json`, registry v2026.06.5 com guide/suppliers/purchases/pricing/billing/inspection  
 **Data:** jun/2026  
 **Commit de referência:** `519f3834` (remove fallback analyser + `vocabularyFastPaths` inicial)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -140,18 +140,18 @@ Legenda de **severidade**:
 | `last-purchase` | +110 | `product_query_intent.lastPurchase` | `productLastPurchase` |
 | `purchase-price-history` | +110 | `product_query_intent.purchasePriceHistory` | `productPurchasePriceHistory` |
 | `purchase-budget-history` | +110 | `product_query_intent.purchaseBudgetHistory` | `productPurchaseBudgetHistory` |
-| `/purchases` | +110 | `external_action_responses.productRouteRanking.purchasesTerms` | `productPurchases` |
-| `/sales/billing` | +125 | billing terms | `productSalesBilling` |
-| `/pricing` | variável | sale pricing / pricing terms | `productPricing` |
+| `/purchases` | +110 | `product_query_intent.purchases.terms` | ✅ `productPurchases` |
+| `/sales/billing` | +125 | `product_query_intent` + billing predicate | ✅ `productBilling` |
+| `/pricing` | variável | sale pricing / `router.priceTerms` | ✅ `productSalePricing` / `productGenericPricing` |
 | `/structure` | +150 | structure intent | `productStructure` (intentBinding) |
 | `/stock` | +120 | stock intent | `productStock` (intentBinding) |
 | `/parents` | +200 | parents intent | `productParents` (intentBinding) |
-| `/guide` | +110 | guide terms | `productGuide` |
-| `/suppliers` | +110 | supplier terms | `productSuppliers` |
+| `/guide` | +110 | `router.guideTerms` | ✅ `productGuide` |
+| `/suppliers` | +110 | `suppliers.terms` | ✅ `productSuppliers` |
 | `/customers` | +110 | customer terms | `productCustomers` |
 | `/internal-movements` | +110 | movements terms | `productInternalMovements` |
 | `/inbound-invoice` / `/outbound-invoice` | +120–130 | invoices terms | `productInvoices` |
-| `/inspection` | +120 | inspection terms | `productInspection` |
+| `/inspection` | +120 | `inspection.terms` | ✅ `productInspection` |
 | `/summary` | +260 | summary terms | `productSummary` (intentBinding) |
 | `/analyser` | +280 (intent ANALYSER) | full analyser terms | `productAnalyser` (explícito only) |
 | `/products/{code}` | +25 genérico | — | **Remover** — usar semântico |
@@ -197,7 +197,7 @@ if action_id.startswith("api_externa."): return +95
 | C2 | `has_actionable_product_route_intent` lista 14 markers | 🟡 | Derivar do registry (`actionableWhen`) |
 | C3 | `refine_operational_intent_from_full` | 🟢 | Manter para intents clássicos STOCK/STRUCTURE/… |
 | C4 | `detect()` ordem fixa de 20+ checks | 🟡 | Opcional: pipeline declarativo por prioridade JSON |
-| C5 | Import `ExternalActionResponseContentService` em domain | 🟡 | Mover summary terms para `product_query_intent.json` |
+| C5 | Import `ExternalActionResponseContentService` em domain | ✅ | summary/purchases/invoices via `product_query_intent.json` |
 
 ---
 
@@ -439,7 +439,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Deletar `select_product_directives`, `select_exclusive_raw_material_catalog` (registry + vocabulary)
 - [x] Deletar `vocabularyFastPaths` (conteúdo migrado — array vazio)
 - [x] Remover `_provider_preference_bonus` api_delpi/api_externa (Fase 5)
-- [ ] Remover duplicação `productRouteRanking.*` vs `product_query_intent.json`
+- [x] Remover duplicação `productRouteRanking.*` vs `product_query_intent.json`
 
 ### Fase 5 — Generalização multi-provider (1 PR)
 
@@ -450,6 +450,14 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Deletar `external_action_domain_route_selection_service.py` (heurísticas → `OperationalRouteMatcherService`)
 - [x] Documentar «Como registrar nova API OpenAPI» em `docs/api/04-actions-openapi.md`
 - [x] Testes multi-provider (tie-break `allowed_action_ids`)
+
+### Fase 6 — Registry vocabulário produto FULL (jun/2026)
+
+- [x] Consolidar vocabulário em `product_query_intent.json` (remover `productRouteRanking.*`)
+- [x] Predicados de rota em `ChatProductQueryIntentService` (guide, purchases, billing, pricing, invoices, suppliers, inspection)
+- [x] Registry v2026.06.5 — `productGuide`, `productSuppliers`, `productPurchases`, `productSalePricing`, `productBilling`, `productGenericPricing`, `productInspection`
+- [ ] Migrar `customers`, `internal-movements` e rotas de invoice inbound/outbound
+- [ ] Enxugar `ExternalActionProductRouteRankingService` conforme registry cobrir casos FULL restantes
 
 ---
 

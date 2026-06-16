@@ -6,9 +6,6 @@ from app.domain.services.chat_assistant_content_service import (
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.domain.services.external_actions.external_action_response_content_service import (
-    ExternalActionResponseContentService,
-)
 
 _INTENT_CONTENT_BUNDLE = "product_query_intent"
 
@@ -1404,16 +1401,63 @@ class ChatProductQueryIntentService:
         if cls._looks_like_product_sub_intent(normalized_text):
             return True
 
-        summary_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productRouteRanking",
-            "summaryTerms",
-        )
-
-        if any(term in normalized_text for term in summary_terms):
+        if cls._looks_like_product_summary_route_question(normalized_text):
             return True
 
         return False
+
+    @classmethod
+    def _looks_like_purchases_route_question(cls, normalized: str) -> bool:
+        if not any(term in normalized for term in cls._terms("purchases", "terms")):
+            return False
+
+        return not (
+            cls._looks_like_last_purchase_question(normalized)
+            or cls._looks_like_purchase_price_history_question(normalized)
+            or cls._looks_like_purchase_budget_history_question(normalized)
+            or cls._looks_like_raw_material_price_intelligence_question(normalized)
+        )
+
+    @classmethod
+    def _looks_like_product_summary_route_question(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._terms("analyser", "summaryExplicit")):
+            return True
+
+        return (
+            "resumo" in normalized
+            and "completo" not in normalized
+            and "ficha" not in normalized
+            and "kaizen" not in normalized
+        )
+
+    @classmethod
+    def _looks_like_guide_route_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._terms("router", "guideTerms"))
+
+    @classmethod
+    def _looks_like_generic_pricing_route_question(cls, normalized: str) -> bool:
+        if cls._looks_like_sale_pricing_question(normalized):
+            return False
+
+        return any(term in normalized for term in cls._terms("router", "priceTerms"))
+
+    @classmethod
+    def _looks_like_invoices_route_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._terms("invoices", "terms"))
+
+    @classmethod
+    def _looks_like_suppliers_route_question(cls, normalized: str) -> bool:
+        if not any(term in normalized for term in cls._terms("suppliers", "terms")):
+            return False
+
+        return bool(re.search(r"\bfornece\b", normalized)) or "fornecedor" in normalized
+
+    @classmethod
+    def _looks_like_inspection_route_question(cls, normalized: str) -> bool:
+        if not any(term in normalized for term in cls._terms("inspection", "terms")):
+            return False
+
+        return not cls._looks_like_shipping_status_question(normalized)
 
     @classmethod
     def refine_operational_intent_from_full(

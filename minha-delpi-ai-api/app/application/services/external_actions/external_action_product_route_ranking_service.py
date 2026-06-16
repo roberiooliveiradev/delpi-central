@@ -11,9 +11,6 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
-from app.domain.services.external_actions.external_action_response_content_service import (
-    ExternalActionResponseContentService,
-)
 
 
 class ExternalActionProductRouteRankingService:
@@ -61,18 +58,8 @@ class ExternalActionProductRouteRankingService:
         wants_price_analysis = (
             ChatProductQueryIntentService._looks_like_price_analysis_question(normalized)
         )
-        wants_purchases = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "purchasesTerms",
-            )
-        ) and not (
-            wants_last_purchase
-            or wants_purchase_price_history
-            or wants_purchase_budget_history
-            or wants_raw_material_price_intelligence
+        wants_purchases = ChatProductQueryIntentService._looks_like_purchases_route_question(
+            normalized
         )
         wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
             normalized
@@ -104,87 +91,58 @@ class ExternalActionProductRouteRankingService:
         wants_sales = ChatProductQueryIntentService._looks_like_sales_question(
             normalized
         ) and not wants_open_orders and not wants_sale_pricing
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
-        )
 
         wants_product_overview = ChatProductOverviewIntentService.is_product_overview_message(
             message
         )
-        wants_product_summary = wants_product_overview or any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "summaryTerms",
+        wants_product_summary = (
+            wants_product_overview
+            or ChatProductQueryIntentService._looks_like_product_summary_route_question(
+                normalized
             )
-        ) or (
-            "resumo" in normalized
-            and "completo" not in normalized
-            and "ficha" not in normalized
-            and "kaizen" not in normalized
         )
         wants_full_analyser = ChatProductQueryIntentService._looks_like_full_analyser_question(
             normalized
         )
-        wants_structure = any(
-            term in normalized
-            for term in ("estrutura", "bom", "bill of material", "composição", "composicao")
+        wants_structure = ChatProductQueryIntentService._looks_like_structure_question(
+            normalized
         )
-        wants_stock = any(
-            term in normalized
-            for term in ("estoque", "saldo", "disponível", "disponivel", "armazém", "armazem")
-        ) and not wants_full_analyser
-
-        wants_guide = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "guideTerms",
-            )
+        wants_stock = (
+            ChatProductQueryIntentService._looks_like_stock_question(normalized)
+            and not wants_full_analyser
+        )
+        wants_guide = ChatProductQueryIntentService._looks_like_guide_route_question(
+            normalized
         )
         wants_suppliers = any(
             term in normalized
             for term in ("fornecedor", "fornecedore", "fornece", "supplier")
         ) or bool(re.search(r"\bfornece\b", normalized))
-        wants_pricing = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "pricingTerms",
+        wants_pricing = (
+            ChatProductQueryIntentService._looks_like_generic_pricing_route_question(
+                normalized
             )
-        ) and not (
-            wants_raw_material_price_intelligence
-            or wants_cost_impact_simulation
-            or wants_last_purchase
-            or wants_purchase_price_history
-            or wants_purchase_budget_history
+            and not (
+                wants_raw_material_price_intelligence
+                or wants_cost_impact_simulation
+                or wants_last_purchase
+                or wants_purchase_price_history
+                or wants_purchase_budget_history
+            )
         )
         wants_customers = any(
             term in normalized
             for term in ("cliente", "customer")
         )
-        wants_parents = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "parentsTerms",
-            )
+        wants_parents = ChatProductQueryIntentService._looks_like_parents_question(
+            normalized
         )
         wants_movements = any(
             term in normalized
             for term in ("movimentaç", "movimentac", "internal-movement")
         )
-        wants_invoices = any(
-            term in normalized
-            for term in ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productRouteRanking",
-                "invoicesTerms",
-            )
+        wants_invoices = ChatProductQueryIntentService._looks_like_invoices_route_question(
+            normalized
         )
         wants_inbound = any(
             term in normalized for term in ("entrada", "inbound", "recebimento")
@@ -231,27 +189,6 @@ class ExternalActionProductRouteRankingService:
             wants_purchase_budget_history = True
         elif inherited_segment == "directives":
             wants_directives = True
-
-        has_specific_sub_intent = (
-            wants_purchases or wants_sales or wants_open_orders or wants_structure
-            or wants_guide or wants_suppliers or wants_pricing or wants_customers
-            or wants_parents or wants_movements or wants_invoices or wants_inspection
-            or wants_billing
-            or wants_factory_status
-            or wants_production_status
-            or wants_shipping_status
-            or wants_structure_exclusivity
-            or wants_raw_material_price_intelligence
-            or wants_cost_impact_simulation
-            or wants_last_purchase
-            or wants_purchase_price_history
-            or wants_purchase_budget_history
-            or wants_directives
-            or wants_product_summary
-            or wants_product_overview
-            or wants_full_analyser
-            or wants_price_analysis
-        )
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -481,7 +418,6 @@ class ExternalActionProductRouteRankingService:
 
         return sorted(candidates, key=sort_key, reverse=True)
 
-
     @staticmethod
     def is_product_sales_summary_path(path: str) -> bool:
         lowered = str(path or "").lower().rstrip("/")
@@ -490,4 +426,3 @@ class ExternalActionProductRouteRankingService:
             return False
 
         return lowered.endswith("/sales") and "/products/" in lowered
-

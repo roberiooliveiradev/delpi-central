@@ -125,7 +125,7 @@ Validar: cada action com `operationId` **idêntico** ao da api-delpi.
 | `app/domain/services/chat_product_query_intent_service.py` | `_looks_like_factory_status_question` | `_looks_like_raw_material_price_question`, `_looks_like_cost_impact_question`, etc. |
 | `app/application/services/external_actions/external_action_product_route_selection_service.py` | `_rank_product_actions` (~L186) | Flags + match path: `raw-material-price-intelligence`, `cost-impact-simulation`, `last-purchase`, … |
 | `app/domain/services/chat_analysis_intent_service.py` | menções a factory | Avaliar se precisa hook para análise de preço |
-| `app/content/pt-BR/assistant/external_action_responses.json` | `selectionReasons`, `actionSelection.productRouteRanking` | Reasons novos (**JSON**, não Python) |
+| `app/content/pt-BR/assistant/external_action_responses.json` | `selectionReasons` | Reasons novos (**JSON**, não Python) |
 
 **Termos sugeridos** (`product_query_intent.json`):
 

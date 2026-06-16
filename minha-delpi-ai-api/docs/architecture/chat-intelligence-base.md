@@ -514,6 +514,22 @@ Changelog consolidado: [`../changelog/2026-05-inteligencia-chat-entregas.md`](..
 
 ## Roteamento automático (api-delpi)
 
+### DOCIE — seleção declarativa de rotas (jun/2026)
+
+Motor canônico para fast paths operacionais:
+
+| Componente | Papel |
+|------------|-------|
+| `operational_route_registry.json` | Catálogo declarativo (`dispatchOrder`, rotas por `priority`, `intentBinding`, `customPredicate`) |
+| `ExternalActionOperationalRouteSelectionService` | Resolve action + parâmetros a partir do registry |
+| `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
+| `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
+| `ExternalActionProductRouteRankingService` | Fallback FULL semântico enquanto rotas migram para o registry |
+
+Ordem no dispatch: refinamentos de sessão → **registry** (`select_vocabulary_fast_path` / `select_by_intent`) → ranking FULL legado → semântico genérico.
+
+Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
+
 O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fast path operacional está ativo. Ordem resumida:
 
 1. Pedidos de **comparação/insights** → sem action (modo análise).
