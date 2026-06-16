@@ -524,7 +524,7 @@ Motor canônico para fast paths operacionais:
 | `ExternalActionOperationalRouteSelectionService` | Resolve action + parâmetros a partir do registry |
 | `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
 | `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
-| `ExternalActionProductRouteRankingService` | Fallback FULL semântico enquanto rotas migram para o registry |
+| `ExternalActionProductRouteRankingService` | Desempate ambíguo pós-registry (intents clássicos, NF genérica, conflitos playbook) |
 
 Ordem no dispatch: refinamentos de sessão → **registry** (`select_vocabulary_fast_path` / `select_by_intent`) → ranking FULL legado → semântico genérico.
 

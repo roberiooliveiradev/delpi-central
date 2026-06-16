@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Callable
 
+from app.application.services.external_actions.external_action_operational_route_selection_service import (
+    ExternalActionOperationalRouteSelectionService,
+)
 from app.application.services.external_actions.external_action_product_route_catalog_service import (
     ExternalActionProductRouteCatalogService,
 )
@@ -38,10 +41,14 @@ class ExternalActionProductRouteSelectionService:
         *,
         catalog: ExternalActionProductRouteCatalogService | None = None,
         ranking: ExternalActionProductRouteRankingService | None = None,
+        operational_route: ExternalActionOperationalRouteSelectionService | None = None,
     ) -> None:
         self.repository = repository
         self._catalog = catalog or ExternalActionProductRouteCatalogService(repository)
         self._ranking = ranking or ExternalActionProductRouteRankingService()
+        self._operational_route = operational_route or ExternalActionOperationalRouteSelectionService(
+            self._catalog
+        )
 
     @classmethod
     def _clamp_max_depth_for_path(cls, value: int, path: str) -> int:
@@ -69,6 +76,21 @@ class ExternalActionProductRouteSelectionService:
 
         if not candidates:
             return None
+
+        route_segment_value = str(route_segment or "").strip().lower()
+
+        if route_segment_value:
+            selected = self._operational_route.select_by_route_segment(
+                message,
+                product_code,
+                route_segment_value,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
 
         if intent == ChatProductQueryIntent.FULL and not route_segment:
             normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")

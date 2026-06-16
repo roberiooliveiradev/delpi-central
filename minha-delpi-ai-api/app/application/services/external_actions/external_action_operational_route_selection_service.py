@@ -94,6 +94,36 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_by_route_segment(
+        self,
+        message: str,
+        product_code: str,
+        route_segment: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        normalized_segment = str(route_segment or "").strip().lower()
+
+        if not normalized_segment or not str(product_code or "").strip():
+            return None
+
+        for route in OperationalRouteRegistryService.routes_by_segment(normalized_segment):
+            selected = self._resolve_route_action(
+                route,
+                message,
+                allowed_action_ids,
+                identifier=product_code,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
     def select_production_operational(
         self,
         message: str,

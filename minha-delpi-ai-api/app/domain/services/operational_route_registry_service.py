@@ -96,6 +96,19 @@ class OperationalRouteRegistryService:
         ]
 
     @classmethod
+    def routes_by_segment(cls, segment: str) -> list[dict[str, Any]]:
+        normalized = str(segment or "").strip().lower()
+
+        if not normalized:
+            return []
+
+        return [
+            route
+            for route in cls.routes()
+            if str(route.get("routeSegment") or "").strip().lower() == normalized
+        ]
+
+    @classmethod
     def system_metadata_routes(cls) -> list[dict[str, Any]]:
         return [
             route

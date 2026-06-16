@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.6"
+    assert OperationalRouteRegistryService.version() == "2026.06.7"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -94,6 +94,13 @@ def test_operational_route_matcher_none_of_excludes_directives() -> None:
         message="diretivas 90260882",
         normalized=normalized,
     )
+
+
+def test_operational_route_registry_routes_by_segment() -> None:
+    guide_routes = OperationalRouteRegistryService.routes_by_segment("guide")
+
+    assert guide_routes
+    assert guide_routes[0]["id"] == "productGuide"
 
 
 def test_operational_route_matcher_factory_status_predicate() -> None:

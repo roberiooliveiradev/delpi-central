@@ -457,7 +457,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Predicados de rota em `ChatProductQueryIntentService` (guide, purchases, billing, pricing, invoices, suppliers, inspection)
 - [x] Registry v2026.06.5 — `productGuide`, `productSuppliers`, `productPurchases`, `productSalePricing`, `productBilling`, `productGenericPricing`, `productInspection`
 - [x] Registry v2026.06.6 — `productCustomers`, `productInternalMovements`, NF entrada/saída com `customPredicate` + continuação por `routeSegment`
-- [ ] Enxugar `ExternalActionProductRouteRankingService` conforme registry cobrir casos FULL restantes
+- [x] `select_by_route_segment` + `routeSegment` no registry — continuação multi-turno sem boosts no ranking
+- [x] Enxugar `ExternalActionProductRouteRankingService` — só desempate ambíguo (intents clássicos, NF genérica, conflitos playbook)
 
 ---
 

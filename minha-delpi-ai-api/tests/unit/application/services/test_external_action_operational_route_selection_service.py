@@ -316,6 +316,40 @@ def test_operational_route_selection_picks_inbound_invoice() -> None:
     assert selected["arguments"]["actionId"] == "inbound-invoice"
 
 
+def test_operational_route_selection_by_route_segment_continuation() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "get_product_guide",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "stock-action",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_by_route_segment(
+        "filial 02",
+        "90260142",
+        "guide",
+        allowed_action_ids=["guide", "stock-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "guide"
+    assert selected["arguments"]["parameters"]["code"] == "90260142"
+
+
 def test_operational_route_selection_system_tables_search() -> None:
     repository = _FakeRepository(
         [

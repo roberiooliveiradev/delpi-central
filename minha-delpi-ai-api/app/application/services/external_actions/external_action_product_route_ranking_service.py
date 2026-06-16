@@ -1,8 +1,6 @@
-"""Ranking heurístico de rotas de produto — fallback FULL (DOCIE Fase 4)."""
+"""Ranking heurístico de rotas de produto — fallback ambíguo pós-registry (DOCIE Fase 6)."""
 
 from __future__ import annotations
-
-import re
 
 from app.domain.services.chat_product_overview_intent_service import (
     ChatProductOverviewIntentService,
@@ -14,6 +12,7 @@ from app.domain.services.chat_product_query_intent_service import (
 
 
 class ExternalActionProductRouteRankingService:
+    """Desempate residual quando registry e routeSegment não resolvem a rota."""
 
     def rank_product_actions(
         self,
@@ -25,7 +24,7 @@ class ExternalActionProductRouteRankingService:
         allowed_action_ids: list[str] | None = None,
     ) -> list[dict]:
         normalized = str(message or "").lower()
-        inherited_segment = str(route_segment or "").strip().lower()
+
         wants_raw_material_price_intelligence = (
             ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
                 normalized
@@ -57,12 +56,6 @@ class ExternalActionProductRouteRankingService:
         )
         wants_price_analysis = (
             ChatProductQueryIntentService._looks_like_price_analysis_question(normalized)
-        )
-        wants_purchases = ChatProductQueryIntentService._looks_like_purchases_route_question(
-            normalized
-        )
-        wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
-            normalized
         )
         wants_factory_status = (
             ChatProductQueryIntentService._looks_like_factory_status_question(
@@ -111,84 +104,22 @@ class ExternalActionProductRouteRankingService:
             ChatProductQueryIntentService._looks_like_stock_question(normalized)
             and not wants_full_analyser
         )
-        wants_guide = ChatProductQueryIntentService._looks_like_guide_route_question(
-            normalized
-        )
-        wants_suppliers = any(
-            term in normalized
-            for term in ("fornecedor", "fornecedore", "fornece", "supplier")
-        ) or bool(re.search(r"\bfornece\b", normalized))
-        wants_pricing = (
-            ChatProductQueryIntentService._looks_like_generic_pricing_route_question(
-                normalized
-            )
-            and not (
-                wants_raw_material_price_intelligence
-                or wants_cost_impact_simulation
-                or wants_last_purchase
-                or wants_purchase_price_history
-                or wants_purchase_budget_history
-            )
-        )
-        wants_customers = any(
-            term in normalized
-            for term in ("cliente", "customer")
-        )
         wants_parents = ChatProductQueryIntentService._looks_like_parents_question(
             normalized
-        )
-        wants_movements = any(
-            term in normalized
-            for term in ("movimentaç", "movimentac", "internal-movement")
         )
         wants_invoices = ChatProductQueryIntentService._looks_like_invoices_route_question(
             normalized
         )
-        wants_inbound = any(
-            term in normalized for term in ("entrada", "inbound", "recebimento")
+        wants_inbound = (
+            ChatProductQueryIntentService._looks_like_inbound_invoice_route_question(
+                normalized
+            )
         )
-        wants_outbound = any(
-            term in normalized for term in ("saída", "saida", "outbound", "expedição", "expedicao")
+        wants_outbound = (
+            ChatProductQueryIntentService._looks_like_outbound_invoice_route_question(
+                normalized
+            )
         )
-        wants_inspection = any(
-            term in normalized
-            for term in ("inspeção", "inspecao", "inspection", "qualidade")
-        )
-
-        if inherited_segment == "purchases":
-            wants_purchases = True
-        elif inherited_segment == "suppliers":
-            wants_suppliers = True
-        elif inherited_segment == "sales":
-            wants_sales = True
-        elif inherited_segment == "pricing":
-            wants_pricing = True
-        elif inherited_segment == "guide":
-            wants_guide = True
-        elif inherited_segment == "customers":
-            wants_customers = True
-        elif inherited_segment == "internal-movements":
-            wants_movements = True
-        elif inherited_segment == "inspection":
-            wants_inspection = True
-        elif inherited_segment == "inbound-invoice":
-            wants_invoices = True
-            wants_inbound = True
-        elif inherited_segment == "outbound-invoice":
-            wants_invoices = True
-            wants_outbound = True
-        elif inherited_segment == "raw-material-price-intelligence":
-            wants_raw_material_price_intelligence = True
-        elif inherited_segment == "cost-impact-simulation":
-            wants_cost_impact_simulation = True
-        elif inherited_segment == "last-purchase":
-            wants_last_purchase = True
-        elif inherited_segment == "purchase-price-history":
-            wants_purchase_price_history = True
-        elif inherited_segment == "purchase-budget-history":
-            wants_purchase_budget_history = True
-        elif inherited_segment == "directives":
-            wants_directives = True
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -198,15 +129,6 @@ class ExternalActionProductRouteRankingService:
             path = str(action.get("path") or "").lower()
 
             value = 0
-
-            if wants_purchases and "/purchases" in path:
-                value += 110
-
-            if wants_billing and "/sales/billing" in path:
-                value += 125
-
-            if wants_sale_pricing and "/pricing" in path:
-                value += 130
 
             if wants_price_analysis and "analyser" in path:
                 value += 135
@@ -355,22 +277,7 @@ class ExternalActionProductRouteRankingService:
             if wants_structure and not wants_full_analyser and "analyser" in haystack:
                 value -= 70
 
-            if wants_guide and "/guide" in path:
-                value += 120
-
-            if wants_suppliers and "/suppliers" in path:
-                value += 120
-
-            if wants_pricing and "/pricing" in path:
-                value += 120
-
-            if wants_customers and "/customers" in path:
-                value += 120
-
             if wants_parents and "/parents" in path:
-                value += 120
-
-            if wants_movements and "/internal-movements" in path:
                 value += 120
 
             if wants_invoices:
@@ -380,12 +287,6 @@ class ExternalActionProductRouteRankingService:
                     value += 130
                 elif "/inbound-invoice" in path or "/outbound-invoice" in path:
                     value += 120
-
-            if wants_inspection and "/inspection" in path and not wants_shipping_status:
-                value += 120
-
-            if wants_inspection and wants_shipping_status and "/inspection" in path:
-                value -= 90
 
             if "/products/{code}" in haystack:
                 value += 25

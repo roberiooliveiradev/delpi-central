@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.6",
+  "version": "2026.06.7",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -13,6 +13,7 @@
       "id": "productDirectives",
       "domain": "product",
       "priority": 165,
+      "routeSegment": "directives",
       "match": {
         "customPredicate": "directives",
         "requiresProductIdentifier": true
@@ -55,6 +56,7 @@
       "id": "productRawMaterialPriceIntelligence",
       "domain": "product",
       "priority": 150,
+      "routeSegment": "raw-material-price-intelligence",
       "match": {
         "customPredicate": "rawMaterialPriceIntelligence"
       },
@@ -74,6 +76,7 @@
       "id": "productCostImpactSimulation",
       "domain": "product",
       "priority": 150,
+      "routeSegment": "cost-impact-simulation",
       "match": {
         "customPredicate": "costImpactSimulation"
       },
@@ -169,6 +172,7 @@
       "id": "productGuide",
       "domain": "product",
       "priority": 122,
+      "routeSegment": "guide",
       "match": {
         "customPredicate": "guideRoute",
         "requiresProductIdentifier": true
@@ -189,6 +193,7 @@
       "id": "productSuppliers",
       "domain": "product",
       "priority": 121,
+      "routeSegment": "suppliers",
       "match": {
         "customPredicate": "suppliersRoute",
         "requiresProductIdentifier": true
@@ -209,6 +214,7 @@
       "id": "productPurchases",
       "domain": "product",
       "priority": 120,
+      "routeSegment": "purchases",
       "match": {
         "customPredicate": "purchasesRoute",
         "requiresProductIdentifier": true
@@ -235,6 +241,7 @@
       "id": "productSalePricing",
       "domain": "product",
       "priority": 119,
+      "routeSegment": "pricing",
       "match": {
         "customPredicate": "salePricingRoute",
         "requiresProductIdentifier": true
@@ -275,6 +282,7 @@
       "id": "productGenericPricing",
       "domain": "product",
       "priority": 117,
+      "routeSegment": "pricing",
       "match": {
         "customPredicate": "genericPricingRoute",
         "requiresProductIdentifier": true
@@ -295,6 +303,7 @@
       "id": "productInspection",
       "domain": "product",
       "priority": 116,
+      "routeSegment": "inspection",
       "match": {
         "customPredicate": "inspectionRoute",
         "requiresProductIdentifier": true
@@ -315,6 +324,7 @@
       "id": "productCustomers",
       "domain": "product",
       "priority": 115,
+      "routeSegment": "customers",
       "match": {
         "customPredicate": "customersRoute",
         "requiresProductIdentifier": true
@@ -335,6 +345,7 @@
       "id": "productInternalMovements",
       "domain": "product",
       "priority": 114,
+      "routeSegment": "internal-movements",
       "match": {
         "customPredicate": "internalMovementsRoute",
         "requiresProductIdentifier": true
@@ -355,6 +366,7 @@
       "id": "productLastPurchase",
       "domain": "product",
       "priority": 110,
+      "routeSegment": "last-purchase",
       "match": {
         "customPredicate": "lastPurchase"
       },
@@ -374,6 +386,7 @@
       "id": "productPurchasePriceHistory",
       "domain": "product",
       "priority": 110,
+      "routeSegment": "purchase-price-history",
       "match": {
         "customPredicate": "purchasePriceHistory"
       },
@@ -393,6 +406,7 @@
       "id": "productPurchaseBudgetHistory",
       "domain": "product",
       "priority": 110,
+      "routeSegment": "purchase-budget-history",
       "match": {
         "customPredicate": "purchaseBudgetHistory"
       },
