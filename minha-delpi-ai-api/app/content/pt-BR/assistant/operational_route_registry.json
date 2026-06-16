@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.10",
+  "version": "2026.06.11",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
@@ -1077,6 +1077,41 @@
       },
       "parameters": { "strategy": "lmp" },
       "presentation": { "reasonKey": "lmpQuery" }
+    },
+    {
+      "id": "productSearchByGroup",
+      "domain": "domainProductSearch",
+      "priority": 142,
+      "match": { "customPredicate": "productSearchWithGroupCode" },
+      "route": {
+        "pathMarkers": ["/search"],
+        "excludePathMarkers": ["/system/"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "product_search" },
+      "presentation": {
+        "reasonFormatKey": "productSearchByGroup",
+        "reasonFormatParam": "group_code"
+      }
+    },
+    {
+      "id": "productSearchByDescription",
+      "domain": "domainProductSearch",
+      "priority": 141,
+      "match": {
+        "allOf": [{ "customPredicate": "productSearchQuestion" }],
+        "noneOf": [{ "customPredicate": "productSearchWithGroupCode" }]
+      },
+      "route": {
+        "pathMarkers": ["/search"],
+        "excludePathMarkers": ["/system/"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "product_search" },
+      "presentation": {
+        "reasonFormatKey": "productSearchByDescription",
+        "reasonFormatParam": "description_query"
+      }
     },
     {
       "id": "systemTableRelations",

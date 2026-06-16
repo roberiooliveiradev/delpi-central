@@ -8,9 +8,6 @@ from typing import Callable
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-from app.domain.services.chat_sql_operational_intent_service import (
-    ChatSqlOperationalIntentService,
-)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -19,70 +16,75 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class ExternalActionProductSearchRouteSelectionService:
     @staticmethod
     def looks_like_product_search(value: str) -> bool:
-        from app.domain.services.chat_technical_description_intent_service import (
-            ChatTechnicalDescriptionIntentService,
-        )
-        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
-        from app.domain.services.chat_web_search_intent_service import (
-            ChatWebSearchIntentService,
+        from app.domain.services.chat_product_search_intent_service import (
+            ChatProductSearchIntentService,
         )
 
-        if ChatSqlIntentService.is_sql_conversation_turn(value):
-            return False
+        return ChatProductSearchIntentService.looks_like_product_search(value)
 
-        if ChatWebSearchIntentService.matches(value):
-            return False
+    @classmethod
+    def build_search_parameters(
+        cls,
+        message: str,
+        normalized: str,
+        action: dict,
+        *,
+        description_override: str | None = None,
+    ) -> dict | None:
+        group_code = cls.extract_search_group_code(message, normalized)
+        description_query = description_override or cls.extract_search_description(message)
+        product_code_query = ChatProductQueryIntentService.extract_product_code(message)
+        page_size = cls.extract_search_limit(normalized)
 
-        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(value):
-            return False
+        parameters: dict = {}
 
-        if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
-            return False
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
 
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
+            if not name:
+                continue
 
-        if ChatProductionOperationalIntentService.matches_rest_route(value):
-            return False
+            lowered = name.lower()
 
-        audit5s_terms = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productSearch",
-            "audit5sExcludeTerms",
-        )
+            if lowered in {"group_code", "groupcode", "grupo"} and group_code:
+                parameters[name] = group_code
+            elif lowered == "code" and product_code_query and not group_code:
+                parameters[name] = product_code_query
+            elif lowered in {
+                "description",
+                "descricao",
+                "query",
+                "q",
+                "search",
+                "term",
+            }:
+                if description_query and not group_code:
+                    parameters[name] = description_query
+            elif lowered == "page":
+                parameters[name] = 1
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = page_size
 
-        if any(term in value for term in audit5s_terms):
-            return False
+        if group_code and "group_code" not in parameters and "groupCode" not in parameters:
+            parameters["group_code"] = group_code
 
-        search_triggers = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productSearch",
-            "searchTriggers",
-        )
-        product_context = ExternalActionResponseContentService.list(
-            "actionSelection",
-            "productSearch",
-            "productContextTerms",
-        )
+        if parameters:
+            return parameters
 
-        has_trigger = any(term in value for term in search_triggers)
-        has_product_context = any(term in value for term in product_context)
+        if group_code:
+            return {
+                "group_code": group_code,
+                "page": 1,
+                "page_size": page_size,
+            }
 
-        if has_trigger and has_product_context:
-            return True
+        if not description_query:
+            return None
 
-        if has_trigger and len(value.split()) >= 3:
-            exclude_terms = ExternalActionResponseContentService.list(
-                "actionSelection",
-                "productSearch",
-                "broadSearchExcludeTerms",
-            )
-
-            if not any(term in value for term in exclude_terms):
-                return True
-
-        return False
+        return {
+            "description": description_query,
+            "page_size": page_size,
+        }
 
     def select(
         self,
@@ -109,57 +111,20 @@ class ExternalActionProductSearchRouteSelectionService:
             if "search" not in path and "search" not in operation_id:
                 continue
 
+            parameters = self.build_search_parameters(
+                message,
+                normalized,
+                action,
+                description_override=description_override,
+            )
+
+            if not parameters:
+                continue
+
             group_code = self.extract_search_group_code(message, normalized)
             description_query = description_override or self.extract_search_description(
                 message
             )
-            product_code_query = ChatProductQueryIntentService.extract_product_code(message)
-            page_size = self.extract_search_limit(normalized)
-
-            parameters = {}
-
-            for parameter in action.get("parametersSchema") or []:
-                name = parameter.get("name")
-
-                if not name:
-                    continue
-
-                lowered = name.lower()
-
-                if lowered in {"group_code", "groupcode", "grupo"} and group_code:
-                    parameters[name] = group_code
-                elif lowered == "code" and product_code_query and not group_code:
-                    parameters[name] = product_code_query
-                elif lowered in {
-                    "description",
-                    "descricao",
-                    "query",
-                    "q",
-                    "search",
-                    "term",
-                }:
-                    if description_query and not group_code:
-                        parameters[name] = description_query
-                elif lowered == "page":
-                    parameters[name] = 1
-                elif lowered in {"page_size", "pagesize", "limit"}:
-                    parameters[name] = page_size
-
-            if group_code and "group_code" not in parameters and "groupCode" not in parameters:
-                parameters["group_code"] = group_code
-
-            if not parameters:
-                if group_code:
-                    parameters = {
-                        "group_code": group_code,
-                        "page": 1,
-                        "page_size": page_size,
-                    }
-                else:
-                    parameters = {
-                        "description": description_query,
-                        "page_size": page_size,
-                    }
 
             if group_code:
                 reason = ExternalActionResponseContentService.format(
@@ -267,26 +232,14 @@ class ExternalActionProductSearchRouteSelectionService:
 
     @staticmethod
     def extract_search_group_code(message: str, normalized: str) -> str | None:
-        patterns = (
-            r"\bgrupo\s+de\s+produtos?\s+([A-Za-z0-9]{1,12})\b",
-            r"\bgrupo\s+([A-Za-z0-9]{1,12})\b",
-            r"\bgroup_code\s+([A-Za-z0-9]{1,12})\b",
-            r"\bdo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
-            r"\bpelo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
+        from app.domain.services.chat_product_search_intent_service import (
+            ChatProductSearchIntentService,
         )
 
-        for pattern in patterns:
-            match = re.search(pattern, message, flags=re.IGNORECASE)
-
-            if match:
-                code = str(match.group(1)).strip().upper()
-
-                if code.lower() in {"de", "do", "da", "produto", "produtos"}:
-                    continue
-
-                return code
-
-        return None
+        return ChatProductSearchIntentService.extract_search_group_code(
+            message,
+            normalized,
+        )
 
     @staticmethod
     def extract_search_limit(value: str) -> int:

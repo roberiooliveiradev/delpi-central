@@ -349,6 +349,37 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_product_search(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        description_override: str | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_product_search_intent_service import (
+            ChatProductSearchIntentService,
+        )
+
+        if not ChatProductSearchIntentService.looks_like_product_search(normalized):
+            return None
+
+        for route in OperationalRouteRegistryService.product_search_routes():
+            selected = self._try_vocabulary_route(
+                route,
+                message,
+                normalized,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+                description_override=description_override,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
     def select_system_metadata(
         self,
         message: str,
@@ -384,6 +415,7 @@ class ExternalActionOperationalRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         conversation_context: str | None = None,
+        description_override: str | None = None,
     ) -> dict | None:
         match_spec = route.get("match")
 
@@ -415,6 +447,7 @@ class ExternalActionOperationalRouteSelectionService:
             build_date_branch_parameters=build_date_branch_parameters,
             merge_date_parameters=merge_date_parameters,
             conversation_context=conversation_context,
+            description_override=description_override,
         )
 
     def _resolve_route_action(
@@ -431,6 +464,7 @@ class ExternalActionOperationalRouteSelectionService:
         merge_date_parameters: Callable[..., dict] | None = None,
         production_kind: ProductionOperationalIntentKind | None = None,
         conversation_context: str | None = None,
+        description_override: str | None = None,
     ) -> dict | None:
         route_spec = route.get("route")
 
@@ -483,6 +517,8 @@ class ExternalActionOperationalRouteSelectionService:
         )
 
         expected_method = str(route_spec.get("method") or "GET").upper()
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
 
         for action in candidates:
             if str(action.get("method") or "GET").upper() != expected_method:
@@ -540,20 +576,27 @@ class ExternalActionOperationalRouteSelectionService:
                 action,
                 message=message,
                 identifier=identifier,
+                normalized=normalized,
                 previous_messages=previous_messages,
                 build_date_branch_parameters=build_date_branch_parameters,
                 merge_date_parameters=merge_date_parameters,
                 production_kind=production_kind,
                 conversation_context=conversation_context,
+                description_override=description_override,
             )
 
             if parameters is None:
                 continue
 
-            presentation = route.get("presentation") or {}
-            reason_key = str(presentation.get("reasonKey") or route.get("id") or "").strip()
+            reason = self._resolve_presentation_reason(
+                route,
+                parameters,
+                message=message,
+                normalized=normalized,
+                description_override=description_override,
+            )
 
-            if not reason_key:
+            if not reason:
                 continue
 
             return {
@@ -562,13 +605,66 @@ class ExternalActionOperationalRouteSelectionService:
                     "actionId": action["actionId"],
                     "parameters": parameters,
                 },
-                "reason": ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    reason_key,
-                ),
+                "reason": reason,
             }
 
         return None
+
+    def _resolve_presentation_reason(
+        self,
+        route: dict,
+        parameters: dict,
+        *,
+        message: str,
+        normalized: str,
+        description_override: str | None = None,
+    ) -> str:
+        presentation = route.get("presentation") or {}
+        reason_format_key = str(presentation.get("reasonFormatKey") or "").strip()
+
+        if reason_format_key:
+            reason_format_param = str(presentation.get("reasonFormatParam") or "").strip()
+
+            if reason_format_param == "group_code":
+                group_code = parameters.get("group_code") or parameters.get("groupCode")
+
+                if group_code:
+                    return ExternalActionResponseContentService.format(
+                        "selectionReasons",
+                        reason_format_key,
+                        group_code=group_code,
+                    )
+            elif reason_format_param == "description_query":
+                from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+                    ExternalActionProductSearchRouteSelectionService,
+                )
+
+                description_query = (
+                    parameters.get("description")
+                    or parameters.get("query")
+                    or parameters.get("q")
+                    or description_override
+                    or ExternalActionProductSearchRouteSelectionService.extract_search_description(
+                        message
+                    )
+                )
+
+                if description_query:
+                    return ExternalActionResponseContentService.format(
+                        "selectionReasons",
+                        reason_format_key,
+                        description_query=description_query,
+                    )
+
+        reason_key = str(presentation.get("reasonKey") or route.get("id") or "").strip()
+
+        if not reason_key:
+            return ""
+
+        return ExternalActionResponseContentService.get(
+            "selectionReasons",
+            reason_key,
+        )
 
     def _build_parameters(
         self,
@@ -577,14 +673,37 @@ class ExternalActionOperationalRouteSelectionService:
         *,
         message: str,
         identifier: str | None,
+        normalized: str | None = None,
         previous_messages: list | None = None,
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         production_kind: ProductionOperationalIntentKind | None = None,
         conversation_context: str | None = None,
+        description_override: str | None = None,
     ) -> dict | None:
         parameters_spec = route.get("parameters") or {}
         strategy = str(parameters_spec.get("strategy") or "").strip()
+        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
+            message or ""
+        )
+
+        if strategy == "product_search":
+            from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+                ExternalActionProductSearchRouteSelectionService,
+            )
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if "search" not in path and "search" not in operation_id:
+                return None
+
+            return ExternalActionProductSearchRouteSelectionService.build_search_parameters(
+                message,
+                normalized_text,
+                action,
+                description_override=description_override,
+            )
 
         if strategy == "lmp":
             from app.domain.services.operational_route_matcher_service import (

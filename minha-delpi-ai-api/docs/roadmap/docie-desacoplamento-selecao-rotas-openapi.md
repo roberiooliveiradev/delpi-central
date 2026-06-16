@@ -500,7 +500,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 ### Fase 10 — Domínios restantes + DoD
 
 - [x] LMP no registry (`domainLmp` + `select_lmp` no motor operacional)
-- [ ] product search no registry
+- [x] product search no registry (`domainProductSearch` + strategy `product_search`)
 - [ ] Refinamentos (paginação/profundidade/métrica) com `routeSegment`
 - [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)

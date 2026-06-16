@@ -500,6 +500,36 @@ def test_operational_route_selection_lmp_detail_by_sale() -> None:
     assert selected["arguments"]["parameters"]["sale_number"] == "123456"
 
 
+def test_operational_route_selection_product_search_by_group() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "product-search",
+                "method": "GET",
+                "path": "/products/search",
+                "operationId": "search_products",
+                "parametersSchema": [
+                    {"name": "group_code", "in": "query"},
+                    {"name": "page"},
+                    {"name": "page_size"},
+                ],
+            }
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_product_search(
+        "buscar produtos do grupo ABC",
+        "buscar produtos do grupo abc",
+        allowed_action_ids=["product-search"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "product-search"
+    assert selected["arguments"]["parameters"]["group_code"] == "ABC"
+
+
 def test_operational_route_selection_by_route_segment_continuation() -> None:
     repository = _FakeRepository(
         [

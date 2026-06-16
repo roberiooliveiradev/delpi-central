@@ -342,6 +342,17 @@ class ExternalActionRouteSelectionService:
         if not candidates_loader:
             return None
 
+        selected = self._operational_route.select_product_search(
+            message,
+            normalized,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            description_override=description_override,
+        )
+
+        if selected:
+            return selected
+
         return self._product_search_route.select(
             message,
             normalized,

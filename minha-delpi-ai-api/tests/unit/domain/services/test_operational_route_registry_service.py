@@ -15,7 +15,7 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.10"
+    assert OperationalRouteRegistryService.version() == "2026.06.11"
     assert "vocabularyFastPaths" in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
@@ -144,3 +144,13 @@ def test_lmp_routes_loaded_from_registry() -> None:
 
     assert "engineeringLmpDetailBySale" in lmp_ids
     assert "engineeringLmpList" in lmp_ids
+
+
+def test_product_search_routes_loaded_from_registry() -> None:
+    search_ids = {
+        str(route.get("id") or "")
+        for route in OperationalRouteRegistryService.product_search_routes()
+    }
+
+    assert "productSearchByGroup" in search_ids
+    assert "productSearchByDescription" in search_ids

@@ -233,6 +233,27 @@ def _looks_like_production_eficiencia_fabril_question(normalized: str) -> bool:
     return any(term in normalized for term in fabril_terms)
 
 
+def _looks_like_product_search_question(normalized: str) -> bool:
+    from app.domain.services.chat_product_search_intent_service import (
+        ChatProductSearchIntentService,
+    )
+
+    return ChatProductSearchIntentService.looks_like_product_search(normalized)
+
+
+def _looks_like_product_search_with_group_code(normalized: str) -> bool:
+    from app.domain.services.chat_product_search_intent_service import (
+        ChatProductSearchIntentService,
+    )
+
+    if not ChatProductSearchIntentService.looks_like_product_search(normalized):
+        return False
+
+    return bool(
+        ChatProductSearchIntentService.extract_search_group_code(normalized, normalized)
+    )
+
+
 class OperationalRouteMatcherService:
     _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
         "directives": ChatProductQueryIntentService._looks_like_directives_question,
@@ -308,6 +329,8 @@ class OperationalRouteMatcherService:
         "lmpQuestion": _looks_like_lmp_question,
         "lmpHasSaleNumber": lambda normalized: bool(_extract_lmp_sale_number(normalized)),
         "lmpCatchAll": _looks_like_lmp_catch_all,
+        "productSearchQuestion": _looks_like_product_search_question,
+        "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,
