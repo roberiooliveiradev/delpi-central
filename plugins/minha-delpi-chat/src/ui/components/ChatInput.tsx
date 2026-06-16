@@ -1,12 +1,9 @@
 import {
-  ArrowUpRight,
   ArrowUp,
   Bot,
   Folder,
   Paperclip,
-  Plus,
   Trash2,
-  Upload,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -29,6 +26,7 @@ import type {
 import type { ChatPresentationFormatOption } from "../../state/hooks/useChatPresentationFormat";
 import { ChatPresentationFormatSelector } from "./ChatPresentationFormatSelector";
 import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
+import { ChatInputPlusMenu } from "./shared/composer/ChatInputPlusMenu";
 import { formatAttachmentSize } from "../chatAttachmentPreview";
 import type { ComposerAttachmentStatus } from "../chatAttachmentStatus";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
@@ -161,7 +159,6 @@ export function ChatInput({
     setInternalMenuOpen(open);
   }
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const plusMenuRef = useRef<HTMLDivElement | null>(null);
   const [mentionCursor, setMentionCursor] = useState(0);
   const [mentionIndex, setMentionIndex] = useState(0);
   const mentionCandidates = useMemo(
@@ -201,44 +198,6 @@ export function ChatInput({
     maxHeightCapPx: 184,
   });
 
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const closeMenu = () => setMenuOpen(false);
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
-
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (plusMenuRef.current?.contains(target)) {
-        return;
-      }
-
-      closeMenu();
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMenu();
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMenuOpen]);
-
-  const selectedAgentIdSet = new Set(selectedAgentIds);
-  const selectedProjectIdSet = new Set(selectedProjectIds);
   const hasContextBar = contextBarItems.length > 0;
   const hasAttachments = attachments.length > 0;
 
@@ -282,94 +241,18 @@ export function ChatInput({
   }
 
   const plusControl = (
-    <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
-      <button
-        type="button"
-        className="mdc-chat-input__plus"
-        onClick={() => setMenuOpen(!isMenuOpen)}
-        aria-label="Mais opções"
-        aria-expanded={isMenuOpen}
-      >
-        <Plus size={20} aria-hidden="true" />
-      </button>
-
-      {isMenuOpen ? (
-        <div className="mdc-chat-input__menu">
-          <div className="mdc-chat-input__menu-section">
-            <strong>Arquivos</strong>
-
-            <button
-              type="button"
-              data-tour="composer-attach"
-              onClick={() => {
-                fileInputRef.current?.click();
-                setMenuOpen(false);
-              }}
-            >
-              <Upload size={16} aria-hidden="true" />
-              <span>{workspaceFileComposerLabels().attachMenuLabel}</span>
-            </button>
-          </div>
-
-          <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
-            <strong>Contexto da conversa</strong>
-            <p className="mdc-chat-input__menu-hint">
-              Selecione até 2 agentes e 3 projetos — o menu permanece aberto para combinar.
-            </p>
-
-            {agents.map((agent) => (
-              <div key={agent.id} className="mdc-chat-input__agent-menu-row">
-                <button
-                  type="button"
-                  className={
-                    selectedAgentIdSet.has(agent.id)
-                      ? "mdc-chat-input__menu-item--active"
-                      : undefined
-                  }
-                  onClick={() => {
-                    onToggleAgent?.(agent.id);
-                  }}
-                >
-                  <Bot size={16} aria-hidden="true" />
-                  <span>{agent.name}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="mdc-chat-input__open-agent"
-                  onClick={() => {
-                    onOpenAgentPage?.(agent.id);
-                    setMenuOpen(false);
-                  }}
-                  title={`Abrir página de ${agent.name}`}
-                  aria-label={`Abrir página de ${agent.name}`}
-                >
-                  <ArrowUpRight size={15} aria-hidden="true" />
-                </button>
-              </div>
-            ))}
-
-            {projects.slice(0, 8).map((project) => (
-              <button
-                key={project.id}
-                type="button"
-                className={
-                  selectedProjectIdSet.has(project.id)
-                    ? "mdc-chat-input__menu-item--active"
-                    : undefined
-                }
-                onClick={() => {
-                  onToggleProject?.(project.id);
-                }}
-              >
-                <Folder size={16} aria-hidden="true" />
-                <span>{project.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <ChatInputPlusMenu
+      open={isMenuOpen}
+      onOpenChange={setMenuOpen}
+      agents={agents}
+      projects={projects}
+      selectedAgentIds={selectedAgentIds}
+      selectedProjectIds={selectedProjectIds}
+      onAttachClick={() => fileInputRef.current?.click()}
+      onToggleAgent={onToggleAgent}
+      onToggleProject={onToggleProject}
+      onOpenAgentPage={onOpenAgentPage}
+    />
   );
 
   const sendControl = isSending ? (

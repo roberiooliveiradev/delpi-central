@@ -1,5 +1,4 @@
 .mdc-chat-confirm {
-  width: min(100%, 28rem);
   color: var(--mdc-text);
   overflow: hidden;
 }

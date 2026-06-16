@@ -1,9 +1,9 @@
 .mdc-decision-card {
-  border: 1px solid var(--mdc-border-subtle, #e2e8f0);
+  border: 1px solid var(--mdc-border-subtle);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
-  background: var(--mdc-surface-elevated, #f8fafc);
+  background: var(--mdc-surface-elevated);
 }
 
 .mdc-decision-card__title {
@@ -38,23 +38,23 @@
 }
 
 .mdc-decision-card__verdict--ok .mdc-decision-card__status-pill {
-  background: #dcfce7;
-  color: #166534;
+  background: color-mix(in srgb, var(--mdc-success) 18%, transparent);
+  color: var(--mdc-success);
 }
 
 .mdc-decision-card__verdict--attention .mdc-decision-card__status-pill {
-  background: #fef3c7;
-  color: #92400e;
+  background: color-mix(in srgb, var(--mdc-warning) 20%, transparent);
+  color: color-mix(in srgb, var(--mdc-warning) 88%, var(--mdc-text));
 }
 
 .mdc-decision-card__verdict--critical .mdc-decision-card__status-pill {
-  background: #fee2e2;
-  color: #991b1b;
+  background: color-mix(in srgb, var(--mdc-danger) 16%, transparent);
+  color: var(--mdc-danger);
 }
 
 .mdc-decision-card__verdict--unknown .mdc-decision-card__status-pill {
-  background: #e2e8f0;
-  color: #334155;
+  background: color-mix(in srgb, var(--mdc-text-muted) 16%, transparent);
+  color: var(--mdc-text-muted);
 }
 
 .mdc-decision-card__block-title {
@@ -69,20 +69,20 @@
 }
 
 .mdc-decision-card__hypothesis-note {
-  color: var(--mdc-text-muted, #64748b);
+  color: var(--mdc-text-muted);
   font-size: 0.9em;
 }
 
 .mdc-decision-card__chip {
-  border: 1px solid var(--mdc-border-subtle, #cbd5e1);
+  border: 1px solid var(--mdc-border-subtle);
   border-radius: 999px;
-  background: #fff;
+  background: var(--mdc-card-bg);
   padding: 6px 12px;
   font-size: 0.875rem;
   cursor: pointer;
 }
 
 .mdc-decision-card__chip:hover {
-  border-color: var(--mdc-accent, #2563eb);
-  color: var(--mdc-accent, #2563eb);
+  border-color: var(--mdc-accent);
+  color: var(--mdc-accent);
 }

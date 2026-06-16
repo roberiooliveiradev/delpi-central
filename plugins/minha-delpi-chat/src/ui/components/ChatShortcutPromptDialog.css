@@ -1,12 +1,4 @@
-.mdc-chat-shortcut-prompt-backdrop {
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: transparent;
-}
-
 .mdc-chat-shortcut-prompt {
-  width: min(100%, 26rem);
   display: grid;
   gap: 0.85rem;
   padding: 1rem 1.1rem;

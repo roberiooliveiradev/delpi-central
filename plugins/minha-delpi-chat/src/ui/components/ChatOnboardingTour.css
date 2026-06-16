@@ -1,20 +1,29 @@
 .mdc-chat-tour-root {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: var(--mdc-overlay-z-scrim);
   pointer-events: none;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-tour-root {
+  position: absolute;
 }
 
 .mdc-chat-tour-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, #020617 55%, transparent);
+  z-index: var(--mdc-overlay-z-scrim);
+  background: var(--mdc-overlay-backdrop-contained, var(--mdc-overlay-backdrop));
   pointer-events: auto;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-tour-backdrop {
+  position: absolute;
 }
 
 .mdc-chat-tour-spotlight {
   position: fixed;
-  z-index: 201;
+  z-index: calc(var(--mdc-overlay-z-scrim) + 1);
   border-radius: var(--mdc-radius-lg, 12px);
   box-shadow:
     0 0 0 9999px color-mix(in srgb, #020617 58%, transparent),
@@ -26,6 +35,10 @@
     left 0.22s ease,
     width 0.22s ease,
     height 0.22s ease;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-tour-spotlight {
+  position: absolute;
 }
 
 .mdc-chat-tour-spotlight[data-pulse="true"] {
@@ -51,14 +64,14 @@
 
 .mdc-chat-tour-target--active {
   position: relative;
-  z-index: 202;
+  z-index: calc(var(--mdc-overlay-z-panel) + 1);
 }
 
 .mdc-chat-tour-follow-up-anchor {
   position: fixed;
   left: 50%;
   bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
-  z-index: 203;
+  z-index: calc(var(--mdc-overlay-z-panel) + 2);
   width: min(36rem, calc(100vw - 2rem));
   transform: translateX(-50%);
   pointer-events: auto;
@@ -66,14 +79,18 @@
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-lg, 12px);
   background: color-mix(in srgb, var(--mdc-card-bg) 98%, transparent);
-  box-shadow: var(--mdc-shadow-lg, 0 16px 40px color-mix(in srgb, #000 24%, transparent));
+  box-shadow: var(--mdc-shadow-lg, 0 16px 40px color-mix(in srgb, var(--mdc-text) 24%, transparent));
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-tour-follow-up-anchor {
+  position: absolute;
 }
 
 .mdc-chat-onboarding-tour {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
   bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 204;
+  z-index: calc(var(--mdc-overlay-z-panel) + 3);
   width: min(22rem, calc(100vw - 2rem));
   display: grid;
   gap: 0.55rem;
@@ -90,6 +107,10 @@
   right: auto;
   bottom: auto;
   max-width: min(22rem, calc(100vw - 1.5rem));
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-onboarding-tour {
+  position: absolute;
 }
 
 .mdc-chat-onboarding-tour--placement-above,

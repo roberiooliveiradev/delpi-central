@@ -93,8 +93,8 @@
 }
 
 .mdc-chat-attachment-card__action--danger:hover {
-  color: #c0392b;
-  background: color-mix(in srgb, #c0392b 12%, transparent);
+  color: var(--mdc-danger);
+  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
 }
 
 .mdc-chat-message-attachment-cards {

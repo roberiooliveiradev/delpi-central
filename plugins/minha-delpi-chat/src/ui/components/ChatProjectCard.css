@@ -103,55 +103,6 @@
   color: var(--mdc-primary);
 }
 
-.mdc-chat-project-card-menu__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 9990;
-  background: transparent;
-  pointer-events: auto;
-}
-
-.mdc-chat-project-card-menu__panel {
-  position: fixed;
-  z-index: 9991;
-  display: grid;
-  width: 14rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
-  box-shadow: var(--mdc-shadow-lg);
-  padding: 0.35rem;
-}
-
-.mdc-chat-project-card-menu__panel button {
-  display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.62rem;
-  width: 100%;
-  border: 0 !important;
-  border-radius: 0.62rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.86rem;
-  padding: 0.58rem 0.62rem;
-  text-align: left;
-}
-
-.mdc-chat-project-card-menu__panel button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
-}
-
-.mdc-chat-project-card-menu__danger {
-  color: var(--mdc-danger) !important;
-}
-
-.mdc-chat-project-card-menu__danger:hover {
-  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
-}
-
 @media (hover: none), (pointer: coarse) {
   .mdc-chat-project-card__options {
     opacity: 1;
@@ -163,9 +114,5 @@
   .mdc-chat-project-card__main {
     min-height: 2.35rem;
     padding-block: 0.35rem;
-  }
-
-  .mdc-chat-project-card-menu__panel {
-    width: min(14rem, calc(100vw - 2rem));
   }
 }

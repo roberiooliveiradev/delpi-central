@@ -1,0 +1,126 @@
+/* Seletor pill do composer — formato, modo de resposta, etc. */
+
+.mdc-composer-option-selector,
+.mdc-chat-response-mode {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mdc-composer-option-selector__trigger,
+.mdc-chat-response-mode__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: min(100%, 11.5rem);
+  height: var(--mdc-composer-control-h, 2.25rem);
+  min-height: var(--mdc-composer-control-h, 2.25rem);
+  padding: 0 0.65rem 0 0.5rem;
+  box-sizing: border-box;
+  border: 1px solid var(--mdc-border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
+  color: var(--mdc-title);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mdc-composer-option-selector__trigger:hover:not(:disabled),
+.mdc-chat-response-mode__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  background: var(--mdc-menu-item-hover);
+}
+
+.mdc-composer-option-selector__trigger:disabled,
+.mdc-chat-response-mode__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mdc-composer-option-selector__trigger svg,
+.mdc-chat-response-mode__trigger svg {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.mdc-composer-option-selector__trigger > span,
+.mdc-chat-response-mode__trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-composer-option-selector__option,
+.mdc-chat-response-mode__option {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.58rem 0.68rem;
+  border: 0;
+  border-radius: 0.72rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.mdc-composer-option-selector__option strong,
+.mdc-chat-response-mode__option strong {
+  font-size: 0.84rem;
+  color: var(--mdc-title);
+}
+
+.mdc-composer-option-selector__option small,
+.mdc-chat-response-mode__option small {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-composer-option-selector__option:hover,
+.mdc-composer-option-selector__option--active,
+.mdc-chat-response-mode__option:hover,
+.mdc-chat-response-mode__option--active {
+  background: var(--mdc-menu-item-active);
+}
+
+.mdc-composer-option-selector__option-label,
+.mdc-chat-response-mode__option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 480px) {
+  .mdc-composer-option-selector__trigger,
+  .mdc-chat-response-mode__trigger {
+    max-width: min(100%, 9.25rem);
+    font-size: 0.78rem;
+    padding-inline: 0.5rem 0.55rem;
+  }
+
+  .mdc-composer-option-selector__option,
+  .mdc-chat-response-mode__option {
+    padding: 0.52rem 0.6rem;
+  }
+
+  .mdc-composer-option-selector__option small,
+  .mdc-chat-response-mode__option small {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+}
+
+@media (max-width: 360px) {
+  .mdc-composer-option-selector__trigger,
+  .mdc-chat-response-mode__trigger {
+    max-width: min(100%, 7.5rem);
+  }
+}

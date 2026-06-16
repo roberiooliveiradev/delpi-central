@@ -9,10 +9,10 @@
   max-height: 14rem;
   overflow: auto;
   padding: 0.45rem;
-  border-radius: 1rem;
+  border-radius: var(--mdc-popover-radius, 1rem);
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 88%, var(--mdc-primary));
   background: color-mix(in srgb, var(--mdc-card-bg) 96%, transparent);
-  box-shadow: 0 18px 40px color-mix(in srgb, #000 28%, transparent);
+  box-shadow: var(--mdc-popover-shadow);
 }
 
 .mdc-chat-composer-mention-menu__hint,
@@ -50,7 +50,7 @@
 
 .mdc-chat-composer-mention-menu__item:hover,
 .mdc-chat-composer-mention-menu__item--active {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  background: var(--mdc-menu-item-hover);
   color: var(--mdc-primary);
 }
 

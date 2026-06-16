@@ -3,7 +3,6 @@
   z-index: 5;
 }
 
-/* Mesmo véu translúcido dos modais centrados (chat vê-se por trás). */
 .mdc-chat-conversation-menu__scrim {
   background: var(--mdc-overlay-backdrop);
 }
@@ -28,56 +27,7 @@
 }
 
 .mdc-chat-conversation-menu__panel {
-  display: grid;
   width: 14rem;
-  padding: 0.35rem;
-}
-
-.mdc-chat-conversation-menu__panel button {
-  display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.62rem;
-  width: 100%;
-  border: 0;
-  border-radius: 0.62rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.86rem;
-  padding: 0.58rem 0.62rem;
-  text-align: left;
-}
-
-.mdc-chat-conversation-menu__panel button svg {
-  justify-self: center;
-}
-
-.mdc-chat-conversation-menu__panel button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
-  color: var(--mdc-title);
-}
-
-.mdc-chat-conversation-menu__panel hr {
-  width: 100%;
-  height: 1px;
-  border: 0;
-  background: var(--mdc-card-border);
-  margin: 0.25rem 0;
-}
-
-.mdc-chat-conversation-menu__disabled {
-  cursor: not-allowed !important;
-  opacity: 0.48;
-}
-
-.mdc-chat-conversation-menu__danger {
-  color: var(--mdc-danger) !important;
-}
-
-.mdc-chat-conversation-menu__danger:hover {
-  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
 }
 
 /* Clean override: botão de opções sem borda, igual ChatGPT */

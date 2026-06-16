@@ -6,6 +6,7 @@
 
 @import "./ui/layout/chat-transitions.css";
 @import "./ui/layout/workspace-responsive.css";
+@import "./ui/styles/_theme-dark.css";
 
 :root {
   --mdc-font-family:
@@ -26,13 +27,14 @@
   --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
 
   --mdc-title: var(--secundary, #003866);
+  /* Escuro: _theme-dark.css redefine --mdc-title como --mdc-primary (marca). */
   --mdc-title-soft: color-mix(in srgb, var(--secundary, #003866) 84%, white);
-  --mdc-text: #111111;
-  --mdc-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --mdc-text: var(--text, rgba(17, 17, 17, 0.92));
+  --mdc-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
 
-  /* Corpo das respostas do assistente — preto no claro (não herda --text do portal). */
-  --mdc-chat-prose: #111111;
-  --mdc-chat-prose-muted: rgba(17, 17, 17, 0.72);
+  /* Corpo das respostas do assistente — herda texto do shell, não do portal cru. */
+  --mdc-chat-prose: var(--mdc-text);
+  --mdc-chat-prose-muted: var(--mdc-text-muted);
 
   --mdc-primary: var(--primary, #089bdb);
   --mdc-on-primary: var(--on-primary, #ffffff);
@@ -118,6 +120,25 @@
   --mdc-radius-lg: 18px;
   --mdc-radius-xl: 24px;
 
+  /* Popovers / menus flutuantes */
+  --mdc-popover-radius: 1rem;
+  --mdc-popover-shadow:
+    0 18px 48px color-mix(in srgb, var(--mdc-text) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mdc-card-border) 40%, transparent);
+  --mdc-popover-width-composer: 16.25rem;
+  --mdc-popover-width-composer-panel: 22rem;
+  --mdc-popover-width-action: 15rem;
+  --mdc-menu-item-hover: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  --mdc-menu-item-active: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  --mdc-primary-contrast: var(--mdc-on-primary);
+  --mdc-text-primary: var(--mdc-text);
+  --mdc-text-secondary: var(--mdc-text-muted);
+  --mdc-border-subtle: color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
+
+  /* Superfícies do shell — sidebar levemente elevada vs. coluna principal */
+  --mdc-sidebar-surface: var(--mdc-card-bg);
+  --mdc-main-surface: var(--mdc-bg-muted);
+
   --mdc-space-1: 4px;
   --mdc-space-2: 8px;
   --mdc-space-3: 12px;
@@ -150,130 +171,6 @@
 }
 
 /* =========================================
-   DARK MODE LOCAL DO PLUGIN
-========================================= */
-
-:root[data-theme="dark"] {
-  --mdc-on-primary: var(--on-primary, #ffffff);
-  --mdc-bg: var(--surface, #0f1115);
-  --mdc-bg-soft: var(--surface-2, #1b2030);
-  --mdc-bg-muted: var(--surface-3, #111521);
-
-  --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
-  --mdc-card-border: rgba(255, 255, 255, 0.1);
-  --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
-
-  --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
-  --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
-  --mdc-text: rgba(255, 255, 255, 0.88);
-  --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
-
-  --mdc-chat-prose: rgba(255, 255, 255, 0.88);
-  --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
-
-  --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
-  --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
-  --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
-  --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
-
-  --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
-  --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
-
-  --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
-  --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
-
-  --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
-  --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
-  --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
-
-  --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
-  --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
-  --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
-
-  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
-  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
-
-  --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
-  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
-  --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
-  --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
-
-  --mdc-chart-series-1: #38bdf8;
-  --mdc-chart-series-2: #2dd4bf;
-  --mdc-chart-series-3: #4ade80;
-  --mdc-chart-series-4: #fbbf24;
-  --mdc-chart-series-5: #f87171;
-  --mdc-chart-series-6: #a78bfa;
-  --mdc-chart-series-7: #60a5fa;
-  --mdc-chart-series-8: #86efac;
-  --mdc-chart-series-9: #fb7185;
-  --mdc-chart-series-10: #93c5fd;
-}
-
-/* =========================================
-   DARK MODE AUTOMÁTICO
-========================================= */
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --mdc-on-primary: var(--on-primary, #ffffff);
-    --mdc-bg: var(--surface, #0f1115);
-    --mdc-bg-soft: var(--surface-2, #1b2030);
-    --mdc-bg-muted: var(--surface-3, #111521);
-
-    --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
-    --mdc-card-border: rgba(255, 255, 255, 0.1);
-    --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
-
-    --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
-    --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
-    --mdc-text: rgba(255, 255, 255, 0.88);
-    --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
-
-    --mdc-chat-prose: rgba(255, 255, 255, 0.88);
-    --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
-
-    --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
-    --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
-    --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
-    --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
-
-    --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
-    --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
-
-    --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
-    --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
-
-    --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
-    --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
-    --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
-
-    --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
-    --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
-    --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
-
-    --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
-    --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
-
-    --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
-    --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
-    --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
-    --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
-
-    --mdc-chart-series-1: #38bdf8;
-    --mdc-chart-series-2: #2dd4bf;
-    --mdc-chart-series-3: #4ade80;
-    --mdc-chart-series-4: #fbbf24;
-    --mdc-chart-series-5: #f87171;
-    --mdc-chart-series-6: #a78bfa;
-    --mdc-chart-series-7: #60a5fa;
-    --mdc-chart-series-8: #86efac;
-    --mdc-chart-series-9: #fb7185;
-    --mdc-chart-series-10: #93c5fd;
-  }
-}
-
-/* =========================================
    ESCOPO DO PLUGIN
    Não estilizar body/html/#root globalmente.
 ========================================= */
@@ -291,16 +188,6 @@
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-:root[data-theme="dark"] .minha-delpi-chat {
-  color-scheme: dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .minha-delpi-chat {
-    color-scheme: dark;
-  }
 }
 
 .minha-delpi-chat button,

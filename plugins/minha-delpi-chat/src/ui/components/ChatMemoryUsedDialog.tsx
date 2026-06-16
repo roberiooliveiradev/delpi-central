@@ -1,7 +1,6 @@
 import { useId } from "react";
 
-import { ModalPortal } from "./ModalPortal";
-import "./chat-modal-surface.css";
+import { ChatModal } from "./shared/modal/ChatModal";
 import "./ChatMemoryUsedDialog.css";
 
 export type MemoryUsageView = {
@@ -27,7 +26,7 @@ type ChatMemoryUsedDialogProps = {
 export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDialogProps) {
   const titleId = useId();
 
-  if (!open || !usage) {
+  if (!usage) {
     return null;
   }
 
@@ -42,115 +41,105 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
     Boolean(usage.writeGated);
 
   return (
-    <ModalPortal>
-      <div
-        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-memory-used-backdrop"
-        role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) {
-            onClose();
-          }
-        }}
-      >
-        <section
-          className="mdc-chat-overlay-panel mdc-chat-memory-used"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-        >
-          <header className="mdc-chat-memory-used__header">
-            <h2 id={titleId} className="mdc-chat-memory-used__title">
-              Memória usada nesta conversa
-            </h2>
-            <button type="button" className="mdc-chat-memory-used__close" onClick={onClose}>
-              Fechar
-            </button>
-          </header>
+    <ChatModal
+      open={open}
+      onClose={onClose}
+      size="md"
+      ariaLabelledBy={titleId}
+      panelClassName="mdc-chat-memory-used"
+      backdropClassName="mdc-chat-memory-used-backdrop"
+    >
+      <header className="mdc-chat-memory-used__header">
+        <h2 id={titleId} className="mdc-chat-memory-used__title">
+          Memória usada nesta conversa
+        </h2>
+        <button type="button" className="mdc-chat-memory-used__close" onClick={onClose}>
+          Fechar
+        </button>
+      </header>
 
-          <div className="mdc-chat-memory-used__body">
-            {usage.topic ? (
-              <p>
-                <strong>Assunto:</strong> {usage.topic}
-              </p>
-            ) : null}
-            {usage.task ? (
-              <p>
-                <strong>Tarefa:</strong> {usage.task}
-              </p>
-            ) : null}
+      <div className="mdc-chat-memory-used__body">
+        {usage.topic ? (
+          <p>
+            <strong>Assunto:</strong> {usage.topic}
+          </p>
+        ) : null}
+        {usage.task ? (
+          <p>
+            <strong>Tarefa:</strong> {usage.task}
+          </p>
+        ) : null}
 
-            {(usage.preferences?.length ?? 0) > 0 ? (
-              <section>
-                <h3>Preferências</h3>
-                <ul>
-                  {usage.preferences?.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+        {(usage.preferences?.length ?? 0) > 0 ? (
+          <section>
+            <h3>Preferências</h3>
+            <ul>
+              {usage.preferences?.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
-            {(usage.resolvedReferences?.length ?? 0) > 0 ? (
-              <section>
-                <h3>Referências</h3>
-                <ul>
-                  {usage.resolvedReferences?.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+        {(usage.resolvedReferences?.length ?? 0) > 0 ? (
+          <section>
+            <h3>Referências</h3>
+            <ul>
+              {usage.resolvedReferences?.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
-            {(usage.semanticHits?.length ?? 0) > 0 ? (
-              <section>
-                <h3>Documentação / playbooks</h3>
-                <ul>
-                  {usage.semanticHits?.map((hit) => (
-                    <li key={hit.title}>
-                      <strong>{hit.title}</strong>
-                      {hit.snippet ? ` — ${hit.snippet}` : null}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+        {(usage.semanticHits?.length ?? 0) > 0 ? (
+          <section>
+            <h3>Documentação / playbooks</h3>
+            <ul>
+              {usage.semanticHits?.map((hit) => (
+                <li key={hit.title}>
+                  <strong>{hit.title}</strong>
+                  {hit.snippet ? ` — ${hit.snippet}` : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
-            {(usage.userContextItems?.length ?? 0) > 0 ? (
-              <section>
-                <h3>Contexto desta conversa</h3>
-                <ul>
-                  {usage.userContextItems?.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+        {(usage.userContextItems?.length ?? 0) > 0 ? (
+          <section>
+            <h3>Contexto desta conversa</h3>
+            <ul>
+              {usage.userContextItems?.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
-            {(usage.episodicCount ?? 0) > 0 || usage.episodicRecall ? (
-              <section>
-                <h3>Episódios</h3>
-                {usage.episodicRecall ? <p>{usage.episodicRecall}</p> : null}
-                {(usage.episodicCount ?? 0) > 0 ? (
-                  <p>{usage.episodicCount} episódio(s) guardado(s) nesta sessão.</p>
-                ) : null}
-              </section>
+        {(usage.episodicCount ?? 0) > 0 || usage.episodicRecall ? (
+          <section>
+            <h3>Episódios</h3>
+            {usage.episodicRecall ? <p>{usage.episodicRecall}</p> : null}
+            {(usage.episodicCount ?? 0) > 0 ? (
+              <p>{usage.episodicCount} episódio(s) guardado(s) nesta sessão.</p>
             ) : null}
+          </section>
+        ) : null}
 
-            {usage.writeGated ? (
-              <p className="mdc-chat-memory-used__note">
-                Gravação de memória pausada neste turno (conteúdo sensível ou pedido do usuário).
-              </p>
-            ) : null}
+        {usage.writeGated ? (
+          <p className="mdc-chat-memory-used__note">
+            Gravação de memória pausada neste turno (conteúdo sensível ou pedido do usuário).
+          </p>
+        ) : null}
 
-            {!hasRichContent ? (
-              <p className="mdc-chat-memory-used__empty">
-                Nenhum contexto persistente além da mensagem atual. Use «+» na barra de contexto
-                para fixar produto, filial ou texto livre.
-              </p>
-            ) : null}
-          </div>
-        </section>
+        {!hasRichContent ? (
+          <p className="mdc-chat-memory-used__empty">
+            Nenhum contexto persistente além da mensagem atual. Use «+» na barra de contexto
+            para fixar produto, filial ou texto livre.
+          </p>
+        ) : null}
       </div>
-    </ModalPortal>
+    </ChatModal>
   );
 }

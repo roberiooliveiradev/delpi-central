@@ -9,9 +9,8 @@ import {
   resolveStarterQueryForFeature,
   type StarterInvokeContext,
 } from "../chatShortcutPrompt";
-import { ModalPortal } from "./ModalPortal";
+import { ChatModal } from "./shared/modal/ChatModal";
 
-import "./chat-modal-surface.css";
 import "./ChatHelpPanel.css";
 
 type ChatHelpPanelProps = {
@@ -137,10 +136,6 @@ export function ChatHelpPanel({
     ];
   }, [catalog]);
 
-  if (!open) {
-    return null;
-  }
-
   const profileHint =
     catalog?.userContext && !catalog.userContext.canUseTools
       ? "Seu perfil não inclui uso de consultas ERP (tools). "
@@ -153,139 +148,134 @@ export function ChatHelpPanel({
       : `${profileHint}Sem agente — algumas consultas pedem escolher um agente.`;
 
   return (
-    <ModalPortal>
-      <div
-        className="mdc-chat-overlay-scrim mdc-chat-help-backdrop"
-        onClick={onClose}
-      >
-        <aside
-          className="mdc-chat-overlay-panel mdc-chat-help-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="mdc-chat-help-title"
-          onClick={(event) => event.stopPropagation()}
+    <ChatModal
+      open={open}
+      onClose={onClose}
+      size="none"
+      scrimLayout="drawer-end"
+      ariaLabelledBy="mdc-chat-help-title"
+      panelClassName="mdc-chat-help-panel"
+      backdropClassName="mdc-chat-help-backdrop"
+    >
+      <header className="mdc-chat-help-panel__header">
+        <div>
+          <h2 id="mdc-chat-help-title" className="mdc-chat-help-panel__title">
+            <CircleHelp size={18} aria-hidden="true" />
+            <span>Ajuda do chat</span>
+          </h2>
+          <p>{agentHint}</p>
+        </div>
+        <button
+          type="button"
+          className="mdc-chat-help-panel__close"
+          aria-label="Fechar ajuda"
+          onClick={onClose}
         >
-          <header className="mdc-chat-help-panel__header">
-            <div>
-              <h2 id="mdc-chat-help-title" className="mdc-chat-help-panel__title">
-                <CircleHelp size={18} aria-hidden="true" />
-                <span>Ajuda do chat</span>
-              </h2>
-              <p>{agentHint}</p>
-            </div>
-            <button
-              type="button"
-              className="mdc-chat-help-panel__close"
-              aria-label="Fechar ajuda"
-              onClick={onClose}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </header>
+          <X size={18} aria-hidden="true" />
+        </button>
+      </header>
 
-          <div className="mdc-chat-help-panel__search">
-            <div className="mdc-chat-help-panel__search-wrap">
-              <Search size={16} aria-hidden="true" />
-              <input
-                type="search"
-                value={searchQuery}
-                placeholder="Buscar funcionalidade (ex.: estoque, gráfico)"
-                aria-label="Buscar na ajuda"
-                onChange={(event) => onSearchQueryChange(event.target.value)}
-              />
-            </div>
-          </div>
+      <div className="mdc-chat-help-panel__search">
+        <div className="mdc-chat-help-panel__search-wrap">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            placeholder="Buscar funcionalidade (ex.: estoque, gráfico)"
+            aria-label="Buscar na ajuda"
+            onChange={(event) => onSearchQueryChange(event.target.value)}
+          />
+        </div>
+      </div>
 
-          {onStartTour ? (
-            <div className="mdc-chat-help-panel__tour">
-              <button type="button" className="mdc-chat-help-panel__tour-link" onClick={onStartTour}>
-                Ver tour rápido do chat
+      {onStartTour ? (
+        <div className="mdc-chat-help-panel__tour">
+          <button type="button" className="mdc-chat-help-panel__tour-link" onClick={onStartTour}>
+            Ver tour rápido do chat
+          </button>
+        </div>
+      ) : null}
+
+      <div className="mdc-chat-help-panel__body">
+        {catalog?.contextualHighlights?.length && !searchQuery.trim() ? (
+          <section className="mdc-chat-help-panel__highlights" aria-label="Novidades">
+            <h3 className="mdc-chat-help-panel__section-title">
+              Novidades
+              {catalog.releaseVersion ? ` · ${catalog.releaseVersion}` : ""}
+            </h3>
+            {catalog.contextualHighlights.map((highlight) => (
+              <article key={highlight.featureId ?? highlight.title} className="mdc-chat-help-panel__highlight-card">
+                <h4>{highlight.title}</h4>
+                {highlight.description ? <p>{highlight.description}</p> : null}
+                {resolveStarterQueryForFeature(highlight.exampleQuery, {
+                  featureId: highlight.featureId,
+                }) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const query = resolveStarterQueryForFeature(highlight.exampleQuery, {
+                        featureId: highlight.featureId,
+                      });
+
+                      if (query) {
+                        onTryPrompt(query, { featureId: highlight.featureId });
+                      }
+                    }}
+                  >
+                    Experimentar
+                  </button>
+                ) : null}
+              </article>
+            ))}
+          </section>
+        ) : null}
+
+        {catalog?.quickPrompts?.length ? (
+          <div className="mdc-chat-help-panel__quick">
+            {catalog.quickPrompts.map((prompt) => (
+              <button
+                key={prompt.id}
+                type="button"
+                onClick={() =>
+                  onTryPrompt(prompt.query, { starterId: prompt.id ?? undefined })
+                }
+              >
+                {prompt.label}
               </button>
-            </div>
-          ) : null}
+            ))}
+          </div>
+        ) : null}
 
-          <div className="mdc-chat-help-panel__body">
-            {catalog?.contextualHighlights?.length && !searchQuery.trim() ? (
-              <section className="mdc-chat-help-panel__highlights" aria-label="Novidades">
-                <h3 className="mdc-chat-help-panel__section-title">
-                  Novidades
-                  {catalog.releaseVersion ? ` · ${catalog.releaseVersion}` : ""}
-                </h3>
-                {catalog.contextualHighlights.map((highlight) => (
-                  <article key={highlight.featureId ?? highlight.title} className="mdc-chat-help-panel__highlight-card">
-                    <h4>{highlight.title}</h4>
-                    {highlight.description ? <p>{highlight.description}</p> : null}
-                    {resolveStarterQueryForFeature(highlight.exampleQuery, {
-                      featureId: highlight.featureId,
-                    }) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const query = resolveStarterQueryForFeature(highlight.exampleQuery, {
-                            featureId: highlight.featureId,
-                          });
+        {loading ? (
+          <p className="mdc-chat-help-panel__status">Carregando catálogo…</p>
+        ) : null}
 
-                          if (query) {
-                            onTryPrompt(query, { featureId: highlight.featureId });
-                          }
-                        }}
-                      >
-                        Experimentar
-                      </button>
-                    ) : null}
-                  </article>
+        {error ? (
+          <p className="mdc-chat-help-panel__status mdc-chat-help-panel__status--error">
+            {error}
+          </p>
+        ) : null}
+
+        {!loading && !error
+          ? sections.map((section) => (
+              <section key={section.id}>
+                <h3 className="mdc-chat-help-panel__section-title">{section.label}</h3>
+                {section.features.map((feature) => (
+                  <FeatureCard
+                    key={feature.id}
+                    feature={feature}
+                    catalog={catalog}
+                    onTryPrompt={onTryPrompt}
+                  />
                 ))}
               </section>
-            ) : null}
+            ))
+          : null}
 
-            {catalog?.quickPrompts?.length ? (
-              <div className="mdc-chat-help-panel__quick">
-                {catalog.quickPrompts.map((prompt) => (
-                  <button
-                    key={prompt.id}
-                    type="button"
-                    onClick={() =>
-                      onTryPrompt(prompt.query, { starterId: prompt.id ?? undefined })
-                    }
-                  >
-                    {prompt.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            {loading ? (
-              <p className="mdc-chat-help-panel__status">Carregando catálogo…</p>
-            ) : null}
-
-            {error ? (
-              <p className="mdc-chat-help-panel__status mdc-chat-help-panel__status--error">
-                {error}
-              </p>
-            ) : null}
-
-            {!loading && !error
-              ? sections.map((section) => (
-                  <section key={section.id}>
-                    <h3 className="mdc-chat-help-panel__section-title">{section.label}</h3>
-                    {section.features.map((feature) => (
-                      <FeatureCard
-                        key={feature.id}
-                        feature={feature}
-                        catalog={catalog}
-                        onTryPrompt={onTryPrompt}
-                      />
-                    ))}
-                  </section>
-                ))
-              : null}
-
-            {catalog?.releaseNotesPreview && !searchQuery.trim() ? (
-              <div className="mdc-chat-help-panel__release">{catalog.releaseNotesPreview}</div>
-            ) : null}
-          </div>
-        </aside>
+        {catalog?.releaseNotesPreview && !searchQuery.trim() ? (
+          <div className="mdc-chat-help-panel__release">{catalog.releaseNotesPreview}</div>
+        ) : null}
       </div>
-    </ModalPortal>
+    </ChatModal>
   );
 }

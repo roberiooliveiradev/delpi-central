@@ -13,7 +13,7 @@
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.35;
-  color: var(--mdc-text-secondary, #5f6368);
+  color: var(--mdc-text-secondary);
 }
 
 .mdc-ingest-progress--compact .mdc-ingest-progress__label {
@@ -27,28 +27,28 @@
   border-radius: 999px;
   overflow: hidden;
   appearance: none;
-  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-border) 55%, transparent);
 }
 
 .mdc-ingest-progress__bar::-webkit-progress-bar {
-  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-border) 55%, transparent);
   border-radius: 999px;
 }
 
 .mdc-ingest-progress__bar::-webkit-progress-value {
-  background: var(--mdc-primary, #1a73e8);
+  background: var(--mdc-primary);
   border-radius: 999px;
   transition: width 0.2s ease;
 }
 
 .mdc-ingest-progress__bar::-moz-progress-bar {
-  background: var(--mdc-primary, #1a73e8);
+  background: var(--mdc-primary);
   border-radius: 999px;
 }
 
 .mdc-ingest-progress__bar--indeterminate {
   position: relative;
-  background: color-mix(in srgb, var(--mdc-border, #dadce0) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-border) 55%, transparent);
 }
 
 .mdc-ingest-progress__bar--indeterminate::after {
@@ -59,7 +59,7 @@
   width: 35%;
   height: 100%;
   border-radius: 999px;
-  background: var(--mdc-primary, #1a73e8);
+  background: var(--mdc-primary);
   animation: mdc-ingest-progress-slide 1.2s ease-in-out infinite;
 }
 

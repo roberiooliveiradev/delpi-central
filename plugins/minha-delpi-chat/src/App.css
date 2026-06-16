@@ -11,8 +11,16 @@
   padding: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--mdc-primary) 8%, transparent), transparent 32rem),
-    var(--mdc-bg);
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--mdc-primary) 6%, transparent),
+      transparent 28rem
+    ),
+    var(--mdc-main-surface, var(--mdc-bg));
+}
+
+.mdc-chat-view-host {
+  background: var(--mdc-main-surface, var(--mdc-bg));
 }
 
 .mdc-chat-eyebrow {

@@ -1,5 +1,4 @@
 .mdc-chat-prompt {
-  width: min(100%, 28rem);
   display: grid;
   gap: 0;
   overflow: hidden;

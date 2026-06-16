@@ -15,6 +15,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | API | [minha-delpi-ai-api/docs/api/README.md](../../../minha-delpi-ai-api/docs/api/README.md) |
 | Backend README | [minha-delpi-ai-api/README.md](../../../minha-delpi-ai-api/README.md) |
 | Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |
+| **Refatoração frontend (plugin)** | [plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) |
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |

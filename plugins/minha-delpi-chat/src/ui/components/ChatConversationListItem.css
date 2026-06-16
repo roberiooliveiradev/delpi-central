@@ -93,10 +93,15 @@
 }
 
 .mdc-chat-conversation-item__content strong {
-  color: var(--mdc-primary);
+  color: var(--mdc-text);
   font-size: 0.78rem;
   font-weight: 820;
   line-height: 1.14;
+}
+
+.mdc-chat-conversation-item--active .mdc-chat-conversation-item__content strong,
+.mdc-chat-conversation-item:hover .mdc-chat-conversation-item__content strong {
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-conversation-item__content small {
@@ -108,10 +113,17 @@
 
 /* Conversas dentro de projetos usam exatamente o mesmo visual das conversas comuns */
 .mdc-chat-conversation-item--project .mdc-chat-conversation-item__content strong {
-  color: var(--mdc-primary);
+  color: var(--mdc-text);
   font-size: 0.78rem;
   font-weight: 820;
   line-height: 1.14;
+}
+
+.mdc-chat-conversation-item--project.mdc-chat-conversation-item--active
+  .mdc-chat-conversation-item__content
+  strong,
+.mdc-chat-conversation-item--project:hover .mdc-chat-conversation-item__content strong {
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-conversation-item--project .mdc-chat-conversation-item__content small {

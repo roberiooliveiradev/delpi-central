@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 import type { AssistantOnboardingTourStep } from "../../data/api/chatTypes";
@@ -15,6 +14,11 @@ import {
   type TourTooltipLayout,
 } from "../chatTourTooltipPosition";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
+import { ModalPortal } from "./ModalPortal";
+import {
+  isOverlayPortalContained,
+  resolveOverlayPortalContainer,
+} from "./modalPortalTarget";
 
 import "./ChatOnboardingTour.css";
 
@@ -25,9 +29,33 @@ function readViewportSize(): { width: number; height: number } {
     return { width: 1280, height: 800 };
   }
 
+  const container = resolveOverlayPortalContainer();
+
+  if (isOverlayPortalContained(container)) {
+    return {
+      width: container.clientWidth,
+      height: container.clientHeight,
+    };
+  }
+
   return {
     width: window.visualViewport?.width ?? window.innerWidth,
     height: window.visualViewport?.height ?? window.innerHeight,
+  };
+}
+
+function spotlightFromElementRect(rect: DOMRect, padding: number): SpotlightRect {
+  const container = resolveOverlayPortalContainer();
+  const contained = isOverlayPortalContained(container);
+  const containerRect = contained ? container.getBoundingClientRect() : null;
+  const offsetTop = containerRect?.top ?? 0;
+  const offsetLeft = containerRect?.left ?? 0;
+
+  return {
+    top: Math.max(0, rect.top - offsetTop - padding),
+    left: Math.max(0, rect.left - offsetLeft - padding),
+    width: rect.width + padding * 2,
+    height: rect.height + padding * 2,
   };
 }
 
@@ -243,12 +271,7 @@ export function ChatOnboardingTour({
       const rect = element.getBoundingClientRect();
       const padding = 8;
 
-      const nextSpotlight: SpotlightRect = {
-        top: Math.max(0, rect.top - padding),
-        left: Math.max(0, rect.left - padding),
-        width: rect.width + padding * 2,
-        height: rect.height + padding * 2,
-      };
+      const nextSpotlight = spotlightFromElementRect(rect, padding);
 
       setSpotlight((current) =>
         spotlightRectsEqual(current, nextSpotlight) ? current : nextSpotlight,
@@ -421,5 +444,5 @@ export function ChatOnboardingTour({
     </div>
   );
 
-  return createPortal(overlay, document.body);
+  return <ModalPortal lockScroll>{overlay}</ModalPortal>;
 }

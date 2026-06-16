@@ -275,8 +275,11 @@ plugins/minha-delpi-chat/src/
 | Segmentos visuais | `assistantContentSegments.ts`, `renderPlanSegmentBuilder.ts` |
 | Ativação de agente | `chatAgentActivation.ts` |
 | Log de atividade SSE | `streamingActivityLog.ts`, `ChatStreamingActivityPanel` |
+| Overlays/menus composer | `shared/overlay/AnchoredMenuPortal`, `shared/composer/ComposerOptionSelector` |
 
 Doc apresentação: [`chat-assistant-content-presentation.md`](../../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md).
+
+**Refatoração frontend (componentes compartilhados, CSS, tokens):** [`frontend-refactor-roadmap.md`](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md).
 
 ### 6.4 Painel administrativo
 
@@ -505,6 +508,7 @@ Perfis dev/prod documentados: [`chat-intelligence-settings-profiles.md`](../../.
 | [roadmap inteligência](../../../minha-delpi-ai-api/docs/roadmap/README.md) | Ondas 1–14 |
 | [admin roadmap](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) | Painel admin (concluído) |
 | [agentes roadmap](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) | Gestão de agentes |
+| [frontend refactor roadmap](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Componentes shared, CSS, tokens, modais |
 
 ### Testes e homologação
 

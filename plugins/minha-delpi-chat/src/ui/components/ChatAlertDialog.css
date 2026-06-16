@@ -1,5 +1,4 @@
 .mdc-chat-alert-dialog {
-  width: min(100%, 24rem);
   display: grid;
   gap: var(--mdc-space-3);
   padding: var(--mdc-space-5);

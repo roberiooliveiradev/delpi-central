@@ -1,0 +1,145 @@
+/* =========================================
+   MINHA DELPI CHAT — TEMA ESCURO
+   Dois seletores são necessários:
+   - data-theme="dark" (escolha explícita)
+   - prefers-color-scheme quando data-theme ≠ light
+
+   Sem @layer: regras em camada perdem para :root em index.css (unlayered).
+   Títulos no escuro = --mdc-primary (mesmo tom da marca «Minha DELPI»).
+========================================= */
+
+:root[data-theme="dark"] {
+  --mdc-on-primary: var(--on-primary, #ffffff);
+  --mdc-bg: var(--surface, #0f1115);
+  --mdc-bg-soft: var(--surface-2, #1b2030);
+  --mdc-bg-muted: var(--surface-3, #111521);
+
+  --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --mdc-card-border: rgba(255, 255, 255, 0.1);
+  --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
+
+  --mdc-title: var(--mdc-primary);
+  --mdc-title-soft: color-mix(in srgb, var(--mdc-primary) 82%, white);
+  --mdc-secondary: var(--mdc-primary);
+  --mdc-text: rgba(255, 255, 255, 0.88);
+  --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+  --mdc-chat-prose: rgba(255, 255, 255, 0.88);
+  --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
+
+  --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
+  --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
+  --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
+  --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
+
+  --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+  --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
+
+  --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
+  --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
+
+  --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
+  --mdc-badge-text: var(--mdc-primary);
+  --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+
+  --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+  --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
+  --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+
+  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+
+  --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
+  --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
+  --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+
+  --mdc-chart-series-1: #38bdf8;
+  --mdc-chart-series-2: #2dd4bf;
+  --mdc-chart-series-3: #4ade80;
+  --mdc-chart-series-4: #fbbf24;
+  --mdc-chart-series-5: #f87171;
+  --mdc-chart-series-6: #a78bfa;
+  --mdc-chart-series-7: #60a5fa;
+  --mdc-chart-series-8: #86efac;
+  --mdc-chart-series-9: #fb7185;
+  --mdc-chart-series-10: #93c5fd;
+
+  --mdc-surface-elevated: var(--mdc-bg-soft);
+  --mdc-sidebar-surface: var(--mdc-bg-soft);
+  --mdc-main-surface: var(--mdc-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mdc-on-primary: var(--on-primary, #ffffff);
+    --mdc-bg: var(--surface, #0f1115);
+    --mdc-bg-soft: var(--surface-2, #1b2030);
+    --mdc-bg-muted: var(--surface-3, #111521);
+
+    --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+    --mdc-card-border: rgba(255, 255, 255, 0.1);
+    --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
+
+    --mdc-title: var(--mdc-primary);
+    --mdc-title-soft: color-mix(in srgb, var(--mdc-primary) 82%, white);
+    --mdc-secondary: var(--mdc-primary);
+    --mdc-text: rgba(255, 255, 255, 0.88);
+    --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+    --mdc-chat-prose: rgba(255, 255, 255, 0.88);
+    --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
+
+    --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
+    --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
+    --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
+    --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
+
+    --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+    --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
+
+    --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
+    --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
+
+    --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
+    --mdc-badge-text: var(--mdc-primary);
+    --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+
+    --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+    --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
+    --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+
+    --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
+    --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+
+    --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+    --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
+    --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
+    --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+
+    --mdc-chart-series-1: #38bdf8;
+    --mdc-chart-series-2: #2dd4bf;
+    --mdc-chart-series-3: #4ade80;
+    --mdc-chart-series-4: #fbbf24;
+    --mdc-chart-series-5: #f87171;
+    --mdc-chart-series-6: #a78bfa;
+    --mdc-chart-series-7: #60a5fa;
+    --mdc-chart-series-8: #86efac;
+    --mdc-chart-series-9: #fb7185;
+    --mdc-chart-series-10: #93c5fd;
+
+    --mdc-surface-elevated: var(--mdc-bg-soft);
+    --mdc-sidebar-surface: var(--mdc-bg-soft);
+    --mdc-main-surface: var(--mdc-bg);
+  }
+}
+
+:root[data-theme="dark"] .minha-delpi-chat {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .minha-delpi-chat {
+    color-scheme: dark;
+  }
+}

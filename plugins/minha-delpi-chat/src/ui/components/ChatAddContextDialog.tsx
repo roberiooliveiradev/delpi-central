@@ -8,9 +8,8 @@ import {
   workspaceFileContextIngestLabels,
 } from "../../content/workspaceFileIngestContent";
 import { WorkspaceFileDropzone } from "./workspace-files/WorkspaceFileDropzone";
+import { ChatModal } from "./shared/modal/ChatModal";
 
-import { ModalPortal } from "./ModalPortal";
-import "./chat-modal-surface.css";
 import "./ChatAddContextDialog.css";
 import "./workspace-files/workspaceFileIngest.css";
 
@@ -66,10 +65,6 @@ export function ChatAddContextDialog({
     setPendingPickId(null);
   }, [open]);
 
-  if (!open) {
-    return null;
-  }
-
   async function ingestFiles(files: FileList | File[]) {
     const list = Array.from(files);
 
@@ -120,124 +115,114 @@ export function ChatAddContextDialog({
   }
 
   return (
-    <ModalPortal>
-      <div
-        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-add-context-backdrop"
-        role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) {
-            onCancel();
-          }
-        }}
-      >
-        <section
-          className="mdc-chat-overlay-panel mdc-chat-add-context"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`${formId}-title`}
-        >
-          <header className="mdc-chat-add-context__header">
-            <h2 id={`${formId}-title`}>Adicionar ao contexto</h2>
-            <p>
-              Cole texto, tabela ou arquivo — ou escolha uma pergunta ou resposta da conversa. O
-              sistema classifica e usa nas próximas respostas.
-            </p>
-          </header>
+    <ChatModal
+      open={open}
+      onClose={onCancel}
+      size="lg"
+      ariaLabelledBy={`${formId}-title`}
+      panelClassName="mdc-chat-add-context"
+      backdropClassName="mdc-chat-add-context-backdrop"
+    >
+      <header className="mdc-chat-add-context__header">
+        <h2 id={`${formId}-title`}>Adicionar ao contexto</h2>
+        <p>
+          Cole texto, tabela ou arquivo — ou escolha uma pergunta ou resposta da conversa. O
+          sistema classifica e usa nas próximas respostas.
+        </p>
+      </header>
 
-          <form id={formId} className="mdc-chat-add-context__form" onSubmit={handleSubmit}>
-            {recentConversation.length > 0 ? (
-              <div className="mdc-chat-add-context__conversation">
-                <span className="mdc-chat-add-context__conversation-label">Da conversa</span>
-                <ul className="mdc-chat-add-context__conversation-list">
-                  {recentConversation.map((pick) => (
-                    <li key={`${pick.role}:${pick.id}`}>
-                      <button
-                        type="button"
-                        className="mdc-chat-add-context__conversation-item"
-                        disabled={pendingPickId !== null}
-                        onClick={() => {
-                          if (pendingPickId) {
-                            return;
-                          }
+      <form id={formId} className="mdc-chat-add-context__form" onSubmit={handleSubmit}>
+        {recentConversation.length > 0 ? (
+          <div className="mdc-chat-add-context__conversation">
+            <span className="mdc-chat-add-context__conversation-label">Da conversa</span>
+            <ul className="mdc-chat-add-context__conversation-list">
+              {recentConversation.map((pick) => (
+                <li key={`${pick.role}:${pick.id}`}>
+                  <button
+                    type="button"
+                    className="mdc-chat-add-context__conversation-item"
+                    disabled={pendingPickId !== null}
+                    onClick={() => {
+                      if (pendingPickId) {
+                        return;
+                      }
 
-                          setPendingPickId(pick.id);
-                          onConfirm({
-                            content: pick.content,
-                            role: pick.role,
-                            messageId: pick.id,
-                            kind: pick.role === "assistant" ? "answer" : "question",
-                          });
-                        }}
-                      >
-                        <span
-                          className={`mdc-chat-add-context__conversation-role mdc-chat-add-context__conversation-role--${pick.role}`}
-                        >
-                          {pick.role === "assistant" ? "Resposta" : "Pergunta"}
-                        </span>
-                        <span className="mdc-chat-add-context__conversation-preview">
-                          {pick.preview}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <label className="mdc-chat-add-context__field">
-              <span>Conteúdo</span>
-              <textarea
-                value={content}
-                rows={7}
-                maxLength={MAX_CHARS}
-                placeholder={
-                  "Ex.: produto 10080001, filial 01\n" +
-                  "Ou cole uma tabela, regras, e-mail, SQL, resumo de reunião…"
-                }
-                autoFocus
-                onChange={(event) => {
-                  setContent(event.target.value);
-                  setError(null);
-                }}
-              />
-            </label>
+                      setPendingPickId(pick.id);
+                      onConfirm({
+                        content: pick.content,
+                        role: pick.role,
+                        messageId: pick.id,
+                        kind: pick.role === "assistant" ? "answer" : "question",
+                      });
+                    }}
+                  >
+                    <span
+                      className={`mdc-chat-add-context__conversation-role mdc-chat-add-context__conversation-role--${pick.role}`}
+                    >
+                      {pick.role === "assistant" ? "Resposta" : "Pergunta"}
+                    </span>
+                    <span className="mdc-chat-add-context__conversation-preview">
+                      {pick.preview}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <label className="mdc-chat-add-context__field">
+          <span>Conteúdo</span>
+          <textarea
+            value={content}
+            rows={7}
+            maxLength={MAX_CHARS}
+            placeholder={
+              "Ex.: produto 10080001, filial 01\n" +
+              "Ou cole uma tabela, regras, e-mail, SQL, resumo de reunião…"
+            }
+            autoFocus
+            onChange={(event) => {
+              setContent(event.target.value);
+              setError(null);
+            }}
+          />
+        </label>
 
-            {filename ? (
-              <p className="mdc-chat-add-context__file-hint">
-                <FileText size={14} aria-hidden /> {filename}
-              </p>
-            ) : null}
+        {filename ? (
+          <p className="mdc-chat-add-context__file-hint">
+            <FileText size={14} aria-hidden /> {filename}
+          </p>
+        ) : null}
 
-            <WorkspaceFileDropzone
-              compact
-              disabled={isReadingFile}
-              isBusy={isReadingFile}
-              isDragActive={isDragActive}
-              contentVariant="context"
-              ingestFamily="context_paste"
-              getAccessToken={getAccessToken}
-              onDragActiveChange={setIsDragActive}
-              onFilesSelected={(files) => {
-                void ingestFiles(files);
-              }}
-            />
+        <WorkspaceFileDropzone
+          compact
+          disabled={isReadingFile}
+          isBusy={isReadingFile}
+          isDragActive={isDragActive}
+          contentVariant="context"
+          ingestFamily="context_paste"
+          getAccessToken={getAccessToken}
+          onDragActiveChange={setIsDragActive}
+          onFilesSelected={(files) => {
+            void ingestFiles(files);
+          }}
+        />
 
-            {error ? <p className="mdc-chat-add-context__error">{error}</p> : null}
+        {error ? <p className="mdc-chat-add-context__error">{error}</p> : null}
 
-            <footer className="mdc-chat-add-context__actions">
-              <button type="button" className="mdc-chat-add-context__secondary" onClick={onCancel}>
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="mdc-chat-add-context__primary"
-                disabled={isReadingFile}
-              >
-                Adicionar
-              </button>
-            </footer>
-          </form>
-        </section>
-      </div>
-    </ModalPortal>
+        <footer className="mdc-chat-add-context__actions">
+          <button type="button" className="mdc-chat-add-context__secondary" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="mdc-chat-add-context__primary"
+            disabled={isReadingFile}
+          >
+            Adicionar
+          </button>
+        </footer>
+      </form>
+    </ChatModal>
   );
 }

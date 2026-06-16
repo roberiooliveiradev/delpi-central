@@ -7,7 +7,7 @@ import {
   validateShortcutValues,
 } from "../chatShortcutPrompt";
 
-import { ModalPortal } from "./ModalPortal";
+import { ChatModal } from "./shared/modal/ChatModal";
 import "./ChatShortcutPromptDialog.css";
 
 type ChatShortcutPromptDialogProps = {
@@ -51,10 +51,6 @@ export function ChatShortcutPromptDialog({
     return filled || template;
   }, [template, values]);
 
-  if (!open) {
-    return null;
-  }
-
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -76,78 +72,68 @@ export function ChatShortcutPromptDialog({
   }
 
   return (
-    <ModalPortal>
-      <div
-        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-shortcut-prompt-backdrop"
-        role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) {
-            onCancel();
-          }
-        }}
-      >
-        <section
-          className="mdc-chat-overlay-panel mdc-chat-shortcut-prompt"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`${formId}-title`}
-        >
-          <header className="mdc-chat-shortcut-prompt__header">
-            <h2 id={`${formId}-title`}>{title}</h2>
-            <p>{description}</p>
-          </header>
+    <ChatModal
+      open={open}
+      onClose={onCancel}
+      size="md"
+      ariaLabelledBy={`${formId}-title`}
+      panelClassName="mdc-chat-shortcut-prompt"
+      backdropClassName="mdc-chat-shortcut-prompt-backdrop"
+    >
+      <header className="mdc-chat-shortcut-prompt__header">
+        <h2 id={`${formId}-title`}>{title}</h2>
+        <p>{description}</p>
+      </header>
 
-          <form id={formId} className="mdc-chat-shortcut-prompt__form" onSubmit={handleSubmit}>
-            {fields.map((field) => (
-              <label key={field.id} className="mdc-chat-shortcut-prompt__field">
-                <span>{field.label}</span>
-                <input
-                  type="text"
-                  inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
-                  autoComplete="off"
-                  autoFocus={fields[0]?.id === field.id}
-                  placeholder={field.placeholder}
-                  value={values[field.id] ?? ""}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setValues((current) => ({ ...current, [field.id]: next }));
-                    setErrors((current) => {
-                      if (!current[field.id]) {
-                        return current;
-                      }
+      <form id={formId} className="mdc-chat-shortcut-prompt__form" onSubmit={handleSubmit}>
+        {fields.map((field) => (
+          <label key={field.id} className="mdc-chat-shortcut-prompt__field">
+            <span>{field.label}</span>
+            <input
+              type="text"
+              inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
+              autoComplete="off"
+              autoFocus={fields[0]?.id === field.id}
+              placeholder={field.placeholder}
+              value={values[field.id] ?? ""}
+              onChange={(event) => {
+                const next = event.target.value;
+                setValues((current) => ({ ...current, [field.id]: next }));
+                setErrors((current) => {
+                  if (!current[field.id]) {
+                    return current;
+                  }
 
-                      const copy = { ...current };
-                      delete copy[field.id];
-                      return copy;
-                    });
-                  }}
-                />
-                {errors[field.id] ? (
-                  <small className="mdc-chat-shortcut-prompt__error">{errors[field.id]}</small>
-                ) : null}
-              </label>
-            ))}
-
-            {errors._form ? (
-              <p className="mdc-chat-shortcut-prompt__error">{errors._form}</p>
+                  const copy = { ...current };
+                  delete copy[field.id];
+                  return copy;
+                });
+              }}
+            />
+            {errors[field.id] ? (
+              <small className="mdc-chat-shortcut-prompt__error">{errors[field.id]}</small>
             ) : null}
+          </label>
+        ))}
 
-            <p className="mdc-chat-shortcut-prompt__preview">
-              <span>Prévia</span>
-              <em>{preview}</em>
-            </p>
+        {errors._form ? (
+          <p className="mdc-chat-shortcut-prompt__error">{errors._form}</p>
+        ) : null}
 
-            <div className="mdc-chat-shortcut-prompt__actions">
-              <button type="button" className="mdc-chat-shortcut-prompt__cancel" onClick={onCancel}>
-                Cancelar
-              </button>
-              <button type="submit" className="mdc-chat-shortcut-prompt__confirm">
-                {confirmLabel}
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </ModalPortal>
+        <p className="mdc-chat-shortcut-prompt__preview">
+          <span>Prévia</span>
+          <em>{preview}</em>
+        </p>
+
+        <div className="mdc-chat-shortcut-prompt__actions">
+          <button type="button" className="mdc-chat-shortcut-prompt__cancel" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button type="submit" className="mdc-chat-shortcut-prompt__confirm">
+            {confirmLabel}
+          </button>
+        </div>
+      </form>
+    </ChatModal>
   );
 }

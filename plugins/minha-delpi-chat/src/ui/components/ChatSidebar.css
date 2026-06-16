@@ -9,7 +9,7 @@
   max-height: 100dvh;
   min-height: 0;
   border-right: 1px solid color-mix(in srgb, var(--mdc-card-border) 72%, transparent);
-  background: var(--mdc-card-bg);
+  background: var(--mdc-sidebar-surface, var(--mdc-card-bg));
   color: var(--mdc-text);
   overflow-y: auto;
   overflow-x: hidden;

@@ -120,7 +120,7 @@
   height: 2.45rem;
   border-radius: 0.62rem;
   overflow: hidden;
-  color: #fff;
+  color: var(--mdc-on-primary);
 }
 
 .mdc-workspace-file-card--row .mdc-workspace-file-card__icon {
@@ -130,17 +130,29 @@
 }
 
 .mdc-workspace-file-card__icon--brand {
-  background: linear-gradient(145deg, #4f8df7 0%, #3b6fe8 100%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-primary) 82%, white) 0%,
+    var(--mdc-primary) 100%
+  );
 }
 
 .mdc-workspace-file-card__icon--pdf,
 .mdc-workspace-file-card__icon--pending,
 .mdc-workspace-file-card__icon--error {
-  background: linear-gradient(145deg, #f06a5b 0%, #e24d3f 100%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-danger) 78%, white) 0%,
+    var(--mdc-danger) 100%
+  );
 }
 
 .mdc-workspace-file-card__icon--image {
-  background: linear-gradient(145deg, #46b97b 0%, #2f9d63 100%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-success) 78%, white) 0%,
+    var(--mdc-success) 100%
+  );
 }
 
 .mdc-workspace-file-card__icon-spinner {
@@ -188,7 +200,7 @@
 }
 
 .mdc-workspace-file-card__subtitle--error {
-  color: color-mix(in srgb, #f07178 88%, var(--mdc-text-muted));
+  color: color-mix(in srgb, var(--mdc-danger) 88%, var(--mdc-text-muted));
 }
 
 .mdc-workspace-file-card__details {
@@ -213,11 +225,11 @@
 }
 
 .mdc-workspace-file-card__detail--success {
-  color: color-mix(in srgb, #3ecf8e 70%, var(--mdc-text-muted));
+  color: color-mix(in srgb, var(--mdc-success) 70%, var(--mdc-text-muted));
 }
 
 .mdc-workspace-file-card__detail--error {
-  color: color-mix(in srgb, #f07178 82%, var(--mdc-text-muted));
+  color: color-mix(in srgb, var(--mdc-danger) 82%, var(--mdc-text-muted));
 }
 
 .mdc-workspace-file-card__actions {
@@ -259,8 +271,8 @@
 }
 
 .mdc-workspace-file-card__action--danger:hover {
-  color: #e57373;
-  background: color-mix(in srgb, #e57373 14%, transparent);
+  color: color-mix(in srgb, var(--mdc-danger) 88%, white);
+  background: color-mix(in srgb, var(--mdc-danger) 14%, transparent);
 }
 
 .mdc-workspace-file-card--chip {

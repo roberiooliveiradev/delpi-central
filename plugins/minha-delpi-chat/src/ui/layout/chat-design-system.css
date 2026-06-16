@@ -137,7 +137,7 @@
   display: block;
   max-width: 34rem;
   margin-inline: auto;
-  color: var(--mdc-primary);
+  color: var(--mdc-title-soft);
   font-size: clamp(1.2rem, 2.4vw, 1.55rem);
   font-weight: 750;
   letter-spacing: -0.02em;

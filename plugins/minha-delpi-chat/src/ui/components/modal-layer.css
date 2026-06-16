@@ -64,6 +64,7 @@
 .mdc-chat-overlay-portal .mdc-chat-agents-modal,
 .mdc-chat-overlay-portal .mdc-chat-project-settings,
 .mdc-chat-overlay-portal .mdc-chat-shortcut-prompt,
+.mdc-chat-overlay-portal .mdc-chat-help-panel,
 .mdc-modal-portal .mdc-chat-project-create-modal,
 .mdc-modal-portal .mdc-chat-confirm,
 .mdc-modal-portal .mdc-chat-archived-dialog,
@@ -72,7 +73,8 @@
 .mdc-modal-portal .mdc-chat-projects-modal,
 .mdc-modal-portal .mdc-chat-agents-modal,
 .mdc-modal-portal .mdc-chat-project-settings,
-.mdc-modal-portal .mdc-chat-shortcut-prompt {
+.mdc-modal-portal .mdc-chat-shortcut-prompt,
+.mdc-modal-portal .mdc-chat-help-panel {
   z-index: var(--mdc-overlay-z-panel);
 }
 

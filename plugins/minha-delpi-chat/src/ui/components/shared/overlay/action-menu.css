@@ -1,0 +1,53 @@
+/* Itens de menu de ação — ícone + rótulo (sidebar, cards, conversas). */
+
+.mdc-action-menu__panel {
+  padding: 0.35rem;
+}
+
+.mdc-action-menu__item {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.62rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0.62rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  padding: 0.58rem 0.62rem;
+  text-align: left;
+}
+
+.mdc-action-menu__item svg {
+  justify-self: center;
+}
+
+.mdc-action-menu__item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+  color: var(--mdc-title);
+}
+
+.mdc-action-menu__item:disabled,
+.mdc-action-menu__item--disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.mdc-action-menu__item--danger {
+  color: var(--mdc-danger) !important;
+}
+
+.mdc-action-menu__item--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
+}
+
+.mdc-action-menu__divider {
+  width: 100%;
+  height: 1px;
+  border: 0;
+  background: var(--mdc-card-border);
+  margin: 0.25rem 0;
+}

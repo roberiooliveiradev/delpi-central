@@ -1,0 +1,42 @@
+/* Shell compartilhado de modais centrados. Conteúdo específico via panelClassName (ex.: mdc-chat-confirm). */
+
+.mdc-chat-modal {
+  color: var(--mdc-text);
+  box-sizing: border-box;
+}
+
+.mdc-chat-modal--sm {
+  width: min(100%, 24rem);
+}
+
+.mdc-chat-modal--md {
+  width: min(100%, 28rem);
+}
+
+.mdc-chat-modal--lg {
+  width: min(100%, 36rem);
+}
+
+.mdc-chat-overlay-scrim--drawer-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim--drawer-end {
+  padding: 0;
+}
+
+.mdc-chat-modal__backdrop {
+  /* Alias genérico — substitui *-backdrop específicos aos poucos. */
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-modal--sm,
+  .mdc-chat-modal--md,
+  .mdc-chat-modal--lg {
+    width: min(100%, calc(100vw - 1.5rem));
+  }
+}

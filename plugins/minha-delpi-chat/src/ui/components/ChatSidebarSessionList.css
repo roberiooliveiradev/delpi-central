@@ -21,7 +21,7 @@
   z-index: 1;
   margin: 0.18rem 0 0.08rem;
   padding: 0.3rem 0.18rem 0.2rem;
-  background: var(--mdc-card-bg);
+  background: var(--mdc-sidebar-surface, var(--mdc-card-bg));
   color: var(--mdc-text-muted);
   font-size: 0.64rem;
   font-weight: 900;

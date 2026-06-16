@@ -21,13 +21,13 @@
 }
 
 .mdc-admin-overview-card:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 45%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--mdc-primary, #2563eb) 10%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--mdc-primary) 10%, transparent);
 }
 
 .mdc-admin-overview-card__label {
   font-size: 0.82rem;
-  color: var(--mdc-text-muted, #5c6578);
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-overview-card__value {
@@ -44,6 +44,6 @@
 .mdc-admin-overview-tab__quick-links button {
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid var(--mdc-border, #d8dee8);
+  border: 1px solid var(--mdc-border);
   background: transparent;
 }

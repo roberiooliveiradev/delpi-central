@@ -1,10 +1,4 @@
-.mdc-chat-archived-backdrop {
-  display: grid;
-  place-items: center;
-}
-
 .mdc-chat-archived-dialog {
-  width: min(100%, 38rem);
   max-height: 82vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);

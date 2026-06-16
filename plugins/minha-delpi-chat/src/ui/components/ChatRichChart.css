@@ -74,8 +74,8 @@
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    #93c5fd 0%,
-    #1d4ed8 100%
+    color-mix(in srgb, var(--mdc-chart-series-7) 45%, var(--mdc-card-bg)) 0%,
+    var(--mdc-chart-series-7) 100%
   );
 }
 
@@ -84,7 +84,7 @@
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--mdc-border) 70%, transparent);
-  background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-accent, #2563eb) 8%);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-accent) 8%);
   font-size: 0.85rem;
   line-height: 1.45;
   color: var(--mdc-body);
@@ -136,7 +136,7 @@
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px dashed color-mix(in srgb, var(--mdc-border) 80%, transparent);
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-accent, #2563eb) 6%);
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-accent) 6%);
   font-size: 0.82rem;
   line-height: 1.4;
   color: var(--mdc-body);
@@ -160,7 +160,7 @@
   border: none;
   background: none;
   padding: 0;
-  color: var(--mdc-accent, #2563eb);
+  color: var(--mdc-accent);
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
@@ -195,9 +195,9 @@
 .mdc-rich-presentation__coverage-notice {
   margin: 0 0 0.65rem;
   padding: 0.55rem 0.75rem;
-  border: 1px solid color-mix(in srgb, #d97706 35%, var(--mdc-card-border));
+  border: 1px solid color-mix(in srgb, var(--mdc-warning) 35%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-sm);
-  background: color-mix(in srgb, #d97706 10%, var(--mdc-card-bg));
+  background: color-mix(in srgb, var(--mdc-warning) 10%, var(--mdc-card-bg));
   color: var(--mdc-text);
   font-size: 0.78rem;
   line-height: 1.45;
@@ -206,7 +206,7 @@
 .mdc-rich-presentation__coverage-notice::before {
   content: "Parcial · ";
   font-weight: 700;
-  color: #b45309;
+  color: color-mix(in srgb, var(--mdc-warning) 92%, var(--mdc-text));
 }
 
 .mdc-rich-presentation__navigation {

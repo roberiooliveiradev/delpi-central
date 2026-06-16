@@ -1,0 +1,108 @@
+/* Painel flutuante compartilhado — popovers, menus ancorados e dropdowns. */
+
+.mdc-menu-popover {
+  display: grid;
+  gap: 0.15rem;
+  min-width: var(--mdc-popover-width-action, 15rem);
+  padding: 0.4rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-popover-radius, 1rem);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-popover-shadow);
+  box-sizing: border-box;
+}
+
+.mdc-menu-popover--portal {
+  position: fixed;
+  z-index: var(--mdc-overlay-z-panel, 9991);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.mdc-menu-popover--portal.mdc-menu-popover--contained {
+  position: absolute;
+}
+
+.mdc-menu-popover--contained.mdc-menu-popover--composer,
+.mdc-menu-popover--contained.mdc-menu-popover--composer-panel,
+.mdc-menu-popover--contained.mdc-menu-popover--action {
+  width: min(var(--mdc-popover-width-composer, 16.25rem), calc(100% - 1rem));
+  max-width: calc(100% - 1rem);
+}
+
+.mdc-menu-popover--contained.mdc-menu-popover--composer-panel {
+  width: min(var(--mdc-popover-width-composer-panel, 22rem), calc(100% - 1rem));
+}
+
+.mdc-menu-popover--contained.mdc-menu-popover--action {
+  width: min(var(--mdc-popover-width-action, 15rem), calc(100% - 1rem));
+}
+
+.mdc-menu-popover--composer {
+  width: min(
+    var(--mdc-popover-width-composer, 16.25rem),
+    calc(
+      100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    )
+  );
+  max-width: calc(100vw - 1rem);
+}
+
+.mdc-menu-popover--composer-panel {
+  width: min(
+    var(--mdc-popover-width-composer-panel, 22rem),
+    calc(
+      100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    )
+  );
+  max-width: calc(100vw - 1rem);
+}
+
+.mdc-menu-popover--action {
+  width: min(
+    var(--mdc-popover-width-action, 15rem),
+    calc(
+      100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    )
+  );
+}
+
+.mdc-menu-popover__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mdc-overlay-z-scrim, 9990);
+  background: transparent;
+  pointer-events: auto;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-menu-popover__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.mdc-menu-popover__scrim--backdrop {
+  background: var(--mdc-overlay-backdrop);
+}
+
+@media (max-width: 480px) {
+  .mdc-menu-popover--composer {
+    width: min(
+      15rem,
+      calc(
+        100vw - 0.75rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+      )
+    );
+  }
+
+  .mdc-menu-popover--composer-panel {
+    width: min(
+      20rem,
+      calc(
+        100vw - 0.75rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+      )
+    );
+  }
+}

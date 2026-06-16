@@ -5,11 +5,12 @@ import {
   Settings,
   Trash2,
 } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useRef, useState } from "react";
 
 import type { ChatProject } from "../../data/api/chatTypes";
 import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
+import { AnchoredMenuPortal } from "./shared/overlay/AnchoredMenuPortal";
+import { ActionMenuPanel } from "./shared/menus/ActionMenuPanel";
 
 import "./ChatProjectCard.css";
 
@@ -23,14 +24,6 @@ type ChatProjectCardProps = {
   onDelete?: () => void;
 };
 
-type MenuPosition = {
-  top: number;
-  left: number;
-};
-
-const MENU_WIDTH = 224;
-const MENU_MARGIN = 8;
-
 export function ChatProjectCard({
   project,
   active,
@@ -42,110 +35,28 @@ export function ChatProjectCard({
 }: ChatProjectCardProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [position, setPosition] = useState<MenuPosition>({ top: 0, left: 0 });
 
-  function updatePosition() {
-    const trigger = triggerRef.current;
-
-    if (!trigger) {
-      return;
-    }
-
-    const rect = trigger.getBoundingClientRect();
-    const preferredLeft = rect.right + MENU_MARGIN;
-    const fallbackLeft = rect.left - MENU_WIDTH - MENU_MARGIN;
-
-    const left =
-      preferredLeft + MENU_WIDTH <= window.innerWidth - MENU_MARGIN
-        ? preferredLeft
-        : Math.max(MENU_MARGIN, fallbackLeft);
-
-    setPosition({
-      top: Math.max(MENU_MARGIN, rect.top),
-      left,
-    });
-  }
-
-  useLayoutEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    updatePosition();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    }
-
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMenuOpen]);
-
-  const menu = isMenuOpen ? (
-    <>
-      <div
-        className="mdc-chat-project-card-menu__scrim"
-        role="presentation"
-        onMouseDown={() => setIsMenuOpen(false)}
-      />
-
-      <div
-        className="mdc-chat-project-card-menu__panel"
-        role="menu"
-        style={{ top: position.top, left: position.left }}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          role="menuitem"
-          onClick={(event) => {
-            event.stopPropagation();
-            setIsMenuOpen(false);
-            onRename?.();
-          }}
-        >
-          <Pencil size={17} aria-hidden="true" />
-          <span>Renomear</span>
-        </button>
-
-        <button
-          type="button"
-          role="menuitem"
-          onClick={(event) => {
-            event.stopPropagation();
-            setIsMenuOpen(false);
-            onOpenSettings?.();
-          }}
-        >
-          <Settings size={17} aria-hidden="true" />
-          <span>Configurações</span>
-        </button>
-
-        <button
-          type="button"
-          role="menuitem"
-          className="mdc-chat-project-card-menu__danger"
-          onClick={(event) => {
-            event.stopPropagation();
-            setIsMenuOpen(false);
-            onDelete?.();
-          }}
-        >
-          <Trash2 size={17} aria-hidden="true" />
-          <span>Excluir projeto</span>
-        </button>
-      </div>
-    </>
-  ) : null;
+  const menuItems = [
+    {
+      id: "rename",
+      label: "Renomear",
+      icon: <Pencil size={17} aria-hidden="true" />,
+      onSelect: () => onRename?.(),
+    },
+    {
+      id: "settings",
+      label: "Configurações",
+      icon: <Settings size={17} aria-hidden="true" />,
+      onSelect: () => onOpenSettings?.(),
+    },
+    {
+      id: "delete",
+      label: "Excluir projeto",
+      icon: <Trash2 size={17} aria-hidden="true" />,
+      variant: "danger" as const,
+      onSelect: () => onDelete?.(),
+    },
+  ];
 
   return (
     <div
@@ -203,14 +114,23 @@ export function ChatProjectCard({
         title="Opções"
         onClick={(event) => {
           event.stopPropagation();
-          updatePosition();
           setIsMenuOpen((current) => !current);
         }}
       >
         <MoreHorizontal size={16} aria-hidden="true" />
       </button>
 
-      {menu ? createPortal(menu, document.body) : null}
+      <AnchoredMenuPortal
+        open={isMenuOpen}
+        triggerRef={triggerRef}
+        itemCount={menuItems.length}
+        placement="action-menu"
+        menuLabel="Opções do projeto"
+        menuRole="menu"
+        onClose={() => setIsMenuOpen(false)}
+      >
+        <ActionMenuPanel items={menuItems} onItemSelect={() => setIsMenuOpen(false)} />
+      </AnchoredMenuPortal>
     </div>
   );
 }
