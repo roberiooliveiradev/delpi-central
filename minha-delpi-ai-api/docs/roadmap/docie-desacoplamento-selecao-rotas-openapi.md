@@ -495,7 +495,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 - [x] NF genérica sem direção entrada/saída → registry (`productInvoicesGeneric` + `genericInvoiceRoute`)
 - [ ] Conflitos playbook restantes → `noneOf` / prioridade registry
-- [ ] Deletar `ExternalActionProductRouteRankingService` + wrapper `ExternalActionProductRouteSelectionService`
+- [x] Deletar `ExternalActionProductRouteRankingService`; wrapper usa `select_product_with_code`
 
 ### Fase 10 — Domínios restantes + DoD
 
@@ -505,7 +505,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [ ] SQL fast path com `fallbackPolicy: sql_until_rest` no registry
 - [x] `has_actionable_product_route_intent` derivado do registry (`actionableProductPredicates`)
 - [ ] Lint CI: termos só em JSON
-- [ ] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths`
+- [x] Atualizar `inteligencia-chat-onda-8.md`; remover chave vazia `vocabularyFastPaths` (fase renomeada `operationalRoutes`)
 
 ---
 

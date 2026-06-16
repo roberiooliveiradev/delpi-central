@@ -58,7 +58,7 @@ def test_select_product_prefers_stock_route_for_stock_intent():
     assert selected["arguments"]["actionId"] == "stock-action"
 
 
-def test_select_vocabulary_fast_path_directives_via_route_selection():
+def test_select_operational_registry_directives_via_route_selection():
     repository = _FakeRepository(
         [
             {
@@ -81,7 +81,7 @@ def test_select_vocabulary_fast_path_directives_via_route_selection():
     )
     route_selection = ExternalActionRouteSelectionService(repository)
 
-    selected = route_selection.select_vocabulary_fast_path(
+    selected = route_selection.select_operational_registry(
         "Diretivas 90260882",
         "diretivas 90260882",
         allowed_action_ids=["directives-action", "analyser-action"],

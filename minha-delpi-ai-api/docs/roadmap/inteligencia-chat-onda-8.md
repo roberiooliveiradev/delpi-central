@@ -1,7 +1,8 @@
 # Inteligência do chat — Onda 8
 
-**Status:** concluída (maio/2026)  
-**Pré-requisitos:** [Onda 7](./inteligencia-chat-onda-7.md)
+**Status:** concluída (maio/2026) — scoring Python de `_rank_product_actions` **substituído** por DOCIE (`operational_route_registry.json` + `ExternalActionOperationalRouteSelectionService`, jun/2026).  
+**Pré-requisitos:** [Onda 7](./inteligencia-chat-onda-7.md)  
+**Evolução:** [DOCIE — desacoplamento seleção rotas OpenAPI](./docie-desacoplamento-selecao-rotas-openapi.md)
 
 ## Objetivo
 

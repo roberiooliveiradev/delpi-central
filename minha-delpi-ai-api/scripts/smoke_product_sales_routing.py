@@ -206,10 +206,10 @@ def main() -> int:
     if selected_id:
         print(f"OK API: selectedExternalAction={selected_id}")
 
-    if not ExternalActionSelectionService._is_product_sales_summary_path(
+    if not ExternalActionProductRouteCatalogService.is_product_sales_summary_path(
         f"/products/{_PRODUCT_CODE}/sales"
     ):
-        print("FAIL unit: helper _is_product_sales_summary_path", file=sys.stderr)
+        print("FAIL unit: helper is_product_sales_summary_path", file=sys.stderr)
         return 1
 
     print("Smoke vendas produto: todas as verificações passaram.")

@@ -524,9 +524,9 @@ Motor canônico para fast paths operacionais:
 | `ExternalActionOperationalRouteSelectionService` | Motor registry — produto, PB15, suprimentos KPI, dashboards produção (v2026.06.8+) |
 | `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
 | `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
-| `ExternalActionProductRouteRankingService` | Desempate ambíguo pós-registry (NF genérica, conflitos playbook) |
+| `ExternalActionOperationalRouteSelectionService.select_product_with_code` | Rotas de produto com código via registry (substitui ranking legado) |
 
-Ordem no dispatch: refinamentos de sessão → **registry** (`select_vocabulary_fast_path` / `select_by_intent`) → ranking FULL legado → semântico genérico.
+Ordem no dispatch: refinamentos de sessão → **registry** (`select_operational_registry` / `select_by_intent` / `select_product_with_code`) → semântico genérico.
 
 Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
 

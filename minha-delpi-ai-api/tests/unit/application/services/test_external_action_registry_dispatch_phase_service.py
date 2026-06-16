@@ -52,16 +52,16 @@ def test_dispatch_order_matches_registry() -> None:
     assert OperationalRouteRegistryService.dispatch_order() == [
         "sessionRefinement",
         "productionOperational",
-        "vocabularyFastPaths",
+        "operationalRoutes",
         "domainRoutes",
         "intentBoundRoutes",
         "semanticFallback",
     ]
 
 
-def test_vocabulary_phase_runs_before_domain_routes() -> None:
+def test_operational_routes_phase_runs_before_domain_routes() -> None:
     route_selection = MagicMock()
-    route_selection.select_vocabulary_fast_path.return_value = {
+    route_selection.select_operational_registry.return_value = {
         "name": "execute_external_action",
         "arguments": {"actionId": "guide", "parameters": {}},
     }
@@ -75,13 +75,13 @@ def test_vocabulary_phase_runs_before_domain_routes() -> None:
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "guide"
-    route_selection.select_vocabulary_fast_path.assert_called_once()
+    route_selection.select_operational_registry.assert_called_once()
     route_selection.select_department_kpi.assert_not_called()
 
 
-def test_domain_routes_run_when_vocabulary_misses() -> None:
+def test_domain_routes_run_when_operational_routes_miss() -> None:
     route_selection = MagicMock()
-    route_selection.select_vocabulary_fast_path.return_value = None
+    route_selection.select_operational_registry.return_value = None
     route_selection.select_department_kpi.return_value = {
         "name": "execute_external_action",
         "arguments": {"actionId": "cpv", "parameters": {}},
@@ -104,7 +104,7 @@ def test_domain_routes_run_when_vocabulary_misses() -> None:
 
 def test_intent_bound_routes_run_after_domain_routes() -> None:
     route_selection = MagicMock()
-    route_selection.select_vocabulary_fast_path.return_value = None
+    route_selection.select_operational_registry.return_value = None
     route_selection.select_department_kpi.return_value = None
     route_selection.select_lmp.return_value = None
     route_selection.select_kpi_without_product.return_value = None

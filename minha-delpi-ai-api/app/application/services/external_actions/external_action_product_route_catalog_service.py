@@ -19,6 +19,15 @@ from app.domain.services.chat_product_query_intent_service import (
 class ExternalActionProductRouteCatalogService:
     HIERARCHICAL_PRODUCT_MAX_DEPTH = 15
 
+    @staticmethod
+    def is_product_sales_summary_path(path: str) -> bool:
+        lowered = str(path or "").lower().rstrip("/")
+
+        if "open-orders" in lowered or "/billing" in lowered:
+            return False
+
+        return lowered.endswith("/sales") and "/products/" in lowered
+
     def __init__(self, repository) -> None:
         self.repository = repository
 

@@ -397,7 +397,7 @@ class ExternalActionRouteSelectionService:
             previous_messages=previous_messages,
         )
 
-    def select_vocabulary_fast_path(
+    def select_operational_registry(
         self,
         message: str,
         normalized: str,

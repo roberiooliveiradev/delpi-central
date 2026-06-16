@@ -1529,6 +1529,9 @@ class ChatProductQueryIntentService:
         if cls._looks_like_parents_question(normalized_text):
             return ChatProductQueryIntent.PARENTS
 
+        if cls._looks_like_product_summary_route_question(normalized_text):
+            return ChatProductQueryIntent.SUMMARY
+
         if cls._looks_like_description_question(normalized_text):
             return ChatProductQueryIntent.DESCRIPTION
 

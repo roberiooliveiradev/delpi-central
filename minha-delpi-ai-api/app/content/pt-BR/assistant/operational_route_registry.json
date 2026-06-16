@@ -1,9 +1,9 @@
 {
-  "version": "2026.06.11",
+  "version": "2026.06.13",
   "dispatchOrder": [
     "sessionRefinement",
     "productionOperational",
-    "vocabularyFastPaths",
+    "operationalRoutes",
     "domainRoutes",
     "intentBoundRoutes",
     "semanticFallback"
@@ -599,6 +599,22 @@
       "presentation": {
         "reasonKey": "productOperational"
       }
+    },
+    {
+      "id": "productPriceAnalysisAnalyser",
+      "domain": "product",
+      "priority": 118,
+      "match": {
+        "customPredicate": "priceAnalysisRoute",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": ["/analyser"],
+        "operationIdMarkers": ["get_product_analyser"],
+        "method": "GET"
+      },
+      "parameters": { "strategy": "product_code" },
+      "presentation": { "reasonKey": "productAnalyser" }
     },
     {
       "id": "productSummary",

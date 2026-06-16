@@ -8,6 +8,7 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
 from app.domain.services.chat_production_operational_intent_service import (
@@ -349,6 +350,120 @@ class ExternalActionOperationalRouteSelectionService:
 
         return None
 
+    def select_product_with_code(
+        self,
+        message: str,
+        product_code: str,
+        allowed_action_ids: list[str],
+        *,
+        intent: str = ChatProductQueryIntent.FULL,
+        route_segment: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
+        route_segment_value = str(route_segment or "").strip().lower()
+        bound_intent = str(intent or ChatProductQueryIntent.FULL).strip().lower()
+
+        if route_segment_value:
+            selected = self.select_by_route_segment(
+                message,
+                product_code,
+                route_segment_value,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
+
+        if bound_intent == ChatProductQueryIntent.FULL:
+            if not ChatProductQueryIntentService.has_actionable_product_route_intent(
+                message,
+                normalized=normalized,
+            ):
+                return None
+
+            refined = ChatProductQueryIntentService.refine_operational_intent_from_full(
+                message,
+                normalized=normalized,
+            )
+
+            if refined != ChatProductQueryIntent.FULL:
+                bound_intent = refined
+        elif bound_intent == ChatProductQueryIntent.SALES:
+            route_segment_value = route_segment_value or "sales"
+
+            if route_segment_value in ("outbound-invoice", "inbound-invoice"):
+                bound_intent = ChatProductQueryIntent.FULL
+
+        if bound_intent != ChatProductQueryIntent.FULL:
+            selected = self.select_by_intent(
+                message,
+                product_code,
+                bound_intent,
+                allowed_action_ids,
+                route_segment=route_segment_value or None,
+                candidates_loader=candidates_loader,
+            )
+
+            if selected:
+                return selected
+
+            if (
+                bound_intent == ChatProductQueryIntent.SALES
+                and ChatProductQueryIntentService.extract_product_code(message)
+            ):
+                return None
+
+            if bound_intent in {
+                ChatProductQueryIntent.DESCRIPTION,
+                ChatProductQueryIntent.ANALYSER,
+            }:
+                selected = self.select_by_intent(
+                    message,
+                    product_code,
+                    ChatProductQueryIntent.ANALYSER,
+                    allowed_action_ids,
+                    candidates_loader=candidates_loader,
+                )
+
+                if selected:
+                    return selected
+
+        for route in OperationalRouteRegistryService.product_identifier_routes():
+            selected = self._try_vocabulary_route(
+                route,
+                message,
+                normalized,
+                allowed_action_ids,
+                identifier=product_code,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
+
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if ChatProductOverviewIntentService.is_product_overview_message(message):
+            selected = self.select_by_intent(
+                message,
+                product_code,
+                ChatProductQueryIntent.ANALYSER,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
+
+            if selected:
+                return selected
+
+        return None
+
     def select_product_search(
         self,
         message: str,
@@ -416,6 +531,7 @@ class ExternalActionOperationalRouteSelectionService:
         merge_date_parameters: Callable[..., dict] | None = None,
         conversation_context: str | None = None,
         description_override: str | None = None,
+        identifier: str | None = None,
     ) -> dict | None:
         match_spec = route.get("match")
 
@@ -429,19 +545,22 @@ class ExternalActionOperationalRouteSelectionService:
         ):
             return None
 
-        identifier = None
+        resolved_identifier = str(identifier or "").strip()
 
         if match_spec.get("requiresProductIdentifier"):
-            identifier = ChatProductQueryIntentService.extract_product_code(message or "")
+            if not resolved_identifier:
+                resolved_identifier = str(
+                    ChatProductQueryIntentService.extract_product_code(message or "") or ""
+                ).strip()
 
-            if not identifier:
+            if not resolved_identifier:
                 return None
 
         return self._resolve_route_action(
             route,
             message,
             allowed_action_ids,
-            identifier=identifier,
+            identifier=resolved_identifier or None,
             candidates_loader=candidates_loader,
             previous_messages=previous_messages,
             build_date_branch_parameters=build_date_branch_parameters,

@@ -331,6 +331,9 @@ class OperationalRouteMatcherService:
         "lmpCatchAll": _looks_like_lmp_catch_all,
         "productSearchQuestion": _looks_like_product_search_question,
         "productSearchWithGroupCode": _looks_like_product_search_with_group_code,
+        "priceAnalysisRoute": lambda normalized: ChatProductQueryIntentService._looks_like_price_analysis_question(
+            normalized
+        ),
         "systemHasTableName": _system_has_table_name,
         "systemWantsColumns": _system_wants_columns,
         "systemWantsRelations": _system_wants_relations,

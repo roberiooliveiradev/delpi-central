@@ -133,6 +133,16 @@ class OperationalRouteRegistryService:
         ]
 
     @classmethod
+    def product_identifier_routes(cls) -> list[dict[str, Any]]:
+        return [
+            route
+            for route in cls.routes()
+            if str(route.get("domain") or "").strip() == "product"
+            and isinstance(route.get("match"), dict)
+            and route["match"].get("requiresProductIdentifier")
+        ]
+
+    @classmethod
     def intent_bound_routes(cls) -> list[dict[str, Any]]:
         routes = _registry_content().get("routes")
 

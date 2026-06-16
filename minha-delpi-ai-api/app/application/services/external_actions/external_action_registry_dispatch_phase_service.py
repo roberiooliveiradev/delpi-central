@@ -123,7 +123,7 @@ class ExternalActionRegistryDispatchPhaseService:
                 ctx,
                 callbacks,
             ),
-            "vocabularyFastPaths": lambda: self._phase_vocabulary_fast_paths(
+            "operationalRoutes": lambda: self._phase_operational_routes(
                 ctx,
                 callbacks,
             ),
@@ -191,12 +191,12 @@ class ExternalActionRegistryDispatchPhaseService:
 
         return None
 
-    def _phase_vocabulary_fast_paths(
+    def _phase_operational_routes(
         self,
         ctx: RegistryDispatchContext,
         callbacks: RegistryDispatchCallbacks,
     ) -> dict | None:
-        return self._route_selection.select_vocabulary_fast_path(
+        return self._route_selection.select_operational_registry(
             ctx.message,
             ctx.normalized,
             ctx.allowed_action_ids,
