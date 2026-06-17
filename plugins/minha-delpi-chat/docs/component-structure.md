@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–45 — **Fase G concluída**; Fase H em andamento ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–51 — **Fase H concluída** ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -17,6 +17,7 @@ src/ui/components/
 │   ├── presentationMetadataReaders.ts  # get*FromToolCalls (PR-39)
 │   ├── presentationMarkdownNormalization.ts  # strip*, table markdown (PR-40)
 │   ├── presentationPairResolver.ts  # pair, merge tabelas/gráficos (PR-41)
+│   ├── chatClipboard.ts             # util copy clipboard (PR-51)
 │   └── segmentBuilders/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
@@ -24,7 +25,7 @@ src/ui/components/
 ├── shell/               # Sidebar, ContextBar, ContextTopbar (PR-35)
 ├── canvas/              # Lousa lateral e preview inline (PR-45)
 ├── admin/               # Painel administrativo (shell + abas modulares)
-└── [raiz]               # Hub chatPresentation, modais finos, orquestração de página
+└── [raiz]               # Hub `chatPresentation.ts` apenas (PR-51)
 ```
 
 Barrels públicos:
