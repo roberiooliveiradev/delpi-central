@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ChatPresentation } from "../../../data/api/chatTypes";
 import { ExpandButton } from "../ChatExpandModal";
-import { buildTableRowMenuActions } from "../chatDrillDown";
+import { buildTableRowMenuActions } from "./chatDrillDown";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
 import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 import {
@@ -11,8 +11,8 @@ import {
 import { formatChartColumnLabel } from "./pipeline/chartAxisSelection";
 import { buildFieldLabelsFromTableColumns } from "./pipeline/presentationFieldLabels";
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
-import { ChatPresentationCopyButton } from "../ChatPresentationCopyButton";
-import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
+import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { tablePresentationToMarkdown } from "../chatPresentation";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;

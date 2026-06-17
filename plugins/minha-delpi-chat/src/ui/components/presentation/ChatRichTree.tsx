@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import type { ChatPresentation, ChatTreeNode } from "../../../data/api/chatTypes";
-import { buildTreePointMenuActions, type TableRowMenuAction } from "../chatDrillDown";
+import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu, type TableRowMenuAnchor } from "../ChatTableRowMenu";
 import { ExpandButton } from "../ChatExpandModal";
-import { ChatPresentationCopyButton } from "../ChatPresentationCopyButton";
-import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
+import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatTreeNodeMeta,
   treePresentationToClipboardText,

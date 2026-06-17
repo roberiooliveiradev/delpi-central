@@ -30,7 +30,7 @@ import {
   resolveChartSeriesColors,
   useMdcDarkMode,
 } from "../../theme/mdcCssVars";
-import { buildChartPointMenuActions } from "../chatDrillDown";
+import { buildChartPointMenuActions } from "./chatDrillDown";
 import {
   applyChartTopFilter,
   applyChartZoomWindow,
@@ -40,12 +40,12 @@ import {
   isTemporalChartAxis,
   type ChartTopFilter,
   type ChartZoomWindow,
-} from "../chartPresentationUx";
+} from "./chartPresentationUx";
 import { aggregateChartRowsByCategory } from "./pipeline/chartCategoryAggregation";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
 import { presentationToCanvasPayload } from "./export/chartCanvasMarkdown";
 import { exportChartElementToPng } from "./export/chartPngExport";
-import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatChartColumnLabel,
   inferDefaultChartAxes,
@@ -58,7 +58,7 @@ import {
 } from "./pipeline/presentationFieldLabels";
 import { ChatMarkdown } from "../message/ChatMarkdown";
 import { ExpandButton } from "../ChatExpandModal";
-import type { ChartViewState } from "../chartViewState";
+import type { ChartViewState } from "./chartViewState";
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import {
   applyCategoryFilter,

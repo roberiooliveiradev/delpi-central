@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { LayoutPanelLeft } from "lucide-react";
 import type { ChatCanvasOpenPayload, ChatPresentation, ChatToolCall } from "../../../data/api/chatTypes";
 import { presentationToCanvasPayload } from "./export/chartCanvasMarkdown";
-import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,

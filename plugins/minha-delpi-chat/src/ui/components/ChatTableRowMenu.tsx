@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 
-import type { TableRowMenuAction } from "./chatDrillDown";
+import type { TableRowMenuAction } from "./presentation/chatDrillDown";
 import { AnchoredMenuPortal } from "./shared/overlay/AnchoredMenuPortal";
 import type { ContextMenuAnchor } from "./shared/overlay/menuPositionUtils";
 import { estimateMenuHeight } from "./shared/overlay/menuPositionUtils";

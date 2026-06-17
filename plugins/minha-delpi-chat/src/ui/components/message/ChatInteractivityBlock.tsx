@@ -5,7 +5,7 @@ import { useConfirmDialog } from "../useConfirmDialog";
 import type { ChatMessageMetadata } from "../../../data/api/chatTypes";
 import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "../presentation/pipeline/chartExplain";
 import { type ChatFollowUpSuggestion } from "../ChatFollowUpChips";
-import type { TableRowMenuAction } from "../chatDrillDown";
+import type { TableRowMenuAction } from "../presentation/chatDrillDown";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
 import { menuAnchorRectFromElement, type MenuAnchorRect } from "../shared/overlay/menuPositionUtils";
 

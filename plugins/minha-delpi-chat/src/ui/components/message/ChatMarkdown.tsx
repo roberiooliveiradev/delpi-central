@@ -9,7 +9,7 @@ import {
   prepareMarkdownContent,
   tableElementToGfmMarkdown,
 } from "./chatMarkdown";
-import { ChatPresentationCopyButton } from "../ChatPresentationCopyButton";
+import { ChatPresentationCopyButton } from "../presentation/ChatPresentationCopyButton";
 import { ChatMermaidBlock } from "./ChatMermaidBlock";
 
 import "./ChatMarkdown.css";

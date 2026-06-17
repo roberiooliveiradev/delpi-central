@@ -238,6 +238,7 @@ PR-39 ✅  presentation/presentationMetadataReaders.ts — get*FromToolCalls, re
 PR-40 ✅  presentation/presentationMarkdownNormalization.ts — strip*, tablePresentationToMarkdown
 PR-41 ✅  presentation/presentationPairResolver.ts — pair resolver, merge tabelas/gráficos
 PR-42 ✅  hex bare em apresentação rica + máscaras; fallbacks `var(--token)` residual aceito
+PR-43 ✅  presentation/ — export/copy buttons, chartPresentationUx, chartViewState, chatDrillDown
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -264,7 +265,7 @@ Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`
 
 Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
 
-Pós-Fase G (opcional): reduzir arquivos na raiz `components/` (~55 → meta ≤25) migrando modais/orquestração restantes.
+Pós-Fase G (**Fase H**, opcional): reduzir arquivos na raiz `components/` (~48 → meta ≤25) migrando modais/orquestração restantes.
 
 ---
 
@@ -307,7 +308,7 @@ Pós-Fase G (opcional): reduzir arquivos na raiz `components/` (~55 → meta ≤
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
 | PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
-| Arquivos TS/TSX na raiz `components/` | 55 | ≤25 (shell + hub + páginas) |
+| Arquivos TS/TSX na raiz `components/` | 48 | ≤25 (shell + hub + páginas) |
 | Arquivos CSS na raiz `components/` | 37 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |

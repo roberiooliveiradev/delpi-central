@@ -1,5 +1,5 @@
 import type { ChatContextChip } from "./ChatContextBar";
-import type { TableRowMenuAction } from "../chatDrillDown";
+import type { TableRowMenuAction } from "../presentation/chatDrillDown";
 import {
   inferContextChipOperationalRole,
   isPinnableContextKind,

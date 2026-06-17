@@ -1,6 +1,6 @@
 import type { ChatKpiCard, ChatPresentation } from "../../../data/api/chatTypes";
 import { ExpandButton } from "../ChatExpandModal";
-import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
+import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatCellValue,
   inferColumnType,

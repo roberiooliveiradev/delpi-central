@@ -71,7 +71,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
 | Modais finos, sidebar, export buttons | Cross-feature |
 
-**Em `presentation/` (PR-34, PR-39–41):** `tableCellFormatting.ts`, metadata readers, markdown normalization, pair resolver.
+**Em `presentation/` (PR-34, PR-38–41, PR-43):** `tableCellFormatting`, metadata readers, markdown normalization, pair resolver, export/copy buttons, `chartPresentationUx`, `chartViewState`, `chatDrillDown`.
 
 **Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
 
@@ -81,7 +81,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `workspace/` (PR-18–20, PR-36):** dropzone/cards/ingest, `ChatProjectHome`, `ChatProjectCard`, `ChatProjectCreateModal`, `ChatAddContextDialog`.
 
-## Fase G — limpeza da raiz (pendente)
+## Fase G — limpeza da raiz (concluída)
 
 | PR | Destino | Arquivos-alvo |
 |----|---------|---------------|
@@ -93,6 +93,12 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-40 | `presentationMarkdownNormalization.ts` | strip*, table markdown | ✅ |
 | PR-41 | `presentationPairResolver.ts` | pair resolver, merge tabelas | ✅ |
 | PR-42 | C3 hex residual + checklist F4 | ver roadmap §5 | ✅ |
+
+## Fase H — redução da raiz (pós-estrutural)
+
+| PR | Destino | Arquivos-alvo |
+|----|---------|---------------|
+| PR-43 | `presentation/` | export/copy buttons, chart UX, drill-down | ✅ |
 
 ## Referências
 
