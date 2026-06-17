@@ -227,7 +227,26 @@ PR-30 ✅  tree/chart normalize → pipeline; doc hub; remove stub CSS raiz
 PR-31 ✅  humanizedCoverageNotice → message/
 PR-32 ✅  chatAssistantMessageActions → message/; chartExplain → pipeline/
 PR-33 ✅  chatMarkdown → message/ (prosa + strip section markers)
+PR-34 ✅  testFixtures → message/; tableCellFormatting → presentation/
 ```
+
+### Fase G — Limpeza da raiz (PR-34+)
+
+Meta: reduzir ~90 TS/TSX na raiz para **shell + hub + orquestração de página**.
+
+| PR | Escopo | Status |
+|----|--------|--------|
+| PR-34 | `testFixtures` → `message/`; `tableCellFormatting` → `presentation/` | ✅ |
+| PR-35 | `shell/` — `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar` | pendente |
+| PR-36 | `workspace/` — `ChatProjectHome`, `ChatProjectCard`, `ChatAddContextDialog`, modais projeto | pendente |
+| PR-37 | `message/` — `ChatInteractivityBlock`, `ChatSources`, `ChatDecisionCard`, `ChatMarkdown.tsx`, `ChatMermaidBlock` | pendente |
+| PR-38 | `presentation/export/` — `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` | pendente |
+| PR-39–41 | Fatiar `chatPresentation.ts` (readers → strip markdown → pair resolver) | pendente |
+| PR-42 | C3 hex residual + checklist F4 §7 | pendente |
+
+Definição **100% refactor estrutural**: PR-42 concluído + hub fatiado + raiz só shell/hub/páginas.
+
+Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`chat-presentation-hub.md`](./chat-presentation-hub.md).
 
 ### Fase concluída (jun/2026)
 

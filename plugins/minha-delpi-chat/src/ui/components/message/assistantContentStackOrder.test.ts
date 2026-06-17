@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildAssistantContentSegments } from "./assistantContentSegments";
-import { fixtureToolCalls } from "../testFixtures";
+import { fixtureToolCalls } from "./testFixtures";
 
 describe("assistantContentStackOrder", () => {
   it("intercala narrativa, tabelas e árvore por seções em layout stack", () => {

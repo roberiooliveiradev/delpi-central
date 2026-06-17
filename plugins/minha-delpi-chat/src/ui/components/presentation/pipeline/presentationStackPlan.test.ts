@@ -7,7 +7,7 @@ import {
   planUsesSummaryThenEvidence,
   resolveTableRole,
 } from "./presentationStackPlan";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("presentationStackPlan", () => {
   it("fallback legacy retorna other quando role ausente na API", () => {

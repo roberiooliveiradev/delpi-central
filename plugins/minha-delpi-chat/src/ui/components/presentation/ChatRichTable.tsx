@@ -3,7 +3,7 @@ import type { ChatPresentation } from "../../../data/api/chatTypes";
 import { ExpandButton } from "../ChatExpandModal";
 import { buildTableRowMenuActions } from "../chatDrillDown";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
-import { formatCellValue, getAlignClass } from "../tableCellFormatting";
+import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 import {
   applyCategoryFilter,
   buildCategoryFilterOptions,

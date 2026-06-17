@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { collectVisualSegments } from "./visualSegmentCollector";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("collectVisualSegments", () => {
   it("não monta dashboard quando a API omitiu dashboardPresentation", () => {

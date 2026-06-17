@@ -5,7 +5,7 @@ import {
   formatCellValue,
   inferColumnType,
   type ColumnType,
-} from "../tableCellFormatting";
+} from "./tableCellFormatting";
 import "./ChatRichKpi.css";
 
 type KpiPresentation = Extract<ChatPresentation, { type: "kpi" }>;

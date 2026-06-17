@@ -7,7 +7,7 @@ import {
   resolveCommentaryTextBody,
 } from "../../chatPresentation";
 import { resolveAvailableVisualFormatOptions } from "../../message/assistantContentVisualFormats";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("presentationFormatRefinement", () => {
   const stockTableRefinement = fixtureToolCalls([

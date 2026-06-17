@@ -11,3 +11,5 @@ export {
   buildChartPresentationFromTable,
   tableSupportsChart,
 } from "./pipeline";
+export { formatCellValue, getAlignClass, inferColumnTypeFromCampoLabel } from "./tableCellFormatting";
+export type { ColumnType } from "./tableCellFormatting";

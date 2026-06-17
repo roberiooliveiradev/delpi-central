@@ -17,7 +17,7 @@ import {
   getDataCoverageNoticeFromToolCall,
   getDataCoverageNoticeFromToolCalls,
 } from "../../chatPresentation";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("presentationMultiRoute", () => {
   it("detecta múltiplas rotas de produto", () => {

@@ -8,7 +8,7 @@ import {
   shouldApplyClientMarkdownCompaction,
   stripRichUiRedundantProseFromMarkdown,
 } from "../../chatPresentation";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("presentationRenderHints", () => {
   it("não recompacta markdown quando a API enviou textRenderMode compact", () => {

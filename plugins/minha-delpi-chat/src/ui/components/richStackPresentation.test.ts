@@ -4,7 +4,7 @@ import {
   hasRichStackPresentation,
   stripRichUiRedundantProseFromMarkdown,
 } from "./chatPresentation";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "./message/testFixtures";
 
 describe("richStackPresentation", () => {
   it("detecta stack em faturamento com tabela e gráfico", () => {

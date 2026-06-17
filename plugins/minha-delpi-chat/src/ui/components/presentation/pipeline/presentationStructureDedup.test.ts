@@ -6,7 +6,7 @@ import {
   isHierarchyDuplicateTable,
   toolCallsHaveTree,
 } from "./presentationStructureDedup";
-import { fixtureToolCalls } from "../../testFixtures";
+import { fixtureToolCalls } from "../../message/testFixtures";
 
 describe("presentationStructureDedup", () => {
   const structureTable = {
