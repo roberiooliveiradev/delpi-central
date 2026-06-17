@@ -11,13 +11,16 @@ src/ui/components/
 │   ├── modal/           # ChatModal
 │   ├── composer/        # ComposerOptionSelector, ChatInputPlusMenu
 │   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
-├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, CSS)
+├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, export/, CSS)
+│   ├── pipeline/        # Stack, dedup, labels, chart/tree builders
+│   ├── export/          # CSV/XLSX/PDF/PNG, lousa markdown (PR-38)
+│   └── segmentBuilders/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
 ├── shell/               # Sidebar, ContextBar, ContextTopbar
 ├── admin/               # Painel administrativo (shell + abas modulares)
-└── [raiz]               # Hub chatPresentation, modais finos, export/chart UX, etc.
+└── [raiz]               # Hub chatPresentation, modais finos, orquestração de página
 ```
 
 Barrels públicos:
@@ -26,6 +29,7 @@ Barrels públicos:
 |-------|--------|-------------------|
 | `shared/` | `shared/index.ts` | `import { ChatModal } from "./shared"` |
 | `presentation/` | `presentation/index.ts` | `import { ChatRichTable } from "./presentation"` |
+| `presentation/export/` | `presentation/export/index.ts` | `import { exportPresentation } from "./presentation/export"` |
 | `presentation/pipeline/` | `presentation/pipeline/index.ts` | stack, labels, chart/tree normalize |
 | `composer/` | `composer/index.ts` | `import { ChatInput } from "./composer"` |
 | `message/` | `message/index.ts` | `import { ChatAssistantContent } from "./message"` |

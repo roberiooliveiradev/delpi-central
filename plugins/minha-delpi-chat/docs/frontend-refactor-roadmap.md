@@ -291,6 +291,7 @@ Pendências até 100%:
 | Build obrigatório | `.cursor/rules/plugins-frontend-build.mdc` |
 | Prosa/markdown assistente | `message/assistantProseRendering.ts` (canônico MFE) |
 | Hub metadata apresentação | [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
+| Export apresentação (CSV/XLSX/PDF/PNG) | `presentation/export/` — ver hub § já extraído |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
 | CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
 | Estrutura feature folders | `docs/component-structure.md` |
@@ -305,6 +306,7 @@ Pendências até 100%:
 | Arquivos TS/TSX na raiz `components/` | 55 | ≤25 (shell + hub + páginas) |
 | Arquivos CSS na raiz `components/` | 37 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
+| Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
 | Módulos em `message/` | 44 arquivos TS/TSX | InteractivityBlock, Sources, markdown, mermaid ✅ |
 | Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |

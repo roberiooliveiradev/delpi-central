@@ -1,6 +1,6 @@
 # Hub `chatPresentation.ts` — contrato MFE ↔ metadata da API
 
-> Complementa [`component-structure.md`](./component-structure.md) e [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–34; extração hub PR-39–41).
+> Complementa [`component-structure.md`](./component-structure.md) e [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–38; extração hub PR-39–41).
 
 ## Por que fica na raiz
 
@@ -35,18 +35,21 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
 | Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
+| Export CSV/XLSX/PDF/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
 | Segment assembly (stack, render plan, markers) | `presentation/segmentBuilders/` | 25 |
 | Prosa / título / markdown stream | `message/assistantProseRendering.ts`, `message/chatMarkdown.ts` | 23, 33 |
 | Coverage humanizado, ações assistente, fixtures teste | `message/humanizedCoverageNotice.ts`, `chatAssistantMessageActions.ts`, `testFixtures.ts` | 31, 32, 34 |
 | Layout stack vs single, ordem visual | `message/assistantContentLayout.ts` | 20+ |
 
-Barrel do pipeline: `presentation/pipeline/index.ts`.
+Barrel do pipeline: `presentation/pipeline/index.ts`.  
+Barrel de export: `presentation/export/index.ts` (consumo via `presentation/index.ts` ou `./presentation/export`).
 
 ## Regras de import
 
 ```text
 message/*          →  ../chatPresentation  (readers + strip helpers)
 presentation/*     →  ../chatPresentation  (pair, título, telemetria indireta)
+presentation/export/*  →  ../../data/api/chatTypes  (payloads de export; sem hub)
 pipeline/*         →  ../../chatPresentation  (render plan, commentary body)
 segmentBuilders/*  →  ../../chatPresentation
 ```
