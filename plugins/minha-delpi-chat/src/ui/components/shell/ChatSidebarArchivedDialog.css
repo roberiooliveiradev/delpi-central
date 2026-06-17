@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--mdc-space-3);
-  align-items: start;
+  align-items: center;
   border-bottom: 1px solid var(--mdc-card-border);
   padding: var(--mdc-space-4);
 }
@@ -28,13 +28,27 @@
 .mdc-chat-archived-dialog header button {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 0.65rem;
-  background: var(--mdc-bg);
-  color: var(--mdc-text);
+  flex-shrink: 0;
+  width: 1.85rem;
+  height: 1.85rem;
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
   cursor: pointer;
+  box-shadow: none;
+}
+
+.mdc-chat-archived-dialog header button:hover,
+.mdc-chat-archived-dialog header button:focus-visible {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+  border: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 .mdc-chat-archived-list {

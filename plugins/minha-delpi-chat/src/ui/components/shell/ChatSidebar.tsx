@@ -164,6 +164,12 @@ export function ChatSidebar({
     }
   }, [isSearchOpen]);
 
+  useEffect(() => {
+    if (isArchivedOpen || isProjectsModalOpen || deleteTargetSession) {
+      onCloseMobile?.();
+    }
+  }, [deleteTargetSession, isArchivedOpen, isProjectsModalOpen, onCloseMobile]);
+
   async function openArchivedSessions() {
     setIsArchivedOpen(true);
     await onLoadArchivedSessions?.();

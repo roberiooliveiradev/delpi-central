@@ -2726,7 +2726,6 @@ export function ChatPage({
           )}
         </section>
         )}
-          <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
         </ChatAnimatedPanel>
 
         <ChatCanvas
@@ -2753,6 +2752,8 @@ export function ChatPage({
           onStartTour={hasOnboardingTourSteps ? startOnboardingTour : undefined}
         />
       </section>
+
+      <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
 
       {isMobileSidebarOpen ? (
         <div

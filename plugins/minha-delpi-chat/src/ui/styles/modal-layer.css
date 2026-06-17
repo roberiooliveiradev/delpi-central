@@ -81,11 +81,11 @@
   max-width: 100%;
 }
 
-/* Overlay contido à coluna principal — não cobre a sidebar. */
+/* Camada de modais — acima do drawer mobile (220) e dos menus da sidebar. */
 .mdc-modal-root {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 230;
   box-sizing: border-box;
   margin: 0;
   padding: 0;

@@ -65,14 +65,18 @@
 }
 
 .mdc-chat-session-edit-card {
-  display: grid;
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
   grid-column: 1 / -1;
-  gap: 0.35rem;
-  padding: 0.25rem;
+  min-width: 0;
+  padding: 0.12rem 0.2rem;
 }
 
 .mdc-chat-session-edit-input {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
   border: 1px solid var(--mdc-card-border);
   border-radius: 0.62rem;
   background: var(--mdc-bg);
@@ -83,29 +87,63 @@
 }
 
 .mdc-chat-session-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.28rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.18rem;
 }
 
 .mdc-chat-session-action {
   display: inline-grid;
   place-items: center;
-  width: 1.78rem;
-  height: 1.78rem;
+  width: 1.72rem;
+  height: 1.72rem;
+  min-width: 1.72rem;
+  min-height: 1.72rem;
+  padding: 0;
   border: 0;
-  border-radius: 0.55rem;
+  border-radius: 0.52rem;
   background: transparent;
   color: var(--mdc-text-muted);
   cursor: pointer;
+  box-shadow: none;
 }
 
-.mdc-chat-session-action:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+.mdc-chat-session-action:hover,
+.mdc-chat-session-action:focus-visible {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
   color: var(--mdc-primary);
+  border: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 /* Clean override: conversas como lista simples, sem cards/bordas */
+.mdc-chat-sidebar .mdc-chat-session-row:has(.mdc-chat-session-edit-card) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mdc-chat-sidebar .mdc-chat-session-edit-card .mdc-chat-session-action,
+.mdc-chat-sidebar .mdc-chat-session-edit-card .mdc-chat-session-action:hover,
+.mdc-chat-sidebar .mdc-chat-session-edit-card .mdc-chat-session-action:focus-visible {
+  width: 1.72rem !important;
+  height: 1.72rem !important;
+  min-width: 1.72rem !important;
+  min-height: 1.72rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0.52rem !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--mdc-text-muted) !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-edit-card .mdc-chat-session-action:hover,
+.mdc-chat-sidebar .mdc-chat-session-edit-card .mdc-chat-session-action:focus-visible {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent) !important;
+  color: var(--mdc-primary) !important;
+}
+
 .mdc-chat-sidebar .mdc-chat-session-row {
   grid-template-columns: minmax(0, 1fr) 1.85rem;
   align-items: center;

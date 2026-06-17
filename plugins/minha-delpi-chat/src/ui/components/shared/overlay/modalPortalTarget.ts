@@ -3,7 +3,7 @@ export const MDC_SIDEBAR_SELECTOR = ".mdc-chat-sidebar";
 
 /**
  * Camada única de overlay do MFE — modais, popovers e menus ancorados.
- * Vive em `#mdc-modal-root` dentro de `.mdc-chat-view-host` (coluna principal).
+ * `#mdc-modal-root` fica em `.minha-delpi-chat` (acima do drawer mobile).
  */
 export function resolveOverlayPortalContainer(): HTMLElement {
   if (typeof document === "undefined") {
