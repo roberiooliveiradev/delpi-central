@@ -11,7 +11,7 @@ src/ui/components/
 │   ├── modal/           # ChatModal
 │   ├── composer/        # ComposerOptionSelector, ChatInputPlusMenu
 │   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
-├── presentation/        # Apresentação rica (tabela, gráfico, KPI, árvore, dashboard)
+├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, CSS)
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
@@ -58,6 +58,7 @@ Novos imports devem usar o caminho canônico (pasta feature ou barrel). Consumid
 | Tema escuro | `src/ui/styles/_theme-dark.css` |
 | Barrel styles | `src/ui/styles/index.css` |
 | Apresentação rica | `presentation/rich-presentation-shared.css` — ver [`rich-presentation-css.md`](./rich-presentation-css.md) |
+| Segment builders | `presentation/segmentBuilders/` — stack, renderPlan, visual collector |
 | Overlay/modal | `shared/overlay/*`, `modal-layer.css` |
 | Responsivo global | `src/ui/layout/workspace-responsive.css` |
 
