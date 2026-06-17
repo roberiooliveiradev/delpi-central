@@ -246,6 +246,7 @@ PR-47 ✅  shared/menus TableRowMenu; canvas ExpandModal; message edit/streaming
 PR-48 ✅  shell ConversationMenu + OnboardingTour; message empty/follow-up/action panels
 PR-49 ✅  shared layout primitives; shell list item; workspace attachment/agent; message trust/debug
 PR-50 ✅  overlay CSS → ui/styles/; DropdownMenuTrigger em ContextTopbar + ProjectHome
+PR-51 ✅  chatClipboard + testes hub → presentation/; raiz só `chatPresentation.ts`
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -272,7 +273,7 @@ Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`
 
 Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
 
-Pós-Fase G (**Fase H**): raiz reduzida a **4 TS/TSX** (hub + testes) após PR-49. Restam `chatPresentation.ts`, `chatClipboard.ts` e testes co-localizados.
+Pós-Fase G (**Fase H**): raiz com **1 TS** (`chatPresentation.ts` hub) após PR-51.
 
 ---
 
@@ -315,7 +316,7 @@ Pós-Fase G (**Fase H**): raiz reduzida a **4 TS/TSX** (hub + testes) após PR-4
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
 | PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
-| Arquivos TS/TSX na raiz `components/` | 4 | hub + testes ✅ |
+| Arquivos TS/TSX na raiz `components/` | 1 | hub `chatPresentation.ts` ✅ |
 | Arquivos CSS na raiz `components/` | 0 | co-localizados com feature ou `ui/styles/` ✅ |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |

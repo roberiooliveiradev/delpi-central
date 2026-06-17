@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   hasRichStackPresentation,
   stripRichUiRedundantProseFromMarkdown,
-} from "./chatPresentation";
-import { fixtureToolCalls } from "./message/testFixtures";
+} from "../chatPresentation";
+import { fixtureToolCalls } from "../message/testFixtures";
 
 describe("richStackPresentation", () => {
   it("detecta stack em faturamento com tabela e gráfico", () => {

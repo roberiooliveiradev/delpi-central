@@ -69,7 +69,7 @@ Ordem sugerida se o hub crescer de novo — **sem** mover o arquivo monolítico 
 2. ~~`presentationMarkdownNormalization.ts`~~ — funções `strip*` e `tablePresentationToMarkdown`. ✅ PR-40
 3. ~~`presentationPairResolver.ts`~~ — `getPresentationPairFromToolCalls`, merge de tabelas. ✅ PR-41
 
-Cada fatia exige: mover + re-export temporário no hub (deprecate) **ou** atualizar todos os consumidores num PR; teste em `chatPresentation.test.ts` ou suite CI P6.
+Cada fatia exige: mover + re-export temporário no hub (deprecate) **ou** atualizar todos os consumidores num PR; teste em `presentation/chatPresentation.test.ts` ou suite CI P6.
 
 ## Referências cruzadas
 

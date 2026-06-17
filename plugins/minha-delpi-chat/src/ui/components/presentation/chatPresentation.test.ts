@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatPresentation, ChatToolCall } from "../../../data/api/chatTypes";
 import {
   buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
@@ -32,7 +32,7 @@ import {
   stripRedundantStructureFromMarkdown,
   tablePresentationToMarkdown,
   type PresentationPair,
-} from "./chatPresentation";
+} from "../chatPresentation";
 
 /** Aceita literais de fixture e tipa como ChatToolCall[] para o compilador. */
 function fixtureToolCalls(calls: unknown[]): ChatToolCall[] {

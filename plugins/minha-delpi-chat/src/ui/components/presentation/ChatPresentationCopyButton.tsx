@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
-import { copyTextToClipboard, scheduleCopyFeedback } from "../chatClipboard";
+import { copyTextToClipboard, scheduleCopyFeedback } from "./chatClipboard";
 
 type ChatPresentationCopyButtonProps = {
   getText: () => string;
