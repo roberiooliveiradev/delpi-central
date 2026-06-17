@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
-import "./agent-builder-controls.css";
+import "./agentBuilderControls.css";
 
 type AgentBuilderSwitchProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "size"> & {
   label?: ReactNode;

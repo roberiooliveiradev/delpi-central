@@ -72,15 +72,15 @@ import {
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
-import { AgentIcebreakersEditor } from "../components/agent-builder/AgentIcebreakersEditor";
-import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
-import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
-import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
+import {
+  AgentIcebreakersEditor,
+  AgentBuilderCheckbox,
+  AgentBuilderSwitch,
+  AgentKnowledgeSourcesPanel,
+} from "../components/workspace/agentBuilder";
 import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
 import "../components/admin/agents/AgentMiniDashboard.css";
 
-import "../components/agent-builder/AgentIcebreakersEditor.css";
-import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
 import "./ChatAgentBuilderPage.css";
 
 type AgentPayload = {

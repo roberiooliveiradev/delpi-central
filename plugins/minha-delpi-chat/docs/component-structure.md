@@ -22,6 +22,7 @@ src/ui/components/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
+│   └── agentBuilder/    # Controles e painéis do builder de agente (PR-53)
 ├── shell/               # Sidebar, ContextBar, ContextTopbar (PR-35)
 ├── canvas/              # Lousa lateral e preview inline (PR-45)
 ├── admin/               # Painel administrativo (shell + abas modulares)

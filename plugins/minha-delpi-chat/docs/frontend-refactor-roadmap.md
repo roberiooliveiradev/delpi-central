@@ -248,6 +248,7 @@ PR-49 ✅  shared layout primitives; shell list item; workspace attachment/agent
 PR-50 ✅  overlay CSS → ui/styles/; DropdownMenuTrigger em ContextTopbar + ProjectHome
 PR-51 ✅  chatClipboard + testes hub → presentation/; raiz só `chatPresentation.ts`
 PR-52 ✅  barrels presentation/; Fase H encerrada no roadmap
+PR-53 ✅  DropdownMenuTrigger no menu assistente; agentBuilder/; hex modais
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -324,7 +325,7 @@ Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34). **Fa
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
 | Arquivos CSS com hex bare (superfície/texto, chat) | 0 | 0 ✅ |
-| Arquivos CSS com hex em fallback `var(--*, #…)` | residual em modais legados | aceito (tokens em `index.css`) |
+| Arquivos CSS com hex em fallback `var(--*, #…)` | 0 em `shared/modal/` | tokens em `index.css` ✅ |
 | Duplicação selector composer | 0 | 0 ✅ |
 | Testes CI apresentação (vitest) | 49 / 49 pass | verde em todo PR pipeline |
 

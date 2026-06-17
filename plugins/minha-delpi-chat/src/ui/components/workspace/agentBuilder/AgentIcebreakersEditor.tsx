@@ -10,7 +10,7 @@ import {
   clampIcebreakerDraft,
   formatIcebreakerForDisplay,
   hasShortcutPlaceholders,
-} from "../../agentIcebreakers";
+} from "../../../agentIcebreakers";
 
 import "./AgentIcebreakersEditor.css";
 

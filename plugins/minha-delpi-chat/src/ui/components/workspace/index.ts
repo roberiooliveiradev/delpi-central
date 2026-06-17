@@ -14,3 +14,9 @@ export {
   ChatAttachmentCard,
   type ChatAttachmentCardModel,
 } from "./ChatAttachmentCard";
+export {
+  AgentIcebreakersEditor,
+  AgentKnowledgeSourcesPanel,
+  AgentBuilderCheckbox,
+  AgentBuilderSwitch,
+} from "./agentBuilder";

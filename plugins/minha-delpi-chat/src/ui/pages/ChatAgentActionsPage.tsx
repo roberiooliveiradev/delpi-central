@@ -50,7 +50,7 @@ import type {
 import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { useConfirmDialog } from "../components/shared";
 import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
-import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
+import { AgentBuilderSwitch } from "../components/workspace/agentBuilder";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";

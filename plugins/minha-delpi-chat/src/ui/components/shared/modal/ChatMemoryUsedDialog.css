@@ -92,8 +92,8 @@
   margin-top: var(--mdc-space-3);
   padding: var(--mdc-space-2) var(--mdc-space-3);
   border-radius: var(--mdc-radius-sm);
-  background: color-mix(in srgb, var(--mdc-warning, #d97706) 12%, transparent);
-  color: color-mix(in srgb, var(--mdc-warning, #d97706) 85%, var(--mdc-text));
+  background: color-mix(in srgb, var(--mdc-warning) 12%, transparent);
+  color: color-mix(in srgb, var(--mdc-warning) 85%, var(--mdc-text));
   font-size: 0.8125rem;
 }
 

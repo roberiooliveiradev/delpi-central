@@ -28,7 +28,7 @@
   border-radius: 0.65rem;
   padding: 0.45rem 0.9rem;
   background: var(--mdc-primary);
-  color: var(--mdc-on-primary, #fff);
+  color: var(--mdc-on-primary);
   font-size: 0.86rem;
   font-weight: 650;
   cursor: pointer;

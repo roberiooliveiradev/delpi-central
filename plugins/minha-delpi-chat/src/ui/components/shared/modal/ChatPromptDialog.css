@@ -103,5 +103,5 @@
 .mdc-chat-prompt__primary {
   border: none;
   background: var(--mdc-primary);
-  color: var(--mdc-on-primary, #fff);
+  color: var(--mdc-on-primary);
 }

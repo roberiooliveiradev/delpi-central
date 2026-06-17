@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
-import "./agent-builder-controls.css";
+import "./agentBuilderControls.css";
 
 type AgentBuilderCheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   label: ReactNode;

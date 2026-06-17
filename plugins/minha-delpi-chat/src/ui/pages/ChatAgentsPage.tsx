@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
-import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
+import { AgentBuilderCheckbox } from "../components/workspace/agentBuilder";
 import { useConfirmDialog } from "../components/shared";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";

@@ -1,22 +1,22 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
-import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
+import type { ChatWorkspaceSource } from "../../../../data/api/chatTypes";
 import {
   workspaceFileAgentIngestLabels,
   workspaceFileKindLabel,
   workspaceFileSourceIndexPresentation,
-} from "../../../content/workspaceFileIngestContent";
-import { getSourceContentHash, sha256HexFromFile } from "../../../utils/fileContentHash";
+} from "../../../../content/workspaceFileIngestContent";
+import { getSourceContentHash, sha256HexFromFile } from "../../../../utils/fileContentHash";
 import {
   buildWorkspaceSourcePreviewTarget,
   useWorkspaceFilePreviewModal,
-} from "../../hooks/useWorkspaceFilePreviewModal";
-import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
-import { WorkspaceFileCard } from "../workspace/WorkspaceFileCard";
-import { WorkspaceFileDropzone } from "../workspace/WorkspaceFileDropzone";
+} from "../../../hooks/useWorkspaceFilePreviewModal";
+import { IngestProgressIndicator } from "../../shared/IngestProgressIndicator";
+import { WorkspaceFileCard } from "../WorkspaceFileCard";
+import { WorkspaceFileDropzone } from "../WorkspaceFileDropzone";
 
 import "./AgentKnowledgeSourcesPanel.css";
-import "../workspace/workspaceFileIngest.css";
+import "../workspaceFileIngest.css";
 
 type AgentKnowledgeSourcesPanelProps = {
   sources: ChatWorkspaceSource[];

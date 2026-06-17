@@ -66,7 +66,7 @@
 
 .mdc-chat-shortcut-prompt__error {
   margin: 0;
-  color: var(--mdc-danger, #f87171);
+  color: var(--mdc-danger);
   font-size: 0.78rem;
 }
 
@@ -93,6 +93,6 @@
 .mdc-chat-shortcut-prompt__confirm {
   border: 0;
   background: var(--mdc-primary);
-  color: var(--mdc-on-primary, #fff);
+  color: var(--mdc-on-primary);
   font-weight: 650;
 }

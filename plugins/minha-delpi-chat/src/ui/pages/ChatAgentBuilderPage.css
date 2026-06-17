@@ -1,7 +1,7 @@
 @import "../layout/workspace-responsive.css";
 @import "../layout/agent-workspace-layout.css";
 @import "../layout/chat-workspace-shared.css";
-@import "../components/agent-builder/agent-builder-controls.css";
+@import "../components/workspace/agentBuilder/agentBuilderControls.css";
 
 .mdc-chat-agent-builder {
   display: grid;

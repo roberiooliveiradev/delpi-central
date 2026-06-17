@@ -7,8 +7,7 @@ import type {
   ChatActionTestResult,
   ChatAgentActionProvider,
 } from "../../../data/api/chatTypes";
-import { AgentBuilderCheckbox } from "../../components/agent-builder/AgentBuilderCheckbox";
-import { AgentBuilderSwitch } from "../../components/agent-builder/AgentBuilderSwitch";
+import { AgentBuilderCheckbox, AgentBuilderSwitch } from "../../components/workspace/agentBuilder";
 import { ActionTestPanel } from "./ActionTestPanel";
 import type { ActionTestPayload } from "./types";
 
