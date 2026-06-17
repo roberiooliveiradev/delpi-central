@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–35 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–36 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -73,14 +73,14 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `shell/` (PR-35):** `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar`, `chatSidebarUtils`, `chatContextChipActions`.
 
-**Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx` (PR-36).
+**Em `workspace/` (PR-18–20, PR-36):** dropzone/cards/ingest, `ChatProjectHome`, `ChatProjectCard`, `ChatProjectCreateModal`, `ChatAddContextDialog`.
 
 ## Fase G — limpeza da raiz (pendente)
 
 | PR | Destino | Arquivos-alvo |
 |----|---------|---------------|
 | PR-35 | `shell/` | Sidebar, ContextBar, ContextTopbar | ✅ |
-| PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto |
+| PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto | ✅ |
 | PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown |
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown |
 | PR-39–41 | fatias do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |

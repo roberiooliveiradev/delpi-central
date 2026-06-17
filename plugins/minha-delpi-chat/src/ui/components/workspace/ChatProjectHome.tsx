@@ -18,39 +18,39 @@ import {
   listChatProjectShares,
   revokeChatProjectShare,
   shareChatProject,
-} from "../../data/api/chatApi";
+} from "../../../data/api/chatApi";
 import type {
   ChatAgent,
   ChatProject,
   ChatProjectShare,
   ChatSession,
   ChatWorkspaceSource,
-} from "../../data/api/chatTypes";
-import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
-import { useConfirmDialog } from "./useConfirmDialog";
-import { usePromptDialog } from "./usePromptDialog";
-import { ChatUserSearchField } from "./ChatUserSearchField";
-import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
-import { handleChatNavClick } from "../../navigation/chatNavigation";
-import { ChatConversationMenu } from "./ChatConversationMenu";
-import { formatSessionDate } from "./shell/chatSidebarUtils";
-import { ChatModal } from "./shared/modal/ChatModal";
+} from "../../../data/api/chatTypes";
+import { ChatAnimatedPanel } from "../ChatAnimatedPanel";
+import { useConfirmDialog } from "../useConfirmDialog";
+import { usePromptDialog } from "../usePromptDialog";
+import { ChatUserSearchField } from "../ChatUserSearchField";
+import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
+import { handleChatNavClick } from "../../../navigation/chatNavigation";
+import { ChatConversationMenu } from "../ChatConversationMenu";
+import { formatSessionDate } from "../shell/chatSidebarUtils";
+import { ChatModal } from "../shared/modal/ChatModal";
 import {
   workspaceFileKindLabel,
   workspaceFileProjectIngestLabels,
   workspaceFileSourceIndexPresentation,
-} from "../../content/workspaceFileIngestContent";
-import { formatAttachmentSize } from "../chatAttachmentPreview";
+} from "../../../content/workspaceFileIngestContent";
+import { formatAttachmentSize } from "../../chatAttachmentPreview";
 import {
   buildWorkspaceSourcePreviewTarget,
   useWorkspaceFilePreviewModal,
-} from "../hooks/useWorkspaceFilePreviewModal";
-import { IngestProgressIndicator } from "./shared/IngestProgressIndicator";
-import { WorkspaceFileCard } from "./workspace/WorkspaceFileCard";
-import { WorkspaceFileDropzone } from "./workspace/WorkspaceFileDropzone";
+} from "../../hooks/useWorkspaceFilePreviewModal";
+import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
+import { WorkspaceFileCard } from "./WorkspaceFileCard";
+import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
 
 import "./ChatProjectHome.css";
-import "./workspace/workspaceFileIngest.css";
+import "./workspaceFileIngest.css";
 
 type ProjectTab = "chats" | "sources" | "agents";
 

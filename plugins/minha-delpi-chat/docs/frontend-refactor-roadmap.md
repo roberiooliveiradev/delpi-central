@@ -230,6 +230,7 @@ PR-32 ✅  chatAssistantMessageActions → message/; chartExplain → pipeline/
 PR-33 ✅  chatMarkdown → message/ (prosa + strip section markers)
 PR-34 ✅  testFixtures → message/; tableCellFormatting → presentation/
 PR-35 ✅  shell/ — ChatSidebar*, ChatContextBar, ChatContextTopbar, chatSidebarUtils
+PR-36 ✅  workspace/ — ChatProjectHome, ChatProjectCard, ChatProjectCreateModal, ChatAddContextDialog
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -240,7 +241,7 @@ Meta: reduzir **75 TS/TSX + ~55 CSS** na raiz (jun/2026) para **shell + hub + or
 |----|--------|--------|
 | PR-34 | `testFixtures` → `message/`; `tableCellFormatting` → `presentation/` | ✅ |
 | PR-35 | `shell/` — `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar` | ✅ |
-| PR-36 | `workspace/` — `ChatProjectHome`, `ChatProjectCard`, `ChatAddContextDialog`, modais projeto | pendente |
+| PR-36 | `workspace/` — `ChatProjectHome`, `ChatProjectCard`, `ChatAddContextDialog`, modais projeto | ✅ |
 | PR-37 | `message/` — `ChatInteractivityBlock`, `ChatSources`, `ChatDecisionCard`, `ChatMarkdown.tsx`, `ChatMermaidBlock` | pendente |
 | PR-38 | `presentation/export/` — `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` | pendente |
 | PR-39–41 | Fatiar `chatPresentation.ts` (readers → strip markdown → pair resolver) | pendente |

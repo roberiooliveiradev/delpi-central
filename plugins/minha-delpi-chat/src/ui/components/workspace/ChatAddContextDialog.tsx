@@ -1,17 +1,17 @@
 import { useEffect, useId, useState } from "react";
 import { FileText } from "lucide-react";
 
-import type { ConversationContextPick } from "../chatContextFromMessage";
-import type { ContextItemPayload } from "../chatContextFromMessage";
+import type { ConversationContextPick } from "../../chatContextFromMessage";
+import type { ContextItemPayload } from "../../chatContextFromMessage";
 import {
   workspaceFileContextBinaryLine,
   workspaceFileContextIngestLabels,
-} from "../../content/workspaceFileIngestContent";
-import { WorkspaceFileDropzone } from "./workspace/WorkspaceFileDropzone";
-import { ChatModal } from "./shared/modal/ChatModal";
+} from "../../../content/workspaceFileIngestContent";
+import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
+import { ChatModal } from "../shared/modal/ChatModal";
 
 import "./ChatAddContextDialog.css";
-import "./workspace/workspaceFileIngest.css";
+import "./workspaceFileIngest.css";
 
 export type UserContextPayload = ContextItemPayload;
 

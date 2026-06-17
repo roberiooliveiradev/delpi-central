@@ -1,9 +1,9 @@
 import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
 import { useState } from "react";
 
-import type { ChatProject } from "../../data/api/chatTypes";
+import type { ChatProject } from "../../../data/api/chatTypes";
 
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatProjectCreateModal.css";
 
 type ChatProjectCreateModalProps = {

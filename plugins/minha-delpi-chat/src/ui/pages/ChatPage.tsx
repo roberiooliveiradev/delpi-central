@@ -11,7 +11,7 @@ import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/composer";
 import { ChatInlineError } from "../components/ChatInlineError";
-import { ChatAddContextDialog } from "../components/ChatAddContextDialog";
+import { ChatAddContextDialog } from "../components/workspace";
 import { ChatContextBar, type ChatContextChip } from "../components/shell";
 import {
   ChatMemoryUsedDialog,
@@ -21,7 +21,7 @@ import { ChatMessageList } from "../components/message";
 import { ChatContextTopbar } from "../components/shell";
 import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
-import { ChatProjectHome } from "../components/ChatProjectHome";
+import { ChatProjectHome } from "../components/workspace";
 import { ChatSidebar, type ChatSidebarView } from "../components/shell";
 import { useConfirmDialog } from "../components/useConfirmDialog";
 import { usePromptDialog } from "../components/usePromptDialog";

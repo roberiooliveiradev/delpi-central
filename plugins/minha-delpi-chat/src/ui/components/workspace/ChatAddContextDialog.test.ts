@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isPinnableContextKind, isUserContextItemKind } from "../chatActiveContext";
+import { isPinnableContextKind, isUserContextItemKind } from "../../chatActiveContext";
 
 describe("context chip kinds", () => {
   it("identifica tipos fixáveis operacionais", () => {

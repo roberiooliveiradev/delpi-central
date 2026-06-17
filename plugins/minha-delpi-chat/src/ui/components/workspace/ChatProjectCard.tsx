@@ -5,9 +5,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { ChatProject } from "../../data/api/chatTypes";
-import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
-import { DropdownMenuTrigger } from "./shared/menus/DropdownMenuTrigger";
+import type { ChatProject } from "../../../data/api/chatTypes";
+import { shouldOpenChatLinkInNewTab } from "../../../navigation/chatNavigation";
+import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 
 import "./ChatProjectCard.css";
 

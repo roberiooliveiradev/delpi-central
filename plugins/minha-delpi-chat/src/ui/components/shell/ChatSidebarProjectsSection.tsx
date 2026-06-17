@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChatProject, ChatSession } from "../../../data/api/chatTypes";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
 import { ChatConversationListItem } from "../ChatConversationListItem";
-import { ChatProjectCard } from "../ChatProjectCard";
+import { ChatProjectCard } from "../workspace";
 import { useConfirmDialog } from "../useConfirmDialog";
 import { usePromptDialog } from "../usePromptDialog";
 
