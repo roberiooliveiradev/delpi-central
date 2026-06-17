@@ -235,6 +235,7 @@ PR-37 ✅  message/ — InteractivityBlock, Sources, DecisionCard, ChatMarkdown,
 PR-38 ✅  presentation/export/ — exportUtils, chartPngExport, chartCanvasMarkdown, dashboardExportCsv
 PR-39 ✅  presentation/presentationMetadataReaders.ts — get*FromToolCalls, render plan, coverage
 PR-40 ✅  presentation/presentationMarkdownNormalization.ts — strip*, tablePresentationToMarkdown
+PR-41 ✅  presentation/presentationPairResolver.ts — pair resolver, merge tabelas/gráficos
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -250,7 +251,8 @@ Meta: reduzir **55 TS/TSX + ~37 CSS** na raiz (jun/2026) para **shell + hub + or
 | PR-38 | `presentation/export/` — `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` | ✅ |
 | PR-39 | `presentationMetadataReaders.ts` — readers metadata puros | ✅ |
 | PR-40 | `presentationMarkdownNormalization.ts` — strip*, table markdown | ✅ |
-| PR-41 | `presentationPairResolver.ts` — pair resolver, merge tabelas | pendente |
+| PR-41 | `presentationPairResolver.ts` — pair resolver, merge tabelas | ✅ |
+| PR-42 | C3 hex residual + checklist F4 §7 | pendente |
 | PR-42 | C3 hex residual + checklist F4 §7 | pendente |
 
 Definição **100% refactor estrutural**: PR-42 concluído + hub fatiado + raiz só shell/hub/páginas.

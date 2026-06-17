@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–40 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–41 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -70,7 +70,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
 | Modais finos, sidebar, export buttons | Cross-feature |
 
-**Em `presentation/` (PR-34, PR-39):** `tableCellFormatting.ts`, `presentationMetadataReaders.ts` (readers metadata).
+**Em `presentation/` (PR-34, PR-39–40):** `tableCellFormatting.ts`, `presentationMetadataReaders.ts`, `presentationMarkdownNormalization.ts`.
 
 **Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
 
@@ -89,7 +89,8 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown, MermaidBlock | ✅ |
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown, dashboardExportCsv | ✅ |
 | PR-39 | `presentationMetadataReaders.ts` | readers metadata puros | ✅ |
-| PR-40–41 | fatias do hub (strip markdown, pair resolver) | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
+| PR-40 | `presentationMarkdownNormalization.ts` | strip*, table markdown | ✅ |
+| PR-41 | fatia pair resolver do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
 
 ## Referências
 
