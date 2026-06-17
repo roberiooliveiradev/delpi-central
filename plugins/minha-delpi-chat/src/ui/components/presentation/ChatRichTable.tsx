@@ -8,7 +8,7 @@ import {
   applyCategoryFilter,
   buildCategoryFilterOptions,
 } from "./pipeline/presentationCategoryFilter";
-import { formatChartColumnLabel } from "../chartAxisSelection";
+import { formatChartColumnLabel } from "./pipeline/chartAxisSelection";
 import { buildFieldLabelsFromTableColumns } from "./pipeline/presentationFieldLabels";
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import { ChatPresentationCopyButton } from "../ChatPresentationCopyButton";

@@ -41,7 +41,7 @@ import {
   type ChartTopFilter,
   type ChartZoomWindow,
 } from "../chartPresentationUx";
-import { aggregateChartRowsByCategory } from "../chartCategoryAggregation";
+import { aggregateChartRowsByCategory } from "./pipeline/chartCategoryAggregation";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
 import { presentationToCanvasPayload } from "../chartCanvasMarkdown";
 import { exportChartElementToPng } from "../chartPngExport";
@@ -50,7 +50,7 @@ import {
   formatChartColumnLabel,
   inferDefaultChartAxes,
   isNumericAxisChartType,
-} from "../chartAxisSelection";
+} from "./pipeline/chartAxisSelection";
 import {
   formatChartAxisValue,
   type FieldFormats,

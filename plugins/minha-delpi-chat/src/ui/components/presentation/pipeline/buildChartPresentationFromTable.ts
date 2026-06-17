@@ -1,7 +1,7 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatPresentation } from "../../../../data/api/chatTypes";
 import { aggregateChartRowsByCategory } from "./chartCategoryAggregation";
 import { inferDefaultChartAxes, listCategoryColumns, listNumericColumns } from "./chartAxisSelection";
-import { buildFieldLabelsFromTableColumns } from "./presentation/pipeline/presentationFieldLabels";
+import { buildFieldLabelsFromTableColumns } from "./presentationFieldLabels";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;

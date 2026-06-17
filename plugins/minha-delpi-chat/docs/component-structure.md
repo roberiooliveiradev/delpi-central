@@ -44,7 +44,7 @@ Exceção CSS: `rich-presentation-shared.css` na raiz ainda reexporta `presentat
 | Barrel styles | `src/ui/styles/index.css` |
 | Apresentação rica | `presentation/rich-presentation-shared.css` — ver [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | Segment builders | `presentation/segmentBuilders/` — stack, renderPlan, visual collector |
-| Pipeline apresentação | `presentation/pipeline/` — stack plan, dedup, metadata, labels, telemetry |
+| Pipeline apresentação | `presentation/pipeline/` — stack plan, dedup, metadata, labels, telemetry, chart builders |
 | Overlay/modal | `shared/overlay/*`, `modal-layer.css` |
 | Responsivo global | `src/ui/layout/workspace-responsive.css` |
 
@@ -54,7 +54,7 @@ Candidatos futuros a `message/`:
 
 - `chatPresentation.ts` (hub compartilhado — consumido por `presentation/pipeline/` e `message/`)
 
-**Movido para `presentation/pipeline/` (PR-27):** stack plan, dedup, metadata, labels, category filter, telemetry, interactivity policy.
+**Movido para `presentation/pipeline/` (PR-27–29):** stack plan, dedup, metadata, labels, category filter, telemetry, interactivity policy, chart axis/aggregation/build-from-table.
 
 **Já em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
 

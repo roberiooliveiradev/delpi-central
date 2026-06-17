@@ -6,3 +6,8 @@ export { ChatRichDashboard } from "./ChatRichDashboard";
 export { buildStackedSegments } from "./segmentBuilders/stackSegmentBuilder";
 export { buildSegmentsFromRenderPlan } from "./segmentBuilders/renderPlanSegmentBuilder";
 export { collectVisualSegments } from "./segmentBuilders/visualSegmentCollector";
+export {
+  formatChartColumnLabel,
+  buildChartPresentationFromTable,
+  tableSupportsChart,
+} from "./pipeline";

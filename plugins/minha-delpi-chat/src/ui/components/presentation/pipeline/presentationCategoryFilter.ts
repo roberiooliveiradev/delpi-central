@@ -1,4 +1,4 @@
-import { formatChartColumnLabel } from "../../chartAxisSelection";
+import { formatChartColumnLabel } from "./chartAxisSelection";
 import type { FieldLabels } from "./presentationFieldLabels";
 
 export type CategoryFilterOption = {

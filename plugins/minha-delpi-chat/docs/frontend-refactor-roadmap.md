@@ -222,6 +222,7 @@ PR-25 ✅  presentation/segmentBuilders/ (stack, renderPlan, visual collector, �
 PR-26 ✅  remoção stubs legados + CI paths + barrel composer
 PR-27 ✅  presentation/pipeline/ — módulos presentation*.ts da raiz
 PR-28 ✅  regressão stack/layout — explicitSessionFormat, presentation.role, decision.layoutMode
+PR-29 ✅  chart builders → presentation/pipeline/ (axis, aggregation, build-from-table)
 ```
 
 ### Fase concluída (jun/2026)

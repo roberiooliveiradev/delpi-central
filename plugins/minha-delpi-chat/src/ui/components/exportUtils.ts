@@ -1,6 +1,6 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { chatAlert } from "../utils/chatNativeDialogs";
-import { formatChartColumnLabel } from "./chartAxisSelection";
+import { formatChartColumnLabel } from "./presentation/pipeline/chartAxisSelection";
 import { rasterizeChartElement } from "./chartPngExport";
 import { buildDashboardCsv } from "./dashboardExportCsv";
 import { exportTreeToCsv, treePresentationToTable } from "./treePresentationUtils";

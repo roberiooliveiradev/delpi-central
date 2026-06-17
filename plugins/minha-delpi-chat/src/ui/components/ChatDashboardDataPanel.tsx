@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
-import { buildChartPresentationFromTable } from "./buildChartPresentationFromTable";
+import { buildChartPresentationFromTable } from "./presentation/pipeline/buildChartPresentationFromTable";
 import {
   resolveRichFormatToggles,
   tablePresentationToMarkdown,
