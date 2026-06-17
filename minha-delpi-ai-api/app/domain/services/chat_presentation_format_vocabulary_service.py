@@ -60,3 +60,36 @@ class ChatPresentationFormatVocabularyService(ChatAssistantVocabularyService):
     @classmethod
     def last_result_terms(cls) -> tuple[str, ...]:
         return cls.terms(*cls._ROOT, "lastResultTerms")
+
+    @classmethod
+    def context_terms(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "contextTerms")
+
+    @classmethod
+    def dashboard_hints(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "dashboardHints")
+
+    @classmethod
+    def canvas_hints(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "canvasHints")
+
+    @classmethod
+    def kpi_hints(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "kpiHints")
+
+    @classmethod
+    def negative_hints(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "negativeHints")
+
+    @classmethod
+    def ambiguous_phrases(cls) -> tuple[str, ...]:
+        return cls.terms(*cls._ROOT, "ambiguousPhrases")
+
+    @classmethod
+    def loose_keywords(cls, fmt: str) -> tuple[str, ...]:
+        token = str(fmt or "").strip()
+
+        if not token:
+            return ()
+
+        return cls.terms(*cls._ROOT, "looseKeywords", token)

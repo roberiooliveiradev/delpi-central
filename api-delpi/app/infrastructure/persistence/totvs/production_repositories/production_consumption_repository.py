@@ -30,18 +30,35 @@ class ProductionConsumptionRepository(
             select_branch = "D4.D4_FILIAL AS branch,"
             group_by_sql = "D4.D4_FILIAL, D4.D4_COD, SB1.B1_DESC, SB1.B1_UM"
             order_by = "real_consumption_qty DESC, D4.D4_FILIAL ASC, D4.D4_COD ASC"
+        elif group_by == "product_group":
+            select_branch = ""
+            group_by_sql = "SB1.B1_GRUPO"
+            order_by = "real_consumption_qty DESC, SB1.B1_GRUPO ASC"
         else:
             select_branch = ""
             group_by_sql = "D4.D4_COD, SB1.B1_DESC, SB1.B1_UM"
             order_by = "real_consumption_qty DESC, D4.D4_COD ASC"
 
-        sql = f"""
-        SELECT TOP {int(limit)}
-            {select_branch}
+        if group_by == "product_group":
+            select_fields = """
+            SB1.B1_GRUPO AS product_group,
+            SUM({consumption_expr}) AS real_consumption_qty
+            """.format(consumption_expr=consumption_expr)
+        else:
+            select_fields = f"""
+            {{select_branch}}
             D4.D4_COD AS item_code,
             SB1.B1_DESC AS description,
             SB1.B1_UM AS unit,
             SUM({consumption_expr}) AS real_consumption_qty
+            """.format(
+                select_branch=select_branch,
+                consumption_expr=consumption_expr,
+            )
+
+        sql = f"""
+        SELECT TOP {int(limit)}
+            {select_fields}
         FROM SD4010 D4 WITH (NOLOCK)
         INNER JOIN SB1010 SB1 WITH (NOLOCK)
             ON SB1.B1_COD = D4.D4_COD

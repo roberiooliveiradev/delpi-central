@@ -37,7 +37,11 @@ class GetProductionConsumptionTopItemsUseCase:
             request.limit or DEFAULT_PRODUCTION_OPERATIONAL_LIMIT,
             MAX_PRODUCTION_OPERATIONAL_LIMIT,
         )
-        group_by = request.group_by if request.group_by in {"general", "branch"} else "general"
+        group_by = (
+            request.group_by
+            if request.group_by in {"general", "branch", "product_group"}
+            else "general"
+        )
 
         fetch_limit = overfetch_limit(limit)
 

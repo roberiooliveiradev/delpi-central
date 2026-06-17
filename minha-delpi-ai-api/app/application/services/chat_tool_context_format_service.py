@@ -37,21 +37,11 @@ class ChatToolContextFormatService:
     @classmethod
     def detect_requested_format(cls, message: str) -> str | None:
         """Detecta se o usuário pediu um formato específico de apresentação."""
-        lowered = (message or "").lower()
+        from app.domain.services.chat_presentation_format_refinement_intent_service import (
+            ChatPresentationFormatRefinementIntentService,
+        )
 
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.text_hints(include_tool_context=True)):
-            return "text"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.tree_hints(include_tool_context=True)):
-            return "tree"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.table_hints(include_tool_context=True)):
-            return "table"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.chart_hints()):
-            return "chart"
-
-        return None
+        return ChatPresentationFormatRefinementIntentService.detect_requested_format(message)
 
     @classmethod
     def resolve_consolidation_format(

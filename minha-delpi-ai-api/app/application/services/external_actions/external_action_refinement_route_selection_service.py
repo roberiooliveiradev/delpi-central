@@ -84,6 +84,78 @@ class ExternalActionRefinementRouteSelectionService:
             fallback_reason=selected.get("reason"),
         )
 
+    def select_consumption_group_by(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        action_id = str(refinement.action_id or "").strip()
+        allowed = set(allowed_action_ids or [])
+
+        if not action_id or action_id not in allowed:
+            return None
+
+        return self.build_group_by_action(
+            refinement,
+            action_id=action_id,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+    def build_group_by_action(
+        self,
+        refinement,
+        *,
+        action_id: str,
+        allowed_action_ids: list[str],
+        base_parameters: dict | None = None,
+    ) -> dict | None:
+        candidates = self.repository.find_candidate_actions(
+            "",
+            limit=80,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+        action = next(
+            (
+                item
+                for item in candidates
+                if str(item.get("actionId") or "") == action_id
+            ),
+            None,
+        )
+
+        if not action:
+            return None
+
+        parameters = dict(base_parameters or refinement.previous_parameters or {})
+        group_by_value = str(refinement.group_by or "product_group").strip()
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"group_by", "groupby", "group-by"}:
+                parameters[name] = group_by_value
+
+        reason = ExternalActionResponseContentService.get(
+            "selectionReasons",
+            "consumptionGroupByRefinement",
+        )
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action_id,
+                "parameters": parameters,
+            },
+            "reason": reason,
+        }
+
     def select_depth(
         self,
         refinement,

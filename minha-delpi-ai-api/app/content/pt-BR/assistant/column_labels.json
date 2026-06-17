@@ -3020,6 +3020,16 @@
         ["branch", "Filial"]
       ]
     },
+    "playbookConsumptionTopItemsByGroup": {
+      "detect": {
+        "allKeys": ["product_group", "real_consumption_qty"],
+        "pathContains": ["/production/consumption/top-items"]
+      },
+      "preferredColumns": [
+        ["product_group", "Grupo produto"],
+        ["real_consumption_qty", "Consumo real"]
+      ]
+    },
     "playbookPurchasesTopProducts": {
       "detect": {
         "anyKeys": ["invoice_count", "total_value"],

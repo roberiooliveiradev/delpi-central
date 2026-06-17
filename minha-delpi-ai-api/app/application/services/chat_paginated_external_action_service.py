@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any, Literal
+
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.services.chat_pagination_consolidation_service import (
@@ -10,9 +13,22 @@ from app.domain.services.chat_pagination_consolidation_service import (
 )
 
 
+@dataclass(frozen=True)
+class FormatRefinementShortcutResult:
+    kind: Literal["skip", "success", "failure"]
+    payload: tuple[object, dict, dict, str | None] | None = None
+    direct_answer: str | None = None
+
+
 class ChatPaginatedExternalActionService:
-    def __init__(self, execute_tool_use_case: ExecuteToolUseCase):
+    def __init__(
+        self,
+        execute_tool_use_case: ExecuteToolUseCase,
+        *,
+        format_refinement_resolver=None,
+    ):
         self.execute_tool_use_case = execute_tool_use_case
+        self.format_refinement_resolver = format_refinement_resolver
 
     def fetch_continue_plan(
         self,
@@ -121,6 +137,81 @@ class ChatPaginatedExternalActionService:
 
         return merged_data, merged_metadata, arguments, continue_prompt
 
+    def resolve_format_refinement_turn(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        previous_messages: list | None,
+        on_stream_activity=None,
+    ) -> FormatRefinementShortcutResult:
+        from app.application.services.chat_presentation_format_refinement_resolver_service import (
+            ChatPresentationFormatRefinementResolverService,
+        )
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        resolver = self.format_refinement_resolver or ChatPresentationFormatRefinementResolverService()
+        intent = resolver.resolve(message, previous_messages=previous_messages)
+
+        if not intent.is_refinement:
+            return FormatRefinementShortcutResult(kind="skip")
+
+        operation = ChatPresentationFormatRefinementService.collect_last_successful_operation(
+            previous_messages,
+        )
+
+        if not operation:
+            return FormatRefinementShortcutResult(
+                kind="failure",
+                direct_answer=resolver.build_failure_direct_answer(
+                    message,
+                    previous_messages=previous_messages,
+                    reason="no_prior",
+                ),
+            )
+
+        requested_format = intent.requested_format
+
+        if not requested_format:
+            return FormatRefinementShortcutResult(
+                kind="failure",
+                direct_answer=resolver.build_failure_direct_answer(
+                    message,
+                    previous_messages=previous_messages,
+                    reason="unrecognized",
+                ),
+            )
+
+        payload = self.fetch_format_refinement_from_history(
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+            requested_format=requested_format,
+        )
+
+        if not payload:
+            return FormatRefinementShortcutResult(
+                kind="failure",
+                direct_answer=resolver.build_failure_direct_answer(
+                    message,
+                    previous_messages=previous_messages,
+                    requested_format=requested_format,
+                    reason="unsupported_format",
+                ),
+            )
+
+        merged_data, merged_metadata, arguments, _continue = payload
+
+        return FormatRefinementShortcutResult(
+            kind="success",
+            payload=payload,
+        )
+
     def fetch_format_refinement_from_history(
         self,
         *,
@@ -129,12 +220,19 @@ class ChatPaginatedExternalActionService:
         message: str,
         previous_messages: list | None,
         on_stream_activity=None,
+        requested_format: str | None = None,
     ) -> tuple[object, dict, dict, str | None] | None:
+        from app.application.services.chat_presentation_format_refinement_resolver_service import (
+            ChatPresentationFormatRefinementResolverService,
+        )
         from app.domain.services.chat_presentation_format_refinement_service import (
             ChatPresentationFormatRefinementService,
         )
 
-        if not ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+        resolver = self.format_refinement_resolver or ChatPresentationFormatRefinementResolverService()
+        intent = resolver.resolve(message, previous_messages=previous_messages)
+
+        if not intent.is_refinement:
             return None
 
         operation = ChatPresentationFormatRefinementService.collect_last_successful_operation(
@@ -183,9 +281,13 @@ class ChatPaginatedExternalActionService:
         if payload is None:
             return None
 
-        requested_format = ChatPresentationFormatRefinementService.detect_requested_format(
-            message,
-        )
+        format_token = requested_format or intent.requested_format
+
+        if not format_token:
+            format_token = ChatPresentationFormatRefinementService.detect_requested_format(
+                message,
+            )
+
         external_use_case = self._external_action_use_case()
 
         if external_use_case is not None and action_id:
@@ -193,7 +295,7 @@ class ChatPaginatedExternalActionService:
                 external_use_case=external_use_case,
                 operation=operation,
                 payload=payload,
-                requested_format=requested_format,
+                requested_format=format_token,
                 user_message=message,
             )
 

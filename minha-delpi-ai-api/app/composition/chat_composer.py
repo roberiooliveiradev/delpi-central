@@ -233,6 +233,14 @@ def make_chat_native_tool_calling_service() -> ChatNativeToolCallingService:
     )
 
 
+def make_chat_presentation_format_refinement_resolver_service():
+    from app.application.services.chat_presentation_format_refinement_resolver_service import (
+        ChatPresentationFormatRefinementResolverService,
+    )
+
+    return ChatPresentationFormatRefinementResolverService(llm_gateway=make_llm_gateway())
+
+
 def make_chat_tool_context_service() -> ChatToolContextService:
     return ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
@@ -244,6 +252,7 @@ def make_chat_tool_context_service() -> ChatToolContextService:
         tool_router_service=make_chat_tool_router_service(),
         external_action_repository=make_postgres_external_action_repository(),
         native_tool_calling_service=make_chat_native_tool_calling_service(),
+        format_refinement_resolver_service=make_chat_presentation_format_refinement_resolver_service(),
     )
 
 

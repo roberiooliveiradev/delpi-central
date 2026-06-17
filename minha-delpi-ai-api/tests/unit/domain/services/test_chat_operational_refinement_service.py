@@ -605,3 +605,77 @@ def test_plan_next_page_follow_up_for_table_columns_preview():
     assert planned[0].action_id == "table-columns-action"
     assert planned[0].page == 2
     assert planned[0].previous_parameters["tableName"] == "SB1"
+
+
+def _consumption_top_items_assistant_message(*, group_by: str = "general"):
+    return {
+        "role": "assistant",
+        "content": "Itens mais consumidos",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "production-consumption-top-items",
+                        "parameters": {
+                            "date_start": "2026-03-01",
+                            "date_end": "2026-03-31",
+                            "limit": 50,
+                            "group_by": group_by,
+                        },
+                    },
+                    "metadata": {
+                        "ok": True,
+                        "path": "/production/consumption/top-items",
+                        "actionId": "production-consumption-top-items",
+                    },
+                }
+            ]
+        },
+    }
+
+
+def test_plan_consumption_group_follow_up_reuses_top_items_action():
+    history = [
+        {"role": "user", "content": "Quais são os top 50 itens de maior consumo na produção?"},
+        _consumption_top_items_assistant_message(),
+    ]
+
+    planned = ChatOperationalRefinementService.plan_consumption_group_follow_ups(
+        "queria um agrupamento por grupo e saber quais deles mais consome da listagem",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "consumption_group_by_refinement"
+    assert planned[0].action_id == "production-consumption-top-items"
+    assert planned[0].group_by == "product_group"
+    assert planned[0].previous_parameters["limit"] == 50
+
+
+def test_plan_consumption_group_follow_up_skips_when_already_grouped():
+    history = [
+        _consumption_top_items_assistant_message(group_by="product_group"),
+    ]
+
+    planned = ChatOperationalRefinementService.plan_consumption_group_follow_ups(
+        "agrupar por grupo",
+        previous_messages=history,
+    )
+
+    assert planned == []
+
+
+def test_detect_consumption_group_refinement_from_history():
+    history = [
+        _consumption_top_items_assistant_message(),
+    ]
+
+    refinement = ChatOperationalRefinementService.detect(
+        "colocar grupo e consumo em um gráfico de barras",
+        previous_messages=history,
+    )
+
+    assert refinement is not None
+    assert refinement.kind == "consumption_group_by_refinement"
+    assert refinement.group_by == "product_group"

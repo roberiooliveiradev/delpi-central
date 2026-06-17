@@ -99,7 +99,7 @@ def get_consumption_top_items(
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    group_by: Literal["general", "branch"] = Query(default="general"),
+    group_by: Literal["general", "branch", "product_group"] = Query(default="general"),
 ):
     try:
         dto = ProductionOperationalRequest(

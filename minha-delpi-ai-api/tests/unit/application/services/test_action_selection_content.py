@@ -97,6 +97,7 @@ def test_selection_reasons_keys_exist():
         "productSearchByGroup",
         "productSearchByDescription",
         "paginationRefinementDefault",
+        "consumptionGroupByRefinement",
         "genericSemanticFallback",
         "lmpQuery",
         "kpiCpv",

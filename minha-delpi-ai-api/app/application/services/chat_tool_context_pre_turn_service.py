@@ -384,7 +384,14 @@ class ChatToolContextPreTurnService:
             drawing_has_pdf=drawing_has_pdf,
             drawing_pdf_extract=drawing_pdf_extract,
             drawing_runtime_skills=drawing_runtime_skills,
-            paginated_service=ChatPaginatedExternalActionService(host.execute_tool_use_case),
+            paginated_service=ChatPaginatedExternalActionService(
+                host.execute_tool_use_case,
+                format_refinement_resolver=getattr(
+                    host,
+                    "format_refinement_resolver_service",
+                    None,
+                ),
+            ),
         )
 
     def _resolve_paginated_shortcuts(
@@ -401,7 +408,49 @@ class ChatToolContextPreTurnService:
             ChatPaginatedExternalActionService,
         )
 
-        paginated_service = ChatPaginatedExternalActionService(host.execute_tool_use_case)
+        paginated_service = ChatPaginatedExternalActionService(
+            host.execute_tool_use_case,
+            format_refinement_resolver=getattr(
+                host,
+                "format_refinement_resolver_service",
+                None,
+            ),
+        )
+
+        format_turn = paginated_service.resolve_format_refinement_turn(
+            user_id=user_id,
+            access_token=access_token,
+            message=raw_message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )
+
+        if format_turn.kind == "failure" and format_turn.direct_answer:
+            return host._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": format_turn.direct_answer,
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
+        if format_turn.kind == "success" and format_turn.payload:
+            merged_data, merged_metadata, arguments, continue_prompt = format_turn.payload
+
+            return host._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
+                previous_messages=previous_messages,
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=None,
+                reason=ChatToolContextContentService.get("pagination", "formatRefinement"),
+            )
 
         shortcuts = (
             (
@@ -417,11 +466,6 @@ class ChatToolContextPreTurnService:
             (
                 paginated_service.fetch_error_recovery_from_history,
                 ChatToolContextContentService.get("pagination", "errorRecovery"),
-                False,
-            ),
-            (
-                paginated_service.fetch_format_refinement_from_history,
-                ChatToolContextContentService.get("pagination", "formatRefinement"),
                 False,
             ),
         )

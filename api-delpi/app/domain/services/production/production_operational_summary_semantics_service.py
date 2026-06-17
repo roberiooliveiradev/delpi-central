@@ -16,6 +16,9 @@ class ProductionOperationalSummarySemanticsService:
         if group_by == "general":
             return True
 
+        if group_by == "product_group":
+            return True
+
         return False
 
     @classmethod

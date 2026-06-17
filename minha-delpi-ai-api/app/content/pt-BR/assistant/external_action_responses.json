@@ -718,6 +718,7 @@
     "transformaMais": "A pergunta solicita dados do programa Transforma Mais.",
     "systemMetadata": "A pergunta solicita metadados de tabelas/colunas do Protheus.",
     "paginationRefinementDefault": "A mensagem ajusta paginação da consulta operacional já feita nesta conversa.",
+    "consumptionGroupByRefinement": "A mensagem pede agrupar o ranking de consumo por grupo de produto, reutilizando os filtros da consulta anterior.",
     "presentationDetailDefault": "A mensagem solicita detalhe de um registro da apresentação anterior com nova consulta à API.",
     "presentationDetailSupplier": "A mensagem solicita detalhe do fornecedor com nova consulta à API de fornecedores do produto.",
     "presentationDetailPurchaseRecord": "A mensagem solicita detalhe de um documento de compra/orçamento com nova consulta à API.",

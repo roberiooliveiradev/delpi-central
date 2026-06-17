@@ -7,8 +7,8 @@ from typing import Any
 from app.domain.services.chat_pagination_consolidation_service import (
     ChatPaginationConsolidationService,
 )
-from app.domain.services.chat_presentation_format_vocabulary_service import (
-    ChatPresentationFormatVocabularyService,
+from app.domain.services.chat_presentation_format_refinement_intent_service import (
+    ChatPresentationFormatRefinementIntentService,
 )
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
@@ -18,64 +18,13 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 class ChatPresentationFormatRefinementService:
     @classmethod
     def looks_like_format_refinement(cls, message: str | None) -> bool:
-        lowered = str(message or "").strip().lower()
-
-        if not lowered:
-            return False
-
-        has_format = bool(cls.detect_requested_format(lowered))
-        has_reference = any(
-            token in lowered for token in ChatPresentationFormatVocabularyService.reference_hints()
-        )
-
-        if has_format and has_reference:
-            return True
-
-        if has_format and any(
-            token in lowered
-            for token in ChatPresentationFormatVocabularyService.last_result_terms()
-        ):
-            return True
-
-        if has_format and cls._has_imperative_format_intent(lowered):
-            return True
-
-        return False
-
-    @classmethod
-    def _has_imperative_format_intent(cls, lowered: str) -> bool:
-        if not any(
-            verb in lowered for verb in ChatPresentationFormatVocabularyService.imperative_verbs()
-        ):
-            return False
-
-        return any(
-            hint in lowered for hint in ChatPresentationFormatVocabularyService.table_hints()
-        ) or any(
-            hint in lowered for hint in ChatPresentationFormatVocabularyService.chart_hints()
-        ) or any(
-            hint in lowered for hint in ChatPresentationFormatVocabularyService.text_hints()
-        ) or any(
-            hint in lowered for hint in ChatPresentationFormatVocabularyService.tree_hints()
+        return ChatPresentationFormatRefinementIntentService.looks_like_format_refinement(
+            message,
         )
 
     @classmethod
     def detect_requested_format(cls, message: str) -> str | None:
-        lowered = str(message or "").lower()
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.text_hints()):
-            return "text"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.tree_hints()):
-            return "tree"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.table_hints()):
-            return "table"
-
-        if any(h in lowered for h in ChatPresentationFormatVocabularyService.chart_hints()):
-            return "chart"
-
-        return None
+        return ChatPresentationFormatRefinementIntentService.detect_requested_format(message)
 
     @classmethod
     def collect_last_successful_operation(

@@ -447,6 +447,17 @@ class ExternalActionRouteSelectionService:
             select_product=select_product,
         )
 
+    def select_consumption_group_by_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        return self._refinement_route.select_consumption_group_by(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+        )
+
     def select_depth_refinement(
         self,
         refinement,

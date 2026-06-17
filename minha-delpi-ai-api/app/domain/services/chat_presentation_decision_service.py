@@ -1905,7 +1905,7 @@ class ChatPresentationDecisionService:
         merged: list[str] = []
         seen: set[str] = set()
 
-        for token in list(available_formats or []) + defaults:
+        for token in list(available_formats or []) + list(defaults or []):
             normalized = cls._view_from_legacy_format(str(token))
 
             if normalized in seen:

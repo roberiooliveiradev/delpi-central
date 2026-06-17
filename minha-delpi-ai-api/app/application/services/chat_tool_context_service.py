@@ -41,6 +41,7 @@ class ChatToolContextService:
         tool_router_service=None,
         external_action_repository=None,
         native_tool_calling_service=None,
+        format_refinement_resolver_service=None,
     ):
         self.tool_selection_service = tool_selection_service
         self.execute_tool_use_case = execute_tool_use_case
@@ -48,6 +49,7 @@ class ChatToolContextService:
         self.tool_router_service = tool_router_service
         self.external_action_repository = external_action_repository
         self.native_tool_calling_service = native_tool_calling_service
+        self.format_refinement_resolver_service = format_refinement_resolver_service
         self.external_action_result_presenter = ExternalActionResultPresenter()
         self._format_service = ChatToolContextFormatService(self.external_action_result_presenter)
         self._external_action_formatter = ChatToolContextExternalActionFormatter(
@@ -321,6 +323,44 @@ class ChatToolContextService:
     def _apply_format_override(self, safe_tool_calls, requested_format, last_data) -> None:
         return self._format_service.apply_format_override(safe_tool_calls, requested_format, last_data)
 
+    def _format_refinement_chart_failure_answer(
+        self,
+        safe_tool_calls: list[dict],
+        *,
+        raw_message: str,
+        previous_messages: list | None,
+    ) -> str | None:
+        from app.application.services.chat_presentation_format_refinement_resolver_service import (
+            ChatPresentationFormatRefinementResolverService,
+        )
+
+        for tool_call in safe_tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            presentation = metadata.get("presentation")
+
+            if isinstance(presentation, dict) and str(presentation.get("type") or "").lower() == "chart":
+                return None
+
+            chart_slot = metadata.get("chartPresentation")
+
+            if isinstance(chart_slot, dict) and str(chart_slot.get("type") or "").lower() == "chart":
+                return None
+
+        resolver = self.format_refinement_resolver_service or ChatPresentationFormatRefinementResolverService()
+
+        return resolver.build_failure_direct_answer(
+            raw_message,
+            previous_messages=previous_messages,
+            reason="chart_build_failed",
+        )
+
     def _finalize_paginated_consolidation_result(
         self,
         *,
@@ -360,6 +400,27 @@ class ChatToolContextService:
                 requested_format,
                 merged_data,
             )
+
+            if requested_format == "chart":
+                chart_failure = self._format_refinement_chart_failure_answer(
+                    safe_tool_calls,
+                    raw_message=raw_message,
+                    previous_messages=previous_messages,
+                )
+
+                if chart_failure:
+                    return self._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result={
+                            "context": "",
+                            "toolCalls": [],
+                            "nativeToolCalling": {"used": False, "providerSupports": False},
+                            "directAnswer": chart_failure,
+                            "skipRag": True,
+                            "currentMessage": raw_message,
+                        },
+                    )
 
         if direct_answer and requested_format != "text":
             ChatToolContextPresentationService._suppress_redundant_structure_presentations(safe_tool_calls)

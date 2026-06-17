@@ -763,7 +763,11 @@ class ExternalActionKpiChartPresenter:
             if not chart_numeric:
                 return None
 
-        label_key = string_keys[0]
+        label_key = (
+            "product_group"
+            if "product_group" in string_keys
+            else string_keys[0]
+        )
         labels = [str(row.get(label_key, "")) for row in rows[:12]]
 
         if len(set(labels)) < 2:
@@ -880,6 +884,9 @@ class ExternalActionKpiChartPresenter:
         )
 
         if not force and not wants_heatmap:
+            if "item_code" in first and "description" in first:
+                return None
+
             if not ChatChartTypeSelectionService._looks_heatmap_matrix(
                 rows,
                 string_keys,

@@ -45,6 +45,32 @@ def test_consumption_top_items_use_case_returns_summary() -> None:
     repository.fetch_top_items.assert_called_once()
 
 
+def test_consumption_top_items_use_case_groups_by_product_group() -> None:
+    repository = MagicMock()
+    repository.fetch_top_items.return_value = [
+        {
+            "product_group": "1008",
+            "real_consumption_qty": 999.0,
+        }
+    ]
+
+    use_case = GetProductionConsumptionTopItemsUseCase(repository)
+    result = use_case.execute(
+        ProductionOperationalRequest(
+            date_start="2026-03-01",
+            date_end="2026-03-31",
+            limit=10,
+            group_by="product_group",
+        )
+    )
+
+    assert result["group_by"] == "product_group"
+    assert result["items"][0]["product_group"] == "1008"
+    assert result["summary"]["consolidated_across_branches"] is True
+    _, kwargs = repository.fetch_top_items.call_args
+    assert kwargs["group_by"] == "product_group"
+
+
 def test_purchases_top_products_use_case_returns_items() -> None:
     repository = MagicMock()
     repository.fetch_top_products.return_value = [

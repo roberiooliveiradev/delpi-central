@@ -30,6 +30,13 @@ def test_consolidated_for_ranking_false_when_group_by_branch() -> None:
     )
 
 
+def test_consolidated_for_ranking_true_when_group_by_product_group() -> None:
+    assert ProductionOperationalSummarySemanticsService.consolidated_for_ranking(
+        branch=None,
+        group_by="product_group",
+    )
+
+
 def test_consolidated_for_product_aggregation_without_branch() -> None:
     assert ProductionOperationalSummarySemanticsService.consolidated_for_product_aggregation(
         branch=None,
