@@ -1,5 +1,5 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import {
   getPresentationDecisionFromToolCalls,
   getTextMarkdownFromToolCalls,
@@ -12,7 +12,7 @@ import {
   isNativeSingleViewSelection,
   orderVisualSegments,
   segmentVisualKind,
-} from "./assistantContentLayout";
+} from "./message/assistantContentLayout";
 import { parseMarkdownAndCodeSegments } from "./sqlMarkdownNormalizer";
 
 export type NativeSingleViewSelection = ReturnType<typeof isNativeSingleViewSelection>;

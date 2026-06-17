@@ -5,7 +5,7 @@ import {
   structureTableTitleMarkers,
 } from "../../content/presentationVocabulary";
 
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 
 function metadataStructureDedupApplied(
   toolCalls: { metadata?: Record<string, unknown> }[],

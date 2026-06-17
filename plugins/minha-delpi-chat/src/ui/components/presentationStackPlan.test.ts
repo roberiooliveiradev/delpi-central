@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bucketTableSegmentsByRole } from "./assistantContentInterleave";
+import { bucketTableSegmentsByRole } from "./message/assistantContentInterleave";
 import {
   getStackPresentationPlanFromToolCalls,
   inferTableRoleFromTitle,

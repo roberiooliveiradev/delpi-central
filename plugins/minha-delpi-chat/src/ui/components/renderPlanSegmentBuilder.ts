@@ -3,8 +3,8 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 import {
   bucketTableSegmentsByRole,
   partitionCommentarySections,
-} from "./assistantContentInterleave";
-import type { AssistantContentSegment } from "./assistantContentTypes";
+} from "./message/assistantContentInterleave";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import {
   getRenderPlanFromToolCalls,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./assistantContentSegments";
+import { buildAssistantContentSegments } from "./message/assistantContentSegments";
 import {
   buildMultiRouteStackSegments,
   collectProductRouteBlocks,
@@ -12,7 +12,7 @@ import {
 import {
   filterSegmentsByVisualKind,
   resolveAvailableVisualFormatOptions,
-} from "./assistantContentVisualFormats";
+} from "./message/assistantContentVisualFormats";
 import {
   getDataCoverageNoticeFromToolCall,
   getDataCoverageNoticeFromToolCalls,

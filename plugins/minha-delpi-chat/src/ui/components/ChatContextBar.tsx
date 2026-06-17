@@ -23,7 +23,7 @@ import {
   buildContextChipQuery,
 } from "./chatContextChipActions";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
-import { menuAnchorRectFromElement } from "./menuPositionUtils";
+import { menuAnchorRectFromElement } from "./shared/overlay/menuPositionUtils";
 import "./ChatContextBar.css";
 
 export type ChatContextChip = {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./assistantContentSegments";
-import { resolveAssistantContentLayout, shouldShowAllVisualSegments } from "./assistantContentLayout";
+import { buildAssistantContentSegments } from "./message/assistantContentSegments";
+import { resolveAssistantContentLayout, shouldShowAllVisualSegments } from "./message/assistantContentLayout";
 import {
   hasRichStackPresentation,
   resolveCommentaryTextBody,
 } from "./chatPresentation";
-import { resolveAvailableVisualFormatOptions } from "./assistantContentVisualFormats";
+import { resolveAvailableVisualFormatOptions } from "./message/assistantContentVisualFormats";
 import { fixtureToolCalls } from "./testFixtures";
 
 describe("presentationFormatRefinement", () => {

@@ -1,4 +1,4 @@
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import { proseChunksSimilar } from "./segmentDedupe";
 
 export const SQL_FENCE_RE = /```sql\s*([\s\S]*?)```/gi;

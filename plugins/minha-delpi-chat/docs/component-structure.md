@@ -48,7 +48,7 @@ Arquivos na **raiz** de `components/` que só reexportam — **não** adicionar 
 | `rich-presentation-shared.css` | `presentation/rich-presentation-shared.css` |
 | `menuPositionUtils.ts` | `shared/overlay/menuPositionUtils.ts` |
 
-Novos imports devem usar o caminho canônico (pasta feature ou barrel).
+Novos imports devem usar o caminho canônico (pasta feature ou barrel). Consumidores na raiz de `components/` importam `./message/*` e `./shared/overlay/*` — **não** os stubs legados.
 
 ## CSS compartilhado
 

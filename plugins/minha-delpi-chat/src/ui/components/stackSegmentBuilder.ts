@@ -1,7 +1,7 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
-import type { AssistantContentSegment } from "./assistantContentTypes";
-import { buildInterleavedStackSegments } from "./assistantContentInterleave";
-import { orderVisualSegments, resolveStackLayoutOrderFromToolCalls } from "./assistantContentLayout";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import { buildInterleavedStackSegments } from "./message/assistantContentInterleave";
+import { orderVisualSegments, resolveStackLayoutOrderFromToolCalls } from "./message/assistantContentLayout";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTablePresentations } from "./presentationTableDedup";
 import { appendVisualSegment } from "./segmentDedupe";

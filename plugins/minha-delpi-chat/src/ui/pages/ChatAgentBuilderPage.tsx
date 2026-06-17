@@ -2185,14 +2185,14 @@ export function ChatAgentBuilderPage({
             </span>
           </div>
 
-          <div className="mdc-chat-agent-builder__preview-card">
-            <div className="mdc-chat-agent-builder__preview-avatar">
-              <Bot size={26} aria-hidden="true" />
+          <div className="mdc-chat-landing mdc-chat-agent-builder__preview-card">
+            <div className="mdc-chat-landing__avatar" aria-hidden="true">
+              <Bot size={26} />
             </div>
 
-            <h2>{name.trim() || "Novo agente"}</h2>
+            <h2 className="mdc-chat-landing__title">{name.trim() || "Novo agente"}</h2>
 
-            <p>
+            <p className="mdc-chat-landing__description">
               {description.trim() ||
                 "Configure comportamento, instruções e quebra-gelos deste especialista."}
             </p>
@@ -2200,6 +2200,7 @@ export function ChatAgentBuilderPage({
             {previewIcebreakers.length > 0 ? (
               <div
                 className={[
+                  "mdc-chat-landing__prompts",
                   "mdc-chat-agent-builder__preview-icebreakers",
                   previewIcebreakerDensityClass,
                 ]
@@ -2215,6 +2216,7 @@ export function ChatAgentBuilderPage({
                   <button
                     key={icebreaker}
                     type="button"
+                    className="mdc-chat-landing__prompt"
                     disabled={isPreviewLoading}
                     title={icebreaker}
                     onClick={() => void sendPreviewMessage(icebreaker)}

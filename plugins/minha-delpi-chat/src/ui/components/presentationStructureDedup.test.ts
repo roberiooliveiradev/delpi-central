@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./assistantContentSegments";
+import { buildAssistantContentSegments } from "./message/assistantContentSegments";
 import {
   filterSegmentsWithoutHierarchyTableDuplicates,
   isHierarchyDuplicateTable,

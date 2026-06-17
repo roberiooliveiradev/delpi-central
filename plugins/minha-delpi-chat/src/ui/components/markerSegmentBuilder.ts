@@ -1,5 +1,5 @@
-import type { AssistantContentSegment } from "./assistantContentTypes";
-import { splitMarkdownWithPresentationMarkers as splitMarkerSegments } from "./assistantContentInterleave";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import { splitMarkdownWithPresentationMarkers as splitMarkerSegments } from "./message/assistantContentInterleave";
 import { parseMarkdownAndCodeSegments } from "./sqlMarkdownNormalizer";
 
 export function splitMarkdownWithPresentationMarkers(

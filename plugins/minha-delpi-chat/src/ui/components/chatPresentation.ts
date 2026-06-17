@@ -9,7 +9,7 @@ import type {
   ChatToolCall,
 } from "../../data/api/chatTypes";
 
-import { isNativeSingleViewSelection, resolveAssistantContentLayout } from "./assistantContentLayout";
+import { isNativeSingleViewSelection, resolveAssistantContentLayout } from "./message/assistantContentLayout";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 

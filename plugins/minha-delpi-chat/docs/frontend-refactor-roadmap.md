@@ -217,6 +217,7 @@ PR-20 ✅  D3 message/workspace + F3 CI build gate
 PR-21 ✅  C3 hex chips · message/ useAssistantContentSegments + AssistantStackSection · docs component-structure
 PR-22 ✅  message/ ChatMessageList + timeline + ChatThinkingDots
 PR-23 ✅  message/ assistantProseRendering (canônico prosa)
+PR-24 ✅  imports canônicos message/* + shared/overlay; preview builder usa chat-landing
 ```
 
 ### Fase concluída (jun/2026)

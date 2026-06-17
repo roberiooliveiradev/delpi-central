@@ -1,4 +1,4 @@
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import { isSameTablePresentation } from "./presentationTableDedup";
 
 export function normalizeProseChunk(value: string): string {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { buildCanonicalStackSegments } from "./presentationStackBlueprint";
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import { buildStackSectionChrome, isStackSectionVisible } from "./presentationStackSections";
-import { filterSegmentsByVisualKind } from "./assistantContentVisualFormats";
+import { filterSegmentsByVisualKind } from "./message/assistantContentVisualFormats";
 
 function parseMarkdown(prose: string): AssistantContentSegment[] {
   return [{ kind: "markdown", markdown: prose }];

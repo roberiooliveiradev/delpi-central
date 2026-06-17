@@ -1,5 +1,5 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
-import type { AssistantContentSegment } from "./assistantContentTypes";
+import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import { isRenderPlanVisualKindAllowed } from "./chatPresentation";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 import {

@@ -1,6 +1,6 @@
 import type { ChatPresentationDecision, ChatToolCall } from "../../data/api/chatTypes";
 
-import type { AssistantVisualKind, ContentFormatKind } from "./assistantContentLayout";
+import type { AssistantVisualKind, ContentFormatKind } from "./message/assistantContentLayout";
 import {
   getPresentationDecisionFromToolCalls,
   mapPresentationDecisionToViewFormat,

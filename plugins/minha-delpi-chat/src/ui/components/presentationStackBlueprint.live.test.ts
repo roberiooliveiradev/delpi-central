@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./assistantContentSegments";
+import { buildAssistantContentSegments } from "./message/assistantContentSegments";
 
 const LIVE_FIXTURE = "/tmp/analyser_meta.json";
 

@@ -6,7 +6,7 @@ import {
   type AssistantMessageMenuAction,
 } from "./chatAssistantMessageActions";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
-import { menuAnchorRectFromElement } from "./menuPositionUtils";
+import { menuAnchorRectFromElement } from "./shared/overlay/menuPositionUtils";
 import "./ChatTableRowMenu.css";
 
 type ChatAssistantMessageMenuProps = {
