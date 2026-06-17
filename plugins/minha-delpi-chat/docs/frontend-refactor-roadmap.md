@@ -235,7 +235,7 @@ PR-36 ✅  workspace/ — ChatProjectHome, ChatProjectCard, ChatProjectCreateMod
 
 ### Fase G — Limpeza da raiz (PR-34+)
 
-Meta: reduzir **75 TS/TSX + ~55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
+Meta: reduzir **70 TS/TSX + ~55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
 
 | PR | Escopo | Status |
 |----|--------|--------|
@@ -300,8 +300,8 @@ Pendências até 100%:
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| PRs estruturais entregues | 35 / 42 (Fase G) | 42 / 42 |
-| Arquivos TS/TSX na raiz `components/` | 75 | ≤25 (shell + hub + páginas) |
+| PRs estruturais entregues | 36 / 42 (Fase G) | 42 / 42 |
+| Arquivos TS/TSX na raiz `components/` | 70 | ≤25 (shell + hub + páginas) |
 | Arquivos CSS na raiz `components/` | 55 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `message/` | 36 arquivos TS/TSX | +InteractivityBlock, Sources, … (PR-37) |
