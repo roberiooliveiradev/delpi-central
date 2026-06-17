@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [new-api-route-checklist.md](./new-api-route-checklist.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md), [changelog viewIntent](../changelog/2026-06-viewintent-apresentacao-automatica.md).
 
 ---
 
@@ -30,6 +30,8 @@ execute_external_action
        presentationDecision.layoutMode = "stack" | "single"
        presentationDecision.visualOrder = ["text","table","tree","chart",…]
        presentationDecision.availableViews, selected, insight, recommendations
+       dataShape.viewIntent (via ChatPresentationDataShapeAnalyzer)
+       ChatPresentationViewIntentService — tabela vs gráfico no Automático
   → ChatPresentationHumanizedNarrativeService.enrich_metadata
        narrativa fina → panorama/leitura/atenção/conclusão (qualquer action com painéis)
   → ChatPresentationStackOrderService.enrich_metadata
@@ -141,6 +143,29 @@ Pergunta: «me fale do produto 90260149». Ordem: **ficha no início**, **alerta
 **Deduplicação estrutura × tabela:** quando há árvore da mesma hierarquia (BOM, parents, analyser), tabelas planas equivalentes (`Componentes da estrutura`, lista de pais) são removidas do metadata (`ChatPresentationStructureDedupService`). O formato **Tabela** no analyser mantém roteiro, inspeção e ficha — não a lista plana de componentes. Com `preferredFormat: table` na rota de estrutura, a árvore é suprimida e permanece só a tabela plana.
 
 Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
+
+### Modo Automático — `viewIntent` e perfil (jun/2026)
+
+No modo **Automático** (sem `explicitSessionFormat`), a API escolhe o formato antes do MFE renderizar.
+
+**Ordem de prioridade:**
+
+1. Preferência explícita do usuário (toolbar / mensagem)
+2. Perfil JSON (`presentation_profiles.json`) — `chartPolicy: skip`, `defaultViewPolicy`
+3. `dataShape.viewIntent` — classificação da forma tabular
+4. Marcadores de mensagem em `presentation_vocabulary.json` → `automaticScoreMarkers`
+5. `presentationDecision.scores` (último recurso)
+
+| `viewIntent` | Significado | Default típico |
+|--------------|-------------|----------------|
+| `auditable_list` | Várias colunas descritivas (OP, produto, descrição…) | `table` |
+| `ranking` | Label + métrica agregada (filial × saldo) | chart |
+| `temporal_series` | Data + numérico | `line_chart` |
+| `table_only` | Sem métrica chartável | `table` |
+
+Serviços: `ChatPresentationDataShapeAnalyzer`, `ChatPresentationViewIntentService`, `ChatPresentationProfileService`.
+
+**MFE:** render-only — não redecide tabela vs gráfico. Checklist rota nova: [new-api-route-checklist.md](./new-api-route-checklist.md).
 
 ---
 

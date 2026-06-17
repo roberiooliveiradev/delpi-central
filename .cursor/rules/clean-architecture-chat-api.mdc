@@ -36,8 +36,15 @@ Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 
 ## Apresentação
 
-- Vocabulário: `column_labels.json`, normalização: `ChatPresentationFieldNormalizationService`.
+- Perfis declarativos: `presentation_profiles.json` → `ChatPresentationProfileService`.
+- Pipeline metadata: `ChatPresentationMetadataPipelineService.build` (application).
+- Forma dos dados: `ChatPresentationDataShapeAnalyzer` (`viewIntent`).
+- Decisão Automático: `ChatPresentationViewIntentService` + `ChatPresentationDecisionService.enrich_metadata`.
+- Presenter: `ExternalActionResultPresenter` + `ExternalActionEntityRoutePresenter` (domain).
+- Vocabulário: `column_labels.json`, `presenter_content.json`, `presentation_vocabulary.json`.
+- Normalização: `ChatPresentationFieldNormalizationService`.
 - Anexos/lousa: `attachments.json` + `ChatAttachmentContentService`.
+- Nova rota: checklist **`new-api-route-checklist.mdc`**.
 
 ## Ports (Fase 2)
 
@@ -50,4 +57,5 @@ Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 2. Texto novo só em JSON?
 3. Send/stream usam o mesmo serviço para a mesma regra?
 4. Teste ou caso em `chat_intelligence_regression_cases.py`?
-5. Playbook: `docs/roadmap/playbook-11-clean-architecture-chat-api.md`
+5. Rota nova: **`new-api-route-checklist.mdc`** + gates `--check-profiles`?
+6. Playbook: `docs/roadmap/playbook-11-clean-architecture-chat-api.md`

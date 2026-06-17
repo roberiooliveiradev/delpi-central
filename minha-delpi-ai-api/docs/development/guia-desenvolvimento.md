@@ -138,6 +138,18 @@ app/
 - [ ] Teste unitário ou caso em `chat_intelligence_regression_cases.py`
 - [ ] Doc atualizada se contrato HTTP ou arquitetura mudou
 
+### 3.3 Nova rota api-delpi exposta ao chat
+
+Seguir **[`docs/architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)** — resumo:
+
+1. **api-delpi:** `api_delpi_success` + `route_contract_registry` + smoke `meta`
+2. **Registry:** `operational_route_registry.json` + `generate_operational_route_registry.py --check`
+3. **Apresentação:** `entityProfiles`, `entitySetProfileContracts`, `pathRules` (específica antes de catch-all)
+4. **Pipeline:** `ChatPresentationMetadataPipelineService` → `viewIntent` → `presentationDecision`
+5. **CI:** `audit_presentation_coverage.py --check-profiles` + teste `test_chat_presentation_view_intent_service.py`
+
+Detalhe api-delpi: [`api-delpi/docs/`](../api/) e playbook-10 no repositório central.
+
 ---
 
 ## 4. Send vs Stream

@@ -19,6 +19,7 @@ Textos exibidos ao usuário (títulos, mensagens, rótulos de tabela, narrativas
 | SQL, actions, cronograma | `external_action_responses.json` → `ExternalActionResponseContentService` |
 | Produto operacional / estoque / MFE | `product_operational_content.json` → `ChatProductOperationalContentService` |
 | Presenter (rotas, KPI, tabelas) | `presenter_content.json` + `column_labels.json` → presenter + `ExternalActionColumnLabelService` |
+| Apresentação / score Automático | `presentation_vocabulary.json`, `presentation_profiles.json` → `ChatPresentationVocabularyService`, `ChatPresentationProfileService` |
 | Erros recuperáveis | `error_handling.json` (ponte SQL em `sql_execution_errors.json`) |
 
 Catálogo completo: `minha-delpi-ai-api/docs/architecture/assistant-content-catalog.md`.

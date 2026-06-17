@@ -11,6 +11,7 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | **Índice completo** | [docs/README.md](docs/README.md) |
 | **Guia do desenvolvedor** | [docs/development/guia-desenvolvimento.md](docs/development/guia-desenvolvimento.md) |
 | **Arquitetura (pipeline)** | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
+| **Nova rota api-delpi** | [docs/architecture/new-api-route-checklist.md](docs/architecture/new-api-route-checklist.md) |
 | **API HTTP (endpoints)** | [docs/api/README.md](docs/api/README.md) |
 | **Testes e smokes** | [docs/testing/README.md](docs/testing/README.md) |
 | **Conhecimento RAG** | [docs/knowledge/README.md](docs/knowledge/README.md) |

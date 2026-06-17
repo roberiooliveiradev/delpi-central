@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
 
-Regras complementares (obrigatórias): `centralized-rules-first.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`.
+Regras complementares (obrigatórias): `development-standards-index.mdc`, `centralized-rules-first.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc` (rotas novas).
 
 ## O que significa «alinhado» aqui
 
@@ -47,6 +47,7 @@ Só prosseguir com desvio após confirmação explícita do usuário ou refatora
 - [ ] **API e MFE** concordam no contrato (metadata); MFE não reimplementa decisão da API.
 - [ ] **Teste de regressão** cobre o bug ou a qualidade esperada (fixture/canônico quando couber).
 - [ ] Nenhum texto PT novo hardcoded fora de `assistant/*.json`.
+- [ ] Rota nova seguiu **`new-api-route-checklist.mdc`** (se aplicável).
 
 ## Anti-padrão documentado (jun/2026 — apresentação)
 

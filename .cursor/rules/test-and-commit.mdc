@@ -1,21 +1,31 @@
 ---
-description: Ao concluir alterações de código, rodar testes relevantes e criar commit
+description: Testes ao concluir código; commit apenas quando o usuário pedir
 alwaysApply: true
 ---
 
 # Teste e commit ao finalizar
 
-Quando concluir uma tarefa que alterou código (feature, fix, refactor, UI, API):
+## Testes (obrigatório ao alterar código)
 
-1. **Testes** — executar o que couber ao escopo:
-   - Python: `pytest` nos pacotes alterados (`api-delpi/tests`, `strategic-indicators-api/tests`, etc.)
-   - Frontend MFE: `npm run build` nos plugins alterados (`plugins/dashboard-*`, etc.)
-   - Corrigir falhas antes de commitar.
+Executar o que couber ao escopo antes de considerar a tarefa concluída:
 
-2. **Commit** — se houver diff no repositório, criar commit com mensagem em português (HEREDOC), focando o *porquê*. Não deixar trabalho só no working tree.
+| Pacote | Comando típico |
+|--------|----------------|
+| `minha-delpi-ai-api` | `.venv/bin/python -m pytest tests/unit/... -q` |
+| `api-delpi` | `pytest api-delpi/tests/ -q` |
+| MFE chat | `npm run build` ou `npm test` em `plugins/minha-delpi-chat` |
+| Gates apresentação | `scripts/audit_presentation_coverage.py --check-profiles` |
+| Nova rota | Ver gates em **`new-api-route-checklist.mdc`** § 4 |
 
-3. **Sem alteração** — se não houve mudança de código, não criar commit vazio.
+Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
 
-4. **Exceções** — perguntar antes de commitar se o usuário pediu só análise/review, ou se arquivos parecem conter segredos (`.env`, credenciais).
+## Commit
 
-Resumir no fim: testes executados (pass/fail) e hash/mensagem do commit, ou que não havia nada a commitar.
+- **Criar commit somente quando o usuário pedir explicitamente** («commit», «commit e push», etc.).
+- Se o usuário pediu só análise/review, ou há `.env`/credenciais no diff — **não** commitar; avisar.
+- Mensagem em português (HEREDOC), focando o *porquê*.
+- Não deixar trabalho relevante só no working tree sem avisar o usuário.
+
+## Sem alteração de código
+
+Não criar commit vazio. Não rodar suite inteira sem necessidade.

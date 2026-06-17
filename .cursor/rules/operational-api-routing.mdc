@@ -1,39 +1,45 @@
+---
+description: Roteamento centralizado de actions api-delpi no chat — sem if por path no use case
+alwaysApply: true
+---
+
 # Roteamento centralizado de APIs operacionais
 
 ## Princípio
 
-Chamadas à api-delpi (e demais providers OpenAPI) **não** devem acoplar lógica por tipo (produto, KPI, LMP, SQL) no chamador. O fluxo é:
+Chamadas à api-delpi **não** acoplam lógica por tipo (produto, KPI, LMP, SQL) no chamador:
 
 ```
-Intent/heurística → OperationalApiRouteSpec → ExternalActionRouteSelectionService → execute_external_action
+Intent/heurística → OperationalApiRouteSpec → ExternalActionRouteSelectionService → ExecuteExternalActionUseCase
 ```
 
 ## Onde implementar
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **Vocabulário** | `app/content/pt-BR/assistant/api_route_domains.json` — domínios, `pathMarkers`, `parameterStrategy` |
-| **Domínio** | `OperationalApiRouteSpec`, `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
-| **Aplicação** | `ExternalActionRouteSelectionService` — matching de actions + tool call |
-| **Orquestração** | `ExternalActionSelectionService` — detecta intenção e monta a spec; **não** duplica matching HTTP |
+| Vocabulário | `api_route_domains.json` — domínios, `pathMarkers`, `parameterStrategy` |
+| Domain | `OperationalApiRouteSpec`, `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
+| Application | `ExternalActionSelectionService`, `ExternalActionRouteSelectionService` |
+| Infrastructure | `HttpExternalActionGateway` |
 
-## O que fazer
+## Checklist (roteamento)
 
-1. Novo domínio ou estratégia de parâmetro → editar `api_route_domains.json` primeiro.
-2. Factory em `OperationalApiRouteSpec` (`from_department_kpi`, `from_supplies_metric`, `from_product`, …).
-3. Seleção via `ExternalActionRouteSelectionService.select(spec, ...)`.
-4. Execução HTTP permanece em `ExecuteExternalActionUseCase` + `HttpExternalActionGateway`.
+1. Domínio ou parâmetro novo → `api_route_domains.json` primeiro.
+2. Factory em `OperationalApiRouteSpec` se spec nova.
+3. Entrada em `operational_route_registry.json` + `--check`.
+4. Regressão: mensagem → `operationId` em fixtures de inteligência.
+
+## Apresentação (após rota HTTP existir)
+
+Seguir **`new-api-route-checklist.mdc`** § 3–5 — roteamento **não** substitui perfil de apresentação.
 
 ## O que NÃO fazer
 
-- `if "/products/"` / `if kpi` espalhado em use cases ou no MFE para escolher action.
+- `if "/products/"` / `if kpi` em use cases ou MFE.
 - Duplicar `_build_date_branch_parameters` fora de `OperationalApiParameterBuilderService`.
-- Bypass de `execute_external_action` em preview/simulate sem o mesmo contrato de metadata.
+- Bypass de `execute_external_action` em preview/simulate sem metadata equivalente.
+- Entregar action selecionável sem presenter/perfil (`entityProfiles`).
 
 ## Metadata
 
-`toolCalls[].metadata.apiRouteDomain` classifica o path executado (`product`, `department_kpi`, `supplies_kpi`, …).
-
-## Apresentação e perfil
-
-Após a rota existir na api-delpi, seguir **`new-api-route-checklist.mdc`** § 3–5 (`entityProfiles`, contratos entitySet, pathRules, gates CI).
+`toolCalls[].metadata.apiRouteDomain` classifica o path (`product`, `department_kpi`, `supplies_kpi`, …).

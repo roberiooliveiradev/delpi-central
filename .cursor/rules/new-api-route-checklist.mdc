@@ -3,85 +3,112 @@ description: Checklist obrigatório ao criar ou alterar rotas api-delpi expostas
 alwaysApply: true
 ---
 
-# Nova rota api-delpi — checklist (chat + apresentação)
+# Nova rota api-delpi — checklist
 
 ## Princípio
 
-Rota nova = **contrato HTTP** (api-delpi) + **roteamento operacional** + **perfil de apresentação** + **teste/gate**. Não entregar só o endpoint — o chat base consome `meta.entity`, perfil JSON e `presentationDecision`.
+Rota exposta ao chat = entrega em **três pacotes** alinhados a clean architecture:
 
-Regras complementares: `api-delpi-response-contract.mdc`, `operational-api-routing.mdc`, `assistant-content-json.mdc`, `chat-intelligence-base.mdc`.
+1. **api-delpi** — contrato HTTP + `meta`
+2. **minha-delpi-ai-api** — roteamento + apresentação + pipeline
+3. **Testes/gates** — regressão antes do merge
+
+Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
 
 ---
 
-## 1. api-delpi (HTTP)
+## 1. api-delpi (`api-delpi/`)
 
-1. Sucesso via **`api_delpi_success(..., operation_id=...)`** — não montar envelope manual.
-2. Registrar em **`route_contract_registry.py`**: `entity` estável + `shape` (`playbook_report`, `paged_list`, `scalar`, `composite_analysis`, …).
-3. **`operation_id`** idêntico no decorator OpenAPI e no registry.
-4. Chat-critical: **`openapi_agent_metadata.agent_route()`** + permissão em `api_delpi_permissions.py`.
-5. Smoke test: `meta.operationId` + `meta.entity` presentes.
+| # | Entrega | Onde |
+|---|---------|------|
+| 1 | `api_delpi_success(..., operation_id=...)` | router |
+| 2 | `route_contract_registry.py` — `entity` + `shape` | application |
+| 3 | `operation_id` = OpenAPI = meta | decorator + registry |
+| 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http |
+| 5 | Permissão em `api_delpi_permissions.py` | security |
+| 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` |
 
-## 2. Roteamento no chat (seleção de action)
+Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
 
-1. Entrada em **`operational_route_registry.json`** (gerar/validar com `generate_operational_route_registry.py --check`).
-2. Domínio/vocabulário em **`api_route_domains.json`** se intenção nova (`pathMarkers`, `parameterStrategy`).
-3. Seleção só via **`ExternalActionRouteSelectionService`** — sem `if path` em use case/MFE.
-4. Caso de regressão em **`chat_intelligence_regression_cases.py`** ou `production_operational_regression_cases.py` (mensagem → `operationId` esperado).
+---
 
-## 3. Apresentação (Automático = formato certo)
+## 2. Chat — roteamento (`minha-delpi-ai-api/`)
 
-Escolher **perfil por semântica dos dados**, não só pelo path:
+| # | Entrega | Onde (camada) |
+|---|---------|---------------|
+| 1 | Registry operacional | `operational_route_registry.json` + `generate_operational_route_registry.py --check` |
+| 2 | Domínio/intenção nova | `api_route_domains.json` (domain via vocabulary) |
+| 3 | Seleção de action | `ExternalActionRouteSelectionService` (application) — **sem** `if path` em use case |
+| 4 | Execução HTTP | `ExecuteExternalActionUseCase` + gateway (application/infrastructure) |
+| 5 | Regressão de intenção | `chat_intelligence_regression_cases.py` ou `production_operational_regression_cases.py` |
 
-| Semântica | Perfil típico | Políticas |
-|-----------|---------------|-----------|
-| Listagem auditável (`items[]`, várias colunas) | `playbook_report` ou `table_list` | `defaultViewPolicy: table_when_available`, `chartPolicy: skip` |
-| KPI / série temporal | `kpi_series` / `kpi_dashboard` | `kpi_when_available`, `chartPolicy: auto` |
-| Hierarquia (BOM, pais) | `tree_hierarchy` | `tree_when_available` |
-| Produto composto | perfil dedicado (`stock`, `analyser`, …) | ver `presentation_profiles.json` |
+---
 
-Arquivos canônicos (`minha-delpi-ai-api`):
+## 3. Chat — apresentação (declarativo + pipeline)
 
-1. **`entityProfiles`** — mapear `meta.entity` → perfil (obrigatório).
-2. **`entitySetProfileContracts`** — incluir entidade no conjunto certo (`playbookOperational`, `productListPresent`, …).
-3. **`pathRules`** — regra **específica antes** de catch-alls (ex.: `/production/` → `kpi_series` quebra listagens).
-4. **`noChartEntities`** — listas que nunca defaultam gráfico.
-5. Títulos/colunas: **`presenter_content.json`** + **`column_labels.json`** (textos PT — nunca hardcoded em Python).
-6. **`entityPathHints`** + **`pathEntityFallbacks`** se path resolve entity sem meta.
+### Perfil por semântica (não por path isolado)
 
-Inteligência transversal (não duplicar no MFE):
+| Dados | Perfil | Políticas JSON |
+|-------|--------|----------------|
+| Listagem auditável | `playbook_report` / `table_list` | `table_when_available`, `chartPolicy: skip` |
+| KPI / série | `kpi_series` / `kpi_dashboard` | `kpi_when_available`, `chartPolicy: auto` |
+| Hierarquia | `tree_hierarchy` | `tree_when_available` |
+| Produto composto | `stock`, `analyser`, … | `presentation_profiles.json` |
 
-- `ChatPresentationDataShapeAnalyzer` → `viewIntent` (`auditable_list` vs `ranking`)
-- `ChatPresentationViewIntentService` → decisão Automático
-- `ChatPresentationDecisionService.enrich_metadata` → `presentationDecision`
+### Arquivos JSON (obrigatório)
 
-## 4. Gates CI (rodar antes do merge)
+- `presentation_profiles.json` — `entityProfiles`, `entitySetProfileContracts`, `pathRules` (**específica antes de catch-alls**), `noChartEntities`, hints/fallbacks
+- `presenter_content.json` + `column_labels.json` — títulos e colunas
+- `presentation_vocabulary.json` — marcadores de score/intenção (se nova heurística de mensagem)
+
+### Pipeline canônico (domain/application — não duplicar)
+
+```
+ExecuteExternalAction → ChatPresentationMetadataPipelineService.build
+  → ExternalActionResultPresenter
+  → ChatPresentationDataShapeAnalyzer (viewIntent)
+  → ChatPresentationDecisionService.enrich_metadata
+  → ChatPresentationViewIntentService (Automático: tabela vs gráfico)
+  → metadata.presentationDecision → MFE render-only
+```
+
+**MFE:** `chatPresentation.ts` / `assistantContentLayout.ts` — consome metadata; **não** redecide formato.
+
+---
+
+## 4. Gates CI (antes do merge)
 
 ```bash
 cd minha-delpi-ai-api
 .venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
 .venv/bin/python scripts/generate_operational_route_registry.py --check
-.venv/bin/python scripts/audit_presentation_path_ifs.py --check   # quando aplicável
-pytest tests/unit/domain/services/test_chat_presentation_view_intent_service.py
+pytest tests/unit/domain/services/test_chat_presentation_view_intent_service.py -q
+# api-delpi alterado:
+pytest api-delpi/tests/ -q -k "<operation_id ou smoke>"
 ```
 
-`--check-profiles` falha se: tier A com perfil `generic`, **contrato entitySet × perfil** quebrado, ou path sem entity caindo em perfil proibido.
+`--check-profiles` falha: tier A com `generic`, contrato **entitySet × perfil** quebrado, path sem entity em perfil proibido.
 
-## 5. Teste de apresentação (mínimo)
+---
 
-Fixture ou teste unitário com payload representativo + modo **Automático**:
+## 5. Teste mínimo de apresentação
 
-- listagem → `presentationDecision.selected` = **`table`** (ou `text` quando narrativa-first)
-- KPI/série → **`kpi`** / **`line_chart`**, não tabela forçada
+Payload representativo + modo **Automático**:
+
+- listagem → `presentationDecision.selected` = `table` (ou `text` se narrativa-first do perfil)
+- KPI/série → `kpi` / `line_chart`
+
+---
 
 ## O que NÃO fazer
 
-- Rota só em OpenAPI sem `entityProfiles` → cai em catch-all (`/production/` → gráfico indevido).
-- Lógica «tabela vs gráfico» no MFE ou no prompt do agente.
-- `operationId` / `entity` diferentes entre api-delpi, registry e presenter.
-- Texto PT de título/coluna/razão só no Python — usar JSON do assistente.
+- Endpoint sem `entityProfiles` (catch-all ex.: `/production/` → `kpi_series` em listagem).
+- Tabela vs gráfico no MFE, prompt de agente ou `Send*`/`Stream*` duplicado.
+- Texto PT em Python/TS — `assistant-content-json.mdc`.
+- Serviço de decisão implementado mas **não** ligado ao pipeline (`clean-code-architecture-guardrails.mdc`).
 
 ## Referências
 
 - `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md`
 - `minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md`
-- `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md` (Playbook 09 — decisão de formato)
+- `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`

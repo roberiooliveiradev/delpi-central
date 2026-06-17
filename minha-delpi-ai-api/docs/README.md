@@ -63,6 +63,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | Documento | Conteúdo |
 |-----------|----------|
 | [README.md](./architecture/README.md) | Índice de arquitetura |
+| [new-api-route-checklist.md](./architecture/new-api-route-checklist.md) | **Nova rota api-delpi** — HTTP, registry, perfil, CI |
 | [chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | **Núcleo** — pipeline, serviços, roteamento api-delpi |
 | [chat-pre-llm-layers.md](./architecture/chat-pre-llm-layers.md) | Fases A/B/C antes do LLM |
 | [chat-assistant-content-presentation.md](./architecture/chat-assistant-content-presentation.md) | Apresentação rica (API + contrato MFE) |
@@ -113,6 +114,7 @@ Documentos para **ingestão na base de conhecimento** — não confundir com có
 
 Changelogs recentes:
 
+- [2026-06-viewintent-apresentacao-automatica.md](./changelog/2026-06-viewintent-apresentacao-automatica.md)
 - [2026-06-playbook-inteligencia.md](./changelog/2026-06-playbook-inteligencia.md)
 - [2026-06-playbook-14-corretor-digitacao-composer.md](./changelog/2026-06-playbook-14-corretor-digitacao-composer.md)
 - [2026-05-inteligencia-chat-entregas.md](./changelog/2026-05-inteligencia-chat-entregas.md)

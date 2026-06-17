@@ -696,18 +696,26 @@ Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compa
 
 ### Playbook 09 — decisão de formato (jun/2026)
 
+Prioridade no modo **Automático:** preferência explícita do usuário → perfil JSON (`presentation_profiles.json`) → `viewIntent` (forma dos dados) → marcadores de mensagem (`presentation_vocabulary.json`) → score (`presentationDecision.scores`).
+
 | Serviço | Papel |
 |---------|--------|
-| `ChatPresentationDataShapeAnalyzer` | Detecta data, numérico, hierarquia e cardinalidade |
-| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`, `layoutMode`, `visualOrder`) |
+| `ChatPresentationMetadataPipelineService` | Orquestra build de metadata pós-`ExecuteExternalAction` (application) |
+| `ChatPresentationProfileService` | Resolve perfil por `meta.entity` / path; contratos `entitySetProfileContracts` |
+| `ChatPresentationDataShapeAnalyzer` | Forma tabular + **`viewIntent`** (`auditable_list`, `ranking`, `temporal_series`, …) |
+| `ChatPresentationViewIntentService` | Automático: prefere tabela vs gráfico (shape + perfil + mensagem) |
+| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`, `layoutMode`, `visualOrder`, `scores`) |
+| `ChatPresentationOperationalDecisionService` | Overrides operacionais por perfil (estoque, pricing, árvore, listas) |
 | `ChatPresentationInsightService` | Gera `insight` curto para o MFE |
 | `ChatPresentationChartPolicyService` | Limita pontos/fatias e agrupa «Outros» em rosca/pizza |
-| `ChatPresentationAxisPreferenceService` | Eixos padrão (eficiência no Y; dispersão evita horas quando há `eficiencia_percentual`) |
-| `ChatPresentationRecommendationService` | Sugestões de formato alternativo (`decision.recommendations` → chips e banner no MFE) |
-| `ChatPresentationAdminMetricsService` | Agregação admin (`GET /admin/metrics/presentation/summary`), taxas e alertas heurísticos |
-| `ExecuteExternalActionUseCase` | Chama `enrich_metadata` após montar `presentation` / `tablePresentation` / `chartPresentation` |
+| `ChatPresentationRecommendationService` | Sugestões de formato alternativo (`decision.recommendations` → chips) |
+| `ChatPresentationCoverageService` | Matriz OpenAPI × perfil; gate `find_entity_set_profile_gaps` |
 
-Regressão: casos P1–P16 em `tests/fixtures/rich_presentation_cases.py` (+ eixos e `ChatChartTypeSelectionService` para eficiência fabril). MFE: `getPresentationDecisionFromToolCalls`, insight, `resolveDefaultRichViewMode`, seletores de eixo em `ChatRichChart`, telemetria `presentation_*` via `POST /chat/assistant/help-events`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).
+**MFE:** render-only — consome `presentationDecision`; não reimplementa heurística de formato.
+
+Checklist rota nova: [`new-api-route-checklist.md`](./new-api-route-checklist.md).
+
+Regressão: `tests/unit/domain/services/test_chat_presentation_view_intent_service.py`, `test_chat_presentation_decision_scores.py`, casos P1–P16 em `tests/fixtures/rich_presentation_cases.py`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).
 
 ### Consolidação paginada (total / completo / continuar) — maio/2026
 

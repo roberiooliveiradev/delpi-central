@@ -28,6 +28,7 @@ Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, stre
 
 | Documento | Assunto |
 |-----------|---------|
+| [new-api-route-checklist.md](./new-api-route-checklist.md) | **Nova rota** — HTTP, registry, perfil, CI |
 | [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md) | `presentationDecision`, stack, multi-rota, MFE |
 | [assistant-content-catalog.md](./assistant-content-catalog.md) | Bundles JSON e serviços loader |
 | [product-operational-content.md](./product-operational-content.md) | Escopos de produto, plural, estoque |
@@ -109,7 +110,9 @@ Send síncrono usa os **mesmos** serviços de preparação e conclusão — ver 
 | Mudança | Camada canônica | Não duplicar em |
 |---------|-----------------|-----------------|
 | Nova intenção / roteamento | `domain/services/*IntentService` | use case, prompt agente |
-| Nova rota api-delpi | `ExternalActionSelectionService` + `api_route_domains.json` | heurística no MFE |
+| Nova rota api-delpi (completa) | [new-api-route-checklist.md](./new-api-route-checklist.md) | endpoint isolado sem perfil/registry |
+| Seleção de action existente | `ExternalActionSelectionService` + `api_route_domains.json` | heurística no MFE |
+| Formato Automático (tabela/gráfico) | `ChatPresentationViewIntentService` + perfis JSON | MFE, prompt agente |
 | Texto PT para usuário | `app/content/pt-BR/assistant/*.json` | Python/TS literal |
 | Título/coluna de tabela | `presenter_content.json` + presenter | system_prompt |
 | Policy LLM global | `domain/prompt_policies/*.md` | agente individual |
@@ -151,5 +154,6 @@ Mapa Cursor: `.cursor/rules/centralized-rules-first.mdc`.
 ## Referências externas
 
 - Contrato api-delpi → chat: [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md)
+- **Nova rota (checklist):** [new-api-route-checklist.md](./new-api-route-checklist.md)
 - Auditoria rotas: [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md)
 - Guia desenvolvedor: [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md)

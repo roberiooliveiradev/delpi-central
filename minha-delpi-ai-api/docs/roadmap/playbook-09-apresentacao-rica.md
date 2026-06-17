@@ -9,20 +9,26 @@ Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md)
 
 **Evolução (jun/2026):** interpretação humanizada, score automático e UX de decisão → [`playbook-13-respostas-humanizadas-dados.md`](./playbook-13-respostas-humanizadas-dados.md).
 
+**Modo Automático escalável (jun/2026):** `viewIntent` na forma dos dados + perfis declarativos + contratos entitySet — [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md), [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md#modo-automático--viewintent-e-perfil-jun2026).
+
 ---
 
 ## Implementação (jun/2026)
 
 | Componente | Responsabilidade |
 |------------|------------------|
-| `ChatPresentationDataShapeAnalyzer` | Linhas/colunas, data, numérico, hierarquia, recomendação interna |
-| `ChatPresentationDecisionService` | Formato preferido, fallback, `availableViews`, motivo |
+| `ChatPresentationDataShapeAnalyzer` | Forma tabular + **`viewIntent`** (`auditable_list`, `ranking`, `temporal_series`, …) |
+| `ChatPresentationViewIntentService` | Modo Automático: prefere tabela vs gráfico (shape + perfil + mensagem) |
+| `ChatPresentationProfileService` | Perfis por `meta.entity` / path; `entitySetProfileContracts`, `chartPolicy` |
+| `ChatPresentationDecisionService` | Formato preferido, fallback, `availableViews`, motivo, scores |
+| `ChatPresentationOperationalDecisionService` | Overrides operacionais (estoque, pricing, listas auditáveis) |
 | `ChatPresentationInsightService` | Insight automático curto (§16) |
 | `ChatPresentationChartPolicyService` | Limites de fatias/pontos e agrupamento «Outros» (§25) |
+| `ChatPresentationCoverageService` | Gate CI — gaps entitySet × perfil |
 | `ChatPresentationAxisPreferenceService` | Eixos X/Y padrão (eficiência, operador) + colunas no `config` |
 | `ChatChartTypeSelectionService` | Subtipo de gráfico (linha, barra H, rosca, combo, …) |
 | `ExternalActionResultPresenter` | Monta `presentation` / `tablePresentation` / `chartPresentation` |
-| `ExecuteExternalActionUseCase` | Enriquece metadata com `presentationDecision` |
+| `ChatPresentationMetadataPipelineService` | Orquestra build de metadata pós-action (application) |
 | MFE `ChatAssistantContent` | Único renderizador: segmentos, toolbar de formato, registry extensível |
 | MFE `assistantContentRegistry` | Novos visuais: `registerAssistantSegmentRenderer` |
 
@@ -31,14 +37,18 @@ Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md)
 ## Pipeline
 
 ```
-Dados da action → Presenter (table/chart/tree/kpi/text)
-               → ExecuteExternalActionUseCase (primary + table/tree/chart + textPresentation)
+Dados da action → ExternalActionResultPresenter (table/chart/tree/kpi/text)
+               → ChatPresentationMetadataPipelineService.build
+               → ChatPresentationDataShapeAnalyzer → viewIntent
                → ChatPresentationDecisionService.enrich_metadata
-                    (layoutMode, visualOrder, availableViews, selected, insight)
-               → MFE buildAssistantContentSegments → ChatAssistantContent
+                    (+ ChatPresentationViewIntentService no Automático)
+                    layoutMode, visualOrder, availableViews, selected, insight
+               → MFE buildAssistantContentSegments → ChatAssistantContent (render-only)
 ```
 
-Ver: [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md).
+**Prioridade no Automático:** preferência explícita → perfil JSON → `viewIntent` → marcadores de mensagem → score.
+
+Ver: [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md), [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md).
 
 ---
 
@@ -60,7 +70,8 @@ Ver: [`../architecture/chat-assistant-content-presentation.md`](../architecture/
       "hasDate": true,
       "hasNumeric": true,
       "hasCategory": true,
-      "hasHierarchy": false
+      "hasHierarchy": false,
+      "viewIntent": "temporal_series"
     },
     "intent": "sales_lookup"
   }
@@ -89,8 +100,9 @@ Ver: [`../architecture/chat-assistant-content-presentation.md`](../architecture/
 | P14 | Dados vazios | `text` |
 | P15 | Formato pedido (linha) | `line_chart` |
 | P16 | Eficiência fabril (LMP, várias métricas) | `horizontal_bar` + eixo Y `eficiencia_percentual` |
+| P17 | Listagem auditável (OPs, programação do dia, NF) — **Automático** | `table` (`viewIntent: auditable_list`, perfil `playbook_report` / `chartPolicy: skip`) |
 
-Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/services/test_rich_presentation.py`, `test_chat_presentation_axis_preference_service.py`, `test_chat_chart_type_selection_service.py`.
+Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/services/test_rich_presentation.py`, `test_chat_presentation_view_intent_service.py`, `test_chat_presentation_decision_scores.py`, `test_chat_presentation_axis_preference_service.py`, `test_chat_chart_type_selection_service.py`.
 
 ---
 

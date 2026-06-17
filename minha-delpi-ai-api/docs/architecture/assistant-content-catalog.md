@@ -79,10 +79,10 @@ Wrappers especializados (mantêm API estável):
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
-| `presentation_vocabulary.json` | Dedup estrutura/BOM, tokens de seção humanizada, rótulos booleanos, **motivos de decisão de formato**, insights de visualização, explicação de gráfico/dashboard, marcadores checklist/lousa, **Playbook 12** (`playbook12Refactor`, `tableRoles`, **`tierAPipelineCases`**) | `ChatPresentationVocabularyService` → decisão, dedup, **gate CI role** (`presentation_table_role_gate`) |
+| `presentation_vocabulary.json` | Dedup estrutura/BOM, **`decisionReasons`**, insights, Playbook 12 (`tableRoles`, `tierAPipelineCases`), **`automaticScoreMarkers`** (listagem vs ranking no Automático) | `ChatPresentationVocabularyService` |
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
-| `presentation_profiles.json` | Perfis declarativos (defaultView, **entitySets**, **entityPathHints**, **pathEntityFallbacks**, stackPlan, visualBuilders, …) | `ChatPresentationProfileService`, `ChatOperationalResponseProfileService` |
+| `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `noChartEntities`, `chartPolicy`, `defaultViewPolicy`, visualBuilders, stackPlan | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |
 | `ChatOperationalResponseProfileService` | Roteamento `meta.entity` → perfil/presenter OpenAPI (alias legado: `ChatApiDelpiResponseProfileService`) | path hardcoded em presenters |
 | `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
 | `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, destaques, prefixos de atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService`, `ChatPresentationStackOrderService` |
@@ -149,8 +149,11 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 | `scripts/lint_operational_route_registry.py --check` | Registry + vocabulário + cobertura tier C |
 | `scripts/generate_operational_route_registry.py --check` | `autoTierCRoutes` sincronizado com OpenAPI baseline |
 | `scripts/audit_presentation_path_ifs.py --check` | Apresentação entity-first (Fase 19) |
+| `scripts/audit_presentation_coverage.py --check-profiles` | Tier A sem `generic`; **contratos entitySet × perfil**; path vs catch-all |
 
 Workflow: `.github/workflows/minha-delpi-ai-api-docie.yml`. Regenerar tier C após reimport OpenAPI: `generate_operational_route_registry.py --write`.
+
+**Nova rota:** checklist completo em [new-api-route-checklist.md](./new-api-route-checklist.md).
 
 ## Pendente (baixa prioridade)
 
