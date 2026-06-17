@@ -17,6 +17,10 @@ def test_production_order_period_filter_sql_clauses() -> None:
     assert "C2_DATPRF >= @DATA_INI" in sql
     assert "C2_QUJE" in sql
     assert "C2_QUANT" in sql
+    assert "SH8010" in sql
+    assert "H8_DTINI >= @DATA_INI" in sql
+    assert "H8_DTINI < @DATA_FIM" in sql
+    assert "SD4010" in sql
 
 
 def test_repository_wires_period_filter_and_date_params() -> None:

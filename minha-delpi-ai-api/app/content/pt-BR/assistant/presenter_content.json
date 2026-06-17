@@ -726,7 +726,7 @@
       "titleGeneric": "Simulador de impacto de custos do PA",
       "introWithDescription": "Ranking de MPs que mais impactam o custo do PA **{code}** ({description}).",
       "introCodeOnly": "Ranking de MPs e simulação de reajuste para o PA **{code}**.",
-      "totalMaterialCostLine": "Custo total de materiais (1 {unit} de PA): **R$ {value}**",
+      "totalMaterialCostLine": "Custo total de materiais para **1 PA**: **R$ {value}**",
       "topMaterialLine": "MP de maior impacto: **{code}** (**{impact}%** do custo de materiais)",
       "simulationLine": "Simulação **{percent}%**: delta projetado **R$ {delta}**",
       "tableVisualizationHint": "Ranking completo na **tabela** abaixo.",

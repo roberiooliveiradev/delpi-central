@@ -30,5 +30,17 @@ PRODUCT_PLAYBOOK_PRODUCTION_ORDER_PERIOD_FILTER_SQL = """
                       AND SC2.C2_DATPRI < @DATA_FIM
                       AND SC2.C2_DATPRF >= @DATA_INI
                   )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM SD4010 RE WITH (NOLOCK)
+                      INNER JOIN SH8010 OA WITH (NOLOCK)
+                          ON OA.H8_OP = RE.D4_OP
+                         AND OA.H8_OPER = RE.D4_OPERAC
+                         AND OA.D_E_L_E_T_ = ''
+                      WHERE RE.D_E_L_E_T_ = ''
+                        AND RE.D4_OP = SC2.C2_OP
+                        AND OA.H8_DTINI >= @DATA_INI
+                        AND OA.H8_DTINI < @DATA_FIM
+                  )
               )
 """

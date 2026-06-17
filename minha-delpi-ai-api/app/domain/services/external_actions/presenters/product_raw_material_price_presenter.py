@@ -378,7 +378,6 @@ class ExternalActionProductRawMaterialPricePresenter:
                 self._route(
                     "costImpactSimulation",
                     "totalMaterialCostLine",
-                    unit=self._product_unit(root),
                     value=str(summary.get("total_material_cost")),
                 )
             )
