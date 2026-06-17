@@ -92,12 +92,18 @@ def test_build_historical_stock_params_matches_cte_placeholder_order() -> None:
         "20260501",
         "20260401",
         "20260501",
-        "20260401",
-        "20260401",
         "20260501",
         "01",
         "A1",
     )
+
+
+def test_movimentos_sd3_uses_single_range_filter() -> None:
+    sql = format_historical_stock_sql(summary_only=True, filters=_EMPTY_FILTERS)
+
+    assert "D3.D3_EMISSAO > U.closing_base_date" in sql
+    assert "D3.D3_EMISSAO < ?" in sql
+    assert " OR " not in sql.split("movimentos_sd3")[1].split("item_keys")[0]
 
 
 def test_format_historical_stock_sql_reuses_shared_ctes() -> None:

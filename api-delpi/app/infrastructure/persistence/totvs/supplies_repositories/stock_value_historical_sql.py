@@ -86,10 +86,8 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
             INNER JOIN ultima_data_sb9 U
                 ON U.branch = D3.D3_FILIAL
             WHERE D3.D_E_L_E_T_ = ''
-              AND (
-                  (D3.D3_EMISSAO > U.closing_base_date AND D3.D3_EMISSAO < ?)
-                  OR (D3.D3_EMISSAO >= ? AND D3.D3_EMISSAO < ?)
-              )
+              AND D3.D3_EMISSAO > U.closing_base_date
+              AND D3.D3_EMISSAO < ?
               {{d3_branch_filter}}
               {{d3_location_filter}}
             GROUP BY
@@ -324,8 +322,6 @@ def build_historical_stock_params(
         period_end_exclusive,
         period_start,
         period_end_exclusive,
-        period_start,
-        period_start,
         period_end_exclusive,
     )
     return (
