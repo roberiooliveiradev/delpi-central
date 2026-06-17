@@ -150,6 +150,39 @@ def test_sections_notice_from_response_meta():
     assert notice["details"]["compositeSections"]["sections"][0]["truncated"] is True
 
 
+def test_operational_limit_notice_when_playbook_pagination_incomplete():
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "items": [{"production_order": "1"} for _ in range(50)],
+            "summary": {
+                "total_records": 50,
+                "branch_filter_applied": False,
+                "is_complete": False,
+            },
+            "pagination": {
+                "limit": 50,
+                "offset": 0,
+                "returned": 50,
+                "is_complete": False,
+            },
+        },
+        path="/production/schedule/today",
+        response_meta={
+            "pagination": {
+                "limit": 50,
+                "returned": 50,
+                "is_complete": False,
+            }
+        },
+    )
+
+    assert notice is not None
+    assert notice["kind"] == "pagination"
+    assert "Resultado incompleto" in notice["message"]
+    assert "sem filtro de filial" in notice["message"]
+    assert notice["details"]["operationalPagination"]["isComplete"] is False
+
+
 def test_append_to_markdown_adds_coverage_block():
     markdown = ChatDataCoverageNoticeService.append_to_markdown(
         "### Título\n\nConteúdo",

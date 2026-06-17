@@ -4,10 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.domain.services.chat_operational_result_completeness_service import (
-    ChatOperationalResultCompletenessService,
-)
-
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,
@@ -54,16 +50,6 @@ class ExternalActionPlaybookReportPresenter:
                     linhas.append(
                         f"{self._host._humanize_key(str(key))}: {self._host._format_field_value(str(key), value)}"
                     )
-
-            incomplete_lines = ChatOperationalResultCompletenessService.build_notice_lines(
-                root,
-                text=lambda key, **values: self._host._presenter_text(
-                    "playbookReports",
-                    key,
-                    **values,
-                ),
-            )
-            linhas.extend(incomplete_lines)
 
             if items:
                 for item in items[:12]:
@@ -139,23 +125,7 @@ class ExternalActionPlaybookReportPresenter:
 
             if items and isinstance(items[0], dict):
                 title = self._playbook_entity_title(entity, table=True)
-                table = self._host._build_items_table(items, title=title, path=path)
-
-                if table and ChatOperationalResultCompletenessService.is_incomplete(root):
-                    notice_lines = ChatOperationalResultCompletenessService.build_notice_lines(
-                        root,
-                        text=lambda key, **values: self._host._presenter_text(
-                            "playbookReports",
-                            key,
-                            **values,
-                        ),
-                    )
-
-                    if notice_lines:
-                        table = dict(table)
-                        table["incompleteNotice"] = " ".join(notice_lines)
-
-                return table
+                return self._host._build_items_table(items, title=title, path=path)
 
             if not summary:
                 return None
@@ -164,6 +134,7 @@ class ExternalActionPlaybookReportPresenter:
             rows = [
                 {"campo": self._host._humanize_key(str(key)), "valor": str(value)}
                 for key, value in summary.items()
+                if key not in {"is_complete", "branch_filter_applied"}
             ]
 
             return {

@@ -7,6 +7,10 @@
   "depthParents": "A consulta de produtos pai foi limitada a {max_depth} nível(is) (max_depth={max_depth}). Hierarquias acima disso podem estar incompletas.",
   "depthGeneric": "A consulta foi limitada a {max_depth} nível(is) de profundidade (max_depth={max_depth}).",
   "sectionsPartial": "Visão composta parcial ({sections}). Use rotas granulares ou view=full se precisar de todos os itens.",
+  "operationalIncomplete": "Resultado incompleto: exibindo {returned} registro(s) (limite da consulta: {limit}).",
+  "operationalIncompleteWithTotal": "Resultado incompleto: exibindo {returned} de {total} registro(s).",
+  "operationalIncompleteNoBranch": "Resultado incompleto: consulta sem filtro de filial — podem existir registros de outras filiais fora desta lista (exibindo {returned}, limite {limit}).",
+  "operationalIncompleteHint": "Para ver o restante, peça mais linhas, informe a filial ou aumente o limite.",
   "contextLabels": {
     "items": "Resultado",
     "structure": "Estrutura",

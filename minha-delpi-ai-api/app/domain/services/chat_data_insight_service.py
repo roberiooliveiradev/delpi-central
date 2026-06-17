@@ -104,6 +104,16 @@ class ChatDataInsightService:
 
         cls._apply_truncation_flags(commentary, metadata=metadata, data=data)
 
+        from app.domain.services.chat_operational_result_completeness_service import (
+            ChatOperationalResultCompletenessService,
+        )
+
+        ChatOperationalResultCompletenessService.apply_to_commentary(
+            commentary,
+            metadata=metadata,
+            data=data,
+        )
+
         data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
 
         if not data_answer:

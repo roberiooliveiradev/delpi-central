@@ -167,18 +167,27 @@ def test_build_generic_complete_list_does_not_mark_pagination_limitation():
     }
     data = {
         "items": rows,
-        "summary": {"total_records": 50, "reference_date": "20260611"},
-        "pagination": {"limit": 50, "offset": 0, "returned": 50},
+        "summary": {
+            "total_records": 50,
+            "reference_date": "20260611",
+            "is_complete": False,
+            "branch_filter_applied": False,
+        },
+        "pagination": {"limit": 50, "offset": 0, "returned": 50, "is_complete": False},
+    }
+    metadata = {
+        **metadata,
+        "apiDelpiResponseMeta": {
+            "pagination": {"limit": 50, "returned": 50, "is_complete": False},
+        },
     }
 
     data_answer = ChatDataInsightService.build(metadata, data)
 
     assert isinstance(data_answer, dict)
     assert data_answer.get("profileKey") == "generic_list"
-    assert not (data_answer.get("limitations") or [])
-    attention = " ".join(data_answer.get("summary", {}).get("attention") or [])
-    assert "extensa" in attention.lower() or any(
-        "extensa" in str(line).lower()
-        for line in (data_answer.get("analysis") or [])
-        if isinstance(line, dict)
+    assert data_answer.get("limitations")
+    assert any(
+        "Resultado incompleto" in str(line)
+        for line in (data_answer.get("limitations") or [])
     )

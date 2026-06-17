@@ -49,6 +49,12 @@ class ChatDataCoverageNoticeService:
                 messages.append(pagination["message"])
                 details["pagination"] = pagination
 
+            operational = cls._operational_limit_notice(root, response_meta=response_meta)
+
+            if operational:
+                messages.append(operational["message"])
+                details["operationalPagination"] = operational
+
             if isinstance(root.get("structure"), dict):
                 structure_notice = cls._pagination_notice(
                     root["structure"],
@@ -168,6 +174,9 @@ class ChatDataCoverageNoticeService:
         if details.get("pagination") or details.get("structurePagination") or details.get("stockPagination"):
             return "pagination"
 
+        if details.get("operationalPagination"):
+            return "pagination"
+
         if details.get("depth"):
             return "depth"
 
@@ -267,6 +276,22 @@ class ChatDataCoverageNoticeService:
             }
 
         return None
+
+    @classmethod
+    def _operational_limit_notice(
+        cls,
+        root: dict,
+        *,
+        response_meta: dict | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_operational_result_completeness_service import (
+            ChatOperationalResultCompletenessService,
+        )
+
+        return ChatOperationalResultCompletenessService.build_notice_payload(
+            root,
+            response_meta=response_meta,
+        )
 
     @classmethod
     def _depth_notice(
