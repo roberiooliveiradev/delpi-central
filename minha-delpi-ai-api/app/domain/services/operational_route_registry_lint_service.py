@@ -104,6 +104,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_fallback_policies(report)
         cls._lint_routes(report)
         cls._lint_parameter_strategies(report)
+        cls._lint_intent_probes(report)
         cls._lint_actionable_predicates(report)
         cls._lint_playbook_product_predicates(report)
         cls._lint_playbook_none_of_rules(report)
@@ -337,6 +338,41 @@ class OperationalRouteRegistryLintService:
             report.add_error(
                 f"routes.{route_id}.parameters.strategy desconhecida: {strategy!r}"
             )
+
+    @classmethod
+    def _lint_intent_probes(cls, report: OperationalRouteRegistryLintReport) -> None:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        probes = ChatAssistantContentService.get_node("product_query_intent", "intentProbes")
+
+        if not isinstance(probes, dict) or not probes:
+            report.add_error("product_query_intent.intentProbes ausente ou inválido")
+            return
+
+        known = frozenset(str(probe_id).strip() for probe_id in probes if str(probe_id).strip())
+
+        for pipeline_key in ("intentDetectPipeline", "intentRefinementPipeline"):
+            pipeline = ChatAssistantContentService.get_node(
+                "product_query_intent",
+                pipeline_key,
+            )
+
+            if not isinstance(pipeline, list):
+                continue
+
+            for index, step in enumerate(pipeline):
+                if not isinstance(step, dict):
+                    continue
+
+                probe = str(step.get("probe") or "").strip()
+
+                if probe and probe not in known:
+                    report.add_error(
+                        f"product_query_intent.{pipeline_key}[{index}].probe "
+                        f"desconhecido: {probe!r}"
+                    )
 
     @classmethod
     def _lint_actionable_predicates(cls, report: OperationalRouteRegistryLintReport) -> None:

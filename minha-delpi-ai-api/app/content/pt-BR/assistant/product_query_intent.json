@@ -13,6 +13,36 @@
     ],
     "operational": ["estoque", "produto", "saldo", "lmp"]
   },
+  "intentProbes": {
+    "drawingAnalysis": { "service": "drawingAnalysis" },
+    "mixedDocumentalOperational": {
+      "allOf": [
+        { "termsFrom": "product_query_intent.mixedDocumental.documental" },
+        { "termsFrom": "product_query_intent.mixedDocumental.operational" }
+      ]
+    },
+    "explicitPlaybookProductScope": {
+      "anyCustomPredicateFrom": "operational_route_registry.playbookProductPredicates"
+    },
+    "multiScopeSingleAnalyser": { "service": "multiScopeSingleAnalyser" },
+    "multiScope": { "service": "multiScope" },
+    "fullAnalyserQuestion": { "service": "fullAnalyserQuestion" },
+    "productSummaryQuestion": {
+      "noneOf": [
+        { "termsFrom": "product_query_intent.analyser.summaryExclude" }
+      ],
+      "anyOf": [
+        { "termsFrom": "product_query_intent.analyser.summaryExplicit" },
+        {
+          "termsFrom": "product_query_intent.summaryRoute.resumoMarker",
+          "excludeTermsFrom": "product_query_intent.summaryRoute.excludeWhen",
+          "hasProductEntityReference": true
+        }
+      ]
+    },
+    "productOverviewMessage": { "service": "productOverviewMessage" },
+    "singleScopeIntent": { "service": "singleScopeIntent" }
+  },
   "referencesPreviousProduct": {
     "filterTerms": [
       "filtre",

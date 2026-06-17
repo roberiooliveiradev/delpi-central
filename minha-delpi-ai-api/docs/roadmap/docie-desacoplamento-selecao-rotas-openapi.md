@@ -577,6 +577,18 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 16:** nova rota GET date/branch/limit = só registry + estratégia JSON; pytest builder + lint verdes.
 
+### Fase 17 — probes intent 100% JSON 🟡
+
+| Entrega | Status |
+|---------|--------|
+| `intentProbes` em `product_query_intent.json` (declarativos + `service` allowlist) | ✅ |
+| `_run_probe` despacha matcher ou `_service_probe_handlers` — zero `if probe ==` | ✅ |
+| `anyCustomPredicateFrom` no matcher (playbook scope) | ✅ |
+| Lint: probes do pipeline existem em `intentProbes` | ✅ |
+| Probes complexos (drawing, multi-scope, analyser) via `service` no JSON | ✅ |
+
+**DoD Fase 17 (parcial):** novos probes = entrada JSON; pytest intent + lint verdes. Migrar probes `service` restantes quando virarem matcher puro.
+
 ---
 
 ### Roadmap 100% — Fases 16–20

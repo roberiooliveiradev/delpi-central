@@ -1,3 +1,6 @@
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -66,5 +69,30 @@ def test_mixed_documental_operational_probe():
     )
 
     assert ChatProductQueryIntentDetectionService.looks_like_mixed_documental_operational(
+        normalized
+    )
+
+
+def test_intent_probes_cover_detect_pipeline():
+    probes = ChatAssistantContentService.get_node(
+        ChatProductQueryIntentDetectionService.BUNDLE,
+        "intentProbes",
+    )
+
+    assert isinstance(probes, dict)
+
+    for step in ChatProductQueryIntentDetectionService._detect_pipeline():
+        probe = str(step.get("probe") or "").strip()
+
+        if probe:
+            assert probe in probes
+
+
+def test_product_summary_probe_uses_json_matcher():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "resumo do produto 90260142"
+    )
+
+    assert ChatProductQueryIntentDetectionService.looks_like_product_summary_question(
         normalized
     )

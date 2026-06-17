@@ -132,6 +132,23 @@ class OperationalRouteMatcherService:
             ):
                 return False
 
+        any_custom_predicate_from = str(
+            spec.get("anyCustomPredicateFrom") or ""
+        ).strip()
+
+        if any_custom_predicate_from:
+            predicates = cls._resolve_terms(any_custom_predicate_from)
+
+            if not predicates or not any(
+                cls._match_custom_predicate(
+                    predicate,
+                    normalized,
+                    message=message,
+                )
+                for predicate in predicates
+            ):
+                return False
+
         terms_from = str(spec.get("termsFrom") or "").strip()
 
         if terms_from and not cls._message_has_terms(terms_from, normalized):
@@ -261,6 +278,7 @@ class OperationalRouteMatcherService:
             and not isinstance(all_of, list)
             and not isinstance(none_of, list)
             and not isinstance(any_of, list)
+            and not any_custom_predicate_from
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
             and not spec.get("lacksProductIdentifier")

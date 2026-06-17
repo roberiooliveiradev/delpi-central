@@ -47,26 +47,11 @@ class ChatProductQueryIntentDetectionService:
 
     @classmethod
     def looks_like_mixed_documental_operational(cls, normalized: str) -> bool:
-        return cls._message_has_any_marker(
-            normalized,
-            "mixedDocumental",
-            "documental",
-        ) and cls._message_has_any_marker(
-            normalized,
-            "mixedDocumental",
-            "operational",
-        )
+        return cls._run_probe("mixedDocumentalOperational", "", normalized)
 
     @classmethod
     def looks_like_explicit_playbook_product_scope(cls, normalized: str) -> bool:
-        from app.domain.services.operational_route_registry_service import (
-            OperationalRouteRegistryService,
-        )
-
-        return cls._matches_any_predicates(
-            OperationalRouteRegistryService.playbook_product_predicates(),
-            normalized,
-        )
+        return cls._run_probe("explicitPlaybookProductScope", "", normalized)
 
     @classmethod
     def looks_like_generic_product_analysis_question(cls, normalized: str) -> bool:
@@ -107,23 +92,7 @@ class ChatProductQueryIntentDetectionService:
 
     @classmethod
     def looks_like_product_summary_question(cls, normalized: str) -> bool:
-        if cls._message_has_any_marker(normalized, "analyser", "summaryExclude"):
-            return False
-
-        if cls._message_has_any_marker(normalized, "analyser", "summaryExplicit"):
-            return True
-
-        if "resumo" not in normalized:
-            return False
-
-        if cls._message_has_any_marker(normalized, "analyser", "summaryExcludeWhenResumo"):
-            return False
-
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
-        )
-
-        return ChatProductPluralPhrasingService.has_product_entity_reference(normalized)
+        return cls._run_probe("productSummaryQuestion", "", normalized)
 
     @classmethod
     def _detect_pipeline(cls) -> list[dict[str, Any]]:
@@ -193,42 +162,62 @@ class ChatProductQueryIntentDetectionService:
 
     @classmethod
     def _run_probe(cls, probe: str, message: str, normalized: str) -> bool:
-        if probe == "drawingAnalysis":
-            from app.domain.services.chat_drawing_intent_service import (
-                ChatDrawingIntentService,
+        spec = ChatAssistantContentService.get_node(cls.BUNDLE, "intentProbes", probe)
+
+        if isinstance(spec, dict):
+            service = str(spec.get("service") or "").strip()
+
+            if service:
+                return cls._invoke_service_probe(service, message, normalized)
+
+            from app.domain.services.operational_route_matcher_service import (
+                OperationalRouteMatcherService,
             )
 
-            return ChatDrawingIntentService.is_drawing_analysis_request(message)
-
-        if probe == "mixedDocumentalOperational":
-            return cls.looks_like_mixed_documental_operational(normalized)
-
-        if probe == "explicitPlaybookProductScope":
-            return cls.looks_like_explicit_playbook_product_scope(normalized)
-
-        if probe == "multiScopeSingleAnalyser":
-            return cls._matches_multi_scope_single_analyser(message)
-
-        if probe == "multiScope":
-            return cls._matches_multi_scope(message)
-
-        if probe == "fullAnalyserQuestion":
-            return cls.looks_like_full_analyser_question(message)
-
-        if probe == "productSummaryQuestion":
-            return cls.looks_like_product_summary_question(normalized)
-
-        if probe == "productOverviewMessage":
-            from app.domain.services.chat_product_overview_intent_service import (
-                ChatProductOverviewIntentService,
+            return OperationalRouteMatcherService.matches(
+                spec,
+                message=message,
+                normalized=normalized,
             )
 
-            return ChatProductOverviewIntentService.is_product_overview_message(message)
+        return cls._invoke_service_probe(probe, message, normalized)
 
-        if probe == "singleScopeIntent":
-            return cls._single_scope_intent(message) is not None
+    @classmethod
+    def _invoke_service_probe(cls, probe: str, message: str, normalized: str) -> bool:
+        handler = cls._service_probe_handlers().get(probe)
 
-        return False
+        if handler is None:
+            return False
+
+        return bool(handler(message, normalized))
+
+    @classmethod
+    def _service_probe_handlers(cls):
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        return {
+            "drawingAnalysis": lambda message, _normalized: (
+                ChatDrawingIntentService.is_drawing_analysis_request(message)
+            ),
+            "multiScopeSingleAnalyser": lambda message, _normalized: (
+                cls._matches_multi_scope_single_analyser(message)
+            ),
+            "multiScope": lambda message, _normalized: cls._matches_multi_scope(message),
+            "fullAnalyserQuestion": lambda message, _normalized: (
+                cls.looks_like_full_analyser_question(message)
+            ),
+            "productOverviewMessage": lambda message, _normalized: (
+                ChatProductOverviewIntentService.is_product_overview_message(message)
+            ),
+            "singleScopeIntent": lambda _message, _normalized: (
+                cls._single_scope_intent(_message) is not None
+            ),
+        }
 
     @classmethod
     def _matches_multi_scope_single_analyser(cls, message: str) -> bool:
