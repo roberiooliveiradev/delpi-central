@@ -92,8 +92,6 @@ class ExternalActionProductPricingPresenter:
                     self._route("tablesCountLine", count=str(len(prices)))
                 )
 
-        linhas.append(self._route("tableVisualizationHint"))
-
         return linhas
 
     def build_product_pricing_table_presentations(self, root: dict, path: str) -> list[dict]:

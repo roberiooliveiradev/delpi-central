@@ -274,15 +274,6 @@ class ExternalActionProductOverviewPresenter:
                 )
             )
 
-        if len(detail_list) > 5:
-            linhas.append(
-                self._host._presenter_text(
-                    "pagination",
-                    "moreDetailRecords",
-                    count=str(len(detail_list) - 5),
-                )
-            )
-
         all_keys = {}
         for item in detail_list:
             for k in item:

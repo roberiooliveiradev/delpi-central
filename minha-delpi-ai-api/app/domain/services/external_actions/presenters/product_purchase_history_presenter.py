@@ -186,9 +186,7 @@ class ExternalActionProductPurchaseHistoryPresenter:
         summary = self._summary(root)
         items = self._items(root)
 
-        if compact_for_rich_ui and code:
-            parts.append(self._route(path, "tableVisualizationHint"))
-        elif description:
+        if description:
             parts.append(
                 self._route(
                     path,

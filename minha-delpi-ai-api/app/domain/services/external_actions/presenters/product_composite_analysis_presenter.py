@@ -184,9 +184,6 @@ class ExternalActionProductCompositeAnalysisPresenter:
                 )
             )
 
-        if compact_for_rich_ui:
-            linhas.append(self._route("factoryStatus", "tableVisualizationHint"))
-
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
 
     def _resolve_factory_commentary(self, root: dict) -> dict | None:
@@ -240,18 +237,6 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         if narrative_lines:
             parts.append("\n\n".join(line for line in narrative_lines if line))
-
-        commentary = self._resolve_factory_commentary(root)
-        highlights = list((commentary or {}).get("highlights") or [])
-        attention = list((commentary or {}).get("attention") or [])
-
-        if highlights:
-            parts.extend(["", self._insight("factoryStatus", "highlightsHeader"), ""])
-            parts.extend(f"- {line}" for line in highlights)
-
-        if attention:
-            parts.extend(["", self._insight("factoryStatus", "attentionHeader"), ""])
-            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
         return _OpsTable.join_markdown_blocks(parts)
 

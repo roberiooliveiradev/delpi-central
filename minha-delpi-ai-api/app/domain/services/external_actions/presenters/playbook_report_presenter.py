@@ -43,10 +43,13 @@ class ExternalActionPlaybookReportPresenter:
             linhas: list[str] = []
 
             if summary:
-                for key, value in list(summary.items())[:8]:
-                    if key in {"is_complete", "branch_filter_applied"}:
-                        continue
+                from app.domain.services.chat_presentation_operational_metadata_field_service import (
+                    ChatPresentationOperationalMetadataFieldService,
+                )
 
+                filtered = ChatPresentationOperationalMetadataFieldService.filter_summary(summary)
+
+                for key, value in list(filtered.items())[:8]:
                     linhas.append(
                         f"{self._host._humanize_key(str(key))}: {self._host._format_field_value(str(key), value)}"
                     )

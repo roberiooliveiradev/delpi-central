@@ -160,7 +160,6 @@ class ExternalActionProductShippingStatusPresenter:
             compact_for_rich_ui=compact_for_rich_ui,
             preview_line=self._route("itemsPreviewLine", count=str(len(items))),
             empty_line=self._route("itemsEmptyLine"),
-            table_hint=self._route("tableVisualizationHint"),
             format_item_line=self._format_movement_preview_line,
         )
 
@@ -263,18 +262,6 @@ class ExternalActionProductShippingStatusPresenter:
                 compact_for_rich_ui=compact_for_rich_ui,
             )
         )
-
-        highlights = self._build_highlights(root)
-
-        if highlights:
-            parts.extend(["", self._insight("highlightsHeader"), ""])
-            parts.extend(f"- {line}" for line in highlights)
-
-        attention = self._build_attention(root)
-
-        if attention:
-            parts.extend(["", self._insight("attentionHeader"), ""])
-            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
         return _OpsTable.join_markdown_blocks(parts)
 

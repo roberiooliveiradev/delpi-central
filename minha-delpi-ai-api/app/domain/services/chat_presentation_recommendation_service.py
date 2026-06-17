@@ -164,7 +164,18 @@ class ChatPresentationRecommendationService:
             add=add,
         )
 
-        return output[:3]
+        from app.domain.services.chat_presentation_visual_ui_hint_service import (
+            ChatPresentationVisualUiHintService,
+        )
+
+        path = str((metadata or {}).get("path") or "").strip()
+
+        return ChatPresentationVisualUiHintService.enrich_recommendations(
+            output,
+            decision=decision,
+            path=path,
+            metadata=metadata,
+        )
 
     @classmethod
     def prune_for_selected(cls, decision: dict[str, Any]) -> None:

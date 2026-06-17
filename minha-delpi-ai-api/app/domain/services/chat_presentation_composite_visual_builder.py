@@ -917,7 +917,13 @@ class ChatPresentationCompositeVisualBuilder:
     def _section_summary(cls, root: dict[str, Any], section: str) -> dict[str, Any]:
         summary = cls._section_block(root, section).get("summary")
 
-        return dict(summary) if isinstance(summary, dict) else {}
+        from app.domain.services.chat_presentation_operational_metadata_field_service import (
+            ChatPresentationOperationalMetadataFieldService,
+        )
+
+        return ChatPresentationOperationalMetadataFieldService.filter_summary(
+            dict(summary) if isinstance(summary, dict) else None,
+        )
 
     @classmethod
     def _resolve_dict(cls, root: dict[str, Any], source_key: str) -> dict[str, Any]:
@@ -938,7 +944,13 @@ class ChatPresentationCompositeVisualBuilder:
         if source_key == "summary":
             summary = root.get("summary")
 
-            return dict(summary) if isinstance(summary, dict) else {}
+            from app.domain.services.chat_presentation_operational_metadata_field_service import (
+                ChatPresentationOperationalMetadataFieldService,
+            )
+
+            return ChatPresentationOperationalMetadataFieldService.filter_summary(
+                dict(summary) if isinstance(summary, dict) else None,
+            )
 
         block = root.get(source_key)
 

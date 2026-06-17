@@ -89,6 +89,8 @@ class ChatOperationalDataCommentaryService:
             "production_status": cls._build_production_commentary,
             "shipping_status": cls._build_shipping_commentary,
             "directives": cls._build_directives_commentary,
+            "sale_pricing": cls._build_sale_pricing_commentary,
+            "analyser": cls._build_analyser_commentary,
         }
         builder = builders.get(str(profile_key).strip())
 
@@ -512,8 +514,17 @@ class ChatOperationalDataCommentaryService:
         highlights: list[str] = []
         attention: list[str] = []
 
-        if raw_materials:
-            highlights.append(cls._text(profile, "tableVisualizationHint"))
+        if summary:
+            highlights.append(
+                cls._text(
+                    profile,
+                    "summaryLine",
+                    raw_materials=str(summary.get("total_raw_materials") or len(raw_materials)),
+                    suppliers=str(summary.get("total_supplier_links") or 0),
+                    with_purchase=str(summary.get("raw_materials_with_last_purchase") or 0),
+                    without_purchase=str(summary.get("raw_materials_without_last_purchase") or 0),
+                )
+            )
 
         without_purchase = int(summary.get("raw_materials_without_last_purchase") or 0)
 
@@ -677,19 +688,6 @@ class ChatOperationalDataCommentaryService:
                 )
             )
 
-        total_records = agg.get("total_records")
-        positions = int(agg.get("positions") or 0)
-
-        if total_records is not None and positions < int(total_records):
-            highlights.append(
-                cls._text(
-                    profile,
-                    "paginatedResult",
-                    shown=str(positions),
-                    total=str(total_records),
-                )
-            )
-
         return highlights
 
     @classmethod
@@ -709,12 +707,6 @@ class ChatOperationalDataCommentaryService:
             and float(agg.get("total_available") or 0) <= 0
         ):
             attention.append(cls._text(profile, "attentionFullyCommitted"))
-
-        total_records = agg.get("total_records")
-        positions = int(agg.get("positions") or 0)
-
-        if total_records is not None and positions < int(total_records):
-            attention.append(cls._text(profile, "attentionPagination"))
 
         return attention
 
@@ -737,6 +729,52 @@ class ChatOperationalDataCommentaryService:
             attention.append(cls._text(profile, "attentionOpNotStarted"))
 
         return attention
+
+    @classmethod
+    def _build_sale_pricing_commentary(
+        cls,
+        root: dict[str, Any],
+        *,
+        format_quantity: Callable[[Any, str | None], str] | None = None,
+    ) -> dict[str, Any] | None:
+        _ = format_quantity
+
+        from app.domain.services.chat_product_pricing_insight_service import (
+            ChatProductPricingInsightService,
+        )
+
+        return ChatProductPricingInsightService.build_commentary(root)
+
+    @classmethod
+    def _build_analyser_commentary(
+        cls,
+        root: dict[str, Any],
+        *,
+        format_quantity: Callable[[Any, str | None], str] | None = None,
+    ) -> dict[str, Any] | None:
+        _ = format_quantity
+
+        from app.domain.services.chat_product_analyser_divergence_service import (
+            ChatProductAnalyserDivergenceService,
+        )
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        highlights: list[str] = []
+        attention = ChatProductAnalyserDivergenceService.build_attention_points(root, product)
+        opening = ChatProductAnalyserDivergenceService.build_opening_narrative(root, product)
+
+        if opening:
+            highlights.append(opening)
+
+        if not highlights and not attention:
+            return {}
+
+        return {
+            "highlights": highlights,
+            "attention": attention,
+            "summaryLines": highlights[:4],
+            "alertLevel": "attention" if attention else "ok",
+        }
 
     @classmethod
     def _build_narrative_insight(cls, commentary: dict[str, Any]) -> str:

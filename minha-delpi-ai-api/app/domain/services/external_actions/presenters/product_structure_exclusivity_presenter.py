@@ -148,36 +148,11 @@ class ExternalActionProductStructureExclusivityPresenter:
                 self._route("exclusivePreviewLine", count=str(len(exclusive_items)))
             )
 
-            if compact_for_rich_ui:
-                linhas.append(self._route("treeVisualizationHint"))
-            else:
+            if not compact_for_rich_ui:
                 for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
                     linhas.append(self._format_exclusive_preview_line(item))
-
-                remaining = len(exclusive_items) - min(len(exclusive_items), _Narrative._PREVIEW_MAX)
-
-                if remaining > 0:
-                    linhas.append(
-                        self._host._presenter_text(
-                            "pagination",
-                            "moreDetailRecords",
-                            count=str(remaining),
-                        )
-                    )
-
-                if len(exclusive_items) > _Narrative._PREVIEW_MAX:
-                    linhas.append(
-                        self._route(
-                            "treeVisualizationHint"
-                            if compact_for_rich_ui
-                            else "tableVisualizationHint"
-                        )
-                    )
         elif self._items(root):
             linhas.append(self._route("noExclusiveLine"))
-
-            if compact_for_rich_ui:
-                linhas.append(self._route("treeVisualizationHint"))
         else:
             linhas.append(self._route("itemsEmptyLine"))
 
@@ -247,25 +222,10 @@ class ExternalActionProductStructureExclusivityPresenter:
             )
         )
 
-        highlights = self._build_highlights(root)
-
-        if highlights:
-            parts.extend(["", self._insight("highlightsHeader"), ""])
-            parts.extend(f"- {line}" for line in highlights)
-
-        attention = self._build_attention(root)
-
-        if attention:
-            parts.extend(["", self._insight("attentionHeader"), ""])
-            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
-
         conclusion = self._build_conclusion_lines(root)
 
         if conclusion:
             parts.extend(["", *conclusion])
-
-        if compact_for_rich_ui:
-            parts.append(self._route("treeVisualizationHint"))
 
         return _OpsTable.join_markdown_blocks(parts)
 

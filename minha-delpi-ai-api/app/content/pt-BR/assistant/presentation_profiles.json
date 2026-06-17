@@ -709,6 +709,7 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
+      "commentaryProfileKey": "analyser",
       "presentationDecision": {
         "defaultTextStack": true
       },
@@ -1129,6 +1130,7 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
+      "commentaryProfileKey": "sale_pricing",
       "presentationDecision": {
         "narrativeFirstMaxRows": 12
       },

@@ -347,6 +347,32 @@ Build MFE: `npm run build` em `plugins/minha-delpi-chat`.
 
 ---
 
+## Desacoplamento narrativa × visual × cobertura (jun/2026)
+
+Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresentation` compacto); **interpretação** (destaques, atenção, limitações, incompletude) fica no pipeline base.
+
+| Sinal | Módulo canônico | Consumidor MFE |
+|-------|-----------------|----------------|
+| Resultado incompleto / paginação operacional | `ChatOperationalResultCompletenessService` → `ChatDataCoverageNoticeService` | Banner `metadata.dataCoverageNotice` |
+| Atenção e limitações na prosa | `ChatDataInsightService` → `dataAnswer` / `dataCommentary` | Lead do `renderPlan` (modo Automático) |
+| Dica «use a tabela/árvore» | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | Toolbar / chips de formato |
+| Insight curto do visual selecionado | `ChatPresentationInsightService.build_with_metadata` (prioriza `dataAnswer`) | Legenda do painel |
+| Campos técnicos (`is_complete`, `branch_filter_applied`) | `ChatPresentationOperationalMetadataFieldService` | **Não** entram em KPI, linhas playbook nem markdown |
+| Insights por rota (fabril, estoque, pricing, analyser) | `ChatOperationalDataCommentaryService` (+ serviços dedicados) | `dataAnswer` via `ChatDataInsightEnrichmentService` |
+
+### O que os presenters **não** devem mais embutir
+
+- `tableVisualizationHint` / `treeVisualizationHint` em `linhas` ou markdown
+- `moreDetailRecords` / `paginatedResult` (cobertura unificada)
+- Seções **Destaques** / **Pontos de atenção** duplicando `dataCommentary`
+- `presentation.incompleteNotice` ou equivalente só no visual
+
+### Heurística «lista extensa»
+
+`ChatDataInsightService` só emite `largeList` quando **não** há incompletude operacional nem flag `paginated` — evita aviso genérico redundante com `dataCoverageNotice`.
+
+---
+
 ## Migração desde `ChatRichPresentation`
 
 - **Removido** em jun/2026; não importar em código novo.

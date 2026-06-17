@@ -90,9 +90,7 @@ class ExternalActionProductPurchasesPresenter:
         total = int(root.get("total") or len(self._items(root)))
         body_parts = []
 
-        if compact_for_rich_ui:
-            body_parts.append(self._route("tableVisualizationHint"))
-        elif code:
+        if code:
             body_parts.append(self._route("introWithCode", code=code, total=str(total)))
         else:
             body_parts.append(self._route("introGeneric", total=str(total)))

@@ -280,6 +280,8 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             "stock",
             "production_status",
             "shipping_status",
+            "sale_pricing",
+            "analyser",
         }
 
         if key in operational_keys:

@@ -89,9 +89,11 @@ class ExternalActionOperationalRouteNarrativeService:
         compact_for_rich_ui: bool,
         preview_line: str,
         empty_line: str,
-        table_hint: str,
         format_item_line,
+        table_hint: str = "",
     ) -> None:
+        _ = table_hint
+
         if not items:
             linhas.append(empty_line)
             return
@@ -99,8 +101,6 @@ class ExternalActionOperationalRouteNarrativeService:
         linhas.append(preview_line)
 
         if compact_for_rich_ui:
-            if table_hint:
-                linhas.append(table_hint)
             return
 
         preview_items = [item for item in items[: cls._PREVIEW_MAX] if isinstance(item, dict)]
@@ -110,17 +110,3 @@ class ExternalActionOperationalRouteNarrativeService:
 
             if line:
                 linhas.append(line)
-
-        remaining = len(items) - len(preview_items)
-
-        if remaining > 0:
-            linhas.append(
-                host._presenter_text(
-                    "pagination",
-                    "moreDetailRecords",
-                    count=str(remaining),
-                )
-            )
-
-        if table_hint and len(items) > cls._PREVIEW_MAX:
-            linhas.append(table_hint)

@@ -168,3 +168,56 @@ class ChatPresentationInsightService:
         )
 
         return vocab.insight_text("participationLeader", leaderLabel=leader_label)
+
+    @classmethod
+    def build_with_metadata(
+        cls,
+        *,
+        selected: str | None,
+        rows: list[dict[str, Any]] | None,
+        data_shape: dict[str, Any] | None = None,
+        reason: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        if isinstance(metadata, dict):
+            from app.domain.services.chat_humanized_data_response_service import (
+                ChatHumanizedDataResponseService,
+            )
+
+            commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
+                metadata,
+            )
+
+            if isinstance(commentary, dict):
+                narrative = str(commentary.get("narrativeInsight") or "").strip()
+
+                if narrative:
+                    return narrative
+
+                summary = commentary.get("summary")
+
+                if isinstance(summary, dict):
+                    answer = str(summary.get("answer") or "").strip()
+
+                    if answer:
+                        return answer
+                elif isinstance(summary, str) and summary.strip():
+                    return summary.strip()
+
+            data_answer = metadata.get("dataAnswer")
+
+            if isinstance(data_answer, dict):
+                summary_block = data_answer.get("summary")
+
+                if isinstance(summary_block, dict):
+                    answer = str(summary_block.get("answer") or "").strip()
+
+                    if answer:
+                        return answer
+
+        return cls.build(
+            selected=selected,
+            rows=rows,
+            data_shape=data_shape,
+            reason=reason,
+        )

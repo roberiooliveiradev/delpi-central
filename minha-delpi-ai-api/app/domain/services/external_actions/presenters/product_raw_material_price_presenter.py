@@ -344,8 +344,6 @@ class ExternalActionProductRawMaterialPricePresenter:
                 )
             )
 
-        linhas.append(self._route("rawMaterialPriceIntelligence", "tableVisualizationHint"))
-
         return linhas
 
     def _build_cost_impact_lines(
@@ -407,8 +405,6 @@ class ExternalActionProductRawMaterialPricePresenter:
                     delta=str(simulation.get("projected_cost_delta") or "—"),
                 )
             )
-
-        linhas.append(self._route("costImpactSimulation", "tableVisualizationHint"))
 
         return linhas
 
@@ -1171,9 +1167,6 @@ class ExternalActionProductRawMaterialPricePresenter:
 
         if history_reading:
             sections.append("\n".join(history_reading))
-
-        if compact_for_rich_ui:
-            sections.append(self._route(route, "tableVisualizationHint"))
 
         return sections
 

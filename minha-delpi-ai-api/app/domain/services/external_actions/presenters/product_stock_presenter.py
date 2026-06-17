@@ -333,19 +333,6 @@ class ExternalActionProductStockPresenter:
                 )
             )
 
-        if (
-            agg.total_records is not None
-            and agg.positions < agg.total_records
-            and agg.page_size
-        ):
-            highlights.append(
-                self._insight(
-                    "paginatedResult",
-                    shown=str(agg.positions),
-                    total=str(agg.total_records),
-                )
-            )
-
         return highlights
 
     def _build_attention(self, agg: _StockAggregation) -> list[str]:
@@ -359,12 +346,6 @@ class ExternalActionProductStockPresenter:
 
         if agg.total_committed > 0 and agg.has_available and agg.total_available <= 0:
             attention.append(self._insight("attentionFullyCommitted"))
-
-        if (
-            agg.total_records is not None
-            and agg.positions < agg.total_records
-        ):
-            attention.append(self._insight("attentionPagination"))
 
         return attention
 
@@ -381,9 +362,7 @@ class ExternalActionProductStockPresenter:
         parts: list[str] = [self._summary_line(agg, description=description)]
         detail_lines = self._detail_lines(items)
 
-        if compact_for_rich_ui:
-            parts.append(self._route("tableVisualizationHint"))
-        elif detail_lines:
+        if not compact_for_rich_ui and detail_lines:
             parts.append("")
             parts.append(f"**{self._host._presenter_text('generic', 'stockTextDetailHeader')}**")
 
@@ -391,29 +370,6 @@ class ExternalActionProductStockPresenter:
 
             for line in preview:
                 parts.append(f"- {line}")
-
-            remaining = len(detail_lines) - len(preview)
-
-            if remaining > 0:
-                parts.append(
-                    self._host._presenter_text(
-                        "pagination",
-                        "moreDetailRecords",
-                        count=str(remaining),
-                    )
-                )
-
-        highlights = self._build_highlights(agg)
-
-        if highlights:
-            parts.extend(["", self._insight("highlightsHeader"), ""])
-            parts.extend(f"- {line}" for line in highlights)
-
-        attention = self._build_attention(agg)
-
-        if attention:
-            parts.extend(["", self._insight("attentionHeader"), ""])
-            parts.extend(f"{index}. {line}" for index, line in enumerate(attention, start=1))
 
         return _OpsTable.join_markdown_blocks(parts)
 

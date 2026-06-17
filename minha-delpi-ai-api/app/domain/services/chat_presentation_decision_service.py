@@ -1051,11 +1051,12 @@ class ChatPresentationDecisionService:
             "hasNarrative": bool(narrative_markdown),
         }
 
-        decision["insight"] = ChatPresentationInsightService.build(
+        decision["insight"] = ChatPresentationInsightService.build_with_metadata(
             selected=str(decision.get("selected") or ""),
             rows=table_rows,
             data_shape=insight_shape,
             reason=str(decision.get("reason") or ""),
+            metadata=metadata,
         )
 
         if str(decision.get("layoutMode") or "") == "stack" and narrative_markdown:

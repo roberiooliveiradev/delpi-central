@@ -183,9 +183,21 @@ class ChatDataInsightService:
             )
 
         if int(shape.get("rows") or 0) > 25:
-            attention.append(
-                ChatHumanizedDataResponseContentService.get("generic", "largeList")
+            from app.domain.services.chat_operational_result_completeness_service import (
+                ChatOperationalResultCompletenessService,
             )
+
+            response_meta = metadata.get("apiDelpiResponseMeta")
+            response_meta = response_meta if isinstance(response_meta, dict) else None
+            incomplete = ChatOperationalResultCompletenessService.is_incomplete(
+                data,
+                response_meta=response_meta,
+            )
+
+            if not incomplete and not commentary.get("paginated"):
+                attention.append(
+                    ChatHumanizedDataResponseContentService.get("generic", "largeList")
+                )
 
         numeric_keys = shape.get("numericKeys") or []
 
