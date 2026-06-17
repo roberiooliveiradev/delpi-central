@@ -424,6 +424,7 @@ class ChatPresentationMetadataPipelineService:
                     str(field_key or "available_quantity"),
                     value,
                 ),
+                user_message=user_message,
             )
 
         ChatPresentationDecisionService.enrich_metadata(

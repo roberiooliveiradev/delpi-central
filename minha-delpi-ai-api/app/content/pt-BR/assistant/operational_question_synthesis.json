@@ -1,0 +1,20 @@
+{
+  "productionStatus": {
+    "situationSummary": "**{code}** — PA **{paStarted}**, PI **{piStarted}**. Apontado **{paQty}** no PA · **{piQty}** nos PI(s) na referência **{date}**.",
+    "situationSummaryNoDate": "**{code}** — PA **{paStarted}**, PI **{piStarted}**. Apontado **{paQty}** no PA · **{piQty}** nos PI(s).",
+    "openOpYesStarted": "**Sim** — OP **{order}** aberta para o PA; produção **iniciada** (apontado **{reported}**).",
+    "openOpYesNotStarted": "**Sim** — OP **{order}** aberta, mas produção **ainda não iniciada** na referência.",
+    "openOpNo": "**Não** — nenhuma OP aberta do PA na referência consultada.",
+    "startedYes": "**Sim** — produção do PA **iniciada** (OP **{order}**, apontado **{reported}**).",
+    "startedNo": "**Não** — produção do PA **não iniciada** na referência consultada.",
+    "reportedNone": "**Não** — há OP aberta, mas **sem apontamento** registrado na referência."
+  },
+  "structureExclusivity": {
+    "exclusiveYes": "**Sim** — **{count}** matéria(s)-prima(s) exclusiva(s) na estrutura do **{code}**.",
+    "exclusiveNo": "**Não** — nenhuma MP exclusiva; as **{count}** matérias-primas do **{code}** são compartilhadas com outros PAs.",
+    "compositionAsk": "A estrutura do **{code}** tem **{total}** componentes (**{intermediates}** PI · **{rawMaterials}** MP)."
+  },
+  "scheduleMembership": {
+    "useFirstLine": true
+  }
+}

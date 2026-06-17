@@ -13,6 +13,9 @@ from app.domain.services.chat_humanized_data_response_service import (
 from app.domain.services.chat_operational_data_commentary_service import (
     ChatOperationalDataCommentaryService,
 )
+from app.domain.services.chat_operational_user_question_synthesis_service import (
+    ChatOperationalUserQuestionSynthesisService,
+)
 from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
@@ -59,6 +62,25 @@ class ChatDataInsightService:
 
         if not commentary:
             return None
+
+        profile_key = str(
+            commentary.get("profileKey")
+            or ChatOperationalDataCommentaryService.resolve_profile_key(
+                path=str(metadata.get("path") or ""),
+                metadata=metadata,
+            )
+            or ""
+        ).strip()
+        user_message = str(metadata.get("userMessage") or "").strip() or None
+
+        if user_message:
+            commentary = ChatOperationalUserQuestionSynthesisService.apply(
+                commentary,
+                data=data,
+                metadata=metadata,
+                user_message=user_message,
+                profile_key=profile_key or None,
+            )
 
         rows = cls._resolve_rows(metadata, data)
         anomalies = ChatDataAnomalyDetectionService.detect(rows=rows, metadata=metadata)

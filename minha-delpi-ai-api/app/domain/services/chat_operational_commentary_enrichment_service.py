@@ -24,9 +24,13 @@ class ChatDataInsightEnrichmentService:
         *,
         data: dict[str, Any] | None = None,
         format_quantity=None,
+        user_message: str | None = None,
     ) -> None:
         if not isinstance(metadata, dict) or not isinstance(data, dict):
             return
+
+        if user_message:
+            metadata["userMessage"] = user_message
 
         data_answer = ChatDataInsightService.build(
             metadata,
